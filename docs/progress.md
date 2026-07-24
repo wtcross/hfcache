@@ -14,7 +14,7 @@ continue at the first unchecked item in phase order.
 
 ## Phase 0 — Contract and Architecture
 
-- [ ] ARC-001 Record architecture decisions and non-goals
+- [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)
 - [ ] ARC-002 Define filesystem layout and invariants
 - [ ] ARC-003 Define configuration schema version 1
 - [ ] ARC-004 Define manifest, catalog, run-report, and verification schemas
