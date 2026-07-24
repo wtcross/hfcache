@@ -21,7 +21,11 @@ continue at the first unchecked item in phase order.
 - [x] ARC-005 Define CLI commands, JSON output, and exit codes (2026-07-24, this commit — `docs/cli.md`: every command and option, selector grammar, JSON envelope, exit-code aggregation, `HFARG`/`HFMNT`/`HFTXN`/`HFHUB`/`HFSYN`/`HFVER`/`HFRET`/`HFWRN` taxonomy)
 - [x] ARC-006 Define transaction and crash-recovery boundaries (2026-07-24, this commit — `docs/architecture.md` §7: `TX-01`–`TX-07`, named checkpoints and crash matrices for publication/prune/repair/sync/recovery, prune commit point, `needs_operator` conditions)
 - [x] ARC-007 Define security and threat assumptions (2026-07-24, this commit — `docs/security.md`: assets, trust boundaries, threats `T-01`–`T-12` with controls, hardening posture, explicit out-of-scope list, verification tests)
-- [ ] ARC-008 Enforce the framework boundary (no workflow engine in v1)
+- [x] ARC-008 Enforce the framework boundary (no workflow engine in v1) (2026-07-24, this commit — `docs/architecture.md` §8 `FW-01`–`FW-04`, plus §9 Phase 0 acceptance)
+
+**Phase 0 complete.** Contracts: `docs/architecture.md`, `docs/configuration.md`,
+`docs/schemas.md`, `docs/cli.md`, `docs/security.md`. Acceptance evidence in
+`docs/architecture.md` §9.
 
 ## Phase 1 — Project Bootstrap and Quality Gates
 

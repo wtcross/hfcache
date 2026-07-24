@@ -807,3 +807,53 @@ when it encounters:
 Each stops the *mutating* command with exit `20`, before Hub contact. `status`,
 `list`, `verify`, and `recover --dry-run` still run, so an operator always has a
 way to inspect an archive that has stopped accepting writes.
+
+## 8. Framework boundary
+
+The sequences in §7 look like workflows. They are not implemented as one.
+
+- **`FW-01`** — Version 1 is ordinary deterministic Python functions plus typed,
+  append-only checkpoint records. There is no workflow engine, state-machine
+  library, task queue, DAG framework, actor system, or agent framework.
+- **`FW-02`** — Transaction journals are **records of durable filesystem facts**,
+  not an orchestration substrate (`TX-02`). Nothing reads a journal to decide what
+  to do next during normal operation; journals are read by recovery, to learn what
+  already happened.
+- **`FW-03`** — The runtime dependency set is `huggingface-hub`, `pydantic`, and
+  `typer`, plus whichever transfer backend the resolved `huggingface-hub` version
+  requires. TOML parsing, JSON, hashing, filesystem operations, locking, and
+  logging use the standard library.
+- **`FW-04`** — A new runtime dependency is justified only by a material
+  correctness benefit that the standard library cannot provide. Convenience,
+  familiarity, and reduced line count are not sufficient. Each addition is
+  recorded as a decision with its rationale.
+
+**Why.** The sequence here is fixed, linear, and single-writer. Every branch is a
+failure branch, and every failure branch is already fully specified by §7's crash
+matrices. A workflow engine would add a second source of truth about state —
+alongside the filesystem, which is the actual authority (`AD-12`) — and turn a
+crash matrix that can be read in one document into an interaction between the
+engine's persistence model and ours. The engine would also need its own durable
+store, which is exactly what `AD-12` exists to avoid.
+
+**When to revisit.** If later requirements introduce **branching workflow graphs**,
+**human approval states**, or **durable distributed orchestration**, the answer is
+Pydantic AI — not a different workflow framework, and not an incremental
+home-grown engine accreted inside `hfcache`. Reaching for a general abstraction
+before one of those three conditions holds is the failure mode this boundary
+exists to prevent.
+
+## 9. Phase 0 acceptance
+
+Phase 0's stated acceptance criteria, and where each is satisfied:
+
+| Criterion | Where |
+| --- | --- |
+| All durable formats have schema versions | `docs/schemas.md` §1.1 fixes the versioning rule, and every format in §2–§10 carries `schema_version`. A newer version is refused rather than read speculatively, which is what makes release rollback safe |
+| Every mutation has an identified atomic boundary | §7.3–§7.7 name every checkpoint, the single atomic act behind it, and its evidence. §7.2 lists the five primitives relied on and states that nothing else is assumed |
+| No requirement depends on full Git history or repository code execution | `NG-01`/`NG-02` remove the history dependency; `AD-01` makes the resolved commit SHA the only identifier needed. `AD-15`/`NG-09` and threat `T-01` remove code execution, including from dependency detection, which parses static metadata only |
+
+Contracts produced by Phase 0: this document, `docs/configuration.md`,
+`docs/schemas.md`, `docs/cli.md`, and `docs/security.md`. Implementation phases
+are written against these; a change to behaviour that contradicts one of them is a
+change to the contract first.
