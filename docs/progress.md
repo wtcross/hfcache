@@ -19,7 +19,7 @@ continue at the first unchecked item in phase order.
 - [x] ARC-003 Define configuration schema version 1 (2026-07-24, this commit — `docs/configuration.md`: every key typed and constrained, credential resolution, `HFCFG001`–`HFCFG016`, config fingerprint)
 - [x] ARC-004 Define manifest, catalog, run-report, and verification schemas (2026-07-24, this commit — `docs/schemas.md`: sentinel, manifest, refs, catalog, run report, verification report, prune plan, audit records, transaction journal)
 - [x] ARC-005 Define CLI commands, JSON output, and exit codes (2026-07-24, this commit — `docs/cli.md`: every command and option, selector grammar, JSON envelope, exit-code aggregation, `HFARG`/`HFMNT`/`HFTXN`/`HFHUB`/`HFSYN`/`HFVER`/`HFRET`/`HFWRN` taxonomy)
-- [ ] ARC-006 Define transaction and crash-recovery boundaries
+- [x] ARC-006 Define transaction and crash-recovery boundaries (2026-07-24, this commit — `docs/architecture.md` §7: `TX-01`–`TX-07`, named checkpoints and crash matrices for publication/prune/repair/sync/recovery, prune commit point, `needs_operator` conditions)
 - [ ] ARC-007 Define security and threat assumptions
 - [ ] ARC-008 Enforce the framework boundary (no workflow engine in v1)
 
@@ -205,3 +205,26 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
    operator urgency — possible corruption, then degraded retention, then stale
    content — and every classification encountered is still listed in the JSON
    envelope's `errors` array, so aggregation hides nothing.
+
+4. **Prune removes the per-SHA reference before tombstoning the tree**
+   (2026-07-24, ARC-006). Plan §15.2 ordered these the other way — tombstone the
+   tree and manifest at step 8, remove `refs/revisions/<sha>.json` at step 9.
+   That leaves a window in which a reference names a tree that has already been
+   renamed into trash, which breaks the invariant that every existing reference
+   resolves (`FS-10`) and would be visible to `verify` and `repair`, both of
+   which resolve per-SHA refs. Recovery never needed the reference to find the
+   tree: the persisted `PrunePlan` already names it. Every property plan §15.2
+   asserts is preserved — cache deletion still happens while all six revisions
+   are published, rollback before the commit point still restores six revisions,
+   and the complete manifest is still recoverable from trash. Plan §15.2 steps
+   8–9 are updated in this commit.
+
+5. **`sync.stale_staging_age_hours` added to the configuration schema**
+   (2026-07-24, ARC-006). Plan §13.3 requires that stale staging directories be
+   reclaimed only when they "exceed a configurable age", but the §9 schema had no
+   key for it, so the requirement was unimplementable as written. Added with a
+   24-hour default and a `1..8760` range. The delay is not the safety mechanism
+   on its own — reclamation also requires a transaction-ID-shaped name and an
+   existing journal — it exists so a concurrent operator command cannot have its
+   working directory reclaimed underneath it. Plan §9 and §9.1 are updated in
+   this commit.

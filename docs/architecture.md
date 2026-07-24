@@ -573,3 +573,237 @@ immediately after a crash. Each is directly testable.
   non-empty, wrongly owned, or wrongly moded `published/` is still refused.
 - **`FS-23`** — Initialization writes `.hfcache-root` last, after the directory
   structure is durable, so a sentinel's existence proves the layout beneath it.
+
+## 7. Transaction and crash-recovery boundaries
+
+A crash is not an exceptional case to be handled once the happy path works. It is
+the normal case that defines the design: the writer can lose power, lose its NFS
+mount, or be killed at any instruction, and every resulting on-disk state must
+have exactly one correct resolution.
+
+### 7.1 Rules that hold for every transaction
+
+- **`TX-01`** — Every mutating operation opens a journal at
+  `.store/transactions/<transaction-id>.json` before its first mutation, and the
+  journal is durable before that mutation begins.
+- **`TX-02`** — A checkpoint is recorded **after** the operation it names is
+  durable, never before. The journal is a record of what has happened, not of what
+  is intended (`AD-14`). This is why recovery can trust it without replaying.
+- **`TX-03`** — Checkpoints are append-only with a strictly increasing
+  `sequence`, and each carries **re-observable evidence**: archive-relative paths,
+  file counts, digests. Recovery confirms a checkpoint by looking at the
+  filesystem, not by trusting the record.
+- **`TX-04`** — Every checkpoint is idempotent. Re-performing the operation it
+  names, when its evidence already holds, is a no-op. This is what makes
+  `recover --apply` safe to run repeatedly.
+- **`TX-05`** — Every state-changing step is a single atomic filesystem
+  operation. Multi-step "atomicity" by convention does not exist here.
+- **`TX-06`** — Where a transaction can fail leaving either more data or less
+  data, it leaves more. Over-retention is a reportable condition; deletion is not
+  reversible (`AD-16`).
+- **`TX-07`** — Every mutating command reconciles unfinished journals **before**
+  contacting the Hub or changing archive state, under the same exclusive lock it
+  will hold for its own work.
+
+### 7.2 The atomic operations this design relies on
+
+| Operation | Used for | Proven by |
+| --- | --- | --- |
+| `rename(2)` of a directory within the dataset | Publishing a revision tree, tombstoning, quarantining | `doctor` |
+| `rename(2)` of a file over an existing file | Replacing a reference, publishing a manifest or catalog | `doctor` |
+| `unlink(2)` of a single file | Removing a per-SHA reference | POSIX |
+| `link(2)` within the dataset | Hardlink publication | `doctor` |
+| `fsync(2)` on a file and on its parent directory | Making a rename's effect durable | POSIX |
+
+Nothing else is assumed. In particular no lock file on NFS, no `O_EXCL` protocol
+across hosts, and no ordering guarantee between two separate renames.
+
+### 7.3 Publication transaction
+
+`operation = "publication"`, one per repository per newly observed SHA.
+
+| # | Checkpoint | Atomic act | Evidence |
+| --- | --- | --- | --- |
+| 1 | `staging_created` | — | Staging directory path under `.store/staging/<txn>/` |
+| 2 | `download_completed` | — | Cache revision present; local-only completeness passed |
+| 3 | `content_hashed` | — | Digest count, hashed bytes, reused-digest count |
+| 4 | `staging_built` | — | Staging tree path, file count, pending manifest digest |
+| 5 | `revision_tree_renamed` | rename dir | Published tree path, file count |
+| 6 | `manifest_published` | rename file | Manifest path, manifest SHA-256 |
+| 7 | `revision_ref_published` | rename file | `refs/revisions/<sha>.json`, publication ID |
+| 8 | `current_ref_replaced` | rename file | New and previous `(commit_sha, publication_id)` |
+| 9 | `catalog_rebuilt` | rename file | Catalog path, catalog SHA-256 |
+| 10 | `publication_committed` | — | `state = "committed"` |
+
+The pending manifest is written into staging at step 4, **before** the tree is
+renamed. That ordering is what makes a crash between 5 and 6 recoverable: the
+published tree can still be validated against a manifest that already exists.
+
+**Crash matrix.** Every row is a state an external observer can find, and has one
+resolution.
+
+| Crash point | On-disk state | Resolution |
+| --- | --- | --- |
+| Before 5 | Staging tree and cache partials only; no published change | Roll back. Quarantine the staging directory if it matches the naming contract and exceeds the stale age; the cache keeps its partials for the next resumable download |
+| After 5, before 6 | Published tree exists, unreferenced, no published manifest | Roll forward if the staged manifest survives: validate the tree against it, then continue from 6. If the staged manifest is gone, the tree cannot be validated — quarantine it and report; never publish an unvalidated tree |
+| After 6, before 7 | Tree and manifest published; no per-SHA reference | Roll forward: validate tree against manifest, publish the reference, continue |
+| After 7, before 8 | Revision retained and discoverable, not current | Roll forward: replace `current.json` if this generation is the newest for the repository, then continue |
+| After 8, before 9 | Revision is current; catalog stale | Roll forward: rebuild the catalog, which is derived and always reconstructible (`FS-16`) |
+| After 9, before 10 | Everything published; journal open | Close the journal. No filesystem change |
+
+At no point does the previous current revision become unusable: `current.json` is
+replaced by a single atomic rename at step 8, and both the old and the new tree
+exist on either side of it.
+
+### 7.4 Prune transaction
+
+`operation = "prune"`, triggered only by the successful publication of a unique
+revision beyond `storage.maximum_revisions`.
+
+| # | Checkpoint | Atomic act | Evidence |
+| --- | --- | --- | --- |
+| 1 | `plan_persisted` | rename file | The validated `PrunePlan` inside the journal |
+| 2 | `cache_revision_deleted` | — | Cache scan shows the revision absent |
+| 3 | `revision_ref_removed` | unlink | `refs/revisions/<sha>.json` absent |
+| 4 | `tree_tombstoned` | rename dir | `.store/trash/<txn>/tree` present, file count |
+| 5 | `manifest_tombstoned` | rename file | `.store/trash/<txn>/manifest.json`, digest |
+| 6 | `catalog_published` | rename file | Catalog path and digest |
+| 7 | `prune_logically_committed` | — | **The commit point** |
+| 8 | `audit_record_written` | rename file | `audit/pruned/.../<pid>.manifest.json` and `.prune.json` |
+| 9 | `trash_removed` | — | `.store/trash/<txn>/` absent |
+| 10 | `prune_completed` | — | `state = "committed"` |
+
+**The per-SHA reference is removed before the tree is tombstoned** (step 3 before
+step 4). The reverse order would leave a window in which a reference names a tree
+that has already been renamed away, violating `FS-10`. Recovery does not need the
+reference to find the tree — the persisted plan already names it.
+
+Cache deletion at step 2 happens while all six revisions are still published, and
+uses supported `huggingface_hub` cache APIs only (`FS-14`). The published
+hardlinks keep the bytes alive regardless of what the cache does.
+
+**The commit point is checkpoint 7.** It divides the transaction into two
+different failure regimes:
+
+| Failure | Behaviour |
+| --- | --- |
+| Before checkpoint 7 | **Roll back.** Restore the manifest, the tree, the per-SHA reference, and the catalog, so all six revisions are published again. Cache deletion may already have happened; that is harmless, because the publication hardlinks hold the bytes. Report `HFRET001`–`HFRET004` and warn `HFWRN001` for temporary over-retention |
+| At or after checkpoint 7 | **Never republish.** Exactly five revisions are consumer-visible and the complete manifest is still recoverable from trash. A failure in steps 8–9 records a `cleanup_deferred` checkpoint and warns `HFWRN002`; only post-commit cleanup is retried later |
+| Rollback itself fails | `HFRET005`, `state = "needs_operator"`. The transaction stops and preserves everything it holds |
+
+The archive never manually deletes a cache blob to force the retained count
+(`FS-14`), and no upstream error or configuration edit ever reaches this
+transaction (`AD-06`).
+
+### 7.5 Repair transaction
+
+`operation = "repair"`. The distinguishing property is that repair must not be
+able to launder corrupt bytes into the expected value (`AD-13`).
+
+| # | Checkpoint | Atomic act | Evidence |
+| --- | --- | --- | --- |
+| 1 | `evidence_preserved` | — | Verification findings and the corrupt instance retained |
+| 2 | `isolated_cache_created` | — | `.store/repair/<txn>/hub` exists and is empty |
+| 3 | `isolated_download_completed` | — | Complete snapshot present in the isolated cache only |
+| 4 | `verified_against_original_manifest` | — | Every path, size, and digest matches the original manifest |
+| 5 | `staging_built` | — | Staging tree path and file count |
+| 6 | `replacement_tree_renamed` | rename dir | New instance path under a new publication ID |
+| 7 | `replacement_manifest_published` | rename file | New manifest path and digest |
+| 8 | `replacement_reverified` | — | The published replacement re-read and confirmed |
+| 9 | `revision_ref_switched` | rename file | `refs/revisions/<sha>.json` names the new instance |
+| 10 | `current_ref_switched` | rename file | Only when the repaired SHA is current |
+| 11 | `catalog_rebuilt` | rename file | Catalog path and digest |
+| 12 | `retirement_record_written` | rename file | `audit/repairs/.../<pid>.retirement.json`, grace expiry |
+| 13 | `implicated_cache_revision_deleted` | — | Canonical cache revision absent |
+| 14 | `isolated_cache_removed` | — | `.store/repair/<txn>/` absent |
+| 15 | `repair_committed` | — | `state = "committed"` |
+
+Checkpoint 4 is the gate: if any expected digest differs from the original
+manifest, the transaction stops with `HFRET006` and the published revision is
+unchanged. Newly observed bytes never become the new expectation.
+
+Checkpoint 8 is the second gate: the replacement is re-read from its published
+location before any reference moves, so a reference only ever switches to an
+instance that has been verified where it now lives.
+
+**Crash between 9 and 10** is the interesting case: `refs/revisions/<sha>.json`
+names the new instance while `refs/current.json` still names the old one. Both
+trees exist — the old one is inside its grace period — so `FS-10` holds and no
+consumer sees a dangling reference. Recovery completes the second switch.
+
+The retired instance stays at its original locator until
+`grace_expires_at`, so an in-flight consumer copy can finish. After expiry a
+separately checkpointed cleanup runs:
+
+| # | Checkpoint | Atomic act |
+| --- | --- | --- |
+| 16 | `retired_tree_quarantined` | rename dir into `.store/quarantine/<txn>/` |
+| 17 | `retired_manifest_archived` | rename file into `audit/repairs/` |
+| 18 | `repair_cleanup_completed` | — |
+
+Quarantined evidence is retained until an operator confirms storage health and
+explicitly approves its removal. The application never deletes it on a schedule.
+
+### 7.6 Sync run transaction
+
+`operation = "sync"`, one per invocation, wrapping the per-repository publication
+transactions and linked to them by `run_id`.
+
+| # | Checkpoint | Evidence |
+| --- | --- | --- |
+| 1 | `run_started` | Run ID, configuration fingerprint, archive ID |
+| 2 | `preflight_passed` | The `FS-02`/`FS-03`/§19 check results |
+| 3 | `journals_reconciled` | Transaction IDs reconciled, or none found |
+| 4 | `repositories_processed` | Per-repository status set |
+| 5 | `catalog_rebuilt` | Catalog path and digest |
+| 6 | `run_report_written` | Run report path |
+| 7 | `run_completed` | Aggregate exit classification |
+
+A crash anywhere leaves the per-repository journals as the authority; the run
+journal exists to correlate them and to prove that reconciliation happened before
+Hub contact.
+
+### 7.7 Recovery transaction
+
+`operation = "recovery"`. `recover --dry-run` performs the analysis and writes
+nothing. `recover --apply` opens this journal and records one checkpoint per
+remediation, each naming the transaction it resolved and the evidence it
+observed, followed by `recovery_report_written` and `recovery_completed`.
+
+Recovery is permitted to: quarantine abandoned staging that matches the naming
+contract; finish a publication from checkpoint 5 onward; rebuild the catalog;
+repair a reference when checkpoints and valid manifests identify exactly one
+correct target; roll an interrupted prune back or forward across its commit point;
+and finish a repair's second reference switch.
+
+Recovery is **not** permitted to: replace an expected digest; choose a current
+revision by modification time; delete unknown data; resolve a state that two valid
+executions could both have produced; or act on a journal whose schema version it
+does not know.
+
+### 7.8 Stale artifacts and unknown data
+
+`.store/staging`, `.store/trash`, `.store/quarantine`, and `.store/repair` are
+addressed by transaction ID (`FS-18`). An entry in one of these areas is acted on
+only when all three hold: its name matches the transaction-ID grammar, a journal
+for that transaction exists, and its age exceeds `sync.stale_staging_age_hours`.
+
+Anything failing those conditions is reported as `HFWRN003` and preserved. The
+application has no code path that deletes a file it cannot explain (`FS-19`,
+`AD-16`).
+
+### 7.9 What stops the machine
+
+Automatic recovery halts, sets `state = "needs_operator"`, and changes nothing
+when it encounters:
+
+| Condition | Code |
+| --- | --- |
+| A journal `schema_version` it does not know | `HFTXN001` |
+| A checkpoint combination no valid execution can produce | `HFTXN002` |
+| Journal evidence that contradicts the filesystem | `HFTXN003` |
+| Two equally valid resolutions | `HFTXN004` |
+
+Each stops the *mutating* command with exit `20`, before Hub contact. `status`,
+`list`, `verify`, and `recover --dry-run` still run, so an operator always has a
+way to inspect an archive that has stopped accepting writes.

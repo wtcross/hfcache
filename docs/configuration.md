@@ -139,6 +139,7 @@ max_workers = 4
 lock_wait_seconds = 3600
 continue_on_repository_error = true
 dependency_policy = "warn"
+stale_staging_age_hours = 24
 
 [verification]
 algorithm = "sha256"
@@ -155,6 +156,7 @@ retired_instance_grace_hours = 168
 | `sync.lock_wait_seconds` | int | `3600` | `0 <= n <= 86400` |
 | `sync.continue_on_repository_error` | bool | `true` | — |
 | `sync.dependency_policy` | str | `"warn"` | `"warn"` only; `"ignore"` and `"fail"` are reserved |
+| `sync.stale_staging_age_hours` | int | `24` | `1 <= n <= 8760` |
 | `verification.algorithm` | str | `"sha256"` | `"sha256"` only |
 | `verification.hash_new_content` | bool | `true` | Must be `true` |
 | `verification.lock_wait_seconds` | int | `86400` | `0 <= n <= 604800` |
@@ -172,6 +174,14 @@ any repository failure still exits non-zero so systemd records it as failed.
 `verification.hash_new_content` must remain `true`. It is a named field because
 the manifest records which policy produced it, not because publishing unhashed
 content is a supported mode (`AD-18`).
+
+`sync.stale_staging_age_hours` is the minimum age a `.store/staging`,
+`.store/trash`, `.store/quarantine`, or `.store/repair` entry must reach before
+reconciliation will act on it — and age is only one of three conditions, alongside
+a name matching the transaction-ID grammar and an existing journal
+(`docs/architecture.md` §7.8). The delay exists so a concurrent operator command
+cannot have its working directory reclaimed underneath it. Quarantined repair
+evidence is exempt: it is released only by explicit operator action.
 
 `repair.retired_instance_grace_hours` has a hard floor of `168` (seven days).
 A superseded repair instance stays readable at its original locator for that long
@@ -317,6 +327,7 @@ max_workers = 4
 lock_wait_seconds = 3600
 continue_on_repository_error = true
 dependency_policy = "warn"
+stale_staging_age_hours = 24
 
 [verification]
 algorithm = "sha256"

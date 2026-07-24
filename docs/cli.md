@@ -407,7 +407,7 @@ condition; a retired condition retires its code.
 | `HFHUB007` | Configured revision could not be resolved to a commit SHA |
 | `HFHUB008` | Repository tree metadata missing or incomplete |
 | `HFHUB009` | Snapshot download failed |
-| `HFHUB010` | Rate limited after the configured retries |
+| `HFHUB010` | Rate limited after the built-in retry budget was exhausted |
 | `HFSYN001` | Local-only completeness check failed after download |
 | `HFSYN002` | Downloaded path set does not match Hub tree metadata |
 | `HFSYN003` | File size does not match Hub metadata during ingestion |

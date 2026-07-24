@@ -355,6 +355,7 @@ max_workers = 4
 lock_wait_seconds = 3600
 continue_on_repository_error = true
 dependency_policy = "warn"
+stale_staging_age_hours = 24
 
 [verification]
 algorithm = "sha256"
@@ -389,6 +390,7 @@ declared_dependencies = []
 - Duplicate `(type, id)` entries are rejected.
 - `max_workers` must be within a conservative validated range, initially `1..32`; the production default is `4`.
 - Scheduled sync waits up to one hour for the exclusive lock; quarterly verification waits up to 24 hours so a long sync can finish without creating a race.
+- `stale_staging_age_hours` is the configurable age required by §13.3 before reconciliation may act on an abandoned staging, trash, quarantine, or repair directory; the default is 24 hours and it is one of three required conditions (`docs/architecture.md` §7.8).
 - Superseded repair instances remain at their original immutable published paths for at least seven days; reducing this grace requires measured consumer-copy data and an explicit configuration review.
 - File filtering options are intentionally absent because the product contract is repository-complete.
 - `expected_account` may be empty for anonymous public access.
@@ -682,8 +684,8 @@ After a sixth unique revision is successfully published:
 5. Persist a `prune_pending` transaction journal and fsync its parent directory.
 6. While all six revisions remain published, ask `huggingface_hub` cache management APIs to delete the exact corresponding cache revision and any now-unreferenced blobs. Published hardlinks continue to preserve the bytes.
 7. Prepare and fsync the updated catalog plus a prune-provenance record under `audit/pruned/`.
-8. Atomically rename the active publication tree into `.store/trash/<transaction-id>/tree` and its complete active manifest into `.store/trash/<transaction-id>/manifest.json`.
-9. Atomically remove `refs/revisions/<sha>.json`, publish the updated catalog, and record a checkpoint after each atomic operation.
+8. Atomically remove `refs/revisions/<sha>.json`, then atomically rename the active publication tree into `.store/trash/<transaction-id>/tree` and its complete active manifest into `.store/trash/<transaction-id>/manifest.json`. Removing the reference first keeps the invariant that no reference ever names a tree that has been renamed away (`docs/architecture.md` `FS-10`); the persisted plan, not the reference, is what recovery uses to locate the tombstoned tree.
+9. Publish the updated catalog, and record a checkpoint after each atomic operation.
 10. Mark the logical prune committed; at this point exactly five revisions are consumer-visible and the complete manifest remains recoverable from trash.
 11. Move the complete manifest plus prune provenance into `audit/pruned/`, then delete the tombstoned hardlink tree. If either cleanup fails, leave a `cleanup_deferred` checkpoint and retry only post-commit cleanup later.
 12. Reconcile cache state, manifests, refs, catalog, and the trash area, then complete the journal and report logical and physical-space effects.
