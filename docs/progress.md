@@ -16,7 +16,7 @@ continue at the first unchecked item in phase order.
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)
 - [x] ARC-002 Define filesystem layout and invariants (2026-07-24, this commit — `docs/architecture.md` §5–6: layout, ownership/modes, path grammar, `FS-01`–`FS-23`)
-- [ ] ARC-003 Define configuration schema version 1
+- [x] ARC-003 Define configuration schema version 1 (2026-07-24, this commit — `docs/configuration.md`: every key typed and constrained, credential resolution, `HFCFG001`–`HFCFG016`, config fingerprint)
 - [ ] ARC-004 Define manifest, catalog, run-report, and verification schemas
 - [ ] ARC-005 Define CLI commands, JSON output, and exit codes
 - [ ] ARC-006 Define transaction and crash-recovery boundaries
