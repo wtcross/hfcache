@@ -352,3 +352,224 @@ Non-goals are not permanent bans. `NG-06` in particular is expected to become
 reachable without a schema redesign: the configuration already carries
 `token_mode`, `credential_name`, and `expected_account`, and the credential path
 is implemented in version 1 even though version 1 refuses non-public repositories.
+
+## 5. Filesystem layout
+
+One dedicated ZFS dataset holds cache blobs, staging directories, hardlinked
+publications, manifests, and atomic renames, so every atomic operation stays
+within a single filesystem.
+
+### 5.1 Archive tree
+
+```text
+/srv/hfcache/                                    0750  root of the archive dataset
+├── .hfcache-root                                0640  sentinel: archive identity
+├── .store/                                      0700  private to the writer
+│   ├── hub/                                           canonical huggingface_hub cache
+│   │   ├── models--<org>--<repo>/
+│   │   └── datasets--<org>--<repo>/
+│   ├── health/                                        preflight probe area
+│   │   └── probe-<probe-id>/
+│   ├── quarantine/                                    preserved evidence, operator-released
+│   │   └── <transaction-id>/
+│   ├── repair/                                        transaction-scoped isolated caches
+│   │   └── <transaction-id>/hub/
+│   ├── staging/                                       publication trees under construction
+│   │   └── <transaction-id>/
+│   │       ├── tree/
+│   │       └── manifest.json
+│   ├── transactions/                                  durable journals
+│   │   └── <transaction-id>.json
+│   └── trash/                                         prune tombstones, pre-cleanup
+│       └── <transaction-id>/
+│           ├── tree/
+│           └── manifest.json
+├── published/                                   2750  the only consumer-visible subtree
+│   ├── repos/
+│   │   ├── models/<org>/<repo>/
+│   │   │   ├── refs/
+│   │   │   │   ├── current.json                       which revision consumers should take
+│   │   │   │   └── revisions/<sha>.json               active instance for each retained SHA
+│   │   │   └── revisions/<sha>/<publication-id>/      immutable repository tree
+│   │   └── datasets/<org>/<repo>/                     identical shape
+│   ├── manifests/
+│   │   ├── models/<org>/<repo>/<sha>/<publication-id>.json
+│   │   └── datasets/<org>/<repo>/<sha>/<publication-id>.json
+│   └── catalog/
+│       ├── repositories.json                          derived index of retained state
+│       └── verification.json                          derived archive health summary
+├── audit/                                       0700  provenance that outlives the data
+│   ├── pruned/<type>/<org>/<repo>/<sha>/
+│   │   ├── <publication-id>.manifest.json             byte-for-byte original manifest
+│   │   └── <publication-id>.prune.json                why, when, and under which transaction
+│   └── repairs/<type>/<org>/<repo>/<sha>/
+│       ├── <publication-id>.manifest.json             retired instance's original manifest
+│       └── <publication-id>.retirement.json           repair provenance and grace expiry
+└── runs/                                        0700
+    └── <YYYYMMDD>T<HHMMSS>Z-<run-id>.json             one report per invocation
+```
+
+Writer-local paths, none of which hold archive content:
+
+```text
+/opt/hfcache/                  root-owned releases and locked virtual environments
+/etc/hfcache/config.toml       root-owned, service-readable configuration
+/srv/hfcache/                  the NFS mount point (root-owned when unmounted)
+/var/cache/hfcache/xet/        disposable hf_xet transfer cache
+/var/lib/hfcache/              local operational state, including HF_HOME
+/run/hfcache/                  process locks and transient run state
+```
+
+### 5.2 Ownership and modes
+
+Modes below are what the writer creates with `UMask=0027` against a dataset whose
+root and `published/` are pre-owned by the NAS-side identity.
+
+| Path | Owner:group | Mode | Reason |
+| --- | --- | --- | --- |
+| Archive root | `hfcache-sync:hfcache-archive` | `0750` | Writer-only; the read identity enters through `published/` |
+| `.hfcache-root` | mapped writer identity | `0640` | Readable to the group, writable only by the writer |
+| `.store`, `audit`, `runs` | mapped writer identity | `0700` | Cache, journals, staging, provenance, and reports are not consumer data |
+| `published` | `hfcache-sync:hfcache-archive` | `2750` setgid | Group-traversable for the read identity; setgid keeps the group on everything created beneath |
+| Directories under `published` | mapped writer identity | `2750` | Inherited setgid plus `UMask=0027` |
+| Files under `published` | mapped writer identity | `0640` | `UMask=0027`; read access for the export identity, no write |
+
+Published files are **never** `chmod`ed by the application. In hardlink mode a
+published file and its cache blob are the same inode, so changing the mode of one
+changes both (`AD-11`). Read-only for consumers is enforced by the server-side
+export, not by file mode.
+
+Because the writer export maps every client identity to
+`hfcache-sync:hfcache-archive`, files on the mount appear owned by NAS-side ids
+with no local account on the writer. Writability is therefore proven by a real
+create/fsync/rename/delete probe under `.store/health/`, never by comparing the
+local service uid against `st_uid`.
+
+### 5.3 Path grammar
+
+| Element | Grammar | Notes |
+| --- | --- | --- |
+| `<type>` | `models` \| `datasets` | Plural on disk; the configuration and API use the singular `model` \| `dataset` |
+| `<org>` | Hub namespace segment | Preserved exactly, including case |
+| `<repo>` | Hub repository-name segment | Preserved exactly, including case |
+| `<sha>` | `[0-9a-f]{40}` | The full resolved commit SHA, lowercase; abbreviations are never written to disk |
+| `<publication-id>` | `[0-9a-f]{32}` | Random UUID4 hex; opaque and carries no ordering |
+| `<transaction-id>` | `[0-9a-f]{32}` | Random UUID4 hex |
+| `<run-id>` | `[0-9a-f]{32}` | Random UUID4 hex |
+| `<probe-id>` | `[0-9a-f]{16}` | Random hex, unique per preflight |
+
+A repository identifier is exactly two segments, `<org>/<repo>`. Single-segment
+canonical identifiers are rejected with a configuration error; every canonical
+Hub repository now has a namespaced form (`gpt2` → `openai-community/gpt2`) and
+requiring it keeps the on-disk layout unambiguous.
+
+Both segments must match `[A-Za-z0-9][A-Za-z0-9._-]*`, must not be `.` or `..`,
+and must not exceed 96 characters. This is validated at configuration load, before
+any network or filesystem access.
+
+Ordering within any generated JSON array of repositories, files, or revisions is
+deterministic: byte-wise ascending on the relative POSIX path or on
+`(type, id, generation)` as applicable. Two runs over identical state produce
+byte-identical output.
+
+## 6. Filesystem invariants
+
+These hold at every instant an external observer could look, including
+immediately after a crash. Each is directly testable.
+
+### Identity and location
+
+- **`FS-01`** — `.hfcache-root` contains the archive's identity as versioned JSON,
+  including a UUID that must equal the configured `storage.archive_id`.
+- **`FS-02`** — Before any mutating command proceeds, the archive root must be
+  proven to be a mount point distinct from its parent, of an NFS/NFSv4 filesystem
+  type, mounted read/write.
+- **`FS-03`** — A mismatch between the sentinel UUID and the configured
+  `archive_id` is fatal. It is never repaired, regenerated, or ignored.
+- **`FS-04`** — `.store/staging` and every destination it is renamed into are on
+  the same filesystem as the archive root, so publication is always a `rename(2)`
+  and never a cross-device copy.
+
+### Immutability
+
+- **`FS-05`** — A publication instance directory
+  `published/repos/<type>/<org>/<repo>/revisions/<sha>/<publication-id>/` is
+  immutable once it has been renamed into place. The application never adds,
+  removes, modifies, or re-modes a file inside it. It is only ever renamed away
+  wholesale, to trash or quarantine.
+- **`FS-06`** — A published manifest is immutable. Expected sizes and digests are
+  never rewritten to match a later observation (`AD-13`, `AD-18`).
+- **`FS-07`** — A repaired instance receives a new `<publication-id>` and a new
+  manifest that copies the original expected path/size/digest set exactly and
+  records `repair_of`. The original manifest is preserved byte-for-byte.
+
+### References
+
+- **`FS-08`** — `refs/current.json` and `refs/revisions/<sha>.json` are small
+  versioned objects naming a full commit SHA, publication generation, publication
+  ID, and the exact archive-relative tree and manifest paths. They are replaced by
+  atomic rename, never edited in place, never appended to.
+- **`FS-09`** — Every path inside a reference is archive-relative and validated to
+  remain under the archive root after normalization. A reference containing an
+  absolute path, a `..` segment, or a symlink component is invalid.
+- **`FS-10`** — Every reference that exists names a publication instance
+  directory and a manifest that both exist and are complete. A reference is
+  written only after both of its targets are durable.
+- **`FS-11`** — `refs/revisions/<sha>.json` exists for exactly the set of SHAs the
+  repository currently retains. `refs/current.json` names one of them.
+- **`FS-12`** — A consumer that reads `refs/current.json` once and copies the tree
+  it names either succeeds, or observes a failure it can retry by rereading the
+  reference. It never silently copies a mixture of two revisions.
+
+### Cache and blobs
+
+- **`FS-13`** — Cache blob paths are obtained only through supported
+  `huggingface_hub` cache-inspection APIs. The application never parses cache
+  directory names to infer a blob location.
+- **`FS-14`** — Cache content is deleted only through supported `huggingface_hub`
+  cache-management APIs. No cache blob under `.store/hub` is ever removed by a
+  direct filesystem call. A transaction-scoped repair cache under
+  `.store/repair/<transaction-id>/hub` is application-owned scratch and is removed
+  wholesale after its bytes are durable in a publication; this is the single
+  documented exception and it never touches `.store/hub`.
+- **`FS-15`** — Every source resolved for publication is verified to be contained
+  by the operation's approved cache root — `.store/hub` for normal ingestion, one
+  `.store/repair/<transaction-id>/hub` for repair — and to be a regular file.
+  Devices, sockets, FIFOs, dangling links, and paths escaping the root are
+  rejected.
+
+### Derived state
+
+- **`FS-16`** — `published/catalog/*.json` is derived. It can always be rebuilt
+  from immutable manifests plus references, and disagreement between the catalog
+  and that authority is resolved in favour of manifests and references.
+
+### Transactions and unknown data
+
+- **`FS-17`** — Every sync, publication, prune, repair, and recovery mutation has
+  a durable transaction journal under `.store/transactions/` whose checkpoints are
+  appended only after the operation they describe is durable.
+- **`FS-18`** — Staging, trash, quarantine, and repair directories are named by
+  transaction ID. A directory in these areas is only ever acted upon when it
+  matches that naming contract, has a journal, and exceeds the configured age.
+- **`FS-19`** — Files and directories the application does not recognise are
+  reported and preserved. Nothing outside the application's own naming contracts
+  is deleted, moved, or rewritten (`AD-16`).
+- **`FS-20`** — Each unique SHA has exactly one `publication_generation` for the
+  life of the repository. Generations are allocated from the union of retained
+  manifests and `audit/pruned/` records, are never reused, and may contain gaps
+  left by crashes.
+
+### Initialization
+
+- **`FS-21`** — `hfcache archive init` is the only way to create the sentinel and
+  the top-level directories. It is an explicit operator action, never reached from
+  a timer, a sync, or an automatic recovery path.
+- **`FS-22`** — Initialization refuses a target that is not the expected
+  read/write NFS mount, already has a sentinel, or holds unknown content or
+  symlinks. The single exception is one pre-existing **empty** `published/`
+  directory whose ownership and mode already match §5.2, which is adopted because
+  TrueNAS requires it to exist before the consumer export can be defined. A
+  non-empty, wrongly owned, or wrongly moded `published/` is still refused.
+- **`FS-23`** — Initialization writes `.hfcache-root` last, after the directory
+  structure is durable, so a sentinel's existence proves the layout beneath it.
