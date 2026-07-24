@@ -17,7 +17,7 @@ continue at the first unchecked item in phase order.
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)
 - [x] ARC-002 Define filesystem layout and invariants (2026-07-24, this commit — `docs/architecture.md` §5–6: layout, ownership/modes, path grammar, `FS-01`–`FS-23`)
 - [x] ARC-003 Define configuration schema version 1 (2026-07-24, this commit — `docs/configuration.md`: every key typed and constrained, credential resolution, `HFCFG001`–`HFCFG016`, config fingerprint)
-- [ ] ARC-004 Define manifest, catalog, run-report, and verification schemas
+- [x] ARC-004 Define manifest, catalog, run-report, and verification schemas (2026-07-24, this commit — `docs/schemas.md`: sentinel, manifest, refs, catalog, run report, verification report, prune plan, audit records, transaction journal)
 - [ ] ARC-005 Define CLI commands, JSON output, and exit codes
 - [ ] ARC-006 Define transaction and crash-recovery boundaries
 - [ ] ARC-007 Define security and threat assumptions
@@ -178,3 +178,12 @@ _None yet._
 ## Decisions
 
 _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3)._
+
+1. **`docs/schemas.md` added beyond the plan §7 documentation set** (2026-07-24,
+   ARC-004). The plan's `docs/` listing has no home for `ARC-004`'s durable JSON
+   schemas. Folding them into `architecture.md` would have made one document
+   carry both the reasoning and roughly a thousand lines of format reference;
+   folding them into `configuration.md` would have conflated operator input with
+   application output. A dedicated schema reference is also the document a
+   consumer or auditor reads without needing anything else. Plan §7 is updated
+   in the `ARC-005` commit, once the full documentation-set deviation is known.
