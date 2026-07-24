@@ -288,7 +288,7 @@ Module boundaries can be consolidated where implementation remains small, but Hu
 
 ### 8.1 Runtime baseline
 
-- Pin Python 3.14 through `.python-version`, subject to final compatibility validation against all locked dependencies.
+- Pin Python 3.14 through `.python-version`. **Validated 2026-07-24 (`BOOT-002`):** the full locked dependency set resolves and installs on CPython 3.14.6, including the `hf-xet` native extension; the pin stands.
 - Use a standard `src/` package layout.
 - Define the CLI entry point as `hfcache = "hfcache.cli:app"`.
 - Build both sdist and wheel artifacts with `uv build`.
@@ -300,7 +300,7 @@ Module boundaries can be consolidated where implementation remains small, but Hu
 - `pydantic`
 - `typer`
 
-Confirm at lock time how the Xet transfer backend is provided for the resolved `huggingface-hub` version — `hf-xet` may arrive as a default dependency or require the `huggingface_hub[hf_xet]` extra — and pin whichever applies in `uv.lock` so production downloads use the same transfer path as tests.
+**Confirmed at lock time (2026-07-24, `BOOT-002`):** `huggingface-hub` 1.24.0 declares `hf-xet` as a *required* dependency, not an extra, so no `huggingface_hub[hf_xet]` marker is needed. `hf-xet` 1.5.2 is pinned in `uv.lock` and ships `cp38-abi3` manylinux wheels that install on CPython 3.14, so production downloads use the same transfer path as tests with no source build.
 
 Use `tomllib` to parse TOML and validate its decoded structure with strict Pydantic models. Prefer the standard library for JSON, hashing, filesystem operations, locking, and logging unless a dependency provides a material correctness benefit.
 

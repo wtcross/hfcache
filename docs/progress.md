@@ -30,7 +30,7 @@ continue at the first unchecked item in phase order.
 ## Phase 1 — Project Bootstrap and Quality Gates
 
 - [x] BOOT-001 Initialize uv project and `src/` layout (includes `git init` + initial docs commit per §36.2) (2026-07-24, this commit — `pyproject.toml`, `src/hfcache/`, `tests/{unit,integration,system,fixtures}`, `examples/`, `packaging/systemd/`, `README.md`, `LICENSE`, `.editorconfig`; git baseline commit `87323c2`)
-- [ ] BOOT-002 Pin Python and create `uv.lock`
+- [x] BOOT-002 Pin Python and create `uv.lock` (2026-07-24, this commit — CPython 3.14.6 validated against the full locked set; `huggingface-hub` 1.24.0, `hf-xet` 1.5.2, `pydantic` 2.13.4, `typer` 0.27.0)
 - [ ] BOOT-003 Configure Ruff formatting and linting
 - [ ] BOOT-004 Configure Pyrefly
 - [ ] BOOT-005 Configure pytest and coverage
@@ -240,3 +240,19 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
    code impact. `uv_build` is uv's own PEP 517 backend, needs no extra build
    dependency, and supports the `src/` layout natively — consistent with §8.1's
    requirement to build both sdist and wheel with `uv build`.
+
+7. **Python 3.14 pin confirmed; `hf-xet` is a required dependency, not an extra**
+   (2026-07-24, BOOT-002). Plan §8.1 made the 3.14 pin "subject to final
+   compatibility validation" and §8.2 left open whether the Xet backend arrives
+   by default or via the `huggingface_hub[hf_xet]` extra. Both are now settled:
+   `huggingface-hub` 1.24.0 requires `hf-xet` directly, and `hf-xet` 1.5.2 ships
+   `cp38-abi3` manylinux wheels that install on CPython 3.14.6 with no source
+   build. The fallback to 3.13 is not needed. Plan §8.1 and §8.2 updated in this
+   commit.
+
+   Also verified against the locked version, since the plan's design depends on
+   them: `HfApi.{repo_info,model_info,dataset_info,list_repo_tree,whoami}`,
+   `snapshot_download`, `scan_cache_dir`, `HFCacheInfo.delete_revisions`, and the
+   `Cached{Repo,Revision,File}Info` types all exist. `snapshot_download` accepts
+   `dry_run`, which is what plan §13.2 step 3 needs for pre-download size
+   estimation — no separate estimation path is required.
