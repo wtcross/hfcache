@@ -39,3 +39,69 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "hfcache"
 module-root = "src"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+# target-version is inferred from project.requires-python.
+
+[tool.ruff.lint]
+select = [
+    "A",     # flake8-builtins
+    "ARG",   # unused arguments
+    "B",     # flake8-bugbear
+    "BLE",   # blind except
+    "C4",    # comprehensions
+    "DTZ",   # flake8-datetimez: every timestamp must be timezone-aware
+    "E",     # pycodestyle errors
+    "EM",    # error messages assigned before raise
+    "ERA",   # commented-out code
+    "F",     # pyflakes
+    "FBT",   # boolean trap in signatures
+    "G",     # logging format
+    "I",     # import sorting
+    "ICN",   # import conventions
+    "INP",   # implicit namespace packages
+    "ISC",   # implicit string concatenation
+    "N",     # pep8-naming
+    "PERF",  # performance antipatterns
+    "PIE",   # misc lints
+    "PL",    # pylint
+    "PT",    # pytest style
+    "PTH",   # use pathlib
+    "Q",     # quotes
+    "RET",   # return hygiene
+    "RSE",   # raise
+    "RUF",   # ruff-specific
+    "S",     # flake8-bandit
+    "SIM",   # simplify
+    "SLF",   # private member access
+    "T20",   # no print()
+    "TC",    # type-checking imports
+    "TID",   # tidy imports
+    "TRY",   # exception hygiene
+    "UP",    # pyupgrade
+    "W",     # pycodestyle warnings
+]
+ignore = [
+    "ISC001",  # conflicts with the formatter
+    "TRY003",  # long messages outside exception classes; the error taxonomy needs detail
+]
+# S101 (assert) is deliberately NOT ignored for src/: an assert used as a safety
+# check disappears under `python -O`. Safety checks raise. Tests may assert.
+
+[tool.ruff.lint.per-file-ignores]
+# Tests may assert, touch privates, hardcode paths, and use fixtures freely.
+"tests/**" = ["ARG001", "ARG002", "PLR2004", "S", "SLF001"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.isort]
+known-first-party = ["hfcache"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.format]
+docstring-code-format = true
