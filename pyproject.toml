@@ -1,0 +1,41 @@
+[project]
+name = "hfcache"
+version = "0.1.0"
+description = "Archive complete revisions of public Hugging Face repositories on long-term storage"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Tyler", email = "tyler@wtcross.com" }]
+keywords = ["huggingface", "archive", "nfs", "zfs", "provenance"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: System :: Archiving :: Mirroring",
+    "Typing :: Typed",
+]
+dependencies = [
+    "huggingface-hub>=0.36",
+    "pydantic>=2.11",
+    "typer>=0.16",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.140",
+    "pyrefly>=0.40",
+    "pytest>=8.4",
+    "pytest-cov>=7.0",
+    "ruff>=0.14",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "hfcache"
+module-root = "src"

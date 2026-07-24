@@ -29,7 +29,7 @@ continue at the first unchecked item in phase order.
 
 ## Phase 1 — Project Bootstrap and Quality Gates
 
-- [ ] BOOT-001 Initialize uv project and `src/` layout (includes `git init` + initial docs commit per §36.2)
+- [x] BOOT-001 Initialize uv project and `src/` layout (includes `git init` + initial docs commit per §36.2) (2026-07-24, this commit — `pyproject.toml`, `src/hfcache/`, `tests/{unit,integration,system,fixtures}`, `examples/`, `packaging/systemd/`, `README.md`, `LICENSE`, `.editorconfig`; git baseline commit `87323c2`)
 - [ ] BOOT-002 Pin Python and create `uv.lock`
 - [ ] BOOT-003 Configure Ruff formatting and linting
 - [ ] BOOT-004 Configure Pyrefly
@@ -232,3 +232,11 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
    existing journal — it exists so a concurrent operator command cannot have its
    working directory reclaimed underneath it. Plan §9 and §9.1 are updated in
    this commit.
+
+6. **MIT license, `uv_build` backend** (2026-07-24, BOOT-001). Plan §7 requires a
+   `LICENSE` file but names no license, and §8.1 requires `uv build` artifacts
+   without naming a backend. MIT is the conventional permissive default for an
+   internal tool and constrains nothing; changing it is a one-file edit with no
+   code impact. `uv_build` is uv's own PEP 517 backend, needs no extra build
+   dependency, and supports the `src/` layout natively — consistent with §8.1's
+   requirement to build both sdist and wheel with `uv build`.
