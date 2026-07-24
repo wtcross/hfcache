@@ -244,11 +244,13 @@ hfcache/
 │       └── hfcache-verify.timer
 ├── docs/
 │   ├── architecture.md
+│   ├── cli.md
 │   ├── configuration.md
 │   ├── consumers.md
 │   ├── deployment-centos-stream-10.md
 │   ├── operations.md
 │   ├── recovery.md
+│   ├── schemas.md
 │   ├── security.md
 │   └── truenas.md
 ├── src/

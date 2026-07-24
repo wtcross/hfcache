@@ -18,7 +18,7 @@ continue at the first unchecked item in phase order.
 - [x] ARC-002 Define filesystem layout and invariants (2026-07-24, this commit — `docs/architecture.md` §5–6: layout, ownership/modes, path grammar, `FS-01`–`FS-23`)
 - [x] ARC-003 Define configuration schema version 1 (2026-07-24, this commit — `docs/configuration.md`: every key typed and constrained, credential resolution, `HFCFG001`–`HFCFG016`, config fingerprint)
 - [x] ARC-004 Define manifest, catalog, run-report, and verification schemas (2026-07-24, this commit — `docs/schemas.md`: sentinel, manifest, refs, catalog, run report, verification report, prune plan, audit records, transaction journal)
-- [ ] ARC-005 Define CLI commands, JSON output, and exit codes
+- [x] ARC-005 Define CLI commands, JSON output, and exit codes (2026-07-24, this commit — `docs/cli.md`: every command and option, selector grammar, JSON envelope, exit-code aggregation, `HFARG`/`HFMNT`/`HFTXN`/`HFHUB`/`HFSYN`/`HFVER`/`HFRET`/`HFWRN` taxonomy)
 - [ ] ARC-006 Define transaction and crash-recovery boundaries
 - [ ] ARC-007 Define security and threat assumptions
 - [ ] ARC-008 Enforce the framework boundary (no workflow engine in v1)
@@ -187,3 +187,21 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
    application output. A dedicated schema reference is also the document a
    consumer or auditor reads without needing anything else. Plan §7 is updated
    in the `ARC-005` commit, once the full documentation-set deviation is known.
+
+2. **`docs/cli.md` added beyond the plan §7 documentation set** (2026-07-24,
+   ARC-005). Same reasoning as decision 1. `operations.md` is the Phase 8
+   runbook document — task-oriented, "how do I rotate a revision" — and is the
+   wrong home for a reference contract that Phase 2 code is written against.
+   Keeping the command surface, JSON envelope, exit-code aggregation, and the
+   complete error taxonomy in one place also means `CFG-007` has a single
+   normative source. Plan §7's `docs/` listing is updated in this commit to
+   include both `cli.md` and `schemas.md`; the deviation is now final.
+
+3. **Exit-code aggregation order fixed as `40`, `50`, `30`** (2026-07-24,
+   ARC-005). Plan §11.2 fixes the codes and requires a non-zero result when a
+   run continues past a repository failure, but does not say which code wins
+   when several arise in one run. Codes `10` and `20` abort before
+   per-repository work, so only `30`/`40`/`50` can co-occur. They are ordered by
+   operator urgency — possible corruption, then degraded retention, then stale
+   content — and every classification encountered is still listed in the JSON
+   envelope's `errors` array, so aggregation hides nothing.
