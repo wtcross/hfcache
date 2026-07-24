@@ -23,6 +23,9 @@ dependencies = [
     "typer>=0.16",
 ]
 
+[project.scripts]
+hfcache = "hfcache.cli:app"
+
 [dependency-groups]
 dev = [
     "hypothesis>=6.140",
@@ -95,6 +98,10 @@ ignore = [
 # Tests may assert, touch privates, and use fixtures freely. INP001 is expected:
 # tests are namespace packages under --import-mode=importlib, with no __init__.py.
 "tests/**" = ["ANN", "ARG001", "ARG002", "INP001", "PLR2004", "S", "SLF001"]
+# Typer expresses flags as boolean parameters with defaults, and the global
+# options callback necessarily takes one parameter per option. That is the
+# framework's interface, not a boolean trap or a wide signature in our own API.
+"src/hfcache/cli.py" = ["FBT001", "FBT002", "PLR0913", "PLR0917"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
