@@ -1,0 +1,23 @@
+# Session scratch and tooling state
+.scratch/
+.tokensave/
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Test and coverage artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Type checker caches
+.ruff_cache/
+.pyrefly_cache/
