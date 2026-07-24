@@ -253,6 +253,8 @@ hfcache/
 │   ├── schemas.md
 │   ├── security.md
 │   └── truenas.md
+├── scripts/
+│   └── check.sh
 ├── src/
 │   └── hfcache/
 │       ├── __init__.py

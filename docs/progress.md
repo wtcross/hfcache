@@ -35,7 +35,11 @@ continue at the first unchecked item in phase order.
 - [x] BOOT-004 Configure Pyrefly (2026-07-24, this commit — `src` + `tests` checked, Python 3.14, non-permissive ignores; Ruff `ANN` added since pyrefly infers rather than requires annotations)
 - [x] BOOT-005 Configure pytest and coverage (2026-07-24, this commit — strict markers/config, `live`/`nfs` opt-in markers deselected by default, warnings-as-errors, branch coverage; autouse fixture strips ambient Hub state from every test)
 - [x] BOOT-006 Add Typer entry point and version command (2026-07-24, this commit — `src/hfcache/cli.py`, `errors.py` `ExitCode`, `__main__.py`, console script; `--json` envelope emitted and asserted against the `docs/cli.md` §4 contract)
-- [ ] BOOT-007 Add provider-neutral quality scripts and build smoke test
+- [x] BOOT-007 Add provider-neutral quality scripts and build smoke test (2026-07-24, this commit — `scripts/check.sh` runs the §8.4 gate; `tests/system/test_wheel_smoke.py` installs the wheel into a clean venv, marker `build`)
+
+**Phase 1 complete.** `scripts/check.sh --with-build` passes from a clean
+checkout: lock check, format, lint, pyrefly, pytest, `uv build`, and the wheel
+install smoke test.
 
 ## Phase 2 — Configuration, Models, and Read-only CLI
 
@@ -256,3 +260,12 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
    `Cached{Repo,Revision,File}Info` types all exist. `snapshot_download` accepts
    `dry_run`, which is what plan §13.2 step 3 needs for pre-download size
    estimation — no separate estimation path is required.
+
+8. **`scripts/` added to the project layout; no CI-provider configuration**
+   (2026-07-24, BOOT-007). Plan §7's tree has nowhere to put the
+   "provider-neutral quality scripts" `BOOT-007` requires, so `scripts/check.sh`
+   is added and plan §7 updated in this commit. Deliberately *not* added: any
+   CI-provider file. The gate is one script that a shell, a git hook, or a
+   pipeline all invoke identically, so a green pipeline and a green workstation
+   mean the same thing. A Makefile was considered and rejected — `make` is not
+   installed on the CentOS Stream 10 writer, and bash is.

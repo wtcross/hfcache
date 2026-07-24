@@ -125,11 +125,12 @@ addopts = [
     "--import-mode=importlib",
     # Opt-in suites are deselected by default; a command-line -m overrides this.
     "-m",
-    "not live and not nfs",
+    "not live and not nfs and not build",
 ]
 markers = [
     "live: contacts the Hugging Face Hub; run with -m live",
     "nfs: requires the live NFS archive mount; run with -m nfs",
+    "build: builds artifacts and a throwaway venv; run with -m build",
 ]
 filterwarnings = ["error"]
 
