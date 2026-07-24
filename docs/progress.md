@@ -43,7 +43,7 @@ install smoke test.
 
 ## Phase 2 — Configuration, Models, and Read-only CLI
 
-- [ ] CFG-001 Strict Pydantic configuration models
+- [x] CFG-001 Strict Pydantic configuration models (2026-07-24, this commit — `src/hfcache/config.py`, `errors.py` `Problem`/`HfcacheError`; all 16 `HFCFG###` codes implemented and each provoked by a test)
 - [ ] CFG-002 Token-source abstraction without literal secrets
 - [ ] CFG-003 Repository identity and safe path mapping
 - [ ] CFG-004 Manifest and report models
