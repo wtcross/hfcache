@@ -92,8 +92,9 @@ ignore = [
 # check disappears under `python -O`. Safety checks raise. Tests may assert.
 
 [tool.ruff.lint.per-file-ignores]
-# Tests may assert, touch privates, hardcode paths, and use fixtures freely.
-"tests/**" = ["ANN", "ARG001", "ARG002", "PLR2004", "S", "SLF001"]
+# Tests may assert, touch privates, and use fixtures freely. INP001 is expected:
+# tests are namespace packages under --import-mode=importlib, with no __init__.py.
+"tests/**" = ["ANN", "ARG001", "ARG002", "INP001", "PLR2004", "S", "SLF001"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -106,6 +107,37 @@ convention = "pep257"
 
 [tool.ruff.format]
 docstring-code-format = true
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--import-mode=importlib",
+    # Opt-in suites are deselected by default; a command-line -m overrides this.
+    "-m",
+    "not live and not nfs",
+]
+markers = [
+    "live: contacts the Hugging Face Hub; run with -m live",
+    "nfs: requires the live NFS archive mount; run with -m nfs",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["src/hfcache"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+    'if __name__ == "__main__":',
+]
 
 [tool.pyrefly]
 project-includes = ["src", "tests"]
