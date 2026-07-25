@@ -18,6 +18,7 @@ The mount table is a fixture rather than `/proc`, which is what lets a temporary
 directory stand in for the NFS archive without mounting anything.
 """
 
+import fcntl
 import inspect
 import os
 import re
@@ -29,6 +30,7 @@ import pytest
 from hfcache.archive import initialize_archive
 from hfcache.config import StorageConfig
 from hfcache.errors import ExitCode, SafetyError
+from hfcache.locking import exclusive_lock, lock_path, read_holder
 from hfcache.paths import ArchiveLayout
 from hfcache.preflight import (
     CHECK_ORDER,
@@ -36,6 +38,7 @@ from hfcache.preflight import (
     READ_ONLY,
     UNPROVABLE_READ_ONLY,
     Check,
+    guarded,
     order_checks,
     require_storage_safety,
     storage_checks,
@@ -546,3 +549,74 @@ def test_the_gate_refuses_a_filesystem_below_its_reserve(initialized, table):
         )
 
     assert codes(caught.value.problems) == ["HFMNT011"]
+
+
+# --------------------------------------------------------------------------- #
+# Lock and checks together (plan §13.1 steps 2-3)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.fixture
+def run_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A stand-in for `/run/hfcache`, so no test touches the real one."""
+    directory = tmp_path / "run"
+    monkeypatch.setattr("hfcache.locking.LOCK_DIRECTORY", directory)
+    return directory
+
+
+def test_a_guarded_command_holds_the_lock_while_it_runs(initialized, table, run_directory: Path):
+    with guarded(
+        initialized,
+        storage=storage_config(),
+        command="sync",
+        lock_wait_seconds=0,
+        table=table,
+    ) as checks:
+        held = read_holder(lock_path())
+        assert next(check.name for check in checks) == "archive_root"
+
+    assert held["command"] == "sync"
+    assert read_holder(lock_path()) == {}, "the lock is released when the body ends"
+
+
+def test_a_guarded_command_refuses_when_another_holds_the_lock(
+    initialized, table, run_directory: Path
+):
+    # The lock comes first (plan §13.1 step 2), so this is reported without the
+    # archive being probed at all.
+    run_directory.mkdir(parents=True)
+    descriptor = os.open(lock_path(), os.O_RDWR | os.O_CREAT, 0o600)
+    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    try:
+        with (
+            pytest.raises(SafetyError) as caught,
+            guarded(
+                initialized,
+                storage=storage_config(),
+                command="sync",
+                lock_wait_seconds=0,
+                table=table,
+            ),
+        ):
+            pass  # pragma: no cover - the acquisition raises before the body
+    finally:
+        os.close(descriptor)
+
+    assert codes(caught.value.problems) == ["HFMNT010"]
+    assert list(initialized.health.iterdir()) == [], "no probe ran"
+
+
+def test_a_guarded_command_releases_the_lock_when_the_checks_refuse(
+    layout: ArchiveLayout, table, run_directory: Path
+):
+    with (
+        pytest.raises(SafetyError) as caught,
+        guarded(layout, storage=storage_config(), command="sync", lock_wait_seconds=0, table=table),
+    ):
+        pass  # pragma: no cover - the gate raises before the body
+
+    assert codes(caught.value.problems) == ["HFMNT005"]
+    # Releasing is what lets the next run report the real problem rather than a
+    # lock left behind by the one that failed.
+    with exclusive_lock(lock_path(), command="prune", wait_seconds=0):
+        pass

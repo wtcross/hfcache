@@ -31,10 +31,12 @@ of those that are present is the table's, taken from `CHECK_ORDER` rather than
 from the order this module happens to build them in.
 """
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Final, Literal, Self, final
 
 from hfcache.errors import Problem, SafetyError
+from hfcache.locking import exclusive_lock, lock_path
 from hfcache.storage import (
     BYTES_PER_GIB,
     capacity_problems,
@@ -51,7 +53,7 @@ from hfcache.storage import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Iterator, Sequence
 
     from hfcache.config import StorageConfig
     from hfcache.paths import ArchiveLayout
@@ -63,6 +65,7 @@ __all__ = [
     "READ_ONLY",
     "UNPROVABLE_READ_ONLY",
     "Check",
+    "guarded",
     "order_checks",
     "require_storage_safety",
     "storage_checks",
@@ -344,6 +347,30 @@ def _capacity_check(layout: ArchiveLayout, storage: StorageConfig, *, needed_byt
 def _gib(value: int) -> str:
     """Render a byte count the way an operator sizing a dataset thinks about it."""
     return f"{value / BYTES_PER_GIB:.1f} GiB"
+
+
+@contextmanager
+def guarded(  # noqa: PLR0913 - each argument is one thing plan §13.1 steps 2-3 need
+    layout: ArchiveLayout,
+    *,
+    storage: StorageConfig,
+    command: str,
+    lock_wait_seconds: int,
+    needed_bytes: int = 0,
+    table: Sequence[MountEntry] | None = None,
+) -> Iterator[tuple[Check, ...]]:
+    """Hold the exclusive lock and prove every §19 requirement, for one command.
+
+    The single entry point a mutating command uses, in the order plan §13.1 gives:
+    acquire the lock (step 2), then run the preflight checks (step 3), then do
+    the work, then release. Taking the lock first is what makes the checks
+    meaningful — proving the archive is sound and *then* discovering another
+    command has been mutating it throughout would prove nothing.
+    """
+    with exclusive_lock(lock_path(), command=command, wait_seconds=lock_wait_seconds):
+        yield require_storage_safety(
+            layout, storage=storage, needed_bytes=needed_bytes, table=table
+        )
 
 
 def require_storage_safety(

@@ -268,6 +268,7 @@ hfcache/
 │       ├── hashing.py
 │       ├── hub.py
 │       ├── identity.py
+│       ├── locking.py
 │       ├── logging.py
 │       ├── manifests.py
 │       ├── models.py

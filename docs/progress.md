@@ -64,7 +64,7 @@ predate `CFG-003`.
 - [x] STO-001 NFS mount and filesystem-type detection (2026-07-25, this commit — the detection itself landed at `STO-000` (decision 28); this is the shared preflight built on it. `src/hfcache/storage.py`: the `.store/health/probe-<probe-id>` create/fsync/rename/delete probe (`HFMNT008`, plan §19 items 6 and 10) which removes every artifact it made including after a failure, and the staging/destination same-filesystem proof (`HFMNT009`, `FS-04`). `src/hfcache/preflight.py` (new, decision 33): the ordered check runner `doctor` and every mutating command share, plus `require_storage_safety`, the hard gate that raises with every problem at once. `doctor` now emits `docs/cli.md` §2 rows 2–5, 7, and 8 in table order with `credential` and `hub_endpoint` at 13 and 14, skips the probe under `--read-only`, and exits `20` when any check failed. `storage.py` and `preflight.py` both at 100% branch coverage; `tests/system/test_live_mount.py` proves rows 2–5 against the live `/srv/hfcache` mount read-only, `-m nfs`)
 - [x] STO-002 Sentinel/archive-ID validation (2026-07-25, this commit — `src/hfcache/archive.py` split out of `storage.py` first, per the `STO-001` sizing note and decision 36; `storage.read_sentinel` is now shared by both. `doctor` check 6 `sentinel` reports `HFMNT005` when the archive is not initialized, `HFMNT006` when the sentinel is unreadable, malformed, or from a newer release, and `HFMNT007` when it names a different archive (`FS-03`). The check owns the "not initialized" condition for the gate, so checks 7 and 8 skip on it without reporting it again — one missing archive is one problem. `storage_checks` and `require_storage_safety` now take the configured `archive_id`. `archive.py`, `preflight.py`, and `storage.py` all at 100% branch coverage)
 - [x] STO-003 Free-space and reserve calculations (2026-07-25, this commit — `storage.describe_capacity` measures the filesystem through `statvfs`, which reports the ZFS quota as the size when one is set and so answers `docs/configuration.md` §4's "quota, or capacity" without the writer knowing which case it is in; `effective_reserve` is whichever configured minimum binds harder; `capacity_problems` is `HFMNT011` against the need *plus* the reserve (plan §19 item 9) and `capacity_warnings` is `HFWRN005` at a tenth of the reserve (decision 38). `doctor` check 12 `free_space` runs against any proven mount rather than only an initialized archive (decision 39), and the warning reaches the envelope's `warnings` array with the exit code still `0`. `storage_checks` and `require_storage_safety` now take the whole `[storage]` table plus this run's `needed_bytes`. 100% branch coverage)
-- [ ] STO-004 Local exclusive locking
+- [x] STO-004 Local exclusive locking (2026-07-25, this commit — `src/hfcache/locking.py` (new, decision 40): `flock(2)` on `/run/hfcache/hfcache.lock`, so the kernel releases it when the process dies and a crashed sync never leaves a lock an operator has to clear. `HFMNT010` on timeout, naming the holder from a diagnostic record the holder writes into the file. `preflight.guarded` composes the lock and the checks in plan §13.1's order — lock at step 2, preflight at step 3 — and is the single entry point every mutating command will use. 100% branch coverage; contention is exercised in-process, since `flock` conflicts between open file descriptions rather than between processes)
 - [ ] STO-005 Atomic JSON and ref writes
 - [ ] STO-006 Staging creation and containment
 - [ ] STO-007 Hardlink and copy publication primitives
@@ -710,3 +710,20 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     running `archive init` — and would do so for no reason, since nothing about
     the measurement depends on the layout existing. The sentence now reads 6-11,
     with check 12 called out separately. `docs/cli.md` §2 updated in this commit.
+
+40. **`locking.py` added to the plan §7 module list** (2026-07-25, STO-004).
+    The lock is neither archive storage nor a `doctor` check: it lives on local
+    tmpfs under `/run/hfcache` (`AD-17`), it is never reported by `doctor` —
+    which does not mutate and must not take it — and it is *held* for the
+    duration of a command rather than checked once. `storage.py` is about
+    proving and writing the NFS mount and `preflight.py` is about the check
+    table, so it belongs in neither. Plan §7 updated in this commit.
+
+    Two implementation points are worth recording. `flock(2)` rather than a pid
+    file, because the lock lives on the open file description and the kernel
+    drops it when the process dies — including under `SIGKILL` or an OOM kill —
+    so a crashed sync cannot leave a lock that an operator has to clear by hand.
+    And the holder record inside the file is diagnostic only: nothing reads it
+    to decide anything, it exists so a command that gives up waiting can say
+    *who* it waited for. It is cleared on release so a later refusal never names
+    a process that has already finished.
