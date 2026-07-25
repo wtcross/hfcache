@@ -1,4 +1,4 @@
-"""Writing the references a consumer reads, and refusing to write a broken one.
+"""Building a staged tree, and writing the references that name it.
 
 `FS-10` is the property this file is mostly about: a reference is written only
 after both of its targets are durable. It is enforced at the point of the write
@@ -19,13 +19,21 @@ import pytest
 
 from hfcache.archive import initialize_archive
 from hfcache.errors import ExitCode, IntegrityError, SafetyError, SynchronizationError
+from hfcache.identity import TransactionId, new_transaction_id
 from hfcache.paths import ArchiveLayout
 from hfcache.publication import (
+    PUBLISHED_DIRECTORY_MODE,
     PUBLISHED_FILE_MODE,
+    STAGING_MODE,
+    create_staging,
+    discard_staging,
+    prepare_staged_parent,
     publish_current_reference,
     publish_revision_reference,
     read_reference,
     reference_target_problems,
+    source_problems,
+    staged_path,
 )
 from hfcache.storage import parse_mount_table
 from tests.fixtures import examples
@@ -74,6 +82,266 @@ def published(layout: ArchiveLayout, reference: Reference) -> Reference:
 
 def codes(problems) -> list[str]:
     return [problem.code for problem in problems]
+
+
+# --------------------------------------------------------------------------- #
+# Staging (`FS-18`, `FS-04`)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.fixture
+def transaction() -> TransactionId:
+    return new_transaction_id()
+
+
+def test_staging_is_created_where_the_transaction_owns_it(layout, transaction):
+    paths = create_staging(layout, transaction)
+
+    assert paths.directory == layout.staging / transaction
+    assert paths.tree.is_dir()
+    assert str(layout.archive_relative(paths.directory)) == f".store/staging/{transaction}"
+
+
+def test_staging_shares_a_filesystem_with_its_destination(layout, transaction):
+    # `FS-04`: publication is a rename, so staging and `published/` must be one
+    # filesystem. Both come from the same archive root, which is what guarantees
+    # it — this asserts the guarantee rather than restating the construction.
+    paths = create_staging(layout, transaction)
+
+    assert paths.tree.stat().st_dev == layout.repos.stat().st_dev
+
+
+def test_the_staged_tree_carries_the_mode_it_will_be_published_with(layout, transaction):
+    # A rename does not change a directory's mode, so what is built here is what
+    # a consumer sees.
+    paths = create_staging(layout, transaction)
+
+    assert stat.S_IMODE(paths.tree.stat().st_mode) == PUBLISHED_DIRECTORY_MODE
+    assert stat.S_IMODE(paths.directory.stat().st_mode) == STAGING_MODE
+
+
+def test_the_umask_does_not_reach_the_staged_modes(layout, transaction):
+    original = os.umask(0o077)
+    try:
+        paths = create_staging(layout, transaction)
+    finally:
+        os.umask(original)
+
+    assert stat.S_IMODE(paths.tree.stat().st_mode) == PUBLISHED_DIRECTORY_MODE
+
+
+def test_staging_is_empty_when_it_is_created(layout, transaction):
+    paths = create_staging(layout, transaction)
+
+    assert list(paths.tree.iterdir()) == []
+
+
+def test_a_second_transaction_gets_its_own_area(layout, transaction):
+    first = create_staging(layout, transaction)
+    second = create_staging(layout, new_transaction_id())
+
+    assert first.directory != second.directory
+
+
+def test_staging_that_already_exists_is_hfsyn005_rather_than_reused(layout, transaction):
+    # Building into an area another transaction owns is the one thing a staging
+    # directory named by transaction id exists to prevent.
+    create_staging(layout, transaction)
+
+    with pytest.raises(SynchronizationError) as caught:
+        create_staging(layout, transaction)
+
+    assert codes(caught.value.problems) == ["HFSYN005"]
+
+
+def test_staging_that_cannot_be_created_is_hfsyn005(layout, transaction):
+    layout.staging.chmod(0o500)
+    try:
+        with pytest.raises(SynchronizationError) as caught:
+            create_staging(layout, transaction)
+    finally:
+        layout.staging.chmod(STAGING_MODE)
+
+    assert codes(caught.value.problems) == ["HFSYN005"]
+    assert caught.value.problems[0].location == f".store/staging/{transaction}"
+
+
+def test_staging_is_discarded_wholesale(layout, transaction):
+    paths = create_staging(layout, transaction)
+    (paths.tree / "partial").mkdir()
+    (paths.tree / "partial" / "file").write_text("half a revision", encoding="utf-8")
+
+    assert discard_staging(layout, transaction)
+    assert not paths.directory.exists()
+    assert layout.staging.is_dir(), "the staging root itself is part of the layout"
+
+
+def test_discarding_an_area_that_is_not_there_is_not_an_error(layout, transaction):
+    # Recovery discards whatever a crashed run left, and "nothing" is a valid
+    # thing to have left.
+    assert not discard_staging(layout, transaction)
+
+
+def test_only_a_transaction_shaped_name_can_be_discarded(layout):
+    # `FS-18` and `FS-19`: the path is derived from a validated id, so a name
+    # that is not one cannot become a path component at all.
+    stranger = layout.staging / "somebody-elses-directory"
+    stranger.mkdir()
+
+    with pytest.raises(ValueError, match="transaction id"):
+        discard_staging(layout, TransactionId("somebody-elses-directory"))
+
+    assert stranger.is_dir(), "nothing outside the naming contract is removed"
+
+
+# --------------------------------------------------------------------------- #
+# Sources (`FS-15`)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.fixture
+def cache_root(layout) -> Path:
+    return layout.hub_cache
+
+
+def test_a_regular_file_inside_the_cache_root_is_accepted(cache_root):
+    blob = cache_root / "blobs" / "abc123"
+    blob.parent.mkdir(parents=True)
+    blob.write_text("bytes", encoding="utf-8")
+
+    assert source_problems(blob, cache_root=cache_root) == []
+
+
+def test_a_cache_symlink_is_resolved_rather_than_refused(cache_root):
+    # This is how `huggingface_hub` lays out every file it downloads, so
+    # refusing symlinks outright would refuse every normal ingestion.
+    blob = cache_root / "blobs" / "abc123"
+    blob.parent.mkdir(parents=True)
+    blob.write_text("bytes", encoding="utf-8")
+    snapshot = cache_root / "snapshots" / "sha" / "config.json"
+    snapshot.parent.mkdir(parents=True)
+    snapshot.symlink_to(blob)
+
+    assert source_problems(snapshot, cache_root=cache_root) == []
+
+
+def test_a_link_that_escapes_the_cache_root_is_hfsyn004(cache_root, tmp_path: Path):
+    outside = tmp_path / "outside"
+    outside.write_text("not ours", encoding="utf-8")
+    escaping = cache_root / "escaping"
+    escaping.symlink_to(outside)
+
+    problems = source_problems(escaping, cache_root=cache_root)
+
+    assert codes(problems) == ["HFSYN004"]
+    assert "outside the approved cache root" in problems[0].message
+
+
+def test_a_path_outside_the_cache_root_is_hfsyn004(cache_root, tmp_path: Path):
+    outside = tmp_path / "outside"
+    outside.write_text("not ours", encoding="utf-8")
+
+    assert codes(source_problems(outside, cache_root=cache_root)) == ["HFSYN004"]
+
+
+def test_a_dangling_link_is_hfsyn004(cache_root):
+    dangling = cache_root / "dangling"
+    dangling.symlink_to(cache_root / "never-existed")
+
+    problems = source_problems(dangling, cache_root=cache_root)
+
+    assert codes(problems) == ["HFSYN004"]
+    assert "dangling" in problems[0].message
+
+
+def test_a_source_that_is_not_there_is_hfsyn004(cache_root):
+    assert codes(source_problems(cache_root / "absent", cache_root=cache_root)) == ["HFSYN004"]
+
+
+def test_a_directory_is_not_a_publishable_source(cache_root):
+    directory = cache_root / "blobs"
+    directory.mkdir()
+
+    problems = source_problems(directory, cache_root=cache_root)
+
+    assert codes(problems) == ["HFSYN004"]
+    assert "not a regular file" in problems[0].message
+
+
+def test_a_fifo_is_not_a_publishable_source(cache_root):
+    fifo = cache_root / "fifo"
+    os.mkfifo(fifo)
+
+    assert codes(source_problems(fifo, cache_root=cache_root)) == ["HFSYN004"]
+
+
+def test_escaping_and_non_regular_are_both_reported(cache_root, tmp_path: Path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    escaping = cache_root / "escaping"
+    escaping.symlink_to(outside)
+
+    assert codes(source_problems(escaping, cache_root=cache_root)) == ["HFSYN004", "HFSYN004"]
+
+
+# --------------------------------------------------------------------------- #
+# Destinations (`T-02`)
+# --------------------------------------------------------------------------- #
+
+
+def test_a_repository_path_lands_under_the_staging_tree(layout, transaction):
+    paths = create_staging(layout, transaction)
+
+    assert staged_path(paths, "config.json") == paths.tree / "config.json"
+    assert staged_path(paths, "nested/dir/model.safetensors").is_relative_to(paths.tree)
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [
+        "/etc/passwd",
+        "../escape",
+        "nested/../../escape",
+        "a\\..\\..\\b",
+        "",
+        "trailing/",
+    ],
+)
+def test_a_path_that_could_escape_is_refused_before_the_join(layout, transaction, relative):
+    paths = create_staging(layout, transaction)
+
+    with pytest.raises(ValueError, match="relative path"):
+        staged_path(paths, relative)
+
+
+def test_a_destination_parent_is_created_at_the_published_mode(layout, transaction):
+    paths = create_staging(layout, transaction)
+    target = staged_path(paths, "nested/deep/model.safetensors")
+
+    prepare_staged_parent(target)
+
+    assert target.parent.is_dir()
+    assert stat.S_IMODE(target.parent.stat().st_mode) == PUBLISHED_DIRECTORY_MODE
+
+
+def test_preparing_a_parent_twice_is_not_an_error(layout, transaction):
+    paths = create_staging(layout, transaction)
+    target = staged_path(paths, "nested/a.bin")
+
+    prepare_staged_parent(target)
+    prepare_staged_parent(target)
+
+
+def test_a_destination_parent_that_cannot_be_created_is_hfsyn005(layout, transaction):
+    paths = create_staging(layout, transaction)
+    paths.tree.chmod(0o500)
+    try:
+        with pytest.raises(SynchronizationError) as caught:
+            prepare_staged_parent(staged_path(paths, "nested/a.bin"))
+    finally:
+        paths.tree.chmod(PUBLISHED_DIRECTORY_MODE)
+
+    assert codes(caught.value.problems) == ["HFSYN005"]
 
 
 # --------------------------------------------------------------------------- #
