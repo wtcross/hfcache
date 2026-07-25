@@ -24,7 +24,8 @@ from typer.testing import CliRunner
 from hfcache.archive import initialize_archive
 from hfcache.cli import UNPROVABLE_READ_ONLY, app
 from hfcache.errors import ExitCode, SynchronizationError
-from hfcache.identity import new_run_id, new_transaction_id
+from hfcache.hub import HubClient, RepositoryFacts
+from hfcache.identity import CommitSha, new_run_id, new_transaction_id
 from hfcache.paths import ArchiveLayout
 from hfcache.transactions import open_transaction
 
@@ -97,6 +98,30 @@ UNIMPLEMENTED_CAPABILITIES = tuple(
 )
 
 
+SHA = "0123456789abcdef0123456789abcdef01234567"
+
+
+def _resolves_to(commit_sha: str):
+    """A `HubClient.repository` that answers without a Hub."""
+
+    def repository(self, identity, revision):
+        return RepositoryFacts(
+            identity=identity, commit_sha=CommitSha(commit_sha), private=False, gated=False
+        )
+
+    return repository
+
+
+def _fails_with(problem_code: str):
+    """A `HubClient.repository` that reports one upstream failure."""
+
+    def repository(self, identity, revision):
+        message = f"{identity.selector} is unavailable"
+        raise SynchronizationError.single(message, code=problem_code, location=identity.selector)
+
+    return repository
+
+
 @pytest.fixture(autouse=True)
 def _offline(monkeypatch: pytest.MonkeyPatch) -> None:
     """Answer `doctor`'s Hub checks without a network.
@@ -114,6 +139,7 @@ def _offline(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr("hfcache.preflight.resolve_host", resolves)
     monkeypatch.setattr("hfcache.preflight.verify_tls", verifies)
+    monkeypatch.setattr(HubClient, "repository", _resolves_to(SHA))
 
 
 @pytest.fixture
@@ -456,6 +482,70 @@ def test_plan_keeps_configuration_order_not_selector_order(config_file: Path):
     )
 
     assert data_of(forwards) == data_of(backwards)
+
+
+def test_plan_resolves_each_enabled_repository_to_a_full_sha(config_file: Path):
+    # The same resolution a sync performs, so a clean `plan` is evidence the
+    # sync will get as far as downloading.
+    entries = data_of(invoke(config_file, "plan"))["repositories"]
+
+    assert [entry["resolved_commit_sha"] for entry in entries] == [SHA, SHA]
+    assert {entry["upstream_state"] for entry in entries} == {"available"}
+
+
+@pytest.mark.parametrize(
+    ("code", "state"),
+    [
+        ("HFHUB004", "missing"),
+        ("HFHUB005", "forbidden"),
+        ("HFHUB006", "refused"),
+        ("HFHUB007", "unresolvable"),
+        ("HFHUB001", "unreachable"),
+    ],
+)
+def test_plan_reports_what_is_true_of_an_unavailable_repository(
+    config_file: Path, monkeypatch: pytest.MonkeyPatch, code, state
+):
+    # An operator wants to know what is true of the repository, not which call
+    # reported it.
+    monkeypatch.setattr(HubClient, "repository", _fails_with(code))
+
+    result = invoke(config_file, "plan")
+    entries = data_of(result)["repositories"]
+
+    assert result.exit_code == ExitCode.SYNC
+    assert {entry["upstream_state"] for entry in entries} == {state}
+    assert {entry["resolved_commit_sha"] for entry in entries} == {None}
+
+
+def test_one_repository_failing_does_not_hide_the_others(
+    config_file: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # An operator with ten repositories and one typo should learn about the typo
+    # and still see the other nine.
+    def repository(self, identity, revision):
+        if identity.id == "zeta/last-in-file":
+            message = "not found"
+            raise SynchronizationError.single(message, code="HFHUB004")
+        return RepositoryFacts(
+            identity=identity, commit_sha=CommitSha(SHA), private=False, gated=False
+        )
+
+    monkeypatch.setattr(HubClient, "repository", repository)
+
+    result = invoke(config_file, "plan")
+    entries = {entry["repository_id"]: entry for entry in data_of(result)["repositories"]}
+
+    assert result.exit_code == ExitCode.SYNC
+    assert entries["zeta/last-in-file"]["upstream_state"] == "missing"
+    assert entries["alpha/first-in-file"]["resolved_commit_sha"] == SHA
+    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFHUB004"]
+
+
+def test_plan_prints_the_resolved_sha_beside_the_selector(config_file: Path):
+    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+
+    assert f"model:zeta/last-in-file@v2.0  {SHA}" in result.output
 
 
 def test_plan_takes_no_lock_and_reads_no_archive(config_file: Path):

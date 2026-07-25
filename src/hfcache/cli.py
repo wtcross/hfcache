@@ -14,7 +14,7 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from importlib.util import find_spec
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, NoReturn
+from typing import TYPE_CHECKING, Annotated, Any, Final, NoReturn
 
 import typer
 
@@ -24,7 +24,7 @@ from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import ConfigurationError, ExitCode, HfcacheError, Problem, SafetyError
 from hfcache.hub import HubClient
-from hfcache.identity import new_run_id, parse_selector
+from hfcache.identity import RepositoryIdentity, new_run_id, parse_selector
 from hfcache.paths import ArchiveLayout
 from hfcache.preflight import (
     READ_ONLY,
@@ -576,35 +576,96 @@ def doctor(
 
 @app.command()
 def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
-    """Report the work a sync would do. Mutates nothing and takes no lock."""
+    """Report the work a sync would do. Mutates nothing and takes no lock.
+
+    This is the command run before enabling a large repository, and its output
+    is what the dataset quota is sized from (`docs/cli.md` §2). It resolves each
+    enabled repository's configured reference to a full commit SHA, which is the
+    same resolution a sync performs — so a `plan` that answers cleanly is
+    evidence the sync will get as far as downloading.
+
+    One repository failing does not abandon the rest: each is reported with the
+    upstream state that was observed, and the run exits `30` if any failed. An
+    operator with ten repositories and one typo should learn about the typo and
+    still see the other nine.
+    """
     started_at = utc_now()
     options = _options(ctx)
     try:
         config = load_config(options.config_path)
-        resolve_token(config.hub, token_file=options.token_file)
+        token = resolve_token(config.hub, token_file=options.token_file)
         selected = _select(config, selectors)
     except HfcacheError as error:
         _report_failure(ctx, "plan", started_at, error)
 
-    entries = [
-        {
-            "enabled": repository.enabled,
-            "repository_id": repository.id,
-            "repository_type": repository.type,
-            "requested_revision": repository.revision,
-        }
-        for repository in selected
-        if repository.enabled
-    ]
+    client = HubClient.of(token, endpoint=config.hub.endpoint)
+    entries: list[dict[str, Any]] = []
+    problems: list[Problem] = []
+    for repository in selected:
+        if not repository.enabled:
+            continue
+        entry, failure = _planned(client, repository)
+        entries.append(entry)
+        if failure is not None:
+            problems.append(failure)
+
+    exit_code = int(ExitCode.SYNC) if problems else int(ExitCode.SUCCESS)
     payload: dict[str, Any] = {"repositories": entries}
     if options.json_output:
-        emit_envelope("plan", payload, started_at=started_at)
-        return
-    if not options.quiet:
+        emit_envelope("plan", payload, started_at=started_at, errors=problems, exit_code=exit_code)
+    elif not options.quiet:
         for entry in entries:
+            resolved = entry["resolved_commit_sha"] or entry["upstream_state"]
             typer.echo(
-                f"{entry['repository_type']}:{entry['repository_id']}@{entry['requested_revision']}"
+                f"{entry['repository_type']}:{entry['repository_id']}"
+                f"@{entry['requested_revision']}  {resolved}"
             )
+    if problems:
+        raise typer.Exit(exit_code)
+
+
+def _planned(
+    client: HubClient, repository: RepositoryConfig
+) -> tuple[dict[str, Any], Problem | None]:
+    """Resolve one repository, reporting rather than raising on failure.
+
+    The upstream state is reported in the entry as well as the problem, because
+    `HFHUB004`, `HFHUB005`, and `HFHUB001` mean the *repository* is unavailable
+    rather than that the run is broken — and every local revision of it is
+    preserved regardless (`AD-06`).
+    """
+    entry: dict[str, Any] = {
+        "enabled": repository.enabled,
+        "repository_id": repository.id,
+        "repository_type": repository.type,
+        "requested_revision": repository.revision,
+        "resolved_commit_sha": None,
+        "upstream_state": "unknown",
+    }
+    try:
+        facts = client.repository(RepositoryIdentity.from_config(repository), repository.revision)
+    except HfcacheError as error:
+        problem = error.problems[0]
+        entry["upstream_state"] = _UPSTREAM_STATES.get(problem.code, "unreachable")
+        return entry, problem
+    entry["resolved_commit_sha"] = facts.commit_sha
+    entry["upstream_state"] = "available"
+    return entry, None
+
+
+_UPSTREAM_STATES: Final = {
+    "HFHUB004": "missing",
+    "HFHUB005": "forbidden",
+    "HFHUB006": "refused",
+    "HFHUB007": "unresolvable",
+}
+"""How an upstream failure is described in a per-repository entry.
+
+Distinct from the code because an operator reading `status` or `plan` wants to
+know what is true of the repository, not which call reported it. Anything else
+is `unreachable`, which is the honest answer when the endpoint itself is the
+problem.
+"""
 
 
 @app.command()
