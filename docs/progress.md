@@ -73,9 +73,21 @@ predate `CFG-003`.
 - [x] STO-010 Durable transaction journals and validated checkpoint evidence (2026-07-25, this commit — `src/hfcache/transactions.py` (plan §7): `open_transaction` writes the journal durably before the first mutation (`TX-01`); `Transaction.checkpoint` appends after the act it names (`TX-02`) and refuses a name that is not next in the operation's documented sequence (`HFTXN002`). `CHECKPOINTS` holds the §7.3-§7.6 sequences and `tests/unit/test_transactions.py` parses them back out of `docs/architecture.md`, so neither table is written twice. `evidence_problems` confirms path evidence against the filesystem (`TX-03`, `HFTXN003`) under the key convention in decision 42. `read_journal` preserves keys this release does not know, which is the half of `docs/schemas.md` §1.1 that decision 20 assigned here. `open_journals` is what `TX-07` reconciles, and treats `needs_operator` as unresolved because it is exactly what must stop the next run. 100% branch coverage)
 - [x] STO-011 Dry-run and apply recovery planning (2026-07-25, this commit — `recovery.plan_recovery` validates every open journal (schema, then checkpoint order, then evidence) and proposes one of four remedies; `apply_recovery` performs only a plan with nothing blocked, records one checkpoint per remediation in a §7.7 recovery journal, and writes the durable report now documented as `docs/schemas.md` §12 (decision 43). The `recover` command takes `--dry-run` or `--apply`, and `--apply` takes the lock and runs the §19 preflight because it is a mutating command. Idempotent by construction: each remedy closes the journal it resolved, so a second run finds nothing. 100% branch coverage. **The remedies for states this codebase cannot yet produce are reported as blocked rather than guessed at** — rolling a publication forward from checkpoint 5 needs `HUB-009`'s manifests, a prune needs `RET-006`, a repair needs `VER-006`; each package adds its own remedy as it lands, the way `doctor`'s checks did)
 
+**Phase 3 complete.** Unsafe storage mutation is now structurally hard rather
+than merely avoided: the mount is proven before anything is written, the sentinel
+is the archive's identity, effective writability and all three publication
+capabilities are demonstrated rather than assumed, one exclusive lock serializes
+every mutating command, every durable write is a rename, every mutation is
+bounded by a journal checkpoint carrying re-observable evidence, and nothing the
+application did not create is ever removed. `scripts/check.sh` passes with 977
+tests; every Phase 3 module is at 100% branch coverage.
+
+New modules beyond the plan's §7 list, each with a recorded decision:
+`preflight.py` (33), `archive.py` (36), `locking.py` (40).
+
 ## Phase 4 — Hub Resolution and Repository Ingestion
 
-- [ ] HUB-001 Typed Hub client adapter
+- [x] HUB-001 Typed Hub client adapter (2026-07-25, this commit — `src/hfcache/hub.py` (plan §7): the only place `huggingface_hub` is called and the only place its exceptions are caught. `HubApi` is a `Protocol`, so a test supplies an object with those methods and no library machinery — plan §12's "deterministic fakes without mocking library internals" implemented as a seam this application defines. Every call passes `token=` explicitly and never `None` (`docs/security.md` T-07); `RepositoryFacts`/`TreeEntry`/`HubIdentity` are types this application owns, so a response-shape change breaks here rather than near the archive; `hub_problem` maps the library's hierarchy onto `HFHUB001`/`004`/`005`/`006`/`007`/`010`; private and gated repositories are refused before anything is fetched. 100% branch coverage, with the library's real exception types constructed rather than approximated)
 - [ ] HUB-002 Optional identity verification
 - [ ] HUB-003 Resolve branch/tag to full SHA
 - [ ] HUB-004 Repository tree and dry-run size
