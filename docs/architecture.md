@@ -605,6 +605,13 @@ immediately after a crash. Each is directly testable.
   directory whose ownership and mode already match §5.2, which is adopted because
   TrueNAS requires it to exist before the consumer export can be defined. A
   non-empty, wrongly owned, or wrongly moded `published/` is still refused.
+  "Correctly owned" means the same owner and group as the archive root, not a
+  particular local uid: under the Mapall writer export both carry NAS-side ids
+  with no local account, so that is the only form of §5.2's ownership rule the
+  writer can evaluate. The retryable partial states are an incomplete subset of
+  the required directories and a leftover `.hfcache-root.tmp-<16 hex>` sibling
+  from an interrupted sentinel write; the retry removes the latter, which is the
+  one deletion initialization performs and is on a file it owns.
 - **`FS-23`** — Initialization writes `.hfcache-root` last, after the directory
   structure is durable, so a sentinel's existence proves the layout beneath it.
 

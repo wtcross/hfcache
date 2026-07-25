@@ -19,12 +19,16 @@ import typer
 from hfcache import __version__
 from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
-from hfcache.errors import ConfigurationError, HfcacheError, Problem
+from hfcache.errors import ConfigurationError, HfcacheError, Problem, SafetyError
 from hfcache.identity import new_run_id, parse_selector
+from hfcache.paths import ArchiveLayout
 from hfcache.reporting import Envelope, EnvelopeProblem
+from hfcache.storage import initialize_archive, inspect_archive
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from hfcache.storage import ArchiveInspection
 
 __all__ = ["app"]
 
@@ -100,7 +104,11 @@ def emit_envelope(
 
 
 def _report_failure(
-    ctx: typer.Context, command: str, started_at: str, error: HfcacheError
+    ctx: typer.Context,
+    command: str,
+    started_at: str,
+    error: HfcacheError,
+    data: dict[str, Any] | None = None,
 ) -> NoReturn:
     """Render a failure and exit with its classification.
 
@@ -108,11 +116,15 @@ def _report_failure(
     never has to parse human text to learn what went wrong. In human mode the
     problems go to stderr, which is why `--quiet` can suppress everything else
     and still leave an operator with the reason.
+
+    `data` is carried when the command determined something worth reporting
+    before it refused — `archive init` describes the target it would not touch,
+    so the same output answers both "why did it stop" and "what is there now".
     """
     if _options(ctx).json_output:
         emit_envelope(
             command,
-            {},
+            data or {},
             started_at=started_at,
             errors=error.problems,
             exit_code=int(error.exit_code),
@@ -255,6 +267,170 @@ def config_validate(ctx: typer.Context) -> None:
         return
     if not options.quiet:
         _echo_pairs(payload)
+
+
+# --------------------------------------------------------------------------- #
+# archive init (`docs/cli.md` §2)
+# --------------------------------------------------------------------------- #
+
+archive_app = typer.Typer(
+    name="archive",
+    help="Create and inspect the archive itself.",
+    no_args_is_help=True,
+)
+app.add_typer(archive_app)
+
+
+def _check_init_options(
+    config: ApplicationConfig,
+    *,
+    archive_root: Path,
+    archive_id: str | None,
+    confirm: bool,
+    inspect: bool,
+) -> None:
+    """Refuse an invocation whose options disagree with each other or with configuration.
+
+    `--archive-root` and `--archive-id` restate what configuration already says.
+    The redundancy is the point: initialization is the one irreversible act, so
+    it does not take its target or its identity from a file alone
+    (`docs/cli.md` §2).
+    """
+    if confirm and inspect:
+        message = (
+            "--confirm and --inspect are mutually exclusive: one performs the initialization "
+            "and the other exists to prove, without touching anything, that it would be safe"
+        )
+        raise ConfigurationError.single(message, code="HFARG002")
+    if archive_root != config.storage.archive_root:
+        message = (
+            f"--archive-root {archive_root} does not match storage.archive_root "
+            f"{config.storage.archive_root}; the two must name the same directory"
+        )
+        raise ConfigurationError.single(message, code="HFARG002", location="storage.archive_root")
+    if archive_id is not None and archive_id != config.storage.archive_id:
+        message = (
+            f"--archive-id {archive_id} does not match storage.archive_id "
+            f"{config.storage.archive_id}; the sentinel is written with the configured value, "
+            f"and a sentinel that disagrees with configuration is fatal and never repaired"
+        )
+        raise ConfigurationError.single(message, code="HFARG002", location="storage.archive_id")
+
+
+@archive_app.command("init")
+def archive_init(
+    ctx: typer.Context,
+    archive_root: Annotated[
+        Path,
+        typer.Option("--archive-root", metavar="PATH", help="Archive root; must match config."),
+    ],
+    archive_id: Annotated[
+        str | None,
+        typer.Option("--archive-id", metavar="UUID", help="Restate the provisioned archive UUID."),
+    ] = None,
+    confirm: Annotated[
+        bool,
+        typer.Option("--confirm", help="Perform the initialization. Required for mutation."),
+    ] = False,
+    inspect: Annotated[
+        bool,
+        typer.Option("--inspect", help="Describe the target without touching it."),
+    ] = False,
+) -> None:
+    """Create the archive layout and its sentinel, exactly once.
+
+    This is the only command that creates the archive (`FS-21`), it is never
+    reached from a timer or a recovery path, and it refuses anything it did not
+    create rather than making room for itself. Without `--confirm` it describes
+    what it would do and exits `10`.
+    """
+    started_at = utc_now()
+    options = _options(ctx)
+    command = "archive init"
+    try:
+        config = load_config(options.config_path)
+        _check_init_options(
+            config,
+            archive_root=archive_root,
+            archive_id=archive_id,
+            confirm=confirm,
+            inspect=inspect,
+        )
+        layout = ArchiveLayout(root=config.storage.archive_root)
+        inspection = inspect_archive(layout, archive_id=config.storage.archive_id)
+    except HfcacheError as error:
+        _report_failure(ctx, command, started_at, error)
+
+    found = inspection.as_payload()
+    if inspection.problems:
+        _report_failure(ctx, command, started_at, SafetyError(inspection.problems), found)
+    if inspect:
+        _emit(ctx, command, found, started_at=started_at, lines=_inspection_lines(inspection))
+        return
+    if not inspection.initializable:
+        message = (
+            f"archive {layout.root} is already initialized; initialization happens once, "
+            f"because a second sentinel would give an existing archive a new identity"
+        )
+        error = SafetyError.single(message, code="HFMNT014", location=str(layout.root))
+        _report_failure(ctx, command, started_at, error, found)
+    if not confirm:
+        message = (
+            f"--confirm is required to initialize {layout.root}; nothing was changed. The "
+            f"reported state is what initialization would act on"
+        )
+        error = ConfigurationError.single(message, code="HFARG003", location=str(layout.root))
+        _report_failure(ctx, command, started_at, error, found)
+
+    try:
+        result = initialize_archive(layout, archive_id=config.storage.archive_id)
+    except HfcacheError as error:
+        _report_failure(ctx, command, started_at, error, found)
+    _emit(
+        ctx,
+        command,
+        result.as_payload(),
+        started_at=started_at,
+        lines={
+            "archive root": str(result.layout.root),
+            "archive id": result.sentinel.archive_id,
+            "created": f"{len(result.created_directories)} directories",
+            "adopted published": "yes" if result.adopted_published else "no",
+            "sentinel": str(result.layout.sentinel),
+        },
+    )
+
+
+def _inspection_lines(inspection: ArchiveInspection) -> dict[str, str]:
+    """Summarize an inspection for an operator reading a terminal."""
+    entry = inspection.mount.entry
+    return {
+        "archive root": str(inspection.layout.root),
+        "state": inspection.state,
+        "filesystem": f"{entry.filesystem_type} from {entry.source}" if entry else "not a mount",
+        "initializable": "yes" if inspection.initializable else "no",
+        "existing directories": str(len(inspection.existing_directories)),
+        "missing directories": str(len(inspection.missing_directories)),
+        "unknown entries": str(inspection.unknown_entry_count),
+        "adopted published": "yes" if inspection.adopted_published else "no",
+    }
+
+
+def _emit(
+    ctx: typer.Context,
+    command: str,
+    payload: dict[str, Any],
+    *,
+    started_at: str,
+    lines: dict[str, str],
+) -> None:
+    """Write either the envelope or the human summary, never both."""
+    options = _options(ctx)
+    if options.json_output:
+        emit_envelope(command, payload, started_at=started_at)
+        return
+    if not options.quiet:
+        _echo_pairs(lines)
 
 
 # --------------------------------------------------------------------------- #

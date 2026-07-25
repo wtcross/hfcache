@@ -192,12 +192,12 @@ Local writer-only paths:
 1. Requires an explicit archive root and confirmation flag.
 2. Proves the target is the expected read/write NFS mount.
 3. Refuses a pre-existing sentinel, unknown content, symlinks, or an already initialized archive — with one narrow exception: a single pre-existing, *empty* `published/` directory is adopted rather than refused when its ownership and mode already match §20.1, because TrueNAS requires that directory to exist before the consumer NFS export can be defined (§35.2). A non-empty, wrongly owned, or wrongly moded `published/` is still refused.
-4. Generates a random archive UUID unless the operator supplies a provisioned one.
+4. Writes the archive UUID the operator provisioned in `storage.archive_id`. `--archive-id` may restate it and must agree; a disagreement is `HFARG002`. Initialization does not mint a UUID of its own, because `storage.archive_id` is a required canonical UUID that configuration already had to carry for the command to load at all, and a second one would produce exactly the sentinel/configuration mismatch §6.1 item 3 calls fatal.
 5. Creates private and published directories with the documented ownership/modes.
 6. Fsyncs the structure and atomically writes `.hfcache-root` last.
-7. Prints the UUID that must be copied into root-owned configuration.
+7. Prints the UUID it wrote, so the operator can confirm that configuration and sentinel agree.
 
-A failed initialization may be safely retried only after `archive init --inspect` confirms that all partial paths match the known empty-layout contract.
+A failed initialization may be safely retried only after `archive init --inspect` confirms that all partial paths match the known empty-layout contract. That contract covers an incomplete subset of the required directories and a leftover temporary sibling of the sentinel (`.hfcache-root.tmp-<16 hex>`), which is what a crash between the sentinel's temporary write and its rename leaves behind; the retry removes it. Anything else present is refused and never removed.
 
 ### 6.3 Consumer resolution
 

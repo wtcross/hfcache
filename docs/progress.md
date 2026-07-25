@@ -60,7 +60,7 @@ predate `CFG-003`.
 
 ## Phase 3 — Storage Safety and Publication Primitives
 
-- [ ] STO-000 Guarded one-time archive initialization and inspection (note the §6.2 empty-`published/` adoption exception)
+- [x] STO-000 Guarded one-time archive initialization and inspection (2026-07-25, this commit — `src/hfcache/storage.py`: mount-table proof, durable byte writes, the known-empty-layout walk, and `initialize_archive`; `archive` sub-app in `src/hfcache/cli.py` with `init`, `--inspect`, `--confirm`, and `--archive-id`. The §6.2 empty-`published/` adoption is implemented with ownership compared against the archive root, per decision 31. 100% branch coverage. **Not yet run against `/srv/hfcache`:** the §36.4 one-time authorization is spent at the rollout checkpoint after `HOST-004`, not here)
 - [ ] STO-001 NFS mount and filesystem-type detection
 - [ ] STO-002 Sentinel/archive-ID validation
 - [ ] STO-003 Free-space and reserve calculations
@@ -142,7 +142,12 @@ predate `CFG-003`.
 
 ## Live rollout checkpoints (§29, writer-side)
 
-- [ ] Archive initialized on `/srv/hfcache`; UUID recorded in `/etc/hfcache/config.toml` (§36.4 one-time authorization)
+- [ ] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
+      `/etc/hfcache/config.toml` (§36.4 one-time authorization). `STO-000` built
+      the command; the authorization is spent here, after `HOST-004` installs a
+      release, so the layout is the one the finished application uses.
+      `archive init --inspect` is non-mutating and may be run against the live
+      mount at any time before that.
 - [ ] `hfcache doctor` clean on the live mount
 - [ ] Test repositories chosen and recorded below; `hfcache plan` reviewed
 - [ ] First manual sync published both test repositories
@@ -515,3 +520,80 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     the durable schemas, because an invocation record and an archived manifest
     change for different reasons.
 
+27. **`archive init` writes the configured archive id; it does not mint one**
+    (2026-07-25, STO-000). Plan §6.2 steps 4 and 7 had initialization generate a
+    UUID and print it for the operator to paste into configuration. That cannot
+    be reconciled with the rest of the contract. `--archive-root` must equal
+    `storage.archive_root` (`docs/cli.md` §2), so configuration is loaded and
+    fully validated before anything happens — and `storage.archive_id` is a
+    *required* canonical UUID (`HFCFG012`), so the operator has necessarily
+    already chosen one before `archive init` can run at all. Minting a second
+    would write a sentinel that disagrees with configuration, which is precisely
+    the state `FS-03` calls fatal and never repairable, and would leave the new
+    archive unusable until an unrelated file was edited. The UUID is therefore
+    provisioned into configuration — which is what the `"replace-with-provisioned-uuid"`
+    placeholder in `docs/configuration.md` §4 has always asked for — and
+    `--archive-id` is kept as the same deliberate restatement `--archive-root`
+    is: the one irreversible command does not take its inputs from a file alone.
+    Disagreement is `HFARG002`. Plan §6.2 and `docs/cli.md` §2 updated in this
+    commit.
+
+28. **`STO-000` lands the primitives it cannot be correct without** (2026-07-25,
+    STO-000). It is the first package of Phase 3 but depends on three later
+    ones: mount and filesystem-type detection (`STO-001`), reading the sentinel
+    and comparing its id (`STO-002`), and atomic writes (`STO-005`). An
+    initialization that cannot prove its target is NFS, cannot tell an
+    initialized archive from unknown content, and cannot write its sentinel
+    without a torn-write window is not a *guarded* initialization, so those
+    pieces are here in their minimal form. The packages keep the rest of their
+    scope: `STO-001` the shared preflight every mutating command runs plus
+    `doctor`'s mount checks, `STO-002` that preflight's sentinel gate, `STO-005`
+    the model-aware JSON and reference writers built on `atomic_write_bytes`.
+
+29. **`archive init --inspect` exits `0` for an already-initialized archive**
+    (2026-07-25, STO-000). `docs/cli.md` fixed no exit code for `--inspect`.
+    Its two real uses both want a non-zero on a bad answer: confirming a target
+    is clean before initializing, and confirming a failed initialization left
+    only known partial paths so a retry is safe. But a healthy initialized
+    archive is also "not initializable", and exiting `20` there would make the
+    command useless as a routine check. So `--inspect` exits `0` when the target
+    is initializable **or** correctly initialized, and `20` when it is neither —
+    unknown content, symlinks, the wrong filesystem, or a malformed or
+    mismatched sentinel. Recorded in `docs/cli.md` §2.
+
+30. **A leftover `.tmp-` sibling is part of the known-empty layout contract**
+    (2026-07-25, STO-000). §6.2 permits retrying a failed initialization once
+    `--inspect` confirms the partial paths match the contract, but a crash
+    between the sentinel's temporary write and its rename leaves a file the
+    contract did not name — so the retry would refuse as "unknown content" and
+    the archive could never be initialized without manual cleanup. Writing the
+    sentinel in place instead was rejected: `O_EXCL` makes its *appearance*
+    atomic but not its *contents*, and a truncated sentinel is worse than a
+    stray temporary, because it looks like an initialized archive. The temporary
+    is therefore recognised by its `<name>.tmp-<16 hex>` grammar, reported by
+    `--inspect`, and removed by the retry. It is the only deletion this command
+    performs and it is on a file the command owns, so `FS-19` is intact.
+
+31. **`published/` adoption compares ownership against the archive root**
+    (2026-07-25, STO-000). §6.2 and `FS-22` adopt a pre-existing `published/`
+    only when "its ownership and mode already match §20.1", but §35.3 rules out
+    the obvious implementation: the Mapall writer export presents NAS-side ids
+    (`3001:3002`) that have no local account, so there is nothing local to
+    compare `st_uid` with. "The same identity owns `published/` as owns the
+    archive root" is the same rule in a form the writer can evaluate, and it
+    fails exactly when the intended one would. The policy takes two
+    `os.stat_result` values rather than two paths, which is what lets it be
+    tested for identities this host cannot create — `tyler` cannot `chown` to
+    3001. `docs/architecture.md` `FS-22` updated in this commit.
+
+32. **A write that fails after every check passed is `HFMNT008`** (2026-07-25,
+    STO-000). Everything `archive init` proves beforehand is a read, so a
+    server-side read-only export presenting `rw` client options, a reached
+    dataset quota, or the NAS going away mid-command are all discovered only by
+    writing. Without a mapping those surface as an `OSError` traceback from the
+    middle of a half-created layout. `docs/cli.md` §5.2 defines `HFMNT008` as a
+    required directory being missing or failing the effective-write probe, which
+    is the same condition observed a different way, so the whole mutation is
+    wrapped and reported under it at exit `20`. The message names the failing
+    path and points at `--inspect`, because decision 30 is what makes the retry
+    safe.

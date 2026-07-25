@@ -99,18 +99,34 @@ hfcache [--config PATH] archive init --archive-root PATH --inspect
 | --- | --- |
 | `--archive-root PATH` | Required, and must equal `storage.archive_root`. Stating it twice is deliberate: initialization is the one irreversible act, so it does not take its target from a file alone |
 | `--confirm` | Required for mutation. Without it, the command explains what it would do and exits `10` |
-| `--archive-id UUID` | Use a provisioned UUID instead of generating one |
-| `--inspect` | Never mutates; reports whether the target matches the known-empty layout contract |
+| `--archive-id UUID` | Restates the provisioned `storage.archive_id`, for the same reason `--archive-root` restates the root. It must agree with configuration (`HFARG002`) |
+| `--inspect` | Never mutates; reports whether the target matches the known-empty layout contract. Mutually exclusive with `--confirm` (`HFARG002`) |
 
 The command proves the target is the expected read/write NFS mount, refuses a
 pre-existing sentinel or unknown content (`FS-22`), creates the directory
 structure with the documented ownership and modes, fsyncs it, writes
-`.hfcache-root` last (`FS-23`), and prints the UUID to copy into root-owned
-configuration.
+`.hfcache-root` last (`FS-23`), and prints the UUID it wrote so the operator can
+confirm that configuration and sentinel agree.
+
+The UUID comes from `storage.archive_id`, which configuration already has to
+carry for any command to load. Initialization does not mint a second one:
+a sentinel that disagrees with configuration is fatal and never repaired
+(`FS-03`), so generating one would deliberately create that state.
 
 The one adoption exception is a single pre-existing **empty** `published/` whose
 ownership and mode already match, because TrueNAS requires that directory to
-exist before the consumer export can be defined.
+exist before the consumer export can be defined. Ownership is checked against the
+archive root's owner rather than against a local uid, because the Mapall writer
+export presents NAS-side ids with no local account.
+
+A refusal still reports the target it found, so one invocation answers both why
+it stopped and what is there now.
+
+**Exit codes.** `0` on success; `10` for a configuration or option problem,
+including the missing `--confirm`; `20` for a mount, content, sentinel, or write
+failure. `--inspect` exits `0` when the target is either initializable *or*
+already correctly initialized — both are healthy answers — and `20` when it is
+neither.
 
 `archive init` is never invoked by a timer, a sync, or a recovery path (`FS-21`).
 
@@ -346,7 +362,7 @@ Serialization follows the same deterministic rules as durable files
 | Command | `data` contains |
 | --- | --- |
 | `config validate` | `config_fingerprint`, `repositories`, `enabled_repositories`, `token_source` |
-| `archive init` | `archive_id`, `archive_root`, created paths, `adopted_published` |
+| `archive init` | `archive_id`, `archive_root`, `created_directories`, `removed_temporaries`, `sentinel`, `adopted_published`. With `--inspect`, or on a refusal: `state`, `initializable`, `mount`, `existing_directories`, `missing_directories`, `unknown_entries`, `unknown_entry_count`, `leftover_temporaries`, `adopted_published`, `archive_id`, `archive_root` |
 | `doctor` | `checks[]` of `{ name, outcome, detail }`, in execution order |
 | `plan` | `repositories[]` of resolved SHA, retained/current state, logical size, estimated new bytes |
 | `sync` | The `RunReport` body (`docs/schemas.md` §6) |
