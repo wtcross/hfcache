@@ -103,3 +103,71 @@ def test_nothing_is_written_to_the_live_mount(config_file: Path):
     run(config_file, "doctor", "--read-only")
 
     assert sorted(path.name for path in ARCHIVE_ROOT.iterdir()) == before
+
+
+# --------------------------------------------------------------------------- #
+# The mutating doctor (`STO-009`)
+# --------------------------------------------------------------------------- #
+#
+# These are the assertions that need an initialized archive, so they are the
+# ones that cannot run until the §29 rollout checkpoint spends the §36.4
+# one-time authorization — after `HOST-004`, not before. They are written now
+# and skip until then, so the checkpoint runs a test that already exists rather
+# than one written to fit whatever it found.
+
+
+def initialized() -> bool:
+    return (ARCHIVE_ROOT / ".hfcache-root").is_file()
+
+
+needs_archive = pytest.mark.skipif(
+    not initialized(),
+    reason="the archive is not initialized; `archive init` runs once at the §29 checkpoint",
+)
+
+
+@pytest.fixture(scope="module")
+def mutating_checks(config_file: Path) -> dict[str, dict]:
+    result = run(config_file, "doctor")
+    envelope = json.loads(result.stdout)
+    return {check["name"]: check for check in envelope["data"]["checks"]}
+
+
+@needs_archive
+def test_the_sentinel_on_the_live_mount_names_the_configured_archive(
+    mutating_checks: dict[str, dict],
+):
+    assert mutating_checks["sentinel"]["outcome"] == "pass"
+
+
+@needs_archive
+def test_the_live_mount_is_effectively_writable(mutating_checks: dict[str, dict]):
+    # Under the Mapall export this cannot be established any other way: the
+    # owner has no local account, so only performing the write answers it
+    # (`docs/plan.md` §35.3).
+    assert mutating_checks["directory_writability"]["outcome"] == "pass"
+
+
+@needs_archive
+def test_every_publication_capability_holds_on_the_real_dataset(
+    mutating_checks: dict[str, dict],
+):
+    # Plan §14.2. Hardlink, atomic directory rename, and atomic ref replacement
+    # are the three things a publication is made of, and NFS is exactly where an
+    # assumption about them would be wrong.
+    for name in ("hardlink_capability", "atomic_directory_rename", "reference_replacement"):
+        assert mutating_checks[name]["outcome"] == "pass", mutating_checks[name]["detail"]
+
+
+@needs_archive
+def test_the_mutating_doctor_is_clean_on_the_live_mount(config_file: Path):
+    assert run(config_file, "doctor").returncode == 0
+
+
+@needs_archive
+def test_the_mutating_doctor_leaves_no_probe_behind(config_file: Path):
+    probes = ARCHIVE_ROOT / ".store" / "health"
+
+    run(config_file, "doctor")
+
+    assert list(probes.iterdir()) == []
