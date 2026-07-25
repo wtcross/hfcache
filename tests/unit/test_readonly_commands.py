@@ -76,6 +76,9 @@ STORAGE_CHECKS = (
     "sentinel",
     "directory_writability",
     "staging_filesystem",
+    "hardlink_capability",
+    "atomic_directory_rename",
+    "reference_replacement",
     "free_space",
 )
 
@@ -194,7 +197,9 @@ def test_checks_needing_an_initialized_archive_report_that_as_the_reason(mounted
     checks = checks_of(result)
 
     assert result.exit_code == ExitCode.SUCCESS, "an uninitialized archive is not a failure"
-    for name in ("sentinel", "directory_writability", "staging_filesystem"):
+    for name in STORAGE_CHECKS[len(MOUNT_CHECKS) :]:
+        if name == "free_space":
+            continue
         assert checks[name]["outcome"] == "skipped"
         assert "not initialized" in checks[name]["detail"]
     for name in (*MOUNT_CHECKS, "free_space"):
@@ -280,13 +285,13 @@ def test_read_only_never_reports_a_capability_as_passing(config_file: Path):
     assert not passing & set(UNPROVABLE_READ_ONLY)
 
 
-def test_doctor_does_not_report_capabilities_it_did_not_probe(initialized_config: Path):
-    # Without --read-only the capabilities whose checks have not landed are
-    # absent rather than fabricated; they arrive with STO-007 and STO-009.
+def test_every_documented_capability_is_now_probed(initialized_config: Path):
+    # `STO-007` landed the last three, so nothing in the table is absent for
+    # want of an implementation any more except the Hub checks.
     names = {check["name"] for check in data_of(invoke(initialized_config, "doctor"))["checks"]}
 
-    assert not names & set(UNIMPLEMENTED_CAPABILITIES)
-    assert "directory_writability" in names, "this one has landed, so it is reported"
+    assert UNIMPLEMENTED_CAPABILITIES == ()
+    assert set(UNPROVABLE_READ_ONLY) <= names
 
 
 def test_doctor_reports_the_credential_source_never_the_value(config_file: Path, tmp_path: Path):

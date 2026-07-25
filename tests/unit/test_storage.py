@@ -16,6 +16,7 @@ checks built on these primitives are `tests/unit/test_preflight.py`.
 """
 
 import os
+import shutil
 import stat
 from pathlib import Path
 
@@ -30,7 +31,7 @@ from hfcache.storage import (
     CapacityFacts,
     MountEntry,
     MountFacts,
-    _exercise_probe,
+    _exercise_writability,
     _remove_probe,
     atomic_write_bytes,
     capacity_problems,
@@ -44,6 +45,9 @@ from hfcache.storage import (
     is_temporary_sibling,
     mount_problems,
     parse_mount_table,
+    probe_directory_rename,
+    probe_hardlink,
+    probe_reference_replacement,
     probe_writability,
     publication_destinations,
     read_mount_table,
@@ -506,28 +510,42 @@ def test_a_probe_whose_bytes_do_not_come_back_is_hfmnt008(
     directory.mkdir()
     monkeypatch.setattr("hfcache.storage.atomic_write_bytes", lose_the_payload)
 
-    problems = _exercise_probe(directory, "probe")
+    problems = _exercise_writability(directory, "probe", "HFMNT008")
 
     assert codes(problems) == ["HFMNT008"]
     assert "read back" in problems[0].message
 
 
 def test_a_probe_that_cannot_write_at_all_is_hfmnt008(tmp_path: Path):
-    problems = _exercise_probe(tmp_path / "absent", "probe")
+    problems = _exercise_writability(tmp_path / "absent", "probe", "HFMNT008")
 
     assert codes(problems) == ["HFMNT008"]
 
 
-def test_an_artifact_the_probe_cannot_remove_is_reported_not_ignored(tmp_path: Path):
-    # A probe creates files only. Anything else there is reported rather than
-    # removed, which keeps the one deletion this command performs inside `FS-19`.
+def test_a_probe_area_is_removed_wholesale_including_its_subdirectories(tmp_path: Path):
+    # The capability probes build directories inside the probe area, and the
+    # area is named `probe-<16 random hex>` by this process moments earlier, so
+    # it cannot hold anything the application did not put there.
     directory = tmp_path / "probe"
-    (directory / "not-a-probe-file").mkdir(parents=True)
+    (directory / "cache" / "nested").mkdir(parents=True)
+    (directory / "cache" / "nested" / "blob").write_text("x", encoding="utf-8")
 
-    problems = _remove_probe(directory, "probe")
+    assert _remove_probe(directory, "probe", "HFMNT008") == []
+    assert not directory.exists()
+
+
+def test_a_probe_area_that_cannot_be_removed_is_reported(tmp_path: Path):
+    # An artifact left behind is what the next inspection would refuse, so a
+    # failed cleanup is reported rather than passed over.
+    directory = tmp_path / "probe"
+    (directory / "nested").mkdir(parents=True)
+    tmp_path.chmod(0o500)
+    try:
+        problems = _remove_probe(directory, "probe", "HFMNT008")
+    finally:
+        tmp_path.chmod(0o700)
 
     assert codes(problems) == ["HFMNT008"]
-    assert directory.is_dir(), "nothing unrecognized is removed to make the probe tidy"
 
 
 # --------------------------------------------------------------------------- #
@@ -724,3 +742,138 @@ def test_the_warning_accounts_for_the_run_as_well_as_the_reserve():
     assert codes(capacity_warnings(room, reserve_bytes=10 * GIB, needed_bytes=10 * GIB)) == [
         "HFWRN005"
     ]
+
+
+# --------------------------------------------------------------------------- #
+# The capability probes (plan §14.2, `doctor` checks 9-11)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    "probe",
+    [probe_hardlink, probe_directory_rename, probe_reference_replacement],
+)
+def test_every_capability_is_proven_on_this_filesystem(initialized: ArchiveLayout, probe):
+    assert probe(initialized) == []
+
+
+@pytest.mark.parametrize(
+    "probe",
+    [probe_hardlink, probe_directory_rename, probe_reference_replacement],
+)
+def test_every_capability_probe_removes_what_it_made(initialized: ArchiveLayout, probe):
+    probe(initialized, probe_id=PROBE_ID)
+
+    assert list(initialized.health.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    ("probe", "code"),
+    [
+        (probe_hardlink, "HFMNT012"),
+        (probe_directory_rename, "HFMNT013"),
+        (probe_reference_replacement, "HFMNT013"),
+    ],
+)
+def test_every_capability_probe_reports_its_documented_code(
+    initialized: ArchiveLayout, monkeypatch: pytest.MonkeyPatch, probe, code
+):
+    # Injected rather than provoked: this host's filesystem supports all three,
+    # which is the point of the probes but leaves no way to observe a failure.
+    def refuse(*args, **kwargs):
+        raise OSError(95, "Operation not supported")
+
+    monkeypatch.setattr("hfcache.storage.atomic_write_bytes", refuse)
+
+    assert codes(probe(initialized)) == [code]
+
+
+def test_a_probe_directory_that_cannot_be_created_is_hfmnt008(initialized: ArchiveLayout):
+    # Reported under `HFMNT008` whatever the probe was for: the archive is not
+    # writable, which is a different finding from the capability being absent.
+    initialized.health.chmod(0o500)
+    try:
+        problems = probe_hardlink(initialized)
+    finally:
+        initialized.health.chmod(0o700)
+
+    assert codes(problems) == ["HFMNT008"]
+
+
+def test_a_hardlink_that_is_really_a_copy_is_hfmnt012(
+    initialized: ArchiveLayout, monkeypatch: pytest.MonkeyPatch
+):
+    # A destination with one link is a second inode, so publication would
+    # silently consume twice the planned space.
+    monkeypatch.setattr("hfcache.storage.os.link", shutil.copyfile)
+
+    problems = probe_hardlink(initialized)
+
+    assert codes(problems) == ["HFMNT012"]
+    assert "twice the planned space" in problems[0].message
+
+
+def test_a_rename_that_leaves_the_original_behind_is_hfmnt013(
+    initialized: ArchiveLayout, monkeypatch: pytest.MonkeyPatch
+):
+    def copy_instead(self, target):
+        shutil.copytree(self, target)
+
+    monkeypatch.setattr(Path, "rename", copy_instead)
+
+    problems = probe_directory_rename(initialized)
+
+    assert codes(problems) == ["HFMNT013"]
+    assert "wholesale" in problems[0].message
+
+
+def test_a_hardlink_that_does_not_read_back_its_bytes_is_hfmnt012(
+    initialized: ArchiveLayout, monkeypatch: pytest.MonkeyPatch
+):
+    # A "link" that is neither the same inode nor the same content fails both
+    # halves of what check 9 proves, and both are reported.
+    def diverge(source, destination):
+        Path(destination).write_bytes(b"different bytes entirely")
+
+    monkeypatch.setattr("hfcache.storage.os.link", diverge)
+
+    problems = probe_hardlink(initialized)
+
+    assert codes(problems) == ["HFMNT012", "HFMNT012"]
+    assert "read back" in problems[1].message
+
+
+def test_a_replacement_that_does_not_take_effect_is_hfmnt013(
+    initialized: ArchiveLayout, monkeypatch: pytest.MonkeyPatch
+):
+    # A filesystem where the second write does not win would leave a consumer
+    # reading the previous revision forever.
+    def ignore_the_second(path, payload, *, mode):
+        if not path.exists():
+            path.write_bytes(payload)
+            path.chmod(mode)
+
+    monkeypatch.setattr("hfcache.storage.atomic_write_bytes", ignore_the_second)
+
+    problems = probe_reference_replacement(initialized)
+
+    assert codes(problems) == ["HFMNT013"]
+    assert "new contents" in problems[0].message
+
+
+def test_a_replacement_that_leaves_a_temporary_behind_is_hfmnt013(
+    initialized: ArchiveLayout, monkeypatch: pytest.MonkeyPatch
+):
+    # The replacement is a rename over the original, so a surviving sibling means
+    # the durable write is not what it claims to be.
+    def leave_a_sibling(path, payload, *, mode):
+        path.write_bytes(payload)
+        path.chmod(mode)
+        temporary_sibling(path).write_bytes(b"partial")
+
+    monkeypatch.setattr("hfcache.storage.atomic_write_bytes", leave_a_sibling)
+
+    problems = probe_reference_replacement(initialized)
+
+    assert codes(problems) == ["HFMNT013"]
+    assert "may survive it" in problems[0].message

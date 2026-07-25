@@ -67,7 +67,7 @@ predate `CFG-003`.
 - [x] STO-004 Local exclusive locking (2026-07-25, this commit — `src/hfcache/locking.py` (new, decision 40): `flock(2)` on `/run/hfcache/hfcache.lock`, so the kernel releases it when the process dies and a crashed sync never leaves a lock an operator has to clear. `HFMNT010` on timeout, naming the holder from a diagnostic record the holder writes into the file. `preflight.guarded` composes the lock and the checks in plan §13.1's order — lock at step 2, preflight at step 3 — and is the single entry point every mutating command will use. 100% branch coverage; contention is exercised in-process, since `flock` conflicts between open file descriptions rather than between processes)
 - [x] STO-005 Atomic JSON and ref writes (2026-07-25, this commit — `storage.write_model` and `storage.read_model`: model-aware durable JSON on top of `atomic_write_bytes` and `models.load`, each taking the caller's code so a failed manifest write is `HFSYN008` and a failed reference write `HFSYN007`. `src/hfcache/publication.py` (plan §7, no deviation) holds the reference writers: `publish_revision_reference` (`FS-11`) and `publish_current_reference` (`FS-08`), both enforcing `FS-10` at the point of the write — a reference whose tree or manifest is not durable is refused, with every missing target reported at once. `read_reference` reports `HFVER008`, because reading one happens while something is being checked. 100% branch coverage. **Still to come at `STO-007`:** the hardlink and copy publication primitives that create the tree a reference names)
 - [x] STO-006 Staging creation and containment (2026-07-25, this commit — added to `publication.py`, which now has two halves: building a tree and naming it. `create_staging` makes `.store/staging/<transaction-id>/tree` exclusively — a colliding id fails rather than building into another transaction's area — with the `tree/` at the *published* mode, since publication is a rename and a rename does not change a mode. `discard_staging` is the module's one deletion and stays inside `FS-19` because the path is derived from a validated transaction id rather than read off the filesystem (`FS-18`). `source_problems` is `FS-15`: symlinks are resolved rather than refused, because the Hub cache reaches every file through one, and what is rejected is a link that escapes the approved cache root, dangles, or lands on something that is not a regular file (`HFSYN004`). `staged_path` joins a repository-relative path only after the grammar has proven it cannot escape (T-02). 100% branch coverage)
-- [ ] STO-007 Hardlink and copy publication primitives
+- [x] STO-007 Hardlink and copy publication primitives (2026-07-25, this commit — `src/hfcache/hashing.py` (plan §7): `sha256_file` streams a file and returns digest *and* size from one read, so the two can never describe different content. `publication.stage_file` proves the source contained (`FS-15`) then links or copies per `publication_mode`, never downgrading a mode automatically (`AD-11`); copy mode verifies the copy against a fresh hash of the source, because a copy that lost bytes would otherwise be published as the revision. `promote_staging` is plan §13.2 step 15, and refuses an existing destination *explicitly* rather than relying on `rename(2)` — which fails on a non-empty directory but replaces an empty one, so the syscall alone would break `FS-05` for an instance directory a crash left empty. `storage` gained the three §14.2 capability probes and `doctor` checks 9-11 (`HFMNT012`, `HFMNT013`), with `publication_mode = "copy"` reporting the hardlink check as not exercised rather than failed (decision 41). 100% branch coverage)
 - [ ] STO-008 Storage reconciliation and stale-staging reporting
 - [ ] STO-009 Complete mutating `doctor` tests
 - [ ] STO-010 Durable transaction journals and validated checkpoint evidence
@@ -727,3 +727,28 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     to decide anything, it exists so a command that gives up waiting can say
     *who* it waited for. It is cleared on release so a later refusal never names
     a process that has already finished.
+
+41. **The capability probes stay inside `.store/health/`** (2026-07-25,
+    STO-007). Plan §14.2 asks `doctor` to prove "a regular file can be
+    hardlinked between private and published test directories", which reads as
+    an instruction to create a test directory under `published/`. The probes do
+    not do that, for two reasons.
+
+    The first is that it does not match what publication actually does. A
+    hardlink is made from a cache blob into `.store/staging` (§14.1 step 4), and
+    what reaches `published/` is the *tree*, by rename (§13.2 step 15). Nothing
+    is ever hardlinked into `published/`, so a probe that linked into it would be
+    proving something the application never does.
+
+    The second is that `doctor` takes no lock. A transient probe directory under
+    `published/repos/` would be visible to a concurrent catalog rebuild or
+    `verify`, and would be reported by `archive init --inspect` as content the
+    application did not create. `docs/architecture.md` §5.1 designates exactly
+    one probe area — `.store/health/probe-<probe-id>/` — and every probe stays
+    inside it. Check 8 has already proven the whole layout is one filesystem, so
+    a hardlink and a rename demonstrated there hold for the dataset.
+
+    `_remove_probe` now removes the area with `rmtree` rather than entry by
+    entry, since the capability probes build subdirectories in it. That stays
+    inside `FS-19`: `probe-<16 random hex>` was created by this process moments
+    earlier and cannot contain anything the application did not put there.

@@ -433,6 +433,9 @@ def test_the_gate_returns_the_ordered_checks_when_everything_passes(initialized,
         "sentinel",
         "directory_writability",
         "staging_filesystem",
+        "hardlink_capability",
+        "atomic_directory_rename",
+        "reference_replacement",
         "free_space",
     ]
 
@@ -620,3 +623,85 @@ def test_a_guarded_command_releases_the_lock_when_the_checks_refuse(
     # lock left behind by the one that failed.
     with exclusive_lock(lock_path(), command="prune", wait_seconds=0):
         pass
+
+
+# --------------------------------------------------------------------------- #
+# Capabilities (rows 9-11, plan §14.2)
+# --------------------------------------------------------------------------- #
+
+CAPABILITIES = ("hardlink_capability", "atomic_directory_rename", "reference_replacement")
+
+
+def test_every_capability_is_proven_on_an_initialized_archive(initialized, table):
+    checks = named(storage_checks(initialized, storage=storage_config(), table=table))
+
+    for name in CAPABILITIES:
+        assert checks[name].outcome == "pass", name
+    assert list(initialized.health.iterdir()) == [], "no probe artifact survives"
+
+
+def test_read_only_reports_every_capability_as_unproven(initialized, table):
+    checks = named(
+        storage_checks(initialized, storage=storage_config(), read_only=True, table=table)
+    )
+
+    for name in CAPABILITIES:
+        assert checks[name].outcome == "skipped"
+        assert checks[name].detail == READ_ONLY
+
+
+def test_copy_mode_does_not_require_the_hardlink_capability(initialized, table):
+    # `publication_mode = "copy"` is the documented fallback for a topology where
+    # hardlinks cannot cross a dataset boundary, so the capability is reported as
+    # not exercised rather than as a failure.
+    checks = named(
+        storage_checks(initialized, storage=storage_config(publication_mode="copy"), table=table)
+    )
+
+    assert checks["hardlink_capability"].outcome == "skipped"
+    assert "copy" in checks["hardlink_capability"].detail
+    assert checks["atomic_directory_rename"].outcome == "pass", "the rename still matters"
+
+
+def test_an_unavailable_capability_is_a_failed_check(
+    initialized, table, monkeypatch: pytest.MonkeyPatch
+):
+    def refuse(*args, **kwargs):
+        raise OSError(95, "Operation not supported")
+
+    monkeypatch.setattr("hfcache.storage.os.link", refuse)
+
+    checks = named(storage_checks(initialized, storage=storage_config(), table=table))
+
+    assert codes(checks["hardlink_capability"].problems) == ["HFMNT012"]
+    assert checks["atomic_directory_rename"].outcome == "pass", "one failure does not stop the rest"
+
+
+def test_capabilities_are_skipped_on_an_uninitialized_archive(layout: ArchiveLayout, table):
+    checks = named(storage_checks(layout, storage=storage_config(), table=table))
+
+    for name in CAPABILITIES:
+        assert checks[name].outcome == "skipped"
+        assert checks[name].detail == NOT_INITIALIZED
+
+
+def test_nothing_is_probed_on_a_mount_that_was_not_proven(layout: ArchiveLayout):
+    checks = named(storage_checks(layout, storage=storage_config(), table=()))
+
+    for name in CAPABILITIES:
+        assert checks[name].outcome == "skipped"
+    assert list(layout.root.iterdir()) == []
+
+
+def test_the_gate_refuses_when_a_capability_is_unavailable(
+    initialized, table, monkeypatch: pytest.MonkeyPatch
+):
+    def refuse(*args, **kwargs):
+        raise OSError(95, "Operation not supported")
+
+    monkeypatch.setattr("hfcache.storage.os.link", refuse)
+
+    with pytest.raises(SafetyError) as caught:
+        require_storage_safety(initialized, storage=storage_config(), table=table)
+
+    assert codes(caught.value.problems) == ["HFMNT012"]

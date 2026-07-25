@@ -11,8 +11,10 @@ The archive here is a real temporary directory with the real layout, created by
 would have to reproduce exactly to be worth anything.
 """
 
+import hashlib
 import os
 import stat
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -28,19 +30,19 @@ from hfcache.publication import (
     create_staging,
     discard_staging,
     prepare_staged_parent,
+    promote_staging,
     publish_current_reference,
     publish_revision_reference,
     read_reference,
     reference_target_problems,
     source_problems,
+    stage_file,
     staged_path,
 )
 from hfcache.storage import parse_mount_table
 from tests.fixtures import examples
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from hfcache.models import Reference
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
@@ -342,6 +344,218 @@ def test_a_destination_parent_that_cannot_be_created_is_hfsyn005(layout, transac
         paths.tree.chmod(PUBLISHED_DIRECTORY_MODE)
 
     assert codes(caught.value.problems) == ["HFSYN005"]
+
+
+# --------------------------------------------------------------------------- #
+# Staging one file (plan §14.1, §14.3)
+# --------------------------------------------------------------------------- #
+
+PAYLOAD = b"the bytes of one repository file\n"
+
+
+@pytest.fixture
+def cached(cache_root) -> Path:
+    """A blob reached through a snapshot symlink, the way the Hub cache lays it out."""
+    blob = cache_root / "blobs" / "abcdef"
+    blob.parent.mkdir(parents=True)
+    blob.write_bytes(PAYLOAD)
+    snapshot = cache_root / "snapshots" / "sha" / "model.safetensors"
+    snapshot.parent.mkdir(parents=True)
+    snapshot.symlink_to(blob)
+    return snapshot
+
+
+@pytest.mark.parametrize("mode", ["hardlink", "copy"])
+def test_a_staged_file_holds_the_bytes_it_came_from(layout, transaction, cached, cache_root, mode):
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+
+    digest = stage_file(cached, destination, publication_mode=mode, cache_root=cache_root)
+
+    assert destination.read_bytes() == PAYLOAD
+    assert digest.size == len(PAYLOAD)
+    assert digest.digest == hashlib.sha256(PAYLOAD).hexdigest()
+
+
+def test_hardlink_mode_publishes_the_same_inode(layout, transaction, cached, cache_root):
+    # `AD-11`: the whole point is that a published revision does not double the
+    # bytes its cache blob already occupies.
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+
+    stage_file(cached, destination, publication_mode="hardlink", cache_root=cache_root)
+
+    assert destination.stat().st_ino == cached.resolve().stat().st_ino
+    assert destination.stat().st_nlink == 2
+
+
+def test_copy_mode_publishes_a_separate_inode_and_never_a_symlink(
+    layout, transaction, cached, cache_root
+):
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+
+    stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
+
+    assert destination.stat().st_ino != cached.resolve().stat().st_ino
+    assert not destination.is_symlink(), "a cache symlink is resolved, never reproduced"
+
+
+@pytest.mark.parametrize("mode", ["hardlink", "copy"])
+def test_staging_creates_the_parent_directories_it_needs(
+    layout, transaction, cached, cache_root, mode
+):
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "nested/deep/model.safetensors")
+
+    stage_file(cached, destination, publication_mode=mode, cache_root=cache_root)
+
+    assert destination.is_file()
+
+
+@pytest.mark.parametrize("mode", ["hardlink", "copy"])
+def test_a_source_outside_the_cache_root_is_never_staged(
+    layout, transaction, cache_root, tmp_path: Path, mode
+):
+    outside = tmp_path / "outside"
+    outside.write_bytes(PAYLOAD)
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+
+    with pytest.raises(SynchronizationError) as caught:
+        stage_file(outside, destination, publication_mode=mode, cache_root=cache_root)
+
+    assert codes(caught.value.problems) == ["HFSYN004"]
+    assert not destination.exists()
+
+
+def test_an_unavailable_hardlink_is_never_downgraded_to_a_copy(
+    layout, transaction, cached, cache_root, monkeypatch: pytest.MonkeyPatch
+):
+    # `AD-11`: a mode is never silently downgraded. Failing here is what stops a
+    # deployment from quietly consuming twice the planned space.
+    def refuse(source, destination):
+        raise OSError(1, "Operation not permitted", str(destination))
+
+    monkeypatch.setattr("hfcache.publication.os.link", refuse)
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+
+    with pytest.raises(SynchronizationError) as caught:
+        stage_file(cached, destination, publication_mode="hardlink", cache_root=cache_root)
+
+    assert codes(caught.value.problems) == ["HFSYN005"]
+    assert "AD-11" in caught.value.problems[0].message
+    assert not destination.exists()
+
+
+def test_a_copy_that_lost_bytes_is_never_published(
+    layout, transaction, cached, cache_root, monkeypatch: pytest.MonkeyPatch
+):
+    # Copy mode exists for a deployment where hardlinks are unavailable, often a
+    # different storage topology, so the copy is proven rather than assumed.
+    def truncate(source, destination):
+        Path(destination).write_bytes(PAYLOAD[:4])
+
+    monkeypatch.setattr("hfcache.publication.shutil.copyfile", truncate)
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+
+    with pytest.raises(SynchronizationError) as caught:
+        stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
+
+    assert codes(caught.value.problems) == ["HFSYN005"]
+    assert "never published" in caught.value.problems[0].message
+
+
+def test_a_copy_that_cannot_be_written_leaves_no_partial_file(
+    layout, transaction, cached, cache_root, monkeypatch: pytest.MonkeyPatch
+):
+    def fail(source, destination):
+        Path(destination).write_bytes(PAYLOAD[:4])
+        raise OSError(28, "No space left on device", str(destination))
+
+    monkeypatch.setattr("hfcache.publication.shutil.copyfile", fail)
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+
+    with pytest.raises(SynchronizationError) as caught:
+        stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
+
+    assert codes(caught.value.problems) == ["HFSYN005"]
+    assert list(destination.parent.iterdir()) == [], "no temporary survives the failure"
+
+
+# --------------------------------------------------------------------------- #
+# Promotion (plan §13.2 step 15)
+# --------------------------------------------------------------------------- #
+
+
+def test_promotion_makes_the_revision_visible_in_one_step(layout, transaction, published):
+    paths = create_staging(layout, transaction)
+    (paths.tree / "model.safetensors").write_bytes(PAYLOAD)
+    destination = layout.published / str(published.tree) / "promoted"
+
+    promote_staging(layout, paths, destination)
+
+    assert (destination / "model.safetensors").read_bytes() == PAYLOAD
+    assert not paths.tree.exists(), "the staged tree moved rather than being copied"
+
+
+def test_promotion_keeps_the_mode_the_tree_was_built_with(layout, transaction, published):
+    paths = create_staging(layout, transaction)
+    destination = layout.published / str(published.tree) / "promoted"
+
+    promote_staging(layout, paths, destination)
+
+    assert stat.S_IMODE(destination.stat().st_mode) == PUBLISHED_DIRECTORY_MODE
+
+
+def test_promotion_never_replaces_an_existing_publication_instance(layout, transaction, published):
+    # `FS-05`: an instance directory is immutable once renamed into place, and
+    # `rename` onto an existing directory failing is what enforces it.
+    paths = create_staging(layout, transaction)
+    destination = layout.published / str(published.tree) / "promoted"
+    destination.mkdir(parents=True)
+    (destination / "already-there").write_text("x", encoding="utf-8")
+
+    with pytest.raises(SynchronizationError) as caught:
+        promote_staging(layout, paths, destination)
+
+    assert codes(caught.value.problems) == ["HFSYN006"]
+    assert (destination / "already-there").exists()
+
+
+def test_an_empty_existing_destination_is_refused_too(layout, transaction, published):
+    # `rename(2)` fails on a non-empty directory but happily replaces an empty
+    # one, so the syscall alone would enforce `FS-05` for most publications and
+    # break it for an instance directory a crash left empty.
+    paths = create_staging(layout, transaction)
+    destination = layout.published / str(published.tree) / "promoted"
+    destination.mkdir(parents=True)
+
+    with pytest.raises(SynchronizationError) as caught:
+        promote_staging(layout, paths, destination)
+
+    assert codes(caught.value.problems) == ["HFSYN006"]
+    assert "FS-05" in caught.value.problems[0].message
+
+
+def test_a_failed_promotion_says_the_previous_reference_is_unchanged(
+    layout, transaction, published, monkeypatch: pytest.MonkeyPatch
+):
+    def refuse(self, target):
+        raise OSError(30, "Read-only file system", str(target))
+
+    monkeypatch.setattr(Path, "rename", refuse)
+    paths = create_staging(layout, transaction)
+    destination = layout.published / str(published.tree) / "promoted"
+
+    with pytest.raises(SynchronizationError) as caught:
+        promote_staging(layout, paths, destination)
+
+    assert codes(caught.value.problems) == ["HFSYN006"]
+    assert "previous reference is unchanged" in caught.value.problems[0].message
 
 
 # --------------------------------------------------------------------------- #

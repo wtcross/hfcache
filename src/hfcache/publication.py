@@ -34,19 +34,22 @@ onto that. Resolution therefore goes through `resolve_published`, and a field
 that tries to escape is a coded refusal rather than a path outside the archive.
 """
 
+import os
 import shutil
 import stat
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Literal
 
 from hfcache.errors import IntegrityError, Problem, SynchronizationError
+from hfcache.hashing import sha256_file
 from hfcache.identity import CommitSha
 from hfcache.models import Reference
 from hfcache.paths import resolve_within
-from hfcache.storage import fsync_directory, read_model, write_model
+from hfcache.storage import fsync_directory, read_model, temporary_sibling, write_model
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from hfcache.hashing import FileDigest
     from hfcache.identity import TransactionId
     from hfcache.paths import ArchiveLayout, RepositoryLayout, StagingPaths
 
@@ -57,11 +60,13 @@ __all__ = [
     "create_staging",
     "discard_staging",
     "prepare_staged_parent",
+    "promote_staging",
     "publish_current_reference",
     "publish_revision_reference",
     "read_reference",
     "reference_target_problems",
     "source_problems",
+    "stage_file",
     "staged_path",
 ]
 
@@ -194,6 +199,127 @@ def prepare_staged_parent(path: Path) -> None:
         message = f"the staging directory {path.parent} could not be created: {exc.strerror}"
         raise SynchronizationError.single(
             message, code="HFSYN005", location=str(path.parent)
+        ) from exc
+
+
+def stage_file(
+    source: Path,
+    destination: Path,
+    *,
+    publication_mode: Literal["hardlink", "copy"],
+    cache_root: Path,
+) -> FileDigest:
+    """Put one repository file into staging, and say what landed there.
+
+    The source is proven contained and regular first (`FS-15`), then either
+    linked or copied according to configuration. The mode is never chosen
+    automatically: if hardlinks turn out to be unavailable while `"hardlink"` is
+    configured, the run fails rather than quietly consuming twice the planned
+    space (`AD-11`), and `doctor` check 9 is what establishes that before a
+    download begins.
+
+    The returned digest is of the bytes now in staging, not of the source, so a
+    caller writing a manifest is describing what it actually published.
+    """
+    if problems := source_problems(source, cache_root=cache_root):
+        raise SynchronizationError(problems)
+    prepare_staged_parent(destination)
+    if publication_mode == "hardlink":
+        return _link(source, destination)
+    return _copy(source, destination)
+
+
+def _link(source: Path, destination: Path) -> FileDigest:
+    """Hardlink a cache blob into staging (plan §14.1 step 4).
+
+    The destination is never `chmod`ed: it is the same inode as the cache blob,
+    so changing one mode changes both (`AD-11`). Read-only access for consumers
+    is enforced by the export and by directory permissions, not by file mode.
+    """
+    try:
+        os.link(source, destination)
+    except OSError as exc:
+        message = (
+            f"{source} could not be hardlinked into staging at {destination}: {exc.strerror}. "
+            f"`publication_mode` is never downgraded to copy automatically (`AD-11`)"
+        )
+        raise SynchronizationError.single(
+            message, code="HFSYN005", location=str(destination)
+        ) from exc
+    return sha256_file(destination, code="HFSYN005")
+
+
+def _copy(source: Path, destination: Path) -> FileDigest:
+    """Copy a resolved regular file into staging, then prove the copy (plan §14.3).
+
+    Temporary sibling and atomic rename per file, so a crash leaves either the
+    complete file or nothing. The copy is hashed *and* compared against a fresh
+    hash of the source, because copy mode exists for the deployment where
+    hardlinks are unavailable — often a different storage topology — and a copy
+    that silently lost bytes would be published as though it were the revision.
+    """
+    expected = sha256_file(source, code="HFSYN005")
+    temporary = temporary_sibling(destination)
+    try:
+        # `copyfile` follows the source and writes a plain regular file, so a
+        # cache symlink is resolved rather than reproduced (plan §14.3).
+        shutil.copyfile(source, temporary)
+        with temporary.open("rb") as handle:
+            os.fsync(handle.fileno())
+        temporary.replace(destination)
+    except OSError as exc:
+        temporary.unlink(missing_ok=True)
+        message = f"{source} could not be copied into staging at {destination}: {exc.strerror}"
+        raise SynchronizationError.single(
+            message, code="HFSYN005", location=str(destination)
+        ) from exc
+    fsync_directory(destination.parent)
+
+    landed = sha256_file(destination, code="HFSYN005")
+    if landed != expected:
+        message = (
+            f"the copy of {source} at {destination} is {landed.size} bytes with digest "
+            f"{landed.digest}, but the source is {expected.size} bytes with digest "
+            f"{expected.digest}; a copy that lost bytes is never published"
+        )
+        raise SynchronizationError.single(message, code="HFSYN005", location=str(destination))
+    return landed
+
+
+def promote_staging(layout: ArchiveLayout, staging: StagingPaths, destination: Path) -> None:
+    """Rename a finished staged tree into place — the moment a revision exists.
+
+    Plan §13.2 step 15, and the single operation that makes a publication
+    visible. One `rename(2)` within one filesystem (`FS-04`), so a consumer
+    either sees the complete revision or does not see it at all (`FS-12`); the
+    tree is fsynced first, so what becomes visible is also durable.
+
+    An existing destination is refused explicitly rather than left to `rename`.
+    `rename(2)` fails on a *non-empty* directory but happily replaces an empty
+    one, so the syscall alone would enforce `FS-05` for most publications and
+    silently break it for an instance directory a crash left empty. The mutating
+    lock is what makes the check-then-rename safe (`AD-17`).
+    """
+    if destination.exists():
+        message = (
+            f"{destination} already exists; a publication instance is immutable once it has "
+            f"been renamed into place and is never replaced (`FS-05`)"
+        )
+        raise SynchronizationError.single(
+            message, code="HFSYN006", location=str(layout.archive_relative(destination))
+        )
+    try:
+        fsync_directory(staging.tree)
+        destination.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
+        staging.tree.rename(destination)
+        fsync_directory(destination.parent)
+    except OSError as exc:
+        message = (
+            f"publishing {staging.tree} to {destination} failed: {exc.strerror}; the previous "
+            f"reference is unchanged and no revision was published"
+        )
+        raise SynchronizationError.single(
+            message, code="HFSYN006", location=str(layout.archive_relative(destination))
         ) from exc
 
 

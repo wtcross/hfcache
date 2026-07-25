@@ -46,6 +46,9 @@ from hfcache.storage import (
     effective_reserve,
     is_initialized,
     mount_problems,
+    probe_directory_rename,
+    probe_hardlink,
+    probe_reference_replacement,
     probe_writability,
     publication_destinations,
     read_sentinel,
@@ -120,6 +123,10 @@ _UNPROVEN: Final = (
     "the archive root was not proven to be a read/write NFS mount, so nothing was read "
     "from it or written to it"
 )
+_COPY_MODE: Final = (
+    'publication_mode = "copy" does not hardlink, so the capability is not required; '
+    "it is reported rather than passed because it was not exercised"
+)
 
 
 @final
@@ -192,13 +199,12 @@ def storage_checks(
     read_only: bool = False,
     table: Sequence[MountEntry] | None = None,
 ) -> list[Check]:
-    """Run every storage check that exists today: `docs/cli.md` §2 rows 2-8 and 12.
+    """Run every storage check `docs/cli.md` §2 rows 2-12 defines.
 
-    Rows 9-11 are absent until `STO-007` and `STO-009` land. The whole
-    `[storage]` table is taken rather than the two or three fields used today,
-    because these checks are the code that reads that table: `archive_id` for the
+    The whole `[storage]` table is taken rather than the individual fields,
+    because these checks are the code that reads it: `archive_id` for the
     sentinel, the two free-space minimums for the reserve, and `publication_mode`
-    for the hardlink check when it arrives.
+    for whether an unavailable hardlink is a failure or an expected answer.
 
     `table` is the parsed mount table, supplied by tests so a temporary directory
     can stand in for the NFS archive; production reads the kernel's.
@@ -209,6 +215,7 @@ def storage_checks(
     checks.append(_sentinel_check(layout, archive_id=storage.archive_id, proven=proven))
     checks.append(_writability_check(layout, proven=proven, read_only=read_only))
     checks.append(_staging_check(layout, proven=proven))
+    checks.extend(_capability_checks(layout, storage, proven=proven, read_only=read_only))
     if proven:
         checks.append(_capacity_check(layout, storage, needed_bytes=needed_bytes))
     else:
@@ -312,6 +319,39 @@ def _staging_check(layout: ArchiveLayout, *, proven: bool) -> Check:
     return Check.passed(
         name, f"staging and {destinations} publication destinations share one filesystem"
     )
+
+
+_CAPABILITY_PROBES: Final = (
+    ("hardlink_capability", probe_hardlink),
+    ("atomic_directory_rename", probe_directory_rename),
+    ("reference_replacement", probe_reference_replacement),
+)
+"""`docs/cli.md` §2 rows 9-11, in table order, with the probe each one runs."""
+
+
+def _capability_checks(
+    layout: ArchiveLayout, storage: StorageConfig, *, proven: bool, read_only: bool
+) -> list[Check]:
+    """`doctor` checks 9-11 — the three capabilities plan §14.2 requires proving.
+
+    Each is demonstrated by performing it and by nothing else, which is why
+    `--read-only` reports all three as unproven rather than passed.
+    """
+    checks: list[Check] = []
+    for name, probe in _CAPABILITY_PROBES:
+        if read_only:
+            checks.append(Check.skipped(name, READ_ONLY))
+        elif not proven:
+            checks.append(Check.skipped(name, _UNPROVEN))
+        elif not is_initialized(layout):
+            checks.append(Check.skipped(name, NOT_INITIALIZED))
+        elif name == "hardlink_capability" and storage.publication_mode != "hardlink":
+            checks.append(Check.skipped(name, _COPY_MODE))
+        elif problems := probe(layout):
+            checks.append(Check.failed(name, problems))
+        else:
+            checks.append(Check.passed(name, f"proven under {layout.health}"))
+    return checks
 
 
 def _capacity_check(layout: ArchiveLayout, storage: StorageConfig, *, needed_bytes: int) -> Check:

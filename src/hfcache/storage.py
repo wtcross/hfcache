@@ -25,6 +25,7 @@ observed as coded `Problem`s and lets its caller decide what that means.
 import os
 import re
 import secrets
+import shutil
 import stat
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -35,7 +36,7 @@ from hfcache.identity import new_probe_id
 from hfcache.models import ArchiveSentinel, DurableModel, VersionedModel, dump, load
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
     from hfcache.identity import ProbeId
     from hfcache.paths import ArchiveLayout
@@ -60,6 +61,9 @@ __all__ = [
     "is_temporary_sibling",
     "mount_problems",
     "parse_mount_table",
+    "probe_directory_rename",
+    "probe_hardlink",
+    "probe_reference_replacement",
     "probe_writability",
     "publication_destinations",
     "read_model",
@@ -113,6 +117,9 @@ _PROBE_FILE_MODE: Final = 0o600
 
 _PROBE_FILE: Final = "probe.json"
 """The one file a probe creates, inside the one directory a probe creates."""
+
+_EXPECTED_LINK_COUNT: Final = 2
+"""A source and its hardlink are one inode reached by two names."""
 
 _PROBE_PAYLOAD: Final = b'{"probe": "hfcache"}\n'
 """What the probe writes and then reads back.
@@ -435,6 +442,60 @@ def probe_writability(layout: ArchiveLayout, *, probe_id: ProbeId | None = None)
     service uid proves nothing about whether this process can write
     (`docs/plan.md` §35.3) — and a server-side read-only export presents `rw`
     client options, so the mount table does not answer it either.
+    """
+    return _run_probe(layout, _exercise_writability, probe_id=probe_id, code="HFMNT008")
+
+
+def probe_hardlink(layout: ArchiveLayout, *, probe_id: ProbeId | None = None) -> list[Problem]:
+    """Prove a regular file can be hardlinked, with the right link count and contents.
+
+    `doctor` check 9 and plan §14.2. Hardlink publication is what keeps a
+    published revision from doubling the bytes its cache blob already occupies
+    (`AD-11`), and a dataset that cannot do it must fail *before* a download
+    rather than silently consume twice the planned space.
+
+    The link is made between two directories inside the probe area rather than
+    between `.store` and `published/` (`docs/progress.md` decision 41): a
+    publication hardlinks a cache blob into `.store/staging` and then renames the
+    *tree*, so it never links into `published/` at all, and check 8 has already
+    proven the whole layout is one filesystem.
+    """
+    return _run_probe(layout, _exercise_hardlink, probe_id=probe_id, code="HFMNT012")
+
+
+def probe_directory_rename(
+    layout: ArchiveLayout, *, probe_id: ProbeId | None = None
+) -> list[Problem]:
+    """Prove a populated directory renames atomically within the dataset.
+
+    `doctor` check 10. This is the single operation that makes a revision
+    visible (plan §13.2 step 15): the staged tree is complete, fsynced, and then
+    renamed into place in one step, so a consumer never observes a partial
+    publication (`FS-12`).
+    """
+    return _run_probe(layout, _exercise_directory_rename, probe_id=probe_id, code="HFMNT013")
+
+
+def probe_reference_replacement(
+    layout: ArchiveLayout, *, probe_id: ProbeId | None = None
+) -> list[Problem]:
+    """Prove a small reference file can be replaced atomically.
+
+    `doctor` check 11. `refs/current.json` is replaced, never edited in place
+    (`FS-08`), and a consumer that reads it once must see either the old
+    revision or the new one — never a truncated file (`FS-12`).
+    """
+    return _run_probe(layout, _exercise_reference_replacement, probe_id=probe_id, code="HFMNT013")
+
+
+def _run_probe(
+    layout: ArchiveLayout,
+    exercise: Callable[[Path, str, str], list[Problem]],
+    *,
+    probe_id: ProbeId | None,
+    code: str,
+) -> list[Problem]:
+    """Make a probe area, exercise one capability in it, and remove it again.
 
     Every artifact is removed before this returns, including after a failed
     probe: a probe that left evidence behind would be found by the next
@@ -451,12 +512,12 @@ def probe_writability(layout: ArchiveLayout, *, probe_id: ProbeId | None = None)
             f"archive is not effectively writable by this identity"
         )
         return [Problem(code="HFMNT008", message=message, location=where)]
-    problems = _exercise_probe(directory, where)
-    problems.extend(_remove_probe(directory, where))
+    problems = exercise(directory, where, code)
+    problems.extend(_remove_probe(directory, where, code))
     return problems
 
 
-def _exercise_probe(directory: Path, where: str) -> list[Problem]:
+def _exercise_writability(directory: Path, where: str, code: str) -> list[Problem]:
     """Perform the four operations plan §19 item 10 names, on the probe's own file."""
     target = directory / _PROBE_FILE
     try:
@@ -468,38 +529,114 @@ def _exercise_probe(directory: Path, where: str) -> list[Problem]:
         target.unlink()
         fsync_directory(directory)
     except OSError as exc:
-        message = (
-            f"the write probe under {directory} failed at {exc.filename or directory}: "
-            f"{exc.strerror}"
-        )
-        return [Problem(code="HFMNT008", message=message, location=where)]
+        return [_probe_failure(directory, where, code, exc)]
     if observed != _PROBE_PAYLOAD:
         message = (
             f"the write probe under {directory} read back {len(observed)} bytes, not the "
             f"{len(_PROBE_PAYLOAD)} it wrote; the archive does not hold what is written to it"
         )
-        return [Problem(code="HFMNT008", message=message, location=where)]
+        return [Problem(code=code, message=message, location=where)]
     return []
 
 
-def _remove_probe(directory: Path, where: str) -> list[Problem]:
-    """Remove the probe's artifacts, whether or not the probe itself succeeded.
+def _exercise_hardlink(directory: Path, where: str, code: str) -> list[Problem]:
+    """Link a file from a cache-like directory into a staging-like one (§14.2)."""
+    private = directory / "cache"
+    staged = directory / "staging"
+    source = private / "blob"
+    destination = staged / "file"
+    try:
+        private.mkdir(mode=_PROBE_DIRECTORY_MODE)
+        staged.mkdir(mode=_PROBE_DIRECTORY_MODE)
+        atomic_write_bytes(source, _PROBE_PAYLOAD, mode=_PROBE_FILE_MODE)
+        os.link(source, destination)
+        links = destination.stat().st_nlink
+        observed = destination.read_bytes()
+    except OSError as exc:
+        return [_probe_failure(directory, where, code, exc)]
+    problems: list[Problem] = []
+    if links != _EXPECTED_LINK_COUNT:
+        message = (
+            f"a hardlink under {directory} reports {links} links, not {_EXPECTED_LINK_COUNT}; "
+            f"the destination is a copy rather than the same inode, so publication would "
+            f"silently consume twice the planned space"
+        )
+        problems.append(Problem(code=code, message=message, location=where))
+    if observed != _PROBE_PAYLOAD:
+        message = f"a hardlink under {directory} does not read back the bytes it was made from"
+        problems.append(Problem(code=code, message=message, location=where))
+    return problems
 
-    Only files directly inside the probe directory, because those are the only
-    things a probe creates. Anything else is reported rather than removed, which
-    keeps this within `FS-19` even in the one case where the application deletes
-    something during a read-only-looking command.
+
+def _exercise_directory_rename(directory: Path, where: str, code: str) -> list[Problem]:
+    """Rename a populated directory the way publication renames a staged tree."""
+    staged = directory / "staging"
+    promoted = directory / "published"
+    try:
+        staged.mkdir(mode=_PROBE_DIRECTORY_MODE)
+        atomic_write_bytes(staged / _PROBE_FILE, _PROBE_PAYLOAD, mode=_PROBE_FILE_MODE)
+        fsync_directory(staged)
+        staged.rename(promoted)
+        fsync_directory(directory)
+        moved = (promoted / _PROBE_FILE).read_bytes()
+        left_behind = staged.exists()
+    except OSError as exc:
+        return [_probe_failure(directory, where, code, exc)]
+    if left_behind or moved != _PROBE_PAYLOAD:
+        message = (
+            f"renaming a directory under {directory} did not move it wholesale; a publication "
+            f"rename must be one step, or a consumer can observe a partial revision"
+        )
+        return [Problem(code=code, message=message, location=where)]
+    return []
+
+
+def _exercise_reference_replacement(directory: Path, where: str, code: str) -> list[Problem]:
+    """Replace a small file the way `refs/current.json` is replaced (`FS-08`)."""
+    reference = directory / "current.json"
+    replacement = _PROBE_PAYLOAD + b"replaced\n"
+    try:
+        atomic_write_bytes(reference, _PROBE_PAYLOAD, mode=_PROBE_FILE_MODE)
+        atomic_write_bytes(reference, replacement, mode=_PROBE_FILE_MODE)
+        observed = reference.read_bytes()
+        siblings = sorted(path.name for path in directory.iterdir())
+    except OSError as exc:
+        return [_probe_failure(directory, where, code, exc)]
+    if observed != replacement:
+        message = f"replacing a reference under {directory} did not leave the new contents"
+        return [Problem(code=code, message=message, location=where)]
+    if siblings != ["current.json"]:
+        message = (
+            f"replacing a reference under {directory} left {siblings}; the replacement is a "
+            f"rename over the original, so nothing else may survive it"
+        )
+        return [Problem(code=code, message=message, location=where)]
+    return []
+
+
+def _probe_failure(directory: Path, where: str, code: str, exc: OSError) -> Problem:
+    """Report an operation the probe could not complete at all."""
+    message = f"the probe under {directory} failed at {exc.filename or directory}: {exc.strerror}"
+    return Problem(code=code, message=message, location=where)
+
+
+def _remove_probe(directory: Path, where: str, code: str) -> list[Problem]:
+    """Remove the probe area, whether or not the probe itself succeeded.
+
+    Removed wholesale rather than entry by entry. That is inside `FS-19` because
+    of the name: `probe-<16 random hex>` was created by this process moments ago
+    and cannot contain anything the application did not put there, so there is
+    nothing here to preserve. Failing to remove it is still reported, because an
+    artifact left behind is what the next inspection would refuse.
     """
     try:
-        for child in sorted(directory.iterdir()):
-            child.unlink()
-        directory.rmdir()
+        shutil.rmtree(directory)
     except OSError as exc:
         message = (
-            f"the write probe left {exc.filename or directory} behind ({exc.strerror}); a probe "
+            f"the probe left {exc.filename or directory} behind ({exc.strerror}); a probe "
             f"removes everything it created, so this is reported rather than passed over"
         )
-        return [Problem(code="HFMNT008", message=message, location=where)]
+        return [Problem(code=code, message=message, location=where)]
     return []
 
 
