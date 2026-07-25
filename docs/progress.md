@@ -63,7 +63,7 @@ predate `CFG-003`.
 - [x] STO-000 Guarded one-time archive initialization and inspection (2026-07-25, this commit — `src/hfcache/storage.py`: mount-table proof, durable byte writes, the known-empty-layout walk, and `initialize_archive`; `archive` sub-app in `src/hfcache/cli.py` with `init`, `--inspect`, `--confirm`, and `--archive-id`. The §6.2 empty-`published/` adoption is implemented with ownership compared against the archive root, per decision 31. 100% branch coverage. **Not yet run against `/srv/hfcache`:** the §36.4 one-time authorization is spent at the rollout checkpoint after `HOST-004`, not here)
 - [x] STO-001 NFS mount and filesystem-type detection (2026-07-25, this commit — the detection itself landed at `STO-000` (decision 28); this is the shared preflight built on it. `src/hfcache/storage.py`: the `.store/health/probe-<probe-id>` create/fsync/rename/delete probe (`HFMNT008`, plan §19 items 6 and 10) which removes every artifact it made including after a failure, and the staging/destination same-filesystem proof (`HFMNT009`, `FS-04`). `src/hfcache/preflight.py` (new, decision 33): the ordered check runner `doctor` and every mutating command share, plus `require_storage_safety`, the hard gate that raises with every problem at once. `doctor` now emits `docs/cli.md` §2 rows 2–5, 7, and 8 in table order with `credential` and `hub_endpoint` at 13 and 14, skips the probe under `--read-only`, and exits `20` when any check failed. `storage.py` and `preflight.py` both at 100% branch coverage; `tests/system/test_live_mount.py` proves rows 2–5 against the live `/srv/hfcache` mount read-only, `-m nfs`)
 - [x] STO-002 Sentinel/archive-ID validation (2026-07-25, this commit — `src/hfcache/archive.py` split out of `storage.py` first, per the `STO-001` sizing note and decision 36; `storage.read_sentinel` is now shared by both. `doctor` check 6 `sentinel` reports `HFMNT005` when the archive is not initialized, `HFMNT006` when the sentinel is unreadable, malformed, or from a newer release, and `HFMNT007` when it names a different archive (`FS-03`). The check owns the "not initialized" condition for the gate, so checks 7 and 8 skip on it without reporting it again — one missing archive is one problem. `storage_checks` and `require_storage_safety` now take the configured `archive_id`. `archive.py`, `preflight.py`, and `storage.py` all at 100% branch coverage)
-- [ ] STO-003 Free-space and reserve calculations — `doctor` check 12 (`HFMNT011`) and the `HFWRN005` approaching-reserve warning
+- [x] STO-003 Free-space and reserve calculations (2026-07-25, this commit — `storage.describe_capacity` measures the filesystem through `statvfs`, which reports the ZFS quota as the size when one is set and so answers `docs/configuration.md` §4's "quota, or capacity" without the writer knowing which case it is in; `effective_reserve` is whichever configured minimum binds harder; `capacity_problems` is `HFMNT011` against the need *plus* the reserve (plan §19 item 9) and `capacity_warnings` is `HFWRN005` at a tenth of the reserve (decision 38). `doctor` check 12 `free_space` runs against any proven mount rather than only an initialized archive (decision 39), and the warning reaches the envelope's `warnings` array with the exit code still `0`. `storage_checks` and `require_storage_safety` now take the whole `[storage]` table plus this run's `needed_bytes`. 100% branch coverage)
 - [ ] STO-004 Local exclusive locking
 - [ ] STO-005 Atomic JSON and ref writes
 - [ ] STO-006 Staging creation and containment
@@ -685,3 +685,28 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     checks beneath it skip silently. One missing archive is one problem, with
     the code `docs/cli.md` §5.2 already assigns to exactly that condition.
 
+38. **`HFWRN005` fires at a tenth of the reserve** (2026-07-25, STO-003).
+    `docs/cli.md` §5.6 defines the warning as "free space approaching the
+    configured reserve" and fixes no threshold, so the application has to choose
+    one. It is expressed as a percentage *of the reserve* rather than as an
+    absolute figure, because a deployment that reserved 100 GiB and one that
+    reserved 1 TiB want to hear about it at different points, and the reserve is
+    the only number that already scales with the deployment.
+
+    A reserve of zero therefore never warns. That is the right reading of an
+    operator who set both minimums to zero: they turned the reserve off, and a
+    warning about a reserve that does not exist has nothing to say.
+
+    The margin is also measured after `needed_bytes`, not before, so a run that
+    is about to consume most of the headroom warns even when the archive looked
+    comfortable before it started.
+
+39. **`free_space` does not need an initialized archive** (2026-07-25, STO-003).
+    `docs/cli.md` §2 put checks 6-12 behind an initialized archive in one
+    sentence covering a range. It is right for 6-11, which all read or write
+    archive-owned paths, and wrong for 12, which calls `statvfs` on the mount
+    point. Reporting it as `skipped` would withhold a real answer from the
+    operator most likely to want it — someone sizing the dataset *before*
+    running `archive init` — and would do so for no reason, since nothing about
+    the measurement depends on the layout existing. The sentence now reads 6-11,
+    with check 12 called out separately. `docs/cli.md` §2 updated in this commit.

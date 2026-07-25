@@ -161,9 +161,16 @@ performs it lands, rather than being reported as skipped or passed
 | 16 | `hub_tls` | The endpoint is reachable and its certificate verifies | no | `HFHUB002` |
 | 17 | `hub_identity` | The resolved identity matches `expected_account`, when set | no | `HFHUB003` |
 
-Checks 6–12 need an initialized archive. Against a target that has none they
+Checks 6–11 need an initialized archive. Against a target that has none they
 report `skipped` with that as the reason, which is operator state rather than
-development state; `archive init` is what changes it.
+development state; `archive init` is what changes it. Check 6 is the one that
+reports the condition, since the sentinel's absence *is* the condition; the rest
+skip on it silently, so one uninitialized archive is one problem rather than six.
+
+Check 12 is deliberately not in that set: `statvfs` on a proven mount answers it,
+and an operator sizing a dataset before initializing is exactly who wants the
+answer. It also raises `HFWRN005` when capacity clears the reserve but not by
+much, which leaves the exit code at `0` (§5.6).
 
 A check whose precondition failed is also `skipped`, with that as its reason:
 nothing can be said about the filesystem type of a path that does not exist, and

@@ -522,7 +522,7 @@ def doctor(
             "configuration",
             f"{options.config_path} is valid; fingerprint {config.fingerprint()[:12]}",
         ),
-        *storage_checks(layout, archive_id=config.storage.archive_id, read_only=read_only),
+        *storage_checks(layout, storage=config.storage, read_only=read_only),
         Check.passed("credential", token.describe()),
         Check.passed("hub_endpoint", f"{config.hub.endpoint} is a well-formed https endpoint"),
     ]
@@ -537,13 +537,19 @@ def doctor(
 
     ordered = order_checks(checks)
     problems = [problem for check in ordered for problem in check.problems]
+    warnings = [warning for check in ordered for warning in check.warnings]
     failed = any(check.outcome == "fail" for check in ordered)
     exit_code = int(ExitCode.SAFETY) if failed else int(ExitCode.SUCCESS)
 
     payload: dict[str, Any] = {"checks": [check.as_entry() for check in ordered]}
     if options.json_output:
         emit_envelope(
-            "doctor", payload, started_at=started_at, errors=problems, exit_code=exit_code
+            "doctor",
+            payload,
+            started_at=started_at,
+            warnings=warnings,
+            errors=problems,
+            exit_code=exit_code,
         )
     elif not options.quiet:
         # The table is the report: a failing row already carries its problem's

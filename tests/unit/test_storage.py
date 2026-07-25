@@ -17,7 +17,7 @@ checks built on these primitives are `tests/unit/test_preflight.py`.
 
 import os
 import stat
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 
@@ -26,13 +26,19 @@ from hfcache.errors import ExitCode, SafetyError
 from hfcache.identity import ProbeId
 from hfcache.paths import ArchiveLayout
 from hfcache.storage import (
+    BYTES_PER_GIB,
+    CapacityFacts,
     MountEntry,
     MountFacts,
     _exercise_probe,
     _remove_probe,
     atomic_write_bytes,
+    capacity_problems,
+    capacity_warnings,
+    describe_capacity,
     describe_mount,
     device_problems,
+    effective_reserve,
     fsync_directory,
     is_initialized,
     is_temporary_sibling,
@@ -44,9 +50,6 @@ from hfcache.storage import (
     same_filesystem_problems,
     temporary_sibling,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 
@@ -575,3 +578,149 @@ def test_an_archive_root_that_cannot_be_examined_is_hfmnt008(tmp_path: Path):
     problems = same_filesystem_problems(ArchiveLayout(root=tmp_path / "absent"))
 
     assert codes(problems) == ["HFMNT008"]
+
+
+# --------------------------------------------------------------------------- #
+# Capacity
+# --------------------------------------------------------------------------- #
+
+GIB = BYTES_PER_GIB
+
+
+def statvfs_result(*, total_bytes: int, available_bytes: int, free_bytes: int | None = None):
+    """A `statvfs` answer with only the fields `describe_capacity` reads set."""
+    block = 4096
+    free = available_bytes if free_bytes is None else free_bytes
+    return os.statvfs_result(
+        (
+            block,
+            block,
+            total_bytes // block,
+            free // block,
+            available_bytes // block,
+            0,
+            0,
+            0,
+            0,
+            255,
+        )
+    )
+
+
+def facts(*, total: int, available: int) -> CapacityFacts:
+    return CapacityFacts(path=Path("/srv/hfcache"), total_bytes=total, available_bytes=available)
+
+
+def test_capacity_is_measured_from_the_filesystem(tmp_path: Path):
+    measured = describe_capacity(tmp_path)
+
+    assert measured.total_bytes > 0
+    assert 0 <= measured.available_bytes <= measured.total_bytes
+
+
+def test_available_space_is_what_this_identity_can_use_not_what_root_can(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # `f_bfree` includes the root-reserved portion and the writer is not root on
+    # this filesystem, so reading it would overstate the headroom.
+    def measured(_path):
+        return statvfs_result(total_bytes=100 * GIB, available_bytes=20 * GIB, free_bytes=30 * GIB)
+
+    monkeypatch.setattr("hfcache.storage.os.statvfs", measured)
+
+    assert describe_capacity(tmp_path).available_bytes == 20 * GIB
+
+
+def test_a_filesystem_that_cannot_be_measured_is_hfmnt008(tmp_path: Path):
+    # Unknown capacity is a different statement from insufficient capacity, and
+    # only the second one may be reported as `HFMNT011`.
+    with pytest.raises(SafetyError) as caught:
+        describe_capacity(tmp_path / "absent")
+
+    assert codes(caught.value.problems) == ["HFMNT008"]
+
+
+def test_capacity_facts_render_for_a_payload():
+    assert facts(total=100, available=40).as_payload() == {
+        "available_bytes": 40,
+        "total_bytes": 100,
+    }
+
+
+@pytest.mark.parametrize(
+    ("total", "gib", "percent", "expected"),
+    [
+        # The absolute floor binds on a small dataset...
+        (200 * GIB, 100, 10, 100 * GIB),
+        # ...and the proportional rule on a large one.
+        (10_000 * GIB, 100, 10, 1_000 * GIB),
+        # Either may be switched off alone.
+        (200 * GIB, 0, 10, 20 * GIB),
+        (200 * GIB, 100, 0, 100 * GIB),
+        # Both off means no reserve at all, which is a choice an operator may make.
+        (200 * GIB, 0, 0, 0),
+    ],
+)
+def test_the_reserve_is_whichever_minimum_binds_harder(total, gib, percent, expected):
+    assert effective_reserve(total, minimum_gib=gib, minimum_percent=percent) == expected
+
+
+def test_capacity_above_the_reserve_is_no_problem():
+    assert (
+        capacity_problems(facts(total=100 * GIB, available=50 * GIB), reserve_bytes=10 * GIB) == []
+    )
+
+
+def test_capacity_below_the_reserve_is_hfmnt011():
+    problems = capacity_problems(facts(total=100 * GIB, available=5 * GIB), reserve_bytes=10 * GIB)
+
+    assert codes(problems) == ["HFMNT011"]
+    assert problems[0].context["required_bytes"] == 10 * GIB
+
+
+def test_the_need_is_counted_on_top_of_the_reserve():
+    # Plan §19 item 9: free capacity must exceed the estimated download, plus the
+    # publication bytes in copy mode, plus the reserve — not the largest of them.
+    room = facts(total=100 * GIB, available=15 * GIB)
+
+    assert capacity_problems(room, reserve_bytes=10 * GIB, needed_bytes=4 * GIB) == []
+    assert codes(capacity_problems(room, reserve_bytes=10 * GIB, needed_bytes=6 * GIB)) == [
+        "HFMNT011"
+    ]
+
+
+def test_exactly_meeting_the_requirement_is_not_a_failure():
+    assert (
+        capacity_problems(facts(total=100 * GIB, available=10 * GIB), reserve_bytes=10 * GIB) == []
+    )
+
+
+def test_ample_headroom_raises_no_warning():
+    assert (
+        capacity_warnings(facts(total=100 * GIB, available=50 * GIB), reserve_bytes=10 * GIB) == []
+    )
+
+
+def test_headroom_within_a_tenth_of_the_reserve_is_hfwrn005():
+    # 10 GiB reserved, 10.5 GiB free: the run succeeds, and the operator should
+    # hear about it before the one that does not.
+    warnings = capacity_warnings(
+        facts(total=100 * GIB, available=10 * GIB + GIB // 2), reserve_bytes=10 * GIB
+    )
+
+    assert codes(warnings) == ["HFWRN005"]
+    assert warnings[0].context["headroom_bytes"] == GIB // 2
+
+
+def test_a_reserve_of_zero_never_warns():
+    # An operator who configured no reserve asked for no warning about it.
+    assert capacity_warnings(facts(total=100 * GIB, available=0), reserve_bytes=0) == []
+
+
+def test_the_warning_accounts_for_the_run_as_well_as_the_reserve():
+    room = facts(total=100 * GIB, available=20 * GIB)
+
+    assert capacity_warnings(room, reserve_bytes=10 * GIB) == []
+    assert codes(capacity_warnings(room, reserve_bytes=10 * GIB, needed_bytes=10 * GIB)) == [
+        "HFWRN005"
+    ]

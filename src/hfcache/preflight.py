@@ -36,7 +36,12 @@ from typing import TYPE_CHECKING, Any, Final, Literal, Self, final
 
 from hfcache.errors import Problem, SafetyError
 from hfcache.storage import (
+    BYTES_PER_GIB,
+    capacity_problems,
+    capacity_warnings,
+    describe_capacity,
     describe_mount,
+    effective_reserve,
     is_initialized,
     mount_problems,
     probe_writability,
@@ -48,6 +53,7 @@ from hfcache.storage import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from hfcache.config import StorageConfig
     from hfcache.paths import ArchiveLayout
     from hfcache.storage import MountEntry, MountFacts
 
@@ -119,6 +125,10 @@ class Check:
     """One check and what it proved (`docs/cli.md` §4.1).
 
     `problems` is what failed, and is empty for anything but a `fail`.
+    `warnings` is what a check noticed while passing — free space above the
+    reserve but not by much — and never changes an exit code on its own
+    (`docs/cli.md` §5.6).
+
     `blocking_code` is set only on a skip that a mutating command may not proceed
     past; the gate turns it into a problem under that code, and `doctor` ignores
     it, which is the whole difference between the two consumers.
@@ -128,12 +138,13 @@ class Check:
     outcome: Literal["pass", "fail", "skipped"]
     detail: str
     problems: tuple[Problem, ...] = ()
+    warnings: tuple[Problem, ...] = ()
     blocking_code: str | None = None
 
     @classmethod
-    def passed(cls, name: str, detail: str) -> Self:
+    def passed(cls, name: str, detail: str, *, warnings: Sequence[Problem] = ()) -> Self:
         """Record a check that ran and proved what it set out to."""
-        return cls(name=name, outcome="pass", detail=detail)
+        return cls(name=name, outcome="pass", detail=detail, warnings=tuple(warnings))
 
     @classmethod
     def failed(cls, name: str, problems: Sequence[Problem]) -> Self:
@@ -173,24 +184,32 @@ def order_checks(checks: Iterable[Check]) -> tuple[Check, ...]:
 def storage_checks(
     layout: ArchiveLayout,
     *,
-    archive_id: str,
+    storage: StorageConfig,
+    needed_bytes: int = 0,
     read_only: bool = False,
     table: Sequence[MountEntry] | None = None,
 ) -> list[Check]:
-    """Run every storage check that exists today: `docs/cli.md` §2 rows 2-8.
+    """Run every storage check that exists today: `docs/cli.md` §2 rows 2-8 and 12.
 
-    Rows 9-12 are absent until `STO-003`, `STO-007`, and `STO-009` land.
-    `archive_id` is the configured `storage.archive_id`, which the sentinel must
-    equal (`FS-03`). `table` is the parsed mount table, supplied by tests so a
-    temporary directory can stand in for the NFS archive; production reads the
-    kernel's.
+    Rows 9-11 are absent until `STO-007` and `STO-009` land. The whole
+    `[storage]` table is taken rather than the two or three fields used today,
+    because these checks are the code that reads that table: `archive_id` for the
+    sentinel, the two free-space minimums for the reserve, and `publication_mode`
+    for the hardlink check when it arrives.
+
+    `table` is the parsed mount table, supplied by tests so a temporary directory
+    can stand in for the NFS archive; production reads the kernel's.
     """
     facts = describe_mount(layout.root, table=table)
     checks = _mount_checks(facts)
     proven = all(check.outcome == "pass" for check in checks)
-    checks.append(_sentinel_check(layout, archive_id=archive_id, proven=proven))
+    checks.append(_sentinel_check(layout, archive_id=storage.archive_id, proven=proven))
     checks.append(_writability_check(layout, proven=proven, read_only=read_only))
     checks.append(_staging_check(layout, proven=proven))
+    if proven:
+        checks.append(_capacity_check(layout, storage, needed_bytes=needed_bytes))
+    else:
+        checks.append(Check.skipped("free_space", _UNPROVEN))
     return checks
 
 
@@ -292,8 +311,47 @@ def _staging_check(layout: ArchiveLayout, *, proven: bool) -> Check:
     )
 
 
+def _capacity_check(layout: ArchiveLayout, storage: StorageConfig, *, needed_bytes: int) -> Check:
+    """`doctor` check 12 — free capacity against the need plus the reserve.
+
+    Unlike checks 6-11 this does not need an initialized archive: `statvfs` on a
+    proven mount answers whether there is room, and an operator sizing a dataset
+    before running `archive init` is exactly who wants the answer
+    (`docs/progress.md` decision 39).
+    """
+    name = "free_space"
+    try:
+        facts = describe_capacity(layout.root)
+    except SafetyError as error:
+        return Check.failed(name, error.problems)
+    reserve = effective_reserve(
+        facts.total_bytes,
+        minimum_gib=storage.minimum_free_space_gib,
+        minimum_percent=storage.minimum_free_space_percent,
+    )
+    problems = capacity_problems(facts, reserve_bytes=reserve, needed_bytes=needed_bytes)
+    if problems:
+        return Check.failed(name, problems)
+    warnings = capacity_warnings(facts, reserve_bytes=reserve, needed_bytes=needed_bytes)
+    detail = (
+        f"{_gib(facts.available_bytes)} free of {_gib(facts.total_bytes)}, reserve {_gib(reserve)}"
+    )
+    if warnings:
+        detail = f"{detail} — approaching the reserve"
+    return Check.passed(name, detail, warnings=warnings)
+
+
+def _gib(value: int) -> str:
+    """Render a byte count the way an operator sizing a dataset thinks about it."""
+    return f"{value / BYTES_PER_GIB:.1f} GiB"
+
+
 def require_storage_safety(
-    layout: ArchiveLayout, *, archive_id: str, table: Sequence[MountEntry] | None = None
+    layout: ArchiveLayout,
+    *,
+    storage: StorageConfig,
+    needed_bytes: int = 0,
+    table: Sequence[MountEntry] | None = None,
 ) -> tuple[Check, ...]:
     """Refuse to proceed unless every storage requirement is proven (plan §19).
 
@@ -302,8 +360,14 @@ def require_storage_safety(
     not run as a check that did not pass — the point of a gate is that nothing
     unproven gets through it, and `--read-only` is deliberately not an option
     here, because a command that is about to write has no business asking for it.
+
+    `needed_bytes` is what this particular run intends to consume: the estimated
+    download plus, in copy mode, the projected publication bytes. It defaults to
+    zero for a caller that is only establishing that the archive is usable.
     """
-    checks = order_checks(storage_checks(layout, archive_id=archive_id, table=table))
+    checks = order_checks(
+        storage_checks(layout, storage=storage, needed_bytes=needed_bytes, table=table)
+    )
     problems: list[Problem] = []
     for check in checks:
         problems.extend(check.problems)

@@ -51,13 +51,19 @@ enabled = false
 """
 
 
-def config_for(archive_root: str) -> str:
+def config_for(archive_root: str, *, reserve_gib: int = 0, reserve_percent: int = 0) -> str:
+    # The reserve defaults to nothing here, not to the schema's 100 GiB / 10%:
+    # the archive under test is a directory on whatever filesystem `/tmp` is, so
+    # the real defaults would make `free_space` pass or fail according to how
+    # full this host happens to be. The capacity tests set it explicitly.
     return f"""
 schema_version = 1
 
 [storage]
 archive_root = "{archive_root}"
 archive_id = "{ARCHIVE_ID}"
+minimum_free_space_gib = {reserve_gib}
+minimum_free_space_percent = {reserve_percent}
 {REPOSITORIES}"""
 
 
@@ -65,7 +71,13 @@ CONFIG = config_for(ABSENT_ROOT)
 
 # `docs/cli.md` §2 rows 2-8, which are what `STO-001` and `STO-002` implement.
 MOUNT_CHECKS = ("archive_root", "mount_point", "filesystem_type", "mount_writable")
-STORAGE_CHECKS = (*MOUNT_CHECKS, "sentinel", "directory_writability", "staging_filesystem")
+STORAGE_CHECKS = (
+    *MOUNT_CHECKS,
+    "sentinel",
+    "directory_writability",
+    "staging_filesystem",
+    "free_space",
+)
 
 # Rows 9-11: capabilities `--read-only` reports as unproven, whose own checks
 # arrive with `STO-007` and `STO-009`.
@@ -185,7 +197,7 @@ def test_checks_needing_an_initialized_archive_report_that_as_the_reason(mounted
     for name in ("sentinel", "directory_writability", "staging_filesystem"):
         assert checks[name]["outcome"] == "skipped"
         assert "not initialized" in checks[name]["detail"]
-    for name in MOUNT_CHECKS:
+    for name in (*MOUNT_CHECKS, "free_space"):
         assert checks[name]["outcome"] == "pass", name
 
 
@@ -196,6 +208,44 @@ def test_the_writability_probe_leaves_nothing_behind(initialized_config: Path, m
     assert invoke(initialized_config, "doctor").exit_code == ExitCode.SUCCESS
 
     assert list((mounted_root / ".store" / "health").iterdir()) == []
+
+
+def test_doctor_fails_when_free_space_is_below_the_reserve(tmp_path: Path, mounted_root: Path):
+    # A reserve of the whole filesystem cannot be met by definition, which is the
+    # portable way to provoke this without filling a disk.
+    path = tmp_path / "reserved.toml"
+    path.write_text(config_for(str(mounted_root), reserve_percent=100), encoding="utf-8")
+
+    result = invoke(path, "doctor")
+
+    assert result.exit_code == ExitCode.SAFETY
+    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFMNT011"]
+
+
+def test_doctor_warns_without_failing_when_free_space_approaches_the_reserve(
+    initialized_config: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # `HFWRN005` never changes a `0` exit on its own (`docs/cli.md` §5.6). The
+    # filesystem is fabricated because a temporary directory's real headroom is
+    # whatever this host happens to have.
+    def measured(_path):
+        block = 4096
+        total, available = 100 * (1024**3), 21 * (1024**3)
+        return os.statvfs_result(
+            (block, block, total // block, available // block, available // block, 0, 0, 0, 0, 255)
+        )
+
+    monkeypatch.setattr("hfcache.storage.os.statvfs", measured)
+    path = initialized_config
+    path.write_text(config_for(str(path.parent / "archive"), reserve_percent=20), encoding="utf-8")
+
+    result = invoke(path, "doctor")
+    envelope = json.loads(result.output)
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert envelope["outcome"] == "success_with_warnings"
+    assert [warning["code"] for warning in envelope["warnings"]] == ["HFWRN005"]
+    assert checks_of(result)["free_space"]["outcome"] == "pass"
 
 
 def test_read_only_says_what_it_cannot_prove(initialized_config: Path):

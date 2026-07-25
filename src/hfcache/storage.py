@@ -41,14 +41,20 @@ if TYPE_CHECKING:
     from hfcache.paths import ArchiveLayout
 
 __all__ = [
+    "BYTES_PER_GIB",
     "MOUNT_TABLE",
     "NFS_FILESYSTEM_TYPES",
     "SENTINEL_MODE",
+    "CapacityFacts",
     "MountEntry",
     "MountFacts",
     "atomic_write_bytes",
+    "capacity_problems",
+    "capacity_warnings",
+    "describe_capacity",
     "describe_mount",
     "device_problems",
+    "effective_reserve",
     "fsync_directory",
     "is_initialized",
     "is_temporary_sibling",
@@ -76,6 +82,17 @@ NFS_FILESYSTEM_TYPES: Final = frozenset({"nfs", "nfs4"})
 
 SENTINEL_MODE: Final = 0o640
 """`.hfcache-root` is readable to the group, writable only by the writer (§5.2)."""
+
+BYTES_PER_GIB: Final = 1024**3
+"""`minimum_free_space_gib` is gibibytes, matching how ZFS reports a quota."""
+
+_APPROACHING_RESERVE_PERCENT: Final = 10
+"""How close to the reserve free capacity gets before `HFWRN005` is raised.
+
+`docs/cli.md` §5.6 defines the warning but fixes no threshold, so this is the
+application's (`docs/progress.md` decision 38). Expressed against the reserve
+rather than as an absolute figure, so it scales with the deployment.
+"""
 
 _MOUNTINFO_ESCAPES: Final = {"040": " ", "011": "\t", "012": "\n", "134": "\\"}
 """The four octal escapes `proc_pid_mountinfo(5)` uses in a mount point."""
@@ -515,6 +532,133 @@ def same_filesystem_problems(layout: ArchiveLayout) -> list[Problem]:
             problems.append(Problem(code="HFMNT008", message=message, location=where))
     problems.extend(device_problems(devices, root_device=root_device))
     return problems
+
+
+# --------------------------------------------------------------------------- #
+# Capacity
+# --------------------------------------------------------------------------- #
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class CapacityFacts:
+    """What `statvfs(2)` reports about the filesystem holding the archive.
+
+    `total_bytes` is the dataset's *quota* when one is set, because that is what
+    the NFS server reports as the filesystem size — which is exactly what
+    `docs/configuration.md` §4's "quota, or capacity when no quota is set" asks
+    for, without the writer needing to know which case it is in.
+
+    `available_bytes` is `f_bavail`, not `f_bfree`: the difference is the
+    root-reserved portion, and the writer is not root on this filesystem.
+    """
+
+    path: Path
+    total_bytes: int
+    available_bytes: int
+
+    def as_payload(self) -> dict[str, Any]:
+        """Render for a `--json` payload."""
+        return {
+            "available_bytes": self.available_bytes,
+            "total_bytes": self.total_bytes,
+        }
+
+
+def describe_capacity(path: Path) -> CapacityFacts:
+    """Measure the filesystem holding `path`.
+
+    A `statvfs` that fails is `HFMNT008` rather than `HFMNT011`: the capacity is
+    unknown, which is a different statement from "the capacity is too small",
+    and only the second one may be reported as a capacity failure.
+    """
+    try:
+        status = os.statvfs(path)
+    except OSError as exc:
+        message = (
+            f"the filesystem holding {path} could not be measured ({exc.strerror}), so free "
+            f"capacity cannot be compared against the configured reserve"
+        )
+        raise SafetyError.single(message, code="HFMNT008", location=str(path)) from exc
+    return CapacityFacts(
+        path=path,
+        total_bytes=status.f_blocks * status.f_frsize,
+        available_bytes=status.f_bavail * status.f_frsize,
+    )
+
+
+def effective_reserve(total_bytes: int, *, minimum_gib: int, minimum_percent: int) -> int:
+    """The greater of the two configured minimums (`docs/configuration.md` §4).
+
+    Whichever binds harder wins, so a small dataset is protected by the absolute
+    floor and a large one by the proportional rule, without an operator having to
+    work out which applies.
+    """
+    return max(minimum_gib * BYTES_PER_GIB, total_bytes * minimum_percent // 100)
+
+
+def capacity_problems(
+    facts: CapacityFacts, *, reserve_bytes: int, needed_bytes: int = 0
+) -> list[Problem]:
+    """Report `HFMNT011` when free capacity does not cover the need plus the reserve.
+
+    Plan §19 item 9. `needed_bytes` is the estimated download plus, in copy mode,
+    the projected publication bytes; `doctor` passes `0`, because it is reporting
+    on the archive rather than planning a run.
+    """
+    required = needed_bytes + reserve_bytes
+    if facts.available_bytes >= required:
+        return []
+    message = (
+        f"{facts.path} has {facts.available_bytes} bytes free, but this run requires "
+        f"{needed_bytes} plus a reserve of {reserve_bytes}, or {required} in total"
+    )
+    return [
+        Problem(
+            code="HFMNT011",
+            message=message,
+            location=str(facts.path),
+            context={
+                "available_bytes": facts.available_bytes,
+                "needed_bytes": needed_bytes,
+                "required_bytes": required,
+                "reserve_bytes": reserve_bytes,
+            },
+        )
+    ]
+
+
+def capacity_warnings(
+    facts: CapacityFacts, *, reserve_bytes: int, needed_bytes: int = 0
+) -> list[Problem]:
+    """Report `HFWRN005` when capacity clears the reserve, but not by much.
+
+    The warning exists so an operator learns before a run *fails*, so the margin
+    is expressed against the reserve itself rather than as an absolute figure: a
+    deployment that reserved 100 GiB and a deployment that reserved 1 TiB want to
+    hear about it at different points. A reserve of zero never warns, which is
+    the right reading of an operator who configured no reserve at all.
+    """
+    margin = reserve_bytes * _APPROACHING_RESERVE_PERCENT // 100
+    headroom = facts.available_bytes - needed_bytes - reserve_bytes
+    if not margin or headroom >= margin:
+        return []
+    message = (
+        f"{facts.path} has {facts.available_bytes} bytes free, which is within "
+        f"{_APPROACHING_RESERVE_PERCENT}% of the {reserve_bytes}-byte reserve"
+    )
+    return [
+        Problem(
+            code="HFWRN005",
+            message=message,
+            location=str(facts.path),
+            context={
+                "available_bytes": facts.available_bytes,
+                "headroom_bytes": headroom,
+                "reserve_bytes": reserve_bytes,
+            },
+        )
+    ]
 
 
 # --------------------------------------------------------------------------- #

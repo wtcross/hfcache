@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from hfcache.archive import initialize_archive
+from hfcache.config import StorageConfig
 from hfcache.errors import ExitCode, SafetyError
 from hfcache.paths import ArchiveLayout
 from hfcache.preflight import (
@@ -52,6 +53,29 @@ CLI_DOCUMENT = Path(__file__).resolve().parents[2] / "docs" / "cli.md"
 TABLE_HEADER = "| # | `name` | Proves | Writes | Code on failure |"
 
 _ROW = re.compile(r"^\|\s*(\d+)\s*\|\s*`(\w+)`\s*\|")
+
+
+def storage_config(archive_id: str = ARCHIVE_ID, **overrides) -> StorageConfig:
+    """The `[storage]` table these checks read.
+
+    The free-space minimums default to zero here rather than to the schema's
+    100 GiB / 10%, because the archive under test is a directory on whatever
+    filesystem `/tmp` is: the real defaults would make every unrelated check fail
+    or pass according to how full this host happens to be. The capacity tests set
+    them explicitly, which is the only place they are the subject.
+    """
+    # Validated from a mapping rather than constructed, because that is how
+    # configuration really arrives: `archive_root` is parsed from a TOML string
+    # by a field validator, not assigned as a `Path`.
+    return StorageConfig.model_validate(
+        {
+            "archive_root": "/srv/hfcache",
+            "archive_id": archive_id,
+            "minimum_free_space_gib": 0,
+            "minimum_free_space_percent": 0,
+            **overrides,
+        }
+    )
 
 
 def nfs_line(mount_point: str, *, filesystem: str = "nfs4", options: str = "rw") -> str:
@@ -94,7 +118,7 @@ def codes(problems) -> list[str]:
 
 def gate_problems(layout: ArchiveLayout, table) -> tuple[Problem, ...]:
     with pytest.raises(SafetyError) as caught:
-        require_storage_safety(layout, archive_id=ARCHIVE_ID, table=table)
+        require_storage_safety(layout, storage=storage_config(), table=table)
     return caught.value.problems
 
 
@@ -171,7 +195,7 @@ def test_a_check_renders_in_the_documented_entry_shape():
 def test_a_failed_check_reports_its_problems_as_its_detail(layout: ArchiveLayout):
     # The human table and the envelope's `errors` array then say the same thing
     # rather than two things.
-    failed = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=()))["mount_point"]
+    failed = named(storage_checks(layout, storage=storage_config(), table=()))["mount_point"]
 
     assert failed.outcome == "fail"
     assert failed.detail == "; ".join(problem.message for problem in failed.problems)
@@ -183,7 +207,7 @@ def test_a_failed_check_reports_its_problems_as_its_detail(layout: ArchiveLayout
 
 
 def test_a_healthy_mount_passes_every_check_that_only_reads(layout: ArchiveLayout, table):
-    checks = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(layout, storage=storage_config(), table=table))
 
     for name in ("archive_root", "mount_point", "filesystem_type", "mount_writable"):
         assert checks[name].outcome == "pass", name
@@ -192,7 +216,9 @@ def test_a_healthy_mount_passes_every_check_that_only_reads(layout: ArchiveLayou
 
 def test_an_absent_root_fails_the_first_check_and_skips_the_rest(tmp_path: Path, table):
     checks = named(
-        storage_checks(ArchiveLayout(root=tmp_path / "absent"), archive_id=ARCHIVE_ID, table=table)
+        storage_checks(
+            ArchiveLayout(root=tmp_path / "absent"), storage=storage_config(), table=table
+        )
     )
 
     assert codes(checks["archive_root"].problems) == ["HFMNT001"]
@@ -206,13 +232,13 @@ def test_a_symlinked_root_fails_the_root_check_without_being_followed(
     link = tmp_path / "link"
     link.symlink_to(archive_root)
 
-    checks = named(storage_checks(ArchiveLayout(root=link), archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(ArchiveLayout(root=link), storage=storage_config(), table=table))
 
     assert codes(checks["archive_root"].problems) == ["HFMNT015"]
 
 
 def test_a_directory_that_is_not_a_mount_point_fails_only_that_check(layout: ArchiveLayout):
-    checks = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=()))
+    checks = named(storage_checks(layout, storage=storage_config(), table=()))
 
     assert checks["archive_root"].outcome == "pass"
     assert codes(checks["mount_point"].problems) == ["HFMNT002"]
@@ -223,7 +249,7 @@ def test_a_directory_that_is_not_a_mount_point_fails_only_that_check(layout: Arc
 def test_a_non_nfs_mount_fails_only_the_type_check(archive_root: Path, layout: ArchiveLayout):
     table = parse_mount_table(nfs_line(os.path.realpath(archive_root), filesystem="ext4"))
 
-    checks = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(layout, storage=storage_config(), table=table))
 
     assert codes(checks["filesystem_type"].problems) == ["HFMNT003"]
     assert checks["mount_writable"].outcome == "pass"
@@ -232,7 +258,7 @@ def test_a_non_nfs_mount_fails_only_the_type_check(archive_root: Path, layout: A
 def test_a_read_only_mount_fails_only_the_writable_check(archive_root: Path, layout: ArchiveLayout):
     table = parse_mount_table(nfs_line(os.path.realpath(archive_root), options="ro"))
 
-    checks = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(layout, storage=storage_config(), table=table))
 
     assert checks["filesystem_type"].outcome == "pass"
     assert codes(checks["mount_writable"].problems) == ["HFMNT004"]
@@ -245,7 +271,7 @@ def test_both_mount_failures_are_reported_as_their_own_checks(
         nfs_line(os.path.realpath(archive_root), filesystem="ext4", options="ro")
     )
 
-    checks = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(layout, storage=storage_config(), table=table))
 
     assert codes(checks["filesystem_type"].problems) == ["HFMNT003"]
     assert codes(checks["mount_writable"].problems) == ["HFMNT004"]
@@ -257,7 +283,7 @@ def test_both_mount_failures_are_reported_as_their_own_checks(
 
 
 def test_a_matching_sentinel_passes_and_names_the_archive(initialized, table):
-    check = named(storage_checks(initialized, archive_id=ARCHIVE_ID, table=table))["sentinel"]
+    check = named(storage_checks(initialized, storage=storage_config(), table=table))["sentinel"]
 
     assert check.outcome == "pass"
     assert ARCHIVE_ID in check.detail
@@ -265,7 +291,9 @@ def test_a_matching_sentinel_passes_and_names_the_archive(initialized, table):
 
 def test_a_sentinel_that_disagrees_with_configuration_is_hfmnt007(initialized, table):
     # `FS-03`: never repaired, never regenerated, never ignored.
-    checks = named(storage_checks(initialized, archive_id=OTHER_ARCHIVE_ID, table=table))
+    checks = named(
+        storage_checks(initialized, storage=storage_config(OTHER_ARCHIVE_ID), table=table)
+    )
 
     assert codes(checks["sentinel"].problems) == ["HFMNT007"]
 
@@ -273,7 +301,7 @@ def test_a_sentinel_that_disagrees_with_configuration_is_hfmnt007(initialized, t
 def test_a_malformed_sentinel_is_hfmnt006(initialized, table):
     initialized.sentinel.write_text("{ not json", encoding="utf-8")
 
-    checks = named(storage_checks(initialized, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(initialized, storage=storage_config(), table=table))
 
     assert codes(checks["sentinel"].problems) == ["HFMNT006"]
 
@@ -281,7 +309,7 @@ def test_a_malformed_sentinel_is_hfmnt006(initialized, table):
 def test_an_unreadable_sentinel_is_hfmnt006(initialized, table):
     initialized.sentinel.chmod(0o000)
     try:
-        checks = named(storage_checks(initialized, archive_id=ARCHIVE_ID, table=table))
+        checks = named(storage_checks(initialized, storage=storage_config(), table=table))
     finally:
         initialized.sentinel.chmod(0o640)
 
@@ -291,7 +319,9 @@ def test_an_unreadable_sentinel_is_hfmnt006(initialized, table):
 def test_a_bad_sentinel_does_not_stop_the_checks_below_it(initialized, table):
     # The report is a record of what was proven. A sentinel naming a different
     # archive says nothing about whether this mount is writable.
-    checks = named(storage_checks(initialized, archive_id=OTHER_ARCHIVE_ID, table=table))
+    checks = named(
+        storage_checks(initialized, storage=storage_config(OTHER_ARCHIVE_ID), table=table)
+    )
 
     assert checks["directory_writability"].outcome == "pass"
     assert checks["staging_filesystem"].outcome == "pass"
@@ -299,7 +329,7 @@ def test_a_bad_sentinel_does_not_stop_the_checks_below_it(initialized, table):
 
 def test_the_gate_refuses_a_sentinel_that_names_another_archive(initialized, table):
     with pytest.raises(SafetyError) as caught:
-        require_storage_safety(initialized, archive_id=OTHER_ARCHIVE_ID, table=table)
+        require_storage_safety(initialized, storage=storage_config(OTHER_ARCHIVE_ID), table=table)
 
     assert codes(caught.value.problems) == ["HFMNT007"]
 
@@ -310,7 +340,7 @@ def test_the_gate_refuses_a_sentinel_that_names_another_archive(initialized, tab
 
 
 def test_an_initialized_archive_proves_writability_and_one_filesystem(initialized, table):
-    checks = named(storage_checks(initialized, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(initialized, storage=storage_config(), table=table))
 
     assert checks["directory_writability"].outcome == "pass"
     assert checks["staging_filesystem"].outcome == "pass"
@@ -318,7 +348,7 @@ def test_an_initialized_archive_proves_writability_and_one_filesystem(initialize
 
 
 def test_an_uninitialized_archive_reports_that_as_the_skip_reason(layout: ArchiveLayout, table):
-    checks = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(layout, storage=storage_config(), table=table))
 
     for name in ("sentinel", "directory_writability", "staging_filesystem"):
         assert checks[name].outcome == "skipped"
@@ -330,7 +360,7 @@ def test_only_the_sentinel_check_holds_an_uninitialized_archive_against_a_writer
 ):
     # One missing archive is one problem. The checks below the sentinel skip on
     # the same condition without reporting it a second and third time.
-    checks = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(layout, storage=storage_config(), table=table))
 
     assert checks["sentinel"].blocking_code == "HFMNT005"
     assert checks["directory_writability"].blocking_code is None
@@ -338,7 +368,9 @@ def test_only_the_sentinel_check_holds_an_uninitialized_archive_against_a_writer
 
 
 def test_read_only_skips_the_probe_and_says_so(initialized, table):
-    checks = named(storage_checks(initialized, archive_id=ARCHIVE_ID, read_only=True, table=table))
+    checks = named(
+        storage_checks(initialized, storage=storage_config(), read_only=True, table=table)
+    )
 
     assert checks["directory_writability"].outcome == "skipped"
     assert checks["directory_writability"].detail == READ_ONLY
@@ -346,7 +378,9 @@ def test_read_only_skips_the_probe_and_says_so(initialized, table):
 
 
 def test_read_only_still_proves_the_check_that_only_stats(initialized, table):
-    checks = named(storage_checks(initialized, archive_id=ARCHIVE_ID, read_only=True, table=table))
+    checks = named(
+        storage_checks(initialized, storage=storage_config(), read_only=True, table=table)
+    )
 
     assert checks["staging_filesystem"].outcome == "pass"
 
@@ -354,7 +388,7 @@ def test_read_only_still_proves_the_check_that_only_stats(initialized, table):
 def test_nothing_is_written_to_a_mount_that_was_not_proven(layout: ArchiveLayout):
     # The probe writes. It must never write to a target that failed the checks
     # whose whole purpose is to establish that it is the archive.
-    checks = named(storage_checks(layout, archive_id=ARCHIVE_ID, table=()))
+    checks = named(storage_checks(layout, storage=storage_config(), table=()))
 
     assert checks["sentinel"].outcome == "skipped"
     assert checks["directory_writability"].outcome == "skipped"
@@ -365,7 +399,7 @@ def test_nothing_is_written_to_a_mount_that_was_not_proven(layout: ArchiveLayout
 def test_a_probe_that_fails_is_reported_as_a_failed_check(initialized, table):
     initialized.health.chmod(0o500)
     try:
-        checks = named(storage_checks(initialized, archive_id=ARCHIVE_ID, table=table))
+        checks = named(storage_checks(initialized, storage=storage_config(), table=table))
     finally:
         initialized.health.chmod(0o700)
 
@@ -375,7 +409,7 @@ def test_a_probe_that_fails_is_reported_as_a_failed_check(initialized, table):
 def test_a_missing_destination_is_reported_as_a_failed_check(initialized, table):
     initialized.trash.rmdir()
 
-    checks = named(storage_checks(initialized, archive_id=ARCHIVE_ID, table=table))
+    checks = named(storage_checks(initialized, storage=storage_config(), table=table))
 
     assert codes(checks["staging_filesystem"].problems) == ["HFMNT008"]
 
@@ -386,7 +420,7 @@ def test_a_missing_destination_is_reported_as_a_failed_check(initialized, table)
 
 
 def test_the_gate_returns_the_ordered_checks_when_everything_passes(initialized, table):
-    checks = require_storage_safety(initialized, archive_id=ARCHIVE_ID, table=table)
+    checks = require_storage_safety(initialized, storage=storage_config(), table=table)
 
     assert [check.name for check in checks] == [
         "archive_root",
@@ -396,6 +430,7 @@ def test_the_gate_returns_the_ordered_checks_when_everything_passes(initialized,
         "sentinel",
         "directory_writability",
         "staging_filesystem",
+        "free_space",
     ]
 
 
@@ -413,7 +448,7 @@ def test_the_gate_carries_every_problem_not_just_the_first(
 
 def test_the_gate_exits_twenty(layout: ArchiveLayout):
     with pytest.raises(SafetyError) as caught:
-        require_storage_safety(layout, archive_id=ARCHIVE_ID, table=())
+        require_storage_safety(layout, storage=storage_config(), table=())
 
     assert caught.value.exit_code == ExitCode.SAFETY
 
@@ -443,3 +478,71 @@ def test_the_gate_offers_no_read_only_mode():
     signature = inspect.signature(require_storage_safety, annotation_format=inspect.Format.STRING)
 
     assert "read_only" not in signature.parameters
+
+
+# --------------------------------------------------------------------------- #
+# Capacity (row 12)
+# --------------------------------------------------------------------------- #
+
+
+def free_space_check(layout: ArchiveLayout, table, **overrides) -> Check:
+    return named(storage_checks(layout, storage=storage_config(**overrides), table=table))[
+        "free_space"
+    ]
+
+
+def test_ample_free_space_passes_and_reports_the_reserve(layout: ArchiveLayout, table):
+    check = free_space_check(layout, table, minimum_free_space_gib=0, minimum_free_space_percent=0)
+
+    assert check.outcome == "pass"
+    assert "reserve 0.0 GiB" in check.detail
+    assert check.warnings == ()
+
+
+def test_free_space_below_the_reserve_is_hfmnt011(layout: ArchiveLayout, table):
+    # A reserve of the whole filesystem cannot be met by definition, which is the
+    # portable way to provoke this without filling a disk.
+    check = free_space_check(layout, table, minimum_free_space_percent=100)
+
+    assert codes(check.problems) == ["HFMNT011"]
+
+
+def test_free_space_does_not_need_an_initialized_archive(layout: ArchiveLayout, table):
+    # Unlike rows 6-11: `statvfs` on a proven mount answers the question, and an
+    # operator sizing a dataset before `archive init` is who wants the answer.
+    assert free_space_check(layout, table).outcome == "pass"
+
+
+def test_free_space_is_skipped_when_the_mount_was_not_proven(layout: ArchiveLayout):
+    check = named(storage_checks(layout, storage=storage_config(), table=()))["free_space"]
+
+    assert check.outcome == "skipped"
+
+
+def test_a_filesystem_that_cannot_be_measured_is_a_failed_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # Defensive: the mount checks passed, so this is the NAS going away between
+    # one syscall and the next.
+    def refuse(path):
+        raise OSError(5, "Input/output error", str(path))
+
+    monkeypatch.setattr("hfcache.storage.os.statvfs", refuse)
+    root = tmp_path / "archive"
+    root.mkdir()
+    table = parse_mount_table(nfs_line(os.path.realpath(root)))
+
+    check = named(storage_checks(ArchiveLayout(root=root), storage=storage_config(), table=table))[
+        "free_space"
+    ]
+
+    assert codes(check.problems) == ["HFMNT008"]
+
+
+def test_the_gate_refuses_a_filesystem_below_its_reserve(initialized, table):
+    with pytest.raises(SafetyError) as caught:
+        require_storage_safety(
+            initialized, storage=storage_config(minimum_free_space_percent=100), table=table
+        )
+
+    assert codes(caught.value.problems) == ["HFMNT011"]
