@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-07-24T21:10:03.400000Z",
+  "last_full_verification": {
+    "completed_at": "2026-07-24T21:09:58.220000Z",
+    "duration_seconds": 612.4,
+    "outcome": "clean",
+    "report": "runs/20260724T205931Z-4c1e8a55b0d24f1e9a3c7d2b6f80e114.json",
+    "started_at": "2026-07-24T20:59:45.800000Z",
+    "throughput_bytes_per_second": 794000000.0,
+    "unique_bytes": 486123904,
+    "unique_objects": 14
+  },
+  "outstanding_failures": [
+    {
+      "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+      "first_seen_at": "2026-07-24T21:09:58.220000Z",
+      "kind": "digest_mismatch",
+      "path": "model.safetensors",
+      "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+      "repository_id": "organization/model-name",
+      "repository_type": "model"
+    }
+  ],
+  "repositories": [
+    {
+      "repository_id": "organization/model-name",
+      "repository_type": "model",
+      "revisions": [
+        {
+          "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+          "outcome": "clean",
+          "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+          "verified_at": "2026-07-24T21:09:58.220000Z"
+        }
+      ]
+    }
+  ],
+  "schema_version": 1
+}

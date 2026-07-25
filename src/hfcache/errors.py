@@ -14,8 +14,11 @@ __all__ = [
     "ConfigurationError",
     "ExitCode",
     "HfcacheError",
+    "IntegrityError",
     "Problem",
+    "RetentionError",
     "SafetyError",
+    "SynchronizationError",
 ]
 
 
@@ -144,3 +147,34 @@ class SafetyError(HfcacheError):
     """
 
     exit_code = ExitCode.SAFETY
+
+
+class SynchronizationError(HfcacheError):
+    """Hub resolution, download, or publication failure. Exits `30`.
+
+    Per-repository: with `sync.continue_on_repository_error`, one of these ends
+    the repository rather than the run, and every local revision is preserved
+    (`AD-06`).
+    """
+
+    exit_code = ExitCode.SYNC
+
+
+class IntegrityError(HfcacheError):
+    """Content does not match its manifest, or a manifest is unusable. Exits `40`.
+
+    Never triggers a rewrite, a prune, or a re-download over the evidence
+    (`AD-13`, `AD-18`). The finding is the point.
+    """
+
+    exit_code = ExitCode.INTEGRITY
+
+
+class RetentionError(HfcacheError):
+    """Prune, repair, or recovery failure. Exits `50`.
+
+    Ranked below integrity in aggregation because degraded retention keeps more
+    data than intended, while an integrity failure means data is already wrong.
+    """
+
+    exit_code = ExitCode.RETENTION

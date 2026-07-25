@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-07-24T20:41:45.010000Z",
+  "repositories": [
+    {
+      "current": {
+        "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+        "publication_generation": 1,
+        "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27"
+      },
+      "enabled": true,
+      "first_published_at": "2026-07-24T20:41:44.310000Z",
+      "last_published_at": "2026-07-24T20:41:44.310000Z",
+      "last_run_status": "published",
+      "last_seen_at": "2026-07-24T20:41:44.310000Z",
+      "managed": true,
+      "repository_id": "organization/model-name",
+      "repository_type": "model",
+      "requested_revision": "main",
+      "revisions": [
+        {
+          "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+          "file_count": 2,
+          "publication_generation": 1,
+          "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+          "published_at": "2026-07-24T20:41:44.310000Z",
+          "total_bytes": 486123904,
+          "verification_state": "verified"
+        }
+      ],
+      "upstream_state": "ok",
+      "warnings": [
+        "HFDEP001"
+      ]
+    }
+  ],
+  "schema_version": 1
+}

@@ -4,7 +4,6 @@ The command surface, global options, JSON envelope, and exit codes are specified
 in `docs/cli.md`. Scheduled runs use exactly the same commands an operator types.
 """
 
-import json
 import platform
 import sys
 from dataclasses import dataclass
@@ -19,6 +18,7 @@ import typer
 
 from hfcache import __version__
 from hfcache.identity import new_run_id
+from hfcache.models import serialize
 
 __all__ = ["app"]
 
@@ -74,9 +74,11 @@ def emit_envelope(
 ) -> None:
     """Write the single JSON envelope defined by `docs/cli.md` §4 to stdout.
 
-    Serialization follows the durable-schema rules in `docs/schemas.md` §1:
-    sorted keys, UTF-8, one trailing newline. Logs and progress go to stderr, so
-    piping stdout is always safe.
+    Serialization goes through the same function durable artifacts use, so
+    sorted keys, UTF-8, and the single trailing newline cannot differ between
+    them. The envelope is written unindented: it is one machine-read line on a
+    pipe, where a durable file is something an operator reads and diffs. Logs
+    and progress go to stderr, so piping stdout is always safe.
     """
     warnings = warnings or []
     errors = errors or []
@@ -93,9 +95,7 @@ def emit_envelope(
         "started_at": started_at,
         "warnings": warnings,
     }
-    sys.stdout.write(
-        json.dumps(envelope, sort_keys=True, ensure_ascii=False, separators=(",", ": ")) + "\n"
-    )
+    sys.stdout.write(serialize(envelope, indent=None))
 
 
 def _dependency_version(distribution: str) -> str:

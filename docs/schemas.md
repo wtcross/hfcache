@@ -20,7 +20,7 @@ These apply to every file in this document.
 | Rule | Requirement |
 | --- | --- |
 | Encoding | UTF-8, no BOM |
-| Serialization | JSON with **sorted keys**, `(",", ": ")` separators, `ensure_ascii=false`, and a single trailing newline |
+| Serialization | JSON with **sorted keys**, **2-space indentation**, `(",", ": ")` separators, `ensure_ascii=false`, and a single trailing newline. Durable files are indented because operators read and diff them during an incident; the `--json` envelope goes through the same serializer with indentation off, because it is one machine-read line on a pipe (`docs/cli.md` §4) |
 | Determinism | Identical logical content produces byte-identical files. Arrays are sorted by a documented key, never by iteration order |
 | Timestamps | RFC 3339 UTC with microsecond precision and a literal `Z`: `2026-07-24T20:57:31.123456Z`. Local time is never written |
 | Durability | Written to a temporary sibling in the same directory, `fsync`ed, then `rename(2)`d into place; the parent directory is `fsync`ed afterwards |
@@ -126,7 +126,7 @@ including by `repair` (`AD-13`, `AD-18`).
   "requested_revision": "main",
   "schema_version": 1,
   "total_bytes": 486123904,
-  "tree": "repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+  "tree": "published/repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27",
   "verification": {
     "algorithm": "sha256",
     "completeness_checked": true,
@@ -364,6 +364,11 @@ and references, and are never treated as authoritative.
 }
 ```
 
+`last_full_verification.report` is archive-relative like every field outside a
+reference, so it names a path under `runs/` that a consumer cannot resolve from
+its own mount. That is intended: it is provenance for the operator, not something
+a consumer is expected to follow.
+
 `outstanding_failures` is the archive's health headline: a non-empty array means
 `hfcache status` reports the archive as degraded until an operator resolves it.
 Entries are never cleared by a later run that simply does not re-check the same
@@ -528,10 +533,10 @@ any mutation.
     "commit_sha": "0123456789abcdef0123456789abcdef01234567",
     "file_count": 14,
     "logical_bytes": 486123904,
-    "manifest": "manifests/models/organization/model-name/0123.../9f14....json",
+    "manifest": "published/manifests/models/organization/model-name/0123.../9f14....json",
     "publication_generation": 1,
     "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
-    "tree": "repos/models/organization/model-name/revisions/0123.../9f14..."
+    "tree": "published/repos/models/organization/model-name/revisions/0123.../9f14..."
   },
   "unique_bytes_released_estimate": 486123904
 }
@@ -597,7 +602,7 @@ rather than replaying intentions (`AD-14`).
   "checkpoints": [
     {
       "evidence": {
-        "path": "repos/models/organization/model-name/revisions/0123.../9f14...",
+        "path": "published/repos/models/organization/model-name/revisions/0123.../9f14...",
         "file_count": 14
       },
       "name": "revision_tree_renamed",
@@ -606,7 +611,7 @@ rather than replaying intentions (`AD-14`).
     },
     {
       "evidence": {
-        "path": "manifests/models/organization/model-name/0123.../9f14....json",
+        "path": "published/manifests/models/organization/model-name/0123.../9f14....json",
         "sha256": "7d2b6f80e1144c1e8a55b0d24f1e9a3c7d2b6f80e1144c1e8a55b0d24f1e9a3c"
       },
       "name": "manifest_published",

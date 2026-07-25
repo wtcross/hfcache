@@ -46,7 +46,7 @@ install smoke test.
 - [x] CFG-001 Strict Pydantic configuration models (2026-07-24, this commit — `src/hfcache/config.py`, `errors.py` `Problem`/`HfcacheError`; all 16 `HFCFG###` codes implemented and each provoked by a test)
 - [x] CFG-002 Token-source abstraction without literal secrets (2026-07-24, this commit — `src/hfcache/credentials.py`: §7 resolution order, `HFARG002`/`HFARG005`/`HFARG006`, `hub_argument` returns `False` and never `None`, redaction proven over generated tokens; no function in the module accepts a token value. The `--token-file` option is parsed by the CLI as of `BOOT-006`; it is *resolved* by the first command that loads configuration, which is `CFG-005`)
 - [x] CFG-003 Repository identity and safe path mapping (2026-07-25, this commit — `src/hfcache/identity.py`: every Hub-facing grammar, `RepositoryIdentity` self-validating, `TYPE:ID[@SHA]` selectors, opaque-id minting; `src/hfcache/paths.py`: the whole §5.1 tree, relative-path grammar, containment, collision folding. Both at 100% branch coverage. `config.py` now imports its identifier grammars rather than defining them)
-- [ ] CFG-004 Manifest and report models
+- [x] CFG-004 Manifest and report models (2026-07-25, this commit — `src/hfcache/models.py` (foundation, sentinel, reference, prune plan, audit records, journal), `manifests.py` (`RevisionManifest`), `reporting.py` (run report, verification report, catalog). One serializer for every writer including the CLI envelope; §1.1 version refusal; a golden fixture per format in `tests/fixtures/schemas/`. All three modules at 100% branch coverage)
 - [ ] CFG-005 `config validate`
 - [ ] CFG-006 Read-only portions of `doctor`, `status`, and `plan`
 - [ ] CFG-007 Deterministic JSON output and error taxonomy
@@ -348,6 +348,16 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     made by the type of artifact being written rather than by a caller remembering
     which base applies.
 
+    Extended at `CFG-004`: the prose was right and three *examples* were wrong.
+    The manifest (§3), prune plan (§8), and journal (§10) examples had all copied
+    the reference's published-relative form into fields their own prose calls
+    archive-relative, so every one of them was missing the `published/` prefix.
+    Corrected in the `CFG-004` commit. The rule that decides the base is narrow:
+    a field is published-relative only when a consumer has to resolve it, which
+    is true of exactly the reference's `tree` and `manifest`. Everything else is
+    archive-relative, including `catalog/verification.json`'s `report`, which
+    names a path under `runs/` that a consumer deliberately cannot follow.
+
 14. **The repository-relative path grammar is published** (2026-07-25, CFG-003).
     `docs/security.md` T-02 required every repository path to be "normalized and
     validated to remain under the publication root" but never said against what
@@ -393,3 +403,47 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     joins identifiers straight into filesystem paths, so it needs a module whose
     whole contract is that a value which came out of it is safe to join. Plan §7 is
     updated in this commit.
+
+18. **Durable files are indented; the `--json` envelope is not** (2026-07-25,
+    CFG-004). `docs/schemas.md` §1 named the separators `(",", ": ")` but no
+    indentation. That pair is exactly what `json.dumps` uses *when indentation is
+    on* — the compact spelling would be `(",", ":")` — and every worked example in
+    the document is 2-space indented, so indentation was intended and unstated.
+    Now stated. The envelope stays unindented, which is not an inconsistency but
+    the distinction that matters: a durable file is read and diffed by an operator
+    during an incident, while the envelope is one machine-read line on a pipe.
+    `docs/cli.md` §4 already listed only the three rules that carry over — sorted
+    keys, UTF-8, trailing newline — so no change was needed there. Both paths call
+    `models.serialize`, so §11's "one shared function" is literal rather than
+    aspirational.
+
+19. **Reading a durable artifact takes the caller's error class *and* code**
+    (2026-07-25, CFG-004). The same malformed file means different things
+    depending on which artifact it is: a bad manifest is `HFVER007` at exit `40`,
+    a bad journal is `HFTXN001` at exit `20`, a bad sentinel is `HFMNT006` at exit
+    `20`. `load` therefore takes both, and applies the code to every problem it
+    reports, with the field path as the location. That is what lets the field
+    validators in `hfcache.identity` and `hfcache.paths` stay ignorant of which
+    artifact they are validating — the artifact names the code, the field names
+    the place. `parse_archive_relative` and `parse_repository_relative` gained an
+    optional `code`; omitted, they raise an uncoded `ValueError` for a validator
+    to collect.
+
+20. **§1.1's "unknown keys are preserved when rewritten" applies only to the
+    journal** (2026-07-25, CFG-004). It contradicts §11's `extra="forbid"` as
+    written. The contradiction is narrower than it looks: manifests are immutable,
+    references are replaced wholesale, and the catalog is rebuilt from scratch, so
+    the transaction journal is the only artifact that is ever read, modified, and
+    written back — the only place an unknown key could be destroyed. Every model
+    forbids unknown keys and reports them by location, which satisfies "reported
+    and never silently dropped". The preservation half is a journal-rewrite
+    concern and belongs to `STO-010`, which is where that rewrite is implemented.
+
+21. **A Pydantic validator must raise `ValueError`, never `TypeError`**
+    (2026-07-25, CFG-004). Found by a test: Pydantic converts `ValueError` and
+    `AssertionError` into validation errors and lets everything else propagate, so
+    a `TypeError` raised for a non-string digest escaped `load` as a bare
+    exception instead of being reported as a coded problem naming the field — the
+    one thing `load` exists to guarantee. Both sites now raise `ValueError` with a
+    `# noqa: TRY004`, since Ruff reasonably prefers `TypeError` for a type check
+    and is wrong about it here.

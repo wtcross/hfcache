@@ -1,0 +1,51 @@
+{
+  "cache_revisions_to_delete": [
+    "0123456789abcdef0123456789abcdef01234567"
+  ],
+  "current": {
+    "commit_sha": "fedcba9876543210fedcba9876543210fedcba98",
+    "publication_generation": 6
+  },
+  "generated_at": "2026-07-24T21:20:00.000000Z",
+  "plan_id": "b71d0e4a3c8f42d190a6c5b3e7f18d24",
+  "reason": "sixth_unique_revision_published",
+  "repository_id": "organization/model-name",
+  "repository_type": "model",
+  "retained": [
+    {
+      "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+      "publication_generation": 1
+    },
+    {
+      "commit_sha": "1234567890abcdef1234567890abcdef12345678",
+      "publication_generation": 2
+    },
+    {
+      "commit_sha": "2345678901abcdef2345678901abcdef23456789",
+      "publication_generation": 3
+    },
+    {
+      "commit_sha": "3456789012abcdef3456789012abcdef3456789a",
+      "publication_generation": 4
+    },
+    {
+      "commit_sha": "456789013abcdef0456789013abcdef0456789ab",
+      "publication_generation": 5
+    },
+    {
+      "commit_sha": "fedcba9876543210fedcba9876543210fedcba98",
+      "publication_generation": 6
+    }
+  ],
+  "schema_version": 1,
+  "selected": {
+    "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+    "file_count": 2,
+    "logical_bytes": 486123904,
+    "manifest": "published/manifests/models/organization/model-name/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27.json",
+    "publication_generation": 1,
+    "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+    "tree": "published/repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27"
+  },
+  "unique_bytes_released_estimate": 486123904
+}

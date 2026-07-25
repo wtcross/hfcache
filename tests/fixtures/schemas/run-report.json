@@ -1,0 +1,45 @@
+{
+  "application_version": "1.0.0",
+  "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+  "command": "sync",
+  "completed_at": "2026-07-24T20:41:46.002000Z",
+  "config_fingerprint": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+  "errors": [],
+  "exit_code": 0,
+  "hostname": "hfcachewriter.lab.cross.solutions",
+  "huggingface_hub_version": "1.24.0",
+  "invocation_mode": "systemd",
+  "outcome": "success",
+  "python_version": "3.14.6",
+  "repositories": [
+    {
+      "downloaded_bytes": 486123904,
+      "duration_seconds": 207.3,
+      "errors": [],
+      "file_count": 2,
+      "hashed_bytes": 486123904,
+      "pruned": null,
+      "publication_generation": 1,
+      "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+      "repository_id": "organization/model-name",
+      "repository_type": "model",
+      "requested_revision": "main",
+      "resolved_commit_sha": "0123456789abcdef0123456789abcdef01234567",
+      "reused_bytes": 0,
+      "status": "published",
+      "warnings": []
+    }
+  ],
+  "run_id": "4c1e8a55b0d24f1e9a3c7d2b6f80e114",
+  "schema_version": 1,
+  "started_at": "2026-07-24T20:38:11.500000Z",
+  "totals": {
+    "downloaded_bytes": 486123904,
+    "hashed_bytes": 486123904,
+    "pruned_logical_bytes": 0,
+    "published_bytes": 486123904,
+    "reused_bytes": 0,
+    "xet_cache_peak_bytes": 12884901888
+  },
+  "warnings": []
+}

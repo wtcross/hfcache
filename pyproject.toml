@@ -95,8 +95,11 @@ ignore = [
 # check disappears under `python -O`. Safety checks raise. Tests may assert.
 
 [tool.ruff.lint.per-file-ignores]
-# Tests may assert, touch privates, and use fixtures freely. INP001 is expected:
-# tests are namespace packages under --import-mode=importlib, with no __init__.py.
+# Tests may assert, touch privates, and use fixtures freely. INP001 is expected
+# for the suite directories: they stay namespace directories under
+# --import-mode=importlib so a test module's name never depends on where it sits.
+# `tests/` and `tests/fixtures/` are real packages, because the shared fixture
+# builders need one importable name that pytest and pyrefly both agree on.
 "tests/**" = ["ANN", "ARG001", "ARG002", "INP001", "PLR2004", "S", "SLF001"]
 # Typer expresses flags as boolean parameters with defaults, and the global
 # options callback necessarily takes one parameter per option. That is the
@@ -107,7 +110,10 @@ ignore = [
 ban-relative-imports = "all"
 
 [tool.ruff.lint.isort]
-known-first-party = ["hfcache"]
+# `tests` is first-party too: the golden-fixture examples in tests/fixtures are
+# imported as `tests.fixtures.examples`, and grouping them with third-party
+# packages would misrepresent where they come from.
+known-first-party = ["hfcache", "tests"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
@@ -149,6 +155,12 @@ exclude_also = [
 
 [tool.pyrefly]
 project-includes = ["src", "tests"]
+# Order matters. `src` first, so a module there is `hfcache.x` and nothing else;
+# the project root second, so `tests.fixtures.examples` resolves to the same name
+# the suite imports at runtime. Rooting at `.` alone would give every module in
+# `src` a second identity, `src.hfcache.x`, that does not compare equal to the
+# first — which surfaces as a type error on `self` in a classmethod.
+search-path = ["src", "."]
 python-version = "3.14"
 untyped-def-behavior = "check-and-infer-return-type"
 # Suppressions must be pyrefly's own; another tool's ignore comment does not

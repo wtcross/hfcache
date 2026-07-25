@@ -21,3 +21,8 @@ htmlcov/
 # Type checker caches
 .ruff_cache/
 .pyrefly_cache/
+
+.claude/
+
+# Local agent/tooling state, never part of the project.
+.claude/

@@ -1,0 +1,23 @@
+{
+  "cleanup": {
+    "completed_at": null,
+    "quarantine_path": null,
+    "state": "pending"
+  },
+  "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+  "evidence": [
+    "HFVER001 model.safetensors"
+  ],
+  "grace_expires_at": "2026-08-01T09:14:02.000000Z",
+  "publication_generation": 1,
+  "reason": "HFVER001 digest mismatch on model.safetensors",
+  "replacement_publication_id": "1a2b3c4d5e6f70819a2b3c4d5e6f7081",
+  "replacement_tree": "published/repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/1a2b3c4d5e6f70819a2b3c4d5e6f7081",
+  "repository_id": "organization/model-name",
+  "repository_type": "model",
+  "retired_at": "2026-07-25T09:14:02.000000Z",
+  "retired_publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+  "retired_tree": "published/repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+  "schema_version": 1,
+  "transaction_id": "e5f60718293a4b5c6d7e8f90a1b2c3d4"
+}

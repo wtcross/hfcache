@@ -1,0 +1,37 @@
+{
+  "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+  "checkpoints": [
+    {
+      "evidence": {
+        "file_count": 2,
+        "path": "published/repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27"
+      },
+      "name": "revision_tree_renamed",
+      "recorded_at": "2026-07-24T20:41:44.310000Z",
+      "sequence": 1
+    },
+    {
+      "evidence": {
+        "path": "published/manifests/models/organization/model-name/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27.json",
+        "sha256": "7d2b6f80e1144c1e8a55b0d24f1e9a3c7d2b6f80e1144c1e8a55b0d24f1e9a3c"
+      },
+      "name": "manifest_published",
+      "recorded_at": "2026-07-24T20:41:44.610000Z",
+      "sequence": 2
+    }
+  ],
+  "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+  "completed_at": null,
+  "config_fingerprint": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+  "created_at": "2026-07-24T20:38:11.600000Z",
+  "error": null,
+  "last_checkpoint_at": "2026-07-24T20:41:44.610000Z",
+  "operation": "publication",
+  "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+  "repository_id": "organization/model-name",
+  "repository_type": "model",
+  "run_id": "4c1e8a55b0d24f1e9a3c7d2b6f80e114",
+  "schema_version": 1,
+  "state": "open",
+  "transaction_id": "e5f60718293a4b5c6d7e8f90a1b2c3d4"
+}

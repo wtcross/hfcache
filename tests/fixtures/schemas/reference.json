@@ -1,0 +1,11 @@
+{
+  "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+  "manifest": "manifests/models/organization/model-name/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27.json",
+  "publication_generation": 1,
+  "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+  "repository_id": "organization/model-name",
+  "repository_type": "model",
+  "schema_version": 1,
+  "tree": "repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+  "updated_at": "2026-07-24T20:41:44.902000Z"
+}

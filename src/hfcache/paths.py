@@ -30,7 +30,7 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import UTC
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Final, final
+from typing import TYPE_CHECKING, Final, NoReturn, final
 
 from hfcache.errors import CodedError
 from hfcache.identity import (
@@ -92,7 +92,20 @@ _PUBLISHED_MODE: Final = 0o2750
 """Group-traversable and setgid, so the read identity keeps its group (§5.2)."""
 
 
-def _parse_relative(value: object, *, code: str, what: str) -> PurePosixPath:
+def _fail(message: str, code: str | None) -> NoReturn:
+    """Raise the coded error the caller asked for, or an uncoded one.
+
+    A caller reporting to an operator supplies the `HF...` code its context
+    calls for. A caller inside a Pydantic validator does not: the model knows
+    which artifact is being read and attaches that code to every problem at
+    once, so a code invented here would only be discarded.
+    """
+    if code is None:
+        raise ValueError(message)
+    raise CodedError(message, code=code)
+
+
+def _parse_relative(value: object, *, code: str | None, what: str) -> PurePosixPath:
     """Validate one relative POSIX path, rejecting anything that could escape.
 
     The rule this draws the line on: reject what can *escape*, allow what is
@@ -104,60 +117,61 @@ def _parse_relative(value: object, *, code: str, what: str) -> PurePosixPath:
     """
     if not isinstance(value, str):
         message = f"{what} must be a string"
-        raise CodedError(message, code=code)
+        _fail(message, code)
     if not value:
         message = f"{what} is empty"
-        raise CodedError(message, code=code)
+        _fail(message, code)
     if value.startswith("/"):
         message = f"invalid {what} {value!r}: must be relative, with no leading '/'"
-        raise CodedError(message, code=code)
+        _fail(message, code)
     if value.endswith("/"):
         message = f"invalid {what} {value!r}: must name a path, not a directory with a trailing '/'"
-        raise CodedError(message, code=code)
+        _fail(message, code)
     if _CONTROL.search(value):
         message = f"invalid {what}: contains a control character or a NUL byte"
-        raise CodedError(message, code=code)
+        _fail(message, code)
     if "\\" in value:
         message = (
             f"invalid {what} {value!r}: contains a backslash, which is a path separator "
             f"on a consumer platform and could traverse there"
         )
-        raise CodedError(message, code=code)
+        _fail(message, code)
     if len(value.encode("utf-8")) > MAXIMUM_RELATIVE_PATH_BYTES:
         message = f"invalid {what}: longer than {MAXIMUM_RELATIVE_PATH_BYTES} bytes"
-        raise CodedError(message, code=code)
+        _fail(message, code)
     for component in value.split("/"):
         if not component:
             message = f"invalid {what} {value!r}: contains an empty path component"
-            raise CodedError(message, code=code)
+            _fail(message, code)
         if component in {".", ".."}:
             message = f"invalid {what} {value!r}: contains a {component!r} component"
-            raise CodedError(message, code=code)
+            _fail(message, code)
         if len(component.encode("utf-8")) > MAXIMUM_COMPONENT_BYTES:
             message = (
                 f"invalid {what} {value!r}: component {component[:32]!r}... exceeds "
                 f"{MAXIMUM_COMPONENT_BYTES} bytes"
             )
-            raise CodedError(message, code=code)
+            _fail(message, code)
     return PurePosixPath(value)
 
 
-def parse_repository_relative(value: object, *, code: str) -> PurePosixPath:
+def parse_repository_relative(value: object, *, code: str | None = None) -> PurePosixPath:
     """Validate a path named by upstream repository content.
 
     `code` is the caller's, because the same malformed path means different
     things at different times: `HFSYN004` while ingesting a Hub tree,
-    `HFVER007` when read back out of a manifest.
+    `HFVER007` when read back out of a manifest. Omit it inside a Pydantic
+    validator, where the model supplies its artifact's code for every problem.
     """
     return _parse_relative(value, code=code, what="repository-relative path")
 
 
-def parse_archive_relative(value: object, *, code: str) -> PurePosixPath:
+def parse_archive_relative(value: object, *, code: str | None = None) -> PurePosixPath:
     """Validate a path field read out of a durable artifact (`docs/schemas.md` §1)."""
     return _parse_relative(value, code=code, what="archive-relative path")
 
 
-def resolve_within(root: Path, value: object, *, code: str) -> Path:
+def resolve_within(root: Path, value: object, *, code: str | None = None) -> Path:
     """Join a relative path onto a root, having proven it cannot leave.
 
     Containment is established by the grammar rather than re-derived after the
