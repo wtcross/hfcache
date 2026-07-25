@@ -22,23 +22,28 @@ import fcntl
 import inspect
 import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
 from hfcache.archive import initialize_archive
-from hfcache.config import StorageConfig
-from hfcache.errors import ExitCode, SafetyError
+from hfcache.config import HubConfig, StorageConfig
+from hfcache.credentials import ResolvedToken, TokenSource
+from hfcache.errors import ExitCode, SafetyError, SynchronizationError
+from hfcache.hub import HubClient
 from hfcache.locking import exclusive_lock, lock_path, read_holder
 from hfcache.paths import ArchiveLayout
 from hfcache.preflight import (
     CHECK_ORDER,
     NOT_INITIALIZED,
     READ_ONLY,
+    UNCONFIGURED_ACCOUNT,
     UNPROVABLE_READ_ONLY,
     Check,
     guarded,
+    hub_checks,
     order_checks,
     require_storage_safety,
     storage_checks,
@@ -705,3 +710,88 @@ def test_the_gate_refuses_when_a_capability_is_unavailable(
         require_storage_safety(initialized, storage=storage_config(), table=table)
 
     assert codes(caught.value.problems) == ["HFMNT012"]
+
+
+# --------------------------------------------------------------------------- #
+# The Hub (rows 15-17)
+# --------------------------------------------------------------------------- #
+
+
+@dataclass
+class StubApi:
+    """A `HubApi` that answers `whoami` however a test needs it to."""
+
+    name: str = "hfcache-service"
+    raises: Exception | None = None
+    endpoint: str = "https://huggingface.co"
+
+    def whoami(self, token=None) -> dict:
+        if self.raises is not None:
+            raise self.raises
+        return {"name": self.name}
+
+    def repo_info(self, repo_id: str, **arguments):  # pragma: no cover - unused here
+        raise NotImplementedError
+
+
+def hub_config(**overrides) -> HubConfig:
+    return HubConfig.model_validate(overrides)
+
+
+def stub_client(api: StubApi) -> HubClient:
+    return HubClient(
+        api=api, token=ResolvedToken(source=TokenSource.SYSTEMD_CREDENTIAL, secret="x")
+    )
+
+
+@pytest.fixture
+def reachable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """DNS and TLS answered without a network; the identity check is the subject."""
+
+    def resolves(_host):
+        return ("192.0.2.1",)
+
+    def verifies(_host):
+        return "TLSv1.3, certificate valid"
+
+    monkeypatch.setattr("hfcache.preflight.resolve_host", resolves)
+    monkeypatch.setattr("hfcache.preflight.verify_tls", verifies)
+
+
+def test_an_unconfigured_account_verifies_nothing(reachable):
+    checks = named(hub_checks(hub_config(), stub_client(StubApi())))
+
+    assert checks["hub_identity"].outcome == "skipped"
+    assert checks["hub_identity"].detail == UNCONFIGURED_ACCOUNT
+
+
+def test_a_matching_account_passes(reachable):
+    config = hub_config(expected_account="hfcache-service")
+
+    checks = named(hub_checks(config, stub_client(StubApi())))
+
+    assert checks["hub_identity"].outcome == "pass"
+    assert "hfcache-service" in checks["hub_identity"].detail
+
+
+def test_an_account_that_is_not_the_configured_one_is_hfhub003(reachable):
+    config = hub_config(expected_account="hfcache-service")
+
+    checks = named(hub_checks(config, stub_client(StubApi(name="somebody-else"))))
+
+    assert codes(checks["hub_identity"].problems) == ["HFHUB003"]
+
+
+def test_a_whoami_that_fails_is_a_failed_check_not_a_crash(reachable):
+    config = hub_config(expected_account="hfcache-service")
+    api = StubApi(raises=SynchronizationError.single("unreachable", code="HFHUB001"))
+
+    checks = named(hub_checks(config, stub_client(api)))
+
+    assert codes(checks["hub_identity"].problems) == ["HFHUB001"]
+
+
+def test_the_hub_checks_are_ordered_as_the_table_orders_them(reachable):
+    checks = hub_checks(hub_config(), stub_client(StubApi()))
+
+    assert [check.name for check in checks] == ["hub_dns", "hub_tls", "hub_identity"]

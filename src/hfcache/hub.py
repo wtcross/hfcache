@@ -28,8 +28,11 @@ shells out to `hf`, `git`, or `git-lfs` (plan §12, `NG-*`). The Hub is a source
 of *files and metadata* and is treated as nothing else.
 """
 
+import socket
+import ssl
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Final, Protocol, Self, final
+from urllib.parse import urlsplit
 
 from huggingface_hub import HfApi
 from huggingface_hub.errors import (
@@ -49,16 +52,22 @@ if TYPE_CHECKING:
     from hfcache.identity import RepositoryIdentity
 
 __all__ = [
+    "CONNECT_TIMEOUT_SECONDS",
     "FORBIDDEN",
     "NOT_FOUND",
     "RATE_LIMITED",
+    "TLS_PORT",
     "HubClient",
     "HubIdentity",
     "RepositoryFacts",
     "TreeEntry",
     "access_problems",
+    "endpoint_host",
     "hub_problem",
+    "identity_problems",
+    "resolve_host",
     "tree_entries",
+    "verify_tls",
 ]
 
 NOT_FOUND: Final = 404
@@ -329,3 +338,89 @@ def tree_entries(raw: Sequence[object]) -> tuple[TreeEntry, ...]:
         if getattr(item, "size", None) is not None
     ]
     return tuple(sorted(entries, key=lambda entry: entry.path))
+
+
+# --------------------------------------------------------------------------- #
+# Reachability (`doctor` checks 15-17)
+# --------------------------------------------------------------------------- #
+
+TLS_PORT: Final = 443
+CONNECT_TIMEOUT_SECONDS: Final = 10.0
+"""Long enough for a slow network, short enough that `doctor` still answers.
+
+`doctor` is what an operator runs when something is already wrong, so it must
+finish. A scheduled sync has its own retry budget and does not depend on this.
+"""
+
+
+def endpoint_host(endpoint: str) -> str:
+    """The host `hub.endpoint` names.
+
+    Configuration has already proven the endpoint is a well-formed `https://`
+    URL (`HFCFG014`), so this parses rather than validates.
+    """
+    return urlsplit(endpoint).hostname or ""
+
+
+def resolve_host(host: str) -> tuple[str, ...]:
+    """Resolve a hostname, or report `HFHUB001`.
+
+    DNS is separated from the TLS connection because they fail for unrelated
+    reasons and an operator fixes them in different places: one is a resolver or
+    a search domain, the other a certificate, a proxy, or a firewall.
+    """
+    try:
+        infos = socket.getaddrinfo(host, TLS_PORT, proto=socket.IPPROTO_TCP)
+    except OSError as exc:
+        message = f"{host} did not resolve: {exc.strerror or exc}"
+        raise SynchronizationError.single(message, code="HFHUB001", location=host) from exc
+    return tuple(sorted({str(info[4][0]) for info in infos}))
+
+
+def verify_tls(
+    host: str,
+    *,
+    port: int = TLS_PORT,
+    timeout: float = CONNECT_TIMEOUT_SECONDS,
+    context: ssl.SSLContext | None = None,
+) -> str:
+    """Connect and verify the certificate, or report `HFHUB002`.
+
+    Verification is the default context's, with hostname checking on: the point
+    is to prove the deployment's trust store and clock agree with the Hub's
+    certificate, and a check that disabled verification would prove nothing.
+
+    `context` and `port` exist so a test can perform a *real* handshake against a
+    local server with its own certificate authority. Injecting the trust anchor
+    rather than the answer is what keeps the test honest — the code under test
+    still verifies, it simply verifies against a CA the test created.
+    """
+    verifier = ssl.create_default_context() if context is None else context
+    try:
+        with (
+            socket.create_connection((host, port), timeout=timeout) as raw,
+            verifier.wrap_socket(raw, server_hostname=host) as secured,
+        ):
+            certificate = secured.getpeercert() or {}
+            version = secured.version() or "unknown"
+    except (OSError, ssl.SSLError) as exc:
+        message = f"the TLS connection to {host} could not be verified: {exc}"
+        raise SynchronizationError.single(message, code="HFHUB002", location=host) from exc
+    return f"{version}, certificate valid until {certificate.get('notAfter', 'unknown')}"
+
+
+def identity_problems(identity: HubIdentity, expected_account: str) -> list[Problem]:
+    """Refuse a run whose Hub identity is not the one configured (`HFHUB003`).
+
+    Only checked when `hub.expected_account` is set, which is what makes it
+    optional. It exists so a credential swapped by mistake is caught before a
+    scheduled run archives content under the wrong account's rate limits and
+    permissions, rather than after.
+    """
+    if not expected_account or identity.name == expected_account:
+        return []
+    message = (
+        f"the Hub reports this run as {identity.name!r}, but hub.expected_account is "
+        f"{expected_account!r}; the credential in use is not the one configured"
+    )
+    return [Problem(code="HFHUB003", message=message, location="hub.expected_account")]

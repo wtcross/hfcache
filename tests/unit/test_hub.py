@@ -36,10 +36,15 @@ from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import ExitCode, SynchronizationError
 from hfcache.hub import (
     HubClient,
+    HubIdentity,
     RepositoryFacts,
     access_problems,
+    endpoint_host,
     hub_problem,
+    identity_problems,
+    resolve_host,
     tree_entries,
+    verify_tls,
 )
 from hfcache.identity import CommitSha, RepositoryIdentity
 
@@ -356,3 +361,97 @@ def test_directories_are_dropped_from_a_tree_listing():
 
 def test_an_empty_tree_is_an_empty_tuple():
     assert tree_entries([]) == ()
+
+
+# --------------------------------------------------------------------------- #
+# Reachability (`doctor` checks 15-17)
+# --------------------------------------------------------------------------- #
+
+
+def test_the_endpoint_host_is_read_out_of_the_configured_url():
+    # Configuration already proved it is a well-formed https URL (`HFCFG014`),
+    # so this parses rather than validates.
+    assert endpoint_host("https://huggingface.co") == "huggingface.co"
+    assert endpoint_host("https://hub.example.test:8443/prefix") == "hub.example.test"
+
+
+def test_a_resolvable_host_reports_its_addresses():
+    # `localhost` resolves from `/etc/hosts`, so this needs no network.
+    addresses = resolve_host("localhost")
+
+    assert addresses
+    assert all(isinstance(address, str) for address in addresses)
+
+
+def test_a_host_that_does_not_resolve_is_hfhub001(monkeypatch: pytest.MonkeyPatch):
+    def refuse(*args, **kwargs):
+        raise OSError(-2, "Name or service not known")
+
+    monkeypatch.setattr("hfcache.hub.socket.getaddrinfo", refuse)
+
+    with pytest.raises(SynchronizationError) as caught:
+        resolve_host("no-such-host.invalid")
+
+    assert codes(caught.value.problems) == ["HFHUB001"]
+
+
+def test_a_connection_that_cannot_be_made_is_hfhub002(monkeypatch: pytest.MonkeyPatch):
+    def refuse(*args, **kwargs):
+        raise OSError(111, "Connection refused")
+
+    monkeypatch.setattr("hfcache.hub.socket.create_connection", refuse)
+
+    with pytest.raises(SynchronizationError) as caught:
+        verify_tls("localhost")
+
+    assert codes(caught.value.problems) == ["HFHUB002"]
+
+
+def test_a_certificate_that_does_not_verify_is_hfhub002(tls_server):
+    # The same local server, verified against the *default* trust store, which
+    # has never heard of its certificate authority. The code under test is doing
+    # real verification and correctly refusing.
+    _, port, _ = tls_server
+
+    with pytest.raises(SynchronizationError) as caught:
+        verify_tls("localhost", port=port)
+
+    assert codes(caught.value.problems) == ["HFHUB002"]
+
+
+def test_a_certificate_that_verifies_reports_the_protocol_and_expiry(tls_server):
+    # A real handshake against a real server. Only the trust anchor is injected,
+    # not the answer: the code under test still verifies, against a certificate
+    # authority this test created.
+    _, port, trust = tls_server
+
+    detail = verify_tls("localhost", port=port, context=trust)
+
+    assert "TLS" in detail
+    assert "certificate valid until" in detail
+
+
+# --------------------------------------------------------------------------- #
+# The configured identity
+# --------------------------------------------------------------------------- #
+
+
+def test_an_unset_expected_account_verifies_nothing():
+    assert identity_problems(HubIdentity(name="anyone", authenticated=True), "") == []
+
+
+def test_a_matching_identity_is_no_problem():
+    identity = HubIdentity(name="hfcache-service", authenticated=True)
+
+    assert identity_problems(identity, "hfcache-service") == []
+
+
+def test_an_identity_that_is_not_the_configured_one_is_hfhub003():
+    # A credential swapped by mistake is caught before a scheduled run archives
+    # content under the wrong account, rather than after.
+    identity = HubIdentity(name="somebody-else", authenticated=True)
+
+    problems = identity_problems(identity, "hfcache-service")
+
+    assert codes(problems) == ["HFHUB003"]
+    assert problems[0].location == "hub.expected_account"

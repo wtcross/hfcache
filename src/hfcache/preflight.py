@@ -35,7 +35,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Final, Literal, Self, final
 
-from hfcache.errors import Problem, SafetyError
+from hfcache.errors import Problem, SafetyError, SynchronizationError
+from hfcache.hub import endpoint_host, identity_problems, resolve_host, verify_tls
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.storage import (
     BYTES_PER_GIB,
@@ -58,17 +59,21 @@ from hfcache.storage import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
-    from hfcache.config import StorageConfig
+    from hfcache.config import HubConfig, StorageConfig
+    from hfcache.hub import HubClient
     from hfcache.paths import ArchiveLayout
     from hfcache.storage import MountEntry, MountFacts
 
 __all__ = [
     "CHECK_ORDER",
     "NOT_INITIALIZED",
+    "OFFLINE",
     "READ_ONLY",
+    "UNCONFIGURED_ACCOUNT",
     "UNPROVABLE_READ_ONLY",
     "Check",
     "guarded",
+    "hub_checks",
     "order_checks",
     "require_storage_safety",
     "storage_checks",
@@ -122,6 +127,10 @@ NOT_INITIALIZED: Final = (
 _UNPROVEN: Final = (
     "the archive root was not proven to be a read/write NFS mount, so nothing was read "
     "from it or written to it"
+)
+UNCONFIGURED_ACCOUNT: Final = (
+    "hub.expected_account is not set, so there is no identity to verify against; "
+    "an anonymous archive of public content is a normal deployment"
 )
 _COPY_MODE: Final = (
     'publication_mode = "copy" does not hardlink, so the capability is not required; '
@@ -446,3 +455,64 @@ def require_storage_safety(
     if problems:
         raise SafetyError(problems)
     return checks
+
+
+# --------------------------------------------------------------------------- #
+# The Hub (`docs/cli.md` §2 rows 15-17)
+# --------------------------------------------------------------------------- #
+
+OFFLINE: Final = (
+    "the endpoint host did not resolve, so nothing further about the Hub could be established"
+)
+
+
+def hub_checks(hub: HubConfig, client: HubClient) -> list[Check]:
+    """Run `doctor` checks 15-17: DNS, TLS, and the configured identity.
+
+    All three read only, so `--read-only` runs them: proving a deployment can
+    reach the Hub is exactly the kind of thing an operator wants from a mount
+    that must not be touched.
+
+    They are ordered as the table orders them, and each depends on the one
+    before: a host that does not resolve cannot be connected to, and an identity
+    cannot be asked for over a connection that was never made.
+    """
+    host = endpoint_host(hub.endpoint)
+    try:
+        addresses = resolve_host(host)
+    except SynchronizationError as error:
+        return [
+            Check.failed("hub_dns", error.problems),
+            Check.skipped("hub_tls", OFFLINE),
+            Check.skipped("hub_identity", OFFLINE),
+        ]
+    checks = [Check.passed("hub_dns", f"{host} resolves to {', '.join(addresses)}")]
+
+    try:
+        detail = verify_tls(host)
+    except SynchronizationError as error:
+        checks.append(Check.failed("hub_tls", error.problems))
+        checks.append(Check.skipped("hub_identity", OFFLINE))
+        return checks
+    checks.append(Check.passed("hub_tls", detail))
+    checks.append(_identity_check(hub, client))
+    return checks
+
+
+def _identity_check(hub: HubConfig, client: HubClient) -> Check:
+    """`doctor` check 17 — who the Hub says this run is, when it was told.
+
+    Skipped rather than passed when `hub.expected_account` is unset: nothing was
+    verified, and an archive of public content run anonymously is a perfectly
+    normal deployment that has nothing to prove here.
+    """
+    name = "hub_identity"
+    if not hub.expected_account:
+        return Check.skipped(name, UNCONFIGURED_ACCOUNT)
+    try:
+        identity = client.whoami()
+    except SynchronizationError as error:
+        return Check.failed(name, error.problems)
+    if problems := identity_problems(identity, hub.expected_account):
+        return Check.failed(name, problems)
+    return Check.passed(name, f"the Hub reports this run as {identity.name}")

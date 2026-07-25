@@ -23,6 +23,7 @@ from hfcache.archive import initialize_archive, inspect_archive
 from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import ConfigurationError, ExitCode, HfcacheError, Problem, SafetyError
+from hfcache.hub import HubClient
 from hfcache.identity import new_run_id, parse_selector
 from hfcache.paths import ArchiveLayout
 from hfcache.preflight import (
@@ -30,6 +31,7 @@ from hfcache.preflight import (
     UNPROVABLE_READ_ONLY,
     Check,
     guarded,
+    hub_checks,
     order_checks,
     storage_checks,
 )
@@ -529,6 +531,7 @@ def doctor(
         *storage_checks(layout, storage=config.storage, read_only=read_only),
         Check.passed("credential", token.describe()),
         Check.passed("hub_endpoint", f"{config.hub.endpoint} is a well-formed https endpoint"),
+        *hub_checks(config.hub, HubClient.of(token, endpoint=config.hub.endpoint)),
     ]
     if read_only:
         # Whatever the runner did not already report as unprovable. As the

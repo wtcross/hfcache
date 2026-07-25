@@ -23,7 +23,7 @@ from typer.testing import CliRunner
 
 from hfcache.archive import initialize_archive
 from hfcache.cli import UNPROVABLE_READ_ONLY, app
-from hfcache.errors import ExitCode
+from hfcache.errors import ExitCode, SynchronizationError
 from hfcache.identity import new_run_id, new_transaction_id
 from hfcache.paths import ArchiveLayout
 from hfcache.transactions import open_transaction
@@ -97,6 +97,25 @@ UNIMPLEMENTED_CAPABILITIES = tuple(
 )
 
 
+@pytest.fixture(autouse=True)
+def _offline(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Answer `doctor`'s Hub checks without a network.
+
+    The unit suite never contacts the Hub — that is what the `live` marker is
+    for — so DNS and TLS are answered here. The tests that care about the Hub
+    checks themselves override these.
+    """
+
+    def resolves(_host):
+        return ("192.0.2.1",)
+
+    def verifies(_host):
+        return "TLSv1.3, certificate valid"
+
+    monkeypatch.setattr("hfcache.preflight.resolve_host", resolves)
+    monkeypatch.setattr("hfcache.preflight.verify_tls", verifies)
+
+
 @pytest.fixture
 def config_file(tmp_path: Path) -> Path:
     path = tmp_path / "config.toml"
@@ -160,8 +179,13 @@ def test_doctor_reports_checks_in_the_normative_order(initialized_config: Path):
         *STORAGE_CHECKS,
         "credential",
         "hub_endpoint",
+        "hub_dns",
+        "hub_tls",
+        "hub_identity",
     ]
-    assert {check["outcome"] for check in checks} == {"pass"}
+    # `hub_identity` is skipped: nothing is verified when no account is
+    # configured, and an anonymous archive of public content is normal.
+    assert {check["outcome"] for check in checks} == {"pass", "skipped"}
     assert all(set(check) == {"detail", "name", "outcome"} for check in checks)
 
 
@@ -333,6 +357,72 @@ def test_doctor_prints_a_readable_table_without_json(config_file: Path):
 
     assert "pass" in result.output
     assert "configuration" in result.output
+
+
+# --------------------------------------------------------------------------- #
+# doctor's Hub checks (rows 15-17)
+# --------------------------------------------------------------------------- #
+
+
+def offline(monkeypatch: pytest.MonkeyPatch, *, at: str) -> None:
+    """Make one of the two reachability probes fail."""
+
+    def refuse(host, **_):
+        message = f"{host} is unreachable"
+        raise SynchronizationError.single(message, code="HFHUB001" if at == "dns" else "HFHUB002")
+
+    monkeypatch.setattr(
+        f"hfcache.preflight.{'resolve_host' if at == 'dns' else 'verify_tls'}", refuse
+    )
+
+
+def test_the_endpoint_host_is_resolved_and_its_certificate_verified(initialized_config: Path):
+    checks = checks_of(invoke(initialized_config, "doctor"))
+
+    assert checks["hub_dns"]["outcome"] == "pass"
+    assert checks["hub_tls"]["outcome"] == "pass"
+
+
+def test_a_host_that_does_not_resolve_is_hfhub001(
+    initialized_config: Path, monkeypatch: pytest.MonkeyPatch
+):
+    offline(monkeypatch, at="dns")
+
+    result = invoke(initialized_config, "doctor")
+    checks = checks_of(result)
+
+    assert result.exit_code == ExitCode.SAFETY
+    assert checks["hub_dns"]["outcome"] == "fail"
+    assert checks["hub_tls"]["outcome"] == "skipped", "nothing further can be established"
+    assert checks["hub_identity"]["outcome"] == "skipped"
+
+
+def test_a_certificate_that_does_not_verify_is_hfhub002(
+    initialized_config: Path, monkeypatch: pytest.MonkeyPatch
+):
+    offline(monkeypatch, at="tls")
+
+    checks = checks_of(invoke(initialized_config, "doctor"))
+
+    assert checks["hub_dns"]["outcome"] == "pass"
+    assert checks["hub_tls"]["outcome"] == "fail"
+    assert checks["hub_identity"]["outcome"] == "skipped"
+
+
+def test_the_hub_checks_run_under_read_only(initialized_config: Path):
+    # They read only, and proving a deployment can reach the Hub is exactly what
+    # an operator wants from a mount that must not be touched.
+    checks = checks_of(invoke(initialized_config, "doctor", "--read-only"))
+
+    assert checks["hub_dns"]["outcome"] == "pass"
+    assert checks["hub_tls"]["outcome"] == "pass"
+
+
+def test_identity_is_not_verified_when_no_account_is_configured(initialized_config: Path):
+    check = checks_of(invoke(initialized_config, "doctor"))["hub_identity"]
+
+    assert check["outcome"] == "skipped"
+    assert "expected_account" in check["detail"]
 
 
 # --------------------------------------------------------------------------- #
