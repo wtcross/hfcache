@@ -88,8 +88,9 @@ def test_the_archive_is_reported_as_not_yet_initialized(checks: dict[str, dict])
     # Initialization is authorized exactly once, at the §29 rollout checkpoint
     # after `HOST-004`. Until then this is the expected answer, and it is
     # operator state rather than a failure.
-    assert checks["staging_filesystem"]["outcome"] == "skipped"
-    assert "not initialized" in checks["staging_filesystem"]["detail"]
+    for name in ("sentinel", "staging_filesystem"):
+        assert checks[name]["outcome"] == "skipped"
+        assert "not initialized" in checks[name]["detail"]
 
 
 def test_read_only_exits_zero_against_the_live_mount(config_file: Path):

@@ -62,7 +62,7 @@ predate `CFG-003`.
 
 - [x] STO-000 Guarded one-time archive initialization and inspection (2026-07-25, this commit — `src/hfcache/storage.py`: mount-table proof, durable byte writes, the known-empty-layout walk, and `initialize_archive`; `archive` sub-app in `src/hfcache/cli.py` with `init`, `--inspect`, `--confirm`, and `--archive-id`. The §6.2 empty-`published/` adoption is implemented with ownership compared against the archive root, per decision 31. 100% branch coverage. **Not yet run against `/srv/hfcache`:** the §36.4 one-time authorization is spent at the rollout checkpoint after `HOST-004`, not here)
 - [x] STO-001 NFS mount and filesystem-type detection (2026-07-25, this commit — the detection itself landed at `STO-000` (decision 28); this is the shared preflight built on it. `src/hfcache/storage.py`: the `.store/health/probe-<probe-id>` create/fsync/rename/delete probe (`HFMNT008`, plan §19 items 6 and 10) which removes every artifact it made including after a failure, and the staging/destination same-filesystem proof (`HFMNT009`, `FS-04`). `src/hfcache/preflight.py` (new, decision 33): the ordered check runner `doctor` and every mutating command share, plus `require_storage_safety`, the hard gate that raises with every problem at once. `doctor` now emits `docs/cli.md` §2 rows 2–5, 7, and 8 in table order with `credential` and `hub_endpoint` at 13 and 14, skips the probe under `--read-only`, and exits `20` when any check failed. `storage.py` and `preflight.py` both at 100% branch coverage; `tests/system/test_live_mount.py` proves rows 2–5 against the live `/srv/hfcache` mount read-only, `-m nfs`)
-- [ ] STO-002 Sentinel/archive-ID validation — `doctor` check 6; `_read_sentinel` exists in `storage.py` from `STO-000` and `preflight.require_storage_safety` from `STO-001`, so this is `HFMNT005` for an absent sentinel plus that check taking over the "not initialized" answer checks 7 and 8 currently give on their own. **Do this one first:** `storage.py` is at 973 lines, so per the `STO-001` sizing note it is `STO-002`'s job to move archive init/inspect into `archive.py` before adding to it
+- [x] STO-002 Sentinel/archive-ID validation (2026-07-25, this commit — `src/hfcache/archive.py` split out of `storage.py` first, per the `STO-001` sizing note and decision 36; `storage.read_sentinel` is now shared by both. `doctor` check 6 `sentinel` reports `HFMNT005` when the archive is not initialized, `HFMNT006` when the sentinel is unreadable, malformed, or from a newer release, and `HFMNT007` when it names a different archive (`FS-03`). The check owns the "not initialized" condition for the gate, so checks 7 and 8 skip on it without reporting it again — one missing archive is one problem. `storage_checks` and `require_storage_safety` now take the configured `archive_id`. `archive.py`, `preflight.py`, and `storage.py` all at 100% branch coverage)
 - [ ] STO-003 Free-space and reserve calculations — `doctor` check 12 (`HFMNT011`) and the `HFWRN005` approaching-reserve warning
 - [ ] STO-004 Local exclusive locking
 - [ ] STO-005 Atomic JSON and ref writes
@@ -651,3 +651,37 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     command about to write has no business asking for one, and an option that
     silences a check is an option that lets one through. `docs/cli.md` §2
     updated in this commit.
+
+36. **`archive.py` split out of `storage.py`** (2026-07-25, STO-002). The
+    `STO-001` sizing note said to do this before adding to a 973-line module,
+    and the cut turned out to be a real boundary rather than a line count.
+    `storage.py` is now what a command must *prove about the mount* and the
+    primitives that *act on it durably* — the mount table, atomic writes, the
+    write probe, the same-filesystem proof, and reading the sentinel.
+    `archive.py` is the one command that brings an archive into being: the
+    known-empty-layout walk, `published/` adoption, `--inspect`, and
+    `initialize_archive`. Each is now under 550 lines and neither imports the
+    other's concerns.
+
+    `_read_sentinel` became `storage.read_sentinel` in the move, because both
+    sides need it: `archive.py` to tell an initialized archive from unknown
+    content, and `preflight.py` for check 6. It reads the archive's identity off
+    the mount, which is a storage question; deciding what a mismatch *means* is
+    still the caller's. `tests/unit/test_storage.py` split the same way, into
+    `test_archive.py` for the module and `test_archive_init.py` — which already
+    existed — for the command. Plan §7 updated in this commit.
+
+37. **The `sentinel` check owns "the archive is not initialized"** (2026-07-25,
+    STO-002). `docs/cli.md` §2 puts checks 6-12 behind an initialized archive
+    and has each report `skipped` with that as the reason, which is right for
+    `doctor`. It is not enough for the gate: `STO-001` had checks 7 and 8 each
+    carry `HFMNT008` for the condition, so a mutating command against an
+    uninitialized archive would have reported two problems, and every later
+    package would have added another.
+
+    Check 6 is the one that actually observes it — the sentinel's absence *is*
+    the condition, and the sentinel is written last, so nothing below it can be
+    said either (`FS-23`). It therefore carries `HFMNT005` for the gate and the
+    checks beneath it skip silently. One missing archive is one problem, with
+    the code `docs/cli.md` §5.2 already assigns to exactly that condition.
+

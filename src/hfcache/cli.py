@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 import typer
 
 from hfcache import __version__
+from hfcache.archive import initialize_archive, inspect_archive
 from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import ConfigurationError, ExitCode, HfcacheError, Problem, SafetyError
@@ -30,12 +31,11 @@ from hfcache.preflight import (
     storage_checks,
 )
 from hfcache.reporting import Envelope, EnvelopeProblem
-from hfcache.storage import initialize_archive, inspect_archive
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from hfcache.storage import ArchiveInspection
+    from hfcache.archive import ArchiveInspection
 
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
 
@@ -522,7 +522,7 @@ def doctor(
             "configuration",
             f"{options.config_path} is valid; fingerprint {config.fingerprint()[:12]}",
         ),
-        *storage_checks(layout, read_only=read_only),
+        *storage_checks(layout, archive_id=config.storage.archive_id, read_only=read_only),
         Check.passed("credential", token.describe()),
         Check.passed("hub_endpoint", f"{config.hub.endpoint} is a well-formed https endpoint"),
     ]

@@ -20,10 +20,10 @@ from typing import TYPE_CHECKING
 import pytest
 from typer.testing import CliRunner
 
+from hfcache.archive import initialize_archive
 from hfcache.cli import UNPROVABLE_READ_ONLY, app
 from hfcache.errors import ExitCode
 from hfcache.paths import ArchiveLayout
-from hfcache.storage import initialize_archive
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -63,9 +63,9 @@ archive_id = "{ARCHIVE_ID}"
 
 CONFIG = config_for(ABSENT_ROOT)
 
-# `docs/cli.md` §2 rows 2-5, 7, and 8, which are what `STO-001` implements.
+# `docs/cli.md` §2 rows 2-8, which are what `STO-001` and `STO-002` implement.
 MOUNT_CHECKS = ("archive_root", "mount_point", "filesystem_type", "mount_writable")
-STORAGE_CHECKS = (*MOUNT_CHECKS, "directory_writability", "staging_filesystem")
+STORAGE_CHECKS = (*MOUNT_CHECKS, "sentinel", "directory_writability", "staging_filesystem")
 
 # Rows 9-11: capabilities `--read-only` reports as unproven, whose own checks
 # arrive with `STO-007` and `STO-009`.
@@ -182,7 +182,7 @@ def test_checks_needing_an_initialized_archive_report_that_as_the_reason(mounted
     checks = checks_of(result)
 
     assert result.exit_code == ExitCode.SUCCESS, "an uninitialized archive is not a failure"
-    for name in ("directory_writability", "staging_filesystem"):
+    for name in ("sentinel", "directory_writability", "staging_filesystem"):
         assert checks[name]["outcome"] == "skipped"
         assert "not initialized" in checks[name]["detail"]
     for name in MOUNT_CHECKS:

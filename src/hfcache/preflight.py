@@ -18,7 +18,9 @@ mutating command proceed:
   never runs in this mode, so the gate never sees these.
 * the archive is not initialized — operator state that `archive init` changes.
   `doctor` reports it and still exits `0`; the gate refuses, because a mutating
-  command may not assume a check would have passed.
+  command may not assume a check would have passed. The `sentinel` check owns
+  this condition and is the only one that reports it, so one missing archive is
+  one problem rather than one per check that needed it.
 * an earlier check failed — nothing can be said about the filesystem type of a
   path that does not exist. The gate adds nothing for these, because the failure
   that caused them is already in the same report.
@@ -39,6 +41,7 @@ from hfcache.storage import (
     mount_problems,
     probe_writability,
     publication_destinations,
+    read_sentinel,
     same_filesystem_problems,
 )
 
@@ -109,14 +112,6 @@ _UNPROVEN: Final = (
     "from it or written to it"
 )
 
-_MISSING_DIRECTORY: Final = "HFMNT008"
-"""What an uninitialized archive is, to a command that may not proceed without one.
-
-`docs/cli.md` §5.2 defines `HFMNT008` as a required directory being missing,
-which is exactly the condition — the sentinel's own absence is `HFMNT005` and
-belongs to the `sentinel` check.
-"""
-
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -178,19 +173,22 @@ def order_checks(checks: Iterable[Check]) -> tuple[Check, ...]:
 def storage_checks(
     layout: ArchiveLayout,
     *,
+    archive_id: str,
     read_only: bool = False,
     table: Sequence[MountEntry] | None = None,
 ) -> list[Check]:
-    """Run every storage check that exists today: `docs/cli.md` §2 rows 2-5, 7, and 8.
+    """Run every storage check that exists today: `docs/cli.md` §2 rows 2-8.
 
-    Rows 6 and 9-12 are absent until `STO-002`, `STO-003`, `STO-007`, and
-    `STO-009` land. `table` is the parsed mount table, supplied by tests so a
+    Rows 9-12 are absent until `STO-003`, `STO-007`, and `STO-009` land.
+    `archive_id` is the configured `storage.archive_id`, which the sentinel must
+    equal (`FS-03`). `table` is the parsed mount table, supplied by tests so a
     temporary directory can stand in for the NFS archive; production reads the
     kernel's.
     """
     facts = describe_mount(layout.root, table=table)
     checks = _mount_checks(facts)
     proven = all(check.outcome == "pass" for check in checks)
+    checks.append(_sentinel_check(layout, archive_id=archive_id, proven=proven))
     checks.append(_writability_check(layout, proven=proven, read_only=read_only))
     checks.append(_staging_check(layout, proven=proven))
     return checks
@@ -237,6 +235,32 @@ def _mount_checks(facts: MountFacts) -> list[Check]:
     ]
 
 
+def _sentinel_check(layout: ArchiveLayout, *, archive_id: str, proven: bool) -> Check:
+    """`doctor` check 6 — the archive's identity, and whether it is this one.
+
+    This is the check that owns "there is no archive here": it is the sentinel's
+    absence, and the sentinel is written last, so nothing below it can be said
+    either (`FS-23`). Checks 7 and 8 therefore skip on the same condition without
+    reporting it again — one missing archive is one problem, not three.
+    """
+    name = "sentinel"
+    if not proven:
+        return Check.skipped(name, _UNPROVEN)
+    if not is_initialized(layout):
+        return Check.skipped(name, NOT_INITIALIZED, blocking_code="HFMNT005")
+    try:
+        sentinel, problems = read_sentinel(layout, archive_id=archive_id)
+    except SafetyError as error:
+        # Unreadable, malformed, or from a release this one does not understand.
+        # `read_sentinel` raises rather than returns for these because a caller
+        # that wanted the sentinel has nothing to go on; here the answer is the
+        # check's own outcome.
+        return Check.failed(name, error.problems)
+    if problems:
+        return Check.failed(name, problems)
+    return Check.passed(name, f"{layout.sentinel} names archive {sentinel.archive_id}")
+
+
 def _writability_check(layout: ArchiveLayout, *, proven: bool, read_only: bool) -> Check:
     """`doctor` check 7 — the only proof of effective writability there is."""
     name = "directory_writability"
@@ -245,7 +269,7 @@ def _writability_check(layout: ArchiveLayout, *, proven: bool, read_only: bool) 
     if not proven:
         return Check.skipped(name, _UNPROVEN)
     if not is_initialized(layout):
-        return Check.skipped(name, NOT_INITIALIZED, blocking_code=_MISSING_DIRECTORY)
+        return Check.skipped(name, NOT_INITIALIZED)
     problems = probe_writability(layout)
     if problems:
         return Check.failed(name, problems)
@@ -258,7 +282,7 @@ def _staging_check(layout: ArchiveLayout, *, proven: bool) -> Check:
     if not proven:
         return Check.skipped(name, _UNPROVEN)
     if not is_initialized(layout):
-        return Check.skipped(name, NOT_INITIALIZED, blocking_code=_MISSING_DIRECTORY)
+        return Check.skipped(name, NOT_INITIALIZED)
     problems = same_filesystem_problems(layout)
     if problems:
         return Check.failed(name, problems)
@@ -269,7 +293,7 @@ def _staging_check(layout: ArchiveLayout, *, proven: bool) -> Check:
 
 
 def require_storage_safety(
-    layout: ArchiveLayout, *, table: Sequence[MountEntry] | None = None
+    layout: ArchiveLayout, *, archive_id: str, table: Sequence[MountEntry] | None = None
 ) -> tuple[Check, ...]:
     """Refuse to proceed unless every storage requirement is proven (plan §19).
 
@@ -279,7 +303,7 @@ def require_storage_safety(
     unproven gets through it, and `--read-only` is deliberately not an option
     here, because a command that is about to write has no business asking for it.
     """
-    checks = order_checks(storage_checks(layout, table=table))
+    checks = order_checks(storage_checks(layout, archive_id=archive_id, table=table))
     problems: list[Problem] = []
     for check in checks:
         problems.extend(check.problems)
