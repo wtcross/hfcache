@@ -30,6 +30,7 @@ from hfcache.preflight import (
     order_checks,
     storage_checks,
 )
+from hfcache.recovery import measure_health
 from hfcache.reporting import Envelope, EnvelopeProblem
 
 if TYPE_CHECKING:
@@ -628,17 +629,36 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
         }
         for repository in selected
     ]
-    payload: dict[str, Any] = {
-        "archive": {
-            "archive_id": config.storage.archive_id,
-            "root": str(config.storage.archive_root),
-        },
-        "repositories": entries,
+    archive: dict[str, Any] = {
+        "archive_id": config.storage.archive_id,
+        "root": str(config.storage.archive_root),
     }
+    # Health is reported when it can be measured and omitted when it cannot.
+    # `status` answers even against an archive that is absent or unmounted
+    # (`docs/cli.md` §2), so an unreachable root reports local configuration
+    # truth rather than failing.
+    layout = ArchiveLayout(root=config.storage.archive_root)
+    warnings: list[Problem] = []
+    try:
+        health = measure_health(
+            layout,
+            config.storage,
+            stale_staging_age_hours=config.sync.stale_staging_age_hours,
+        )
+    except HfcacheError:
+        archive["reachable"] = False
+    else:
+        archive["reachable"] = True
+        archive |= health.as_payload()
+        warnings.extend(health.reconciliation.warnings)
+
+    payload: dict[str, Any] = {"archive": archive, "repositories": entries}
     if options.json_output:
-        emit_envelope("status", payload, started_at=started_at)
+        emit_envelope("status", payload, started_at=started_at, warnings=warnings)
         return
     if not options.quiet:
         for entry in entries:
             state = "enabled" if entry["enabled"] else "disabled"
             typer.echo(f"{entry['repository_type']}:{entry['repository_id']}  {state}")
+        for warning in warnings:
+            typer.echo(warning.as_line(), err=True)

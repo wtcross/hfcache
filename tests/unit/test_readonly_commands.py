@@ -390,7 +390,37 @@ def test_status_marks_upstream_unknown_rather_than_contacting_the_hub(config_fil
 def test_status_reports_the_archive_it_is_configured_for(config_file: Path):
     archive = data_of(invoke(config_file, "status"))["archive"]
 
-    assert archive == {"archive_id": ARCHIVE_ID, "root": "/nonexistent/archive/root"}
+    assert archive == {
+        "archive_id": ARCHIVE_ID,
+        "reachable": False,
+        "root": "/nonexistent/archive/root",
+    }
+
+
+def test_status_reports_health_when_the_archive_can_be_measured(initialized_config: Path):
+    archive = data_of(invoke(initialized_config, "status"))["archive"]
+
+    assert archive["reachable"]
+    assert archive["available_bytes"] > 0
+    assert archive["unfinished_transactions"] == 0
+    assert archive["deferred_cleanup"] == 0
+    assert archive["unknown_entries"] == []
+
+
+def test_status_surfaces_what_the_transaction_areas_hold(
+    initialized_config: Path, mounted_root: Path
+):
+    # A crashed run leaves staging behind; `status` is where an operator sees it.
+    (mounted_root / ".store" / "staging" / ("a" * 32)).mkdir()
+    (mounted_root / ".store" / "trash" / ("b" * 32)).mkdir()
+
+    result = invoke(initialized_config, "status")
+    archive = data_of(result)["archive"]
+
+    assert archive["unfinished_transactions"] == 1
+    assert archive["deferred_cleanup"] == 1
+    assert [warning["code"] for warning in json.loads(result.output)["warnings"]] == ["HFWRN002"]
+    assert result.exit_code == ExitCode.SUCCESS, "a warning never changes a 0 exit on its own"
 
 
 def test_status_answers_when_the_archive_is_absent(config_file: Path):
@@ -493,6 +523,20 @@ def test_plan_prints_selectors_an_operator_can_paste_back(config_file: Path):
     assert "model:zeta/last-in-file@v2.0" in result.output
     assert "dataset:alpha/first-in-file@main" in result.output
     assert "organization/turned-off" not in result.output
+
+
+def test_status_prints_its_warnings_where_a_pipe_will_not_swallow_them(
+    initialized_config: Path, mounted_root: Path
+):
+    # Warnings go to stderr so `hfcache status | ...` stays a clean repository
+    # list while an operator watching the terminal still sees them.
+    (mounted_root / ".store" / "trash" / ("b" * 32)).mkdir()
+
+    result = runner.invoke(app, ["--config", str(initialized_config), "status"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert "HFWRN002" not in result.stdout
+    assert "HFWRN002" in result.stderr
 
 
 def test_status_prints_each_repository_with_its_state(config_file: Path):
