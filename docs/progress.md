@@ -47,7 +47,7 @@ install smoke test.
 - [x] CFG-002 Token-source abstraction without literal secrets (2026-07-24, this commit — `src/hfcache/credentials.py`: §7 resolution order, `HFARG002`/`HFARG005`/`HFARG006`, `hub_argument` returns `False` and never `None`, redaction proven over generated tokens; no function in the module accepts a token value. The `--token-file` option is parsed by the CLI as of `BOOT-006`; it is *resolved* by the first command that loads configuration, which is `CFG-005`)
 - [x] CFG-003 Repository identity and safe path mapping (2026-07-25, this commit — `src/hfcache/identity.py`: every Hub-facing grammar, `RepositoryIdentity` self-validating, `TYPE:ID[@SHA]` selectors, opaque-id minting; `src/hfcache/paths.py`: the whole §5.1 tree, relative-path grammar, containment, collision folding. Both at 100% branch coverage. `config.py` now imports its identifier grammars rather than defining them)
 - [x] CFG-004 Manifest and report models (2026-07-25, this commit — `src/hfcache/models.py` (foundation, sentinel, reference, prune plan, audit records, journal), `manifests.py` (`RevisionManifest`), `reporting.py` (run report, verification report, catalog). One serializer for every writer including the CLI envelope; §1.1 version refusal; a golden fixture per format in `tests/fixtures/schemas/`. All three modules at 100% branch coverage)
-- [ ] CFG-005 `config validate`
+- [x] CFG-005 `config validate` (2026-07-25, this commit — `config` sub-app in `src/hfcache/cli.py`; loads configuration and resolves the credential, takes no lock and makes no network call; failure envelope emitted with every problem, exit `10`; `--token-file` is now resolved as `CFG-002` said it would be here)
 - [ ] CFG-006 Read-only portions of `doctor`, `status`, and `plan`
 - [ ] CFG-007 Deterministic JSON output and error taxonomy
 
@@ -447,3 +447,25 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     one thing `load` exists to guarantee. Both sites now raise `ValueError` with a
     `# noqa: TRY004`, since Ruff reasonably prefers `TypeError` for a type check
     and is wrong about it here.
+
+22. **`config validate` reports `token_source`** (2026-07-25, CFG-005).
+    `docs/cli.md` §4.1 listed only the fingerprint and two counts. The command an
+    operator runs before enabling the timer should also answer "did the credential
+    resolve, and from where" — otherwise the first evidence that a systemd
+    credential is missing or that `--token-file` is unreadable arrives during a
+    scheduled run hours later. The field carries the *source* name only
+    (`token-file`, `systemd-credential`, `none`), never the value, which is what
+    `docs/security.md` T-07 permits. `docs/cli.md` §2 and §4.1 updated in this
+    commit.
+
+23. **A whole-table constraint is not reported alongside a bad field in the same
+    table** (2026-07-25, CFG-005). Pydantic does not run a `mode="after"` model
+    validator when a field in that model already failed, so a configuration with
+    both a bad `storage.archive_root` and `maximum_revisions = 9` reports
+    `HFCFG006` now and `HFCFG011` only after the path is fixed. This narrows
+    `docs/configuration.md` §8's promise that an operator fixes one file once, and
+    it is recorded rather than worked around: making it complete would mean
+    turning every table-level rule into a field-level one, which would lose the
+    cross-field checks that are the reason those validators exist. The behaviour
+    is asserted in `tests/unit/test_config_validate.py` so it cannot change
+    silently.

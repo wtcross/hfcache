@@ -12,11 +12,14 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, NoReturn
 
 import typer
 
 from hfcache import __version__
+from hfcache.config import load_config
+from hfcache.credentials import resolve_token
+from hfcache.errors import HfcacheError
 from hfcache.identity import new_run_id
 from hfcache.models import serialize
 
@@ -96,6 +99,37 @@ def emit_envelope(
         "warnings": warnings,
     }
     sys.stdout.write(serialize(envelope, indent=None))
+
+
+def _report_failure(
+    ctx: typer.Context, command: str, started_at: str, error: HfcacheError
+) -> NoReturn:
+    """Render a failure and exit with its classification.
+
+    The envelope is emitted on failure too (`docs/cli.md` §4), so automation
+    never has to parse human text to learn what went wrong. In human mode the
+    problems go to stderr, which is why `--quiet` can suppress everything else
+    and still leave an operator with the reason.
+    """
+    if _options(ctx).json_output:
+        emit_envelope(
+            command,
+            {},
+            started_at=started_at,
+            errors=[problem.as_envelope_entry() for problem in error.problems],
+            exit_code=int(error.exit_code),
+        )
+    else:
+        for problem in error.problems:
+            typer.echo(problem.as_line(), err=True)
+    raise typer.Exit(int(error.exit_code))
+
+
+def _echo_pairs(payload: dict[str, Any]) -> None:
+    """Print a flat payload as aligned `key  value` lines."""
+    width = max(len(key) for key in payload)
+    for key in sorted(payload):
+        typer.echo(f"{key.replace('_', ' '):<{width}}  {payload[key]}")
 
 
 def _dependency_version(distribution: str) -> str:
@@ -179,6 +213,47 @@ def version(ctx: typer.Context) -> None:
     if _options(ctx).json_output:
         emit_envelope("version", payload, started_at=started_at)
         return
-    width = max(len(key) for key in payload)
-    for key in sorted(payload):
-        typer.echo(f"{key.replace('_', ' '):<{width}}  {payload[key]}")
+    _echo_pairs(payload)
+
+
+config_app = typer.Typer(
+    name="config",
+    help="Inspect and validate configuration.",
+    no_args_is_help=True,
+)
+app.add_typer(config_app)
+
+
+@config_app.command("validate")
+def config_validate(ctx: typer.Context) -> None:
+    """Parse and fully validate configuration, touching nothing.
+
+    Runs exactly the validation every mutating command runs — the same loader,
+    the same credential resolution — and takes no lock, checks no mount, and
+    makes no network request (`docs/cli.md` §2). That is what makes it safe to
+    run against production configuration from a shell at any time, and it is why
+    a green `config validate` means a scheduled run will get as far as the mount
+    check rather than failing on a typo hours later.
+    """
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        config = load_config(options.config_path)
+        token = resolve_token(config.hub, token_file=options.token_file)
+    except HfcacheError as error:
+        _report_failure(ctx, "config validate", started_at, error)
+
+    payload: dict[str, Any] = {
+        "config_fingerprint": config.fingerprint(),
+        "enabled_repositories": len(config.enabled_repositories),
+        "repositories": len(config.repositories),
+        # The source, never the value (`docs/security.md` T-07). An operator
+        # checking a deployment needs to know whether the credential resolved
+        # and from where; learning that only from a sync hours later is worse.
+        "token_source": token.source.value,
+    }
+    if options.json_output:
+        emit_envelope("config validate", payload, started_at=started_at)
+        return
+    if not options.quiet:
+        _echo_pairs(payload)

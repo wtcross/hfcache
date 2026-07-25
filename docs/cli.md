@@ -83,6 +83,11 @@ hfcache [--config PATH] config validate
 Performs exactly the validation every mutating command performs, and touches
 nothing — no lock, no mount check, no network. Exits `0` or `10`.
 
+This includes resolving the credential, so `--token-file` and an installed
+systemd credential are checked here rather than first failing during a scheduled
+run. `token_source` reports which source won — `token-file`,
+`systemd-credential`, or `none` — and never the value (`docs/security.md` T-07).
+
 ### `archive init`
 
 ```text
@@ -340,7 +345,7 @@ Serialization follows the same deterministic rules as durable files
 
 | Command | `data` contains |
 | --- | --- |
-| `config validate` | `config_fingerprint`, repository count, enabled count |
+| `config validate` | `config_fingerprint`, `repositories`, `enabled_repositories`, `token_source` |
 | `archive init` | `archive_id`, `archive_root`, created paths, `adopted_published` |
 | `doctor` | `checks[]` of `{ name, outcome, detail }`, in execution order |
 | `plan` | `repositories[]` of resolved SHA, retained/current state, logical size, estimated new bytes |
