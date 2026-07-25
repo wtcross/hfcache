@@ -144,7 +144,7 @@ performs it lands, rather than being reported as skipped or passed
 | # | `name` | Proves | Writes | Code on failure |
 | --- | --- | --- | --- | --- |
 | 1 | `configuration` | Configuration parses and fully validates | no | `HFCFG###` |
-| 2 | `archive_root` | The archive root exists | no | `HFMNT001` |
+| 2 | `archive_root` | The archive root exists and is a directory | no | `HFMNT001`, `HFMNT015` |
 | 3 | `mount_point` | It is a mount point distinct from its parent | no | `HFMNT002` |
 | 4 | `filesystem_type` | The filesystem is NFS/NFSv4 | no | `HFMNT003` |
 | 5 | `mount_writable` | The mount is not read-only | no | `HFMNT004` |
@@ -164,6 +164,17 @@ performs it lands, rather than being reported as skipped or passed
 Checks 6–12 need an initialized archive. Against a target that has none they
 report `skipped` with that as the reason, which is operator state rather than
 development state; `archive init` is what changes it.
+
+A check whose precondition failed is also `skipped`, with that as its reason:
+nothing can be said about the filesystem type of a path that does not exist, and
+`pass` is the one answer that would be wrong. The failure that caused it is
+already reported as its own check, so it is never restated.
+
+The same ordered checks are what a mutating command's preflight runs, and it
+reads a skip differently: `doctor` reports one and still exits `0`, while a
+command that is about to write refuses, because it may not assume a check it
+never ran would have passed. Every problem found is reported at once
+(`docs/plan.md` §19).
 
 Writability is proven only by the check-7 probe, never by comparing `st_uid`
 against the local service uid — under the Mapall writer export the owner has no

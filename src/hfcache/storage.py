@@ -40,11 +40,13 @@ from typing import TYPE_CHECKING, Any, Final, Literal, final
 
 from hfcache import __version__
 from hfcache.errors import Problem, SafetyError
+from hfcache.identity import new_probe_id
 from hfcache.models import ArchiveSentinel, Provenance, dump, load
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
+    from hfcache.identity import ProbeId
     from hfcache.paths import ArchiveLayout
 
 __all__ = [
@@ -59,14 +61,19 @@ __all__ = [
     "MountFacts",
     "atomic_write_bytes",
     "describe_mount",
+    "device_problems",
     "fsync_directory",
     "initialize_archive",
     "inspect_archive",
+    "is_initialized",
     "is_temporary_sibling",
     "mount_problems",
     "parse_mount_table",
+    "probe_writability",
+    "publication_destinations",
     "published_adoption_problems",
     "read_mount_table",
+    "same_filesystem_problems",
     "temporary_sibling",
 ]
 
@@ -101,6 +108,24 @@ _MOUNTINFO_FIXED_FIELDS: Final = 6
 
 _TEMPORARY = re.compile(r".+\.tmp-[0-9a-f]{16}")
 """A durable write in progress. Matched with `fullmatch`, never anchored."""
+
+_PROBE_DIRECTORY_MODE: Final = 0o700
+"""A probe directory is the writer's alone, like everything else under `.store`."""
+
+_PROBE_FILE_MODE: Final = 0o600
+"""The probe file outlives nothing; nobody else ever needs to read it."""
+
+_PROBE_FILE: Final = "probe.json"
+"""The one file a probe creates, inside the one directory a probe creates."""
+
+_PROBE_PAYLOAD: Final = b'{"probe": "hfcache"}\n'
+"""What the probe writes and then reads back.
+
+Read back rather than assumed, because `write` returning success is not the same
+statement as the bytes being there: a short write, a truncating filesystem, or a
+mode that made the file unreadable to the identity that just created it are all
+caught here and none of them are caught by the write alone.
+"""
 
 
 # --------------------------------------------------------------------------- #
@@ -347,6 +372,172 @@ def atomic_write_bytes(path: Path, payload: bytes, *, mode: int) -> None:
         temporary.unlink(missing_ok=True)
         raise
     fsync_directory(path.parent)
+
+
+# --------------------------------------------------------------------------- #
+# Effective writability and filesystem containment
+# --------------------------------------------------------------------------- #
+
+
+def is_initialized(layout: ArchiveLayout) -> bool:
+    """Whether the archive has been initialized.
+
+    The sentinel is written last, so its presence is what proves the layout
+    beneath it exists (`FS-23`). A check that needs an initialized archive asks
+    this, and reports `skipped` rather than failing when the answer is no: an
+    uninitialized target is operator state that `archive init` changes, not a
+    broken deployment.
+    """
+    return layout.sentinel.is_file()
+
+
+def probe_writability(layout: ArchiveLayout, *, probe_id: ProbeId | None = None) -> list[Problem]:
+    """Prove create, fsync, rename, and delete succeed under `.store/health/`.
+
+    Plan §19 items 6 and 10, and `doctor` check 7. This is the *only* way
+    effective writability is ever established. The Mapall writer export presents
+    NAS-side owner ids with no local account, so comparing `st_uid` against the
+    service uid proves nothing about whether this process can write
+    (`docs/plan.md` §35.3) — and a server-side read-only export presents `rw`
+    client options, so the mount table does not answer it either.
+
+    Every artifact is removed before this returns, including after a failed
+    probe: a probe that left evidence behind would be found by the next
+    inspection and refused as content the application did not put there
+    (`FS-22`).
+    """
+    directory = layout.probe(new_probe_id() if probe_id is None else probe_id)
+    where = str(layout.archive_relative(directory))
+    try:
+        directory.mkdir(mode=_PROBE_DIRECTORY_MODE)
+    except OSError as exc:
+        message = (
+            f"the probe directory {directory} could not be created ({exc.strerror}), so the "
+            f"archive is not effectively writable by this identity"
+        )
+        return [Problem(code="HFMNT008", message=message, location=where)]
+    problems = _exercise_probe(directory, where)
+    problems.extend(_remove_probe(directory, where))
+    return problems
+
+
+def _exercise_probe(directory: Path, where: str) -> list[Problem]:
+    """Perform the four operations plan §19 item 10 names, on the probe's own file."""
+    target = directory / _PROBE_FILE
+    try:
+        # `atomic_write_bytes` is create, fsync, chmod, rename, fsync-parent —
+        # exactly the primitive publication uses. Exercising the real one is the
+        # point: an approximation could succeed where publication would not.
+        atomic_write_bytes(target, _PROBE_PAYLOAD, mode=_PROBE_FILE_MODE)
+        observed = target.read_bytes()
+        target.unlink()
+        fsync_directory(directory)
+    except OSError as exc:
+        message = (
+            f"the write probe under {directory} failed at {exc.filename or directory}: "
+            f"{exc.strerror}"
+        )
+        return [Problem(code="HFMNT008", message=message, location=where)]
+    if observed != _PROBE_PAYLOAD:
+        message = (
+            f"the write probe under {directory} read back {len(observed)} bytes, not the "
+            f"{len(_PROBE_PAYLOAD)} it wrote; the archive does not hold what is written to it"
+        )
+        return [Problem(code="HFMNT008", message=message, location=where)]
+    return []
+
+
+def _remove_probe(directory: Path, where: str) -> list[Problem]:
+    """Remove the probe's artifacts, whether or not the probe itself succeeded.
+
+    Only files directly inside the probe directory, because those are the only
+    things a probe creates. Anything else is reported rather than removed, which
+    keeps this within `FS-19` even in the one case where the application deletes
+    something during a read-only-looking command.
+    """
+    try:
+        for child in sorted(directory.iterdir()):
+            child.unlink()
+        directory.rmdir()
+    except OSError as exc:
+        message = (
+            f"the write probe left {exc.filename or directory} behind ({exc.strerror}); a probe "
+            f"removes everything it created, so this is reported rather than passed over"
+        )
+        return [Problem(code="HFMNT008", message=message, location=where)]
+    return []
+
+
+def publication_destinations(layout: ArchiveLayout) -> tuple[Path, ...]:
+    """Every directory a staging or published tree is renamed into (`FS-04`).
+
+    A publication renames staging into `published/repos`; a prune renames a
+    published tree into `.store/trash`; a verification failure renames one into
+    `.store/quarantine`. `manifests/` and `catalog/` receive durable file writes,
+    whose rename is within one directory by construction, and they are listed
+    anyway so the proof covers the whole consumer-visible subtree rather than
+    the parts that happen to need it most.
+    """
+    return (
+        layout.published,
+        layout.repos,
+        layout.manifests,
+        layout.catalog,
+        layout.trash,
+        layout.quarantine,
+    )
+
+
+def device_problems(devices: Mapping[str, int], *, root_device: int) -> list[Problem]:
+    """Report every path that is not on the archive root's filesystem (`FS-04`).
+
+    Taken as device numbers rather than paths so the policy is separable from
+    the syscall, which is what lets it be exercised for a second filesystem this
+    test host cannot mount — the same reason `published_adoption_problems` takes
+    `os.stat_result` values.
+    """
+    return [
+        Problem(
+            code="HFMNT009",
+            message=(
+                f"{where} is on device {device}, but the archive root is on {root_device}; "
+                f"publication is a rename(2) and would become a cross-device copy"
+            ),
+            location=where,
+        )
+        for where, device in sorted(devices.items())
+        if device != root_device
+    ]
+
+
+def same_filesystem_problems(layout: ArchiveLayout) -> list[Problem]:
+    """Prove staging and every publication destination share one filesystem.
+
+    `doctor` check 8 and plan §19 item 7. Reads only: `stat(2)` on directories
+    the layout already requires to exist, so this proves nothing about
+    writability and is safe under `--read-only`.
+    """
+    root = layout.root
+    try:
+        root_device = root.stat().st_dev
+    except OSError as exc:
+        message = (
+            f"the archive root {root} could not be examined ({exc.strerror}), so staging and "
+            f"its publication destinations cannot be proven to share a filesystem"
+        )
+        return [Problem(code="HFMNT008", message=message, location=str(root))]
+
+    devices: dict[str, int] = {}
+    problems: list[Problem] = []
+    for path in (layout.staging, *publication_destinations(layout)):
+        where = str(layout.archive_relative(path))
+        try:
+            devices[where] = path.stat().st_dev
+        except OSError as exc:
+            message = f"required directory {path} could not be examined: {exc.strerror}"
+            problems.append(Problem(code="HFMNT008", message=message, location=where))
+    problems.extend(device_problems(devices, root_device=root_device))
+    return problems
 
 
 # --------------------------------------------------------------------------- #

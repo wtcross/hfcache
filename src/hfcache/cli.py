@@ -12,16 +12,23 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from importlib.util import find_spec
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, NoReturn
+from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 
 import typer
 
 from hfcache import __version__
 from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
-from hfcache.errors import ConfigurationError, HfcacheError, Problem, SafetyError
+from hfcache.errors import ConfigurationError, ExitCode, HfcacheError, Problem, SafetyError
 from hfcache.identity import new_run_id, parse_selector
 from hfcache.paths import ArchiveLayout
+from hfcache.preflight import (
+    READ_ONLY,
+    UNPROVABLE_READ_ONLY,
+    Check,
+    order_checks,
+    storage_checks,
+)
 from hfcache.reporting import Envelope, EnvelopeProblem
 from hfcache.storage import initialize_archive, inspect_archive
 
@@ -30,7 +37,7 @@ if TYPE_CHECKING:
 
     from hfcache.storage import ArchiveInspection
 
-__all__ = ["app"]
+__all__ = ["UNPROVABLE_READ_ONLY", "app"]
 
 DEFAULT_CONFIG_PATH = Path("/etc/hfcache/config.toml")
 """Matches the systemd invocation in `docs/plan.md` §22.2."""
@@ -484,32 +491,6 @@ def _select(config: ApplicationConfig, selectors: list[str] | None) -> tuple[Rep
 # --------------------------------------------------------------------------- #
 
 
-@dataclass(frozen=True, slots=True)
-class Check:
-    """One `doctor` probe and what it proved (`docs/cli.md` §4.1)."""
-
-    name: str
-    outcome: Literal["pass", "fail", "skipped"]
-    detail: str
-
-    def as_entry(self) -> dict[str, str]:
-        """Render in the documented `checks[]` shape."""
-        return {"detail": self.detail, "name": self.name, "outcome": self.outcome}
-
-
-UNPROVABLE_READ_ONLY: Final = (
-    "hardlink_capability",
-    "atomic_directory_rename",
-    "reference_replacement",
-)
-"""What `--read-only` cannot establish.
-
-`docs/cli.md` §2 requires these to be reported as unproven rather than passed:
-each one is a capability that can only be demonstrated by performing it, and a
-mount that must not be touched is a mount on which they are unknown.
-"""
-
-
 @app.command()
 def doctor(
     ctx: typer.Context,
@@ -520,8 +501,12 @@ def doctor(
 ) -> None:
     """Prove the deployment can do what a scheduled run will ask of it.
 
-    Checks run in a fixed order and every one is reported, so the output is a
-    record of what was proven rather than of where the command stopped.
+    Every check is reported, in the normative order of the `docs/cli.md` §2
+    table, so the output is a record of what was proven rather than of where the
+    command stopped. The checks themselves are `hfcache.preflight`'s, which is
+    the same runner a mutating command's hard gate uses — the report an operator
+    reads and the preflight a scheduled run performs cannot describe different
+    things (plan §19).
     """
     started_at = utc_now()
     options = _options(ctx)
@@ -531,37 +516,44 @@ def doctor(
     except HfcacheError as error:
         _report_failure(ctx, "doctor", started_at, error)
 
+    layout = ArchiveLayout(root=config.storage.archive_root)
     checks = [
-        Check(
-            name="configuration",
-            outcome="pass",
-            detail=f"{options.config_path} is valid; fingerprint {config.fingerprint()[:12]}",
+        Check.passed(
+            "configuration",
+            f"{options.config_path} is valid; fingerprint {config.fingerprint()[:12]}",
         ),
-        Check(name="credential", outcome="pass", detail=token.describe()),
-        Check(
-            name="hub_endpoint",
-            outcome="pass",
-            detail=f"{config.hub.endpoint} is a well-formed https endpoint",
-        ),
+        *storage_checks(layout, read_only=read_only),
+        Check.passed("credential", token.describe()),
+        Check.passed("hub_endpoint", f"{config.hub.endpoint} is a well-formed https endpoint"),
     ]
     if read_only:
+        # Whatever the runner did not already report as unprovable. As the
+        # packages behind those capabilities land they leave this list, rather
+        # than being stated in two places that could disagree.
+        probed = {check.name for check in checks}
         checks.extend(
-            Check(
-                name=name,
-                outcome="skipped",
-                detail="--read-only: this capability can only be proven by exercising it",
-            )
-            for name in UNPROVABLE_READ_ONLY
+            Check.skipped(name, READ_ONLY) for name in UNPROVABLE_READ_ONLY if name not in probed
         )
 
-    payload: dict[str, Any] = {"checks": [check.as_entry() for check in checks]}
+    ordered = order_checks(checks)
+    problems = [problem for check in ordered for problem in check.problems]
+    failed = any(check.outcome == "fail" for check in ordered)
+    exit_code = int(ExitCode.SAFETY) if failed else int(ExitCode.SUCCESS)
+
+    payload: dict[str, Any] = {"checks": [check.as_entry() for check in ordered]}
     if options.json_output:
-        emit_envelope("doctor", payload, started_at=started_at)
-        return
-    if not options.quiet:
-        width = max(len(check.name) for check in checks)
-        for check in checks:
+        emit_envelope(
+            "doctor", payload, started_at=started_at, errors=problems, exit_code=exit_code
+        )
+    elif not options.quiet:
+        # The table is the report: a failing row already carries its problem's
+        # message as its detail, so repeating the problems on stderr would say
+        # the same thing twice.
+        width = max(len(check.name) for check in ordered)
+        for check in ordered:
             typer.echo(f"{check.outcome:<7}  {check.name:<{width}}  {check.detail}")
+    if failed:
+        raise typer.Exit(exit_code)
 
 
 # --------------------------------------------------------------------------- #

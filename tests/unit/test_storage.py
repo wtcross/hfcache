@@ -22,21 +22,29 @@ from typing import TYPE_CHECKING
 import pytest
 
 from hfcache.errors import ExitCode, SafetyError
+from hfcache.identity import ProbeId
 from hfcache.models import SCHEMA_VERSION, ArchiveSentinel, Provenance, dump
 from hfcache.paths import ArchiveLayout
 from hfcache.storage import (
     MountEntry,
     MountFacts,
+    _exercise_probe,
+    _remove_probe,
     atomic_write_bytes,
     describe_mount,
+    device_problems,
     fsync_directory,
     initialize_archive,
     inspect_archive,
+    is_initialized,
     is_temporary_sibling,
     mount_problems,
     parse_mount_table,
+    probe_writability,
+    publication_destinations,
     published_adoption_problems,
     read_mount_table,
+    same_filesystem_problems,
     temporary_sibling,
 )
 
@@ -410,6 +418,171 @@ def test_fsync_of_a_directory_succeeds_on_this_filesystem(tmp_path: Path):
     # Publication durability depends on it: fsyncing a file makes its contents
     # durable, not the parent's reference to it.
     fsync_directory(tmp_path)
+
+
+# --------------------------------------------------------------------------- #
+# The writability probe
+# --------------------------------------------------------------------------- #
+
+PROBE_ID = ProbeId("0123456789abcdef")
+
+
+@pytest.fixture
+def initialized(layout: ArchiveLayout, table) -> ArchiveLayout:
+    initialize(layout, table)
+    return layout
+
+
+def test_an_archive_is_initialized_exactly_when_its_sentinel_is_there(layout, table):
+    # The sentinel is written last (`FS-23`), so its presence is what proves the
+    # layout beneath it.
+    assert not is_initialized(layout)
+
+    initialize(layout, table)
+
+    assert is_initialized(layout)
+
+
+def test_a_probe_proves_create_fsync_rename_and_delete(initialized: ArchiveLayout):
+    assert probe_writability(initialized) == []
+
+
+def test_a_probe_removes_every_artifact_it_made(initialized: ArchiveLayout):
+    probe_writability(initialized, probe_id=PROBE_ID)
+
+    assert list(initialized.health.iterdir()) == []
+    assert not initialized.probe(PROBE_ID).exists()
+
+
+def test_a_probe_writes_under_the_documented_path(initialized: ArchiveLayout, monkeypatch):
+    # `.store/health/probe-<probe-id>`, per `docs/architecture.md` §5.1. Captured
+    # rather than inferred, because the directory is gone by the time the probe
+    # returns.
+    seen: list[Path] = []
+    real = fsync_directory
+    monkeypatch.setattr(
+        "hfcache.storage.fsync_directory", lambda path: (seen.append(path), real(path))[1]
+    )
+
+    probe_writability(initialized, probe_id=PROBE_ID)
+
+    assert initialized.probe(PROBE_ID) in seen
+    assert str(initialized.archive_relative(initialized.probe(PROBE_ID))) == (
+        f".store/health/probe-{PROBE_ID}"
+    )
+
+
+def test_a_probe_that_cannot_create_its_directory_is_hfmnt008(initialized: ArchiveLayout):
+    initialized.health.chmod(0o500)
+    try:
+        problems = probe_writability(initialized)
+    finally:
+        initialized.health.chmod(0o700)
+
+    assert codes(problems) == ["HFMNT008"]
+    assert list(initialized.health.iterdir()) == []
+
+
+def test_a_failed_probe_still_removes_what_it_made(
+    initialized: ArchiveLayout, monkeypatch: pytest.MonkeyPatch
+):
+    # The requirement is "including after a failed probe": a leftover would be
+    # found by the next inspection and refused as content nobody recognises.
+    def refuse(path: Path, payload: bytes, *, mode: int) -> None:
+        raise OSError(13, "Permission denied", str(path))
+
+    monkeypatch.setattr("hfcache.storage.atomic_write_bytes", refuse)
+
+    problems = probe_writability(initialized, probe_id=PROBE_ID)
+
+    assert codes(problems) == ["HFMNT008"]
+    assert list(initialized.health.iterdir()) == []
+
+
+def test_a_probe_whose_bytes_do_not_come_back_is_hfmnt008(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # An export that accepts a write and holds something else is not writable in
+    # any sense that matters. Injected, because no local filesystem does it.
+    def lose_the_payload(path: Path, payload: bytes, *, mode: int) -> None:
+        path.write_bytes(b"not what was written")
+
+    directory = tmp_path / "probe"
+    directory.mkdir()
+    monkeypatch.setattr("hfcache.storage.atomic_write_bytes", lose_the_payload)
+
+    problems = _exercise_probe(directory, "probe")
+
+    assert codes(problems) == ["HFMNT008"]
+    assert "read back" in problems[0].message
+
+
+def test_a_probe_that_cannot_write_at_all_is_hfmnt008(tmp_path: Path):
+    problems = _exercise_probe(tmp_path / "absent", "probe")
+
+    assert codes(problems) == ["HFMNT008"]
+
+
+def test_an_artifact_the_probe_cannot_remove_is_reported_not_ignored(tmp_path: Path):
+    # A probe creates files only. Anything else there is reported rather than
+    # removed, which keeps the one deletion this command performs inside `FS-19`.
+    directory = tmp_path / "probe"
+    (directory / "not-a-probe-file").mkdir(parents=True)
+
+    problems = _remove_probe(directory, "probe")
+
+    assert codes(problems) == ["HFMNT008"]
+    assert directory.is_dir(), "nothing unrecognized is removed to make the probe tidy"
+
+
+# --------------------------------------------------------------------------- #
+# One filesystem (`FS-04`)
+# --------------------------------------------------------------------------- #
+
+
+def test_every_publication_destination_is_named(layout: ArchiveLayout):
+    # A destination missing from this list is a destination the same-filesystem
+    # proof never covers, so the list is asserted rather than assumed.
+    assert set(publication_destinations(layout)) == {
+        layout.published,
+        layout.repos,
+        layout.manifests,
+        layout.catalog,
+        layout.trash,
+        layout.quarantine,
+    }
+
+
+def test_one_filesystem_is_no_problem():
+    assert device_problems({"published": 64, ".store/staging": 64}, root_device=64) == []
+
+
+def test_a_destination_on_another_filesystem_is_hfmnt009():
+    problems = device_problems(
+        {"published": 65, ".store/staging": 64, ".store/trash": 66}, root_device=64
+    )
+
+    assert codes(problems) == ["HFMNT009", "HFMNT009"]
+    assert [problem.location for problem in problems] == [".store/trash", "published"]
+
+
+def test_staging_and_every_destination_share_the_archive_filesystem(initialized: ArchiveLayout):
+    assert same_filesystem_problems(initialized) == []
+
+
+def test_a_destination_that_is_missing_is_hfmnt008(initialized: ArchiveLayout):
+    initialized.trash.rmdir()
+
+    problems = same_filesystem_problems(initialized)
+
+    assert codes(problems) == ["HFMNT008"]
+    assert problems[0].location == ".store/trash"
+
+
+def test_an_archive_root_that_cannot_be_examined_is_hfmnt008(tmp_path: Path):
+    problems = same_filesystem_problems(ArchiveLayout(root=tmp_path / "absent"))
+
+    assert codes(problems) == ["HFMNT008"]
 
 
 # --------------------------------------------------------------------------- #

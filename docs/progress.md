@@ -61,8 +61,8 @@ predate `CFG-003`.
 ## Phase 3 — Storage Safety and Publication Primitives
 
 - [x] STO-000 Guarded one-time archive initialization and inspection (2026-07-25, this commit — `src/hfcache/storage.py`: mount-table proof, durable byte writes, the known-empty-layout walk, and `initialize_archive`; `archive` sub-app in `src/hfcache/cli.py` with `init`, `--inspect`, `--confirm`, and `--archive-id`. The §6.2 empty-`published/` adoption is implemented with ownership compared against the archive root, per decision 31. 100% branch coverage. **Not yet run against `/srv/hfcache`:** the §36.4 one-time authorization is spent at the rollout checkpoint after `HOST-004`, not here)
-- [ ] STO-001 NFS mount and filesystem-type detection — *the detection itself landed at `STO-000` (decision 28), so what remains is the shared preflight built on it:* the `.store/health/probe-<probe-id>` create/fsync/rename/delete writability probe (`HFMNT008`, plan §19 items 6 and 10), the staging/destination same-filesystem check (`HFMNT009`, `FS-04`), one ordered check runner both `doctor` and every mutating command use, `doctor` checks 2–5, 7, and 8 of the `docs/cli.md` §2 table wired in, `--read-only` skipping the probe, and `doctor` exiting `20` when any check fails instead of always `0`
-- [ ] STO-002 Sentinel/archive-ID validation — `doctor` check 6; `_read_sentinel` exists in `storage.py` from `STO-000`, so this is `HFMNT005` for an absent sentinel plus the gate every mutating command runs
+- [x] STO-001 NFS mount and filesystem-type detection (2026-07-25, this commit — the detection itself landed at `STO-000` (decision 28); this is the shared preflight built on it. `src/hfcache/storage.py`: the `.store/health/probe-<probe-id>` create/fsync/rename/delete probe (`HFMNT008`, plan §19 items 6 and 10) which removes every artifact it made including after a failure, and the staging/destination same-filesystem proof (`HFMNT009`, `FS-04`). `src/hfcache/preflight.py` (new, decision 33): the ordered check runner `doctor` and every mutating command share, plus `require_storage_safety`, the hard gate that raises with every problem at once. `doctor` now emits `docs/cli.md` §2 rows 2–5, 7, and 8 in table order with `credential` and `hub_endpoint` at 13 and 14, skips the probe under `--read-only`, and exits `20` when any check failed. `storage.py` and `preflight.py` both at 100% branch coverage; `tests/system/test_live_mount.py` proves rows 2–5 against the live `/srv/hfcache` mount read-only, `-m nfs`)
+- [ ] STO-002 Sentinel/archive-ID validation — `doctor` check 6; `_read_sentinel` exists in `storage.py` from `STO-000` and `preflight.require_storage_safety` from `STO-001`, so this is `HFMNT005` for an absent sentinel plus that check taking over the "not initialized" answer checks 7 and 8 currently give on their own. **Do this one first:** `storage.py` is at 973 lines, so per the `STO-001` sizing note it is `STO-002`'s job to move archive init/inspect into `archive.py` before adding to it
 - [ ] STO-003 Free-space and reserve calculations — `doctor` check 12 (`HFMNT011`) and the `HFWRN005` approaching-reserve warning
 - [ ] STO-004 Local exclusive locking
 - [ ] STO-005 Atomic JSON and ref writes
@@ -597,3 +597,57 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     wrapped and reported under it at exit `20`. The message names the failing
     path and points at `--inspect`, because decision 30 is what makes the retry
     safe.
+
+33. **The check runner is its own module, `preflight.py`** (2026-07-25,
+    STO-001). Plan §7's module list has no home for it, and neither of the two
+    obvious ones works. `cli.py` is wrong because the runner is not the CLI's:
+    a mutating command's hard gate uses the identical checks in the identical
+    order, and a scheduled `sync` must not have to route through the command
+    surface to reach them. `storage.py` is wrong because the table includes
+    `configuration`, `credential`, and the four `hub_*` checks, which are not
+    storage — and because `storage.py` is at 973 lines, near the point where one
+    module carries everything. So the *primitives* stay in `storage.py`
+    (`probe_writability`, `same_filesystem_problems`, `is_initialized`) and the
+    *ordering, outcomes, and gate* are `preflight.py`, which is also where the
+    normative `docs/cli.md` §2 table lives as `CHECK_ORDER`. Plan §7 updated in
+    this commit.
+
+    Sizing note for the next package: `storage.py` is now 973 lines and
+    `STO-002` adds to it. The §36 protocol's instruction stands — split
+    `archive init`/`--inspect` into `archive.py` at that point, with its own
+    decision and plan §7 amendment. It is not done here because it would mix a
+    large move into the commit that implements the preflight.
+
+34. **`archive_root` reports `HFMNT015` as well as `HFMNT001`** (2026-07-25,
+    STO-001). `docs/cli.md` §2 row 2 proved "the archive root exists" and named
+    only `HFMNT001`. A symlink exists, and so does a regular file; neither is an
+    archive root, and `mount_problems` already reports both as `HFMNT015`.
+    Putting that under a later check was considered and rejected: `mount_point`
+    would then fail for a path whose problem is not its mount, and the check
+    that actually looked at the root would have reported `pass`. Row 2 is now
+    "exists and is a directory" with both codes, which is what it always
+    verified. `docs/cli.md` §2 updated in this commit.
+
+35. **A skipped check has three meanings, and the gate reads them differently**
+    (2026-07-25, STO-001). `docs/cli.md` §2 described `skipped` for two
+    situations — `--read-only`, and an archive that is not initialized — and
+    plan §19 requires the same checks to be a *hard* preflight for every
+    mutating command. Those two cannot both be satisfied by one boolean: an
+    uninitialized archive is a fine answer for `doctor`, which reports it and
+    exits `0`, and an impossible one for a command that is about to write.
+
+    A third case appeared while implementing rows 2–5. `mount_problems`
+    short-circuits, so with an absent root nothing is known about its filesystem
+    type; reporting `pass` there would be the one wrong answer, and reporting
+    `fail` would invent a failure that was never observed.
+
+    So a check carries the reason it did not run, and only the "not initialized"
+    reason blocks a mutating command — as `HFMNT008`, which `docs/cli.md` §5.2
+    already defines as a required directory being missing, which is exactly the
+    condition. A precondition skip adds nothing, because the failure that caused
+    it is already its own entry in the same report; restating it three times
+    would make a single missing directory look like four problems.
+    `require_storage_safety` deliberately takes no `--read-only` option: a
+    command about to write has no business asking for one, and an option that
+    silences a check is an option that lets one through. `docs/cli.md` §2
+    updated in this commit.
