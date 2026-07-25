@@ -365,10 +365,11 @@ condition; a retired condition retires its code.
 | Code | Condition |
 | --- | --- |
 | `HFARG001` | Malformed selector, or an abbreviated commit SHA |
-| `HFARG002` | Mutually exclusive options given together |
+| `HFARG002` | Mutually exclusive options given together, or an option that contradicts configuration — `--token-file` with `hub.token_mode = "disabled"` |
 | `HFARG003` | A required option is missing, such as `archive init` without `--confirm` |
 | `HFARG004` | Selector names a repository absent from configuration, for a command that requires one |
-| `HFARG005` | `--token-file` is missing, unreadable, empty, or not a regular file |
+| `HFARG005` | `--token-file` is missing, unreadable, empty, not a regular file, or does not hold a single well-formed token |
+| `HFARG006` | The systemd credential named by `hub.credential_name` is present but unusable, or `$CREDENTIALS_DIRECTORY` is not an absolute path |
 
 ### 5.2 Storage and transaction safety — exit `20`
 

@@ -65,7 +65,7 @@ credential_name = "hf-token"
 | `endpoint` | str | `"https://huggingface.co"` | Absolute `https://` URL, host required, no path, no query, no trailing `/` |
 | `expected_account` | str | `""` | Empty, or a Hub username/organization matching `[A-Za-z0-9][A-Za-z0-9._-]{0,95}` |
 | `token_mode` | str | `"optional"` | `"disabled"` \| `"optional"`; `"required"` is reserved and rejected in schema version 1 |
-| `credential_name` | str | `"hf-token"` | `[A-Za-z0-9._-]{1,64}` |
+| `credential_name` | str | `"hf-token"` | `[A-Za-z0-9._-]{1,64}`, and not `.` or `..` |
 
 `endpoint` must be `https://`. A plaintext endpoint is `HFCFG014`: TLS
 verification is not optional, and an archive whose provenance came over an
@@ -259,6 +259,39 @@ what a production run does (`docs/plan.md` §12).
 
 A token is never written to the archive, a manifest, a run report, a log line, or
 a journal entry.
+
+### 7.1 What a credential file must contain
+
+A credential file holds the token alone, with at most one trailing newline. After
+that newline is removed the remainder must be non-empty printable ASCII with no
+whitespace, and the file must be a regular file of at most 4096 bytes.
+
+Anything else is a malformed credential rather than a token to be repaired on the
+way through: a token becomes an `Authorization` header, so forwarding a value
+containing a stray carriage return, tab, or second newline would put whitespace
+into a header. Every rejection names the file and the defect, never the content.
+
+### 7.2 When each source fails
+
+| Situation | Outcome |
+| --- | --- |
+| `--token-file` given and unusable | `HFARG005` |
+| `--token-file` given with `token_mode = "disabled"` | `HFARG002` |
+| `$CREDENTIALS_DIRECTORY` unset or empty | No token; not an error |
+| Credential named by `credential_name` absent from that directory | No token; not an error |
+| That credential's name exists but is unusable | `HFARG006` |
+| `$CREDENTIALS_DIRECTORY` set to a relative path | `HFARG006` |
+
+The asymmetry in the middle rows is deliberate. `token_mode = "optional"` means a
+*missing* credential is normal, so absence resolves to anonymous access. A
+credential that was installed and is then unreadable, empty, or malformed is a
+different event: continuing anonymously would report success for a run the
+operator believes was authenticated, so it fails at exit `10` instead.
+
+`--token-file` together with `token_mode = "disabled"` is a contradiction, not a
+preference. Honouring the flag would violate the configured mode; ignoring it
+would let an operator believe a run was authenticated when it was not. Neither is
+silently chosen.
 
 ## 8. Configuration error codes
 

@@ -243,9 +243,13 @@ class HubConfig(_Strict):
                 f"hub.expected_account {self.expected_account!r} is not a valid Hub account name"
             )
             raise CodedError(message, code="HFCFG005")
-        if not _CREDENTIAL_NAME.match(self.credential_name):
+        if self.credential_name in {".", ".."} or not _CREDENTIAL_NAME.match(self.credential_name):
+            # '.' and '..' match the grammar but name a directory rather than a
+            # credential, so they are rejected here where the error is legible
+            # instead of surfacing as an unreadable credential at run time.
             message = (
-                f"hub.credential_name {self.credential_name!r} must match [A-Za-z0-9._-]{{1,64}}"
+                f"hub.credential_name {self.credential_name!r} must match "
+                f"[A-Za-z0-9._-]{{1,64}} and name a file, not '.' or '..'"
             )
             raise CodedError(message, code="HFCFG013")
         return self

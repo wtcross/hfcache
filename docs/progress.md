@@ -44,7 +44,7 @@ install smoke test.
 ## Phase 2 — Configuration, Models, and Read-only CLI
 
 - [x] CFG-001 Strict Pydantic configuration models (2026-07-24, this commit — `src/hfcache/config.py`, `errors.py` `Problem`/`HfcacheError`; all 16 `HFCFG###` codes implemented and each provoked by a test)
-- [ ] CFG-002 Token-source abstraction without literal secrets
+- [x] CFG-002 Token-source abstraction without literal secrets (2026-07-24, this commit — `src/hfcache/credentials.py`: §7 resolution order, `HFARG002`/`HFARG005`/`HFARG006`, `hub_argument` returns `False` and never `None`, redaction proven over generated tokens; no function in the module accepts a token value. The `--token-file` option is parsed by the CLI as of `BOOT-006`; it is *resolved* by the first command that loads configuration, which is `CFG-005`)
 - [ ] CFG-003 Repository identity and safe path mapping
 - [ ] CFG-004 Manifest and report models
 - [ ] CFG-005 `config validate`
@@ -148,6 +148,10 @@ install smoke test.
 - Model: _TBD — small public model, well under 100 MB, availability confirmed on the Hub_
 - Dataset: _TBD — small public dataset, well under 100 MB, availability confirmed on the Hub_
 
+Chosen at `HUB-004`, when the Hub adapter can confirm availability and size
+without downloading. §36.5 authorizes the session to choose; see **Operator
+decisions needed** item 1 for the separate question that does need an operator.
+
 ## Operator handoff
 
 Keep instructions exact and copy-pasteable; add acceptance checks.
@@ -181,7 +185,23 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
 
 ## Operator decisions needed
 
-_None yet._
+1. **Which repositories the archive is ultimately for** (raised 2026-07-24, during
+   `CFG-002`; not blocking until `HUB-005`). Two separate questions have been
+   conflated so far, so they are separated here:
+
+   - *The two test repositories* (§36.5) do **not** need an operator: the plan
+     authorizes the session to choose them, requiring only that each is public,
+     well under 100 MB, and confirmed available at implementation time. They stay
+     `_TBD_` above until `HUB-004` can resolve and size candidates against the
+     live Hub, and the choice is recorded here and in `examples/config.toml` when
+     made.
+   - *The production repository list* does need an operator, because it is the
+     only input to handoff item 4 (the TrueNAS dataset quota) and to §29 step 12.
+     Nothing is blocked while it is open: Phases 3–6 are written against
+     configuration, not against a particular repository.
+
+   When the list is known, `hfcache plan` reports dry-run sizes for it without
+   downloading anything, which is the number the quota decision wants.
 
 ## Decisions
 
@@ -269,3 +289,48 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
    pipeline all invoke identically, so a green pipeline and a green workstation
    mean the same thing. A Makefile was considered and rejected — `make` is not
    installed on the CentOS Stream 10 writer, and bash is.
+
+9. **`--token-file` with `token_mode = "disabled"` is `HFARG002`, not a silent
+   choice** (2026-07-24, CFG-002). `docs/configuration.md` §3 says `"disabled"`
+   means Hub calls *always* pass `token=False`; §7 says `--token-file` is the
+   first-match-wins source. When both are present the two sentences disagree, and
+   the contract did not say which wins. Honouring the flag violates the configured
+   mode. Ignoring the flag is worse: the operator believes the run was
+   authenticated and nothing says otherwise. So the combination is refused before
+   any Hub request, consistent with `AD-11`'s rule that a mode is never silently
+   downgraded. `docs/configuration.md` §7.2 and the `HFARG002` row in
+   `docs/cli.md` §5.1 are updated in this commit.
+
+10. **`HFARG006` added for a systemd credential that is present but unusable**
+    (2026-07-24, CFG-002). The taxonomy had `HFARG005` for `--token-file` and
+    nothing for the other source, so an empty, unreadable, or malformed systemd
+    credential had no code. It needs one distinct from `HFARG005`, because the two
+    conditions have different fixes — one is a mistyped command line, the other a
+    broken unit or credential store. Absence still resolves to anonymous access,
+    since `token_mode = "optional"` says a missing credential is normal; presence
+    plus unusability does not, because continuing anonymously would report success
+    for a run the operator believes was authenticated. `$CREDENTIALS_DIRECTORY`
+    set to a relative path shares the code: systemd always sets it absolute, so a
+    relative value means the environment is wrong and a credential would otherwise
+    be read relative to the working directory. Added to `docs/cli.md` §5.1 in this
+    commit; the plan does not enumerate `HFARG` codes, so no plan amendment is
+    needed.
+
+11. **A credential file is validated, never sanitized** (2026-07-24, CFG-002).
+    §7 said to strip a single trailing newline and said nothing about what may
+    remain. A token becomes an `Authorization` header, so a value containing a
+    stray carriage return, tab, or second newline must not be forwarded — and must
+    not be quietly cleaned up either, because a file that malformed is not
+    reliably the token the operator intended. After the one newline is removed the
+    remainder must be non-empty printable ASCII with no whitespace, in a regular
+    file of at most 4096 bytes. The size cap keeps a mistyped path from reading a
+    large file into memory before its contents are found unusable. Recorded as
+    `docs/configuration.md` §7.1.
+
+12. **`hub.credential_name` may not be `.` or `..`** (2026-07-24, CFG-002). Both
+    match the published `[A-Za-z0-9._-]{1,64}` grammar, and both name a directory
+    rather than a credential. Neither is exploitable — no `/` is permitted, so the
+    worst case resolves to `$CREDENTIALS_DIRECTORY` itself and fails as "not a
+    regular file" — but it fails at run time with a confusing message instead of
+    at `config validate` with a clear one. Rejected as `HFCFG013`, and the §3
+    constraint column is updated in this commit.

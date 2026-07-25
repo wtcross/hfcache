@@ -16,6 +16,10 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _AMBIENT_HUB_VARS = (
+    # systemd sets this for any unit with LoadCredential=. The suite must never
+    # read a real credential installed on the writer host, so it is removed here
+    # and every credential test supplies its own directory explicitly.
+    "CREDENTIALS_DIRECTORY",
     "HF_TOKEN",
     "HUGGING_FACE_HUB_TOKEN",
     "HUGGINGFACE_HUB_TOKEN",
