@@ -261,10 +261,12 @@ hfcache/
 │       ├── __main__.py
 │       ├── cli.py
 │       ├── config.py
+│       ├── credentials.py
 │       ├── dependencies.py
 │       ├── errors.py
 │       ├── hashing.py
 │       ├── hub.py
+│       ├── identity.py
 │       ├── logging.py
 │       ├── manifests.py
 │       ├── models.py

@@ -7,7 +7,6 @@ in `docs/cli.md`. Scheduled runs use exactly the same commands an operator types
 import json
 import platform
 import sys
-import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError
@@ -19,6 +18,7 @@ from typing import Annotated, Any
 import typer
 
 from hfcache import __version__
+from hfcache.identity import new_run_id
 
 __all__ = ["app"]
 
@@ -55,11 +55,6 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
-def new_id() -> str:
-    """Return a 32-character opaque identifier (`docs/architecture.md` §5.3)."""
-    return uuid.uuid4().hex
-
-
 def _options(ctx: typer.Context) -> GlobalOptions:
     """Retrieve the global options attached by the callback."""
     if not isinstance(ctx.obj, GlobalOptions):  # pragma: no cover - defensive
@@ -93,7 +88,7 @@ def emit_envelope(
         "errors": errors,
         "exit_code": exit_code,
         "outcome": outcome,
-        "run_id": new_id(),
+        "run_id": new_run_id(),
         "schema_version": ENVELOPE_SCHEMA_VERSION,
         "started_at": started_at,
         "warnings": warnings,

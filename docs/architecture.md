@@ -470,7 +470,37 @@ any network or filesystem access.
 Ordering within any generated JSON array of repositories, files, or revisions is
 deterministic: byte-wise ascending on the relative POSIX path or on
 `(type, id, generation)` as applicable. Two runs over identical state produce
-byte-identical output.
+byte-identical output. Byte-wise on `(type, id)` is not the same as ordering by
+`(type, namespace, name)` — `-` sorts before `/`, so `a-b/x` precedes `a/b-x` —
+and the whole identifier is what orders.
+
+#### Repository-relative file paths
+
+The paths *inside* a repository come from upstream and are hostile input
+(`docs/security.md` T-02). Each is validated before anything is linked, copied,
+or written at it:
+
+| Rule | Reason |
+| --- | --- |
+| Non-empty, no leading `/` | An absolute path is not a location in this tree |
+| No `.`, `..`, or empty component | Traversal, and `a//b` naming the same file as `a/b` |
+| No trailing `/` | A file entry that names a directory |
+| No C0 control character, DEL, or NUL | Unrepresentable, and a log-injection vector |
+| No backslash | A path separator on a consumer platform, where `a\..\..\b` traverses |
+| Component at most 255 bytes | `NAME_MAX` |
+| Whole path at most 1024 bytes | Keeps every derived absolute path far inside `PATH_MAX` |
+
+The line is drawn at what can **escape**, not at what is merely awkward
+elsewhere: a trailing space or a name like `CON` is left alone, because this
+application does not get to decide what a repository may call its files.
+
+Two entries that fold to the same key — NFC normalization plus full case folding
+— are rejected rather than published. The archive dataset is case-sensitive and
+does not normalize, so both spellings would survive here; a consumer copying to
+APFS or NTFS would silently merge them and hold a tree that no longer matches the
+manifest it verified against. The fold is deliberately a little stricter than any
+single filesystem's rule, because refusing a pair of names is visible and
+recoverable while silently merging two files is neither (`AD-16`).
 
 ## 6. Filesystem invariants
 
@@ -509,9 +539,13 @@ immediately after a crash. Each is directly testable.
   versioned objects naming a full commit SHA, publication generation, publication
   ID, and the exact archive-relative tree and manifest paths. They are replaced by
   atomic rename, never edited in place, never appended to.
-- **`FS-09`** — Every path inside a reference is archive-relative and validated to
-  remain under the archive root after normalization. A reference containing an
-  absolute path, a `..` segment, or a symlink component is invalid.
+- **`FS-09`** — Every path inside a durable artifact is relative and is validated
+  to remain under its root after normalization. A path field containing an
+  absolute path, a `..` segment, or a symlink component is invalid. The root is
+  the archive root for every artifact except a reference, whose `tree` and
+  `manifest` are relative to `published/` — the directory a consumer actually
+  mounts, and therefore the only base that resolves on the reader's side
+  (`docs/schemas.md` §4.1).
 - **`FS-10`** — Every reference that exists names a publication instance
   directory and a manifest that both exist and are complete. A reference is
   written only after both of its targets are durable.

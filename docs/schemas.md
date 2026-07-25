@@ -24,7 +24,7 @@ These apply to every file in this document.
 | Determinism | Identical logical content produces byte-identical files. Arrays are sorted by a documented key, never by iteration order |
 | Timestamps | RFC 3339 UTC with microsecond precision and a literal `Z`: `2026-07-24T20:57:31.123456Z`. Local time is never written |
 | Durability | Written to a temporary sibling in the same directory, `fsync`ed, then `rename(2)`d into place; the parent directory is `fsync`ed afterwards |
-| Paths | Every path field is **archive-relative** POSIX, without a leading `/`, without `.` or `..` segments, and validated to stay under the archive root (`FS-09`) |
+| Paths | Every path field is relative POSIX, without a leading `/`, without `.` or `..` segments, and validated to stay under its root (`FS-09`). That root is the **archive root**, with one exception: the `tree` and `manifest` fields of a reference (§4) are relative to **`published/`**, because a consumer mounts that directory and no other base resolves for it |
 | Digests | Lowercase hex |
 | Commit SHAs | Full 40-character lowercase hex; abbreviations are never written |
 | Absent values | `null` for a known-but-unset value; a key is never omitted from a written object |

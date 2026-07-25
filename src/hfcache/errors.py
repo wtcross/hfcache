@@ -10,12 +10,30 @@ from enum import IntEnum
 from typing import Any, Self
 
 __all__ = [
+    "CodedError",
     "ConfigurationError",
     "ExitCode",
     "HfcacheError",
     "Problem",
     "SafetyError",
 ]
+
+
+class CodedError(ValueError):
+    """A grammar or constraint failure that already knows its error code.
+
+    Raised by the low-level validators in `hfcache.identity` and
+    `hfcache.config`. It is a `ValueError` so that Pydantic collects it as an
+    ordinary validation failure, and it carries the code so the collector does
+    not have to re-derive which rule was broken from the message text.
+
+    The message comes first so a raise site reads as an ordinary exception and
+    the message stays in a variable, which is what keeps tracebacks readable.
+    """
+
+    def __init__(self, message: str, *, code: str) -> None:
+        super().__init__(message)
+        self.code = code
 
 
 class ExitCode(IntEnum):

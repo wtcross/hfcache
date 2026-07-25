@@ -45,7 +45,7 @@ install smoke test.
 
 - [x] CFG-001 Strict Pydantic configuration models (2026-07-24, this commit — `src/hfcache/config.py`, `errors.py` `Problem`/`HfcacheError`; all 16 `HFCFG###` codes implemented and each provoked by a test)
 - [x] CFG-002 Token-source abstraction without literal secrets (2026-07-24, this commit — `src/hfcache/credentials.py`: §7 resolution order, `HFARG002`/`HFARG005`/`HFARG006`, `hub_argument` returns `False` and never `None`, redaction proven over generated tokens; no function in the module accepts a token value. The `--token-file` option is parsed by the CLI as of `BOOT-006`; it is *resolved* by the first command that loads configuration, which is `CFG-005`)
-- [ ] CFG-003 Repository identity and safe path mapping
+- [x] CFG-003 Repository identity and safe path mapping (2026-07-25, this commit — `src/hfcache/identity.py`: every Hub-facing grammar, `RepositoryIdentity` self-validating, `TYPE:ID[@SHA]` selectors, opaque-id minting; `src/hfcache/paths.py`: the whole §5.1 tree, relative-path grammar, containment, collision folding. Both at 100% branch coverage. `config.py` now imports its identifier grammars rather than defining them)
 - [ ] CFG-004 Manifest and report models
 - [ ] CFG-005 `config validate`
 - [ ] CFG-006 Read-only portions of `doctor`, `status`, and `plan`
@@ -334,3 +334,62 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     regular file" — but it fails at run time with a confusing message instead of
     at `config validate` with a clear one. Rejected as `HFCFG013`, and the §3
     constraint column is updated in this commit.
+
+13. **A reference's paths are relative to `published/`, every other artifact's are
+    archive-relative** (2026-07-25, CFG-003). `docs/schemas.md` §1 said every path
+    field is archive-relative; §4.1 said a reference's `tree` and `manifest` are
+    relative to `published/`, and its worked example was written that way. Only one
+    can hold. `published/` wins, because it is not a stylistic choice: a consumer
+    mounts `published/` and nothing else, so an archive-relative `published/repos/…`
+    would resolve to `<mount>/published/repos/…`, which does not exist. The rule is
+    now stated once with its exception, in `docs/schemas.md` §1 and in `FS-09`, both
+    amended in this commit. `RepositoryLayout` exposes the two forms as separate
+    methods — `tree_reference` and `manifest_tree_field` — so the distinction is
+    made by the type of artifact being written rather than by a caller remembering
+    which base applies.
+
+14. **The repository-relative path grammar is published** (2026-07-25, CFG-003).
+    `docs/security.md` T-02 required every repository path to be "normalized and
+    validated to remain under the publication root" but never said against what
+    grammar, so the requirement could not be implemented twice the same way. Now
+    written out as a table in `docs/architecture.md` §5.3. The rule that generated
+    it: reject what can **escape**, allow what is merely awkward. A backslash is
+    rejected because it is a path separator on a consumer platform, where
+    `a\..\..\b` traverses; a trailing space or a name like `CON` is left alone,
+    because this application does not get to decide what a repository may call its
+    files. Sizes are measured in bytes rather than characters, since `NAME_MAX` is.
+
+15. **Collision folding is deliberately stricter than any one filesystem**
+    (2026-07-25, CFG-003). T-02 requires rejecting two manifest entries that
+    "resolve to the same on-disk path — including via case or Unicode-normalization
+    collision" without fixing a fold. The fold is NFC plus `str.casefold`. Full case
+    folding also maps some ligatures, so `ﬁle` and `file` are reported as colliding
+    even though nothing would really merge them. That over-rejection is the intended
+    direction: refusing a pair of names is visible, explainable, and recoverable by
+    an operator, while publishing a tree in which two manifest entries resolve to
+    one file is silent and corrupts the thing being archived (`AD-16`). NFKC is not
+    applied — it folds superscripts and width variants that no consumer could
+    confuse, and would refuse legitimate names for nothing.
+
+16. **Five identifier grammars accepted a trailing newline; fixed** (2026-07-25,
+    CFG-003). `config.py` compiled `^…$` and applied it with `re.match`, and in
+    Python `$` also matches immediately before a trailing newline. So
+    `parse_revision` accepted `"main\n"` and, worse, accepted a 40-character SHA
+    with a newline glued to it and returned the value including the newline — which
+    would then have been sent to the Hub and written into a path and a manifest.
+    TOML can produce such a value through an escape or a multi-line string. All five
+    patterns (`_SEGMENT`, `_REFERENCE_NAME`, `_COMMIT_SHA`, `_ACCOUNT`,
+    `_CREDENTIAL_NAME`) now use `fullmatch` with no anchors, `tests/unit/
+    test_identity.py` provokes the newline case for every grammar, and a structural
+    test fails if any future pattern in the module is written anchored. This is the
+    same defect found in `credentials.py` during `CFG-002`; finding it a second time
+    is why the guard is now structural rather than another example.
+
+17. **`credentials.py` and `identity.py` added to the plan §7 module list**
+    (2026-07-25, CFG-003). Neither existed in the plan's source tree.
+    `credentials.py` should have been added by `CFG-002` and was missed;
+    `identity.py` is new here, splitting the *names* the archive uses from the
+    *paths* built out of them. The split has a purpose beyond tidiness: `paths.py`
+    joins identifiers straight into filesystem paths, so it needs a module whose
+    whole contract is that a value which came out of it is safe to join. Plan §7 is
+    updated in this commit.

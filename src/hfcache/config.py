@@ -12,6 +12,13 @@ convention:
   distinguishes these, so a type error always means the operator wrote the wrong
   thing.
 * `frozen=True` — configuration is immutable for the life of the process.
+
+Identifier grammars — repository ids, revisions, commit SHAs — live in
+`hfcache.identity`, which is also where the paths built from them get their
+guarantees. This module owns only the grammars that belong to a specific
+configuration key. Every pattern here is applied with `fullmatch`: `$` also
+matches immediately before a trailing newline, so an anchored `match` would
+accept a value with a newline glued to the end of it.
 """
 
 import hashlib
@@ -24,7 +31,8 @@ from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
 
-from hfcache.errors import ConfigurationError, Problem
+from hfcache.errors import CodedError, ConfigurationError, Problem
+from hfcache.identity import RepositoryIdentity, parse_repository_id, parse_revision
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -36,6 +44,8 @@ __all__ = [
     "SyncConfig",
     "VerificationConfig",
     "load_config",
+    "parse_repository_id",
+    "parse_revision",
     "validate_config_mapping",
 ]
 
@@ -47,94 +57,12 @@ MAXIMUM_REVISIONS = 5
 REPAIR_GRACE_FLOOR_HOURS = 168
 """Seven days. A superseded repair instance must stay readable at least this long."""
 
-_SEGMENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
-_SEGMENT_MAX = 96
-_ACCOUNT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")
-_CREDENTIAL_NAME = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
-_COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
-_REFERENCE_NAME = re.compile(r"^[A-Za-z0-9._/-]{1,255}$")
+_ACCOUNT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,95}")
+_CREDENTIAL_NAME = re.compile(r"[A-Za-z0-9._-]{1,64}")
 
 _SECRET_LIKE_KEYS = frozenset(
     {"token", "hf_token", "api_token", "access_token", "secret", "password"}
 )
-
-
-class CodedError(ValueError):
-    """A validation failure that already knows its `HFCFG###` code.
-
-    The message comes first so the raise site reads as an ordinary exception and
-    the message stays in a variable, which is what keeps tracebacks readable.
-    """
-
-    def __init__(self, message: str, *, code: str) -> None:
-        super().__init__(message)
-        self.code = code
-
-
-def _require_repository_segment(value: str, *, whole: str) -> None:
-    if value in {".", ".."} or not _SEGMENT.match(value) or len(value) > _SEGMENT_MAX:
-        message = f"invalid repository identifier {whole!r}: bad segment {value!r}"
-        raise CodedError(message, code="HFCFG008")
-
-
-def parse_repository_id(value: object) -> str:
-    """Validate a two-segment Hub repository identifier.
-
-    Single-segment canonical identifiers are rejected. Every canonical Hub
-    repository now has a namespaced form (`gpt2` -> `openai-community/gpt2`), and
-    requiring it keeps the on-disk layout unambiguous
-    (`docs/architecture.md` §5.3).
-    """
-    if not isinstance(value, str):
-        message = "repository id must be a string"
-        raise CodedError(message, code="HFCFG008")
-    segments = value.split("/")
-    if len(segments) != 2:  # noqa: PLR2004 - exactly namespace and name
-        message = (
-            f"invalid repository identifier {value!r}: expected exactly two segments "
-            f"'<namespace>/<name>'"
-        )
-        raise CodedError(message, code="HFCFG008")
-    for segment in segments:
-        _require_repository_segment(segment, whole=value)
-    return value
-
-
-def parse_revision(value: object) -> str:
-    """Validate a branch name, tag name, or full 40-character commit SHA.
-
-    Abbreviated SHAs are rejected: they are ambiguous, and an abbreviation is
-    never written to disk (`docs/configuration.md` §6).
-    """
-    if not isinstance(value, str):
-        message = "revision must be a string"
-        raise CodedError(message, code="HFCFG009")
-    if _COMMIT_SHA.match(value):
-        return value
-    if re.fullmatch(r"[0-9a-fA-F]{40}", value):
-        # Reachable only for a mis-cased SHA, since the lowercase form returned
-        # above. Treating it as a branch name would send an uppercase SHA to the
-        # Hub and write a non-canonical value toward disk.
-        message = (
-            f"invalid revision {value!r}: a commit SHA must be lowercase hex; use {value.lower()!r}"
-        )
-        raise CodedError(message, code="HFCFG009")
-    if re.fullmatch(r"[0-9a-fA-F]{4,39}", value):
-        message = (
-            f"invalid revision {value!r}: abbreviated commit SHAs are ambiguous; "
-            f"use the full 40-character SHA or a branch or tag name"
-        )
-        raise CodedError(message, code="HFCFG009")
-    if (
-        not _REFERENCE_NAME.match(value)
-        or value.startswith(("-", "/"))
-        or value.endswith(("/", ".lock"))
-        or "//" in value
-        or ".." in value
-    ):
-        message = f"invalid revision {value!r}: not a usable branch or tag name"
-        raise CodedError(message, code="HFCFG009")
-    return value
 
 
 def _parse_absolute_path(value: object) -> Path:
@@ -238,12 +166,14 @@ class HubConfig(_Strict):
 
     @model_validator(mode="after")
     def _check(self) -> Self:
-        if self.expected_account and not _ACCOUNT.match(self.expected_account):
+        if self.expected_account and not _ACCOUNT.fullmatch(self.expected_account):
             message = (
                 f"hub.expected_account {self.expected_account!r} is not a valid Hub account name"
             )
             raise CodedError(message, code="HFCFG005")
-        if self.credential_name in {".", ".."} or not _CREDENTIAL_NAME.match(self.credential_name):
+        if self.credential_name in {".", ".."} or not _CREDENTIAL_NAME.fullmatch(
+            self.credential_name
+        ):
             # '.' and '..' match the grammar but name a directory rather than a
             # credential, so they are rejected here where the error is legible
             # instead of surfacing as an unreadable credential at run time.
@@ -339,6 +269,11 @@ class RepositoryConfig(_Strict):
                 raise CodedError(message, code="HFCFG005")
             seen.add(dependency)
         return self
+
+    @property
+    def identity(self) -> RepositoryIdentity:
+        """This entry as the identity every path is built from (`hfcache.paths`)."""
+        return RepositoryIdentity.from_config(self)
 
     @property
     def key(self) -> tuple[str, str]:
