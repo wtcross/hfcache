@@ -61,9 +61,9 @@ predate `CFG-003`.
 ## Phase 3 — Storage Safety and Publication Primitives
 
 - [x] STO-000 Guarded one-time archive initialization and inspection (2026-07-25, this commit — `src/hfcache/storage.py`: mount-table proof, durable byte writes, the known-empty-layout walk, and `initialize_archive`; `archive` sub-app in `src/hfcache/cli.py` with `init`, `--inspect`, `--confirm`, and `--archive-id`. The §6.2 empty-`published/` adoption is implemented with ownership compared against the archive root, per decision 31. 100% branch coverage. **Not yet run against `/srv/hfcache`:** the §36.4 one-time authorization is spent at the rollout checkpoint after `HOST-004`, not here)
-- [ ] STO-001 NFS mount and filesystem-type detection
-- [ ] STO-002 Sentinel/archive-ID validation
-- [ ] STO-003 Free-space and reserve calculations
+- [ ] STO-001 NFS mount and filesystem-type detection — *the detection itself landed at `STO-000` (decision 28), so what remains is the shared preflight built on it:* the `.store/health/probe-<probe-id>` create/fsync/rename/delete writability probe (`HFMNT008`, plan §19 items 6 and 10), the staging/destination same-filesystem check (`HFMNT009`, `FS-04`), one ordered check runner both `doctor` and every mutating command use, `doctor` checks 2–5, 7, and 8 of the `docs/cli.md` §2 table wired in, `--read-only` skipping the probe, and `doctor` exiting `20` when any check fails instead of always `0`
+- [ ] STO-002 Sentinel/archive-ID validation — `doctor` check 6; `_read_sentinel` exists in `storage.py` from `STO-000`, so this is `HFMNT005` for an absent sentinel plus the gate every mutating command runs
+- [ ] STO-003 Free-space and reserve calculations — `doctor` check 12 (`HFMNT011`) and the `HFWRN005` approaching-reserve warning
 - [ ] STO-004 Local exclusive locking
 - [ ] STO-005 Atomic JSON and ref writes
 - [ ] STO-006 Staging creation and containment

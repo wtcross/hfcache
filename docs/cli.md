@@ -136,24 +136,50 @@ neither.
 hfcache [--config PATH] doctor [--read-only]
 ```
 
-Proves, in order: configuration validity; archive root exists; it is a mount
-point distinct from its parent; the filesystem type is NFS/NFSv4; the mount is
-read/write; the sentinel exists and matches `storage.archive_id`; required
-directories are **effectively writable** via a real create/fsync/rename/delete
-probe under `.store/health/` (never by comparing `st_uid`); staging and
-destination share a filesystem; a regular file can be hardlinked from the cache
-area into a published test path with correct link count and contents; a directory
-can be atomically renamed within the dataset; a small ref file can be atomically
-replaced; free capacity exceeds the configured reserve; DNS resolves the Hub
-endpoint; the endpoint is reachable over TLS; and, when `expected_account` is
-set, that the resolved identity matches.
+`checks[]` is emitted in this order. The names are normative — automation keys on
+them and `status` quotes them — and a check is **absent** until the package that
+performs it lands, rather than being reported as skipped or passed
+(`docs/progress.md` decision 24).
 
-`--read-only` runs only the checks that mutate nothing, for use on a mount that
-must not be touched. It cannot prove hardlink, rename, or ref-replacement
-capability, and says so explicitly rather than reporting a pass.
+| # | `name` | Proves | Writes | Code on failure |
+| --- | --- | --- | --- | --- |
+| 1 | `configuration` | Configuration parses and fully validates | no | `HFCFG###` |
+| 2 | `archive_root` | The archive root exists | no | `HFMNT001` |
+| 3 | `mount_point` | It is a mount point distinct from its parent | no | `HFMNT002` |
+| 4 | `filesystem_type` | The filesystem is NFS/NFSv4 | no | `HFMNT003` |
+| 5 | `mount_writable` | The mount is not read-only | no | `HFMNT004` |
+| 6 | `sentinel` | `.hfcache-root` exists and matches `storage.archive_id` | no | `HFMNT005`–`HFMNT007` |
+| 7 | `directory_writability` | Create, fsync, rename, and delete succeed under `.store/health/` | **yes** | `HFMNT008` |
+| 8 | `staging_filesystem` | Staging and every publication destination share a filesystem | no | `HFMNT009` |
+| 9 | `hardlink_capability` | A cache file hardlinks into a published path with the right link count and contents | **yes** | `HFMNT012` |
+| 10 | `atomic_directory_rename` | A directory renames atomically within the dataset | **yes** | `HFMNT013` |
+| 11 | `reference_replacement` | A small reference file is replaced atomically | **yes** | `HFMNT013` |
+| 12 | `free_space` | Free capacity exceeds the configured reserve | no | `HFMNT011` |
+| 13 | `credential` | The credential resolved, and from which source | no | `HFARG005`, `HFARG006` |
+| 14 | `hub_endpoint` | The endpoint is a well-formed `https://` URL | no | `HFCFG014` |
+| 15 | `hub_dns` | The endpoint host resolves | no | `HFHUB001` |
+| 16 | `hub_tls` | The endpoint is reachable and its certificate verifies | no | `HFHUB002` |
+| 17 | `hub_identity` | The resolved identity matches `expected_account`, when set | no | `HFHUB003` |
 
-Every probe artifact is removed before the command returns. Exits `0` or `20`
-(or `10` for configuration problems).
+Checks 6–12 need an initialized archive. Against a target that has none they
+report `skipped` with that as the reason, which is operator state rather than
+development state; `archive init` is what changes it.
+
+Writability is proven only by the check-7 probe, never by comparing `st_uid`
+against the local service uid — under the Mapall writer export the owner has no
+local account (`docs/plan.md` §35.3).
+
+`--read-only` runs only the checks that mutate nothing — every row above whose
+`Writes` column is `no` — for use on a mount that must not be touched. It cannot
+prove effective writability, hardlink, rename, or ref-replacement capability, and
+reports those four as `skipped` with that reason rather than as a pass. Each is a
+capability that only performing it demonstrates, so on a mount that must not be
+touched they are unknown, and saying so is the honest answer.
+
+Every probe artifact is removed before the command returns, including after a
+failed probe. Exits `0` when every check that ran passed, `20` when any check
+failed, and `10` for a configuration problem, which stops the command before any
+check runs.
 
 ### `plan`
 

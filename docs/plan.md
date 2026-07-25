@@ -844,6 +844,11 @@ Every mutating command must verify:
 
 Failure is exit code `20` before any Hub download begins.
 
+`hfcache doctor` reports these same requirements as named checks. The names, the
+order, which of them write, and the code each reports on failure are normative in
+`docs/cli.md` §2 — one table, so the preflight a mutating command runs and the
+report an operator reads cannot describe different things.
+
 ## 20. TrueNAS 25.10.5 Implementation
 
 ### 20.1 Dataset
