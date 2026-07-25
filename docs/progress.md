@@ -70,7 +70,7 @@ predate `CFG-003`.
 - [x] STO-007 Hardlink and copy publication primitives (2026-07-25, this commit — `src/hfcache/hashing.py` (plan §7): `sha256_file` streams a file and returns digest *and* size from one read, so the two can never describe different content. `publication.stage_file` proves the source contained (`FS-15`) then links or copies per `publication_mode`, never downgrading a mode automatically (`AD-11`); copy mode verifies the copy against a fresh hash of the source, because a copy that lost bytes would otherwise be published as the revision. `promote_staging` is plan §13.2 step 15, and refuses an existing destination *explicitly* rather than relying on `rename(2)` — which fails on a non-empty directory but replaces an empty one, so the syscall alone would break `FS-05` for an instance directory a crash left empty. `storage` gained the three §14.2 capability probes and `doctor` checks 9-11 (`HFMNT012`, `HFMNT013`), with `publication_mode = "copy"` reporting the hardlink check as not exercised rather than failed (decision 41). 100% branch coverage)
 - [x] STO-008 Storage reconciliation and stale-staging reporting (2026-07-25, this commit — `src/hfcache/recovery.py` (plan §7): `reconcile_storage` scans the four transaction areas and reports what they hold without touching any of it. `HFWRN004` for staging past `sync.stale_staging_age_hours`, `HFWRN002` for a prune tombstone whose physical removal is outstanding, `HFWRN003` for an entry whose name is not a 32-hex transaction id — preserved, whatever it is (`FS-19`). Quarantine is reported and never warned about, because plan §16.5 retains it until an operator approves cleanup, so age says nothing about it. `measure_health` adds free space against the reserve, and `status` now emits the archive health block `docs/cli.md` §2 describes, with warnings on stderr and the exit code still `0`. 100% branch coverage. **Reclamation is deliberately absent:** plan §13.3 and `FS-18` allow it only for a directory that also *has a journal*, which arrives at `STO-010`, so `STO-011` is where removing one belongs)
 - [x] STO-009 Complete mutating `doctor` tests (2026-07-25, this commit — the checks themselves landed at `STO-001`, `STO-002`, `STO-003`, and `STO-007`, each with its own unit coverage against a temporary archive and a fabricated mount table. What this package adds is `tests/system/test_live_mount.py`'s mutating half: sentinel, effective writability, and all three §14.2 publication capabilities asserted against the real NFS dataset, plus the probe area left empty. They are written now and **skip until the archive is initialized**, which is the §29 rollout checkpoint after `HOST-004` — so the checkpoint runs a test that already exists rather than one written to fit whatever it found. Run with `pytest -m nfs`)
-- [ ] STO-010 Durable transaction journals and validated checkpoint evidence
+- [x] STO-010 Durable transaction journals and validated checkpoint evidence (2026-07-25, this commit — `src/hfcache/transactions.py` (plan §7): `open_transaction` writes the journal durably before the first mutation (`TX-01`); `Transaction.checkpoint` appends after the act it names (`TX-02`) and refuses a name that is not next in the operation's documented sequence (`HFTXN002`). `CHECKPOINTS` holds the §7.3-§7.6 sequences and `tests/unit/test_transactions.py` parses them back out of `docs/architecture.md`, so neither table is written twice. `evidence_problems` confirms path evidence against the filesystem (`TX-03`, `HFTXN003`) under the key convention in decision 42. `read_journal` preserves keys this release does not know, which is the half of `docs/schemas.md` §1.1 that decision 20 assigned here. `open_journals` is what `TX-07` reconciles, and treats `needs_operator` as unresolved because it is exactly what must stop the next run. 100% branch coverage)
 - [ ] STO-011 Dry-run and apply recovery planning
 
 ## Phase 4 — Hub Resolution and Repository Ingestion
@@ -752,3 +752,23 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     entry, since the capability probes build subdirectories in it. That stays
     inside `FS-19`: `probe-<16 random hex>` was created by this process moments
     earlier and cannot contain anything the application did not put there.
+
+42. **Checkpoint evidence names paths by key suffix** (2026-07-25, STO-010).
+    `TX-03` requires each checkpoint to carry re-observable evidence and
+    requires recovery to confirm it by looking at the filesystem rather than by
+    trusting the record. `docs/architecture.md` §7.3-§7.7 describe that evidence
+    in prose — "published tree path, file count", "`.store/trash/<txn>/` absent"
+    — which is enough for a human and not enough for code.
+
+    The convention that makes it mechanical: an evidence key ending `_path`
+    names an archive-relative path that must still exist, `_paths` a list of
+    them, and `_absent` a path that must *not* exist. Everything else is left to
+    the package that knows how to interpret it, because a file count or a digest
+    means nothing without the artifact it describes.
+
+    Suffixes rather than a fixed key list, because the same checkpoint carries
+    different paths in different operations and a list would have to be extended
+    every time one is added — which is exactly the kind of table that goes stale.
+    The suffix travels with the key, so a caller that names a path correctly gets
+    it checked for free. Evidence keys are durable, so this is a format decision
+    and not only an implementation one.
