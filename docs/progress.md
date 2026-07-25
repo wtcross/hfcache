@@ -48,7 +48,7 @@ install smoke test.
 - [x] CFG-003 Repository identity and safe path mapping (2026-07-25, this commit — `src/hfcache/identity.py`: every Hub-facing grammar, `RepositoryIdentity` self-validating, `TYPE:ID[@SHA]` selectors, opaque-id minting; `src/hfcache/paths.py`: the whole §5.1 tree, relative-path grammar, containment, collision folding. Both at 100% branch coverage. `config.py` now imports its identifier grammars rather than defining them)
 - [x] CFG-004 Manifest and report models (2026-07-25, this commit — `src/hfcache/models.py` (foundation, sentinel, reference, prune plan, audit records, journal), `manifests.py` (`RevisionManifest`), `reporting.py` (run report, verification report, catalog). One serializer for every writer including the CLI envelope; §1.1 version refusal; a golden fixture per format in `tests/fixtures/schemas/`. All three modules at 100% branch coverage)
 - [x] CFG-005 `config validate` (2026-07-25, this commit — `config` sub-app in `src/hfcache/cli.py`; loads configuration and resolves the credential, takes no lock and makes no network call; failure envelope emitted with every problem, exit `10`; `--token-file` is now resolved as `CFG-002` said it would be here)
-- [ ] CFG-006 Read-only portions of `doctor`, `status`, and `plan`
+- [x] CFG-006 Read-only portions of `doctor`, `status`, and `plan` (2026-07-25, this commit — selector resolution with `HFARG001`/`HFARG004`; `doctor` check-runner with `configuration`, `credential`, `hub_endpoint`, and `--read-only`'s three explicit unproven capabilities; `plan` over enabled repositories in configuration order; `status` reporting local truth with `upstream_state: unknown`. **Still to come:** `doctor`'s storage probes at `STO-009` and its Hub reachability/identity checks at `HUB-001`/`HUB-002`; `plan`'s resolved SHA and size estimates at `HUB-003`/`HUB-004`; `status`'s retained-revision and health blocks at `STO-008`/`VER-005`)
 - [ ] CFG-007 Deterministic JSON output and error taxonomy
 
 ## Phase 3 — Storage Safety and Publication Primitives
@@ -469,3 +469,19 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     cross-field checks that are the reason those validators exist. The behaviour
     is asserted in `tests/unit/test_config_validate.py` so it cannot change
     silently.
+
+24. **A partially implemented command reports what it probed, not a placeholder**
+    (2026-07-25, CFG-006). `doctor` is specified with fourteen checks; Phase 2 can
+    perform three of them, because the rest need the storage layer or the Hub
+    adapter. Two ways to handle that were rejected: emitting the missing checks
+    with a `skipped` outcome and a "not implemented yet" detail, which puts
+    development state into operator-facing output, and emitting them as `pass`,
+    which is a lie. They are simply absent until the package that performs them
+    lands, and the `checks[]` array is ordered and open-ended so appending is the
+    natural way to add one. `--read-only` is the exception and is *not*
+    development state: `docs/cli.md` §2 requires it to say that hardlink, rename,
+    and ref-replacement capability are unproven, so those three entries are real
+    output that will still be there at v1. The same rule governs `plan` and
+    `status`: each reports the fields it can determine and omits the rest, and the
+    checkbox above names the work package that completes each one.
+

@@ -12,15 +12,15 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Annotated, Any, NoReturn
+from typing import Annotated, Any, Final, Literal, NoReturn
 
 import typer
 
 from hfcache import __version__
-from hfcache.config import load_config
+from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
-from hfcache.errors import HfcacheError
-from hfcache.identity import new_run_id
+from hfcache.errors import ConfigurationError, HfcacheError, Problem
+from hfcache.identity import new_run_id, parse_selector
 from hfcache.models import serialize
 
 __all__ = ["app"]
@@ -257,3 +257,216 @@ def config_validate(ctx: typer.Context) -> None:
         return
     if not options.quiet:
         _echo_pairs(payload)
+
+
+# --------------------------------------------------------------------------- #
+# Selectors (`docs/cli.md` §1.1)
+# --------------------------------------------------------------------------- #
+
+SelectorArgument = Annotated[
+    list[str] | None,
+    typer.Argument(metavar="[TYPE:ID ...]", help="Restrict the command to these repositories."),
+]
+
+
+def _select(config: ApplicationConfig, selectors: list[str] | None) -> tuple[RepositoryConfig, ...]:
+    """Resolve selectors against configuration, in configuration order.
+
+    With no selectors the answer is every configured repository. With selectors
+    the answer keeps *configuration* order rather than the order they were
+    typed, so two invocations naming the same set behave identically — the same
+    determinism `docs/architecture.md` §5.3 requires of generated output.
+
+    A selector naming a repository that is not configured is `HFARG004`. All of
+    them are reported at once, because an operator who mistyped two names should
+    learn both now.
+    """
+    if not selectors:
+        return config.repositories
+
+    # Both sides are `(type, id)`: `RepositoryConfig.key` and
+    # `RepositoryIdentity.sort_key` agree by construction.
+    wanted = {parse_selector(text).identity.sort_key for text in selectors}
+    matched = tuple(repository for repository in config.repositories if repository.key in wanted)
+    if missing := wanted - {repository.key for repository in matched}:
+        raise ConfigurationError(
+            [
+                Problem(
+                    code="HFARG004",
+                    message=(
+                        f"selector {repository_type}:{repository_id} names a repository that is "
+                        f"not in configuration"
+                    ),
+                    location=f"{repository_type}:{repository_id}",
+                )
+                for repository_type, repository_id in sorted(missing)
+            ]
+        )
+    return matched
+
+
+# --------------------------------------------------------------------------- #
+# doctor
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True, slots=True)
+class Check:
+    """One `doctor` probe and what it proved (`docs/cli.md` §4.1)."""
+
+    name: str
+    outcome: Literal["pass", "fail", "skipped"]
+    detail: str
+
+    def as_entry(self) -> dict[str, str]:
+        """Render in the documented `checks[]` shape."""
+        return {"detail": self.detail, "name": self.name, "outcome": self.outcome}
+
+
+UNPROVABLE_READ_ONLY: Final = (
+    "hardlink_capability",
+    "atomic_directory_rename",
+    "reference_replacement",
+)
+"""What `--read-only` cannot establish.
+
+`docs/cli.md` §2 requires these to be reported as unproven rather than passed:
+each one is a capability that can only be demonstrated by performing it, and a
+mount that must not be touched is a mount on which they are unknown.
+"""
+
+
+@app.command()
+def doctor(
+    ctx: typer.Context,
+    read_only: Annotated[
+        bool,
+        typer.Option("--read-only", help="Run only the checks that mutate nothing."),
+    ] = False,
+) -> None:
+    """Prove the deployment can do what a scheduled run will ask of it.
+
+    Checks run in a fixed order and every one is reported, so the output is a
+    record of what was proven rather than of where the command stopped.
+    """
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        config = load_config(options.config_path)
+        token = resolve_token(config.hub, token_file=options.token_file)
+    except HfcacheError as error:
+        _report_failure(ctx, "doctor", started_at, error)
+
+    checks = [
+        Check(
+            name="configuration",
+            outcome="pass",
+            detail=f"{options.config_path} is valid; fingerprint {config.fingerprint()[:12]}",
+        ),
+        Check(name="credential", outcome="pass", detail=token.describe()),
+        Check(
+            name="hub_endpoint",
+            outcome="pass",
+            detail=f"{config.hub.endpoint} is a well-formed https endpoint",
+        ),
+    ]
+    if read_only:
+        checks.extend(
+            Check(
+                name=name,
+                outcome="skipped",
+                detail="--read-only: this capability can only be proven by exercising it",
+            )
+            for name in UNPROVABLE_READ_ONLY
+        )
+
+    payload: dict[str, Any] = {"checks": [check.as_entry() for check in checks]}
+    if options.json_output:
+        emit_envelope("doctor", payload, started_at=started_at)
+        return
+    if not options.quiet:
+        width = max(len(check.name) for check in checks)
+        for check in checks:
+            typer.echo(f"{check.outcome:<7}  {check.name:<{width}}  {check.detail}")
+
+
+# --------------------------------------------------------------------------- #
+# plan and status
+# --------------------------------------------------------------------------- #
+
+
+@app.command()
+def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
+    """Report the work a sync would do. Mutates nothing and takes no lock."""
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        config = load_config(options.config_path)
+        resolve_token(config.hub, token_file=options.token_file)
+        selected = _select(config, selectors)
+    except HfcacheError as error:
+        _report_failure(ctx, "plan", started_at, error)
+
+    entries = [
+        {
+            "enabled": repository.enabled,
+            "repository_id": repository.id,
+            "repository_type": repository.type,
+            "requested_revision": repository.revision,
+        }
+        for repository in selected
+        if repository.enabled
+    ]
+    payload: dict[str, Any] = {"repositories": entries}
+    if options.json_output:
+        emit_envelope("plan", payload, started_at=started_at)
+        return
+    if not options.quiet:
+        for entry in entries:
+            typer.echo(
+                f"{entry['repository_type']}:{entry['repository_id']}@{entry['requested_revision']}"
+            )
+
+
+@app.command()
+def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
+    """Report local truth about the archive.
+
+    Never fails merely because the Hub is unreachable (`docs/cli.md` §2): it
+    reports what is known locally and marks upstream state `unknown`. This is the
+    command an operator runs first, so it answers even when everything else is
+    broken.
+    """
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        config = load_config(options.config_path)
+        selected = _select(config, selectors)
+    except HfcacheError as error:
+        _report_failure(ctx, "status", started_at, error)
+
+    entries = [
+        {
+            "enabled": repository.enabled,
+            "managed": True,
+            "repository_id": repository.id,
+            "repository_type": repository.type,
+            "requested_revision": repository.revision,
+            "upstream_state": "unknown",
+        }
+        for repository in selected
+    ]
+    payload: dict[str, Any] = {
+        "archive": {
+            "archive_id": config.storage.archive_id,
+            "root": str(config.storage.archive_root),
+        },
+        "repositories": entries,
+    }
+    if options.json_output:
+        emit_envelope("status", payload, started_at=started_at)
+        return
+    if not options.quiet:
+        for entry in entries:
+            state = "enabled" if entry["enabled"] else "disabled"
+            typer.echo(f"{entry['repository_type']}:{entry['repository_id']}  {state}")
