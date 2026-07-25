@@ -31,6 +31,7 @@ from hfcache.models import (
     RunIdField,
     Sha256,
     Timestamp,
+    TransactionIdField,
     VersionedModel,
     as_tuple,
 )
@@ -45,6 +46,8 @@ __all__ = [
     "FullVerificationSummary",
     "OutstandingFailure",
     "PrunedRevision",
+    "RecoveryReport",
+    "Remediation",
     "RepositoriesCatalog",
     "RepositoryCatalogEntry",
     "RepositoryRunResult",
@@ -281,6 +284,50 @@ class RunReport(RunEnvelope):
         ordered = sorted(self.repositories, key=lambda r: (r.repository_type, r.repository_id))
         if list(self.repositories) != ordered:
             message = "repositories must be sorted by (repository_type, repository_id)"
+            raise ValueError(message)
+        return self
+
+
+# --------------------------------------------------------------------------- #
+# §12 Recovery report
+# --------------------------------------------------------------------------- #
+
+
+@final
+class Remediation(DurableModel):
+    """One thing `recover` did, or declined to do, to one transaction.
+
+    `blocked` is not a failure of recovery: it is recovery correctly refusing to
+    resolve a state that two valid executions could both have produced, or one
+    whose journal it may not act on (`docs/architecture.md` §7.9).
+    """
+
+    evidence: dict[str, Any] = Field(default_factory=dict)
+    outcome: Literal["applied", "blocked", "pending"]
+    reason: str
+    remedy: str
+    transaction_id: TransactionIdField
+
+
+@final
+class RecoveryReport(RunEnvelope):
+    """`runs/<YYYYMMDD>T<HHMMSS>Z-<run-id>.json` for `recover` (§12).
+
+    The same shape as a run report with recovery-specific fields, for the same
+    reason a verification report is: they are all written to `runs/` and read by
+    the same operator, so the shared part is one class.
+    """
+
+    remediations: Annotated[tuple[Remediation, ...], BeforeValidator(as_tuple)] = ()
+
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        seen = [entry.transaction_id for entry in self.remediations]
+        if len(set(seen)) != len(seen):
+            message = "a transaction is remediated at most once in one recovery run"
+            raise ValueError(message)
+        if list(seen) != sorted(seen):
+            message = "remediations must be sorted by transaction_id"
             raise ValueError(message)
         return self
 

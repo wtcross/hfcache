@@ -19,33 +19,83 @@ name is not a 32-hex transaction id was not created by this application. It is
 reported under `HFWRN003` and preserved, whatever it is.
 
 **Age is measured, never assumed.** The delay is not the safety mechanism on its
-own — reclamation will also require a journal — but it is what stops a concurrent
+own — reclamation also requires a journal — but it is what stops a concurrent
 operator command from having its working directory pulled out from under it
 (`docs/progress.md` decision 5).
+
+The second half of this module plans and applies recovery (plan §18,
+`docs/architecture.md` §7.7). Planning reads journals and the filesystem and
+proposes a remedy for each unfinished transaction; applying performs only
+remedies a plan validated, records one checkpoint per remediation, and writes a
+durable report. Recovery is roll-forward oriented and never replaces an expected
+digest, chooses a revision by modification time, or removes unknown data
+(`AD-16`).
+
+What recovery may *not* resolve on its own it reports as blocked, and a blocked
+plan stops a mutating command at exit `20` before Hub contact (§7.9). That is
+deliberate: a state two valid executions could both have produced has no single
+correct resolution, and guessing at one is how an archive loses data.
 """
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Final, final
+from functools import partial
+from typing import TYPE_CHECKING, Any, Final, Literal, final
 
-from hfcache.errors import Problem
-from hfcache.identity import OPAQUE_ID_LENGTH
-from hfcache.storage import BYTES_PER_GIB, describe_capacity, effective_reserve
+from hfcache.errors import ExitCode, Problem, RetentionError, SafetyError
+from hfcache.identity import OPAQUE_ID_LENGTH, TransactionId, new_run_id, new_transaction_id
+from hfcache.reporting import RecoveryReport, Remediation
+from hfcache.storage import (
+    BYTES_PER_GIB,
+    describe_capacity,
+    effective_reserve,
+    fsync_directory,
+    write_model,
+)
+from hfcache.transactions import (
+    CHECKPOINTS,
+    Transaction,
+    checkpoint_order_problems,
+    evidence_problems,
+    open_journals,
+    open_transaction,
+    read_journal,
+)
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from pathlib import Path
+
     from hfcache.config import StorageConfig
+    from hfcache.identity import RunId
+    from hfcache.models import TransactionJournal
     from hfcache.paths import ArchiveLayout
+    from hfcache.transactions import JournalFile
 
 __all__ = [
+    "BLOCKED",
+    "QUARANTINE_MODE",
+    "REPORT_MODE",
     "SECONDS_PER_HOUR",
     "ArchiveHealth",
     "AreaFinding",
+    "PlannedRemediation",
     "Reconciliation",
+    "RecoveryPlan",
+    "Remedy",
+    "apply_recovery",
     "measure_health",
+    "plan_recovery",
     "reconcile_storage",
 ]
 
 SECONDS_PER_HOUR: Final = 3600
+
+QUARANTINE_MODE: Final = 0o700
+"""Quarantine and `runs/` are private to the writer (§5.2)."""
+
+REPORT_MODE: Final = 0o600
+"""A run report is the writer's record, not consumer data."""
 
 _TRANSACTION_NAME_LENGTH: Final = OPAQUE_ID_LENGTH
 _HEX: Final = frozenset("0123456789abcdef")
@@ -256,3 +306,355 @@ def measure_health(
             layout, stale_staging_age_hours=stale_staging_age_hours, now=now
         ),
     )
+
+
+# --------------------------------------------------------------------------- #
+# Planning (plan §18, `docs/architecture.md` §7.7)
+# --------------------------------------------------------------------------- #
+
+Remedy = Literal["quarantine_staging", "close_journal", "operator", "wait"]
+"""What recovery proposes to do about one unfinished transaction.
+
+`wait` is a real answer, not an absence of one: a staging directory younger than
+`sync.stale_staging_age_hours` may belong to work an operator started, and §7.8
+requires all three of name, journal, and age before anything is acted on.
+"""
+
+BLOCKED: Final = "operator"
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class PlannedRemediation:
+    """One unfinished transaction and what recovery proposes to do about it."""
+
+    transaction_id: str
+    operation: str
+    state: str
+    last_checkpoint: str | None
+    remedy: Remedy
+    reason: str
+    problems: tuple[Problem, ...] = ()
+
+    def as_payload(self) -> dict[str, Any]:
+        """Render for a `--json` payload."""
+        return {
+            "last_checkpoint": self.last_checkpoint,
+            "operation": self.operation,
+            "reason": self.reason,
+            "remedy": self.remedy,
+            "state": self.state,
+            "transaction_id": self.transaction_id,
+        }
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class RecoveryPlan:
+    """Everything `recover --apply` would do, and everything it would refuse to."""
+
+    remediations: tuple[PlannedRemediation, ...]
+
+    @property
+    def blocked(self) -> tuple[PlannedRemediation, ...]:
+        """States recovery may not resolve on its own (§7.9)."""
+        return tuple(entry for entry in self.remediations if entry.remedy == BLOCKED)
+
+    @property
+    def actionable(self) -> tuple[PlannedRemediation, ...]:
+        """What applying would actually perform."""
+        return tuple(
+            entry
+            for entry in self.remediations
+            if entry.remedy in {"quarantine_staging", "close_journal"}
+        )
+
+    @property
+    def problems(self) -> tuple[Problem, ...]:
+        """Every problem behind a blocked remediation, for one refusal."""
+        return tuple(problem for entry in self.blocked for problem in entry.problems)
+
+    def as_payload(self) -> dict[str, Any]:
+        """Render for `recover`'s `data` payload (`docs/cli.md` §4.1)."""
+        return {
+            "actionable": len(self.actionable),
+            "blocked": len(self.blocked),
+            "plan": [entry.as_payload() for entry in self.remediations],
+        }
+
+
+def plan_recovery(
+    layout: ArchiveLayout,
+    *,
+    stale_staging_age_hours: int,
+    now: datetime | None = None,
+) -> RecoveryPlan:
+    """Decide what to do about every unfinished journal, without touching anything.
+
+    This is `recover --dry-run` in full, and the analysis a mutating command runs
+    before it acts (`TX-07`). Every journal is validated first — schema, then
+    checkpoint order, then evidence against the filesystem — because a journal
+    that cannot be trusted is not a journal a remedy may be chosen from.
+    """
+    moment = datetime.now(UTC) if now is None else now
+    return RecoveryPlan(
+        remediations=tuple(
+            _remediation(layout, file, stale_staging_age_hours=stale_staging_age_hours, now=moment)
+            for file in open_journals(layout)
+        )
+    )
+
+
+def _remediation(
+    layout: ArchiveLayout,
+    file: JournalFile,
+    *,
+    stale_staging_age_hours: int,
+    now: datetime,
+) -> PlannedRemediation:
+    """Choose one remedy, or refuse to."""
+    journal = file.journal
+    names = [checkpoint.name for checkpoint in journal.checkpoints]
+    last = names[-1] if names else None
+    blocked = partial(
+        PlannedRemediation,
+        transaction_id=journal.transaction_id,
+        operation=journal.operation,
+        state=journal.state,
+        last_checkpoint=last,
+        remedy=BLOCKED,
+    )
+
+    problems = [
+        *checkpoint_order_problems(journal),
+        *evidence_problems(layout, journal),
+    ]
+    if problems:
+        return blocked(
+            reason="the journal does not describe a state any valid execution produces",
+            problems=tuple(problems),
+        )
+    if journal.state == "needs_operator":
+        message = (
+            f"transaction {journal.transaction_id} stopped and asked for an operator; "
+            f"recovery never resolves what it was told not to"
+        )
+        return blocked(
+            reason="the transaction asked for an operator",
+            problems=(
+                Problem(
+                    code="HFTXN004",
+                    message=message,
+                    location=str(journal.transaction_id),
+                ),
+            ),
+        )
+
+    if journal.operation in CHECKPOINTS and names == list(CHECKPOINTS[journal.operation]):
+        return PlannedRemediation(
+            transaction_id=journal.transaction_id,
+            operation=journal.operation,
+            state=journal.state,
+            last_checkpoint=last,
+            remedy="close_journal",
+            reason="every documented checkpoint is recorded, so only the journal is open",
+        )
+
+    if journal.operation == "publication" and _before_the_tree_was_renamed(names):
+        return _staging_remediation(
+            layout, journal, last, stale_staging_age_hours=stale_staging_age_hours, now=now
+        )
+
+    message = (
+        f"transaction {journal.transaction_id} is a {journal.operation} that stopped after "
+        f"{last!r}; resolving it needs evidence recovery cannot obtain on its own"
+    )
+    return blocked(
+        reason=f"no unambiguous resolution for a {journal.operation} at {last!r}",
+        problems=(Problem(code="HFTXN004", message=message, location=str(journal.transaction_id)),),
+    )
+
+
+def _before_the_tree_was_renamed(names: list[str]) -> bool:
+    """Whether a publication crashed before checkpoint 5 (§7.3 crash matrix).
+
+    Before the rename nothing published changed, so rolling back is always
+    correct. At or after it a tree exists and the resolution is to roll forward,
+    which needs the manifest machinery that publishes it.
+    """
+    return "revision_tree_renamed" not in names
+
+
+def _staging_remediation(
+    layout: ArchiveLayout,
+    journal: TransactionJournal,
+    last: str | None,
+    *,
+    stale_staging_age_hours: int,
+    now: datetime,
+) -> PlannedRemediation:
+    """Quarantine abandoned staging, but only once §7.8's three conditions hold."""
+    staging = layout.staging_for(TransactionId(journal.transaction_id)).directory
+    common = {
+        "transaction_id": journal.transaction_id,
+        "operation": journal.operation,
+        "state": journal.state,
+        "last_checkpoint": last,
+    }
+    if not staging.is_dir():
+        return PlannedRemediation(
+            **common,
+            remedy="close_journal",
+            reason="nothing published changed and the staging area is already gone",
+        )
+    age = (now.timestamp() - staging.stat().st_mtime) / SECONDS_PER_HOUR
+    if age < stale_staging_age_hours:
+        return PlannedRemediation(
+            **common,
+            remedy="wait",
+            reason=(
+                f"staging is {age:.1f} hours old, under the configured "
+                f"{stale_staging_age_hours}; it is left alone until it is certainly abandoned"
+            ),
+        )
+    return PlannedRemediation(
+        **common,
+        remedy="quarantine_staging",
+        reason="the publication stopped before anything was published, so it rolls back",
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Applying
+# --------------------------------------------------------------------------- #
+
+
+def apply_recovery(
+    layout: ArchiveLayout,
+    plan: RecoveryPlan,
+    *,
+    envelope: Mapping[str, Any],
+    started_at: datetime,
+) -> tuple[Path, tuple[Remediation, ...]]:
+    """Perform a validated plan, journalled, and write the durable report.
+
+    Refuses a plan with anything blocked, before performing any of the rest: a
+    partially recovered archive with an unresolved transaction still in it is
+    harder to reason about than the state it started in.
+
+    Idempotent (`TX-04`). Each remedy closes the journal it resolved, so a
+    second run finds nothing left to do — which is what makes `recover --apply`
+    safe to run twice.
+    """
+    if plan.blocked:
+        raise SafetyError(list(plan.problems))
+
+    run_id = new_run_id()
+    transaction = open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="recovery",
+        run_id=run_id,
+        archive_id=str(envelope["archive_id"]),
+        config_fingerprint=str(envelope["config_fingerprint"]),
+    )
+    applied = [_perform(layout, entry, transaction) for entry in plan.remediations]
+
+    report_path = layout.run_report(started_at, run_id)
+    _write_report(report_path, applied, envelope=envelope, run_id=run_id, started_at=started_at)
+    transaction.checkpoint(
+        "recovery_report_written", report_path=str(layout.archive_relative(report_path))
+    )
+    transaction.checkpoint("recovery_completed", remediation_count=len(applied))
+    transaction.commit()
+    return report_path, tuple(sorted(applied, key=lambda record: record.transaction_id))
+
+
+def _perform(
+    layout: ArchiveLayout, entry: PlannedRemediation, transaction: Transaction
+) -> Remediation:
+    """Carry out one remedy and checkpoint it, or record that it was left alone."""
+    identifier = TransactionId(entry.transaction_id)
+    if entry.remedy == "wait":
+        return Remediation(
+            outcome="pending", reason=entry.reason, remedy=entry.remedy, transaction_id=identifier
+        )
+    evidence: dict[str, Any] = {}
+    if entry.remedy == "quarantine_staging":
+        evidence = _quarantine(layout, identifier)
+    _close_resolved(layout, identifier, entry)
+    transaction.checkpoint(entry.remedy, resolved_transaction_id=entry.transaction_id, **evidence)
+    return Remediation(
+        evidence=evidence,
+        outcome="applied",
+        reason=entry.reason,
+        remedy=entry.remedy,
+        transaction_id=identifier,
+    )
+
+
+def _quarantine(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
+    """Move abandoned staging into `.store/quarantine/<txn>/`, never delete it.
+
+    A rename rather than a removal, because the staging tree is evidence of what
+    a crashed run had built and §7.8 retains it until an operator says otherwise.
+    """
+    staging = layout.staging_for(transaction_id).directory
+    destination = layout.quarantine_for(transaction_id)
+    try:
+        destination.parent.mkdir(mode=QUARANTINE_MODE, parents=True, exist_ok=True)
+        staging.rename(destination)
+        fsync_directory(layout.quarantine)
+        fsync_directory(layout.staging)
+    except OSError as exc:
+        message = f"abandoned staging {staging} could not be quarantined: {exc.strerror}"
+        raise RetentionError.single(
+            message, code="HFRET010", location=str(layout.archive_relative(staging))
+        ) from exc
+    return {
+        "quarantine_path": str(layout.archive_relative(destination)),
+        "staging_absent": str(layout.archive_relative(staging)),
+    }
+
+
+def _close_resolved(
+    layout: ArchiveLayout, transaction_id: TransactionId, entry: PlannedRemediation
+) -> None:
+    """Close the journal recovery just resolved, so a second run finds nothing."""
+    file = read_journal(layout, layout.journal(transaction_id))
+    resumed = Transaction(layout=layout, file=file)
+    if entry.remedy == "close_journal" and _is_complete(file.journal):
+        resumed.commit()
+    else:
+        resumed.fail("HFTXN003", f"resolved by recovery: {entry.reason}")
+
+
+def _is_complete(journal: TransactionJournal) -> bool:
+    """Whether every documented checkpoint for this operation was recorded."""
+    names = [checkpoint.name for checkpoint in journal.checkpoints]
+    return journal.operation in CHECKPOINTS and names == list(CHECKPOINTS[journal.operation])
+
+
+def _write_report(
+    path: Path,
+    applied: list[Remediation],
+    *,
+    envelope: Mapping[str, Any],
+    run_id: RunId,
+    started_at: datetime,
+) -> None:
+    """Persist what recovery did, where every other run report lives (§12)."""
+    report = RecoveryReport.model_validate(
+        dict(envelope)
+        | {
+            "command": "recover --apply",
+            "completed_at": datetime.now(UTC),
+            "exit_code": int(ExitCode.SUCCESS),
+            "outcome": "success",
+            "remediations": sorted(applied, key=lambda record: record.transaction_id),
+            "run_id": run_id,
+            "started_at": started_at,
+        }
+    )
+    path.parent.mkdir(mode=QUARANTINE_MODE, parents=True, exist_ok=True)
+    write_model(path, report, mode=REPORT_MODE, code="HFRET010")

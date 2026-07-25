@@ -4,7 +4,9 @@ The command surface, global options, JSON envelope, and exit codes are specified
 in `docs/cli.md`. Scheduled runs use exactly the same commands an operator types.
 """
 
+import os
 import platform
+import socket
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -27,10 +29,11 @@ from hfcache.preflight import (
     READ_ONLY,
     UNPROVABLE_READ_ONLY,
     Check,
+    guarded,
     order_checks,
     storage_checks,
 )
-from hfcache.recovery import measure_health
+from hfcache.recovery import apply_recovery, measure_health, plan_recovery
 from hfcache.reporting import Envelope, EnvelopeProblem
 
 if TYPE_CHECKING:
@@ -662,3 +665,107 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             typer.echo(f"{entry['repository_type']}:{entry['repository_id']}  {state}")
         for warning in warnings:
             typer.echo(warning.as_line(), err=True)
+
+
+# --------------------------------------------------------------------------- #
+# recover (`docs/cli.md` §2)
+# --------------------------------------------------------------------------- #
+
+
+@app.command()
+def recover(
+    ctx: typer.Context,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Describe the plan and mutate nothing."),
+    ] = False,
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Execute a fully validated plan. Idempotent."),
+    ] = False,
+) -> None:
+    """Reconcile unfinished transaction journals (plan §18).
+
+    Roll-forward oriented: it never replaces an expected digest, chooses a
+    revision by modification time, or removes unknown data (`AD-16`). A state it
+    may not resolve on its own is reported and exits `20` rather than guessed at,
+    because a state two valid executions could both have produced has no single
+    correct resolution.
+
+    `--dry-run` reads only. `--apply` takes the same exclusive lock and runs the
+    same storage preflight every mutating command does, because it is one.
+    """
+    started_at = datetime.now(UTC)
+    stamp = utc_now()
+    options = _options(ctx)
+    command = f"recover {'--apply' if apply else '--dry-run'}"
+    try:
+        if dry_run == apply:
+            message = (
+                "exactly one of --dry-run and --apply is required: one describes what would "
+                "happen and the other performs it, and neither is a safe default"
+            )
+            raise ConfigurationError.single(message, code="HFARG002")
+        config = load_config(options.config_path)
+    except HfcacheError as error:
+        _report_failure(ctx, command, stamp, error)
+
+    layout = ArchiveLayout(root=config.storage.archive_root)
+    stale_hours = config.sync.stale_staging_age_hours
+    payload: dict[str, Any] = {}
+    try:
+        if apply:
+            # `--apply` mutates, so it takes the same lock and passes the same
+            # §19 preflight as any other mutating command, and plans *inside*
+            # them — a plan made before the lock could be stale by the time it
+            # ran.
+            with guarded(
+                layout,
+                storage=config.storage,
+                command=command,
+                lock_wait_seconds=config.sync.lock_wait_seconds,
+            ):
+                plan = plan_recovery(layout, stale_staging_age_hours=stale_hours)
+                payload = plan.as_payload()
+                if not plan.blocked:
+                    report, applied = apply_recovery(
+                        layout, plan, envelope=_run_envelope(config), started_at=started_at
+                    )
+                    payload |= {
+                        "applied": len(applied),
+                        "report": str(layout.archive_relative(report)),
+                    }
+        else:
+            plan = plan_recovery(layout, stale_staging_age_hours=stale_hours)
+            payload = plan.as_payload()
+    except HfcacheError as error:
+        _report_failure(ctx, command, stamp, error, payload)
+
+    if plan.blocked:
+        _report_failure(ctx, command, stamp, SafetyError(list(plan.problems)), payload)
+    _emit(
+        ctx,
+        command,
+        payload,
+        started_at=stamp,
+        lines={
+            "actionable": str(payload["actionable"]),
+            "blocked": str(payload["blocked"]),
+            "applied": str(payload.get("applied", "-")),
+        },
+    )
+
+
+def _run_envelope(config: ApplicationConfig) -> dict[str, Any]:
+    """The provenance fields every durable report carries (`docs/schemas.md` §6)."""
+    return {
+        "application_version": __version__,
+        "archive_id": config.storage.archive_id,
+        "config_fingerprint": config.fingerprint(),
+        "hostname": socket.gethostname(),
+        "huggingface_hub_version": _dependency_version("huggingface-hub"),
+        # systemd sets INVOCATION_ID for every unit it starts, which is the one
+        # signal that distinguishes a timer run from an operator at a terminal.
+        "invocation_mode": "systemd" if os.environ.get("INVOCATION_ID") else "interactive",
+        "python_version": platform.python_version(),
+    }

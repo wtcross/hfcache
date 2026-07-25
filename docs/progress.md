@@ -71,7 +71,7 @@ predate `CFG-003`.
 - [x] STO-008 Storage reconciliation and stale-staging reporting (2026-07-25, this commit — `src/hfcache/recovery.py` (plan §7): `reconcile_storage` scans the four transaction areas and reports what they hold without touching any of it. `HFWRN004` for staging past `sync.stale_staging_age_hours`, `HFWRN002` for a prune tombstone whose physical removal is outstanding, `HFWRN003` for an entry whose name is not a 32-hex transaction id — preserved, whatever it is (`FS-19`). Quarantine is reported and never warned about, because plan §16.5 retains it until an operator approves cleanup, so age says nothing about it. `measure_health` adds free space against the reserve, and `status` now emits the archive health block `docs/cli.md` §2 describes, with warnings on stderr and the exit code still `0`. 100% branch coverage. **Reclamation is deliberately absent:** plan §13.3 and `FS-18` allow it only for a directory that also *has a journal*, which arrives at `STO-010`, so `STO-011` is where removing one belongs)
 - [x] STO-009 Complete mutating `doctor` tests (2026-07-25, this commit — the checks themselves landed at `STO-001`, `STO-002`, `STO-003`, and `STO-007`, each with its own unit coverage against a temporary archive and a fabricated mount table. What this package adds is `tests/system/test_live_mount.py`'s mutating half: sentinel, effective writability, and all three §14.2 publication capabilities asserted against the real NFS dataset, plus the probe area left empty. They are written now and **skip until the archive is initialized**, which is the §29 rollout checkpoint after `HOST-004` — so the checkpoint runs a test that already exists rather than one written to fit whatever it found. Run with `pytest -m nfs`)
 - [x] STO-010 Durable transaction journals and validated checkpoint evidence (2026-07-25, this commit — `src/hfcache/transactions.py` (plan §7): `open_transaction` writes the journal durably before the first mutation (`TX-01`); `Transaction.checkpoint` appends after the act it names (`TX-02`) and refuses a name that is not next in the operation's documented sequence (`HFTXN002`). `CHECKPOINTS` holds the §7.3-§7.6 sequences and `tests/unit/test_transactions.py` parses them back out of `docs/architecture.md`, so neither table is written twice. `evidence_problems` confirms path evidence against the filesystem (`TX-03`, `HFTXN003`) under the key convention in decision 42. `read_journal` preserves keys this release does not know, which is the half of `docs/schemas.md` §1.1 that decision 20 assigned here. `open_journals` is what `TX-07` reconciles, and treats `needs_operator` as unresolved because it is exactly what must stop the next run. 100% branch coverage)
-- [ ] STO-011 Dry-run and apply recovery planning
+- [x] STO-011 Dry-run and apply recovery planning (2026-07-25, this commit — `recovery.plan_recovery` validates every open journal (schema, then checkpoint order, then evidence) and proposes one of four remedies; `apply_recovery` performs only a plan with nothing blocked, records one checkpoint per remediation in a §7.7 recovery journal, and writes the durable report now documented as `docs/schemas.md` §12 (decision 43). The `recover` command takes `--dry-run` or `--apply`, and `--apply` takes the lock and runs the §19 preflight because it is a mutating command. Idempotent by construction: each remedy closes the journal it resolved, so a second run finds nothing. 100% branch coverage. **The remedies for states this codebase cannot yet produce are reported as blocked rather than guessed at** — rolling a publication forward from checkpoint 5 needs `HUB-009`'s manifests, a prune needs `RET-006`, a repair needs `VER-006`; each package adds its own remedy as it lands, the way `doctor`'s checks did)
 
 ## Phase 4 — Hub Resolution and Repository Ingestion
 
@@ -772,3 +772,24 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     The suffix travels with the key, so a caller that names a path correctly gets
     it checked for free. Evidence keys are durable, so this is a format decision
     and not only an implementation one.
+
+43. **The recovery report is a run report** (2026-07-25, STO-011).
+    `docs/architecture.md` §7.7 requires `recover --apply` to record a
+    `recovery_report_written` checkpoint, but no document said what that report
+    is. Three options were considered. Reusing the §6 run report unchanged does
+    not fit — its body is per-repository sync results, and a recovery resolves
+    transactions rather than repositories. Treating the journal itself as the
+    report is a dodge: the journal is evidence of what happened, not a report an
+    operator reads. Inventing a separate location would put a third kind of file
+    somewhere `list` and `status` do not look.
+
+    So it is `RecoveryReport`, the §6 envelope with a `remediations[]` body,
+    written to the same `runs/` path — exactly the relationship the verification
+    report already has to the run report, and for the same reason: one operator
+    reads all three, so the shared part is one class rather than three that
+    drift. Documented as `docs/schemas.md` §12 in this commit.
+
+    `outcome: "pending"` is recorded for a remediation deliberately left alone —
+    staging too young to be certainly abandoned. That is a real answer and worth
+    persisting: an operator reading the report should see that recovery
+    considered the directory and chose to wait, not that it missed it.

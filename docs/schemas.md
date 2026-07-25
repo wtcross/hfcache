@@ -661,3 +661,59 @@ Every schema in this document is implemented as a versioned Pydantic model with
 JSON function so the conventions in §1 cannot drift per call site. The unit suite
 holds a golden fixture for each format; a serialization change that alters bytes
 without a `schema_version` bump fails the suite.
+
+## 12. Recovery report
+
+Path: `runs/<YYYYMMDD>T<HHMMSS>Z-<run-id>.json`, written by `recover --apply`.
+
+The §6 run-report envelope with recovery-specific fields, for the same reason a
+verification report is: all three are written to `runs/` and read by the same
+operator, so the shared part is one shape.
+
+```json
+{
+  "application_version": "1.0.0",
+  "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+  "command": "recover --apply",
+  "completed_at": "2026-07-25T09:14:02.113000Z",
+  "config_fingerprint": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+  "errors": [],
+  "exit_code": 0,
+  "hostname": "hfcachewriter.lab.cross.solutions",
+  "huggingface_hub_version": "0.36.0",
+  "invocation_mode": "interactive",
+  "outcome": "success",
+  "python_version": "3.14.6",
+  "remediations": [
+    {
+      "evidence": {
+        "quarantine_path": ".store/quarantine/7c1e8a55b0d24f1e9a3c7d2b6f80e114",
+        "staging_absent": ".store/staging/7c1e8a55b0d24f1e9a3c7d2b6f80e114"
+      },
+      "outcome": "applied",
+      "reason": "the publication stopped before anything was published, so it rolls back",
+      "remedy": "quarantine_staging",
+      "transaction_id": "7c1e8a55b0d24f1e9a3c7d2b6f80e114"
+    }
+  ],
+  "run_id": "4c1e8a55b0d24f1e9a3c7d2b6f80e114",
+  "schema_version": 1,
+  "started_at": "2026-07-25T09:14:01.882000Z",
+  "warnings": []
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `remediations[].remedy` | What recovery proposed: `quarantine_staging`, `close_journal`, `wait`, or `operator` |
+| `remediations[].outcome` | `applied` when performed, `pending` when deliberately left alone, `blocked` when recovery refused to resolve it |
+| `remediations[].evidence` | Re-observable facts, under the §10 key convention: `_path` exists, `_absent` does not |
+| `remediations[].transaction_id` | The transaction this entry resolved |
+
+A transaction appears at most once, and the array is sorted by `transaction_id`,
+so two runs that did the same work produce the same bytes.
+
+`blocked` is not a failure of recovery. It is recovery correctly refusing to
+resolve a state that two valid executions could both have produced
+(`docs/architecture.md` §7.9); the run exits `20` and changes nothing.
+

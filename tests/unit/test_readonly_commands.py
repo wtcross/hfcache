@@ -13,6 +13,7 @@ whole command be exercised, including the probe that writes, without mounting
 anything.
 """
 
+import fcntl
 import json
 import os
 from typing import TYPE_CHECKING
@@ -23,7 +24,9 @@ from typer.testing import CliRunner
 from hfcache.archive import initialize_archive
 from hfcache.cli import UNPROVABLE_READ_ONLY, app
 from hfcache.errors import ExitCode
+from hfcache.identity import new_run_id, new_transaction_id
 from hfcache.paths import ArchiveLayout
+from hfcache.transactions import open_transaction
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -64,6 +67,11 @@ archive_root = "{archive_root}"
 archive_id = "{ARCHIVE_ID}"
 minimum_free_space_gib = {reserve_gib}
 minimum_free_space_percent = {reserve_percent}
+
+[sync]
+# Zero, so a test that holds the lock observes the refusal instead of waiting
+# out the hour a scheduled sync is configured for.
+lock_wait_seconds = 0
 {REPOSITORIES}"""
 
 
@@ -559,3 +567,114 @@ def test_quiet_suppresses_the_doctor_table(initialized_config: Path):
 
     assert result.exit_code == ExitCode.SUCCESS
     assert result.output == ""
+
+
+# --------------------------------------------------------------------------- #
+# recover
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize("arguments", [(), ("--dry-run", "--apply")])
+def test_recover_requires_exactly_one_mode(config_file: Path, arguments):
+    # Neither is a safe default: one describes what would happen and the other
+    # performs it.
+    result = invoke(config_file, "recover", *arguments)
+
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert json.loads(result.output)["errors"][0]["code"] == "HFARG002"
+
+
+def test_recover_dry_run_describes_a_clean_archive(initialized_config: Path):
+    result = invoke(initialized_config, "recover", "--dry-run")
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert data_of(result) == {"actionable": 0, "blocked": 0, "plan": []}
+
+
+def test_recover_dry_run_mutates_nothing(initialized_config: Path, mounted_root: Path):
+    before = sorted(path.name for path in (mounted_root / ".store" / "transactions").iterdir())
+
+    invoke(initialized_config, "recover", "--dry-run")
+
+    after = sorted(path.name for path in (mounted_root / ".store" / "transactions").iterdir())
+    assert after == before
+
+
+def test_recover_apply_takes_the_lock_and_runs_the_preflight(
+    initialized_config: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # `--apply` mutates, so it is a mutating command in every sense.
+    monkeypatch.setattr("hfcache.locking.LOCK_DIRECTORY", tmp_path / "run")
+
+    result = invoke(initialized_config, "recover", "--apply")
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert data_of(result)["applied"] == 0
+
+
+def test_recover_apply_refuses_when_the_lock_is_held(
+    initialized_config: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    run_directory = tmp_path / "run"
+    run_directory.mkdir()
+    monkeypatch.setattr("hfcache.locking.LOCK_DIRECTORY", run_directory)
+    descriptor = os.open(run_directory / "hfcache.lock", os.O_RDWR | os.O_CREAT, 0o600)
+    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    try:
+        result = invoke(initialized_config, "recover", "--apply")
+    finally:
+        os.close(descriptor)
+
+    assert result.exit_code == ExitCode.SAFETY
+    assert json.loads(result.output)["errors"][0]["code"] == "HFMNT010"
+
+
+def test_recover_reports_a_state_it_may_not_resolve(
+    initialized_config: Path, mounted_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr("hfcache.locking.LOCK_DIRECTORY", tmp_path / "run")
+    layout = ArchiveLayout(root=mounted_root)
+    open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="publication",
+        run_id=new_run_id(),
+        archive_id=ARCHIVE_ID,
+        config_fingerprint="a" * 64,
+    ).needs_operator("HFTXN004", "two equally valid resolutions")
+
+    result = invoke(initialized_config, "recover", "--dry-run")
+
+    assert result.exit_code == ExitCode.SAFETY
+    assert json.loads(result.output)["errors"][0]["code"] == "HFTXN004"
+    assert data_of(result)["blocked"] == 1, "the plan is reported alongside the refusal"
+
+
+def test_recover_apply_performs_nothing_when_the_plan_is_blocked(
+    initialized_config: Path, mounted_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # A partially recovered archive with an unresolved transaction still in it is
+    # harder to reason about than the state it started in.
+    monkeypatch.setattr("hfcache.locking.LOCK_DIRECTORY", tmp_path / "run")
+    layout = ArchiveLayout(root=mounted_root)
+    open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="publication",
+        run_id=new_run_id(),
+        archive_id=ARCHIVE_ID,
+        config_fingerprint="a" * 64,
+    ).needs_operator("HFTXN004", "two equally valid resolutions")
+
+    result = invoke(initialized_config, "recover", "--apply")
+
+    assert result.exit_code == ExitCode.SAFETY
+    assert "applied" not in data_of(result)
+    assert list((mounted_root / "runs").iterdir()) == [], "no report was written"
+
+
+def test_recover_prints_a_readable_summary_without_json(initialized_config: Path):
+    result = runner.invoke(app, ["--config", str(initialized_config), "recover", "--dry-run"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert "actionable" in result.output
