@@ -49,7 +49,14 @@ install smoke test.
 - [x] CFG-004 Manifest and report models (2026-07-25, this commit — `src/hfcache/models.py` (foundation, sentinel, reference, prune plan, audit records, journal), `manifests.py` (`RevisionManifest`), `reporting.py` (run report, verification report, catalog). One serializer for every writer including the CLI envelope; §1.1 version refusal; a golden fixture per format in `tests/fixtures/schemas/`. All three modules at 100% branch coverage)
 - [x] CFG-005 `config validate` (2026-07-25, this commit — `config` sub-app in `src/hfcache/cli.py`; loads configuration and resolves the credential, takes no lock and makes no network call; failure envelope emitted with every problem, exit `10`; `--token-file` is now resolved as `CFG-002` said it would be here)
 - [x] CFG-006 Read-only portions of `doctor`, `status`, and `plan` (2026-07-25, this commit — selector resolution with `HFARG001`/`HFARG004`; `doctor` check-runner with `configuration`, `credential`, `hub_endpoint`, and `--read-only`'s three explicit unproven capabilities; `plan` over enabled repositories in configuration order; `status` reporting local truth with `upstream_state: unknown`. **Still to come:** `doctor`'s storage probes at `STO-009` and its Hub reachability/identity checks at `HUB-001`/`HUB-002`; `plan`'s resolved SHA and size estimates at `HUB-003`/`HUB-004`; `status`'s retained-revision and health blocks at `STO-008`/`VER-005`)
-- [ ] CFG-007 Deterministic JSON output and error taxonomy
+- [x] CFG-007 Deterministic JSON output and error taxonomy (2026-07-25, this commit — `src/hfcache/taxonomy.py`: every family's exit classification and the §3 aggregation rule; `Envelope`/`EnvelopeProblem` in `reporting.py` so the `--json` contract is a model rather than a dict built per call site. `tests/unit/test_taxonomy.py` parses the code tables out of `docs/cli.md` §5 and `docs/configuration.md` §8 and checks both directions, so the taxonomy cannot drift from the documents that define it)
+
+**Phase 2 complete.** Every operator input is validated before any network or
+filesystem access: configuration, credentials, repository identity, path safety,
+durable schemas, and the read-only command surface. `scripts/check.sh` passes
+with 566 tests; every Phase 2 module is at 100% branch coverage except `cli.py`
+at 99% and `config.py` at 89%, whose gaps are the non-string type guards that
+predate `CFG-003`.
 
 ## Phase 3 — Storage Safety and Publication Primitives
 
@@ -484,4 +491,27 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     output that will still be there at v1. The same rule governs `plan` and
     `status`: each reports the fields it can determine and omits the rest, and the
     checkbox above names the work package that completes each one.
+
+25. **The taxonomy is checked against the documents that define it, in both
+    directions** (2026-07-25, CFG-007). A table of codes in a document and a table
+    of codes in a module drift the moment someone edits one. `test_taxonomy.py`
+    therefore parses `docs/cli.md` §5 and `docs/configuration.md` §8 and asserts
+    that every documented code classifies as its own section header says, that
+    every family the code knows about appears in the documents, and that the
+    `HFCFG` range has no gaps. It reads only the leading cell of a table row:
+    §5.3's prose cross-references `HFVER002` while explaining how it differs from
+    `HFSYN003`, and a mention is not a claim about which section a code belongs
+    to. Classification is by family prefix rather than by a per-code table,
+    because a code's family already determines its exit and a second table would
+    be a second thing to keep in sync.
+
+26. **The `--json` envelope is a model, not a dict** (2026-07-25, CFG-007). It is
+    not durable — nothing on the archive is ever this shape — but it is a contract
+    with automation, and it was being assembled by hand at each call site with the
+    `outcome`/`exit_code` agreement enforced by a conditional expression. It is
+    now `reporting.Envelope`, which refuses an undocumented exit code, an
+    `outcome` that contradicts it, `success_with_warnings` without warnings, and a
+    failure carrying no errors. It keeps its own `schema_version`, separate from
+    the durable schemas, because an invocation record and an archived manifest
+    change for different reasons.
 

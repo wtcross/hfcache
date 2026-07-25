@@ -12,11 +12,11 @@ here treats it as authority; it exists so `status` and `list` answer without
 walking the whole archive.
 """
 
-from typing import Annotated, Literal, Self, final
+from typing import Annotated, Any, Literal, Self, final
 
 from pydantic import BeforeValidator, Field, model_validator
 
-from hfcache.errors import ExitCode
+from hfcache.errors import ExitCode, Problem
 from hfcache.models import (
     ArchivePath,
     ByteCount,
@@ -36,8 +36,11 @@ from hfcache.models import (
 )
 
 __all__ = [
+    "ENVELOPE_SCHEMA_VERSION",
     "CatalogRevision",
     "CurrentRevision",
+    "Envelope",
+    "EnvelopeProblem",
     "Finding",
     "FullVerificationSummary",
     "OutstandingFailure",
@@ -57,6 +60,81 @@ Seconds = Annotated[float, Field(ge=0.0)]
 Rate = Annotated[float, Field(ge=0.0)]
 
 _SUCCESSFUL_OUTCOMES = frozenset({"success", "success_with_warnings"})
+
+ENVELOPE_SCHEMA_VERSION = 1
+"""Versioned independently of the durable schemas (`docs/cli.md` §4).
+
+The envelope describes an invocation; a manifest describes archived content.
+Tying them together would force a version bump on every consumer of one because
+the other changed.
+"""
+
+
+# --------------------------------------------------------------------------- #
+# §4 The `--json` envelope
+# --------------------------------------------------------------------------- #
+
+
+@final
+class EnvelopeProblem(DurableModel):
+    """One entry in the envelope's `warnings` or `errors` array."""
+
+    code: str
+    context: dict[str, Any] = Field(default_factory=dict)
+    message: str
+    repository: str | None = None
+
+    @classmethod
+    def of(cls, problem: Problem) -> Self:
+        """Render an internal `Problem` in the envelope's shape.
+
+        The mapping lives in `Problem.as_envelope_entry`, so the two cannot
+        disagree about where a location goes.
+        """
+        return cls.model_validate(problem.as_envelope_entry())
+
+
+@final
+class Envelope(DurableModel):
+    """The single object `--json` writes to stdout.
+
+    Not a durable artifact — nothing on the archive is ever this shape — but it
+    is a contract with automation all the same, so it is modelled rather than
+    assembled from a dict at each call site. `outcome` is checked against
+    `exit_code` here for the same reason a run report checks it: they are one
+    statement in two forms and something reads both.
+    """
+
+    command: str
+    completed_at: str
+    data: dict[str, Any] = Field(default_factory=dict)
+    errors: Annotated[tuple[EnvelopeProblem, ...], BeforeValidator(as_tuple)] = ()
+    exit_code: int
+    outcome: Literal["success", "success_with_warnings", "failed"]
+    run_id: RunIdField
+    schema_version: int = ENVELOPE_SCHEMA_VERSION
+    started_at: str
+    warnings: Annotated[tuple[EnvelopeProblem, ...], BeforeValidator(as_tuple)] = ()
+
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        if self.schema_version != ENVELOPE_SCHEMA_VERSION:
+            message = f"envelope schema_version must be {ENVELOPE_SCHEMA_VERSION}"
+            raise ValueError(message)
+        if self.exit_code not in set(ExitCode):
+            message = f"exit_code {self.exit_code} is not a documented classification"
+            raise ValueError(message)
+        succeeded = self.exit_code == ExitCode.SUCCESS
+        if succeeded != (self.outcome in _SUCCESSFUL_OUTCOMES):
+            message = f"outcome {self.outcome!r} contradicts exit_code {self.exit_code}"
+            raise ValueError(message)
+        if (self.outcome == "success_with_warnings") != bool(self.warnings):
+            message = "success_with_warnings is reported exactly when warnings were recorded"
+            raise ValueError(message)
+        if self.outcome == "failed" and not self.errors:
+            message = "a failed envelope carries the errors that failed it"
+            raise ValueError(message)
+        return self
 
 
 # --------------------------------------------------------------------------- #

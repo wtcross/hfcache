@@ -12,7 +12,7 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Annotated, Any, Final, Literal, NoReturn
+from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, NoReturn
 
 import typer
 
@@ -21,14 +21,15 @@ from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import ConfigurationError, HfcacheError, Problem
 from hfcache.identity import new_run_id, parse_selector
-from hfcache.models import serialize
+from hfcache.reporting import Envelope, EnvelopeProblem
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__ = ["app"]
 
 DEFAULT_CONFIG_PATH = Path("/etc/hfcache/config.toml")
 """Matches the systemd invocation in `docs/plan.md` §22.2."""
-
-ENVELOPE_SCHEMA_VERSION = 1
 
 app = typer.Typer(
     name="hfcache",
@@ -71,8 +72,8 @@ def emit_envelope(
     data: dict[str, Any],
     *,
     started_at: str,
-    warnings: list[dict[str, Any]] | None = None,
-    errors: list[dict[str, Any]] | None = None,
+    warnings: Sequence[Problem] = (),
+    errors: Sequence[Problem] = (),
     exit_code: int = 0,
 ) -> None:
     """Write the single JSON envelope defined by `docs/cli.md` §4 to stdout.
@@ -83,22 +84,19 @@ def emit_envelope(
     pipe, where a durable file is something an operator reads and diffs. Logs
     and progress go to stderr, so piping stdout is always safe.
     """
-    warnings = warnings or []
-    errors = errors or []
     outcome = "failed" if exit_code else ("success_with_warnings" if warnings else "success")
-    envelope = {
-        "command": command,
-        "completed_at": utc_now(),
-        "data": data,
-        "errors": errors,
-        "exit_code": exit_code,
-        "outcome": outcome,
-        "run_id": new_run_id(),
-        "schema_version": ENVELOPE_SCHEMA_VERSION,
-        "started_at": started_at,
-        "warnings": warnings,
-    }
-    sys.stdout.write(serialize(envelope, indent=None))
+    envelope = Envelope(
+        command=command,
+        completed_at=utc_now(),
+        data=data,
+        errors=tuple(EnvelopeProblem.of(problem) for problem in errors),
+        exit_code=exit_code,
+        outcome=outcome,
+        run_id=new_run_id(),
+        started_at=started_at,
+        warnings=tuple(EnvelopeProblem.of(problem) for problem in warnings),
+    )
+    sys.stdout.write(envelope.to_json(indent=None))
 
 
 def _report_failure(
@@ -116,7 +114,7 @@ def _report_failure(
             command,
             {},
             started_at=started_at,
-            errors=[problem.as_envelope_entry() for problem in error.problems],
+            errors=error.problems,
             exit_code=int(error.exit_code),
         )
     else:
