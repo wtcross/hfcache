@@ -30,9 +30,9 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any, Final, final
 
-from hfcache.errors import Problem, SafetyError
+from hfcache.errors import HfcacheError, Problem, SafetyError
 from hfcache.identity import new_probe_id
-from hfcache.models import ArchiveSentinel, load
+from hfcache.models import ArchiveSentinel, DurableModel, VersionedModel, dump, load
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -62,10 +62,12 @@ __all__ = [
     "parse_mount_table",
     "probe_writability",
     "publication_destinations",
+    "read_model",
     "read_mount_table",
     "read_sentinel",
     "same_filesystem_problems",
     "temporary_sibling",
+    "write_model",
 ]
 
 MOUNT_TABLE = Path("/proc/self/mountinfo")
@@ -366,6 +368,45 @@ def atomic_write_bytes(path: Path, payload: bytes, *, mode: int) -> None:
         temporary.unlink(missing_ok=True)
         raise
     fsync_directory(path.parent)
+
+
+def write_model(path: Path, model: DurableModel, *, mode: int, code: str) -> None:
+    """Write one validated durable artifact, atomically (`docs/schemas.md` §1).
+
+    `dump` renders the bytes and `atomic_write_bytes` places them, so every
+    durable file this application writes goes through the same serializer and the
+    same temporary-sibling-fsync-rename. `code` is the caller's, for the same
+    reason `read_model`'s is: a failed manifest write is `HFSYN008` and a failed
+    reference write is `HFSYN007`, and only the caller knows which it is doing.
+    """
+    try:
+        atomic_write_bytes(path, dump(model), mode=mode)
+    except OSError as exc:
+        message = f"writing {path} failed: {exc.strerror}"
+        raise SafetyError.single(message, code=code, location=str(path)) from exc
+
+
+def read_model[ModelT: VersionedModel](
+    path: Path,
+    model_type: type[ModelT],
+    *,
+    error: type[HfcacheError],
+    code: str,
+    location: str | None = None,
+) -> ModelT:
+    """Read one durable artifact back, mapping an unreadable file to the same code.
+
+    `load` already turns a malformed or too-new artifact into coded problems.
+    This adds the one thing it cannot see: the file not being readable at all,
+    which for every caller means the same thing as the file being unusable.
+    """
+    where = str(path) if location is None else location
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        message = f"{path} could not be read: {exc.strerror}"
+        raise error([Problem(code=code, message=message, location=where)]) from exc
+    return load(model_type, raw, error=error, code=code, location=where)
 
 
 # --------------------------------------------------------------------------- #
