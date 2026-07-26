@@ -135,6 +135,30 @@ where `hfcache list` landed.
 
 ## Phase 6 — Dependency Warnings and Archive Verification
 
+**Carried into this phase.** Two items are open that the packages above should
+have closed, recorded here rather than left to be rediscovered:
+
+1. **Recovery's roll-forward remedies are still `blocked`.** `STO-011` deferred
+   them explicitly — "rolling a publication forward from checkpoint 5 needs
+   `HUB-009`'s manifests, a prune needs `RET-006`; each package adds its own
+   remedy as it lands" — and both packages landed without adding them.
+   `recovery.plan_recovery` today resolves only a publication that crashed
+   *before* checkpoint 5 (quarantine staging) and one with every checkpoint
+   recorded (close the journal); all four `docs/architecture.md` §7.3 crash-matrix
+   rows from "after 5, before 6" onward, and §7.4's prune rollback and
+   roll-forward, return `operator` instead of the resolution the document
+   already specifies. `VER-006` adds the repair remedy regardless, so the four
+   belong together.
+
+2. **`verification_state` is hardcoded `"verified"` in three places** —
+   `publication.py` `_catalog_entry`, and `cli.py` `_status_entry` and
+   `_listed_revision`. No document says whether a revision that was SHA-256
+   verified at ingestion but never verified offline is `verified` or
+   `unverified`, so this is an unsettled question rather than a defect; today
+   `failed` is unreachable and `unverified` is never reported for a published
+   revision. `VER-005` has to settle it, record the decision, and make all three
+   read the same source.
+
 - [x] DEP-001 Model-card dependency inspection (2026-07-26, this commit — `src/hfcache/dependencies.py` (plan §7) reads `README.md`'s YAML front matter through `huggingface_hub.repocard.metadata_load`, which parses with `yaml.safe_load`: no object construction, no tag that could reach a constructor (`AD-15`, T-04). A `base_model` holding a list produces one observation per entry, because a merged model legitimately names several parents. Detection reads the *snapshot*, so it sees the same bytes that were hashed and will be published — a detector reading anything else could report a dependency the archived revision does not declare)
 - [x] DEP-002 Adapter-config dependency inspection (2026-07-26, this commit — `adapter_config.json` through `json.loads` and nothing else; PEFT would import it through its own loader, and reading it as the JSON document it is, is the whole difference between describing an adapter and running one. `base_model_name_or_path` is recorded at `high` confidence, above a card's `base_model`, because an adapter without its base cannot be loaded at all rather than merely being incomplete)
 - [x] DEP-003 Compare observations with declared dependencies (2026-07-26, this commit — `declared` and `managed` are separate questions and the manifest records both: declared-but-unmanaged is an operator who knows and decided not to archive it, managed-but-undeclared is a stale declaration. Comparison is case-folded, because the Hub treats `Org/Model` and `org/model` as one repository while a `declared_dependencies` entry is typed by hand, and reporting a case difference as undeclared would train an operator to ignore the code. `managed` is matched on bare repository ids rather than selectors, since a `base_model` value carries no type prefix)
