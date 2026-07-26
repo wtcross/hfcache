@@ -229,6 +229,7 @@ class HubApi(Protocol):
         max_workers: int,
         token: str | bool | None = None,
         dry_run: Literal[False] = False,
+        local_files_only: bool = False,
     ) -> str: ...
 
 
@@ -460,12 +461,64 @@ class HubClient:
             raise SynchronizationError([hub_problem(exc, identity=identity)]) from exc
         return _snapshot_path(local, identity=identity, cache_dir=cache_dir)
 
+    def verify_local(
+        self,
+        identity: RepositoryIdentity,
+        commit_sha: CommitSha,
+        *,
+        cache_dir: Path,
+    ) -> Path:
+        """Ask the library to assemble the revision from the cache alone.
 
-def _snapshot_path(local: object, *, identity: RepositoryIdentity, cache_dir: Path) -> Path:
+        Plan §12 item 5 and §13.2 step 6. `local_files_only=True` makes the same
+        call the download made, with the network taken away: the library walks
+        the revision it knows it fetched and resolves each file out of the cache,
+        and reports `IncompleteSnapshotError` when any of them is not really
+        there. That is a check this application could not write for itself
+        without the thing plan §12 item 7 forbids — parsing the cache's private
+        layout to find out what a blob or a partial download is called.
+
+        It is deliberately *not* the whole completeness story.
+        `hfcache.sync.completeness_problems` independently compares what landed
+        against the Hub's tree metadata, because this call proves the library is
+        satisfied and says nothing about whether what satisfied it is the path
+        set the archive was promised.
+
+        No `max_workers`: nothing is fetched, so there is nothing to parallelize.
+        """
+        try:
+            local = self.api.snapshot_download(
+                identity.id,
+                repo_type=identity.type,
+                revision=commit_sha,
+                cache_dir=str(cache_dir),
+                max_workers=1,
+                token=self.token.hub_argument,
+                dry_run=False,
+                local_files_only=True,
+            )
+        except Exception as exc:
+            message = (
+                f"the local-only completeness check for {identity.selector} failed: "
+                f"{type(exc).__name__}: {exc}. The download reported success, so the cache "
+                f"no longer holds every file of the revision it fetched"
+            )
+            raise SynchronizationError.single(
+                message, code="HFSYN001", location=identity.selector
+            ) from exc
+        return _snapshot_path(local, identity=identity, cache_dir=cache_dir, code="HFSYN001")
+
+
+def _snapshot_path(
+    local: object, *, identity: RepositoryIdentity, cache_dir: Path, code: str = "HFHUB009"
+) -> Path:
     """Narrow one `snapshot_download` return into a proven snapshot directory.
 
-    Three things are checked, all `HFHUB009`, because all three mean the same
-    thing to an operator: the download did not leave a usable snapshot behind.
+    Four things are checked under one code, because to an operator they mean one
+    thing: the call did not leave a usable snapshot behind. The code is the
+    caller's — a download that produced nothing is `HFHUB009`, the same
+    observation during the completeness check is `HFSYN001` — since the same
+    fact means something different depending on which step noticed it.
 
     Containment is the one worth explaining. The path is resolved before it is
     compared, because the cache reaches its snapshots through symlinks, and it is
@@ -478,11 +531,11 @@ def _snapshot_path(local: object, *, identity: RepositoryIdentity, cache_dir: Pa
     where = identity.selector
     if not isinstance(local, str) or not local:
         message = (
-            f"the download of {where} returned {type(local).__name__} rather than a snapshot "
+            f"the snapshot call for {where} returned {type(local).__name__} rather than a "
             f"path; the revision's bytes are read from that directory, so an unrecognised "
             f"result is refused rather than interpreted"
         )
-        raise SynchronizationError.single(message, code="HFHUB009", location=where)
+        raise SynchronizationError.single(message, code=code, location=where)
 
     snapshot = Path(local)
     try:
@@ -490,24 +543,24 @@ def _snapshot_path(local: object, *, identity: RepositoryIdentity, cache_dir: Pa
         root = cache_dir.resolve(strict=True)
     except OSError as exc:
         message = (
-            f"the download of {where} reported {snapshot}, which could not be resolved "
+            f"the snapshot call for {where} reported {snapshot}, which could not be resolved "
             f"({exc.strerror}); a snapshot that is not there was not downloaded"
         )
-        raise SynchronizationError.single(message, code="HFHUB009", location=where) from exc
+        raise SynchronizationError.single(message, code=code, location=where) from exc
 
     if not resolved.is_relative_to(root):
         message = (
-            f"the download of {where} reported {resolved}, which is outside the private cache "
-            f"root {root}; every source the archive publishes from must be contained by the "
-            f"root this run approved (`FS-15`)"
+            f"the snapshot call for {where} reported {resolved}, which is outside the private "
+            f"cache root {root}; every source the archive publishes from must be contained by "
+            f"the root this run approved (`FS-15`)"
         )
-        raise SynchronizationError.single(message, code="HFHUB009", location=where)
+        raise SynchronizationError.single(message, code=code, location=where)
     if not resolved.is_dir():
         message = (
-            f"the download of {where} reported {resolved}, which is not a directory; a "
+            f"the snapshot call for {where} reported {resolved}, which is not a directory; a "
             f"snapshot is the tree the revision's files were written into"
         )
-        raise SynchronizationError.single(message, code="HFHUB009", location=where)
+        raise SynchronizationError.single(message, code=code, location=where)
     return resolved
 
 

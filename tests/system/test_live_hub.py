@@ -30,6 +30,7 @@ from hfcache.hub import (
     verify_tls,
 )
 from hfcache.identity import RepositoryIdentity
+from hfcache.sync import completeness_problems
 
 pytestmark = pytest.mark.live
 
@@ -153,6 +154,49 @@ def test_a_real_download_fetches_every_file_of_the_revision(client: HubClient, i
         landed = snapshot / entry.path
         assert landed.resolve().is_file(), entry.path
         assert landed.stat().st_size == entry.size, entry.path
+
+
+@pytest.mark.parametrize("identity", [MODEL, DATASET], ids=["model", "dataset"])
+def test_a_real_download_passes_both_completeness_checks(client: HubClient, identity, tmp_path):
+    # Plan §13.2 steps 6-8 against real content: the library's own local-only
+    # assembly, and this application's independent comparison of what landed
+    # with what the Hub listed. Both have to hold — the first says the library
+    # is satisfied, the second says what satisfied it is the promised path set.
+    cache = tmp_path / "hub"
+    facts = client.repository(identity, "main")
+    tree = client.tree(identity, facts.commit_sha)
+    client.download(identity, facts.commit_sha, cache_dir=cache, max_workers=2)
+
+    snapshot = client.verify_local(identity, facts.commit_sha, cache_dir=cache)
+
+    assert completeness_problems(snapshot, tree, identity=identity, cache_root=cache) == []
+
+
+def test_the_local_check_needs_no_network(client: HubClient, tmp_path, monkeypatch):
+    # It is the check a `verify` run performs with `HF_HUB_OFFLINE=1` set
+    # (plan §22.3), so it must not reach the Hub at all.
+    cache = tmp_path / "hub"
+    facts = client.repository(DATASET, "main")
+    client.download(DATASET, facts.commit_sha, cache_dir=cache, max_workers=2)
+
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+
+    assert client.verify_local(DATASET, facts.commit_sha, cache_dir=cache).is_dir()
+
+
+def test_a_cache_missing_a_blob_fails_the_local_check(client: HubClient, tmp_path):
+    # The one failure this check exists to catch: the download reported success
+    # and the bytes are no longer there.
+    cache = tmp_path / "hub"
+    facts = client.repository(DATASET, "main")
+    snapshot = client.download(DATASET, facts.commit_sha, cache_dir=cache, max_workers=2)
+    target = next(path for path in sorted(snapshot.iterdir()) if path.is_file())
+    target.resolve().unlink()
+
+    with pytest.raises(SynchronizationError) as caught:
+        client.verify_local(DATASET, facts.commit_sha, cache_dir=cache)
+
+    assert [problem.code for problem in caught.value.problems] == ["HFSYN001"]
 
 
 def test_a_second_download_of_the_same_sha_fetches_nothing(client: HubClient, tmp_path):

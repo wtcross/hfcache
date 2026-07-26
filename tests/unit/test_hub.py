@@ -28,6 +28,7 @@ import pytest
 from huggingface_hub.errors import (
     GatedRepoError,
     HfHubHTTPError,
+    IncompleteSnapshotError,
     RepositoryNotFoundError,
     RevisionNotFoundError,
 )
@@ -657,6 +658,64 @@ def test_a_download_failure_is_a_coded_problem(tmp_path):
         client(api).download(MODEL, CommitSha(SHA), cache_dir=tmp_path, max_workers=1)
 
     assert codes(caught.value.problems) == ["HFHUB004"]
+
+
+# --------------------------------------------------------------------------- #
+# The local-only completeness check (plan §12 item 5, §13.2 step 6)
+# --------------------------------------------------------------------------- #
+
+
+def test_the_local_check_asks_the_library_to_work_without_the_network(tmp_path):
+    cache = tmp_path / "hub"
+    snapshot = snapshot_in(cache)
+    api = FakeApi(snapshot=str(snapshot))
+
+    local = client(api).verify_local(MODEL, CommitSha(SHA), cache_dir=cache)
+
+    call = api.calls[-1]
+    assert call["local_files_only"] is True
+    assert call["dry_run"] is False
+    assert call["revision"] == SHA
+    assert call["cache_dir"] == str(cache)
+    assert local == snapshot.resolve()
+
+
+def test_the_local_check_parallelizes_nothing(tmp_path):
+    # Nothing is fetched, so there is nothing to fetch concurrently.
+    cache = tmp_path / "hub"
+    api = FakeApi(snapshot=str(snapshot_in(cache)))
+
+    client(api).verify_local(MODEL, CommitSha(SHA), cache_dir=cache)
+
+    assert api.calls[-1]["max_workers"] == 1
+
+
+def test_a_cache_that_can_no_longer_assemble_the_revision_is_hfsyn001(tmp_path):
+    # The download reported success, so the bytes were there and now are not.
+    cache = tmp_path / "hub"
+    cache.mkdir()
+    # The genuine article, constructed the way the library constructs it, so the
+    # classification is tested against the exception it actually raises.
+    api = FakeApi(raises=IncompleteSnapshotError("model.bin is missing", str(cache)))
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).verify_local(MODEL, CommitSha(SHA), cache_dir=cache)
+
+    assert codes(caught.value.problems) == ["HFSYN001"]
+    assert caught.value.exit_code == ExitCode.SYNC
+
+
+def test_the_local_check_reports_its_own_code_not_the_downloads(tmp_path):
+    # The same observation — no usable snapshot — means something different
+    # depending on which step noticed it.
+    cache = tmp_path / "hub"
+    cache.mkdir()
+    api = FakeApi(snapshot=None)
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).verify_local(MODEL, CommitSha(SHA), cache_dir=cache)
+
+    assert codes(caught.value.problems) == ["HFSYN001"]
 
 
 # --------------------------------------------------------------------------- #
