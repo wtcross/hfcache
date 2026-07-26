@@ -1105,7 +1105,9 @@ def _status_entry(
         # The current revision's state, from the one place any of it is recorded
         # (decision 51). A revision nothing has verified offline reads
         # `unverified`, which is what makes `verified` mean something.
-        entry["verification_state"] = states.state_of(identity, reference.commit_sha)
+        entry["verification_state"] = states.state_of(
+            identity, reference.commit_sha, reference.publication_id
+        )
     return entry
 
 
@@ -1269,7 +1271,9 @@ def _listed_revision(
         "publication_id": manifest.publication_id,
         "published_at": manifest.published_at.isoformat().replace("+00:00", "Z"),
         "total_bytes": manifest.total_bytes,
-        "verification_state": states.state_of(identity, manifest.commit_sha),
+        "verification_state": states.state_of(
+            identity, manifest.commit_sha, manifest.publication_id
+        ),
     }
 
 

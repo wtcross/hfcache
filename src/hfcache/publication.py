@@ -599,7 +599,9 @@ def _catalog_entry(
                 publication_id=manifest.publication_id,
                 published_at=manifest.published_at,
                 total_bytes=manifest.total_bytes,
-                verification_state=states.state_of(identity, manifest.commit_sha),
+                verification_state=states.state_of(
+                    identity, manifest.commit_sha, manifest.publication_id
+                ),
             )
         )
     current = _current(layout, repository)
@@ -673,7 +675,7 @@ class VerificationStates:
     unfalsifiable — which is exactly why `failed` was previously unreachable.
     """
 
-    outcomes: Mapping[tuple[str, str, str], str]
+    outcomes: Mapping[tuple[str, str, str, str], str]
 
     @classmethod
     def of(cls, layout: ArchiveLayout) -> Self:
@@ -683,17 +685,40 @@ class VerificationStates:
             return cls(outcomes={})
         return cls(
             outcomes={
-                (entry.repository_type, entry.repository_id, revision.commit_sha): revision.outcome
+                (
+                    entry.repository_type,
+                    entry.repository_id,
+                    revision.commit_sha,
+                    revision.publication_id,
+                ): revision.outcome
                 for entry in catalog.repositories
                 for revision in entry.revisions
+                # An entry naming no instance contributes nothing, so every
+                # revision reads `unverified` against it. `publication_id` is
+                # optional in the schema because a *finding* may not be able to
+                # name an instance (decision 49); a catalog entry that cannot
+                # either is one whose verification cannot be attributed to
+                # anything on disk, and the conservative answer to "was this
+                # instance re-read?" is no.
+                if revision.publication_id is not None
             }
         )
 
     def state_of(
-        self, identity: RepositoryIdentity, commit_sha: str
+        self, identity: RepositoryIdentity, commit_sha: str, publication_id: str
     ) -> Literal["verified", "unverified", "failed"]:
-        """This revision's verification state, keyed by what a reference names."""
-        outcome = self.outcomes.get((identity.type, identity.id, commit_sha))
+        """This *instance's* verification state, keyed the way the catalog records it.
+
+        The publication id is part of the key, not decoration (decision 62). A
+        verification re-reads the bytes of one published instance, and two
+        instances of the same SHA are different bytes in different places: a
+        repair replaces one, and a prune followed by a later republication of the
+        same SHA produces another. Keyed by SHA alone, a freshly published
+        instance inherits the verification of one that no longer exists — which
+        is `verified` for content nothing has ever re-read, exactly the
+        unfalsifiable field decision 51 existed to close.
+        """
+        outcome = self.outcomes.get((identity.type, identity.id, commit_sha, publication_id))
         if outcome == "clean":
             return "verified"
         if outcome == "failed":

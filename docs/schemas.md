@@ -389,6 +389,15 @@ Both catalogs are derived (`FS-16`). A `verification.json` that is absent or
 unreadable means every revision reads `unverified`: derived state may lower the
 confidence this application reports and may never raise it.
 
+A revision entry is keyed by `(repository_type, repository_id, commit_sha,
+publication_id)`, and the publication id is part of the key rather than
+decoration (decision 62). A verification re-reads the bytes of one published
+*instance*, and two instances of one SHA are different bytes in different places
+— a repair replaces one, and a prune followed by a later republication of the
+same SHA produces another. An entry whose `publication_id` is null therefore
+raises nobody's confidence: it cannot be attributed to anything on disk, so every
+instance reads `unverified` against it.
+
 ## 6. Run report
 
 Path: `runs/<YYYYMMDD>T<HHMMSS>Z-<run-id>.json`, one per invocation of a mutating

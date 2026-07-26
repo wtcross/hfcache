@@ -1469,6 +1469,8 @@ Work packages:
 - `HOST-003`: Configure hard NFSv4 mount. *(Done 2026-07-24; mount live — §35.1.)*
 - `SYNC-003`: Give the sync run its §7.6 journal and reconcile unfinished journals before Hub contact (`TX-07`). *(Carried out of Phase 6; it lands here because the scheduled invocation is what makes it matter.)*
 - `SYNC-004`: Discard a committed transaction's staging area. *(Defect found by `status` at the §29 rollout checkpoint — decision 56.)*
+- `SYNC-005`: Discard staging when a publication fails before the rename. *(The same defect in the failure path, found at `SEL-001`.)*
+- `VER-007`: Key the reported verification state on the publication instance. *(Found at `SEL-001` by a prune-then-republish — decision 62.)*
 - `HOST-004`: Install the locked application environment.
 - `SYS-001`: Install and validate systemd target, services, and timers.
 - `SYS-002`: Apply and test systemd hardening.

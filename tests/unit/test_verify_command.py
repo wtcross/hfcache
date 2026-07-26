@@ -8,6 +8,7 @@ the archive exactly as it was. The checking itself is
 
 import json
 import os
+import shutil
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path  # noqa: TC003 - fixtures take and return one at run time
@@ -941,6 +942,56 @@ def test_a_verified_revision_reads_verified_everywhere(config_path, archive):
     )
     catalog = rebuild_catalog(archive, generated_at=NOW)
     assert catalog.repositories[0].revisions[0].verification_state == "verified"
+
+
+def test_a_new_instance_of_a_verified_sha_reads_unverified(config_path, archive):
+    """Decision 62. A verification re-reads the bytes of one published
+    *instance*, and two instances of the same SHA are different bytes in
+    different places — a repair replaces one, and a prune followed by a later
+    republication of the same SHA produces another.
+
+    Found on the live archive: a revision that had been pruned and re-synced read
+    `verified` on the strength of a verification of the instance the prune
+    removed, which is `verified` for content nothing had ever re-read.
+    """
+    first = publish(archive)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+    assert status_of(config_path)["repositories"][0]["verification_state"] == "verified"
+
+    # The cache snapshot is what a download produces; clear it so the second
+    # publication builds its own, exactly as a re-sync after a prune does.
+    shutil.rmtree(archive.hub_cache / f"{MODEL.type}s--{MODEL.id.replace('/', '--')}")
+    second = publish(archive)
+
+    assert second.publication_id != first.publication_id
+    assert second.commit_sha == first.commit_sha
+    assert status_of(config_path)["repositories"][0]["verification_state"] == "unverified"
+    assert listed(config_path)["repositories"][0]["revisions"][0]["verification_state"] == (
+        "unverified"
+    )
+    catalog = rebuild_catalog(archive, generated_at=NOW)
+    assert catalog.repositories[0].revisions[0].verification_state == "unverified"
+
+    # And verifying again makes it true again, of the instance that now exists.
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+    assert status_of(config_path)["repositories"][0]["verification_state"] == "verified"
+
+
+def test_a_catalog_entry_naming_no_instance_reads_unverified(config_path, archive):
+    """The optional `publication_id` case. A verification that could not name an
+    instance (decision 49) cannot be attributed to anything on disk, so the
+    conservative answer to "was this instance re-read?" is no."""
+    published = publish(archive)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+    catalog = VerificationCatalog.model_validate_json(
+        archive.verification_catalog.read_text(encoding="utf-8")
+    )
+    payload = catalog.model_dump(mode="json")
+    payload["repositories"][0]["revisions"][0]["publication_id"] = None
+    archive.verification_catalog.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert published.publication_id
+    assert status_of(config_path)["repositories"][0]["verification_state"] == "unverified"
 
 
 def test_a_failed_revision_reads_failed_everywhere(config_path, archive):
