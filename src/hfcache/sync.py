@@ -52,6 +52,7 @@ from hfcache.publication import (
     PUBLISHED_DIRECTORY_MODE,
     PUBLISHED_FILE_MODE,
     create_staging,
+    discard_staging,
     next_generation,
     projected_publication_bytes,
     promote_staging,
@@ -694,7 +695,11 @@ def publish_revision(  # noqa: PLR0913 - the §7.3 sequence's inputs, one argume
         # rename, so it keeps the suffix and stays checkable.
         staging_tree=str(layout.archive_relative(staging.tree)),
         file_count=manifest.file_count,
-        pending_manifest_path=str(layout.archive_relative(pending)),
+        # `pending_manifest` carries no `_path` suffix either, for decision 53's
+        # reason applied to decision 56's change: checkpoint 10 discards the whole
+        # staging area now that the manifest is published, so asserting this file
+        # still exists would make every committed journal contradict the archive.
+        pending_manifest=str(layout.archive_relative(pending)),
     )
 
     repository = RepositoryLayout(archive=layout, identity=identity)
@@ -978,7 +983,21 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
         cache_root=layout.hub_cache,
         configured=configured,
     )
-    transaction.checkpoint("publication_committed", state="committed")
+    # Checkpoint 10's act (decision 56). The staging area held the tree, which
+    # checkpoint 5 renamed away, and the pending manifest, which checkpoint 6
+    # published — so what is left is a redundant copy of an artifact the archive
+    # now owns. Discarded here rather than left behind, because a directory under
+    # `.store/staging` is how `reconcile_storage` recognises *unfinished* work:
+    # one per published revision would report a finished publication as
+    # outstanding, and warn `HFWRN004` about it once it aged past the configured
+    # staleness. Inside `FS-19` because the path is derived from the transaction
+    # id (`FS-18`), never read off the filesystem.
+    discard_staging(layout, transaction_id)
+    transaction.checkpoint(
+        "publication_committed",
+        state="committed",
+        staging_absent=str(layout.archive_relative(staging.directory)),
+    )
     transaction.commit()
 
     # Plan §13.2 step 20, and only here: retention is triggered by a *successful*

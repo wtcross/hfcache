@@ -11,14 +11,21 @@ real `nas.lab.cross.solutions:/mnt/tank/huggingface-archive` mount, and checks
 that `docs/cli.md` §2 rows 2-5 pass on it.
 
 `--read-only` is not a convenience here, it is the whole safety argument: the
-archive is live, it is not yet initialized, and initialization is authorized
-exactly once at the §29 rollout checkpoint. Nothing in this file writes, and one
-test asserts that by comparing the mount's contents before and after.
+archive is live, and initialization is authorized exactly once at the §29 rollout
+checkpoint. Nothing in the read-only half of this file writes, and one test
+asserts that by comparing the mount's contents before and after.
+
+The file runs against a deployment in either state. Before the checkpoint the
+archive is uninitialized and the checks that need a sentinel skip; after it they
+are the ones that matter most, because `docs/plan.md` §35.3 means effective
+writability and the three §14.2 publication capabilities cannot be established on
+this export any other way than by performing them.
 """
 
 import json
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -26,17 +33,51 @@ import pytest
 pytestmark = pytest.mark.nfs
 
 ARCHIVE_ROOT = Path("/srv/hfcache")
+DEPLOYED_CONFIG = Path("/etc/hfcache/config.toml")
 
-# Any UUID validates; the sentinel it would be compared against does not exist
-# yet, and the checks exercised here never read one.
-ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
+SENTINEL = ARCHIVE_ROOT / ".hfcache-root"
+
+# Any UUID validates when no sentinel exists to compare it against. Once the
+# archive is initialized the id has to be the one the archive actually carries,
+# or every check past the sentinel reports `HFMNT007` and proves nothing.
+FALLBACK_ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
+
+
+def archive_id() -> str:
+    """The deployment's archive id, from the best source this user can read.
+
+    `/etc/hfcache/config.toml` first, which is the deployment's own answer. It is
+    mode `0640` root:hfcache and the suite runs as an ordinary developer account,
+    so that usually fails — and it must keep failing rather than the account be
+    added to the group, because the mode is the contract (plan §21.2).
+
+    The sentinel is the fallback and is readable here for the reason plan §35.3
+    gives: the export maps every client identity to the dataset owner. Taking the
+    id from there does make the `sentinel` check's *comparison* trivially satisfy
+    itself — what it still proves on the live mount is that the sentinel parses,
+    that its schema version is one this build knows, and that the layout behind it
+    is intact. `FS-03`'s mismatch path is unit-tested against a fabricated
+    sentinel, where a mismatch can be arranged without corrupting a live archive.
+    """
+    for source, extract in (
+        (DEPLOYED_CONFIG, lambda payload: payload["storage"]["archive_id"]),
+        (SENTINEL, lambda payload: payload["archive_id"]),
+    ):
+        try:
+            raw = source.read_bytes()
+        except OSError:
+            continue
+        payload = tomllib.loads(raw.decode()) if source.suffix == ".toml" else json.loads(raw)
+        return str(extract(payload))
+    return FALLBACK_ARCHIVE_ID
+
 
 CONFIG = f"""
 schema_version = 1
 
 [storage]
 archive_root = "{ARCHIVE_ROOT}"
-archive_id = "{ARCHIVE_ID}"
+archive_id = "{archive_id()}"
 
 [[repositories]]
 id = "hf-internal-testing/tiny-random-gpt2"
@@ -84,15 +125,6 @@ def test_the_writability_probe_is_skipped_under_read_only(checks: dict[str, dict
     assert "read-only" in checks["directory_writability"]["detail"]
 
 
-def test_the_archive_is_reported_as_not_yet_initialized(checks: dict[str, dict]):
-    # Initialization is authorized exactly once, at the §29 rollout checkpoint
-    # after `HOST-004`. Until then this is the expected answer, and it is
-    # operator state rather than a failure.
-    for name in ("sentinel", "staging_filesystem"):
-        assert checks[name]["outcome"] == "skipped"
-        assert "not initialized" in checks[name]["detail"]
-
-
 def test_read_only_exits_zero_against_the_live_mount(config_file: Path):
     assert run(config_file, "doctor", "--read-only").returncode == 0
 
@@ -109,11 +141,11 @@ def test_nothing_is_written_to_the_live_mount(config_file: Path):
 # The mutating doctor (`STO-009`)
 # --------------------------------------------------------------------------- #
 #
-# These are the assertions that need an initialized archive, so they are the
-# ones that cannot run until the §29 rollout checkpoint spends the §36.4
-# one-time authorization — after `HOST-004`, not before. They are written now
-# and skip until then, so the checkpoint runs a test that already exists rather
-# than one written to fit whatever it found.
+# These are the assertions that need an initialized archive, so they could not
+# run until the §29 rollout checkpoint spent the §36.4 one-time authorization —
+# after `HOST-004`, not before. They were written at `STO-009` and skipped until
+# then, so the checkpoint ran tests that already existed rather than ones written
+# to fit whatever it found.
 
 
 def initialized() -> bool:
@@ -124,6 +156,29 @@ needs_archive = pytest.mark.skipif(
     not initialized(),
     reason="the archive is not initialized; `archive init` runs once at the §29 checkpoint",
 )
+
+before_archive = pytest.mark.skipif(
+    initialized(),
+    reason="the archive is initialized; this is the pre-checkpoint contract",
+)
+
+
+@before_archive
+def test_the_archive_is_reported_as_not_yet_initialized(checks: dict[str, dict]):
+    # The state a fresh deployment is in, before the §29 rollout checkpoint.
+    # Operator state rather than a failure, so `--read-only` still exits `0`.
+    for name in ("sentinel", "staging_filesystem"):
+        assert checks[name]["outcome"] == "skipped"
+        assert "not initialized" in checks[name]["detail"]
+
+
+@needs_archive
+def test_the_sentinel_and_layout_are_readable_without_writing(checks: dict[str, dict]):
+    # The counterpart, once the archive exists: both answers come from reading,
+    # so `--read-only` proves the archive's identity and that staging and every
+    # publication destination are on one filesystem (`FS-04`) without touching it.
+    for name in ("sentinel", "staging_filesystem"):
+        assert checks[name]["outcome"] == "pass", checks[name]["detail"]
 
 
 @pytest.fixture(scope="module")

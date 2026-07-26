@@ -776,6 +776,22 @@ def test_the_run_records_every_documented_checkpoint_in_order(config_file: Path,
 
 
 @pytest.mark.usefixtures("_wired")
+def test_a_completed_run_leaves_nothing_reading_as_unfinished(config_file: Path, layout):
+    """Decision 56, from the place an operator sees it. `status` reads
+    `.store/staging` to count unfinished transactions, so a successful run that
+    left staging behind would report finished work as outstanding — and after
+    `stale_staging_age_hours` would warn `HFWRN004` about it."""
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert list(layout.staging.iterdir()) == []
+    status = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+    archive = json.loads(status.output)["data"]["archive"]
+    assert archive["unfinished_transactions"] == 0
+    assert archive["findings"] == []
+
+
+@pytest.mark.usefixtures("_wired")
 def test_the_run_journal_carries_the_evidence_each_checkpoint_names(config_file: Path, layout):
     CliRunner().invoke(app, ["--config", str(config_file), "sync"])
 

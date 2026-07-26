@@ -134,6 +134,22 @@ def test_hfcfg001_directory_instead_of_file(tmp_path: Path):
     assert [p.code for p in raised.value.problems] == ["HFCFG001"]
 
 
+def test_hfcfg001_unreadable_file(tmp_path: Path):
+    """The deployed case, and the reason `--config` disables typer's own access
+    check (decision 57): `/etc/hfcache/config.toml` is `0640` root:hfcache, so
+    every identity but root and the service account gets exactly this — a
+    configuration problem at exit `10`, not a usage error at exit `2`."""
+    path = tmp_path / "config.toml"
+    path.write_text("schema_version = 1\n", encoding="utf-8")
+    path.chmod(0o000)
+
+    with pytest.raises(ConfigurationError) as raised:
+        load_config(path)
+
+    assert [p.code for p in raised.value.problems] == ["HFCFG001"]
+    assert "unreadable" in raised.value.problems[0].message
+
+
 def test_hfcfg002_malformed_toml(tmp_path: Path):
     path = tmp_path / "config.toml"
     path.write_text("schema_version = = 1\n", encoding="utf-8")

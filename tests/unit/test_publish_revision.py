@@ -31,6 +31,7 @@ from hfcache.identity import (
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.publication import (
     create_staging,
+    discard_staging,
     next_generation,
     publish_catalog,
     published_repositories,
@@ -159,7 +160,14 @@ def publish(  # noqa: PLR0913 - a test helper standing in for the caller `SYNC-0
         cache_root=layout.hub_cache,
         configured=configured or {},
     )
-    transaction.checkpoint("publication_committed", state="committed")
+    # Checkpoint 10's act and then the checkpoint, exactly as `sync._ingest`
+    # does it (decision 56).
+    discard_staging(layout, transaction_id)
+    transaction.checkpoint(
+        "publication_committed",
+        state="committed",
+        staging_absent=str(layout.archive_relative(staging.directory)),
+    )
     transaction.commit()
     return outcome, transaction
 
@@ -217,7 +225,24 @@ def test_the_manifest_waits_in_staging_before_the_tree_is_renamed(layout, snapsh
     built = next(c for c in transaction.journal.checkpoints if c.name == "staging_built")
     renamed = next(c for c in transaction.journal.checkpoints if c.name == "revision_tree_renamed")
     assert built.sequence < renamed.sequence
-    assert "pending_manifest_path" in built.evidence
+    # No `_path` suffix: checkpoint 10 discards the staging area, so the key is
+    # re-observable by a person and not asserted to still exist (decision 56).
+    assert "pending_manifest" in built.evidence
+
+
+def test_staging_is_discarded_when_the_publication_commits(layout, snapshot):
+    """Decision 56. A directory under `.store/staging` is how
+    `reconcile_storage` recognises unfinished work, so one left behind by a
+    committed publication reports a finished revision as outstanding — and warns
+    `HFWRN004` about it once it ages past the configured staleness."""
+    outcome, transaction = publish(layout, snapshot)
+
+    assert list(layout.staging.iterdir()) == []
+    assert outcome.tree.is_dir(), "the tree it published is untouched"
+    committed = next(
+        c for c in transaction.journal.checkpoints if c.name == "publication_committed"
+    )
+    assert committed.evidence["staging_absent"].startswith(".store/staging/")
 
 
 def test_each_checkpoint_carries_the_evidence_7_3_names(layout, snapshot):

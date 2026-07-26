@@ -61,6 +61,7 @@ from hfcache.publication import (
     PUBLISHED_DIRECTORY_MODE,
     PUBLISHED_FILE_MODE,
     create_staging,
+    discard_staging,
     promote_staging,
     publish_catalog,
     publish_current_reference,
@@ -318,7 +319,11 @@ def repair_revision(  # noqa: PLR0913, PLR0915 - §7.5's fifteen checkpoints, in
         "staging_built",
         staging_tree=str(layout.archive_relative(staging.tree)),
         file_count=manifest.file_count,
-        pending_manifest_path=str(layout.archive_relative(pending)),
+        # No `_path` suffix, decision 56: checkpoint 15 discards the whole
+        # staging area, and this journal stays open through the retirement grace
+        # — so a suffix here would make every `recover` in that window report
+        # `HFTXN003` against a repair that succeeded.
+        pending_manifest=str(layout.archive_relative(pending)),
     )
 
     instance = repository.instance(commit_sha, replacement_id)
@@ -419,7 +424,16 @@ def repair_revision(  # noqa: PLR0913, PLR0915 - §7.5's fifteen checkpoints, in
         "isolated_cache_removed",
         isolated_cache_absent=str(layout.archive_relative(cache.parent)),
     )
-    transaction.checkpoint("repair_committed", state="committed")
+    # Checkpoint 15's act, for the same reason a publication's checkpoint 10
+    # does it (decision 56): the tree was renamed away and the pending manifest
+    # published, so what remains under `.store/staging` is a redundant copy that
+    # `reconcile_storage` would report as unfinished work.
+    discard_staging(layout, transaction_id)
+    transaction.checkpoint(
+        "repair_committed",
+        state="committed",
+        staging_absent=str(layout.archive_relative(staging.directory)),
+    )
     # Deliberately not committed: checkpoints 16-18 are this transaction's
     # post-grace cleanup, and an open journal is what `recover` can find.
     return RepairOutcome(

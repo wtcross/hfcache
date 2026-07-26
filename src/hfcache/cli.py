@@ -229,7 +229,16 @@ def main(
     ctx: typer.Context,
     config: Annotated[
         Path,
-        typer.Option("--config", metavar="PATH", help="Configuration file."),
+        # `readable=False` disables typer's own parse-time access check. It
+        # defaults to on, and an existing-but-unreadable path fails it with exit
+        # `2` — which `ExitCode` reserves for a malformed command line, precisely
+        # so a scheduler can tell one from an application outcome. A
+        # configuration file this identity cannot read is an application outcome:
+        # `load_config` reports it as `HFCFG001` at exit `10`, naming the path.
+        # It also has to be off for the commands that never load configuration —
+        # `version` and `--help` must answer on a host where /etc/hfcache is
+        # readable only by root and the service account (decision 57).
+        typer.Option("--config", metavar="PATH", readable=False, help="Configuration file."),
     ] = DEFAULT_CONFIG_PATH,
     json_output: Annotated[
         bool,
@@ -252,6 +261,10 @@ def main(
         typer.Option(
             "--token-file",
             metavar="PATH",
+            # Same reason as `--config`: a token file that cannot be read is
+            # `HFARG005` at exit `10`, reported by `credentials` by shape and
+            # never by content, not a usage error at exit `2`.
+            readable=False,
             help="Read a Hub token from this file. Never logged.",
         ),
     ] = None,

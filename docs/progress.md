@@ -216,6 +216,7 @@ interpretations, including both carried-in items.
 - [x] HOST-002 Service identity and local paths (2026-07-24, host prep)
 - [x] HOST-003 Hard NFSv4 mount (2026-07-24, host prep; automount active)
 - [x] SYNC-003 Sync run journal and `TX-07` reconciliation (2026-07-26, this commit — the Phase 6 carried-out item. `cli._run` opens the §7.6 journal inside `preflight.guarded` and records checkpoints 1-3: `run_started`, `preflight_passed`, and `journals_reconciled` — the third *after* `recovery.reconcile` has resolved every unfinished journal, under the lock the run already holds and before a single Hub request. `synchronize` takes the transaction and records 4-7, each after its own act is durable, and commits; a run whose exit is not `0` still commits, because the run transaction completed and which repositories failed is what the report carries. The reconciliation is real work, not a formality: a test leaves an abandoned staging directory from a previous run and the next `sync` quarantines it, names the recovery report in its own journal, and goes on to publish. A `needs_operator` journal stops the run at exit `20` with `hub.downloads == []` asserted — nothing fetched, nothing changed, and the run closes its own journal rather than leaving a second unfinished one behind. **`prune --apply` and `repair` reconcile too**, since `TX-07` says every mutating command does and leaving two of the three out would have recreated this same carried item; `verify` deliberately does not, because §7.9 requires it still answer when the machine has stopped. `plan_recovery` gained `exclude`, which is how a run reconciles everything except itself — `TX-01` opened its journal before it could act, so it is unfinished by construction throughout. Decision 55 records the crashed-run-journal resolution this needed. `recovery.py` and `sync.py` both at 100% branch coverage; `cli.py` back to its one pre-existing gap)
+- [x] SYNC-004 Discard a committed transaction's staging area (2026-07-26, this commit — decision 56, found by running `status` on the live archive after the first sync: two successful publications reported `unfinished_transactions: 2`. `discard_staging` had existed since `STO-006` with nothing but its own tests calling it, because `promote_staging` renames `tree/` away and the pending manifest is its *sibling*. It is now the act of publication's checkpoint 10 and repair's checkpoint 15, both recording `staging_absent`, and `recovery._complete_publication` performs it too. `pending_manifest_path` loses its suffix by decision 53's rule — it mattered most for repair, whose journal stays open through the seven-day grace and would have reported `HFTXN003` to every `recover` in that window. The `HFTXN003` test now deletes the *published tree* instead, which is a real journal-contradicts-filesystem state; the deleted staged manifest correctly quarantines the tree. `docs/architecture.md` §7.3 and §7.5 amended. Every affected module still at 100% branch coverage)
 - [ ] HOST-004 Install the locked application environment
 - [ ] SYS-001 Install and validate systemd target, services, timers
 - [ ] SYS-002 Apply and test systemd hardening
@@ -1186,3 +1187,60 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     filesystem has always implied and what six recovery tests had to start
     saying out loud: they now ask for the remedy of the operation they are about
     rather than taking `remediations[0]`.
+
+56. **A committed publication or repair discards its staging area**
+    (2026-07-26, `SYNC-004`). Found by running `status` on the live archive at
+    the §29 rollout checkpoint: after two successful publications it reported
+    `unfinished_transactions: 2`, with two `.store/staging/<txn>/` directories
+    holding nothing but a copy of a manifest that was already published.
+
+    `publication.discard_staging` had existed since `STO-006` and was called by
+    nothing but its own tests. `promote_staging` renames `tree/` out of the
+    staging directory and the pending manifest is its *sibling*, so it stays —
+    which is the whole point between checkpoints 5 and 6, and pure residue after
+    6. Nothing was at risk, but the consequences compound: `reconcile_storage`
+    reads `.store/staging` to find unfinished work, so every published revision
+    would have left a permanent false positive, and each would have begun
+    warning `HFWRN004` — "staging past the stale age" — a day later. An operator
+    who learns to ignore that code stops reading the one signal that means a run
+    really did stop half way.
+
+    So the discard is now the *act* of the last checkpoint: publication's 10 and
+    repair's 15, each recording `staging_absent` — `_absent` being mechanically
+    checkable in the opposite direction (decision 42). `recovery`'s
+    `_complete_publication` does it too, since a recovery-completed publication
+    is the only other place those steps will ever run for that transaction.
+
+    Two knock-on corrections. Checkpoint 4's `pending_manifest_path` becomes
+    `pending_manifest`, by decision 53's rule — a later step in the same
+    operation removes it, so asserting it still exists would make every
+    committed journal contradict the archive, and would block every `recover`
+    during a repair's seven-day grace. And the test that provoked `HFTXN003` by
+    deleting the staged manifest no longer can: that deletion now correctly
+    means "the tree cannot be validated" and quarantines it (§7.3's caveat). The
+    `HFTXN003` case is provoked instead by deleting the *published tree*
+    checkpoint 5 named, which is a genuine journal-contradicts-filesystem state.
+    `docs/architecture.md` §7.3 and §7.5 are amended in this commit.
+
+57. **The `--config` and `--token-file` options do not check readability at
+    parse time** (2026-07-26, `HOST-004`). Found the moment
+    `/etc/hfcache/config.toml` was installed at its documented `0640
+    root:hfcache` (plan §21.2): every command run as an ordinary account began
+    exiting `2` from typer's argument parser — including `hfcache version` and
+    `hfcache --help`, which never open the file.
+
+    Typer's `Path` parameter type defaults to `readable=True`, and with
+    `exists=False` that means a path which does not exist passes while one that
+    exists but is unreadable fails. `ExitCode` reserves `1` and `2` for a
+    malformed command line "so a scheduler must be able to tell a malformed
+    command line from an application outcome" — and a configuration file this
+    identity cannot read is an application outcome. `load_config` already
+    reported it correctly as `HFCFG001` at exit `10`, naming the path; the
+    parser never let it get that far.
+
+    Both options now pass `readable=False`, so the access decision belongs to
+    the code that has an error taxonomy for it. `--token-file` gets the same
+    treatment for the same reason: `HFARG005` at exit `10`, reported by shape and
+    never by content. The mode on the configuration file is deliberately
+    unchanged — it is the contract, and the fix is that the application reports
+    it properly rather than that more identities can read it.

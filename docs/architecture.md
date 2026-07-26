@@ -674,11 +674,20 @@ across hosts, and no ordering guarantee between two separate renames.
 | 7 | `revision_ref_published` | rename file | `refs/revisions/<sha>.json`, publication ID |
 | 8 | `current_ref_replaced` | rename file | New and previous `(commit_sha, publication_id)` |
 | 9 | `catalog_rebuilt` | rename file | Catalog path, catalog SHA-256 |
-| 10 | `publication_committed` | — | `state = "committed"` |
+| 10 | `publication_committed` | `rmtree` of `.store/staging/<txn>/` | `state = "committed"`, staging area absent |
 
 The pending manifest is written into staging at step 4, **before** the tree is
 renamed. That ordering is what makes a crash between 5 and 6 recoverable: the
 published tree can still be validated against a manifest that already exists.
+
+The last checkpoint discards the staging area, because by then it holds only a
+redundant copy of a manifest step 6 published. A directory under
+`.store/staging` is how §7.8 recognises *unfinished* work, so one left behind by
+a committed transaction reports a finished revision as outstanding and warns
+`HFWRN004` about it once it ages past `sync.stale_staging_age_hours`. This is why
+steps 4 and 5 record the staged paths **without** a path suffix: a later step in
+the same operation moves or removes both, so the evidence is re-observable by a
+person and is not asserted to still exist (decision 53's rule).
 
 **Crash matrix.** Every row is a state an external observer can find, and has one
 resolution.
@@ -757,7 +766,7 @@ able to launder corrupt bytes into the expected value (`AD-13`).
 | 12 | `retirement_record_written` | rename file | `audit/repairs/.../<pid>.retirement.json`, grace expiry |
 | 13 | `implicated_cache_revision_deleted` | — | Canonical cache revision absent |
 | 14 | `isolated_cache_removed` | — | `.store/repair/<txn>/` absent |
-| 15 | `repair_committed` | — | `state = "committed"` |
+| 15 | `repair_committed` | `rmtree` of `.store/staging/<txn>/` | `state = "committed"`, staging area absent |
 
 Checkpoint 4 is the gate: if any expected digest differs from the original
 manifest, the transaction stops with `HFRET006` and the published revision is

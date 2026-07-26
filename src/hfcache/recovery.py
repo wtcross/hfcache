@@ -59,6 +59,7 @@ from hfcache.paths import RepositoryLayout
 from hfcache.publication import (
     PUBLISHED_DIRECTORY_MODE,
     PUBLISHED_FILE_MODE,
+    discard_staging,
     publish_catalog,
     publish_current_reference,
     publish_revision_reference,
@@ -631,7 +632,7 @@ _MANIFEST_EVIDENCE: Final = (
     # the journal knows which one this transaction was publishing.
     "manifest_path",
     "replacement_manifest_path",
-    "pending_manifest_path",
+    "pending_manifest",
 )
 
 
@@ -1083,6 +1084,11 @@ def _complete_publication(layout: ArchiveLayout, transaction_id: TransactionId) 
     publish_revision_reference(layout, reference)
     publish_current_if_newest(layout, identity, reference)
     publish_catalog(layout, rebuild_catalog(layout, generated_at=datetime.now(UTC)))
+    # The transaction's own last act, performed here for the same reason the rest
+    # of steps 6-9 are (decision 56): a completion that left staging behind would
+    # leave the finished publication reading as unfinished work forever, and this
+    # is the only place that will ever run those steps for this transaction.
+    discard_staging(layout, transaction_id)
     return {
         "published_tree_path": str(layout.archive_relative(instance)),
         "publication_id": manifest.publication_id,

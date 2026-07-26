@@ -713,6 +713,24 @@ def test_the_repair_command_requires_a_full_sha(config_path):
     assert [p["code"] for p in json.loads(result.stdout)["errors"]] == ["HFARG001"]
 
 
+def test_a_repair_discards_its_staging_when_it_commits(client, layout, config):
+    """Decision 56, on the side where it matters more: a repair journal stays
+    open for the whole retirement grace, so staging it left behind would report
+    a committed repair as unfinished work for seven days."""
+    sync(client, layout, config, only_model(config))
+    damage(layout, SHA_A)
+
+    outcome = repair(client, layout, config)
+
+    assert list(layout.staging.iterdir()) == []
+    journal = read_journal(layout, layout.journal(_txn(outcome.transaction_id))).journal
+    committed = next(c for c in journal.checkpoints if c.name == "repair_committed")
+    assert committed.evidence["staging_absent"].startswith(".store/staging/")
+    # And the journal still says nothing false about the filesystem, which is
+    # what every `recover` in that window checks.
+    assert not plan(layout, now=NOW).blocked
+
+
 def test_the_repair_command_stops_on_a_journal_that_asked_for_an_operator(
     client, layout, config, config_path
 ):
@@ -860,16 +878,41 @@ def test_a_tree_that_cannot_be_validated_is_quarantined_not_published(
     assert list(layout.quarantine.iterdir()), "the tree is preserved as evidence"
 
 
-def test_a_staged_manifest_that_vanished_stops_the_machine(client, layout, config, monkeypatch):
-    """`TX-03`: checkpoint 4 said the pending manifest was durable. A journal
-    that contradicts the filesystem is `HFTXN003` and an operator's decision,
-    not a state recovery may resolve on its own (§7.9)."""
+def test_a_staged_manifest_that_vanished_is_quarantined_not_published(
+    client, layout, config, monkeypatch
+):
+    """A vanished staged manifest and a corrupt one have the same answer: the
+    tree cannot be validated, so §7.3 preserves it as evidence.
+
+    It is not `HFTXN003`. Checkpoint 4 records the pending manifest without a
+    `_path` suffix (decision 56), because checkpoint 10 discards the staging area
+    — so its absence never means the journal is lying about what happened.
+    """
     restore = crash_at(monkeypatch, sync_module, "write_model", on_call=2)
     with pytest.raises(CrashError):
         sync(client, layout, config, only_model(config))
     restore()
     for staged in layout.staging.rglob("manifest.json"):
         staged.unlink()
+
+    prepared = plan(layout)
+
+    assert not prepared.blocked
+    assert remedy_for(prepared, "publication") == "quarantine_tree"
+
+
+def test_a_journal_that_contradicts_the_filesystem_stops_the_machine(
+    client, layout, config, monkeypatch
+):
+    """`TX-03`: checkpoint 5 said the published tree was durable, and it is gone.
+    A journal that contradicts the filesystem is `HFTXN003` and an operator's
+    decision, not a state recovery may resolve on its own (§7.9)."""
+    restore = crash_at(monkeypatch, sync_module, "publish_revision_reference")
+    with pytest.raises(CrashError):
+        sync(client, layout, config, only_model(config))
+    restore()
+    instance = next(iter(layout.repos.rglob("config.json"))).parent
+    shutil.rmtree(instance)
 
     prepared = plan(layout)
 

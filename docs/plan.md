@@ -1457,6 +1457,7 @@ Work packages:
 - `HOST-002`: Create service identity and local paths. *(Done 2026-07-24 — §35.1.)*
 - `HOST-003`: Configure hard NFSv4 mount. *(Done 2026-07-24; mount live — §35.1.)*
 - `SYNC-003`: Give the sync run its §7.6 journal and reconcile unfinished journals before Hub contact (`TX-07`). *(Carried out of Phase 6; it lands here because the scheduled invocation is what makes it matter.)*
+- `SYNC-004`: Discard a committed transaction's staging area. *(Defect found by `status` at the §29 rollout checkpoint — decision 56.)*
 - `HOST-004`: Install the locked application environment.
 - `SYS-001`: Install and validate systemd target, services, and timers.
 - `SYS-002`: Apply and test systemd hardening.

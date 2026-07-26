@@ -29,6 +29,24 @@ def test_version_reports_the_stack():
         assert field in result.output
 
 
+def test_an_unreadable_configuration_is_exit_ten_and_not_a_usage_error(tmp_path):
+    """Decision 57. `ExitCode` reserves `1` and `2` for a malformed command line
+    precisely so a scheduler can tell one from an application outcome, and typer's
+    Path type checks readability at parse time by default — which turned the
+    deployed `0640 root:hfcache` configuration into exit `2` for every identity
+    but two, including for commands that never open it."""
+    path = tmp_path / "config.toml"
+    path.write_text("schema_version = 1\n", encoding="utf-8")
+    path.chmod(0o000)
+
+    unreadable = runner.invoke(app, ["--json", "--config", str(path), "status"])
+    assert unreadable.exit_code == ExitCode.CONFIGURATION
+    assert [error["code"] for error in json.loads(unreadable.output)["errors"]] == ["HFCFG001"]
+
+    # And a command that needs no configuration answers regardless.
+    assert runner.invoke(app, ["--config", str(path), "version"]).exit_code == ExitCode.SUCCESS
+
+
 def test_version_json_envelope_matches_the_contract():
     result = runner.invoke(app, ["--json", "version"])
     assert result.exit_code == ExitCode.SUCCESS
