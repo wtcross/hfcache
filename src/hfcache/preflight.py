@@ -75,6 +75,7 @@ __all__ = [
     "guarded",
     "hub_checks",
     "order_checks",
+    "require_capacity",
     "require_storage_safety",
     "storage_checks",
 ]
@@ -391,6 +392,33 @@ def _capacity_check(layout: ArchiveLayout, storage: StorageConfig, *, needed_byt
     if warnings:
         detail = f"{detail} — approaching the reserve"
     return Check.passed(name, detail, warnings=warnings)
+
+
+def require_capacity(
+    layout: ArchiveLayout, storage: StorageConfig, *, needed_bytes: int
+) -> list[Problem]:
+    """Refuse a download the archive does not have room for (plan §13.2 step 4).
+
+    The whole-run preflight at §13.1 step 3 cannot answer this: it runs before
+    any repository has been resolved, so the only need it knows about is zero.
+    This is the same measurement against a need that is finally known, taken
+    immediately before the download it guards — because the archive can fill up
+    between one repository and the next, and the repository that discovers it
+    should be the one that would have overflowed.
+
+    Returns warnings rather than raising on them: `HFWRN005` means the run is
+    close to the reserve, not over it, and a run that can still complete should
+    (`docs/cli.md` §5.6).
+    """
+    facts = describe_capacity(layout.root)
+    reserve = effective_reserve(
+        facts.total_bytes,
+        minimum_gib=storage.minimum_free_space_gib,
+        minimum_percent=storage.minimum_free_space_percent,
+    )
+    if problems := capacity_problems(facts, reserve_bytes=reserve, needed_bytes=needed_bytes):
+        raise SafetyError(problems)
+    return capacity_warnings(facts, reserve_bytes=reserve, needed_bytes=needed_bytes)
 
 
 def _gib(value: int) -> str:

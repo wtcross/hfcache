@@ -16,13 +16,26 @@ disagreement stops the revision rather than being published as fact.
 """
 
 from dataclasses import dataclass
-from datetime import datetime  # noqa: TC003 - a dataclass field type, needed at runtime
+from datetime import UTC, datetime
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Literal, Self, final
+from typing import TYPE_CHECKING, Final, Literal, Self, final
 
-from hfcache.errors import Problem, SynchronizationError
+from hfcache.errors import (
+    ExitCode,
+    HfcacheError,
+    IntegrityError,
+    Problem,
+    SynchronizationError,
+)
 from hfcache.hashing import sha256_file
-from hfcache.identity import CommitSha, PublicationId
+from hfcache.identity import (
+    CommitSha,
+    PublicationId,
+    RepositoryIdentity,
+    TransactionId,
+    new_publication_id,
+    new_transaction_id,
+)
 from hfcache.manifests import (
     FileEntry,
     FileProvenance,
@@ -33,32 +46,39 @@ from hfcache.manifests import (
 )
 from hfcache.models import Reference
 from hfcache.paths import RepositoryLayout, find_path_collisions, parse_repository_relative
+from hfcache.preflight import require_capacity
 from hfcache.publication import (
     PUBLISHED_DIRECTORY_MODE,
     PUBLISHED_FILE_MODE,
+    create_staging,
+    next_generation,
+    projected_publication_bytes,
     promote_staging,
     publish_catalog,
     publish_current_reference,
     publish_revision_reference,
     read_reference,
     rebuild_catalog,
+    retained_references,
     source_problems,
     stage_file,
     staged_path,
 )
-from hfcache.reporting import RuntimeVersions
-from hfcache.storage import fsync_directory, write_model
+from hfcache.reporting import RepositoryRunResult, RunReport, RuntimeVersions, RunTotals
+from hfcache.storage import fsync_directory, read_model, write_model
+from hfcache.taxonomy import aggregate_exit_code
+from hfcache.transactions import Transaction, open_transaction
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
     from pathlib import Path
+    from typing import Any
 
-    from hfcache.config import RepositoryConfig
-    from hfcache.hub import TreeEntry
-    from hfcache.identity import RepositoryIdentity
+    from hfcache.config import ApplicationConfig, RepositoryConfig
+    from hfcache.hub import DownloadEstimate, HubClient, RepositoryFacts, TreeEntry
+    from hfcache.identity import RunId
     from hfcache.manifests import DependencyObservation, RepairProvenance
     from hfcache.paths import ArchiveLayout, StagingPaths
-    from hfcache.transactions import Transaction
 
 __all__ = [
     "HashedFile",
@@ -736,3 +756,419 @@ def _current_pair(layout: ArchiveLayout, repository: RepositoryLayout) -> tuple[
         return None
     reference = read_reference(layout, repository.current_ref)
     return (reference.commit_sha, reference.publication_id)
+
+
+# --------------------------------------------------------------------------- #
+# Synchronizing one repository (plan §13.2)
+# --------------------------------------------------------------------------- #
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class RepositoryOutcome:
+    """One repository's result, plus the manifest when it published one."""
+
+    result: RepositoryRunResult
+    manifest: RevisionManifest | None = None
+
+
+def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to run
+    client: HubClient,
+    layout: ArchiveLayout,
+    repository: RepositoryConfig,
+    config: ApplicationConfig,
+    *,
+    run_id: RunId,
+    configured: Mapping[str, RepositoryConfig],
+) -> RepositoryOutcome:
+    """Run plan §13.2 for one repository, from resolution to publication.
+
+    The order is the plan's and the reasons are its: resolve to an immutable SHA
+    first so nothing below can be about a moving target; skip early if that SHA
+    is already held, because re-downloading content the archive already proved is
+    the most expensive way to learn nothing; estimate and check capacity before
+    downloading rather than after, because discovering the dataset is full
+    halfway through a large model wastes the whole transfer.
+
+    A failure raises. Deciding whether one repository's failure ends the run is
+    the caller's, because it is a policy question — `sync.continue_on_repository_error`
+    — and this function is where the work is, not where the policy is.
+    """
+    identity = RepositoryIdentity.from_config(repository)
+    started = _now()
+    facts = client.repository(identity, repository.revision)
+
+    if (held := _already_retained(layout, identity, facts.commit_sha)) is not None:
+        return RepositoryOutcome(
+            result=_retained_result(layout, repository, identity, held, started)
+        )
+
+    estimate = client.estimate(
+        identity,
+        facts.commit_sha,
+        cache_dir=layout.hub_cache,
+        max_workers=config.sync.max_workers,
+    )
+    needed = estimate.new_bytes + projected_publication_bytes(
+        estimate.logical_bytes, publication_mode=config.storage.publication_mode
+    )
+    warnings = require_capacity(layout, config.storage, needed_bytes=needed)
+
+    transaction_id = new_transaction_id()
+    transaction = open_transaction(
+        layout,
+        transaction_id=transaction_id,
+        operation="publication",
+        run_id=run_id,
+        archive_id=config.storage.archive_id,
+        config_fingerprint=config.fingerprint(),
+        repository_id=identity.id,
+        repository_type=identity.type,
+        commit_sha=facts.commit_sha,
+    )
+    try:
+        return _ingest(
+            client,
+            layout,
+            transaction,
+            repository=repository,
+            config=config,
+            identity=identity,
+            facts=facts,
+            estimate=estimate,
+            started=started,
+            configured=configured,
+            warnings=warnings,
+        )
+    except HfcacheError as error:
+        transaction.fail(error.problems[0].code, error.problems[0].message)
+        raise
+
+
+def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
+    client: HubClient,
+    layout: ArchiveLayout,
+    transaction: Transaction,
+    *,
+    repository: RepositoryConfig,
+    config: ApplicationConfig,
+    identity: RepositoryIdentity,
+    facts: RepositoryFacts,
+    estimate: DownloadEstimate,
+    started: datetime,
+    configured: Mapping[str, RepositoryConfig],
+    warnings: Sequence[Problem],
+) -> RepositoryOutcome:
+    """Plan §13.2 steps 5-19, inside an open journal (§7.3 checkpoints 1-10)."""
+    transaction_id = TransactionId(transaction.journal.transaction_id)
+    staging = create_staging(layout, transaction_id)
+    transaction.checkpoint(
+        "staging_created", staging_path=str(layout.archive_relative(staging.directory))
+    )
+
+    download_started = _now()
+    client.download(
+        identity,
+        facts.commit_sha,
+        cache_dir=layout.hub_cache,
+        max_workers=config.sync.max_workers,
+    )
+    snapshot = client.verify_local(identity, facts.commit_sha, cache_dir=layout.hub_cache)
+    download_completed = _now()
+    transaction.checkpoint(
+        "download_completed",
+        commit_sha=facts.commit_sha,
+        downloaded_bytes=estimate.new_bytes,
+    )
+
+    tree = client.tree(identity, facts.commit_sha)
+    if problems := completeness_problems(
+        snapshot, tree, identity=identity, cache_root=layout.hub_cache
+    ):
+        raise SynchronizationError(problems)
+
+    hashed = hash_snapshot(
+        snapshot, tree, identity=identity, known=_known_digests(layout, identity)
+    )
+    verified = _now()
+    transaction.checkpoint(
+        "content_hashed",
+        hashed_objects=hashed.hashed_objects,
+        hashed_bytes=hashed.hashed_bytes,
+        reused_digests=hashed.reused_digests,
+    )
+
+    manifest = build_manifest(
+        identity=identity,
+        requested_revision=repository.revision,
+        commit_sha=facts.commit_sha,
+        publication_id=new_publication_id(),
+        publication_generation=next_generation(layout, identity),
+        publication_mode=config.storage.publication_mode,
+        tree=tree,
+        hashed=hashed,
+        layout=RepositoryLayout(archive=layout, identity=identity),
+        hub_endpoint=config.hub.endpoint,
+        timeline=Timeline(
+            first_observed_at=started,
+            download_started_at=download_started,
+            download_completed_at=download_completed,
+            verified_at=verified,
+            published_at=_now(),
+        ),
+    )
+    outcome = publish_revision(
+        layout,
+        transaction,
+        identity=identity,
+        snapshot=snapshot,
+        manifest=manifest,
+        staging=staging,
+        publication_mode=config.storage.publication_mode,
+        cache_root=layout.hub_cache,
+        configured=configured,
+    )
+    transaction.checkpoint("publication_committed", state="committed")
+    transaction.commit()
+
+    return RepositoryOutcome(
+        manifest=manifest,
+        result=RepositoryRunResult(
+            downloaded_bytes=estimate.new_bytes,
+            duration_seconds=(_now() - started).total_seconds(),
+            file_count=manifest.file_count,
+            hashed_bytes=hashed.hashed_bytes,
+            publication_generation=outcome.publication_generation,
+            publication_id=outcome.publication_id,
+            repository_id=identity.id,
+            repository_type=identity.type,
+            requested_revision=repository.revision,
+            resolved_commit_sha=outcome.commit_sha,
+            reused_bytes=estimate.cached_bytes,
+            status="completed_with_warnings" if warnings else "published",
+            warnings=tuple(sorted({warning.code for warning in warnings})),
+        ),
+    )
+
+
+def _already_retained(
+    layout: ArchiveLayout, identity: RepositoryIdentity, commit_sha: CommitSha
+) -> Reference | None:
+    """The active instance reference for a SHA the archive already holds.
+
+    Plan §13.2 step 2. `refs/revisions/<sha>.json` is what makes a SHA retained,
+    so this is the whole question — not whether a directory exists, which can be
+    a superseded repair instance inside its grace period.
+    """
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    path = repository.revision_ref(commit_sha)
+    if not path.exists():
+        return None
+    return read_reference(layout, path)
+
+
+def _retained_result(
+    layout: ArchiveLayout,
+    repository: RepositoryConfig,
+    identity: RepositoryIdentity,
+    held: Reference,
+    started: datetime,
+) -> RepositoryRunResult:
+    """Report a SHA the archive already holds, moving the current ref if needed.
+
+    Two outcomes look alike from outside and mean different things to an
+    operator, which is why `docs/schemas.md` §6 gives them different names.
+    `skipped` is upstream not having moved. `ref_moved_to_retained_revision` is
+    upstream having moved *back* to something already held — no bytes fetched,
+    but consumers are now being pointed somewhere else, which is a change worth
+    seeing in a run report.
+
+    Retention order is untouched either way. Re-observing a SHA does not make a
+    duplicate or reorder the sequence (§15.1), so the generation stays as it was.
+    """
+    layout_for = RepositoryLayout(archive=layout, identity=identity)
+    current = layout_for.current_ref
+    moved = (
+        not current.exists()
+        or read_reference(layout, current).publication_id != held.publication_id
+    )
+    if moved:
+        publish_current_reference(layout, held)
+    return RepositoryRunResult(
+        duration_seconds=(_now() - started).total_seconds(),
+        publication_generation=held.publication_generation,
+        publication_id=held.publication_id,
+        repository_id=identity.id,
+        repository_type=identity.type,
+        requested_revision=repository.revision,
+        resolved_commit_sha=held.commit_sha,
+        status="ref_moved_to_retained_revision" if moved else "skipped",
+    )
+
+
+def _known_digests(
+    layout: ArchiveLayout, identity: RepositoryIdentity
+) -> dict[ObjectIdentity, KnownDigest]:
+    """Every digest this repository's retained publications already established.
+
+    Built per repository rather than archive-wide, because §16.1's reuse rule
+    needs the digest to come from a *retained verified publication*, and the
+    references that define that set are per repository. Sharing across
+    repositories would be sound — an inode is an inode — but it would also mean
+    a manifest citing a publication of a different repository as its evidence,
+    which is far harder to follow during an incident than a second read.
+    """
+    index: dict[ObjectIdentity, KnownDigest] = {}
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    for reference in retained_references(layout, identity):
+        manifest_path = repository.manifest(
+            CommitSha(reference.commit_sha), PublicationId(reference.publication_id)
+        )
+        manifest = read_model(
+            manifest_path, RevisionManifest, error=IntegrityError, code="HFVER007"
+        )
+        index |= published_digests(layout.published / str(reference.tree), manifest)
+    return index
+
+
+def _now() -> datetime:
+    """This moment, in UTC. One reader so a run's timeline is self-consistent."""
+    return datetime.now(UTC)
+
+
+# --------------------------------------------------------------------------- #
+# Synchronizing a run (plan §13.1)
+# --------------------------------------------------------------------------- #
+
+
+RUN_REPORT_MODE: Final = 0o600
+"""Run reports live under `runs/`, which is private to the writer (§5.2).
+
+Not consumer-visible and not meant to be: a run report names transaction ids,
+cache paths, and per-repository byte counts, none of which a read-only consumer
+has any use for and some of which describe the writer's private areas.
+"""
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class RunOutcome:
+    """What one `sync` run did, and where it recorded it."""
+
+    report: RunReport
+    report_path: Path
+    exit_code: ExitCode
+
+
+def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
+    client: HubClient,
+    layout: ArchiveLayout,
+    config: ApplicationConfig,
+    *,
+    selected: Sequence[RepositoryConfig],
+    envelope: Mapping[str, Any],
+    run_id: RunId,
+    started_at: datetime,
+) -> RunOutcome:
+    """Process every selected repository and record the run (plan §13.1 steps 5-11).
+
+    The lock and the storage preflight are the caller's — `preflight.guarded`
+    composes them in §13.1's order, and holding them around this call is what
+    makes every check it performed still true while the work happens.
+
+    Deterministic configuration order, always. Not selector order, not
+    alphabetical, not "smallest first": two runs naming the same repositories
+    must do the same things in the same sequence, because that is what makes a
+    partial run's journals interpretable and a failure reproducible.
+
+    A disabled repository is reported rather than omitted. An operator who
+    disabled something wants to see that the run knew about it and left it
+    alone; silence looks the same as a configuration that never mentioned it.
+    """
+    configured = {
+        RepositoryIdentity.from_config(repository).selector: repository
+        for repository in config.repositories
+    }
+    results: list[RepositoryRunResult] = []
+    totals = {"downloaded_bytes": 0, "hashed_bytes": 0, "reused_bytes": 0}
+    for repository in selected:
+        if not repository.enabled:
+            results.append(_disabled_result(repository))
+            continue
+        try:
+            result = synchronize_repository(
+                client, layout, repository, config, run_id=run_id, configured=configured
+            ).result
+        except HfcacheError as error:
+            # Every local revision of this repository is preserved regardless
+            # (`AD-06`): a failure here means the run learned nothing new about
+            # it, never that what it already holds is suspect.
+            results.append(_failed_result(repository, error))
+            if not config.sync.continue_on_repository_error:
+                break
+            continue
+        results.append(result)
+        totals["downloaded_bytes"] += result.downloaded_bytes
+        totals["hashed_bytes"] += result.hashed_bytes
+        totals["reused_bytes"] += result.reused_bytes
+
+    codes = [code for result in results for code in result.errors]
+    exit_code = aggregate_exit_code(codes)
+    report = RunReport.model_validate(
+        {
+            **envelope,
+            "command": "sync",
+            "completed_at": _now(),
+            "errors": tuple(sorted(set(codes))),
+            "exit_code": int(exit_code),
+            "outcome": _outcome(exit_code, results),
+            "repositories": tuple(
+                sorted(results, key=lambda r: (r.repository_type, r.repository_id))
+            ),
+            "run_id": run_id,
+            "started_at": started_at,
+            "totals": RunTotals(**totals),
+            "warnings": tuple(sorted({w for result in results for w in result.warnings})),
+        }
+    )
+    # `runs/` is created by `archive init` and proven writable by the preflight
+    # this run is holding, so it is written into rather than created here.
+    path = layout.run_report(started_at, run_id)
+    write_model(path, report, mode=RUN_REPORT_MODE, code="HFSYN008")
+    fsync_directory(path.parent)
+    return RunOutcome(report=report, report_path=path, exit_code=exit_code)
+
+
+def _failed_result(repository: RepositoryConfig, error: HfcacheError) -> RepositoryRunResult:
+    """One repository that failed, recorded so the run can continue past it.
+
+    Every code the failure carried, not just the first: a completeness check
+    reports one problem per missing file, and an operator fixing an incomplete
+    download should see the shape of the gap rather than its first element.
+    """
+    return RepositoryRunResult(
+        errors=tuple(sorted({problem.code for problem in error.problems})),
+        repository_id=repository.id,
+        repository_type=repository.type,
+        requested_revision=repository.revision,
+        status="failed",
+    )
+
+
+def _disabled_result(repository: RepositoryConfig) -> RepositoryRunResult:
+    """A repository configuration turned off, reported rather than omitted."""
+    return RepositoryRunResult(
+        repository_id=repository.id,
+        repository_type=repository.type,
+        requested_revision=repository.revision,
+        status="disabled",
+    )
+
+
+def _outcome(exit_code: ExitCode, results: Sequence[RepositoryRunResult]) -> str:
+    """The envelope's outcome, which must agree with the exit code it carries."""
+    if exit_code != ExitCode.SUCCESS:
+        return "failed"
+    if any(result.warnings for result in results):
+        return "success_with_warnings"
+    return "success"

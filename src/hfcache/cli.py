@@ -36,6 +36,7 @@ from hfcache.preflight import (
 from hfcache.publication import projected_publication_bytes
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery
 from hfcache.reporting import Envelope, EnvelopeProblem, RuntimeVersions
+from hfcache.sync import synchronize
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -792,6 +793,102 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             typer.echo(f"{entry['repository_type']}:{entry['repository_id']}  {state}")
         for warning in warnings:
             typer.echo(warning.as_line(), err=True)
+
+
+# --------------------------------------------------------------------------- #
+# sync (`docs/cli.md` §2)
+# --------------------------------------------------------------------------- #
+
+
+@app.command()
+def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
+    """Synchronize configured repositories (plan §13.1).
+
+    The scheduled command, and the only one that downloads. It runs the §13.1
+    sequence in order: load configuration, take the exclusive lock, prove the
+    §19 storage requirements, then process repositories in deterministic
+    configuration order, rebuild the derived catalog, and write a durable run
+    report.
+
+    The lock and the preflight are held for the whole run rather than checked
+    per repository, which is what makes them mean anything: proving the archive
+    sound and then letting another command mutate it throughout would prove
+    nothing.
+    """
+    started_at = datetime.now(UTC)
+    stamp = utc_now()
+    options = _options(ctx)
+    try:
+        config = load_config(options.config_path)
+        token = resolve_token(config.hub, token_file=options.token_file)
+        selected = _select(config, selectors)
+    except HfcacheError as error:
+        _report_failure(ctx, "sync", stamp, error)
+
+    client = HubClient.of(token, endpoint=config.hub.endpoint)
+    layout = ArchiveLayout(root=config.storage.archive_root)
+    try:
+        with guarded(
+            layout,
+            storage=config.storage,
+            command="sync",
+            lock_wait_seconds=config.sync.lock_wait_seconds,
+        ):
+            outcome = synchronize(
+                client,
+                layout,
+                config,
+                selected=selected,
+                envelope=_run_envelope(config),
+                run_id=new_run_id(),
+                started_at=started_at,
+            )
+    except HfcacheError as error:
+        _report_failure(ctx, "sync", stamp, error)
+
+    payload = outcome.report.model_dump(mode="json")
+    payload["report"] = str(layout.archive_relative(outcome.report_path))
+    # The envelope's arrays are rebuilt from the durable report rather than
+    # collected separately, so the two cannot describe different runs. Each entry
+    # names the repository it belongs to, which is what an operator with ten
+    # configured repositories and one failure needs first.
+    problems = [
+        Problem(
+            code=code,
+            message=f"{result.repository_type}:{result.repository_id} failed",
+            repository=f"{result.repository_type}:{result.repository_id}",
+        )
+        for result in outcome.report.repositories
+        for code in result.errors
+    ]
+    warnings = [
+        Problem(
+            code=code,
+            message=f"{result.repository_type}:{result.repository_id} warned",
+            repository=f"{result.repository_type}:{result.repository_id}",
+        )
+        for result in outcome.report.repositories
+        for code in result.warnings
+    ]
+    if options.json_output:
+        emit_envelope(
+            "sync",
+            payload,
+            started_at=stamp,
+            warnings=warnings,
+            errors=problems,
+            exit_code=int(outcome.exit_code),
+        )
+    elif not options.quiet:
+        for result in outcome.report.repositories:
+            typer.echo(
+                f"{result.repository_type}:{result.repository_id}  {result.status}"
+                f"{'  ' + result.resolved_commit_sha if result.resolved_commit_sha else ''}"
+            )
+        for problem in problems:
+            typer.echo(problem.as_line(), err=True)
+    if outcome.exit_code != ExitCode.SUCCESS:
+        raise typer.Exit(int(outcome.exit_code))
 
 
 # --------------------------------------------------------------------------- #
