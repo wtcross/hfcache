@@ -256,7 +256,9 @@ hfcache/
 │   ├── security.md
 │   └── truenas.md
 ├── scripts/
+│   ├── check-hardening.sh
 │   ├── check.sh
+│   ├── hardening-probe.py
 │   └── install-release.sh
 ├── src/
 │   └── hfcache/
@@ -1043,6 +1045,8 @@ It shares the application lock domain with sync and prune so the commands cannot
 
 Set `HF_HUB_OFFLINE=1` for verification. Test `PrivateNetwork=true` on the deployed NFS mount and enable it if the already-mounted filesystem remains reliable under reconnect; otherwise keep the command application-offline and document the narrower host egress control used for this unit.
 
+**Settled 2026-07-26 (decision 60):** both were tested and both leave the already-mounted archive fully readable, but the reconnect condition cannot be met by the autonomous session (§36.4 defers NFS interruption to an operator window). So the unit keeps `HF_HUB_OFFLINE=1` and adds `IPAddressDeny=any`, which filters the unit's own sockets through its cgroup without moving it into another network namespace — the NFS client's RPC sockets are the kernel's and stay untouched. The `PrivateNetwork=true` evaluation is an operator handoff item.
+
 ### 22.4 Timers
 
 Use these initial deployment calendars, expressed in the VM's `America/New_York` timezone:
@@ -1082,6 +1086,8 @@ Validate the strongest compatible settings, including:
 - Explicit writable paths limited to the NFS archive and systemd-managed state/cache/runtime directories.
 
 Test each setting against `huggingface_hub`, `hf_xet`, DNS, TLS, NFS, and Python native extensions. Do not weaken hardening without documenting the failing requirement and narrower alternative.
+
+`scripts/check-hardening.sh` is how that testing is performed and re-performed (decision 59): it reads the `[Service]` properties out of the **installed** unit and runs `scripts/hardening-probe.py` under them, so the settings under test are the settings deployed. Re-run it after any change to a unit's hardening and after any `huggingface_hub`, `hf_xet`, or Python upgrade — a sandbox is a statement about which syscalls and paths a dependency needs, and dependencies change. Nothing needed weakening: all settings above are applied and all 21 checks pass on both units.
 
 ### 22.6 Credentials
 

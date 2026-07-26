@@ -46,6 +46,7 @@ RELEASE_CONTENT=(
   examples
   packaging
   pyproject.toml
+  scripts
   src
   uv.lock
 )

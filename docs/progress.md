@@ -219,7 +219,7 @@ interpretations, including both carried-in items.
 - [x] SYNC-004 Discard a committed transaction's staging area (2026-07-26, this commit — decision 56, found by running `status` on the live archive after the first sync: two successful publications reported `unfinished_transactions: 2`. `discard_staging` had existed since `STO-006` with nothing but its own tests calling it, because `promote_staging` renames `tree/` away and the pending manifest is its *sibling*. It is now the act of publication's checkpoint 10 and repair's checkpoint 15, both recording `staging_absent`, and `recovery._complete_publication` performs it too. `pending_manifest_path` loses its suffix by decision 53's rule — it mattered most for repair, whose journal stays open through the seven-day grace and would have reported `HFTXN003` to every `recover` in that window. The `HFTXN003` test now deletes the *published tree* instead, which is a real journal-contradicts-filesystem state; the deleted staged manifest correctly quarantines the tree. `docs/architecture.md` §7.3 and §7.5 amended. Every affected module still at 100% branch coverage)
 - [x] HOST-004 Install the locked application environment (2026-07-26, this commit — `scripts/install-release.sh` performs plan §21.4 rather than describing it, and is the mechanism §30's upgrade steps 3 and 6 name; rollback is the same tool with `--switch`, because a rollback that uses a different procedure than the install is a procedure nobody has tested. Release 0.1.0 is live at `/opt/hfcache/releases/0.1.0` with `current` switched by rename onto a staged symlink — `ln -sfn` unlinks first and leaves a window in which `current` does not exist, which is the one thing a running service must never see. Root-owned, `0755`/`0644`, so the account that runs the archive cannot modify the code that runs it. **The interpreter is the deployment's own:** CentOS Stream 10 ships 3.12 and EPEL reaches 3.13, so CPython 3.14.6 is a uv-managed build installed into `/opt/hfcache/python` and pinned there — a venv whose `home` pointed under `/home` would start on a workstation and fail under `ProtectHome=true` (§22.5), which is a failure that would not have appeared until `SYS-002`. uv is pinned to 0.11.32 and the script refuses a different one. `--no-python-downloads` during `uv sync`, so that step can only use the interpreter the previous step installed. **A defect the build found:** `uv sync` in a staging directory writes that path into `pyvenv.cfg` and every console-script shebang, so the venv is built in its *final* path and it is `switch_to`'s refusal of a release with no `.venv/bin/hfcache` that keeps an incomplete build from becoming live. `packaging/tmpfiles.d/hfcache.conf` provisions `/run/hfcache` for operator-run commands, since `/run` is a tmpfs and the service account cannot create a directory in it. Decision 57 records the `--config` readability defect this exposed)
 - [x] SYS-001 Install and validate systemd target, services, timers (2026-07-26, this commit — all seven §22 units written in `packaging/systemd/` and installed to `/etc/systemd/system`. `systemd-analyze verify` over all seven produces **no output at all**, which is the gate; it exits `0` even while reporting ordering cycles, and it did (decision 58). `systemd-analyze calendar` validates both expressions: `*-*-* 02:00:00` and `Wed *-01,04,07,10-01..07 04:00:00`, the latter resolving to the first Wednesday of January, April, July, and October at 04:00 local. **The fstab entry is retired**, commented in place with a pointer to the units and the original kept at `/etc/fstab.pre-hfcache-units`; `daemon-reload` handed the live mount over without interrupting it — same autofs fd, same NFS mount, `status` still `reachable` (decision 58). `hfcache.target` is enabled and started, `srv-hfcache.automount` enabled into both `remote-fs.target` and `hfcache.target`, `hfcache-sync.timer` enabled and active with its next elapse at 02:23 EDT (02:00 plus the randomized delay), and **`hfcache-verify.timer` installed, `disabled`, and inactive** — expressible only because the timers attach through their own `[Install] WantedBy=hfcache.target` rather than the target's `Wants=`, which would have started the disabled one. Starting the target ran no sync, per §22.1. Both services then run clean *through systemd*: `hfcache-sync.service` exits `0` with both repositories `skipped`, and its run report records `invocation_mode: systemd`, which is the distinction §22.2's `INVOCATION_ID` check exists to make; `hfcache-verify.service` exits `0`, `clean`, 17 objects and 12.1 MiB read. `/run/hfcache` is `0700 hfcache:hfcache` from `RuntimeDirectory` and survives the oneshot via `RuntimeDirectoryPreserve=yes`, and `HF_XET_CACHE`/`HF_HOME` have materialized at `/var/cache/hfcache/xet` and `/var/lib/hfcache/hf-home` — nothing resolved toward a home directory. No SELinux AVC denial from any of it. Hardening is `SYS-002`)
-- [ ] SYS-002 Apply and test systemd hardening
+- [x] SYS-002 Apply and test systemd hardening (2026-07-26, this commit — every §22.5 setting applied to both service units and every one of them *tested*, by `scripts/check-hardening.sh` and `scripts/hardening-probe.py` (decision 59). The probe runs in a transient unit carrying the `[Service]` properties read out of the **installed** unit file at run time, so it cannot pass while the deployed unit drifts away from it, and it has two halves: the workload §22.5 names — DNS, TLS, a real `huggingface_hub` API call, a real `hf_xet` download, `pydantic_core`/`hf_xet`/`libyaml` imports, and create/fsync/rename/unlink on the NFS archive — and a confirmation that each setting is *in effect*, because a property systemd parsed and could not apply reads as protection in the unit file and is not there. **21 of 21 pass on both units**, with the four network checks inverted for the verification unit: reaching the Hub from it would be the failure. `ReadWritePaths=/srv/hfcache` is the entire non-systemd-managed mutation surface, and the probe confirms the archive inside the service's namespace is the live NFS mount rather than an empty autofs trigger the `ProtectSystem=strict` bind-mount could have captured — it reads the sentinel back. The real `hfcache-sync.service` and `hfcache-verify.service` then both run clean under the hardening, and `status` stays clean. `systemd-analyze verify` over all seven units: no output. `systemd-analyze security`: 2.9 and 2.8, both `OK`; the one ✗ is `UMask=0027`, which §22.2 requires. **Nothing was weakened** — the one probe failure was the probe's own bug (`ProtectHome=true` makes `/home` inaccessible, not empty). §22.3's `PrivateNetwork=true` is deliberately *not* enabled: decision 60)
 - [ ] SEL-001 Validate all operations with SELinux enforcing
 - [ ] SEC-001 Validate optional systemd credential support
 
@@ -343,6 +343,14 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
    does not overlap NAS scrub/SMART/replication, then enable.
 9. **Optional cleanup:** revoke passwordless sudo
    (`sudo rm /etc/sudoers.d/tyler-nopasswd`) after rollout.
+10. **`PrivateNetwork=true` on `hfcache-verify.service` (§22.3, decision 60):**
+    during the item 7 interruption window, add
+    `PrivateNetwork=true` as a drop-in on `hfcache-verify.service`, start a full
+    verification, and break and restore the NAS connection while it runs.
+    Acceptance: the verification completes and reports `clean`, and no NFS
+    operation returns an error. If it does, remove the drop-in and leave
+    `IPAddressDeny=any` as the egress control. Steady-state reads are already
+    proven under `PrivateNetwork=true`; only the reconnect path is open.
 
 ## Operator decisions needed
 
@@ -1324,3 +1332,77 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     WantedBy=hfcache.target` instead, so what the target wants is exactly what
     has been enabled and "installed but disabled" is a state the design can
     actually express.
+
+59. **The hardening is tested by a probe that reads the deployed unit**
+    (2026-07-26, `SYS-002`). §22.5 says "test each setting against
+    `huggingface_hub`, `hf_xet`, DNS, TLS, NFS, and Python native extensions",
+    and a checklist an operator ticks is not a test. `scripts/check-hardening.sh`
+    and `scripts/hardening-probe.py` are added beyond plan §7's layout, which is
+    amended in this commit.
+
+    One design decision carries the value: the probe does **not** restate the
+    settings. `check-hardening.sh` reads the `[Service]` properties out of the
+    installed unit file at run time and passes them to `systemd-run`, so the
+    thing under test is the thing deployed. A probe holding its own copy would
+    have gone green while the unit drifted, which is the failure mode of every
+    security checklist.
+
+    It asserts two different things. That the workload still runs — DNS, TLS, a
+    real Hub API call, a real `hf_xet` download, the native extension imports,
+    and a create/fsync/rename/unlink on the archive — because a setting that
+    quietly breaks one of these does not announce itself; `snapshot_download`
+    failing under `ProcSubset=pid` looks like a network problem at 02:00 on a
+    Tuesday. And that each setting is *in effect*, because a property systemd
+    parsed and could not apply reads as protection in the unit file and is not
+    there.
+
+    Two things it deliberately does not claim. `ProtectKernelTunables` and
+    `ProtectKernelLogs` are confirmed only as *refusals*: `ProcSubset=pid`
+    already hides `/proc/sys` and `PrivateDevices=true` already removes
+    `/dev/kmsg`, so the refusal does not prove which line caused it. That is
+    defence in depth, and reading the unit file rather than a copy is what keeps
+    a removed line from going unnoticed. And the four network checks **invert**
+    for the verification unit — reaching the Hub from it is the failure — because
+    a probe that only ever asserted "the network works" would have to skip the
+    offline unit entirely, and "the offline unit is actually offline" is the more
+    valuable assertion of the two, being the one a dependency upgrade can quietly
+    undo.
+
+    The probe also confirms something the sandbox itself put at risk:
+    `ProtectSystem=strict` bind-mounts the world read-only and `ReadWritePaths=`
+    re-mounts the archive, and on an autofs path that could have captured the
+    *trigger* instead of the NFS mount, leaving the service writing into an empty
+    directory inside its own namespace. It reads the sentinel back to prove
+    otherwise. All 21 checks pass on both units, and nothing was weakened to get
+    there — the single failure was the probe's own bug, `ProtectHome=true` making
+    `/home` inaccessible rather than empty.
+
+60. **`IPAddressDeny=any` on the verification unit rather than
+    `PrivateNetwork=true`** (2026-07-26, `SYS-002`). §22.3 asks that
+    `PrivateNetwork=true` be tested on the deployed NFS mount and enabled "if the
+    already-mounted filesystem remains reliable **under reconnect**".
+
+    Both were tested. Under `PrivateNetwork=true` and under `IPAddressDeny=any`
+    alike, a probe read all 21 published files — 12 721 220 bytes — off the
+    already-mounted archive while outbound TCP and DNS both failed. Steady-state
+    reads are fine either way, so that is not what decides it.
+
+    The condition is the reconnect, and it cannot be met here: §36.4 defers NFS
+    interruption against the live mount to an operator-supervised window, so this
+    session has no way to provoke one. §22.3's own instruction for that case is to
+    keep the command application-offline and document the narrower host egress
+    control — so `HF_HUB_OFFLINE=1` stays, the structural guarantee stays
+    (`verify` builds no `HubClient` and resolves no credential, asserted in the
+    suite), and the third layer is `IPAddressDeny=any`.
+
+    It is the better fit independently of the untested condition.
+    `IPAddressDeny` filters the unit's own sockets through its cgroup and does not
+    move the unit into a different network namespace at all; the NFS client's RPC
+    sockets belong to the kernel and are untouched, so there is no reconnect path
+    to be unsure about in the first place. `PrivateNetwork=true` would put the
+    process in a namespace holding only loopback, and any NFS behaviour that
+    depends on the caller's namespace — an upcall, a referral, a re-established
+    connection — becomes a question this deployment cannot currently answer.
+
+    Handoff item 10 carries the `PrivateNetwork=true` evaluation for the operator
+    window that can answer it.

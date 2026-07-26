@@ -105,6 +105,14 @@ ignore = [
 # options callback necessarily takes one parameter per option. That is the
 # framework's interface, not a boolean trap or a wide signature in our own API.
 "src/hfcache/cli.py" = ["FBT001", "FBT002", "PLR0913", "PLR0917"]
+# Operator scripts, not application code, and the rules that fit `src/` do not fit
+# them. A probe whose entire output is a report prints (T201); it asserts, because
+# an assertion that vanishes under `python -O` is exactly right for something run
+# by hand and never in production (S101); it imports inside functions so a missing
+# dependency is attributed to the check that needed it (PLC0415); it is a script
+# rather than a package (INP001); and its decorators are plumbing that pyrefly
+# infers (ANN). S108 is /tmp as a documented fallback for CACHE_DIRECTORY.
+"scripts/**" = ["ANN", "INP001", "PLC0415", "S101", "S108", "SIM117", "T201"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

@@ -52,6 +52,39 @@ RuntimeDirectoryPreserve=yes
 Environment=HF_XET_CACHE=/var/cache/hfcache/xet
 Environment=HF_HOME=/var/lib/hfcache/hf-home
 
+# --- §22.5 hardening. Every setting here is tested by
+# --- scripts/check-hardening.sh, which runs a real workload — DNS, TLS, a
+# --- huggingface_hub API call, an hf_xet download, native extension imports, and
+# --- a create/fsync/rename/unlink on the NFS archive — under these exact
+# --- properties, and then confirms each one is in effect. A property systemd
+# --- parsed but could not apply reads as protection in this file and is not there.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# The only writable path that is not systemd-managed. `ProtectSystem=strict`
+# makes the whole filesystem read-only and StateDirectory/CacheDirectory/
+# RuntimeDirectory carry their own write access, so this one line is the entire
+# mutation surface of the service (§22.5's last item).
+ReadWritePaths=/srv/hfcache
+
 [Install]
 # Not enabled. The timer starts this; an operator runs it by hand with
 # `systemctl start hfcache-sync.service` or by invoking the CLI directly.
