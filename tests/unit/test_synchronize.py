@@ -29,7 +29,7 @@ from hfcache.archive import initialize_archive
 from hfcache.cli import app
 from hfcache.config import ApplicationConfig, load_config
 from hfcache.credentials import ResolvedToken, TokenSource
-from hfcache.errors import ExitCode, SynchronizationError
+from hfcache.errors import ExitCode, IntegrityError, SynchronizationError
 from hfcache.hub import HubClient
 from hfcache.identity import RepositoryIdentity, new_run_id
 from hfcache.locking import lock_path
@@ -700,3 +700,230 @@ def test_quiet_suppresses_the_per_repository_lines(config_file: Path):
 
     assert result.exit_code == ExitCode.SUCCESS
     assert result.output.strip() == ""
+
+
+# --------------------------------------------------------------------------- #
+# Aggregate reporting (`docs/cli.md` §3)
+# --------------------------------------------------------------------------- #
+
+
+def test_the_run_report_aggregates_every_code_encountered(client, layout, config, hub):
+    # Aggregation hides nothing: the single number a scheduler sees is one
+    # decision, and every code is still listed.
+    del hub.heads[MODEL.selector]
+    del hub.heads[DATASET.selector]
+
+    outcome = run(client, layout, config)
+
+    assert outcome.exit_code == ExitCode.SYNC
+    assert outcome.report.errors
+    assert outcome.report.outcome == "failed"
+    assert outcome.report.exit_code == int(ExitCode.SYNC)
+
+
+def test_integrity_outranks_synchronization_in_the_reported_exit(client, layout, config, hub):
+    # `docs/cli.md` §3's order is operator urgency: possible corruption first.
+    del hub.heads[MODEL.selector]
+    original = HubClient.verify_local
+
+    def integrity_failure(self, identity, commit_sha, *, cache_dir):
+        message = "a manifest is unusable"
+        raise IntegrityError.single(message, code="HFVER007")
+
+    try:
+        HubClient.verify_local = integrity_failure
+        outcome = run(client, layout, config)
+    finally:
+        HubClient.verify_local = original
+
+    # A `KeyError` from the fake's head lookup is a transport failure to the
+    # adapter, which is the honest classification for "the Hub did not answer".
+    assert set(outcome.report.errors) == {"HFHUB001", "HFVER007"}
+    assert outcome.exit_code == ExitCode.INTEGRITY
+
+
+def test_a_clean_run_reports_no_errors_and_exits_zero(client, layout, config):
+    outcome = run(client, layout, config)
+
+    assert outcome.report.errors == ()
+    assert outcome.report.outcome == "success"
+    assert outcome.exit_code == ExitCode.SUCCESS
+
+
+# --------------------------------------------------------------------------- #
+# `status` and `list` over what a run produced
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.usefixtures("_wired")
+def test_status_reports_retained_and_current_state(config_file: Path):
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+
+    entries = {
+        f"{e['repository_type']}:{e['repository_id']}": e
+        for e in json.loads(result.output)["data"]["repositories"]
+    }
+    assert entries[MODEL.selector]["retained_revisions"] == 1
+    assert entries[MODEL.selector]["current_commit_sha"] == SHA_A
+    assert entries[MODEL.selector]["retained_generations"] == [1]
+    assert entries[MODEL.selector]["last_run_status"] == "published"
+
+
+@pytest.mark.usefixtures("_wired")
+def test_status_answers_for_a_repository_that_was_never_synced(config_file: Path):
+    # A configured repository with nothing archived yet is a normal state.
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+
+    entry = json.loads(result.output)["data"]["repositories"][0]
+    assert result.exit_code == ExitCode.SUCCESS
+    assert entry["retained_revisions"] == 0
+    assert entry["current_commit_sha"] is None
+    assert entry["last_run_status"] is None
+
+
+@pytest.mark.usefixtures("_wired")
+def test_status_never_contacts_the_hub(config_file: Path, hub: FakeHub):
+    # It must answer when the Hub is unreachable, so it does not resolve.
+    hub.heads.clear()
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert {e["upstream_state"] for e in json.loads(result.output)["data"]["repositories"]} == {
+        "unknown"
+    }
+
+
+@pytest.mark.usefixtures("_wired")
+def test_list_reads_manifests_and_references_not_the_catalog(config_file: Path, layout):
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    # The catalog is derived and can be missing (`FS-16`); `list` answers anyway.
+    layout.repositories_catalog.unlink()
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "list"])
+
+    entries = json.loads(result.output)["data"]["repositories"]
+    assert result.exit_code == ExitCode.SUCCESS
+    assert {e["repository_id"] for e in entries} == {MODEL.id, DATASET.id}
+    assert all(e["retained_revisions"] == 1 for e in entries)
+    assert all(e["current_commit_sha"] == SHA_A for e in entries)
+
+
+@pytest.mark.usefixtures("_wired")
+def test_list_revisions_describes_each_retained_revision(config_file: Path, hub: FakeHub):
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    hub.heads[MODEL.selector] = SHA_B
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    result = CliRunner().invoke(
+        app, ["--json", "--config", str(config_file), "list", "--revisions"]
+    )
+
+    entries = {e["repository_id"]: e for e in json.loads(result.output)["data"]["repositories"]}
+    revisions = entries[MODEL.id]["revisions"]
+    assert [r["commit_sha"] for r in revisions] == [SHA_A, SHA_B]
+    assert [r["publication_generation"] for r in revisions] == [1, 2]
+    assert all(r["total_bytes"] > 0 and r["file_count"] > 0 for r in revisions)
+
+
+@pytest.mark.usefixtures("_wired")
+def test_list_restricts_to_one_repository_type(config_file: Path):
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    result = CliRunner().invoke(
+        app, ["--json", "--config", str(config_file), "list", "--type", "dataset"]
+    )
+
+    entries = json.loads(result.output)["data"]["repositories"]
+    assert [e["repository_id"] for e in entries] == [DATASET.id]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_list_restricts_to_its_selectors(config_file: Path):
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    result = CliRunner().invoke(
+        app, ["--json", "--config", str(config_file), "list", "model:organization/model-name"]
+    )
+
+    entries = json.loads(result.output)["data"]["repositories"]
+    assert [e["repository_id"] for e in entries] == [MODEL.id]
+
+
+def test_list_refuses_a_type_that_is_not_a_repository_type(config_file: Path):
+    result = CliRunner().invoke(
+        app, ["--json", "--config", str(config_file), "list", "--type", "space"]
+    )
+
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFARG002"]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_list_prints_one_line_per_repository(config_file: Path):
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    result = CliRunner().invoke(app, ["--config", str(config_file), "list"])
+
+    assert "1 revisions" in result.output
+    assert SHA_A in result.output
+
+
+def test_list_answers_for_an_archive_with_nothing_published(config_file: Path):
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "list"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert json.loads(result.output)["data"]["repositories"] == []
+
+
+@pytest.mark.usefixtures("_wired")
+def test_status_answers_over_a_damaged_reference(config_file: Path, layout):
+    # `status` is the command an operator runs first, so it answers even when
+    # part of the archive is unreadable rather than failing with it.
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    repository.current_ref.write_text("{ not json", encoding="utf-8")
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+
+    entries = {
+        f"{e['repository_type']}:{e['repository_id']}": e
+        for e in json.loads(result.output)["data"]["repositories"]
+    }
+    assert result.exit_code == ExitCode.SUCCESS
+    assert entries[MODEL.selector]["current_commit_sha"] is None
+    # The undamaged repository still reports fully.
+    assert entries[DATASET.selector]["current_commit_sha"] == SHA_A
+
+
+@pytest.mark.usefixtures("_wired")
+def test_status_skips_a_run_report_it_cannot_read(config_file: Path, layout):
+    # Informational rather than authoritative: the references above it are the
+    # archive's truth, so a damaged report costs one field and not the command.
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    for report in layout.runs.glob("*.json"):
+        report.write_text("{ not json", encoding="utf-8")
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+
+    entries = json.loads(result.output)["data"]["repositories"]
+    assert result.exit_code == ExitCode.SUCCESS
+    assert {entry["last_run_status"] for entry in entries} == {None}
+    assert entries[0]["retained_revisions"] == 1
+
+
+def test_status_reports_no_last_run_when_the_archive_is_absent(tmp_path: Path):
+    path = tmp_path / "absent.toml"
+    path.write_text(
+        CONFIG.format(root="/nonexistent/archive/root", archive_id=ARCHIVE_ID, reserve_gib=0),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(path), "status"])
+
+    entries = json.loads(result.output)["data"]["repositories"]
+    assert result.exit_code == ExitCode.SUCCESS
+    assert {entry["last_run_status"] for entry in entries} == {None}
+    assert {entry["retained_revisions"] for entry in entries} == {0}

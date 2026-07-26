@@ -112,7 +112,7 @@ this phase's four settled interpretations.
 ## Phase 5 — Multi-repository Sync and Retention
 
 - [x] SYNC-001 Deterministic multi-repository orchestration (2026-07-26, this commit — `sync.synchronize_repository` runs plan §13.2 end to end for one repository and `sync.synchronize` runs §13.1 steps 5-11 over a selection, in *configuration* order rather than selector or alphabetical order, because two runs naming the same repositories have to do the same things in the same sequence for a partial run's journals to be interpretable. The `sync` command holds `preflight.guarded` — lock then §19 checks — for the whole run rather than per repository: proving the archive sound and then letting another command mutate it throughout would prove nothing. `preflight.require_capacity` is new, because §13.1's whole-run preflight runs before any repository is resolved and so knows a need of zero; the per-repository gate is the same measurement taken immediately before the download it guards, so the repository that would have overflowed is the one that reports it. A disabled repository is reported rather than omitted, and a SHA the archive already retains is `skipped` or `ref_moved_to_retained_revision` — the two look alike from outside and mean different things. **Continuation landed here rather than at `SYNC-002`:** a loop that cannot record a failure cannot be tested at all, so `continue_on_repository_error` and per-repository failure recording are in this commit; `SYNC-002` takes the aggregate reporting that sits on top of them. 100% branch coverage on `sync.py`; `tests/unit/test_synchronize.py` drives whole runs through a `HubApi` fake whose cache is real — blobs reached through symlinks — so the inode sharing publication depends on is exercised rather than approximated)
-- [ ] SYNC-002 Continuation and aggregate failure reporting
+- [x] SYNC-002 Continuation and aggregate failure reporting (2026-07-26, this commit — the aggregate a run produces, and the two commands that read it afterwards. `taxonomy.aggregate_exit_code` now decides the run's single exit from every code encountered, in `docs/cli.md` §3's operator-urgency order, while the durable report and the `--json` envelope both list all of them — aggregation decides which number a scheduler sees and hides nothing. The envelope's `errors` and `warnings` arrays are rebuilt from the durable report rather than collected alongside it, so the two cannot describe different runs, and each entry names the repository it belongs to. `status` now reports per-repository retained count, retained generations, current SHA and generation, and last-run status, read from the *references* and the newest run report rather than from the catalog — `status` is what an operator runs when something is already wrong, and the catalog is derived (`FS-16`). It tolerates damage in both: an unreadable reference costs that repository's current-revision fields and an unreadable run report costs one field, neither costs the command. **`hfcache list` is implemented here** (decision 48). 100% branch coverage on `sync.py`; `cli.py` at 99%, the one gap still the unreachable `hf_xet` fallback)
 - [ ] RET-001 Immutable publication-generation retention ordering
 - [ ] RET-002 Five-revision selection
 - [ ] RET-003 Dry-run prune plans
@@ -910,3 +910,21 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     Added to `docs/cli.md` §5.3 in this commit. `tests/unit/test_taxonomy.py`
     reads that table, so the code is covered in both directions the moment it is
     published.
+
+48. **`hfcache list` lands at `SYNC-002`** (2026-07-26). Plan §11 requires the
+    command and plan §28 gives it no work package — the only v1 CLI command with
+    no home. Three placements were considered. `CFG-006` implemented the
+    read-only command surface and would have been the natural place, except that
+    at Phase 2 there was nothing published to list, so the command could only
+    have been written against a layout that did not exist yet. Phase 8 is
+    documentation and release; adding a command there would mean shipping a
+    runbook before the thing it documents. `SYNC-002` is where the archive first
+    holds revisions an operator would want an inventory of, and where the sibling
+    read commands — `status` reporting the same references — are being completed.
+
+    `list` deliberately reads manifests and references and never the catalog,
+    which `docs/cli.md` §2 already required and which is the reason it belongs
+    beside `status` rather than beside the catalog rebuild: an operator taking
+    inventory during an incident is exactly the person who cannot rely on derived
+    state (`FS-16`). Selectors restrict the *configured* set, so naming one
+    repository never hides an unmanaged one the operator did not ask about.

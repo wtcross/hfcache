@@ -20,10 +20,25 @@ import typer
 from hfcache.archive import initialize_archive, inspect_archive
 from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
-from hfcache.errors import ConfigurationError, ExitCode, HfcacheError, Problem, SafetyError
+from hfcache.errors import (
+    ConfigurationError,
+    ExitCode,
+    HfcacheError,
+    IntegrityError,
+    Problem,
+    SafetyError,
+)
 from hfcache.hub import HubClient
-from hfcache.identity import RepositoryIdentity, new_run_id, parse_selector
-from hfcache.paths import ArchiveLayout
+from hfcache.identity import (
+    REPOSITORY_TYPES,
+    CommitSha,
+    PublicationId,
+    RepositoryIdentity,
+    new_run_id,
+    parse_selector,
+)
+from hfcache.manifests import RevisionManifest
+from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.preflight import (
     READ_ONLY,
     UNPROVABLE_READ_ONLY,
@@ -33,15 +48,22 @@ from hfcache.preflight import (
     order_checks,
     storage_checks,
 )
-from hfcache.publication import projected_publication_bytes
+from hfcache.publication import (
+    projected_publication_bytes,
+    published_repositories,
+    read_reference,
+    retained_references,
+)
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery
-from hfcache.reporting import Envelope, EnvelopeProblem, RuntimeVersions
+from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersions
+from hfcache.storage import read_model
 from hfcache.sync import synchronize
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from hfcache.archive import ArchiveInspection
+    from hfcache.models import Reference
 
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
 
@@ -749,17 +771,9 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     except HfcacheError as error:
         _report_failure(ctx, "status", started_at, error)
 
-    entries = [
-        {
-            "enabled": repository.enabled,
-            "managed": True,
-            "repository_id": repository.id,
-            "repository_type": repository.type,
-            "requested_revision": repository.revision,
-            "upstream_state": "unknown",
-        }
-        for repository in selected
-    ]
+    layout = ArchiveLayout(root=config.storage.archive_root)
+    last_run = _last_run_statuses(layout)
+    entries = [_status_entry(layout, repository, last_run) for repository in selected]
     archive: dict[str, Any] = {
         "archive_id": config.storage.archive_id,
         "root": str(config.storage.archive_root),
@@ -768,7 +782,6 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     # `status` answers even against an archive that is absent or unmounted
     # (`docs/cli.md` §2), so an unreachable root reports local configuration
     # truth rather than failing.
-    layout = ArchiveLayout(root=config.storage.archive_root)
     warnings: list[Problem] = []
     try:
         health = measure_health(
@@ -889,6 +902,203 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             typer.echo(problem.as_line(), err=True)
     if outcome.exit_code != ExitCode.SUCCESS:
         raise typer.Exit(int(outcome.exit_code))
+
+
+def _status_entry(
+    layout: ArchiveLayout, repository: RepositoryConfig, last_run: Mapping[str, str]
+) -> dict[str, Any]:
+    """One repository's local truth, from its references and the last run report.
+
+    Read from the references rather than from the catalog, for the same reason
+    `list` does: the catalog is derived and can be missing (`FS-16`), and this is
+    the command an operator runs when something is already wrong. An archive that
+    holds nothing for this repository answers with zeros rather than failing —
+    a repository configured but never synced is a normal state, not an error.
+
+    `upstream_state` stays `unknown`. `status` never contacts the Hub, because it
+    must answer when the Hub is unreachable; `plan` is the command that resolves.
+    """
+    identity = RepositoryIdentity.from_config(repository)
+    entry: dict[str, Any] = {
+        "current_commit_sha": None,
+        "current_publication_generation": None,
+        "enabled": repository.enabled,
+        "last_run_status": last_run.get(identity.selector),
+        "managed": True,
+        "repository_id": repository.id,
+        "repository_type": repository.type,
+        "requested_revision": repository.revision,
+        "retained_generations": [],
+        "retained_revisions": 0,
+        "upstream_state": "unknown",
+        "verification_state": "unverified",
+    }
+    try:
+        held = retained_references(layout, identity)
+        current = RepositoryLayout(archive=layout, identity=identity).current_ref
+        reference = read_reference(layout, current) if current.exists() else None
+    except HfcacheError:
+        return entry
+    entry["retained_revisions"] = len(held)
+    entry["retained_generations"] = [item.publication_generation for item in held]
+    if reference is not None:
+        entry["current_commit_sha"] = reference.commit_sha
+        entry["current_publication_generation"] = reference.publication_generation
+        entry["verification_state"] = "verified"
+    return entry
+
+
+def _last_run_statuses(layout: ArchiveLayout) -> dict[str, str]:
+    """What the most recent run report said about each repository.
+
+    The newest report by name, which is chronological: `run_report` stamps the
+    UTC start time first, so lexical order is time order and no file has to be
+    opened to find the latest one.
+
+    A run report that will not load is skipped rather than reported. It is
+    informational here — the references above are the archive's truth — and
+    `status` exists to answer even when parts of the archive are damaged.
+
+    `glob` on a directory that is absent or unreadable yields nothing rather
+    than raising, so an archive that is not mounted answers "no last run",
+    which is the truthful answer and not an error.
+    """
+    for path in sorted(layout.runs.glob("*.json"), reverse=True):
+        try:
+            report = read_model(path, RunReport, error=IntegrityError, code="HFVER007")
+        except HfcacheError:
+            continue
+        return {
+            f"{result.repository_type}:{result.repository_id}": result.status
+            for result in report.repositories
+        }
+    return {}
+
+
+# --------------------------------------------------------------------------- #
+# list (`docs/cli.md` §2)
+# --------------------------------------------------------------------------- #
+
+
+@app.command(name="list")
+def list_repositories(
+    ctx: typer.Context,
+    selectors: SelectorArgument = None,
+    repository_type: Annotated[
+        str | None,
+        typer.Option("--type", metavar="model|dataset", help="Restrict to one repository type."),
+    ] = None,
+    revisions: Annotated[
+        bool,
+        typer.Option("--revisions", help="Include every retained revision."),
+    ] = False,
+) -> None:
+    """List archived repositories and revisions.
+
+    Reads only manifests and references (`docs/cli.md` §2), never the catalog.
+    That is the point of the command: the catalog is derived and can be missing
+    or corrupt (`FS-16`), and an operator taking inventory during an incident is
+    exactly the person who cannot rely on it. Rebuilding the same view from the
+    authoritative artifacts costs a directory walk and answers regardless.
+
+    Takes no lock and mutates nothing, so it is safe to run during a sync.
+    """
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        config = load_config(options.config_path)
+        wanted = {
+            RepositoryIdentity.from_config(repository).selector
+            for repository in _select(config, selectors)
+        }
+        if repository_type is not None and repository_type not in REPOSITORY_TYPES:
+            message = (
+                f"--type must be one of {', '.join(sorted(REPOSITORY_TYPES))}; "
+                f"{repository_type!r} is neither"
+            )
+            raise ConfigurationError.single(message, code="HFARG002", location="--type")
+    except HfcacheError as error:
+        _report_failure(ctx, "list", started_at, error)
+
+    layout = ArchiveLayout(root=config.storage.archive_root)
+    configured = {
+        RepositoryIdentity.from_config(repository).selector: repository
+        for repository in config.repositories
+    }
+    entries: list[dict[str, Any]] = []
+    for identity in published_repositories(layout):
+        if repository_type is not None and identity.type != repository_type:
+            continue
+        # Selectors restrict the *configured* set, so a selector never hides an
+        # unmanaged repository the operator did not ask about by name.
+        if selectors and identity.selector not in wanted:
+            continue
+        entries.append(_listed(layout, identity, configured.get(identity.selector), revisions))
+
+    _emit(
+        ctx,
+        "list",
+        {"repositories": entries},
+        started_at=started_at,
+        lines={
+            f"{entry['repository_type']}:{entry['repository_id']}": (
+                f"{entry['retained_revisions']} revisions"
+                + (
+                    f"  current {entry['current_commit_sha']}"
+                    if entry["current_commit_sha"]
+                    else ""
+                )
+            )
+            for entry in entries
+        },
+    )
+
+
+def _listed(
+    layout: ArchiveLayout,
+    identity: RepositoryIdentity,
+    configured: RepositoryConfig | None,
+    revisions: bool,
+) -> dict[str, Any]:
+    """One repository's inventory, read from its references and manifests."""
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    held = retained_references(layout, identity)
+    current = (
+        read_reference(layout, repository.current_ref) if repository.current_ref.exists() else None
+    )
+    entry: dict[str, Any] = {
+        "current_commit_sha": current.commit_sha if current else None,
+        "current_publication_id": current.publication_id if current else None,
+        "enabled": configured.enabled if configured else None,
+        "managed": configured is not None,
+        "repository_id": identity.id,
+        "repository_type": identity.type,
+        "retained_revisions": len(held),
+    }
+    if revisions:
+        entry["revisions"] = [_listed_revision(repository, reference) for reference in held]
+    return entry
+
+
+def _listed_revision(repository: RepositoryLayout, reference: Reference) -> dict[str, Any]:
+    """One retained revision, from the immutable manifest that describes it."""
+    manifest = read_model(
+        repository.manifest(
+            CommitSha(reference.commit_sha), PublicationId(reference.publication_id)
+        ),
+        RevisionManifest,
+        error=IntegrityError,
+        code="HFVER007",
+    )
+    return {
+        "commit_sha": manifest.commit_sha,
+        "file_count": manifest.file_count,
+        "publication_generation": manifest.publication_generation,
+        "publication_id": manifest.publication_id,
+        "published_at": manifest.published_at.isoformat().replace("+00:00", "Z"),
+        "total_bytes": manifest.total_bytes,
+        "verification_state": "verified",
+    }
 
 
 # --------------------------------------------------------------------------- #
