@@ -62,6 +62,7 @@ from hfcache.sync import synchronize
 from hfcache.verification import (
     FINDING_CODES,
     build_report,
+    require_retained,
     resolve_archive,
     resolve_run,
     verify_targets,
@@ -73,6 +74,7 @@ if TYPE_CHECKING:
     from hfcache.archive import ArchiveInspection
     from hfcache.models import PrunePlan, Reference
     from hfcache.reporting import VerificationReport
+    from hfcache.verification import Resolved
 
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
 
@@ -1135,6 +1137,10 @@ def verify(
         bool,
         typer.Option("--full", help="Verify every retained revision. The quarterly job."),
     ] = False,
+    revision: Annotated[
+        str | None,
+        typer.Option("--revision", metavar="TYPE:ID@SHA", help="Verify one retained revision."),
+    ] = None,
     run_id: Annotated[
         str | None,
         typer.Option("--run-id", metavar="ID", help="Which run --new checks. Default: the newest."),
@@ -1159,13 +1165,19 @@ def verify(
     touches unchecked. It takes the exclusive lock, which is what makes it
     mutually exclusive with sync, prune, and repair, and runs with Hub networking
     disabled because it re-reads what the archive already has.
+
+    `--revision TYPE:ID@SHA` checks one retained revision, which is what an
+    operator reaches for after a `--full` reported a finding and again after a
+    `repair` claims to have fixed it. The repository need not be in
+    configuration: an unmanaged repository's data is still the archive's (`AD-06`)
+    and is still worth checking.
     """
     started_at = datetime.now(UTC)
     stamp = utc_now()
     options = _options(ctx)
-    command = f"verify --{'full' if full else 'new'}"
+    command = f"verify --{_mode_option(new=new, full=full, revision=revision)}"
     try:
-        mode = _verification_mode(new=new, full=full, run_id=run_id)
+        mode = _verification_mode(new=new, full=full, revision=revision, run_id=run_id)
         config = load_config(options.config_path)
     except HfcacheError as error:
         _report_failure(ctx, command, stamp, error)
@@ -1188,6 +1200,10 @@ def verify(
                 networking_disabled(),
             ):
                 outcome = verify_targets(resolve_archive(layout), started_at=started_at)
+        elif mode == "revision":
+            outcome = verify_targets(
+                (_named_revision(layout, str(revision)),), started_at=started_at
+            )
         else:
             outcome = verify_targets(
                 resolve_run(layout, _run_to_verify(layout, run_id)), started_at=started_at
@@ -1205,17 +1221,37 @@ def verify(
     _emit_verification(ctx, command, report, started_at=stamp)
 
 
+def _chosen_modes(*, new: bool, full: bool, revision: str | None) -> list[str]:
+    """Which mode options this invocation named, in `docs/cli.md` §2's order."""
+    return [
+        name
+        for name, given in (("--new", new), ("--full", full), ("--revision", revision is not None))
+        if given
+    ]
+
+
+def _mode_option(*, new: bool, full: bool, revision: str | None) -> str:
+    """The mode name for the `command` field, before the invocation is validated.
+
+    A refusal still has to say which command was refused, and an invocation that
+    named two modes or none is reported under the first mode it named or under
+    `--new`; naming the command is not the same as accepting it.
+    """
+    chosen = _chosen_modes(new=new, full=full, revision=revision)
+    return chosen[0].removeprefix("--") if chosen else "new"
+
+
 def _verification_mode(
-    *, new: bool, full: bool, run_id: str | None
+    *, new: bool, full: bool, revision: str | None, run_id: str | None
 ) -> Literal["new", "full", "revision"]:
     """Decide which mode was asked for, refusing none and refusing two.
 
     `docs/cli.md` §2: exactly one mode option is required. There is no default —
-    `--new` and `--full` differ by orders of magnitude in what they read, and
-    guessing which an operator meant would either skip most of the archive or
-    saturate the NAS for an hour.
+    the modes differ by orders of magnitude in what they read, and guessing which
+    an operator meant would either skip most of the archive or saturate the NAS
+    for an hour.
     """
-    chosen = [name for name, given in (("--new", new), ("--full", full)) if given]
+    chosen = _chosen_modes(new=new, full=full, revision=revision)
     if len(chosen) > 1:
         message = (
             f"{' and '.join(chosen)} were given together; verify takes exactly one mode option, "
@@ -1225,7 +1261,7 @@ def _verification_mode(
     if not chosen:
         message = (
             "verify requires exactly one mode option; --new checks the content one run "
-            "introduced and --full checks every retained revision"
+            "introduced, --full every retained revision, and --revision one of them"
         )
         raise ConfigurationError.single(message, code="HFARG003", location="verify")
     if run_id is not None and not new:
@@ -1234,7 +1270,32 @@ def _verification_mode(
             f"a run; it is accepted only with --new"
         )
         raise ConfigurationError.single(message, code="HFARG002", location="--run-id")
-    return "full" if full else "new"
+    if full:
+        return "full"
+    return "revision" if revision is not None else "new"
+
+
+def _named_revision(layout: ArchiveLayout, selector: str) -> Resolved:
+    """Resolve `--revision TYPE:ID@SHA` against what the archive retains.
+
+    The SHA is required rather than defaulted to the current revision. `verify
+    --revision` is run when a particular revision is under suspicion, and
+    silently checking whichever one happens to be current would answer a question
+    nobody asked — and would report clean while the damaged revision sat
+    unexamined.
+
+    The repository is *not* required to be in configuration. An unmanaged
+    repository's data is still the archive's (`AD-06`), and a revision an
+    operator is investigating is often one whose repository was removed.
+    """
+    parsed = parse_selector(selector)
+    if parsed.commit_sha is None:
+        message = (
+            f"--revision {selector!r} names no revision; it takes TYPE:ID@SHA with the full "
+            f"40-character commit SHA, because a repository has more than one retained revision"
+        )
+        raise ConfigurationError.single(message, code="HFARG001", location="--revision")
+    return require_retained(layout, parsed.identity, parsed.commit_sha)
 
 
 def _run_to_verify(layout: ArchiveLayout, run_id: str | None) -> RunReport:

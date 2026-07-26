@@ -491,3 +491,81 @@ def test_full_takes_no_lock_it_does_not_release(config_path, archive):
     second = envelope_of(invoke(config_path, "--full"))["data"]
     assert first["scope"] == second["scope"]
     assert first["verification_outcome"] == second["verification_outcome"] == "clean"
+
+
+# --------------------------------------------------------------------------- #
+# `--revision` (`docs/cli.md` §2)
+# --------------------------------------------------------------------------- #
+
+
+def test_revision_verifies_exactly_one_revision(config_path, archive):
+    publish(archive, commit_sha=SHA_A)
+    publish(archive, commit_sha=SHA_B)
+    envelope = envelope_of(invoke(config_path, "--revision", f"{MODEL.selector}@{SHA_A}"))
+    assert envelope["command"] == "verify --revision"
+    assert envelope["data"]["mode"] == "revision"
+    assert envelope["data"]["scope"]["revisions"] == 1
+    assert envelope["data"]["scope"]["repositories"] == 1
+
+
+def test_revision_reports_the_damage_in_the_revision_it_was_given(config_path, archive):
+    published = publish(archive, commit_sha=SHA_A)
+    publish(archive, commit_sha=SHA_B)
+    (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
+
+    clean = invoke(config_path, "--revision", f"{MODEL.selector}@{SHA_B}")
+    assert clean.exit_code == ExitCode.SUCCESS
+
+    damaged = invoke(config_path, "--revision", f"{MODEL.selector}@{SHA_A}")
+    assert damaged.exit_code == ExitCode.INTEGRITY
+    assert [problem["code"] for problem in envelope_of(damaged)["errors"]] == ["HFVER003"]
+
+
+def test_revision_verifies_a_repository_that_is_not_configured(config_path, archive):
+    """`AD-06`: an unmanaged repository's data is still the archive's, and a
+    revision under investigation is often one whose repository was removed."""
+    publish(archive, identity=DATASET, commit_sha=SHA_A)
+    assert DATASET.id not in config_path.read_text(encoding="utf-8")
+    result = invoke(config_path, "--revision", f"{DATASET.selector}@{SHA_A}")
+    assert result.exit_code == ExitCode.SUCCESS
+    assert envelope_of(result)["data"]["scope"]["revisions"] == 1
+
+
+def test_revision_without_a_sha_is_refused(config_path, archive):
+    """Defaulting to the current revision would answer a question nobody asked,
+    and would report clean while the suspect revision sat unexamined."""
+    publish(archive)
+    result = invoke(config_path, "--revision", MODEL.selector)
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFARG001"]
+
+
+def test_revision_with_an_abbreviated_sha_is_refused(config_path, archive):
+    publish(archive)
+    result = invoke(config_path, "--revision", f"{MODEL.selector}@1111111")
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFARG001"]
+
+
+def test_a_sha_the_archive_does_not_retain_is_an_invocation_error(config_path, archive):
+    """Exit `40` would tell a scheduler the archive is corrupt because somebody
+    typed one wrong character."""
+    publish(archive, commit_sha=SHA_A)
+    result = invoke(config_path, "--revision", f"{MODEL.selector}@{SHA_B}")
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFARG004"]
+
+
+def test_revision_and_full_together_are_refused(config_path):
+    result = invoke(config_path, "--full", "--revision", f"{MODEL.selector}@{SHA_A}")
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFARG002"]
+
+
+def test_a_refusal_still_names_the_mode_it_refused(config_path):
+    """`command` in the envelope says which invocation failed, even when the
+    invocation was the thing that was wrong."""
+    result = invoke(config_path, "--revision", "not-a-selector")
+    assert envelope_of(result)["command"] == "verify --revision"
+    result = invoke(config_path)
+    assert envelope_of(result)["command"] == "verify --new"
