@@ -31,7 +31,8 @@ of *files and metadata* and is treated as nothing else.
 import socket
 import ssl
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, Self, final
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, Self, final, overload
 from urllib.parse import urlsplit
 
 from huggingface_hub import HfApi
@@ -47,7 +48,6 @@ from hfcache.identity import CommitSha, parse_commit_sha
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
-    from pathlib import Path
 
     from hfcache.credentials import ResolvedToken
     from hfcache.identity import RepositoryIdentity
@@ -201,11 +201,12 @@ class HubApi(Protocol):
     # these is something plan §12 item 4 requires be passed *explicitly* rather
     # than defaulted, and dropping one would mean relying on a library default.
     #
-    # `dry_run` is `Literal[True]` because that is the only call `HUB-004` makes,
-    # and the library overloads the return on it. `HUB-005` adds the second
-    # overload when it performs the real download; declaring both now would
-    # describe a call this release cannot make.
-    def snapshot_download(  # noqa: PLR0913
+    # Overloaded on `dry_run` because the library is: a dry run returns file
+    # records and a real download returns the snapshot path. Declaring both is
+    # what lets `estimate` and `download` each be typed for the answer it gets
+    # rather than sharing an `Any` that neither of them means.
+    @overload
+    def snapshot_download(
         self,
         repo_id: str,
         *,
@@ -216,6 +217,19 @@ class HubApi(Protocol):
         token: str | bool | None = None,
         dry_run: Literal[True],
     ) -> list[Any]: ...
+
+    @overload
+    def snapshot_download(
+        self,
+        repo_id: str,
+        *,
+        repo_type: str,
+        revision: str,
+        cache_dir: str,
+        max_workers: int,
+        token: str | bool | None = None,
+        dry_run: Literal[False] = False,
+    ) -> str: ...
 
 
 def hub_problem(exc: Exception, *, identity: RepositoryIdentity | None = None) -> Problem:
@@ -401,6 +415,100 @@ class HubClient:
             )
             raise SynchronizationError.single(message, code="HFHUB009", location=identity.selector)
         return download_estimate(result)
+
+    def download(
+        self,
+        identity: RepositoryIdentity,
+        commit_sha: CommitSha,
+        *,
+        cache_dir: Path,
+        max_workers: int,
+    ) -> Path:
+        """Fetch one complete immutable revision into the private cache.
+
+        Plan §13.2 step 5, with every argument plan §12 item 4 requires be
+        explicit rather than defaulted: the repository id and type, the resolved
+        full commit SHA rather than the reference that produced it, the cache
+        path, the configured worker count, and the token. No allow or ignore
+        filters, because the product contract is repository-complete — there is
+        no supported way to archive part of a repository, so there is no argument
+        that would express it.
+
+        Resumption is the library's, not this application's. `snapshot_download`
+        into a cache that already holds part of this revision continues from what
+        is there, which is why the canonical download store is the native Hub
+        cache on NFS (`AD-09`) rather than a temporary directory: an interrupted
+        run costs the bytes it had not yet fetched, not the whole revision.
+
+        The snapshot path it returns is proven to be inside the cache root before
+        it is handed back. Everything downstream — completeness, hashing,
+        publication — treats that directory as the source of the revision's
+        bytes, and `FS-15` requires a source be shown contained rather than
+        assumed to be.
+        """
+        try:
+            local = self.api.snapshot_download(
+                identity.id,
+                repo_type=identity.type,
+                revision=commit_sha,
+                cache_dir=str(cache_dir),
+                max_workers=max_workers,
+                token=self.token.hub_argument,
+                dry_run=False,
+            )
+        except Exception as exc:
+            raise SynchronizationError([hub_problem(exc, identity=identity)]) from exc
+        return _snapshot_path(local, identity=identity, cache_dir=cache_dir)
+
+
+def _snapshot_path(local: object, *, identity: RepositoryIdentity, cache_dir: Path) -> Path:
+    """Narrow one `snapshot_download` return into a proven snapshot directory.
+
+    Three things are checked, all `HFHUB009`, because all three mean the same
+    thing to an operator: the download did not leave a usable snapshot behind.
+
+    Containment is the one worth explaining. The path is resolved before it is
+    compared, because the cache reaches its snapshots through symlinks, and it is
+    compared against the resolved cache root this application chose rather than
+    trusted as returned. A snapshot directory outside the cache root would be a
+    source that the rest of the pipeline reads and publishes from, and `FS-15`
+    requires containment be demonstrated rather than assumed — including when
+    the value came from a library rather than from a repository.
+    """
+    where = identity.selector
+    if not isinstance(local, str) or not local:
+        message = (
+            f"the download of {where} returned {type(local).__name__} rather than a snapshot "
+            f"path; the revision's bytes are read from that directory, so an unrecognised "
+            f"result is refused rather than interpreted"
+        )
+        raise SynchronizationError.single(message, code="HFHUB009", location=where)
+
+    snapshot = Path(local)
+    try:
+        resolved = snapshot.resolve(strict=True)
+        root = cache_dir.resolve(strict=True)
+    except OSError as exc:
+        message = (
+            f"the download of {where} reported {snapshot}, which could not be resolved "
+            f"({exc.strerror}); a snapshot that is not there was not downloaded"
+        )
+        raise SynchronizationError.single(message, code="HFHUB009", location=where) from exc
+
+    if not resolved.is_relative_to(root):
+        message = (
+            f"the download of {where} reported {resolved}, which is outside the private cache "
+            f"root {root}; every source the archive publishes from must be contained by the "
+            f"root this run approved (`FS-15`)"
+        )
+        raise SynchronizationError.single(message, code="HFHUB009", location=where)
+    if not resolved.is_dir():
+        message = (
+            f"the download of {where} reported {resolved}, which is not a directory; a "
+            f"snapshot is the tree the revision's files were written into"
+        )
+        raise SynchronizationError.single(message, code="HFHUB009", location=where)
+    return resolved
 
 
 def _facts(identity: RepositoryIdentity, info: object) -> RepositoryFacts:

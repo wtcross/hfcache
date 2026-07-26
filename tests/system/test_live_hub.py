@@ -137,6 +137,38 @@ def test_a_dry_run_costs_a_revision_without_downloading_it(client: HubClient, id
     assert estimate.cached_bytes == 0
 
 
+@pytest.mark.parametrize("identity", [MODEL, DATASET], ids=["model", "dataset"])
+def test_a_real_download_fetches_every_file_of_the_revision(client: HubClient, identity, tmp_path):
+    # Plan §26.3: download every file, into a cache this test owns and throws
+    # away. Both repositories are exercised because a model's weight files go
+    # through the Xet transfer path and a dataset's payload largely does not.
+    cache = tmp_path / "hub"
+    facts = client.repository(identity, "main")
+    tree = client.tree(identity, facts.commit_sha)
+
+    snapshot = client.download(identity, facts.commit_sha, cache_dir=cache, max_workers=2)
+
+    assert snapshot.is_relative_to(cache.resolve())
+    for entry in tree:
+        landed = snapshot / entry.path
+        assert landed.resolve().is_file(), entry.path
+        assert landed.stat().st_size == entry.size, entry.path
+
+
+def test_a_second_download_of_the_same_sha_fetches_nothing(client: HubClient, tmp_path):
+    # Plan §26.3's "run a second sync and confirm no unnecessary download",
+    # proven at the adapter: after one download the dry run reports the whole
+    # revision as cached, which is the number a sync's capacity gate reads.
+    cache = tmp_path / "hub"
+    facts = client.repository(DATASET, "main")
+    client.download(DATASET, facts.commit_sha, cache_dir=cache, max_workers=2)
+
+    again = client.estimate(DATASET, facts.commit_sha, cache_dir=cache, max_workers=2)
+
+    assert again.new_bytes == 0
+    assert again.cached_bytes == again.logical_bytes > 0
+
+
 def test_the_dry_run_and_the_tree_agree_about_the_revisions_size(client: HubClient, tmp_path):
     # Two independent Hub answers about the same immutable revision. `plan`
     # reports the tree's size as the repository's and the dry run's as what

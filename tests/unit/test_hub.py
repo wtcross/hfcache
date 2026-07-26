@@ -21,7 +21,7 @@ against the hierarchy the library actually raises.
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
 import pytest
@@ -48,6 +48,9 @@ from hfcache.hub import (
     verify_tls,
 )
 from hfcache.identity import CommitSha, RepositoryIdentity
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 SHA = "0123456789abcdef0123456789abcdef01234567"
 
@@ -89,6 +92,7 @@ class FakeApi:
     identity: dict[str, Any] = field(default_factory=lambda: {"name": "hfcache-service"})
     tree: Any = field(default_factory=list)
     dry_run_result: Any = None
+    snapshot: Any = None
     raises: Exception | None = None
     calls: list[dict[str, Any]] = field(default_factory=list)
     endpoint: str = "https://huggingface.co"
@@ -121,7 +125,9 @@ class FakeApi:
         self.calls.append({"method": "snapshot_download", "repo_id": repo_id, **arguments})
         if self.raises is not None:
             raise self.raises
-        return self.dry_run_result if self.dry_run_result is not None else []
+        if arguments.get("dry_run"):
+            return self.dry_run_result if self.dry_run_result is not None else []
+        return self.snapshot
 
 
 def anonymous() -> ResolvedToken:
@@ -522,6 +528,133 @@ def test_an_estimate_failure_is_a_coded_problem(tmp_path):
 
     with pytest.raises(SynchronizationError) as caught:
         client(api).estimate(MODEL, CommitSha(SHA), cache_dir=tmp_path, max_workers=1)
+
+    assert codes(caught.value.problems) == ["HFHUB004"]
+
+
+# --------------------------------------------------------------------------- #
+# Downloading a revision (plan §13.2 step 5)
+# --------------------------------------------------------------------------- #
+
+
+def snapshot_in(cache: Path, name: str = "snapshots/" + SHA) -> Path:
+    """A directory inside a cache root, the way a completed download leaves one."""
+    path = cache / name
+    path.mkdir(parents=True)
+    return path
+
+
+def test_a_download_passes_every_argument_plan_12_requires_be_explicit(tmp_path):
+    cache = tmp_path / "hub"
+    snapshot = snapshot_in(cache)
+    api = FakeApi(snapshot=str(snapshot))
+
+    local = client(api).download(MODEL, CommitSha(SHA), cache_dir=cache, max_workers=4)
+
+    call = api.calls[-1]
+    assert call["repo_id"] == "organization/model-name"
+    assert call["repo_type"] == "model"
+    assert call["revision"] == SHA
+    assert call["cache_dir"] == str(cache)
+    assert call["max_workers"] == 4
+    assert call["token"] is False
+    assert call["dry_run"] is False
+    assert local == snapshot.resolve()
+
+
+def test_a_download_never_passes_allow_or_ignore_filters(tmp_path):
+    # There is no supported way to archive part of a repository, so there is no
+    # argument that would express one.
+    cache = tmp_path / "hub"
+    api = FakeApi(snapshot=str(snapshot_in(cache)))
+
+    client(api).download(MODEL, CommitSha(SHA), cache_dir=cache, max_workers=1)
+
+    assert "allow_patterns" not in api.calls[-1]
+    assert "ignore_patterns" not in api.calls[-1]
+
+
+def test_a_download_is_pinned_to_the_sha_not_the_reference_that_produced_it(tmp_path):
+    cache = tmp_path / "hub"
+    api = FakeApi(snapshot=str(snapshot_in(cache)))
+
+    client(api).download(MODEL, CommitSha(SHA), cache_dir=cache, max_workers=1)
+
+    assert api.calls[-1]["revision"] == SHA
+
+
+def test_a_snapshot_reached_through_a_symlink_resolves_inside_the_cache(tmp_path):
+    # The cache reaches its snapshots through symlinks by design, so the path is
+    # resolved before it is compared rather than refused for being one.
+    cache = tmp_path / "hub"
+    snapshot = snapshot_in(cache)
+    link = cache / "link"
+    link.symlink_to(snapshot)
+    api = FakeApi(snapshot=str(link))
+
+    assert client(api).download(MODEL, CommitSha(SHA), cache_dir=cache, max_workers=1) == snapshot
+
+
+@pytest.mark.parametrize("returned", [None, "", 7], ids=["none", "empty", "not-a-string"])
+def test_a_download_that_returned_no_path_is_hfhub009(tmp_path, returned):
+    cache = tmp_path / "hub"
+    cache.mkdir()
+    api = FakeApi(snapshot=returned)
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).download(MODEL, CommitSha(SHA), cache_dir=cache, max_workers=1)
+
+    assert codes(caught.value.problems) == ["HFHUB009"]
+
+
+def test_a_snapshot_that_is_not_there_is_hfhub009(tmp_path):
+    # A snapshot that cannot be resolved was not downloaded, whatever the
+    # library returned.
+    cache = tmp_path / "hub"
+    cache.mkdir()
+    api = FakeApi(snapshot=str(cache / "snapshots" / SHA))
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).download(MODEL, CommitSha(SHA), cache_dir=cache, max_workers=1)
+
+    assert codes(caught.value.problems) == ["HFHUB009"]
+
+
+def test_a_snapshot_outside_the_cache_root_is_hfhub009(tmp_path):
+    # `FS-15`: every source the archive publishes from is *shown* contained, and
+    # a value that came from a library gets the same proof as one that came from
+    # a repository.
+    cache = tmp_path / "hub"
+    cache.mkdir()
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    api = FakeApi(snapshot=str(elsewhere))
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).download(MODEL, CommitSha(SHA), cache_dir=cache, max_workers=1)
+
+    assert codes(caught.value.problems) == ["HFHUB009"]
+    assert "outside the private cache root" in caught.value.problems[0].message
+
+
+def test_a_snapshot_that_is_not_a_directory_is_hfhub009(tmp_path):
+    cache = tmp_path / "hub"
+    cache.mkdir()
+    regular = cache / "not-a-tree"
+    regular.write_text("", encoding="utf-8")
+    api = FakeApi(snapshot=str(regular))
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).download(MODEL, CommitSha(SHA), cache_dir=cache, max_workers=1)
+
+    assert codes(caught.value.problems) == ["HFHUB009"]
+
+
+def test_a_download_failure_is_a_coded_problem(tmp_path):
+    api = FakeApi(raises=absent("gone"))
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).download(MODEL, CommitSha(SHA), cache_dir=tmp_path, max_workers=1)
 
     assert codes(caught.value.problems) == ["HFHUB004"]
 
