@@ -35,7 +35,7 @@ from hfcache.identity import CommitSha, RepositoryIdentity, new_run_id
 from hfcache.locking import lock_path
 from hfcache.manifests import RevisionManifest
 from hfcache.paths import ArchiveLayout, RepositoryLayout
-from hfcache.publication import read_reference, retained_references
+from hfcache.publication import published_repositories, read_reference, retained_references
 from hfcache.reporting import RepositoriesCatalog, RunReport
 from hfcache.retention import plan_prune
 from hfcache.storage import parse_mount_table
@@ -1336,3 +1336,95 @@ def test_a_disabled_repository_keeps_its_revisions(client, layout, config, hub, 
 
     assert statuses(outcome)[MODEL.selector] == "disabled"
     assert len(retained_references(layout, MODEL)) == 3
+
+
+# --------------------------------------------------------------------------- #
+# Dependency warnings (plan §17, `AD-07`)
+# --------------------------------------------------------------------------- #
+
+
+def test_an_undeclared_dependency_warns_and_still_exits_zero(client, layout, config, hub):
+    # `AD-07`: the warning is durable and visible, and changes nothing else.
+    hub.revisions[SHA_A] = {
+        **CONTENT,
+        "README.md": b"---\nbase_model: meta-llama/Llama-3.1-8B\n---\n\n# A model\n",
+    }
+
+    outcome = run(client, layout, config)
+
+    result = next(r for r in outcome.report.repositories if r.repository_id == MODEL.id)
+    assert result.status == "completed_with_warnings"
+    assert "HFDEP001" in result.warnings
+    assert outcome.exit_code == ExitCode.SUCCESS
+    assert outcome.report.outcome == "success_with_warnings"
+
+
+def test_the_dependency_is_written_into_the_immutable_manifest(client, layout, config, hub):
+    hub.revisions[SHA_A] = {
+        **CONTENT,
+        "README.md": b"---\nbase_model: meta-llama/Llama-3.1-8B\n---\n\n# A model\n",
+    }
+
+    run(client, layout, config)
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    reference = read_reference(layout, repository.current_ref)
+    manifest = RevisionManifest.model_validate_json(
+        (layout.published / str(reference.manifest)).read_text(encoding="utf-8")
+    )
+    assert [item.detected_id for item in manifest.dependencies] == ["meta-llama/Llama-3.1-8B"]
+    assert manifest.dependencies[0].declared is False
+
+
+def test_a_declared_dependency_produces_no_warning(client, layout, config, hub, tmp_path):
+    hub.revisions[SHA_A] = {
+        **CONTENT,
+        "README.md": b"---\nbase_model: meta-llama/Llama-3.1-8B\n---\n\n# A model\n",
+    }
+    declared = tmp_path / "declared.toml"
+    declared.write_text(
+        CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+            'id = "organization/model-name"\ntype = "model"',
+            'id = "organization/model-name"\ntype = "model"\n'
+            'declared_dependencies = ["meta-llama/Llama-3.1-8B"]',
+        ),
+        encoding="utf-8",
+    )
+
+    outcome = run(client, layout, load_config(declared))
+
+    result = next(r for r in outcome.report.repositories if r.repository_id == MODEL.id)
+    assert result.status == "published"
+    assert result.warnings == ()
+
+
+def test_a_dependency_never_triggers_a_download(client, layout, config, hub):
+    # `NG-05`: a detector that fetched what it found would turn one configured
+    # repository into an unbounded transitive closure.
+    hub.revisions[SHA_A] = {
+        **CONTENT,
+        "README.md": b"---\nbase_model: meta-llama/Llama-3.1-8B\n---\n\n# A model\n",
+    }
+
+    run(client, layout, config)
+
+    assert set(hub.downloads) == {SHA_A}
+    assert published_repositories(layout) == (DATASET, MODEL)
+
+
+def test_a_dependency_that_is_also_configured_is_recorded_as_managed(
+    client, layout, config, hub, tmp_path
+):
+    hub.revisions[SHA_A] = {
+        **CONTENT,
+        "README.md": b"---\nbase_model: organization/dataset-name\n---\n\n# A model\n",
+    }
+
+    run(client, layout, config)
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    reference = read_reference(layout, repository.current_ref)
+    manifest = RevisionManifest.model_validate_json(
+        (layout.published / str(reference.manifest)).read_text(encoding="utf-8")
+    )
+    assert manifest.dependencies[0].managed is True

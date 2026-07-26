@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal, Self, final
 
+from hfcache.dependencies import detect_dependencies, undeclared, undeclared_warnings
 from hfcache.errors import (
     ExitCode,
     HfcacheError,
@@ -907,7 +908,33 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
         reused_digests=hashed.reused_digests,
     )
 
+    # Plan §13.2 step 10, from the snapshot rather than the Hub: detection reads
+    # the same bytes that were hashed and will be published, so it cannot report
+    # a dependency the archived revision does not actually declare.
+    observations = detect_dependencies(
+        snapshot,
+        declared=repository.declared_dependencies,
+        # Bare repository ids, not selectors: plan §17 asks whether the detected
+        # repository "is independently configured for archive management", and a
+        # `base_model` value names a repository without a type prefix. Matching
+        # across types is deliberate — a dataset and a model sharing an id is
+        # pathological, and reporting it managed is the harmless direction.
+        managed=sorted({entry.id for entry in configured.values()}),
+    )
+    dependency_warnings = [
+        Problem(
+            code=code,
+            message=(
+                f"{identity.selector} declares dependencies its configuration does not: "
+                + ", ".join(item.detected_id for item in undeclared(observations))
+            ),
+            repository=identity.selector,
+        )
+        for code in undeclared_warnings(observations)
+    ]
+
     manifest = build_manifest(
+        dependencies=observations,
         identity=identity,
         requested_revision=repository.revision,
         commit_sha=facts.commit_sha,
@@ -947,6 +974,7 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
     # just published down with it.
     pruned = _apply_retention(layout, identity, config, run_id=run_id)
 
+    reported = [*warnings, *dependency_warnings]
     return RepositoryOutcome(
         manifest=manifest,
         result=RepositoryRunResult(
@@ -962,8 +990,8 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
             resolved_commit_sha=outcome.commit_sha,
             pruned=pruned,
             reused_bytes=estimate.cached_bytes,
-            status="completed_with_warnings" if warnings else "published",
-            warnings=tuple(sorted({warning.code for warning in warnings})),
+            status="completed_with_warnings" if reported else "published",
+            warnings=tuple(sorted({warning.code for warning in reported})),
         ),
     )
 
