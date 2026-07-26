@@ -175,18 +175,18 @@ def test_a_journal_that_contradicts_the_filesystem_is_blocked(layout: ArchiveLay
     assert codes(prepared.problems) == ["HFTXN003"]
 
 
-def test_a_publication_past_the_tree_rename_is_blocked_for_now(layout: ArchiveLayout):
-    # §7.3, "After 5": the resolution is to roll forward, which needs the
-    # manifest machinery that publishes one. Recovery says so rather than
-    # guessing.
+def test_a_published_tree_with_no_surviving_manifest_is_quarantined(layout: ArchiveLayout):
+    # §7.3, "After 5, before 6": roll forward *if the staged manifest survives*.
+    # This journal has no manifest anywhere, so the tree cannot be validated and
+    # the row's own caveat applies — never publish an unvalidated tree.
     transaction = begin(layout)
     for name in CHECKPOINTS["publication"][:5]:
         transaction.checkpoint(name)
 
     prepared = plan(layout)
 
-    assert prepared.blocked
-    assert codes(prepared.problems) == ["HFTXN004"]
+    assert not prepared.blocked
+    assert prepared.remediations[0].remedy == "quarantine_tree"
 
 
 def test_a_plan_renders_for_the_envelope(layout: ArchiveLayout):

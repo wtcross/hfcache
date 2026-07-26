@@ -276,6 +276,7 @@ hfcache/
 │       ├── preflight.py
 │       ├── publication.py
 │       ├── recovery.py
+│       ├── repair.py
 │       ├── reporting.py
 │       ├── retention.py
 │       ├── storage.py

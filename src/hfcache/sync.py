@@ -686,7 +686,13 @@ def publish_revision(  # noqa: PLR0913 - the §7.3 sequence's inputs, one argume
     fsync_directory(staging.tree)
     transaction.checkpoint(
         "staging_built",
-        staging_tree_path=str(layout.archive_relative(staging.tree)),
+        # `staging_tree` carries no `_path` suffix on purpose (decision 53).
+        # Checkpoint 5 renames this directory away, so asserting it still exists
+        # would make every journal that got past 5 contradict the filesystem —
+        # which is exactly the state recovery has to roll *forward* from. The
+        # pending manifest is a sibling of `tree/` and does not travel with the
+        # rename, so it keeps the suffix and stays checkable.
+        staging_tree=str(layout.archive_relative(staging.tree)),
         file_count=manifest.file_count,
         pending_manifest_path=str(layout.archive_relative(pending)),
     )

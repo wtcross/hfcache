@@ -409,7 +409,12 @@ def apply_prune(
     fsync_directory(trash.directory)
     transaction.checkpoint(
         "tree_tombstoned",
-        tombstoned_tree_path=str(layout.archive_relative(trash.tree)),
+        # No `_path` suffix: checkpoint 9 removes the whole trash area, and a
+        # journal a crash left open between 7 and 9 would otherwise contradict
+        # the filesystem in the one state recovery exists to finish (decision
+        # 53). Recovery derives the tombstone from the transaction id, which is
+        # what `FS-18` guarantees it can.
+        tombstoned_tree=str(layout.archive_relative(trash.tree)),
         file_count=plan.selected.file_count,
     )
 
@@ -419,7 +424,7 @@ def apply_prune(
     fsync_directory(trash.directory)
     transaction.checkpoint(
         "manifest_tombstoned",
-        tombstoned_manifest_path=str(layout.archive_relative(trash.manifest)),
+        tombstoned_manifest=str(layout.archive_relative(trash.manifest)),
         manifest_sha256=sha256_bytes(manifest_bytes),
     )
 

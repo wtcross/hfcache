@@ -135,29 +135,40 @@ where `hfcache list` landed.
 
 ## Phase 6 — Dependency Warnings and Archive Verification
 
-**Carried into this phase.** Two items are open that the packages above should
-have closed, recorded here rather than left to be rediscovered:
+**Carried into this phase — both now closed.**
 
-1. **Recovery's roll-forward remedies are still `blocked`.** `STO-011` deferred
-   them explicitly — "rolling a publication forward from checkpoint 5 needs
-   `HUB-009`'s manifests, a prune needs `RET-006`; each package adds its own
-   remedy as it lands" — and both packages landed without adding them.
-   `recovery.plan_recovery` today resolves only a publication that crashed
-   *before* checkpoint 5 (quarantine staging) and one with every checkpoint
-   recorded (close the journal); all four `docs/architecture.md` §7.3 crash-matrix
-   rows from "after 5, before 6" onward, and §7.4's prune rollback and
-   roll-forward, return `operator` instead of the resolution the document
-   already specifies. `VER-006` adds the repair remedy regardless, so the four
-   belong together.
+1. **Recovery's roll-forward remedies were `blocked`.** `STO-011` deferred them
+   explicitly and neither `HUB-009` nor `RET-006` added them. **Closed at
+   `VER-006`**: all four `docs/architecture.md` §7.3 crash-matrix rows from
+   "after 5, before 6" onward now resolve as `complete_publication` (or
+   `quarantine_tree` for the row's own "if the staged manifest is gone"
+   caveat), §7.4's two regimes as `rollback_prune` and `complete_prune`, and
+   §7.5's crash between the two reference switches as `complete_repair`.
+   Decision 53 records the evidence-convention defect that had to be fixed
+   first — the journals were contradicting the filesystem by design in exactly
+   those states.
 
-2. **`verification_state` is hardcoded `"verified"` in three places** —
-   `publication.py` `_catalog_entry`, and `cli.py` `_status_entry` and
-   `_listed_revision`. No document says whether a revision that was SHA-256
-   verified at ingestion but never verified offline is `verified` or
-   `unverified`, so this is an unsettled question rather than a defect; today
-   `failed` is unreachable and `unverified` is never reported for a published
-   revision. `VER-005` has to settle it, record the decision, and make all three
-   read the same source.
+2. **`verification_state` was hardcoded `"verified"` in three places.**
+   **Closed at `VER-005`**, decision 51: it comes from
+   `catalog/verification.json` through the single reader
+   `publication.VerificationStates`, a revision nothing has re-read offline is
+   `unverified`, and `failed` is reachable for the first time.
+
+**Carried out of this phase.** One item is open that this phase found and did
+not close, recorded here rather than left to be rediscovered:
+
+1. **`TX-07` reconciliation is not implemented in `sync`.** `docs/architecture.md`
+   §7.6 gives the sync run its own journal with seven checkpoints, the third of
+   which is `journals_reconciled`, and `TX-07` requires *every* mutating command
+   reconcile unfinished journals before contacting the Hub. `sync` opens no run
+   journal and calls no reconciliation; `SYNC-001` and `SYNC-002` completed
+   without it and `transactions.CHECKPOINTS["sync"]` has held the sequence since
+   `STO-010` with nothing producing it. Nothing is unsafe today — `recover
+   --dry-run` and `--apply` reconcile on demand, and a repair's deferred cleanup
+   is surfaced by `HFWRN008` in `status` — but a scheduled run does not stop on
+   a `needs_operator` journal the way §7.9 says it should. It belongs with the
+   systemd work in Phase 7, where the scheduled invocation is what makes it
+   matter.
 
 - [x] DEP-001 Model-card dependency inspection (2026-07-26, this commit — `src/hfcache/dependencies.py` (plan §7) reads `README.md`'s YAML front matter through `huggingface_hub.repocard.metadata_load`, which parses with `yaml.safe_load`: no object construction, no tag that could reach a constructor (`AD-15`, T-04). A `base_model` holding a list produces one observation per entry, because a merged model legitimately names several parents. Detection reads the *snapshot*, so it sees the same bytes that were hashed and will be published — a detector reading anything else could report a dependency the archived revision does not declare)
 - [x] DEP-002 Adapter-config dependency inspection (2026-07-26, this commit — `adapter_config.json` through `json.loads` and nothing else; PEFT would import it through its own loader, and reading it as the JSON document it is, is the whole difference between describing an adapter and running one. `base_model_name_or_path` is recorded at `high` confidence, above a card's `base_model`, because an adapter without its base cannot be loaded at all rather than merely being incomplete)
@@ -168,7 +179,27 @@ have closed, recorded here rather than left to be rediscovered:
 - [x] VER-003 Revision-scoped verification (2026-07-26, this commit — `verify --revision TYPE:ID@SHA`, the mode an operator uses after a `--full` reported a finding and again after a `repair` claims to have fixed it. The SHA is *required* rather than defaulted to the current revision: defaulting would answer a question nobody asked and would report clean while the suspect revision sat unexamined (`HFARG001` when the selector carries none). The repository need not be in configuration, because an unmanaged repository's data is still the archive's (`AD-06`) and a revision under investigation is often one whose repository was removed — so `--revision` deliberately does not go through `_select`. A SHA the archive does not retain is `HFARG004` at exit `10` rather than a finding at exit `40`, since telling a scheduler the archive is corrupt because somebody typed one wrong character is the worse failure; `verification.require_retained` owns that distinction and still returns a *damaged* revision as findings, because the operator asked about that SHA and it is there. `_mode_option` names the mode in the envelope's `command` even for an invocation that was itself the thing refused)
 - [x] VER-004 Verification estimation (2026-07-26, this commit — `verify --estimate` costs a full verification with `stat` alone: nothing is hashed, nothing is opened, no lock is taken, and it always exits `0` because nothing was read and so nothing can have been found wrong. The unique set is built exactly the way `ReadSet` builds it — by `(device, inode)` for a hardlink-published instance and per file for a copy-published one — so the figure it reports is the figure `--full` would actually read rather than the archive's logical size. A path that cannot be `stat`ed is counted separately and charged nothing, so an operator reading a suspiciously small estimate can see why it is small. `publication.read_verification_catalog` is new and supplies the last measured throughput; it returns `None` for a catalog that is *absent or unreadable*, deliberately, because every caller uses that file to raise confidence and derived state (`FS-16`) must never do that — an unreadable catalog leaves every revision reading `unverified`, which is the signal an operator acts on. Before the first `--full` there is no measured rate and therefore no estimated duration: a number derived from a rate nobody measured is a guess wearing a decimal point, and this is the operator sizing a maintenance window. Decision 50 records why `storage_maintenance` reports `undetectable`)
 - [x] VER-005 Verification reports and current health (2026-07-26, this commit — plan §16.2 items 8 and 9, and the second item this phase carried in. `verification.persist_verification` writes the durable `VerificationReport` under `runs/` and *then* the catalog that names it, in that order because `last_full_verification.report` is a path an operator follows and a catalog naming a report that did not exist yet would be a dangling reference in the one artifact reached for when the archive is already suspect. A failing run writes its report exactly as a clean one does: the evidence is the point. `verification.verification_catalog` **merges** rather than replaces, which is what `docs/schemas.md` §5.2 requires — an outstanding failure is cleared only by a verification that re-read the same object, never by a narrow run that did not look, and `first_seen_at` is preserved across re-reports so an operator can tell last night's fault from a quarter-old one. A third clearing path is added and documented: a revision that is no longer retained leaves the catalog, because a pruned revision does not exist and an archive reported permanently degraded over content it no longer holds carries a signal nobody can clear. `last_full_verification` is replaced only by `--full`, since a `--new` run measures a handful of objects and its throughput would give the estimator the wrong workload. `VerificationOutcome` now carries a `RevisionOutcome` per revision *covered*, because "this revision was re-read and was clean" is a fact no set of findings can express. `status` reports the archive-level verification block `docs/cli.md` §2 asks for and still exits `0` — it reports, and `verify` classifies. **Both carried-in items and two corrections:** decision 51 settles `verification_state` and gives all three call sites one source of truth (`failed` was previously unreachable); decision 52 fixes `storage.write_model`, which always raised `SafetyError` and so exited `20` for every `HFSYN`/`HFRET`/`HFVER` code it was given — decision 46's rule applied everywhere except there. All new modules at 100% branch coverage)
-- [ ] VER-006 Isolated-cache repair, atomic ref switching, retirement grace, checkpointed cleanup
+- [x] VER-006 Isolated-cache repair, atomic ref switching, retirement grace, checkpointed cleanup (2026-07-26, this commit — `src/hfcache/repair.py` (decision 54) performs all fifteen §7.5 checkpoints, and `recovery.py` gains the six remedies that close the first carried-in item. **Checkpoint 4 is the gate `AD-13` exists for**: the isolated download is hashed and compared against the *original* manifest, and a single difference is `HFRET006` with the published revision untouched — newly observed bytes are evidence of a failed repair, never a new expectation. **Checkpoint 8 is the second gate**: the replacement is re-read from its *published* location, through the same `verification.verify_target` `verify` uses, before any reference moves; a test loses a file between the rename and that read and asserts nothing switched. The download goes into `.store/repair/<txn>/hub` and nowhere else (`FS-14`'s single exception), because the canonical cache may hold the very blob under suspicion. The replacement keeps the SHA's `publication_generation` — a repair that reissued one would move the revision in the prune queue for having been fixed (`AD-05`) — and its manifest copies the original's path/size/digest set exactly *and* every digest in it was read from disk this run, which is how `docs/schemas.md` §3.5 and `AD-18` hold at once. The retired instance stays readable at its original locator for the seven-day grace, and after it a checkpointed cleanup **quarantines rather than deletes** (plan §16.5 item 12); `status` reports `HFWRN008` and what quarantine is holding. **The journal deliberately stays open past checkpoint 15**, because 16-18 are the same transaction and an open journal is the only durable record `recover` can find on its own. `repair.py` and `recovery.py` both at 100% branch coverage. Decision 53 records the evidence-convention fix the roll-forward remedies needed first, and the crash tests raise an exception nothing handles — the only way to leave a journal the way a killed process does, since every mutating command closes its own on a handled error)
+
+**Phase 6 complete.** The archive can now be audited and mended. `verify` reads
+published trees back against their immutable manifests in four scopes, reads
+each physical object once, runs with Hub networking disabled, and exits `40` on
+any finding without ever rewriting a manifest, pruning a revision, or
+re-downloading over the evidence. `repair` replaces a damaged instance from an
+isolated cache, refuses a download that does not match the original manifest,
+switches references only after re-verifying where the replacement now lives, and
+quarantines the superseded instance after its grace rather than deleting it.
+`recover` resolves every §7.3, §7.4, and §7.5 state the documents give a
+resolution for, and still refuses the ones they do not. `scripts/check.sh`
+passes with 1463 tests; `-m live` runs 24 against the real Hub, now including
+a `verify` over both freshly published test repositories with networking
+disabled — clean, one read per physical object — and a flipped byte in one of
+them reported without the manifest or the reference changing. Every Phase 6
+module is at 100% branch coverage.
+
+`verification.py` was added from plan §7's list, no deviation; `repair.py` was
+added beyond it (decision 54). Decisions 49-54 record this phase's settled
+interpretations, including both carried-in items.
 
 ## Phase 7 — TrueNAS and CentOS Stream Deployment
 
@@ -1065,3 +1096,54 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     call sites out of `src/` with `ast` and checks each pairing against
     `taxonomy.classify`, so a new one is checked the moment it lands rather than
     at exit time during an incident.
+
+53. **Evidence for a path a later checkpoint moves carries no `_path` suffix**
+    (2026-07-26, `VER-006`). Decision 42 made evidence mechanically checkable
+    with a key-naming convention: `_path` means "must still exist", `_absent`
+    means "must not". `evidence_problems` enforces it, and `HFTXN003` — journal
+    contradicts filesystem — stops the machine (§7.9).
+
+    Three checkpoints recorded a `_path` for something the *next* checkpoint in
+    their own sequence deliberately renames away: publication's `staging_built`
+    named `staging_tree_path`, which checkpoint 5 renames into `published/`;
+    prune's `tree_tombstoned` and `manifest_tombstoned` named paths under
+    `.store/trash`, which checkpoint 9 removes. A journal that got past those
+    steps therefore contradicted the filesystem *by design*, and recovery
+    reported `HFTXN003` for the exact states §7.3 and §7.4 give roll-forward
+    resolutions for. That is why the carried-in remedies could not simply be
+    added: the evidence had to stop lying first.
+
+    The rule is now: **evidence whose subject a later checkpoint in the same
+    operation moves is recorded without a path suffix.** The value is still
+    recorded and still re-observable by a person; it is just not asserted to
+    still exist. Nothing loses the ability to *locate* anything, because
+    `FS-18` guarantees every transaction area is derivable from the transaction
+    id — which is how `_staging_remediation` and the prune remedies find their
+    directories already.
+
+    Repair follows the same rule for `corrupt_instance`, `original_manifest`,
+    `isolated_cache`, `snapshot`, and `staging_tree`, all of which checkpoints
+    14, 16, or 17 move — and it matters more there than anywhere, because a
+    repair journal stays open for the whole seven-day grace and its evidence is
+    re-checked by every `recover` in that window.
+
+54. **`repair.py` added beyond plan §7's module list** (2026-07-26, `VER-006`).
+    The fourth module added this way, after `preflight.py` (33), `archive.py`
+    (36), and `locking.py` (40). §7 permits consolidating boundaries "where
+    implementation remains small" and requires Hub access, storage mutation,
+    retention, and verification stay independently testable; it does not say
+    where repair goes.
+
+    `retention.py` was the obvious candidate and is wrong: repair does not
+    remove a revision, it replaces an instance of one, and the two transactions
+    have opposite commit semantics — a prune's commit point makes deletion
+    irreversible, while a repair never deletes at all. `sync.py` was the other
+    candidate and is already the largest module in the project. Repair has its
+    own §7.5 checkpoint sequence, its own two gates, its own crash matrix, and
+    the only isolated cache in the design (`FS-14`'s single exception), so it
+    is its own module. `docs/plan.md` §7's listing is amended in this commit.
+
+    The post-grace cleanup lives there too rather than in `recovery.py`, and
+    recovery calls into it. Checkpoints 16-18 are steps of the *repair*
+    transaction — recovery's job is to notice they are due and to run them, not
+    to know how.

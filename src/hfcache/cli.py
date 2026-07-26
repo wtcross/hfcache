@@ -57,6 +57,7 @@ from hfcache.publication import (
     retained_references,
 )
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery
+from hfcache.repair import cleanup_warnings, preserved_bytes, repair_revision
 from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersions
 from hfcache.retention import apply_prune, plan_all
 from hfcache.storage import read_model
@@ -819,6 +820,11 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
         archive["reachable"] = True
         archive |= health.as_payload()
         warnings.extend(health.reconciliation.warnings)
+        # `HFWRN008`: a retired repair instance past its grace is outstanding
+        # work an operator can complete, and it is invisible from the transaction
+        # areas alone because the retirement record is what tracks it.
+        warnings.extend(cleanup_warnings(layout))
+        archive["quarantined_bytes"] = preserved_bytes(layout)
     archive["verification"] = _verification_health(layout)
 
     payload: dict[str, Any] = {"archive": archive, "repositories": entries}
@@ -1699,6 +1705,86 @@ def recover(
             "actionable": str(payload["actionable"]),
             "blocked": str(payload["blocked"]),
             "applied": str(payload.get("applied", "-")),
+        },
+    )
+
+
+@app.command()
+def repair(
+    ctx: typer.Context,
+    selector: Annotated[
+        str,
+        typer.Argument(metavar="TYPE:ID@SHA", help="The retained revision to replace."),
+    ],
+    reason: Annotated[
+        str,
+        typer.Option("--reason", metavar="TEXT", help="Why this repair is being performed."),
+    ] = "operator_requested",
+) -> None:
+    """Replace a damaged publication instance with a verified one (plan §16.5).
+
+    The exact immutable SHA is downloaded into an isolated
+    `.store/repair/<transaction-id>/hub` and checked against the **original**
+    manifest. If any expected digest differs the command stops with `HFRET006`
+    and the published revision is unchanged: newly observed bytes are evidence of
+    a failed repair, never a new expectation (`AD-13`).
+
+    The replacement is published under a new publication id at a new immutable
+    locator, re-verified where it now lives, and only then do the references
+    switch. The superseded instance stays readable at its original locator for
+    the configured grace period, so a consumer copy already in flight can finish;
+    after that a checkpointed cleanup *quarantines* it rather than deleting it,
+    and `recover --apply` is what performs that.
+    """
+    stamp = utc_now()
+    options = _options(ctx)
+    command = "repair"
+    try:
+        parsed = parse_selector(selector)
+        if parsed.commit_sha is None:
+            message = (
+                f"repair {selector!r} names no revision; it takes TYPE:ID@SHA with the full "
+                f"40-character commit SHA, because a repair replaces one instance of one SHA"
+            )
+            raise ConfigurationError.single(message, code="HFARG001", location="TYPE:ID@SHA")
+        config = load_config(options.config_path)
+        token = resolve_token(config.hub, token_file=options.token_file)
+    except HfcacheError as error:
+        _report_failure(ctx, command, stamp, error)
+
+    layout = ArchiveLayout(root=config.storage.archive_root)
+    client = HubClient.of(token, endpoint=config.hub.endpoint)
+    try:
+        with guarded(
+            layout,
+            storage=config.storage,
+            command=command,
+            lock_wait_seconds=config.sync.lock_wait_seconds,
+        ):
+            outcome = repair_revision(
+                client,
+                layout,
+                config,
+                identity=parsed.identity,
+                commit_sha=parsed.commit_sha,
+                reason=reason,
+                envelope=_run_envelope(config),
+                run_id=new_run_id(),
+            )
+    except HfcacheError as error:
+        _report_failure(ctx, command, stamp, error)
+
+    _emit(
+        ctx,
+        command,
+        outcome.as_payload(),
+        started_at=stamp,
+        lines={
+            "commit sha": outcome.commit_sha,
+            "retired": outcome.retired_publication_id,
+            "replacement": outcome.replacement_publication_id,
+            "grace expires": outcome.grace_expires_at.isoformat(),
+            "transaction": outcome.transaction_id,
         },
     )
 

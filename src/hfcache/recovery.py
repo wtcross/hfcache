@@ -37,19 +37,44 @@ deliberate: a state two valid executions could both have produced has no single
 correct resolution, and guessing at one is how an archive loses data.
 """
 
+import shutil
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import partial
 from typing import TYPE_CHECKING, Any, Final, Literal, final
 
-from hfcache.errors import ExitCode, Problem, RetentionError, SafetyError
-from hfcache.identity import OPAQUE_ID_LENGTH, TransactionId, new_run_id, new_transaction_id
+from hfcache.errors import ExitCode, IntegrityError, Problem, RetentionError, SafetyError
+from hfcache.identity import (
+    OPAQUE_ID_LENGTH,
+    CommitSha,
+    PublicationId,
+    RepositoryIdentity,
+    TransactionId,
+    new_run_id,
+    new_transaction_id,
+)
+from hfcache.manifests import RevisionManifest
+from hfcache.models import PrunedRevisionRecord, PrunePlan, Reference
+from hfcache.paths import RepositoryLayout
+from hfcache.publication import (
+    PUBLISHED_DIRECTORY_MODE,
+    PUBLISHED_FILE_MODE,
+    publish_catalog,
+    publish_current_reference,
+    publish_revision_reference,
+    read_reference,
+    rebuild_catalog,
+    retained_references,
+)
+from hfcache.repair import PendingCleanup, finish_cleanup, pending_cleanups
 from hfcache.reporting import RecoveryReport, Remediation
 from hfcache.storage import (
     BYTES_PER_GIB,
+    atomic_write_bytes,
     describe_capacity,
     effective_reserve,
     fsync_directory,
+    read_model,
     write_model,
 )
 from hfcache.transactions import (
@@ -61,9 +86,10 @@ from hfcache.transactions import (
     open_transaction,
     read_journal,
 )
+from hfcache.verification import ReadSet, VerificationTarget, verify_target
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
     from pathlib import Path
 
     from hfcache.config import StorageConfig
@@ -73,8 +99,11 @@ if TYPE_CHECKING:
     from hfcache.transactions import JournalFile
 
 __all__ = [
+    "APPLICABLE",
     "BLOCKED",
+    "COMPLETING",
     "QUARANTINE_MODE",
+    "REPORT_DIRECTORY_MODE",
     "REPORT_MODE",
     "SECONDS_PER_HOUR",
     "ArchiveHealth",
@@ -86,6 +115,7 @@ __all__ = [
     "apply_recovery",
     "measure_health",
     "plan_recovery",
+    "publish_current_if_newest",
     "reconcile_storage",
 ]
 
@@ -96,6 +126,9 @@ QUARANTINE_MODE: Final = 0o700
 
 REPORT_MODE: Final = 0o600
 """A run report is the writer's record, not consumer data."""
+
+REPORT_DIRECTORY_MODE: Final = 0o700
+"""`audit/` outlives the data it describes and is never consumer-visible (§5.2)."""
 
 _TRANSACTION_NAME_LENGTH: Final = OPAQUE_ID_LENGTH
 _HEX: Final = frozenset("0123456789abcdef")
@@ -312,15 +345,42 @@ def measure_health(
 # Planning (plan §18, `docs/architecture.md` §7.7)
 # --------------------------------------------------------------------------- #
 
-Remedy = Literal["quarantine_staging", "close_journal", "operator", "wait"]
+Remedy = Literal[
+    "quarantine_staging",
+    "quarantine_tree",
+    "complete_publication",
+    "rollback_prune",
+    "complete_prune",
+    "complete_repair",
+    "finish_repair_cleanup",
+    "close_journal",
+    "operator",
+    "wait",
+]
 """What recovery proposes to do about one unfinished transaction.
 
-`wait` is a real answer, not an absence of one: a staging directory younger than
+`wait` is a real answer, not an absence of one. A staging directory younger than
 `sync.stale_staging_age_hours` may belong to work an operator started, and §7.8
-requires all three of name, journal, and age before anything is acted on.
+requires all three of name, journal, and age before anything is acted on; a
+retired repair instance inside its grace period is deliberately waiting, and
+finishing early would pull the tree out from under an in-flight consumer copy.
 """
 
 BLOCKED: Final = "operator"
+
+APPLICABLE: Final = frozenset(
+    {
+        "quarantine_staging",
+        "quarantine_tree",
+        "complete_publication",
+        "rollback_prune",
+        "complete_prune",
+        "complete_repair",
+        "finish_repair_cleanup",
+        "close_journal",
+    }
+)
+"""Remedies `recover --apply` performs. `wait` and `operator` are not among them."""
 
 
 @final
@@ -363,11 +423,7 @@ class RecoveryPlan:
     @property
     def actionable(self) -> tuple[PlannedRemediation, ...]:
         """What applying would actually perform."""
-        return tuple(
-            entry
-            for entry in self.remediations
-            if entry.remedy in {"quarantine_staging", "close_journal"}
-        )
+        return tuple(entry for entry in self.remediations if entry.remedy in APPLICABLE)
 
     @property
     def problems(self) -> tuple[Problem, ...]:
@@ -405,7 +461,7 @@ def plan_recovery(
     )
 
 
-def _remediation(
+def _remediation(  # noqa: PLR0911 - one return per state §7 gives a resolution for
     layout: ArchiveLayout,
     file: JournalFile,
     *,
@@ -460,10 +516,16 @@ def _remediation(
             reason="every documented checkpoint is recorded, so only the journal is open",
         )
 
-    if journal.operation == "publication" and _before_the_tree_was_renamed(names):
-        return _staging_remediation(
-            layout, journal, last, stale_staging_age_hours=stale_staging_age_hours, now=now
-        )
+    if journal.operation == "publication":
+        if _before_the_tree_was_renamed(names):
+            return _staging_remediation(
+                layout, journal, last, stale_staging_age_hours=stale_staging_age_hours, now=now
+            )
+        return _publication_remediation(layout, journal, last)
+    if journal.operation == "prune":
+        return _prune_remediation(journal, last)
+    if journal.operation == "repair":
+        return _repair_remediation(layout, journal, last, now=now)
 
     message = (
         f"transaction {journal.transaction_id} is a {journal.operation} that stopped after "
@@ -479,10 +541,193 @@ def _before_the_tree_was_renamed(names: list[str]) -> bool:
     """Whether a publication crashed before checkpoint 5 (§7.3 crash matrix).
 
     Before the rename nothing published changed, so rolling back is always
-    correct. At or after it a tree exists and the resolution is to roll forward,
-    which needs the manifest machinery that publishes it.
+    correct. At or after it a tree exists and the resolution is to roll forward.
     """
     return "revision_tree_renamed" not in names
+
+
+def _publication_remediation(
+    layout: ArchiveLayout, journal: TransactionJournal, last: str | None
+) -> PlannedRemediation:
+    """A publication whose tree was renamed: roll forward, or quarantine it.
+
+    §7.3's crash matrix gives one resolution for each of the four rows from
+    "after 5, before 6" onward, and they are the same resolution at different
+    depths: validate the published tree against its manifest, then continue from
+    wherever the journal stopped. Every remaining step is idempotent, so the
+    depth only decides how much is left to do.
+
+    The one branch is the row's own caveat. Between 5 and 6 the manifest lives
+    only in staging; if that staged manifest is gone, the tree cannot be
+    validated and §7.3 says to quarantine it and report — **never publish an
+    unvalidated tree**.
+    """
+    common = {
+        "transaction_id": journal.transaction_id,
+        "operation": journal.operation,
+        "state": journal.state,
+        "last_checkpoint": last,
+    }
+    if _publication_manifest(layout, journal) is None:
+        return PlannedRemediation(
+            **common,
+            remedy="quarantine_tree",
+            reason=(
+                "the tree was renamed but no manifest survives to validate it against, so it "
+                "is preserved as evidence rather than published"
+            ),
+        )
+    return PlannedRemediation(
+        **common,
+        remedy="complete_publication",
+        reason=(
+            f"the published tree can be validated against its manifest and continued from {last!r}"
+        ),
+    )
+
+
+_MANIFEST_EVIDENCE: Final = (
+    # A publication's published copy, then a repair's, then either one's staged
+    # copy. Order matters: a repaired SHA has *two* manifests on disk, and only
+    # the journal knows which one this transaction was publishing.
+    "manifest_path",
+    "replacement_manifest_path",
+    "pending_manifest_path",
+)
+
+
+def _publication_manifest(
+    layout: ArchiveLayout, journal: TransactionJournal
+) -> RevisionManifest | None:
+    """The manifest describing the instance *this* transaction was publishing.
+
+    Located from the journal's own evidence rather than by looking for manifests
+    under the SHA. A repaired revision has an original manifest and a replacement
+    manifest filed side by side, and choosing between them by directory order
+    would let recovery switch a reference to the instance the transaction was
+    replacing — the exact opposite of what it was doing.
+
+    The published copy is preferred over the staged one, because after checkpoint
+    6 it is the archive's own artifact; the staged copy is what makes the window
+    between the rename and that publication recoverable at all (§7.3).
+    """
+    for key in _MANIFEST_EVIDENCE:
+        for checkpoint in journal.checkpoints:
+            value = checkpoint.evidence.get(key)
+            if not isinstance(value, str):
+                continue
+            try:
+                return read_model(
+                    layout.resolve(value, code="HFTXN003"),
+                    RevisionManifest,
+                    error=IntegrityError,
+                    code="HFVER007",
+                )
+            except IntegrityError:
+                continue
+    return None
+
+
+def _prune_remediation(journal: TransactionJournal, last: str | None) -> PlannedRemediation:
+    """A prune, resolved by which side of its commit point it stopped on (§7.4).
+
+    Checkpoint 7 divides the transaction into two opposite regimes, and the
+    resolution follows the regime rather than the step. Before it: roll back, so
+    all six revisions are published again — over-retention is always preferable
+    to a revision that should not have gone (`TX-06`). At or after it: never
+    republish, because five revisions are what consumers already see and the
+    archive recorded that decision; only the post-commit cleanup is retried.
+    """
+    names = [checkpoint.name for checkpoint in journal.checkpoints]
+    common = {
+        "transaction_id": journal.transaction_id,
+        "operation": journal.operation,
+        "state": journal.state,
+        "last_checkpoint": last,
+    }
+    if "prune_logically_committed" in names:
+        return PlannedRemediation(
+            **common,
+            remedy="complete_prune",
+            reason=(
+                "the prune passed its commit point, so the five consumer-visible revisions "
+                "stand and only the deferred cleanup is finished"
+            ),
+        )
+    return PlannedRemediation(
+        **common,
+        remedy="rollback_prune",
+        reason=(
+            "the prune stopped before its commit point, so the sixth revision is republished; "
+            "over-retention is reportable and a deletion is not reversible"
+        ),
+    )
+
+
+def _repair_remediation(
+    layout: ArchiveLayout, journal: TransactionJournal, last: str | None, *, now: datetime
+) -> PlannedRemediation:
+    """A repair, resolved by whether its references switched and its grace expired.
+
+    Two quite different states share one operation. Before `repair_committed`
+    the transaction is genuinely unfinished — §7.5's interesting case is a crash
+    between 9 and 10, where the per-SHA reference names the new instance and
+    `current.json` still names the old one; both trees exist, so `FS-10` holds
+    and recovery completes the second switch.
+
+    After `repair_committed` nothing is unfinished at all: the journal is open
+    *by design* for the grace period, so that the post-grace cleanup has a
+    durable record to be found from. Inside the grace that is `wait`; past it,
+    the cleanup runs.
+    """
+    names = [checkpoint.name for checkpoint in journal.checkpoints]
+    common = {
+        "transaction_id": journal.transaction_id,
+        "operation": journal.operation,
+        "state": journal.state,
+        "last_checkpoint": last,
+    }
+    if "replacement_tree_renamed" not in names:
+        # Nothing published changed: the revision is still the instance it was,
+        # and the isolated download and staging are the only artifacts. That is
+        # §7.3's "before 5" shape, and it takes §7.3's answer.
+        return _staging_remediation(layout, journal, last, stale_staging_age_hours=0, now=now)
+    if "repair_committed" not in names:
+        return PlannedRemediation(
+            **common,
+            remedy="complete_repair",
+            reason=f"the repair verified its replacement and stopped at {last!r}; it continues",
+        )
+    pending = _pending_for(layout, journal.transaction_id)
+    if pending is None:
+        return PlannedRemediation(
+            **common,
+            remedy="close_journal",
+            reason="the repair is complete and its retired instance has already been cleaned up",
+        )
+    if not pending.is_due(now):
+        return PlannedRemediation(
+            **common,
+            remedy="wait",
+            reason=(
+                f"the retired instance is readable until "
+                f"{pending.record.grace_expires_at.isoformat()}, so an in-flight consumer copy "
+                f"can still finish"
+            ),
+        )
+    return PlannedRemediation(
+        **common,
+        remedy="finish_repair_cleanup",
+        reason="the grace period expired, so the retired instance is quarantined and archived",
+    )
+
+
+def _pending_for(layout: ArchiveLayout, transaction_id: str) -> PendingCleanup | None:
+    """The retirement record this repair transaction wrote, if its cleanup is open."""
+    for item in pending_cleanups(layout):
+        if item.record.transaction_id == transaction_id:
+            return item
+    return None
 
 
 def _staging_remediation(
@@ -573,15 +818,19 @@ def apply_recovery(
 def _perform(
     layout: ArchiveLayout, entry: PlannedRemediation, transaction: Transaction
 ) -> Remediation:
-    """Carry out one remedy and checkpoint it, or record that it was left alone."""
+    """Carry out one remedy and checkpoint it, or record that it was left alone.
+
+    Each remedy re-performs the *original* transaction's remaining steps in its
+    own journal, then closes that journal. `TX-04` makes that safe to repeat: a
+    step whose evidence already holds is a no-op, so a `recover --apply` that
+    itself crashes half way leaves work the next one finishes.
+    """
     identifier = TransactionId(entry.transaction_id)
     if entry.remedy == "wait":
         return Remediation(
             outcome="pending", reason=entry.reason, remedy=entry.remedy, transaction_id=identifier
         )
-    evidence: dict[str, Any] = {}
-    if entry.remedy == "quarantine_staging":
-        evidence = _quarantine(layout, identifier)
+    evidence = _REMEDIES.get(entry.remedy, _nothing)(layout, identifier)
     _close_resolved(layout, identifier, entry)
     transaction.checkpoint(entry.remedy, resolved_transaction_id=entry.transaction_id, **evidence)
     return Remediation(
@@ -591,6 +840,11 @@ def _perform(
         remedy=entry.remedy,
         transaction_id=identifier,
     )
+
+
+def _nothing(_layout: ArchiveLayout, _transaction_id: TransactionId) -> dict[str, Any]:
+    """`close_journal` changes no filesystem state; only the journal closes."""
+    return {}
 
 
 def _quarantine(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
@@ -617,22 +871,425 @@ def _quarantine(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[st
     }
 
 
+def _quarantine_tree(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
+    """Preserve a published tree no surviving manifest can validate (§7.3 row 2).
+
+    The tree is renamed into quarantine, never removed: it may hold the only copy
+    of a revision, and the reason it cannot be published is that nothing can
+    vouch for it — which is a reason to keep it for an operator, not to destroy
+    it (`AD-16`, plan §16.5 item 12).
+    """
+    journal = read_journal(layout, layout.journal(transaction_id)).journal
+    tree = _published_tree(layout, journal)
+    destination = layout.quarantine_for(transaction_id)
+    if tree is None or not tree.is_dir():  # pragma: no cover - the plan proved it is there
+        return {}
+    try:
+        destination.parent.mkdir(mode=QUARANTINE_MODE, parents=True, exist_ok=True)
+        tree.rename(destination)
+        fsync_directory(layout.quarantine)
+    except OSError as exc:
+        message = f"the unvalidatable tree {tree} could not be quarantined: {exc.strerror}"
+        raise RetentionError.single(
+            message, code="HFRET010", location=str(layout.archive_relative(tree))
+        ) from exc
+    return {
+        "quarantine_path": str(layout.archive_relative(destination)),
+        "unvalidatable_tree_absent": str(layout.archive_relative(tree)),
+    }
+
+
+def _published_tree(layout: ArchiveLayout, journal: TransactionJournal) -> Path | None:
+    """Where checkpoint 5 renamed the tree to, from its own evidence."""
+    value = next(
+        (
+            checkpoint.evidence["published_tree_path"]
+            for checkpoint in journal.checkpoints
+            if isinstance(checkpoint.evidence.get("published_tree_path"), str)
+        ),
+        None,
+    )
+    if value is None:  # pragma: no cover - checkpoint 5 is what makes this remedy reachable
+        return None
+    return layout.resolve(value, code="HFTXN003")
+
+
+def _complete_publication(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
+    """Finish §7.3 from wherever it stopped, having validated the tree first.
+
+    Validation comes first and is not optional: §7.3's whole reason for writing
+    the pending manifest into staging *before* the rename is so that a tree found
+    at checkpoint 5 can be checked against something. A tree that does not match
+    is never referenced — recovery reports it and changes nothing (`AD-16`).
+
+    Steps 6 through 9 are then re-performed unconditionally rather than resumed
+    from the recorded checkpoint. Each is an atomic write of a value derived from
+    the manifest, so re-doing one that already happened writes the same bytes to
+    the same place (`TX-04`), and deciding *which* to skip would be one more
+    thing to get wrong.
+    """
+    journal = read_journal(layout, layout.journal(transaction_id)).journal
+    manifest = _publication_manifest(layout, journal)
+    if manifest is None:  # pragma: no cover - the plan chose quarantine instead
+        return {}
+    identity = manifest.identity
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    commit = CommitSha(manifest.commit_sha)
+    publication = PublicationId(manifest.publication_id)
+    instance = repository.instance(commit, publication)
+
+    findings = verify_target(
+        VerificationTarget(
+            identity=identity,
+            reference=_reference_for(repository, manifest),
+            manifest=manifest,
+            tree=instance,
+        ),
+        ReadSet(),
+    )
+    if findings:
+        raise SafetyError(
+            [
+                Problem(
+                    code="HFTXN003",
+                    message=(
+                        f"the published tree {layout.archive_relative(instance)} does not match "
+                        f"its manifest at {finding.path}: {finding.kind}; an unvalidated tree is "
+                        f"never referenced"
+                    ),
+                    location=str(layout.archive_relative(instance)),
+                )
+                for finding in findings
+            ]
+        )
+
+    published_manifest = repository.manifest(commit, publication)
+    published_manifest.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
+    write_model(
+        published_manifest,
+        manifest,
+        mode=PUBLISHED_FILE_MODE,
+        code="HFRET010",
+        error=RetentionError,
+    )
+    reference = _reference_for(repository, manifest)
+    publish_revision_reference(layout, reference)
+    publish_current_if_newest(layout, identity, reference)
+    publish_catalog(layout, rebuild_catalog(layout, generated_at=datetime.now(UTC)))
+    return {
+        "published_tree_path": str(layout.archive_relative(instance)),
+        "publication_id": manifest.publication_id,
+    }
+
+
+def _reference_for(repository: RepositoryLayout, manifest: RevisionManifest) -> Reference:
+    """The reference a published manifest implies, field for field."""
+    commit = CommitSha(manifest.commit_sha)
+    publication = PublicationId(manifest.publication_id)
+    return Reference(
+        commit_sha=commit,
+        manifest=str(repository.manifest_reference(commit, publication)),
+        publication_generation=manifest.publication_generation,
+        publication_id=publication,
+        repository_id=manifest.repository_id,
+        repository_type=manifest.repository_type,
+        tree=str(repository.tree_reference(commit, publication)),
+        updated_at=manifest.published_at,
+    )
+
+
+def publish_current_if_newest(
+    layout: ArchiveLayout, identity: RepositoryIdentity, reference: Reference
+) -> bool:
+    """Replace `current.json` only when this is the repository's newest revision.
+
+    §7.3 row 4's own condition, and it compares immutable *generations* rather
+    than modification times — which §7.7 forbids recovery from using to choose a
+    current revision. An older revision rolled forward is retained and
+    discoverable without becoming what consumers are pointed at, which is
+    exactly what the row says.
+    """
+    generations = [held.publication_generation for held in retained_references(layout, identity)]
+    if generations and reference.publication_generation < max(generations):
+        return False
+    publish_current_reference(layout, reference)
+    return True
+
+
+def _rollback_prune(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
+    """Put the sixth revision back (§7.4, before the commit point).
+
+    Every step is the inverse of one the prune performed, in reverse order, and
+    each tolerates not having been needed: a rollback from checkpoint 2 finds the
+    tree still published and the reference still there, and does nothing to
+    either. Over-retention is reportable; a deletion is not reversible (`TX-06`).
+    """
+    journal = read_journal(layout, layout.journal(transaction_id)).journal
+    plan = _prune_plan(journal)
+    identity = RepositoryIdentity.of(plan.repository_type, plan.repository_id)
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    commit = CommitSha(plan.selected.commit_sha)
+    publication = PublicationId(plan.selected.publication_id)
+    trash = layout.trash_for(transaction_id)
+
+    _restore(
+        trash.manifest, repository.manifest(commit, publication), mode=PUBLISHED_DIRECTORY_MODE
+    )
+    _restore(trash.tree, repository.instance(commit, publication), mode=PUBLISHED_DIRECTORY_MODE)
+    manifest = read_model(
+        repository.manifest(commit, publication),
+        RevisionManifest,
+        error=IntegrityError,
+        code="HFVER007",
+    )
+    publish_revision_reference(layout, _reference_for(repository, manifest))
+    publish_catalog(layout, rebuild_catalog(layout, generated_at=datetime.now(UTC)))
+    if trash.directory.is_dir() and not any(trash.directory.iterdir()):
+        trash.directory.rmdir()
+        fsync_directory(layout.trash)
+    return {
+        "restored_tree_path": str(
+            layout.archive_relative(repository.instance(commit, publication))
+        ),
+        "commit_sha": plan.selected.commit_sha,
+    }
+
+
+def _complete_prune(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
+    """Finish the post-commit cleanup a prune deferred (§7.4, at or after 7).
+
+    Never republishes. Five revisions are what consumers already see and the
+    archive recorded that decision at checkpoint 7; re-adding the sixth would
+    contradict it. What is left is the audit record and the physical removal of
+    the tombstone, and both are idempotent.
+    """
+    journal = read_journal(layout, layout.journal(transaction_id)).journal
+    plan = _prune_plan(journal)
+    identity = RepositoryIdentity.of(plan.repository_type, plan.repository_id)
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    commit = CommitSha(plan.selected.commit_sha)
+    publication = PublicationId(plan.selected.publication_id)
+    trash = layout.trash_for(transaction_id)
+
+    audit = repository.pruned_records(commit)
+    audit.mkdir(mode=REPORT_DIRECTORY_MODE, parents=True, exist_ok=True)
+    archived = repository.pruned_manifest(commit, publication)
+    if trash.manifest.is_file() and not archived.is_file():
+        # Byte for byte, exactly as the prune would have: it is the evidence of
+        # what was there, and this release's rendering of it is not the bytes the
+        # archive published (`FS-06`).
+        atomic_write_bytes(archived, trash.manifest.read_bytes(), mode=REPORT_MODE)
+        fsync_directory(audit)
+    record = repository.prune_record(commit, publication)
+    if not record.is_file():
+        # The timestamps are recovery's own clock, and honestly so: they record
+        # when the record was written, which is when this ran (§9.1).
+        write_model(
+            record,
+            _pruned_record(plan, transaction_id=transaction_id, now=datetime.now(UTC)),
+            mode=REPORT_MODE,
+            code="HFRET010",
+            error=RetentionError,
+        )
+        fsync_directory(audit)
+    if trash.directory.is_dir():
+        shutil.rmtree(trash.directory)
+        fsync_directory(layout.trash)
+    return {
+        "trash_absent": str(layout.archive_relative(trash.directory)),
+        "commit_sha": plan.selected.commit_sha,
+    }
+
+
+def _pruned_record(
+    plan: PrunePlan, *, transaction_id: TransactionId, now: datetime
+) -> PrunedRevisionRecord:
+    """The §9.1 record a prune writes at checkpoint 8, rebuilt from its plan."""
+    return PrunedRevisionRecord(
+        commit_sha=plan.selected.commit_sha,
+        file_count=plan.selected.file_count,
+        logical_bytes=plan.selected.logical_bytes,
+        manifest_archived_at=now,
+        plan_id=plan.plan_id,
+        publication_generation=plan.selected.publication_generation,
+        publication_id=plan.selected.publication_id,
+        pruned_at=now,
+        reason=plan.reason,
+        repository_id=plan.repository_id,
+        repository_type=plan.repository_type,
+        retained_after=tuple(
+            summary for summary in plan.retained if summary.commit_sha != plan.selected.commit_sha
+        ),
+        transaction_id=transaction_id,
+        tree=plan.selected.tree,
+    )
+
+
+def _prune_plan(journal: TransactionJournal) -> PrunePlan:
+    """The validated plan checkpoint 1 persisted, which names everything else."""
+    payload = next(
+        (
+            checkpoint.evidence["plan"]
+            for checkpoint in journal.checkpoints
+            if isinstance(checkpoint.evidence.get("plan"), dict)
+        ),
+        None,
+    )
+    # Unreachable through the prune itself: checkpoint 1 is the first thing
+    # `apply_prune` records, and `checkpoint_order_problems` refuses a journal
+    # whose names are not a prefix of the documented sequence. Kept because a
+    # `KeyError` from the middle of a rollback is the worst way to learn that.
+    if payload is None:  # pragma: no cover - checkpoint 1 is a prune's first act
+        message = f"prune journal {journal.transaction_id} records no plan; it cannot be resolved"
+        raise SafetyError.single(message, code="HFTXN003", location=str(journal.transaction_id))
+    return PrunePlan.model_validate(payload)
+
+
+def _restore(source: Path, destination: Path, *, mode: int) -> None:
+    """Move a tombstoned artifact back, tolerating it never having gone."""
+    try:
+        destination.parent.mkdir(mode=mode, parents=True, exist_ok=True)
+        if source.exists() and not destination.exists():
+            source.rename(destination)
+        fsync_directory(destination.parent)
+    except OSError as exc:
+        message = f"{source} could not be restored to {destination}: {exc.strerror}"
+        raise RetentionError.single(message, code="HFRET005", location=str(destination)) from exc
+
+
+def _complete_repair(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
+    """Finish a repair's reference switches and the steps after them (§7.5).
+
+    §7.5's interesting case is a crash between 9 and 10: the per-SHA reference
+    names the new instance while `current.json` still names the old one. Both
+    trees exist — the old one is inside its grace period — so `FS-10` holds, no
+    consumer sees a dangling reference, and the resolution is simply to complete
+    the second switch.
+
+    The replacement is re-verified before either reference moves, for the same
+    reason checkpoint 8 does it: a reference only ever switches to an instance
+    that has been verified where it now lives.
+    """
+    journal = read_journal(layout, layout.journal(transaction_id)).journal
+    manifest = _publication_manifest(layout, journal)
+    if manifest is None:
+        message = (
+            f"repair {transaction_id} published no replacement manifest, so there is nothing "
+            f"to switch a reference to; the original revision is unchanged"
+        )
+        raise SafetyError.single(message, code="HFTXN004", location=str(transaction_id))
+    identity = manifest.identity
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    commit = CommitSha(manifest.commit_sha)
+    publication = PublicationId(manifest.publication_id)
+    reference = _reference_for(repository, manifest)
+    findings = verify_target(
+        VerificationTarget(
+            identity=identity,
+            reference=reference,
+            manifest=manifest,
+            tree=repository.instance(commit, publication),
+        ),
+        ReadSet(),
+    )
+    if findings:
+        raise SafetyError(
+            [
+                Problem(
+                    code="HFTXN003",
+                    message=(
+                        f"the repair replacement fails verification at {finding.path}: "
+                        f"{finding.kind}; no reference is switched to it"
+                    ),
+                    location=str(transaction_id),
+                )
+                for finding in findings
+            ]
+        )
+    publish_revision_reference(layout, reference)
+    if _current_names(layout, repository, commit):
+        publish_current_reference(layout, reference)
+    publish_catalog(layout, rebuild_catalog(layout, generated_at=datetime.now(UTC)))
+    return {
+        "revision_ref_path": str(layout.archive_relative(repository.revision_ref(commit))),
+        "publication_id": manifest.publication_id,
+    }
+
+
+def _current_names(layout: ArchiveLayout, repository: RepositoryLayout, commit: CommitSha) -> bool:
+    """Whether `current.json` names this SHA, and so has to move with it.
+
+    A repository with no current reference has never completed a publication, so
+    there is nothing for a repair to switch — the answer is no rather than an
+    error.
+    """
+    if not repository.current_ref.is_file():  # pragma: no cover - a repair implies a publication
+        return False
+    return read_reference(layout, repository.current_ref).commit_sha == commit
+
+
+def _finish_repair_cleanup(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
+    """Run §7.5's checkpoints 16-18 in this recovery's own journal.
+
+    The checkpoints belong to the repair transaction, and the repair's journal is
+    resumed to record them — the same journal `repair_revision` left open for
+    exactly this. Recovery's own journal records that it did so, which is how a
+    reader of either can reconstruct the sequence.
+    """
+    pending = _pending_for(layout, transaction_id)
+    if pending is None:  # pragma: no cover - the plan proved there is one
+        return {}
+    resumed = Transaction(layout=layout, file=read_journal(layout, layout.journal(transaction_id)))
+    return finish_cleanup(layout, resumed, pending)
+
+
+_REMEDIES: Final[Mapping[str, Callable[[ArchiveLayout, TransactionId], dict[str, Any]]]] = {
+    "quarantine_staging": _quarantine,
+    "quarantine_tree": _quarantine_tree,
+    "complete_publication": _complete_publication,
+    "rollback_prune": _rollback_prune,
+    "complete_prune": _complete_prune,
+    "complete_repair": _complete_repair,
+    "finish_repair_cleanup": _finish_repair_cleanup,
+}
+"""Each remedy's implementation, so `_perform` dispatches rather than branches."""
+
+
+COMPLETING: Final = frozenset(
+    {
+        "close_journal",
+        "complete_publication",
+        "complete_prune",
+        "complete_repair",
+        "finish_repair_cleanup",
+    }
+)
+"""Remedies that carried a transaction to the end it was working towards.
+
+The rest — quarantining staging, quarantining an unvalidatable tree, rolling a
+prune back — resolved the transaction by *undoing* it, and a journal that says
+`committed` about work that was undone would misdescribe the archive to the next
+reader.
+"""
+
+
 def _close_resolved(
     layout: ArchiveLayout, transaction_id: TransactionId, entry: PlannedRemediation
 ) -> None:
-    """Close the journal recovery just resolved, so a second run finds nothing."""
+    """Close the journal recovery just resolved, so a second run finds nothing.
+
+    `committed` when the remedy finished what the transaction was doing, and
+    `failed` when it undid it. Both are conclusions; the distinction is what an
+    operator reading the journal afterwards needs, because "the revision was
+    published in the end" and "the revision was never published" are the two
+    different things a roll-forward and a roll-back leave behind.
+    """
     file = read_journal(layout, layout.journal(transaction_id))
     resumed = Transaction(layout=layout, file=file)
-    if entry.remedy == "close_journal" and _is_complete(file.journal):
+    if entry.remedy in COMPLETING:
         resumed.commit()
     else:
         resumed.fail("HFTXN003", f"resolved by recovery: {entry.reason}")
-
-
-def _is_complete(journal: TransactionJournal) -> bool:
-    """Whether every documented checkpoint for this operation was recorded."""
-    names = [checkpoint.name for checkpoint in journal.checkpoints]
-    return journal.operation in CHECKPOINTS and names == list(CHECKPOINTS[journal.operation])
 
 
 def _write_report(
