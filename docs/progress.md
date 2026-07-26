@@ -218,7 +218,7 @@ interpretations, including both carried-in items.
 - [x] SYNC-003 Sync run journal and `TX-07` reconciliation (2026-07-26, this commit — the Phase 6 carried-out item. `cli._run` opens the §7.6 journal inside `preflight.guarded` and records checkpoints 1-3: `run_started`, `preflight_passed`, and `journals_reconciled` — the third *after* `recovery.reconcile` has resolved every unfinished journal, under the lock the run already holds and before a single Hub request. `synchronize` takes the transaction and records 4-7, each after its own act is durable, and commits; a run whose exit is not `0` still commits, because the run transaction completed and which repositories failed is what the report carries. The reconciliation is real work, not a formality: a test leaves an abandoned staging directory from a previous run and the next `sync` quarantines it, names the recovery report in its own journal, and goes on to publish. A `needs_operator` journal stops the run at exit `20` with `hub.downloads == []` asserted — nothing fetched, nothing changed, and the run closes its own journal rather than leaving a second unfinished one behind. **`prune --apply` and `repair` reconcile too**, since `TX-07` says every mutating command does and leaving two of the three out would have recreated this same carried item; `verify` deliberately does not, because §7.9 requires it still answer when the machine has stopped. `plan_recovery` gained `exclude`, which is how a run reconciles everything except itself — `TX-01` opened its journal before it could act, so it is unfinished by construction throughout. Decision 55 records the crashed-run-journal resolution this needed. `recovery.py` and `sync.py` both at 100% branch coverage; `cli.py` back to its one pre-existing gap)
 - [x] SYNC-004 Discard a committed transaction's staging area (2026-07-26, this commit — decision 56, found by running `status` on the live archive after the first sync: two successful publications reported `unfinished_transactions: 2`. `discard_staging` had existed since `STO-006` with nothing but its own tests calling it, because `promote_staging` renames `tree/` away and the pending manifest is its *sibling*. It is now the act of publication's checkpoint 10 and repair's checkpoint 15, both recording `staging_absent`, and `recovery._complete_publication` performs it too. `pending_manifest_path` loses its suffix by decision 53's rule — it mattered most for repair, whose journal stays open through the seven-day grace and would have reported `HFTXN003` to every `recover` in that window. The `HFTXN003` test now deletes the *published tree* instead, which is a real journal-contradicts-filesystem state; the deleted staged manifest correctly quarantines the tree. `docs/architecture.md` §7.3 and §7.5 amended. Every affected module still at 100% branch coverage)
 - [x] HOST-004 Install the locked application environment (2026-07-26, this commit — `scripts/install-release.sh` performs plan §21.4 rather than describing it, and is the mechanism §30's upgrade steps 3 and 6 name; rollback is the same tool with `--switch`, because a rollback that uses a different procedure than the install is a procedure nobody has tested. Release 0.1.0 is live at `/opt/hfcache/releases/0.1.0` with `current` switched by rename onto a staged symlink — `ln -sfn` unlinks first and leaves a window in which `current` does not exist, which is the one thing a running service must never see. Root-owned, `0755`/`0644`, so the account that runs the archive cannot modify the code that runs it. **The interpreter is the deployment's own:** CentOS Stream 10 ships 3.12 and EPEL reaches 3.13, so CPython 3.14.6 is a uv-managed build installed into `/opt/hfcache/python` and pinned there — a venv whose `home` pointed under `/home` would start on a workstation and fail under `ProtectHome=true` (§22.5), which is a failure that would not have appeared until `SYS-002`. uv is pinned to 0.11.32 and the script refuses a different one. `--no-python-downloads` during `uv sync`, so that step can only use the interpreter the previous step installed. **A defect the build found:** `uv sync` in a staging directory writes that path into `pyvenv.cfg` and every console-script shebang, so the venv is built in its *final* path and it is `switch_to`'s refusal of a release with no `.venv/bin/hfcache` that keeps an incomplete build from becoming live. `packaging/tmpfiles.d/hfcache.conf` provisions `/run/hfcache` for operator-run commands, since `/run` is a tmpfs and the service account cannot create a directory in it. Decision 57 records the `--config` readability defect this exposed)
-- [ ] SYS-001 Install and validate systemd target, services, timers
+- [x] SYS-001 Install and validate systemd target, services, timers (2026-07-26, this commit — all seven §22 units written in `packaging/systemd/` and installed to `/etc/systemd/system`. `systemd-analyze verify` over all seven produces **no output at all**, which is the gate; it exits `0` even while reporting ordering cycles, and it did (decision 58). `systemd-analyze calendar` validates both expressions: `*-*-* 02:00:00` and `Wed *-01,04,07,10-01..07 04:00:00`, the latter resolving to the first Wednesday of January, April, July, and October at 04:00 local. **The fstab entry is retired**, commented in place with a pointer to the units and the original kept at `/etc/fstab.pre-hfcache-units`; `daemon-reload` handed the live mount over without interrupting it — same autofs fd, same NFS mount, `status` still `reachable` (decision 58). `hfcache.target` is enabled and started, `srv-hfcache.automount` enabled into both `remote-fs.target` and `hfcache.target`, `hfcache-sync.timer` enabled and active with its next elapse at 02:23 EDT (02:00 plus the randomized delay), and **`hfcache-verify.timer` installed, `disabled`, and inactive** — expressible only because the timers attach through their own `[Install] WantedBy=hfcache.target` rather than the target's `Wants=`, which would have started the disabled one. Starting the target ran no sync, per §22.1. Both services then run clean *through systemd*: `hfcache-sync.service` exits `0` with both repositories `skipped`, and its run report records `invocation_mode: systemd`, which is the distinction §22.2's `INVOCATION_ID` check exists to make; `hfcache-verify.service` exits `0`, `clean`, 17 objects and 12.1 MiB read. `/run/hfcache` is `0700 hfcache:hfcache` from `RuntimeDirectory` and survives the oneshot via `RuntimeDirectoryPreserve=yes`, and `HF_XET_CACHE`/`HF_HOME` have materialized at `/var/cache/hfcache/xet` and `/var/lib/hfcache/hf-home` — nothing resolved toward a home directory. No SELinux AVC denial from any of it. Hardening is `SYS-002`)
 - [ ] SYS-002 Apply and test systemd hardening
 - [ ] SEL-001 Validate all operations with SELinux enforcing
 - [ ] SEC-001 Validate optional systemd credential support
@@ -1283,3 +1283,44 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     never by content. The mode on the configuration file is deliberately
     unchanged — it is the contract, and the fix is that the application reports
     it properly rather than that more identities can read it.
+
+58. **The archive mount is defined by explicit units and the fstab line is
+    retired** (2026-07-26, `SYS-001`). Plan §21.3 permits either mechanism, and
+    the deployment had the fstab one from `HOST-003`. Keeping both is not a
+    third option: a unit in `/etc/systemd/system` shadows the one
+    `systemd-fstab-generator` produces from that line, so the file an operator
+    would edit first would have had no effect at all. §22 lists the two units as
+    shipped artifacts, so the units win and the fstab line is commented in place
+    with a pointer to them; `/etc/fstab.pre-hfcache-units` holds the original.
+
+    The handover was the risk — this session dies with the mount (§36.4) — so it
+    was done with `daemon-reload` and nothing else. A reload re-reads unit files
+    and does not stop active units, and a mount unit's active state comes from
+    `/proc/self/mountinfo` rather than from its configuration. Confirmed after:
+    the same autofs file descriptor, the same NFS mount with the same options,
+    both units `active` and now sourced from `/etc/systemd/system`, and `status`
+    still reporting the archive reachable. The unit's `Options=` apply from the
+    next mount, not to the one already established, which is why `systemctl show`
+    still lists the fstab-era `x-systemd.*` options.
+
+    Two findings worth keeping. **`systemd-analyze verify` exits `0` while
+    reporting ordering cycles**, so its *output* is the gate and its exit status
+    is not — the same lesson as piping a gate into `grep`. And the first
+    automount unit had one: `After=network-online.target` on the *automount*
+    produced `local-fs.target → srv-hfcache.automount → network-online.target →
+    NetworkManager.service → sysinit.target → local-fs.target`, because systemd
+    gives every automount unit an implicit `Before=local-fs.target`. Network
+    ordering belongs on the mount, which is the unit that contacts the NAS; an
+    automount is a kernel trigger on a directory and needs nothing. The
+    fstab generator had it right, and comparing against what it produced —
+    `systemctl show` on the generated units, before the reload replaced them —
+    is what found it.
+
+    `hfcache.target` does **not** list the timers in `Wants=`. §22.4 says the
+    target wants the automount and both timers, but a `Wants=` starts a unit
+    whether or not it is enabled, and §34 requires the quarterly verification
+    timer stay off until an operator confirms its calendar against the NAS
+    schedules. The timers attach through their own `[Install]
+    WantedBy=hfcache.target` instead, so what the target wants is exactly what
+    has been enabled and "installed but disabled" is a state the design can
+    actually express.

@@ -1,0 +1,50 @@
+# The quarterly full verification (docs/plan.md §22.3, §16.2).
+#
+# A distinct unit from the sync, not a mode of it, because the two have opposite
+# shapes: one reaches the Hub and writes, the other reaches nothing and re-reads.
+# They share the *application* lock — one lock for every mutating command
+# (`AD-17`) — which is what makes them mutually exclusive with each other and with
+# prune and repair. There is no second lock domain to keep in step.
+#
+# The hardening block is §22.5 and is applied and tested at SYS-002, including
+# whether PrivateNetwork=true holds on the deployed NFS mount under reconnect.
+
+[Unit]
+Description=Verify every retained revision against its manifest
+Documentation=file:///opt/hfcache/current/docs/cli.md
+Documentation=file:///opt/hfcache/current/docs/operations.md
+After=remote-fs.target
+RequiresMountsFor=/srv/hfcache
+PartOf=hfcache.target
+
+[Service]
+Type=oneshot
+User=hfcache
+Group=hfcache
+UMask=0027
+ExecStart=/opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml verify --full
+
+# A full verification reads every unique object in the archive. `verify
+# --estimate` is what an operator sizes the maintenance window from; this unit
+# does not get to decide the run has taken too long.
+TimeoutStartSec=infinity
+
+StateDirectory=hfcache
+StateDirectoryMode=0750
+CacheDirectory=hfcache
+CacheDirectoryMode=0750
+RuntimeDirectory=hfcache
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+
+# Belt and braces, in that order. The real guarantee is structural and asserted in
+# the test suite — `verify` constructs no HubClient and resolves no credential, so
+# there is no code path from here to the network. This makes the same statement to
+# the library, so a future dependency that reached out on import fails loudly
+# instead of quietly phoning home during a maintenance window.
+Environment=HF_HUB_OFFLINE=1
+Environment=HF_XET_CACHE=/var/cache/hfcache/xet
+Environment=HF_HOME=/var/lib/hfcache/hf-home
+
+[Install]
+# Not enabled. The timer starts this.

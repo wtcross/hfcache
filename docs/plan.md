@@ -971,7 +971,7 @@ Keep `/opt/hfcache`, the configuration, and unit files root-owned. Make the bare
 
 ### 21.3 NFS client mount
 
-Use an explicit `srv-hfcache.mount` plus `srv-hfcache.automount`, or an equivalent `/etc/fstab` entry that generates both, with:
+Use an explicit `srv-hfcache.mount` plus `srv-hfcache.automount`, or an equivalent `/etc/fstab` entry that generates both — **one or the other, never both**, because a unit in `/etc/systemd/system` shadows the generated one and the fstab line then has no effect (decision 58; this deployment uses the units). Either way:
 
 - NFSv4.2 over TCP.
 - `rw`.
@@ -1052,7 +1052,9 @@ Use these initial deployment calendars, expressed in the VM's `America/New_York`
 
 Validate both expressions with `systemd-analyze calendar`. Move the verification drop-in before production if it overlaps the actual TrueNAS scrub, SMART, snapshot, or replication schedule.
 
-`hfcache.target` wants the automount and both timers. The automount, services, and timers use `PartOf=hfcache.target`; mount ordering must stop active services before attempting an ordinary unmount. Never force-unmount during archive I/O. Enabling the target is the normal administration path.
+`hfcache.target` wants the automount and both timers — the timers by way of their own `[Install] WantedBy=hfcache.target` rather than a `Wants=` in the target, so an installed-but-disabled timer stays stopped when the target starts (decision 58). The automount, services, and timers use `PartOf=hfcache.target`; mount ordering must stop active services before attempting an ordinary unmount. Never force-unmount during archive I/O. Enabling the target is the normal administration path.
+
+Network ordering belongs on `srv-hfcache.mount`, never on `srv-hfcache.automount`: an automount unit carries an implicit `Before=local-fs.target`, so ordering it after `network-online.target` creates a boot cycle. Judge `systemd-analyze verify` by its **output**; it exits `0` while reporting one.
 
 ### 22.5 Hardening
 

@@ -1,0 +1,30 @@
+# Daily sync at 02:00 local time (docs/plan.md §22.4).
+#
+# Local time, deliberately: the calendar was chosen against this site's NAS
+# maintenance windows, which are themselves local, and a UTC schedule would drift
+# an hour relative to them twice a year.
+
+[Unit]
+Description=Daily hfcache synchronization
+Documentation=file:///opt/hfcache/current/docs/operations.md
+PartOf=hfcache.target
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+
+# A writer that was off at 02:00 syncs when it comes back rather than skipping a
+# day. For an archive whose point is to hold what upstream had, a missed day is a
+# gap nothing else fills.
+Persistent=true
+
+# Two runs of the same schedule do not start at the same instant, which matters
+# once more than one writer shares this NAS. Thirty minutes is small against a
+# daily period and large against the NAS's own scheduled work.
+RandomizedDelaySec=30m
+
+# The default accuracy is a minute of slack systemd may use to batch timers. Kept
+# explicit because it is part of the schedule contract, not a detail.
+AccuracySec=1m
+
+[Install]
+WantedBy=hfcache.target

@@ -1,0 +1,34 @@
+# Quarterly full verification (docs/plan.md §22.4, §34).
+#
+# **Installed but left disabled.** Enabling it is an operator decision that
+# requires confirming this calendar does not overlap the TrueNAS scrub, SMART,
+# snapshot, or replication schedules — a full verification reads every unique
+# object in the archive, and running it against a pool that is already saturated
+# by a scrub would measure the scrub rather than the archive. The handoff list in
+# docs/progress.md carries the item.
+#
+# `Wed *-01,04,07,10-01..07` is the first Wednesday of January, April, July, and
+# October: the day-of-week filter and the 1st-to-7th day range intersect in
+# exactly one day per named month. Validated with `systemd-analyze calendar`,
+# which is the only way to be sure of an expression like this.
+
+[Unit]
+Description=Quarterly hfcache full verification
+Documentation=file:///opt/hfcache/current/docs/operations.md
+PartOf=hfcache.target
+
+[Timer]
+OnCalendar=Wed *-01,04,07,10-01..07 04:00:00
+
+# A writer that was down over the scheduled window verifies when it returns. A
+# quarterly integrity check that silently skipped a quarter would leave the
+# archive reading `unverified` with nobody told why.
+Persistent=true
+
+# Two hours, against thirty minutes for the sync: this run is long and heavy, and
+# the wider window is what keeps two writers from starting a full read of the same
+# pool within minutes of each other.
+RandomizedDelaySec=2h
+
+[Install]
+WantedBy=hfcache.target

@@ -1,0 +1,23 @@
+# The scheduled lifecycle, as one thing an operator enables (docs/plan.md §22.1).
+#
+# Starting this target activates the archive automount and whichever timers are
+# enabled. It deliberately does *not* run a sync: enabling the lifecycle and
+# performing a run are different decisions, and a target that synced on start
+# would download a full archive the first time somebody enabled it.
+#
+# The timers are attached from their own [Install] sections rather than listed
+# here in Wants=. That is what makes "installed but disabled" expressible: a
+# Wants= here would start the quarterly verification timer even while it is
+# disabled, and §34 requires it stay off until an operator confirms the calendar
+# against the NAS scrub, SMART, and replication schedules. What the target wants
+# is exactly what has been enabled — visible in hfcache.target.wants/.
+
+[Unit]
+Description=hfcache archive lifecycle
+Documentation=file:///opt/hfcache/current/docs/plan.md
+Documentation=file:///opt/hfcache/current/docs/cli.md
+Wants=srv-hfcache.automount
+After=remote-fs.target
+
+[Install]
+WantedBy=multi-user.target

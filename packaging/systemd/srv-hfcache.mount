@@ -1,0 +1,35 @@
+# The NFSv4 archive mount (docs/plan.md §21.3, §22).
+#
+# An explicit unit rather than an /etc/fstab entry. §21.3 permits either, and the
+# two must not both exist: a unit in /etc/systemd/system shadows the one
+# systemd-fstab-generator produces, so an operator editing fstab would see no
+# effect at all. The fstab line this replaced is retained, commented, with a
+# pointer here.
+#
+# `_netdev` and `nofail` are fstab *directives*, not mount options, and are
+# deliberately absent from Options=. What they asked for is expressed as unit
+# properties instead: network ordering below, and the fact that nothing requires
+# this mount at boot — the host stays bootable with the NAS down because only
+# srv-hfcache.automount is enabled, and an automount that cannot mount fails the
+# unit that asked for it rather than the boot.
+#
+# There is no `soft` option and there never may be: a soft mount turns a stalled
+# server into an I/O error mid-write, and this filesystem holds an archive whose
+# whole value is that a published revision is either complete or absent.
+
+[Unit]
+Description=Hugging Face archive (nas.lab.cross.solutions:/mnt/tank/huggingface-archive)
+Documentation=file:///opt/hfcache/current/docs/plan.md
+After=network-online.target
+Wants=network-online.target
+PartOf=hfcache.target
+
+[Mount]
+What=nas.lab.cross.solutions:/mnt/tank/huggingface-archive
+Where=/srv/hfcache
+Type=nfs4
+Options=rw,hard,nosuid,nodev,noexec,vers=4.2,proto=tcp,nconnect=4
+# Bounded, so a mount attempt against an unavailable NAS fails the service that
+# triggered it instead of hanging it (§21.3). nconnect=4 is the benchmarked
+# value recorded in §35.1, not an assumed one.
+TimeoutSec=30s

@@ -1,0 +1,57 @@
+# The scheduled sync (docs/plan.md §22.2).
+#
+# `Type=oneshot`, because a run ends. systemd records the exit code, and the
+# application's §11.2 classifications are chosen so that a scheduler can tell a
+# malformed invocation from a repository failure from a safety refusal.
+#
+# The hardening block is §22.5 and is applied and tested at SYS-002.
+
+[Unit]
+Description=Synchronize configured Hugging Face repositories
+Documentation=file:///opt/hfcache/current/docs/cli.md
+Documentation=file:///opt/hfcache/current/docs/operations.md
+Wants=network-online.target
+After=network-online.target remote-fs.target
+# The mount boundary. This pulls in srv-hfcache.automount and orders the service
+# after it, so a NAS that cannot be reached fails this unit *before* the
+# application runs rather than during it — no download into a missing archive.
+RequiresMountsFor=/srv/hfcache
+PartOf=hfcache.target
+
+[Service]
+Type=oneshot
+User=hfcache
+Group=hfcache
+UMask=0027
+ExecStart=/opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml sync
+
+# A first sync of a large repository legitimately takes hours, and there is no
+# honest number to put here: a timeout would kill a healthy transfer. The bounds
+# that matter are the application's own — per-request Hub timeouts, the lock wait,
+# and the capacity gate — and none of them is a wall-clock limit on the run.
+TimeoutStartSec=infinity
+
+# /var/lib/hfcache, /var/cache/hfcache, /run/hfcache: created, owned, and mode-set
+# by systemd, so the deployment does not depend on them having been provisioned by
+# hand. RuntimeDirectoryMode matches locking.LOCK_DIRECTORY_MODE, and
+# RuntimeDirectoryPreserve keeps /run/hfcache after the oneshot exits so an
+# operator running the CLI directly still has somewhere to take the lock.
+StateDirectory=hfcache
+StateDirectoryMode=0750
+CacheDirectory=hfcache
+CacheDirectoryMode=0750
+RuntimeDirectory=hfcache
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+
+# No Hub library state may resolve toward a home directory: the service account
+# has none, and a library that fell back to one would write archive-critical cache
+# outside every path this deployment reasons about. The Hub cache itself is *not*
+# set here — it is passed explicitly to snapshot_download from the archive layout
+# (§12), so it cannot be redirected by the environment at all.
+Environment=HF_XET_CACHE=/var/cache/hfcache/xet
+Environment=HF_HOME=/var/lib/hfcache/hf-home
+
+[Install]
+# Not enabled. The timer starts this; an operator runs it by hand with
+# `systemctl start hfcache-sync.service` or by invoking the CLI directly.

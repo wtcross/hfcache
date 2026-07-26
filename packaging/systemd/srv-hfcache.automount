@@ -1,0 +1,40 @@
+# On-demand activation for the archive mount (docs/plan.md §21.3, §22.1).
+#
+# This is the unit that is *enabled*; srv-hfcache.mount is never enabled directly.
+# Boot therefore never waits for the NAS, and the first access — a sync, a
+# verification, or an operator's `ls` — triggers the mount. A failure to mount
+# fails the unit that asked, before any application mutation, which is the
+# boundary §21.3 relies on together with the application's own mount and sentinel
+# checks.
+#
+# TimeoutIdleSec=0 disables idle unmounting, and that is not a default worth
+# accepting: an archive that unmounted itself between two phases of a long run
+# and remounted on the next access would hand the application a different mount
+# generation mid-transaction. autofs will not unmount a busy filesystem, but
+# "busy" is not the same as "in the middle of a transaction".
+
+[Unit]
+Description=Automount the Hugging Face archive
+Documentation=file:///opt/hfcache/current/docs/plan.md
+PartOf=hfcache.target
+
+# No network ordering here, and that is not an omission. An automount unit is a
+# kernel trigger on a directory; it needs nothing but the directory. Network
+# ordering belongs on srv-hfcache.mount, which is what actually contacts the NAS.
+#
+# Putting `After=network-online.target` here produced a genuine ordering cycle,
+# because systemd gives every automount unit an implicit `Before=local-fs.target`:
+# local-fs → automount → network-online → NetworkManager → sysinit → local-fs.
+# `systemd-analyze verify` reported it while still exiting 0, which is why its
+# *output* is the gate and not its exit status.
+
+[Automount]
+Where=/srv/hfcache
+TimeoutIdleSec=0
+
+[Install]
+# remote-fs.target so the archive is reachable at boot whether or not
+# hfcache.target is enabled — an operator inspecting the archive should not have
+# to start the scheduled lifecycle to do it. hfcache.target wants it as well
+# (§22.4), so starting the target makes the mount available.
+WantedBy=remote-fs.target hfcache.target
