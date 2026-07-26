@@ -43,7 +43,7 @@ from huggingface_hub.errors import (
     RevisionNotFoundError,
 )
 
-from hfcache.errors import Problem, SynchronizationError
+from hfcache.errors import Problem, RetentionError, SynchronizationError
 from hfcache.identity import CommitSha, parse_commit_sha
 
 if TYPE_CHECKING:
@@ -64,6 +64,7 @@ __all__ = [
     "RepositoryFacts",
     "TreeEntry",
     "access_problems",
+    "delete_cache_revision",
     "download_estimate",
     "endpoint_host",
     "hub_problem",
@@ -518,6 +519,43 @@ class HubClient:
                 message, code="HFSYN001", location=identity.selector
             ) from exc
         return _snapshot_path(local, identity=identity, cache_dir=cache_dir, code="HFSYN001")
+
+
+def delete_cache_revision(cache_dir: Path, commit_sha: CommitSha) -> int:
+    """Remove one revision from the private cache through the supported API.
+
+    Plan §12 item 7 and `FS-14`: cache blobs are never removed by path. This
+    application does not know which blobs a revision uniquely owns — that is the
+    library's bookkeeping, and a revision's blobs are routinely shared with
+    revisions that are staying. `delete_revisions` computes the set and this
+    executes it, which is the only way to shrink the cache without risking a blob
+    another retained revision depends on.
+
+    Returns the bytes the library expected to free, which is what a run report
+    records. It is the library's estimate rather than a measurement, and is
+    reported as such: on ZFS the space may not return until the snapshots holding
+    it expire (§15.3).
+
+    A cache that does not contain the revision is not an error. Prune step 2 is
+    idempotent by design — a retried transaction finds it already gone — and
+    `delete_revisions` on an absent revision frees nothing and raises nothing.
+    """
+    from huggingface_hub import scan_cache_dir  # noqa: PLC0415 - see below
+
+    # Imported here rather than at module scope because `scan_cache_dir` walks
+    # the whole cache on call and this is the only place that wants it; a
+    # top-level import would suggest the adapter reaches into the cache
+    # routinely, and it does not.
+    try:
+        strategy = scan_cache_dir(cache_dir).delete_revisions(commit_sha)
+        strategy.execute()
+    except Exception as exc:
+        message = (
+            f"the cache revision {commit_sha} could not be deleted: {type(exc).__name__}: {exc}. "
+            f"Published hardlinks keep the bytes regardless, so the revision is preserved"
+        )
+        raise RetentionError.single(message, code="HFRET002", location=str(cache_dir)) from exc
+    return int(strategy.expected_freed_size)
 
 
 def _snapshot_path(

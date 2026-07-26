@@ -64,7 +64,14 @@ from hfcache.publication import (
     stage_file,
     staged_path,
 )
-from hfcache.reporting import RepositoryRunResult, RunReport, RuntimeVersions, RunTotals
+from hfcache.reporting import (
+    PrunedRevision,
+    RepositoryRunResult,
+    RunReport,
+    RuntimeVersions,
+    RunTotals,
+)
+from hfcache.retention import apply_prune, plan_prune
 from hfcache.storage import fsync_directory, read_model, write_model
 from hfcache.taxonomy import aggregate_exit_code
 from hfcache.transactions import Transaction, open_transaction
@@ -839,6 +846,7 @@ def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to
             started=started,
             configured=configured,
             warnings=warnings,
+            run_id=run_id,
         )
     except HfcacheError as error:
         transaction.fail(error.problems[0].code, error.problems[0].message)
@@ -858,8 +866,9 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
     started: datetime,
     configured: Mapping[str, RepositoryConfig],
     warnings: Sequence[Problem],
+    run_id: RunId,
 ) -> RepositoryOutcome:
-    """Plan §13.2 steps 5-19, inside an open journal (§7.3 checkpoints 1-10)."""
+    """Plan §13.2 steps 5-20, inside an open journal (§7.3 checkpoints 1-10)."""
     transaction_id = TransactionId(transaction.journal.transaction_id)
     staging = create_staging(layout, transaction_id)
     transaction.checkpoint(
@@ -931,6 +940,13 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
     transaction.checkpoint("publication_committed", state="committed")
     transaction.commit()
 
+    # Plan §13.2 step 20, and only here: retention is triggered by a *successful*
+    # publication (`AD-04`), so it runs after the publication transaction has
+    # committed rather than inside it. A prune that failed would then be its own
+    # failure with its own journal, and could never take the revision that was
+    # just published down with it.
+    pruned = _apply_retention(layout, identity, config, run_id=run_id)
+
     return RepositoryOutcome(
         manifest=manifest,
         result=RepositoryRunResult(
@@ -944,10 +960,52 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
             repository_type=identity.type,
             requested_revision=repository.revision,
             resolved_commit_sha=outcome.commit_sha,
+            pruned=pruned,
             reused_bytes=estimate.cached_bytes,
             status="completed_with_warnings" if warnings else "published",
             warnings=tuple(sorted({warning.code for warning in warnings})),
         ),
+    )
+
+
+def _apply_retention(
+    layout: ArchiveLayout,
+    identity: RepositoryIdentity,
+    config: ApplicationConfig,
+    *,
+    run_id: RunId,
+) -> PrunedRevision | None:
+    """Rotate the oldest revision out if this publication was the sixth (§15.2).
+
+    Returns what went, for the run report, or `None` when nothing did — which is
+    every run in steady state below the limit.
+
+    A prune failure does not fail the repository. The newly published revision is
+    kept and the archive reports temporary over-retention (`HFWRN001`), because
+    §15.2's failure rule is explicit that a failed prune removes nothing and
+    prefers keeping six revisions to losing one.
+    """
+    plan = plan_prune(
+        layout,
+        identity,
+        maximum=config.storage.maximum_revisions,
+        generated_at=_now(),
+    )
+    if plan is None:
+        return None
+    record = apply_prune(
+        layout,
+        plan,
+        envelope={
+            "archive_id": config.storage.archive_id,
+            "config_fingerprint": config.fingerprint(),
+            "run_id": run_id,
+        },
+    )
+    return PrunedRevision(
+        commit_sha=record.commit_sha,
+        logical_bytes=record.logical_bytes,
+        publication_generation=record.publication_generation,
     )
 
 

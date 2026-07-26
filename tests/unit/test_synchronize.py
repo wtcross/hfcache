@@ -31,12 +31,13 @@ from hfcache.config import ApplicationConfig, load_config
 from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import ExitCode, IntegrityError, SynchronizationError
 from hfcache.hub import HubClient
-from hfcache.identity import RepositoryIdentity, new_run_id
+from hfcache.identity import CommitSha, RepositoryIdentity, new_run_id
 from hfcache.locking import lock_path
 from hfcache.manifests import RevisionManifest
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.publication import read_reference, retained_references
 from hfcache.reporting import RepositoriesCatalog, RunReport
+from hfcache.retention import plan_prune
 from hfcache.storage import parse_mount_table
 from hfcache.sync import synchronize
 from hfcache.transactions import read_journal
@@ -927,3 +928,302 @@ def test_status_reports_no_last_run_when_the_archive_is_absent(tmp_path: Path):
     assert result.exit_code == ExitCode.SUCCESS
     assert {entry["last_run_status"] for entry in entries} == {None}
     assert {entry["retained_revisions"] for entry in entries} == {0}
+
+
+# --------------------------------------------------------------------------- #
+# Retention (plan §15, `docs/architecture.md` §7.4)
+# --------------------------------------------------------------------------- #
+
+
+def heads_through(client, layout, config, hub, count: int) -> list[str]:
+    """Publish `count` unique revisions of the model, oldest first."""
+    published = []
+    for index in range(count):
+        commit = f"{index + 1:040d}"
+        hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
+        hub.heads[MODEL.selector] = commit
+        run(client, layout, config)
+        published.append(commit)
+    return published
+
+
+def test_five_revisions_are_kept_unchanged(client, layout, config, hub):
+    published = heads_through(client, layout, config, hub, 5)
+
+    references = retained_references(layout, MODEL)
+    assert [reference.commit_sha for reference in references] == published
+    assert [reference.publication_generation for reference in references] == [1, 2, 3, 4, 5]
+
+
+def test_a_sixth_revision_removes_the_oldest(client, layout, config, hub):
+    published = heads_through(client, layout, config, hub, 6)
+
+    references = retained_references(layout, MODEL)
+    assert [reference.commit_sha for reference in references] == published[1:]
+    assert len(references) == 5
+    # The generation is retired, never reissued (`FS-20`).
+    assert [reference.publication_generation for reference in references] == [2, 3, 4, 5, 6]
+
+
+def test_the_pruned_tree_and_reference_are_gone(client, layout, config, hub):
+    published = heads_through(client, layout, config, hub, 6)
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    assert not repository.revision_ref(CommitSha(published[0])).exists()
+    assert not any(repository.revision(CommitSha(published[0])).glob("*"))
+
+
+def test_the_pruned_revision_leaves_durable_evidence(client, layout, config, hub):
+    # The manifest byte for byte plus a provenance record: together they prove
+    # what was there and why it went (`docs/schemas.md` §9.1).
+    published = heads_through(client, layout, config, hub, 6)
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    audit = repository.pruned_records(CommitSha(published[0]))
+    assert sorted(path.name.split(".", 1)[1] for path in audit.iterdir()) == [
+        "manifest.json",
+        "prune.json",
+    ]
+
+
+def test_the_current_revision_survives_the_prune(client, layout, config, hub):
+    published = heads_through(client, layout, config, hub, 6)
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    reference = read_reference(layout, repository.current_ref)
+    assert reference.commit_sha == published[5]
+    assert (layout.published / str(reference.tree)).is_dir()
+
+
+def test_the_prune_is_reported_in_the_run_that_caused_it(client, layout, config, hub):
+    heads_through(client, layout, config, hub, 5)
+    hub.revisions["6" * 40] = {**CONTENT, "generation.txt": b"5"}
+    hub.heads[MODEL.selector] = "6" * 40
+
+    outcome = run(client, layout, config)
+
+    result = next(r for r in outcome.report.repositories if r.repository_id == MODEL.id)
+    assert result.pruned is not None
+    assert result.pruned.publication_generation == 1
+
+
+def test_no_trash_survives_a_completed_prune(client, layout, config, hub):
+    heads_through(client, layout, config, hub, 6)
+
+    assert list(layout.trash.iterdir()) == []
+
+
+def test_the_prune_journal_records_every_checkpoint_in_order(client, layout, config, hub):
+    heads_through(client, layout, config, hub, 6)
+
+    prunes = [
+        read_journal(layout, path).journal
+        for path in sorted(layout.transactions.glob("*.json"))
+        if read_journal(layout, path).journal.operation == "prune"
+    ]
+    assert len(prunes) == 1
+    assert [checkpoint.name for checkpoint in prunes[0].checkpoints] == [
+        "plan_persisted",
+        "cache_revision_deleted",
+        "revision_ref_removed",
+        "tree_tombstoned",
+        "manifest_tombstoned",
+        "catalog_published",
+        "prune_logically_committed",
+        "audit_record_written",
+        "trash_removed",
+        "prune_completed",
+    ]
+    assert prunes[0].state == "committed"
+
+
+def test_a_repository_below_the_limit_never_prunes(client, layout, config, hub):
+    heads_through(client, layout, config, hub, 3)
+
+    prunes = [
+        path
+        for path in layout.transactions.glob("*.json")
+        if read_journal(layout, path).journal.operation == "prune"
+    ]
+    assert prunes == []
+
+
+def test_the_catalog_reflects_the_five_that_remain(client, layout, config, hub):
+    published = heads_through(client, layout, config, hub, 6)
+
+    catalog = RepositoriesCatalog.model_validate_json(
+        layout.repositories_catalog.read_text(encoding="utf-8")
+    )
+    entry = next(e for e in catalog.repositories if e.repository_id == MODEL.id)
+    assert [revision.commit_sha for revision in entry.revisions] == published[1:]
+
+
+def test_a_repository_with_no_current_reference_is_never_pruned(client, layout, config, hub):
+    # A repository whose first publication has not completed: pruning it would
+    # remove a revision while consumers have nothing to be pointed at.
+    heads_through(client, layout, config, hub, 6)
+    RepositoryLayout(archive=layout, identity=MODEL).current_ref.unlink()
+
+    assert plan_prune(layout, MODEL, maximum=1, generated_at=datetime.now(UTC)) is None
+
+
+def test_a_cache_deletion_failure_is_hfret002(client, layout, config, hub, monkeypatch):
+    # Published hardlinks keep the bytes regardless, so the revision is
+    # preserved and the run reports the failure rather than losing data.
+    heads_through(client, layout, config, hub, 5)
+
+    def refuse(cache_dir, commit_sha):
+        message = "the cache is unreadable"
+        raise OSError(message)
+
+    monkeypatch.setattr("huggingface_hub.scan_cache_dir", refuse)
+    hub.revisions["6" * 40] = {**CONTENT, "generation.txt": b"5"}
+    hub.heads[MODEL.selector] = "6" * 40
+
+    outcome = run(client, layout, config)
+
+    result = next(r for r in outcome.report.repositories if r.repository_id == MODEL.id)
+    assert result.status == "failed"
+    assert result.errors == ("HFRET002",)
+    # Nothing was removed: six revisions remain, which is the preferred outcome.
+    assert len(retained_references(layout, MODEL)) == 6
+
+
+# --------------------------------------------------------------------------- #
+# The `prune` command (`docs/cli.md` §2)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.usefixtures("_wired")
+def test_prune_dry_run_reports_the_plan_and_mutates_nothing(config_file: Path, layout, hub):
+    for index in range(6):
+        commit = f"{index + 1:040d}"
+        hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
+        hub.heads[MODEL.selector] = commit
+        hub.heads[DATASET.selector] = commit
+        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    # `sync` already pruned to five; a further plan needs a lower maximum, so
+    # this asserts the *shape* of a dry run rather than forcing a second prune.
+    before = {reference.commit_sha for reference in retained_references(layout, MODEL)}
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--dry-run"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert json.loads(result.output)["data"]["plans"] == []
+    assert {r.commit_sha for r in retained_references(layout, MODEL)} == before
+
+
+@pytest.mark.usefixtures("_wired")
+def test_prune_dry_run_describes_the_revision_it_would_remove(config_file: Path, layout, hub):
+    for index in range(6):
+        commit = f"{index + 1:040d}"
+        hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
+        hub.heads[MODEL.selector] = commit
+        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    # Lower the limit so a plan exists to describe.
+    lowered = config_file.parent / "lowered.toml"
+    lowered.write_text(
+        config_file.read_text(encoding="utf-8").replace(
+            "[sync]", "maximum_revisions = 5\n\n[sync]"
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(lowered), "prune", "--dry-run"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+
+
+@pytest.mark.usefixtures("_wired")
+def test_prune_requires_exactly_one_mode(config_file: Path):
+    both = CliRunner().invoke(
+        app, ["--json", "--config", str(config_file), "prune", "--dry-run", "--apply"]
+    )
+    neither = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune"])
+
+    for result in (both, neither):
+        assert result.exit_code == ExitCode.CONFIGURATION
+        assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFARG002"]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_prune_apply_takes_the_lock_and_completes_a_plan(config_file: Path, layout, hub):
+    for index in range(6):
+        commit = f"{index + 1:040d}"
+        hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
+        hub.heads[MODEL.selector] = commit
+        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    payload = json.loads(result.output)["data"]
+    assert payload["plans"] == []
+    assert payload["applied"] == []
+
+
+@pytest.mark.usefixtures("_wired")
+def test_prune_prints_that_there_is_nothing_to_do(config_file: Path):
+    result = CliRunner().invoke(app, ["--config", str(config_file), "prune", "--dry-run"])
+
+    assert "nothing to prune" in result.output
+
+
+@pytest.mark.usefixtures("_wired")
+def test_prune_apply_completes_retention_an_earlier_failure_deferred(
+    config_file: Path, layout, hub
+):
+    # The command's documented reason to exist (`docs/cli.md` §2). The sixth
+    # publication's prune fails at cache deletion, leaving six revisions; a
+    # later `prune --apply` finishes the job.
+    for index in range(5):
+        commit = f"{index + 1:040d}"
+        hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
+        hub.heads[MODEL.selector] = commit
+        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    def refuse(cache_dir, commit_sha=None):
+        message = "the cache is unreadable"
+        raise OSError(message)
+
+    hub.revisions["6" * 40] = {**CONTENT, "generation.txt": b"5"}
+    hub.heads[MODEL.selector] = "6" * 40
+    # Scoped, so undoing it leaves the lock directory and the Hub wiring alone.
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr("huggingface_hub.scan_cache_dir", refuse)
+        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    assert len(retained_references(layout, MODEL)) == 6
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    applied = json.loads(result.output)["data"]["applied"]
+    assert [record["publication_generation"] for record in applied] == [1]
+    assert len(retained_references(layout, MODEL)) == 5
+
+
+@pytest.mark.usefixtures("_wired")
+def test_prune_reports_a_failure_rather_than_a_traceback(
+    config_file: Path, layout, hub, monkeypatch
+):
+    for index in range(5):
+        commit = f"{index + 1:040d}"
+        hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
+        hub.heads[MODEL.selector] = commit
+        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    def refuse(cache_dir, commit_sha=None):
+        message = "the cache is unreadable"
+        raise OSError(message)
+
+    hub.revisions["6" * 40] = {**CONTENT, "generation.txt": b"5"}
+    hub.heads[MODEL.selector] = "6" * 40
+    monkeypatch.setattr("huggingface_hub.scan_cache_dir", refuse)
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
+
+    assert result.exit_code == ExitCode.RETENTION
+    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFRET002"]
+    # Nothing removed: six revisions remain, which §15.2 prefers to losing one.
+    assert len(retained_references(layout, MODEL)) == 6

@@ -56,6 +56,7 @@ from hfcache.publication import (
 )
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery
 from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersions
+from hfcache.retention import apply_prune, plan_all
 from hfcache.storage import read_model
 from hfcache.sync import synchronize
 
@@ -63,7 +64,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
     from hfcache.archive import ArchiveInspection
-    from hfcache.models import Reference
+    from hfcache.models import PrunePlan, Reference
 
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
 
@@ -1099,6 +1100,106 @@ def _listed_revision(repository: RepositoryLayout, reference: Reference) -> dict
         "total_bytes": manifest.total_bytes,
         "verification_state": "verified",
     }
+
+
+# --------------------------------------------------------------------------- #
+# prune (`docs/cli.md` §2)
+# --------------------------------------------------------------------------- #
+
+
+@app.command()
+def prune(
+    ctx: typer.Context,
+    selectors: SelectorArgument = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Print the exact plan and mutate nothing."),
+    ] = False,
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Execute a validated plan."),
+    ] = False,
+) -> None:
+    """Inspect or complete retention cleanup (plan §15.2).
+
+    Retention normally runs inside `sync`; this command exists to inspect the
+    plan before it runs and to complete retention an earlier failure deferred
+    (`docs/cli.md` §2).
+
+    `--dry-run` reads only and takes no lock: it reports the plan `--apply`
+    would execute, built from the same references and manifests the prune itself
+    reads, so what an operator reviewed is what runs.
+
+    `--apply` mutates, so it takes the exclusive lock and passes the same §19
+    preflight as any other mutating command, and plans *inside* them — a plan
+    made before the lock could be stale by the time it ran.
+    """
+    started_at = utc_now()
+    options = _options(ctx)
+    command = f"prune {'--apply' if apply else '--dry-run'}"
+    try:
+        if dry_run == apply:
+            message = (
+                "exactly one of --dry-run and --apply is required: one describes what would "
+                "happen and the other performs it, and neither is a safe default"
+            )
+            raise ConfigurationError.single(message, code="HFARG002")
+        config = load_config(options.config_path)
+        wanted = {
+            RepositoryIdentity.from_config(repository).selector
+            for repository in _select(config, selectors)
+        }
+    except HfcacheError as error:
+        _report_failure(ctx, command, started_at, error)
+
+    layout = ArchiveLayout(root=config.storage.archive_root)
+    maximum = config.storage.maximum_revisions
+    try:
+        if apply:
+            with guarded(
+                layout,
+                storage=config.storage,
+                command=command,
+                lock_wait_seconds=config.sync.lock_wait_seconds,
+            ):
+                plans = _plans(layout, wanted, maximum=maximum)
+                # One run id for the whole invocation, so every prune journal
+                # this command opens correlates with the same envelope and with
+                # each other.
+                envelope = _run_envelope(config) | {"run_id": new_run_id()}
+                applied = [apply_prune(layout, plan, envelope=envelope) for plan in plans]
+        else:
+            plans = _plans(layout, wanted, maximum=maximum)
+            applied = []
+    except HfcacheError as error:
+        _report_failure(ctx, command, started_at, error)
+
+    payload: dict[str, Any] = {
+        "plans": [plan.model_dump(mode="json") for plan in plans],
+        "applied": [record.model_dump(mode="json") for record in applied],
+    }
+    _emit(
+        ctx,
+        command,
+        payload,
+        started_at=started_at,
+        lines={
+            f"{plan.repository_type}:{plan.repository_id}": (
+                f"prune generation {plan.selected.publication_generation} "
+                f"({plan.selected.commit_sha})"
+            )
+            for plan in plans
+        }
+        or {"retention": "nothing to prune"},
+    )
+
+
+def _plans(layout: ArchiveLayout, wanted: set[str], *, maximum: int) -> tuple[PrunePlan, ...]:
+    """Every prune the selected repositories need, in repository order."""
+    identities = [
+        identity for identity in published_repositories(layout) if identity.selector in wanted
+    ]
+    return plan_all(layout, identities, maximum=maximum, generated_at=datetime.now(UTC))
 
 
 # --------------------------------------------------------------------------- #
