@@ -44,16 +44,32 @@ from typing import TYPE_CHECKING, Final, Literal, final
 
 from hfcache.errors import ConfigurationError, HfcacheError, IntegrityError
 from hfcache.hashing import sha256_file
-from hfcache.identity import COMMIT_SHA_LENGTH, CommitSha, PublicationId, RepositoryIdentity
+from hfcache.identity import (
+    COMMIT_SHA_LENGTH,
+    CommitSha,
+    PublicationId,
+    RepositoryIdentity,
+    RunId,
+)
 from hfcache.manifests import FileEntry, RevisionManifest
 from hfcache.paths import RepositoryLayout, parse_repository_relative, resolve_within
 from hfcache.publication import (
+    publish_verification_catalog,
     published_repositories,
     read_reference,
     read_verification_catalog,
 )
-from hfcache.reporting import Finding, VerificationReport, VerificationScope
-from hfcache.storage import read_model
+from hfcache.reporting import (
+    Finding,
+    FullVerificationSummary,
+    OutstandingFailure,
+    RepositoryVerificationEntry,
+    VerificationCatalog,
+    VerificationReport,
+    VerificationRevisionEntry,
+    VerificationScope,
+)
+from hfcache.storage import read_model, write_model
 from hfcache.sync import ObjectIdentity
 
 if TYPE_CHECKING:
@@ -68,19 +84,25 @@ if TYPE_CHECKING:
 __all__ = [
     "FINDING_CODES",
     "INTRODUCING_STATUSES",
+    "REPORT_MODE",
+    "RUNS_MODE",
     "UNDETECTABLE",
     "ReadSet",
     "Resolved",
+    "RevisionOutcome",
     "VerificationEstimate",
     "VerificationOutcome",
     "VerificationTarget",
     "build_report",
     "estimate_verification",
+    "persist_verification",
     "require_retained",
     "resolve_archive",
     "resolve_repository",
     "resolve_revision",
     "resolve_run",
+    "retained_keys",
+    "verification_catalog",
     "verify_target",
     "verify_targets",
 ]
@@ -680,16 +702,67 @@ def _extra_finding(target: VerificationTarget, relative: PurePosixPath) -> Findi
 
 @final
 @dataclass(frozen=True, slots=True)
+class RevisionOutcome:
+    """One revision this run covered, and how it came out.
+
+    Carried through the run rather than collapsed into a finding list, because
+    `catalog/verification.json` records an outcome *per revision* — and "this
+    revision was re-read and was clean" is a fact no set of findings can express,
+    findings being what a clean revision does not produce.
+    """
+
+    commit_sha: str
+    findings: tuple[Finding, ...]
+    identity: RepositoryIdentity
+    publication_id: str | None
+
+    @property
+    def outcome(self) -> Literal["clean", "failed"]:
+        """Whether this revision came out clean."""
+        return "failed" if self.findings else "clean"
+
+
+@final
+@dataclass(frozen=True, slots=True)
 class VerificationOutcome:
     """What one `verify` invocation read, and what it found."""
 
-    findings: tuple[Finding, ...]
-    repositories: int
-    revisions: int
+    revisions_covered: tuple[RevisionOutcome, ...]
     bytes_read: int
     objects_read: int
     started_at: datetime
     completed_at: datetime
+
+    @property
+    def findings(self) -> tuple[Finding, ...]:
+        """Every finding the run made, in the order `docs/schemas.md` §7 fixes."""
+        return tuple(
+            sorted(
+                (finding for revision in self.revisions_covered for finding in revision.findings),
+                key=lambda finding: finding.sort_key,
+            )
+        )
+
+    @property
+    def repositories(self) -> int:
+        """Distinct repositories looked at.
+
+        Counted separately from revisions because "two repositories, seven
+        revisions" is how plan §16.4 and `docs/schemas.md` §7 describe a scope,
+        and how an operator sizes the next run.
+        """
+        return len({revision.identity.sort_key for revision in self.revisions_covered})
+
+    @property
+    def revisions(self) -> int:
+        """Revisions looked at, including ones too damaged to read.
+
+        A revision that could not be resolved still counts: the run did look at
+        it, and a report covering fewer revisions than it reported findings for
+        would be internally inconsistent. A SHA the archive no longer retains
+        counts toward neither, because nothing was there to look at.
+        """
+        return len(self.revisions_covered)
 
     @property
     def outcome(self) -> Literal["clean", "failed"]:
@@ -727,37 +800,44 @@ def verify_targets(
 ) -> VerificationOutcome:
     """Verify everything that resolved, and account for what it cost.
 
-    `repositories` counts distinct repositories rather than revisions, because
-    "two repositories, seven revisions" is how plan §16.4 and `docs/schemas.md`
-    §7 describe a scope and how an operator sizes the next run.
-
-    A revision that could not be resolved still counts toward `revisions`: the
-    run did look at it, and a report covering fewer revisions than it reported
-    findings for would be internally inconsistent. A SHA the archive no longer
-    retains counts toward neither, because nothing was there to look at.
+    One `RevisionOutcome` per revision the run *covered*, which is what the
+    verification catalog is updated from: a revision this run re-read and found
+    clean has to be distinguishable from one it never looked at, and only the
+    covered set can make that distinction.
     """
     reads = ReadSet()
-    findings: list[Finding] = []
-    repositories: set[tuple[str, str]] = set()
-    revisions = 0
-    for item in resolved:
-        findings.extend(item.findings)
-        repositories.update(
-            (finding.repository_type, finding.repository_id) for finding in item.findings
-        )
-        if item.target is not None:
-            repositories.add(item.target.identity.sort_key)
-            findings.extend(verify_target(item.target, reads))
-        if item.target is not None or item.findings:
-            revisions += 1
+    covered = [
+        _revision_outcome(item, reads)
+        for item in resolved
+        if item.target is not None or item.findings
+    ]
     return VerificationOutcome(
-        findings=tuple(sorted(findings, key=lambda finding: finding.sort_key)),
-        repositories=len(repositories),
-        revisions=revisions,
+        revisions_covered=tuple(covered),
         bytes_read=reads.bytes_read,
         objects_read=reads.objects_read,
         started_at=started_at,
         completed_at=now or datetime.now(UTC),
+    )
+
+
+def _revision_outcome(item: Resolved, reads: ReadSet) -> RevisionOutcome:
+    """Verify one resolved revision, or record the findings that stopped it."""
+    if item.target is None:
+        # An artifact too damaged to read still belongs to a revision, and the
+        # findings themselves say which — they were built from the reference
+        # path and the repository directory that led to it.
+        first = item.findings[0]
+        return RevisionOutcome(
+            commit_sha=first.commit_sha,
+            findings=item.findings,
+            identity=RepositoryIdentity.of(first.repository_type, first.repository_id),
+            publication_id=first.publication_id,
+        )
+    return RevisionOutcome(
+        commit_sha=item.target.reference.commit_sha,
+        findings=verify_target(item.target, reads),
+        identity=item.target.identity,
+        publication_id=item.target.reference.publication_id,
     )
 
 
@@ -916,4 +996,201 @@ def build_report(
             "throughput_bytes_per_second": outcome.throughput_bytes_per_second,
             "verification_outcome": outcome.outcome,
         }
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Persistence (plan §16.2 items 8 and 9)
+# --------------------------------------------------------------------------- #
+
+RUNS_MODE: Final = 0o700
+REPORT_MODE: Final = 0o600
+"""`runs/` is the writer's own record and is never consumer-visible (§5.2)."""
+
+
+def persist_verification(
+    layout: ArchiveLayout,
+    report: VerificationReport,
+    outcome: VerificationOutcome,
+    *,
+    mode: Literal["new", "full", "revision"],
+) -> Path:
+    """Write the report, then the catalog that names it (plan §16.2 items 8-9).
+
+    In that order, because the catalog's `last_full_verification.report` is a
+    path an operator follows. A catalog naming a report that had not been written
+    yet would be a dangling reference in the one artifact an operator reaches for
+    when they already suspect the archive.
+
+    Both writes are atomic renames of derived or append-only files, which is why
+    `--new` and `--revision` can do this without the lock `--full` holds: a
+    concurrent reader sees one whole catalog or the other, and a run report's
+    name carries a run id nothing else will reuse.
+    """
+    path = layout.run_report(report.started_at, RunId(report.run_id))
+    path.parent.mkdir(mode=RUNS_MODE, parents=True, exist_ok=True)
+    write_model(path, report, mode=REPORT_MODE, code="HFVER007", error=IntegrityError)
+    publish_verification_catalog(
+        layout,
+        verification_catalog(layout, outcome, mode=mode, report=layout.archive_relative(path)),
+    )
+    return path
+
+
+def retained_keys(layout: ArchiveLayout) -> set[tuple[str, str, str]]:
+    """Every `(type, id, commit_sha)` the archive retains, from the references alone.
+
+    No model is loaded: a reference's *name* is what makes a SHA retained
+    (`FS-11`), so the retained set can be read even when some of the references
+    themselves cannot be. That matters here, because this set is what stops the
+    verification catalog from accumulating entries about revisions the archive no
+    longer holds.
+    """
+    return {
+        (str(identity.type), identity.id, path.stem)
+        for identity in published_repositories(layout)
+        for path in (RepositoryLayout(archive=layout, identity=identity).refs / "revisions").glob(
+            "*.json"
+        )
+        if _is_commit_sha(path.stem)
+    }
+
+
+def verification_catalog(
+    layout: ArchiveLayout,
+    outcome: VerificationOutcome,
+    *,
+    mode: Literal["new", "full", "revision"],
+    report: PurePosixPath,
+) -> VerificationCatalog:
+    """Merge this run into the archive's verification headline (`docs/schemas.md` §5.2).
+
+    A merge rather than a replacement, and the rule is the one §5.2 states: an
+    entry is cleared only by a verification that re-read the same object, never
+    by a run that simply did not look at it. So `verify --new` refreshes the
+    revisions it covered and leaves the rest of the archive's history exactly as
+    it was — which is what stops a narrow run from appearing to fix a problem it
+    never examined.
+
+    There is a third way an entry leaves, beyond §5.2's two: the revision is no
+    longer retained. A pruned revision does not exist, and reporting the archive
+    permanently degraded over content it no longer holds would be a health signal
+    an operator could never clear.
+
+    `last_full_verification` is replaced only by `--full`. A `--new` run measures
+    a handful of objects, and letting its throughput stand as *the* measured rate
+    would give the estimator a figure from the wrong workload.
+    """
+    previous = read_verification_catalog(layout)
+    retained = retained_keys(layout)
+    covered = {
+        (str(revision.identity.type), revision.identity.id, revision.commit_sha)
+        for revision in outcome.revisions_covered
+    }
+    return VerificationCatalog(
+        generated_at=outcome.completed_at,
+        last_full_verification=_last_full(previous, outcome, mode=mode, report=report),
+        outstanding_failures=tuple(
+            sorted(
+                _outstanding(previous, outcome, retained=retained, covered=covered),
+                key=lambda failure: failure.sort_key,
+            )
+        ),
+        repositories=_repository_entries(previous, outcome, retained=retained, covered=covered),
+    )
+
+
+def _repository_entries(
+    previous: VerificationCatalog | None,
+    outcome: VerificationOutcome,
+    *,
+    retained: set[tuple[str, str, str]],
+    covered: set[tuple[str, str, str]],
+) -> tuple[RepositoryVerificationEntry, ...]:
+    """Per-revision outcomes: this run's, over what the archive still retains."""
+    held: dict[tuple[str, str], dict[str, VerificationRevisionEntry]] = {}
+    for entry in previous.repositories if previous else ():
+        for revision in entry.revisions:
+            key = (entry.repository_type, entry.repository_id, revision.commit_sha)
+            if key in retained and key not in covered:
+                held.setdefault(key[:2], {})[revision.commit_sha] = revision
+    for revision in outcome.revisions_covered:
+        key = (str(revision.identity.type), revision.identity.id)
+        held.setdefault(key, {})[revision.commit_sha] = VerificationRevisionEntry(
+            commit_sha=revision.commit_sha,
+            outcome=revision.outcome,
+            publication_id=revision.publication_id,
+            verified_at=outcome.completed_at,
+        )
+    return tuple(
+        sorted(
+            (
+                RepositoryVerificationEntry.model_validate(
+                    {
+                        "repository_id": repository_id,
+                        "repository_type": repository_type,
+                        "revisions": sorted(entries.values(), key=lambda item: item.commit_sha),
+                    }
+                )
+                for (repository_type, repository_id), entries in held.items()
+            ),
+            key=lambda entry: (entry.repository_type, entry.repository_id),
+        )
+    )
+
+
+def _outstanding(
+    previous: VerificationCatalog | None,
+    outcome: VerificationOutcome,
+    *,
+    retained: set[tuple[str, str, str]],
+    covered: set[tuple[str, str, str]],
+) -> list[OutstandingFailure]:
+    """Carry forward what this run did not re-check, and record what it found.
+
+    `first_seen_at` is preserved for a failure that was already outstanding, so
+    an operator can tell a fault that appeared last night from one that has been
+    reported for a quarter.
+    """
+    existing = previous.outstanding_failures if previous else ()
+    seen = {failure.sort_key: failure.first_seen_at for failure in existing}
+    kept = [
+        failure
+        for failure in existing
+        if (key := (failure.repository_type, failure.repository_id, failure.commit_sha)) in retained
+        and key not in covered
+    ]
+    return kept + [
+        OutstandingFailure(
+            commit_sha=finding.commit_sha,
+            first_seen_at=seen.get(finding.sort_key, outcome.completed_at),
+            kind=finding.kind,
+            path=finding.path,
+            publication_id=finding.publication_id,
+            repository_id=finding.repository_id,
+            repository_type=finding.repository_type,
+        )
+        for finding in outcome.findings
+    ]
+
+
+def _last_full(
+    previous: VerificationCatalog | None,
+    outcome: VerificationOutcome,
+    *,
+    mode: Literal["new", "full", "revision"],
+    report: PurePosixPath,
+) -> FullVerificationSummary | None:
+    """This run's summary when it was a full one, otherwise the previous one."""
+    if mode != "full":
+        return previous.last_full_verification if previous else None
+    return FullVerificationSummary(
+        completed_at=outcome.completed_at,
+        duration_seconds=outcome.duration_seconds,
+        outcome=outcome.outcome,
+        report=str(report),
+        started_at=outcome.started_at,
+        throughput_bytes_per_second=outcome.throughput_bytes_per_second,
+        unique_bytes=outcome.bytes_read,
+        unique_objects=outcome.objects_read,
     )

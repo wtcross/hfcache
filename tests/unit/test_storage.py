@@ -15,16 +15,26 @@ Inspection and initialization are `tests/unit/test_archive.py`; the ordered
 checks built on these primitives are `tests/unit/test_preflight.py`.
 """
 
+import ast
 import os
 import shutil
 import stat
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
 from hfcache.archive import initialize_archive
-from hfcache.errors import ExitCode, SafetyError
+from hfcache.errors import (
+    ConfigurationError,
+    ExitCode,
+    IntegrityError,
+    RetentionError,
+    SafetyError,
+    SynchronizationError,
+)
 from hfcache.identity import ProbeId
+from hfcache.models import ArchiveSentinel, Provenance
 from hfcache.paths import ArchiveLayout
 from hfcache.storage import (
     BYTES_PER_GIB,
@@ -53,7 +63,9 @@ from hfcache.storage import (
     read_mount_table,
     same_filesystem_problems,
     temporary_sibling,
+    write_model,
 )
+from hfcache.taxonomy import classify
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 
@@ -877,3 +889,76 @@ def test_a_replacement_that_leaves_a_temporary_behind_is_hfmnt013(
 
     assert codes(problems) == ["HFMNT013"]
     assert "may survive it" in problems[0].message
+
+
+# --------------------------------------------------------------------------- #
+# `write_model` pairs its code with its error class (decision 52)
+# --------------------------------------------------------------------------- #
+
+
+def test_a_write_failure_raises_the_class_the_caller_paired_with_its_code(tmp_path: Path):
+    directory = tmp_path / "read-only"
+    directory.mkdir()
+    directory.chmod(0o500)
+    try:
+        with pytest.raises(IntegrityError) as caught:
+            write_model(
+                directory / "report.json",
+                _sentinel(),
+                mode=0o600,
+                code="HFVER007",
+                error=IntegrityError,
+            )
+    finally:
+        directory.chmod(0o700)
+    assert caught.value.exit_code == classify("HFVER007") == ExitCode.INTEGRITY
+
+
+def test_every_write_model_call_site_pairs_its_code_with_the_taxonomy(tmp_path: Path):
+    """Scanned out of `src/`, so a new call site is checked the moment it lands.
+
+    The exit an error carries comes from its class; the classification
+    `docs/cli.md` §5 publishes comes from the code's family. A prune audit record
+    written with `SafetyError` and an `HFRET` code would exit `20` for a
+    condition the taxonomy calls `50`, which is the wrong instruction to a
+    scheduler in the middle of an incident.
+    """
+    classes = {
+        "ConfigurationError": ConfigurationError,
+        "IntegrityError": IntegrityError,
+        "RetentionError": RetentionError,
+        "SafetyError": SafetyError,
+        "SynchronizationError": SynchronizationError,
+    }
+    pairings: list[tuple[str, str, str]] = []
+    for source in sorted(Path("src/hfcache").glob("*.py")):
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            if not (isinstance(node.func, ast.Name) and node.func.id == "write_model"):
+                continue
+            keywords = {keyword.arg: keyword.value for keyword in node.keywords}
+            code = keywords.get("code")
+            if not isinstance(code, ast.Constant):
+                continue
+            error = keywords.get("error")
+            name = error.id if isinstance(error, ast.Name) else "SafetyError"
+            pairings.append((source.name, str(code.value), name))
+
+    assert pairings, "no write_model call sites were found; the scan is broken"
+    mismatched = [
+        (where, code, name)
+        for where, code, name in pairings
+        if classes[name].exit_code != classify(code)
+    ]
+    assert mismatched == []
+
+
+def _sentinel() -> ArchiveSentinel:
+    """Any small durable model; what is under test is the failure, not the shape."""
+    return ArchiveSentinel(
+        archive_id=ARCHIVE_ID,
+        created_at=datetime(2026, 7, 26, 12, 0, 0, tzinfo=UTC),
+        created_by=Provenance(application_version="0.1.0", hostname="writer.example"),
+    )

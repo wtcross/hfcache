@@ -459,7 +459,11 @@ def apply_prune(
         repository.pruned_manifest(commit, publication), manifest_bytes, mode=AUDIT_FILE_MODE
     )
     write_model(
-        repository.prune_record(commit, publication), record, mode=AUDIT_FILE_MODE, code="HFRET004"
+        repository.prune_record(commit, publication),
+        record,
+        mode=AUDIT_FILE_MODE,
+        code="HFRET004",
+        error=RetentionError,
     )
     fsync_directory(audit)
     transaction.checkpoint("audit_record_written", audit_path=str(layout.archive_relative(audit)))

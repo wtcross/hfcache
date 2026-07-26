@@ -167,7 +167,7 @@ have closed, recorded here rather than left to be rediscovered:
 - [x] VER-002 Unique-object full verification (2026-07-26, this commit — `verify --full` over `verification.resolve_archive`, which reads the repository set off `published/repos/` rather than off configuration: removing a repository from configuration never deletes its archive (`AD-06`), so a quarterly job that skipped unmanaged repositories would leave exactly the content nothing else touches unchecked. The lock is `preflight.guarded` with `verification.lock_wait_seconds`, which is the *global* lock rather than a second one (§22.3) — that is what makes `--full` mutually exclusive with sync, prune, and repair, and it is taken before the §19 gate for the same reason every mutating command takes it first. `hub.networking_disabled` sets `HF_HUB_OFFLINE` for the duration and restores the previous value rather than clearing it, since a deployment may legitimately run offline; the real guarantee is structural, though, and is asserted as such — `verify` builds no `HubClient` and resolves no credential, and a test replaces `HubClient` with one that raises to prove it. Read-once is now demonstrated at archive scale: two revisions sharing hardlinked blobs report one read per object, and the same pair published in copy mode reports two. 100% branch coverage on `verification.py` and `hub.py`)
 - [x] VER-003 Revision-scoped verification (2026-07-26, this commit — `verify --revision TYPE:ID@SHA`, the mode an operator uses after a `--full` reported a finding and again after a `repair` claims to have fixed it. The SHA is *required* rather than defaulted to the current revision: defaulting would answer a question nobody asked and would report clean while the suspect revision sat unexamined (`HFARG001` when the selector carries none). The repository need not be in configuration, because an unmanaged repository's data is still the archive's (`AD-06`) and a revision under investigation is often one whose repository was removed — so `--revision` deliberately does not go through `_select`. A SHA the archive does not retain is `HFARG004` at exit `10` rather than a finding at exit `40`, since telling a scheduler the archive is corrupt because somebody typed one wrong character is the worse failure; `verification.require_retained` owns that distinction and still returns a *damaged* revision as findings, because the operator asked about that SHA and it is there. `_mode_option` names the mode in the envelope's `command` even for an invocation that was itself the thing refused)
 - [x] VER-004 Verification estimation (2026-07-26, this commit — `verify --estimate` costs a full verification with `stat` alone: nothing is hashed, nothing is opened, no lock is taken, and it always exits `0` because nothing was read and so nothing can have been found wrong. The unique set is built exactly the way `ReadSet` builds it — by `(device, inode)` for a hardlink-published instance and per file for a copy-published one — so the figure it reports is the figure `--full` would actually read rather than the archive's logical size. A path that cannot be `stat`ed is counted separately and charged nothing, so an operator reading a suspiciously small estimate can see why it is small. `publication.read_verification_catalog` is new and supplies the last measured throughput; it returns `None` for a catalog that is *absent or unreadable*, deliberately, because every caller uses that file to raise confidence and derived state (`FS-16`) must never do that — an unreadable catalog leaves every revision reading `unverified`, which is the signal an operator acts on. Before the first `--full` there is no measured rate and therefore no estimated duration: a number derived from a rate nobody measured is a guess wearing a decimal point, and this is the operator sizing a maintenance window. Decision 50 records why `storage_maintenance` reports `undetectable`)
-- [ ] VER-005 Verification reports and current health
+- [x] VER-005 Verification reports and current health (2026-07-26, this commit — plan §16.2 items 8 and 9, and the second item this phase carried in. `verification.persist_verification` writes the durable `VerificationReport` under `runs/` and *then* the catalog that names it, in that order because `last_full_verification.report` is a path an operator follows and a catalog naming a report that did not exist yet would be a dangling reference in the one artifact reached for when the archive is already suspect. A failing run writes its report exactly as a clean one does: the evidence is the point. `verification.verification_catalog` **merges** rather than replaces, which is what `docs/schemas.md` §5.2 requires — an outstanding failure is cleared only by a verification that re-read the same object, never by a narrow run that did not look, and `first_seen_at` is preserved across re-reports so an operator can tell last night's fault from a quarter-old one. A third clearing path is added and documented: a revision that is no longer retained leaves the catalog, because a pruned revision does not exist and an archive reported permanently degraded over content it no longer holds carries a signal nobody can clear. `last_full_verification` is replaced only by `--full`, since a `--new` run measures a handful of objects and its throughput would give the estimator the wrong workload. `VerificationOutcome` now carries a `RevisionOutcome` per revision *covered*, because "this revision was re-read and was clean" is a fact no set of findings can express. `status` reports the archive-level verification block `docs/cli.md` §2 asks for and still exits `0` — it reports, and `verify` classifies. **Both carried-in items and two corrections:** decision 51 settles `verification_state` and gives all three call sites one source of truth (`failed` was previously unreachable); decision 52 fixes `storage.write_model`, which always raised `SafetyError` and so exited `20` for every `HFSYN`/`HFRET`/`HFVER` code it was given — decision 46's rule applied everywhere except there. All new modules at 100% branch coverage)
 - [ ] VER-006 Isolated-cache repair, atomic ref switching, retirement grace, checkpointed cleanup
 
 ## Phase 7 — TrueNAS and CentOS Stream Deployment
@@ -1017,3 +1017,51 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     operator to confirm the quarterly calendar does not overlap NAS maintenance
     before enabling the timer, which is the same decision made by the party that
     can actually see the schedule.
+
+51. **`verification_state` comes from `catalog/verification.json`, and a
+    revision nothing has re-read is `unverified`** (2026-07-26, `VER-005`).
+    This settles the second item Phase 6 carried in. No document said whether a
+    revision that was SHA-256 verified at ingestion but never verified offline
+    is `verified` or `unverified`, and three call sites hardcoded `"verified"`,
+    which made `failed` unreachable and `unverified` unreportable for any
+    published revision.
+
+    Ingestion hashing is not verification of the published revision. It reads
+    the bytes in the *Hub cache*, before the publication tree exists, and its
+    result is already recorded where it belongs — `manifest.verification.outcome`
+    is `verified` and always will be, because a manifest is only published after
+    ingestion succeeds (`docs/schemas.md` §3.4). `verify` reads the *tree*, which
+    is a different set of bytes on a different filesystem at a different time,
+    and `catalog/verification.json` is the record of that. Reporting `verified`
+    for a revision nothing has ever re-read would make the field unfalsifiable —
+    which is exactly the symptom the hardcoding produced.
+
+    So: `clean` in the verification catalog is `verified`, `failed` is `failed`,
+    and no entry is `unverified`. `publication.VerificationStates` is the single
+    reader, and `publication._catalog_entry`, `cli._status_entry`, and
+    `cli._listed_revision` all go through it. A newly published revision reads
+    `unverified` until a `verify` covers it, which is what makes the §29 rollout
+    checkpoint's `verify --full` a step that changes something observable.
+
+    The two catalog models gained nullable `publication_id` for the same single
+    case decision 49 gave `Finding`, and `docs/schemas.md` §5.2 now says so.
+
+52. **`storage.write_model` takes the caller's error class, not just its code**
+    (2026-07-26, `VER-005`). Decision 46 settled that an error's class and its
+    code's family must agree, because the exit comes from the class and the
+    `docs/cli.md` §5 classification comes from the family. `sha256_file` and
+    `read_model` were fixed to take `error=`; `write_model` was not, and always
+    raised `SafetyError`.
+
+    Every existing call site was therefore mismatched. A failed reference write
+    reported `HFSYN007` — documented as exit `30` — and exited `20`; a failed
+    prune audit record reported `HFRET004` and exited `20` rather than `50`.
+    Both send a scheduler to investigate the mount when the mount is fine and
+    the run is what failed. `tests/unit/test_publication.py` had pinned the old
+    behaviour with a comment explaining it, which is how it survived.
+
+    `write_model` now takes `error=` with `SafetyError` as the default, and all
+    nine call sites pair explicitly. `tests/unit/test_storage.py` parses the
+    call sites out of `src/` with `ast` and checks each pairing against
+    `taxonomy.classify`, so a new one is checked the moment it lands rather than
+    at exit time during an incident.

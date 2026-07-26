@@ -49,9 +49,11 @@ from hfcache.preflight import (
     storage_checks,
 )
 from hfcache.publication import (
+    VerificationStates,
     projected_publication_bytes,
     published_repositories,
     read_reference,
+    read_verification_catalog,
     retained_references,
 )
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery
@@ -64,6 +66,7 @@ from hfcache.verification import (
     UNDETECTABLE,
     build_report,
     estimate_verification,
+    persist_verification,
     require_retained,
     resolve_archive,
     resolve_run,
@@ -793,7 +796,8 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
 
     layout = ArchiveLayout(root=config.storage.archive_root)
     last_run = _last_run_statuses(layout)
-    entries = [_status_entry(layout, repository, last_run) for repository in selected]
+    states = VerificationStates.of(layout)
+    entries = [_status_entry(layout, repository, last_run, states) for repository in selected]
     archive: dict[str, Any] = {
         "archive_id": config.storage.archive_id,
         "root": str(config.storage.archive_root),
@@ -815,6 +819,7 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
         archive["reachable"] = True
         archive |= health.as_payload()
         warnings.extend(health.reconciliation.warnings)
+    archive["verification"] = _verification_health(layout)
 
     payload: dict[str, Any] = {"archive": archive, "repositories": entries}
     if options.json_output:
@@ -823,9 +828,44 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     if not options.quiet:
         for entry in entries:
             state = "enabled" if entry["enabled"] else "disabled"
-            typer.echo(f"{entry['repository_type']}:{entry['repository_id']}  {state}")
+            typer.echo(
+                f"{entry['repository_type']}:{entry['repository_id']}  {state}"
+                f"  {entry['verification_state']}"
+            )
+        if archive["verification"]["degraded"]:
+            typer.echo(
+                f"archive degraded: {archive['verification']['outstanding_failures']} "
+                f"outstanding verification failures",
+                err=True,
+            )
         for warning in warnings:
             typer.echo(warning.as_line(), err=True)
+
+
+def _verification_health(layout: ArchiveLayout) -> dict[str, Any]:
+    """The archive's verification headline, as `docs/cli.md` §2 requires of `status`.
+
+    `degraded` is the one an operator acts on, and it stays true until a
+    verification re-reads the objects that failed or a repair replaces them
+    (`docs/schemas.md` §5.2) — never merely because a later narrow run did not
+    look. `status` still exits `0`: it reports, and `verify` is what classifies.
+
+    An archive with no verification catalog reports `degraded = false` with no
+    last full verification, which is the truth about an archive nothing has
+    verified yet rather than a claim that it is sound.
+    """
+    catalog = read_verification_catalog(layout)
+    if catalog is None:
+        return {"degraded": False, "last_full_verification": None, "outstanding_failures": 0}
+    return {
+        "degraded": catalog.is_degraded,
+        "last_full_verification": (
+            catalog.last_full_verification.model_dump(mode="json")
+            if catalog.last_full_verification
+            else None
+        ),
+        "outstanding_failures": len(catalog.outstanding_failures),
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -927,7 +967,10 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
 
 
 def _status_entry(
-    layout: ArchiveLayout, repository: RepositoryConfig, last_run: Mapping[str, str]
+    layout: ArchiveLayout,
+    repository: RepositoryConfig,
+    last_run: Mapping[str, str],
+    states: VerificationStates,
 ) -> dict[str, Any]:
     """One repository's local truth, from its references and the last run report.
 
@@ -966,7 +1009,10 @@ def _status_entry(
     if reference is not None:
         entry["current_commit_sha"] = reference.commit_sha
         entry["current_publication_generation"] = reference.publication_generation
-        entry["verification_state"] = "verified"
+        # The current revision's state, from the one place any of it is recorded
+        # (decision 51). A revision nothing has verified offline reads
+        # `unverified`, which is what makes `verified` mean something.
+        entry["verification_state"] = states.state_of(identity, reference.commit_sha)
     return entry
 
 
@@ -1047,6 +1093,7 @@ def list_repositories(
         RepositoryIdentity.from_config(repository).selector: repository
         for repository in config.repositories
     }
+    states = VerificationStates.of(layout)
     entries: list[dict[str, Any]] = []
     for identity in published_repositories(layout):
         if repository_type is not None and identity.type != repository_type:
@@ -1055,7 +1102,9 @@ def list_repositories(
         # unmanaged repository the operator did not ask about by name.
         if selectors and identity.selector not in wanted:
             continue
-        entries.append(_listed(layout, identity, configured.get(identity.selector), revisions))
+        entries.append(
+            _listed(layout, identity, configured.get(identity.selector), revisions, states)
+        )
 
     _emit(
         ctx,
@@ -1081,6 +1130,7 @@ def _listed(
     identity: RepositoryIdentity,
     configured: RepositoryConfig | None,
     revisions: bool,
+    states: VerificationStates,
 ) -> dict[str, Any]:
     """One repository's inventory, read from its references and manifests."""
     repository = RepositoryLayout(archive=layout, identity=identity)
@@ -1098,11 +1148,18 @@ def _listed(
         "retained_revisions": len(held),
     }
     if revisions:
-        entry["revisions"] = [_listed_revision(repository, reference) for reference in held]
+        entry["revisions"] = [
+            _listed_revision(repository, reference, identity, states) for reference in held
+        ]
     return entry
 
 
-def _listed_revision(repository: RepositoryLayout, reference: Reference) -> dict[str, Any]:
+def _listed_revision(
+    repository: RepositoryLayout,
+    reference: Reference,
+    identity: RepositoryIdentity,
+    states: VerificationStates,
+) -> dict[str, Any]:
     """One retained revision, from the immutable manifest that describes it."""
     manifest = read_model(
         repository.manifest(
@@ -1119,7 +1176,7 @@ def _listed_revision(repository: RepositoryLayout, reference: Reference) -> dict
         "publication_id": manifest.publication_id,
         "published_at": manifest.published_at.isoformat().replace("+00:00", "Z"),
         "total_bytes": manifest.total_bytes,
-        "verification_state": "verified",
+        "verification_state": states.state_of(identity, manifest.commit_sha),
     }
 
 
@@ -1234,7 +1291,15 @@ def verify(
         mode=mode,
         run_id=new_run_id(),
     )
-    _emit_verification(ctx, command, report, started_at=stamp)
+    try:
+        # Persisted before the envelope is rendered, so an operator reading a
+        # `40` on stderr can already open the report it names. A findings run
+        # writes its report exactly as a clean one does: the evidence is the
+        # point (plan §16.2 items 8-9).
+        report_path = persist_verification(layout, report, outcome, mode=mode)
+    except HfcacheError as error:
+        _report_failure(ctx, command, stamp, error, report.model_dump(mode="json"))
+    _emit_verification(ctx, command, report, report_path, started_at=stamp, layout=layout)
 
 
 def _chosen_modes(*, new: bool, full: bool, revision: str | None, estimate: bool) -> list[str]:
@@ -1383,7 +1448,13 @@ def _run_to_verify(layout: ArchiveLayout, run_id: str | None) -> RunReport:
 
 
 def _emit_verification(
-    ctx: typer.Context, command: str, report: VerificationReport, *, started_at: str
+    ctx: typer.Context,
+    command: str,
+    report: VerificationReport,
+    report_path: Path,
+    *,
+    started_at: str,
+    layout: ArchiveLayout,
 ) -> None:
     """Render a verification report and exit with its classification.
 
@@ -1395,6 +1466,7 @@ def _emit_verification(
     options = _options(ctx)
     problems = _finding_problems(report)
     payload = report.model_dump(mode="json")
+    payload["report"] = str(layout.archive_relative(report_path))
     if options.json_output:
         emit_envelope(
             command,
@@ -1413,6 +1485,7 @@ def _emit_verification(
                 "objects read": str(report.scope.unique_objects_read),
                 "bytes read": _bytes(report.scope.unique_bytes_read),
                 "findings": str(len(report.findings)),
+                "report": str(layout.archive_relative(report_path)),
             }
         )
         for problem in problems:

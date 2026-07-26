@@ -22,7 +22,11 @@ from hfcache.hub import OFFLINE_VARIABLE, networking_disabled
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, new_run_id
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.paths import ArchiveLayout, RepositoryLayout
-from hfcache.publication import publish_verification_catalog
+from hfcache.publication import (
+    publish_verification_catalog,
+    read_verification_catalog,
+    rebuild_catalog,
+)
 from hfcache.reporting import FullVerificationSummary, RunReport, VerificationCatalog
 from hfcache.storage import parse_mount_table, write_model
 from tests.unit.test_verification import (
@@ -709,3 +713,269 @@ def test_estimate_and_new_together_are_refused(config_path):
     result = invoke(config_path, "--new", "--estimate")
     assert result.exit_code == ExitCode.CONFIGURATION
     assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFARG002"]
+
+
+# --------------------------------------------------------------------------- #
+# Persistence and health (plan §16.2 items 8 and 9)
+# --------------------------------------------------------------------------- #
+
+
+def reports_in(layout: ArchiveLayout) -> list[Path]:
+    return sorted(layout.runs.glob("*.json"))
+
+
+def test_a_verification_writes_a_durable_report(config_path, archive):
+    published = publish(archive)
+    write_run_report(
+        archive, commit_sha=published.commit_sha, publication_id=published.publication_id
+    )
+    before = reports_in(archive)
+    envelope = envelope_of(invoke(config_path, "--new"))
+
+    written = [path for path in reports_in(archive) if path not in before]
+    assert len(written) == 1
+    assert envelope["data"]["report"] == f"runs/{written[0].name}"
+    persisted = json.loads(written[0].read_text(encoding="utf-8"))
+    assert persisted["run_id"] == envelope["run_id"]
+    assert persisted["command"] == "verify --new"
+    assert persisted["verification_outcome"] == "clean"
+    assert written[0].stat().st_mode & 0o777 == 0o600
+
+
+def test_a_failing_verification_writes_its_report_too(config_path, archive):
+    """The evidence is the point: a run that found something must leave a record."""
+    published = publish(archive)
+    write_run_report(
+        archive, commit_sha=published.commit_sha, publication_id=published.publication_id
+    )
+    (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
+    before = reports_in(archive)
+
+    result = invoke(config_path, "--new")
+    assert result.exit_code == ExitCode.INTEGRITY
+
+    written = [path for path in reports_in(archive) if path not in before]
+    persisted = json.loads(written[0].read_text(encoding="utf-8"))
+    assert persisted["verification_outcome"] == "failed"
+    assert persisted["findings"][0]["kind"] == "missing"
+
+
+def test_a_full_verification_updates_the_catalog(config_path, archive):
+    published = publish(archive)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.outstanding_failures == ()
+    assert catalog.last_full_verification is not None
+    assert catalog.last_full_verification.outcome == "clean"
+    assert catalog.last_full_verification.report.startswith("runs/")
+    assert (archive.root / catalog.last_full_verification.report).is_file()
+    (entry,) = catalog.repositories
+    assert entry.repository_id == MODEL.id
+    assert [revision.commit_sha for revision in entry.revisions] == [published.commit_sha]
+    assert entry.revisions[0].outcome == "clean"
+
+
+def test_findings_become_outstanding_failures(config_path, archive):
+    published = publish(archive)
+    (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.is_degraded
+    (failure,) = catalog.outstanding_failures
+    assert failure.kind == "missing"
+    assert failure.path == "config.json"
+    assert catalog.repositories[0].revisions[0].outcome == "failed"
+
+
+def test_a_narrow_run_never_clears_a_failure_it_did_not_look_at(config_path, archive):
+    """`docs/schemas.md` §5.2: an entry is cleared only by a verification that
+    re-reads the object, never by one that simply did not check it."""
+    damaged = publish(archive, commit_sha=SHA_A)
+    publish(archive, commit_sha=SHA_B)
+    (tree_of(archive, damaged.commit_sha, damaged.publication_id) / "config.json").unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    healthy = invoke(config_path, "--revision", f"{MODEL.selector}@{SHA_B}")
+    assert healthy.exit_code == ExitCode.SUCCESS
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.is_degraded
+    assert [failure.commit_sha for failure in catalog.outstanding_failures] == [SHA_A]
+    assert catalog.repositories[0].revisions[1].outcome == "clean"
+
+
+def test_re_reading_a_repaired_object_clears_its_failure(config_path, archive):
+    published = publish(archive)
+    path = tree_of(archive, published.commit_sha, published.publication_id) / "config.json"
+    payload = path.read_bytes()
+    path.unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    path.write_bytes(payload)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.outstanding_failures == ()
+    assert not catalog.is_degraded
+
+
+def test_first_seen_at_survives_a_second_report_of_the_same_failure(config_path, archive):
+    """An operator has to be able to tell last night's fault from a quarter-old one."""
+    published = publish(archive)
+    (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+    first = read_verification_catalog(archive)
+    assert first is not None
+
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+    second = read_verification_catalog(archive)
+    assert second is not None
+
+    assert second.outstanding_failures[0].first_seen_at == (
+        first.outstanding_failures[0].first_seen_at
+    )
+    assert second.generated_at > first.generated_at
+
+
+def test_a_revision_that_is_no_longer_retained_leaves_the_catalog(config_path, archive):
+    """A pruned revision does not exist, and reporting the archive permanently
+    degraded over content it no longer holds is a signal nobody can clear."""
+    published = publish(archive, commit_sha=SHA_A)
+    publish(archive, commit_sha=SHA_B)
+    (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    RepositoryLayout(archive=archive, identity=MODEL).revision_ref(CommitSha(SHA_A)).unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.outstanding_failures == ()
+    assert [revision.commit_sha for revision in catalog.repositories[0].revisions] == [SHA_B]
+
+
+def test_a_narrow_run_does_not_replace_the_last_full_verification(config_path, archive):
+    """A `--new` run measures a handful of objects; letting its throughput stand
+    as the measured rate would give the estimator the wrong workload."""
+    published = publish(archive)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+    after_full = read_verification_catalog(archive)
+    assert after_full is not None
+
+    write_run_report(
+        archive, commit_sha=published.commit_sha, publication_id=published.publication_id
+    )
+    assert invoke(config_path, "--new").exit_code == ExitCode.SUCCESS
+
+    after_new = read_verification_catalog(archive)
+    assert after_new is not None
+    assert after_new.last_full_verification == after_full.last_full_verification
+
+
+def test_an_unreadable_reference_is_recorded_without_naming_an_instance(config_path, archive):
+    published = publish(archive)
+    RepositoryLayout(archive=archive, identity=MODEL).revision_ref(
+        CommitSha(published.commit_sha)
+    ).write_text("{ not json", encoding="utf-8")
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.outstanding_failures[0].publication_id is None
+    assert catalog.repositories[0].revisions[0].publication_id is None
+    assert catalog.repositories[0].revisions[0].outcome == "failed"
+
+
+def test_a_report_that_cannot_be_written_is_reported(config_path, archive, monkeypatch):
+    published = publish(archive)
+    write_run_report(
+        archive, commit_sha=published.commit_sha, publication_id=published.publication_id
+    )
+    archive.runs.chmod(0o500)
+    try:
+        result = invoke(config_path, "--new")
+    finally:
+        archive.runs.chmod(0o700)
+    assert result.exit_code == ExitCode.INTEGRITY
+    # The verification itself still reached a verdict, and it is in the payload.
+    assert envelope_of(result)["data"]["verification_outcome"] == "clean"
+
+
+# --------------------------------------------------------------------------- #
+# `verification_state` has one source of truth (decision 51)
+# --------------------------------------------------------------------------- #
+
+
+def status_of(config_path: Path) -> dict:
+    result = runner.invoke(app, ["--config", str(config_path), "--json", "status"])
+    return json.loads(result.stdout)["data"]
+
+
+def listed(config_path: Path) -> dict:
+    result = runner.invoke(app, ["--config", str(config_path), "--json", "list", "--revisions"])
+    return json.loads(result.stdout)["data"]
+
+
+def test_a_published_revision_is_unverified_until_something_verifies_it(config_path, archive):
+    """Ingestion hashing read the Hub cache before the tree existed; `verify` is
+    what reads the tree (decision 51)."""
+    publish(archive)
+    assert status_of(config_path)["repositories"][0]["verification_state"] == "unverified"
+    assert listed(config_path)["repositories"][0]["revisions"][0]["verification_state"] == (
+        "unverified"
+    )
+
+
+def test_a_verified_revision_reads_verified_everywhere(config_path, archive):
+    publish(archive)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+    assert status_of(config_path)["repositories"][0]["verification_state"] == "verified"
+    assert listed(config_path)["repositories"][0]["revisions"][0]["verification_state"] == (
+        "verified"
+    )
+    catalog = rebuild_catalog(archive, generated_at=NOW)
+    assert catalog.repositories[0].revisions[0].verification_state == "verified"
+
+
+def test_a_failed_revision_reads_failed_everywhere(config_path, archive):
+    """`failed` was unreachable while the state was hardcoded; it is not now."""
+    published = publish(archive)
+    (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+    assert status_of(config_path)["repositories"][0]["verification_state"] == "failed"
+    assert listed(config_path)["repositories"][0]["revisions"][0]["verification_state"] == "failed"
+    catalog = rebuild_catalog(archive, generated_at=NOW)
+    assert catalog.repositories[0].revisions[0].verification_state == "failed"
+
+
+def test_status_reports_the_archive_as_degraded_until_it_is_cleared(config_path, archive):
+    published = publish(archive)
+    path = tree_of(archive, published.commit_sha, published.publication_id) / "config.json"
+    payload = path.read_bytes()
+    path.unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    health = status_of(config_path)["archive"]["verification"]
+    assert health["degraded"] is True
+    assert health["outstanding_failures"] == 1
+    assert health["last_full_verification"]["outcome"] == "failed"
+
+    path.write_bytes(payload)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+    assert status_of(config_path)["archive"]["verification"]["degraded"] is False
+
+
+def test_the_human_status_says_the_archive_is_degraded(config_path, archive):
+    published = publish(archive)
+    (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+    result = runner.invoke(app, ["--config", str(config_path), "status"])
+    assert result.exit_code == ExitCode.SUCCESS
+    assert "archive degraded" in result.output
+    assert "failed" in result.output

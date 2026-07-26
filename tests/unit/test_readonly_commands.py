@@ -756,6 +756,13 @@ def test_status_reports_the_archive_it_is_configured_for(config_file: Path):
         "archive_id": ARCHIVE_ID,
         "reachable": False,
         "root": "/nonexistent/archive/root",
+        # An archive nothing has verified is not degraded, and is not sound
+        # either — it reports the absence rather than either claim (`VER-005`).
+        "verification": {
+            "degraded": False,
+            "last_full_verification": None,
+            "outstanding_failures": 0,
+        },
     }
 
 

@@ -574,9 +574,21 @@ class OutstandingFailure(DurableModel):
     first_seen_at: Timestamp
     kind: str
     path: RepositoryPath | None = None
-    publication_id: PublicationIdField
+    publication_id: PublicationIdField | None = None
+    """`null` for a reference that would not load, exactly as in `Finding`."""
     repository_id: RepositoryIdField
     repository_type: RepositoryTypeField
+
+    @property
+    def sort_key(self) -> tuple[str, str, str, str, str]:
+        """Deterministic ordering for the outstanding-failures array."""
+        return (
+            self.repository_type,
+            self.repository_id,
+            self.commit_sha,
+            self.path or "",
+            self.kind,
+        )
 
 
 @final
@@ -585,7 +597,8 @@ class VerificationRevisionEntry(DurableModel):
 
     commit_sha: CommitShaField
     outcome: Literal["clean", "failed"]
-    publication_id: PublicationIdField
+    publication_id: PublicationIdField | None = None
+    """`null` for a reference that would not load, exactly as in `Finding`."""
     verified_at: Timestamp
 
 
@@ -596,6 +609,17 @@ class RepositoryVerificationEntry(DurableModel):
     repository_id: RepositoryIdField
     repository_type: RepositoryTypeField
     revisions: Annotated[tuple[VerificationRevisionEntry, ...], BeforeValidator(as_tuple)] = ()
+
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        shas = [revision.commit_sha for revision in self.revisions]
+        if shas != sorted(shas):
+            message = "revisions must be sorted ascending by commit_sha"
+            raise ValueError(message)
+        if len(set(shas)) != len(shas):
+            message = "one revision has one most recent verification outcome, not several"
+            raise ValueError(message)
+        return self
 
 
 @final
@@ -616,6 +640,10 @@ class VerificationCatalog(VersionedModel):
         ordered = sorted(self.repositories, key=lambda r: (r.repository_type, r.repository_id))
         if list(self.repositories) != ordered:
             message = "repositories must be sorted by (repository_type, repository_id)"
+            raise ValueError(message)
+        keys = [failure.sort_key for failure in self.outstanding_failures]
+        if keys != sorted(keys):
+            message = "outstanding_failures must be sorted by (type, id, sha, path, kind)"
             raise ValueError(message)
         return self
 

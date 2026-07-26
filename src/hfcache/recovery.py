@@ -657,4 +657,4 @@ def _write_report(
         }
     )
     path.parent.mkdir(mode=QUARANTINE_MODE, parents=True, exist_ok=True)
-    write_model(path, report, mode=REPORT_MODE, code="HFRET010")
+    write_model(path, report, mode=REPORT_MODE, code="HFRET010", error=RetentionError)

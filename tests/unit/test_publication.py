@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from hfcache.archive import initialize_archive
-from hfcache.errors import ExitCode, IntegrityError, SafetyError, SynchronizationError
+from hfcache.errors import ExitCode, IntegrityError, SynchronizationError
 from hfcache.identity import TransactionId, new_transaction_id
 from hfcache.paths import ArchiveLayout
 from hfcache.publication import (
@@ -704,15 +704,17 @@ def test_a_reference_that_cannot_be_written_is_hfsyn007(layout, published):
     repository.refs.mkdir(parents=True)
     repository.refs.chmod(0o500)
     try:
-        # `write_model` raises `SafetyError`, because a filesystem that refuses a
-        # durable write is a storage failure whatever was being written; the code
-        # is the caller's and stays `HFSYN007`.
-        with pytest.raises(SafetyError) as caught:
+        # `SynchronizationError`, not `SafetyError`: the exit an error carries
+        # comes from its class and the classification `docs/cli.md` §5 publishes
+        # comes from the code's family, so `HFSYN007` has to arrive as a `30`
+        # (decision 52). The mount checks passed — what failed is the run.
+        with pytest.raises(SynchronizationError) as caught:
             publish_current_reference(layout, published)
     finally:
         repository.refs.chmod(0o2750)
 
     assert codes(caught.value.problems) == ["HFSYN007"]
+    assert caught.value.exit_code == ExitCode.SYNC
 
 
 # --------------------------------------------------------------------------- #

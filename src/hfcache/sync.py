@@ -680,7 +680,9 @@ def publish_revision(  # noqa: PLR0913 - the §7.3 sequence's inputs, one argume
     # the tree would be one nothing can vouch for, and §7.3's crash matrix
     # quarantines such a tree rather than publishing it.
     pending = staging.manifest
-    write_model(pending, manifest, mode=PUBLISHED_FILE_MODE, code="HFSYN008")
+    write_model(
+        pending, manifest, mode=PUBLISHED_FILE_MODE, code="HFSYN008", error=SynchronizationError
+    )
     fsync_directory(staging.tree)
     transaction.checkpoint(
         "staging_built",
@@ -702,7 +704,13 @@ def publish_revision(  # noqa: PLR0913 - the §7.3 sequence's inputs, one argume
 
     published_manifest = repository.manifest(commit_sha, publication_id)
     published_manifest.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
-    write_model(published_manifest, manifest, mode=PUBLISHED_FILE_MODE, code="HFSYN008")
+    write_model(
+        published_manifest,
+        manifest,
+        mode=PUBLISHED_FILE_MODE,
+        code="HFSYN008",
+        error=SynchronizationError,
+    )
     fsync_directory(published_manifest.parent)
     transaction.checkpoint(
         "manifest_published",
@@ -1228,7 +1236,7 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
     # `runs/` is created by `archive init` and proven writable by the preflight
     # this run is holding, so it is written into rather than created here.
     path = layout.run_report(started_at, run_id)
-    write_model(path, report, mode=RUN_REPORT_MODE, code="HFSYN008")
+    write_model(path, report, mode=RUN_REPORT_MODE, code="HFSYN008", error=SynchronizationError)
     fsync_directory(path.parent)
     return RunOutcome(report=report, report_path=path, exit_code=exit_code)
 

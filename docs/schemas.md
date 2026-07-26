@@ -372,8 +372,22 @@ a consumer is expected to follow.
 `outstanding_failures` is the archive's health headline: a non-empty array means
 `hfcache status` reports the archive as degraded until an operator resolves it.
 Entries are never cleared by a later run that simply does not re-check the same
-object; they are cleared only by a verification that re-reads it successfully or
-by a completed repair.
+object; they are cleared only by a verification that re-reads it successfully,
+by a completed repair, or by the revision ceasing to be retained — a pruned
+revision does not exist, and an archive reported permanently degraded over
+content it no longer holds carries a signal nobody can clear.
+
+`publication_id` is nullable in both `outstanding_failures[]` and
+`repositories[].revisions[]`, for the single case §7 gives: a reference that
+would not parse names no publication instance.
+
+`repositories[].revisions[]` is sorted ascending by `commit_sha` and holds at
+most one entry per revision — it records the *most recent* outcome, not a
+history. The run reports under `runs/` are the history.
+
+Both catalogs are derived (`FS-16`). A `verification.json` that is absent or
+unreadable means every revision reads `unverified`: derived state may lower the
+confidence this application reports and may never raise it.
 
 ## 6. Run report
 

@@ -648,6 +648,37 @@ def test_verification_catalog_repositories_must_be_sorted():
         VerificationCatalog.model_validate(payload)
 
 
+def test_verification_catalog_revisions_must_be_sorted_by_sha():
+    payload = examples.verification_catalog().to_payload()
+    entry = payload["repositories"][0]
+    later = dict(entry["revisions"][0])
+    later["commit_sha"] = examples.OTHER_SHA
+    entry["revisions"] = [later, entry["revisions"][0]]
+
+    with pytest.raises(ValueError, match="sorted ascending by commit_sha"):
+        VerificationCatalog.model_validate(payload)
+
+
+def test_one_revision_has_one_most_recent_verification_outcome():
+    payload = examples.verification_catalog().to_payload()
+    entry = payload["repositories"][0]
+    entry["revisions"] = [entry["revisions"][0], dict(entry["revisions"][0])]
+
+    with pytest.raises(ValueError, match="one most recent verification outcome"):
+        VerificationCatalog.model_validate(payload)
+
+
+def test_outstanding_failures_must_be_sorted():
+    payload = examples.degraded_verification_catalog().to_payload()
+    first = payload["outstanding_failures"][0]
+    earlier = dict(first)
+    earlier["commit_sha"] = "0" * 40
+    payload["outstanding_failures"] = [first, earlier]
+
+    with pytest.raises(ValueError, match="outstanding_failures must be sorted"):
+        VerificationCatalog.model_validate(payload)
+
+
 def test_a_repeated_generation_in_the_catalog_is_refused():
     payload = examples.repositories_catalog().to_payload()
     entry = payload["repositories"][0]

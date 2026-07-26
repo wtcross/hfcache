@@ -377,7 +377,14 @@ def atomic_write_bytes(path: Path, payload: bytes, *, mode: int) -> None:
     fsync_directory(path.parent)
 
 
-def write_model(path: Path, model: DurableModel, *, mode: int, code: str) -> None:
+def write_model(
+    path: Path,
+    model: DurableModel,
+    *,
+    mode: int,
+    code: str,
+    error: type[HfcacheError] = SafetyError,
+) -> None:
     """Write one validated durable artifact, atomically (`docs/schemas.md` §1).
 
     `dump` renders the bytes and `atomic_write_bytes` places them, so every
@@ -385,12 +392,19 @@ def write_model(path: Path, model: DurableModel, *, mode: int, code: str) -> Non
     same temporary-sibling-fsync-rename. `code` is the caller's, for the same
     reason `read_model`'s is: a failed manifest write is `HFSYN008` and a failed
     reference write is `HFSYN007`, and only the caller knows which it is doing.
+
+    `error` travels with it, following decision 46 — the same pairing
+    `sha256_file` and `read_model` already require. The exit an error carries
+    comes from its *class*, while the classification `docs/cli.md` §5 publishes
+    comes from the code's *family*, so a call that paired `SafetyError` with an
+    `HFSYN` code would exit `20` for a condition the taxonomy calls `30`.
+    `tests/unit/test_storage.py` asserts the two agree at every call site.
     """
     try:
         atomic_write_bytes(path, dump(model), mode=mode)
     except OSError as exc:
         message = f"writing {path} failed: {exc.strerror}"
-        raise SafetyError.single(message, code=code, location=str(path)) from exc
+        raise error.single(message, code=code, location=str(path)) from exc
 
 
 def read_model[ModelT: VersionedModel](

@@ -37,8 +37,9 @@ that tries to escape is a coded refusal rather than a path outside the archive.
 import os
 import shutil
 import stat
+from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, Literal
+from typing import TYPE_CHECKING, Final, Literal, Self, final
 
 from hfcache.errors import IntegrityError, Problem, SynchronizationError
 from hfcache.hashing import sha256_file
@@ -69,6 +70,7 @@ __all__ = [
     "PUBLISHED_DIRECTORY_MODE",
     "PUBLISHED_FILE_MODE",
     "STAGING_MODE",
+    "VerificationStates",
     "create_staging",
     "discard_staging",
     "next_generation",
@@ -441,7 +443,9 @@ def _publish(
         raise SynchronizationError.single(
             message, code="HFSYN007", location=str(path.parent)
         ) from exc
-    write_model(path, reference, mode=PUBLISHED_FILE_MODE, code="HFSYN007")
+    write_model(
+        path, reference, mode=PUBLISHED_FILE_MODE, code="HFSYN007", error=SynchronizationError
+    )
     # The rename made the reference visible and fsynced its own directory; this
     # makes the `refs/revisions/` directory entry durable too when the write
     # created it, so a crash cannot leave a reference the parent does not list.
@@ -558,8 +562,9 @@ def rebuild_catalog(
     its `enabled` flag, published-but-not-configured is `managed = false` with
     `enabled = null`, and configured-but-never-published simply has no entry yet.
     """
+    states = VerificationStates.of(layout)
     entries = [
-        _catalog_entry(layout, identity, configured.get(identity.selector))
+        _catalog_entry(layout, identity, configured.get(identity.selector), states)
         for identity in published_repositories(layout)
     ]
     return RepositoriesCatalog(
@@ -569,7 +574,10 @@ def rebuild_catalog(
 
 
 def _catalog_entry(
-    layout: ArchiveLayout, identity: RepositoryIdentity, configured: RepositoryConfig | None
+    layout: ArchiveLayout,
+    identity: RepositoryIdentity,
+    configured: RepositoryConfig | None,
+    states: VerificationStates,
 ) -> RepositoryCatalogEntry:
     """One repository's retained state, read from its references and manifests."""
     repository = RepositoryLayout(archive=layout, identity=identity)
@@ -591,7 +599,7 @@ def _catalog_entry(
                 publication_id=manifest.publication_id,
                 published_at=manifest.published_at,
                 total_bytes=manifest.total_bytes,
-                verification_state="verified",
+                verification_state=states.state_of(identity, manifest.commit_sha),
             )
         )
     current = _current(layout, repository)
@@ -649,6 +657,50 @@ def read_verification_catalog(layout: ArchiveLayout) -> VerificationCatalog | No
         return None
 
 
+@final
+@dataclass(frozen=True, slots=True)
+class VerificationStates:
+    """What `catalog/verification.json` says about each retained revision.
+
+    The one source of truth behind every `verification_state` this application
+    reports — the derived catalog, `status`, and `list` all read it through here,
+    so the three cannot disagree (decision 51).
+
+    A revision with no entry is `unverified`. Ingestion hashing does not make a
+    revision `verified`: it read the bytes in the Hub cache *before* the
+    published tree existed, and `verify` is what reads the tree. Reporting
+    `verified` for a revision nothing has ever re-read would make the field
+    unfalsifiable — which is exactly why `failed` was previously unreachable.
+    """
+
+    outcomes: Mapping[tuple[str, str, str], str]
+
+    @classmethod
+    def of(cls, layout: ArchiveLayout) -> Self:
+        """Read the verification catalog once, for a command about to use it."""
+        catalog = read_verification_catalog(layout)
+        if catalog is None:
+            return cls(outcomes={})
+        return cls(
+            outcomes={
+                (entry.repository_type, entry.repository_id, revision.commit_sha): revision.outcome
+                for entry in catalog.repositories
+                for revision in entry.revisions
+            }
+        )
+
+    def state_of(
+        self, identity: RepositoryIdentity, commit_sha: str
+    ) -> Literal["verified", "unverified", "failed"]:
+        """This revision's verification state, keyed by what a reference names."""
+        outcome = self.outcomes.get((identity.type, identity.id, commit_sha))
+        if outcome == "clean":
+            return "verified"
+        if outcome == "failed":
+            return "failed"
+        return "unverified"
+
+
 def publish_verification_catalog(layout: ArchiveLayout, catalog: VerificationCatalog) -> Path:
     """Replace `published/catalog/verification.json` atomically.
 
@@ -659,7 +711,9 @@ def publish_verification_catalog(layout: ArchiveLayout, catalog: VerificationCat
     """
     path = layout.verification_catalog
     path.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
-    write_model(path, catalog, mode=PUBLISHED_FILE_MODE, code="HFSYN007")
+    write_model(
+        path, catalog, mode=PUBLISHED_FILE_MODE, code="HFSYN007", error=SynchronizationError
+    )
     fsync_directory(path.parent)
     return path
 
@@ -674,6 +728,8 @@ def publish_catalog(layout: ArchiveLayout, catalog: RepositoriesCatalog) -> Path
     """
     path = layout.repositories_catalog
     path.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
-    write_model(path, catalog, mode=PUBLISHED_FILE_MODE, code="HFSYN007")
+    write_model(
+        path, catalog, mode=PUBLISHED_FILE_MODE, code="HFSYN007", error=SynchronizationError
+    )
     fsync_directory(path.parent)
     return path
