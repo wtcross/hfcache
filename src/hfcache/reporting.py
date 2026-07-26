@@ -400,7 +400,15 @@ class Finding(DurableModel):
     ]
     observed: str | None = None
     path: RepositoryPath | None = None
-    publication_id: PublicationIdField
+    publication_id: PublicationIdField | None = None
+    """`null` only for a reference that would not load (decision 49).
+
+    Every other finding is about a publication instance some reference names, and
+    records which one. A reference that will not parse names no instance, so
+    there is nothing to record — and attributing the finding to the instance the
+    filesystem happens to hold would assert exactly what the unreadable reference
+    failed to say.
+    """
     repository_id: RepositoryIdField
     repository_type: RepositoryTypeField
 

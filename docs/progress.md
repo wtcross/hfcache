@@ -163,7 +163,7 @@ have closed, recorded here rather than left to be rediscovered:
 - [x] DEP-002 Adapter-config dependency inspection (2026-07-26, this commit — `adapter_config.json` through `json.loads` and nothing else; PEFT would import it through its own loader, and reading it as the JSON document it is, is the whole difference between describing an adapter and running one. `base_model_name_or_path` is recorded at `high` confidence, above a card's `base_model`, because an adapter without its base cannot be loaded at all rather than merely being incomplete)
 - [x] DEP-003 Compare observations with declared dependencies (2026-07-26, this commit — `declared` and `managed` are separate questions and the manifest records both: declared-but-unmanaged is an operator who knows and decided not to archive it, managed-but-undeclared is a stale declaration. Comparison is case-folded, because the Hub treats `Org/Model` and `org/model` as one repository while a `declared_dependencies` entry is typed by hand, and reporting a case difference as undeclared would train an operator to ignore the code. `managed` is matched on bare repository ids rather than selectors, since a `base_model` value carries no type prefix)
 - [x] DEP-004 Persist and display non-fatal warnings (2026-07-26, this commit — an undeclared dependency emits `HFDEP001` once however many observations carry it (the code names the condition, not the instance), is written into the immutable manifest's `dependencies` array along with the declared ones, marks the repository `completed_with_warnings`, reaches the run report and the `--json` envelope, and leaves the exit code at `0`. It never triggers a download (`NG-05`): a detector that fetched what it found would turn one configured repository into an unbounded transitive closure. Unparseable metadata is recorded at `low` confidence rather than guessed at — 'this file did not parse' is a finding an operator can check. 100% branch coverage; the tests feed the detector a YAML tag naming a Python callable and assert the result is an observation rather than an effect)
-- [ ] VER-001 `verify --new`
+- [x] VER-001 `verify --new` (2026-07-26, this commit — `src/hfcache/verification.py` (plan §7) and the `verify` command. The module has no write path at all, which is how plan §16.1's last line is enforced rather than remembered: a finding is a value, so a mismatch structurally cannot rewrite a manifest, prune a revision, or re-download over the evidence. Every artifact it reads can fail and none of those failures escape — an unparseable reference, a manifest that will not load, a manifest filed under the wrong SHA, and a tree that is not there are each a finding attributed to the revision they belong to, and the run continues to the next one, because `verify` is what an operator reaches for when the archive is *already* known to be wrong (§7.9). `ReadSet` is plan §16.2 item 4: keyed by `sync.ObjectIdentity` and confirmed with `samefile` rather than trusted, since an inode number is reused after deletion; sharing is decided per *file* from the manifest's own `publication_mode`, because a hardlink-mode and a copy-mode tree can both be retained and each has to be read the way its bytes are laid out. `--new` resolves through the archive's current references rather than the publication ids the run recorded, so a revision a later prune rotated out is not verified and one a later repair replaced is verified in its replacement. Exit `0` clean, `40` on any finding, with the envelope's `errors` grouped by `(kind, repository)` — the complete set is in `data`, and an array with one entry per finding is not something an operator reads. 100% branch coverage. **A correction landed with it:** `emit_envelope` minted a fresh run id for every command, so `sync`'s envelope and its durable report named different runs, which is precisely what `docs/cli.md` §4 says that field is for; both now pass the report's id. Decision 49 records the two contract amendments. **Still to come:** `--full` at `VER-002`, `--revision` at `VER-003`, `--estimate` at `VER-004`, and the durable report and catalog update at `VER-005` — this package builds the `VerificationReport` and emits it, and does not yet write it to `runs/`)
 - [ ] VER-002 Unique-object full verification
 - [ ] VER-003 Revision-scoped verification
 - [ ] VER-004 Verification estimation
@@ -964,3 +964,29 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     inventory during an incident is exactly the person who cannot rely on derived
     state (`FS-16`). Selectors restrict the *configured* set, so naming one
     repository never hides an unmanaged one the operator did not ask about.
+
+49. **A verification finding may name no publication instance, and `HFARG004`
+    now covers a revision or a run this archive does not hold** (2026-07-26,
+    `VER-001`). Two small contract amendments, both forced by the same thing:
+    `verify` is the command an operator runs when the archive is *already* known
+    to be wrong (`docs/architecture.md` §7.9), so it has to keep answering about
+    artifacts it cannot read.
+
+    `docs/schemas.md` §7 typed `finding.publication_id` as required. A reference
+    that will not parse names no publication instance, so there is nothing to
+    put there — and attributing the finding to whichever instance directory the
+    filesystem happens to hold would assert exactly what the unreadable
+    reference failed to say. The alternative was to raise instead of reporting,
+    which would abandon every other repository in the run because one reference
+    file is corrupt. The field is now nullable, `docs/schemas.md` §7 says the
+    single case it is null for, and every other finding still carries it.
+
+    `docs/cli.md` §5.1 defined `HFARG004` as a selector naming a repository
+    absent from configuration. `verify --revision TYPE:ID@SHA` and
+    `verify --new --run-id ID` can both name something that is not there, and
+    neither is an integrity failure: a mistyped SHA reported as exit `40` would
+    tell a scheduler the archive is corrupt because somebody typed one wrong
+    character. The row now reads "an argument names something the archive does
+    not hold", which is one condition with three instances rather than three
+    codes for one mistake. `tests/unit/test_taxonomy.py` parses that table, so
+    the widened row is checked in both directions.

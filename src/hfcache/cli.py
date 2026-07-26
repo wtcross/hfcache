@@ -59,12 +59,14 @@ from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersi
 from hfcache.retention import apply_prune, plan_all
 from hfcache.storage import read_model
 from hfcache.sync import synchronize
+from hfcache.verification import FINDING_CODES, build_report, resolve_run, verify_targets
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
     from hfcache.archive import ArchiveInspection
     from hfcache.models import PrunePlan, Reference
+    from hfcache.reporting import VerificationReport
 
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
 
@@ -115,6 +117,7 @@ def emit_envelope(
     warnings: Sequence[Problem] = (),
     errors: Sequence[Problem] = (),
     exit_code: int = 0,
+    run_id: str | None = None,
 ) -> None:
     """Write the single JSON envelope defined by `docs/cli.md` §4 to stdout.
 
@@ -123,6 +126,12 @@ def emit_envelope(
     them. The envelope is written unindented: it is one machine-read line on a
     pipe, where a durable file is something an operator reads and diffs. Logs
     and progress go to stderr, so piping stdout is always safe.
+
+    `run_id` is passed by a command that wrote a durable report, because §4 says
+    the envelope's run id *correlates it with that report* — minting a fresh one
+    would give an operator two identifiers for one run and no way to join them.
+    A command that writes no report has nothing to correlate with and gets a new
+    id, which still ties the envelope to that invocation's log lines.
     """
     outcome = "failed" if exit_code else ("success_with_warnings" if warnings else "success")
     envelope = Envelope(
@@ -132,7 +141,7 @@ def emit_envelope(
         errors=tuple(EnvelopeProblem.of(problem) for problem in errors),
         exit_code=exit_code,
         outcome=outcome,
-        run_id=new_run_id(),
+        run_id=run_id if run_id is not None else new_run_id(),
         started_at=started_at,
         warnings=tuple(EnvelopeProblem.of(problem) for problem in warnings),
     )
@@ -848,13 +857,14 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             command="sync",
             lock_wait_seconds=config.sync.lock_wait_seconds,
         ):
+            run_id = new_run_id()
             outcome = synchronize(
                 client,
                 layout,
                 config,
                 selected=selected,
                 envelope=_run_envelope(config),
-                run_id=new_run_id(),
+                run_id=run_id,
                 started_at=started_at,
             )
     except HfcacheError as error:
@@ -892,6 +902,7 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             warnings=warnings,
             errors=problems,
             exit_code=int(outcome.exit_code),
+            run_id=run_id,
         )
     elif not options.quiet:
         for result in outcome.report.repositories:
@@ -1100,6 +1111,167 @@ def _listed_revision(repository: RepositoryLayout, reference: Reference) -> dict
         "total_bytes": manifest.total_bytes,
         "verification_state": "verified",
     }
+
+
+# --------------------------------------------------------------------------- #
+# verify (`docs/cli.md` §2)
+# --------------------------------------------------------------------------- #
+
+
+@app.command()
+def verify(
+    ctx: typer.Context,
+    new: Annotated[
+        bool,
+        typer.Option("--new", help="Verify the content one run introduced."),
+    ] = False,
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", metavar="ID", help="Which run --new checks. Default: the newest."),
+    ] = None,
+) -> None:
+    """Re-read published content and compare it with its manifest (plan §16).
+
+    Exits `0` on a clean result and `40` on any integrity finding. A finding
+    never rewrites a manifest, prunes a revision, or re-downloads over the
+    evidence (`docs/cli.md` §2, `AD-13`): it is recorded, reported, and left for
+    an operator to act on with `repair`.
+
+    `--new` covers exactly the content one run introduced, which is what makes it
+    cheap enough to run after every sync. It resolves through the archive's
+    current references rather than through the publication ids the run recorded,
+    so a revision a later prune rotated out is not verified and a revision a
+    later repair replaced is verified in its replacement.
+    """
+    started_at = datetime.now(UTC)
+    stamp = utc_now()
+    options = _options(ctx)
+    command = "verify --new"
+    try:
+        _require_one_mode(new=new)
+        config = load_config(options.config_path)
+    except HfcacheError as error:
+        _report_failure(ctx, command, stamp, error)
+
+    layout = ArchiveLayout(root=config.storage.archive_root)
+    try:
+        resolved = resolve_run(layout, _run_to_verify(layout, run_id))
+    except HfcacheError as error:
+        _report_failure(ctx, command, stamp, error)
+
+    outcome = verify_targets(resolved, started_at=started_at)
+    report = build_report(
+        outcome,
+        envelope=_run_envelope(config),
+        command=command,
+        mode="new",
+        run_id=new_run_id(),
+    )
+    _emit_verification(ctx, command, report, started_at=stamp)
+
+
+def _require_one_mode(*, new: bool) -> None:
+    """Refuse an invocation that names no verification mode, or more than one.
+
+    `docs/cli.md` §2: exactly one mode option is required. There is no default —
+    `--new` and `--full` differ by orders of magnitude in what they read, and
+    guessing which an operator meant would either skip most of the archive or
+    saturate the NAS for an hour.
+    """
+    if not new:
+        message = (
+            "verify requires exactly one mode option; --new checks the content one run introduced"
+        )
+        raise ConfigurationError.single(message, code="HFARG003", location="verify")
+
+
+def _run_to_verify(layout: ArchiveLayout, run_id: str | None) -> RunReport:
+    """The run report `--new` covers: the one named, or the most recent.
+
+    Reports are named `<timestamp>-<run-id>.json`, so lexical order is
+    chronological and the newest is found without opening anything. A named run
+    still has to be searched for, because the timestamp half of its filename is
+    not knowable from the id.
+
+    A report that will not load is skipped while searching for the newest — an
+    older readable run is a better answer than a refusal — but a *named* one that
+    will not load is reported, because the operator asked for that run and
+    silently checking a different one would be the wrong kind of helpful.
+    """
+    paths = sorted(layout.runs.glob("*.json"), reverse=True)
+    for path in paths:
+        if run_id is not None and not path.stem.endswith(f"-{run_id}"):
+            continue
+        try:
+            return read_model(path, RunReport, error=IntegrityError, code="HFVER007")
+        except HfcacheError:
+            if run_id is not None:
+                raise
+            continue
+    message = (
+        f"no run report {'named ' + run_id + ' ' if run_id else ''}was found under "
+        f"{layout.runs}; `verify --new` checks what a run introduced, so there has to be a run"
+    )
+    raise ConfigurationError.single(message, code="HFARG004", location=run_id or str(layout.runs))
+
+
+def _emit_verification(
+    ctx: typer.Context, command: str, report: VerificationReport, *, started_at: str
+) -> None:
+    """Render a verification report and exit with its classification.
+
+    The envelope's `errors` array is grouped by `(kind, repository)` rather than
+    listing one entry per finding. A damaged archive can produce thousands, and
+    an array that long is not something an operator or a log pipeline reads —
+    the complete finding set is in `data`, which is the report body itself.
+    """
+    options = _options(ctx)
+    problems = _finding_problems(report)
+    payload = report.model_dump(mode="json")
+    if options.json_output:
+        emit_envelope(
+            command,
+            payload,
+            started_at=started_at,
+            errors=problems,
+            exit_code=report.exit_code,
+            run_id=report.run_id,
+        )
+    elif not options.quiet:
+        _echo_pairs(
+            {
+                "outcome": report.verification_outcome,
+                "repositories": str(report.scope.repositories),
+                "revisions": str(report.scope.revisions),
+                "objects read": str(report.scope.unique_objects_read),
+                "bytes read": _bytes(report.scope.unique_bytes_read),
+                "findings": str(len(report.findings)),
+            }
+        )
+        for problem in problems:
+            typer.echo(problem.as_line(), err=True)
+    if report.exit_code != ExitCode.SUCCESS:
+        raise typer.Exit(report.exit_code)
+
+
+def _finding_problems(report: VerificationReport) -> list[Problem]:
+    """One envelope entry per `(kind, repository)`, carrying how many there were."""
+    counted: dict[tuple[str, str, str], int] = {}
+    for finding in report.findings:
+        key = (finding.kind, finding.repository_type, finding.repository_id)
+        counted[key] = counted.get(key, 0) + 1
+    return [
+        Problem(
+            code=FINDING_CODES[kind],
+            message=(
+                f"{count} {kind} finding{'s' if count > 1 else ''} "
+                f"in {repository_type}:{repository_id}"
+            ),
+            repository=f"{repository_type}:{repository_id}",
+            context={"findings": count, "kind": kind},
+        )
+        for (kind, repository_type, repository_id), count in sorted(counted.items())
+    ]
 
 
 # --------------------------------------------------------------------------- #

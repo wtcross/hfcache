@@ -494,6 +494,13 @@ fields plus:
 | `ref_invalid` | A reference names a missing or inconsistent tree or manifest |
 | `manifest_invalid` | A manifest fails schema validation or internal consistency |
 
+`finding.publication_id` is `null` for exactly one case: a `ref_invalid` finding
+about a reference that would not parse. Such a reference names no publication
+instance, so there is none to record, and naming whichever instance the
+filesystem happens to hold would assert precisely what the unreadable reference
+failed to say. Every other finding carries the publication id of the instance it
+is about.
+
 A verification failure **never** rewrites the manifest, prunes the revision, or
 re-downloads over the evidence (`AD-13`, `AD-18`). It records findings, updates
 `catalog/verification.json`, and exits `40`.
