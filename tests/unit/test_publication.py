@@ -30,6 +30,7 @@ from hfcache.publication import (
     create_staging,
     discard_staging,
     prepare_staged_parent,
+    projected_publication_bytes,
     promote_staging,
     publish_current_reference,
     publish_revision_reference,
@@ -344,6 +345,21 @@ def test_a_destination_parent_that_cannot_be_created_is_hfsyn005(layout, transac
         paths.tree.chmod(PUBLISHED_DIRECTORY_MODE)
 
     assert codes(caught.value.problems) == ["HFSYN005"]
+
+
+# --------------------------------------------------------------------------- #
+# What a publication costs (plan §19 item 9)
+# --------------------------------------------------------------------------- #
+
+
+def test_hardlink_publication_costs_nothing_beyond_metadata():
+    # The whole reason `publication_mode` is an explicit choice (`AD-11`): the
+    # blobs are already on the dataset, and a hardlink adds a directory entry.
+    assert projected_publication_bytes(10 * 1024**3, publication_mode="hardlink") == 0
+
+
+def test_copy_publication_costs_a_second_copy_of_every_byte():
+    assert projected_publication_bytes(10 * 1024**3, publication_mode="copy") == 10 * 1024**3
 
 
 # --------------------------------------------------------------------------- #

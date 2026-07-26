@@ -35,6 +35,7 @@ from hfcache.preflight import (
     order_checks,
     storage_checks,
 )
+from hfcache.publication import projected_publication_bytes
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery
 from hfcache.reporting import Envelope, EnvelopeProblem
 
@@ -599,12 +600,13 @@ def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
         _report_failure(ctx, "plan", started_at, error)
 
     client = HubClient.of(token, endpoint=config.hub.endpoint)
+    cache_dir = ArchiveLayout(root=config.storage.archive_root).hub_cache
     entries: list[dict[str, Any]] = []
     problems: list[Problem] = []
     for repository in selected:
         if not repository.enabled:
             continue
-        entry, failure = _planned(client, repository)
+        entry, failure = _planned(client, repository, config, cache_dir=cache_dir)
         entries.append(entry)
         if failure is not None:
             problems.append(failure)
@@ -615,42 +617,104 @@ def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
         emit_envelope("plan", payload, started_at=started_at, errors=problems, exit_code=exit_code)
     elif not options.quiet:
         for entry in entries:
-            resolved = entry["resolved_commit_sha"] or entry["upstream_state"]
-            typer.echo(
-                f"{entry['repository_type']}:{entry['repository_id']}"
-                f"@{entry['requested_revision']}  {resolved}"
-            )
+            typer.echo(_plan_line(entry))
     if problems:
         raise typer.Exit(exit_code)
 
 
 def _planned(
-    client: HubClient, repository: RepositoryConfig
+    client: HubClient,
+    repository: RepositoryConfig,
+    config: ApplicationConfig,
+    *,
+    cache_dir: Path,
 ) -> tuple[dict[str, Any], Problem | None]:
-    """Resolve one repository, reporting rather than raising on failure.
+    """Resolve and cost one repository, reporting rather than raising on failure.
 
     The upstream state is reported in the entry as well as the problem, because
     `HFHUB004`, `HFHUB005`, and `HFHUB001` mean the *repository* is unavailable
     rather than that the run is broken — and every local revision of it is
     preserved regardless (`AD-06`).
+
+    Three Hub calls in the order plan §13.2 puts them: resolve the reference to
+    an immutable SHA, enumerate what that revision contains, then cost what
+    downloading it would take. Each later call is against the resolved SHA, and a
+    failure at any of them leaves the fields below it `null` rather than guessed
+    — a partial answer that says which part is missing is more useful than one
+    that does not.
     """
     entry: dict[str, Any] = {
         "enabled": repository.enabled,
+        "estimated_new_bytes": None,
+        "file_count": None,
+        "logical_bytes": None,
+        "projected_publication_bytes": None,
+        "publication_mode": config.storage.publication_mode,
         "repository_id": repository.id,
         "repository_type": repository.type,
         "requested_revision": repository.revision,
         "resolved_commit_sha": None,
         "upstream_state": "unknown",
     }
+    identity = RepositoryIdentity.from_config(repository)
     try:
-        facts = client.repository(RepositoryIdentity.from_config(repository), repository.revision)
+        facts = client.repository(identity, repository.revision)
+        entry["resolved_commit_sha"] = facts.commit_sha
+        entry["upstream_state"] = "available"
+
+        tree = client.tree(identity, facts.commit_sha)
+        entry["file_count"] = len(tree)
+        entry["logical_bytes"] = sum(item.size for item in tree)
+        entry["projected_publication_bytes"] = projected_publication_bytes(
+            entry["logical_bytes"], publication_mode=config.storage.publication_mode
+        )
+
+        estimate = client.estimate(
+            identity,
+            facts.commit_sha,
+            cache_dir=cache_dir,
+            max_workers=config.sync.max_workers,
+        )
+        entry["estimated_new_bytes"] = estimate.new_bytes
     except HfcacheError as error:
         problem = error.problems[0]
         entry["upstream_state"] = _UPSTREAM_STATES.get(problem.code, "unreachable")
         return entry, problem
-    entry["resolved_commit_sha"] = facts.commit_sha
-    entry["upstream_state"] = "available"
     return entry, None
+
+
+def _plan_line(entry: dict[str, Any]) -> str:
+    """One repository's row of human-readable `plan` output.
+
+    An entry whose resolution failed has no sizes to show, so it reports the
+    upstream state in the place the SHA would have been — which is the answer an
+    operator running `plan` against a typo wants first.
+    """
+    selector = f"{entry['repository_type']}:{entry['repository_id']}@{entry['requested_revision']}"
+    if entry["resolved_commit_sha"] is None:
+        return f"{selector}  {entry['upstream_state']}"
+    line = f"{selector}  {entry['resolved_commit_sha']}"
+    if entry["file_count"] is None:
+        return line
+    line = f"{line}  {entry['file_count']} files, {_bytes(entry['logical_bytes'])}"
+    if entry["estimated_new_bytes"] is not None:
+        line = f"{line}, {_bytes(entry['estimated_new_bytes'])} new"
+    if entry["projected_publication_bytes"]:
+        line = f"{line}, {_bytes(entry['projected_publication_bytes'])} to publish"
+    return line
+
+
+def _bytes(value: int) -> str:
+    """Render a byte count at a scale an operator can read.
+
+    Not `preflight`'s GiB rendering, which is right for a dataset reserve and
+    useless for a repository: the two small test repositories would both show as
+    `0.0 GiB`, and `plan` is the command that has to tell them apart.
+    """
+    for unit, threshold in (("GiB", 1024**3), ("MiB", 1024**2), ("KiB", 1024)):
+        if value >= threshold:
+            return f"{value / threshold:.1f} {unit}"
+    return f"{value} B"
 
 
 _UPSTREAM_STATES: Final = {

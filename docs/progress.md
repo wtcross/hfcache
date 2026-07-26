@@ -90,7 +90,7 @@ New modules beyond the plan's §7 list, each with a recorded decision:
 - [x] HUB-001 Typed Hub client adapter (2026-07-25, this commit — `src/hfcache/hub.py` (plan §7): the only place `huggingface_hub` is called and the only place its exceptions are caught. `HubApi` is a `Protocol`, so a test supplies an object with those methods and no library machinery — plan §12's "deterministic fakes without mocking library internals" implemented as a seam this application defines. Every call passes `token=` explicitly and never `None` (`docs/security.md` T-07); `RepositoryFacts`/`TreeEntry`/`HubIdentity` are types this application owns, so a response-shape change breaks here rather than near the archive; `hub_problem` maps the library's hierarchy onto `HFHUB001`/`004`/`005`/`006`/`007`/`010`; private and gated repositories are refused before anything is fetched. 100% branch coverage, with the library's real exception types constructed rather than approximated)
 - [x] HUB-002 Optional identity verification (2026-07-25, this commit — `hub.resolve_host`, `hub.verify_tls`, and `hub.identity_problems`, wired into `preflight.hub_checks` as `doctor` rows 15-17. DNS and TLS are separate checks because they fail for unrelated reasons and are fixed in different places; each depends on the one before, so a host that does not resolve skips the rest rather than reporting three failures for one cause. `hub_identity` is *skipped* when `hub.expected_account` is unset — nothing was verified, and an anonymous archive of public content is a normal deployment — and `HFHUB003` when the Hub names a different account, which catches a credential swapped by mistake before a scheduled run uses it. All three read only, so `--read-only` runs them. `verify_tls` takes an injectable context so `tests/unit/conftest.py` can prove it against a real local TLS server with its own CA: the trust anchor is injected, never the answer, so the code under test is still verifying. `tests/system/test_live_hub.py` (marker `live`) exercises the adapter against the real Hub; the unit suite never touches the network. 100% branch coverage)
 - [x] HUB-003 Resolve branch/tag to full SHA (2026-07-25, this commit — `HubClient.repository` performs the resolution and refuses anything but a full 40-character lowercase SHA (`HFHUB007`), since every path, manifest, and reference is keyed by it and an abbreviation never reaches disk. `plan` now resolves each enabled repository and reports `resolved_commit_sha` and `upstream_state`; one repository failing does not abandon the rest, and the run exits `30` if any did. `upstream_state` describes what is true of the *repository* — `missing`, `forbidden`, `refused`, `unresolvable`, `unreachable` — rather than which call reported it. **Still to come at `HUB-004`:** `plan`'s logical size, estimated new bytes, and projected copy-mode publication bytes)
-- [ ] HUB-004 Repository tree and dry-run size
+- [x] HUB-004 Repository tree and dry-run size (2026-07-26, this commit — `HubClient.tree` lists the revision recursively against the *resolved SHA*, draining the generator inside the `try` because `list_repo_tree` makes its request during iteration; a file entry with no path is `HFHUB008`, since the listing is the exact path set every later step joins onto a filesystem path. `HubClient.estimate` is plan §13.2 step 3's dry run, against the same private cache a real download writes to and with no allow/ignore filters — and it creates nothing, not even the cache directory, which is proven live so `plan` is safe against an uninitialized archive. `publication.projected_publication_bytes` states the `AD-11` cost model once, so the estimate an operator reads and the reserve a sync will enforce cannot disagree. `plan` now reports `file_count`, `logical_bytes`, `estimated_new_bytes`, `projected_publication_bytes`, and `publication_mode`; a failure at any of the three Hub reads leaves the fields below it `null` rather than guessed. `hub.py` and `publication.py` at 100% branch coverage; `tests/system/test_live_hub.py` proves the tree and the dry run against the real Hub, including that the two agree about the revision's size. **Still to come at `HUB-009`:** `plan`'s retained/current state, which needs the references that package writes)
 - [ ] HUB-005 Complete `snapshot_download`
 - [ ] HUB-006 Local-only completeness verification
 - [ ] HUB-007 Hash new unique content
@@ -167,14 +167,28 @@ New modules beyond the plan's §7 list, each with a recorded decision:
 - [ ] `hfcache verify --full` clean; `hfcache status` clean
 - [ ] `hfcache.target` enabled; sync timer active; verification timer installed but disabled
 
-## Test repositories (decide at implementation time, §36.5)
+## Test repositories (decided 2026-07-26 at `HUB-004`, §36.5)
 
-- Model: _TBD — small public model, well under 100 MB, availability confirmed on the Hub_
-- Dataset: _TBD — small public dataset, well under 100 MB, availability confirmed on the Hub_
+- Model: **`hf-internal-testing/tiny-random-gpt2`** — 10 files, 12 512 611 bytes
+  (11.9 MiB) at `71034c5d8bde858ff824298bdedc65515b97d2b9`.
+- Dataset: **`hf-internal-testing/fixtures_ade20k`** — 7 files, 206 179 bytes
+  (201.3 KiB) at `850d349e5038f291284e7999fcacbedc0922534b`.
 
-Chosen at `HUB-004`, when the Hub adapter can confirm availability and size
-without downloading. §36.5 authorizes the session to choose; see **Operator
-decisions needed** item 1 for the separate question that does need an operator.
+Both public, neither private nor gated, sizes measured by `hfcache plan` against
+the live Hub on 2026-07-26 without downloading anything. Recorded in
+`examples/config.toml`, which validates, and used by `tests/system/test_live_hub.py`.
+
+Why these two. `hf-internal-testing` is the organization Hugging Face maintains
+for exactly this purpose, so the repositories are long-lived and unlikely to be
+renamed or deleted out from under a test. Both are far under the §36.5 100 MB
+ceiling, which matters because §36.6 item 7 requires a full sync, an idempotent
+second sync, and a `verify --full` over them — a cycle that has to be cheap
+enough to run repeatedly. And they differ in shape as well as size: the model is
+a handful of large-ish weight files, the dataset a mix of images, a parquet file,
+and a README, so publication and hashing are exercised over both profiles.
+
+§36.5 authorizes the session to choose these; see **Operator decisions needed**
+item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
 
@@ -213,12 +227,11 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
    `CFG-002`; not blocking until `HUB-005`). Two separate questions have been
    conflated so far, so they are separated here:
 
-   - *The two test repositories* (§36.5) do **not** need an operator: the plan
+   - *The two test repositories* (§36.5) did **not** need an operator: the plan
      authorizes the session to choose them, requiring only that each is public,
-     well under 100 MB, and confirmed available at implementation time. They stay
-     `_TBD_` above until `HUB-004` can resolve and size candidates against the
-     live Hub, and the choice is recorded here and in `examples/config.toml` when
-     made.
+     well under 100 MB, and confirmed available at implementation time. **Settled
+     2026-07-26 at `HUB-004`** — see "Test repositories" above; recorded in
+     `examples/config.toml`. This half of the item is closed.
    - *The production repository list* does need an operator, because it is the
      only input to handoff item 4 (the TrueNAS dataset quota) and to §29 step 12.
      Nothing is blocked while it is open: Phases 3–6 are written against
@@ -805,3 +818,44 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     staging too young to be certainly abandoned. That is a real answer and worth
     persisting: an operator reading the report should see that recovery
     considered the directory and chose to wait, not that it missed it.
+
+44. **`projected_publication_bytes` is measured under the configured mode, not
+    hypothetically under copy** (2026-07-26, HUB-004). `docs/cli.md` §2 asked
+    `plan` for "the projected publication bytes in copy mode", which reads two
+    ways: the field means something only in copy mode, or the field always
+    reports what copy mode *would* cost. The second was rejected. `plan` is the
+    command the dataset quota is sized from, so the number it reports has to be
+    the number the archive will actually consume — and under the default
+    `hardlink` mode that is zero, because a hardlink points at a cache blob
+    already on the dataset (`AD-11`).
+
+    Nothing is lost by not reporting the hypothetical: copy mode's cost is
+    exactly `logical_bytes`, which is in the same payload. A deployment weighing
+    the switch reads it off the field beside it. `publication_mode` is reported
+    with it so the zero is explicable rather than looking like a missing
+    measurement. `docs/cli.md` §2 and §4.1 updated in this commit; §4.1 now names
+    every field of the payload rather than summarizing it, since automation keys
+    on them.
+
+    The cost model itself is `publication.projected_publication_bytes` rather
+    than a conditional at the call site, because plan §19 item 9 makes the same
+    number part of a sync's free-space gate. An estimate an operator reads and a
+    reserve a sync enforces that disagreed about what publication costs would be
+    a capacity failure discovered mid-download.
+
+45. **An empty tree listing is reported; an entry with no path is refused**
+    (2026-07-26, HUB-004). `HFHUB008` is "repository tree metadata missing or
+    incomplete", and two conditions could claim it. A revision containing no
+    files is *not* one: it is a truthful answer to what the metadata call asked,
+    `plan` reports it as `0 files`, and whether an empty revision is worth
+    publishing — and consuming a retention slot — is a decision for the package
+    that publishes one, not for the call that reads the metadata.
+
+    A file entry with no path is the other, and it is refused. The listing is
+    what plan §13.2 step 7 calls the exact repository path set, and every later
+    step joins those names onto a filesystem path; an empty one would arrive at
+    that join looking like a legitimate name for the tree's own root. The
+    previous code coerced it to `""` and carried on. This is narrower than the
+    path grammar in `hfcache.paths`, deliberately: the grammar answers "is this
+    name safe to join", and this answers "did the response contain a name at
+    all", which is a question about the library's shape and belongs at the seam.

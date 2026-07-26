@@ -1,0 +1,68 @@
+# hfcache — runnable configuration for the two small public test repositories.
+#
+# Install as /etc/hfcache/config.toml, owner root:hfcache, mode 0640. Every key
+# is documented in docs/configuration.md; this file is the worked example in its
+# §10 with the test repositories filled in.
+#
+# Validate without touching anything:
+#
+#     hfcache --config examples/config.toml config validate
+#
+# Two values must be replaced before this is a production configuration:
+# storage.archive_id (below) and the [[repositories]] list, which grows per
+# docs/plan.md §29 step 12 after `hfcache plan` reports dry-run sizes.
+
+schema_version = 1
+
+[hub]
+endpoint = "https://huggingface.co"
+expected_account = ""          # empty: anonymous public access
+token_mode = "optional"        # no credential installed; token=False is passed
+credential_name = "hf-token"
+
+[storage]
+archive_root = "/srv/hfcache"
+
+# Replace with the UUID provisioned for this archive. `archive init` writes this
+# exact value into .hfcache-root and never mints one of its own, so configuration
+# and sentinel cannot disagree (docs/progress.md decision 27).
+archive_id = "00000000-0000-0000-0000-000000000000"
+
+publication_mode = "hardlink"  # "copy" only after a capacity review
+minimum_free_space_gib = 100
+minimum_free_space_percent = 10
+maximum_revisions = 5
+
+[sync]
+max_workers = 4
+lock_wait_seconds = 3600       # a scheduled sync waits an hour for the lock
+continue_on_repository_error = true
+dependency_policy = "warn"
+stale_staging_age_hours = 24
+
+[verification]
+algorithm = "sha256"
+hash_new_content = true
+lock_wait_seconds = 86400      # 24 h, so a long sync can finish first
+
+[repair]
+retired_instance_grace_hours = 168   # seven days for an in-flight consumer copy
+
+# The two test repositories (docs/plan.md §36.5, chosen at HUB-004). Both are
+# public, owned by `hf-internal-testing`, and deliberately tiny — roughly 12 MiB
+# and 200 KiB — so a full sync, prune, and verification cycle can be exercised
+# end to end without waiting on a large download.
+
+[[repositories]]
+id = "hf-internal-testing/tiny-random-gpt2"
+type = "model"
+revision = "main"
+enabled = true
+declared_dependencies = []
+
+[[repositories]]
+id = "hf-internal-testing/fixtures_ade20k"
+type = "dataset"
+revision = "main"
+enabled = true
+declared_dependencies = []

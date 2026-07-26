@@ -39,6 +39,7 @@ from hfcache.hub import (
     HubIdentity,
     RepositoryFacts,
     access_problems,
+    download_estimate,
     endpoint_host,
     hub_problem,
     identity_problems,
@@ -72,11 +73,22 @@ class Entry:
 
 
 @dataclass
+class DryRunEntry:
+    """One record of a `snapshot_download(dry_run=True)` result."""
+
+    filename: str
+    file_size: int
+    will_download: bool = True
+
+
+@dataclass
 class FakeApi:
     """A `HubApi` with no library machinery, recording how it was called."""
 
     info: Any = field(default_factory=Info)
     identity: dict[str, Any] = field(default_factory=lambda: {"name": "hfcache-service"})
+    tree: Any = field(default_factory=list)
+    dry_run_result: Any = None
     raises: Exception | None = None
     calls: list[dict[str, Any]] = field(default_factory=list)
     endpoint: str = "https://huggingface.co"
@@ -92,6 +104,24 @@ class FakeApi:
         if self.raises is not None:
             raise self.raises
         return self.info
+
+    def list_repo_tree(self, repo_id: str, **arguments: Any) -> Any:
+        # A generator, like the library's: the request is made during iteration,
+        # so a failure has to be raised there rather than at the call.
+        self.calls.append({"method": "list_repo_tree", "repo_id": repo_id, **arguments})
+
+        def listing():
+            if self.raises is not None:
+                raise self.raises
+            yield from self.tree
+
+        return listing()
+
+    def snapshot_download(self, repo_id: str, **arguments: Any) -> Any:
+        self.calls.append({"method": "snapshot_download", "repo_id": repo_id, **arguments})
+        if self.raises is not None:
+            raise self.raises
+        return self.dry_run_result if self.dry_run_result is not None else []
 
 
 def anonymous() -> ResolvedToken:
@@ -360,7 +390,140 @@ def test_directories_are_dropped_from_a_tree_listing():
 
 
 def test_an_empty_tree_is_an_empty_tuple():
+    # Not a refusal: "this revision has no files" is a truthful answer to what
+    # the metadata call asked, and whether such a revision is worth publishing
+    # belongs to the package that publishes one.
     assert tree_entries([]) == ()
+
+
+def test_a_file_entry_with_no_path_is_hfhub008():
+    # The listing is the exact path set every later step joins onto a filesystem
+    # path; an empty name would reach that join looking legitimate.
+    with pytest.raises(SynchronizationError) as caught:
+        tree_entries([Entry("model.bin", 8), Entry("", 4)], identity=MODEL)
+
+    assert codes(caught.value.problems) == ["HFHUB008"]
+    assert caught.value.problems[0].location == MODEL.selector
+
+
+def test_a_file_entry_with_no_path_reports_without_an_identity():
+    with pytest.raises(SynchronizationError) as caught:
+        tree_entries([Entry("", 4)])
+
+    assert caught.value.problems[0].location is None
+    assert "the repository" in caught.value.problems[0].message
+
+
+def test_the_tree_is_listed_recursively_against_the_resolved_sha():
+    # Against the SHA rather than the reference: a moving branch could enumerate
+    # one commit and download the next.
+    api = FakeApi(tree=[Entry("nested/model.bin", 8), Entry("README.md", 2)])
+
+    entries = client(api).tree(MODEL, CommitSha(SHA))
+
+    call = api.calls[-1]
+    assert call["method"] == "list_repo_tree"
+    assert call["revision"] == SHA
+    assert call["recursive"] is True
+    assert call["repo_type"] == "model"
+    assert call["token"] is False
+    assert [entry.path for entry in entries] == ["README.md", "nested/model.bin"]
+
+
+def test_a_tree_listing_that_fails_during_iteration_is_a_coded_problem():
+    # `list_repo_tree` returns a generator, so the request happens while the
+    # listing is drained. Draining outside the `try` would let the library's own
+    # exception escape instead of a coded problem.
+    api = FakeApi(raises=absent("gone"))
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).tree(MODEL, CommitSha(SHA))
+
+    assert codes(caught.value.problems) == ["HFHUB004"]
+
+
+# --------------------------------------------------------------------------- #
+# Download estimation
+# --------------------------------------------------------------------------- #
+
+
+def test_an_estimate_separates_what_the_revision_is_from_what_would_be_fetched():
+    estimate = download_estimate(
+        [
+            DryRunEntry("model.bin", 1000, will_download=True),
+            DryRunEntry("config.json", 24, will_download=False),
+        ]
+    )
+
+    assert estimate.file_count == 2
+    assert estimate.logical_bytes == 1024
+    assert estimate.new_bytes == 1000
+    assert estimate.cached_bytes == 24
+
+
+def test_a_fully_cached_revision_estimates_no_new_bytes():
+    # The second sync of an unchanged repository: large logically, free to fetch.
+    estimate = download_estimate([DryRunEntry("model.bin", 1000, will_download=False)])
+
+    assert estimate.logical_bytes == 1000
+    assert estimate.new_bytes == 0
+    assert estimate.cached_bytes == 1000
+
+
+def test_an_empty_dry_run_estimates_nothing():
+    estimate = download_estimate([])
+
+    assert (estimate.file_count, estimate.logical_bytes, estimate.new_bytes) == (0, 0, 0)
+
+
+def test_the_estimate_is_a_dry_run_against_the_cache_the_download_would_write(tmp_path):
+    # The same explicit cache path a real download gets: an estimate against a
+    # different cache would report bytes as new that the sync would have reused.
+    api = FakeApi(dry_run_result=[DryRunEntry("model.bin", 512)])
+
+    estimate = client(api).estimate(MODEL, CommitSha(SHA), cache_dir=tmp_path, max_workers=4)
+
+    call = api.calls[-1]
+    assert call["method"] == "snapshot_download"
+    assert call["dry_run"] is True
+    assert call["cache_dir"] == str(tmp_path)
+    assert call["revision"] == SHA
+    assert call["repo_type"] == "model"
+    assert call["max_workers"] == 4
+    assert call["token"] is False
+    assert estimate.new_bytes == 512
+
+
+def test_no_allow_or_ignore_filters_are_ever_passed(tmp_path):
+    # The product contract is repository-complete (plan §12 item 4), so an
+    # estimate over a subset would estimate the wrong thing.
+    api = FakeApi(dry_run_result=[])
+
+    client(api).estimate(MODEL, CommitSha(SHA), cache_dir=tmp_path, max_workers=1)
+
+    assert "allow_patterns" not in api.calls[-1]
+    assert "ignore_patterns" not in api.calls[-1]
+
+
+def test_an_estimate_that_did_not_return_file_records_is_hfhub009(tmp_path):
+    # `dry_run=True` is what keeps this call from downloading. A result shaped
+    # like a completed download means the flag did not take effect, so it is
+    # refused rather than interpreted.
+    api = FakeApi(dry_run_result="/some/snapshot/path")
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).estimate(MODEL, CommitSha(SHA), cache_dir=tmp_path, max_workers=1)
+
+    assert codes(caught.value.problems) == ["HFHUB009"]
+
+
+def test_an_estimate_failure_is_a_coded_problem(tmp_path):
+    api = FakeApi(raises=absent("gone"))
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api).estimate(MODEL, CommitSha(SHA), cache_dir=tmp_path, max_workers=1)
+
+    assert codes(caught.value.problems) == ["HFHUB004"]
 
 
 # --------------------------------------------------------------------------- #

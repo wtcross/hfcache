@@ -16,21 +16,18 @@ anything.
 import fcntl
 import json
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 from hfcache.archive import initialize_archive
-from hfcache.cli import UNPROVABLE_READ_ONLY, app
+from hfcache.cli import UNPROVABLE_READ_ONLY, _bytes, app
 from hfcache.errors import ExitCode, SynchronizationError
-from hfcache.hub import HubClient, RepositoryFacts
+from hfcache.hub import DownloadEstimate, HubClient, RepositoryFacts, TreeEntry
 from hfcache.identity import CommitSha, new_run_id, new_transaction_id
 from hfcache.paths import ArchiveLayout
 from hfcache.transactions import open_transaction
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 runner = CliRunner()
 
@@ -101,6 +98,13 @@ UNIMPLEMENTED_CAPABILITIES = tuple(
 SHA = "0123456789abcdef0123456789abcdef01234567"
 
 
+# One file of 4 KiB, half of it already cached — enough for `plan` to have to
+# keep "how large is this revision" and "how much would be fetched" apart.
+TREE = (TreeEntry(path="config.json", size=1024), TreeEntry(path="model.bin", size=3072))
+LOGICAL_BYTES = 4096
+NEW_BYTES = 3072
+
+
 def _resolves_to(commit_sha: str):
     """A `HubClient.repository` that answers without a Hub."""
 
@@ -122,13 +126,23 @@ def _fails_with(problem_code: str):
     return repository
 
 
+def _raises(problem_code: str):
+    """A `HubClient` method that reports one failure, whatever it was asked."""
+
+    def method(self, *arguments, **keywords):
+        message = "upstream failed"
+        raise SynchronizationError.single(message, code=problem_code)
+
+    return method
+
+
 @pytest.fixture(autouse=True)
 def _offline(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Answer `doctor`'s Hub checks without a network.
+    """Answer `doctor`'s and `plan`'s Hub calls without a network.
 
     The unit suite never contacts the Hub — that is what the `live` marker is
-    for — so DNS and TLS are answered here. The tests that care about the Hub
-    checks themselves override these.
+    for — so DNS, TLS, resolution, the tree listing, and the download estimate
+    are all answered here. The tests that care about one of them override it.
     """
 
     def resolves(_host):
@@ -137,9 +151,19 @@ def _offline(monkeypatch: pytest.MonkeyPatch) -> None:
     def verifies(_host):
         return "TLSv1.3, certificate valid"
 
+    def tree(self, identity, commit_sha):
+        return TREE
+
+    def estimate(self, identity, commit_sha, *, cache_dir, max_workers):
+        return DownloadEstimate(
+            file_count=len(TREE), logical_bytes=LOGICAL_BYTES, new_bytes=NEW_BYTES
+        )
+
     monkeypatch.setattr("hfcache.preflight.resolve_host", resolves)
     monkeypatch.setattr("hfcache.preflight.verify_tls", verifies)
     monkeypatch.setattr(HubClient, "repository", _resolves_to(SHA))
+    monkeypatch.setattr(HubClient, "tree", tree)
+    monkeypatch.setattr(HubClient, "estimate", estimate)
 
 
 @pytest.fixture
@@ -552,6 +576,156 @@ def test_plan_takes_no_lock_and_reads_no_archive(config_file: Path):
     # `storage.archive_root` is a path that does not exist. `plan` mutates
     # nothing and takes no lock (`docs/cli.md` §2), so this still succeeds.
     assert invoke(config_file, "plan").exit_code == ExitCode.SUCCESS
+
+
+def test_plan_reports_the_revisions_size_and_what_would_be_downloaded(config_file: Path):
+    # The two numbers are not interchangeable, which is why both are reported:
+    # one is how large the revision is, the other how much is not already
+    # cached. This is the output the dataset quota is sized from.
+    entry = data_of(invoke(config_file, "plan"))["repositories"][0]
+
+    assert entry["file_count"] == len(TREE)
+    assert entry["logical_bytes"] == LOGICAL_BYTES
+    assert entry["estimated_new_bytes"] == NEW_BYTES
+
+
+def test_hardlink_publication_projects_no_publication_bytes(config_file: Path):
+    # Hardlinks point at cache blobs already on the dataset, so publication
+    # costs nothing beyond metadata (`AD-11`). The mode travels with the number
+    # so the zero is explicable.
+    entry = data_of(invoke(config_file, "plan"))["repositories"][0]
+
+    assert entry["publication_mode"] == "hardlink"
+    assert entry["projected_publication_bytes"] == 0
+
+
+def test_copy_publication_projects_a_second_physical_copy(tmp_path: Path):
+    path = tmp_path / "config.toml"
+    path.write_text(
+        config_for(ABSENT_ROOT).replace("[storage]", '[storage]\npublication_mode = "copy"'),
+        encoding="utf-8",
+    )
+
+    entry = data_of(invoke(path, "plan"))["repositories"][0]
+
+    assert entry["publication_mode"] == "copy"
+    assert entry["projected_publication_bytes"] == LOGICAL_BYTES
+
+
+def test_the_estimate_uses_the_cache_a_sync_would_write_to(config_file: Path):
+    # An estimate against a different cache would report bytes as new that the
+    # sync would have reused, which is the one way this number can mislead.
+    seen: list[Path] = []
+
+    def estimate(self, identity, commit_sha, *, cache_dir, max_workers):
+        seen.append(cache_dir)
+        return DownloadEstimate(file_count=0, logical_bytes=0, new_bytes=0)
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(HubClient, "estimate", estimate)
+        invoke(config_file, "plan")
+
+    assert seen
+    assert all(path == ArchiveLayout(root=Path(ABSENT_ROOT)).hub_cache for path in seen)
+
+
+def test_a_tree_failure_keeps_the_sha_and_leaves_the_sizes_null(
+    config_file: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # A partial answer that says which part is missing beats one that guesses.
+    monkeypatch.setattr(HubClient, "tree", _raises("HFHUB008"))
+
+    result = invoke(config_file, "plan")
+    entry = data_of(result)["repositories"][0]
+
+    assert result.exit_code == ExitCode.SYNC
+    assert entry["resolved_commit_sha"] == SHA
+    assert entry["file_count"] is None
+    assert entry["logical_bytes"] is None
+    assert entry["estimated_new_bytes"] is None
+
+
+def test_an_estimate_failure_still_reports_the_revisions_size(
+    config_file: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(HubClient, "estimate", _raises("HFHUB009"))
+
+    result = invoke(config_file, "plan")
+    entry = data_of(result)["repositories"][0]
+
+    assert result.exit_code == ExitCode.SYNC
+    assert entry["logical_bytes"] == LOGICAL_BYTES
+    assert entry["estimated_new_bytes"] is None
+
+
+def test_plan_prints_the_sizes_beside_the_sha(config_file: Path):
+    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+
+    assert "2 files, 4.0 KiB, 3.0 KiB new" in result.output
+
+
+def test_plan_prints_publication_bytes_only_when_copy_mode_adds_them(
+    tmp_path: Path, config_file: Path
+):
+    path = tmp_path / "copy.toml"
+    path.write_text(
+        config_for(ABSENT_ROOT).replace("[storage]", '[storage]\npublication_mode = "copy"'),
+        encoding="utf-8",
+    )
+
+    copying = runner.invoke(app, ["--config", str(path), "plan"])
+    linking = runner.invoke(app, ["--config", str(config_file), "plan"])
+
+    assert "4.0 KiB to publish" in copying.output
+    assert "to publish" not in linking.output
+
+
+def test_plan_prints_the_upstream_state_when_nothing_resolved(
+    config_file: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(HubClient, "repository", _fails_with("HFHUB004"))
+
+    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+
+    assert "model:zeta/last-in-file@v2.0  missing" in result.output
+
+
+def test_plan_prints_the_sha_alone_when_the_tree_failed(
+    config_file: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(HubClient, "tree", _raises("HFHUB008"))
+
+    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+
+    assert f"model:zeta/last-in-file@v2.0  {SHA}" in result.output
+    assert "files," not in result.output
+
+
+def test_plan_prints_the_size_without_a_new_byte_count_when_the_estimate_failed(
+    config_file: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(HubClient, "estimate", _raises("HFHUB009"))
+
+    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+
+    assert "2 files, 4.0 KiB" in result.output
+    assert "new" not in result.output
+
+
+@pytest.mark.parametrize(
+    ("value", "rendered"),
+    [
+        (0, "0 B"),
+        (999, "999 B"),
+        (1024, "1.0 KiB"),
+        (1024**2, "1.0 MiB"),
+        (3 * 1024**3, "3.0 GiB"),
+    ],
+)
+def test_byte_counts_are_rendered_at_a_scale_an_operator_can_read(value, rendered):
+    # Not `preflight`'s GiB rendering: both small test repositories would show
+    # as `0.0 GiB`, and `plan` is the command that has to tell them apart.
+    assert _bytes(value) == rendered
 
 
 # --------------------------------------------------------------------------- #

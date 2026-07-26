@@ -31,7 +31,7 @@ of *files and metadata* and is treated as nothing else.
 import socket
 import ssl
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Final, Protocol, Self, final
+from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, Self, final
 from urllib.parse import urlsplit
 
 from huggingface_hub import HfApi
@@ -46,7 +46,8 @@ from hfcache.errors import Problem, SynchronizationError
 from hfcache.identity import CommitSha, parse_commit_sha
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
+    from pathlib import Path
 
     from hfcache.credentials import ResolvedToken
     from hfcache.identity import RepositoryIdentity
@@ -57,11 +58,13 @@ __all__ = [
     "NOT_FOUND",
     "RATE_LIMITED",
     "TLS_PORT",
+    "DownloadEstimate",
     "HubClient",
     "HubIdentity",
     "RepositoryFacts",
     "TreeEntry",
     "access_problems",
+    "download_estimate",
     "endpoint_host",
     "hub_problem",
     "identity_problems",
@@ -100,6 +103,29 @@ class TreeEntry:
 
     path: str
     size: int
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class DownloadEstimate:
+    """What downloading one revision would cost, measured without downloading it.
+
+    Plan §13.2 step 3 asks for a download dry run before step 4 checks free-space
+    headroom, so the two numbers it separates are the two an operator needs and
+    they are not interchangeable. `logical_bytes` is how large the revision is;
+    `new_bytes` is how much of it is not already in the private cache. A second
+    sync of an unchanged repository has a large `logical_bytes` and a `new_bytes`
+    of zero, and reporting only one of those would answer the wrong question.
+    """
+
+    file_count: int
+    logical_bytes: int
+    new_bytes: int
+
+    @property
+    def cached_bytes(self) -> int:
+        """What the private Hub cache already holds, and a sync would reuse."""
+        return self.logical_bytes - self.new_bytes
 
 
 @final
@@ -160,6 +186,36 @@ class HubApi(Protocol):
         token: str | bool | None = None,
     ) -> Any:  # noqa: ANN401 - a library response, narrowed to `RepositoryFacts` by `_facts`
         ...
+
+    def list_repo_tree(
+        self,
+        repo_id: str,
+        *,
+        recursive: bool = False,
+        revision: str | None = None,
+        repo_type: str | None = None,
+        token: str | bool | None = None,
+    ) -> Iterable[Any]: ...
+
+    # `PLR0913` counts arguments this application did not choose: every one of
+    # these is something plan §12 item 4 requires be passed *explicitly* rather
+    # than defaulted, and dropping one would mean relying on a library default.
+    #
+    # `dry_run` is `Literal[True]` because that is the only call `HUB-004` makes,
+    # and the library overloads the return on it. `HUB-005` adds the second
+    # overload when it performs the real download; declaring both now would
+    # describe a call this release cannot make.
+    def snapshot_download(  # noqa: PLR0913
+        self,
+        repo_id: str,
+        *,
+        repo_type: str,
+        revision: str,
+        cache_dir: str,
+        max_workers: int,
+        token: str | bool | None = None,
+        dry_run: Literal[True],
+    ) -> list[Any]: ...
 
 
 def hub_problem(exc: Exception, *, identity: RepositoryIdentity | None = None) -> Problem:
@@ -278,6 +334,74 @@ class HubClient:
             raise SynchronizationError(problems)
         return facts
 
+    def tree(self, identity: RepositoryIdentity, commit_sha: CommitSha) -> tuple[TreeEntry, ...]:
+        """Every file one immutable revision contains (plan §12 item 3).
+
+        Always against a resolved commit SHA rather than a branch, so the listing
+        describes the same immutable revision the download will fetch; a moving
+        reference could enumerate one commit and download the next.
+
+        The listing is drained inside the `try`, not after it. `list_repo_tree`
+        returns a generator, so the request is made during iteration and a
+        repository that disappears between resolution and enumeration raises
+        there — outside the block, it would escape as a library exception rather
+        than as a coded problem.
+        """
+        try:
+            raw = list(
+                self.api.list_repo_tree(
+                    identity.id,
+                    recursive=True,
+                    revision=commit_sha,
+                    repo_type=identity.type,
+                    token=self.token.hub_argument,
+                )
+            )
+        except Exception as exc:
+            raise SynchronizationError([hub_problem(exc, identity=identity)]) from exc
+        return tree_entries(raw, identity=identity)
+
+    def estimate(
+        self,
+        identity: RepositoryIdentity,
+        commit_sha: CommitSha,
+        *,
+        cache_dir: Path,
+        max_workers: int,
+    ) -> DownloadEstimate:
+        """Cost one revision's download without performing it (plan §13.2 step 3).
+
+        A dry run reads the same cache a real download would write to, so it is
+        given the same explicit cache path — an estimate against a different
+        cache would report bytes as new that the sync would have reused. It
+        creates nothing: an archive root that does not exist yet reports the
+        whole revision as new, which is exactly right.
+
+        No allow or ignore filters are passed, here or at the real download
+        (plan §12 item 4). The product contract is repository-complete, so an
+        estimate over a subset would be an estimate of the wrong thing.
+        """
+        try:
+            result = self.api.snapshot_download(
+                identity.id,
+                repo_type=identity.type,
+                revision=commit_sha,
+                cache_dir=str(cache_dir),
+                max_workers=max_workers,
+                token=self.token.hub_argument,
+                dry_run=True,
+            )
+        except Exception as exc:
+            raise SynchronizationError([hub_problem(exc, identity=identity)]) from exc
+        if not isinstance(result, list):
+            message = (
+                f"the dry run for {identity.selector} returned {type(result).__name__} rather "
+                f"than a list of file records; `dry_run=True` is what keeps this call from "
+                f"downloading, so an unrecognised result is refused rather than interpreted"
+            )
+            raise SynchronizationError.single(message, code="HFHUB009", location=identity.selector)
+        return download_estimate(result)
+
 
 def _facts(identity: RepositoryIdentity, info: object) -> RepositoryFacts:
     """Read the fields this application needs out of one library response.
@@ -326,18 +450,60 @@ def access_problems(facts: RepositoryFacts) -> list[Problem]:
     return [Problem(code="HFHUB006", message=message, location=facts.identity.selector)]
 
 
-def tree_entries(raw: Sequence[object]) -> tuple[TreeEntry, ...]:
+def tree_entries(
+    raw: Sequence[object], *, identity: RepositoryIdentity | None = None
+) -> tuple[TreeEntry, ...]:
     """Normalize a repository tree listing into this application's own type.
 
     Directories are dropped: the archive publishes files, and a directory in the
     listing is a container the path grammar reconstructs on its own.
+
+    A file entry carrying no path is `HFHUB008` — "tree metadata missing or
+    incomplete" — rather than an empty string. The listing is what plan §13.2
+    step 7 calls the exact repository path set, and every later step joins those
+    names onto a filesystem path; an empty one would reach that join looking like
+    a legitimate name for the tree's own root.
+
+    An empty *listing* is not refused here. A repository with no files is a
+    truthful answer to "what does this revision contain", and `plan` reports it
+    as such; whether an empty revision is worth publishing is a question for the
+    package that publishes one, not for the call that reads the metadata.
     """
-    entries = [
-        TreeEntry(path=str(getattr(item, "path", "")), size=int(getattr(item, "size", 0) or 0))
-        for item in raw
-        if getattr(item, "size", None) is not None
-    ]
+    entries = []
+    for item in raw:
+        if getattr(item, "size", None) is None:
+            continue
+        path = str(getattr(item, "path", "") or "")
+        if not path:
+            where = identity.selector if identity else None
+            message = (
+                f"the Hub returned a file entry with no path for {where or 'the repository'}; "
+                f"the tree listing is the exact path set every later step is built from"
+            )
+            raise SynchronizationError.single(message, code="HFHUB008", location=where)
+        entries.append(TreeEntry(path=path, size=int(getattr(item, "size", 0) or 0)))
     return tuple(sorted(entries, key=lambda entry: entry.path))
+
+
+def download_estimate(raw: Sequence[object]) -> DownloadEstimate:
+    """Aggregate one `snapshot_download(dry_run=True)` result.
+
+    Read through `getattr` for the same reason the rest of this module is: these
+    are library records, and the three fields this application needs from them
+    are named once, here. `will_download` is the library's own answer to "is
+    this file already cached", which is a question about the cache's internal
+    layout that plan §12 item 7 forbids this application from answering for
+    itself by parsing directory names.
+    """
+    sizes = [
+        (int(getattr(item, "file_size", 0) or 0), bool(getattr(item, "will_download", False)))
+        for item in raw
+    ]
+    return DownloadEstimate(
+        file_count=len(sizes),
+        logical_bytes=sum(size for size, _ in sizes),
+        new_bytes=sum(size for size, downloads in sizes if downloads),
+    )
 
 
 # --------------------------------------------------------------------------- #

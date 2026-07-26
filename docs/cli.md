@@ -208,7 +208,23 @@ hfcache [--config PATH] plan [TYPE:ID ...]
 Resolves each enabled repository's configured reference to a full commit SHA and
 reports, per repository: the resolved SHA, whether it is already retained or
 current, the repository's logical size, the estimated new bytes to download, and
-the projected publication bytes in copy mode. Mutates nothing and takes no lock.
+the publication bytes projected under the configured `publication_mode`. Mutates
+nothing and takes no lock.
+
+Three Hub reads per repository, in the order §13.2 of `docs/plan.md` puts them:
+resolve the reference, enumerate the revision's tree, then cost the download with
+a `snapshot_download` dry run against the same private cache a sync would write
+to. The dry run creates nothing — not even the cache directory — so this command
+answers against an archive that has not been initialized yet, which is exactly
+who is asking. A failure at any of the three leaves the fields below it `null`
+rather than guessed, and the repository's `upstream_state` records what was
+observed.
+
+`projected_publication_bytes` is `0` under `publication_mode = "hardlink"`, since
+a hardlink points at a cache blob already on the dataset; under `"copy"` it is the
+logical size, because copy mode writes a second physical copy of every byte
+(`AD-11`). The mode is reported beside it so the zero is explicable, and a
+deployment weighing the switch reads the copy-mode figure off `logical_bytes`.
 
 This is the command run before enabling a large repository, and its output is what
 the dataset quota is sized from.
@@ -408,7 +424,7 @@ Serialization follows the same deterministic rules as durable files
 | `config validate` | `config_fingerprint`, `repositories`, `enabled_repositories`, `token_source` |
 | `archive init` | `archive_id`, `archive_root`, `created_directories`, `removed_temporaries`, `sentinel`, `adopted_published`. With `--inspect`, or on a refusal: `state`, `initializable`, `mount`, `existing_directories`, `missing_directories`, `unknown_entries`, `unknown_entry_count`, `leftover_temporaries`, `adopted_published`, `archive_id`, `archive_root` |
 | `doctor` | `checks[]` of `{ name, outcome, detail }`, in execution order |
-| `plan` | `repositories[]` of resolved SHA, retained/current state, logical size, estimated new bytes |
+| `plan` | `repositories[]` of `enabled`, `repository_type`, `repository_id`, `requested_revision`, `resolved_commit_sha`, `upstream_state`, `file_count`, `logical_bytes`, `estimated_new_bytes`, `projected_publication_bytes`, `publication_mode`, plus retained/current state |
 | `sync` | The `RunReport` body (`docs/schemas.md` §6) |
 | `status` | Archive health block plus per-repository state |
 | `list` | `repositories[]`, with `revisions[]` when `--revisions` is given |

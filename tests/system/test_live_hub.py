@@ -8,9 +8,15 @@ tell you that `huggingface_hub`'s response shape is still what `_facts` reads,
 or that `huggingface.co`'s certificate verifies against this host's trust store.
 Those are the two things this file exists for.
 
-It reads only — `repo_info`, `whoami`, DNS, TLS — and downloads nothing. The
-repositories it names are chosen for being tiny and long-lived; a test that
-fails because one was renamed is reporting something true.
+It reads only — `repo_info`, `whoami`, `list_repo_tree`, a `snapshot_download`
+dry run, DNS, TLS — and downloads nothing. The dry run in particular is asserted
+to leave no cache directory behind, because `plan` is run by operators sizing a
+dataset before the archive exists at all.
+
+The two repositories are the ones the archive itself syncs (`docs/progress.md`,
+"Test repositories"), so these tests and the first real sync exercise the same
+upstream content; a test that fails because one was renamed is reporting
+something true.
 """
 
 import pytest
@@ -29,9 +35,9 @@ pytestmark = pytest.mark.live
 
 ENDPOINT = "https://huggingface.co"
 
-# Small, public, and long-standing. `HUB-004` chooses the two repositories the
-# archive actually syncs; these are only here to prove the adapter reads a real
-# response correctly.
+# The two test repositories, chosen at `HUB-004` under plan §36.5 and recorded
+# in `docs/progress.md` and `examples/config.toml`. Small, public, long-standing,
+# and owned by `hf-internal-testing`, which exists to be depended on by tests.
 MODEL = RepositoryIdentity.of("model", "hf-internal-testing/tiny-random-gpt2")
 DATASET = RepositoryIdentity.of("dataset", "hf-internal-testing/fixtures_ade20k")
 
@@ -96,3 +102,50 @@ def test_a_revision_that_does_not_exist_is_reported(client: HubClient):
     # The Hub distinguishes a missing revision from a missing repository, and so
     # does the adapter; both are refusals rather than a crash.
     assert [problem.code for problem in caught.value.problems] == ["HFHUB007"]
+
+
+@pytest.mark.parametrize("identity", [MODEL, DATASET], ids=["model", "dataset"])
+def test_a_real_tree_listing_reads_as_typed_entries(client: HubClient, identity):
+    facts = client.repository(identity, "main")
+
+    tree = client.tree(identity, facts.commit_sha)
+
+    assert tree
+    assert all(entry.path and entry.size >= 0 for entry in tree)
+    # Sorted and unique, which is what every generated array in the archive is
+    # required to be (`docs/architecture.md` §5.3).
+    paths = [entry.path for entry in tree]
+    assert paths == sorted(paths)
+    assert len(set(paths)) == len(paths)
+
+
+@pytest.mark.parametrize("identity", [MODEL, DATASET], ids=["model", "dataset"])
+def test_a_dry_run_costs_a_revision_without_downloading_it(client: HubClient, identity, tmp_path):
+    # The cache directory does not exist and must not be created: `plan` mutates
+    # nothing, and an operator sizing a dataset runs it before `archive init`.
+    cache = tmp_path / "hub"
+
+    estimate = client.estimate(
+        identity, client.repository(identity, "main").commit_sha, cache_dir=cache, max_workers=2
+    )
+
+    assert not cache.exists()
+    assert estimate.file_count > 0
+    assert estimate.logical_bytes > 0
+    # Nothing is cached, so the whole revision is new.
+    assert estimate.new_bytes == estimate.logical_bytes
+    assert estimate.cached_bytes == 0
+
+
+def test_the_dry_run_and_the_tree_agree_about_the_revisions_size(client: HubClient, tmp_path):
+    # Two independent Hub answers about the same immutable revision. `plan`
+    # reports the tree's size as the repository's and the dry run's as what
+    # would be fetched, so a disagreement would make those two numbers
+    # incomparable.
+    facts = client.repository(DATASET, "main")
+
+    tree = client.tree(DATASET, facts.commit_sha)
+    estimate = client.estimate(DATASET, facts.commit_sha, cache_dir=tmp_path / "hub", max_workers=2)
+
+    assert estimate.file_count == len(tree)
+    assert estimate.logical_bytes == sum(entry.size for entry in tree)

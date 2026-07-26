@@ -733,6 +733,12 @@ class StubApi:
     def repo_info(self, repo_id: str, **arguments):  # pragma: no cover - unused here
         raise NotImplementedError
 
+    def list_repo_tree(self, repo_id: str, **arguments):  # pragma: no cover - unused here
+        raise NotImplementedError
+
+    def snapshot_download(self, repo_id: str, **arguments):  # pragma: no cover - unused here
+        raise NotImplementedError
+
 
 def hub_config(**overrides) -> HubConfig:
     return HubConfig.model_validate(overrides)

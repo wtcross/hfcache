@@ -60,6 +60,7 @@ __all__ = [
     "create_staging",
     "discard_staging",
     "prepare_staged_parent",
+    "projected_publication_bytes",
     "promote_staging",
     "publish_current_reference",
     "publish_revision_reference",
@@ -200,6 +201,25 @@ def prepare_staged_parent(path: Path) -> None:
         raise SynchronizationError.single(
             message, code="HFSYN005", location=str(path.parent)
         ) from exc
+
+
+def projected_publication_bytes(
+    logical_bytes: int, *, publication_mode: Literal["hardlink", "copy"]
+) -> int:
+    """What publishing a revision of this size will itself consume.
+
+    The whole reason `publication_mode` is an explicit configuration choice
+    rather than an automatic fallback (`AD-11`): hardlink publication adds
+    directory entries pointing at cache blobs that are already on the dataset, so
+    it costs nothing beyond metadata, while copy publication writes a second
+    physical copy of every byte. Plan §19 item 9 requires the second number to be
+    in the free-space calculation before a download starts, and `plan` reports it
+    because that is the figure the dataset quota is sized from.
+
+    Stated once, here, so the estimate an operator reads and the reserve a sync
+    enforces cannot disagree about what a publication costs.
+    """
+    return logical_bytes if publication_mode == "copy" else 0
 
 
 def stage_file(
