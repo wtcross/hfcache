@@ -16,16 +16,21 @@ and symlink cases testable at all.
 
 import hashlib
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from hfcache.errors import ExitCode, SynchronizationError
 from hfcache.hub import TreeEntry
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity
+from hfcache.manifests import DependencyObservation, HashReuse, RevisionManifest
+from hfcache.paths import ArchiveLayout, RepositoryLayout
+from hfcache.reporting import RuntimeVersions
 from hfcache.sync import (
     KnownDigest,
     ObjectIdentity,
+    Timeline,
+    build_manifest,
     completeness_problems,
     hash_snapshot,
     published_digests,
@@ -467,3 +472,272 @@ def test_a_manifest_path_the_tree_no_longer_holds_is_skipped(tmp_path):
     tree.mkdir()
 
     assert published_digests(tree, manifest) == {}
+
+
+# --------------------------------------------------------------------------- #
+# Describing the revision (plan §13.2 step 12, §10.1)
+# --------------------------------------------------------------------------- #
+
+TIMELINE = Timeline(
+    first_observed_at=examples.at("2026-07-26T09:00:00.000000Z"),
+    download_started_at=examples.at("2026-07-26T09:00:01.000000Z"),
+    download_completed_at=examples.at("2026-07-26T09:00:30.000000Z"),
+    verified_at=examples.at("2026-07-26T09:00:45.000000Z"),
+    published_at=examples.at("2026-07-26T09:00:50.000000Z"),
+)
+
+
+@pytest.fixture
+def repository_layout(tmp_path: Path) -> RepositoryLayout:
+    return RepositoryLayout(archive=ArchiveLayout(root=tmp_path / "archive"), identity=MODEL)
+
+
+def described(hashed_snapshot, tree, layout, **overrides):
+    arguments: dict[str, Any] = {
+        "identity": MODEL,
+        "requested_revision": "main",
+        "commit_sha": CommitSha(SHA),
+        "publication_id": PublicationId(PUBLICATION),
+        "publication_generation": 1,
+        "publication_mode": "hardlink",
+        "tree": tree,
+        "hashed": hashed_snapshot,
+        "layout": layout,
+        "hub_endpoint": "https://huggingface.co",
+        "timeline": TIMELINE,
+    }
+    return build_manifest(**(arguments | overrides))
+
+
+def test_a_manifest_describes_every_file_that_was_published(cache, snapshot, repository_layout):
+    landed(cache, snapshot, "config.json", PAYLOAD)
+    landed(cache, snapshot, "model.bin", OTHER)
+    tree = [
+        TreeEntry(path="config.json", size=len(PAYLOAD), git_oid="a" * 40),
+        TreeEntry(path="model.bin", size=len(OTHER), lfs_sha256="b" * 64, xet_hash="c" * 64),
+    ]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    assert manifest.file_count == 2
+    assert [entry.path for entry in manifest.files] == ["config.json", "model.bin"]
+    assert manifest.total_bytes == len(PAYLOAD) + len(OTHER)
+    assert manifest.commit_sha == SHA
+    assert manifest.repository_id == MODEL.id
+    assert manifest.publication_generation == 1
+
+
+def test_sizes_and_digests_come_from_what_was_read_not_from_the_hub(
+    cache, snapshot, repository_layout
+):
+    # `AD-18`: the Hub's size is a claim. Completeness already made them agree,
+    # so the way to see which one reached the manifest is to make them differ.
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+    result = hashed(snapshot, tree)
+
+    manifest = described(result, [TreeEntry(path="model.bin", size=999_999)], repository_layout)
+
+    assert manifest.files[0].size == len(PAYLOAD)
+    assert manifest.files[0].sha256 == PAYLOAD_DIGEST
+
+
+def test_upstream_identifiers_are_recorded_as_comparison_values(cache, snapshot, repository_layout):
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [
+        TreeEntry(
+            path="model.bin",
+            size=len(PAYLOAD),
+            git_oid="a" * 40,
+            lfs_sha256="b" * 64,
+            xet_hash="c" * 64,
+        )
+    ]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    upstream = manifest.files[0].upstream
+    assert (upstream.git_oid, upstream.lfs_sha256, upstream.xet_hash) == (
+        "a" * 40,
+        "b" * 64,
+        "c" * 64,
+    )
+    # Recorded beside the digest, never as it.
+    assert manifest.files[0].sha256 == PAYLOAD_DIGEST
+
+
+def test_an_object_the_hub_said_nothing_about_records_no_identifiers(
+    cache, snapshot, repository_layout
+):
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    upstream = manifest.files[0].upstream
+    assert (upstream.git_oid, upstream.lfs_sha256, upstream.xet_hash) == (None, None, None)
+
+
+def test_a_hashed_object_records_that_it_was_downloaded_and_read(
+    cache, snapshot, repository_layout
+):
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    provenance = manifest.files[0].provenance
+    assert provenance.hashed is True
+    assert provenance.source == "hub_download"
+    assert provenance.cache_root == "canonical"
+    assert provenance.hash_reused_from is None
+    assert manifest.verification.reused_digests == 0
+
+
+def test_a_reused_digest_names_the_publication_it_came_from(cache, snapshot, repository_layout):
+    # So no manifest holds a digest whose origin cannot be traced to bytes this
+    # archive read.
+    source = landed(cache, snapshot, "model.bin", PAYLOAD)
+    known = {
+        ObjectIdentity.of(source): KnownDigest(
+            commit_sha=CommitSha(OTHER_SHA),
+            publication_id=PublicationId(PUBLICATION),
+            sha256="a" * 64,
+            size=len(PAYLOAD),
+        )
+    }
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    manifest = described(hashed(snapshot, tree, known=known), tree, repository_layout)
+
+    provenance = manifest.files[0].provenance
+    assert provenance.hashed is False
+    assert provenance.source == "cache_reuse"
+    assert provenance.hash_reused_from == HashReuse(
+        commit_sha=OTHER_SHA, publication_id=PUBLICATION
+    )
+    assert manifest.verification.reused_digests == 1
+
+
+def test_a_repair_download_records_the_isolated_cache_it_came_from(
+    cache, snapshot, repository_layout
+):
+    # `FS-14`: a repair never reuses the canonical cache, and the manifest says so.
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout, cache_root="repair")
+
+    assert manifest.files[0].provenance.cache_root == "repair"
+    assert manifest.files[0].provenance.source == "repair_download"
+
+
+def test_the_verification_summary_counts_objects_not_paths(cache, snapshot, repository_layout):
+    target = blob(cache, "shared", PAYLOAD)
+    for name in ("first.bin", "second.bin"):
+        (snapshot / name).symlink_to(target)
+    tree = [TreeEntry(path=name, size=len(PAYLOAD)) for name in ("first.bin", "second.bin")]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    assert manifest.file_count == 2
+    assert manifest.verification.hashed_objects == 1
+    assert manifest.verification.hashed_bytes == len(PAYLOAD)
+    assert manifest.total_bytes == 2 * len(PAYLOAD)
+    assert manifest.verification.completeness_checked is True
+
+
+def test_the_manifest_names_its_own_tree_archive_relative(cache, snapshot, repository_layout):
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    # Decision 13: only a *reference* is relative to `published/`.
+    assert manifest.tree.startswith("published/repos/models/")
+    assert manifest.tree == str(
+        repository_layout.manifest_tree_field(CommitSha(SHA), PublicationId(PUBLICATION))
+    )
+
+
+def test_the_timeline_is_the_callers_because_it_records_when_work_happened(
+    cache, snapshot, repository_layout
+):
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    assert manifest.download_started_at == TIMELINE.download_started_at
+    assert manifest.published_at == TIMELINE.published_at
+    assert manifest.verified_at == manifest.verification.verified_at
+
+
+def test_this_processs_versions_are_recorded(cache, snapshot, repository_layout):
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    versions = RuntimeVersions.measured()
+    assert manifest.application_version == versions.application
+    assert manifest.python_version == versions.python
+    assert manifest.huggingface_hub_version == versions.huggingface_hub
+
+
+def test_dependencies_are_sorted_however_they_arrive(cache, snapshot, repository_layout):
+    # The manifest model requires the ordering; the builder supplies it rather
+    # than making every caller remember to.
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+    observations = [
+        DependencyObservation(
+            confidence="high",
+            declared=False,
+            detected_id="z/base",
+            managed=False,
+            source_field="base_model",
+            source_file="README.md",
+        ),
+        DependencyObservation(
+            confidence="medium",
+            declared=True,
+            detected_id="a/base",
+            managed=True,
+            source_field="base_model_name_or_path",
+            source_file="adapter_config.json",
+        ),
+    ]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout, dependencies=observations)
+
+    # Byte-wise, so `README.md` precedes `adapter_config.json`: `R` is 0x52 and
+    # `a` is 0x61. Deterministic bytes matter more here than alphabetical taste.
+    assert [item.source_file for item in manifest.dependencies] == [
+        "README.md",
+        "adapter_config.json",
+    ]
+
+
+def test_a_manifest_round_trips_through_its_durable_form(cache, snapshot, repository_layout):
+    # The point of building one: it is written and read back later, and the
+    # model refuses anything whose arithmetic does not describe a real tree.
+    landed(cache, snapshot, "config.json", PAYLOAD)
+    landed(cache, snapshot, "model.bin", OTHER)
+    tree = [
+        TreeEntry(path="config.json", size=len(PAYLOAD)),
+        TreeEntry(path="model.bin", size=len(OTHER)),
+    ]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout)
+
+    assert RevisionManifest.model_validate_json(manifest.to_json()) == manifest
+
+
+def test_a_copy_mode_publication_records_the_mode_it_used(cache, snapshot, repository_layout):
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    manifest = described(hashed(snapshot, tree), tree, repository_layout, publication_mode="copy")
+
+    assert manifest.publication_mode == "copy"

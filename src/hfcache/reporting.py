@@ -12,10 +12,15 @@ here treats it as authority; it exists so `status` and `list` answer without
 walking the whole archive.
 """
 
+import platform
+from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as package_version
 from typing import Annotated, Any, Literal, Self, final
 
 from pydantic import BeforeValidator, Field, model_validator
 
+from hfcache import __version__
 from hfcache.errors import ExitCode, Problem
 from hfcache.models import (
     ArchivePath,
@@ -54,6 +59,7 @@ __all__ = [
     "RepositoryVerificationEntry",
     "RunReport",
     "RunTotals",
+    "RuntimeVersions",
     "VerificationCatalog",
     "VerificationReport",
     "VerificationRevisionEntry",
@@ -216,6 +222,41 @@ class RunTotals(DurableModel):
     pruned_logical_bytes: ByteCount = 0
     reused_bytes: ByteCount = 0
     xet_cache_peak_bytes: ByteCount = 0
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class RuntimeVersions:
+    """Which software produced a durable artifact.
+
+    Read once, here, because a manifest and a run report carry the same three
+    fields and an operator correlating them during an incident has to be able to
+    trust that they were measured the same way. A missing distribution reports
+    `"unknown"` rather than raising: a report that cannot name its dependency
+    version is still worth writing, and refusing to record a run because
+    `importlib.metadata` could not find a package would be the wrong trade in the
+    one situation where the report matters most.
+    """
+
+    application: str
+    huggingface_hub: str
+    python: str
+
+    @classmethod
+    def measured(cls) -> Self:
+        """Read this process's versions."""
+        return cls(
+            application=__version__,
+            huggingface_hub=_distribution_version("huggingface-hub"),
+            python=platform.python_version(),
+        )
+
+
+def _distribution_version(distribution: str) -> str:
+    try:
+        return package_version(distribution)
+    except PackageNotFoundError:  # pragma: no cover - a broken installation
+        return "unknown"
 
 
 class RunEnvelope(VersionedModel):

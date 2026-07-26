@@ -19,6 +19,8 @@ upstream content; a test that fails because one was renamed is reporting
 something true.
 """
 
+from datetime import UTC, datetime
+
 import pytest
 
 from hfcache.credentials import ResolvedToken, TokenSource
@@ -29,8 +31,10 @@ from hfcache.hub import (
     resolve_host,
     verify_tls,
 )
-from hfcache.identity import RepositoryIdentity
-from hfcache.sync import completeness_problems
+from hfcache.identity import RepositoryIdentity, new_publication_id
+from hfcache.manifests import RevisionManifest
+from hfcache.paths import ArchiveLayout, RepositoryLayout
+from hfcache.sync import Timeline, build_manifest, completeness_problems, hash_snapshot
 
 pytestmark = pytest.mark.live
 
@@ -211,6 +215,61 @@ def test_a_second_download_of_the_same_sha_fetches_nothing(client: HubClient, tm
 
     assert again.new_bytes == 0
     assert again.cached_bytes == again.logical_bytes > 0
+
+
+def test_a_real_revision_produces_a_manifest_that_round_trips(client: HubClient, tmp_path):
+    # The whole ingestion sequence against real content: resolve, list, download,
+    # check completeness, hash, describe. The manifest model enforces its own
+    # arithmetic, ordering, and timeline, so building one from real bytes and
+    # reading it back is the end-to-end proof that the pieces agree.
+    cache = tmp_path / "hub"
+    facts = client.repository(DATASET, "main")
+    tree = client.tree(DATASET, facts.commit_sha)
+    started = datetime.now(UTC)
+    client.download(DATASET, facts.commit_sha, cache_dir=cache, max_workers=2)
+    snapshot = client.verify_local(DATASET, facts.commit_sha, cache_dir=cache)
+    assert completeness_problems(snapshot, tree, identity=DATASET, cache_root=cache) == []
+    hashed = hash_snapshot(snapshot, tree, identity=DATASET)
+    finished = datetime.now(UTC)
+
+    manifest = build_manifest(
+        identity=DATASET,
+        requested_revision="main",
+        commit_sha=facts.commit_sha,
+        publication_id=new_publication_id(),
+        publication_generation=1,
+        publication_mode="hardlink",
+        tree=tree,
+        hashed=hashed,
+        layout=RepositoryLayout(archive=ArchiveLayout(root=tmp_path / "archive"), identity=DATASET),
+        hub_endpoint=ENDPOINT,
+        timeline=Timeline(
+            first_observed_at=started,
+            download_started_at=started,
+            download_completed_at=finished,
+            verified_at=finished,
+            published_at=finished,
+        ),
+    )
+
+    assert manifest.file_count == len(tree)
+    assert manifest.total_bytes == sum(entry.size for entry in tree)
+    assert RevisionManifest.model_validate_json(manifest.to_json()) == manifest
+    # Every digest was computed here; nothing was reused, since the cache is new.
+    assert manifest.verification.reused_digests == 0
+    assert all(entry.provenance.hashed for entry in manifest.files)
+
+
+def test_a_real_lfs_file_records_its_upstream_identifiers(client: HubClient, tmp_path):
+    # Comparison values only (`AD-18`). The model's weight file is the one that
+    # exercises the LFS and Xet paths.
+    facts = client.repository(MODEL, "main")
+
+    tree = client.tree(MODEL, facts.commit_sha)
+
+    weights = next(entry for entry in tree if entry.path.endswith(".safetensors"))
+    assert weights.git_oid
+    assert weights.lfs_sha256
 
 
 def test_the_dry_run_and_the_tree_agree_about_the_revisions_size(client: HubClient, tmp_path):

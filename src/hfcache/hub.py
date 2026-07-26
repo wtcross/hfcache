@@ -97,12 +97,23 @@ class TreeEntry:
     """One file the Hub says a revision contains.
 
     `size` is the Hub's claim about the file and is used only for estimation
-    (plan §13.2 step 3). It never becomes a manifest's expected size: that comes
-    from hashing the bytes that actually landed (`AD-18`).
+    (plan §13.2 step 3) and for the completeness comparison. It never becomes a
+    manifest's expected size: that comes from hashing the bytes that actually
+    landed (`AD-18`).
+
+    The three identifiers are the same kind of thing and are recorded for the
+    same reason plan §10.1 gives — they help explain a discrepancy later. A Git
+    object id is a hash of a *pointer* for an LFS file, an LFS digest is
+    upstream's claim rather than this archive's reading, and a Xet hash
+    identifies a chunk assembly rather than a byte sequence. None of them is ever
+    compared against or substituted for the digest this application computes.
     """
 
     path: str
     size: int
+    git_oid: str | None = None
+    lfs_sha256: str | None = None
+    xet_hash: str | None = None
 
 
 @final
@@ -642,8 +653,26 @@ def tree_entries(
                 f"the tree listing is the exact path set every later step is built from"
             )
             raise SynchronizationError.single(message, code="HFHUB008", location=where)
-        entries.append(TreeEntry(path=path, size=int(getattr(item, "size", 0) or 0)))
+        entries.append(
+            TreeEntry(
+                path=path,
+                size=int(getattr(item, "size", 0) or 0),
+                git_oid=_text(getattr(item, "blob_id", None)),
+                lfs_sha256=_text(getattr(getattr(item, "lfs", None), "sha256", None)),
+                xet_hash=_text(getattr(item, "xet_hash", None)),
+            )
+        )
     return tuple(sorted(entries, key=lambda entry: entry.path))
+
+
+def _text(value: object) -> str | None:
+    """One optional library string, normalised to `str | None`.
+
+    The Hub supplies each identifier for some files and not others — `lfs` is
+    absent on a small file, `xet_hash` on a repository not using Xet — so the
+    absent case is the common one and must not become the string `"None"`.
+    """
+    return str(value) if value else None
 
 
 def download_estimate(raw: Sequence[object]) -> DownloadEstimate:

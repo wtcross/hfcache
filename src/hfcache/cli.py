@@ -5,7 +5,6 @@ in `docs/cli.md`. Scheduled runs use exactly the same commands an operator types
 """
 
 import os
-import platform
 import socket
 import sys
 from dataclasses import dataclass
@@ -18,7 +17,6 @@ from typing import TYPE_CHECKING, Annotated, Any, Final, NoReturn
 
 import typer
 
-from hfcache import __version__
 from hfcache.archive import initialize_archive, inspect_archive
 from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
@@ -37,7 +35,7 @@ from hfcache.preflight import (
 )
 from hfcache.publication import projected_publication_bytes
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery
-from hfcache.reporting import Envelope, EnvelopeProblem
+from hfcache.reporting import Envelope, EnvelopeProblem, RuntimeVersions
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -228,10 +226,11 @@ def version(ctx: typer.Context) -> None:
     that is otherwise broken.
     """
     started_at = utc_now()
+    versions = RuntimeVersions.measured()
     payload: dict[str, Any] = {
-        "application": __version__,
-        "huggingface_hub": _dependency_version("huggingface-hub"),
-        "python": platform.python_version(),
+        "application": versions.application,
+        "huggingface_hub": versions.huggingface_hub,
+        "python": versions.python,
         "transfer_backend": _transfer_backend(),
     }
     if _options(ctx).json_output:
@@ -886,14 +885,15 @@ def recover(
 
 def _run_envelope(config: ApplicationConfig) -> dict[str, Any]:
     """The provenance fields every durable report carries (`docs/schemas.md` §6)."""
+    versions = RuntimeVersions.measured()
     return {
-        "application_version": __version__,
+        "application_version": versions.application,
         "archive_id": config.storage.archive_id,
         "config_fingerprint": config.fingerprint(),
         "hostname": socket.gethostname(),
-        "huggingface_hub_version": _dependency_version("huggingface-hub"),
+        "huggingface_hub_version": versions.huggingface_hub,
         # systemd sets INVOCATION_ID for every unit it starts, which is the one
         # signal that distinguishes a timer run from an operator at a terminal.
         "invocation_mode": "systemd" if os.environ.get("INVOCATION_ID") else "interactive",
-        "python_version": platform.python_version(),
+        "python_version": versions.python,
     }

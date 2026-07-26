@@ -16,13 +16,23 @@ disagreement stops the revision rather than being published as fact.
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Self, final
+from datetime import datetime  # noqa: TC003 - a dataclass field type, needed at runtime
+from typing import TYPE_CHECKING, Literal, Self, final
 
 from hfcache.errors import Problem, SynchronizationError
 from hfcache.hashing import sha256_file
 from hfcache.identity import CommitSha, PublicationId
+from hfcache.manifests import (
+    FileEntry,
+    FileProvenance,
+    HashReuse,
+    RevisionManifest,
+    UpstreamIdentifiers,
+    VerificationSummary,
+)
 from hfcache.paths import find_path_collisions, parse_repository_relative
 from hfcache.publication import source_problems
+from hfcache.reporting import RuntimeVersions
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -30,13 +40,16 @@ if TYPE_CHECKING:
 
     from hfcache.hub import TreeEntry
     from hfcache.identity import RepositoryIdentity
-    from hfcache.manifests import RevisionManifest
+    from hfcache.manifests import DependencyObservation, RepairProvenance
+    from hfcache.paths import RepositoryLayout
 
 __all__ = [
     "HashedFile",
     "HashedSnapshot",
     "KnownDigest",
     "ObjectIdentity",
+    "Timeline",
+    "build_manifest",
     "completeness_problems",
     "hash_snapshot",
     "published_digests",
@@ -388,3 +401,160 @@ def hash_snapshot(
         files.append(HashedFile(path=entry.path, sha256=read.digest, size=read.size))
 
     return HashedSnapshot(files=tuple(files), hashed_bytes=hashed_bytes, hashed_objects=len(hashed))
+
+
+# --------------------------------------------------------------------------- #
+# Describing the revision (plan §13.2 step 12, §10.1)
+# --------------------------------------------------------------------------- #
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class Timeline:
+    """When each stage of one ingestion happened (`docs/schemas.md` §3.1).
+
+    Carried as a value rather than stamped inside the builder because the
+    manifest's own validator checks these are ordered, and the moments it
+    describes happened in the caller — `download_started_at` before a download
+    this function never saw. Stamping them here would record when the manifest
+    was assembled and call it when the work occurred.
+
+    `first_observed_at` is separate from the rest and may predate them by weeks:
+    it records when this SHA was first seen for this repository, which for a
+    republished or repaired revision is not when this instance was built.
+    """
+
+    first_observed_at: datetime
+    download_started_at: datetime
+    download_completed_at: datetime
+    verified_at: datetime
+    published_at: datetime
+
+
+def build_manifest(  # noqa: PLR0913 - §10.1 fixes the field set; each argument is one of them
+    *,
+    identity: RepositoryIdentity,
+    requested_revision: str,
+    commit_sha: CommitSha,
+    publication_id: PublicationId,
+    publication_generation: int,
+    publication_mode: Literal["hardlink", "copy"],
+    tree: Sequence[TreeEntry],
+    hashed: HashedSnapshot,
+    layout: RepositoryLayout,
+    hub_endpoint: str,
+    timeline: Timeline,
+    dependencies: Sequence[DependencyObservation] = (),
+    cache_root: Literal["canonical", "repair"] = "canonical",
+    repair: RepairProvenance | None = None,
+) -> RevisionManifest:
+    """Assemble the immutable description of one publication instance.
+
+    Every number in the result comes from what was read rather than from what
+    was claimed: sizes and digests are `HashedSnapshot`'s, and the Hub's tree
+    contributes only the three upstream identifiers, which are comparison values
+    and never a substitute (`AD-18`, plan §10.1).
+
+    The model does the checking. `file_count` against `len(files)`, `total_bytes`
+    against the sum, `reused_digests` against the entries marked unhashed,
+    byte-wise path ordering, collision folding, and the timeline's order are all
+    enforced by `RevisionManifest` itself, so a manifest that describes no real
+    tree cannot be constructed here and cannot be read back later. This function
+    is deliberately thin over that: it arranges inputs, it does not decide
+    whether they are consistent.
+
+    Nothing is written. Plan §13.2 step 12 writes to a temporary sibling and step
+    16 publishes it atomically, and both belong to the transaction that owns the
+    filesystem — this returns the value they persist.
+    """
+    upstream = {entry.path: entry for entry in tree}
+    files = tuple(
+        FileEntry(
+            path=entry.path,
+            provenance=_provenance(entry, cache_root=cache_root),
+            sha256=entry.sha256,
+            size=entry.size,
+            upstream=_upstream(upstream.get(entry.path)),
+        )
+        for entry in hashed.files
+    )
+    versions = RuntimeVersions.measured()
+    return RevisionManifest(
+        application_version=versions.application,
+        commit_sha=commit_sha,
+        dependencies=tuple(
+            sorted(
+                dependencies,
+                key=lambda item: (item.source_file, item.source_field, item.detected_id),
+            )
+        ),
+        download_completed_at=timeline.download_completed_at,
+        download_started_at=timeline.download_started_at,
+        file_count=len(files),
+        files=files,
+        first_observed_at=timeline.first_observed_at,
+        hub_endpoint=hub_endpoint,
+        huggingface_hub_version=versions.huggingface_hub,
+        publication_generation=publication_generation,
+        publication_id=publication_id,
+        publication_mode=publication_mode,
+        published_at=timeline.published_at,
+        python_version=versions.python,
+        repair=repair,
+        repository_id=identity.id,
+        repository_type=identity.type,
+        requested_revision=requested_revision,
+        total_bytes=hashed.total_bytes,
+        tree=str(layout.manifest_tree_field(commit_sha, publication_id)),
+        verification=VerificationSummary(
+            completeness_checked=True,
+            hashed_bytes=hashed.hashed_bytes,
+            hashed_objects=hashed.hashed_objects,
+            outcome="verified",
+            reused_digests=hashed.reused_digests,
+            verified_at=timeline.verified_at,
+        ),
+        verified_at=timeline.verified_at,
+    )
+
+
+def _provenance(entry: HashedFile, *, cache_root: Literal["canonical", "repair"]) -> FileProvenance:
+    """How one object's bytes were obtained, in the manifest's own terms.
+
+    The three fields are not independent, and `FileProvenance` refuses the
+    combinations that would misdescribe an object: an unhashed entry must name
+    the publication whose inode it shares, and a repair download must come from
+    the repair cache root (`FS-14`). What is decided here is only which of the
+    permitted combinations this entry is.
+    """
+    if entry.reused_from is not None:
+        return FileProvenance(
+            cache_root=cache_root,
+            hash_reused_from=HashReuse(
+                commit_sha=entry.reused_from.commit_sha,
+                publication_id=entry.reused_from.publication_id,
+            ),
+            hashed=False,
+            source="cache_reuse",
+        )
+    return FileProvenance(
+        cache_root=cache_root,
+        hash_reused_from=None,
+        hashed=True,
+        source="repair_download" if cache_root == "repair" else "hub_download",
+    )
+
+
+def _upstream(entry: TreeEntry | None) -> UpstreamIdentifiers:
+    """What upstream said about an object, or nothing when it said nothing.
+
+    A path that is not in the tree cannot reach here — completeness refused it
+    already — but the lookup is written total rather than trusting that, because
+    the alternative is a `KeyError` from the middle of manifest construction
+    for a condition that has a perfectly good empty answer.
+    """
+    if entry is None:  # pragma: no cover - completeness refuses this first
+        return UpstreamIdentifiers()
+    return UpstreamIdentifiers(
+        git_oid=entry.git_oid, lfs_sha256=entry.lfs_sha256, xet_hash=entry.xet_hash
+    )

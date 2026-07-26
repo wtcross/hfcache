@@ -403,6 +403,35 @@ def test_an_empty_tree_is_an_empty_tuple():
     assert tree_entries([]) == ()
 
 
+def test_upstream_identifiers_are_read_off_the_listing():
+    # Comparison values for the manifest (plan §10.1), never digests.
+    @dataclass
+    class Lfs:
+        sha256: str
+
+    @dataclass
+    class Rich:
+        path: str
+        size: int
+        blob_id: str
+        lfs: object
+        xet_hash: str
+
+    entries = tree_entries([Rich("model.bin", 8, "a" * 40, Lfs("b" * 64), "c" * 64)])
+
+    assert entries[0].git_oid == "a" * 40
+    assert entries[0].lfs_sha256 == "b" * 64
+    assert entries[0].xet_hash == "c" * 64
+
+
+def test_an_absent_identifier_is_none_and_never_the_string_none():
+    # `lfs` is absent on a small file and `xet_hash` on a repository not using
+    # Xet, so the absent case is the common one.
+    entries = tree_entries([Entry("config.json", 2)])
+
+    assert (entries[0].git_oid, entries[0].lfs_sha256, entries[0].xet_hash) == (None, None, None)
+
+
 def test_a_file_entry_with_no_path_is_hfhub008():
     # The listing is the exact path set every later step joins onto a filesystem
     # path; an empty name would reach that join looking legitimate.
