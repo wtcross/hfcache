@@ -237,6 +237,8 @@ hfcache/
 │   ├── tmpfiles.d/
 │   │   └── hfcache.conf
 │   └── systemd/
+│       ├── hfcache-sync.service.d/
+│       │   └── credential.conf.example
 │       ├── srv-hfcache.mount
 │       ├── srv-hfcache.automount
 │       ├── hfcache.target

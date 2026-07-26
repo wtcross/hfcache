@@ -223,7 +223,44 @@ interpretations, including both carried-in items.
 - [x] SYNC-005 Discard staging when a publication fails before the rename (2026-07-26, this commit — decision 56's problem in the failure path, found at `SEL-001` when a real sync failed under the hardening and left `.store/staging/<txn>/` behind with nothing able to reclaim it. A journal closed `failed` is *resolved*, so `open_journals` skips it, `plan_recovery` never proposes a remedy, and `reconcile_storage` goes on reporting that directory as unfinished work — warning `HFWRN004` about it once it ages past the configured staleness. §7.3's "Before 5 → roll back" row is now performed by the command that knows it failed rather than left for a recovery that will never look. **Only before the rename:** at or after checkpoint 5 a tree is published and the staged manifest is the only thing that can validate it, so it is preserved — a resolved journal in that state is something an operator has to look at, and deleting its evidence first would be the wrong help. Both sides asserted: one test fails the local-completeness check and expects empty staging, the other fails the reference publication and expects the staged manifest to survive. `sync.py` at 100% branch coverage)
 - [x] VER-007 Key the reported verification state on the publication instance (2026-07-26, this commit — decision 62, found at `SEL-001` by the retention rotation: a dataset revision that had been pruned and then re-synced under a new publication id read `verified` in `status`, on the strength of a verification of the instance the prune had removed. `catalog/verification.json` has recorded `publication_id` since `VER-005`; `VerificationStates.of` was keying on `(type, id, commit_sha)` and throwing it away, so `verified` became true of content nothing had ever re-read — the unfalsifiable field decision 51 existed to close, reappearing through a different door. The key is now the instance, all three call sites pass the id the reference or manifest already carries, and an entry whose `publication_id` is null raises nobody's confidence because it cannot be attributed to anything on disk. No durable format change: the field was already there. `docs/schemas.md` §5.2 amended. `publication.py` at 100% branch coverage)
 - [x] SEL-001 Validate all operations with SELinux enforcing (2026-07-26, this commit — SELinux `Enforcing` throughout, `/srv/hfcache` carrying the normal `nfs_t` filesystem label (§23 item 2), and the services running in the **default** systemd service domain `unconfined_service_t` (item 3). Labels were fixed first, per item 6: every local path's *type* already matched the policy default, but the paths created at a shell carried `unconfined_u` where a system-installed file should carry `system_u`, so `restorecon -RF` was run over `/opt/hfcache`, `/etc/hfcache`, `/var/lib/hfcache`, and `/var/cache/hfcache` — 7 082 paths relabelled, and a second pass would relabel none. `install-release.sh` now uses `-RF` for the same reason. **Every item-4 path exercised on the real dataset:** sync with real downloads through the hardened unit, hashing, hardlink publication, atomic directory rename, the §7.4 **prune** — all ten checkpoints committed, both audit records written, the per-SHA reference removed, trash and quarantine empty — full verification, and `recover --dry-run`. Getting to a live prune took a real retention rotation, because `storage.maximum_revisions` is pinned to 5 by the schema (`HFCFG011`) and `AD-04` triggers a prune only from a *successful publication* beyond the maximum: four more real commits of `fixtures_ade20k` were published, the sixth publication pruned generation 1 automatically, and restoring `revision = "main"` re-downloaded and republished the pruned SHA as generation 7 — which pruned generation 2 in turn. That is §29 step 15's revision change and retention simulation, observed rather than simulated. Afterwards: `verify --full` read 23 unique objects across 6 revisions and reported `clean`; `status` exits `0`, not degraded, no outstanding failures, nothing unfinished. **Zero AVC denials** — no `type=AVC`, `USER_AVC`, or `SELINUX_ERR` record in `/var/log/audit/audit.log` and no `avc: denied` in the journal, for a boot that predates `HOST-004`, so the search covers every operation this session performed. No local policy module was created and none is needed (items 7-9), and nothing was weakened: no `setenforce 0`, no permissive domain, no allow rule, no boolean or fcontext customization. The exercise found three real defects — `SYNC-005`, `VER-007`, and decision 61's `RestrictSUIDSGID` incompatibility — which is what exercising is for)
-- [ ] SEC-001 Validate optional systemd credential support
+- [x] SEC-001 Validate optional systemd credential support (2026-07-26, this commit — §22.6 item 4's drop-in is `packaging/systemd/hfcache-sync.service.d/credential.conf.example`, shipped with the release, **not installed**, and carrying the exact `systemd-creds encrypt` recipe plus its acceptance checks. It was installed, exercised, and removed here, because a drop-in nobody has run is a document rather than a control. Evidence, all of it against a deliberately fake token: the ciphertext does not contain the plaintext; `systemd-analyze verify` clean with the drop-in; the credential arrives at `$CREDENTIALS_DIRECTORY/hf-token` mode `0440` and the application resolves it with source `systemd-credential` and **decrypts to exactly the right bytes**, compared by digest rather than printed. `--token-file` resolves with source `token-file` (item 2) and a token file this identity cannot read is `HFARG005` at exit `10`, reported *by shape* — "is unreadable: Permission denied" — never by content. With `hub.expected_account` set, `whoami` is called and the Hub's 401 becomes a failed `hub_identity` check at exit `20` before any mutation (item 5), which is the credential-swapped-by-mistake case caught before a scheduled run uses it. **Ambient Hub environment variables are ignored entirely:** with `HF_TOKEN` and `HUGGING_FACE_HUB_TOKEN` both set in the unit's environment and no credential supplied, `hub_argument` is exactly `False` — not `None` (T-07). And the secret persisted nowhere it could (item 3): zero occurrences in the archive, in `runs/`, in `config.toml`, in `/var/lib/hfcache`, in `/var/cache/hfcache`, in the release tree, and zero in the journal under either service unit, under any transient probe, or under uid 981. The only journal occurrences at all are `sudo`'s own audit records of the *searches* — uid 1000, session scope — which is the search looking at itself. Cleaned up afterwards with `shred`: the deployment is anonymous, `doctor` reads `credential: pass` (no token) and `hub_identity: skipped`)
+
+**Phase 7 complete (writer side).** The application is deployed, the archive is
+initialized and healthy, and every unit is installed, validated, and hardened
+with each setting tested. Six work packages beyond the plan's Phase 7 list were
+needed, all of them defects the deployment itself surfaced: `SYNC-003` (the
+carried `TX-07` item), `SYNC-004`, `SYNC-005`, and `VER-007` in the application,
+and decisions 57, 58, 61, and 62 in its contracts. That is the argument for
+rolling out onto real storage before declaring anything done — none of the four
+was reachable from the test suite as it stood.
+
+**Carried out of this phase.** Two items are open that this phase found and did
+not close, recorded here rather than left to be rediscovered:
+
+1. **A pruned revision leaves an empty `revisions/<sha>/` directory behind.**
+   §7.4's checkpoints tombstone the *instance* directory and its manifest;
+   nothing removes the now-empty SHA container above it. Nothing derived is
+   wrong — `list`, `status`, the catalog, `next_generation`, and `verify` all
+   resolve through references, and all five were checked against the live
+   archive after the retention rotation — but the tree accumulates one empty
+   directory per pruned revision forever, in a consumer-visible location. Left
+   open deliberately: removing it means adding an act to §7.4's documented
+   checkpoint sequence, which is a durable-contract change and not a drive-by
+   at `SEL-001`. It belongs with `OPS-003`/`REL-002`, where the consumer-facing
+   tree is documented and reviewed.
+
+2. **`RestrictSUIDSGID=true` is off, and could come back.** Decision 61 records
+   why it cannot be set today: `create_staging` must create a setgid directory.
+   If `PUBLISHED_DIRECTORY_MODE`'s setgid bit is ever revisited — for instance if
+   the consumer export moves to POSIX ACLs, which would carry group inheritance
+   without it — the setting becomes applicable again and
+   `scripts/check-hardening.sh` is what would prove it.
+
+*A note on two commits.* Decision 61's unit change and the probe extension that
+covers it were staged into the `SYNC-005` commit rather than `SEL-001`, where
+they belong. The decisions and this checklist attribute them correctly; the
+history does not, and rewriting three commits to move two files would have risked
+more than it fixed.
 
 ## Phase 8 — Operational Readiness and Release
 
