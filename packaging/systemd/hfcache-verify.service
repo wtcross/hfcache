@@ -79,7 +79,24 @@ ProtectClock=true
 ProtectHostname=true
 ProtectProc=invisible
 ProcSubset=pid
-RestrictSUIDSGID=true
+# RestrictSUIDSGID is **not** set, and this is the one §22.5 setting that is not.
+# The failing requirement: `publication.create_staging` creates the staging tree at
+# PUBLISHED_DIRECTORY_MODE = 0o2750, setgid, because publication is a rename and a
+# rename does not change a mode — so every published directory carries the group
+# the consumer export's read identity depends on (§5.2, and the `published/`
+# anchor the NAS was provisioned with is 2750 for the same reason).
+# `RestrictSUIDSGID=true` makes that `mkdir` EPERM, which failed a real sync with
+# `HFSYN005` (decision 61). The alternative — stop asking for setgid and hope the
+# parent's inheritance covers it — would trade a durable, consumer-visible
+# on-disk contract for a hardening flag, and would be silent when it was wrong.
+#
+# The narrower control that replaces it, and why the residual risk is closed
+# twice over: /srv/hfcache is mounted `nosuid,nodev,noexec`, so a setuid or setgid
+# file on the only filesystem this service can write is inert; `NoNewPrivileges=true`
+# means this service and every child can never gain privileges from such a bit
+# wherever it sits; and the capability bounding and ambient sets are empty. The
+# systemd-managed directories are 0750/0700 `hfcache:hfcache`, reachable only by
+# this account and root, and root ignores setgid on exec anyway.
 RestrictNamespaces=true
 LockPersonality=true
 CapabilityBoundingSet=

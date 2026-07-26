@@ -870,7 +870,29 @@ def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to
         )
     except HfcacheError as error:
         transaction.fail(error.problems[0].code, error.problems[0].message)
+        # §7.3's "Before 5 → roll back", performed by the command that knows it
+        # failed rather than left for a recovery that will never look. A journal
+        # closed `failed` is *resolved*, so `open_journals` skips it and
+        # `plan_recovery` never proposes a remedy for the staging it left — while
+        # `reconcile_storage` goes on reporting that directory as unfinished work
+        # and warns `HFWRN004` about it once it ages. That is decision 56's
+        # problem in the failure path, and this is the same answer.
+        #
+        # Only before the rename. At or after checkpoint 5 a tree is published
+        # and the staged manifest is the only thing that can validate it (§7.3),
+        # so it is preserved — a resolved journal past that point is a state an
+        # operator has to look at, and deleting its evidence first would be the
+        # wrong help.
+        if not _tree_was_renamed(transaction):
+            discard_staging(layout, transaction_id)
         raise
+
+
+def _tree_was_renamed(transaction: Transaction) -> bool:
+    """Whether this publication got as far as §7.3 checkpoint 5."""
+    return any(
+        checkpoint.name == "revision_tree_renamed" for checkpoint in transaction.journal.checkpoints
+    )
 
 
 def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each

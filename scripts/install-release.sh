@@ -251,9 +251,16 @@ smoke "${RELEASE}/.venv/bin/hfcache"
 RESTORE=
 trap - EXIT
 
-if [[ -e "${PREFIX}/selinux-relabel" || -x /usr/sbin/restorecon ]]; then
+if [[ -x /usr/sbin/restorecon ]]; then
   step 'restorecon'
-  /usr/sbin/restorecon -R "${PREFIX}" || printf 'restorecon reported a problem\n' >&2
+  # `-F` as well as `-R`: without it restorecon leaves the SELinux *user* part
+  # alone, and a tree root created at a shell carries `unconfined_u` rather than
+  # the `system_u` a system-installed file should have. The type is what the
+  # targeted policy enforces on, so this is consistency rather than a fix — but an
+  # inconsistent label is one more thing an operator reading an AVC has to rule
+  # out. Reported and not fatal: a release that is built and smoke-tested is still
+  # a good release on a host with SELinux disabled.
+  /usr/sbin/restorecon -RF "${PREFIX}" || printf 'restorecon reported a problem\n' >&2
 fi
 
 if [[ ${MODE} == stage ]]; then

@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from typer.testing import CliRunner
 
+from hfcache import sync as sync_module
 from hfcache.archive import initialize_archive
 from hfcache.cli import app
 from hfcache.config import ApplicationConfig, load_config
@@ -773,6 +774,49 @@ def test_the_run_records_every_documented_checkpoint_in_order(config_file: Path,
         "run_completed",
     ]
     assert journal.state == "committed"
+
+
+def test_a_failure_before_the_rename_leaves_no_staging_behind(client, layout, config, hub):
+    """A journal closed `failed` is resolved, so recovery never looks at it. If
+    the failed publication left its staging behind, nothing would ever reclaim it
+    and `status` would report a finished-and-failed run as outstanding work
+    forever — decision 56's problem in the failure path."""
+
+    def refuse(*_arguments, **_keywords):
+        message = "the snapshot could not be assembled"
+        raise SynchronizationError.single(message, code="HFSYN001")
+
+    original = HubClient.verify_local
+    try:
+        HubClient.verify_local = refuse
+        outcome = run(client, layout, config)
+    finally:
+        HubClient.verify_local = original
+
+    assert set(statuses(outcome).values()) == {"failed"}
+    assert list(layout.staging.iterdir()) == []
+
+
+def test_a_failure_after_the_rename_keeps_its_staged_manifest(client, layout, config, hub):
+    """The other side of the same rule. Past checkpoint 5 a tree is published and
+    the staged manifest is the only thing that can validate it (§7.3), so it is
+    preserved — a resolved journal in that state is something an operator has to
+    look at, and deleting the evidence first would be the wrong help."""
+    original = sync_module.publish_revision_reference
+
+    def refuse(*_arguments, **_keywords):
+        message = "the reference could not be published"
+        raise SynchronizationError.single(message, code="HFSYN007")
+
+    try:
+        sync_module.publish_revision_reference = refuse
+        outcome = run(client, layout, config)
+    finally:
+        sync_module.publish_revision_reference = original
+
+    assert set(statuses(outcome).values()) == {"failed"}
+    staged = sorted(layout.staging.rglob("manifest.json"))
+    assert staged, "the staged manifest is the only thing that can validate the published tree"
 
 
 @pytest.mark.usefixtures("_wired")

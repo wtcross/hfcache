@@ -34,6 +34,13 @@ from pathlib import Path
 
 ARCHIVE = Path("/srv/hfcache")
 PROBE_AREA = ARCHIVE / ".store" / "health"
+PUBLISHED_DIRECTORY_MODE = 0o2750
+"""Mirrors `publication.PUBLISHED_DIRECTORY_MODE`, restated rather than imported.
+
+The probe runs under a sandbox that may not be able to import the application at
+all, and what is being tested is the *syscall* the application makes, not the
+application. If the constant changes there, this line has to change too — which
+is why `docs/plan.md` §22.5 says to re-run this after an upgrade."""
 HOST = "huggingface.co"
 REPOSITORY = "hf-internal-testing/tiny-random-gpt2"
 
@@ -312,6 +319,41 @@ def _nfs() -> str:
         return f"{destination.name} written, renamed, removed"
     finally:
         for path in (source, destination):
+            path.unlink(missing_ok=True)
+
+
+@check("setgid directory on the archive")
+def _setgid_directory() -> str:
+    # `publication.create_staging` makes the staging tree at
+    # PUBLISHED_DIRECTORY_MODE = 0o2750, because publication is a rename and a
+    # rename does not change a mode. `RestrictSUIDSGID=true` makes that exact call
+    # EPERM, and the first version of this probe missed it: it wrote *files* to the
+    # archive and never created a directory with the setgid bit. The failure
+    # therefore surfaced as a failed sync rather than as a failed check, which is
+    # the whole thing this file exists to prevent (decision 61).
+    target = PROBE_AREA / f"setgid-{os.getpid()}"
+    target.mkdir(mode=PUBLISHED_DIRECTORY_MODE)
+    try:
+        return (
+            f"mkdir(mode={oct(PUBLISHED_DIRECTORY_MODE)}) -> {oct(target.stat().st_mode & 0o7777)}"
+        )
+    finally:
+        target.rmdir()
+
+
+@check("hardlink on the archive")
+def _hardlink() -> str:
+    # The other publication primitive, and the one plan §14.2 says NFS is exactly
+    # where an assumption about it would be wrong.
+    source = PROBE_AREA / f"link-source-{os.getpid()}"
+    link = PROBE_AREA / f"link-{os.getpid()}"
+    try:
+        source.write_bytes(b"hardening probe")
+        os.link(source, link)
+        assert source.samefile(link), "the link is not the same inode"
+        return f"link count {source.stat().st_nlink}"
+    finally:
+        for path in (link, source):
             path.unlink(missing_ok=True)
 
 
