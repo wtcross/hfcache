@@ -1227,3 +1227,112 @@ def test_prune_reports_a_failure_rather_than_a_traceback(
     assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFRET002"]
     # Nothing removed: six revisions remain, which §15.2 prefers to losing one.
     assert len(retained_references(layout, MODEL)) == 6
+
+
+# --------------------------------------------------------------------------- #
+# Nothing deletes on an upstream error or a configuration edit (`AD-06`)
+# --------------------------------------------------------------------------- #
+
+
+def test_a_repository_removed_from_configuration_keeps_every_revision(
+    client, layout, config, hub, tmp_path
+):
+    # Removing an entry from a file is not a request to delete an archive.
+    heads_through(client, layout, config, hub, 3)
+    reduced = tmp_path / "reduced.toml"
+    reduced.write_text(
+        CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+            '[[repositories]]\nid = "organization/model-name"\ntype = "model"\n', ""
+        ),
+        encoding="utf-8",
+    )
+
+    run(client, layout, load_config(reduced))
+
+    assert len(retained_references(layout, MODEL)) == 3
+    assert RepositoryLayout(archive=layout, identity=MODEL).current_ref.exists()
+
+
+def test_an_unmanaged_repository_stays_in_the_catalog_as_unmanaged(
+    client, layout, config, hub, tmp_path
+):
+    heads_through(client, layout, config, hub, 2)
+    reduced = tmp_path / "reduced.toml"
+    reduced.write_text(
+        CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+            '[[repositories]]\nid = "organization/model-name"\ntype = "model"\n', ""
+        ),
+        encoding="utf-8",
+    )
+
+    run(client, layout, load_config(reduced))
+
+    catalog = RepositoriesCatalog.model_validate_json(
+        layout.repositories_catalog.read_text(encoding="utf-8")
+    )
+    entry = next(e for e in catalog.repositories if e.repository_id == MODEL.id)
+    assert entry.managed is False
+    assert entry.enabled is None
+    assert len(entry.revisions) == 2
+
+
+def test_an_unmanaged_repository_is_never_pruned(client, layout, config, hub, tmp_path):
+    # A prune is triggered by a *successful publication* of that repository
+    # (`AD-04`); a repository nothing is publishing to cannot reach one.
+    heads_through(client, layout, config, hub, 6)
+    reduced = tmp_path / "reduced.toml"
+    reduced.write_text(
+        CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+            '[[repositories]]\nid = "organization/model-name"\ntype = "model"\n', ""
+        ),
+        encoding="utf-8",
+    )
+    before = [r.commit_sha for r in retained_references(layout, MODEL)]
+
+    run(client, layout, load_config(reduced))
+
+    assert [r.commit_sha for r in retained_references(layout, MODEL)] == before
+
+
+@pytest.mark.parametrize("code", ["HFHUB004", "HFHUB005", "HFHUB001"])
+def test_an_upstream_error_never_prunes_or_deletes(client, layout, config, hub, code):
+    # A 403, a 404, and a deleted repository never trigger deletion (`AD-06`).
+    heads_through(client, layout, config, hub, 6)
+    before = [r.commit_sha for r in retained_references(layout, MODEL)]
+    current = read_reference(
+        layout, RepositoryLayout(archive=layout, identity=MODEL).current_ref
+    ).commit_sha
+
+    def unavailable(self, identity, revision):
+        message = f"{identity.selector} is unavailable"
+        raise SynchronizationError.single(message, code=code)
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(HubClient, "repository", unavailable)
+        outcome = run(client, layout, config)
+
+    assert statuses(outcome)[MODEL.selector] == "failed"
+    assert [r.commit_sha for r in retained_references(layout, MODEL)] == before
+    assert (
+        read_reference(
+            layout, RepositoryLayout(archive=layout, identity=MODEL).current_ref
+        ).commit_sha
+        == current
+    )
+
+
+def test_a_disabled_repository_keeps_its_revisions(client, layout, config, hub, tmp_path):
+    heads_through(client, layout, config, hub, 3)
+    disabled = tmp_path / "off.toml"
+    disabled.write_text(
+        CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+            'id = "organization/model-name"\ntype = "model"',
+            'id = "organization/model-name"\ntype = "model"\nenabled = false',
+        ),
+        encoding="utf-8",
+    )
+
+    outcome = run(client, layout, load_config(disabled))
+
+    assert statuses(outcome)[MODEL.selector] == "disabled"
+    assert len(retained_references(layout, MODEL)) == 3

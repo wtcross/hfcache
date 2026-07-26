@@ -1170,6 +1170,14 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
         totals["hashed_bytes"] += result.hashed_bytes
         totals["reused_bytes"] += result.reused_bytes
 
+    # Plan §13.1 step 10, a *whole-run* step distinct from §7.3 checkpoint 9.
+    # The per-publication rebuild keeps the catalog current with each revision;
+    # this keeps it current with each *configuration*, which changes without any
+    # revision being published — a repository removed from the file is still
+    # archived and must start reading as unmanaged (`AD-06`) on the next run
+    # rather than on the next time something happens to publish.
+    publish_catalog(layout, rebuild_catalog(layout, configured=configured, generated_at=_now()))
+
     codes = [code for result in results for code in result.errors]
     exit_code = aggregate_exit_code(codes)
     report = RunReport.model_validate(
