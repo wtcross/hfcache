@@ -28,8 +28,10 @@ shells out to `hf`, `git`, or `git-lfs` (plan §12, `NG-*`). The Hub is a source
 of *files and metadata* and is treated as nothing else.
 """
 
+import os
 import socket
 import ssl
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, Self, final, overload
@@ -47,7 +49,7 @@ from hfcache.errors import Problem, RetentionError, SynchronizationError
 from hfcache.identity import CommitSha, parse_commit_sha
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Iterator, Sequence
 
     from hfcache.credentials import ResolvedToken
     from hfcache.identity import RepositoryIdentity
@@ -56,6 +58,7 @@ __all__ = [
     "CONNECT_TIMEOUT_SECONDS",
     "FORBIDDEN",
     "NOT_FOUND",
+    "OFFLINE_VARIABLE",
     "RATE_LIMITED",
     "TLS_PORT",
     "DownloadEstimate",
@@ -69,10 +72,46 @@ __all__ = [
     "endpoint_host",
     "hub_problem",
     "identity_problems",
+    "networking_disabled",
     "resolve_host",
     "tree_entries",
     "verify_tls",
 ]
+
+OFFLINE_VARIABLE: Final = "HF_HUB_OFFLINE"
+"""The library's own switch for refusing every network request."""
+
+
+@contextmanager
+def networking_disabled() -> Iterator[None]:
+    """Run a block with Hub networking turned off (`docs/cli.md` §2).
+
+    `verify --full` re-reads content the archive already holds, so it has no
+    business contacting the Hub — and the quarterly job runs unattended for an
+    hour against an archive that may be under investigation, which is exactly
+    when an unnoticed network call would be worst.
+
+    The real guarantee is structural: verification builds no `HubClient` and
+    resolves no credential, so there is nothing in it that *could* make a
+    request. This is the belt to that pair of braces, and it is worth having
+    because it also covers anything the library might do lazily on a code path
+    this application does not own.
+
+    The previous value is restored rather than deleted unconditionally, because
+    a deployment may legitimately run the whole application offline and clearing
+    the variable would silently turn that off for whatever ran next in the
+    process.
+    """
+    previous = os.environ.get(OFFLINE_VARIABLE)
+    os.environ[OFFLINE_VARIABLE] = "1"
+    try:
+        yield
+    finally:
+        if previous is None:
+            del os.environ[OFFLINE_VARIABLE]
+        else:
+            os.environ[OFFLINE_VARIABLE] = previous
+
 
 NOT_FOUND: Final = 404
 FORBIDDEN: Final = 403

@@ -47,7 +47,7 @@ from hfcache.hashing import sha256_file
 from hfcache.identity import COMMIT_SHA_LENGTH, CommitSha, PublicationId, RepositoryIdentity
 from hfcache.manifests import FileEntry, RevisionManifest
 from hfcache.paths import RepositoryLayout, parse_repository_relative, resolve_within
-from hfcache.publication import read_reference
+from hfcache.publication import published_repositories, read_reference
 from hfcache.reporting import Finding, VerificationReport, VerificationScope
 from hfcache.storage import read_model
 from hfcache.sync import ObjectIdentity
@@ -70,6 +70,7 @@ __all__ = [
     "VerificationTarget",
     "build_report",
     "require_retained",
+    "resolve_archive",
     "resolve_repository",
     "resolve_revision",
     "resolve_run",
@@ -432,6 +433,22 @@ def _is_commit_sha(value: str) -> bool:
     """Whether a reference file's name is a full lowercase commit SHA."""
     return len(value) == COMMIT_SHA_LENGTH and all(
         character in "0123456789abcdef" for character in value
+    )
+
+
+def resolve_archive(layout: ArchiveLayout) -> tuple[Resolved, ...]:
+    """Every retained revision of every repository the archive holds (plan §16.2).
+
+    The repository set is read off `published/repos/` rather than off
+    configuration, because those are different sets and the difference matters
+    most here: removing a repository from configuration never deletes its
+    archive (`AD-06`), and a quarterly verification that skipped unmanaged
+    repositories would leave exactly the content nothing else touches unchecked.
+    """
+    return tuple(
+        resolved
+        for identity in published_repositories(layout)
+        for resolved in resolve_repository(layout, identity)
     )
 
 

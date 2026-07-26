@@ -19,6 +19,7 @@ constructed here rather than approximated, so the classification is tested
 against the hierarchy the library actually raises.
 """
 
+import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
@@ -36,6 +37,7 @@ from huggingface_hub.errors import (
 from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import ExitCode, SynchronizationError
 from hfcache.hub import (
+    OFFLINE_VARIABLE,
     HubClient,
     HubIdentity,
     RepositoryFacts,
@@ -44,6 +46,7 @@ from hfcache.hub import (
     endpoint_host,
     hub_problem,
     identity_problems,
+    networking_disabled,
     resolve_host,
     tree_entries,
     verify_tls,
@@ -839,3 +842,40 @@ def test_an_identity_that_is_not_the_configured_one_is_hfhub003():
 
     assert codes(problems) == ["HFHUB003"]
     assert problems[0].location == "hub.expected_account"
+
+
+# --------------------------------------------------------------------------- #
+# Networking disabled (`docs/cli.md` §2, plan §16.2)
+# --------------------------------------------------------------------------- #
+
+
+def test_networking_disabled_sets_the_library_switch():
+    with networking_disabled():
+        assert os.environ[OFFLINE_VARIABLE] == "1"
+
+
+def test_networking_disabled_removes_a_variable_it_introduced(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv(OFFLINE_VARIABLE, raising=False)
+    with networking_disabled():
+        pass
+    assert OFFLINE_VARIABLE not in os.environ
+
+
+def test_networking_disabled_restores_a_deployment_that_was_already_offline(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Clearing it unconditionally would silently put a deliberately offline
+    deployment back online for whatever ran next in the process."""
+    monkeypatch.setenv(OFFLINE_VARIABLE, "1")
+    with networking_disabled():
+        assert os.environ[OFFLINE_VARIABLE] == "1"
+    assert os.environ[OFFLINE_VARIABLE] == "1"
+
+
+def test_networking_disabled_restores_the_previous_value_after_a_failure(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv(OFFLINE_VARIABLE, "0")
+    with pytest.raises(RuntimeError), networking_disabled():
+        raise RuntimeError
+    assert os.environ[OFFLINE_VARIABLE] == "0"

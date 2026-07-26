@@ -8,6 +8,7 @@ the archive exactly as it was. The checking itself is
 
 import json
 import os
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path  # noqa: TC003 - fixtures take and return one at run time
 
@@ -17,17 +18,21 @@ from typer.testing import CliRunner
 from hfcache.archive import initialize_archive
 from hfcache.cli import app
 from hfcache.errors import ExitCode
+from hfcache.hub import OFFLINE_VARIABLE, networking_disabled
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, new_run_id
+from hfcache.locking import exclusive_lock, lock_path
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.reporting import RunReport
 from hfcache.storage import parse_mount_table, write_model
 from tests.unit.test_verification import (
     ARCHIVE_ID,
+    DATASET,
     ENVELOPE,
     FILES,
     MODEL,
     NOW,
     SHA_A,
+    SHA_B,
     nfs_line,
     publish,
 )
@@ -52,6 +57,10 @@ minimum_free_space_percent = 0
 # out the hour a scheduled sync is configured for.
 lock_wait_seconds = 0
 
+[verification]
+# Zero for the same reason; a scheduled full verification waits a day.
+lock_wait_seconds = 0
+
 [[repositories]]
 id = "{MODEL.id}"
 type = "{MODEL.type}"
@@ -59,10 +68,22 @@ type = "{MODEL.type}"
 
 
 @pytest.fixture
-def archive(tmp_path: Path) -> ArchiveLayout:
-    """An initialized archive with one published revision."""
+def archive(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ArchiveLayout:
+    """An initialized archive the application sees as a read/write NFSv4 mount.
+
+    `--full` runs the §19 preflight, which reads the system mount table, so the
+    table is substituted here the same way `tests/unit/test_readonly_commands.py`
+    substitutes it — a real directory described as the mount it would be in
+    production. The lock directory moves for the same reason: `/run/hfcache`
+    belongs to the service identity, and a test suite has no business creating
+    it.
+    """
     root = tmp_path / "archive"
     root.mkdir()
+    table = tmp_path / "mountinfo"
+    table.write_text(nfs_line(os.path.realpath(root)), encoding="utf-8")
+    monkeypatch.setattr("hfcache.storage.MOUNT_TABLE", table)
+    monkeypatch.setattr("hfcache.locking.LOCK_DIRECTORY", tmp_path / "run")
     layout = ArchiveLayout(root=root)
     initialize_archive(
         layout, archive_id=ARCHIVE_ID, table=parse_mount_table(nfs_line(os.path.realpath(root)))
@@ -346,3 +367,127 @@ def test_the_repository_identity_used_here_is_the_configured_one(config_path):
     assert RepositoryIdentity.of(MODEL.type, MODEL.id) == MODEL
     assert MODEL.id in config_path.read_text(encoding="utf-8")
     assert SHA_A  # the fixture's default revision, kept in one place
+
+
+# --------------------------------------------------------------------------- #
+# `--full` (plan §16.2)
+# --------------------------------------------------------------------------- #
+
+
+def test_full_covers_every_retained_revision_of_every_repository(config_path, archive):
+    publish(archive, commit_sha=SHA_A)
+    publish(archive, commit_sha=SHA_B)
+    publish(archive, identity=DATASET, commit_sha=SHA_A)
+    envelope = envelope_of(invoke(config_path, "--full"))
+    assert envelope["data"]["mode"] == "full"
+    assert envelope["data"]["scope"]["repositories"] == 2
+    assert envelope["data"]["scope"]["revisions"] == 3
+
+
+def test_full_covers_a_repository_that_is_no_longer_configured(config_path, archive):
+    """`AD-06`: removing a repository from configuration never deletes its
+    archive, so a quarterly job that skipped it would leave exactly the content
+    nothing else touches unchecked."""
+    publish(archive, identity=DATASET, commit_sha=SHA_A)
+    assert DATASET.id not in config_path.read_text(encoding="utf-8")
+    envelope = envelope_of(invoke(config_path, "--full"))
+    assert envelope["data"]["scope"]["repositories"] == 1
+    assert envelope["data"]["scope"]["revisions"] == 1
+
+
+def test_full_reads_a_shared_blob_once_across_revisions(config_path, archive):
+    """Plan §16.2 item 4: hardlinked content is one physical object, one read."""
+    publish(archive, commit_sha=SHA_A)
+    publish(archive, commit_sha=SHA_B)
+    scope = envelope_of(invoke(config_path, "--full"))["data"]["scope"]
+    assert scope["revisions"] == 2
+    assert scope["unique_objects_read"] == len(FILES)
+    assert scope["unique_bytes_read"] == sum(len(payload) for payload in FILES.values())
+
+
+def test_full_exits_forty_on_corrupted_content(config_path, archive):
+    published = publish(archive)
+    path = tree_of(archive, published.commit_sha, published.publication_id) / "config.json"
+    payload = bytearray(path.read_bytes())
+    payload[0] ^= 0xFF
+    path.unlink()
+    path.write_bytes(bytes(payload))
+    result = invoke(config_path, "--full")
+    assert result.exit_code == ExitCode.INTEGRITY
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFVER001"]
+
+
+def test_full_runs_with_hub_networking_disabled(config_path, archive, monkeypatch):
+    """`docs/cli.md` §2. Observed from inside the run rather than inferred from
+    the environment afterwards, which would look identical if it never ran."""
+    publish(archive)
+    observed: list[str | None] = []
+    real = networking_disabled
+
+    @contextmanager
+    def recording():
+        with real():
+            observed.append(os.environ.get(OFFLINE_VARIABLE))
+            yield
+
+    monkeypatch.setattr("hfcache.cli.networking_disabled", recording)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+    assert observed == ["1"]
+
+
+def test_full_builds_no_hub_client(config_path, archive, monkeypatch):
+    """The structural half of "networking disabled": there is nothing in the
+    verification path that could make a request in the first place."""
+    publish(archive)
+
+    class Refuses:
+        @staticmethod
+        def of(*_arguments, **_keywords):
+            message = "verify must never construct a Hub client"
+            raise AssertionError(message)
+
+    monkeypatch.setattr("hfcache.cli.HubClient", Refuses)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+
+
+def test_full_is_refused_while_another_command_holds_the_lock(config_path, archive):
+    """The verification lock is the global one (§22.3), which is what makes
+    `--full` mutually exclusive with sync, prune, and repair."""
+    publish(archive)
+    with exclusive_lock(lock_path(), command="sync", wait_seconds=0):
+        result = invoke(config_path, "--full")
+    assert result.exit_code == ExitCode.SAFETY
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFMNT010"]
+
+
+def test_full_refuses_an_archive_that_is_not_a_proven_mount(tmp_path, archive):
+    """`--full` writes a report, so it passes the same §19 gate every other
+    writing command does."""
+    elsewhere = tmp_path / "not-a-mount"
+    elsewhere.mkdir()
+    path = tmp_path / "elsewhere.toml"
+    path.write_text(config_for(elsewhere), encoding="utf-8")
+    result = invoke(path, "--full")
+    assert result.exit_code == ExitCode.SAFETY
+
+
+def test_new_and_full_together_are_refused(config_path):
+    result = invoke(config_path, "--new", "--full")
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFARG002"]
+
+
+def test_run_id_without_new_is_refused(config_path):
+    result = invoke(config_path, "--full", "--run-id", "0" * 32)
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFARG002"]
+
+
+def test_full_takes_no_lock_it_does_not_release(config_path, archive):
+    """Running it twice in a row proves the lock was released, and that a
+    verification is repeatable because it changes nothing."""
+    publish(archive)
+    first = envelope_of(invoke(config_path, "--full"))["data"]
+    second = envelope_of(invoke(config_path, "--full"))["data"]
+    assert first["scope"] == second["scope"]
+    assert first["verification_outcome"] == second["verification_outcome"] == "clean"

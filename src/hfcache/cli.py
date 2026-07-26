@@ -13,7 +13,7 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from importlib.util import find_spec
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Final, NoReturn
+from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, NoReturn
 
 import typer
 
@@ -28,7 +28,7 @@ from hfcache.errors import (
     Problem,
     SafetyError,
 )
-from hfcache.hub import HubClient
+from hfcache.hub import HubClient, networking_disabled
 from hfcache.identity import (
     REPOSITORY_TYPES,
     CommitSha,
@@ -59,7 +59,13 @@ from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersi
 from hfcache.retention import apply_prune, plan_all
 from hfcache.storage import read_model
 from hfcache.sync import synchronize
-from hfcache.verification import FINDING_CODES, build_report, resolve_run, verify_targets
+from hfcache.verification import (
+    FINDING_CODES,
+    build_report,
+    resolve_archive,
+    resolve_run,
+    verify_targets,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -1125,6 +1131,10 @@ def verify(
         bool,
         typer.Option("--new", help="Verify the content one run introduced."),
     ] = False,
+    full: Annotated[
+        bool,
+        typer.Option("--full", help="Verify every retained revision. The quarterly job."),
+    ] = False,
     run_id: Annotated[
         str | None,
         typer.Option("--run-id", metavar="ID", help="Which run --new checks. Default: the newest."),
@@ -1142,47 +1152,89 @@ def verify(
     current references rather than through the publication ids the run recorded,
     so a revision a later prune rotated out is not verified and a revision a
     later repair replaced is verified in its replacement.
+
+    `--full` covers every retained revision of every repository the archive
+    holds, including repositories no longer in configuration (`AD-06`) — a
+    quarterly job that skipped those would leave exactly the content nothing else
+    touches unchecked. It takes the exclusive lock, which is what makes it
+    mutually exclusive with sync, prune, and repair, and runs with Hub networking
+    disabled because it re-reads what the archive already has.
     """
     started_at = datetime.now(UTC)
     stamp = utc_now()
     options = _options(ctx)
-    command = "verify --new"
+    command = f"verify --{'full' if full else 'new'}"
     try:
-        _require_one_mode(new=new)
+        mode = _verification_mode(new=new, full=full, run_id=run_id)
         config = load_config(options.config_path)
     except HfcacheError as error:
         _report_failure(ctx, command, stamp, error)
 
     layout = ArchiveLayout(root=config.storage.archive_root)
     try:
-        resolved = resolve_run(layout, _run_to_verify(layout, run_id))
+        if mode == "full":
+            # The lock first, then the §19 gate, then the work — the same order
+            # every mutating command uses, because a verification that wrote its
+            # report while a sync republished underneath it would be describing
+            # an archive that no longer exists. Networking is off for the whole
+            # of it (`docs/cli.md` §2).
+            with (
+                guarded(
+                    layout,
+                    storage=config.storage,
+                    command=command,
+                    lock_wait_seconds=config.verification.lock_wait_seconds,
+                ),
+                networking_disabled(),
+            ):
+                outcome = verify_targets(resolve_archive(layout), started_at=started_at)
+        else:
+            outcome = verify_targets(
+                resolve_run(layout, _run_to_verify(layout, run_id)), started_at=started_at
+            )
     except HfcacheError as error:
         _report_failure(ctx, command, stamp, error)
 
-    outcome = verify_targets(resolved, started_at=started_at)
     report = build_report(
         outcome,
         envelope=_run_envelope(config),
         command=command,
-        mode="new",
+        mode=mode,
         run_id=new_run_id(),
     )
     _emit_verification(ctx, command, report, started_at=stamp)
 
 
-def _require_one_mode(*, new: bool) -> None:
-    """Refuse an invocation that names no verification mode, or more than one.
+def _verification_mode(
+    *, new: bool, full: bool, run_id: str | None
+) -> Literal["new", "full", "revision"]:
+    """Decide which mode was asked for, refusing none and refusing two.
 
     `docs/cli.md` §2: exactly one mode option is required. There is no default —
     `--new` and `--full` differ by orders of magnitude in what they read, and
     guessing which an operator meant would either skip most of the archive or
     saturate the NAS for an hour.
     """
-    if not new:
+    chosen = [name for name, given in (("--new", new), ("--full", full)) if given]
+    if len(chosen) > 1:
         message = (
-            "verify requires exactly one mode option; --new checks the content one run introduced"
+            f"{' and '.join(chosen)} were given together; verify takes exactly one mode option, "
+            f"because each names a different scope rather than a different amount of effort"
+        )
+        raise ConfigurationError.single(message, code="HFARG002", location="verify")
+    if not chosen:
+        message = (
+            "verify requires exactly one mode option; --new checks the content one run "
+            "introduced and --full checks every retained revision"
         )
         raise ConfigurationError.single(message, code="HFARG003", location="verify")
+    if run_id is not None and not new:
+        message = (
+            f"--run-id names which run {chosen[0]} would check, and {chosen[0]} is not scoped to "
+            f"a run; it is accepted only with --new"
+        )
+        raise ConfigurationError.single(message, code="HFARG002", location="--run-id")
+    return "full" if full else "new"
 
 
 def _run_to_verify(layout: ArchiveLayout, run_id: str | None) -> RunReport:
