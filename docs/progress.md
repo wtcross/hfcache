@@ -222,7 +222,7 @@ interpretations, including both carried-in items.
 - [x] SYS-002 Apply and test systemd hardening (2026-07-26, this commit — every §22.5 setting applied to both service units and every one of them *tested*, by `scripts/check-hardening.sh` and `scripts/hardening-probe.py` (decision 59). The probe runs in a transient unit carrying the `[Service]` properties read out of the **installed** unit file at run time, so it cannot pass while the deployed unit drifts away from it, and it has two halves: the workload §22.5 names — DNS, TLS, a real `huggingface_hub` API call, a real `hf_xet` download, `pydantic_core`/`hf_xet`/`libyaml` imports, and create/fsync/rename/unlink on the NFS archive — and a confirmation that each setting is *in effect*, because a property systemd parsed and could not apply reads as protection in the unit file and is not there. **21 of 21 pass on both units**, with the four network checks inverted for the verification unit: reaching the Hub from it would be the failure. `ReadWritePaths=/srv/hfcache` is the entire non-systemd-managed mutation surface, and the probe confirms the archive inside the service's namespace is the live NFS mount rather than an empty autofs trigger the `ProtectSystem=strict` bind-mount could have captured — it reads the sentinel back. The real `hfcache-sync.service` and `hfcache-verify.service` then both run clean under the hardening, and `status` stays clean. `systemd-analyze verify` over all seven units: no output. `systemd-analyze security`: 2.9 and 2.8, both `OK`; the one ✗ is `UMask=0027`, which §22.2 requires. **Nothing was weakened** — the one probe failure was the probe's own bug (`ProtectHome=true` makes `/home` inaccessible, not empty). §22.3's `PrivateNetwork=true` is deliberately *not* enabled: decision 60)
 - [x] SYNC-005 Discard staging when a publication fails before the rename (2026-07-26, this commit — decision 56's problem in the failure path, found at `SEL-001` when a real sync failed under the hardening and left `.store/staging/<txn>/` behind with nothing able to reclaim it. A journal closed `failed` is *resolved*, so `open_journals` skips it, `plan_recovery` never proposes a remedy, and `reconcile_storage` goes on reporting that directory as unfinished work — warning `HFWRN004` about it once it ages past the configured staleness. §7.3's "Before 5 → roll back" row is now performed by the command that knows it failed rather than left for a recovery that will never look. **Only before the rename:** at or after checkpoint 5 a tree is published and the staged manifest is the only thing that can validate it, so it is preserved — a resolved journal in that state is something an operator has to look at, and deleting its evidence first would be the wrong help. Both sides asserted: one test fails the local-completeness check and expects empty staging, the other fails the reference publication and expects the staged manifest to survive. `sync.py` at 100% branch coverage)
 - [x] VER-007 Key the reported verification state on the publication instance (2026-07-26, this commit — decision 62, found at `SEL-001` by the retention rotation: a dataset revision that had been pruned and then re-synced under a new publication id read `verified` in `status`, on the strength of a verification of the instance the prune had removed. `catalog/verification.json` has recorded `publication_id` since `VER-005`; `VerificationStates.of` was keying on `(type, id, commit_sha)` and throwing it away, so `verified` became true of content nothing had ever re-read — the unfalsifiable field decision 51 existed to close, reappearing through a different door. The key is now the instance, all three call sites pass the id the reference or manifest already carries, and an entry whose `publication_id` is null raises nobody's confidence because it cannot be attributed to anything on disk. No durable format change: the field was already there. `docs/schemas.md` §5.2 amended. `publication.py` at 100% branch coverage)
-- [ ] SEL-001 Validate all operations with SELinux enforcing
+- [x] SEL-001 Validate all operations with SELinux enforcing (2026-07-26, this commit — SELinux `Enforcing` throughout, `/srv/hfcache` carrying the normal `nfs_t` filesystem label (§23 item 2), and the services running in the **default** systemd service domain `unconfined_service_t` (item 3). Labels were fixed first, per item 6: every local path's *type* already matched the policy default, but the paths created at a shell carried `unconfined_u` where a system-installed file should carry `system_u`, so `restorecon -RF` was run over `/opt/hfcache`, `/etc/hfcache`, `/var/lib/hfcache`, and `/var/cache/hfcache` — 7 082 paths relabelled, and a second pass would relabel none. `install-release.sh` now uses `-RF` for the same reason. **Every item-4 path exercised on the real dataset:** sync with real downloads through the hardened unit, hashing, hardlink publication, atomic directory rename, the §7.4 **prune** — all ten checkpoints committed, both audit records written, the per-SHA reference removed, trash and quarantine empty — full verification, and `recover --dry-run`. Getting to a live prune took a real retention rotation, because `storage.maximum_revisions` is pinned to 5 by the schema (`HFCFG011`) and `AD-04` triggers a prune only from a *successful publication* beyond the maximum: four more real commits of `fixtures_ade20k` were published, the sixth publication pruned generation 1 automatically, and restoring `revision = "main"` re-downloaded and republished the pruned SHA as generation 7 — which pruned generation 2 in turn. That is §29 step 15's revision change and retention simulation, observed rather than simulated. Afterwards: `verify --full` read 23 unique objects across 6 revisions and reported `clean`; `status` exits `0`, not degraded, no outstanding failures, nothing unfinished. **Zero AVC denials** — no `type=AVC`, `USER_AVC`, or `SELINUX_ERR` record in `/var/log/audit/audit.log` and no `avc: denied` in the journal, for a boot that predates `HOST-004`, so the search covers every operation this session performed. No local policy module was created and none is needed (items 7-9), and nothing was weakened: no `setenforce 0`, no permissive domain, no allow rule, no boolean or fcontext customization. The exercise found three real defects — `SYNC-005`, `VER-007`, and decision 61's `RestrictSUIDSGID` incompatibility — which is what exercising is for)
 - [ ] SEC-001 Validate optional systemd credential support
 
 ## Phase 8 — Operational Readiness and Release
@@ -1408,3 +1408,73 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
 
     Handoff item 10 carries the `PrivateNetwork=true` evaluation for the operator
     window that can answer it.
+
+61. **`RestrictSUIDSGID=true` is the one §22.5 setting not applied**
+    (2026-07-26, `SEL-001`). Found by a real sync failing under the hardening
+    with `HFSYN005`: `staging ... could not be created: Operation not permitted`.
+
+    The failing requirement. `publication.create_staging` creates the staging
+    tree at `PUBLISHED_DIRECTORY_MODE = 0o2750` — setgid — because publication is
+    a rename and a rename does not change a mode, so that is the only moment the
+    published directory's mode can be set. The setgid bit is what carries the
+    group the consumer export's read identity depends on (§5.2), and the
+    `published/` anchor the NAS was provisioned with is `2750` for the same
+    reason. `RestrictSUIDSGID=true` is implemented as a seccomp filter on the
+    mode argument of `mkdir`/`chmod`/`mknod`, so it refuses that call outright.
+    Attribution was proven rather than assumed: the same `mkdir(0o2750)` on the
+    archive was run in two transient units differing only in that setting, and it
+    is `Operation not permitted` under `true` and succeeds under `false`.
+
+    The alternative that was rejected: stop asking for setgid and rely on the
+    parent directory's inheritance. That trades a durable, consumer-visible
+    on-disk contract for a hardening flag, and it would be silent when it was
+    wrong — a published tree that quietly lost its group would only surface as a
+    consumer permission failure, on a different host, later.
+
+    The narrower control that replaces it. The escalation `RestrictSUIDSGID`
+    exists to prevent is closed twice over: `/srv/hfcache` is mounted
+    `nosuid,nodev,noexec`, so a setuid or setgid file on the only filesystem this
+    service can write is inert; `NoNewPrivileges=true` means this service and
+    every child can never gain privileges from such a bit wherever it sits; and
+    the capability bounding and ambient sets are empty. The systemd-managed
+    directories are `0750`/`0700` `hfcache:hfcache`, reachable only by this
+    account and root, and root ignores setgid on exec anyway. It is dropped on
+    **both** service units rather than only the one that needs it: two units with
+    different hardening is a trap for whoever next adds a drop-in that runs
+    `repair`, and the security delta is nil given the above.
+
+    The probe missed it, and that is the more useful half of this entry. Its
+    first version wrote *files* to the archive and never created a directory with
+    the setgid bit, so the incompatibility surfaced as a failed sync rather than
+    as a failed check — the exact thing `scripts/hardening-probe.py` exists to
+    prevent. It now creates a setgid directory and a hardlink on the real archive,
+    and both are among the 23 checks that pass.
+
+62. **The reported verification state is keyed by publication instance, not by
+    SHA** (2026-07-26, `VER-007`). Found at `SEL-001` by the retention rotation:
+    a dataset revision that had been pruned and later re-synced read `verified`
+    in `status`, on the strength of a verification of the instance the prune had
+    removed.
+
+    `catalog/verification.json` has recorded `publication_id` per revision since
+    `VER-005`. `VerificationStates.of` keyed its lookup on
+    `(repository_type, repository_id, commit_sha)` and discarded it. A
+    verification re-reads the bytes of one published *instance*, and two
+    instances of one SHA are different bytes in different places — a repair
+    replaces one, and a prune followed by a later republication of the same SHA
+    produces another. So `verified` became true of content nothing had ever
+    re-read: decision 51's unfalsifiable field, reappearing through a different
+    door, and reappearing in exactly the window an operator would look at, the
+    one between publishing a revision and verifying it.
+
+    The key is now the instance, and the three call sites — `status`, `list`, and
+    the derived catalog — each pass the publication id the reference or the
+    manifest they already hold carries. An entry whose `publication_id` is null
+    raises nobody's confidence, because it cannot be attributed to anything on
+    disk and the conservative answer to "was this instance re-read?" is no.
+
+    No durable format change was needed; the field was already there.
+    `docs/schemas.md` §5.2 now states the key. A repair was never affected —
+    `VER-006`'s checkpoint 8 re-verifies the replacement before any reference
+    moves, so it records its own entry — which is why this only ever surfaced
+    through a prune.
