@@ -307,7 +307,15 @@ more than it fixed.
       `degraded: false`, no outstanding failures, `unfinished_transactions: 0`
       and no findings — the last two only after `SYNC-004`, which this checkpoint
       is what found)
-- [ ] `hfcache.target` enabled; sync timer active; verification timer installed but disabled
+- [x] `hfcache.target` enabled; sync timer active; verification timer installed
+      but disabled (2026-07-26 — `hfcache.target` and `srv-hfcache.automount`
+      `enabled`, `hfcache-sync.timer` `enabled` and `active` with its next elapse
+      02:18 EDT (02:00 plus the randomized delay), `hfcache-verify.timer`
+      installed with `is-enabled` = `disabled` and `is-active` = `inactive`.
+      Starting the target ran no sync, per §22.1. Both services then run clean
+      through systemd, repeatedly: the sync is an idempotent skip and the
+      verification reads 23 unique objects across 6 revisions and reports
+      `clean`. Handoff item 8 remains for enabling the quarterly timer.)
 
 **Observed exit codes (§11.2, §36.6 item 7).** Against this deployment,
 2026-07-26: `0` from `status`, `plan`, both syncs, `verify --full`, and
