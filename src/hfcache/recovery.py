@@ -89,7 +89,7 @@ from hfcache.transactions import (
 from hfcache.verification import ReadSet, VerificationTarget, verify_target
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Callable, Collection, Mapping
     from pathlib import Path
 
     from hfcache.config import StorageConfig
@@ -108,6 +108,7 @@ __all__ = [
     "SECONDS_PER_HOUR",
     "ArchiveHealth",
     "AreaFinding",
+    "JournalReconciliation",
     "PlannedRemediation",
     "Reconciliation",
     "RecoveryPlan",
@@ -116,6 +117,7 @@ __all__ = [
     "measure_health",
     "plan_recovery",
     "publish_current_if_newest",
+    "reconcile",
     "reconcile_storage",
 ]
 
@@ -444,6 +446,7 @@ def plan_recovery(
     *,
     stale_staging_age_hours: int,
     now: datetime | None = None,
+    exclude: Collection[str] = (),
 ) -> RecoveryPlan:
     """Decide what to do about every unfinished journal, without touching anything.
 
@@ -451,12 +454,20 @@ def plan_recovery(
     before it acts (`TX-07`). Every journal is validated first — schema, then
     checkpoint order, then evidence against the filesystem — because a journal
     that cannot be trusted is not a journal a remedy may be chosen from.
+
+    `exclude` names transactions to leave out. It exists for the one caller that
+    has an open journal of its own while it reconciles: a sync run opens its
+    §7.6 journal before it may touch anything (`TX-01`), so without this it
+    would find itself unfinished and propose a remedy for a run that is still
+    executing. A transaction cannot recover itself.
     """
     moment = datetime.now(UTC) if now is None else now
+    skip = frozenset(exclude)
     return RecoveryPlan(
         remediations=tuple(
             _remediation(layout, file, stale_staging_age_hours=stale_staging_age_hours, now=moment)
             for file in open_journals(layout)
+            if file.journal.transaction_id not in skip
         )
     )
 
@@ -526,6 +537,8 @@ def _remediation(  # noqa: PLR0911 - one return per state §7 gives a resolution
         return _prune_remediation(journal, last)
     if journal.operation == "repair":
         return _repair_remediation(layout, journal, last, now=now)
+    if journal.operation == "sync":
+        return _sync_remediation(journal, last)
 
     message = (
         f"transaction {journal.transaction_id} is a {journal.operation} that stopped after "
@@ -534,6 +547,32 @@ def _remediation(  # noqa: PLR0911 - one return per state §7 gives a resolution
     return blocked(
         reason=f"no unambiguous resolution for a {journal.operation} at {last!r}",
         problems=(Problem(code="HFTXN004", message=message, location=str(journal.transaction_id)),),
+    )
+
+
+def _sync_remediation(journal: TransactionJournal, last: str | None) -> PlannedRemediation:
+    """A run journal a crash left open: close it, whatever it got to (§7.6).
+
+    The run transaction owns no filesystem state. Every mutation a run made
+    belongs to a publication or a prune journal that has its own remedy, and
+    §7.6 says so outright — the per-repository journals are the authority and
+    the run journal exists to correlate them and to prove reconciliation
+    happened before Hub contact. There is nothing here to roll forward.
+
+    The one whole-run step that does touch the archive is plan §13.1 step 10's
+    catalog rebuild, and recovery deliberately does not perform it: that rebuild
+    reads *configuration* to decide which repositories are managed (`AD-06`),
+    and recovery takes no configuration. Rebuilding without it would mark every
+    configured repository unmanaged — a derived file (`FS-16`) made actively
+    wrong rather than merely stale. The next sync rebuilds it correctly.
+    """
+    return PlannedRemediation(
+        transaction_id=journal.transaction_id,
+        operation=journal.operation,
+        state=journal.state,
+        last_checkpoint=last,
+        remedy="close_journal",
+        reason="a run journal correlates the per-repository journals and holds no state of its own",
     )
 
 
@@ -813,6 +852,74 @@ def apply_recovery(
     transaction.checkpoint("recovery_completed", remediation_count=len(applied))
     transaction.commit()
     return report_path, tuple(sorted(applied, key=lambda record: record.transaction_id))
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class JournalReconciliation:
+    """What `TX-07` reconciliation settled before a mutating command acted."""
+
+    resolved: tuple[str, ...]
+    pending: tuple[str, ...]
+    report: str | None = None
+
+    def as_evidence(self) -> dict[str, Any]:
+        """§7.6 checkpoint 3's evidence: the transaction ids, or none found.
+
+        `report` carries no `_path` suffix even though it names one that exists.
+        The convention (decision 42) asserts a path *this* transaction must
+        still be able to observe, and a recovery report belongs to the recovery
+        transaction that wrote it — a later `recover` may legitimately supersede
+        it, and a run journal is not the place that should stop the machine.
+        """
+        evidence: dict[str, Any] = {
+            "pending_transaction_ids": list(self.pending),
+            "reconciled_transaction_ids": list(self.resolved),
+        }
+        if self.report is not None:
+            evidence["recovery_report"] = self.report
+        return evidence
+
+
+def reconcile(
+    layout: ArchiveLayout,
+    *,
+    stale_staging_age_hours: int,
+    envelope: Mapping[str, Any],
+    started_at: datetime,
+    exclude: Collection[str] = (),
+) -> JournalReconciliation:
+    """Resolve every unfinished journal before a mutating command acts (`TX-07`).
+
+    Run under the exclusive lock the command already holds and before the Hub is
+    contacted, which is the entire point of the rule: an unattended run must not
+    download a byte into an archive whose last run stopped somewhere nobody has
+    looked at. A blocked plan raises, so the command exits `20` (§7.9) having
+    changed nothing — and `status`, `list`, `verify`, and `recover --dry-run`
+    still answer, so there is always a way to inspect what stopped it.
+
+    Nothing actionable writes nothing. A `wait` remediation is a real answer and
+    not an absence of one: a repair inside its retirement grace is deliberately
+    waiting, and a recovery report describing a recovery that recovered nothing
+    would be noise in the one directory an operator reads when the archive is
+    already suspect.
+    """
+    plan = plan_recovery(layout, stale_staging_age_hours=stale_staging_age_hours, exclude=exclude)
+    if plan.blocked:
+        raise SafetyError(list(plan.problems))
+    pending = tuple(
+        sorted(entry.transaction_id for entry in plan.remediations if entry.remedy == "wait")
+    )
+    if not plan.actionable:
+        return JournalReconciliation(resolved=(), pending=pending)
+    report, applied = apply_recovery(layout, plan, envelope=envelope, started_at=started_at)
+    return JournalReconciliation(
+        resolved=tuple(
+            sorted(record.transaction_id for record in applied if record.outcome == "applied")
+        ),
+        pending=pending,
+        report=str(layout.archive_relative(report)),
+    )
 
 
 def _perform(

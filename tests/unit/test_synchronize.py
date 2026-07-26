@@ -31,7 +31,7 @@ from hfcache.config import ApplicationConfig, load_config
 from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import ExitCode, IntegrityError, SynchronizationError
 from hfcache.hub import HubClient
-from hfcache.identity import CommitSha, RepositoryIdentity, new_run_id
+from hfcache.identity import CommitSha, RepositoryIdentity, new_run_id, new_transaction_id
 from hfcache.locking import lock_path
 from hfcache.manifests import RevisionManifest
 from hfcache.paths import ArchiveLayout, RepositoryLayout
@@ -40,10 +40,13 @@ from hfcache.reporting import RepositoriesCatalog, RunReport
 from hfcache.retention import plan_prune
 from hfcache.storage import parse_mount_table
 from hfcache.sync import synchronize
-from hfcache.transactions import read_journal
+from hfcache.transactions import open_transaction, read_journal
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from hfcache.identity import RunId
+    from hfcache.transactions import Transaction
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 
@@ -229,19 +232,45 @@ def envelope(config: ApplicationConfig) -> dict[str, Any]:
     }
 
 
+def run_transaction(layout: ArchiveLayout, config: ApplicationConfig, run_id: RunId) -> Transaction:
+    """The §7.6 journal `cli._run` opens, with checkpoints 1-3 already recorded.
+
+    The run transaction is the command's, not `synchronize`'s: `TX-07`
+    reconciliation happens between checkpoints 2 and 3 and needs `recovery`,
+    which imports this module's `repair` dependency. What is mirrored here is
+    the *state* `synchronize` is handed — an open journal standing at
+    `journals_reconciled` — so checkpoints 4-7 are recorded against exactly what
+    production gives them.
+    """
+    transaction = open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="sync",
+        run_id=run_id,
+        archive_id=config.storage.archive_id,
+        config_fingerprint=config.fingerprint(),
+    )
+    transaction.checkpoint("run_started", run_id=run_id)
+    transaction.checkpoint("preflight_passed", checks=[])
+    transaction.checkpoint("journals_reconciled", reconciled_transaction_ids=[])
+    return transaction
+
+
 def run(
     client: HubClient,
     layout: ArchiveLayout,
     config: ApplicationConfig,
     selected: Sequence[Any] | None = None,
 ):
+    run_id = new_run_id()
     return synchronize(
         client,
         layout,
         config,
+        run_transaction(layout, config, run_id),
         selected=selected if selected is not None else config.repositories,
         envelope=envelope(config),
-        run_id=new_run_id(),
+        run_id=run_id,
         started_at=datetime.now(UTC),
     )
 
@@ -492,10 +521,18 @@ def test_a_failed_transaction_is_closed_as_failed(client, layout, config, hub):
         HubClient.download = original
 
     assert set(statuses(outcome).values()) == {"failed"}
-    journals = sorted(layout.transactions.glob("*.json"))
-    assert journals
-    for path in journals:
-        assert read_journal(layout, path).journal.state == "failed"
+    journals = [
+        read_journal(layout, path).journal for path in sorted(layout.transactions.glob("*.json"))
+    ]
+    publications = [journal for journal in journals if journal.operation == "publication"]
+    assert publications
+    for journal in publications:
+        assert journal.state == "failed"
+    # The *run* committed. Every repository failed and the run reports it, but
+    # the run transaction itself did all seven of its own steps — which is the
+    # difference §7.6 draws between a run that failed and a run that finished
+    # with failures in it.
+    assert [journal.state for journal in journals if journal.operation == "sync"] == ["committed"]
 
 
 def test_a_run_that_may_not_continue_stops_at_the_first_failure(client, layout, tmp_path, hub):
@@ -701,6 +738,161 @@ def test_quiet_suppresses_the_per_repository_lines(config_file: Path):
 
     assert result.exit_code == ExitCode.SUCCESS
     assert result.output.strip() == ""
+
+
+# --------------------------------------------------------------------------- #
+# The §7.6 run transaction and `TX-07` reconciliation
+# --------------------------------------------------------------------------- #
+
+
+def sync_journals(layout: ArchiveLayout):
+    """Every run journal the archive holds, oldest first."""
+    return [
+        journal
+        for journal in (
+            read_journal(layout, path).journal
+            for path in sorted(layout.transactions.glob("*.json"))
+        )
+        if journal.operation == "sync"
+    ]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_the_run_records_every_documented_checkpoint_in_order(config_file: Path, layout):
+    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    (journal,) = sync_journals(layout)
+    assert [checkpoint.name for checkpoint in journal.checkpoints] == [
+        "run_started",
+        "preflight_passed",
+        "journals_reconciled",
+        "repositories_processed",
+        "catalog_rebuilt",
+        "run_report_written",
+        "run_completed",
+    ]
+    assert journal.state == "committed"
+
+
+@pytest.mark.usefixtures("_wired")
+def test_the_run_journal_carries_the_evidence_each_checkpoint_names(config_file: Path, layout):
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    (journal,) = sync_journals(layout)
+    evidence = {checkpoint.name: checkpoint.evidence for checkpoint in journal.checkpoints}
+    assert evidence["run_started"]["archive_id"] == ARCHIVE_ID
+    assert [check["outcome"] for check in evidence["preflight_passed"]["checks"]]
+    assert evidence["journals_reconciled"] == {
+        "pending_transaction_ids": [],
+        "reconciled_transaction_ids": [],
+    }
+    assert evidence["repositories_processed"]["statuses"] == {
+        DATASET.selector: "published",
+        MODEL.selector: "published",
+    }
+    assert evidence["catalog_rebuilt"]["catalog_path"] == "published/catalog/repositories.json"
+    assert evidence["run_report_written"]["run_report_path"].startswith("runs/")
+    assert evidence["run_completed"] == {"exit_code": 0, "outcome": "success"}
+
+
+@pytest.mark.usefixtures("_wired")
+def test_the_run_journal_never_reconciles_itself(config_file: Path, layout):
+    """`TX-01` opens it before the run may act, so it is unfinished throughout.
+
+    Without the exclusion the run would find its own journal, propose
+    `close_journal` for work still executing, and close it under itself.
+    """
+    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    (journal,) = sync_journals(layout)
+    reconciled = journal.checkpoints[2].evidence
+    assert journal.transaction_id not in reconciled["reconciled_transaction_ids"]
+    assert len(journal.checkpoints) == 7
+
+
+@pytest.mark.usefixtures("_wired")
+def test_a_run_finishes_what_the_previous_run_left_unfinished(config_file: Path, layout, hub):
+    """`TX-07`: the reconciliation is real work, not a formality."""
+    abandoned = new_transaction_id()
+    open_transaction(
+        layout,
+        transaction_id=abandoned,
+        operation="publication",
+        run_id=new_run_id(),
+        archive_id=ARCHIVE_ID,
+        config_fingerprint="0" * 64,
+        repository_id=MODEL.id,
+        repository_type=MODEL.type,
+    ).checkpoint("staging_created", staging_path=f".store/staging/{abandoned}")
+    (layout.staging / abandoned).mkdir(parents=True)
+    os.utime(layout.staging / abandoned, (0, 0))
+
+    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    (journal,) = sync_journals(layout)
+    reconciled = journal.checkpoints[2].evidence
+    assert reconciled["reconciled_transaction_ids"] == [abandoned]
+    # The report the reconciliation wrote is named, so an operator reading the
+    # run journal can follow it (`recovery_report` carries no `_path` suffix
+    # because it belongs to the recovery transaction, not to this one).
+    assert reconciled["recovery_report"].startswith("runs/")
+    assert list(layout.quarantine.iterdir()), "the abandoned staging is preserved"
+
+
+@pytest.mark.usefixtures("_wired")
+def test_a_journal_that_asked_for_an_operator_stops_the_run_before_the_hub(
+    config_file: Path, layout, hub
+):
+    """§7.9, and the whole reason `TX-07` is a rule: an unattended run must not
+    download into an archive whose last run stopped somewhere nobody looked."""
+    stopped = new_transaction_id()
+    transaction = open_transaction(
+        layout,
+        transaction_id=stopped,
+        operation="publication",
+        run_id=new_run_id(),
+        archive_id=ARCHIVE_ID,
+        config_fingerprint="0" * 64,
+        repository_id=MODEL.id,
+        repository_type=MODEL.type,
+    )
+    transaction.needs_operator("HFTXN004", "two equally valid resolutions")
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+
+    assert result.exit_code == ExitCode.SAFETY
+    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFTXN004"]
+    assert hub.downloads == [], "not one byte was fetched"
+    # The run closed its own journal rather than leaving a second unfinished one
+    # behind, and the journal that stopped it is untouched.
+    (run_journal,) = sync_journals(layout)
+    assert run_journal.state == "failed"
+    assert [checkpoint.name for checkpoint in run_journal.checkpoints] == [
+        "run_started",
+        "preflight_passed",
+    ]
+    assert read_journal(layout, layout.journal(stopped)).journal.state == "needs_operator"
+
+
+@pytest.mark.usefixtures("_wired")
+def test_a_run_that_cannot_write_its_report_closes_its_journal_as_failed(
+    config_file: Path, layout, monkeypatch
+):
+    def refuse(*_arguments, **_keywords):
+        message = "the run report could not be written"
+        raise SynchronizationError.single(message, code="HFSYN008")
+
+    monkeypatch.setattr("hfcache.sync.write_model", refuse)
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+
+    assert result.exit_code == ExitCode.SYNC
+    (journal,) = sync_journals(layout)
+    assert journal.state == "failed"
+    assert journal.error is not None
+    assert journal.error.code == "HFSYN008"
 
 
 # --------------------------------------------------------------------------- #
@@ -1160,6 +1352,33 @@ def test_prune_apply_takes_the_lock_and_completes_a_plan(config_file: Path, layo
     payload = json.loads(result.output)["data"]
     assert payload["plans"] == []
     assert payload["applied"] == []
+
+
+@pytest.mark.usefixtures("_wired")
+def test_prune_apply_stops_on_a_journal_that_asked_for_an_operator(config_file: Path, layout, hub):
+    """`TX-07` again: a plan built over an archive with an unfinished
+    publication in it would be counting revisions nobody has finished deciding
+    about."""
+    for index in range(6):
+        commit = f"{index + 1:040d}"
+        hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
+        hub.heads[MODEL.selector] = commit
+        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="prune",
+        run_id=new_run_id(),
+        archive_id=ARCHIVE_ID,
+        config_fingerprint="0" * 64,
+    ).needs_operator("HFTXN004", "two equally valid resolutions")
+    before = {reference.commit_sha for reference in retained_references(layout, MODEL)}
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
+
+    assert result.exit_code == ExitCode.SAFETY
+    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFTXN004"]
+    assert {r.commit_sha for r in retained_references(layout, MODEL)} == before
 
 
 @pytest.mark.usefixtures("_wired")

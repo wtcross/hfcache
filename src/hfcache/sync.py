@@ -1164,6 +1164,7 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
     client: HubClient,
     layout: ArchiveLayout,
     config: ApplicationConfig,
+    transaction: Transaction,
     *,
     selected: Sequence[RepositoryConfig],
     envelope: Mapping[str, Any],
@@ -1172,9 +1173,19 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
 ) -> RunOutcome:
     """Process every selected repository and record the run (plan §13.1 steps 5-11).
 
-    The lock and the storage preflight are the caller's — `preflight.guarded`
-    composes them in §13.1's order, and holding them around this call is what
-    makes every check it performed still true while the work happens.
+    The lock, the storage preflight, and the §7.6 run journal are all the
+    caller's, composed at the command boundary in §13.1's order: lock (step 2),
+    preflight (step 3), then the journal whose first three checkpoints record
+    that the run started, that the preflight passed, and that unfinished
+    journals were reconciled before the Hub was contacted (`TX-07`). Holding
+    them around this call is what makes every check they performed still true
+    while the work happens.
+
+    This function records the remaining four checkpoints, each after the act it
+    names is durable (`TX-02`), and closes the journal. A run whose exit code is
+    not `0` still commits: the *run transaction* completed, and which
+    repositories failed is what the durable report and checkpoint 7's evidence
+    are for.
 
     Deterministic configuration order, always. Not selector order, not
     alphabetical, not "smallest first": two runs naming the same repositories
@@ -1212,13 +1223,27 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
         totals["hashed_bytes"] += result.hashed_bytes
         totals["reused_bytes"] += result.reused_bytes
 
+    transaction.checkpoint(
+        "repositories_processed",
+        statuses={
+            f"{result.repository_type}:{result.repository_id}": result.status for result in results
+        },
+    )
+
     # Plan §13.1 step 10, a *whole-run* step distinct from §7.3 checkpoint 9.
     # The per-publication rebuild keeps the catalog current with each revision;
     # this keeps it current with each *configuration*, which changes without any
     # revision being published — a repository removed from the file is still
     # archived and must start reading as unmanaged (`AD-06`) on the next run
     # rather than on the next time something happens to publish.
-    publish_catalog(layout, rebuild_catalog(layout, configured=configured, generated_at=_now()))
+    catalog_path = publish_catalog(
+        layout, rebuild_catalog(layout, configured=configured, generated_at=_now())
+    )
+    transaction.checkpoint(
+        "catalog_rebuilt",
+        catalog_path=str(layout.archive_relative(catalog_path)),
+        catalog_sha256=sha256_file(catalog_path).digest,
+    )
 
     codes = [code for result in results for code in result.errors]
     exit_code = aggregate_exit_code(codes)
@@ -1244,6 +1269,9 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
     path = layout.run_report(started_at, run_id)
     write_model(path, report, mode=RUN_REPORT_MODE, code="HFSYN008", error=SynchronizationError)
     fsync_directory(path.parent)
+    transaction.checkpoint("run_report_written", run_report_path=str(layout.archive_relative(path)))
+    transaction.checkpoint("run_completed", exit_code=int(exit_code), outcome=report.outcome)
+    transaction.commit()
     return RunOutcome(report=report, report_path=path, exit_code=exit_code)
 
 

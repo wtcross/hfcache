@@ -1456,6 +1456,7 @@ Work packages:
 - `HOST-001`: Provision CentOS Stream 10 VM, DNS, time, and updates. *(Done 2026-07-24 — §35.1.)*
 - `HOST-002`: Create service identity and local paths. *(Done 2026-07-24 — §35.1.)*
 - `HOST-003`: Configure hard NFSv4 mount. *(Done 2026-07-24; mount live — §35.1.)*
+- `SYNC-003`: Give the sync run its §7.6 journal and reconcile unfinished journals before Hub contact (`TX-07`). *(Carried out of Phase 6; it lands here because the scheduled invocation is what makes it matter.)*
 - `HOST-004`: Install the locked application environment.
 - `SYS-001`: Install and validate systemd target, services, and timers.
 - `SYS-002`: Apply and test systemd hardening.

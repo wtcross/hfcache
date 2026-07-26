@@ -154,8 +154,8 @@ where `hfcache list` landed.
    `publication.VerificationStates`, a revision nothing has re-read offline is
    `unverified`, and `failed` is reachable for the first time.
 
-**Carried out of this phase.** One item is open that this phase found and did
-not close, recorded here rather than left to be rediscovered:
+**Carried out of this phase — now closed.** One item was open that this phase
+found and did not close, recorded here rather than left to be rediscovered:
 
 1. **`TX-07` reconciliation is not implemented in `sync`.** `docs/architecture.md`
    §7.6 gives the sync run its own journal with seven checkpoints, the third of
@@ -168,7 +168,10 @@ not close, recorded here rather than left to be rediscovered:
    is surfaced by `HFWRN008` in `status` — but a scheduled run does not stop on
    a `needs_operator` journal the way §7.9 says it should. It belongs with the
    systemd work in Phase 7, where the scheduled invocation is what makes it
-   matter.
+   matter. **Closed at `SYNC-003`** (Phase 7), which also extends the rule to
+   `prune --apply` and `repair`, the other two mutating commands that never had
+   it. Decision 55 records the one behaviour that had to change to get there: a
+   crashed run journal now closes rather than stopping the machine.
 
 - [x] DEP-001 Model-card dependency inspection (2026-07-26, this commit — `src/hfcache/dependencies.py` (plan §7) reads `README.md`'s YAML front matter through `huggingface_hub.repocard.metadata_load`, which parses with `yaml.safe_load`: no object construction, no tag that could reach a constructor (`AD-15`, T-04). A `base_model` holding a list produces one observation per entry, because a merged model legitimately names several parents. Detection reads the *snapshot*, so it sees the same bytes that were hashed and will be published — a detector reading anything else could report a dependency the archived revision does not declare)
 - [x] DEP-002 Adapter-config dependency inspection (2026-07-26, this commit — `adapter_config.json` through `json.loads` and nothing else; PEFT would import it through its own loader, and reading it as the JSON document it is, is the whole difference between describing an adapter and running one. `base_model_name_or_path` is recorded at `high` confidence, above a card's `base_model`, because an adapter without its base cannot be loaded at all rather than merely being incomplete)
@@ -212,6 +215,7 @@ interpretations, including both carried-in items.
 - [x] HOST-001 Provision CentOS Stream 10 VM, DNS, time, updates (2026-07-24, host prep)
 - [x] HOST-002 Service identity and local paths (2026-07-24, host prep)
 - [x] HOST-003 Hard NFSv4 mount (2026-07-24, host prep; automount active)
+- [x] SYNC-003 Sync run journal and `TX-07` reconciliation (2026-07-26, this commit — the Phase 6 carried-out item. `cli._run` opens the §7.6 journal inside `preflight.guarded` and records checkpoints 1-3: `run_started`, `preflight_passed`, and `journals_reconciled` — the third *after* `recovery.reconcile` has resolved every unfinished journal, under the lock the run already holds and before a single Hub request. `synchronize` takes the transaction and records 4-7, each after its own act is durable, and commits; a run whose exit is not `0` still commits, because the run transaction completed and which repositories failed is what the report carries. The reconciliation is real work, not a formality: a test leaves an abandoned staging directory from a previous run and the next `sync` quarantines it, names the recovery report in its own journal, and goes on to publish. A `needs_operator` journal stops the run at exit `20` with `hub.downloads == []` asserted — nothing fetched, nothing changed, and the run closes its own journal rather than leaving a second unfinished one behind. **`prune --apply` and `repair` reconcile too**, since `TX-07` says every mutating command does and leaving two of the three out would have recreated this same carried item; `verify` deliberately does not, because §7.9 requires it still answer when the machine has stopped. `plan_recovery` gained `exclude`, which is how a run reconciles everything except itself — `TX-01` opened its journal before it could act, so it is unfinished by construction throughout. Decision 55 records the crashed-run-journal resolution this needed. `recovery.py` and `sync.py` both at 100% branch coverage; `cli.py` back to its one pre-existing gap)
 - [ ] HOST-004 Install the locked application environment
 - [ ] SYS-001 Install and validate systemd target, services, timers
 - [ ] SYS-002 Apply and test systemd hardening
@@ -1147,3 +1151,38 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     recovery calls into it. Checkpoints 16-18 are steps of the *repair*
     transaction — recovery's job is to notice they are due and to run them, not
     to know how.
+
+55. **A crashed sync run journal closes; it does not stop the machine**
+    (2026-07-26, `SYNC-003`). Before this package nothing produced a `sync`
+    journal, and `recovery._remediation` fell through to its final refusal for
+    one: `HFTXN004`, blocked, operator decides. A test asserted exactly that.
+    Once `sync` actually opens the §7.6 journal, that behaviour becomes
+    unusable — every interrupted run would leave the archive refusing writes
+    until a person cleared a journal about which nothing is ambiguous, and
+    unattended operation is the point of the whole design (`AD-01`).
+
+    §7.6 already said why it is not ambiguous: "the per-repository journals are
+    the authority; the run journal exists to correlate them and to prove that
+    reconciliation happened before Hub contact." Every mutation a run made is
+    inside a publication or prune journal that has its own remedy. So the
+    resolution is `close_journal`, whatever checkpoint the run reached, and
+    `docs/architecture.md` §7.6 and §7.7 are amended in this commit to say so.
+
+    Recovery deliberately does **not** roll a run forward through checkpoint 5,
+    even though §7.7 permits rebuilding a catalog. Plan §13.1 step 10's rebuild
+    reads *configuration* to decide which repositories are managed (`AD-06`),
+    and recovery takes no configuration — rebuilding without it would mark every
+    configured repository unmanaged, turning a merely stale derived file
+    (`FS-16`) into an actively wrong one. The next sync rebuilds it correctly.
+    The replaced test now provokes the genuine no-resolution case instead: a
+    `recovery` transaction that itself crashed, which §7.7 gives no resolution
+    for and which is still `HFTXN004`.
+
+    Two smaller consequences, both load-bearing. The run journal excludes
+    *itself* from reconciliation — `TX-01` opens it before the run may act, so
+    it is unfinished for the whole run and a transaction cannot recover itself;
+    `plan_recovery` gained `exclude` for that one caller. And a crash inside a
+    run now leaves **two** open journals rather than one, which is what the
+    filesystem has always implied and what six recovery tests had to start
+    saying out loud: they now ask for the remedy of the operation they are about
+    rather than taking `remediations[0]`.

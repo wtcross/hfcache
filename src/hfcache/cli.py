@@ -35,6 +35,7 @@ from hfcache.identity import (
     PublicationId,
     RepositoryIdentity,
     new_run_id,
+    new_transaction_id,
     parse_selector,
 )
 from hfcache.manifests import RevisionManifest
@@ -56,12 +57,13 @@ from hfcache.publication import (
     read_verification_catalog,
     retained_references,
 )
-from hfcache.recovery import apply_recovery, measure_health, plan_recovery
+from hfcache.recovery import apply_recovery, measure_health, plan_recovery, reconcile
 from hfcache.repair import cleanup_warnings, preserved_bytes, repair_revision
 from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersions
 from hfcache.retention import apply_prune, plan_all
 from hfcache.storage import read_model
 from hfcache.sync import synchronize
+from hfcache.transactions import open_transaction
 from hfcache.verification import (
     FINDING_CODES,
     UNDETECTABLE,
@@ -78,8 +80,10 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
     from hfcache.archive import ArchiveInspection
+    from hfcache.identity import RunId
     from hfcache.models import PrunePlan, Reference
     from hfcache.reporting import VerificationReport
+    from hfcache.sync import RunOutcome
     from hfcache.verification import Resolved
 
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
@@ -893,6 +897,12 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     per repository, which is what makes them mean anything: proving the archive
     sound and then letting another command mutate it throughout would prove
     nothing.
+
+    Inside them the run opens its §7.6 journal and reconciles every unfinished
+    transaction before a single Hub request is made (`TX-07`). A journal that
+    stopped and asked for an operator stops this run at exit `20` with nothing
+    downloaded and nothing changed — which is the whole reason an unattended
+    scheduled sync is safe to leave running.
     """
     started_at = datetime.now(UTC)
     stamp = utc_now()
@@ -906,20 +916,22 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
 
     client = HubClient.of(token, endpoint=config.hub.endpoint)
     layout = ArchiveLayout(root=config.storage.archive_root)
+    envelope = _run_envelope(config)
     try:
         with guarded(
             layout,
             storage=config.storage,
             command="sync",
             lock_wait_seconds=config.sync.lock_wait_seconds,
-        ):
+        ) as checks:
             run_id = new_run_id()
-            outcome = synchronize(
+            outcome = _run(
                 client,
                 layout,
                 config,
                 selected=selected,
-                envelope=_run_envelope(config),
+                envelope=envelope,
+                checks=checks,
                 run_id=run_id,
                 started_at=started_at,
             )
@@ -970,6 +982,68 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             typer.echo(problem.as_line(), err=True)
     if outcome.exit_code != ExitCode.SUCCESS:
         raise typer.Exit(int(outcome.exit_code))
+
+
+def _run(
+    client: HubClient,
+    layout: ArchiveLayout,
+    config: ApplicationConfig,
+    *,
+    selected: Sequence[RepositoryConfig],
+    envelope: Mapping[str, Any],
+    checks: Sequence[Check],
+    run_id: RunId,
+    started_at: datetime,
+) -> RunOutcome:
+    """The §7.6 run transaction: open it, reconcile, then do the work.
+
+    Checkpoints 1-3 live here for the same reason the lock and the preflight do:
+    `TX-07` requires reconciliation happen under the lock the run already holds
+    and **before** the Hub is contacted, and this journal is what proves it did.
+    `sync.synchronize` records checkpoints 4-7 and closes the journal.
+
+    The run excludes *itself* from what it reconciles. `TX-01` opened this
+    journal before the run was allowed to touch anything, so it is unfinished by
+    construction for as long as the run is executing; without the exclusion a
+    run would find itself and propose a remedy for work still in progress.
+    """
+    transaction = open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="sync",
+        run_id=run_id,
+        archive_id=str(envelope["archive_id"]),
+        config_fingerprint=str(envelope["config_fingerprint"]),
+    )
+    try:
+        transaction.checkpoint(
+            "run_started",
+            archive_id=str(envelope["archive_id"]),
+            config_fingerprint=str(envelope["config_fingerprint"]),
+            run_id=run_id,
+        )
+        transaction.checkpoint("preflight_passed", checks=[check.as_entry() for check in checks])
+        reconciled = reconcile(
+            layout,
+            stale_staging_age_hours=config.sync.stale_staging_age_hours,
+            envelope=envelope,
+            started_at=started_at,
+            exclude=(transaction.journal.transaction_id,),
+        )
+        transaction.checkpoint("journals_reconciled", **reconciled.as_evidence())
+        return synchronize(
+            client,
+            layout,
+            config,
+            transaction,
+            selected=selected,
+            envelope=envelope,
+            run_id=run_id,
+            started_at=started_at,
+        )
+    except HfcacheError as error:
+        transaction.fail(error.problems[0].code, error.problems[0].message)
+        raise
 
 
 def _status_entry(
@@ -1580,11 +1654,22 @@ def prune(
                 command=command,
                 lock_wait_seconds=config.sync.lock_wait_seconds,
             ):
-                plans = _plans(layout, wanted, maximum=maximum)
                 # One run id for the whole invocation, so every prune journal
                 # this command opens correlates with the same envelope and with
                 # each other.
                 envelope = _run_envelope(config) | {"run_id": new_run_id()}
+                # `TX-07`, under the lock and before anything is planned: a
+                # plan built over an archive with an unfinished publication in
+                # it would be counting revisions nobody has finished deciding
+                # about. This command opens no journal of its own until
+                # `apply_prune` does, so it excludes nothing.
+                reconcile(
+                    layout,
+                    stale_staging_age_hours=config.sync.stale_staging_age_hours,
+                    envelope=envelope,
+                    started_at=datetime.now(UTC),
+                )
+                plans = _plans(layout, wanted, maximum=maximum)
                 applied = [apply_prune(layout, plan, envelope=envelope) for plan in plans]
         else:
             plans = _plans(layout, wanted, maximum=maximum)
@@ -1754,6 +1839,7 @@ def repair(
 
     layout = ArchiveLayout(root=config.storage.archive_root)
     client = HubClient.of(token, endpoint=config.hub.endpoint)
+    envelope = _run_envelope(config)
     try:
         with guarded(
             layout,
@@ -1761,6 +1847,16 @@ def repair(
             command=command,
             lock_wait_seconds=config.sync.lock_wait_seconds,
         ):
+            # `TX-07`, before the isolated download: a repair re-reads the
+            # original manifest and the published instance to decide what the
+            # replacement must be, and both are exactly what an unfinished
+            # publication or prune is still in the middle of changing.
+            reconcile(
+                layout,
+                stale_staging_age_hours=config.sync.stale_staging_age_hours,
+                envelope=envelope,
+                started_at=datetime.now(UTC),
+            )
             outcome = repair_revision(
                 client,
                 layout,
@@ -1768,7 +1864,7 @@ def repair(
                 identity=parsed.identity,
                 commit_sha=parsed.commit_sha,
                 reason=reason,
-                envelope=_run_envelope(config),
+                envelope=envelope,
                 run_id=new_run_id(),
             )
     except HfcacheError as error:

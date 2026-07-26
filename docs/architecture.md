@@ -804,6 +804,20 @@ A crash anywhere leaves the per-repository journals as the authority; the run
 journal exists to correlate them and to prove that reconciliation happened before
 Hub contact.
 
+Two consequences follow from that. The run journal is opened before the run may
+touch anything (`TX-01`), so it is itself unfinished for as long as the run
+executes and the run **excludes itself** from what it reconciles at checkpoint 3 —
+a transaction cannot recover itself. And a run journal a crash left open has one
+resolution whatever checkpoint it reached: close it. It owns no filesystem state,
+and the one whole-run step that changes the archive — plan §13.1 step 10's catalog
+rebuild — reads configuration to decide which repositories are managed (`AD-06`),
+which recovery does not take. The next run performs it; the catalog is derived
+(`FS-16`).
+
+A run whose exit classification is not `0` still records checkpoint 7 and commits.
+The run transaction completed; which repositories failed is what the durable run
+report and that checkpoint's evidence carry.
+
 ### 7.7 Recovery transaction
 
 `operation = "recovery"`. `recover --dry-run` performs the analysis and writes
@@ -815,7 +829,8 @@ Recovery is permitted to: quarantine abandoned staging that matches the naming
 contract; finish a publication from checkpoint 5 onward; rebuild the catalog;
 repair a reference when checkpoints and valid manifests identify exactly one
 correct target; roll an interrupted prune back or forward across its commit point;
-and finish a repair's second reference switch.
+finish a repair's second reference switch; and close a §7.6 run journal, which
+holds no state of its own.
 
 Recovery is **not** permitted to: replace an expected digest; choose a current
 revision by modification time; delete unknown data; resolve a state that two valid

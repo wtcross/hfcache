@@ -136,13 +136,27 @@ def envelope(config: ApplicationConfig) -> dict[str, Any]:
 
 
 def sync(client: HubClient, layout: ArchiveLayout, config: ApplicationConfig, selected=None):
+    """A whole run, journal and all — see `test_synchronize.run_transaction`."""
+    run_id = new_run_id()
+    transaction = open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="sync",
+        run_id=run_id,
+        archive_id=config.storage.archive_id,
+        config_fingerprint=config.fingerprint(),
+    )
+    transaction.checkpoint("run_started", run_id=run_id)
+    transaction.checkpoint("preflight_passed", checks=[])
+    transaction.checkpoint("journals_reconciled", reconciled_transaction_ids=[])
     return synchronize(
         client,
         layout,
         config,
+        transaction,
         selected=selected if selected is not None else config.repositories,
         envelope=envelope(config),
-        run_id=new_run_id(),
+        run_id=run_id,
         started_at=datetime.now(UTC),
     )
 
@@ -500,6 +514,26 @@ def apply(layout: ArchiveLayout, config: ApplicationConfig, *, now: datetime | N
     return apply_recovery(layout, prepared, envelope=envelope(config), started_at=datetime.now(UTC))
 
 
+def remedy_for(prepared, operation: str) -> str:
+    """The remedy proposed for the one journal of this operation.
+
+    A crash inside a run leaves *two* open journals now (§7.6): the
+    per-repository one that was mid-flight and the run journal wrapping it. Both
+    are real and both get a remedy, so a test that asks about a publication has
+    to say so rather than take whichever the directory listed first.
+    """
+    (entry,) = [item for item in prepared.remediations if item.operation == operation]
+    return entry.remedy
+
+
+def open_journal_for(layout: ArchiveLayout, operation: str):
+    """The one open journal of this operation, for the same reason."""
+    (found,) = [
+        journal for journal in open_journals(layout) if journal.journal.operation == operation
+    ]
+    return found
+
+
 def test_inside_the_grace_period_recovery_waits(client, layout, config):
     sync(client, layout, config, only_model(config))
     damage(layout, SHA_A)
@@ -679,6 +713,35 @@ def test_the_repair_command_requires_a_full_sha(config_path):
     assert [p["code"] for p in json.loads(result.stdout)["errors"]] == ["HFARG001"]
 
 
+def test_the_repair_command_stops_on_a_journal_that_asked_for_an_operator(
+    client, layout, config, config_path
+):
+    """`TX-07` applies to every mutating command, and repair is one. It re-reads
+    the original manifest and the published instance to decide what the
+    replacement must be, and both are what an unfinished transaction is still in
+    the middle of changing."""
+    sync(client, layout, config, only_model(config))
+    damage(layout, SHA_A)
+    open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="publication",
+        run_id=new_run_id(),
+        archive_id=ARCHIVE_ID,
+        config_fingerprint="0" * 64,
+        repository_id=MODEL.id,
+        repository_type=MODEL.type,
+    ).needs_operator("HFTXN004", "two equally valid resolutions")
+
+    result = runner.invoke(
+        app, ["--config", str(config_path), "--json", "repair", f"{MODEL.selector}@{SHA_A}"]
+    )
+
+    assert result.exit_code == ExitCode.SAFETY
+    assert [p["code"] for p in json.loads(result.stdout)["errors"]] == ["HFTXN004"]
+    assert list(layout.repair_caches.iterdir()) == [], "no isolated download was started"
+
+
 def test_the_repair_command_takes_the_exclusive_lock(client, layout, config, config_path):
     sync(client, layout, config, only_model(config))
     with exclusive_lock(lock_path(), command="sync", wait_seconds=0):
@@ -741,7 +804,7 @@ def test_a_publication_interrupted_after_the_rename_rolls_forward(
     restore()
 
     prepared = plan(layout)
-    assert prepared.remediations[0].remedy == "complete_publication"
+    assert remedy_for(prepared, "publication") == "complete_publication"
 
     apply(layout, config)
 
@@ -763,7 +826,7 @@ def test_a_publication_interrupted_before_the_reference_rolls_forward(
     restore()
 
     prepared = plan(layout)
-    assert prepared.remediations[0].remedy == "complete_publication"
+    assert remedy_for(prepared, "publication") == "complete_publication"
 
     apply(layout, config)
 
@@ -788,7 +851,7 @@ def test_a_tree_that_cannot_be_validated_is_quarantined_not_published(
         staged.write_text("{ not json", encoding="utf-8")
 
     prepared = plan(layout)
-    assert prepared.remediations[0].remedy == "quarantine_tree"
+    assert remedy_for(prepared, "publication") == "quarantine_tree"
 
     apply(layout, config)
 
@@ -856,7 +919,7 @@ def test_a_prune_interrupted_before_its_commit_point_rolls_back(
 
     assert len(retained_references(layout, MODEL)) == 5, "the sixth was tombstoned"
     prepared = plan(layout)
-    assert prepared.remediations[0].remedy == "rollback_prune"
+    assert remedy_for(prepared, "prune") == "rollback_prune"
 
     apply(layout, config)
 
@@ -878,7 +941,7 @@ def test_a_prune_interrupted_after_its_commit_point_rolls_forward(
     assert len(retained_references(layout, MODEL)) == 5
     assert list(layout.trash.iterdir()), "the tombstone is still there"
     prepared = plan(layout)
-    assert prepared.remediations[0].remedy == "complete_prune"
+    assert remedy_for(prepared, "prune") == "complete_prune"
 
     apply(layout, config)
 
@@ -1089,8 +1152,26 @@ def test_a_tree_that_cannot_be_quarantined_is_hfret010(client, layout, config, m
 
 
 def test_an_operation_with_no_documented_resolution_is_an_operators_decision(layout, config):
-    """§7.6's sync-run journal correlates the per-repository ones and has no
-    resolution of its own; recovery says so rather than guessing (§7.9)."""
+    """A recovery that itself crashed: §7.7 gives no resolution for one, and
+    recovery says so rather than guessing (§7.9)."""
+    open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="recovery",
+        run_id=new_run_id(),
+        archive_id=ARCHIVE_ID,
+        config_fingerprint=config.fingerprint(),
+    ).checkpoint("close_journal", resolved_transaction_id=new_transaction_id())
+
+    prepared = plan(layout)
+
+    assert prepared.blocked
+    assert [problem.code for problem in prepared.problems] == ["HFTXN004"]
+
+
+def test_a_run_journal_a_crash_left_open_is_closed_and_nothing_else(layout, config):
+    """§7.6: the run journal correlates the per-repository journals and owns no
+    filesystem state, so there is nothing to roll forward — whatever it got to."""
     open_transaction(
         layout,
         transaction_id=new_transaction_id(),
@@ -1102,8 +1183,12 @@ def test_an_operation_with_no_documented_resolution_is_an_operators_decision(lay
 
     prepared = plan(layout)
 
-    assert prepared.blocked
-    assert [problem.code for problem in prepared.problems] == ["HFTXN004"]
+    assert not prepared.blocked
+    assert remedy_for(prepared, "sync") == "close_journal"
+
+    apply(layout, config)
+
+    assert open_journals(layout) == ()
 
 
 def test_an_interrupted_repair_whose_manifest_will_not_load_stops_the_machine(
@@ -1165,8 +1250,7 @@ def test_rolling_a_prune_back_twice_is_the_same_as_once(client, hub, layout, con
     with pytest.raises(CrashError):
         six_revisions(client, hub, layout, config)
     restore()
-    (journal,) = open_journals(layout)
-    identifier = _txn(journal.journal.transaction_id)
+    identifier = _txn(open_journal_for(layout, "prune").journal.transaction_id)
 
     recovery_module._rollback_prune(layout, identifier)
     recovery_module._rollback_prune(layout, identifier)
@@ -1179,8 +1263,7 @@ def test_completing_a_prune_twice_is_the_same_as_once(client, hub, layout, confi
     with pytest.raises(CrashError):
         six_revisions(client, hub, layout, config)
     restore()
-    (journal,) = open_journals(layout)
-    identifier = _txn(journal.journal.transaction_id)
+    identifier = _txn(open_journal_for(layout, "prune").journal.transaction_id)
 
     recovery_module._complete_prune(layout, identifier)
     recovery_module._complete_prune(layout, identifier)

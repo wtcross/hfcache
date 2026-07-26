@@ -238,12 +238,18 @@ hfcache [--config PATH] sync [TYPE:ID ...]
 The scheduled command. With no selectors it processes every enabled repository in
 deterministic configuration order; with selectors it restricts the run to those.
 
-Sequence, locking and preflight first, then per repository: resolve, skip or move
-the reference if the SHA is already retained, estimate and check capacity,
-download, check completeness locally, hash new unique content, detect
-dependencies, write the manifest, build staging, rename it into place, publish the
-manifest, publish the per-SHA reference, replace `current.json`, rebuild the
-catalog, apply retention.
+Sequence, locking and preflight first, then the run journal and reconciliation,
+then per repository: resolve, skip or move the reference if the SHA is already
+retained, estimate and check capacity, download, check completeness locally, hash
+new unique content, detect dependencies, write the manifest, build staging, rename
+it into place, publish the manifest, publish the per-SHA reference, replace
+`current.json`, rebuild the catalog, apply retention.
+
+Reconciliation happens under the lock and **before the first Hub request**
+(`TX-07`): unfinished transaction journals are resolved, and one that asked for an
+operator stops the run at `20` with nothing downloaded and nothing changed. The
+same applies to `prune --apply` and `repair`, which are mutating commands too.
+`status`, `list`, `verify`, and `recover --dry-run` still answer in that state.
 
 Exits `0`, `10`, `20`, `30`, `40`, or `50` per §3.
 
