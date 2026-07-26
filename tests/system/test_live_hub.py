@@ -19,10 +19,12 @@ upstream content; a test that fails because one was renamed is reporting
 something true.
 """
 
+import os
 from datetime import UTC, datetime
 
 import pytest
 
+from hfcache.archive import initialize_archive
 from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import SynchronizationError
 from hfcache.hub import (
@@ -31,10 +33,25 @@ from hfcache.hub import (
     resolve_host,
     verify_tls,
 )
-from hfcache.identity import RepositoryIdentity, new_publication_id
+from hfcache.identity import (
+    RepositoryIdentity,
+    new_publication_id,
+    new_run_id,
+    new_transaction_id,
+)
 from hfcache.manifests import RevisionManifest
 from hfcache.paths import ArchiveLayout, RepositoryLayout
-from hfcache.sync import Timeline, build_manifest, completeness_problems, hash_snapshot
+from hfcache.publication import create_staging, next_generation, read_reference
+from hfcache.storage import parse_mount_table
+from hfcache.sync import (
+    Timeline,
+    build_manifest,
+    completeness_problems,
+    hash_snapshot,
+    publish_revision,
+    snapshot_paths,
+)
+from hfcache.transactions import open_transaction
 
 pytestmark = pytest.mark.live
 
@@ -284,3 +301,106 @@ def test_the_dry_run_and_the_tree_agree_about_the_revisions_size(client: HubClie
 
     assert estimate.file_count == len(tree)
     assert estimate.logical_bytes == sum(entry.size for entry in tree)
+
+
+@pytest.mark.parametrize("identity", [MODEL, DATASET], ids=["model", "dataset"])
+def test_a_real_revision_is_published_end_to_end(client: HubClient, identity, tmp_path):
+    # Phase 4's acceptance, on a throwaway archive: one public model and one
+    # public dataset can be archived, every Hub path appears in the publication,
+    # and the references a consumer reads resolve to what they name.
+    #
+    # The archive here is a temporary directory described to the application as
+    # an NFSv4 mount. `/srv/hfcache` is deliberately untouched: initializing it
+    # is a one-time authorization spent at the §29 rollout checkpoint, not by a
+    # test run.
+    root = tmp_path / "archive"
+    root.mkdir()
+    layout = ArchiveLayout(root=root)
+    initialize_archive(
+        layout,
+        archive_id="3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+        table=parse_mount_table(
+            f"457 47 0:68 / {os.path.realpath(root)} rw,relatime shared:488 - nfs4 nas:/x rw\n"
+        ),
+    )
+
+    facts = client.repository(identity, "main")
+    tree = client.tree(identity, facts.commit_sha)
+    started = datetime.now(UTC)
+    client.download(identity, facts.commit_sha, cache_dir=layout.hub_cache, max_workers=2)
+    snapshot = client.verify_local(identity, facts.commit_sha, cache_dir=layout.hub_cache)
+    assert (
+        completeness_problems(snapshot, tree, identity=identity, cache_root=layout.hub_cache) == []
+    )
+    hashed = hash_snapshot(snapshot, tree, identity=identity)
+    finished = datetime.now(UTC)
+
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    transaction_id = new_transaction_id()
+    transaction = open_transaction(
+        layout,
+        transaction_id=transaction_id,
+        operation="publication",
+        run_id=new_run_id(),
+        archive_id="3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+        config_fingerprint="c" * 64,
+        repository_id=identity.id,
+        repository_type=identity.type,
+    )
+    staging = create_staging(layout, transaction_id)
+    transaction.checkpoint("staging_created", staging_path="x")
+    transaction.checkpoint("download_completed", cache_revision=facts.commit_sha)
+    transaction.checkpoint("content_hashed", hashed_objects=hashed.hashed_objects)
+    manifest = build_manifest(
+        identity=identity,
+        requested_revision="main",
+        commit_sha=facts.commit_sha,
+        publication_id=new_publication_id(),
+        publication_generation=next_generation(layout, identity),
+        publication_mode="hardlink",
+        tree=tree,
+        hashed=hashed,
+        layout=repository,
+        hub_endpoint=ENDPOINT,
+        timeline=Timeline(
+            first_observed_at=started,
+            download_started_at=started,
+            download_completed_at=finished,
+            verified_at=finished,
+            published_at=finished,
+        ),
+    )
+
+    outcome = publish_revision(
+        layout,
+        transaction,
+        identity=identity,
+        snapshot=snapshot,
+        manifest=manifest,
+        staging=staging,
+        publication_mode="hardlink",
+        cache_root=layout.hub_cache,
+    )
+    transaction.checkpoint("publication_committed", state="committed")
+    transaction.commit()
+
+    # Every Hub path appears in the publication, at the size the Hub listed and
+    # as the same inode as the cache blob — hardlink publication, no second copy.
+    for entry in tree:
+        landed = outcome.tree / entry.path
+        assert landed.is_file(), entry.path
+        assert landed.stat().st_size == entry.size, entry.path
+        assert landed.samefile(snapshot / entry.path), entry.path
+
+    # The reference a consumer reads resolves to the tree and the manifest.
+    reference = read_reference(layout, repository.current_ref)
+    assert (layout.published / str(reference.tree)).is_dir()
+    assert (layout.published / str(reference.manifest)).is_file()
+    assert reference.commit_sha == facts.commit_sha
+
+    # And the manifest describes exactly what was published.
+    published = RevisionManifest.model_validate_json(
+        (layout.published / str(reference.manifest)).read_text(encoding="utf-8")
+    )
+    assert published == manifest
+    assert list(snapshot_paths(outcome.tree)) == [entry.path for entry in published.files]

@@ -17,6 +17,7 @@ disagreement stops the revision rather than being published as fact.
 
 from dataclasses import dataclass
 from datetime import datetime  # noqa: TC003 - a dataclass field type, needed at runtime
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Literal, Self, final
 
 from hfcache.errors import Problem, SynchronizationError
@@ -30,28 +31,46 @@ from hfcache.manifests import (
     UpstreamIdentifiers,
     VerificationSummary,
 )
-from hfcache.paths import find_path_collisions, parse_repository_relative
-from hfcache.publication import source_problems
+from hfcache.models import Reference
+from hfcache.paths import RepositoryLayout, find_path_collisions, parse_repository_relative
+from hfcache.publication import (
+    PUBLISHED_DIRECTORY_MODE,
+    PUBLISHED_FILE_MODE,
+    promote_staging,
+    publish_catalog,
+    publish_current_reference,
+    publish_revision_reference,
+    read_reference,
+    rebuild_catalog,
+    source_problems,
+    stage_file,
+    staged_path,
+)
 from hfcache.reporting import RuntimeVersions
+from hfcache.storage import fsync_directory, write_model
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
     from pathlib import Path
 
+    from hfcache.config import RepositoryConfig
     from hfcache.hub import TreeEntry
     from hfcache.identity import RepositoryIdentity
     from hfcache.manifests import DependencyObservation, RepairProvenance
-    from hfcache.paths import RepositoryLayout
+    from hfcache.paths import ArchiveLayout, StagingPaths
+    from hfcache.transactions import Transaction
 
 __all__ = [
     "HashedFile",
     "HashedSnapshot",
     "KnownDigest",
     "ObjectIdentity",
+    "PublicationOutcome",
     "Timeline",
     "build_manifest",
     "completeness_problems",
     "hash_snapshot",
+    "publish_revision",
     "published_digests",
     "snapshot_paths",
 ]
@@ -558,3 +577,162 @@ def _upstream(entry: TreeEntry | None) -> UpstreamIdentifiers:
     return UpstreamIdentifiers(
         git_oid=entry.git_oid, lfs_sha256=entry.lfs_sha256, xet_hash=entry.xet_hash
     )
+
+
+# --------------------------------------------------------------------------- #
+# Publishing the revision (plan §13.2 steps 11-19, §7.3)
+# --------------------------------------------------------------------------- #
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class PublicationOutcome:
+    """What one successful ingestion produced."""
+
+    commit_sha: CommitSha
+    manifest: RevisionManifest
+    publication_generation: int
+    publication_id: PublicationId
+    tree: Path
+
+
+def publish_revision(  # noqa: PLR0913 - the §7.3 sequence's inputs, one argument each
+    layout: ArchiveLayout,
+    transaction: Transaction,
+    *,
+    identity: RepositoryIdentity,
+    snapshot: Path,
+    manifest: RevisionManifest,
+    staging: StagingPaths,
+    publication_mode: Literal["hardlink", "copy"],
+    cache_root: Path,
+    configured: Mapping[str, RepositoryConfig] = MappingProxyType({}),
+) -> PublicationOutcome:
+    """Build, rename, reference, and record one revision (§7.3 checkpoints 4-9).
+
+    Every step is one atomic act followed by the checkpoint that names it, in the
+    order §7.3 fixes, and `Transaction.checkpoint` refuses a name that is not
+    next — so a journal this function produced can only describe an execution
+    that really happened.
+
+    The order is not arbitrary and each adjacency is load-bearing:
+
+    * The manifest is written into **staging** before the rename, so the tree
+      that appears at checkpoint 5 can always be validated (see
+      `PENDING_MANIFEST`).
+    * The tree is renamed before the manifest is published, so a manifest never
+      names a tree that is not there.
+    * Both are durable before `refs/revisions/<sha>.json`, and that before
+      `refs/current.json` — `FS-10`, enforced again at the point of each write by
+      `publish_revision_reference` and `publish_current_reference`.
+    * `current.json` is replaced by a single rename, so the previous current
+      revision is usable on both sides of it and a consumer either sees the old
+      tree or the new one, never a mixture (`FS-12`).
+
+    The catalog comes last because it is derived (`FS-16`). Nothing reads it to
+    decide anything; it is rebuilt from the manifests and references this
+    function just made durable.
+    """
+    # Driven by the manifest, not by the hash result or the Hub tree they both
+    # came from: the tree that reaches `published/` then cannot contain a path
+    # its own manifest does not list, by construction rather than by agreement
+    # between three collections.
+    for entry in manifest.files:
+        stage_file(
+            snapshot / entry.path,
+            staged_path(staging, entry.path),
+            publication_mode=publication_mode,
+            cache_root=cache_root,
+        )
+    # `StagingPaths.manifest` is a sibling of `tree/`, so it does not travel with
+    # the rename at checkpoint 5 — which is the point. §7.3 writes it here,
+    # *before* the tree moves, because that is what makes a crash between
+    # checkpoints 5 and 6 recoverable: the published tree can still be validated
+    # against a manifest that already exists. Written after the rename instead,
+    # the tree would be one nothing can vouch for, and §7.3's crash matrix
+    # quarantines such a tree rather than publishing it.
+    pending = staging.manifest
+    write_model(pending, manifest, mode=PUBLISHED_FILE_MODE, code="HFSYN008")
+    fsync_directory(staging.tree)
+    transaction.checkpoint(
+        "staging_built",
+        staging_tree_path=str(layout.archive_relative(staging.tree)),
+        file_count=manifest.file_count,
+        pending_manifest_path=str(layout.archive_relative(pending)),
+    )
+
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    commit_sha = CommitSha(manifest.commit_sha)
+    publication_id = PublicationId(manifest.publication_id)
+    instance = repository.instance(commit_sha, publication_id)
+    promote_staging(layout, staging, instance)
+    transaction.checkpoint(
+        "revision_tree_renamed",
+        published_tree_path=str(layout.archive_relative(instance)),
+        file_count=manifest.file_count,
+    )
+
+    published_manifest = repository.manifest(commit_sha, publication_id)
+    published_manifest.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
+    write_model(published_manifest, manifest, mode=PUBLISHED_FILE_MODE, code="HFSYN008")
+    fsync_directory(published_manifest.parent)
+    transaction.checkpoint(
+        "manifest_published",
+        manifest_path=str(layout.archive_relative(published_manifest)),
+        manifest_sha256=sha256_file(published_manifest).digest,
+    )
+
+    reference = Reference(
+        commit_sha=commit_sha,
+        manifest=str(repository.manifest_reference(commit_sha, publication_id)),
+        publication_generation=manifest.publication_generation,
+        publication_id=publication_id,
+        repository_id=identity.id,
+        repository_type=identity.type,
+        tree=str(repository.tree_reference(commit_sha, publication_id)),
+        updated_at=manifest.published_at,
+    )
+    publish_revision_reference(layout, reference)
+    transaction.checkpoint(
+        "revision_ref_published",
+        revision_ref_path=str(layout.archive_relative(repository.revision_ref(commit_sha))),
+        publication_id=publication_id,
+    )
+
+    previous = _current_pair(layout, repository)
+    publish_current_reference(layout, reference)
+    transaction.checkpoint(
+        "current_ref_replaced",
+        current_ref_path=str(layout.archive_relative(repository.current_ref)),
+        new=[commit_sha, publication_id],
+        previous=list(previous) if previous else None,
+    )
+
+    catalog = rebuild_catalog(layout, configured=configured, generated_at=manifest.published_at)
+    catalog_path = publish_catalog(layout, catalog)
+    transaction.checkpoint(
+        "catalog_rebuilt",
+        catalog_path=str(layout.archive_relative(catalog_path)),
+        catalog_sha256=sha256_file(catalog_path).digest,
+    )
+
+    return PublicationOutcome(
+        commit_sha=commit_sha,
+        manifest=manifest,
+        publication_generation=manifest.publication_generation,
+        publication_id=publication_id,
+        tree=instance,
+    )
+
+
+def _current_pair(layout: ArchiveLayout, repository: RepositoryLayout) -> tuple[str, str] | None:
+    """The `(commit_sha, publication_id)` `current.json` names, before it moves.
+
+    Recorded as checkpoint 8's evidence so recovery can tell a completed switch
+    from one that never happened. `None` is the first publication, which is a
+    real answer and not a missing one.
+    """
+    if not repository.current_ref.exists():
+        return None
+    reference = read_reference(layout, repository.current_ref)
+    return (reference.commit_sha, reference.publication_id)

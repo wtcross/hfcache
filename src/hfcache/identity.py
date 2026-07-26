@@ -36,6 +36,7 @@ __all__ = [
     "PROBE_ID_LENGTH",
     "REPOSITORY_TYPES",
     "SEGMENT_MAXIMUM_LENGTH",
+    "TYPE_DIRECTORIES",
     "CommitSha",
     "ProbeId",
     "PublicationId",
@@ -64,8 +65,14 @@ RepositoryType = Literal["model", "dataset"]
 REPOSITORY_TYPES: Final = ("dataset", "model")
 """Every supported type, sorted, so any listing derived from it is deterministic."""
 
-_TYPE_DIRECTORIES: Final = MappingProxyType({"dataset": "datasets", "model": "models"})
-"""Singular in configuration and on the command line, plural on disk (§5.3)."""
+TYPE_DIRECTORIES: Final = MappingProxyType({"dataset": "datasets", "model": "models"})
+"""Singular in configuration and on the command line, plural on disk (§5.3).
+
+Public because it is also the enumeration of what the archive can hold: walking
+`published/repos/` to discover repositories needs the same two names, and a
+second copy of them somewhere else is a third place a future repository type
+would have to be added.
+"""
 
 SEGMENT_MAXIMUM_LENGTH = 96
 COMMIT_SHA_LENGTH = 40
@@ -296,7 +303,7 @@ class RepositoryIdentity:
     @property
     def directory(self) -> str:
         """The plural on-disk directory name for this type (`models`, `datasets`)."""
-        return _TYPE_DIRECTORIES[self.type]
+        return TYPE_DIRECTORIES[self.type]
 
     @property
     def sort_key(self) -> tuple[str, str]:

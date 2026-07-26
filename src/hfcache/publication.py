@@ -37,21 +37,32 @@ that tries to escape is a coded refusal rather than a path outside the archive.
 import os
 import shutil
 import stat
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal
 
 from hfcache.errors import IntegrityError, Problem, SynchronizationError
 from hfcache.hashing import sha256_file
-from hfcache.identity import CommitSha
+from hfcache.identity import TYPE_DIRECTORIES, CommitSha, PublicationId, RepositoryIdentity
+from hfcache.manifests import RevisionManifest
 from hfcache.models import Reference
-from hfcache.paths import resolve_within
+from hfcache.paths import RepositoryLayout, resolve_within
+from hfcache.reporting import (
+    CatalogRevision,
+    CurrentRevision,
+    RepositoriesCatalog,
+    RepositoryCatalogEntry,
+)
 from hfcache.storage import fsync_directory, read_model, temporary_sibling, write_model
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from datetime import datetime
     from pathlib import Path
 
+    from hfcache.config import RepositoryConfig
     from hfcache.hashing import FileDigest
     from hfcache.identity import TransactionId
-    from hfcache.paths import ArchiveLayout, RepositoryLayout, StagingPaths
+    from hfcache.paths import ArchiveLayout, StagingPaths
 
 __all__ = [
     "PUBLISHED_DIRECTORY_MODE",
@@ -59,13 +70,18 @@ __all__ = [
     "STAGING_MODE",
     "create_staging",
     "discard_staging",
+    "next_generation",
     "prepare_staged_parent",
     "projected_publication_bytes",
     "promote_staging",
+    "publish_catalog",
     "publish_current_reference",
     "publish_revision_reference",
+    "published_repositories",
     "read_reference",
+    "rebuild_catalog",
     "reference_target_problems",
+    "retained_references",
     "source_problems",
     "stage_file",
     "staged_path",
@@ -443,3 +459,175 @@ def read_reference(layout: ArchiveLayout, path: Path) -> Reference:
         code="HFVER008",
         location=str(layout.archive_relative(path)),
     )
+
+
+# --------------------------------------------------------------------------- #
+# The derived catalog (`FS-16`, plan §13.2 step 19)
+# --------------------------------------------------------------------------- #
+
+
+def published_repositories(layout: ArchiveLayout) -> tuple[RepositoryIdentity, ...]:
+    """Every repository the archive holds published content for.
+
+    Read off `published/repos/<type>/<org>/<repo>` rather than off configuration,
+    because those are different sets and the difference is deliberate: removing a
+    repository from configuration never deletes its archive (`AD-06`), so it must
+    keep appearing in the catalog as unmanaged.
+
+    A directory whose name is not a valid identifier is skipped rather than
+    reported. Nothing about it can be interpreted — there is no repository to
+    attribute a problem to — and `recovery.reconcile_storage` is what reports
+    unknown entries in application-owned areas (`FS-19`).
+    """
+    found: list[RepositoryIdentity] = []
+    for repository_type, directory in TYPE_DIRECTORIES.items():
+        root = layout.repos / directory
+        for namespace in _subdirectories(root):
+            for name in _subdirectories(namespace):
+                try:
+                    found.append(
+                        RepositoryIdentity.of(repository_type, f"{namespace.name}/{name.name}")
+                    )
+                except ValueError:
+                    continue
+    return tuple(sorted(found, key=lambda identity: identity.sort_key))
+
+
+def _subdirectories(path: Path) -> list[Path]:
+    """Immediate subdirectories, or nothing when the parent is absent."""
+    try:
+        return sorted(entry for entry in path.iterdir() if entry.is_dir())
+    except OSError:
+        return []
+
+
+def retained_references(
+    layout: ArchiveLayout, identity: RepositoryIdentity
+) -> tuple[Reference, ...]:
+    """Every per-SHA instance reference one repository holds (`FS-11`).
+
+    `refs/revisions/<sha>.json` is what makes a SHA retained, so this is the
+    authoritative retained set — not the revision directories, which can hold a
+    superseded repair instance inside its grace period, and not the catalog,
+    which is derived from exactly this.
+
+    Ordered by `publication_generation`, which is the immutable retention
+    ordering (`AD-05`): wall-clock time and upstream commit time both reorder
+    under repair and republication, and the generation does not.
+    """
+    references = [
+        read_reference(layout, path)
+        for path in sorted(
+            (RepositoryLayout(archive=layout, identity=identity).refs / "revisions").glob("*.json")
+        )
+    ]
+    return tuple(sorted(references, key=lambda reference: reference.publication_generation))
+
+
+def next_generation(layout: ArchiveLayout, identity: RepositoryIdentity) -> int:
+    """The generation a newly published unique SHA receives (plan §13.2 step 11).
+
+    `max(existing) + 1`, never `count + 1`. A prune removes the oldest revision
+    and its reference, so counting would reissue a generation that a pruned
+    revision already held and break the ordering that retention depends on.
+    Gaps after a crash are explicitly acceptable (§15.1); collisions are not.
+    """
+    references = retained_references(layout, identity)
+    return max((reference.publication_generation for reference in references), default=0) + 1
+
+
+def rebuild_catalog(
+    layout: ArchiveLayout,
+    *,
+    configured: Mapping[str, RepositoryConfig] = MappingProxyType({}),
+    generated_at: datetime,
+) -> RepositoriesCatalog:
+    """Derive the whole catalog from immutable manifests and references (`FS-16`).
+
+    Rebuilt rather than edited, every time. The catalog exists so `status` and
+    `list` answer without walking the archive, and the cost of that convenience
+    is that it can be stale or wrong; the cost is only acceptable because it is
+    never authority. Where it disagrees with a manifest or a reference, they win,
+    and this function is how it is brought back into agreement.
+
+    `configured` is keyed by selector so a repository present in one set and not
+    the other is described correctly: configured-and-published is `managed` with
+    its `enabled` flag, published-but-not-configured is `managed = false` with
+    `enabled = null`, and configured-but-never-published simply has no entry yet.
+    """
+    entries = [
+        _catalog_entry(layout, identity, configured.get(identity.selector))
+        for identity in published_repositories(layout)
+    ]
+    return RepositoriesCatalog(
+        generated_at=generated_at,
+        repositories=tuple(sorted(entries, key=lambda e: (e.repository_type, e.repository_id))),
+    )
+
+
+def _catalog_entry(
+    layout: ArchiveLayout, identity: RepositoryIdentity, configured: RepositoryConfig | None
+) -> RepositoryCatalogEntry:
+    """One repository's retained state, read from its references and manifests."""
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    revisions: list[CatalogRevision] = []
+    for reference in retained_references(layout, identity):
+        manifest = read_model(
+            repository.manifest(
+                CommitSha(reference.commit_sha), PublicationId(reference.publication_id)
+            ),
+            RevisionManifest,
+            error=IntegrityError,
+            code="HFVER007",
+        )
+        revisions.append(
+            CatalogRevision(
+                commit_sha=manifest.commit_sha,
+                file_count=manifest.file_count,
+                publication_generation=manifest.publication_generation,
+                publication_id=manifest.publication_id,
+                published_at=manifest.published_at,
+                total_bytes=manifest.total_bytes,
+                verification_state="verified",
+            )
+        )
+    current = _current(layout, repository)
+    published = [revision.published_at for revision in revisions]
+    return RepositoryCatalogEntry(
+        current=current,
+        enabled=configured.enabled if configured else None,
+        first_published_at=min(published) if published else None,
+        last_published_at=max(published) if published else None,
+        managed=configured is not None,
+        repository_id=identity.id,
+        repository_type=identity.type,
+        requested_revision=configured.revision if configured else None,
+        revisions=tuple(revisions),
+    )
+
+
+def _current(layout: ArchiveLayout, repository: RepositoryLayout) -> CurrentRevision | None:
+    """Which revision consumers are pointed at, or `None` before the first one."""
+    if not repository.current_ref.exists():
+        return None
+    reference = read_reference(layout, repository.current_ref)
+    return CurrentRevision(
+        commit_sha=reference.commit_sha,
+        publication_generation=reference.publication_generation,
+        publication_id=reference.publication_id,
+    )
+
+
+def publish_catalog(layout: ArchiveLayout, catalog: RepositoriesCatalog) -> Path:
+    """Replace `published/catalog/repositories.json` atomically.
+
+    Derived state, so a failure to write it is not a failure of the publication
+    that preceded it — but it is still an atomic replacement, because a consumer
+    or a `status` run reading a half-written catalog would see an archive that
+    never existed.
+    """
+    path = layout.repositories_catalog
+    path.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
+    write_model(path, catalog, mode=PUBLISHED_FILE_MODE, code="HFSYN007")
+    fsync_directory(path.parent)
+    return path
