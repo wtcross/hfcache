@@ -217,7 +217,7 @@ interpretations, including both carried-in items.
 - [x] HOST-003 Hard NFSv4 mount (2026-07-24, host prep; automount active)
 - [x] SYNC-003 Sync run journal and `TX-07` reconciliation (2026-07-26, this commit — the Phase 6 carried-out item. `cli._run` opens the §7.6 journal inside `preflight.guarded` and records checkpoints 1-3: `run_started`, `preflight_passed`, and `journals_reconciled` — the third *after* `recovery.reconcile` has resolved every unfinished journal, under the lock the run already holds and before a single Hub request. `synchronize` takes the transaction and records 4-7, each after its own act is durable, and commits; a run whose exit is not `0` still commits, because the run transaction completed and which repositories failed is what the report carries. The reconciliation is real work, not a formality: a test leaves an abandoned staging directory from a previous run and the next `sync` quarantines it, names the recovery report in its own journal, and goes on to publish. A `needs_operator` journal stops the run at exit `20` with `hub.downloads == []` asserted — nothing fetched, nothing changed, and the run closes its own journal rather than leaving a second unfinished one behind. **`prune --apply` and `repair` reconcile too**, since `TX-07` says every mutating command does and leaving two of the three out would have recreated this same carried item; `verify` deliberately does not, because §7.9 requires it still answer when the machine has stopped. `plan_recovery` gained `exclude`, which is how a run reconciles everything except itself — `TX-01` opened its journal before it could act, so it is unfinished by construction throughout. Decision 55 records the crashed-run-journal resolution this needed. `recovery.py` and `sync.py` both at 100% branch coverage; `cli.py` back to its one pre-existing gap)
 - [x] SYNC-004 Discard a committed transaction's staging area (2026-07-26, this commit — decision 56, found by running `status` on the live archive after the first sync: two successful publications reported `unfinished_transactions: 2`. `discard_staging` had existed since `STO-006` with nothing but its own tests calling it, because `promote_staging` renames `tree/` away and the pending manifest is its *sibling*. It is now the act of publication's checkpoint 10 and repair's checkpoint 15, both recording `staging_absent`, and `recovery._complete_publication` performs it too. `pending_manifest_path` loses its suffix by decision 53's rule — it mattered most for repair, whose journal stays open through the seven-day grace and would have reported `HFTXN003` to every `recover` in that window. The `HFTXN003` test now deletes the *published tree* instead, which is a real journal-contradicts-filesystem state; the deleted staged manifest correctly quarantines the tree. `docs/architecture.md` §7.3 and §7.5 amended. Every affected module still at 100% branch coverage)
-- [ ] HOST-004 Install the locked application environment
+- [x] HOST-004 Install the locked application environment (2026-07-26, this commit — `scripts/install-release.sh` performs plan §21.4 rather than describing it, and is the mechanism §30's upgrade steps 3 and 6 name; rollback is the same tool with `--switch`, because a rollback that uses a different procedure than the install is a procedure nobody has tested. Release 0.1.0 is live at `/opt/hfcache/releases/0.1.0` with `current` switched by rename onto a staged symlink — `ln -sfn` unlinks first and leaves a window in which `current` does not exist, which is the one thing a running service must never see. Root-owned, `0755`/`0644`, so the account that runs the archive cannot modify the code that runs it. **The interpreter is the deployment's own:** CentOS Stream 10 ships 3.12 and EPEL reaches 3.13, so CPython 3.14.6 is a uv-managed build installed into `/opt/hfcache/python` and pinned there — a venv whose `home` pointed under `/home` would start on a workstation and fail under `ProtectHome=true` (§22.5), which is a failure that would not have appeared until `SYS-002`. uv is pinned to 0.11.32 and the script refuses a different one. `--no-python-downloads` during `uv sync`, so that step can only use the interpreter the previous step installed. **A defect the build found:** `uv sync` in a staging directory writes that path into `pyvenv.cfg` and every console-script shebang, so the venv is built in its *final* path and it is `switch_to`'s refusal of a release with no `.venv/bin/hfcache` that keeps an incomplete build from becoming live. `packaging/tmpfiles.d/hfcache.conf` provisions `/run/hfcache` for operator-run commands, since `/run` is a tmpfs and the service account cannot create a directory in it. Decision 57 records the `--config` readability defect this exposed)
 - [ ] SYS-001 Install and validate systemd target, services, timers
 - [ ] SYS-002 Apply and test systemd hardening
 - [ ] SEL-001 Validate all operations with SELinux enforcing
@@ -238,18 +238,57 @@ interpretations, including both carried-in items.
 
 ## Live rollout checkpoints (§29, writer-side)
 
-- [ ] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
-      `/etc/hfcache/config.toml` (§36.4 one-time authorization). `STO-000` built
-      the command; the authorization is spent here, after `HOST-004` installs a
-      release, so the layout is the one the finished application uses.
-      `archive init --inspect` is non-mutating and may be run against the live
-      mount at any time before that.
-- [ ] `hfcache doctor` clean on the live mount
-- [ ] Test repositories chosen and recorded below; `hfcache plan` reviewed
-- [ ] First manual sync published both test repositories
-- [ ] Second sync idempotent (skip)
-- [ ] `hfcache verify --full` clean; `hfcache status` clean
+- [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
+      `/etc/hfcache/config.toml` (§36.4 one-time authorization, **spent
+      2026-07-26**). `archive init --archive-root /srv/hfcache --archive-id
+      f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2 --confirm`, run as the service
+      identity from the installed release. `--inspect` first reported
+      `initializable: true`, `adopted_published: true`, no unknown entries; the
+      run created the fifteen remaining directories and `.hfcache-root`, and
+      adopted the pre-created `published/` per §6.2. **Never re-initialize.**
+- [x] `hfcache doctor` clean on the live mount (2026-07-26 — all 17 rows: 16
+      `pass`, `hub_identity` `skipped` because `hub.expected_account` is unset,
+      which §2 documents as a normal anonymous deployment. Effective writability
+      and all three §14.2 publication capabilities *proven* on the real dataset,
+      which under the Mapall export is the only way they can be (§35.3). Exit `0`,
+      and the probe area left empty)
+- [x] Test repositories chosen and recorded below; `hfcache plan` reviewed
+      (2026-07-26 — the same two SHAs and sizes recorded at `HUB-004`:
+      `71034c5d…` 10 files / 11.9 MiB and `850d349e…` 7 files / 201.3 KiB, all new)
+- [x] First manual sync published both test repositories (2026-07-26 — exit `0`,
+      both `published` at generation 1, 12 512 611 and 206 179 bytes downloaded;
+      one §7.6 run journal and two publication journals, all `committed` with
+      every documented checkpoint)
+- [x] Second sync idempotent (skip) (2026-07-26 — exit `0`, both `skipped`,
+      every total zero including `downloaded_bytes` and `hashed_bytes`)
+- [x] `hfcache verify --full` clean; `hfcache status` clean (2026-07-26 —
+      `verify --full` read 17 unique objects and 12 718 790 unique bytes, exactly
+      the sum of the two revisions, so each physical object was read once;
+      outcome `clean`, exit `0`. `status` exit `0`, both revisions `verified`,
+      `degraded: false`, no outstanding failures, `unfinished_transactions: 0`
+      and no findings — the last two only after `SYNC-004`, which this checkpoint
+      is what found)
 - [ ] `hfcache.target` enabled; sync timer active; verification timer installed but disabled
+
+**Observed exit codes (§11.2, §36.6 item 7).** Against this deployment,
+2026-07-26: `0` from `status`, `plan`, both syncs, `verify --full`, and
+`verify --revision` on a clean retained revision. `10` from an absent
+configuration, an unreadable one (`HFCFG001`, decision 57), a selector naming an
+unconfigured repository, `verify --revision` without a SHA, `verify --revision`
+naming a SHA the archive does not retain, and `prune` with neither mode. `20`
+with `HFMNT010` from **all four** mutating commands — `sync`, `verify --full`,
+`prune --apply`, `recover --apply` — while another process held the lock, which
+is §22.3's mutual exclusion demonstrated rather than assumed. `30` with
+`HFHUB004` from a run whose only configured repository does not exist upstream;
+its catalog rebuild marked the two real repositories unmanaged, and the next real
+sync restored them, which is what `FS-16` promises about derived state.
+
+`40` and `50` are deliberately **not** provoked here: both need published content
+or a retained revision to be damaged, and §36.5 forbids rewriting content on
+`/srv/hfcache` outside the application's own transactional contracts. They are
+covered by the suites instead — `-m live` flips a byte in a freshly published
+revision on a throwaway archive and asserts `40` with the manifest and reference
+unchanged, and the retention and repair suites assert `50`.
 
 ## Test repositories (decided 2026-07-26 at `HUB-004`, §36.5)
 

@@ -234,6 +234,8 @@ hfcache/
 ├── examples/
 │   └── config.toml
 ├── packaging/
+│   ├── tmpfiles.d/
+│   │   └── hfcache.conf
 │   └── systemd/
 │       ├── srv-hfcache.mount
 │       ├── srv-hfcache.automount
@@ -254,7 +256,8 @@ hfcache/
 │   ├── security.md
 │   └── truenas.md
 ├── scripts/
-│   └── check.sh
+│   ├── check.sh
+│   └── install-release.sh
 ├── src/
 │   └── hfcache/
 │       ├── __init__.py
@@ -1653,7 +1656,8 @@ These values do not block application implementation but must be set before prod
 - Static IP for `hfcachewriter.lab.cross.solutions`. — **Confirmed:** `192.168.10.90` (nmcli `manual`).
 - Consumer hosts or consumer VLAN. — **Open (operator).**
 - Local Xet cache capacity. — **Confirmed:** `/var/cache/hfcache/xet` on the root filesystem with ~65 GiB free; treat ~50 GiB as the working ceiling and surface peak usage in run reports.
-- Minimum archive free-space reserve. — **Provisional:** keep the §9 defaults (100 GiB / 10 %) until the dataset quota is sized from dry runs.
+- Minimum archive free-space reserve. — **Confirmed provisional:** the §9 defaults are installed (100 GiB / 10 %). On the 36 TiB dataset the percentage binds harder, giving a 3603.8 GiB effective reserve; revisit when the quota is sized from dry runs.
+- Archive UUID. — **Provisioned 2026-07-26 at `HOST-004`:** `f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2`, in `/etc/hfcache/config.toml` and in `/srv/hfcache/.hfcache-root`. `archive init` ran exactly once; never re-initialize (§36.4).
 - Confirmation that the selected 02:00 daily sync and quarterly verification calendars do not conflict with NAS maintenance. — **Open (operator).** Install both timers, but leave the verification timer disabled until confirmed (§36.4).
 - TrueNAS snapshot and replication retention. — **Open (operator);** proposal in §20.3.
 - Initial public model and dataset repository list. — **Decided policy:** two deliberately small public repositories (one model, one dataset), chosen at implementation time after confirming current Hub availability, recorded in `docs/progress.md` and `examples/config.toml`; the production list grows later per §29 step 12.

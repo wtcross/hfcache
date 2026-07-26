@@ -1,0 +1,269 @@
+#!/usr/bin/env bash
+#
+# Install a versioned hfcache release and switch to it atomically.
+#
+# This is plan §21.4 executed rather than described, and it is the mechanism plan
+# §30's upgrade step 3 (install into a separate release directory) and step 6
+# (atomically switch the current application symlink) refer to. Rollback is the
+# same tool with --switch, because a rollback that uses a different procedure
+# than the install is a procedure nobody has tested.
+#
+# Nothing here is invoked from systemd. `uv sync` runs at deployment time, so a
+# scheduled run never resolves dependencies, never writes to a release tree, and
+# never needs network access for anything but the Hub.
+#
+# Usage:
+#   sudo scripts/install-release.sh                 # build and switch
+#   sudo scripts/install-release.sh --no-switch     # stage only, leave `current`
+#   sudo scripts/install-release.sh --switch 0.1.0  # point `current` at a release
+#   scripts/install-release.sh --list               # what is installed, and what is live
+#
+set -euo pipefail
+
+PREFIX=${HFCACHE_PREFIX:-/opt/hfcache}
+SOURCE=${HFCACHE_SOURCE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
+
+# Pinned, because a deployment tool that silently accepts whatever resolver
+# happens to be installed is not a deployment tool (plan §21.4). Override
+# deliberately, in the environment, when the pin is being moved on purpose.
+REQUIRED_UV_VERSION=${HFCACHE_UV_VERSION:-0.11.32}
+
+# The interpreter the service runs. It must not come from a home directory: the
+# hardened unit sets ProtectHome=true (plan §22.5), so a venv whose `home` points
+# under /home starts on a workstation and fails as a service. CentOS Stream 10
+# ships 3.12 and EPEL reaches 3.13, so 3.14 is a uv-managed build installed into
+# a root-owned system location and pinned there.
+PYTHON_VERSION=$(cat "${SOURCE}/.python-version")
+export UV_PYTHON_INSTALL_DIR="${PREFIX}/python"
+
+# What a release tree contains. Enough to build the venv, deploy the units, and
+# read the documentation on the host — and nothing that only the repository needs.
+RELEASE_CONTENT=(
+  .python-version
+  LICENSE
+  README.md
+  docs
+  examples
+  packaging
+  pyproject.toml
+  src
+  uv.lock
+)
+
+DIRECTORY_MODE=0755
+FILE_MODE=0644
+
+step() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
+die() {
+  printf 'install-release: %s\n' "$*" >&2
+  exit 1
+}
+
+uv_binary() {
+  # Resolvable as the invoking user or as the operator who owns the toolchain;
+  # sudo strips PATH, and uv is a user install on this host (plan §35.1).
+  if [[ -n ${HFCACHE_UV:-} ]]; then
+    printf '%s\n' "${HFCACHE_UV}"
+    return
+  fi
+  local candidate
+  for candidate in "$(command -v uv 2> /dev/null || true)" \
+    /usr/local/bin/uv /usr/bin/uv "${SUDO_USER:+/home/${SUDO_USER}/.local/bin/uv}"; do
+    [[ -n ${candidate} && -x ${candidate} ]] && {
+      printf '%s\n' "${candidate}"
+      return
+    }
+  done
+  die 'uv is not on PATH; set HFCACHE_UV to its absolute path'
+}
+
+release_version() {
+  # From the source tree's own metadata, so the directory name and the version
+  # the CLI reports cannot disagree.
+  sed -n 's/^version = "\(.*\)"$/\1/p' "${SOURCE}/pyproject.toml" | head -1
+}
+
+switch_to() {
+  # Atomic by construction: a symlink is created beside `current` and renamed
+  # over it. `ln -sfn` unlinks first and leaves a window in which `current` does
+  # not exist, which is the one thing a running service must never see.
+  local version=$1 target="${PREFIX}/releases/$1"
+  [[ -d ${target} ]] || die "release ${version} is not installed under ${PREFIX}/releases"
+  [[ -x "${target}/.venv/bin/hfcache" ]] || die "release ${version} has no built environment"
+  local staged="${PREFIX}/.current.$$"
+  ln -s "releases/${version}" "${staged}"
+  mv -T "${staged}" "${PREFIX}/current"
+  printf 'current -> releases/%s\n' "${version}"
+}
+
+installed_releases() {
+  [[ -d "${PREFIX}/releases" ]] || return 0
+  find "${PREFIX}/releases" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V
+}
+
+smoke() {
+  # The release's own entry point, run from the release's own environment. A
+  # release that cannot report its version is not one to switch to.
+  local binary=$1
+  "${binary}" --help > /dev/null
+  "${binary}" version
+  "${binary}" --json version > /dev/null
+  if [[ -r /etc/hfcache/config.toml ]]; then
+    step 'hfcache config validate'
+    "${binary}" --config /etc/hfcache/config.toml config validate
+  else
+    printf 'no /etc/hfcache/config.toml yet; skipping config validate\n'
+  fi
+}
+
+MODE=install
+SWITCH_TARGET=
+for argument in "$@"; do
+  case "${argument}" in
+    --no-switch) MODE=stage ;;
+    --list) MODE=list ;;
+    --switch)
+      MODE=switch
+      SWITCH_TARGET=pending
+      ;;
+    -h | --help)
+      sed -n '3,20p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *)
+      [[ ${SWITCH_TARGET} == pending ]] || die "unknown argument: ${argument}"
+      SWITCH_TARGET=${argument}
+      ;;
+  esac
+done
+[[ ${SWITCH_TARGET} == pending ]] && die '--switch requires a version'
+
+if [[ ${MODE} == list ]]; then
+  printf 'prefix:  %s\n' "${PREFIX}"
+  printf 'current: %s\n' "$(readlink "${PREFIX}/current" 2> /dev/null || printf 'not set')"
+  printf 'releases:\n'
+  installed_releases | sed 's/^/  /'
+  exit 0
+fi
+
+[[ ${EUID} -eq 0 ]] || die "must run as root to write ${PREFIX}"
+
+if [[ ${MODE} == switch ]]; then
+  switch_to "${SWITCH_TARGET}"
+  exit 0
+fi
+
+VERSION=$(release_version)
+[[ -n ${VERSION} ]] || die "could not read the version from ${SOURCE}/pyproject.toml"
+RELEASE="${PREFIX}/releases/${VERSION}"
+UV=$(uv_binary)
+
+step "uv ${REQUIRED_UV_VERSION}"
+FOUND=$("${UV}" --version | awk '{print $2}')
+[[ ${FOUND} == "${REQUIRED_UV_VERSION}" ]] ||
+  die "uv ${FOUND} is installed but this release pins ${REQUIRED_UV_VERSION} (${UV})"
+printf '%s\n' "${UV}"
+
+step "CPython ${PYTHON_VERSION} under ${UV_PYTHON_INSTALL_DIR}"
+install -d -m "${DIRECTORY_MODE}" -o root -g root "${UV_PYTHON_INSTALL_DIR}"
+# Idempotent: uv reuses a matching interpreter already in the install directory
+# and downloads one only when there is none. The download is verified by uv
+# against the python-build-standalone release metadata.
+"${UV}" python install "${PYTHON_VERSION}"
+# `--managed-python --system` so the answer is the interpreter installed above
+# rather than whatever virtual environment the invoking directory happens to hold
+# — running this from the source checkout would otherwise resolve its own .venv.
+INTERPRETER=$("${UV}" python find --managed-python --system "${PYTHON_VERSION}")
+case "${INTERPRETER}" in
+  "${UV_PYTHON_INSTALL_DIR}"/*) : ;;
+  *) die "uv resolved ${INTERPRETER}, which is outside ${UV_PYTHON_INSTALL_DIR}" ;;
+esac
+printf '%s\n' "${INTERPRETER}"
+
+step "release tree ${RELEASE}"
+# The *sources* are staged and renamed in, so a copy interrupted half way never
+# becomes a release directory. The **environment is built in its final path**,
+# which is not a choice: a venv records absolute paths in `pyvenv.cfg` and in
+# every console-script shebang, so one built elsewhere and moved is a venv whose
+# interpreter does not exist. What guards a failed build instead is `switch_to`,
+# which refuses a release with no `.venv/bin/hfcache` — an incomplete release can
+# be left behind, but it can never become live.
+STAGING="${PREFIX}/releases/.${VERSION}.$$"
+RESTORE=
+cleanup() {
+  rm -rf "${STAGING}"
+  # A same-version rebuild moved the old tree aside. Put it back, so a failed
+  # build leaves the release that was there rather than nothing at all.
+  [[ -n ${RESTORE} && -d ${RESTORE} ]] && {
+    rm -rf "${RELEASE}"
+    mv -T "${RESTORE}" "${RELEASE}"
+  }
+  return 0
+}
+trap cleanup EXIT
+install -d -m "${DIRECTORY_MODE}" -o root -g root "${PREFIX}/releases" "${STAGING}"
+for item in "${RELEASE_CONTENT[@]}"; do
+  [[ -e "${SOURCE}/${item}" ]] || die "the source tree has no ${item}"
+  cp -R "${SOURCE}/${item}" "${STAGING}/"
+done
+
+if [[ -d ${RELEASE} ]]; then
+  # Reinstalling a version that is already installed. `current` is a symlink to
+  # the release *name*, so it dangles while this runs — which is why plan §30's
+  # upgrade stops `hfcache.target` and waits for active jobs before step 3.
+  if [[ $(readlink "${PREFIX}/current" 2> /dev/null) == "releases/${VERSION}" ]]; then
+    printf 'note: current points at %s and is being rebuilt in place;\n' "${VERSION}" >&2
+    printf '      hfcache.target should be stopped (plan §30 upgrade step 1)\n' >&2
+  fi
+  RESTORE="${RELEASE}.replaced.$$"
+  mv -T "${RELEASE}" "${RESTORE}"
+fi
+mv -T "${STAGING}" "${RELEASE}"
+STAGING=
+
+step 'uv sync --frozen --no-dev --no-editable'
+# `--no-editable` so the installed package is a built wheel rather than a path
+# reference: nothing at runtime reads `src/`, and the venv keeps working if the
+# release tree's sources are later made unreadable.
+# `--no-python-downloads` so this step can only use the interpreter pinned above.
+(
+  cd "${RELEASE}"
+  "${UV}" sync --frozen --no-dev --no-editable --no-python-downloads \
+    --python "${PYTHON_VERSION}"
+)
+
+step 'ownership and modes'
+# Root-owned and read-only to the service identity (plan §21.4): the account that
+# runs the archive cannot modify the code that runs it, so a compromise of the
+# service cannot become a persistent change to the application.
+chown -R root:root "${RELEASE}"
+chmod -R u=rwX,go=rX "${RELEASE}"
+find "${RELEASE}" -type d -exec chmod "${DIRECTORY_MODE}" {} +
+find "${RELEASE}" -type f ! -perm -u=x -exec chmod "${FILE_MODE}" {} +
+
+step 'smoke checks'
+smoke "${RELEASE}/.venv/bin/hfcache"
+
+# Everything the new release needed is durable; the old tree is no longer a
+# fallback and the trap must not restore it.
+[[ -n ${RESTORE} ]] && rm -rf "${RESTORE}"
+RESTORE=
+trap - EXIT
+
+if [[ -e "${PREFIX}/selinux-relabel" || -x /usr/sbin/restorecon ]]; then
+  step 'restorecon'
+  /usr/sbin/restorecon -R "${PREFIX}" || printf 'restorecon reported a problem\n' >&2
+fi
+
+if [[ ${MODE} == stage ]]; then
+  step 'staged'
+  printf 'release %s is installed; `current` is unchanged\n' "${VERSION}"
+  exit 0
+fi
+
+step 'switch'
+switch_to "${VERSION}"
+
+printf '\n\033[1;32mrelease %s is live at %s/current\033[0m\n' "${VERSION}" "${PREFIX}"
+printf 'retained releases:\n'
+installed_releases | sed 's/^/  /'
