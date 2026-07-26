@@ -14,20 +14,32 @@ the Hub cache lays one out: a `blobs/` directory of real content and a
 and symlink cases testable at all.
 """
 
+import hashlib
 import os
 from typing import TYPE_CHECKING
 
 import pytest
 
+from hfcache.errors import ExitCode, SynchronizationError
 from hfcache.hub import TreeEntry
-from hfcache.identity import RepositoryIdentity
-from hfcache.sync import completeness_problems, snapshot_paths
+from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity
+from hfcache.sync import (
+    KnownDigest,
+    ObjectIdentity,
+    completeness_problems,
+    hash_snapshot,
+    published_digests,
+    snapshot_paths,
+)
+from tests.fixtures import examples
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 MODEL = RepositoryIdentity.of("model", "organization/model-name")
 SHA = "0123456789abcdef0123456789abcdef01234567"
+OTHER_SHA = "89abcdef0123456789abcdef0123456789abcdef"
+PUBLICATION = "0f1e2d3c4b5a69788796a5b4c3d2e1f0"
 
 
 @pytest.fixture
@@ -253,3 +265,205 @@ def test_every_problem_carries_the_repository_it_belongs_to(cache, snapshot):
 
     assert problems
     assert all(problem.repository == MODEL.selector for problem in problems)
+
+
+# --------------------------------------------------------------------------- #
+# Hashing new content (plan §13.2 step 9, §16.1)
+# --------------------------------------------------------------------------- #
+
+PAYLOAD = b"the bytes of one repository file"
+OTHER = b"different bytes entirely!"
+PAYLOAD_DIGEST = hashlib.sha256(PAYLOAD).hexdigest()
+OTHER_DIGEST = hashlib.sha256(OTHER).hexdigest()
+
+
+def hashed(snapshot: Path, tree, **keywords):
+    return hash_snapshot(snapshot, tree, identity=MODEL, **keywords)
+
+
+def test_every_object_is_read_and_hashed(cache, snapshot):
+    landed(cache, snapshot, "config.json", PAYLOAD)
+    landed(cache, snapshot, "model.bin", OTHER)
+    tree = [
+        TreeEntry(path="config.json", size=len(PAYLOAD)),
+        TreeEntry(path="model.bin", size=len(OTHER)),
+    ]
+
+    result = hashed(snapshot, tree)
+
+    assert [entry.sha256 for entry in result.files] == [PAYLOAD_DIGEST, OTHER_DIGEST]
+    assert result.hashed_objects == 2
+    assert result.hashed_bytes == len(PAYLOAD) + len(OTHER)
+    assert result.reused_digests == 0
+
+
+def test_entries_come_back_sorted_by_path(cache, snapshot):
+    landed(cache, snapshot, "z.json", PAYLOAD)
+    landed(cache, snapshot, "a.bin", OTHER)
+    tree = [TreeEntry(path="z.json", size=len(PAYLOAD)), TreeEntry(path="a.bin", size=len(OTHER))]
+
+    result = hashed(snapshot, tree)
+
+    assert [entry.path for entry in result.files] == ["a.bin", "z.json"]
+
+
+def test_an_upstream_digest_is_never_substituted_for_reading(cache, snapshot):
+    # `AD-18`: the manifest records what this archive read, not what it was told.
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+
+    result = hashed(snapshot, [TreeEntry(path="model.bin", size=len(PAYLOAD))])
+
+    assert result.files[0].sha256 == PAYLOAD_DIGEST
+    assert result.files[0].reused_from is None
+
+
+def test_two_paths_sharing_one_inode_are_read_once(cache, snapshot):
+    # A unique *physical object*, which is what §16.1 counts. Both paths still
+    # become manifest entries; what was avoided is the second read.
+    target = blob(cache, "shared", PAYLOAD)
+    for name in ("first.bin", "second.bin"):
+        (snapshot / name).symlink_to(target)
+    tree = [TreeEntry(path=name, size=len(PAYLOAD)) for name in ("first.bin", "second.bin")]
+
+    result = hashed(snapshot, tree)
+
+    assert len(result.files) == 2
+    assert {entry.sha256 for entry in result.files} == {PAYLOAD_DIGEST}
+    assert result.hashed_objects == 1
+    assert result.hashed_bytes == len(PAYLOAD)
+    # Both were read during this run, so neither is a cross-run reuse.
+    assert result.reused_digests == 0
+    assert result.total_bytes == 2 * len(PAYLOAD)
+
+
+def test_a_digest_is_reused_for_a_proven_identical_inode(cache, snapshot):
+    # The only reuse §16.1 permits: same physical inode, same size, and a digest
+    # from a retained publication.
+    source = landed(cache, snapshot, "model.bin", PAYLOAD)
+    known = {
+        ObjectIdentity.of(source): KnownDigest(
+            commit_sha=CommitSha(OTHER_SHA),
+            publication_id=PublicationId(PUBLICATION),
+            sha256="a" * 64,
+            size=len(PAYLOAD),
+        )
+    }
+
+    result = hashed(snapshot, [TreeEntry(path="model.bin", size=len(PAYLOAD))], known=known)
+
+    assert result.files[0].sha256 == "a" * 64
+    assert result.files[0].reused_from is not None
+    assert result.files[0].reused_from.commit_sha == OTHER_SHA
+    assert result.hashed_objects == 0
+    assert result.hashed_bytes == 0
+    assert result.reused_digests == 1
+
+
+def test_a_size_that_no_longer_matches_refuses_the_reuse(cache, snapshot):
+    # An inode number is reused by the filesystem after deletion, so the inode
+    # alone is not proof. A changed size is the cheapest evidence it happened.
+    source = landed(cache, snapshot, "model.bin", PAYLOAD)
+    known = {
+        ObjectIdentity.of(source): KnownDigest(
+            commit_sha=CommitSha(OTHER_SHA),
+            publication_id=PublicationId(PUBLICATION),
+            sha256="a" * 64,
+            size=len(PAYLOAD) + 1,
+        )
+    }
+
+    result = hashed(snapshot, [TreeEntry(path="model.bin", size=len(PAYLOAD))], known=known)
+
+    assert result.files[0].sha256 == PAYLOAD_DIGEST
+    assert result.files[0].reused_from is None
+    assert result.hashed_objects == 1
+
+
+def test_a_different_inode_is_never_reused_however_similar(cache, snapshot):
+    # Same bytes, same size, different object: it gets read.
+    landed(cache, snapshot, "model.bin", PAYLOAD)
+    elsewhere = blob(cache, "unrelated", PAYLOAD)
+    known = {
+        ObjectIdentity.of(elsewhere): KnownDigest(
+            commit_sha=CommitSha(OTHER_SHA),
+            publication_id=PublicationId(PUBLICATION),
+            sha256="a" * 64,
+            size=len(PAYLOAD),
+        )
+    }
+
+    result = hashed(snapshot, [TreeEntry(path="model.bin", size=len(PAYLOAD))], known=known)
+
+    assert result.files[0].sha256 == PAYLOAD_DIGEST
+    assert result.hashed_objects == 1
+
+
+def test_an_empty_snapshot_hashes_nothing(snapshot):
+    result = hashed(snapshot, [])
+
+    assert result.files == ()
+    assert (result.hashed_objects, result.hashed_bytes, result.total_bytes) == (0, 0, 0)
+
+
+def test_an_object_that_vanished_after_the_completeness_check_is_hfsyn009(cache, snapshot):
+    result = hash_snapshot
+    tree = [TreeEntry(path="model.bin", size=len(PAYLOAD))]
+
+    with pytest.raises(SynchronizationError) as caught:
+        result(snapshot, tree, identity=MODEL)
+
+    assert codes(caught.value.problems) == ["HFSYN009"]
+    assert caught.value.exit_code == ExitCode.SYNC
+    assert caught.value.problems[0].repository == MODEL.selector
+
+
+def test_an_unreadable_object_is_hfsyn009_not_an_integrity_failure(cache, snapshot):
+    # A cache object that cannot be read means the sync failed, not that the
+    # archive is corrupt — nothing has been published yet.
+    source = landed(cache, snapshot, "model.bin", PAYLOAD)
+    source.resolve().chmod(0o000)
+    try:
+        with pytest.raises(SynchronizationError) as caught:
+            hashed(snapshot, [TreeEntry(path="model.bin", size=len(PAYLOAD))])
+    finally:
+        source.resolve().chmod(0o600)
+
+    assert codes(caught.value.problems) == ["HFSYN009"]
+    assert caught.value.exit_code == ExitCode.SYNC
+
+
+# --------------------------------------------------------------------------- #
+# Indexing a retained publication's digests
+# --------------------------------------------------------------------------- #
+
+
+def test_a_published_tree_is_indexed_by_the_inode_each_object_occupies_now(tmp_path):
+    # The manifest supplies the digest and the filesystem supplies the identity;
+    # neither alone would let §16.1's reuse rule be checked.
+    manifest = examples.manifest()
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    files = {}
+    for entry in manifest.files:
+        path = tree / entry.path
+        path.write_bytes(b"x" * entry.size if entry.size < 100 else b"")
+        files[entry.path] = path
+
+    index = published_digests(tree, manifest)
+
+    for entry in manifest.files:
+        known = index[ObjectIdentity.of(files[entry.path])]
+        assert known.sha256 == entry.sha256
+        assert known.size == entry.size
+        assert known.commit_sha == manifest.commit_sha
+        assert known.publication_id == manifest.publication_id
+
+
+def test_a_manifest_path_the_tree_no_longer_holds_is_skipped(tmp_path):
+    # A missing published file is real corruption, but it is `verify`'s finding
+    # to make; here it only means there is no proven inode to reuse from.
+    manifest = examples.manifest()
+    tree = tmp_path / "tree"
+    tree.mkdir()
+
+    assert published_digests(tree, manifest) == {}

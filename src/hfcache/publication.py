@@ -266,7 +266,7 @@ def _link(source: Path, destination: Path) -> FileDigest:
         raise SynchronizationError.single(
             message, code="HFSYN005", location=str(destination)
         ) from exc
-    return sha256_file(destination, code="HFSYN005")
+    return sha256_file(destination, error=SynchronizationError, code="HFSYN005")
 
 
 def _copy(source: Path, destination: Path) -> FileDigest:
@@ -278,7 +278,7 @@ def _copy(source: Path, destination: Path) -> FileDigest:
     hardlinks are unavailable — often a different storage topology — and a copy
     that silently lost bytes would be published as though it were the revision.
     """
-    expected = sha256_file(source, code="HFSYN005")
+    expected = sha256_file(source, error=SynchronizationError, code="HFSYN005")
     temporary = temporary_sibling(destination)
     try:
         # `copyfile` follows the source and writes a plain regular file, so a
@@ -295,7 +295,7 @@ def _copy(source: Path, destination: Path) -> FileDigest:
         ) from exc
     fsync_directory(destination.parent)
 
-    landed = sha256_file(destination, code="HFSYN005")
+    landed = sha256_file(destination, error=SynchronizationError, code="HFSYN005")
     if landed != expected:
         message = (
             f"the copy of {source} at {destination} is {landed.size} bytes with digest "

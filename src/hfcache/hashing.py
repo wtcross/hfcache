@@ -14,7 +14,7 @@ import hashlib
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final, final
 
-from hfcache.errors import IntegrityError
+from hfcache.errors import HfcacheError, IntegrityError
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -43,13 +43,26 @@ class FileDigest:
     size: int
 
 
-def sha256_file(path: Path, *, code: str = "HFVER006") -> FileDigest:
+def sha256_file(
+    path: Path,
+    *,
+    error: type[HfcacheError] = IntegrityError,
+    code: str = "HFVER006",
+) -> FileDigest:
     """Hash one file, streaming it.
 
-    `code` is the caller's because an unreadable object means different things
-    at different times: `HFVER006` when `verify` is reading the archive, and a
+    `code` is the caller's because an unreadable object means different things at
+    different times: `HFVER006` when `verify` is reading the archive, and a
     synchronization code when a run is ingesting. It defaults to the verification
     reading, which is the common one.
+
+    `error` travels with it, following decision 19. The exit an error carries
+    comes from its *class*, while the classification `docs/cli.md` §5 publishes
+    comes from the code's *family*, so a call that paired `IntegrityError` with
+    an `HFSYN` code would exit `40` for a condition the taxonomy calls `30` —
+    telling an operator the archive is corrupt when a download failed. Passing
+    both keeps the two from disagreeing, and `tests/unit/test_hashing.py` asserts
+    that they agree for every call site.
     """
     digest = hashlib.sha256()
     size = 0
@@ -60,5 +73,5 @@ def sha256_file(path: Path, *, code: str = "HFVER006") -> FileDigest:
                 size += len(chunk)
     except OSError as exc:
         message = f"{path} could not be read for hashing: {exc.strerror}"
-        raise IntegrityError.single(message, code=code, location=str(path)) from exc
+        raise error.single(message, code=code, location=str(path)) from exc
     return FileDigest(digest=digest.hexdigest(), size=size)

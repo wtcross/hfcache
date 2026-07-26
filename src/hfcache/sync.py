@@ -15,20 +15,33 @@ that actually landed (`AD-18`). The two are compared here precisely so that a
 disagreement stops the revision rather than being published as fact.
 """
 
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Self, final
 
-from hfcache.errors import Problem
+from hfcache.errors import Problem, SynchronizationError
+from hfcache.hashing import sha256_file
+from hfcache.identity import CommitSha, PublicationId
 from hfcache.paths import find_path_collisions, parse_repository_relative
 from hfcache.publication import source_problems
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
     from pathlib import Path
 
     from hfcache.hub import TreeEntry
     from hfcache.identity import RepositoryIdentity
+    from hfcache.manifests import RevisionManifest
 
-__all__ = ["completeness_problems", "snapshot_paths"]
+__all__ = [
+    "HashedFile",
+    "HashedSnapshot",
+    "KnownDigest",
+    "ObjectIdentity",
+    "completeness_problems",
+    "hash_snapshot",
+    "published_digests",
+    "snapshot_paths",
+]
 
 
 def snapshot_paths(snapshot: Path) -> tuple[str, ...]:
@@ -192,3 +205,186 @@ def _content_problems(
                 Problem(code="HFSYN003", message=message, location=path, repository=where)
             )
     return problems
+
+
+# --------------------------------------------------------------------------- #
+# Hashing new content (plan §13.2 step 9, §16.1)
+# --------------------------------------------------------------------------- #
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class ObjectIdentity:
+    """Which physical object a path leads to, on this filesystem, right now.
+
+    `(device, inode)` and nothing else. Plan §16.1 is explicit that a cache path,
+    a prior-run inode number, an mtime, a Git SHA-1, or an opaque Xet identifier
+    is *insufficient* to prove two files are the same bytes, and the reason is
+    that every one of them can be equal for objects that differ. An inode pair
+    read from the filesystem during this run is the one identity the kernel is
+    answering for at the moment it is asked.
+    """
+
+    device: int
+    inode: int
+
+    @classmethod
+    def of(cls, path: Path) -> Self:
+        """Read one object's identity, following the cache's symlink to it."""
+        info = path.resolve().stat()
+        return cls(device=info.st_dev, inode=info.st_ino)
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class KnownDigest:
+    """A digest this archive already computed, and the publication it belongs to."""
+
+    commit_sha: CommitSha
+    publication_id: PublicationId
+    sha256: str
+    size: int
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class HashedFile:
+    """One repository path, with the digest that will go into its manifest.
+
+    `reused_from` is the retained publication whose inode this object shares.
+    `None` means the bytes were read during this run, which is the case the
+    manifest records as `hashed = true`.
+    """
+
+    path: str
+    sha256: str
+    size: int
+    reused_from: KnownDigest | None = None
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class HashedSnapshot:
+    """What ingestion verification read, ready for a manifest.
+
+    `files` has one entry per repository path; `hashed_objects` and
+    `hashed_bytes` count *physical objects*, so two paths hardlinked to one blob
+    contribute one object and one file's worth of bytes while still producing two
+    manifest entries. That distinction is what `docs/schemas.md` §3.4 means by
+    hashed objects, and it is also why a large repository of deduplicated
+    content is cheap to re-ingest.
+    """
+
+    files: tuple[HashedFile, ...]
+    hashed_bytes: int
+    hashed_objects: int
+
+    @property
+    def reused_digests(self) -> int:
+        """Entries whose digest came from a retained publication, not a read."""
+        return sum(1 for entry in self.files if entry.reused_from is not None)
+
+    @property
+    def total_bytes(self) -> int:
+        """Logical size of the revision: every path, whether or not shared."""
+        return sum(entry.size for entry in self.files)
+
+
+def published_digests(tree: Path, manifest: RevisionManifest) -> dict[ObjectIdentity, KnownDigest]:
+    """Index one retained publication's objects by the inode they occupy now.
+
+    This is what makes plan §16.1's reuse rule checkable rather than aspirational.
+    The manifest supplies the digest — a value this archive computed and has
+    since verified — and the filesystem supplies the identity, read at the moment
+    the index is built. Neither alone would do: a manifest cannot say which inode
+    its bytes live on today, and an inode cannot say what it hashes to.
+
+    A path the manifest lists but the tree no longer holds is skipped rather than
+    reported. A missing published file is real corruption, but it is `verify`'s
+    finding to make and act on (`AD-13`); all it means here is that there is no
+    proven inode to reuse a digest from, so the object gets hashed.
+    """
+    index: dict[ObjectIdentity, KnownDigest] = {}
+    for entry in manifest.files:
+        source = tree / entry.path
+        try:
+            identity = ObjectIdentity.of(source)
+        except OSError:
+            continue
+        index[identity] = KnownDigest(
+            commit_sha=CommitSha(manifest.commit_sha),
+            publication_id=PublicationId(manifest.publication_id),
+            sha256=entry.sha256,
+            size=entry.size,
+        )
+    return index
+
+
+def hash_snapshot(
+    snapshot: Path,
+    tree: Sequence[TreeEntry],
+    *,
+    identity: RepositoryIdentity,
+    known: Mapping[ObjectIdentity, KnownDigest] | None = None,
+) -> HashedSnapshot:
+    """Read every newly introduced unique object once (plan §13.2 step 9).
+
+    Two kinds of reuse, and the difference between them is the whole of §16.1.
+
+    *Within this run*, two repository paths that resolve to one inode are hashed
+    once. Both manifest entries still record `hashed = true`, because the bytes
+    genuinely were read during this run — what was avoided is a second read of
+    the same object, not a second verification.
+
+    *Across runs*, a digest from a retained publication is reused only when the
+    object is proven to be the same inode **and** the same size. Both conditions,
+    because an inode number is reused by the filesystem after deletion and a size
+    that no longer matches is the cheapest possible evidence that it has been.
+    Such an entry records `hashed = false` and names the publication it came
+    from, so a manifest never contains a digest whose origin cannot be traced
+    back to bytes this archive read.
+
+    Everything else is hashed. An upstream digest is never a substitute
+    (`AD-18`), and no path is exempt for being large.
+    """
+    known = known or {}
+    hashed: dict[ObjectIdentity, str] = {}
+    files: list[HashedFile] = []
+    hashed_bytes = 0
+
+    for entry in sorted(tree, key=lambda item: item.path):
+        source = snapshot / entry.path
+        try:
+            object_identity = ObjectIdentity.of(source)
+            size = source.resolve().stat().st_size
+        except OSError as exc:
+            message = (
+                f"{entry.path} could not be examined before hashing ({exc.strerror}); the "
+                f"completeness check passed, so the object was there and is not now"
+            )
+            raise SynchronizationError.single(
+                message, code="HFSYN009", location=entry.path, repository=identity.selector
+            ) from exc
+
+        if (digest := hashed.get(object_identity)) is not None:
+            files.append(HashedFile(path=entry.path, sha256=digest, size=size))
+            continue
+
+        candidate = known.get(object_identity)
+        if candidate is not None and candidate.size == size:
+            files.append(
+                HashedFile(
+                    path=entry.path,
+                    sha256=candidate.sha256,
+                    size=size,
+                    reused_from=candidate,
+                )
+            )
+            continue
+
+        read = sha256_file(source, error=SynchronizationError, code="HFSYN009")
+        hashed[object_identity] = read.digest
+        hashed_bytes += read.size
+        files.append(HashedFile(path=entry.path, sha256=read.digest, size=read.size))
+
+    return HashedSnapshot(files=tuple(files), hashed_bytes=hashed_bytes, hashed_objects=len(hashed))

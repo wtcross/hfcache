@@ -93,7 +93,7 @@ New modules beyond the plan's §7 list, each with a recorded decision:
 - [x] HUB-004 Repository tree and dry-run size (2026-07-26, this commit — `HubClient.tree` lists the revision recursively against the *resolved SHA*, draining the generator inside the `try` because `list_repo_tree` makes its request during iteration; a file entry with no path is `HFHUB008`, since the listing is the exact path set every later step joins onto a filesystem path. `HubClient.estimate` is plan §13.2 step 3's dry run, against the same private cache a real download writes to and with no allow/ignore filters — and it creates nothing, not even the cache directory, which is proven live so `plan` is safe against an uninitialized archive. `publication.projected_publication_bytes` states the `AD-11` cost model once, so the estimate an operator reads and the reserve a sync will enforce cannot disagree. `plan` now reports `file_count`, `logical_bytes`, `estimated_new_bytes`, `projected_publication_bytes`, and `publication_mode`; a failure at any of the three Hub reads leaves the fields below it `null` rather than guessed. `hub.py` and `publication.py` at 100% branch coverage; `tests/system/test_live_hub.py` proves the tree and the dry run against the real Hub, including that the two agree about the revision's size. **Still to come at `HUB-009`:** `plan`'s retained/current state, which needs the references that package writes)
 - [x] HUB-005 Complete `snapshot_download` (2026-07-26, this commit — `HubClient.download` performs plan §13.2 step 5 with every argument plan §12 item 4 requires be explicit: repository id and type, the resolved full SHA rather than the reference that produced it, the cache path, the configured worker count, and the token; no allow or ignore filters exist as arguments, because there is no supported way to archive part of a repository. Resumption is the library's — the canonical download store is the native Hub cache on NFS (`AD-09`), so an interrupted run costs the bytes it had not yet fetched. The `HubApi` protocol is now overloaded on `dry_run` exactly as the library is, so `estimate` and `download` are each typed for the answer they get. `_snapshot_path` refuses a returned path that is missing, unresolvable, outside the cache root, or not a directory — all `HFHUB009`, because to an operator they mean one thing: no usable snapshot. Containment is proven rather than assumed even though the value came from a library and not from a repository (`FS-15`). 100% branch coverage; `tests/system/test_live_hub.py` downloads both test repositories in full and asserts every tree path landed at its stated size, then proves a second dry run reports zero new bytes — plan §26.3's "download every file" and "no unnecessary download" at the adapter level)
 - [x] HUB-006 Local-only completeness verification (2026-07-26, this commit — two independent checks, because either alone is insufficient. `HubClient.verify_local` is plan §12 item 5: the same call the download made with `local_files_only=True`, so the library assembles the revision from the cache with the network taken away and reports `HFSYN001` when it cannot. That check is not one this application could write for itself without doing what plan §12 item 7 forbids — parsing the cache's private layout. `src/hfcache/sync.py` (plan §7, no deviation) is the other half: `completeness_problems` compares what landed against the Hub tree independently, reporting missing *and* extra paths as `HFSYN002`, size disagreements as `HFSYN003`, and unsafe sources as `HFSYN004` through the same `source_problems` publication itself uses (`FS-15`). Upstream metadata is treated as a claim and local bytes as the evidence: a size mismatch stops the revision without deciding which side is wrong, since the manifest records what was read (`AD-18`). Path grammar and `T-02` collision folding run here too, so a name that could escape or that would merge with another on a consumer filesystem is refused before it is joined onto anything. **A defect the tests found:** `Path.exists()` and `Path.is_dir()` follow symlinks, so a dangling link in the snapshot looked absent to one check and present to the other and passed completeness with nothing behind it — both now use `follow_symlinks=False`, and the case is pinned by its own test. `hub.py` and `sync.py` at 100% branch coverage; the live suite proves both checks against real downloads of both test repositories, that the local check works with `HF_HUB_OFFLINE=1`, and that deleting one blob fails it)
-- [ ] HUB-007 Hash new unique content
+- [x] HUB-007 Hash new unique content (2026-07-26, this commit — `sync.hash_snapshot` reads every newly introduced unique *physical object* once, streaming in bounded chunks through `hashing.sha256_file`. `ObjectIdentity` is `(st_dev, st_ino)` read during this run and nothing else, because plan §16.1 rules out every other candidate — cache path, prior-run inode, mtime, Git SHA-1, Xet identifier — for the same reason: each can be equal for objects that differ. Two kinds of reuse and the difference between them is the whole of §16.1: *within* a run two paths on one inode are hashed once and both still record `hashed = true`, since the bytes were read; *across* runs a digest is reused only when the inode **and** the size both match a retained publication, and that entry records `hashed = false` naming its source, so no manifest can hold a digest whose origin does not trace back to bytes this archive read. `sync.published_digests` builds that index — manifest for the digest, filesystem for the identity, neither sufficient alone. 100% branch coverage. Two corrections landed with it, decisions 46 and 47)
 - [ ] HUB-008 Durable manifest generation
 - [ ] HUB-009 Publish revision instance; atomic per-SHA and current refs
 
@@ -859,3 +859,42 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     path grammar in `hfcache.paths`, deliberately: the grammar answers "is this
     name safe to join", and this answers "did the response contain a name at
     all", which is a question about the library's shape and belongs at the seam.
+
+46. **A hashing failure's error class must match its code's family** (2026-07-26,
+    HUB-007). `sha256_file` took the caller's `code` and always raised
+    `IntegrityError`, so `publication.stage_file`'s three calls — which correctly
+    pass `HFSYN005` — would have exited `40` for a condition `docs/cli.md` §5.3
+    classifies as `30`. Nothing had surfaced it yet, because publication is not
+    reachable from a command until `HUB-009`; it would have arrived as an
+    operator being told the archive is corrupt when a download failed.
+
+    Two ways an exit is determined coexist in this codebase: `HfcacheError`
+    subclasses carry one as a class attribute, and `taxonomy.classify` derives
+    one from the code's family. They are not redundant — the first is what a
+    raise site produces and the second is what the published tables promise — so
+    they have to agree, and nothing was making them. `sha256_file` now takes
+    `error` alongside `code`, which is exactly the shape decision 19 settled for
+    reading a durable artifact, and `tests/unit/test_hashing.py` asserts
+    `caught.value.exit_code == classify(code)` for every pairing used in `src/`.
+
+    A single `error_for(code)` factory was considered and rejected: it would let
+    a raise site name a code from a family it has no business raising and get a
+    plausible-looking error back. Passing both makes the pairing visible at the
+    call site, which is where a mistake is legible.
+
+47. **`HFSYN009` added for content that cannot be read while hashing**
+    (2026-07-26, HUB-007). Plan §13.2 step 9 hashes newly introduced objects and
+    §16.1 requires a hash failure to prevent publication, but the taxonomy had no
+    code for the failure itself. The nearby ones are all wrong: `HFSYN001` is the
+    local-only completeness check specifically, `HFSYN003` is a size mismatch,
+    `HFSYN004` is an unsafe path, `HFSYN005` is staging construction — which has
+    not started yet at step 9.
+
+    `HFVER006` ("object could not be read") describes the condition exactly and
+    is still wrong, because it exits `40`. Nothing has been published when step 9
+    runs, so no archive content is wrong; the run failed and the next one will
+    retry. That is a `30`, which is what put the code in the `HFSYN` family.
+
+    Added to `docs/cli.md` §5.3 in this commit. `tests/unit/test_taxonomy.py`
+    reads that table, so the code is covered in both directions the moment it is
+    published.

@@ -498,6 +498,7 @@ condition; a retired condition retires its code.
 | `HFSYN006` | Publication rename failed |
 | `HFSYN007` | Reference publication failed |
 | `HFSYN008` | Manifest write failed |
+| `HFSYN009` | Newly introduced content could not be read for hashing |
 
 `HFHUB004`, `HFHUB005`, and `HFHUB001` mark the repository's `upstream_state` and
 preserve every local revision. They never trigger a prune (`AD-06`).
