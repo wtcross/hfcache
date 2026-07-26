@@ -290,7 +290,7 @@ Exactly one mode option is required; two is `HFARG002`.
 | `--new` | Content introduced by one run. Defaults to the most recent run report in `runs/`; `--run-id` selects another |
 | `--full` | Every retained revision reachable from `refs/revisions/<sha>.json`. The quarterly job |
 | `--revision` | One retained revision |
-| `--estimate` | No hashing. Reports unique bytes to read, measured throughput when known, estimated duration, repository and revision counts, and any detectable overlap with storage maintenance |
+| `--estimate` | No hashing. Reports unique bytes to read, measured throughput when known, estimated duration, repository and revision counts, and any detectable overlap with storage maintenance. Takes no lock and always exits `0`: nothing was read, so nothing can have been found wrong |
 
 `--full` acquires the verification lock, which is mutually exclusive with sync,
 prune, and repair. It runs with Hub networking disabled.
@@ -428,7 +428,7 @@ Serialization follows the same deterministic rules as durable files
 | `sync` | The `RunReport` body (`docs/schemas.md` §6) |
 | `status` | Archive health block plus per-repository state |
 | `list` | `repositories[]`, with `revisions[]` when `--revisions` is given |
-| `verify` | The `VerificationReport` body (`docs/schemas.md` §7) |
+| `verify` | The `VerificationReport` body (`docs/schemas.md` §7). For `--estimate`, which produces no report because it verifies nothing: `mode`, `repositories`, `revisions`, `unique_objects`, `unique_bytes`, `unreadable_objects`, `measured_throughput_bytes_per_second`, `estimated_duration_seconds`, `storage_maintenance` |
 | `prune` | The `PrunePlan`, plus applied results for `--apply` |
 | `recover` | `findings[]`, `plan[]`, and applied results for `--apply` |
 | `repair` | Transaction ID, old and new publication IDs, verification result, grace expiry |

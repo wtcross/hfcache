@@ -47,7 +47,11 @@ from hfcache.hashing import sha256_file
 from hfcache.identity import COMMIT_SHA_LENGTH, CommitSha, PublicationId, RepositoryIdentity
 from hfcache.manifests import FileEntry, RevisionManifest
 from hfcache.paths import RepositoryLayout, parse_repository_relative, resolve_within
-from hfcache.publication import published_repositories, read_reference
+from hfcache.publication import (
+    published_repositories,
+    read_reference,
+    read_verification_catalog,
+)
 from hfcache.reporting import Finding, VerificationReport, VerificationScope
 from hfcache.storage import read_model
 from hfcache.sync import ObjectIdentity
@@ -64,11 +68,14 @@ if TYPE_CHECKING:
 __all__ = [
     "FINDING_CODES",
     "INTRODUCING_STATUSES",
+    "UNDETECTABLE",
     "ReadSet",
     "Resolved",
+    "VerificationEstimate",
     "VerificationOutcome",
     "VerificationTarget",
     "build_report",
+    "estimate_verification",
     "require_retained",
     "resolve_archive",
     "resolve_repository",
@@ -751,6 +758,124 @@ def verify_targets(
         objects_read=reads.objects_read,
         started_at=started_at,
         completed_at=now or datetime.now(UTC),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Estimation (plan §16.4)
+# --------------------------------------------------------------------------- #
+
+UNDETECTABLE: Final = "undetectable"
+"""What the writer can say about NAS maintenance windows (decision 50)."""
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class VerificationEstimate:
+    """What a full verification would cost, measured without reading anything.
+
+    Plan §16.4's field set. `measured_throughput_bytes_per_second` is `None`
+    until a full verification has actually run, and the estimated duration is
+    `None` with it — a number derived from a rate nobody measured would be a
+    guess wearing a decimal point, and the operator scheduling a quarterly job
+    against a NAS maintenance window is exactly the person who should not be
+    given one.
+    """
+
+    repositories: int
+    revisions: int
+    unique_objects: int
+    unique_bytes: int
+    unreadable_objects: int
+    measured_throughput_bytes_per_second: float | None
+
+    @property
+    def estimated_duration_seconds(self) -> float | None:
+        """How long the read would take at the last measured rate, if there is one."""
+        if not self.measured_throughput_bytes_per_second:
+            return None
+        return self.unique_bytes / self.measured_throughput_bytes_per_second
+
+    def as_payload(self) -> dict[str, object]:
+        """Render for `verify --estimate`'s `data` payload (`docs/cli.md` §4.1)."""
+        return {
+            "estimated_duration_seconds": self.estimated_duration_seconds,
+            "measured_throughput_bytes_per_second": self.measured_throughput_bytes_per_second,
+            "mode": "estimate",
+            "repositories": self.repositories,
+            "revisions": self.revisions,
+            "storage_maintenance": UNDETECTABLE,
+            "unique_bytes": self.unique_bytes,
+            "unique_objects": self.unique_objects,
+            "unreadable_objects": self.unreadable_objects,
+        }
+
+
+def estimate_verification(layout: ArchiveLayout) -> VerificationEstimate:
+    """Cost a full verification with `stat` alone (plan §16.4).
+
+    Nothing is hashed and nothing is opened, so this is cheap enough to run
+    before deciding whether tonight is the night. The unique set is built the
+    same way the read set is — by `(device, inode)` for a hardlink-published
+    instance, and per file for a copy-published one — so the figure it reports is
+    the figure `--full` would actually read rather than the archive's logical
+    size.
+
+    A path that cannot be stat'ed contributes no bytes and is counted separately.
+    It costs nothing to read because there is nothing there, and `--full` will
+    report it as `missing` or `unreadable`; saying so here means an operator
+    reading a suspiciously small estimate knows why it is small.
+
+    The last measured throughput comes from `catalog/verification.json`, which
+    only a completed `--full` writes. Before the first one there is no rate and
+    therefore no duration.
+    """
+    resolved = resolve_archive(layout)
+    repositories: set[tuple[str, str]] = set()
+    seen: set[object] = set()
+    unique_bytes = 0
+    unreadable = 0
+    revisions = 0
+    for item in resolved:
+        repositories.update(
+            (finding.repository_type, finding.repository_id) for finding in item.findings
+        )
+        if item.target is None:
+            revisions += 1 if item.findings else 0
+            continue
+        repositories.add(item.target.identity.sort_key)
+        revisions += 1
+        for entry in item.target.manifest.files:
+            path = resolve_within(item.target.tree, entry.path, code="HFVER007")
+            try:
+                info = path.lstat()
+            except OSError:
+                unreadable += 1
+                continue
+            key = (
+                ObjectIdentity(device=info.st_dev, inode=info.st_ino)
+                if item.target.share_reads
+                # A copy-published file is its own physical object even when
+                # another tree holds identical bytes, so it is keyed by where it
+                # is rather than by what it is.
+                else (item.target.reference.publication_id, entry.path)
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            unique_bytes += info.st_size
+
+    catalog = read_verification_catalog(layout)
+    last = catalog.last_full_verification if catalog else None
+    return VerificationEstimate(
+        repositories=len(repositories),
+        revisions=revisions,
+        unique_objects=len(seen),
+        unique_bytes=unique_bytes,
+        unreadable_objects=unreadable,
+        measured_throughput_bytes_per_second=(
+            last.throughput_bytes_per_second if last and last.throughput_bytes_per_second else None
+        ),
     )
 
 

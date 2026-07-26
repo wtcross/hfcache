@@ -22,7 +22,8 @@ from hfcache.hub import OFFLINE_VARIABLE, networking_disabled
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, new_run_id
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.paths import ArchiveLayout, RepositoryLayout
-from hfcache.reporting import RunReport
+from hfcache.publication import publish_verification_catalog
+from hfcache.reporting import FullVerificationSummary, RunReport, VerificationCatalog
 from hfcache.storage import parse_mount_table, write_model
 from tests.unit.test_verification import (
     ARCHIVE_ID,
@@ -569,3 +570,142 @@ def test_a_refusal_still_names_the_mode_it_refused(config_path):
     assert envelope_of(result)["command"] == "verify --revision"
     result = invoke(config_path)
     assert envelope_of(result)["command"] == "verify --new"
+
+
+# --------------------------------------------------------------------------- #
+# `--estimate` (plan §16.4)
+# --------------------------------------------------------------------------- #
+
+
+def test_estimate_reports_what_full_would_read(config_path, archive):
+    publish(archive, commit_sha=SHA_A)
+    publish(archive, commit_sha=SHA_B)
+    publish(archive, identity=DATASET, commit_sha=SHA_A)
+    result = invoke(config_path, "--estimate")
+    assert result.exit_code == ExitCode.SUCCESS
+    data = envelope_of(result)["data"]
+    assert data["mode"] == "estimate"
+    assert data["repositories"] == 2
+    assert data["revisions"] == 3
+    # Two hardlinked revisions of the model share their objects; the dataset's
+    # are the same blobs again, because the fixture publishes identical content.
+    assert data["unique_objects"] == len(FILES)
+    assert data["unique_bytes"] == sum(len(payload) for payload in FILES.values())
+
+
+def test_estimate_counts_copy_mode_files_individually(config_path, archive):
+    publish(archive, commit_sha=SHA_A, publication_mode="copy")
+    publish(archive, commit_sha=SHA_B, publication_mode="copy")
+    data = envelope_of(invoke(config_path, "--estimate"))["data"]
+    assert data["unique_objects"] == 2 * len(FILES)
+    assert data["unique_bytes"] == 2 * sum(len(payload) for payload in FILES.values())
+
+
+def test_estimate_has_no_duration_before_a_full_verification_has_run(config_path, archive):
+    """A number derived from a rate nobody measured is a guess wearing a
+    decimal point, and this is the operator sizing a maintenance window."""
+    publish(archive)
+    data = envelope_of(invoke(config_path, "--estimate"))["data"]
+    assert data["measured_throughput_bytes_per_second"] is None
+    assert data["estimated_duration_seconds"] is None
+
+
+def test_estimate_uses_the_last_measured_throughput_when_there_is_one(config_path, archive):
+    publish(archive)
+    publish_verification_catalog(
+        archive,
+        VerificationCatalog(
+            generated_at=NOW,
+            last_full_verification=FullVerificationSummary(
+                completed_at=NOW,
+                duration_seconds=2.0,
+                outcome="clean",
+                report="runs/20260726T120000Z-" + "0" * 32 + ".json",
+                started_at=NOW,
+                throughput_bytes_per_second=100.0,
+                unique_bytes=200,
+                unique_objects=2,
+            ),
+        ),
+    )
+    data = envelope_of(invoke(config_path, "--estimate"))["data"]
+    assert data["measured_throughput_bytes_per_second"] == 100.0
+    assert data["estimated_duration_seconds"] == data["unique_bytes"] / 100.0
+
+
+def test_a_catalog_that_will_not_load_is_treated_as_never_measured(config_path, archive):
+    """Derived state never raises the confidence level (`FS-16`)."""
+    publish(archive)
+    archive.verification_catalog.parent.mkdir(parents=True, exist_ok=True)
+    archive.verification_catalog.write_text("{ not json", encoding="utf-8")
+    data = envelope_of(invoke(config_path, "--estimate"))["data"]
+    assert data["measured_throughput_bytes_per_second"] is None
+
+
+def test_estimate_reports_storage_maintenance_as_undetectable(config_path, archive):
+    """Decision 50: the writer has no supported channel to observe NAS
+    maintenance, and saying so beats reporting a clear window it cannot see."""
+    publish(archive)
+    assert envelope_of(invoke(config_path, "--estimate"))["data"]["storage_maintenance"] == (
+        "undetectable"
+    )
+
+
+def test_estimate_counts_a_path_it_cannot_stat_without_charging_for_it(config_path, archive):
+    published = publish(archive)
+    (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
+    data = envelope_of(invoke(config_path, "--estimate"))["data"]
+    assert data["unreadable_objects"] == 1
+    assert data["unique_bytes"] == len(FILES["nested/weights.bin"])
+
+
+def test_estimate_exits_zero_on_a_damaged_archive(config_path, archive):
+    """Nothing was read, so nothing can have been found wrong; an estimator that
+    could report `40` would confuse a scheduling question with an answer."""
+    published = publish(archive)
+    reference = RepositoryLayout(archive=archive, identity=MODEL).revision_ref(
+        CommitSha(published.commit_sha)
+    )
+    reference.write_text("{ not json", encoding="utf-8")
+    result = invoke(config_path, "--estimate")
+    assert result.exit_code == ExitCode.SUCCESS
+    data = envelope_of(result)["data"]
+    assert data["revisions"] == 1
+    assert data["repositories"] == 1
+    assert data["unique_objects"] == 0
+
+
+def test_estimate_hashes_nothing_and_takes_no_lock(config_path, archive):
+    """It is a planning command, so it answers while a sync holds the lock."""
+    publish(archive)
+    with exclusive_lock(lock_path(), command="sync", wait_seconds=0):
+        result = invoke(config_path, "--estimate")
+    assert result.exit_code == ExitCode.SUCCESS
+
+
+def test_estimate_answers_on_an_archive_with_nothing_published(config_path, archive):
+    data = envelope_of(invoke(config_path, "--estimate"))["data"]
+    assert data == {
+        "estimated_duration_seconds": None,
+        "measured_throughput_bytes_per_second": None,
+        "mode": "estimate",
+        "repositories": 0,
+        "revisions": 0,
+        "storage_maintenance": "undetectable",
+        "unique_bytes": 0,
+        "unique_objects": 0,
+        "unreadable_objects": 0,
+    }
+
+
+def test_the_human_estimate_names_the_unknown_duration(config_path, archive):
+    publish(archive)
+    result = runner.invoke(app, ["--config", str(config_path), "verify", "--estimate"])
+    assert result.exit_code == ExitCode.SUCCESS
+    assert "never measured" in result.stdout
+
+
+def test_estimate_and_new_together_are_refused(config_path):
+    result = invoke(config_path, "--new", "--estimate")
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFARG002"]

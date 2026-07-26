@@ -61,7 +61,9 @@ from hfcache.storage import read_model
 from hfcache.sync import synchronize
 from hfcache.verification import (
     FINDING_CODES,
+    UNDETECTABLE,
     build_report,
+    estimate_verification,
     require_retained,
     resolve_archive,
     resolve_run,
@@ -1141,6 +1143,10 @@ def verify(
         str | None,
         typer.Option("--revision", metavar="TYPE:ID@SHA", help="Verify one retained revision."),
     ] = None,
+    estimate: Annotated[
+        bool,
+        typer.Option("--estimate", help="Report what a full verification would cost. No hashing."),
+    ] = False,
     run_id: Annotated[
         str | None,
         typer.Option("--run-id", metavar="ID", help="Which run --new checks. Default: the newest."),
@@ -1171,18 +1177,28 @@ def verify(
     `repair` claims to have fixed it. The repository need not be in
     configuration: an unmanaged repository's data is still the archive's (`AD-06`)
     and is still worth checking.
+
+    `--estimate` hashes nothing and takes no lock. It reports what `--full`
+    would read, so that scheduling it against a NAS maintenance window is a
+    decision made from a measurement rather than from a guess (plan §16.4).
     """
     started_at = datetime.now(UTC)
     stamp = utc_now()
     options = _options(ctx)
-    command = f"verify --{_mode_option(new=new, full=full, revision=revision)}"
+    command = f"verify --{_mode_option(new=new, full=full, revision=revision, estimate=estimate)}"
     try:
-        mode = _verification_mode(new=new, full=full, revision=revision, run_id=run_id)
+        mode = _verification_mode(
+            new=new, full=full, revision=revision, estimate=estimate, run_id=run_id
+        )
         config = load_config(options.config_path)
     except HfcacheError as error:
         _report_failure(ctx, command, stamp, error)
 
     layout = ArchiveLayout(root=config.storage.archive_root)
+    if mode == "estimate":
+        _emit_estimate(ctx, command, layout, started_at=stamp)
+        return
+
     try:
         if mode == "full":
             # The lock first, then the §19 gate, then the work — the same order
@@ -1221,29 +1237,34 @@ def verify(
     _emit_verification(ctx, command, report, started_at=stamp)
 
 
-def _chosen_modes(*, new: bool, full: bool, revision: str | None) -> list[str]:
+def _chosen_modes(*, new: bool, full: bool, revision: str | None, estimate: bool) -> list[str]:
     """Which mode options this invocation named, in `docs/cli.md` §2's order."""
     return [
         name
-        for name, given in (("--new", new), ("--full", full), ("--revision", revision is not None))
+        for name, given in (
+            ("--new", new),
+            ("--full", full),
+            ("--revision", revision is not None),
+            ("--estimate", estimate),
+        )
         if given
     ]
 
 
-def _mode_option(*, new: bool, full: bool, revision: str | None) -> str:
+def _mode_option(*, new: bool, full: bool, revision: str | None, estimate: bool) -> str:
     """The mode name for the `command` field, before the invocation is validated.
 
     A refusal still has to say which command was refused, and an invocation that
     named two modes or none is reported under the first mode it named or under
     `--new`; naming the command is not the same as accepting it.
     """
-    chosen = _chosen_modes(new=new, full=full, revision=revision)
+    chosen = _chosen_modes(new=new, full=full, revision=revision, estimate=estimate)
     return chosen[0].removeprefix("--") if chosen else "new"
 
 
 def _verification_mode(
-    *, new: bool, full: bool, revision: str | None, run_id: str | None
-) -> Literal["new", "full", "revision"]:
+    *, new: bool, full: bool, revision: str | None, estimate: bool, run_id: str | None
+) -> Literal["new", "full", "revision", "estimate"]:
     """Decide which mode was asked for, refusing none and refusing two.
 
     `docs/cli.md` §2: exactly one mode option is required. There is no default —
@@ -1251,7 +1272,7 @@ def _verification_mode(
     an operator meant would either skip most of the archive or saturate the NAS
     for an hour.
     """
-    chosen = _chosen_modes(new=new, full=full, revision=revision)
+    chosen = _chosen_modes(new=new, full=full, revision=revision, estimate=estimate)
     if len(chosen) > 1:
         message = (
             f"{' and '.join(chosen)} were given together; verify takes exactly one mode option, "
@@ -1261,7 +1282,8 @@ def _verification_mode(
     if not chosen:
         message = (
             "verify requires exactly one mode option; --new checks the content one run "
-            "introduced, --full every retained revision, and --revision one of them"
+            "introduced, --full every retained revision, --revision one of them, and "
+            "--estimate none of them"
         )
         raise ConfigurationError.single(message, code="HFARG003", location="verify")
     if run_id is not None and not new:
@@ -1272,7 +1294,39 @@ def _verification_mode(
         raise ConfigurationError.single(message, code="HFARG002", location="--run-id")
     if full:
         return "full"
+    if estimate:
+        return "estimate"
     return "revision" if revision is not None else "new"
+
+
+def _emit_estimate(
+    ctx: typer.Context, command: str, layout: ArchiveLayout, *, started_at: str
+) -> None:
+    """Report what `--full` would cost, having hashed nothing (plan §16.4).
+
+    Always exit `0`. Nothing was read, so nothing can have been found wrong, and
+    an estimator that could report `40` would make an operator's scheduling
+    question indistinguishable from an integrity answer.
+    """
+    estimate = estimate_verification(layout)
+    payload = estimate.as_payload()
+    duration = estimate.estimated_duration_seconds
+    _emit(
+        ctx,
+        command,
+        payload,
+        started_at=started_at,
+        lines={
+            "repositories": str(estimate.repositories),
+            "revisions": str(estimate.revisions),
+            "unique objects": str(estimate.unique_objects),
+            "unique bytes": _bytes(estimate.unique_bytes),
+            "estimated duration": (
+                f"{duration:.0f}s" if duration is not None else "unknown — never measured"
+            ),
+            "storage maintenance": UNDETECTABLE,
+        },
+    )
 
 
 def _named_revision(layout: ArchiveLayout, selector: str) -> Resolved:

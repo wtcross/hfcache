@@ -51,6 +51,7 @@ from hfcache.reporting import (
     CurrentRevision,
     RepositoriesCatalog,
     RepositoryCatalogEntry,
+    VerificationCatalog,
 )
 from hfcache.storage import fsync_directory, read_model, temporary_sibling, write_model
 
@@ -77,8 +78,10 @@ __all__ = [
     "publish_catalog",
     "publish_current_reference",
     "publish_revision_reference",
+    "publish_verification_catalog",
     "published_repositories",
     "read_reference",
+    "read_verification_catalog",
     "rebuild_catalog",
     "reference_target_problems",
     "retained_references",
@@ -616,6 +619,49 @@ def _current(layout: ArchiveLayout, repository: RepositoryLayout) -> CurrentRevi
         publication_generation=reference.publication_generation,
         publication_id=reference.publication_id,
     )
+
+
+def read_verification_catalog(layout: ArchiveLayout) -> VerificationCatalog | None:
+    """`published/catalog/verification.json`, or `None` when there is nothing to read.
+
+    `None` covers both an absent catalog and one that will not load, and that is
+    deliberate rather than lazy. The catalog is derived (`FS-16`): it is rebuilt
+    wholesale by the next `verify --full`, and every caller uses it to *raise*
+    confidence — to say a revision was verified, or to predict how long the next
+    verification will take. Treating an unreadable one as "nothing has been
+    verified" understates confidence, which is the direction a damaged archive
+    should err in; raising instead would let a corrupt derived file fail the
+    publication transaction that rebuilds the other catalog beside it.
+
+    What it must never do is silently hide corruption, and it does not: a
+    catalog that will not load leaves every revision reading `unverified`, which
+    is exactly the signal an operator acts on.
+    """
+    try:
+        return read_model(
+            layout.verification_catalog,
+            VerificationCatalog,
+            error=IntegrityError,
+            code="HFVER007",
+            location=str(layout.archive_relative(layout.verification_catalog)),
+        )
+    except IntegrityError:
+        return None
+
+
+def publish_verification_catalog(layout: ArchiveLayout, catalog: VerificationCatalog) -> Path:
+    """Replace `published/catalog/verification.json` atomically.
+
+    The archive's health headline (`docs/schemas.md` §5.2), written by `verify`
+    and read by `status`, `list`, and the estimator. Atomic for the same reason
+    the repositories catalog is: a consumer or a `status` run reading a
+    half-written file would see an archive that never existed.
+    """
+    path = layout.verification_catalog
+    path.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
+    write_model(path, catalog, mode=PUBLISHED_FILE_MODE, code="HFSYN007")
+    fsync_directory(path.parent)
+    return path
 
 
 def publish_catalog(layout: ArchiveLayout, catalog: RepositoriesCatalog) -> Path:
