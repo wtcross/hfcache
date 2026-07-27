@@ -707,7 +707,7 @@ After a sixth unique revision is successfully published:
 8. Atomically remove `refs/revisions/<sha>.json`, then atomically rename the active publication tree into `.store/trash/<transaction-id>/tree` and its complete active manifest into `.store/trash/<transaction-id>/manifest.json`. Removing the reference first keeps the invariant that no reference ever names a tree that has been renamed away (`docs/architecture.md` `FS-10`); the persisted plan, not the reference, is what recovery uses to locate the tombstoned tree.
 9. Publish the updated catalog, and record a checkpoint after each atomic operation.
 10. Mark the logical prune committed; at this point exactly five revisions are consumer-visible and the complete manifest remains recoverable from trash.
-11. Move the complete manifest plus prune provenance into `audit/pruned/`, then delete the tombstoned hardlink tree. If either cleanup fails, leave a `cleanup_deferred` checkpoint and retry only post-commit cleanup later.
+11. Move the complete manifest plus prune provenance into `audit/pruned/`, then delete the tombstoned hardlink tree. Then `rmdir` the `revisions/<sha>/` and `manifests/<sha>/` containers that step 8 emptied, keeping either one that still holds something — a repair's retired instance inside its grace period, or a superseded manifest. If any of this cleanup fails, leave a `cleanup_deferred` checkpoint and retry only post-commit cleanup later.
 12. Reconcile cache state, manifests, refs, catalog, and the trash area, then complete the journal and report logical and physical-space effects.
 
 If any prune step fails:

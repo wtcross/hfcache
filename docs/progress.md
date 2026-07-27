@@ -238,6 +238,8 @@ was reachable from the test suite as it stood.
 not close, recorded here rather than left to be rediscovered:
 
 1. **A pruned revision leaves an empty `revisions/<sha>/` directory behind.**
+   ***Closed 2026-07-27 by `RET-008`*** — and it was two directories, not one:
+   `manifests/<sha>/` is emptied by the same transaction. See the Phase 8 entry.
    §7.4's checkpoints tombstone the *instance* directory and its manifest;
    nothing removes the now-empty SHA container above it. Nothing derived is
    wrong — `list`, `status`, the catalog, `next_generation`, and `verify` all
@@ -269,7 +271,7 @@ more than it fixed.
 - [x] HARD-001 Make the probe's setgid check exercise and assert the syscall the application depends on (2026-07-27, this commit — decision 66. Found at `OBS-001`, re-running `check-hardening.sh` after the unit edit: the check could not fail for the reason it exists. `hardening-probe.py`'s `_setgid_directory` called only `mkdir(mode=0o2750)`, but `publication.create_staging` calls `mkdir` **and then `chmod`** (`publication.py:139-140`), and on this NFS mount that difference decides the outcome: measured on `/srv/hfcache/.store/health` as the service identity, `mkdir` alone yields `0o750` with no setgid, `mkdir`+`chmod` yields `0o2750`. The check also never *asserts* the mode — it formats the result into its pass message, which is why it has been reporting `mkdir(mode=0o2750) -> 0o750` and passing. So the standing guard on the consumer-visible group-inheritance contract (§5.2) tests a syscall the application does not rely on, and could not fail if setgid stopped landing. Nothing is broken today: every directory in the live published tree is `2750`/`2755`, and decision 61's conclusion is unaffected because `RestrictSUIDSGID` filters the mode argument of `chmod` as well as `mkdir` and its attribution was proven separately in two transient units. The fix mirrors the application — `mkdir` then `chmod` — and asserts both `S_ISGID` and the exact mode on the result, because an unfalsifiable check is the family of defect decisions 51 and 62 exist to close and this was one. **The falsifiability was proven rather than assumed**, which is the only evidence that distinguishes this fix from the bug: run as the service identity against `/srv/hfcache/.store/health`, the new assertions *reject* the old sequence — `mkdir` alone raises `AssertionError: the setgid bit did not land: 0o750` — and accept the new one at `0o2750`. A passing check on its own could not have shown that, since the old check passed too. `check-hardening.sh` then ran green on **both** service units, 23 of 23 each, with the line that had read `mkdir(mode=0o2750) -> 0o750` now reading `mkdir+chmod(0o2750) -> 0o2750, S_ISGID set`; the verification unit still inverts its four network checks. Run from a root-owned staging path under `/opt` rather than the checkout, because `ProtectHome=true` makes the probe unreadable under `/home`, and rather than rebuilding release 0.1.1 in place, which `install-release.sh` warns wants `hfcache.target` stopped — and stopping the target unmounts the archive (decision 65). `REL-001` ships the fixed probe into `/opt/hfcache/current` properly. No AVC denial from any of it, and the probe area was left empty
 - [x] OPS-001 Installation and upgrade runbooks (2026-07-27, this commit — `docs/deployment-centos-stream-10.md`, plan §7's listed document, taking a bare CentOS Stream 10 VM to a running `hfcache.target`: packages, the pinned uv and why the interpreter is uv-managed rather than the distribution's, service identity, local paths and why `/srv/hfcache` must not be writable by `hfcache`, the mount units and why network ordering belongs on the mount, configuration and its `0640 root:hfcache` contract, `install-release.sh`, the one-time `archive init`, tmpfiles/journald/failure-hook integration, unit install, `check-hardening.sh` from the *release* rather than a checkout, the prove-before-enabling sequence, and enablement with the verify timer deliberately off. **Every block marked observed is real output.** §30's upgrade and rollback were exercised rather than written from memory: `--no-switch` staging (quoting the same-version rebuild warning), `--switch`, a genuine rollback from 0.1.1 to 0.1.0 and forward again, and a no-change sync through the unit whose journal now shows the `OBS-002` event trail. `archive init` is the one step that could not be re-run — it is once-per-archive by design and its authorization was spent on 2026-07-26 — so it carries the recorded evidence and says plainly that it does. Two findings, decision 65: plan §30 step 1 as written would have unmounted the archive, and rollback needed a second release to be a rollback at all)
 - [x] OPS-002 Sync, verification, pruning, and status runbooks (2026-07-27, this commit — `docs/operations.md`, plan §7's listed document and the one four units point `Documentation=` at. Covers `status`, `list`, `plan`, `sync`, `verify` in all four modes, `prune`, and `recover --dry-run` as an operator runs them, plus reading the journal and the durable run report, all eleven `HFWRN` codes with a response for each, every §11.2 exit code with what to do about it, and timer administration. **Every command block was run on this deployment.** The exit codes were provoked rather than described: four distinct `10`s — absent configuration, an unconfigured selector, `verify --revision` without a SHA, `prune` with neither mode — and a real `20`, by holding the exclusive lock with `flock` against a copy of the configuration carrying a one-second `lock_wait_seconds` so the refusal was quick rather than an hour. `40` and `50` stay unprovoked for the reason the rollout checkpoints already give: both need published content damaged, and §36.5 forbids writing to `/srv/hfcache` outside the application's own contracts — the suites cover them. Two accuracy corrections came out of writing it: `plan` emits `huggingface_hub`'s own dry-run progress on stderr, which `docs/cli.md` §1's "progress is disabled when stdout is not a terminal" does not quite describe — though the claim that matters holds, journald has never received a progress line from either unit, verified across the whole retained journal — and `list`'s *human* line does not distinguish an unmanaged repository, only `--json` and `status` do. The runbook says both rather than repeating the tidier claim)
-- [ ] RET-008 Remove the empty `revisions/<sha>/` container a prune leaves behind (carried out of Phase 7; adds an act to §7.4's checkpoint sequence, so it is a durable-contract change and lands before `OPS-003` documents the tree's shape)
+- [x] RET-008 Remove the containers a prune empties (2026-07-27, this commit — decision 68, and the first of the two Phase 7 carried items. §7.4 gains checkpoint 10, `containers_removed`, so the documented sequence is eleven steps; `tests/unit/test_transactions.py` parses the §7.4 table out of `docs/architecture.md` and compares it to `CHECKPOINTS`, so the amendment was enforced by the suite rather than remembered. **Two containers, not one.** The carried item and plan §28 both named only `revisions/<sha>/`; tombstoning also moves the manifest out of `manifests/<sha>/`, and that is equally empty, equally permanent, and equally inside `published/`. The live archive had one of each, from the generation-2 prune of `527d5001…`. **It sits after the commit point**, with the other cleanup, because before checkpoint 7 a rollback puts the tree and manifest back into exactly these containers — removing them earlier would mean recreating them on the one path that must not acquire new failure modes. A crash between 7 and 10 leaves them, `recover` reports `complete_prune`, and finishing it removes them; there is a test that crashes precisely there. **The atomic act is `rmdir` and that is the whole safety argument:** it refuses a non-empty directory, so the two states in which a container must survive — a repair's retired instance sitting beside its replacement through the grace, and a superseded manifest — need no detection of their own and cannot be got wrong. `rmtree` would take both, and `FS-19` is why it is not used: this removes a directory it has *proven* empty, not one it has decided is unwanted. 10 new tests including the `ENOTEMPTY`-versus-real-error distinction, both containers surviving independently, `TX-04` idempotence, and a pruned SHA that returns rebuilding its own container — which is not hypothetical, it is what the live dataset did on 2026-07-26 (decision 62). `retention.py` and `recovery.py` both back to 100% branch coverage. **The live archive was brought into conformance**: the two pre-fix containers were removed with `rmdir` as the service identity — an operation that cannot destroy content, since a non-empty directory refuses it — and `verify --full` then read 23 unique objects across 6 revisions and reported `clean`, with `status` exit `0`, not degraded, nothing unfinished. Leaving them would have had `OPS-003` document a tree shape the live archive contradicted, which is the reason this package was sequenced first)
 - [ ] OPS-003 Corruption and repair runbook → `docs/recovery.md` (repair half), exercised on a **throwaway archive** — §36.5 forbids damaging `/srv/hfcache`, so the damage, the exit `40`, the repair, and the retirement grace are demonstrated on a temporary root
 - [ ] OPS-004 Snapshot/replica restore runbook → `docs/recovery.md` (restore half); the ZFS drill is operator work, the procedure and the post-restore `verify --full` and reference reconstruction are not
 - [ ] OPS-005 Close §26.6's failure-injection matrix — audit the eleven points against the suite, fill the thin rows (the §7.4 prune commit point and `revision_ref_published`), and decide whether they live in `tests/integration/`, which plan §7 lists and which is empty
@@ -1748,3 +1750,54 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     Exit codes are the helper's own (`0`/`1`/`2`) and deliberately not §11.2's.
     It is not this application, it does not run on this host, and borrowing
     `40` for "digest mismatch" would imply a shared taxonomy that does not exist.
+
+68. **A prune's container cleanup is checkpoint 10, after the commit point, and
+    its atomic act is `rmdir`** (2026-07-27, `RET-008`). Plan §15.2 and
+    `docs/architecture.md` §7.4 both described a prune that tombstones the
+    publication instance and its manifest and then stops. Both are amended here,
+    because that leaves two directories that nothing ever removes.
+
+    What the documents missed. The instance is
+    `revisions/<sha>/<publication-id>/` and its manifest is
+    `manifests/<sha>/<publication-id>.json`, so tombstoning empties the `<sha>`
+    directory *above* each of them. Nothing derived is wrong when they linger —
+    `list`, `status`, the catalog, `next_generation`, and `verify` all resolve
+    through references, and all five were checked against the live archive after
+    the 2026-07-26 rotation. But they are permanent, they accumulate one pair per
+    pruned SHA, and they are in `published/`, so a consumer listing `revisions/`
+    sees SHAs the archive does not retain. The carried item named only the first
+    of the two; the second was found by looking at the live archive rather than at
+    the text.
+
+    **Where it goes, and why not earlier.** The obvious placement is right after
+    the two tombstoning steps, where the containers become empty. That is wrong,
+    and the reason is the rollback path. Before checkpoint 7 the transaction can
+    still be rolled back, and `recovery._rollback_prune` puts the tree and the
+    manifest back *into these exact containers*. Removing them pre-commit would
+    make the rollback recreate them, which adds a failure mode to the one path in
+    §7.4 whose entire purpose is to restore six revisions safely. Post-commit,
+    the revision is never coming back, and an empty directory is definitionally
+    cleanup — which is precisely the regime checkpoints 8 and 9 already occupy and
+    which §7.4 already says is the only thing retried later. The cost is a window:
+    a crash between 7 and 10 leaves the containers until the next `recover
+    --apply`. That is reportable, harmless, and tested.
+
+    **Why `rmdir` and never `rmtree`.** Two states require a container to survive
+    its own SHA being pruned, and both are real: a repair inside its grace period
+    leaves the retired instance beside the replacement, so `revisions/<sha>/`
+    holds two instances; and a superseded manifest can sit beside the tombstoned
+    one. `rmdir` refuses a non-empty directory, so neither state needs to be
+    detected, and the code cannot be wrong about them — the kernel is. `rmtree`
+    would silently take both. `FS-19` is the rule this satisfies: the application
+    removes a directory it has *proven* empty, not one it has decided is unwanted.
+    `ENOTEMPTY` and `EEXIST` are the two answers POSIX permits for that refusal
+    and both are treated as "keep"; `ENOENT` is idempotence (`TX-04`); anything
+    else propagates, because reporting a permission failure as though the
+    directory had merely been busy would hide it forever.
+
+    The live archive was brought into conformance in the same commit rather than
+    left as a documented exception, because `OPS-003` documents this tree's shape
+    next and a runbook describing a shape the archive contradicts is worse than
+    either. The removal used `rmdir`, which cannot destroy content;
+    `verify --full` afterwards read 23 unique objects across 6 revisions and
+    reported `clean`.

@@ -17,6 +17,7 @@ That is what makes retention explainable after the fact: an operator reading
 without knowing what order things happened in or what the clock said.
 """
 
+import errno
 import hashlib
 import shutil
 from dataclasses import dataclass
@@ -60,6 +61,7 @@ __all__ = [
     "plan_all",
     "plan_prune",
     "prune_candidate",
+    "remove_empty_containers",
     "require_valid_selection",
     "selection_of",
     "selection_problems",
@@ -343,6 +345,60 @@ def plan_all(
 # --------------------------------------------------------------------------- #
 
 
+_NOT_EMPTY: Final = frozenset({errno.ENOTEMPTY, errno.EEXIST})
+"""What `rmdir` reports for a directory that still holds something.
+
+POSIX permits either, and this is the answer the whole of `RET-008` turns on:
+a container that is not empty is a container that must not go.
+"""
+
+
+def remove_empty_containers(
+    layout: ArchiveLayout, repository: RepositoryLayout, commit_sha: CommitSha
+) -> dict[str, list[str]]:
+    """Remove the two `<sha>/` containers a prune emptied (§7.4 checkpoint 10).
+
+    Tombstoning moves the publication *instance* and its manifest out, one level
+    below their SHA directories, so both are left behind holding nothing — in
+    `published/`, which is the consumer-visible subtree. Nothing derived reads
+    them: `list`, `status`, the catalog, `next_generation`, and `verify` all
+    resolve through references. But they accumulate one pair per pruned SHA, and
+    a consumer listing `revisions/` sees SHAs the archive does not retain.
+
+    The primitive is `rmdir` and that is the entire safety argument. It refuses a
+    directory that still holds anything, so the two states where a container must
+    survive need no detection of their own and cannot be got wrong:
+
+    - A **repair** in its grace period leaves the retired instance beside the
+      replacement, so `revisions/<sha>/` holds two instances and the manifest
+      directory holds two manifests. Neither goes.
+    - A SHA that was pruned and later **re-observed** is republished into the same
+      container under a new publication id.
+
+    `rmtree` would delete both. It is never used here, and `FS-19` is why: this
+    removes a directory it has proven empty, not one it has decided is unwanted.
+    """
+    removed: list[str] = []
+    retained: list[str] = []
+    for container in (repository.revision(commit_sha), repository.revision_manifests(commit_sha)):
+        relative = str(layout.archive_relative(container))
+        try:
+            container.rmdir()
+        except FileNotFoundError:
+            # Already gone. A second `recover --apply` finds this, and `TX-04`
+            # requires it be a no-op rather than an error.
+            removed.append(relative)
+            continue
+        except OSError as exc:
+            if exc.errno not in _NOT_EMPTY:
+                raise
+            retained.append(relative)
+            continue
+        fsync_directory(container.parent)
+        removed.append(relative)
+    return {"removed": sorted(removed), "retained": sorted(retained)}
+
+
 def apply_prune(
     layout: ArchiveLayout,
     plan: PrunePlan,
@@ -476,6 +532,13 @@ def apply_prune(
     shutil.rmtree(trash.directory)
     transaction.checkpoint(
         "trash_removed", trash_absent=str(layout.archive_relative(trash.directory))
+    )
+
+    containers = remove_empty_containers(layout, repository, commit)
+    transaction.checkpoint(
+        "containers_removed",
+        containers_absent=containers["removed"],
+        containers_retained=containers["retained"],
     )
     transaction.checkpoint("prune_completed", state="committed")
     transaction.commit()

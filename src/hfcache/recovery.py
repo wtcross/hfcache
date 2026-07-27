@@ -70,6 +70,7 @@ from hfcache.publication import (
 )
 from hfcache.repair import PendingCleanup, finish_cleanup, pending_cleanups
 from hfcache.reporting import RecoveryReport, Remediation
+from hfcache.retention import remove_empty_containers
 from hfcache.storage import (
     BYTES_PER_GIB,
     atomic_write_bytes,
@@ -1216,9 +1217,18 @@ def _complete_prune(layout: ArchiveLayout, transaction_id: TransactionId) -> dic
     if trash.directory.is_dir():
         shutil.rmtree(trash.directory)
         fsync_directory(layout.trash)
+    # §7.4 checkpoint 10, and the reason it sits after the commit point: a prune
+    # that stopped anywhere between 7 and 10 has already emptied both containers
+    # and will never put the revision back, so removing them is exactly the
+    # "only post-commit cleanup is retried later" this remedy exists to perform.
+    # `remove_empty_containers` is idempotent by construction, which is what lets
+    # this run after a prune that already did it (`TX-04`).
+    containers = remove_empty_containers(layout, repository, commit)
     return {
         "trash_absent": str(layout.archive_relative(trash.directory)),
         "commit_sha": plan.selected.commit_sha,
+        "containers_absent": containers["removed"],
+        "containers_retained": containers["retained"],
     }
 
 

@@ -994,6 +994,55 @@ def test_a_prune_interrupted_after_its_commit_point_rolls_forward(
     assert open_journals(layout) == ()
 
 
+def test_a_prune_interrupted_before_its_containers_are_removed_is_completed(
+    client, hub, layout, config, monkeypatch
+):
+    """§7.4 checkpoint 10 — the boundary `RET-008` added.
+
+    Past the commit point, so the five consumer-visible revisions stand and are
+    never republished; what is left outstanding is the pair of emptied `<sha>/`
+    containers, and finishing them is exactly the post-commit cleanup this remedy
+    is for.
+    """
+    restore = crash_at(monkeypatch, retention_module, "remove_empty_containers")
+    with pytest.raises(CrashError):
+        six_revisions(client, hub, layout, config)
+    restore()
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    pruned = CommitSha("1" * 40)
+    # This is the state the crash leaves, and the state RET-008 exists to end:
+    # the instance is gone, the container that held it is not.
+    assert repository.revision(pruned).is_dir()
+    assert not any(repository.revision(pruned).iterdir()), "emptied, not removed"
+    prepared = plan(layout)
+    assert remedy_for(prepared, "prune") == "complete_prune"
+
+    apply(layout, config)
+
+    assert not repository.revision(pruned).exists()
+    assert not repository.revision_manifests(pruned).exists()
+    assert len(retained_references(layout, MODEL)) == 5, "never republished"
+    assert open_journals(layout) == ()
+
+
+def test_completing_a_prune_removes_containers_a_second_time_without_error(
+    client, hub, layout, config, monkeypatch
+):
+    """The same remedy runs after a prune that already removed them (`TX-04`)."""
+    restore = crash_at(monkeypatch, retention_module, "write_model")
+    with pytest.raises(CrashError):
+        six_revisions(client, hub, layout, config)
+    restore()
+
+    apply(layout, config)
+    apply(layout, config)
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    assert not repository.revision(CommitSha("1" * 40)).exists()
+    assert len(retained_references(layout, MODEL)) == 5
+
+
 # --------------------------------------------------------------------------- #
 # Finishing an interrupted repair (§7.5, the crash between 9 and 10)
 # --------------------------------------------------------------------------- #

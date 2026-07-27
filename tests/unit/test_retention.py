@@ -12,9 +12,10 @@ behaviour, and the archive keeping one revision too many is always preferable to
 it removing one it should not have (`AD-04`).
 """
 
+import errno
 import os
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 from hypothesis import given
@@ -31,15 +32,13 @@ from hfcache.retention import (
     ordered_revisions,
     over_retention,
     prune_candidate,
+    remove_empty_containers,
     require_valid_selection,
     selection_of,
     selection_problems,
 )
 from hfcache.storage import parse_mount_table
 from tests.fixtures import examples
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 MODEL = RepositoryIdentity.of("model", "organization/model-name")
@@ -317,3 +316,121 @@ def test_a_revision_summarizes_as_its_ordering_key():
 
     assert summary.commit_sha == item.commit_sha
     assert summary.publication_generation == 4
+
+
+# --------------------------------------------------------------------------- #
+# Removing the containers a prune empties (`RET-008`, §7.4 checkpoint 10)
+# --------------------------------------------------------------------------- #
+
+
+def empty_the_instance(layout: ArchiveLayout, item: RetainedRevision) -> None:
+    """Do what checkpoints 4 and 5 do: move the instance and manifest out."""
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    commit = CommitSha(item.commit_sha)
+    publication = PublicationId(item.reference.publication_id)
+    repository.instance(commit, publication).rmdir()
+    repository.manifest(commit, publication).unlink()
+
+
+def test_the_containers_a_prune_emptied_are_removed(layout):
+    item = revision(1)
+    place(layout, item)
+    empty_the_instance(layout, item)
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    commit = CommitSha(item.commit_sha)
+
+    result = remove_empty_containers(layout, repository, commit)
+
+    assert not repository.revision(commit).exists()
+    assert not repository.revision_manifests(commit).exists()
+    assert result["retained"] == []
+    assert len(result["removed"]) == 2
+
+
+def test_a_container_still_holding_an_instance_is_never_removed(layout):
+    """The repair case: a retired instance sits beside its replacement through
+    the grace period, so `revisions/<sha>/` holds two. `rmdir` refuses, which is
+    the whole safety argument — no detection of the state is needed."""
+    item = revision(1)
+    place(layout, item)
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    commit = CommitSha(item.commit_sha)
+    survivor = repository.instance(commit, PublicationId(new_publication_id()))
+    survivor.mkdir(parents=True)
+    empty_the_instance(layout, item)
+
+    result = remove_empty_containers(layout, repository, commit)
+
+    assert repository.revision(commit).is_dir(), "a container holding an instance survived"
+    assert survivor.is_dir()
+    assert str(layout.archive_relative(repository.revision(commit))) in result["retained"]
+    # The manifest container next to it was empty, so it still goes.
+    assert not repository.revision_manifests(commit).exists()
+
+
+def test_a_manifest_container_holding_a_superseded_manifest_is_kept(layout):
+    item = revision(1)
+    place(layout, item)
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    commit = CommitSha(item.commit_sha)
+    superseded = repository.manifest(commit, PublicationId(new_publication_id()))
+    superseded.write_bytes(b"{}")
+    empty_the_instance(layout, item)
+
+    result = remove_empty_containers(layout, repository, commit)
+
+    assert superseded.is_file()
+    assert str(layout.archive_relative(repository.revision_manifests(commit))) in result["retained"]
+
+
+def test_removing_containers_twice_is_the_same_as_once(layout):
+    """`TX-04`: `recover --apply` is safe to run repeatedly."""
+    item = revision(1)
+    place(layout, item)
+    empty_the_instance(layout, item)
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    commit = CommitSha(item.commit_sha)
+
+    first = remove_empty_containers(layout, repository, commit)
+    second = remove_empty_containers(layout, repository, commit)
+
+    assert first == second
+    assert second["retained"] == []
+    assert not repository.revision(commit).exists()
+
+
+def test_a_container_that_cannot_be_removed_for_another_reason_is_not_swallowed(
+    layout, monkeypatch
+):
+    """ "Not empty" is a state this expects; anything else is a real problem.
+
+    Reporting a permission failure as though the directory had simply been busy
+    would hide it forever, because the next run would report the same thing.
+    """
+    item = revision(1)
+    place(layout, item)
+    empty_the_instance(layout, item)
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+
+    def refuse(_self: Path) -> None:
+        raise PermissionError(errno.EACCES, "Permission denied")
+
+    monkeypatch.setattr(Path, "rmdir", refuse)
+
+    with pytest.raises(PermissionError):
+        remove_empty_containers(layout, repository, CommitSha(item.commit_sha))
+
+
+def test_removing_containers_leaves_every_other_revision_alone(layout):
+    kept = revision(2)
+    place(layout, kept)
+    going = revision(1)
+    place(layout, going)
+    empty_the_instance(layout, going)
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+
+    remove_empty_containers(layout, repository, CommitSha(going.commit_sha))
+
+    assert repository.revision(CommitSha(kept.commit_sha)).is_dir()
+    assert repository.revision_manifests(CommitSha(kept.commit_sha)).is_dir()
+    assert repository.revisions.is_dir(), "the shared parent is not a container"

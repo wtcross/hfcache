@@ -86,6 +86,7 @@ CHECKPOINTS: Final[Mapping[str, tuple[str, ...]]] = {
         "prune_logically_committed",
         "audit_record_written",
         "trash_removed",
+        "containers_removed",
         "prune_completed",
     ),
     # §7.5 — 4 and 8 are gates; 16-18 are the post-grace cleanup.

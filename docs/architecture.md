@@ -733,7 +733,8 @@ revision beyond `storage.maximum_revisions`.
 | 7 | `prune_logically_committed` | — | **The commit point** |
 | 8 | `audit_record_written` | rename file | `audit/pruned/.../<pid>.manifest.json` and `.prune.json` |
 | 9 | `trash_removed` | — | `.store/trash/<txn>/` absent |
-| 10 | `prune_completed` | — | `state = "committed"` |
+| 10 | `containers_removed` | `rmdir` | The emptied `revisions/<sha>/` and `manifests/<sha>/`: those removed, and those kept because something remained |
+| 11 | `prune_completed` | — | `state = "committed"` |
 
 **The per-SHA reference is removed before the tree is tombstoned** (step 3 before
 step 4). The reverse order would leave a window in which a reference names a tree
@@ -752,6 +753,34 @@ different failure regimes:
 | Before checkpoint 7 | **Roll back.** Restore the manifest, the tree, the per-SHA reference, and the catalog, so all six revisions are published again. Cache deletion may already have happened; that is harmless, because the publication hardlinks hold the bytes. Report `HFRET001`–`HFRET004` and warn `HFWRN001` for temporary over-retention |
 | At or after checkpoint 7 | **Never republish.** Exactly five revisions are consumer-visible and the complete manifest is still recoverable from trash. A failure in steps 8–9 records a `cleanup_deferred` checkpoint and warns `HFWRN002`; only post-commit cleanup is retried later |
 | Rollback itself fails | `HFRET005`, `state = "needs_operator"`. The transaction stops and preserves everything it holds |
+
+**Checkpoint 10 removes the containers steps 4 and 5 emptied.** Tombstoning moves
+the publication *instance* and its manifest out, and both live one level below a
+`<sha>` directory — so `revisions/<sha>/` and `manifests/<sha>/` are left holding
+nothing, inside the consumer-visible subtree. Nothing derived is wrong when they
+linger: `list`, `status`, the catalog, `next_generation`, and `verify` all resolve
+through references. But they accumulate one pair per pruned SHA, and a consumer
+listing `revisions/` sees SHAs the archive does not retain.
+
+It sits **after** the commit point, in the cleanup regime, for the same reason
+steps 8 and 9 do. Before checkpoint 7 the transaction can still roll back, and
+these containers are exactly where the rollback puts the tree and manifest back;
+removing them earlier would mean recreating them on the one path that must not
+acquire new failure modes. A crash between 7 and 10 therefore leaves the
+containers behind, `recover` reports the prune as `complete_prune`, and finishing
+it removes them.
+
+The atomic act is `rmdir`, and that is the entire safety argument. It refuses a
+directory that still holds anything, so the two states in which a container must
+survive need no detection of their own:
+
+- A **repair** in its grace period leaves the retired instance beside its
+  replacement (§7.5), so `revisions/<sha>/` holds two instances.
+- A SHA that was pruned and later **re-observed** is republished into the same
+  container under a new publication id.
+
+`rmtree` would remove both. It is not used here: `FS-19` permits removing a
+directory proven empty, not one decided to be unwanted.
 
 The archive never manually deletes a cache blob to force the retained count
 (`FS-14`), and no upstream error or configuration edit ever reaches this

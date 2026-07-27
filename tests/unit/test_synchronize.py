@@ -1286,6 +1286,46 @@ def test_the_pruned_tree_and_reference_are_gone(client, layout, config, hub):
     assert not any(repository.revision(CommitSha(published[0])).glob("*"))
 
 
+def test_a_prune_leaves_no_empty_container_behind(client, layout, config, hub):
+    """`RET-008`: §7.4 tombstones the instance and its manifest, one level below
+    their SHA directories. Both containers go too, or the consumer-visible tree
+    accumulates one pair per pruned SHA forever."""
+    published = heads_through(client, layout, config, hub, 6)
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    pruned = CommitSha(published[0])
+    assert not repository.revision(pruned).exists(), "revisions/<sha>/ survived the prune"
+    assert not repository.revision_manifests(pruned).exists(), "manifests/<sha>/ survived"
+    # The five that remain are untouched, which is the thing an over-eager
+    # cleanup would break.
+    for commit in published[1:]:
+        assert repository.revision(CommitSha(commit)).is_dir()
+        assert repository.revision_manifests(CommitSha(commit)).is_dir()
+
+
+def test_a_pruned_sha_that_returns_is_republished_into_a_fresh_container(
+    client, layout, config, hub
+):
+    """The container is removed, so a later re-observation has to recreate it.
+
+    This is not hypothetical: it is what the live archive did on 2026-07-26, when
+    a pruned dataset SHA was re-synced and became generation 7 (decision 62).
+    """
+    published = heads_through(client, layout, config, hub, 6)
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    pruned = CommitSha(published[0])
+    assert not repository.revision(pruned).exists()
+
+    hub.heads[MODEL.selector] = str(pruned)
+    run(client, layout, config)
+
+    assert repository.revision(pruned).is_dir(), "the returning SHA rebuilt its container"
+    reference = read_reference(layout, repository.revision_ref(pruned))
+    assert reference.commit_sha == str(pruned)
+    # A new generation, because the old one was retired and is never reissued.
+    assert reference.publication_generation == 7
+
+
 def test_the_pruned_revision_leaves_durable_evidence(client, layout, config, hub):
     # The manifest byte for byte plus a provenance record: together they prove
     # what was there and why it went (`docs/schemas.md` §9.1).
@@ -1345,6 +1385,7 @@ def test_the_prune_journal_records_every_checkpoint_in_order(client, layout, con
         "prune_logically_committed",
         "audit_record_written",
         "trash_removed",
+        "containers_removed",
         "prune_completed",
     ]
     assert prunes[0].state == "committed"
