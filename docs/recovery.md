@@ -237,7 +237,7 @@ audit/repairs/models/…/71034c5d…/
 ```
 
 ```text
-$ hfcache status --json | jq '.data.archive | {quarantined_bytes, deferred_cleanup}'
+$ hfcache --json status | jq '.data.archive | {quarantined_bytes, deferred_cleanup}'
 {"quarantined_bytes": 12512611, "deferred_cleanup": 0}
 ```
 
@@ -329,7 +329,7 @@ exit=20
 ```
 
 ```text
-$ hfcache recover --dry-run --json | jq '.data'
+$ hfcache --json recover --dry-run | jq '.data'
 {"actionable": 0, "blocked": 1, "plan": [{"remedy": "operator", ...}]}
 ```
 
@@ -405,3 +405,207 @@ sudo rm -rf /srv/hfcache-throwaway-src /mnt/hfcache-throwaway
 **Never point a throwaway config at `/srv/hfcache`**, and never re-run
 `archive init` against it. The real archive was initialized once, on 2026-07-26,
 and that authorization is spent.
+
+---
+
+## 7. Restoring from a ZFS snapshot or replica
+
+Use this when the bytes are gone or wrong and **upstream cannot supply them** —
+the repository was deleted or gated, or `repair` refused because upstream no
+longer serves what the manifest recorded.
+
+The ZFS side is operator work on TrueNAS and is not something this application
+does or can do. What is written here is the procedure around it: what to
+establish first, what to restore, and what to run afterwards.
+
+### Before you restore
+
+```bash
+$H verify --full          # exit 40, and the findings name every damaged path
+$H recover --dry-run      # is anything mid-transaction?
+$H --json status | jq '.data.archive'
+```
+
+Three things to establish, in this order:
+
+1. **What is actually damaged.** The findings name repository, SHA, publication
+   id, and path. Restoring the whole dataset when one file is wrong throws away
+   good revisions published since the snapshot.
+2. **Whether a transaction is in flight.** If `recover --dry-run` reports
+   anything actionable or blocked, resolve that *first* — §5. A restore
+   underneath an open transaction produces exactly the journal-contradicts-
+   filesystem state `HFTXN003` exists to report.
+3. **Which snapshot predates the damage.** The manifest's `published_at` and the
+   run report in `runs/` bound when the revision was written; a snapshot from
+   before the damage but after the publication is what you want.
+
+### Restoring
+
+Prefer the **narrowest** restore that covers the findings. In descending order of
+preference:
+
+| Scope | When |
+| --- | --- |
+| Individual files out of `.zfs/snapshot/<name>/` | A handful of paths, all named by findings |
+| One publication instance directory | Many paths in one revision |
+| One repository subtree | Several revisions of one repository |
+| The whole dataset | The dataset is lost; see §8 |
+
+Restoring individual files from a snapshot is a copy back into place, done on the
+NAS or over the writer's mount, as the identity that owns the tree. It is safe
+precisely because published trees are immutable: nothing else writes there, so a
+file replaced with its own earlier bytes is not racing anything.
+
+**Do not restore `.store/` selectively.** The cache, journals, and staging areas
+are internally consistent with each other and with `published/`; mixing a
+restored journal with a current tree is how you manufacture `HFTXN003`. If
+`.store/` has to come back, take the whole dataset (§8).
+
+### After you restore — this part is not optional
+
+```bash
+$H verify --full          # must reach exit 0
+$H recover --dry-run      # must report actionable 0, blocked 0
+$H status
+```
+
+`verify --full` is the only thing that establishes a restore worked. It re-reads
+every retained revision against its manifest, so it will tell you both that the
+damage is gone and that the restore did not bring back something stale. Plan
+§16.3 lists restoration from snapshot or replica as an event requiring a full
+verification for exactly this reason.
+
+If verification still fails, the snapshot predates the publication or postdates
+the damage. Try an earlier one; the manifest's expectations never change, so
+there is no risk of "converging" on wrong bytes.
+
+---
+
+## 8. A lost writer, and rebuilding derived state
+
+### The writer VM is gone
+
+Nothing archive-side is lost with it. The writer holds no authoritative state:
+`/srv/hfcache` is on the NAS, and `/opt/hfcache`, `/etc/hfcache`,
+`/var/lib/hfcache`, and `/var/cache/hfcache` are all rebuildable.
+
+1. Provision a replacement with the **same hostname and IP**
+   (`hfcachewriter.lab.cross.solutions`, `192.168.10.90`). The NFS export is
+   scoped to that exact host, so a different address does not get write access —
+   which is the export doing its job.
+2. Follow `docs/deployment-centos-stream-10.md` from the top, with one
+   exception: **do not run `archive init`.** The archive exists and has an
+   identity. Put its existing UUID in `/etc/hfcache/config.toml`.
+3. `$H doctor` — the sentinel check is what proves the new host is talking to the
+   right archive.
+4. `$H verify --full` and `$H recover --dry-run`.
+
+The sentinel is the guard here. If `doctor` reports the archive id does not match
+configuration, stop: either the config has the wrong UUID or the mount is
+pointing somewhere unexpected, and both are better found now.
+
+### Rebuilding the catalog
+
+`published/catalog/repositories.json` is **derived** and always reconstructible
+(`FS-16`). Destroying it costs nothing:
+
+```text
+$ rm published/catalog/repositories.json
+$ hfcache list
+model:hf-internal-testing/tiny-random-gpt2  1 revisions  current 71034c5d8bde858ff824298bdedc65515b97d2b9
+$ hfcache status
+model:hf-internal-testing/tiny-random-gpt2  enabled  verified
+```
+
+`list` and `status` still answer, because they read manifests and references
+rather than the catalog. Any sync rebuilds it:
+
+```text
+$ hfcache sync
+model:hf-internal-testing/tiny-random-gpt2  skipped  71034c5d8bde858ff824298bdedc65515b97d2b9
+$ ls published/catalog/repositories.json
+published/catalog/repositories.json
+```
+
+The catalog is a convenience for readers, never a source of truth. If it and the
+manifests disagree, the manifests are right.
+
+### A damaged `refs/current.json`
+
+This is §31's "damaged current ref". `current.json` is the one file a consumer
+must read, and it is **derived from the retained set**: the correct value is the
+reference for the highest `publication_generation` among the SHAs that have a
+`refs/revisions/<sha>.json`.
+
+Full verification checks it (`VER-008`). A `current.json` that names an instance
+the per-SHA reference does not is `HFVER008` at exit `40`:
+
+```text
+$ hfcache verify --full
+outcome       failed
+revisions     2
+HFVER008 (model:hf-internal-testing/tiny-random-gpt2): 1 ref_invalid finding in model:…
+exit=40
+```
+
+A `current.json` that will not parse at all is quieter, and knowing that matters:
+`status` drops the repository to `unverified` and a consumer using
+`examples/copy-revision.py` fails closed at exit `2`, but `verify --full` reports
+`clean` — it has no SHA to attribute a finding to. If `status` says `unverified`
+for a repository whose revisions all verify, read `current.json` by hand.
+
+To reconstruct it:
+
+```bash
+# what the archive retains, and which generation is newest.
+# --json is a *global* option and goes before the subcommand; `list --json`
+# is "No such option" at exit 2.
+$H --json list --revisions | jq '.data.repositories[].revisions'
+# the per-SHA reference for that generation is the correct content
+cat published/repos/<type>/<org>/<repo>/refs/revisions/<sha>.json
+```
+
+Observed:
+
+```text
+$ hfcache --json list --revisions
+  hf-internal-testing/tiny-random-gpt2  [('71034c5d', 1)]
+```
+
+Copy that file to `current.json` — the two schemas are identical
+(`docs/schemas.md` §4.2) — then re-verify. **Never choose a revision by directory
+modification time** (§31): a backup, a restore, or a repair changes mtimes, and
+the generation is the only ordering key that does not move (`AD-05`).
+
+If the per-SHA references are also gone, the manifests still carry
+`publication_generation` and can be read directly. If those are gone too, what
+remains is `audit/`, which is enough to prove what the archive held but not to
+serve it — restore from a snapshot.
+
+---
+
+## 9. Acceptance: what "recovered" means
+
+An archive is recovered when all four of these hold, in this order:
+
+```bash
+$H recover --dry-run      # actionable 0, blocked 0
+$H verify --full          # exit 0, outcome clean
+$H status                 # exit 0, no "archive degraded" line on stderr
+$H sync                   # exit 0
+```
+
+The last one matters and is easy to skip. `sync` is the first thing that takes
+the exclusive lock and reconciles journals *before* contacting the Hub (`TX-07`),
+so a clean sync is the proof that the archive will accept writes again — which is
+the thing an interrupted transaction takes away.
+
+Then, from a consumer, one copy end to end:
+
+```bash
+python3 copy-revision.py --mount /mnt/hfcache --type model \
+  --repository <org>/<name> --destination ./check
+```
+
+That exercises the path a downstream machine actually depends on, and it is the
+only check in this document that is performed from outside the writer.
