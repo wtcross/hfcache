@@ -34,8 +34,19 @@ consumers at all.
 
 ## Status
 
-Under active implementation. `docs/progress.md` is the authoritative work-package
-tracker; `docs/plan.md` is the accepted implementation plan.
+**`v0.1.2` — first tagged release, 2026-07-27.** The writer is complete and
+deployed: it syncs, publishes, retains five revisions, prunes, verifies, repairs,
+and recovers, under systemd with SELinux enforcing and validated hardening. It is
+running against a live NFS-backed ZFS archive.
+
+What remains is operator work that this project cannot perform for itself — the
+read-only consumer export, snapshots and replication, the disjointness proof from
+a second client, reboot persistence, and enabling the quarterly verification
+timer. All of it is listed, with copy-pasteable instructions and acceptance
+checks, under **Operator handoff** in `docs/progress.md`.
+
+`docs/progress.md` is the authoritative work-package tracker; `docs/plan.md` is
+the accepted implementation plan.
 
 ## Documentation
 
@@ -46,8 +57,17 @@ tracker; `docs/plan.md` is the accepted implementation plan.
 | [`docs/schemas.md`](docs/schemas.md) | Durable JSON formats: manifests, references, catalog, reports, journals |
 | [`docs/cli.md`](docs/cli.md) | Command surface, JSON output, exit codes, error taxonomy |
 | [`docs/security.md`](docs/security.md) | Assets, trust boundaries, threats, and the control enforcing each |
+| [`docs/deployment-centos-stream-10.md`](docs/deployment-centos-stream-10.md) | Building the writer host, installing, upgrading, and rolling back |
+| [`docs/operations.md`](docs/operations.md) | Running it: sync, verify, prune, status, timers, exit codes, measured performance |
+| [`docs/recovery.md`](docs/recovery.md) | Corruption, repair, snapshot restore, lost writer, and the stopped-machine states |
+| [`docs/consumers.md`](docs/consumers.md) | Copying and verifying a revision from a downstream host |
 | [`docs/plan.md`](docs/plan.md) | The accepted implementation plan |
 | [`docs/progress.md`](docs/progress.md) | Work-package tracker and operator handoff |
+
+`docs/truenas.md` is the one document in the plan's set that does not exist: it
+belongs to whoever performs the NAS-side handoff items, because the dataset
+tuning, the two exports, and the snapshot schedule are its content and none of
+them can be made or verified from the writer.
 
 ## Development
 
