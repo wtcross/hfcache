@@ -1547,14 +1547,54 @@ Work packages:
   see `docs/progress.md`.)*
 - `OPS-001`: Write installation and upgrade runbooks.
 - `OPS-002`: Write sync, verification, pruning, and status runbooks.
-- `OPS-003`: Write corruption and repair runbooks.
-- `OPS-004`: Write snapshot/replica restore runbook.
-- `OPS-005`: Run failure-injection suite.
-- `OPS-006`: Run capacity and throughput benchmarks.
-- `OPS-007`: Perform a downstream copy and manifest verification.
-- `REL-001`: Build and install release candidate from wheel.
-- `REL-002`: Run final quality and security gates.
-- `REL-003`: Tag and document the first release.
+- `RET-008`: Remove the empty `revisions/<sha>/` container a prune leaves behind.
+  *(Carried out of Phase 7. §7.4 tombstones the instance directory and its
+  manifest; nothing removes the now-empty SHA directory above it, so the tree
+  accumulates one per pruned revision forever in a consumer-visible location.
+  Nothing derived is wrong. Closing it adds an act to §7.4's checkpoint sequence,
+  which is a durable-contract change — hence its own package, ahead of `OPS-003`
+  so the runbook documents the fixed shape.)*
+- `OPS-003`: Write the corruption and repair runbook → `docs/recovery.md`
+  (repair half). Exercised on a **throwaway archive**, never on `/srv/hfcache`:
+  §36.5 forbids damaging published content, so the damage, the exit `40`, the
+  `repair` and the retirement grace are all demonstrated on a temporary root.
+  Covers §16.5, §31's corrupt-revision scenarios, and the `HFTXN001`–`HFTXN004`
+  stopped-machine states.
+- `OPS-004`: Write the snapshot and replica restore runbook → `docs/recovery.md`
+  (restore half), plus the lost-writer-VM and damaged-current-ref scenarios of
+  §31. The ZFS-side restore drill itself is operator work; what this package owns
+  is the procedure, the post-restore `verify --full`, and the catalog/reference
+  reconstruction that follows it.
+- `OPS-005`: Close §26.6's failure-injection matrix. **Substantially covered
+  already** — the §7.3 publication boundaries and the §7.5 repair ref switches
+  have tests; the thin rows are the §7.4 prune commit point and
+  `revision_ref_published`. This package audits the eleven injection points
+  against the suite, fills the gaps, and states the coverage explicitly so a
+  later reader does not have to re-derive it. Decide here whether these live in
+  `tests/integration/`, which plan §7 lists and which is **empty** — §26.2's
+  integration suite was written into `tests/unit/` against the same fixtures.
+- `OPS-006`: Measure §27's writer-side quantities against the current archive and
+  record them. Hub-to-writer download, writer-to-NFS write, NFS sequential read,
+  SHA-256 throughput, hardlink publication rate, and local Xet peak are all
+  measurable now. Space-per-five-revisions and snapshot-held space are **not**
+  meaningful until the production repository list exists and `NAS-006` is
+  configured; record the method and defer the numbers.
+- `OPS-007`: Write the consumer copy-and-verify helper and `docs/consumers.md`,
+  and exercise it from the writer against `published/`. **Sequence this early:**
+  operator handoff items 1, 2, and 5 are all tested *with* this helper, so it
+  unblocks the NAS-side work rather than waiting on it.
+- `REL-001`: Build and install a release candidate **from the wheel**. Note the
+  gap this closes: `scripts/install-release.sh` currently stages a source tree
+  and runs `uv sync`, so no deployed release has been installed from the built
+  artifact. Changing the mechanism invalidates `OPS-001`'s exercised output, so
+  either re-exercise that runbook in the same commit or record why the source-tree
+  install remains the supported path and the wheel is only smoke-tested.
+- `REL-002`: Run the final quality and security gates, and close the two Phase 7
+  carried items — `RET-008` above and the `RestrictSUIDSGID` watch item of
+  decision 61 — as either fixed or explicitly accepted.
+- `REL-003`: Tag and document the first release. Decide the version: `0.1.1` is
+  live and untagged, having been cut at `OPS-001` only so that a rollback had
+  somewhere to go.
 
 Acceptance:
 
