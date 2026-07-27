@@ -379,7 +379,15 @@ content it no longer holds carries a signal nobody can clear.
 
 `publication_id` is nullable in both `outstanding_failures[]` and
 `repositories[].revisions[]`, for the single case §7 gives: a reference that
-would not parse names no publication instance.
+would not parse names no publication instance. `commit_sha` is additionally
+nullable in `outstanding_failures[]` — and only there, never in
+`repositories[].revisions[]` — for §7's single case of a `current.json` that
+would not parse, which names no revision either. The clearing rule for such an
+entry follows from what re-reads the reference: only `--full` does, so a
+narrower run carries the entry forward untouched, a `--full` clears it — or
+re-adds it with `first_seen_at` preserved while the reference is still
+unreadable — and it leaves with its repository if the repository leaves
+`published/`.
 
 `repositories[].revisions[]` is sorted ascending by `commit_sha` and holds at
 most one entry per revision — it records the *most recent* outcome, not a
@@ -517,12 +525,18 @@ fields plus:
 | `ref_invalid` | A reference names a missing or inconsistent tree or manifest |
 | `manifest_invalid` | A manifest fails schema validation or internal consistency |
 
-`finding.publication_id` is `null` for exactly one case: a `ref_invalid` finding
-about a reference that would not parse. Such a reference names no publication
-instance, so there is none to record, and naming whichever instance the
-filesystem happens to hold would assert precisely what the unreadable reference
-failed to say. Every other finding carries the publication id of the instance it
-is about.
+Two finding fields are nullable, each for exactly one case.
+`finding.publication_id` is `null` only for a `ref_invalid` finding about a
+reference that would not parse: such a reference names no publication instance,
+so there is none to record, and naming whichever instance the filesystem happens
+to hold would assert precisely what the unreadable reference failed to say.
+`finding.commit_sha` is `null` only for the narrower case of a `current.json`
+that would not parse (`VER-009`): a per-SHA reference carries its SHA in its
+filename, so even unreadable it still names a revision, but `current.json` names
+nothing at all. Such a finding carries `commit_sha: null`,
+`publication_id: null`, and no `path`, and the model refuses a null `commit_sha`
+in any other shape. Every other finding names the revision and the publication
+instance it is about.
 
 A verification failure **never** rewrites the manifest, prunes the revision, or
 re-downloads over the evidence (`AD-13`, `AD-18`). It records findings, updates

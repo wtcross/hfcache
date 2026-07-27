@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, get_args
 
 import pytest
+from pydantic import ValidationError
 
 from hfcache.archive import initialize_archive
 from hfcache.errors import ConfigurationError, HfcacheError
@@ -33,7 +34,7 @@ from hfcache.identity import (
 )
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.publication import create_staging, next_generation, read_reference
-from hfcache.reporting import Finding, RepositoryRunResult, RunReport
+from hfcache.reporting import Finding, OutstandingFailure, RepositoryRunResult, RunReport
 from hfcache.storage import parse_mount_table, write_model
 from hfcache.sync import Timeline, build_manifest, hash_snapshot, publish_revision
 from hfcache.transactions import open_transaction
@@ -563,19 +564,124 @@ def test_a_repository_with_no_current_ref_is_not_a_finding(layout):
     assert resolve_current_reference(layout, MODEL) == ()
 
 
-def test_a_current_ref_that_will_not_parse_yields_no_finding_here(layout):
-    """The documented limit of `VER-008`.
+def test_a_current_ref_that_will_not_parse_is_a_finding_with_no_sha(layout):
+    """`VER-009`, closing the limit `VER-008` documented (decision 73).
 
-    A `Finding` requires a `commit_sha`, and a `current.json` that will not parse
-    supplies none — its own filename carries no SHA, unlike `refs/revisions/`.
-    Rather than attribute the damage to a revision that may be perfectly sound,
-    nothing is reported here. It is not silent: `status` drops the repository to
-    `unverified`, and `examples/copy-revision.py` fails closed on it at exit `2`.
+    A `current.json` that will not parse names no revision — its own filename
+    carries no SHA, unlike `refs/revisions/` — so the finding carries a null
+    `commit_sha` and `publication_id` rather than attributing the damage to a
+    revision that may be perfectly sound. The one file a consumer must read is
+    unreadable, and the integrity command now says so durably.
     """
     publish(layout)
     current_ref_of(layout).write_text("{ truncated", encoding="utf-8")
 
-    assert resolve_current_reference(layout, MODEL) == ()
+    (finding,) = resolve_current_reference(layout, MODEL)
+
+    assert finding.kind == "ref_invalid"
+    assert finding.commit_sha is None
+    assert finding.publication_id is None
+    assert finding.path is None
+    assert "the current reference could not be read" in (finding.observed or "")
+
+
+def test_a_current_ref_that_parses_but_fails_the_schema_is_the_same_finding(layout):
+    """Valid JSON that is not a valid reference is the same damage: unreadable."""
+    publish(layout)
+    current_ref_of(layout).write_text(json.dumps({"commit_sha": "not a sha"}), encoding="utf-8")
+
+    (finding,) = resolve_current_reference(layout, MODEL)
+
+    assert finding.kind == "ref_invalid"
+    assert finding.commit_sha is None
+    assert finding.publication_id is None
+
+
+def test_an_unparseable_current_ref_is_one_finding_and_the_revision_still_verifies(layout):
+    """One broken file, one finding — and the sound revision stays clean.
+
+    The damage is the pointer, not the bytes it pointed at: the retained
+    revision must come out of the same run verified, or a broken `current.json`
+    would smear `failed` over content that is intact.
+    """
+    outcome = publish(layout)
+    current_ref_of(layout).write_text("{ truncated", encoding="utf-8")
+
+    resolved = resolve_repository(layout, MODEL)
+    findings = run(resolved)
+
+    assert kinds(findings) == ["ref_invalid"]
+    assert findings[0].commit_sha is None
+    targets = [item.target for item in resolved if item.target is not None]
+    assert [target.reference.commit_sha for target in targets] == [outcome.commit_sha]
+
+
+def finding_payload(**overrides) -> dict:
+    """The one shape a null-SHA finding is allowed to take, ready to distort."""
+    return {
+        "commit_sha": None,
+        "kind": "ref_invalid",
+        "observed": "the current reference could not be read: truncated",
+        "publication_id": None,
+        "repository_id": MODEL.id,
+        "repository_type": str(MODEL.type),
+    } | overrides
+
+
+def test_a_finding_with_no_sha_is_accepted_only_as_the_unreadable_current_reference():
+    """The widened field is guarded, not merely optional (`VER-009`).
+
+    A null `commit_sha` means "this damage belongs to no revision", and exactly
+    one artifact can be damaged that way: a `current.json` that would not parse,
+    which also names no instance and no path. Any other null-SHA shape is a
+    finding this module never produces, and the model refuses to carry it.
+    """
+    accepted = Finding.model_validate(finding_payload())
+    assert accepted.commit_sha is None
+    assert accepted.sort_key[2] == ""
+
+
+@pytest.mark.parametrize(
+    "distortion",
+    [
+        {"kind": "digest_mismatch"},
+        {"publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27"},
+        {"path": "config.json"},
+    ],
+)
+def test_any_other_null_sha_finding_shape_is_refused(distortion):
+    with pytest.raises(ValidationError, match="commit_sha is null only"):
+        Finding.model_validate(finding_payload(**distortion))
+
+
+def outstanding_payload(**overrides) -> dict:
+    return {
+        "commit_sha": None,
+        "first_seen_at": "2026-07-27T12:00:00Z",
+        "kind": "ref_invalid",
+        "publication_id": None,
+        "repository_id": MODEL.id,
+        "repository_type": str(MODEL.type),
+    } | overrides
+
+
+def test_an_outstanding_failure_with_no_sha_is_held_to_the_same_shape():
+    accepted = OutstandingFailure.model_validate(outstanding_payload())
+    assert accepted.commit_sha is None
+    assert accepted.sort_key[2] == ""
+
+
+@pytest.mark.parametrize(
+    "distortion",
+    [
+        {"kind": "missing"},
+        {"publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27"},
+        {"path": "config.json"},
+    ],
+)
+def test_any_other_null_sha_outstanding_shape_is_refused(distortion):
+    with pytest.raises(ValidationError, match="commit_sha is null only"):
+        OutstandingFailure.model_validate(outstanding_payload(**distortion))
 
 
 def test_an_unreadable_manifest_is_manifest_invalid(layout):

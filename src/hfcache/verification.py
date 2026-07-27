@@ -263,7 +263,7 @@ class VerificationTarget:
 def _finding(
     identity: RepositoryIdentity,
     *,
-    commit_sha: str,
+    commit_sha: str | None,
     kind: str,
     publication_id: str | None,
     **fields: object,
@@ -273,7 +273,9 @@ def _finding(
     `publication_id` is `None` only for a reference that would not load: such a
     reference names no instance, so there is no publication to attribute the
     finding to and inventing one would be a claim this module cannot support
-    (decision 49).
+    (decision 49). `commit_sha` is `None` only for a `current.json` that would
+    not parse (`VER-009`): it names no revision either, and unlike a per-SHA
+    reference its filename carries no SHA to fall back on.
     """
     return Finding.model_validate(
         {
@@ -454,19 +456,28 @@ def resolve_current_reference(
     on `publication_id`.
 
     A repository with no `current.json` is not a finding — nothing has completed a
-    publication there yet. A `current.json` that will not parse at all is reported
-    by `resolve_revision`'s sibling path only when a SHA can be recovered from it;
-    an unparseable one is left to `status`, which drops the repository to
-    `unverified`, and to the consumer helper, which fails closed on it.
+    publication there yet. A `current.json` that will not parse at all *is* one
+    (`VER-009`): the one file a consumer must read is unreadable, which is damage
+    to report, not a state to infer around. It names no revision and no instance,
+    so the finding carries a null `commit_sha` and `publication_id` — attributing
+    the damage to a retained revision that may be perfectly sound would assert
+    exactly what the unreadable reference failed to say.
     """
     repository = RepositoryLayout(archive=layout, identity=identity)
     if not repository.current_ref.is_file():
         return ()
     try:
         current = read_reference(layout, repository.current_ref)
-    except HfcacheError:
-        # No commit SHA to attribute a finding to; see the docstring.
-        return ()
+    except HfcacheError as error:
+        return (
+            _finding(
+                identity,
+                commit_sha=None,
+                kind="ref_invalid",
+                publication_id=None,
+                observed=_reason(error, "the current reference"),
+            ),
+        )
 
     retained = repository.revision_ref(CommitSha(current.commit_sha))
     if not retained.is_file():
@@ -782,9 +793,15 @@ class RevisionOutcome:
     `catalog/verification.json` records an outcome *per revision* — and "this
     revision was re-read and was clean" is a fact no set of findings can express,
     findings being what a clean revision does not produce.
+
+    `commit_sha` is `None` for the one coverage the run makes that is not a
+    revision: a `current.json` that would not parse (`VER-009`). Such an outcome
+    still counts toward the scope — the run did look — but it never becomes a
+    per-revision catalog entry, because an outcome attributed to no revision
+    raises nobody's confidence.
     """
 
-    commit_sha: str
+    commit_sha: str | None
     findings: tuple[Finding, ...]
     identity: RepositoryIdentity
     publication_id: str | None
@@ -1156,16 +1173,27 @@ def verification_catalog(
     """
     previous = read_verification_catalog(layout)
     retained = retained_keys(layout)
+    published = {(str(identity.type), identity.id) for identity in published_repositories(layout)}
     covered = {
         (str(revision.identity.type), revision.identity.id, revision.commit_sha)
         for revision in outcome.revisions_covered
+        # A null-SHA outcome is the current reference, not a revision, and the
+        # covered set is keyed by revision (`VER-009`).
+        if revision.commit_sha is not None
     }
     return VerificationCatalog(
         generated_at=outcome.completed_at,
         last_full_verification=_last_full(previous, outcome, mode=mode, report=report),
         outstanding_failures=tuple(
             sorted(
-                _outstanding(previous, outcome, retained=retained, covered=covered),
+                _outstanding(
+                    previous,
+                    outcome,
+                    mode=mode,
+                    published=published,
+                    retained=retained,
+                    covered=covered,
+                ),
                 key=lambda failure: failure.sort_key,
             )
         ),
@@ -1188,6 +1216,11 @@ def _repository_entries(
             if key in retained and key not in covered:
                 held.setdefault(key[:2], {})[revision.commit_sha] = revision
     for revision in outcome.revisions_covered:
+        if revision.commit_sha is None:
+            # The current reference would not parse (`VER-009`). Its finding is
+            # in `outstanding_failures`; a per-revision outcome without a
+            # revision would be meaningless here.
+            continue
         key = (str(revision.identity.type), revision.identity.id)
         held.setdefault(key, {})[revision.commit_sha] = VerificationRevisionEntry(
             commit_sha=revision.commit_sha,
@@ -1212,10 +1245,12 @@ def _repository_entries(
     )
 
 
-def _outstanding(
+def _outstanding(  # noqa: PLR0913 - the facts §5.2's clearing rules read, one argument each
     previous: VerificationCatalog | None,
     outcome: VerificationOutcome,
     *,
+    mode: Literal["new", "full", "revision"],
+    published: set[tuple[str, str]],
     retained: set[tuple[str, str, str]],
     covered: set[tuple[str, str, str]],
 ) -> list[OutstandingFailure]:
@@ -1230,8 +1265,9 @@ def _outstanding(
     kept = [
         failure
         for failure in existing
-        if (key := (failure.repository_type, failure.repository_id, failure.commit_sha)) in retained
-        and key not in covered
+        if _still_outstanding(
+            failure, mode=mode, published=published, retained=retained, covered=covered
+        )
     ]
     return kept + [
         OutstandingFailure(
@@ -1245,6 +1281,35 @@ def _outstanding(
         )
         for finding in outcome.findings
     ]
+
+
+def _still_outstanding(
+    failure: OutstandingFailure,
+    *,
+    mode: Literal["new", "full", "revision"],
+    published: set[tuple[str, str]],
+    retained: set[tuple[str, str, str]],
+    covered: set[tuple[str, str, str]],
+) -> bool:
+    """Whether a run that produced no matching finding leaves this entry standing.
+
+    A revision-keyed failure follows §5.2's rule: it stands while its revision is
+    retained and this run did not re-read it.
+
+    A failure with no `commit_sha` is the current reference itself (`VER-009`),
+    and the revision rule cannot clear it — no retained key ever matches. The
+    current-reference check runs only through `resolve_repository`, so only
+    `--full` re-reads it today. Hence: a narrower run carries the entry forward
+    unchanged, a `--full` run drops it — re-adding it with `first_seen_at`
+    preserved when the reference is still unreadable — and a repository leaving
+    `published/` takes it along. This rule must be revisited if a narrower mode
+    ever grows the current-reference check, or a clean `--new` would clear a
+    failure it never re-read.
+    """
+    if failure.commit_sha is None:
+        return mode != "full" and (failure.repository_type, failure.repository_id) in published
+    key = (failure.repository_type, failure.repository_id, failure.commit_sha)
+    return key in retained and key not in covered
 
 
 def _last_full(

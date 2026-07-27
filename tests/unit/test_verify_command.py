@@ -26,6 +26,7 @@ from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, new_r
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.publication import (
+    VerificationStates,
     publish_verification_catalog,
     read_verification_catalog,
     rebuild_catalog,
@@ -956,6 +957,177 @@ def test_an_unreadable_reference_is_recorded_without_naming_an_instance(config_p
     assert catalog.outstanding_failures[0].publication_id is None
     assert catalog.repositories[0].revisions[0].publication_id is None
     assert catalog.repositories[0].revisions[0].outcome == "failed"
+
+
+# --------------------------------------------------------------------------- #
+# An unparseable current reference (`VER-009`)
+# --------------------------------------------------------------------------- #
+
+
+def current_ref_path(layout: ArchiveLayout) -> Path:
+    return RepositoryLayout(archive=layout, identity=MODEL).current_ref
+
+
+def test_an_unparseable_current_ref_is_hfver008_at_exit_40(config_path, archive):
+    """`VER-009`, closing decision 73's documented limit.
+
+    The one file a consumer must read will not parse, and the run now says so
+    durably: exit `40`, exactly one finding, attributed to no revision and no
+    instance because the damage is the pointer itself.
+    """
+    publish(archive)
+    current_ref_path(archive).write_text("{ truncated", encoding="utf-8")
+
+    result = invoke(config_path, "--full")
+
+    assert result.exit_code == ExitCode.INTEGRITY
+    envelope = envelope_of(result)
+    assert [problem["code"] for problem in envelope["errors"]] == ["HFVER008"]
+    (finding,) = envelope["data"]["findings"]
+    assert finding["kind"] == "ref_invalid"
+    assert finding["commit_sha"] is None
+    assert finding["publication_id"] is None
+
+
+def test_a_schema_invalid_current_ref_is_the_same_finding_at_exit_40(config_path, archive):
+    """Valid JSON that is not a valid reference is equally unreadable."""
+    publish(archive)
+    current_ref_path(archive).write_text(json.dumps({"commit_sha": "not a sha"}), encoding="utf-8")
+
+    result = invoke(config_path, "--full")
+
+    assert result.exit_code == ExitCode.INTEGRITY
+    (finding,) = envelope_of(result)["data"]["findings"]
+    assert finding["kind"] == "ref_invalid"
+    assert finding["commit_sha"] is None
+
+
+def test_a_null_sha_failure_is_outstanding_and_never_a_revision_entry(config_path, archive):
+    """`docs/schemas.md` §5.2: the failure lands in `outstanding_failures[]` and
+    the sound revision it pointed at stays clean in `repositories[].revisions[]`."""
+    published = publish(archive)
+    current_ref_path(archive).write_text("{ truncated", encoding="utf-8")
+
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.is_degraded
+    (failure,) = catalog.outstanding_failures
+    assert failure.commit_sha is None
+    assert failure.publication_id is None
+    assert failure.kind == "ref_invalid"
+    (entry,) = catalog.repositories
+    assert [revision.commit_sha for revision in entry.revisions] == [published.commit_sha]
+    assert entry.revisions[0].outcome == "clean"
+
+
+def test_a_narrow_run_carries_a_null_sha_failure_forward(config_path, archive):
+    """§5.2's rule holds for the entry the retained-key rule cannot see.
+
+    A null-SHA failure matches no retained revision key, so the ordinary
+    clearing rule would silently drop it on the next narrow run — a `--revision`
+    that never re-read the current reference would then appear to have fixed it.
+    It is carried forward instead: only `--full` re-checks the reference today.
+    """
+    published = publish(archive)
+    current_ref_path(archive).write_text("{ truncated", encoding="utf-8")
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    healthy = invoke(config_path, "--revision", f"{MODEL.selector}@{published.commit_sha}")
+    assert healthy.exit_code == ExitCode.SUCCESS
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.is_degraded
+    (failure,) = catalog.outstanding_failures
+    assert failure.commit_sha is None
+
+
+def test_a_clean_full_run_clears_a_null_sha_failure(config_path, archive):
+    published = publish(archive)
+    reference = current_ref_path(archive).read_bytes()
+    current_ref_path(archive).write_bytes(b"{ truncated")
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    current_ref_path(archive).write_bytes(reference)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.outstanding_failures == ()
+    assert not catalog.is_degraded
+    assert published.commit_sha  # the revision came through it all retained
+
+
+def test_a_still_broken_full_run_preserves_a_null_sha_first_seen_at(config_path, archive):
+    """A `--full` re-reads the reference, so it drops and re-adds the entry —
+    and the re-add must not reset the clock an operator reads."""
+    publish(archive)
+    current_ref_path(archive).write_text("{ truncated", encoding="utf-8")
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+    first = read_verification_catalog(archive)
+    assert first is not None
+
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+    second = read_verification_catalog(archive)
+    assert second is not None
+
+    (failure,) = second.outstanding_failures
+    assert failure.first_seen_at == first.outstanding_failures[0].first_seen_at
+    assert second.generated_at > first.generated_at
+
+
+def test_a_null_sha_failure_leaves_when_its_repository_leaves_published(tmp_path, archive):
+    """The health signal follows the content: a repository removed from
+    `published/` has no current reference to repair, and a degraded flag nobody
+    can clear is the same defect the retained-set rule closes for revisions."""
+    published = publish(archive)
+    dataset = publish(archive, identity=DATASET, commit_sha=SHA_B)
+    both = tmp_path / "both.toml"
+    both.write_text(
+        config_for(archive.root)
+        + f"""
+[[repositories]]
+id = "{DATASET.id}"
+type = "{DATASET.type}"
+""",
+        encoding="utf-8",
+    )
+    current_ref_path(archive).write_text("{ truncated", encoding="utf-8")
+    assert invoke(both, "--full").exit_code == ExitCode.INTEGRITY
+
+    shutil.rmtree(RepositoryLayout(archive=archive, identity=MODEL).directory)
+    healthy = invoke(both, "--revision", f"{DATASET.selector}@{dataset.commit_sha}")
+    assert healthy.exit_code == ExitCode.SUCCESS
+
+    catalog = read_verification_catalog(archive)
+    assert catalog is not None
+    assert catalog.outstanding_failures == ()
+    assert not catalog.is_degraded
+    assert published.commit_sha  # the model's revision existed until the removal
+
+
+def test_status_reports_degraded_over_a_null_sha_failure(config_path, archive):
+    publish(archive)
+    current_ref_path(archive).write_text("{ truncated", encoding="utf-8")
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    health = status_of(config_path)["archive"]["verification"]
+    assert health["degraded"] is True
+    assert health["outstanding_failures"] == 1
+
+
+def test_verification_states_are_untouched_by_a_null_sha_failure(config_path, archive):
+    """`repositories[].revisions[]` never carries a null SHA, so every consumer
+    of `VerificationStates` reads exactly what it read before: the revision was
+    re-read clean in the same run that reported the reference unreadable."""
+    published = publish(archive)
+    current_ref_path(archive).write_text("{ truncated", encoding="utf-8")
+    assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
+
+    states = VerificationStates.of(archive)
+    assert states.state_of(MODEL, published.commit_sha, published.publication_id) == "verified"
 
 
 def test_a_report_that_cannot_be_written_is_reported(config_path, archive, monkeypatch):

@@ -386,7 +386,16 @@ class Finding(DurableModel):
     evidence (`AD-13`, `AD-18`). It is recorded, surfaced, and exits `40`.
     """
 
-    commit_sha: CommitShaField
+    commit_sha: CommitShaField | None = None
+    """`null` only for a current reference that would not parse (`VER-009`).
+
+    `refs/revisions/<sha>.json` carries its SHA in its filename, so a finding
+    about one always names a revision even when the file will not load.
+    `current.json` does not: unparseable, it names no revision at all, and
+    attributing the damage to a retained revision would assert exactly what the
+    unreadable reference failed to say. The validator below holds this to the
+    one case.
+    """
     expected: str | None = None
     kind: Literal[
         "missing",
@@ -412,13 +421,26 @@ class Finding(DurableModel):
     repository_id: RepositoryIdField
     repository_type: RepositoryTypeField
 
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        if self.commit_sha is None and (
+            self.kind != "ref_invalid" or self.publication_id is not None or self.path is not None
+        ):
+            message = (
+                "commit_sha is null only for a ref_invalid finding carrying no publication_id "
+                "and no path — a current reference that would not parse names no revision, and "
+                "every other finding is about a revision the archive names"
+            )
+            raise ValueError(message)
+        return self
+
     @property
     def sort_key(self) -> tuple[str, str, str, str, str]:
         """Deterministic ordering for the findings array."""
         return (
             self.repository_type,
             self.repository_id,
-            self.commit_sha,
+            self.commit_sha or "",
             self.path or "",
             self.kind,
         )
@@ -570,7 +592,8 @@ class OutstandingFailure(DurableModel):
     problem it never looked at.
     """
 
-    commit_sha: CommitShaField
+    commit_sha: CommitShaField | None = None
+    """`null` only for a current reference that would not parse, as in `Finding`."""
     first_seen_at: Timestamp
     kind: str
     path: RepositoryPath | None = None
@@ -579,13 +602,25 @@ class OutstandingFailure(DurableModel):
     repository_id: RepositoryIdField
     repository_type: RepositoryTypeField
 
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        if self.commit_sha is None and (
+            self.kind != "ref_invalid" or self.publication_id is not None or self.path is not None
+        ):
+            message = (
+                "commit_sha is null only for a ref_invalid failure carrying no publication_id "
+                "and no path, exactly as in Finding"
+            )
+            raise ValueError(message)
+        return self
+
     @property
     def sort_key(self) -> tuple[str, str, str, str, str]:
         """Deterministic ordering for the outstanding-failures array."""
         return (
             self.repository_type,
             self.repository_id,
-            self.commit_sha,
+            self.commit_sha or "",
             self.path or "",
             self.kind,
         )

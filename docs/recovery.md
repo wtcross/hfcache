@@ -548,11 +548,17 @@ HFVER008 (model:hf-internal-testing/tiny-random-gpt2): 1 ref_invalid finding in 
 exit=40
 ```
 
-A `current.json` that will not parse at all is quieter, and knowing that matters:
-`status` drops the repository to `unverified` and a consumer using
-`examples/copy-revision.py` fails closed at exit `2`, but `verify --full` reports
-`clean` — it has no SHA to attribute a finding to. If `status` says `unverified`
-for a repository whose revisions all verify, read `current.json` by hand.
+A `current.json` that will not parse at all is just as loud since `VER-009`
+(0.1.3): `verify --full` reports it as `HFVER008` at exit `40`, with a finding
+whose `commit_sha` and `publication_id` are null — the damage is the pointer
+itself, and attributing it to a retained revision would assert exactly what the
+unreadable file failed to say. The failure stays outstanding, and `status`
+reports the archive degraded, until a `--full` re-reads the reference; a
+consumer using `examples/copy-revision.py` fails closed at exit `2` throughout.
+On releases before 0.1.3 this case was quiet — `verify --full` reported `clean`
+and only `status`'s `unverified` hinted at it — so on an old release, if
+`status` says `unverified` for a repository whose revisions all verify, read
+`current.json` by hand.
 
 To reconstruct it:
 
