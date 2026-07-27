@@ -1,15 +1,16 @@
-"""Repair, and the recovery that finishes what a repair or a prune left open.
+"""Crash injection for publication, prune, repair, and recovery.
 
-`docs/architecture.md` §7.5 and plan §16.5. The property every test here circles
-is `AD-13`: repair must not be able to launder corrupt bytes into the expected
-value. So the archive is built by publishing for real, damaged for real, and the
-repair is run through `repair_revision` — and what is asserted afterwards is that
-the *original* manifest is unchanged, that the retired instance is still
-readable, and that a download which does not match is refused outright.
+Every interruption here is provoked rather than fabricated: a step is made to
+fail, the transaction stops where it stopped, and `recover` is asked what to do
+about the state that actually resulted. `tests/unit/test_failure_matrix.py`
+maps these injections onto plan §26.6's points.
 
-The recovery half provokes genuine partial executions rather than fabricating
-journals: a step is made to fail, the transaction stops where it stopped, and
-`recover` is asked what to do about the state that actually resulted.
+The repair half additionally circles `AD-13` (`docs/architecture.md` §7.5, plan
+§16.5): repair must not be able to launder corrupt bytes into the expected
+value. So the archive is built by publishing for real, damaged for real, and
+the repair is run through `repair_revision` — and what is asserted afterwards
+is that the *original* manifest is unchanged, that the retired instance is
+still readable, and that a download which does not match is refused outright.
 """
 
 import json

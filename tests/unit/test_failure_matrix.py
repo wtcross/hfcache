@@ -8,8 +8,7 @@ The tests that establish that are spread across four modules, because each lives
 beside the fixtures it needs — the crash injections next to the recovery they
 exercise, the verification interruption next to the `verify` command. That is the
 right place for them to run and the wrong place to read the matrix from, because
-nothing in `test_repair.py`'s name suggests it holds the publication and prune
-boundaries too.
+no single module holds the whole map.
 
 So the map lives here, and it is executable. `MATRIX` names, for each of §26.6's
 eleven points, the test functions that cover it; the test below resolves every
@@ -24,13 +23,12 @@ from typing import Final
 
 import pytest
 
-# Every module named in `MATRIX`, so a typo in a module name fails here rather
-# than silently skipping a row.
+# Exactly the modules named in `MATRIX` — asserted below, so the list can
+# neither miss a module the matrix names nor keep one it no longer does.
 MODULES: Final = (
+    "tests.unit.test_crash_injection",
     "tests.unit.test_recovery_planning",
-    "tests.unit.test_repair",
     "tests.unit.test_synchronize",
-    "tests.unit.test_verification",
     "tests.unit.test_verify_command",
 )
 
@@ -71,13 +69,16 @@ MATRIX: Final[dict[str, tuple[tuple[str, str], ...]]] = {
     # 4 — the staged manifest is written at §7.3 step 4 and published at step 6;
     # crashing the second write is a crash during manifest creation.
     "during manifest creation": (
-        ("tests.unit.test_repair", "test_a_publication_interrupted_after_the_rename_rolls_forward"),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
+            "test_a_publication_interrupted_after_the_rename_rolls_forward",
+        ),
+        (
+            "tests.unit.test_crash_injection",
             "test_a_staged_manifest_that_vanished_is_quarantined_not_published",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_tree_that_cannot_be_validated_is_quarantined_not_published",
         ),
     ),
@@ -98,46 +99,64 @@ MATRIX: Final[dict[str, tuple[tuple[str, str], ...]]] = {
     ),
     # 6
     "after revision rename, before ref replacement": (
-        ("tests.unit.test_repair", "test_a_publication_interrupted_after_the_rename_rolls_forward"),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
+            "test_a_publication_interrupted_after_the_rename_rolls_forward",
+        ),
+        (
+            "tests.unit.test_crash_injection",
             "test_a_publication_interrupted_before_the_reference_rolls_forward",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_published_tree_that_does_not_match_its_manifest_is_never_referenced",
         ),
     ),
     # 7 — `revision_ref_published`, one of the two rows `OPS-005` found thin.
     "after ref replacement, before pruning": (
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_publication_interrupted_before_the_current_ref_rolls_forward",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_publication_interrupted_before_the_catalog_rolls_forward",
         ),
-        ("tests.unit.test_repair", "test_an_older_revision_rolled_forward_does_not_become_current"),
+        (
+            "tests.unit.test_crash_injection",
+            "test_an_older_revision_rolled_forward_does_not_become_current",
+        ),
     ),
     # 8 — the §7.4 prune commit point, the other thin row.
     "during publication-tree removal": (
-        ("tests.unit.test_repair", "test_a_prune_interrupted_before_its_commit_point_rolls_back"),
-        ("tests.unit.test_repair", "test_a_prune_interrupted_at_its_commit_point_rolls_back"),
-        ("tests.unit.test_repair", "test_a_prune_interrupted_after_its_commit_point_rolls_forward"),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
+            "test_a_prune_interrupted_before_its_commit_point_rolls_back",
+        ),
+        (
+            "tests.unit.test_crash_injection",
+            "test_a_prune_interrupted_at_its_commit_point_rolls_back",
+        ),
+        (
+            "tests.unit.test_crash_injection",
+            "test_a_prune_interrupted_after_its_commit_point_rolls_forward",
+        ),
+        (
+            "tests.unit.test_crash_injection",
             "test_a_prune_interrupted_before_its_containers_are_removed_is_completed",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_prune_that_crashed_before_the_tombstone_rolls_back_with_no_trash",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_prune_whose_audit_records_landed_only_needs_its_trash_removed",
         ),
-        ("tests.unit.test_repair", "test_a_rollback_that_cannot_restore_the_tree_is_hfret005"),
+        (
+            "tests.unit.test_crash_injection",
+            "test_a_rollback_that_cannot_restore_the_tree_is_hfret005",
+        ),
     ),
     # 9
     "during hub cache cleanup": (
@@ -150,23 +169,23 @@ MATRIX: Final[dict[str, tuple[tuple[str, str], ...]]] = {
     # 10
     "before and between repair ref replacements": (
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_repair_interrupted_before_the_rename_changes_nothing_and_rolls_back",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_repair_interrupted_between_the_two_ref_switches_is_completed",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_an_interrupted_repair_whose_replacement_is_damaged_switches_nothing",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_replacement_lost_between_the_rename_and_the_re_read_switches_nothing",
         ),
         (
-            "tests.unit.test_repair",
+            "tests.unit.test_crash_injection",
             "test_a_repair_of_a_non_current_revision_completes_without_moving_current",
         ),
     ),
@@ -196,6 +215,13 @@ def test_every_documented_injection_point_is_mapped():
 @pytest.mark.parametrize("module", MODULES)
 def test_every_module_named_in_the_matrix_imports(module):
     assert importlib.import_module(module) is not None
+
+
+def test_the_module_list_is_exactly_what_the_matrix_names():
+    """`MODULES` claims to be the modules `MATRIX` draws from — so derive that
+    set and compare, rather than trusting the tuple to be maintained by hand."""
+    named = {module for covering in MATRIX.values() for module, _ in covering}
+    assert set(MODULES) == named
 
 
 @pytest.mark.parametrize(("point", "covering"), sorted(MATRIX.items()))
