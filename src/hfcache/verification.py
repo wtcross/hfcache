@@ -98,6 +98,7 @@ __all__ = [
     "persist_verification",
     "require_retained",
     "resolve_archive",
+    "resolve_current_reference",
     "resolve_repository",
     "resolve_revision",
     "resolve_run",
@@ -435,6 +436,73 @@ def _reason(error: HfcacheError, what: str) -> str:
     return f"{what} could not be read: " + "; ".join(problem.message for problem in error.problems)
 
 
+def resolve_current_reference(
+    layout: ArchiveLayout, identity: RepositoryIdentity
+) -> tuple[Finding, ...]:
+    """Check `refs/current.json` against the retained set (`VER-008`).
+
+    Verification enumerates `refs/revisions/`, because that is what makes a SHA
+    retained (`FS-11`). `current.json` is not in that set, and until now nothing
+    read it — so the **one file a consumer must read** (§6.3) was the one artifact
+    a full verification never looked at, while plan §16.2 step 3 said it
+    validated refs. A `current.json` naming an instance that does not exist is
+    `FS-10`'s dangling reference, it strands every consumer that resolves it, and
+    `verify --full` called the archive clean.
+
+    `docs/schemas.md` §4.2 states the invariant this enforces: `current.json`
+    always names a SHA that also has a `refs/revisions/<sha>.json`, and both agree
+    on `publication_id`.
+
+    A repository with no `current.json` is not a finding — nothing has completed a
+    publication there yet. A `current.json` that will not parse at all is reported
+    by `resolve_revision`'s sibling path only when a SHA can be recovered from it;
+    an unparseable one is left to `status`, which drops the repository to
+    `unverified`, and to the consumer helper, which fails closed on it.
+    """
+    repository = RepositoryLayout(archive=layout, identity=identity)
+    if not repository.current_ref.is_file():
+        return ()
+    try:
+        current = read_reference(layout, repository.current_ref)
+    except HfcacheError:
+        # No commit SHA to attribute a finding to; see the docstring.
+        return ()
+
+    retained = repository.revision_ref(CommitSha(current.commit_sha))
+    if not retained.is_file():
+        return (
+            _reference_finding(
+                identity,
+                current,
+                "ref_invalid",
+                f"current.json names {current.commit_sha}, which the archive does not retain: "
+                f"there is no {layout.archive_relative(retained)}",
+            ),
+        )
+    try:
+        active = read_reference(layout, retained)
+    except HfcacheError:
+        # The per-SHA reference is the damaged artifact and `resolve_revision`
+        # reports it against its own SHA. A second finding here would describe one
+        # broken file twice, which is the noise `_agreement_findings` avoids for
+        # the same reason.
+        return ()
+    if active.publication_id == current.publication_id:
+        # They agree, so anything else wrong with that instance belongs to the
+        # revision, and `resolve_revision` has already looked at it.
+        return ()
+    return (
+        _reference_finding(
+            identity,
+            current,
+            "ref_invalid",
+            f"current.json names instance {current.publication_id} but "
+            f"refs/revisions/{current.commit_sha}.json names {active.publication_id}; "
+            f"they must agree (`docs/schemas.md` §4.2)",
+        ),
+    )
+
+
 def resolve_repository(layout: ArchiveLayout, identity: RepositoryIdentity) -> tuple[Resolved, ...]:
     """Every retained revision of one repository, in commit-SHA order.
 
@@ -455,6 +523,11 @@ def resolve_repository(layout: ArchiveLayout, identity: RepositoryIdentity) -> t
         if not _is_commit_sha(path.stem):
             continue
         resolved.append(resolve_revision(layout, identity, CommitSha(path.stem)))
+    # `current.json` is not in `refs/revisions/`, so nothing above reaches it
+    # (`VER-008`). It is reported as its own entry rather than folded into the
+    # revision it names, because what is wrong is the reference, not the bytes.
+    if current := resolve_current_reference(layout, identity):
+        resolved.append(Resolved(findings=current))
     return tuple(resolved)
 
 

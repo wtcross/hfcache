@@ -11,6 +11,7 @@ path removed, something planted — and what is asserted is the finding it produ
 and the fact that the archive is unchanged afterwards.
 """
 
+import json
 import os
 import re
 from datetime import UTC, datetime, timedelta
@@ -43,6 +44,7 @@ from hfcache.verification import (
     Resolved,
     build_report,
     require_retained,
+    resolve_current_reference,
     resolve_repository,
     resolve_revision,
     resolve_run,
@@ -489,6 +491,91 @@ def test_a_reference_naming_a_tree_that_is_not_there_is_ref_invalid(layout):
     findings = run(resolve_repository(layout, MODEL))
     assert kinds(findings) == ["ref_invalid"]
     assert findings[0].publication_id == outcome.publication_id
+
+
+def current_ref_of(layout: ArchiveLayout):
+    return RepositoryLayout(archive=layout, identity=MODEL).current_ref
+
+
+def test_a_current_ref_that_agrees_with_the_retained_set_is_not_a_finding(layout):
+    """`VER-008`: the ordinary case must stay silent, or every archive is degraded."""
+    publish(layout)
+
+    assert resolve_current_reference(layout, MODEL) == ()
+    assert run(resolve_repository(layout, MODEL)) == ()
+
+
+def test_a_current_ref_naming_an_instance_the_per_sha_ref_does_not_is_ref_invalid(layout):
+    """`VER-008`, and the state `OPS-004`'s drill found `verify --full` calling clean.
+
+    `refs/current.json` is the one file a consumer must read (§6.3), and it is not
+    in `refs/revisions/`, so nothing verification enumerated ever reached it. A
+    `current.json` naming an instance that does not exist is `FS-10`'s dangling
+    reference: it strands every consumer that resolves it, and the archive
+    reported `outcome: clean` at exit `0`.
+    """
+    outcome = publish(layout)
+    reference = json.loads(current_ref_of(layout).read_text(encoding="utf-8"))
+    reference["publication_id"] = "0" * 32
+    reference["tree"] = (
+        f"repos/models/organization/model-name/revisions/{outcome.commit_sha}/{'0' * 32}"
+    )
+    reference["manifest"] = (
+        f"manifests/models/organization/model-name/{outcome.commit_sha}/{'0' * 32}.json"
+    )
+    current_ref_of(layout).write_text(json.dumps(reference), encoding="utf-8")
+
+    findings = run(resolve_repository(layout, MODEL))
+
+    assert kinds(findings) == ["ref_invalid"]
+    assert "they must agree" in (findings[0].observed or "")
+
+
+def test_a_current_ref_naming_a_sha_the_archive_does_not_retain_is_ref_invalid(layout):
+    publish(layout)
+    reference = json.loads(current_ref_of(layout).read_text(encoding="utf-8"))
+    reference["commit_sha"] = SHA_B
+    current_ref_of(layout).write_text(json.dumps(reference), encoding="utf-8")
+
+    findings = run(resolve_repository(layout, MODEL))
+
+    assert kinds(findings) == ["ref_invalid"]
+    assert "does not retain" in (findings[0].observed or "")
+
+
+def test_a_broken_per_sha_ref_is_reported_once_not_twice(layout):
+    """The per-SHA reference is the damaged artifact; `current.json` pointing at
+    it is downstream. One broken file must produce one finding."""
+    outcome = publish(layout)
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    repository.revision_ref(CommitSha(outcome.commit_sha)).write_text("{ no", encoding="utf-8")
+
+    findings = run(resolve_repository(layout, MODEL))
+
+    assert kinds(findings) == ["ref_invalid"]
+
+
+def test_a_repository_with_no_current_ref_is_not_a_finding(layout):
+    """Nothing has completed a publication there, which is not damage."""
+    publish(layout)
+    current_ref_of(layout).unlink()
+
+    assert resolve_current_reference(layout, MODEL) == ()
+
+
+def test_a_current_ref_that_will_not_parse_yields_no_finding_here(layout):
+    """The documented limit of `VER-008`.
+
+    A `Finding` requires a `commit_sha`, and a `current.json` that will not parse
+    supplies none — its own filename carries no SHA, unlike `refs/revisions/`.
+    Rather than attribute the damage to a revision that may be perfectly sound,
+    nothing is reported here. It is not silent: `status` drops the repository to
+    `unverified`, and `examples/copy-revision.py` fails closed on it at exit `2`.
+    """
+    publish(layout)
+    current_ref_of(layout).write_text("{ truncated", encoding="utf-8")
+
+    assert resolve_current_reference(layout, MODEL) == ()
 
 
 def test_an_unreadable_manifest_is_manifest_invalid(layout):
