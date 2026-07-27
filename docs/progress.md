@@ -274,7 +274,7 @@ more than it fixed.
 - [ ] OPS-004 Snapshot/replica restore runbook → `docs/recovery.md` (restore half); the ZFS drill is operator work, the procedure and the post-restore `verify --full` and reference reconstruction are not
 - [ ] OPS-005 Close §26.6's failure-injection matrix — audit the eleven points against the suite, fill the thin rows (the §7.4 prune commit point and `revision_ref_published`), and decide whether they live in `tests/integration/`, which plan §7 lists and which is empty
 - [ ] OPS-006 Measure §27's writer-side quantities and record them; space-per-five-revisions and snapshot-held space wait on the production repository list and `NAS-006`
-- [ ] OPS-007 Consumer copy-and-verify helper + `docs/consumers.md`, exercised from the writer against `published/`. **Sequence early:** handoff items 1, 2, and 5 are all tested with this helper
+- [x] OPS-007 Consumer copy-and-verify helper + `docs/consumers.md` (2026-07-27, this commit — decision 67. `examples/copy-revision.py` is plan §6.3's "small shell/Python example", and `docs/consumers.md` is plan §7's listed document; both are the downstream half of the archive, and sequencing them early is what unblocks handoff items 1, 2, and 5. **Standard library only** — a consumer should not have to install this project to read what it produced — so it was exercised with the host's system `python3` 3.12.13 rather than the release's 3.14, which is the proof that it carries no dependency on either. Both live repositories copied and verified from the writer against `/srv/hfcache/published` as the service identity: the model at 10 files / 12 512 611 bytes and the dataset at 7 files / 206 179 bytes, each matching the sizes recorded at `HUB-004` exactly. **The verifier was itself verified**, because an unfalsifiable check is what `HARD-001` had just finished closing: on a **throwaway** copy of the published tree in `/var/tmp` — never on `/srv/hfcache`, per §36.5 — a flipped byte is caught as a digest mismatch, a removed file as `missing`, an added file as `extra`, and a vanished tree as retryable, retried, and then given up on at exit `1`. The two states that mean the *archive* is inconsistent rather than racing are refused immediately at exit `2` without spending an attempt: a reference whose `tree` would escape the mount, and a reference and manifest naming different instances. §6.3's repair contract is demonstrated rather than asserted — with `current.json` switched to a second instance while the first was still present, which is exactly what a repair leaves during its grace, the helper resolved and verified the **new** one. The trap the document leads with: a reference's `tree`/`manifest` are relative to `published/` and the *manifest's own* `tree` field is archive-relative, so a consumer that used the latter would build a path it cannot see)
 - [ ] REL-001 Build and install a release candidate from the **wheel** — no deployed release has been; `install-release.sh` stages a source tree and runs `uv sync`
 - [ ] REL-002 Final quality and security gates; close or explicitly accept `RET-008` and decision 61's `RestrictSUIDSGID` watch item
 - [ ] REL-003 Tag and document the first release; decide the version (`0.1.1` is live and untagged)
@@ -385,7 +385,22 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
    chosen production repositories (plan §20.1).
 5. **Consumer copy test (§29 steps 10–11):** from a consumer client, copy the
    current model and dataset revisions with the documented helper and verify
-   against the manifests.
+   against the manifests. **The helper now exists** (`OPS-007`):
+   `examples/copy-revision.py`, shipped in the release at
+   `/opt/hfcache/current/examples/`, with `docs/consumers.md` as its runbook.
+   Copy it to the consumer host — it needs only Python 3 and the read-only
+   mount, not this project. Acceptance:
+
+   ```bash
+   python3 copy-revision.py --mount /mnt/hfcache --type model \
+     --repository hf-internal-testing/tiny-random-gpt2 --destination ./gpt2
+   python3 copy-revision.py --mount /mnt/hfcache --type dataset \
+     --repository hf-internal-testing/fixtures_ade20k --destination ./ade20k
+   ```
+
+   Both exit `0` and report `verified`. It has been exercised from the *writer*
+   against `published/`; what remains is running it from a genuine consumer
+   client over the read-only export, which is what items 1 and 2 provide.
 6. **Reboot persistence (§26.5):** reboot the writer; confirm mount, target,
    and timers return; confirm boot completes with the NAS down.
 7. **Live-mount interruption window (§26.4):** operator-supervised NFS
@@ -1697,3 +1712,39 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     And decision 61's watch item is now genuinely checkable: `RestrictSUIDSGID`
     filters the mode argument of `chmod` as well as `mkdir`, so if that setting
     ever becomes applicable again, this check is what fails first.
+
+67. **The consumer helper is `examples/copy-revision.py`, and it may not import
+    `hfcache`** (2026-07-27, `OPS-007`). Plan §6.3 requires "a small shell/Python
+    example that copies the tree and verifies it against the referenced manifest"
+    and §33 requires that a downstream system can do exactly that, but plan §7's
+    layout gave the example no home: `examples/` listed only `config.toml`. §7 is
+    amended in this commit to list it.
+
+    Where it went. `scripts/` was the other candidate and is wrong: everything in
+    it — `check.sh`, `install-release.sh`, `check-hardening.sh` — is run by the
+    *operator* on the writer, against a deployment. This is run by someone else,
+    on a machine that has no deployment. `examples/` also ships in
+    `RELEASE_CONTENT`, so the helper reaches `/opt/hfcache/current/examples/` and
+    an operator has something to hand to a consumer.
+
+    The constraint that shaped it: **standard library only**. The tempting
+    alternative was to reuse `hfcache.verification`, which already hashes a tree
+    against a manifest and is far better tested than anything written here. It was
+    rejected because it inverts the dependency the archive exists to avoid. A
+    consumer is a machine that mounts one read-only NFS export; requiring it to
+    install this project — and therefore `huggingface_hub`, `pydantic`, `hf_xet`,
+    and a Python 3.14 that CentOS Stream 10 does not ship — to *read a directory*
+    would make the archive harder to consume than the Hub it is caching. The cost
+    is a second implementation of the verification loop, and it is paid knowingly:
+    the helper duplicates roughly forty lines of hashing and path checking.
+
+    That duplication is also a mild benefit, and it is why the helper was proven
+    against damage rather than only against success. It is an independent reading
+    of the same manifest: it was run on a throwaway tree with a byte flipped, a
+    file removed, and a file added, and it caught all three. If it and the
+    application ever disagree about a published revision, that disagreement is
+    information — one of them is wrong, and the manifest says which.
+
+    Exit codes are the helper's own (`0`/`1`/`2`) and deliberately not §11.2's.
+    It is not this application, it does not run on this host, and borrowing
+    `40` for "digest mismatch" would imply a shared taxonomy that does not exist.

@@ -113,6 +113,13 @@ ignore = [
 # rather than a package (INP001); and its decorators are plumbing that pyrefly
 # infers (ANN). S108 is /tmp as a documented fallback for CACHE_DIRECTORY.
 "scripts/**" = ["ANN", "INP001", "PLC0415", "S101", "S108", "SIM117", "T201"]
+# The consumer helper is a standalone example that runs on a *downstream* host,
+# with the standard library and nothing else — it must not import `hfcache`, so
+# the application's reporting conventions are not available to it. Its entire
+# interface is stdout and stderr (T201), and it is a script rather than a package
+# (INP001). Everything else in the ruleset applies to it and is enforced: the path
+# containment, the streamed hashing, and the exception hygiene are the point of it.
+"examples/**" = ["INP001", "T201"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

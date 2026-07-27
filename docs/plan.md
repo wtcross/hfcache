@@ -232,7 +232,8 @@ hfcache/
 ├── pyproject.toml
 ├── uv.lock
 ├── examples/
-│   └── config.toml
+│   ├── config.toml
+│   └── copy-revision.py
 ├── packaging/
 │   ├── journald.conf.d/
 │   │   └── hfcache.conf
