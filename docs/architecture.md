@@ -434,10 +434,22 @@ root and `published/` are pre-owned by the NAS-side identity.
 | Directories under `published` | mapped writer identity | `2750` | Inherited setgid plus `UMask=0027` |
 | Files under `published` | mapped writer identity | `0640` | `UMask=0027`; read access for the export identity, no write |
 
-Published files are **never** `chmod`ed by the application. In hardlink mode a
+Published **files** are never `chmod`ed by the application. In hardlink mode a
 published file and its cache blob are the same inode, so changing the mode of one
 changes both (`AD-11`). Read-only for consumers is enforced by the server-side
 export, not by file mode.
+
+A published tree's **root directory** is the exception, and it has to be. "Inherited
+setgid" above is true of the directories *under* a published tree and false of the
+tree itself: that root is created in `.store/staging/<txn>/`, which is `0700` and
+has no setgid to inherit, and it reaches `published/` by a rename — which does not
+change a mode. So the only moment its mode can be set is at creation, and
+`publication.create_staging` sets it with `mkdir` **followed by an explicit
+`chmod`**. The `chmod` is not redundant with `mkdir`'s mode argument: POSIX does
+not guarantee `mkdir` honours setgid there, and this NFSv4 server does not — `mkdir`
+alone yields `0750`, `mkdir`+`chmod` yields `2750` (`docs/progress.md` decision 66).
+Removing it would drop the group the read identity depends on, silently, and the
+failure would appear on a consumer host rather than this one.
 
 Because the writer export maps every client identity to
 `hfcache-sync:hfcache-archive`, files on the mount appear owned by NAS-side ids

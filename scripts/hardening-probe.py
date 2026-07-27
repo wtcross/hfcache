@@ -28,6 +28,7 @@ import json
 import os
 import socket
 import ssl
+import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -331,12 +332,32 @@ def _setgid_directory() -> str:
     # archive and never created a directory with the setgid bit. The failure
     # therefore surfaced as a failed sync rather than as a failed check, which is
     # the whole thing this file exists to prevent (decision 61).
+    #
+    # The second version missed it a second way, and that is `HARD-001`: two
+    # defects in one check.
+    #
+    # *The syscall.* `create_staging` calls `mkdir` **and then `chmod`**
+    # (`publication.py:139-140`); this called only `mkdir`. On this NFS mount that
+    # difference decides the outcome — the server does not honour a setgid bit in
+    # `mkdir`'s mode argument, and `PROBE_AREA` is `0o700`, so nothing is
+    # inherited either. Measured as the service identity: `mkdir` alone yields
+    # `0o750`, `mkdir`+`chmod` yields `0o2750`.
+    #
+    # *The assertion.* It formatted the resulting mode into its pass message
+    # rather than asserting it, so it reported `mkdir(mode=0o2750) -> 0o750` and
+    # passed. `S_ISGID` is what carries the group the consumer export's read
+    # identity depends on (§5.2), so it is the bit this check exists to guard, and
+    # a guard that cannot fail is the family of defect decisions 51 and 62 close.
     target = PROBE_AREA / f"setgid-{os.getpid()}"
     target.mkdir(mode=PUBLISHED_DIRECTORY_MODE)
     try:
-        return (
-            f"mkdir(mode={oct(PUBLISHED_DIRECTORY_MODE)}) -> {oct(target.stat().st_mode & 0o7777)}"
+        target.chmod(PUBLISHED_DIRECTORY_MODE)
+        mode = target.stat().st_mode & 0o7777
+        assert mode & stat.S_ISGID, f"the setgid bit did not land: {oct(mode)}"
+        assert mode == PUBLISHED_DIRECTORY_MODE, (
+            f"mode is {oct(mode)}, not {oct(PUBLISHED_DIRECTORY_MODE)}"
         )
+        return f"mkdir+chmod({oct(PUBLISHED_DIRECTORY_MODE)}) -> {oct(mode)}, S_ISGID set"
     finally:
         target.rmdir()
 
