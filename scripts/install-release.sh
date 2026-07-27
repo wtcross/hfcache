@@ -242,6 +242,15 @@ chmod -R u=rwX,go=rX "${RELEASE}"
 find "${RELEASE}" -type d -exec chmod "${DIRECTORY_MODE}" {} +
 find "${RELEASE}" -type f ! -perm -u=x -exec chmod "${FILE_MODE}" {} +
 
+# The interpreter directory is outside ${RELEASE} and is not rebuilt per release,
+# so the sweep above never reaches it. `uv python install` leaves its own lock
+# file at 0666 (`REL-002`), which is a world-writable regular file inside a
+# prefix plan §21.4 requires be root-owned and read-only to everything else.
+# Nothing is lost by narrowing it: every caller of `uv python install` here is
+# root, and root ignores the write bit.
+find "${UV_PYTHON_INSTALL_DIR}" -maxdepth 1 -type f -perm -o+w \
+  -exec chmod "${FILE_MODE}" {} + 2> /dev/null || true
+
 step 'smoke checks'
 smoke "${RELEASE}/.venv/bin/hfcache"
 
