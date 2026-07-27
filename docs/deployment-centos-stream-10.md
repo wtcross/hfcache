@@ -586,6 +586,29 @@ the newer one had written, and found nothing to reconcile and nothing blocked.
 That is the property rollback depends on, and it is worth re-checking whenever a
 release touches a durable format.
 
+**0.1.2 is the first release that did touch one**, so it was re-checked. `RET-008`
+added checkpoint 10, `containers_removed`, to §7.4's prune sequence. Fed a prune
+journal recording it, the two releases answer differently, and the difference is
+the guarantee working:
+
+```text
+=== release 0.1.2 reading it ===
+   accepted
+=== release 0.1.1 reading it ===
+   ['HFTXN002']
+    prune journal … records checkpoints […], which is not a prefix of the
+    documented sequence …; no valid execution produces this combination
+```
+
+So the operational rule for this rollback, and any later one across a checkpoint
+change: **roll back with no prune in flight.** A *completed* prune journal is
+closed and recovery never reads it, so the ordinary case is unaffected — which is
+why the `recover --dry-run` above is clean. But if a prune is interrupted and you
+then roll back, the older release will refuse the journal at exit `20` and wait
+for an operator rather than guess. That is the correct answer and not a
+regression; it is simply not a state you want to discover at 02:00. Check
+`recover --dry-run` **before** switching, as the sequence above does.
+
 Keep at least the previous release installed (plan §21.4 item 7). `--list` is how
 you see what you have:
 
