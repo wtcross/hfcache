@@ -401,6 +401,15 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     operation returns an error. If it does, remove the drop-in and leave
     `IPAddressDeny=any` as the egress control. Steady-state reads are already
     proven under `PrivateNetwork=true`; only the reconnect path is open.
+11. **`docs/truenas.md` (plan §7):** the one document in §7's set with no work
+    package that produces it. `OPS-001`–`OPS-004` account for
+    `deployment-centos-stream-10.md`, `operations.md`, and `recovery.md`, and
+    `consumers.md` falls out of `OPS-007`; nothing owns the TrueNAS side.
+    Written by whoever performs handoff items 1–4, because the dataset tuning,
+    the two exports, the disjointness proof, and the snapshot/replication/scrub
+    schedule are the content, and this session cannot make or verify any of
+    them (§36.4). Plan §20 is the specification to write it against; §35.2
+    records what was already provisioned on 2026-07-24.
 
 ## Operator decisions needed
 
