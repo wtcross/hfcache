@@ -128,12 +128,18 @@ so its sequence is as long as the work it found and cannot be enumerated here.
 Its two closing checkpoints are still ordered, by `_RECOVERY_CLOSING`.
 """
 
-PERMITTED_EXTRA_CHECKPOINTS: Final[Mapping[str, frozenset[str]]] = {
-    # §7.4: a failure in steps 8-9 records this instead, after the commit point,
-    # and only post-commit cleanup is retried later.
-    "prune": frozenset({"cleanup_deferred"}),
-}
-"""Checkpoints a valid execution may record outside the documented sequence."""
+PERMITTED_EXTRA_CHECKPOINTS: Final[Mapping[str, frozenset[str]]] = {}
+"""Checkpoints a valid execution may record outside the documented sequence.
+
+Empty since `RET-009`. §7.4 once named a `cleanup_deferred` checkpoint for a
+prune whose post-commit cleanup failed, and this mapping permitted it — but no
+execution ever recorded one: a failure in the post-commit steps leaves the
+journal open at its last checkpoint, which is exactly what makes the cleanup
+reachable from `recover`. A journal carrying the checkpoint was therefore
+written by no valid execution, and refusing it is the stronger guard. A future
+release that wants an extra checkpoint recorded adds its permit here, with the
+cross-format note a vocabulary widening requires.
+"""
 
 _RECOVERY_CLOSING: Final = ("recovery_report_written", "recovery_completed")
 

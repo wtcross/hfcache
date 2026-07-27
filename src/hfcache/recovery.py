@@ -286,11 +286,11 @@ def _deferred_warnings(findings: list[AreaFinding]) -> list[Problem]:
     """`HFWRN002` for each tombstone a prune committed but did not remove."""
     deferred = [finding for finding in findings if finding.area == ".store/trash"]
     for finding in deferred:
-        # Plan §24's `retention.deferred`. §7.4 names a `cleanup_deferred`
-        # checkpoint for this state, but nothing records one — the post-commit
-        # steps run inline and a failure there leaves the tombstone rather than a
-        # marker. So the observation, not the checkpoint, is what the event
-        # reports, and this reconciliation is what makes it.
+        # Plan §24's `retention.deferred`. The tombstone observation is the
+        # signal for this state (§7.4): the post-commit steps run inline, a
+        # failure there leaves the journal open and the tombstone in place, and
+        # this reconciliation is where the state is seen. So the event is
+        # emitted here rather than by the prune.
         emit("retention.deferred", tombstone=finding.path, area=finding.area)
     return [
         Problem(

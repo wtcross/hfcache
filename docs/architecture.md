@@ -751,7 +751,7 @@ different failure regimes:
 | Failure | Behaviour |
 | --- | --- |
 | Before checkpoint 7 | **Roll back.** Restore the manifest, the tree, the per-SHA reference, and the catalog, so all six revisions are published again. Cache deletion may already have happened; that is harmless, because the publication hardlinks hold the bytes. Report `HFRET001`–`HFRET004` and warn `HFWRN001` for temporary over-retention |
-| At or after checkpoint 7 | **Never republish.** Exactly five revisions are consumer-visible and the complete manifest is still recoverable from trash. A failure in steps 8–9 records a `cleanup_deferred` checkpoint and warns `HFWRN002`; only post-commit cleanup is retried later |
+| At or after checkpoint 7 | **Never republish.** Exactly five revisions are consumer-visible and the complete manifest is still recoverable from trash. A failure in steps 8–10 leaves the journal open at the last recorded checkpoint; `recover` reports the prune as `complete_prune` and finishes only the cleanup, and `HFWRN002` comes from observing the outstanding tombstone during reconciliation |
 | Rollback itself fails | `HFRET005`, `state = "needs_operator"`. The transaction stops and preserves everything it holds |
 
 **Checkpoint 10 removes the containers steps 4 and 5 emptied.** Tombstoning moves

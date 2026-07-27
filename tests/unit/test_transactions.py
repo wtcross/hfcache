@@ -235,15 +235,20 @@ def test_a_checkpoint_from_another_operation_is_hftxn002(layout: ArchiveLayout):
     assert codes(caught.value.problems) == ["HFTXN002"]
 
 
-def test_a_prune_may_record_the_documented_deferred_cleanup(layout: ArchiveLayout):
-    # §7.4: a failure in steps 8-9 records this instead, after the commit point.
+def test_a_cleanup_deferred_checkpoint_on_a_prune_is_refused(layout: ArchiveLayout):
+    # RET-009: §7.4 once named this checkpoint, but no execution records one —
+    # a post-commit failure leaves the journal open at its last checkpoint, and
+    # that is what makes the cleanup reachable from `recover`. A journal
+    # carrying it was therefore written by no valid execution.
     transaction = begin(layout, "prune")
     for name in CHECKPOINTS["prune"][:7]:
         transaction.checkpoint(name)
 
-    transaction.checkpoint("cleanup_deferred")
+    with pytest.raises(SafetyError) as caught:
+        transaction.checkpoint("cleanup_deferred")
 
-    assert on_disk(transaction)["checkpoints"][-1]["name"] == "cleanup_deferred"
+    assert codes(caught.value.problems) == ["HFTXN002"]
+    assert len(on_disk(transaction)["checkpoints"]) == 7, "the refusal wrote nothing"
 
 
 def test_a_recovery_journal_records_one_checkpoint_per_remediation(layout: ArchiveLayout):
