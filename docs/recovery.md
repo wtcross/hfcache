@@ -1,0 +1,407 @@
+# Recovering the hfcache archive
+
+| Field | Value |
+| --- | --- |
+| Status | Runbook, exercised on a throwaway archive from `hfcachewriter.lab.cross.solutions` |
+| Work packages | `OPS-003` (corruption and repair), `OPS-004` (snapshot and replica restore) |
+| Derived from | `docs/plan.md` §16.5, §31; `docs/architecture.md` §7.5, §7.9 |
+| Companions | `docs/operations.md` for normal running, `docs/deployment-centos-stream-10.md` for building the host |
+
+This is what to do when something is **wrong** with the archive: a revision whose
+bytes no longer match its manifest, a reference that will not resolve, a
+transaction that stopped and will not resume, or a host that is gone.
+
+**Every command block below was run.** Not on `/srv/hfcache` — plan §36.5 forbids
+damaging published content — but on a **throwaway archive**: a second NFSv4 export
+served from the writer itself, initialized with its own UUID, synced from the real
+Hub, and then deliberately broken. §6 explains how to build one, because being
+able to rehearse this is the point.
+
+Throughout, `$D` is the throwaway; on a real archive it is the invocation
+`docs/operations.md` calls `$H`:
+
+```bash
+H="sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml"
+```
+
+---
+
+## 1. Finding out that something is wrong
+
+Three things tell you, in decreasing order of how much you will like hearing it.
+
+**`status` says the archive is degraded.** The per-repository line reads `failed`
+rather than `verified`, and a line goes to **stderr**:
+
+```text
+$ hfcache status
+model:hf-internal-testing/tiny-random-gpt2  enabled  failed
+archive degraded: 1 outstanding verification failures
+exit=0
+```
+
+`status` still exits `0`. It reports; it does not adjudicate. The exit code that
+means corruption comes from `verify`.
+
+**`verify --full` exits `40`.** This is the quarterly job's answer, and the one a
+scheduler sees:
+
+```text
+$ hfcache verify --full
+bytes read    11.9 MiB
+findings      1
+objects read  10
+outcome       failed
+report        runs/20260727T143705Z-793e9c8787ea42e387ac15ebe0216a1d.json
+repositories  1
+revisions     1
+HFVER001 (model:hf-internal-testing/tiny-random-gpt2): 1 digest_mismatch finding in model:hf-internal-testing/tiny-random-gpt2
+exit=40
+```
+
+**The finding names the object.** `--json` carries what you need to decide:
+
+```json
+{
+  "commit_sha": "71034c5d8bde858ff824298bdedc65515b97d2b9",
+  "expected": "9ad49cd2ff58daa38243e4eeaac13b1259786d9418e45bfc01a1fd1fe1089e77",
+  "kind": "digest_mismatch",
+  "observed": "cb83ee975a0cc7cb251789216e28e978703643a03cb30a5a877d1cf420bfaab4",
+  "path": "config.json",
+  "publication_id": "edb94772f09d45dba2c6ecb80e52c4fa",
+  "repository_id": "hf-internal-testing/tiny-random-gpt2",
+  "repository_type": "model"
+}
+```
+
+`expected` comes from the immutable manifest and `observed` from reading the bytes
+now. **The archive never rewrites `expected` to match `observed`.** That is the
+one rule the whole of repair is built to preserve (`AD-13`).
+
+### Which way to go
+
+| What you have | What to do |
+| --- | --- |
+| Upstream still has the revision | **Repair** — §2. Re-downloads the same immutable SHA and verifies it against the original manifest |
+| Upstream is gone, but you have snapshots | **Restore** — §7. ZFS gives back the bytes that were there |
+| Neither | Preserve everything and stop. The manifest and the audit records still prove what was there |
+| A transaction stopped and commands exit `20` | §5 — the machine has stopped on purpose |
+
+Do not delete the damaged revision to "clean up". It is evidence, it is what a
+repair verifies against, and nothing else in the archive is at risk from it.
+
+---
+
+## 2. Repairing a revision from upstream
+
+```bash
+$H repair model:<org>/<name>@<full-sha> --reason "what prompted this"
+```
+
+The SHA must be the full 40 characters. `--reason` is recorded in the retirement
+record and is how someone reading `audit/repairs/` in six months finds out why.
+
+```text
+$ hfcache repair model:hf-internal-testing/tiny-random-gpt2@71034c5d8bde858ff824298bdedc65515b97d2b9 \
+    --reason "digest_mismatch on config.json, found by quarterly verification"
+commit sha     71034c5d8bde858ff824298bdedc65515b97d2b9
+grace expires  2026-08-03T14:37:18.004675+00:00
+replacement    ad8d5a64672a48199289efcfb65ad7fb
+retired        edb94772f09d45dba2c6ecb80e52c4fa
+transaction    96c73340a0c4467cb4fec8a5a1264fa7
+exit=0
+```
+
+What that did, in the order §7.5 fixes it:
+
+1. Preserved the verification findings and the corrupt instance as evidence.
+2. Made an **empty, isolated cache** at `.store/repair/<txn>/hub`. In hardlink
+   mode the corrupt published file and its cache blob are the same inode, so
+   re-downloading into the canonical cache could reuse the very object under
+   suspicion. This is `FS-14`'s one exception and the reason it exists.
+3. Downloaded the same immutable SHA into that cache only.
+4. **The gate.** Verified every path, size, and SHA-256 against the *original*
+   manifest. A single difference stops the transaction with `HFRET006` and leaves
+   the published revision untouched.
+5. Published the replacement under a **new publication id**, at a new immutable
+   locator, and re-read it *from where it now lives* before any reference moved.
+6. Switched `refs/revisions/<sha>.json`, then `refs/current.json`.
+7. Wrote the retirement record and deleted the implicated canonical cache
+   revision.
+
+Afterwards the archive is clean and the repaired revision verifies:
+
+```text
+$ hfcache verify --full
+findings      0
+objects read  10
+outcome       clean
+exit=0
+$ hfcache status
+model:hf-internal-testing/tiny-random-gpt2  enabled  verified
+```
+
+**The generation does not change.** A repair replaces an instance, not a
+revision, so retention order is untouched — the repaired SHA keeps its place and
+`prune` still selects by the same key it always did.
+
+**The original manifest is not rewritten.** Both manifests exist afterwards; the
+replacement copies the original's expectations byte-identically and adds a
+`repair` block naming what it replaced:
+
+```json
+{"reason": "…", "repair_of": "edb94772f09d45dba2c6ecb80e52c4fa",
+ "repair_of_manifest": "published/manifests/…/edb94772f09d45dba2c6ecb80e52c4fa.json",
+ "repaired_at": "…", "transaction_id": "96c73340a0c4467cb4fec8a5a1264fa7"}
+```
+
+### When a repair refuses
+
+If the download does not match the original manifest, the command stops with
+`HFRET006` at exit `50` and **changes nothing**. That is not a failure of the
+tool. It means upstream no longer serves the bytes this archive recorded for that
+SHA, and the archive is right to keep saying so. Go to §7 — a restore is the
+remaining option, and if that is not available, what you have is the manifest and
+the audit trail, which is still a true account of what was there.
+
+---
+
+## 3. The grace period
+
+The repaired instance is live immediately, but the **retired one stays exactly
+where it was** for the configured grace (seven days by default). A consumer that
+resolved the old locator before the switch can finish its copy.
+
+```text
+$ ls published/repos/…/revisions/71034c5d…/
+ad8d5a64672a48199289efcfb65ad7fb        <- the replacement, named by current.json
+edb94772f09d45dba2c6ecb80e52c4fa        <- retired, readable until the grace expires
+```
+
+Inside the grace, recovery deliberately does nothing:
+
+```text
+$ hfcache recover --dry-run
+actionable  0
+applied     -
+blocked     0
+
+  remedy=wait
+  reason=the retired instance is readable until 2026-08-03T14:37:18.004675+00:00,
+         so an in-flight consumer copy can still finish
+```
+
+This is why `docs/consumers.md` tells a consumer to treat a vanished tree as
+retryable: the grace is generous, but it is finite.
+
+---
+
+## 4. After the grace: quarantine, not deletion
+
+Once the grace expires, `status` starts warning and names the command that
+finishes it:
+
+```text
+HFWRN008 (model:…) [published/repos/…/edb94772f09d45dba2c6ecb80e52c4fa]: the retired
+instance edb94772f09d45dba2c6ecb80e52c4fa of model:…@71034c5d… passed its grace period
+at 2026-07-22T00:00:00+00:00 and awaits cleanup; `hfcache recover --apply` performs it
+```
+
+```text
+$ hfcache recover --dry-run
+actionable  1
+blocked     0
+  remedy=finish_repair_cleanup
+  reason=the grace period expired, so the retired instance is quarantined and archived
+
+$ hfcache recover --apply
+actionable  1
+applied     1
+blocked     0
+exit=0
+```
+
+The retired tree is **moved, never deleted**:
+
+```text
+published instances now:
+  ad8d5a64672a48199289efcfb65ad7fb
+
+.store/quarantine/96c73340a0c4467cb4fec8a5a1264fa7/
+  .gitattributes  config.json  merges.txt  model.safetensors  pytorch_model.bin
+  special_tokens_map.json  tf_model.h5  tokenizer.json  tokenizer_config.json  vocab.json
+
+audit/repairs/models/…/71034c5d…/
+  edb94772f09d45dba2c6ecb80e52c4fa.manifest.json     <- the original, byte for byte
+  edb94772f09d45dba2c6ecb80e52c4fa.retirement.json   <- now cleanup: completed
+```
+
+```text
+$ hfcache status --json | jq '.data.archive | {quarantined_bytes, deferred_cleanup}'
+{"quarantined_bytes": 12512611, "deferred_cleanup": 0}
+```
+
+**Quarantine is retained until you decide otherwise.** This application has no
+code path that removes it on a schedule (plan §16.5 item 12). Releasing it is an
+operator judgement — confirm the storage is healthy and the replacement has
+verified at least once since, then remove the directory by hand. Until then it is
+the evidence of what the bytes were, and `quarantined_bytes` in `status` is how
+you notice it is holding space.
+
+---
+
+## 5. When the machine stops (`HFTXN001`–`HFTXN004`)
+
+Automatic recovery halts, changes nothing, and exits `20` when it finds a state
+it may not resolve (§7.9). `status`, `list`, `verify`, and `recover --dry-run`
+still work, so you always have a way to look.
+
+All four were provoked on the throwaway.
+
+### `HFTXN001` — a journal this release does not understand
+
+```text
+HFTXN001 [.store/transactions/aaaa….json]: schema_version 99 is newer than 1, which is
+what this release understands; refusing to read it rather than guess at its meaning
+exit=20
+```
+
+Also raised by a journal that is damaged rather than merely newer — a truncated
+or hand-edited file fails validation and is reported the same way, naming the
+field:
+
+```text
+HFTXN001 [.store/transactions/dddd….json:<root>]: Value error, last_checkpoint_at is
+set exactly when at least one checkpoint exists
+```
+
+**What to do.** If the version is *newer*, you have rolled back across a format
+change — roll forward again, or if you meant to roll back, see
+`docs/deployment-centos-stream-10.md` §14. If the journal is *damaged*, the
+transaction it describes cannot be reconstructed from it; move it aside into a
+directory outside `.store/transactions/`, keep it, and run `verify --full` to
+establish what the archive actually holds. Do not edit it to make it parse.
+
+### `HFTXN002` — a checkpoint sequence no valid execution produces
+
+```text
+HFTXN002 [bbbb…]: publication journal bbbb… records checkpoints ['staging_created',
+'download_completed', 'staging_built', 'content_hashed'], which is not a prefix of the
+documented sequence [...]; no valid execution produces this combination
+exit=20
+```
+
+**What to do.** The journal did not come from a run of this application, or it
+has been altered. Preserve it, and treat the archive as unknown until
+`verify --full` has read it. The checkpoint sequences are in
+`docs/architecture.md` §7.3–§7.6 if you need to work out how far the operation
+had actually got.
+
+### `HFTXN003` — journal evidence that contradicts the filesystem
+
+```text
+HFTXN003 [revision_tree_renamed.published_tree_path]: checkpoint revision_tree_renamed
+recorded published_tree_path=published/repos/models/…/eeee…, but /srv/hfcache/published/
+repos/models/…/eeee… does not exist; the journal and the archive disagree about what happened
+exit=20
+```
+
+Every checkpoint carries re-observable evidence, and recovery confirms it by
+looking rather than by trusting the record (`TX-03`). This is that check failing.
+
+**What to do.** Something removed a path the archive believed it had written.
+That is usually a restore that went back further than the journal, or a manual
+deletion. Establish which with `verify --full`, then §7. The named path is the
+one to start from.
+
+This is also the code `REP-001` now raises when a retirement record cannot be
+parsed — the repair is committed but whether its retired instance still awaits
+quarantine can no longer be determined. Restore that record from a snapshot if
+you have one; otherwise the retired tree is identifiable from the journal's
+`retired_tree` evidence and can be quarantined by hand.
+
+### `HFTXN004` — two equally valid resolutions, or a transaction that asked for you
+
+```text
+HFTXN004 [dddd…]: transaction dddd… stopped and asked for an operator; recovery never
+resolves what it was told not to
+exit=20
+```
+
+```text
+$ hfcache recover --dry-run --json | jq '.data'
+{"actionable": 0, "blocked": 1, "plan": [{"remedy": "operator", ...}]}
+```
+
+**What to do.** A previous run set `state = "needs_operator"` because *it* could
+not decide, and recovery will not overrule that. Read the journal: its
+`checkpoints` say exactly how far the operation got, and `docs/architecture.md`
+§7 says what each boundary means. Resolve the underlying condition, then either
+complete the work by hand following the checkpoint sequence, or — far more often —
+accept the over-retention and let the next run proceed by moving the journal
+aside once you have established the archive is consistent.
+
+### The general shape
+
+Whatever the code, the sequence is the same:
+
+```bash
+$H recover --dry-run          # what it thinks, without touching anything
+$H verify --full              # what is actually on disk
+# … decide, act, then …
+$H recover --dry-run          # confirm there is nothing left
+$H verify --full              # confirm the archive is clean
+```
+
+Nothing in this section is time-critical. A stopped archive is still serving
+consumers from `published/`; what has stopped is *writing*.
+
+---
+
+## 6. Building a throwaway archive to rehearse on
+
+Everything above was run against one, and it is worth having. It is a second
+NFSv4 export served by the writer to itself, so it needs no NAS change and cannot
+touch the real dataset.
+
+```bash
+# a local directory, exported to this host only
+sudo install -d -m 0750 -o hfcache -g hfcache /srv/hfcache-throwaway-src
+echo '/srv/hfcache-throwaway-src 127.0.0.1(rw,sync,no_subtree_check,fsid=77)' \
+  | sudo tee /etc/exports.d/hfcache-throwaway.exports
+sudo systemctl start nfs-server && sudo exportfs -ra
+
+# mount it — the export path, not the NFSv4 pseudo-root, which is read-only
+sudo install -d -m 0755 /mnt/hfcache-throwaway
+sudo mount -t nfs4 -o rw,hard,proto=tcp \
+  127.0.0.1:/srv/hfcache-throwaway-src /mnt/hfcache-throwaway
+```
+
+The archive root **must** be a mount point of type `nfs`/`nfs4`; preflight checks
+`/proc/self/mountinfo` and there is no override. Then give it its own config with
+its **own `archive_id`**, and initialize it:
+
+```bash
+D="sudo -u hfcache HF_HOME=/var/tmp/hfcache-drill/hf \
+   /opt/hfcache/current/.venv/bin/hfcache --config /var/tmp/hfcache-drill/config.toml"
+$D archive init --archive-root /mnt/hfcache-throwaway \
+    --archive-id 9c2f1e40-8a55-4b31-90ad-7e6c4d2b8f13 --confirm
+$D doctor && $D sync
+```
+
+`doctor` passes all 17 checks against it, including the hardlink, atomic-rename,
+and reference-replacement probes — which is what makes a rehearsal here mean
+something.
+
+Tear down when finished:
+
+```bash
+sudo umount /mnt/hfcache-throwaway
+sudo rm -f /etc/exports.d/hfcache-throwaway.exports
+sudo exportfs -ra && sudo systemctl stop nfs-server
+sudo rm -rf /srv/hfcache-throwaway-src /mnt/hfcache-throwaway
+```
+
+**Never point a throwaway config at `/srv/hfcache`**, and never re-run
+`archive init` against it. The real archive was initialized once, on 2026-07-26,
+and that authorization is spent.
