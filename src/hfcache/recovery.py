@@ -53,6 +53,7 @@ from hfcache.identity import (
     new_run_id,
     new_transaction_id,
 )
+from hfcache.logging import emit
 from hfcache.manifests import RevisionManifest
 from hfcache.models import PrunedRevisionRecord, PrunePlan, Reference
 from hfcache.paths import RepositoryLayout
@@ -277,6 +278,14 @@ def _stale_warnings(findings: list[AreaFinding], age_hours: int) -> list[Problem
 
 def _deferred_warnings(findings: list[AreaFinding]) -> list[Problem]:
     """`HFWRN002` for each tombstone a prune committed but did not remove."""
+    deferred = [finding for finding in findings if finding.area == ".store/trash"]
+    for finding in deferred:
+        # Plan §24's `retention.deferred`. §7.4 names a `cleanup_deferred`
+        # checkpoint for this state, but nothing records one — the post-commit
+        # steps run inline and a failure there leaves the tombstone rather than a
+        # marker. So the observation, not the checkpoint, is what the event
+        # reports, and this reconciliation is what makes it.
+        emit("retention.deferred", tombstone=finding.path, area=finding.area)
     return [
         Problem(
             code="HFWRN002",
@@ -286,8 +295,7 @@ def _deferred_warnings(findings: list[AreaFinding]) -> list[Problem]:
             ),
             location=finding.path,
         )
-        for finding in findings
-        if finding.area == ".store/trash"
+        for finding in deferred
     ]
 
 

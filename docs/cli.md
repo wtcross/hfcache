@@ -29,7 +29,7 @@ invocation:
 | --- | --- | --- |
 | `--config PATH` | `/etc/hfcache/config.toml` | Configuration file |
 | `--json` | off | Emit the machine-readable envelope (§4) on stdout and nothing else |
-| `--verbose` / `-v` | off | Repeatable; raises log detail. Never enables secret logging |
+| `--verbose` / `-v` | off | Adds the `hfcache.logging.DEBUG_EVENTS` detail to the §24 event log. Repeatable, and repeats beyond the first are currently equivalent to one, because the vocabulary bottoms out at `DEBUG`. Never enables secret logging |
 | `--quiet` / `-q` | off | Suppress progress and informational output; warnings and errors still print |
 | `--no-color` | auto | Force plain output; also implied when stdout is not a terminal |
 | `--token-file PATH` | none | Read a token from this file for an operator-run command (§`docs/configuration.md` §7) |
@@ -572,6 +572,17 @@ manifest and the run report, is surfaced by `status`, and leaves the exit code a
   (`run.started`, `repository.resolved`, `download.completed`,
   `dependency.undeclared`, `publication.completed`, `retention.pruned`,
   `run.completed`, and the rest of `docs/plan.md` §24), and record durable
-  checkpoints rather than per-chunk progress.
+  checkpoints rather than per-chunk progress. The vocabulary is closed:
+  `hfcache.logging.EVENTS` is the whole of it, and emitting a name outside it
+  raises rather than writing a line no filter will match.
+- The format is logfmt on **stderr** — `event=… level=… run_id=… key=value`,
+  keys sorted after the first three, values quoted only when they would
+  otherwise be ambiguous. Under systemd each line carries a `<N>` syslog prefix,
+  which journald turns into `PRIORITY`, so `journalctl -p err -u
+  hfcache-sync.service` selects failures; run by hand there is no prefix.
+- Levels follow the options: `--quiet` is `WARNING`, the default is `INFO`, and
+  `-v` is `DEBUG`. The §24 families are emitted at the default level rather than
+  behind a flag, because they are the record an unattended run leaves and the
+  systemd units pass no flags.
 - Absolute filesystem paths are printed for operator commands, but every path
   written into a durable artifact is archive-relative (`docs/schemas.md` §1).

@@ -76,7 +76,7 @@ def init(config_file: Path, root: Path, *arguments: str):
 
 
 def envelope(result) -> dict:
-    return json.loads(result.output)
+    return json.loads(result.stdout)
 
 
 def error_codes(result) -> list[str]:

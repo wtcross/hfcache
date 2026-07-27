@@ -41,7 +41,7 @@ def test_an_unreadable_configuration_is_exit_ten_and_not_a_usage_error(tmp_path)
 
     unreadable = runner.invoke(app, ["--json", "--config", str(path), "status"])
     assert unreadable.exit_code == ExitCode.CONFIGURATION
-    assert [error["code"] for error in json.loads(unreadable.output)["errors"]] == ["HFCFG001"]
+    assert [error["code"] for error in json.loads(unreadable.stdout)["errors"]] == ["HFCFG001"]
 
     # And a command that needs no configuration answers regardless.
     assert runner.invoke(app, ["--config", str(path), "version"]).exit_code == ExitCode.SUCCESS
@@ -55,7 +55,7 @@ def test_version_json_envelope_matches_the_contract():
     assert result.output.endswith("\n")
     assert not result.output.rstrip("\n").endswith("\n")
 
-    envelope = json.loads(result.output)
+    envelope = json.loads(result.stdout)
     assert set(envelope) == {
         "command",
         "completed_at",

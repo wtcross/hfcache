@@ -38,6 +38,7 @@ from typing import TYPE_CHECKING, Any, Final, Literal, Self, final
 from hfcache.errors import Problem, SafetyError, SynchronizationError
 from hfcache.hub import endpoint_host, identity_problems, resolve_host, verify_tls
 from hfcache.locking import exclusive_lock, lock_path
+from hfcache.logging import emit
 from hfcache.storage import (
     BYTES_PER_GIB,
     capacity_problems,
@@ -445,9 +446,25 @@ def guarded(  # noqa: PLR0913 - each argument is one thing plan §13.1 steps 2-3
     command has been mutating it throughout would prove nothing.
     """
     with exclusive_lock(lock_path(), command=command, wait_seconds=lock_wait_seconds):
-        yield require_storage_safety(
-            layout, storage=storage, needed_bytes=needed_bytes, table=table
-        )
+        try:
+            checks = require_storage_safety(
+                layout, storage=storage, needed_bytes=needed_bytes, table=table
+            )
+        except SafetyError as error:
+            # Plan §24's `preflight.failed`, emitted here because this is the one
+            # place that knows the gate refused rather than that some later step
+            # did. A refusal leaves no run report — the run never reached one —
+            # so without this line the only durable trace is an exit code.
+            emit(
+                "preflight.failed",
+                command=command,
+                archive_root=str(layout.root),
+                codes=",".join(sorted({problem.code for problem in error.problems})),
+            )
+            raise
+        for check in checks:
+            emit("preflight.check", check=check.name, outcome=check.outcome, detail=check.detail)
+        yield checks
 
 
 def require_storage_safety(

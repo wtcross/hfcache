@@ -4,7 +4,6 @@ The command surface, global options, JSON envelope, and exit codes are specified
 in `docs/cli.md`. Scheduled runs use exactly the same commands an operator types.
 """
 
-import os
 import socket
 import sys
 from dataclasses import dataclass
@@ -38,6 +37,8 @@ from hfcache.identity import (
     new_transaction_id,
     parse_selector,
 )
+from hfcache.logging import bind_run, current_run_id, emit, under_systemd
+from hfcache.logging import configure as configure_logging
 from hfcache.manifests import RevisionManifest
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.preflight import (
@@ -148,8 +149,10 @@ def emit_envelope(
     `run_id` is passed by a command that wrote a durable report, because §4 says
     the envelope's run id *correlates it with that report* — minting a fresh one
     would give an operator two identifiers for one run and no way to join them.
-    A command that writes no report has nothing to correlate with and gets a new
-    id, which still ties the envelope to that invocation's log lines.
+    A command that writes no report has nothing to correlate with and reports the
+    id `hfcache.logging` bound at startup — which is what actually ties the
+    envelope to that invocation's log lines, rather than minting a second id that
+    appears nowhere else.
     """
     outcome = "failed" if exit_code else ("success_with_warnings" if warnings else "success")
     envelope = Envelope(
@@ -159,7 +162,7 @@ def emit_envelope(
         errors=tuple(EnvelopeProblem.of(problem) for problem in errors),
         exit_code=exit_code,
         outcome=outcome,
-        run_id=run_id if run_id is not None else new_run_id(),
+        run_id=run_id if run_id is not None else (current_run_id() or new_run_id()),
         started_at=started_at,
         warnings=tuple(EnvelopeProblem.of(problem) for problem in warnings),
     )
@@ -270,6 +273,11 @@ def main(
     ] = None,
 ) -> None:
     """Options accepted before the command."""
+    # Before any command runs, so a failure inside argument handling is still
+    # logged, and so `--verbose` selects a level rather than being accepted and
+    # ignored. This also binds the run id every event carries; a command that
+    # writes a durable report rebinds it to that report's id.
+    configure_logging(verbose=verbose, quiet=quiet)
     ctx.obj = GlobalOptions(
         config_path=config,
         json_output=json_output,
@@ -938,6 +946,18 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             lock_wait_seconds=config.sync.lock_wait_seconds,
         ) as checks:
             run_id = new_run_id()
+            # From here the log, the envelope, and `runs/<…>.json` name the same
+            # run. The preflight above has already logged under the startup id,
+            # which is correct: it happened before this run existed.
+            bind_run(run_id)
+            emit(
+                "run.started",
+                command="sync",
+                archive_id=str(envelope["archive_id"]),
+                config_fingerprint=str(envelope["config_fingerprint"]),
+                repositories=len(selected),
+                invocation=str(envelope["invocation_mode"]),
+            )
             outcome = _run(
                 client,
                 layout,
@@ -1564,6 +1584,21 @@ def _emit_verification(
     problems = _finding_problems(report)
     payload = report.model_dump(mode="json")
     payload["report"] = str(layout.archive_relative(report_path))
+    # The report carries its own run id, so bind it before the event: a
+    # verification writes a durable artifact and the log must name the same run.
+    bind_run(report.run_id)
+    emit(
+        "verification.completed",
+        command=command,
+        outcome=report.verification_outcome,
+        exit_code=report.exit_code,
+        repositories=report.scope.repositories,
+        revisions=report.scope.revisions,
+        objects_read=report.scope.unique_objects_read,
+        bytes_read=report.scope.unique_bytes_read,
+        findings=len(report.findings),
+        report=str(layout.archive_relative(report_path)),
+    )
     if options.json_output:
         emit_envelope(
             command,
@@ -1911,8 +1946,11 @@ def _run_envelope(config: ApplicationConfig) -> dict[str, Any]:
         "config_fingerprint": config.fingerprint(),
         "hostname": socket.gethostname(),
         "huggingface_hub_version": versions.huggingface_hub,
-        # systemd sets INVOCATION_ID for every unit it starts, which is the one
-        # signal that distinguishes a timer run from an operator at a terminal.
-        "invocation_mode": "systemd" if os.environ.get("INVOCATION_ID") else "interactive",
+        # `under_systemd` reads INVOCATION_ID, which systemd sets for every unit
+        # it starts and nothing else sets — the one signal that distinguishes a
+        # timer run from an operator at a terminal. Shared with the event log so
+        # the run report and the journal cannot disagree about where a run came
+        # from, and so the log knows whether to emit syslog priority prefixes.
+        "invocation_mode": "systemd" if under_systemd() else "interactive",
         "python_version": versions.python,
     }

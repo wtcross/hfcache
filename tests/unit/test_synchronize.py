@@ -623,7 +623,7 @@ def test_the_sync_command_publishes_and_exits_zero(config_file: Path):
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
 
     assert result.exit_code == ExitCode.SUCCESS
-    payload = json.loads(result.output)["data"]
+    payload = json.loads(result.stdout)["data"]
     assert {entry["status"] for entry in payload["repositories"]} == {"published"}
     assert payload["report"].startswith("runs/")
 
@@ -640,7 +640,7 @@ def test_the_sync_command_takes_the_exclusive_lock(config_file: Path, layout: Ar
         os.close(held)
 
     assert result.exit_code == ExitCode.SAFETY
-    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFMNT010"]
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFMNT010"]
 
 
 @pytest.mark.usefixtures("_wired")
@@ -649,7 +649,7 @@ def test_the_sync_command_restricts_a_run_to_its_selectors(config_file: Path):
         app, ["--json", "--config", str(config_file), "sync", "model:organization/model-name"]
     )
 
-    payload = json.loads(result.output)["data"]
+    payload = json.loads(result.stdout)["data"]
     assert [entry["repository_id"] for entry in payload["repositories"]] == [
         "organization/model-name"
     ]
@@ -670,7 +670,7 @@ def test_the_sync_command_exits_thirty_when_a_repository_failed(config_file: Pat
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
 
     assert result.exit_code == ExitCode.SYNC
-    assert json.loads(result.output)["outcome"] == "failed"
+    assert json.loads(result.stdout)["outcome"] == "failed"
 
 
 def test_the_sync_command_refuses_an_unmounted_archive(tmp_path: Path):
@@ -734,11 +734,72 @@ def test_the_sync_command_prints_each_failure_on_stderr(config_file: Path, hub: 
 @pytest.mark.usefixtures("_wired")
 def test_quiet_suppresses_the_per_repository_lines(config_file: Path):
     # `--quiet` suppresses informational output; the durable run report is still
-    # written, which is where an unattended run's evidence belongs.
+    # written, which is where an unattended run's evidence belongs. Asserted
+    # against `output` rather than `stdout`, so it also covers the §24 event log:
+    # quiet raises that to WARNING, and a clean run has nothing at that level.
     result = CliRunner().invoke(app, ["--quiet", "--config", str(config_file), "sync"])
 
     assert result.exit_code == ExitCode.SUCCESS
     assert result.output.strip() == ""
+
+
+@pytest.mark.usefixtures("_wired")
+def test_a_run_leaves_the_plan_section_24_event_trail_on_stderr(config_file: Path):
+    """The whole point of `OBS-002`: a scheduled run is legible from the journal.
+
+    Asserted as a *sequence* rather than a set, because the order is what makes
+    the trail readable — a reader following one repository sees it resolved,
+    downloaded, and published in that order, and can tell a run that stopped
+    part way from one that never started.
+    """
+    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    assert result.exit_code == ExitCode.SUCCESS
+    events = [
+        line.split(" ", 1)[0].removeprefix("event=")
+        for line in result.stderr.splitlines()
+        if line.startswith("event=")
+    ]
+    assert events == [
+        "run.started",
+        "repository.resolved",
+        "download.started",
+        "download.completed",
+        "publication.completed",
+        "repository.resolved",
+        "download.started",
+        "download.completed",
+        "publication.completed",
+        "run.completed",
+    ]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_every_event_in_a_run_carries_the_report_s_run_id(config_file: Path):
+    # The join §24 exists to make possible: one identifier across the envelope on
+    # stdout, the lines on stderr, and `runs/<…>.json` on the archive.
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+
+    run_id = json.loads(result.stdout)["run_id"]
+    emitted = [line for line in result.stderr.splitlines() if line.startswith("event=")]
+    assert emitted
+    # `run.started` onwards; the preflight lines above it predate the run id and
+    # deliberately carry the startup one instead.
+    assert all(f"run_id={run_id}" in line for line in emitted)
+
+
+@pytest.mark.usefixtures("_wired")
+def test_a_failing_repository_says_so_in_the_event_trail(config_file: Path, hub: FakeHub):
+    del hub.heads[MODEL.selector]
+
+    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+
+    failed = [
+        line for line in result.stderr.splitlines() if line.startswith("event=repository.fai")
+    ]
+    assert len(failed) == 1
+    assert "repository=model:organization/model-name" in failed[0]
+    assert "level=error" in failed[0]
 
 
 # --------------------------------------------------------------------------- #
@@ -830,7 +891,7 @@ def test_a_completed_run_leaves_nothing_reading_as_unfinished(config_file: Path,
     assert result.exit_code == ExitCode.SUCCESS
     assert list(layout.staging.iterdir()) == []
     status = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
-    archive = json.loads(status.output)["data"]["archive"]
+    archive = json.loads(status.stdout)["data"]["archive"]
     assert archive["unfinished_transactions"] == 0
     assert archive["findings"] == []
 
@@ -923,7 +984,7 @@ def test_a_journal_that_asked_for_an_operator_stops_the_run_before_the_hub(
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
 
     assert result.exit_code == ExitCode.SAFETY
-    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFTXN004"]
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFTXN004"]
     assert hub.downloads == [], "not one byte was fetched"
     # The run closed its own journal rather than leaving a second unfinished one
     # behind, and the journal that stopped it is untouched.
@@ -1016,7 +1077,7 @@ def test_status_reports_retained_and_current_state(config_file: Path):
 
     entries = {
         f"{e['repository_type']}:{e['repository_id']}": e
-        for e in json.loads(result.output)["data"]["repositories"]
+        for e in json.loads(result.stdout)["data"]["repositories"]
     }
     assert entries[MODEL.selector]["retained_revisions"] == 1
     assert entries[MODEL.selector]["current_commit_sha"] == SHA_A
@@ -1029,7 +1090,7 @@ def test_status_answers_for_a_repository_that_was_never_synced(config_file: Path
     # A configured repository with nothing archived yet is a normal state.
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
 
-    entry = json.loads(result.output)["data"]["repositories"][0]
+    entry = json.loads(result.stdout)["data"]["repositories"][0]
     assert result.exit_code == ExitCode.SUCCESS
     assert entry["retained_revisions"] == 0
     assert entry["current_commit_sha"] is None
@@ -1044,7 +1105,7 @@ def test_status_never_contacts_the_hub(config_file: Path, hub: FakeHub):
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
 
     assert result.exit_code == ExitCode.SUCCESS
-    assert {e["upstream_state"] for e in json.loads(result.output)["data"]["repositories"]} == {
+    assert {e["upstream_state"] for e in json.loads(result.stdout)["data"]["repositories"]} == {
         "unknown"
     }
 
@@ -1057,7 +1118,7 @@ def test_list_reads_manifests_and_references_not_the_catalog(config_file: Path, 
 
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "list"])
 
-    entries = json.loads(result.output)["data"]["repositories"]
+    entries = json.loads(result.stdout)["data"]["repositories"]
     assert result.exit_code == ExitCode.SUCCESS
     assert {e["repository_id"] for e in entries} == {MODEL.id, DATASET.id}
     assert all(e["retained_revisions"] == 1 for e in entries)
@@ -1074,7 +1135,7 @@ def test_list_revisions_describes_each_retained_revision(config_file: Path, hub:
         app, ["--json", "--config", str(config_file), "list", "--revisions"]
     )
 
-    entries = {e["repository_id"]: e for e in json.loads(result.output)["data"]["repositories"]}
+    entries = {e["repository_id"]: e for e in json.loads(result.stdout)["data"]["repositories"]}
     revisions = entries[MODEL.id]["revisions"]
     assert [r["commit_sha"] for r in revisions] == [SHA_A, SHA_B]
     assert [r["publication_generation"] for r in revisions] == [1, 2]
@@ -1089,7 +1150,7 @@ def test_list_restricts_to_one_repository_type(config_file: Path):
         app, ["--json", "--config", str(config_file), "list", "--type", "dataset"]
     )
 
-    entries = json.loads(result.output)["data"]["repositories"]
+    entries = json.loads(result.stdout)["data"]["repositories"]
     assert [e["repository_id"] for e in entries] == [DATASET.id]
 
 
@@ -1101,7 +1162,7 @@ def test_list_restricts_to_its_selectors(config_file: Path):
         app, ["--json", "--config", str(config_file), "list", "model:organization/model-name"]
     )
 
-    entries = json.loads(result.output)["data"]["repositories"]
+    entries = json.loads(result.stdout)["data"]["repositories"]
     assert [e["repository_id"] for e in entries] == [MODEL.id]
 
 
@@ -1111,7 +1172,7 @@ def test_list_refuses_a_type_that_is_not_a_repository_type(config_file: Path):
     )
 
     assert result.exit_code == ExitCode.CONFIGURATION
-    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFARG002"]
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG002"]
 
 
 @pytest.mark.usefixtures("_wired")
@@ -1128,7 +1189,7 @@ def test_list_answers_for_an_archive_with_nothing_published(config_file: Path):
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "list"])
 
     assert result.exit_code == ExitCode.SUCCESS
-    assert json.loads(result.output)["data"]["repositories"] == []
+    assert json.loads(result.stdout)["data"]["repositories"] == []
 
 
 @pytest.mark.usefixtures("_wired")
@@ -1143,7 +1204,7 @@ def test_status_answers_over_a_damaged_reference(config_file: Path, layout):
 
     entries = {
         f"{e['repository_type']}:{e['repository_id']}": e
-        for e in json.loads(result.output)["data"]["repositories"]
+        for e in json.loads(result.stdout)["data"]["repositories"]
     }
     assert result.exit_code == ExitCode.SUCCESS
     assert entries[MODEL.selector]["current_commit_sha"] is None
@@ -1161,7 +1222,7 @@ def test_status_skips_a_run_report_it_cannot_read(config_file: Path, layout):
 
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
 
-    entries = json.loads(result.output)["data"]["repositories"]
+    entries = json.loads(result.stdout)["data"]["repositories"]
     assert result.exit_code == ExitCode.SUCCESS
     assert {entry["last_run_status"] for entry in entries} == {None}
     assert entries[0]["retained_revisions"] == 1
@@ -1176,7 +1237,7 @@ def test_status_reports_no_last_run_when_the_archive_is_absent(tmp_path: Path):
 
     result = CliRunner().invoke(app, ["--json", "--config", str(path), "status"])
 
-    entries = json.loads(result.output)["data"]["repositories"]
+    entries = json.loads(result.stdout)["data"]["repositories"]
     assert result.exit_code == ExitCode.SUCCESS
     assert {entry["last_run_status"] for entry in entries} == {None}
     assert {entry["retained_revisions"] for entry in entries} == {0}
@@ -1361,7 +1422,7 @@ def test_prune_dry_run_reports_the_plan_and_mutates_nothing(config_file: Path, l
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--dry-run"])
 
     assert result.exit_code == ExitCode.SUCCESS
-    assert json.loads(result.output)["data"]["plans"] == []
+    assert json.loads(result.stdout)["data"]["plans"] == []
     assert {r.commit_sha for r in retained_references(layout, MODEL)} == before
 
 
@@ -1395,7 +1456,7 @@ def test_prune_requires_exactly_one_mode(config_file: Path):
 
     for result in (both, neither):
         assert result.exit_code == ExitCode.CONFIGURATION
-        assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFARG002"]
+        assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG002"]
 
 
 @pytest.mark.usefixtures("_wired")
@@ -1409,7 +1470,7 @@ def test_prune_apply_takes_the_lock_and_completes_a_plan(config_file: Path, layo
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
 
     assert result.exit_code == ExitCode.SUCCESS
-    payload = json.loads(result.output)["data"]
+    payload = json.loads(result.stdout)["data"]
     assert payload["plans"] == []
     assert payload["applied"] == []
 
@@ -1437,7 +1498,7 @@ def test_prune_apply_stops_on_a_journal_that_asked_for_an_operator(config_file: 
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
 
     assert result.exit_code == ExitCode.SAFETY
-    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFTXN004"]
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFTXN004"]
     assert {r.commit_sha for r in retained_references(layout, MODEL)} == before
 
 
@@ -1476,7 +1537,7 @@ def test_prune_apply_completes_retention_an_earlier_failure_deferred(
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
 
     assert result.exit_code == ExitCode.SUCCESS
-    applied = json.loads(result.output)["data"]["applied"]
+    applied = json.loads(result.stdout)["data"]["applied"]
     assert [record["publication_generation"] for record in applied] == [1]
     assert len(retained_references(layout, MODEL)) == 5
 
@@ -1503,7 +1564,7 @@ def test_prune_reports_a_failure_rather_than_a_traceback(
     result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
 
     assert result.exit_code == ExitCode.RETENTION
-    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFRET002"]
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFRET002"]
     # Nothing removed: six revisions remain, which §15.2 prefers to losing one.
     assert len(retained_references(layout, MODEL)) == 6
 

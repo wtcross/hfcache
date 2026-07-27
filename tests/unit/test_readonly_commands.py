@@ -208,7 +208,7 @@ def invoke(config_file: Path, *arguments: str):
 
 
 def data_of(result) -> dict:
-    return json.loads(result.output)["data"]
+    return json.loads(result.stdout)["data"]
 
 
 def checks_of(result) -> dict[str, dict]:
@@ -248,7 +248,7 @@ def test_doctor_exits_twenty_when_any_check_failed(config_file: Path):
     result = invoke(config_file, "doctor")
 
     assert result.exit_code == ExitCode.SAFETY
-    envelope = json.loads(result.output)
+    envelope = json.loads(result.stdout)
     assert envelope["outcome"] == "failed"
     assert [error["code"] for error in envelope["errors"]] == ["HFMNT001"]
 
@@ -306,7 +306,7 @@ def test_doctor_fails_when_free_space_is_below_the_reserve(tmp_path: Path, mount
     result = invoke(path, "doctor")
 
     assert result.exit_code == ExitCode.SAFETY
-    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFMNT011"]
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFMNT011"]
 
 
 def test_doctor_warns_without_failing_when_free_space_approaches_the_reserve(
@@ -327,7 +327,7 @@ def test_doctor_warns_without_failing_when_free_space_approaches_the_reserve(
     path.write_text(config_for(str(path.parent / "archive"), reserve_percent=20), encoding="utf-8")
 
     result = invoke(path, "doctor")
-    envelope = json.loads(result.output)
+    envelope = json.loads(result.stdout)
 
     assert result.exit_code == ExitCode.SUCCESS
     assert envelope["outcome"] == "success_with_warnings"
@@ -396,7 +396,7 @@ def test_doctor_fails_on_bad_configuration_before_probing(tmp_path: Path):
 
     result = invoke(path, "doctor")
 
-    envelope = json.loads(result.output)
+    envelope = json.loads(result.stdout)
     assert result.exit_code == ExitCode.CONFIGURATION
     assert envelope["data"] == {}, "no check ran, so none is reported"
     assert envelope["errors"][0]["code"] == "HFCFG004"
@@ -563,7 +563,7 @@ def test_one_repository_failing_does_not_hide_the_others(
     assert result.exit_code == ExitCode.SYNC
     assert entries["zeta/last-in-file"]["upstream_state"] == "missing"
     assert entries["alpha/first-in-file"]["resolved_commit_sha"] == SHA
-    assert [error["code"] for error in json.loads(result.output)["errors"]] == ["HFHUB004"]
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFHUB004"]
 
 
 def test_plan_prints_the_resolved_sha_beside_the_selector(config_file: Path):
@@ -788,7 +788,7 @@ def test_status_surfaces_what_the_transaction_areas_hold(
 
     assert archive["unfinished_transactions"] == 1
     assert archive["deferred_cleanup"] == 1
-    assert [warning["code"] for warning in json.loads(result.output)["warnings"]] == ["HFWRN002"]
+    assert [warning["code"] for warning in json.loads(result.stdout)["warnings"]] == ["HFWRN002"]
     assert result.exit_code == ExitCode.SUCCESS, "a warning never changes a 0 exit on its own"
 
 
@@ -827,7 +827,7 @@ def test_a_malformed_selector_is_hfarg001(config_file: Path, command):
     result = invoke(config_file, command, "not-a-selector")
 
     assert result.exit_code == ExitCode.CONFIGURATION
-    assert json.loads(result.output)["errors"][0]["code"] == "HFARG001"
+    assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG001"
 
 
 @pytest.mark.parametrize("command", ["plan", "status"])
@@ -835,7 +835,7 @@ def test_an_abbreviated_sha_in_a_selector_is_hfarg001(config_file: Path, command
     result = invoke(config_file, command, "model:zeta/last-in-file@0123456")
 
     assert result.exit_code == ExitCode.CONFIGURATION
-    assert json.loads(result.output)["errors"][0]["code"] == "HFARG001"
+    assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG001"
 
 
 @pytest.mark.parametrize("command", ["plan", "status"])
@@ -843,13 +843,13 @@ def test_an_unconfigured_selector_is_hfarg004(config_file: Path, command):
     result = invoke(config_file, command, "model:absent/repository")
 
     assert result.exit_code == ExitCode.CONFIGURATION
-    assert json.loads(result.output)["errors"][0]["code"] == "HFARG004"
+    assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG004"
 
 
 def test_every_unconfigured_selector_is_reported_at_once(config_file: Path):
     result = invoke(config_file, "plan", "model:absent/one", "model:absent/two")
 
-    errors = json.loads(result.output)["errors"]
+    errors = json.loads(result.stdout)["errors"]
     assert [error["code"] for error in errors] == ["HFARG004", "HFARG004"]
     assert {error["context"]["location"] for error in errors} == {
         "model:absent/one",
@@ -862,7 +862,7 @@ def test_the_type_is_part_of_the_selector_match(config_file: Path):
     result = invoke(config_file, "status", "model:alpha/first-in-file")
 
     assert result.exit_code == ExitCode.CONFIGURATION
-    assert json.loads(result.output)["errors"][0]["code"] == "HFARG004"
+    assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG004"
 
 
 def test_a_disabled_repository_can_still_be_selected_by_status(config_file: Path):
@@ -942,7 +942,7 @@ def test_recover_requires_exactly_one_mode(config_file: Path, arguments):
     result = invoke(config_file, "recover", *arguments)
 
     assert result.exit_code == ExitCode.CONFIGURATION
-    assert json.loads(result.output)["errors"][0]["code"] == "HFARG002"
+    assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG002"
 
 
 def test_recover_dry_run_describes_a_clean_archive(initialized_config: Path):
@@ -987,7 +987,7 @@ def test_recover_apply_refuses_when_the_lock_is_held(
         os.close(descriptor)
 
     assert result.exit_code == ExitCode.SAFETY
-    assert json.loads(result.output)["errors"][0]["code"] == "HFMNT010"
+    assert json.loads(result.stdout)["errors"][0]["code"] == "HFMNT010"
 
 
 def test_recover_reports_a_state_it_may_not_resolve(
@@ -1007,7 +1007,7 @@ def test_recover_reports_a_state_it_may_not_resolve(
     result = invoke(initialized_config, "recover", "--dry-run")
 
     assert result.exit_code == ExitCode.SAFETY
-    assert json.loads(result.output)["errors"][0]["code"] == "HFTXN004"
+    assert json.loads(result.stdout)["errors"][0]["code"] == "HFTXN004"
     assert data_of(result)["blocked"] == 1, "the plan is reported alongside the refusal"
 
 

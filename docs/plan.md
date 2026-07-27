@@ -1156,6 +1156,19 @@ exists once a run gets far enough to write one. A run that dies in preflight,
 mid-download, or on a lock timeout leaves nothing but systemd's exit code, so the
 journal is the only record of exactly the failures an operator most needs.
 
+**Application half done 2026-07-27 (`OBS-002`).** `src/hfcache/logging.py` emits
+every family above as logfmt on stderr, using the standard library only
+(`FW-03`). The vocabulary is closed — `EVENTS` is the whole of it and a name
+outside it raises — so an operator's `journalctl … event=publication.completed`
+survives a release. Every event carries the run id, and `configure` binds one at
+startup so a command that writes no durable report still reports the *same* id in
+its stdout envelope as it does on stderr; commands that do write one rebind to
+that report's id, joining the log, the envelope, and `runs/<...>.json`.
+`--verbose` selects the level, which it did not before: it was parsed, stored,
+and read by nothing. Secrets are refused by field name and by value shape —
+`hf_` tokens, `Bearer` values, and presigned URLs — on top of the structural fact
+that no call site passes a credential.
+
 Recommended event families:
 
 ```text

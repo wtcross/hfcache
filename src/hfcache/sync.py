@@ -37,6 +37,7 @@ from hfcache.identity import (
     new_publication_id,
     new_transaction_id,
 )
+from hfcache.logging import emit
 from hfcache.manifests import (
     FileEntry,
     FileProvenance,
@@ -824,11 +825,22 @@ def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to
     identity = RepositoryIdentity.from_config(repository)
     started = _now()
     facts = client.repository(identity, repository.revision)
+    emit(
+        "repository.resolved",
+        repository=identity.selector,
+        requested_revision=repository.revision,
+        commit_sha=facts.commit_sha,
+    )
 
     if (held := _already_retained(layout, identity, facts.commit_sha)) is not None:
-        return RepositoryOutcome(
-            result=_retained_result(layout, repository, identity, held, started)
+        result = _retained_result(layout, repository, identity, held, started)
+        emit(
+            "repository.skipped",
+            repository=identity.selector,
+            commit_sha=facts.commit_sha,
+            status=result.status,
         )
+        return RepositoryOutcome(result=result)
 
     estimate = client.estimate(
         identity,
@@ -840,6 +852,14 @@ def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to
         estimate.logical_bytes, publication_mode=config.storage.publication_mode
     )
     warnings = require_capacity(layout, config.storage, needed_bytes=needed)
+    emit(
+        "capacity.evaluated",
+        repository=identity.selector,
+        needed_bytes=needed,
+        new_bytes=estimate.new_bytes,
+        cached_bytes=estimate.cached_bytes,
+        logical_bytes=estimate.logical_bytes,
+    )
 
     transaction_id = new_transaction_id()
     transaction = open_transaction(
@@ -918,6 +938,13 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
     )
 
     download_started = _now()
+    emit(
+        "download.started",
+        repository=identity.selector,
+        commit_sha=facts.commit_sha,
+        new_bytes=estimate.new_bytes,
+        file_count=estimate.file_count,
+    )
     client.download(
         identity,
         facts.commit_sha,
@@ -930,6 +957,13 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
         "download_completed",
         commit_sha=facts.commit_sha,
         downloaded_bytes=estimate.new_bytes,
+    )
+    emit(
+        "download.completed",
+        repository=identity.selector,
+        commit_sha=facts.commit_sha,
+        downloaded_bytes=estimate.new_bytes,
+        seconds=round((download_completed - download_started).total_seconds(), 3),
     )
 
     tree = client.tree(identity, facts.commit_sha)
@@ -973,6 +1007,16 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
         )
         for code in undeclared_warnings(observations)
     ]
+    for item in undeclared(observations):
+        emit(
+            "dependency.undeclared",
+            repository=identity.selector,
+            commit_sha=facts.commit_sha,
+            detected=item.detected_id,
+            source=item.source_file,
+            confidence=item.confidence,
+            managed=item.managed,
+        )
 
     manifest = build_manifest(
         dependencies=observations,
@@ -1021,6 +1065,18 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
         staging_absent=str(layout.archive_relative(staging.directory)),
     )
     transaction.commit()
+    emit(
+        "publication.completed",
+        repository=identity.selector,
+        commit_sha=outcome.commit_sha,
+        publication_id=outcome.publication_id,
+        publication_generation=outcome.publication_generation,
+        file_count=manifest.file_count,
+        logical_bytes=manifest.total_bytes,
+        hashed_bytes=hashed.hashed_bytes,
+        reused_digests=hashed.reused_digests,
+        mode=config.storage.publication_mode,
+    )
 
     # Plan §13.2 step 20, and only here: retention is triggered by a *successful*
     # publication (`AD-04`), so it runs after the publication transaction has
@@ -1084,6 +1140,16 @@ def _apply_retention(
             "config_fingerprint": config.fingerprint(),
             "run_id": run_id,
         },
+    )
+    emit(
+        "retention.pruned",
+        repository=identity.selector,
+        commit_sha=record.commit_sha,
+        publication_generation=record.publication_generation,
+        publication_id=record.publication_id,
+        logical_bytes=record.logical_bytes,
+        file_count=record.file_count,
+        retained_after=len(record.retained_after),
     )
     return PrunedRevision(
         commit_sha=record.commit_sha,
@@ -1255,7 +1321,18 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
             # Every local revision of this repository is preserved regardless
             # (`AD-06`): a failure here means the run learned nothing new about
             # it, never that what it already holds is suspect.
-            results.append(_failed_result(repository, error))
+            failed = _failed_result(repository, error)
+            emit(
+                "repository.failed",
+                repository=f"{failed.repository_type}:{failed.repository_id}",
+                codes=",".join(failed.errors),
+                # The first problem's message, which is the one an operator reads
+                # first anyway. `_scrub` still passes over it, because a message
+                # is free text and a path in it could carry anything.
+                detail=error.problems[0].message,
+                continuing=config.sync.continue_on_repository_error,
+            )
+            results.append(failed)
             if not config.sync.continue_on_repository_error:
                 break
             continue
@@ -1313,6 +1390,17 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
     transaction.checkpoint("run_report_written", run_report_path=str(layout.archive_relative(path)))
     transaction.checkpoint("run_completed", exit_code=int(exit_code), outcome=report.outcome)
     transaction.commit()
+    emit(
+        "run.completed",
+        command="sync",
+        exit_code=int(exit_code),
+        outcome=report.outcome,
+        repositories=len(results),
+        downloaded_bytes=totals["downloaded_bytes"],
+        hashed_bytes=totals["hashed_bytes"],
+        reused_bytes=totals["reused_bytes"],
+        report=str(layout.archive_relative(path)),
+    )
     return RunOutcome(report=report, report_path=path, exit_code=exit_code)
 
 

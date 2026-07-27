@@ -52,7 +52,7 @@ def invoke(*arguments: str):
 
 
 def envelope_of(result) -> dict:
-    return json.loads(result.output)
+    return json.loads(result.stdout)
 
 
 # --------------------------------------------------------------------------- #
