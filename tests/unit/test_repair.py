@@ -834,6 +834,117 @@ def test_a_publication_interrupted_after_the_rename_rolls_forward(
     assert open_journals(layout) == ()
 
 
+def crash_at_checkpoint(monkeypatch: pytest.MonkeyPatch, operation: str, *, after: int):
+    """Kill a transaction once it has recorded its nth checkpoint.
+
+    Some §7 boundaries have no function call between two checkpoints to hang a
+    `crash_at` on — §7.4's commit point is `catalog_published` immediately
+    followed by `prune_logically_committed` — so the only way to stop between
+    them is to count the checkpoints themselves. The kill happens *after* the
+    real append, so the journal a crash leaves holds exactly `after` of them.
+    """
+    real = Transaction.checkpoint
+    seen = {"count": 0}
+
+    def failing(self, name: str, **evidence: Any):
+        recorded = real(self, name, **evidence)
+        if self.journal.operation == operation:
+            seen["count"] += 1
+            if seen["count"] == after:
+                raise CrashError
+        return recorded
+
+    monkeypatch.setattr(Transaction, "checkpoint", failing)
+    return lambda: monkeypatch.setattr(Transaction, "checkpoint", real)
+
+
+def test_a_publication_interrupted_before_the_current_ref_rolls_forward(
+    client, hub, layout, config, monkeypatch
+):
+    """§7.3, "After 7, before 8": retained and discoverable, but not yet current.
+
+    §26.6's `revision_ref_published` row. The condition function has its own test
+    (`test_an_older_revision_rolled_forward_does_not_become_current`); this is the
+    boundary reached by an actual crash, which is what the matrix asks for.
+    """
+    sync(client, layout, config, only_model(config))
+    hub.heads[MODEL.selector] = SHA_B
+    restore = crash_at(monkeypatch, sync_module, "publish_current_reference")
+    with pytest.raises(CrashError):
+        sync(client, layout, config, only_model(config))
+    restore()
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    # The new revision is retained; the previous one is still what consumers get.
+    assert read_reference(layout, repository.revision_ref(CommitSha(SHA_B))).commit_sha == SHA_B
+    assert read_reference(layout, repository.current_ref).commit_sha == SHA_A
+    prepared = plan(layout)
+    assert remedy_for(prepared, "publication") == "complete_publication"
+
+    apply(layout, config)
+
+    assert read_reference(layout, repository.current_ref).commit_sha == SHA_B
+    assert open_journals(layout) == ()
+
+
+def test_a_publication_interrupted_before_the_catalog_rolls_forward(
+    client, layout, config, monkeypatch
+):
+    """§7.3, "After 8, before 9": current, with a stale catalog.
+
+    The catalog is derived and always reconstructible (`FS-16`), so the whole
+    resolution is to rebuild it.
+    """
+    restore = crash_at(monkeypatch, sync_module, "publish_catalog")
+    with pytest.raises(CrashError):
+        sync(client, layout, config, only_model(config))
+    restore()
+
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    assert read_reference(layout, repository.current_ref).commit_sha == SHA_A
+    prepared = plan(layout)
+    assert remedy_for(prepared, "publication") == "complete_publication"
+
+    apply(layout, config)
+
+    catalog = layout.catalog / "repositories.json"
+    assert catalog.is_file()
+    assert SHA_A in catalog.read_text(encoding="utf-8")
+    assert open_journals(layout) == ()
+
+
+def test_a_prune_interrupted_at_its_commit_point_rolls_back(
+    client, hub, layout, config, monkeypatch
+):
+    """§7.4's last rollback-able state: checkpoint 6 recorded, 7 not.
+
+    The catalog already names five revisions, but `prune_logically_committed` is
+    absent — so the archive has not decided, and `TX-06` says put the sixth back.
+    This is the boundary immediately before the commit point, and it is the one
+    row of §7.4 that neither of the other two prune crash tests reaches: they
+    stop during checkpoint 6 and during checkpoint 8 respectively.
+    """
+    restore = crash_at_checkpoint(monkeypatch, "prune", after=6)
+    with pytest.raises(CrashError):
+        six_revisions(client, hub, layout, config)
+    restore()
+
+    journal = next(
+        read_journal(layout, path).journal
+        for path in sorted(layout.transactions.glob("*.json"))
+        if read_journal(layout, path).journal.operation == "prune"
+    )
+    assert [checkpoint.name for checkpoint in journal.checkpoints][-1] == "catalog_published"
+    assert "prune_logically_committed" not in [c.name for c in journal.checkpoints]
+    prepared = plan(layout)
+    assert remedy_for(prepared, "prune") == "rollback_prune"
+
+    apply(layout, config)
+
+    assert len(retained_references(layout, MODEL)) == 6, "the sixth came back"
+    assert open_journals(layout) == ()
+
+
 def test_a_publication_interrupted_before_the_reference_rolls_forward(
     client, layout, config, monkeypatch
 ):

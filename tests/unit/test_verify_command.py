@@ -6,6 +6,7 @@ the archive exactly as it was. The checking itself is
 `tests/unit/test_verification.py`'s.
 """
 
+import hashlib
 import json
 import os
 import shutil
@@ -16,6 +17,7 @@ from pathlib import Path  # noqa: TC003 - fixtures take and return one at run ti
 import pytest
 from typer.testing import CliRunner
 
+from hfcache import verification as verification_module
 from hfcache.archive import initialize_archive
 from hfcache.cli import app
 from hfcache.errors import ExitCode
@@ -759,6 +761,69 @@ def test_a_failing_verification_writes_its_report_too(config_path, archive):
     persisted = json.loads(written[0].read_text(encoding="utf-8"))
     assert persisted["verification_outcome"] == "failed"
     assert persisted["findings"][0]["kind"] == "missing"
+
+
+class InterruptedRunError(RuntimeError):
+    """Stands in for the writer losing power partway through a verification."""
+
+
+def fingerprint(layout: ArchiveLayout) -> dict[str, str]:
+    """Every published byte, keyed by path — what must not change."""
+    return {
+        str(path.relative_to(layout.published)): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(layout.published.rglob("*"))
+        if path.is_file()
+    }
+
+
+def test_a_verification_interrupted_leaves_the_archive_exactly_as_it_was(
+    config_path, archive, monkeypatch
+):
+    """§26.6's last row: inject failure *during* the quarterly verification.
+
+    Verification only reads. Its report and its catalog entry are each replaced
+    by a single atomic rename, so an interruption can leave a partial neither,
+    and no retained revision is touched by the run that was checking it. The run
+    after it still reports clean, which is the property that matters: an
+    interrupted verification costs time, not evidence.
+    """
+    publish(archive, commit_sha=SHA_A)
+    publish(archive, commit_sha=SHA_B)
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
+
+    before_catalog = read_verification_catalog(archive)
+    before_reports = reports_in(archive)
+    before_content = fingerprint(archive)
+
+    real = verification_module.verify_target
+    calls: list[int] = []
+
+    def failing(target, reads):
+        calls.append(1)
+        # After the first revision has been read, so the crash lands mid-run
+        # rather than before it started.
+        if len(calls) == 2:
+            raise InterruptedRunError
+        return real(target, reads)
+
+    monkeypatch.setattr(verification_module, "verify_target", failing)
+    result = invoke(config_path, "--full")
+    # Restore this one attribute rather than `monkeypatch.undo()`, which would
+    # also revert the `archive` fixture's mount table and lock directory and send
+    # the next invocation at the real `/run/hfcache`.
+    monkeypatch.setattr(verification_module, "verify_target", real)
+
+    assert isinstance(result.exception, InterruptedRunError)
+    assert fingerprint(archive) == before_content, "verification changed published bytes"
+    assert reports_in(archive) == before_reports, "a partial report was left behind"
+    after_catalog = read_verification_catalog(archive)
+    assert after_catalog is not None
+    assert before_catalog is not None
+    assert after_catalog.last_full_verification == before_catalog.last_full_verification
+    assert not after_catalog.is_degraded
+
+    # And the next run is clean, having lost nothing but the time.
+    assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
 
 
 def test_a_full_verification_updates_the_catalog(config_path, archive):

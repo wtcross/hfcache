@@ -297,12 +297,13 @@ hfcache/
 │       └── verification.py
 └── tests/
     ├── fixtures/
-    ├── integration/
     ├── system/
     └── unit/
 ```
 
 Module boundaries can be consolidated where implementation remains small, but Hub access, storage mutation, retention, and verification must remain independently testable.
+
+There is no `tests/integration/`. §26.2's integration tests all exist and all run, but they live in `tests/unit/` beside the unit tests of the same modules, because they share those modules' fixtures and because the tier boundary does not fall where a directory split would put it — one file holds both a pure retention-ordering test and a full six-revision publish-and-prune cycle against the fake Hub. `tests/unit/test_failure_matrix.py` maps §26.6's eleven injection points to the tests that cover them, and checks that every name it claims still resolves (`OPS-005`, decision 69).
 
 ## 8. Python and Dependency Management
 
