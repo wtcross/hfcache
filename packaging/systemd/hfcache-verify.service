@@ -16,10 +16,11 @@ Documentation=file:///opt/hfcache/current/docs/operations.md
 After=remote-fs.target
 RequiresMountsFor=/srv/hfcache
 PartOf=hfcache.target
-# §24's monitoring seam, and it carries more weight on this unit than on the
-# sync: a quarterly job that fails has three months to go unnoticed, and exit
-# `40` here means the archive may be corrupt. See hfcache-failure@.service.
-OnFailure=hfcache-failure@%n.service
+# §24's monitoring seam, left rather than wired, and it carries more weight on
+# this unit than on the sync: a quarterly job that fails has three months to go
+# unnoticed, and exit `40` here means the archive may be corrupt. Whoever
+# activates hfcache-failure@.service.example should start with this unit.
+#OnFailure=hfcache-failure@%n.service
 
 [Service]
 Type=oneshot

@@ -38,12 +38,34 @@
 # opinion about how this site pages someone, and §24 is explicit that it should
 # not acquire one.
 #
-# Installed as a template so one handler serves every unit and names which one
-# failed. The two service units carry `OnFailure=hfcache-failure@%n.service`,
-# which passes the failing unit's name as the instance.
+# **Shipped as an example, not installed.** §24 asks that a hook be *left* for
+# future monitoring, and this deployment has nobody to notify: a handler that
+# only reprints what systemd already logged is a seam, not a control, and
+# installing one would add a unit that fires on every failure to no end. The
+# same reasoning as `hfcache-sync.service.d/credential.conf.example`, which
+# ships complete and uninstalled against the day the archive needs a token.
 #
-# Install to /etc/systemd/system/hfcache-failure@.service. It is never enabled —
-# nothing wants it; it is started by the OnFailure= of a unit that failed.
+# It has been exercised, which is what makes it an example worth having rather
+# than untested prose. Against a genuinely failed `hfcache-sync.service` it
+# produced five lines at `PRIORITY=3` tagged `hfcache-failure`, carrying
+# `ExecMainStatus=10` — the application's own §11.2 classification, intact
+# through systemd — and an `InvocationID` that resolved to exactly that run's
+# output. It fired once, for the failure; the clean run after it did not
+# trigger it. Decision 63 records the evidence.
+#
+# To activate, both halves are needed:
+#
+#   1. install this file, without the .example suffix:
+#        install -m 0644 -o root -g root hfcache-failure@.service.example \
+#          /etc/systemd/system/hfcache-failure@.service
+#   2. uncomment the `OnFailure=hfcache-failure@%n.service` line in
+#      hfcache-sync.service and hfcache-verify.service, reinstall them, and
+#      `systemctl daemon-reload`.
+#
+# A template, so one handler serves every unit and names which one failed: `%n`
+# in the failing unit passes that unit's name as this one's instance. It is
+# never enabled — nothing wants it; it is started by the OnFailure= of a unit
+# that failed.
 
 [Unit]
 Description=Report the failure of %i

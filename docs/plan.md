@@ -244,7 +244,7 @@ hfcache/
 │       ├── srv-hfcache.mount
 │       ├── srv-hfcache.automount
 │       ├── hfcache.target
-│       ├── hfcache-failure@.service
+│       ├── hfcache-failure@.service.example
 │       ├── hfcache-sync.service
 │       ├── hfcache-sync.timer
 │       ├── hfcache-verify.service
@@ -1016,7 +1016,13 @@ Ship the following units:
 - `hfcache-sync.timer`
 - `hfcache-verify.service`
 - `hfcache-verify.timer`
-- `hfcache-failure@.service` — §24's monitoring seam, added at `OBS-001`
+
+`packaging/systemd/` additionally ships `hfcache-failure@.service.example`,
+§24's monitoring seam. It is shipped **uninstalled**, like the credential
+drop-in beside it: §24 asks that a hook be *left* for future monitoring, and a
+handler that only reprints what systemd already logged is a seam rather than a
+control. Both service units carry the matching `OnFailure=` line commented, so
+activating it is two steps and neither is guesswork.
 
 ### 22.1 Target
 
@@ -1135,13 +1141,15 @@ The initial public-only deployment does not require a token. Implement credentia
 sets `Storage=persistent` with `SystemMaxUse=1G` and `MaxRetentionSec=1year`;
 CentOS Stream 10 shipped no `journald.conf` at all, so the effective default was
 `Storage=auto` with no `/var/log/journal`, and every line this deployment logged
-was volatile. `packaging/systemd/hfcache-failure@.service` is the `OnFailure=`
-hook, carried by both service units as `OnFailure=hfcache-failure@%n.service`. It
-reports the failed unit's `Result`, `ExecMainStatus`, and `InvocationID` into the
-journal at error priority and does not act on the unit — a handler that
-intervened would turn one bad run into a loop, and every failure mode here is one
-where stopping and leaving the evidence is correct (`AD-16`). Replacing its
-`ExecStart` with a real notifier is a drop-in, documented in the unit.
+was volatile. `packaging/systemd/hfcache-failure@.service.example` is the `OnFailure=`
+hook, shipped complete and **uninstalled**, with the matching line commented in
+both service units. It reports the failed unit's `Result`, `ExecMainStatus`, and
+`InvocationID` into the journal at error priority and does not act on the unit —
+a handler that intervened would turn one bad run into a loop, and every failure
+mode here is one where stopping and leaving the evidence is correct (`AD-16`).
+Replacing its `ExecStart` with a real notifier is a drop-in, documented in the
+unit. It was installed and fired against a genuinely failed unit before being
+withdrawn to an example, which is what distinguishes it from untested prose.
 
 Why the journal matters independently of the run report: `runs/<...>.json` only
 exists once a run gets far enough to write one. A run that dies in preflight,
