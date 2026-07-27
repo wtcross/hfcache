@@ -1,0 +1,527 @@
+# Operating hfcache
+
+| Field | Value |
+| --- | --- |
+| Status | Runbook, exercised on `hfcachewriter.lab.cross.solutions` |
+| Work package | `OPS-002` |
+| Derived from | `docs/plan.md` §11.2, §15, §16, §24, §29; `docs/cli.md` |
+| Companion | `docs/deployment-centos-stream-10.md` for getting it up in the first place |
+
+Day-to-day operation: what each command reports, what every exit code means and
+what to do about it, how to read a run report and the journal, what each warning
+code is telling you, and how to administer the timers.
+
+**Every command block below was run on this deployment.** Where output is
+abbreviated it is marked with `…`; nothing is invented.
+
+Throughout, `$H` stands for the invocation an operator uses. Scheduled runs use
+exactly the same commands, which is what makes a behaviour reproducible by hand:
+
+```bash
+H="sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml"
+```
+
+The service account has a `nologin` shell; invoking the binary directly works
+anyway, and that is the supported way to exercise the CLI as the identity the
+timers use. Running as yourself will fail — `/etc/hfcache/config.toml` is
+`0640 root:hfcache`.
+
+---
+
+## 1. Is the archive healthy?
+
+`status` is the first command and answers in one screen.
+
+```text
+$ hfcache status
+model:hf-internal-testing/tiny-random-gpt2  enabled  verified
+dataset:hf-internal-testing/fixtures_ade20k  enabled  verified
+exit=0
+```
+
+The human form is deliberately thin. The answer to "is anything wrong" is in
+`--json`, and that is the form to use when you are actually investigating:
+
+```bash
+$H --json status | python3 -m json.tool
+```
+
+```json
+{
+  "archive": {
+    "archive_id": "f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2",
+    "available_gib": 36037.6,
+    "deferred_cleanup": 0,
+    "findings": [],
+    "quarantined_bytes": 0,
+    "reachable": true,
+    "unfinished_transactions": 0,
+    "unknown_entries": [],
+    "verification": {
+      "degraded": false,
+      "last_full_verification": { "outcome": "clean", "unique_objects": 23, "…": "…" },
+      "outstanding_failures": 0
+    }
+  },
+  "repositories": [ { "…": "…" } ]
+}
+```
+
+The six fields to read, and what a non-default value means:
+
+| Field | Healthy | If not |
+| --- | --- | --- |
+| `reachable` | `true` | The mount is gone. Nothing will run; see §7 |
+| `unfinished_transactions` | `0` | A run stopped part way. `recover --dry-run` (§6) |
+| `findings` | `[]` | Warnings are outstanding. Each carries an `HFWRN` code; §8 |
+| `unknown_entries` | `[]` | Files the application cannot explain, preserved not deleted |
+| `verification.degraded` | `false` | A verification found something. §4 |
+| `deferred_cleanup` | `0` | A prune committed but its bytes are still on the dataset; §5 |
+
+`verification_state` per repository is keyed on the **publication instance**, not
+the SHA — a revision that was pruned and later re-synced is a different instance
+and reads unverified until something re-reads it (decision 62).
+
+---
+
+## 2. What is archived?
+
+```text
+$ hfcache list
+dataset:hf-internal-testing/fixtures_ade20k  5 revisions  current 850d349e5038f291284e7999fcacbedc0922534b
+model:hf-internal-testing/tiny-random-gpt2   1 revisions  current 71034c5d8bde858ff824298bdedc65515b97d2b9
+exit=0
+```
+
+Five revisions is the steady-state maximum per repository (`AD-04`). One means
+the repository has only ever published once, not that anything is wrong.
+
+`list` reports what is **archived**, which is not the same as what is
+configured. A repository removed from `config.toml` keeps every revision it has
+and continues to appear here — removal from configuration never deletes anything
+(`AD-06`). The human line does not distinguish the two; `--json` carries
+`"managed": false` for a repository the archive holds but configuration no longer
+names, and `status` reports it as `HFWRN007`.
+
+Selectors restrict the *configured* set, so passing one never hides an unmanaged
+repository you did not ask about by name.
+
+---
+
+## 3. What would a sync do?
+
+`plan` resolves every configured repository against the Hub and reports the work
+without downloading anything.
+
+```text
+$ hfcache plan
+[dry-run] Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 1844.70it/s]
+[dry-run] Fetching 7 files: 100%|██████████| 7/7 [00:00<00:00, 1115.51it/s]
+model:hf-internal-testing/tiny-random-gpt2@main  71034c5d8bde858ff824298bdedc65515b97d2b9  10 files, 11.9 MiB, 0 B new
+dataset:hf-internal-testing/fixtures_ade20k@main  850d349e5038f291284e7999fcacbedc0922534b  7 files, 201.3 KiB, 0 B new
+exit=0
+```
+
+`0 B new` means the private cache already holds every byte, so a sync would
+resolve and skip. The two numbers are not interchangeable and both matter:
+the size of the revision, and how much of it is not already here.
+
+The `[dry-run] Fetching` lines are `huggingface_hub`'s own progress on **stderr**,
+not hfcache's. Redirect stderr if you are scripting `plan`. They do not reach
+journald, because `plan` is not a unit — the scheduled units have never logged a
+progress line.
+
+**This is the command to run before adding a production repository.** It reports
+the dry-run size the TrueNAS quota decision needs, without downloading.
+
+---
+
+## 4. Syncing
+
+The timer runs this daily at 02:00 with up to 30 minutes of randomized delay.
+To run it by hand, prefer the unit over the CLI, because the unit is what
+production uses — same sandbox, same environment, same identity:
+
+```bash
+sudo systemctl start hfcache-sync.service
+systemctl show hfcache-sync.service --property=Result --property=ExecMainStatus
+```
+
+```text
+Result=success
+ExecMainStatus=0
+```
+
+### Reading the run in the journal
+
+Every run leaves a structured trail (plan §24). One line per thing that became
+durable — never per chunk, so the volume is a function of how many repositories
+were touched, not how many bytes moved.
+
+```text
+$ sudo journalctl -u hfcache-sync.service --since '-2 min' -o cat
+Starting hfcache-sync.service - Synchronize configured Hugging Face repositories...
+event=run.started level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 archive_id=f2a38add-… command=sync config_fingerprint=266d272b… invocation=systemd repositories=2
+event=repository.resolved level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 commit_sha=71034c5d8bde858ff824298bdedc65515b97d2b9 repository=model:hf-internal-testing/tiny-random-gpt2 requested_revision=main
+event=repository.skipped level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 commit_sha=71034c5d8bde858ff824298bdedc65515b97d2b9 repository=model:hf-internal-testing/tiny-random-gpt2 status=skipped
+event=run.completed level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 command=sync downloaded_bytes=0 exit_code=0 hashed_bytes=0 outcome=success report=runs/20260727T104452Z-cccb23522c9a4d4d9520f9cc782670a6.json repositories=2 reused_bytes=0
+Finished hfcache-sync.service - Synchronize configured Hugging Face repositories.
+```
+
+Useful selections:
+
+```bash
+sudo journalctl -u hfcache-sync.service -p err            # failures only
+sudo journalctl -u hfcache-sync.service --since today
+sudo journalctl _SYSTEMD_INVOCATION_ID=<id>               # exactly one run
+sudo journalctl -u hfcache-sync.service | grep event=publication.completed
+```
+
+`-p err` works because each line carries a syslog priority prefix under systemd
+which journald turns into `PRIORITY`. The event names are a **closed
+vocabulary** — `hfcache.logging.EVENTS` is all of them — so a filter written
+today keeps matching.
+
+Storage is persistent and bounded at 1 GiB or one year, whichever binds first.
+Before that was configured the journal was volatile and every scheduled run was
+lost at reboot.
+
+### Reading the durable run report
+
+The journal says what happened; `runs/<UTC>-<run-id>.json` says what the run
+*did*, and it is the authority. The `run_id` joins them.
+
+```bash
+sudo -u hfcache bash -c 'python3 -m json.tool "$(ls -t /srv/hfcache/runs/*.json | head -1)"'
+```
+
+```json
+{
+  "command": "sync",
+  "exit_code": 0,
+  "invocation_mode": "systemd",
+  "outcome": "success",
+  "repositories": [
+    {
+      "downloaded_bytes": 0,
+      "hashed_bytes": 0,
+      "publication_generation": 7,
+      "repository_id": "hf-internal-testing/fixtures_ade20k",
+      "resolved_commit_sha": "850d349e5038f291284e7999fcacbedc0922534b",
+      "reused_bytes": 0,
+      "status": "skipped"
+    }
+  ],
+  "run_id": "9e6a6461d7994e65b1e625543f88d3be",
+  "totals": {
+    "downloaded_bytes": 0, "hashed_bytes": 0, "pruned_logical_bytes": 0,
+    "published_bytes": 0, "reused_bytes": 0, "xet_cache_peak_bytes": 0
+  }
+}
+```
+
+Per-repository `status` is one of `skipped`, `ref_moved_to_retained_revision`,
+`published`, `completed_with_warnings`, `failed`, or `disabled`. A `disabled`
+repository is reported rather than omitted, so an operator can see the run knew
+about it.
+
+**A run report only exists if the run got far enough to write one.** A run that
+died in preflight, on a lock timeout, or mid-download has no report — the journal
+is the only record, which is why it is persistent.
+
+---
+
+## 5. Verification
+
+Three modes, and they answer different questions.
+
+```text
+$ hfcache verify --estimate
+estimated duration   0s
+repositories         2
+revisions            6
+storage maintenance  undetectable
+unique bytes         12.3 MiB
+unique objects       23
+exit=0
+```
+
+Run `--estimate` before scheduling a full verification on a real archive; it is
+what you size the maintenance window from. `storage maintenance: undetectable`
+means the writer cannot see the NAS scrub schedule from here — coordinating that
+is an operator judgement, not something the tool can check.
+
+```text
+$ hfcache verify --full
+event=verification.completed level=info run_id=e49eb54994db49fbb87e25f6bcc41fe7 bytes_read=12890456 command="verify --full" exit_code=0 findings=0 objects_read=23 outcome=clean report=runs/20260727T105133Z-…json repositories=2 revisions=6
+bytes read    12.3 MiB
+findings      0
+objects read  23
+outcome       clean
+report        runs/20260727T105133Z-e49eb54994db49fbb87e25f6bcc41fe7.json
+repositories  2
+revisions     6
+exit=0
+```
+
+23 unique objects across 6 revisions — shared hardlinked content is read **once**,
+which is why `objects read` is smaller than the sum of the revisions' file counts.
+
+One revision at a time, which is the mode to use after a targeted suspicion:
+
+```text
+$ hfcache verify --revision model:hf-internal-testing/tiny-random-gpt2@71034c5d8bde858ff824298bdedc65515b97d2b9
+bytes read    11.9 MiB
+findings      0
+objects read  10
+outcome       clean
+report        runs/20260727T105135Z-c174d3c355e64aa4acff1afc49248971.json
+repositories  1
+revisions     1
+exit=0
+```
+
+`--revision` needs the full 40-character SHA; an abbreviated one is refused,
+because a repository has more than one retained revision and a prefix is a guess.
+
+Verification never repairs. A mismatch is reported and the manifest is left
+exactly as it was — an expected digest is never rewritten to match what was
+found, which is the whole point of having one. Repair is a separate, explicit
+command; that is `OPS-003`.
+
+**Run `verify --full` after** a ZFS checksum or scrub error, a restore from
+snapshot or replica, a migration, an unexpected shutdown during publication, any
+manual modification of the archive, a repair, or a change to publication mode.
+
+The quarterly timer is installed and **disabled** pending calendar confirmation
+against the NAS maintenance schedule; see §9.
+
+---
+
+## 6. Retention and recovery
+
+```text
+$ hfcache prune --dry-run
+retention  nothing to prune
+exit=0
+```
+
+Pruning is not something you normally run. Retention is applied automatically by
+a **successful publication** beyond the maximum (`AD-04`): the sixth unique
+revision rotates the oldest non-current one out. `prune --apply` exists for
+finishing a rotation that a previous run left incomplete.
+
+Neither `--dry-run` nor `--apply` is a default; omitting both is an error, because
+one describes and the other performs.
+
+```text
+$ hfcache recover --dry-run
+actionable  0
+applied     -
+blocked     0
+exit=0
+```
+
+`recover --dry-run` mutates nothing and is always safe, including on an archive
+that has stopped accepting writes. Read the two numbers:
+
+- **`actionable`** — unfinished transactions with exactly one correct resolution.
+  `recover --apply` will finish them, and is idempotent.
+- **`blocked`** — states with no unambiguous resolution. `recover --apply` will
+  *not* touch these and neither should you until you understand them. Each
+  carries a code: `HFTXN001` (unknown journal version), `HFTXN002` (impossible
+  checkpoint combination), `HFTXN003` (journal contradicts the filesystem),
+  `HFTXN004` (two equally valid resolutions).
+
+A blocked journal stops every mutating command at exit `20` before the Hub is
+contacted. `status`, `list`, `verify`, and `recover --dry-run` keep working, so
+there is always a way to inspect an archive that has stopped.
+
+Recovery prefers over-retention to deletion and never guesses: it will not
+replace an expected digest, pick a current revision by modification time, or
+remove data it cannot explain.
+
+---
+
+## 7. Exit codes, and what to do about each
+
+Plan §11.2. `1` and `2` are deliberately unused — Typer reserves them for
+malformed command lines, so a scheduler can tell a bad invocation from an
+application outcome.
+
+| Code | Meaning | What to do |
+| --- | --- | --- |
+| `0` | Success, including non-fatal dependency warnings | Nothing. Check `status.findings` if warnings were reported |
+| `10` | Invalid configuration or invocation | Fix the command or the file. Nothing was touched |
+| `20` | Mount, sentinel, permission, capacity, or lock safety | **Stop.** Nothing was downloaded or changed. §7.1 |
+| `30` | One or more repository sync failures | Other repositories may have succeeded. Read the run report |
+| `40` | Integrity verification failure | **Do not sync or prune.** Preserve evidence; go to `OPS-003` |
+| `50` | Prune or repair failure | The archive prefers over-retention; `recover --dry-run` |
+
+Observed on this deployment:
+
+```text
+$ hfcache --config /etc/hfcache/absent.toml status
+HFCFG001 [/etc/hfcache/absent.toml]: configuration file /etc/hfcache/absent.toml does not exist
+exit=10
+
+$ hfcache sync model:organization/not-configured
+HFARG004 [model:organization/not-configured]: selector model:organization/not-configured names a repository that is not in configuration
+exit=10
+
+$ hfcache verify --revision model:hf-internal-testing/tiny-random-gpt2
+HFARG001 [--revision]: --revision 'model:…/tiny-random-gpt2' names no revision; it takes TYPE:ID@SHA with the full 40-character commit SHA, because a repository has more than one retained revision
+exit=10
+
+$ hfcache prune
+HFARG002: exactly one of --dry-run and --apply is required: one describes what would happen and the other performs it, and neither is a safe default
+exit=10
+```
+
+`40` and `50` are deliberately **not** provoked against the live archive — both
+require published content to be damaged, and the application is not permitted to
+rewrite `/srv/hfcache` outside its own transactional contracts. They are covered
+by the test suites instead: the live-Hub suite flips a byte in a freshly
+published revision on a throwaway archive and asserts `40` with the manifest and
+the reference unchanged, and the retention and repair suites assert `50`.
+
+### 7.1 Exit 20 in practice
+
+The common cause is benign — another mutating command is already running. Exactly
+one runs at a time (`AD-17`), and sync, verify, prune, repair, and
+`recover --apply` all share the one lock.
+
+```text
+$ hfcache sync            # while another process holds the lock
+HFMNT010 [/run/hfcache/hfcache.lock]: sync could not acquire the exclusive lock /run/hfcache/hfcache.lock within 1s; the holder left no record. Exactly one mutating command runs at a time (`AD-17`)
+exit=20
+```
+
+A scheduled sync waits an hour for the lock and a verification waits 24, so a
+long sync finishes rather than racing. If nothing should be running:
+
+```bash
+sudo fuser -v /run/hfcache/hfcache.lock     # who holds it
+systemctl is-active hfcache-sync.service hfcache-verify.service
+```
+
+The lock is `flock(2)`, so the kernel releases it when the holder dies. A crashed
+run never leaves a lock to clear by hand.
+
+The other causes of `20` are the §19 storage requirements, and every one of them
+is reported by name:
+
+```bash
+$H doctor
+```
+
+`doctor` runs the same check set the mutating preflight runs, so its report and
+the gate cannot describe different things. A failed run also logs
+`event=preflight.failed` with the codes, which is the one durable trace of a
+refusal that wrote no run report.
+
+---
+
+## 8. Warning codes
+
+Warnings never change a `0` exit on their own. They appear in `status.findings`,
+in the run report, and in the journal.
+
+| Code | Meaning | Response |
+| --- | --- | --- |
+| `HFDEP001` | Undeclared dependency detected in repository metadata | Add it to `declared_dependencies`, or configure the dependency as its own repository. Never downloaded implicitly |
+| `HFWRN001` | Temporary over-retention: a deferred prune left six revisions | `recover --dry-run`, then `prune --apply` |
+| `HFWRN002` | Logical prune committed, trash removal outstanding | Physical only; the revision is gone logically. `recover --apply` retries the cleanup |
+| `HFWRN003` | Unknown files in an application-owned area | **Preserved, never deleted.** Identify them before removing anything by hand |
+| `HFWRN004` | Stale staging directory | A run stopped part way and aged past `sync.stale_staging_age_hours`. `recover --dry-run` |
+| `HFWRN005` | Free space approaching the configured reserve | Capacity work. Note ZFS snapshots hold blocks after an application prune |
+| `HFWRN006` | Upstream repository unreachable | Nothing to do. Every local revision is preserved; this never triggers a prune |
+| `HFWRN007` | Archived repository is not in configuration | Expected after removing one. Its revisions are kept |
+| `HFWRN008` | Retired repair instance past its grace period | `recover --apply` quarantines it |
+| `HFWRN009` | Local Xet transfer cache exceeded its advisory ceiling | Writer-local disk, not the archive. Check `/var/cache/hfcache/xet` |
+| `HFWRN010` | Verification may overlap storage maintenance | Reschedule one of them |
+
+`HFWRN004` deserves care: it is the signal that a run really did stop half way.
+It used to fire after every successful publication because a committed
+transaction left its staging directory behind (decision 56). That is fixed, so if
+you see it now, believe it.
+
+---
+
+## 9. Timers
+
+```text
+$ systemctl list-timers 'hfcache*' --all
+NEXT                        LEFT LAST                              PASSED UNIT               ACTIVATES
+Tue 2026-07-28 02:03:06 EDT  19h Mon 2026-07-27 02:19:23 EDT 4h 33min ago hfcache-sync.timer hfcache-sync.service
+
+1 timers listed.
+
+$ systemctl is-enabled hfcache.target hfcache-sync.timer hfcache-verify.timer
+enabled
+enabled
+disabled
+```
+
+Only one timer is listed because the quarterly verification timer is installed
+and **disabled**, pending confirmation that its calendar does not overlap the NAS
+scrub, SMART, or replication windows. Check the calendar before enabling it:
+
+```text
+$ systemd-analyze calendar 'Wed *-01,04,07,10-01..07 04:00:00'
+Normalized form: Wed *-01,04,07,10-01..07 04:00:00
+    Next elapse: Wed 2026-10-07 04:00:00 EDT
+       (in UTC): Wed 2026-10-07 08:00:00 UTC
+       From now: 2 months 11 days left
+```
+
+Then:
+
+```bash
+sudo systemctl enable --now hfcache-verify.timer
+```
+
+Both timers are `Persistent=true`, so a missed calendar event runs after the host
+comes back rather than being skipped.
+
+To pause the schedule without disturbing the mount:
+
+```bash
+sudo systemctl stop hfcache-sync.timer
+```
+
+> **Do not `systemctl stop hfcache.target` to pause things.**
+> `srv-hfcache.mount` is `PartOf=hfcache.target`, so stopping the target
+> **unmounts `/srv/hfcache`**. The automount re-triggers on next access so this
+> is recoverable, but it will disconnect anything working in that directory.
+> Stopping the timers is what "pause the schedule" means.
+
+Nothing notices a failed run on its own. `packaging/systemd/hfcache-failure@.service.example`
+is the seam for that — see the deployment runbook §9. Until it is activated,
+`status` and the journal are the only things that will tell you.
+
+---
+
+## 10. Quick reference
+
+```bash
+H="sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml"
+
+$H status                     # is anything wrong
+$H --json status              # the form to investigate with
+$H list                       # what is archived
+$H plan                       # what a sync would do, and its size
+$H doctor                     # prove the deployment can still do its job
+$H verify --estimate          # size the maintenance window
+$H verify --full              # the quarterly integrity read
+$H recover --dry-run          # always safe, including on a stopped archive
+$H prune --dry-run            # what retention would rotate out
+
+sudo systemctl start hfcache-sync.service              # run a sync as production does
+sudo systemctl stop  hfcache-sync.timer                # pause the schedule
+sudo journalctl -u hfcache-sync.service -p err         # failures only
+sudo journalctl _SYSTEMD_INVOCATION_ID=<id>            # exactly one run
+```
+
+Not covered here: corruption and repair (`OPS-003`), snapshot and replica restore
+(`OPS-004`), and the consumer-side copy, which happens on a different host.
