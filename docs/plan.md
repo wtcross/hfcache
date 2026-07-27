@@ -1585,7 +1585,17 @@ Acceptance:
 
 ### Upgrade
 
-1. Stop `hfcache.target` or wait for active jobs to complete.
+1. Stop the **timers** — `hfcache-sync.timer` and `hfcache-verify.timer` — or
+   wait for active jobs to complete, and confirm no process holds the lock.
+
+   *Amended 2026-07-27 at `OPS-001`.* This step said "stop `hfcache.target`".
+   §22.4 puts `PartOf=hfcache.target` on `srv-hfcache.mount`, so stopping the
+   target also stops the mount and **unmounts `/srv/hfcache`**. Between releases
+   that is harmless — the automount re-triggers on next access — but it
+   disconnects anything working in the directory, and what step 1 is actually
+   for is that no job is running when `current` moves. Stopping the timers
+   achieves that and nothing else. `docs/deployment-centos-stream-10.md` §13
+   carries the exercised procedure.
 2. Verify no lock is held.
 3. Install the new version into a separate release directory.
 4. Run migrations only for explicitly versioned JSON schemas.
