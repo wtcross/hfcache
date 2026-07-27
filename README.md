@@ -34,10 +34,16 @@ consumers at all.
 
 ## Status
 
-**`v0.1.2` — first tagged release, 2026-07-27.** The writer is complete and
+**`v0.1.3` — current release, 2026-07-27.** The writer is complete and
 deployed: it syncs, publishes, retains five revisions, prunes, verifies, repairs,
 and recovers, under systemd with SELinux enforcing and validated hardening. It is
-running against a live NFS-backed ZFS archive.
+running against a live NFS-backed ZFS archive. 0.1.3 closes the last documented
+verification gap — an unparseable `refs/current.json` is now a durable
+`HFVER008` finding at exit `40` rather than a quiet `unverified` — and carries
+the crash-injection rename and the `cleanup_deferred` doc reconciliation.
+Rolling back to 0.1.2 requires no null-SHA finding outstanding
+(`docs/deployment-centos-stream-10.md` §14). `v0.1.2` was the first tagged
+release.
 
 What remains is operator work that this project cannot perform for itself — the
 read-only consumer export, snapshots and replication, the disjointness proof from

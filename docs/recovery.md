@@ -555,6 +555,28 @@ itself, and attributing it to a retained revision would assert exactly what the
 unreadable file failed to say. The failure stays outstanding, and `status`
 reports the archive degraded, until a `--full` re-reads the reference; a
 consumer using `examples/copy-revision.py` fails closed at exit `2` throughout.
+Observed on a throwaway archive, release 0.1.3 (`REL-004`'s drill):
+
+```text
+$ hfcache verify --full
+outcome       failed
+findings      1
+revisions     2
+HFVER008 (model:hf-internal-testing/tiny-random-gpt2): 1 ref_invalid finding in model:…
+exit=40
+$ hfcache status
+model:hf-internal-testing/tiny-random-gpt2  enabled  unverified
+archive degraded: 1 outstanding verification failures
+```
+
+and the finding in the report, attributed to nothing because the pointer itself
+is the damage:
+
+```json
+{"commit_sha": null, "kind": "ref_invalid", "path": null, "publication_id": null,
+ "observed": "the current reference could not be read: not valid JSON: …"}
+```
+
 On releases before 0.1.3 this case was quiet — `verify --full` reported `clean`
 and only `status`'s `unverified` hinted at it — so on an old release, if
 `status` says `unverified` for a repository whose revisions all verify, read

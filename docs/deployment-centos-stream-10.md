@@ -609,6 +609,30 @@ for an operator rather than guess. That is the correct answer and not a
 regression; it is simply not a state you want to discover at 02:00. Check
 `recover --dry-run` **before** switching, as the sequence above does.
 
+**0.1.3 touched a durable format too** — `VER-009` made `commit_sha` nullable in
+a verification finding and in `catalog/verification.json`'s
+`outstanding_failures[]`, for a `current.json` that will not parse — so the same
+cross-format check was performed, on a throwaway archive with its current
+reference broken. Both releases read the same catalog, and the difference is
+this rollback's operational rule:
+
+```text
+=== release 0.1.3 reading it ===
+degraded: true   outstanding_failures: 1   last_full_verification: failed
+=== release 0.1.2 reading it ===
+degraded: false  outstanding_failures: 0   last_full_verification: null
+```
+
+0.1.2 does not refuse the catalog the way an older release refuses a journal:
+the catalog is derived (`FS-16`), so a validation failure reads as `None` and
+every revision reports `unverified` — confidence lowered, never raised. What is
+lost is the **degraded signal itself**, silently, along with the last full
+verification's summary. So: **roll back to 0.1.2 only with no null-SHA finding
+outstanding.** A clean `verify --full` first is what clears the entry — observed
+on the drill: after one, 0.1.2 read the same catalog fully, `verified` and not
+degraded. `status` on the *new* release before switching is the check, exactly
+where `recover --dry-run` sits in the sequence above.
+
 Keep at least the previous release installed (plan §21.4 item 7). `--list` is how
 you see what you have:
 
