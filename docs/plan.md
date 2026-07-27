@@ -234,6 +234,8 @@ hfcache/
 ├── examples/
 │   └── config.toml
 ├── packaging/
+│   ├── journald.conf.d/
+│   │   └── hfcache.conf
 │   ├── tmpfiles.d/
 │   │   └── hfcache.conf
 │   └── systemd/
@@ -242,6 +244,7 @@ hfcache/
 │       ├── srv-hfcache.mount
 │       ├── srv-hfcache.automount
 │       ├── hfcache.target
+│       ├── hfcache-failure@.service
 │       ├── hfcache-sync.service
 │       ├── hfcache-sync.timer
 │       ├── hfcache-verify.service
@@ -288,6 +291,7 @@ hfcache/
 │       ├── retention.py
 │       ├── storage.py
 │       ├── sync.py
+│       ├── taxonomy.py
 │       ├── transactions.py
 │       └── verification.py
 └── tests/
@@ -1012,6 +1016,7 @@ Ship the following units:
 - `hfcache-sync.timer`
 - `hfcache-verify.service`
 - `hfcache-verify.timer`
+- `hfcache-failure@.service` — §24's monitoring seam, added at `OBS-001`
 
 ### 22.1 Target
 
@@ -1089,7 +1094,7 @@ Validate the strongest compatible settings, including:
 
 Test each setting against `huggingface_hub`, `hf_xet`, DNS, TLS, NFS, and Python native extensions. Do not weaken hardening without documenting the failing requirement and narrower alternative.
 
-`scripts/check-hardening.sh` is how that testing is performed and re-performed (decision 59): it reads the `[Service]` properties out of the **installed** unit and runs `scripts/hardening-probe.py` under them, so the settings under test are the settings deployed. Re-run it after any change to a unit's hardening and after any `huggingface_hub`, `hf_xet`, or Python upgrade — a sandbox is a statement about which syscalls and paths a dependency needs, and dependencies change. Nothing needed weakening: all settings above are applied and all 21 checks pass on both units.
+`scripts/check-hardening.sh` is how that testing is performed and re-performed (decision 59): it reads the `[Service]` properties out of the **installed** unit and runs `scripts/hardening-probe.py` under them, so the settings under test are the settings deployed. Re-run it after any change to a unit's hardening and after any `huggingface_hub`, `hf_xet`, or Python upgrade — a sandbox is a statement about which syscalls and paths a dependency needs, and dependencies change. Nothing needed weakening: all settings above are applied and all 23 checks pass on both units. (The count was 21 when `SYS-002` first ran it; decision 61 added the setgid-directory and hardlink checks and this sentence was not updated with it. Corrected at `OBS-001`, against a live 23-of-23 run.)
 
 ### 22.6 Credentials
 
@@ -1125,6 +1130,23 @@ The initial public-only deployment does not require a token. Implement credentia
 - Never log tokens, authorization headers, signed URLs, or repository secrets.
 - Enable persistent journald storage with a documented size or age limit.
 - Leave a documented `OnFailure=` hook for future monitoring without embedding a notification provider in the application.
+
+**Host half done 2026-07-27 (`OBS-001`).** `packaging/journald.conf.d/hfcache.conf`
+sets `Storage=persistent` with `SystemMaxUse=1G` and `MaxRetentionSec=1year`;
+CentOS Stream 10 shipped no `journald.conf` at all, so the effective default was
+`Storage=auto` with no `/var/log/journal`, and every line this deployment logged
+was volatile. `packaging/systemd/hfcache-failure@.service` is the `OnFailure=`
+hook, carried by both service units as `OnFailure=hfcache-failure@%n.service`. It
+reports the failed unit's `Result`, `ExecMainStatus`, and `InvocationID` into the
+journal at error priority and does not act on the unit — a handler that
+intervened would turn one bad run into a loop, and every failure mode here is one
+where stopping and leaving the evidence is correct (`AD-16`). Replacing its
+`ExecStart` with a real notifier is a drop-in, documented in the unit.
+
+Why the journal matters independently of the run report: `runs/<...>.json` only
+exists once a run gets far enough to write one. A run that dies in preflight,
+mid-download, or on a lock timeout leaves nothing but systemd's exit code, so the
+journal is the only record of exactly the failures an operator most needs.
 
 Recommended event families:
 
@@ -1493,6 +1515,15 @@ Acceptance:
 
 Work packages:
 
+- `OBS-001`: Close §24's host half — persistent journald storage with a
+  documented bound, and the documented `OnFailure=` hook. *(Ahead of the
+  runbooks, because both are things the runbooks have to cite and neither can be
+  cited honestly until it exists.)*
+- `OBS-002`: Implement §24's structured event log — stable event names carrying
+  the run ID, emitted to stderr for journald, wired to `--verbose`.
+- `HARD-001`: Make the §22.5 probe's setgid check exercise the syscall the
+  application actually depends on, and assert its result. *(Found at `OBS-001`;
+  see `docs/progress.md`.)*
 - `OPS-001`: Write installation and upgrade runbooks.
 - `OPS-002`: Write sync, verification, pruning, and status runbooks.
 - `OPS-003`: Write corruption and repair runbooks.

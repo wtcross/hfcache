@@ -1,0 +1,87 @@
+# The documented OnFailure= hook (docs/plan.md §24, last item).
+#
+# §24 asks for "a documented `OnFailure=` hook for future monitoring without
+# embedding a notification provider in the application". This is that hook, and
+# it is a working unit rather than a commented-out line, for the reason decision
+# 59 gives about hardening checklists and SEC-001 gives about the credential
+# drop-in: a control nobody has run is a document. A commented-out OnFailure=
+# would be discovered to be misspelled on the night it was needed.
+#
+# What it does by default is the least a handler can honestly do — print the
+# failed unit's own verdict into the journal, tagged and at error priority:
+#
+#   Id=hfcache-sync.service
+#   Result=exit-code
+#   ExecMainCode=1
+#   ExecMainStatus=20
+#   InvocationID=c0a12f5f43ea4f7281f5689724927971
+#
+# `ExecMainStatus` is the application's §11.2 classification, so the line already
+# distinguishes a safety refusal (20) from repository failures (30) from an
+# integrity failure (40). `InvocationID` is the handle for the rest of it:
+#
+#   journalctl _SYSTEMD_INVOCATION_ID=<id>
+#
+# which returns exactly that run's output and nothing else. This is why the
+# journald drop-in shipped alongside it matters — before it, that command
+# answered only until the next reboot.
+#
+# **Replacing it with a real notifier.** Drop in an override and swap ExecStart:
+#
+#   /etc/systemd/system/hfcache-failure@.service.d/notify.conf
+#     [Service]
+#     ExecStart=
+#     ExecStart=/usr/local/bin/notify-somewhere %i
+#
+# The empty ExecStart= is required; without it systemd appends rather than
+# replaces. Keep the provider here rather than in the application: hfcache has no
+# opinion about how this site pages someone, and §24 is explicit that it should
+# not acquire one.
+#
+# Installed as a template so one handler serves every unit and names which one
+# failed. The two service units carry `OnFailure=hfcache-failure@%n.service`,
+# which passes the failing unit's name as the instance.
+#
+# Install to /etc/systemd/system/hfcache-failure@.service. It is never enabled —
+# nothing wants it; it is started by the OnFailure= of a unit that failed.
+
+[Unit]
+Description=Report the failure of %i
+Documentation=file:///opt/hfcache/current/docs/plan.md
+Documentation=file:///opt/hfcache/current/docs/operations.md
+
+[Service]
+Type=oneshot
+
+# `systemctl show` reads; it does not act. The handler deliberately cannot
+# restart, reset, or otherwise touch the unit that failed — a failure handler
+# that intervenes turns one bad run into a loop, and every hfcache failure mode
+# is one where stopping and leaving the evidence is correct (`AD-16`).
+ExecStart=/usr/bin/systemctl show %i --no-pager \
+  --property=Id \
+  --property=Result \
+  --property=ExecMainCode \
+  --property=ExecMainStatus \
+  --property=InvocationID
+
+SyslogIdentifier=hfcache-failure
+SyslogLevel=err
+
+# Modest hardening for a unit that runs one read-only systemctl. Proven rather
+# than assumed, the same way §22.5's settings are: the hook is fired for real
+# against a genuinely failed unit and its output read back out of the journal.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectClock=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX

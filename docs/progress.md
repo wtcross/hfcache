@@ -264,6 +264,9 @@ more than it fixed.
 
 ## Phase 8 — Operational Readiness and Release
 
+- [x] OBS-001 Close §24's host half — persistent journald, `OnFailure=` hook (2026-07-27, this commit — decision 63. §24's last two bullets were the only part of the section with no implementation at all, and both are things `OPS-001`/`OPS-002` have to reference, so they land first. **Persistent journald:** CentOS Stream 10 ships no `/etc/systemd/journald.conf`, so the effective setting was the compiled `Storage=auto`, which is persistent *only if `/var/log/journal` already exists* — it did not, and every line since the 2026-07-25 boot was living in `/run/log/journal`. `packaging/journald.conf.d/hfcache.conf` sets `Storage=persistent`, `SystemMaxUse=1G`, and `MaxRetentionSec=1year`; the year covers four quarterly verifications, and 1 GiB is deliberate headroom against an observed 8 MiB for the whole of Phase 7. Applied with `systemctl restart systemd-journald && journalctl --flush` rather than a reboot (§36.4), and **the existing volatile history survived the migration** — verified after: same earliest record (the 2026-07-25 07:38 boot), all 75 `hfcache-sync` records, this morning's 02:19 timer run intact. `/run/log/journal` drained. **The `OnFailure=` hook:** `packaging/systemd/hfcache-failure@.service`, a template so one handler serves every unit and names which failed, carried by both service units as `OnFailure=hfcache-failure@%n.service`. It is a working unit rather than a commented-out line for the reason `SEC-001` gives about the credential drop-in — a control nobody has run is a document, and a commented-out `OnFailure=` gets discovered to be misspelled on the night it is needed. **Fired for real** against a genuinely failed `hfcache-sync.service`: five lines at `PRIORITY=3`, tagged `hfcache-failure`, carrying `Id`, `Result=exit-code`, `ExecMainStatus=10` — the application's own §11.2 classification travelling through systemd — and `InvocationID`, which `journalctl _SYSTEMD_INVOCATION_ID=<id>` then resolved to exactly that run's one output line, `HFCFG001`. Fired **once**, for the failure only; the clean run immediately after did not trigger it. The handler reads and does not act (`AD-16`). `systemd-analyze verify` over all eight units: no output, which is the gate (decision 58). Hardening re-checked on the sync unit after the edit: **23 of 23**, which corrected plan §22.5's stale "21")
+- [ ] OBS-002 Structured event log for §24 (the 13 event families, `run_id` on every event, wired to `--verbose`)
+- [ ] HARD-001 The probe's setgid check cannot fail for the reason it exists (found 2026-07-27 at `OBS-001`, re-running `check-hardening.sh` after the unit edit). `hardening-probe.py`'s `_setgid_directory` calls only `mkdir(mode=0o2750)`, but `publication.create_staging` calls `mkdir` **and then `chmod`** (`publication.py:139-140`), and on this NFS mount that difference decides the outcome: measured on `/srv/hfcache/.store/health` as the service identity, `mkdir` alone yields `0o750` with no setgid, `mkdir`+`chmod` yields `0o2750`. The check also never *asserts* the mode — it formats the result into its pass message, which is why it has been reporting `mkdir(mode=0o2750) -> 0o750` and passing. So the standing guard on the consumer-visible group-inheritance contract (§5.2) tests a syscall the application does not rely on, and could not fail if setgid stopped landing. Nothing is broken today: every directory in the live published tree is `2750`/`2755`, and decision 61's conclusion is unaffected because `RestrictSUIDSGID` filters the mode argument of `chmod` as well as `mkdir` and its attribution was proven separately in two transient units. The fix is to mirror the application and assert `S_ISGID` on the result — an unfalsifiable check is the family of defect decisions 51 and 62 exist to close, and this is one
 - [ ] OPS-001 Installation and upgrade runbooks
 - [ ] OPS-002 Sync, verification, pruning, and status runbooks
 - [ ] OPS-003 Corruption and repair runbooks
@@ -1523,3 +1526,46 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     `VER-006`'s checkpoint 8 re-verifies the replacement before any reference
     moves, so it records its own entry — which is why this only ever surfaced
     through a prune.
+
+63. **§24's host half is two shipped files, not two runbook steps** (2026-07-27,
+    `OBS-001`). Both of §24's last bullets could have been discharged as
+    instructions in `OPS-001` — "enable persistent journald", "consider an
+    `OnFailure=` hook". They are shipped artifacts instead, for two different
+    reasons.
+
+    The journald setting, because §33 requires a fresh VM be reproducible **from
+    documentation** and a setting that lives only in prose is one an operator
+    silently skips. It is host-wide policy set by an application package, which
+    would be presumptuous on a shared machine; this is a dedicated
+    single-purpose writer (§21.1), so it is merely explicit. The values are
+    bounded on both axes because they protect different things —
+    `SystemMaxUse=1G` bounds the root filesystem the Xet cache shares, and
+    `MaxRetentionSec=1year` bounds how far back an operator can look, at four
+    quarterly verifications. `SystemKeepFree` is left at its 15% default, which
+    is already the setting that stops the journal filling the disk under a
+    download.
+
+    The hook, because a commented-out `OnFailure=` is not a hook. It was fired
+    against a real failed unit and its output read back out of the journal — the
+    same standard decision 59 applies to hardening and `SEC-001` applies to the
+    credential drop-in. Two properties are load-bearing and both were confirmed
+    rather than assumed: `ExecMainStatus` carries the application's §11.2
+    classification through systemd unchanged (`10` observed for an `HFCFG001`),
+    and `InvocationID` resolves through `journalctl _SYSTEMD_INVOCATION_ID=` to
+    that run's output and nothing else. The handler deliberately only reads. A
+    failure handler that restarts or resets turns one bad run into a loop, and
+    there is no hfcache failure mode where the right response is to try again
+    immediately — `AD-16` says ambiguity stops the machine.
+
+    **Why this preceded the runbooks rather than following them.** `OPS-002`
+    would otherwise have had to write two instructions that were false: "check
+    the journal for the failure", against a store that did not survive a reboot,
+    and any statement that a failed run is noticed. The ordering is the point,
+    not a preference.
+
+    **What is deliberately still open.** The durable run report remains the
+    record of what a run *did*; the journal is the record of what happened when
+    a run could not get far enough to write one. `OBS-002` closes the gap
+    between them by making the journal structured — today it carries systemd's
+    start/stop lines and the CLI's human table rows, and nothing carrying a
+    `run_id`.

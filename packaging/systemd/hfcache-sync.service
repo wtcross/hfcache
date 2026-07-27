@@ -17,6 +17,12 @@ After=network-online.target remote-fs.target
 # application runs rather than during it — no download into a missing archive.
 RequiresMountsFor=/srv/hfcache
 PartOf=hfcache.target
+# §24's monitoring seam. A scheduled run that fails is otherwise silent until
+# somebody thinks to run `hfcache status` — and the failures that leave no
+# durable run report behind (preflight refusal, lock timeout, a crash
+# mid-download) are exactly the ones nothing else records. The handler only
+# reports; see hfcache-failure@.service for how to point it at a real notifier.
+OnFailure=hfcache-failure@%n.service
 
 [Service]
 Type=oneshot
