@@ -68,7 +68,12 @@ from hfcache.publication import (
     rebuild_catalog,
     retained_references,
 )
-from hfcache.repair import PendingCleanup, finish_cleanup, pending_cleanups
+from hfcache.repair import (
+    PendingCleanup,
+    finish_cleanup,
+    pending_cleanups,
+    unreadable_retirements,
+)
 from hfcache.reporting import RecoveryReport, Remediation
 from hfcache.retention import remove_empty_containers
 from hfcache.storage import (
@@ -749,6 +754,33 @@ def _repair_remediation(
         )
     pending = _pending_for(layout, journal.transaction_id)
     if pending is None:
+        # `REP-001`: absent and unreadable are not the same answer. A retirement
+        # record is the only durable statement that an instance is awaiting its
+        # post-grace quarantine, so one that will not parse is damaged work, not
+        # finished work — and closing the journal on it would discard the last
+        # thing that makes the cleanup reachable from `recover`, while `status`
+        # went on citing `recover --apply` as the remedy (`HFWRN008`).
+        if damaged := unreadable_retirements(layout):
+            return PlannedRemediation(
+                **common,
+                remedy=BLOCKED,
+                reason=(
+                    "the repair is committed but a retirement record will not parse, so whether "
+                    "its retired instance still awaits quarantine cannot be determined"
+                ),
+                problems=tuple(
+                    Problem(
+                        code="HFTXN003",
+                        message=(
+                            f"the retirement record {layout.archive_relative(path)} cannot be "
+                            f"read, so the repair's post-grace cleanup can be neither confirmed "
+                            f"nor performed"
+                        ),
+                        location=str(layout.archive_relative(path)),
+                    )
+                    for path in damaged
+                ),
+            )
         return PlannedRemediation(
             **common,
             remedy="close_journal",

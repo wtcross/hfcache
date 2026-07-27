@@ -41,7 +41,7 @@ from hfcache.identity import (
 )
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.manifests import RevisionManifest
-from hfcache.models import RepairRetirementRecord
+from hfcache.models import RepairCleanup, RepairRetirementRecord
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.publication import read_reference, retained_references
 from hfcache.recovery import apply_recovery, plan_recovery
@@ -1261,6 +1261,58 @@ def test_a_repair_whose_cleanup_already_ran_only_needs_its_journal_closed(client
     assert read_journal(layout, layout.journal(_txn(outcome.transaction_id))).journal.state == (
         "committed"
     )
+
+
+def test_a_retirement_record_that_will_not_load_blocks_rather_than_closing(
+    client, hub, layout, config
+):
+    """`REP-001`: absent and unreadable are not the same answer.
+
+    `pending_cleanups` skips a record it cannot parse, deliberately, so one
+    damaged record does not hide the others. A caller that turns "no pending
+    cleanup" into a *decision* must not read that skip as "the cleanup is done" —
+    which is what `_repair_remediation` did. It closed the repair journal, and
+    that journal is the only thing making the post-grace cleanup reachable from
+    `recover`, while `status` went on citing `recover --apply` as the remedy
+    (`HFWRN008`). The retired instance was stranded with nothing able to finish
+    it. Found by `OPS-003`'s drill on a throwaway archive.
+    """
+    sync(client, layout, config, only_model(config))
+    repair(client, layout, config, commit_sha=SHA_A)
+    (record,) = pending_cleanups(layout)
+    record.path.write_text("{ not a retirement record", encoding="utf-8")
+
+    prepared = plan(layout)
+
+    entry = next(item for item in prepared.remediations if item.operation == "repair")
+    assert entry.remedy == recovery_module.BLOCKED, "an unreadable record must stop, not close"
+    assert [problem.code for problem in entry.problems] == ["HFTXN003"]
+    # And applying refuses the whole plan rather than performing the rest of it.
+    with pytest.raises(SafetyError):
+        apply(layout, config)
+
+
+def test_a_repair_whose_cleanup_really_did_complete_still_closes(client, layout, config):
+    """The other half of `REP-001`: a *readable* record marked complete is the
+    case `close_journal` is actually for, and it still works."""
+    sync(client, layout, config, only_model(config))
+    repair(client, layout, config, commit_sha=SHA_A)
+    (pending,) = pending_cleanups(layout)
+    completed = pending.record.model_copy(
+        update={
+            "cleanup": RepairCleanup(
+                completed_at=datetime.now(UTC),
+                quarantine_path=".store/quarantine/x",
+                state="completed",
+            )
+        }
+    )
+    pending.path.write_text(completed.model_dump_json(), encoding="utf-8")
+
+    prepared = plan(layout)
+
+    entry = next(item for item in prepared.remediations if item.operation == "repair")
+    assert entry.remedy == "close_journal"
 
 
 def test_a_retirement_record_that_will_not_load_never_hides_the_others(client, layout, config):

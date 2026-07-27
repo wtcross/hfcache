@@ -100,6 +100,7 @@ __all__ = [
     "preserved_bytes",
     "repair_revision",
     "retirement_record",
+    "unreadable_retirements",
 ]
 
 CACHE_MODE: Final = 0o700
@@ -654,6 +655,11 @@ def pending_cleanups(layout: ArchiveLayout) -> tuple[PendingCleanup, ...]:
     A record that will not load is skipped rather than reported here. `verify`
     and `recover` are what report damaged artifacts; this function answers a
     scheduling question, and one unreadable record must not hide the others.
+
+    Callers that turn "no pending cleanup" into a *decision* must consult
+    `unreadable_retirements` as well, because absent and unreadable are not the
+    same answer and only one of them means the work is done. `REP-001` is what
+    happens when they are conflated.
     """
     found: list[PendingCleanup] = []
     for path in sorted(layout.repair_audit.rglob("*.retirement.json")):
@@ -664,6 +670,24 @@ def pending_cleanups(layout: ArchiveLayout) -> tuple[PendingCleanup, ...]:
         if record.cleanup.state == "pending":
             found.append(PendingCleanup(record=record, path=path))
     return tuple(found)
+
+
+def unreadable_retirements(layout: ArchiveLayout) -> tuple[Path, ...]:
+    """Every retirement record that exists and will not parse.
+
+    The counterpart to `pending_cleanups`' skipping. A retirement record is the
+    only durable statement that an instance was retired and is awaiting its
+    post-grace quarantine, so one that cannot be read is not an absence of work —
+    it is work whose description has been damaged, and `TX-06` says that is a
+    state to report rather than to resolve by assuming the smaller answer.
+    """
+    damaged: list[Path] = []
+    for path in sorted(layout.repair_audit.rglob("*.retirement.json")):
+        try:
+            read_model(path, RepairRetirementRecord, error=IntegrityError, code="HFVER007")
+        except IntegrityError:
+            damaged.append(path)
+    return tuple(damaged)
 
 
 def due_cleanups(
