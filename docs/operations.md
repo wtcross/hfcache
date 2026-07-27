@@ -502,7 +502,79 @@ is the seam for that — see the deployment runbook §9. Until it is activated,
 
 ---
 
-## 10. Quick reference
+## 10. Measured performance and capacity (plan §27)
+
+Measured 2026-07-27 (`OPS-006`) on `hfcachewriter.lab.cross.solutions` against
+`nas.lab.cross.solutions:/mnt/tank/huggingface-archive` over NFSv4.2, `nconnect=4`,
+1 MiB rsize/wsize. Work ran in `/srv/hfcache/.store/health/`, the archive's own
+probe area, and was removed afterwards.
+
+**Re-measure after** a NAS or network change, a `huggingface_hub`/`hf_xet`
+upgrade, or before activating a repository substantially larger than the current
+set. These are one host's numbers on an idle archive, not a specification.
+
+| Quantity | Measured | Method |
+| --- | --- | --- |
+| Writer → NFS sequential write | **114 MB/s** | `dd bs=1M count=1024 conv=fsync` |
+| NFS sequential read, uncached | **94 MB/s** | `dd bs=1M iflag=direct` |
+| NFS sequential read, cached | **117 MB/s** | `dd bs=1M`, warm page cache |
+| SHA-256 throughput | **1 660 MB/s** | `hashing.sha256_file` over 1 GiB |
+| Hub → writer download | **14.3 MB/s** | `snapshot_download`, 12.5 MiB, 10 files, anonymous |
+| Hardlink publication rate | **91 links/s** | 2 000 `os.link` calls on the mount |
+| Copy-mode fallback | **41 files/s** | 2.2× slower per file than hardlinking |
+| Metadata (`stat`) | **95 000 /s** | warm; not a bottleneck |
+| Local Xet cache peak | **252 KiB** | `/var/cache/hfcache/xet` after the test syncs |
+
+### What these numbers mean in practice
+
+**Publication is metadata-bound, not bandwidth-bound.** 91 hardlinks per second
+is the number to plan with: a 10-file model publishes in a tenth of a second, and
+a 10 000-file dataset spends about **two minutes** in publication alone, having
+already downloaded and hashed. If a large dataset repository is ever activated,
+this — not throughput — is what determines the sync window.
+
+**Hashing is free relative to the mount.** SHA-256 runs at 1 660 MB/s against a
+mount that reads at 94 MB/s uncached, and hashing local disk measured the same
+1 672 MB/s, so it is CPU-bound and roughly eighteen times faster than the storage
+feeding it. Ingestion verification costs nothing worth optimising; a full
+verification's cost is the **read**, which is why `verify --estimate` reports
+unique bytes rather than a file count.
+
+**A full verification of this archive reads at storage speed.** Take 94 MB/s as
+the planning figure for `verify --full`: roughly 5.6 GiB per minute, 340 GiB per
+hour. That is the number to schedule the quarterly job against, and the reason
+plan §16.2 says not to overlap it with a scrub.
+
+**Copy mode costs about 2.2× per file** at small file sizes, on top of consuming
+real space instead of sharing inodes. Hardlink mode is confirmed working here
+(`doctor`), so this is a fallback figure only.
+
+### Deferred, with their method recorded
+
+Two of §27's quantities are **not** measured, and cannot honestly be until the
+archive holds production content:
+
+- **Space retained by five application revisions.** Needs the production
+  repository list (Operator decision 1). Method: publish five revisions, then
+  `du -sb --count-links` against `du -sb` on `published/` — the first counts every
+  hardlink, the second counts unique inodes, and the ratio is what retention
+  actually costs. On the current two test repositories the ratio is **1.01×**,
+  which measures nothing useful: their revisions share almost no files, and the
+  sample is 12.5 MiB.
+- **Space retained by ZFS snapshots after application pruning.** Needs `NAS-006`
+  (handoff item 3); there is no snapshot schedule on this dataset yet. Method:
+  record `zfs list -o used,usedbysnapshots,usedbydataset` before a prune and
+  after, and note that logical release and physical release differ — plan §15.3,
+  and `unique_bytes_released_estimate` in a prune plan is explicitly the logical
+  figure.
+
+Until both exist, the dataset quota (handoff item 4) should be set from
+`hfcache plan`'s dry-run sizes for the production list rather than extrapolated
+from anything above.
+
+---
+
+## 11. Quick reference
 
 ```bash
 H="sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml"
