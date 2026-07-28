@@ -140,15 +140,15 @@ a workstation and fails as a service under `ProtectHome=true`, and it fails at
 ## 4. Get the source
 
 ```bash
-git clone <origin> /home/<operator>/Projects/hfcache
+git clone https://github.com/wtcross/hfcache.git /home/<operator>/Projects/hfcache
 ```
 
-No remote is configured on this deployment (plan §36.2); the working tree at
-`/home/tyler/Projects/hfcache` is the source of releases. `install-release.sh`
-copies a fixed subset of it into each release directory — `src`, `docs`,
-`packaging`, `scripts`, `examples`, `pyproject.toml`, `uv.lock`, and the
-license — so the release tree is self-contained and the units can point
-`Documentation=` at it.
+The public repository is `github.com/wtcross/hfcache`, mirrored on the lab
+Forgejo (`git.lab.cross.solutions`). The working tree on the writer is the
+source of releases: `install-release.sh` copies a fixed subset of it into each
+release directory — `src`, `docs`, `packaging`, `scripts`, `examples`,
+`pyproject.toml`, `uv.lock`, and the license — so the release tree is
+self-contained and the units can point `Documentation=` at it.
 
 ---
 

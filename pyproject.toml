@@ -23,6 +23,12 @@ dependencies = [
     "typer>=0.16",
 ]
 
+[project.urls]
+Homepage = "https://github.com/wtcross/hfcache"
+Repository = "https://github.com/wtcross/hfcache"
+Changelog = "https://github.com/wtcross/hfcache/blob/main/CHANGELOG.md"
+Issues = "https://github.com/wtcross/hfcache/issues"
+
 [project.scripts]
 hfcache = "hfcache.cli:app"
 

@@ -74,24 +74,44 @@ Coding agents start at [`AGENTS.md`](AGENTS.md) — a context router into these
 documents and the agent-specific set under [`docs/agents/`](docs/agents/).
 `CLAUDE.md` is a symlink to it.
 
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `src/hfcache/` | The application: one package on `huggingface-hub`, `pydantic`, `typer`, and the standard library |
+| `docs/` | The contracts and runbooks in the table above |
+| `docs/agents/` | Agent-facing workflow, conventions, environment, and release docs |
+| `packaging/` | systemd units and timers, journald and tmpfiles drop-ins |
+| `scripts/` | `check.sh` (the quality gate), `install-release.sh`, and the hardening probe pair |
+| `examples/` | A runnable `config.toml`, and `copy-revision.py` — the consumer-side helper |
+| `tests/` | `unit/` (default, offline), `system/` (opt-in markers), `fixtures/` (golden schemas) |
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/) and CPython 3.14.
 
 ```bash
+git clone https://github.com/wtcross/hfcache.git
+cd hfcache
 uv sync                      # create the locked development environment
 uv run hfcache --help
 ```
 
-Quality gates, all of which must pass from a clean checkout:
+The quality gate is one script — lock check, formatting, lint, types, the
+default test suite, and a build — and it is exactly what must pass from a
+clean checkout:
 
 ```bash
-uv lock --check
-uv run ruff format --check .
-uv run ruff check .
-uv run pyrefly check
-uv run pytest
-uv build
+scripts/check.sh                 # the docs/plan.md §8.4 gate
+scripts/check.sh --with-build    # plus a wheel install smoke test
+```
+
+Three opt-in suites are deselected by default:
+
+```bash
+uv run pytest -m live     # contacts the Hugging Face Hub
+uv run pytest -m nfs      # requires the live NFS archive mount on the writer
+uv run pytest -m build    # builds artifacts and installs into a throwaway venv
 ```
 
 ## License
