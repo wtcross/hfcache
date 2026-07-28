@@ -484,6 +484,39 @@ sudo systemctl enable --now hfcache-verify.timer
 Both timers are `Persistent=true`, so a missed calendar event runs after the host
 comes back rather than being skipped.
 
+### When a run outlasts the schedule
+
+A first sync of a large repository legitimately takes hours, and the service is
+deliberately never killed for being long (`TimeoutStartSec=infinity`; the
+unit's own comment says why). Three things bound and shape a long run instead:
+
+- **It cannot overlap itself.** The service is `Type=oneshot`; if the next
+  02:00 elapses while a run is still executing, systemd merges the new start
+  job into the running one. No second instance starts, nothing queues, and
+  that day's trigger is consumed — the day is skipped. `Persistent=true`
+  replays an elapse missed while the *host* was down, not one consumed while
+  the unit was busy.
+- **A skipped day is the designed semantics, not a fault.** The archive holds
+  what each run observes (`AD-02`/`AD-03`): commits between observations are
+  legitimately skipped, and retention depth is measured in observations — tune
+  the timer to tune depth. Nothing fetched is lost to the overrun either:
+  downloads resume from the cache's partials (`AD-09`), each repository is its
+  own transaction, so everything published before an interruption stays
+  published, and the next run reuses every byte already on disk.
+- **The lock is the second wall** (`AD-17`), for what systemd cannot
+  serialize: manual runs and the other mutating commands. A scheduled sync
+  waits `sync.lock_wait_seconds` — one hour by default — then gives up with
+  `HFMNT010` at exit `20`, before contacting the Hub; verification waits 24
+  hours, so a legitimately long sync delays it rather than losing to it
+  (`docs/configuration.md` §5).
+
+A sync that gives up on the lock leaves **no run report** — the journal is the
+only record, which is precisely the case the failure hook below exists for.
+The next day's timer simply tries again. If runs chronically outlast the day,
+the symptom is fewer observations per repository, never a damaged archive;
+size a repository with `hfcache plan` before adding it, and add large
+repositories in stages.
+
 To pause the schedule without disturbing the mount:
 
 ```bash

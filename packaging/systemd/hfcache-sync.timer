@@ -15,6 +15,11 @@ OnCalendar=*-*-* 02:00:00
 # A writer that was off at 02:00 syncs when it comes back rather than skipping a
 # day. For an archive whose point is to hold what upstream had, a missed day is a
 # gap nothing else fills.
+#
+# This replays an elapse missed while the host was down. An elapse that arrives
+# while the previous run is still executing instead merges into that run — the
+# day is skipped, which AD-02/AD-03 make an observation gap rather than a fault
+# (docs/operations.md §9).
 Persistent=true
 
 # Two runs of the same schedule do not start at the same instant, which matters
