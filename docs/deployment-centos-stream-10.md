@@ -113,7 +113,8 @@ $ stat -c '%a %U:%G %n' /opt/hfcache /etc/hfcache /var/cache/hfcache /var/lib/hf
 
 `UNKNOWN:UNKNOWN` is correct and is not a fault. The writer export maps every
 client identity to the NAS-side `hfcache-sync:hfcache-archive` (uid 3001, gid
-3002), and those ids have no local passwd entry. This is exactly why preflight
+3002 — this server's choice of values, `docs/storage-requirements.md` §2), and
+those ids have no local passwd entry. This is exactly why preflight
 proves writability with a real create/fsync/rename/delete probe instead of
 comparing `st_uid` against the service uid (plan §35.3).
 
@@ -128,6 +129,12 @@ is not a deployment tool.
 ```bash
 curl -LsSf https://astral.sh/uv/0.11.32/install.sh | sh
 ```
+
+The pinned version is the one in the script (`REQUIRED_UV_VERSION`), so a
+newer checkout may pin newer — install that version's URL instead. To run
+deliberately against a different uv, set `HFCACHE_UV_VERSION`; the script's
+`--help` lists every override (`HFCACHE_PREFIX`, `HFCACHE_SOURCE`,
+`HFCACHE_UV`).
 
 **Observed:**
 
@@ -194,6 +201,14 @@ TARGET       SOURCE                                                FSTYPE OPTION
                                                                           relatime,vers=4.2,hard,
                                                                           proto=tcp,nconnect=4,...
 ```
+
+**If your archive root is not `/srv/hfcache`:** the path is a convention
+shared by more than the configuration. systemd derives a mount unit's name
+from its `Where=`, so `srv-hfcache.mount` and `srv-hfcache.automount` must be
+renamed to what `systemd-escape --path <your-path>` produces, with `Where=`
+updated; both service units carry `RequiresMountsFor=` and `ReadWritePaths=`
+for the same path; and `storage.archive_root` in the configuration must
+agree. One path, five files.
 
 ---
 

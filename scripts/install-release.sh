@@ -18,6 +18,12 @@
 #   sudo scripts/install-release.sh --switch 0.1.0  # point `current` at a release
 #   scripts/install-release.sh --list               # what is installed, and what is live
 #
+# Environment overrides, for deployments that move a default deliberately:
+#   HFCACHE_PREFIX       install prefix                (default /opt/hfcache)
+#   HFCACHE_SOURCE       source tree to stage          (default: this checkout)
+#   HFCACHE_UV           absolute path to uv           (default: search PATH, then well-known locations)
+#   HFCACHE_UV_VERSION   uv version to accept          (default: the pinned version below)
+#
 set -euo pipefail
 
 PREFIX=${HFCACHE_PREFIX:-/opt/hfcache}
@@ -128,7 +134,7 @@ for argument in "$@"; do
       SWITCH_TARGET=pending
       ;;
     -h | --help)
-      sed -n '3,20p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      sed -n '3,26p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)

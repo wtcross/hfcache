@@ -64,8 +64,10 @@ note are the pattern).
 - `forgejo` — `ssh://git@git.lab.example.com:2222/<user>/hfcache.git` —
   the lab mirror.
 
-Push `main` with `--follow-tags` to **both** remotes at package boundaries and
-after every release:
+Pushing is the **maintainer's** step — it needs push access to both remotes,
+which contributors do not have; a contribution stops at a proposed change,
+and the maintainer lands it. Maintainers push `main` with `--follow-tags` to
+both remotes at package boundaries and after every release:
 
 ```bash
 git push github main --follow-tags
