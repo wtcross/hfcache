@@ -1,7 +1,7 @@
-# Session scratch and tooling state
+# Session scratch and local agent/tooling state, never part of the project
 .scratch/
 .tokensave/
-.claude/settings.local.json
+.claude/
 
 # Python
 __pycache__/
@@ -17,12 +17,8 @@ build/
 .coverage.*
 coverage.xml
 htmlcov/
+.hypothesis/
 
 # Type checker caches
 .ruff_cache/
 .pyrefly_cache/
-
-.claude/
-
-# Local agent/tooling state, never part of the project.
-.claude/
