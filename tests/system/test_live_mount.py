@@ -7,7 +7,7 @@ mountinfo line for the archive. That substitution is what makes the suite
 portable, and it is also exactly what a mount proof must not rely on: a parser
 that agrees with a line this repository wrote proves nothing about the line the
 kernel writes. So this file reads `/proc/self/mountinfo` for real, against the
-real `nas.lab.cross.solutions:/mnt/tank/huggingface-archive` mount, and checks
+real `nas.lab.example.com:/mnt/tank/huggingface-archive` mount, and checks
 that `docs/cli.md` §2 rows 2-5 pass on it.
 
 `--read-only` is not a convenience here, it is the whole safety argument: the

@@ -84,7 +84,7 @@ def sentinel() -> ArchiveSentinel:
         archive_id=ARCHIVE_ID,
         created_at=at("2026-07-24T20:57:31.123456Z"),
         created_by=Provenance(
-            application_version="1.0.0", hostname="hfcachewriter.lab.cross.solutions"
+            application_version="1.0.0", hostname="hfcachewriter.lab.example.com"
         ),
     )
 
@@ -297,7 +297,7 @@ def run_report() -> RunReport:
         config_fingerprint=FINGERPRINT,
         errors=(),
         exit_code=0,
-        hostname="hfcachewriter.lab.cross.solutions",
+        hostname="hfcachewriter.lab.example.com",
         huggingface_hub_version="1.24.0",
         invocation_mode="systemd",
         outcome="success",
@@ -357,7 +357,7 @@ def verification_report() -> VerificationReport:
                 repository_type="model",
             ),
         ),
-        hostname="hfcachewriter.lab.cross.solutions",
+        hostname="hfcachewriter.lab.example.com",
         huggingface_hub_version="1.24.0",
         invocation_mode="interactive",
         mode="full",

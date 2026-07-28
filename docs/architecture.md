@@ -34,7 +34,7 @@ visible to consumers at all. There is no partial state in between.
 
 ```mermaid
 flowchart LR
-    T["systemd timers<br/>sync · verify"] --> W["Writer VM<br/>hfcachewriter.lab.cross.solutions<br/>CentOS Stream 10"]
+    T["systemd timers<br/>sync · verify"] --> W["Writer VM<br/>hfcachewriter.lab.example.com<br/>CentOS Stream 10"]
     W -->|"HTTPS, huggingface_hub"| H["Hugging Face Hub"]
     W -->|"NFSv4.2 read/write<br/>exact-host export"| N["TrueNAS dataset<br/>tank/huggingface-archive"]
     C["Downstream consumers"] -->|"NFSv4.2 read-only<br/>published/ export"| N

@@ -10,7 +10,7 @@
 | Progress tracker | `docs/progress.md` |
 | Working project name | `hfcache` |
 | Primary CLI | `hfcache` |
-| Sync writer | `hfcachewriter.lab.cross.solutions` |
+| Sync writer | `hfcachewriter.lab.example.com` |
 | Writer operating system | CentOS Stream 10 |
 | Storage platform | TrueNAS 25.10.5 |
 | Repository scope | Public Hugging Face model and dataset repositories |
@@ -46,7 +46,7 @@ The recommended design is more than mounting NFS as `HF_HUB_CACHE` and schedulin
 3. Store all durable repository content, revision manifests, and run reports on a dedicated TrueNAS dataset.
 4. Maintain no more than five published revisions per repository during healthy steady-state operation.
 5. Never expose incomplete or unverified revisions to downstream readers.
-6. Give exactly one host read/write access to the archive: `hfcachewriter.lab.cross.solutions`.
+6. Give exactly one host read/write access to the archive: `hfcachewriter.lab.example.com`.
 7. Give downstream consumers server-enforced read-only NFS access.
 8. Refuse to download when the archive path is not the expected NFS mount.
 9. Detect likely base-model dependencies without executing repository code; warn when a dependency is undeclared, but do not fail the sync or download it automatically.
@@ -926,7 +926,7 @@ Preferred export definitions:
 **Writer export**
 
 - Path: archive dataset root.
-- Allowed host: only the exact static IP (`/32`) for `hfcachewriter.lab.cross.solutions`.
+- Allowed host: only the exact static IP (`/32`) for `hfcachewriter.lab.example.com`.
 - Read-only: disabled.
 - Mapall user/group: `hfcache-sync:hfcache-archive`.
 - Protocol: NFSv4.
@@ -966,7 +966,7 @@ For a trusted isolated storage VLAN, `AUTH_SYS` with exact host restrictions and
 
 ### 21.1 VM provisioning
 
-- Hostname: `hfcachewriter.lab.cross.solutions`.
+- Hostname: `hfcachewriter.lab.example.com`.
 - Assign a static IP and stable forward/reverse DNS.
 - Keep SELinux enforcing.
 - Apply normal CentOS Stream security updates.
@@ -1768,7 +1768,7 @@ The project is complete when all of the following are true:
 ### Storage and security
 
 - The writer fails closed when NFS is missing, wrong, read-only, or below reserve.
-- Only `hfcachewriter.lab.cross.solutions` has read/write export access.
+- Only `hfcachewriter.lab.example.com` has read/write export access.
 - Downstream test clients have server-enforced read-only access.
 - Writer and consumer NFS client scopes are proven disjoint on TrueNAS 25.10.5.
 - SELinux remains enforcing.
@@ -1786,13 +1786,13 @@ The project is complete when all of the following are true:
 
 These values do not block application implementation but must be set before production rollout. Status as of 2026-07-24:
 
-- TrueNAS hostname or storage IP. — **Confirmed:** `nas.lab.cross.solutions` (`192.168.10.4`).
+- TrueNAS hostname or storage IP. — **Confirmed:** `nas.lab.example.com` (`192.0.2.4`).
 - TrueNAS pool and dataset path. — **Confirmed:** `tank/huggingface-archive`, exported at `/mnt/tank/huggingface-archive`.
-- Static IP for `hfcachewriter.lab.cross.solutions`. — **Confirmed:** `192.168.10.90` (nmcli `manual`).
+- Static IP for `hfcachewriter.lab.example.com`. — **Confirmed:** `192.0.2.90` (nmcli `manual`).
 - Consumer hosts or consumer VLAN. — **Open (operator).**
 - Local Xet cache capacity. — **Confirmed:** `/var/cache/hfcache/xet` on the root filesystem with ~65 GiB free; treat ~50 GiB as the working ceiling and surface peak usage in run reports.
 - Minimum archive free-space reserve. — **Confirmed provisional:** the §9 defaults are installed (100 GiB / 10 %). On the 36 TiB dataset the percentage binds harder, giving a 3603.8 GiB effective reserve; revisit when the quota is sized from dry runs.
-- Archive UUID. — **Provisioned 2026-07-26 at `HOST-004`:** `f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2`, in `/etc/hfcache/config.toml` and in `/srv/hfcache/.hfcache-root`. `archive init` ran exactly once; never re-initialize (§36.4).
+- Archive UUID. — **Provisioned 2026-07-26 at `HOST-004`:** `00000000-0000-0000-0000-000000000000`, in `/etc/hfcache/config.toml` and in `/srv/hfcache/.hfcache-root`. `archive init` ran exactly once; never re-initialize (§36.4).
 - Confirmation that the selected 02:00 daily sync and quarterly verification calendars do not conflict with NAS maintenance. — **Open (operator).** Install both timers, but leave the verification timer disabled until confirmed (§36.4).
 - TrueNAS snapshot and replication retention. — **Open (operator);** proposal in §20.3.
 - Initial public model and dataset repository list. — **Decided policy:** two deliberately small public repositories (one model, one dataset), chosen at implementation time after confirming current Hub availability, recorded in `docs/progress.md` and `examples/config.toml`; the production list grows later per §29 step 12.
@@ -1806,9 +1806,9 @@ Verified on the writer on 2026-07-24 after completing the host-preparation check
 
 | Item | State |
 | --- | --- |
-| Host / OS | `hfcachewriter.lab.cross.solutions`, CentOS Stream 10, SELinux enforcing, chrony synchronized, `America/New_York` |
-| Network | Static `192.168.10.90/24` on `enp1s0` (nmcli `manual`), gateway/DNS `192.168.10.1`, forward and reverse DNS verified |
-| Privilege | `tyler` has passwordless sudo (`/etc/sudoers.d/tyler-nopasswd`); revoke after rollout if desired |
+| Host / OS | `hfcachewriter.lab.example.com`, CentOS Stream 10, SELinux enforcing, chrony synchronized, `America/New_York` |
+| Network | Static `192.0.2.90/24` on `enp1s0` (nmcli `manual`), gateway/DNS `192.0.2.1`, forward and reverse DNS verified |
+| Privilege | `<operator>` has passwordless sudo (`/etc/sudoers.d/<operator>-nopasswd`); revoke after rollout if desired |
 | Packages | `git` 2.52.0 and `nfs-utils` installed |
 | Toolchain | uv 0.11.32 (user install at `~/.local/bin/uv`), CPython 3.14.6 installed via uv; system Python remains 3.12 |
 | Service identity | `hfcache:hfcache` (uid/gid 981), nologin shell, no home directory |
@@ -1821,10 +1821,10 @@ Verified on the writer on 2026-07-24 after completing the host-preparation check
 
 | Item | State |
 | --- | --- |
-| NAS | `nas.lab.cross.solutions` (`192.168.10.4`), NFSv4 reachable |
+| NAS | `nas.lab.example.com` (`192.0.2.4`), NFSv4 reachable |
 | Dataset | `tank/huggingface-archive` exported at `/mnt/tank/huggingface-archive`; §20.1 tuning applied; quota deferred until dry-run sizing |
 | Identities | `hfcache-sync` (uid 3001), group `hfcache-archive` (gid 3002), `hfcache-read` created server-side |
-| Writer export | NFSv4 read/write, restricted to `192.168.10.90/32`, Mapall `hfcache-sync:hfcache-archive` — live and write-verified from the writer |
+| Writer export | NFSv4 read/write, restricted to `192.0.2.90/32`, Mapall `hfcache-sync:hfcache-archive` — live and write-verified from the writer |
 | Dataset root | Owned `3001:3002`, mode `0750`; contains a single empty `published/` directory (setgid `2750`, correct ownership) pre-created as the consumer-export anchor — `archive init` adopts it per §6.2 |
 | Consumer export | Not yet created (operator, `NAS-004`) |
 | Snapshots / replication / scrubs / alerts | Not yet configured (operator, `NAS-006`) |
@@ -1856,7 +1856,7 @@ continue unrelaxed in `docs/agents/environment.md`.
 
 ### 36.2 Version control discipline
 
-- The repository lives at `/home/tyler/Projects/hfcache`. If it is not yet a git repository, the first Phase 0 action is `git init` (default branch `main`) plus an initial commit of the existing `docs/` and `.gitignore`.
+- The repository lives at `/home/<operator>/Projects/hfcache`. If it is not yet a git repository, the first Phase 0 action is `git init` (default branch `main`) plus an initial commit of the existing `docs/` and `.gitignore`.
 - Commit at every completed work package with the message convention `<WORK-PACKAGE-ID>: <summary>` (for example `STO-005: atomic JSON and ref writes`). Update `docs/progress.md` in the same commit.
 - Run the full §8.4 gate before each phase-boundary commit; run at least the targeted tests before every work-package commit.
 - No remote is configured; do not push. The operator may add a remote later.
@@ -1886,7 +1886,7 @@ Out of scope — record in the operator handoff instead of attempting:
 
 ### 36.5 Execution constraints
 
-- Build and test as `tyler`; use sudo only for installation and system configuration steps. Exercise the installed CLI as the service identity with `sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache ...` — direct binary invocation works despite the nologin shell.
+- Build and test as `<operator>`; use sudo only for installation and system configuration steps. Exercise the installed CLI as the service identity with `sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache ...` — direct binary invocation works despite the nologin shell.
 - Never weaken SELinux or systemd hardening to make something pass; follow §23 and §22.5.
 - Never delete or rewrite content on `/srv/hfcache` outside application-owned paths and the application's own transactional contracts.
 - Choose the two test repositories deliberately small (each well under 100 MB total), confirm their current availability on the Hub at implementation time, and record the choice in `docs/progress.md` and `examples/config.toml`.

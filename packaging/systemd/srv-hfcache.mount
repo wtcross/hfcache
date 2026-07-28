@@ -18,14 +18,14 @@
 # whole value is that a published revision is either complete or absent.
 
 [Unit]
-Description=Hugging Face archive (nas.lab.cross.solutions:/mnt/tank/huggingface-archive)
+Description=Hugging Face archive (nas.lab.example.com:/mnt/tank/huggingface-archive)
 Documentation=file:///opt/hfcache/current/docs/plan.md
 After=network-online.target
 Wants=network-online.target
 PartOf=hfcache.target
 
 [Mount]
-What=nas.lab.cross.solutions:/mnt/tank/huggingface-archive
+What=nas.lab.example.com:/mnt/tank/huggingface-archive
 Where=/srv/hfcache
 Type=nfs4
 Options=rw,hard,nosuid,nodev,noexec,vers=4.2,proto=tcp,nconnect=4

@@ -8,7 +8,7 @@ document is what such a session must know, and what it must not do.
 ## Where am I?
 
 ```bash
-hostname                 # hfcachewriter.lab.cross.solutions → the production writer
+hostname                 # hfcachewriter.lab.example.com → the production writer
 findmnt /srv/hfcache     # live NFSv4.2 mount of tank/huggingface-archive when deployed
 ```
 
@@ -64,7 +64,7 @@ Carried from plan §36.4–§36.5 and not relaxed by §36's supersession
 - **Do not enable `hfcache-verify.timer`** — operator handoff item 8 owns the
   calendar decision. Quiesce during deploys by stopping `hfcache-sync.timer`,
   never `hfcache.target` (decision 65).
-- **No NAS-side changes.** Everything on `nas.lab.cross.solutions` — exports,
+- **No NAS-side changes.** Everything on `nas.lab.example.com` — exports,
   snapshots, quotas, scrubs — is operator work, tracked in the handoff.
 - Build and test as the login user; `sudo` is for installation and system
   configuration steps. Rehearsals that need a mutable archive use the

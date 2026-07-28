@@ -3,7 +3,7 @@
   "created_at": "2026-07-24T20:57:31.123456Z",
   "created_by": {
     "application_version": "1.0.0",
-    "hostname": "hfcachewriter.lab.cross.solutions"
+    "hostname": "hfcachewriter.lab.example.com"
   },
   "layout_version": 1,
   "schema_version": 1

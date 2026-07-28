@@ -226,7 +226,7 @@ def envelope(config: ApplicationConfig) -> dict[str, Any]:
         "application_version": "0.1.0",
         "archive_id": config.storage.archive_id,
         "config_fingerprint": config.fingerprint(),
-        "hostname": "hfcachewriter.lab.cross.solutions",
+        "hostname": "hfcachewriter.lab.example.com",
         "huggingface_hub_version": "1.24.0",
         "invocation_mode": "interactive",
         "python_version": "3.14.6",

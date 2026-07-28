@@ -89,7 +89,7 @@ def storage_config(archive_id: str = ARCHIVE_ID, **overrides) -> StorageConfig:
 def nfs_line(mount_point: str, *, filesystem: str = "nfs4", options: str = "rw") -> str:
     return (
         f"457 47 0:68 / {mount_point} {options},nosuid,nodev,relatime shared:488 "
-        f"- {filesystem} nas.lab.cross.solutions:/mnt/tank/hf rw,vers=4.2"
+        f"- {filesystem} nas.lab.example.com:/mnt/tank/hf rw,vers=4.2"
     )
 
 

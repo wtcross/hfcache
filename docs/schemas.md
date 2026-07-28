@@ -54,7 +54,7 @@ structure is durable (`FS-23`). Never rewritten.
   "created_at": "2026-07-24T20:57:31.123456Z",
   "created_by": {
     "application_version": "1.0.0",
-    "hostname": "hfcachewriter.lab.cross.solutions"
+    "hostname": "hfcachewriter.lab.example.com"
   },
   "layout_version": 1,
   "schema_version": 1
@@ -420,7 +420,7 @@ or reporting command.
   "config_fingerprint": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
   "errors": [],
   "exit_code": 0,
-  "hostname": "hfcachewriter.lab.cross.solutions",
+  "hostname": "hfcachewriter.lab.example.com",
   "huggingface_hub_version": "0.36.0",
   "invocation_mode": "systemd",
   "outcome": "success",
@@ -723,7 +723,7 @@ operator, so the shared part is one shape.
   "config_fingerprint": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
   "errors": [],
   "exit_code": 0,
-  "hostname": "hfcachewriter.lab.cross.solutions",
+  "hostname": "hfcachewriter.lab.example.com",
   "huggingface_hub_version": "0.36.0",
   "invocation_mode": "interactive",
   "outcome": "success",

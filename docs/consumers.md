@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Runbook, exercised from `hfcachewriter.lab.cross.solutions` against the live archive |
+| Status | Runbook, exercised from `hfcachewriter.lab.example.com` against the live archive |
 | Work package | `OPS-007` |
 | Derived from | `docs/plan.md` §6.3, §33; `docs/schemas.md` §3, §4 |
 | Helper | `examples/copy-revision.py`, shipped in the release at `/opt/hfcache/current/examples/` |
@@ -30,7 +30,7 @@ nothing else:
 ```bash
 sudo mkdir -p /mnt/hfcache
 sudo mount -t nfs4 -o ro,hard,nosuid,nodev,noexec \
-  nas.lab.cross.solutions:/mnt/tank/huggingface-archive/published /mnt/hfcache
+  nas.lab.example.com:/mnt/tank/huggingface-archive/published /mnt/hfcache
 ```
 
 Read-only is enforced **by the server**, not by this mount option and not by file

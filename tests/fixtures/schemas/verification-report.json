@@ -20,7 +20,7 @@
       "repository_type": "model"
     }
   ],
-  "hostname": "hfcachewriter.lab.cross.solutions",
+  "hostname": "hfcachewriter.lab.example.com",
   "huggingface_hub_version": "1.24.0",
   "invocation_mode": "interactive",
   "mode": "full",

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Runbook, exercised on `hfcachewriter.lab.cross.solutions` |
+| Status | Runbook, exercised on `hfcachewriter.lab.example.com` |
 | Work package | `OPS-002` |
 | Derived from | `docs/plan.md` §11.2, §15, §16, §24, §29; `docs/cli.md` |
 | Companion | `docs/deployment-centos-stream-10.md` for getting it up in the first place |
@@ -49,7 +49,7 @@ $H --json status | python3 -m json.tool
 ```json
 {
   "archive": {
-    "archive_id": "f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2",
+    "archive_id": "00000000-0000-0000-0000-000000000000",
     "available_gib": 36037.6,
     "deferred_cleanup": 0,
     "findings": [],
@@ -161,7 +161,7 @@ were touched, not how many bytes moved.
 ```text
 $ sudo journalctl -u hfcache-sync.service --since '-2 min' -o cat
 Starting hfcache-sync.service - Synchronize configured Hugging Face repositories...
-event=run.started level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 archive_id=f2a38add-… command=sync config_fingerprint=266d272b… invocation=systemd repositories=2
+event=run.started level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 archive_id=00000000-… command=sync config_fingerprint=266d272b… invocation=systemd repositories=2
 event=repository.resolved level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 commit_sha=71034c5d8bde858ff824298bdedc65515b97d2b9 repository=model:hf-internal-testing/tiny-random-gpt2 requested_revision=main
 event=repository.skipped level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 commit_sha=71034c5d8bde858ff824298bdedc65515b97d2b9 repository=model:hf-internal-testing/tiny-random-gpt2 status=skipped
 event=run.completed level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 command=sync downloaded_bytes=0 exit_code=0 hashed_bytes=0 outcome=success report=runs/20260727T104452Z-cccb23522c9a4d4d9520f9cc782670a6.json repositories=2 reused_bytes=0
@@ -504,8 +504,8 @@ is the seam for that — see the deployment runbook §9. Until it is activated,
 
 ## 10. Measured performance and capacity (plan §27)
 
-Measured 2026-07-27 (`OPS-006`) on `hfcachewriter.lab.cross.solutions` against
-`nas.lab.cross.solutions:/mnt/tank/huggingface-archive` over NFSv4.2, `nconnect=4`,
+Measured 2026-07-27 (`OPS-006`) on `hfcachewriter.lab.example.com` against
+`nas.lab.example.com:/mnt/tank/huggingface-archive` over NFSv4.2, `nconnect=4`,
 1 MiB rsize/wsize. Work ran in `/srv/hfcache/.store/health/`, the archive's own
 probe area, and was removed afterwards.
 

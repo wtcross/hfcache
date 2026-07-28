@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Runbook, exercised on `hfcachewriter.lab.cross.solutions` |
+| Status | Runbook, exercised on `hfcachewriter.lab.example.com` |
 | Work package | `OPS-001` |
 | Derived from | `docs/plan.md` §21, §22, §29, §30, §35 |
 | Companion | `docs/operations.md` for running it once it is up |
@@ -23,13 +23,21 @@ the writer to mount.
 
 ## 0. What you need before starting
 
-| Input | This deployment's value | Where it comes from |
+| Input | Example value | Where it comes from |
 | --- | --- | --- |
-| Storage host | `nas.lab.cross.solutions` (`192.168.10.4`) | plan §34 |
+| Storage host | `nas.lab.example.com` (`192.0.2.4`) | plan §34 |
 | Export path | `/mnt/tank/huggingface-archive` | plan §34 |
-| Writer static IP | `192.168.10.90`, in the export's allow list | plan §34 |
-| Archive UUID | `f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2` | provisioned once; see §8 |
+| Writer static IP | `192.0.2.90`, in the export's allow list | plan §34 |
+| Archive UUID | `00000000-0000-0000-0000-000000000000` | provisioned once; see §8 |
 | Repository list | two small public test repositories | `docs/progress.md` |
+
+The values above — and every concrete hostname, address, and UUID in this
+repository — are placeholders of the right shape: hostnames under
+`lab.example.com` (RFC 2606), addresses in the `192.0.2.0/24` documentation
+range (RFC 5737), an all-zeros archive UUID. Substitute your deployment's own
+values as you go; the real ones belong in the deployment itself —
+`/etc/hfcache/config.toml`, the sentinel, the NAS configuration — never in
+this repository.
 
 The archive UUID is the one value you must decide **before** initializing and can
 never change afterwards: it goes into `storage.archive_id` and into the sentinel,
@@ -144,7 +152,7 @@ git clone https://github.com/wtcross/hfcache.git /home/<operator>/Projects/hfcac
 ```
 
 The public repository is `github.com/wtcross/hfcache`, mirrored on the lab
-Forgejo (`git.lab.cross.solutions`). The working tree on the writer is the
+Forgejo (`git.lab.example.com`). The working tree on the writer is the
 source of releases: `install-release.sh` copies a fixed subset of it into each
 release directory — `src`, `docs`, `packaging`, `scripts`, `examples`,
 `pyproject.toml`, `uv.lock`, and the license — so the release tree is
@@ -182,7 +190,7 @@ on it produces a genuine ordering cycle. Judge `systemd-analyze verify` by its
 $ findmnt -T /srv/hfcache
 TARGET       SOURCE                                                FSTYPE OPTIONS
 /srv/hfcache systemd-1                                             autofs rw,relatime,fd=51,...
-/srv/hfcache nas.lab.cross.solutions:/mnt/tank/huggingface-archive nfs4   rw,nosuid,nodev,noexec,
+/srv/hfcache nas.lab.example.com:/mnt/tank/huggingface-archive nfs4   rw,nosuid,nodev,noexec,
                                                                           relatime,vers=4.2,hard,
                                                                           proto=tcp,nconnect=4,...
 ```
@@ -275,7 +283,7 @@ Then, only if `initializable` is true and `unknown entries` is `0`:
 sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache \
   --config /etc/hfcache/config.toml archive init \
   --archive-root /srv/hfcache \
-  --archive-id f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2 --confirm
+  --archive-id 00000000-0000-0000-0000-000000000000 --confirm
 ```
 
 The root and the UUID are restated on the command line deliberately: this is the
@@ -389,10 +397,10 @@ performs cannot describe different things.
 $ hfcache doctor
 pass     configuration            /etc/hfcache/config.toml is valid; fingerprint 266d272b64f9
 pass     archive_root             /srv/hfcache exists and is a directory
-pass     mount_point              /srv/hfcache is a mount point of nas.lab.cross.solutions:/mnt/tank/huggingface-archive
-pass     filesystem_type          nfs4 from nas.lab.cross.solutions:/mnt/tank/huggingface-archive
+pass     mount_point              /srv/hfcache is a mount point of nas.lab.example.com:/mnt/tank/huggingface-archive
+pass     filesystem_type          nfs4 from nas.lab.example.com:/mnt/tank/huggingface-archive
 pass     mount_writable           mounted read/write
-pass     sentinel                 /srv/hfcache/.hfcache-root names archive f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2
+pass     sentinel                 /srv/hfcache/.hfcache-root names archive 00000000-0000-0000-0000-000000000000
 pass     directory_writability    create, fsync, rename, and delete succeeded under /srv/hfcache/.store/health
 pass     staging_filesystem       staging and 6 publication destinations share one filesystem
 pass     hardlink_capability      proven under /srv/hfcache/.store/health
@@ -535,7 +543,7 @@ And the run in the journal, which is what the §24 event log is for:
 ```text
 $ sudo journalctl -u hfcache-sync.service --since '-2 min' -o cat
 Starting hfcache-sync.service - Synchronize configured Hugging Face repositories...
-event=run.started level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 archive_id=f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2 command=sync config_fingerprint=266d272b… invocation=systemd repositories=2
+event=run.started level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 archive_id=00000000-0000-0000-0000-000000000000 command=sync config_fingerprint=266d272b… invocation=systemd repositories=2
 event=repository.resolved level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 commit_sha=71034c5d8bde858ff824298bdedc65515b97d2b9 repository=model:hf-internal-testing/tiny-random-gpt2 requested_revision=main
 event=repository.skipped level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 commit_sha=71034c5d8bde858ff824298bdedc65515b97d2b9 repository=model:hf-internal-testing/tiny-random-gpt2 status=skipped
 event=run.completed level=info run_id=cccb23522c9a4d4d9520f9cc782670a6 command=sync downloaded_bytes=0 exit_code=0 hashed_bytes=0 outcome=success report=runs/20260727T104452Z-cccb23522c9a4d4d9520f9cc782670a6.json repositories=2 reused_bytes=0

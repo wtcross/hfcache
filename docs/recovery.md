@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Runbook, exercised on a throwaway archive from `hfcachewriter.lab.cross.solutions` |
+| Status | Runbook, exercised on a throwaway archive from `hfcachewriter.lab.example.com` |
 | Work packages | `OPS-003` (corruption and repair), `OPS-004` (snapshot and replica restore) |
 | Derived from | `docs/plan.md` §16.5, §31; `docs/architecture.md` §7.5, §7.9 |
 | Companions | `docs/operations.md` for normal running, `docs/deployment-centos-stream-10.md` for building the host |
@@ -490,7 +490,7 @@ Nothing archive-side is lost with it. The writer holds no authoritative state:
 `/var/lib/hfcache`, and `/var/cache/hfcache` are all rebuildable.
 
 1. Provision a replacement with the **same hostname and IP**
-   (`hfcachewriter.lab.cross.solutions`, `192.168.10.90`). The NFS export is
+   (`hfcachewriter.lab.example.com`, `192.0.2.90`). The NFS export is
    scoped to that exact host, so a different address does not get write access —
    which is the export doing its job.
 2. Follow `docs/deployment-centos-stream-10.md` from the top, with one

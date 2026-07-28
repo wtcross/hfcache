@@ -61,7 +61,7 @@ note are the pattern).
 
 - `github` — `git@github.com:wtcross/hfcache.git` — the primary public
   repository.
-- `forgejo` — `ssh://git@git.lab.cross.solutions:2222/tyler/hfcache.git` —
+- `forgejo` — `ssh://git@git.lab.example.com:2222/<user>/hfcache.git` —
   the lab mirror.
 
 Push `main` with `--follow-tags` to **both** remotes at package boundaries and

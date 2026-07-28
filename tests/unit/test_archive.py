@@ -8,7 +8,7 @@ mounting anything.
 
 Ownership rules are exercised through `published_adoption_problems`, which takes
 `os.stat_result` values instead of paths. That is deliberate: the Mapall export
-presents NAS-side ids that this host has no account for and `tyler` cannot
+presents NAS-side ids that this host has no account for and `<operator>` cannot
 `chown` to, so the policy is tested for identities the test process could never
 create on disk.
 
@@ -49,7 +49,7 @@ def nfs_line(mount_point: str, *, filesystem: str = "nfs4", options: str = "rw")
     """One mountinfo line for `mount_point`, in the kernel's field order."""
     return (
         f"457 47 0:68 / {mount_point} {options},nosuid,nodev,relatime shared:488 "
-        f"- {filesystem} nas.lab.cross.solutions:/mnt/tank/hf rw,vers=4.2"
+        f"- {filesystem} nas.lab.example.com:/mnt/tank/hf rw,vers=4.2"
     )
 
 

@@ -78,7 +78,7 @@ def nfs_line(mount_point: str, *, filesystem: str = "nfs4", options: str = "rw")
     """One mountinfo line for `mount_point`, in the kernel's field order."""
     return (
         f"457 47 0:68 / {mount_point} {options},nosuid,nodev,relatime shared:488 "
-        f"- {filesystem} nas.lab.cross.solutions:/mnt/tank/hf rw,vers=4.2"
+        f"- {filesystem} nas.lab.example.com:/mnt/tank/hf rw,vers=4.2"
     )
 
 
@@ -125,7 +125,7 @@ def test_a_mount_entry_is_parsed_into_its_documented_fields():
 
     assert str(entry.mount_point) == "/srv/hfcache"
     assert entry.filesystem_type == "nfs4"
-    assert entry.source == "nas.lab.cross.solutions:/mnt/tank/hf"
+    assert entry.source == "nas.lab.example.com:/mnt/tank/hf"
     assert "nosuid" in entry.options
     assert "vers=4.2" in entry.super_options
 
@@ -318,7 +318,7 @@ def test_mount_facts_render_for_the_envelope(archive_root: Path, table):
         "filesystem_type": "nfs4",
         "is_mount_point": True,
         "read_only": False,
-        "source": "nas.lab.cross.solutions:/mnt/tank/hf",
+        "source": "nas.lab.example.com:/mnt/tank/hf",
     }
 
 

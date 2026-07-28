@@ -44,7 +44,7 @@ def mounted(archive_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     table = tmp_path / "mountinfo"
     table.write_text(
         f"457 47 0:68 / {archive_root.resolve()} rw,nosuid,nodev,relatime shared:488 "
-        f"- nfs4 nas.lab.cross.solutions:/mnt/tank/hf rw,vers=4.2\n",
+        f"- nfs4 nas.lab.example.com:/mnt/tank/hf rw,vers=4.2\n",
         encoding="utf-8",
     )
     monkeypatch.setattr("hfcache.storage.MOUNT_TABLE", table)

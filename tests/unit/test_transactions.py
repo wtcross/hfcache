@@ -54,7 +54,7 @@ _ROW = re.compile(r"^\|\s*\d+\s*\|\s*`(\w+)`\s*\|")
 def nfs_line(mount_point: str) -> str:
     return (
         f"457 47 0:68 / {mount_point} rw,nosuid,nodev,relatime shared:488 "
-        f"- nfs4 nas.lab.cross.solutions:/mnt/tank/hf rw,vers=4.2"
+        f"- nfs4 nas.lab.example.com:/mnt/tank/hf rw,vers=4.2"
     )
 
 

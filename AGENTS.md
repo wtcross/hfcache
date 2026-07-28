@@ -24,7 +24,7 @@ file — edit this one.
    Nothing lands outside that loop.
 
 **This working copy may be on the production writer VM**
-(`hfcachewriter.lab.cross.solutions`), where `/srv/hfcache` is a live NFS
+(`hfcachewriter.lab.example.com`), where `/srv/hfcache` is a live NFS
 archive. Before touching anything outside the repository, read
 `docs/agents/environment.md` and its hard limits. The three that matter most:
 never write under `/srv/hfcache` outside the application's own code paths,

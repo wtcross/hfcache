@@ -298,13 +298,14 @@ outside §28's phase set.
 - [x] DOC-002 `AGENTS.md` context router, `CLAUDE.md` symlink, `docs/agents/` (2026-07-28, this commit — decisions 81, 82. The router is deliberately small and loads nothing: a read-first list, a task→document map, the non-negotiables with their IDs, and the commands, every reference a backticked path an agent reads on demand — decision 81 records why that shape and why `@`-imports were rejected. Four agent docs land under `docs/agents/`: `workflow.md`, the §36 successor — session startup, the work-package loop, the Decisions rules, and pushing to both remotes (decision 82); `conventions.md`, the code/test/doc conventions with their reasons, including the two doc-parsing tests and the closed dependency set; `environment.md`, the writer VM's facts and the hard limits carried unrelaxed from §36.4–§36.5; `release.md`, `REL-004`'s worked run distilled into the standing checklist — gates, the decision-65 drill, §13 deploy, the proof set, tag-then-push. Plan §7 and §36 carry dated amendments; README points agents at the router. `./scripts/check.sh` exit `0` — the §7.3–§7.5 table parser and the `cli.md` reader consume regions nothing here touches)
 - [x] DOC-003 `CHANGELOG.md`; README `Status` becomes a pointer (2026-07-28, this commit — decision 83. Entries for `v0.1.2` and `v0.1.3` condensed from the annotated tags, which the preamble names as the complete notes — one authority, one convenience; 0.1.0 and 0.1.1 stated for what they were, install-mechanism proofs that were never releases. Each entry keeps the release's operational edge: 0.1.3's carries the null-SHA rollback rule beside the change that created it. README `Status` drops its per-release narrative — the paragraph had grown a release note each tag — and keeps the current version, the deployed state, and the pointers; plan §7 carries the one-line amendment. `./scripts/check.sh` exit `0`)
 - [x] DOC-004 README for a public repository; `[project.urls]`; deployment §4 clone reality (2026-07-28, this commit — README gains a repository-layout table, and its `Development` section now says what the gate *is* — `scripts/check.sh`, with the three opt-in markers spelled out — instead of restating the §8.4 command list the script already runs in order; clone instructions name the public repository. `pyproject.toml` gains `[project.urls]` (homepage, repository, changelog, issues at `github.com/wtcross/hfcache`) — metadata only, no resolution input, so the lockfile stands and `uv lock --check` inside the gate proves it. `docs/deployment-centos-stream-10.md` §4's `git clone <origin>` placeholder and its "no remote is configured" note — true when written, wrong since decision 82 — now name the real repository and the mirror; a runbook is edited directly, not amended (`docs/agents/conventions.md`). No decision: nothing here deviates from a contract. `./scripts/check.sh` exit `0`)
+- [x] DOC-005 Scrub environment specifics into placeholders (2026-07-28, this commit — decision 84. Every lab hostname, address, provisioned identifier, and login-account path in tracked files is replaced by a placeholder of the same shape: `*.lab.cross.solutions` → `*.lab.example.com` (RFC 2606), `192.168.10.x` → `192.0.2.x` (RFC 5737, last octets preserved so the export-allow-list narrative still reads), the provisioned archive UUID → the all-zeros UUID `examples/config.toml` already uses for "replace me" — its truncated `…-` form in the §24 log sample included — and `/home/tyler`, `` `tyler` ``, the sudoers filename, and the mirror URL's account → `<operator>`/`<user>`. The replacement reached everything the strings touched: contracts, runbooks, plan §34–§35's confirmed-values record, handoff items, decision 82's quoted URL, the golden fixtures **and** `tests/fixtures/examples.py` that generates them, unit-test fixture strings, `srv-hfcache.mount`'s `What=` and `Description=`, and the live-mount test's docstring. `CLAUDE.md` was excluded from the in-place pass because editing through it would have replaced the symlink with a regular file. Deployment §0 now states the placeholder convention. What stays, deliberately: the `wtcross` GitHub identity, author email, and license copyright (published on purpose), `tank/huggingface-archive` (TrueNAS's default pool name, generic), and hash or random log samples (config fingerprint, run ids) that identify nothing. `./scripts/check.sh` exit `0` — the goldens and their generator moved together. History before this commit still carries the originals; decision 84 records that boundary)
 
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
       `/etc/hfcache/config.toml` (§36.4 one-time authorization, **spent
       2026-07-26**). `archive init --archive-root /srv/hfcache --archive-id
-      f2a38add-59c1-4c1a-a8cc-5ab8f22fa1e2 --confirm`, run as the service
+      00000000-0000-0000-0000-000000000000 --confirm`, run as the service
       identity from the installed release. `--inspect` first reported
       `initializable: true`, `adopted_published: true`, no unknown entries; the
       run created the fifteen remaining directories and `.hfcache-root`, and
@@ -388,10 +389,10 @@ item 1 for the separate production-list question that does need an operator.
 
 Keep instructions exact and copy-pasteable; add acceptance checks.
 
-1. **NAS-004 — consumer export (TrueNAS UI on `nas.lab.cross.solutions`):**
+1. **NAS-004 — consumer export (TrueNAS UI on `nas.lab.example.com`):**
    NFSv4 export of `/mnt/tank/huggingface-archive/published`, read-only enabled
    server-side, Mapall `hfcache-read:hfcache-archive`, allowed clients =
-   explicit consumer hosts or consumer VLAN, **excluding** `192.168.10.90`
+   explicit consumer hosts or consumer VLAN, **excluding** `192.0.2.90`
    (plan §20.2). Acceptance: consumer can read; consumer create/modify/
    rename/delete all fail at the server.
 2. **NAS-005 — disjointness proof:** from a consumer client, mount the
@@ -428,7 +429,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
 8. **Verification timer enable (§29 step 14):** confirm the quarterly calendar
    does not overlap NAS scrub/SMART/replication, then enable.
 9. **Optional cleanup:** revoke passwordless sudo
-   (`sudo rm /etc/sudoers.d/tyler-nopasswd`) after rollout.
+   (`sudo rm /etc/sudoers.d/<operator>-nopasswd`) after rollout.
 10. **`PrivateNetwork=true` on `hfcache-verify.service` (§22.3, decision 60):**
     during the item 7 interruption window, add
     `PrivateNetwork=true` as a drop-in on `hfcache-verify.service`, start a full
@@ -834,7 +835,7 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     archive root" is the same rule in a form the writer can evaluate, and it
     fails exactly when the intended one would. The policy takes two
     `os.stat_result` values rather than two paths, which is what lets it be
-    tested for identities this host cannot create — `tyler` cannot `chown` to
+    tested for identities this host cannot create — `<operator>` cannot `chown` to
     3001. `docs/architecture.md` `FS-22` updated in this commit.
 
 32. **A write that fails after every check passed is `HFMNT008`** (2026-07-25,
@@ -1175,7 +1176,7 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     it. Nothing on the writer can detect it.
 
     The writer holds an NFS mount and nothing else. ZFS scrubs, SMART long
-    tests, and replication all run on `nas.lab.cross.solutions`, and the archive
+    tests, and replication all run on `nas.lab.example.com`, and the archive
     dataset exposes no channel that reports them: there is no configured NAS API
     endpoint, no credential for one, and §36.4 forbids changing the NAS to add
     one. Inferring maintenance from observed read latency was considered and
@@ -2248,7 +2249,7 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     maintenance sessions on a public repository. `workflow.md` starts from the
     tracker tail and `AGENTS.md`'s map; `github`
     (`git@github.com:wtcross/hfcache.git`) is the primary public repository
-    and `forgejo` (`ssh://git@git.lab.cross.solutions:2222/tyler/hfcache.git`)
+    and `forgejo` (`ssh://git@git.lab.example.com:2222/<user>/hfcache.git`)
     the lab mirror, pushed with `--follow-tags` at package boundaries and
     never force-pushed — the history is the audit trail this tracker cites.
     What does **not** change: §36.4–§36.5's hard limits, which continue in
@@ -2269,3 +2270,27 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     the preamble because a public reader who meets four version directories
     in the deployment doc deserves the explanation the `v0.1.2` tag already
     gives.
+
+84. **Placeholders replace environment specifics, records included**
+    (2026-07-28, DOC-005). The repository is public; the deployment's
+    hostnames, addresses, and provisioned identifiers are the environment's
+    business, not the repository's. Two rules shaped the scrub. **Same-shape
+    placeholders**, so every document keeps its meaning: RFC 2606 names under
+    the same labels (`hfcachewriter.lab.example.com`, `nas.lab.example.com`),
+    RFC 5737's `192.0.2.0/24` with last octets preserved — the writer stays
+    `.90` everywhere, so the export allow-list narrative still reads — and
+    the all-zeros UUID `examples/config.toml` already established as
+    "replace me". **Records are scrubbed too**: plan §35's environment
+    inventory, the handoff items, and decision 82's quoted URL are historical
+    records, but what they record — that a value was confirmed, provisioned
+    once, excluded from an allow list — survives substitution intact, and a
+    public record is exactly where the real values must not sit. What
+    deliberately stays: the `wtcross` GitHub identity, author email, and
+    license copyright (published on purpose), the `tank/huggingface-archive`
+    dataset path (TrueNAS's default pool name, generic), and hash or random
+    log samples (a config fingerprint, run ids) that identify nothing. The
+    real values now live only where they operate: `/etc/hfcache/config.toml`,
+    the sentinel, the NAS, and local git remote configuration. Git history
+    before `DOC-005` still carries the originals; removing those is a history
+    rewrite with new object ids throughout, which this decision does not
+    perform and which, if wanted, is its own recorded step.
