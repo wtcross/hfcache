@@ -305,6 +305,13 @@ Module boundaries can be consolidated where implementation remains small, but Hu
 
 There is no `tests/integration/`. §26.2's integration tests all exist and all run, but they live in `tests/unit/` beside the unit tests of the same modules, because they share those modules' fixtures and because the tier boundary does not fall where a directory split would put it — one file holds both a pure retention-ordering test and a full six-revision publish-and-prune cycle against the fake Hub. `tests/unit/test_failure_matrix.py` maps §26.6's eleven injection points to the tests that cover them, and checks that every name it claims still resolves (`OPS-005`, decision 69).
 
+**Amended 2026-07-28 (`DOC-002`, decision 81).** The repository root
+additionally carries `AGENTS.md` — the agent context router — with `CLAUDE.md`
+as a symlink to it, and `docs/` gains an `agents/` subdirectory (`workflow.md`,
+`conventions.md`, `environment.md`, `release.md`): documents about how the
+repository is worked on, kept apart from the contract and runbook set above.
+`docs/truenas.md` remains unwritten by design (operator handoff item 11).
+
 ## 8. Python and Dependency Management
 
 ### 8.1 Runtime baseline
@@ -1826,6 +1833,15 @@ Because the writer export maps every client identity to `hfcache-sync:hfcache-ar
 ## 36. Autonomous Implementation Protocol
 
 This section governs the long-running implementation session (Claude Code running on the writer host with this repository as its working directory). The plan above defines *what* to build; this section defines *how the session executes it* unattended.
+
+**Amended 2026-07-28 (`DOC-002`, decision 82).** This section governed the
+autonomous build-out that ended at `v0.1.3`, and it stays as that run's record.
+Sessions after it follow `docs/agents/workflow.md`, reached from `AGENTS.md`.
+The material differences: remotes now exist (`github` primary, `forgejo` lab
+mirror) and pushing is part of the loop, so §36.2's "no remote is configured;
+do not push" no longer holds; startup routes through `AGENTS.md`'s context map
+rather than re-reading this plan in full; and §36.4–§36.5's scope limits
+continue unrelaxed in `docs/agents/environment.md`.
 
 ### 36.1 Session startup — every session, including resumption
 

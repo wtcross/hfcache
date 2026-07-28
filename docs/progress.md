@@ -295,7 +295,7 @@ agent-context layer. Decision 80 records the family and this section sitting
 outside §28's phase set.
 
 - [x] DOC-001 Remove stale test-tree placeholders; consolidate `.gitignore` (2026-07-28, this commit — decision 80. The three `.gitkeep` files under `tests/unit/`, `tests/system/`, and `tests/fixtures/` predate the suites that populated those directories, and a placeholder in a populated directory asserts nothing — git tracks the members now. `.gitignore` carried `.claude/` three ways — two blanket entries plus a third naming one file inside it — accreted across sessions, and an uncommitted `.hypothesis` line at the end; now one entry per tool, grouped by what the state is, with `.hypothesis/` beside the other test artifacts it belongs to. No behaviour, no durable format, nothing a release ships. `./scripts/check.sh` exit `0`)
-- [ ] DOC-002 `AGENTS.md` context router, `CLAUDE.md` symlink, `docs/agents/`
+- [x] DOC-002 `AGENTS.md` context router, `CLAUDE.md` symlink, `docs/agents/` (2026-07-28, this commit — decisions 81, 82. The router is deliberately small and loads nothing: a read-first list, a task→document map, the non-negotiables with their IDs, and the commands, every reference a backticked path an agent reads on demand — decision 81 records why that shape and why `@`-imports were rejected. Four agent docs land under `docs/agents/`: `workflow.md`, the §36 successor — session startup, the work-package loop, the Decisions rules, and pushing to both remotes (decision 82); `conventions.md`, the code/test/doc conventions with their reasons, including the two doc-parsing tests and the closed dependency set; `environment.md`, the writer VM's facts and the hard limits carried unrelaxed from §36.4–§36.5; `release.md`, `REL-004`'s worked run distilled into the standing checklist — gates, the decision-65 drill, §13 deploy, the proof set, tag-then-push. Plan §7 and §36 carry dated amendments; README points agents at the router. `./scripts/check.sh` exit `0` — the §7.3–§7.5 table parser and the `cli.md` reader consume regions nothing here touches)
 - [ ] DOC-003 `CHANGELOG.md`; README `Status` becomes a pointer
 - [ ] DOC-004 README for a public repository; `[project.urls]`; deployment §4 clone reality
 
@@ -2223,3 +2223,35 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     each deviation as it lands. The alternative — doing it untracked because
     the phases are over — would make this file's claim to be authoritative
     quietly false at the exact moment the repository becomes visible.
+
+81. **`AGENTS.md`, `CLAUDE.md`, and `docs/agents/` added beyond plan §7's
+    layout** (2026-07-28, DOC-002). Four shapes were settled together. **A
+    router, not a manual:** the three load-bearing documents (`docs/plan.md`,
+    `docs/progress.md`, `docs/architecture.md`) total about 410 KB — an entry
+    file that embedded or force-loaded them would spend an agent's context
+    before the task started, so the router maps task to document and stops.
+    **Backticked paths, not `@`-imports:** Claude Code inlines `@path`
+    references from `CLAUDE.md` eagerly at session start, which is the exact
+    opposite of the progressive loading the router exists for; a code-span
+    path is inert there and reads identically in every other tool. **A
+    symlink, not a copy:** `CLAUDE.md` and `AGENTS.md` are one file so the two
+    entry conventions cannot drift; divergence becomes impossible rather than
+    reviewed-for. **`docs/agents/`, not the contract set:** workflow,
+    conventions, environment, and release are about how the repository is
+    worked on; the `docs/` root set is normative for the application, and
+    mixing the two would blur which documents bind the implementation.
+
+82. **`docs/agents/workflow.md` supersedes plan §36 for sessions after the
+    build-out; pushing joins the loop** (2026-07-28, DOC-002). §36 was written
+    for one long autonomous run: startup meant reading the plan in full, no
+    remote existed, and "do not push" was correct. All three are wrong for
+    maintenance sessions on a public repository. `workflow.md` starts from the
+    tracker tail and `AGENTS.md`'s map; `github`
+    (`git@github.com:wtcross/hfcache.git`) is the primary public repository
+    and `forgejo` (`ssh://git@git.lab.cross.solutions:2222/tyler/hfcache.git`)
+    the lab mirror, pushed with `--follow-tags` at package boundaries and
+    never force-pushed — the history is the audit trail this tracker cites.
+    What does **not** change: §36.4–§36.5's hard limits, which continue in
+    `docs/agents/environment.md` and bind any session on the writer, and the
+    tracker discipline itself. §36 keeps a dated amendment and remains the
+    build-out's record.

@@ -75,6 +75,10 @@ belongs to whoever performs the NAS-side handoff items, because the dataset
 tuning, the two exports, and the snapshot schedule are its content and none of
 them can be made or verified from the writer.
 
+Coding agents start at [`AGENTS.md`](AGENTS.md) — a context router into these
+documents and the agent-specific set under [`docs/agents/`](docs/agents/).
+`CLAUDE.md` is a symlink to it.
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/) and CPython 3.14.
