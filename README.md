@@ -32,6 +32,23 @@ consumers at all.
 - **Content is data, never code.** Nothing from a repository is executed,
   imported, unpickled, or given `trust_remote_code`.
 
+## Requirements
+
+- **Writer host** — Linux with systemd. The runbook
+  ([`docs/deployment-centos-stream-10.md`](docs/deployment-centos-stream-10.md))
+  targets CentOS Stream 10 with SELinux enforcing; the SELinux steps are
+  skippable on other distributions. Python 3.14 arrives via
+  [uv](https://docs.astral.sh/uv/) — no system Python is used.
+- **Storage** — any NFSv4.2 server that can provide the two exports and the
+  identity mapping in
+  [`docs/storage-requirements.md`](docs/storage-requirements.md) (the
+  reference deployment uses TrueNAS). The archive root **must** be an NFS
+  mount; preflight refuses anything else by design.
+- **Consumers** — any host that can mount the read-only export; the copy
+  helper needs only Python 3.
+- **No NAS yet?** [`docs/quickstart.md`](docs/quickstart.md) runs everything
+  on one machine with a loopback NFS export.
+
 ## Status
 
 **`v0.1.3` — current release, deployed 2026-07-27.** The writer is complete
@@ -58,6 +75,8 @@ the accepted implementation plan.
 | [`docs/schemas.md`](docs/schemas.md) | Durable JSON formats: manifests, references, catalog, reports, journals |
 | [`docs/cli.md`](docs/cli.md) | Command surface, JSON output, exit codes, error taxonomy |
 | [`docs/security.md`](docs/security.md) | Assets, trust boundaries, threats, and the control enforcing each |
+| [`docs/quickstart.md`](docs/quickstart.md) | Run everything on one machine with a loopback NFS export |
+| [`docs/storage-requirements.md`](docs/storage-requirements.md) | What any NFSv4.2 server must provide: filesystem semantics, the two exports, identities |
 | [`docs/deployment-centos-stream-10.md`](docs/deployment-centos-stream-10.md) | Building the writer host, installing, upgrading, and rolling back |
 | [`docs/operations.md`](docs/operations.md) | Running it: sync, verify, prune, status, timers, exit codes, measured performance |
 | [`docs/recovery.md`](docs/recovery.md) | Corruption, repair, snapshot restore, lost writer, and the stopped-machine states |
@@ -65,10 +84,12 @@ the accepted implementation plan.
 | [`docs/plan.md`](docs/plan.md) | The accepted implementation plan |
 | [`docs/progress.md`](docs/progress.md) | Work-package tracker and operator handoff |
 
-`docs/truenas.md` is the one document in the plan's set that does not exist: it
-belongs to whoever performs the NAS-side handoff items, because the dataset
-tuning, the two exports, and the snapshot schedule are its content and none of
-them can be made or verified from the writer.
+[`docs/storage-requirements.md`](docs/storage-requirements.md) states what any
+NFSv4.2 server must provide. `docs/truenas.md` — the reference deployment's
+NAS-side runbook against those requirements — remains unwritten by design: it
+belongs to whoever performs the NAS-side handoff items (`docs/progress.md`,
+operator handoff item 11), because none of its content can be made or verified
+from the writer.
 
 Coding agents start at [`AGENTS.md`](AGENTS.md) — a context router into these
 documents and the agent-specific set under [`docs/agents/`](docs/agents/).

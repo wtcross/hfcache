@@ -316,6 +316,11 @@ repository is worked on, kept apart from the contract and runbook set above.
 set: the browsable release summary beside the annotated tags, which remain the
 complete notes.
 
+**Amended 2026-07-28 (`DOC-006`, decision 85).** `docs/quickstart.md` and
+`docs/storage-requirements.md` join the documentation set: the first-run path
+(`docs/recovery.md` §6's loopback archive, promoted) and the server-agnostic
+statement of what §20's TrueNAS configuration provides.
+
 ## 8. Python and Dependency Management
 
 ### 8.1 Runtime baseline
