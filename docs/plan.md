@@ -312,6 +312,10 @@ as a symlink to it, and `docs/` gains an `agents/` subdirectory (`workflow.md`,
 repository is worked on, kept apart from the contract and runbook set above.
 `docs/truenas.md` remains unwritten by design (operator handoff item 11).
 
+**Amended 2026-07-28 (`DOC-003`, decision 83).** `CHANGELOG.md` joins the root
+set: the browsable release summary beside the annotated tags, which remain the
+complete notes.
+
 ## 8. Python and Dependency Management
 
 ### 8.1 Runtime baseline

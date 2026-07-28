@@ -296,7 +296,7 @@ outside §28's phase set.
 
 - [x] DOC-001 Remove stale test-tree placeholders; consolidate `.gitignore` (2026-07-28, this commit — decision 80. The three `.gitkeep` files under `tests/unit/`, `tests/system/`, and `tests/fixtures/` predate the suites that populated those directories, and a placeholder in a populated directory asserts nothing — git tracks the members now. `.gitignore` carried `.claude/` three ways — two blanket entries plus a third naming one file inside it — accreted across sessions, and an uncommitted `.hypothesis` line at the end; now one entry per tool, grouped by what the state is, with `.hypothesis/` beside the other test artifacts it belongs to. No behaviour, no durable format, nothing a release ships. `./scripts/check.sh` exit `0`)
 - [x] DOC-002 `AGENTS.md` context router, `CLAUDE.md` symlink, `docs/agents/` (2026-07-28, this commit — decisions 81, 82. The router is deliberately small and loads nothing: a read-first list, a task→document map, the non-negotiables with their IDs, and the commands, every reference a backticked path an agent reads on demand — decision 81 records why that shape and why `@`-imports were rejected. Four agent docs land under `docs/agents/`: `workflow.md`, the §36 successor — session startup, the work-package loop, the Decisions rules, and pushing to both remotes (decision 82); `conventions.md`, the code/test/doc conventions with their reasons, including the two doc-parsing tests and the closed dependency set; `environment.md`, the writer VM's facts and the hard limits carried unrelaxed from §36.4–§36.5; `release.md`, `REL-004`'s worked run distilled into the standing checklist — gates, the decision-65 drill, §13 deploy, the proof set, tag-then-push. Plan §7 and §36 carry dated amendments; README points agents at the router. `./scripts/check.sh` exit `0` — the §7.3–§7.5 table parser and the `cli.md` reader consume regions nothing here touches)
-- [ ] DOC-003 `CHANGELOG.md`; README `Status` becomes a pointer
+- [x] DOC-003 `CHANGELOG.md`; README `Status` becomes a pointer (2026-07-28, this commit — decision 83. Entries for `v0.1.2` and `v0.1.3` condensed from the annotated tags, which the preamble names as the complete notes — one authority, one convenience; 0.1.0 and 0.1.1 stated for what they were, install-mechanism proofs that were never releases. Each entry keeps the release's operational edge: 0.1.3's carries the null-SHA rollback rule beside the change that created it. README `Status` drops its per-release narrative — the paragraph had grown a release note each tag — and keeps the current version, the deployed state, and the pointers; plan §7 carries the one-line amendment. `./scripts/check.sh` exit `0`)
 - [ ] DOC-004 README for a public repository; `[project.urls]`; deployment §4 clone reality
 
 ## Live rollout checkpoints (§29, writer-side)
@@ -2255,3 +2255,17 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     `docs/agents/environment.md` and bind any session on the writer, and the
     tracker discipline itself. §36 keeps a dated amendment and remains the
     build-out's record.
+
+83. **`CHANGELOG.md` beside the annotated tags, and README `Status` stops
+    accreting release notes** (2026-07-28, DOC-003). The release record was
+    annotated tags plus a README paragraph that grew a release's worth of
+    detail each tag plus the `REL` entries here — all true, none browsable
+    from a repository listing, which starts to matter the moment the
+    repository has one. `CHANGELOG.md` states in its preamble that the tags
+    carry the complete notes and it is the summary, so there is one authority
+    and one convenience rather than two authorities that can drift. README
+    `Status` keeps the current version and state and points at the changelog
+    and the operator handoff. The 0.1.0/0.1.1 non-releases are explained in
+    the preamble because a public reader who meets four version directories
+    in the deployment doc deserves the explanation the `v0.1.2` tag already
+    gives.
