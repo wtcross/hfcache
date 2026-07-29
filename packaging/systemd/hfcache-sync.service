@@ -39,6 +39,21 @@ ExecStart=/opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.to
 # and the capacity gate — and none of them is a wall-clock limit on the run.
 TimeoutStartSec=infinity
 
+# The writer is a guest, and a terabyte-scale sync streams every byte through the
+# page cache — `snapshot_download` writes ordinary buffered files, so without a
+# bound the cache grows until the guest has touched all of its RAM. Memory a
+# guest has touched is memory the hypervisor has committed; on 2026-07-29 a
+# 1.5 TB download did exactly that and the host OOM-killed the VM mid-run
+# (decision 86). `MemoryHigh=` makes the kernel reclaim this cgroup's cache
+# continuously instead, so the run's footprint stays near this figure no matter
+# the repository size — at no real cost, because a repository larger than guest
+# RAM was never going to be served from cache anyway. The figure is a working
+# set, not a quota: several times the process's own anonymous memory, so the
+# throttle only ever squeezes cache. `MemoryMax=` is deliberately absent — it
+# kills, which would trade the host's OOM for one of our own; above `high` the
+# kernel throttles and reclaims, and a slow sync beats a dead one.
+MemoryHigh=4G
+
 # /var/lib/hfcache, /var/cache/hfcache, /run/hfcache: created, owned, and mode-set
 # by systemd, so the deployment does not depend on them having been provisioned by
 # hand. RuntimeDirectoryMode matches locking.LOCK_DIRECTORY_MODE, and

@@ -34,6 +34,15 @@ ExecStart=/opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.to
 # does not get to decide the run has taken too long.
 TimeoutStartSec=infinity
 
+# The same cache bound as the sync, for the read direction: hashing every unique
+# object pulls the whole archive through the page cache, and each page is read
+# once and never again. Unbounded, that walk makes the guest touch all of its
+# RAM — memory the hypervisor then has committed for good (decision 86). No
+# `MemoryMax=`, for the sync unit's reason: above `high` the kernel throttles
+# and reclaims rather than kills, and exit `40` from this unit has to mean "the
+# archive may be corrupt", never "the cap was tight this quarter".
+MemoryHigh=4G
+
 StateDirectory=hfcache
 StateDirectoryMode=0750
 CacheDirectory=hfcache

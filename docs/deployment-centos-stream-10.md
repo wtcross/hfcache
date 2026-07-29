@@ -314,7 +314,7 @@ which is why it is the single documented adoption exception.
 
 ---
 
-## 9. Host integration: tmpfiles, journald, and the failure hook
+## 9. Host integration: tmpfiles, journald, sysctl, and the failure hook
 
 ```bash
 sudo install -m 0644 -o root -g root packaging/tmpfiles.d/hfcache.conf /etc/tmpfiles.d/hfcache.conf
@@ -348,6 +348,25 @@ MaxRetentionSec=1year
 $ ls -d /var/log/journal
 /var/log/journal
 ```
+
+Install the dirty-page bounds:
+
+```bash
+sudo install -m 0644 -o root -g root packaging/sysctl.d/hfcache.conf /etc/sysctl.d/hfcache.conf
+sudo sysctl -p /etc/sysctl.d/hfcache.conf
+```
+
+This fragment and the `MemoryHigh=` line in each service unit are one design
+(decision 86): a terabyte-scale sync or a full verification streams every byte
+through the page cache, and on a virtual machine an unbounded cache makes the
+guest touch all of its RAM — memory the hypervisor has then committed whether or
+not the guest ever needs it again. On an overcommitted host that is how a
+healthy guest gets OOM-killed mid-transfer. `MemoryHigh=` keeps each run's
+footprint near a fixed working set; the sysctl keeps the dirty share of that set
+small enough that reclaim always has clean pages to take. The half that only the
+hypervisor can do — returning reclaimed pages to the host (virtio-balloon free
+page reporting) or not overcommitting this guest at all — is the host operator's,
+and this deployment assumes one of the two is in place.
 
 Optionally, wire the failure hook. It ships complete and uninstalled at
 `packaging/systemd/hfcache-failure@.service.example`; activating it is installing

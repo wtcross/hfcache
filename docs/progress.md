@@ -303,6 +303,14 @@ outside §28's phase set.
 - [x] DOC-007 Portability notes: script overrides, path coupling, maintainer pushes (2026-07-28, this commit — the rest of the portability review's findings. `install-release.sh --help` now prints the environment overrides that already existed (`HFCACHE_PREFIX`, `HFCACHE_SOURCE`, `HFCACHE_UV`, `HFCACHE_UV_VERSION`) — the mechanism was there, undocumented, and the `--help` sed range moved with the header it prints (verified by running it). Deployment §3 says how to move with a moved uv pin; §2's "(uid 3001, gid 3002)" now reads as the server's choice of values with `storage-requirements.md` §2 as authority; §5 gains the one-path-five-files note — `srv-hfcache.mount`/`.automount` names derive from `Where=` via `systemd-escape --path`, both service units carry `RequiresMountsFor=` and `ReadWritePaths=`, and `storage.archive_root` must agree. `docs/agents/workflow.md` reframes pushing as the maintainer's step, since contributors hold neither remote. No decision: nothing deviates from a contract; everything here states what was already true. `./scripts/check.sh` exit `0`)
 - [x] DOC-008 Document what happens when a sync outlasts its schedule (2026-07-28, this commit — the 2026-07-28 long-run investigation found the mechanics all present and the explanation absent: nothing said what happens when a run is still executing at the next 02:00. `docs/operations.md` §9 now carries "When a run outlasts the schedule": the oneshot merge — a trigger that elapses mid-run coalesces into it, the day is skipped, and `Persistent=true` covers a host that was down, not a unit that was busy; why the skip is `AD-02`/`AD-03` semantics rather than a fault; what survives an overrun (resumable cache partials per `AD-09`, per-repository transactions, next-run reuse); the lock as the second wall with its asymmetric waits and the `HFMNT010`/exit-`20` giving-up path that leaves no run report — precisely the case the inactive `hfcache-failure@` hook exists for; and the chronic-overrun guidance (fewer observations, `hfcache plan` before adding, stage large additions). The `Persistent=true` comment in `hfcache-sync.timer` gains the two sentences that prevent the misreading at the spot it would happen — comment-only, no behaviour change, no redeploy forced. No decision: everything stated was already true. `./scripts/check.sh` exit `0`)
 
+## Guest memory bounding (SYS, 2026-07-29)
+
+Opened after the 2026-07-29 incident: the hypervisor OOM-killed the writer VM
+at 02:03:55 mid-way through a 1.5 TB download (decision 86 carries the
+evidence and the reasoning).
+
+- [x] SYS-003 Bound sync and verify page cache; absolute dirty-page limits (2026-07-29, this commit — decision 86. `MemoryHigh=4G` on `hfcache-sync.service` and `hfcache-verify.service`, no `MemoryMax=`, because above `high` the kernel throttles and reclaims where `max` kills — a slow sync beats a dead one, and exit `40` from verify must never mean "the cap was tight". New `packaging/sysctl.d/hfcache.conf` sets `vm.dirty_background_bytes=1G` / `vm.dirty_bytes=2G` so the dirty share of the budget stays reclaimable-adjacent rather than the ratio default's ~4.8 GiB, which alone could fill the cap with pages reclaim cannot take. Deployment §9 installs the fragment and states the design, including the half only the hypervisor can do. Applied live: units installed per §10, `systemd-analyze verify` silent, `scripts/check-hardening.sh` all 23 checks pass on both units, sysctl values confirmed active. Validated against the real workload: the pre-change boot-time catch-up sync peaked at 18.3 GiB of a 23 GiB guest in 26 minutes; restarted under the cap it streams a 209 GB repository at `MemoryCurrent` ≈ 4.0 GiB, `MemoryPeak` 4.3 GiB. `./scripts/check.sh` exit `0`)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -450,6 +458,18 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     schedule are the content, and this session cannot make or verify any of
     them (§36.4). Plan §20 is the specification to write it against; §35.2
     records what was already provisioned on 2026-07-24.
+12. **Hypervisor memory for the writer VM (decision 86):** `SYS-003` bounds
+    what the guest touches, but only the hypervisor can take reclaimed pages
+    back or stop overcommitting them. On the virtualization host, either
+    enable free page reporting on the balloon device —
+    `<memballoon model='virtio' freePageReporting='on'/>` in the domain XML
+    (libvirt ≥ 6.9, QEMU ≥ 5.1), then a full guest power cycle — or reserve
+    the guest's full memory so ballooning is not load-bearing. The guest's
+    balloon currently negotiates only `STATS_VQ`; neither free page hinting
+    nor reporting is offered. Acceptance: after a terabyte-scale sync, the
+    QEMU process RSS on the host returns to (reporting) or never leaves
+    (reservation) the expected envelope, and no OOM kill of the VM appears in
+    the host journal.
 
 ## Operator decisions needed
 
@@ -2317,3 +2337,33 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     load-bearing — a missing mount must fail rather than silently land on
     the VM's root filesystem — and a loopback export meets the requirement
     honestly on one machine, so the requirement stands.
+
+86. **Guest memory is bounded in the units, not trusted to the host**
+    (2026-07-29, SYS-003). At 02:03:55 on 2026-07-29 the hypervisor
+    OOM-killed the writer VM mid-way through the 1.5 TB
+    `moonshotai/Kimi-K3` download. The guest-side evidence: the previous
+    boot's journal ends abruptly in routine activity with no shutdown
+    sequence and no wtmp shutdown record; every XFS filesystem replayed its
+    log on the next boot; kdump was armed yet left no vmcore, ruling out a
+    guest panic; no OOM or shutdown command inside the guest. The mechanism:
+    `snapshot_download` streams every byte through the page cache, an
+    unbounded cache makes the guest touch all of its RAM, and a guest page
+    once touched is host memory committed for good — the balloon device
+    negotiates only `STATS_VQ`, so nothing ever returns. The morning
+    catch-up sync confirmed it directly: 18.3 GiB peak on a 23 GiB guest in
+    26 minutes. **Decided:** `MemoryHigh=4G` on both service units plus
+    absolute dirty-page sysctls (`packaging/sysctl.d/hfcache.conf`), so a
+    run's footprint is a fixed working set regardless of repository size —
+    validated live at ~4.0 GiB steady while streaming a 209 GB repository.
+    **Rejected:** `MemoryMax=`, because it kills at the limit and would
+    trade the host's OOM for one of our own — above `high` the kernel
+    throttles and reclaims, and a slow sync beats a dead one; per-file cache
+    hints (`posix_fadvise`) in the application, because the write path
+    belongs to `huggingface_hub`/`hf_xet`, not to this code, and a cgroup
+    bound covers both it and the xet chunk cache without a dependency on
+    library internals; and fixing it host-side only, because the units
+    should be safe guests on any hypervisor, not just a correctly configured
+    one. The host retains its half — returning reclaimed pages or not
+    overcommitting — as handoff item 12. This adds a resource control and
+    weakens no §22.5 hardening; `check-hardening.sh` passed 23/23 on both
+    units after the change.
