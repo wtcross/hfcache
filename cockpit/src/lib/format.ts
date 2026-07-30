@@ -37,3 +37,15 @@ export function formatHours(hours: number | null | undefined): string {
         return '—';
     return `${hours.toFixed(1)} h`;
 }
+
+export function formatDuration(seconds: number | null | undefined): string {
+    if (seconds === null || seconds === undefined || !Number.isFinite(seconds) || seconds < 0)
+        return '—';
+    if (seconds < 60)
+        return `${Math.round(seconds)} s`;
+    const minutes = seconds / 60;
+    if (minutes < 60)
+        return `${Math.round(minutes)} min`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours} h ${Math.round(minutes - hours * 60)} min`;
+}

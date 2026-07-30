@@ -65,7 +65,7 @@ const RevisionsTable = ({ repository }: { repository: ListRepository }) => (
                         </>
                     ),
                 },
-                { title: <Sha sha={revision.commit_sha} short={shortSha(revision.commit_sha)} /> },
+                { title: <code>{revision.commit_sha}</code> },
                 revision.file_count,
                 formatBytes(revision.total_bytes),
                 formatTimestamp(revision.published_at),

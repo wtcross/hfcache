@@ -14,6 +14,7 @@ import { ArchiveBrowser } from './archive';
 import { Dashboard } from './dashboard';
 import { RunReports } from './reports';
 import { SyncOperations } from './sync';
+import { Verification } from './verify';
 
 export const Application = () => {
     const [activeTab, setActiveTab] = useState<string | number>('overview');
@@ -35,6 +36,9 @@ export const Application = () => {
                     </Tab>
                     <Tab eventKey="archive" title={<TabTitleText>Repositories</TabTitleText>}>
                         <ArchiveBrowser />
+                    </Tab>
+                    <Tab eventKey="verify" title={<TabTitleText>Verification</TabTitleText>}>
+                        <Verification />
                     </Tab>
                     <Tab eventKey="runs" title={<TabTitleText>Runs</TabTitleText>}>
                         <RunReports />

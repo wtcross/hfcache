@@ -8,7 +8,7 @@
  * event vocabulary.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
@@ -24,14 +24,13 @@ import {
 import { Flex, FlexItem } from "@patternfly/react-core/dist/esm/layouts/Flex/index.js";
 import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/index.js";
 
+import { UnitActivity } from './activity';
 import { runHfcacheStreaming } from './api/hfcache';
-import { followUnitJournal } from './api/journal';
 import { startUnit, stopUnit, SYNC_SERVICE, SYNC_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError } from './components';
 import { useHfcache, useUnitPoll } from './hooks';
 import { Envelope } from './lib/envelope';
 import { formatSelector } from './lib/command';
-import { interpretEvent, JournalEvent } from './lib/events';
 import { formatTimestamp } from './lib/format';
 
 const Item = ({ term, children }: { term: string; children: React.ReactNode }) => (
@@ -78,54 +77,6 @@ const RecoverHint = () => {
                             guesses (AD-16).
                         </StackItem>
                     </Stack>}
-            </CardBody>
-        </Card>
-    );
-};
-
-function latestPerRepository(events: JournalEvent[]): Array<[string, JournalEvent]> {
-    const latest = new Map<string, JournalEvent>();
-    for (const event of events) {
-        if (event.repository !== undefined)
-            latest.set(event.repository, event);
-    }
-    return [...latest.entries()];
-}
-
-const LiveActivity = () => {
-    const [lines, setLines] = useState<string[]>([]);
-
-    useEffect(() => {
-        const stop = followUnitJournal(SYNC_SERVICE, line => {
-            setLines(previous => [...previous, line].slice(-200));
-        });
-        return stop;
-    }, []);
-
-    const events = lines.map(interpretEvent).filter(event => event !== null);
-    const perRepository = latestPerRepository(events);
-
-    return (
-        <Card>
-            <CardTitle>Live activity</CardTitle>
-            <CardBody>
-                <Stack hasGutter>
-                    {perRepository.length > 0 &&
-                        <StackItem>
-                            <DescriptionList isHorizontal isCompact>
-                                {perRepository.map(([repository, event]) => (
-                                    <Item term={repository} key={repository}>
-                                        <Label isCompact>{event.event}</Label>
-                                    </Item>
-                                ))}
-                            </DescriptionList>
-                        </StackItem>}
-                    <StackItem>
-                        <pre className="hfcache-journal">
-                            {lines.length === 0 ? 'Waiting for journal lines…' : lines.join('\n')}
-                        </pre>
-                    </StackItem>
-                </Stack>
             </CardBody>
         </Card>
     );
@@ -208,7 +159,7 @@ const SyncControls = ({ onStopped }: { onStopped: () => void }) => {
                             </FlexItem>
                         </Flex>
                     </StackItem>
-                    {running && <StackItem><LiveActivity /></StackItem>}
+                    {running && <StackItem><UnitActivity unit={SYNC_SERVICE} /></StackItem>}
                 </Stack>
 
                 <ConfirmModal
