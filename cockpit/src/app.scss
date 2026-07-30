@@ -16,6 +16,21 @@
     margin-block-start: var(--pf-t--global--spacer--md);
 }
 
+.hfcache-config-text {
+    font-family: monospace;
+}
+
+.hfcache-field-grid {
+    display: grid;
+    gap: var(--pf-t--global--spacer--md);
+    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+}
+
+.hfcache-field-error {
+    color: var(--pf-t--global--color--status--danger--default);
+    font-size: var(--pf-t--global--font--size--sm);
+}
+
 .hfcache-journal {
     background: var(--pf-t--global--background--color--secondary--default);
     font-size: var(--pf-t--global--font--size--sm);
