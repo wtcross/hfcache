@@ -55,6 +55,7 @@ watch: $(NODE_MODULES_STAMP) $(COCKPIT_REPO_STAMP)
 lint: $(NODE_MODULES_STAMP) $(COCKPIT_REPO_STAMP)
 	$(PNPM) run eslint
 	$(PNPM) run stylelint
+	$(PNPM) run typecheck
 
 test: $(NODE_MODULES_STAMP)
 	$(PNPM) run test

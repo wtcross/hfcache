@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "allowImportingTsExtensions": true,
         "allowJs": true,
         "checkJs": true,
         "exactOptionalPropertyTypes": true,
@@ -9,6 +10,7 @@
         "paths": { "*": ["./pkg/lib/*"] },
         "moduleResolution": "bundler",
         "noEmit": true,
+        "skipLibCheck": true,
         "strict": true,
         "target": "es2020",
         "types": ["node"]
