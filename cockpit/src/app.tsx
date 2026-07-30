@@ -13,6 +13,7 @@ import { Tab, Tabs, TabTitleText } from "@patternfly/react-core/dist/esm/compone
 import { ArchiveBrowser } from './archive';
 import { Configuration } from './configuration';
 import { Dashboard } from './dashboard';
+import { Maintenance } from './maintenance';
 import { RunReports } from './reports';
 import { SyncOperations } from './sync';
 import { Verification } from './verify';
@@ -46,6 +47,9 @@ export const Application = () => {
                     </Tab>
                     <Tab eventKey="runs" title={<TabTitleText>Runs</TabTitleText>}>
                         <RunReports />
+                    </Tab>
+                    <Tab eventKey="maintenance" title={<TabTitleText>Maintenance</TabTitleText>}>
+                        <Maintenance />
                     </Tab>
                 </Tabs>
             </PageSection>
