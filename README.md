@@ -81,6 +81,8 @@ the accepted implementation plan.
 | [`docs/operations.md`](docs/operations.md) | Running it: sync, verify, prune, status, timers, exit codes, measured performance |
 | [`docs/recovery.md`](docs/recovery.md) | Corruption, repair, snapshot restore, lost writer, and the stopped-machine states |
 | [`docs/consumers.md`](docs/consumers.md) | Copying and verifying a revision from a downstream host |
+| [`docs/cockpit.md`](docs/cockpit.md) | The Cockpit plugin's contract: rules, privilege model, operation surface |
+| [`docs/cockpit-plugin/`](docs/cockpit-plugin/) | Installing and using the Cockpit plugin |
 | [`docs/plan.md`](docs/plan.md) | The accepted implementation plan |
 | [`docs/progress.md`](docs/progress.md) | Work-package tracker and operator handoff |
 
@@ -95,11 +97,24 @@ Coding agents start at [`AGENTS.md`](AGENTS.md) — a context router into these
 documents and the agent-specific set under [`docs/agents/`](docs/agents/).
 `CLAUDE.md` is a symlink to it.
 
+## Browser administration
+
+An optional Cockpit plugin under [`cockpit/`](cockpit/) administers a
+deployed writer from the browser: sync control with live activity, archive
+browsing, configuration editing, schedule management, verification, run
+reports, and maintenance. Every action is one of the runbook's own CLI
+commands or systemd units — never a side channel — and the CLI remains the
+application's only interface.
+[`docs/cockpit-plugin/`](docs/cockpit-plugin/) covers installation and
+usage; [`docs/cockpit.md`](docs/cockpit.md) is the contract it is written
+against.
+
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
 | `src/hfcache/` | The application: one package on `huggingface-hub`, `pydantic`, `typer`, and the standard library |
+| `cockpit/` | The Cockpit administration plugin: a browser UI over the CLI and the systemd units |
 | `docs/` | The contracts and runbooks in the table above |
 | `docs/agents/` | Agent-facing workflow, conventions, environment, and release docs |
 | `packaging/` | systemd units and timers, journald and tmpfiles drop-ins |
@@ -137,4 +152,7 @@ uv run pytest -m build    # builds artifacts and installs into a throwaway venv
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+MIT ([`LICENSE`](LICENSE)), with one subtree different:
+[`cockpit/`](cockpit/) is LGPL-2.1-or-later — it derives from the Cockpit
+starter kit — declared per file in SPDX headers (decision 90 in
+`docs/progress.md`).

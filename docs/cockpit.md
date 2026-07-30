@@ -19,6 +19,10 @@ with the commands in `docs/operations.md`, and the UI displays the underlying
 command wherever practical so the plugin teaches the runbook rather than
 hiding it.
 
+Operator-facing installation and usage documentation is
+`docs/cockpit-plugin/` (`CPT-012`), written against this contract; where
+they disagree, this document wins and the operator pages are corrected.
+
 ## 1. Rules
 
 | ID | Rule |

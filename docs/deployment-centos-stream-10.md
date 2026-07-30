@@ -712,22 +712,28 @@ list in `docs/progress.md`.
 ## 16. The Cockpit plugin
 
 Optional browser administration for this deployment; `docs/cockpit.md` is its
-contract. The plugin is static files — nothing runs server-side beyond
-cockpit itself, and the application is untouched (`CP-01`, `CP-14`).
+contract, and `docs/cockpit-plugin/` is the full installation and usage
+guide — this section is the deployment-step summary. The plugin is static
+files — nothing runs server-side beyond cockpit itself, and the application
+is untouched (`CP-01`, `CP-14`).
 
 Build-host requirements: the pnpm toolchain in the operator's `PNPM_HOME`
 (decision 88) and `make`. Runtime requirements: `cockpit` with its socket
 enabled — this deployment runs cockpit 364.
 
 ```bash
-# build, then install to /usr/share/cockpit/hfcache (root-owned)
-make -C cockpit
+# production build, then install to /usr/share/cockpit/hfcache (root-owned)
+make -C cockpit clean && make -C cockpit NODE_ENV=production
 sudo make -C cockpit install
 
 # development loop instead: per-user symlink, rebuild + browser refresh
 make -C cockpit devel-install
 cockpit-bridge --packages | grep hfcache
 ```
+
+`install` copies whatever `dist/` holds: without `NODE_ENV=production` the
+result is an unminified development bundle, and `clean` forces the rebuild
+make would otherwise consider up to date.
 
 Update is rebuild plus `sudo make -C cockpit install` again; removal is
 `sudo rm -rf /usr/share/cockpit/hfcache`, plus `make -C cockpit
