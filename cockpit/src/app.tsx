@@ -1,39 +1,34 @@
 /*
  * SPDX-License-Identifier: LGPL-2.1-or-later
  *
- * Derived from cockpit-project/starter-kit src/app.tsx @ a099cb10.
- * CPT-002 scaffold: proves the bridge (cockpit.file) and the PatternFly
- * toolchain end-to-end; the real surfaces land with CPT-004 onward.
+ * The application shell: one tab per contract surface (docs/cockpit.md §3),
+ * added as its work package lands.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
-import { Card, CardBody, CardTitle } from "@patternfly/react-core/dist/esm/components/Card/index.js";
-import { Page } from "@patternfly/react-core/dist/esm/components/Page/index.js";
+import { Page, PageSection } from "@patternfly/react-core/dist/esm/components/Page/index.js";
+import { Tab, Tabs, TabTitleText } from "@patternfly/react-core/dist/esm/components/Tabs/index.js";
 
-import cockpit from 'cockpit';
+import { Dashboard } from './dashboard';
 
 export const Application = () => {
-    const [hostname, setHostname] = useState('');
-
-    useEffect(() => {
-        const file = cockpit.file('/etc/hostname');
-        file.watch(content => setHostname(content?.trim() ?? ''));
-        return file.close;
-    }, []);
+    const [activeTab, setActiveTab] = useState<string | number>('overview');
 
     return (
         <Page className="pf-m-no-sidebar">
-            <Card>
-                <CardTitle>hfcache</CardTitle>
-                <CardBody>
-                    <Alert
-                        variant="info"
-                        title={cockpit.format("hfcache administration scaffold (CPT-002), running on $0", hostname)}
-                    />
-                </CardBody>
-            </Card>
+            <PageSection>
+                <Tabs
+                    activeKey={activeTab}
+                    onSelect={(_event, eventKey) => setActiveTab(eventKey)}
+                    mountOnEnter
+                    unmountOnExit
+                >
+                    <Tab eventKey="overview" title={<TabTitleText>Overview</TabTitleText>}>
+                        <Dashboard />
+                    </Tab>
+                </Tabs>
+            </PageSection>
         </Page>
     );
 };

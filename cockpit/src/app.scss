@@ -1,3 +1,17 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 
 @use "page.scss";
+
+.hfcache-issue {
+    margin-block-end: var(--pf-t--global--spacer--sm);
+}
+
+.hfcache-issue-guidance {
+    color: var(--pf-t--global--text--color--subtle);
+    font-size: var(--pf-t--global--font--size--sm);
+    margin-inline-start: var(--pf-t--global--spacer--md);
+}
+
+.pf-v6-c-tab-content {
+    margin-block-start: var(--pf-t--global--spacer--md);
+}
