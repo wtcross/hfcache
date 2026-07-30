@@ -8,6 +8,9 @@
 import React from 'react';
 
 import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
+import {
+    DescriptionList, DescriptionListDescription, DescriptionListGroup, DescriptionListTerm,
+} from "@patternfly/react-core/dist/esm/components/DescriptionList/index.js";
 import { Label } from "@patternfly/react-core/dist/esm/components/Label/index.js";
 import { Spinner } from "@patternfly/react-core/dist/esm/components/Spinner/index.js";
 
@@ -98,3 +101,34 @@ export const UnmanagedLabel = () => (
 export const Sha = ({ sha, short }: { sha: string | null; short: string }) => (
     <code title={sha ?? undefined}>{short}</code>
 );
+
+/* A command payload's scalar fields, for envelopes whose data the UI has no
+ * richer rendering for; arrays summarize to their length. */
+export const DataSummary = ({ data }: { data: unknown }) => {
+    if (typeof data !== 'object' || data === null)
+        return null;
+    const entries = Object.entries(data as Record<string, unknown>);
+    if (entries.length === 0)
+        return null;
+    return (
+        <DescriptionList isHorizontal isCompact>
+            {entries.map(([key, value]) => {
+                let shown: string;
+                if (value === null)
+                    shown = 'null';
+                else if (Array.isArray(value))
+                    shown = `${value.length} entries`;
+                else if (typeof value === 'object')
+                    shown = '…';
+                else
+                    shown = String(value);
+                return (
+                    <DescriptionListGroup key={key}>
+                        <DescriptionListTerm>{key}</DescriptionListTerm>
+                        <DescriptionListDescription>{shown}</DescriptionListDescription>
+                    </DescriptionListGroup>
+                );
+            })}
+        </DescriptionList>
+    );
+};

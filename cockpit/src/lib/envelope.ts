@@ -71,6 +71,30 @@ export function parseEnvelope(stdout: string): Envelope {
     return env as unknown as Envelope;
 }
 
+/* A page-spawned selector sync merges stderr into the stream so checkpoint
+ * events are visible live (docs/cockpit.md §5); the envelope is the last
+ * JSON document in that mixed output. logfmt lines never start with `{`,
+ * so scanning line starts from the end finds it deterministically. */
+export function extractEnvelope(output: string): Envelope {
+    try {
+        return parseEnvelope(output);
+    } catch {
+        // Mixed stream; scan for the envelope below.
+    }
+    const lines = output.split('\n');
+    for (let index = lines.length - 1; index >= 0; index -= 1) {
+        if (lines[index].startsWith('{')) {
+            const candidate = lines.slice(index).join('\n');
+            try {
+                return parseEnvelope(candidate);
+            } catch {
+                // Not the envelope's first line; keep scanning.
+            }
+        }
+    }
+    throw new EnvelopeError('no JSON envelope found in command output');
+}
+
 /* HFMNT010: the benign "another mutating command is running" case (AD-17),
  * rendered as a busy state and never as a failure (docs/cockpit.md CP-10). */
 export const LOCK_BUSY_CODE = 'HFMNT010';

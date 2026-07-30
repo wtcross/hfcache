@@ -13,6 +13,7 @@ import { Tab, Tabs, TabTitleText } from "@patternfly/react-core/dist/esm/compone
 import { ArchiveBrowser } from './archive';
 import { Dashboard } from './dashboard';
 import { RunReports } from './reports';
+import { SyncOperations } from './sync';
 
 export const Application = () => {
     const [activeTab, setActiveTab] = useState<string | number>('overview');
@@ -28,6 +29,9 @@ export const Application = () => {
                 >
                     <Tab eventKey="overview" title={<TabTitleText>Overview</TabTitleText>}>
                         <Dashboard />
+                    </Tab>
+                    <Tab eventKey="sync" title={<TabTitleText>Sync</TabTitleText>}>
+                        <SyncOperations />
                     </Tab>
                     <Tab eventKey="archive" title={<TabTitleText>Repositories</TabTitleText>}>
                         <ArchiveBrowser />

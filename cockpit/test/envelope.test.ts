@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
-    classifyEnvelope, EnvelopeError, EnvelopeSchemaError, EXIT_CODE_GUIDANCE, parseEnvelope,
+    classifyEnvelope, EnvelopeError, EnvelopeSchemaError, EXIT_CODE_GUIDANCE, extractEnvelope, parseEnvelope,
 } from '../src/lib/envelope.ts';
 
 function envelope(overrides: Record<string, unknown> = {}): string {
@@ -80,6 +80,19 @@ test('missing or mistyped required fields are an EnvelopeError', () => {
     assert.throws(
         () => parseEnvelope(envelope({ errors: [{ code: 42, repository: null, message: 'x' }] })),
         EnvelopeError);
+});
+
+test('the envelope is extracted from a merged logfmt stream', () => {
+    const pretty = JSON.stringify(JSON.parse(envelope({ command: 'sync' })), null, 2);
+    const mixed = 'event=run.started level=info run_id=abc repositories=1\n' +
+        'event=repository.resolved level=info run_id=abc repository=model:a/b\n' +
+        `${pretty}\n`;
+    assert.equal(extractEnvelope(mixed).command, 'sync');
+    assert.equal(extractEnvelope(envelope()).command, 'status');
+});
+
+test('a stream with no envelope is an EnvelopeError', () => {
+    assert.throws(() => extractEnvelope('event=run.started level=info\nnothing else'), EnvelopeError);
 });
 
 test('every documented exit code carries operator guidance', () => {

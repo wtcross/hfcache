@@ -7,6 +7,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { runHfcache } from './api/hfcache';
+import {
+    ServiceResult, serviceResult, TimerState, timerState, UnitState, unitState,
+} from './api/systemd';
 import { Envelope } from './lib/envelope';
 
 export interface EnvelopeQuery {
@@ -51,4 +54,52 @@ export function useHfcache(command: string[]): EnvelopeQuery {
 
     const refresh = useCallback(() => setGeneration(value => value + 1), []);
     return { envelope, error, loading, refresh };
+}
+
+export interface UnitQuery {
+    state: UnitState | null;
+    timer: TimerState | null;
+    result: ServiceResult | null;
+    refresh: () => void;
+}
+
+/* Poll one unit's state. Timer units also read next/last elapse; services
+ * also read Result/ExecMainStatus. Read-only D-Bus, safe for any unit —
+ * operating on units goes through api/systemd's guarded entry points. */
+export function useUnitPoll(name: string, intervalMs = 5000): UnitQuery {
+    const [state, setState] = useState<UnitState | null>(null);
+    const [timer, setTimer] = useState<TimerState | null>(null);
+    const [result, setResult] = useState<ServiceResult | null>(null);
+    const [generation, setGeneration] = useState(0);
+
+    useEffect(() => {
+        let cancelled = false;
+        const poll = () => {
+            unitState(name).then(value => {
+                if (!cancelled)
+                    setState(value);
+            }, () => undefined);
+            if (name.endsWith('.timer')) {
+                timerState(name).then(value => {
+                    if (!cancelled)
+                        setTimer(value);
+                }, () => undefined);
+            }
+            if (name.endsWith('.service')) {
+                serviceResult(name).then(value => {
+                    if (!cancelled)
+                        setResult(value);
+                }, () => undefined);
+            }
+        };
+        poll();
+        const handle = window.setInterval(poll, intervalMs);
+        return () => {
+            cancelled = true;
+            window.clearInterval(handle);
+        };
+    }, [name, intervalMs, generation]);
+
+    const refresh = useCallback(() => setGeneration(value => value + 1), []);
+    return { state, timer, result, refresh };
 }
