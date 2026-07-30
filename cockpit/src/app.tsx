@@ -10,7 +10,9 @@ import React, { useState } from 'react';
 import { Page, PageSection } from "@patternfly/react-core/dist/esm/components/Page/index.js";
 import { Tab, Tabs, TabTitleText } from "@patternfly/react-core/dist/esm/components/Tabs/index.js";
 
+import { ArchiveBrowser } from './archive';
 import { Dashboard } from './dashboard';
+import { RunReports } from './reports';
 
 export const Application = () => {
     const [activeTab, setActiveTab] = useState<string | number>('overview');
@@ -26,6 +28,12 @@ export const Application = () => {
                 >
                     <Tab eventKey="overview" title={<TabTitleText>Overview</TabTitleText>}>
                         <Dashboard />
+                    </Tab>
+                    <Tab eventKey="archive" title={<TabTitleText>Repositories</TabTitleText>}>
+                        <ArchiveBrowser />
+                    </Tab>
+                    <Tab eventKey="runs" title={<TabTitleText>Runs</TabTitleText>}>
+                        <RunReports />
                     </Tab>
                 </Tabs>
             </PageSection>

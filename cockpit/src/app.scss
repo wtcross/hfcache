@@ -15,3 +15,11 @@
 .pf-v6-c-tab-content {
     margin-block-start: var(--pf-t--global--spacer--md);
 }
+
+.hfcache-journal {
+    background: var(--pf-t--global--background--color--secondary--default);
+    font-size: var(--pf-t--global--font--size--sm);
+    max-block-size: 24rem;
+    overflow: auto;
+    padding: var(--pf-t--global--spacer--sm);
+}
