@@ -708,3 +708,37 @@ Two acceptance items cannot be checked from the writer and are operator work:
 reboot persistence, and everything that needs a second host — the consumer
 export, its read-only enforcement, and a downstream copy. Both are in the handoff
 list in `docs/progress.md`.
+
+## 16. The Cockpit plugin
+
+Optional browser administration for this deployment; `docs/cockpit.md` is its
+contract. The plugin is static files — nothing runs server-side beyond
+cockpit itself, and the application is untouched (`CP-01`, `CP-14`).
+
+Build-host requirements: the pnpm toolchain in the operator's `PNPM_HOME`
+(decision 88) and `make`. Runtime requirements: `cockpit` with its socket
+enabled — this deployment runs cockpit 364.
+
+```bash
+# build, then install to /usr/share/cockpit/hfcache (root-owned)
+make -C cockpit
+sudo make -C cockpit install
+
+# development loop instead: per-user symlink, rebuild + browser refresh
+make -C cockpit devel-install
+cockpit-bridge --packages | grep hfcache
+```
+
+Update is rebuild plus `sudo make -C cockpit install` again; removal is
+`sudo rm -rf /usr/share/cockpit/hfcache`, plus `make -C cockpit
+devel-uninstall` where the development symlink was used. The plugin's only
+host state outside that directory is what its contract names: the managed
+schedule drop-in `/etc/systemd/system/hfcache-sync.timer.d/50-cockpit.conf`
+and the configuration pipeline's candidate and predecessor beside
+`/etc/hfcache/config.toml` (`docs/cockpit.md` §6–§7).
+
+Administrative Cockpit access is required for everything mutating: the
+plugin escalates through the superuser bridge and drops to the service
+identity for CLI work (`CP-03`); a session without that access gets
+read-only state. SELinux stays enforcing; nothing here relaxes §22.5
+(`CP-13`).

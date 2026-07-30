@@ -630,3 +630,7 @@ sudo journalctl _SYSTEMD_INVOCATION_ID=<id>            # exactly one run
 
 Not covered here: corruption and repair (`OPS-003`), snapshot and replica restore
 (`OPS-004`), and the consumer-side copy, which happens on a different host.
+
+The Cockpit plugin (`docs/cockpit.md`) is a browser front-end for exactly this
+runbook — the same commands, the same units, and this document's guidance
+carried inline. Nothing it can do is anything this runbook does not describe.

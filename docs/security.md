@@ -226,6 +226,29 @@ reported and preserved, never deleted (`FS-19`). Where a transaction can fail
 leaving more or less data, it leaves more (`TX-06`). Quarantined evidence is
 released only by explicit operator action.
 
+### T-13 — The management plugin widens the operator surface
+
+**Capability.** The Cockpit plugin (`docs/cockpit.md`) exposes operator
+actions — sync control, configuration editing, schedule changes, repair — in
+a browser behind cockpit-ws.
+
+**Controls.** Authentication is the host's own (PAM through cockpit-ws), and
+every mutating path requires the superuser bridge, which only an
+administrative session obtains — the same boundary as a shell, and §6 already
+places root and the operator out of scope as adversaries. The plugin is
+static files under `/usr/share/cockpit/hfcache` with no listener, daemon, or
+durable state of its own; CLI work drops to the service identity and never
+runs as root (`CP-03`); it never reads `$CREDENTIALS_DIRECTORY`, offers token
+entry, or renders a credential (`CP-08`, upholding T-07); the archive is
+reached only through CLI envelopes plus one read-only run-report read as the
+service identity (`CP-01`, `CP-09`); and `archive init`, `hfcache.target`,
+and `hfcache-verify.timer` are refused structurally in its API layer
+(`CP-05`–`CP-07`).
+
+**Residual risk.** cockpit-ws itself, patched with the distribution like
+`sshd`. An administrative browser session is as powerful as an administrative
+shell, which is this deployment's existing posture, not a new one.
+
 ## 4. Controls summary
 
 | # | Control | Enforced by |
@@ -247,6 +270,7 @@ released only by explicit operator action.
 | 15 | Explicit configuration required for any dependency archiving | `AD-07` |
 | 16 | Unknown state reported, never deleted or guessed | `AD-16`, `TX-06` |
 | 17 | Fail-closed preflight before any download | Exit `20` |
+| 18 | Management UI confined to operator surfaces, with the limits structural | `docs/cockpit.md` `CP-01`–`CP-14` |
 
 ## 5. systemd hardening posture
 
