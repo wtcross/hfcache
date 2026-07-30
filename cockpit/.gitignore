@@ -1,0 +1,7 @@
+# build-time state only; nothing here is committed (docs/cockpit.md CP-14)
+/.cockpit-repo/
+/dist/
+/metafile.json
+/node_modules/
+/pkg/
+/runtime-npm-modules.txt

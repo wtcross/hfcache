@@ -58,6 +58,22 @@ uv run pytest
 step 'uv build'
 uv build
 
+# Cockpit plugin gate (docs/cockpit.md §8): frozen install, lint, unit tests,
+# and a production build, when cockpit/ and the toolchain are both present.
+# The skip is loud so a green gate on a toolchain-less host cannot be mistaken
+# for plugin coverage; a CPT package lands only from a host where this stage
+# ran (decision 88).
+PNPM_BIN="$(command -v pnpm || true)"
+if [[ -z $PNPM_BIN && -x "${PNPM_HOME:-$HOME/.local/share/pnpm}/bin/pnpm" ]]; then
+  PNPM_BIN="${PNPM_HOME:-$HOME/.local/share/pnpm}/bin/pnpm"
+fi
+if [[ -d cockpit && -n $PNPM_BIN ]] && command -v make > /dev/null 2>&1; then
+  step 'cockpit plugin gate'
+  make -C cockpit check PNPM="$PNPM_BIN"
+elif [[ -d cockpit ]]; then
+  printf '\nNOTE: cockpit/ exists but pnpm or make is missing — plugin gate SKIPPED (docs/cockpit.md §8)\n' >&2
+fi
+
 if [[ $WITH_BUILD -eq 1 ]]; then
   step 'wheel install smoke test'
   uv run pytest -m build

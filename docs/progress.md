@@ -319,10 +319,7 @@ A browser administration UI for the deployed writer, as a Cockpit package in
 package in this family.
 
 - [x] CPT-001 Cockpit plugin contract and work-package plan (2026-07-30, this commit — decisions 87–89. `docs/cockpit.md`: rules `CP-01`–`CP-14`; the privilege model — superuser bridge, then `runuser` to the service identity, root never runs the CLI; the operation surface mapped to `docs/cli.md` and `docs/operations.md` mechanisms; envelope and exit-code rendering; the configuration validate-install pipeline with `plan` previews against candidate files; the timer drop-in protocol; the pnpm toolchain and the conditional plugin gate; testing scope and version-1 non-goals. `AGENTS.md`'s context map gains the row routing plugin work to the contract. The 2026-07-30 feasibility review established the facts the contract encodes: no publish command exists — publication is a stage of `sync` and `repair` is the only republish; cockpit 364 is installed and its socket active on the writer; node LTS and pnpm are provisioned operator-side under `PNPM_HOME`. Doc-only: no source, no packaging, no durable format touched. `./scripts/check.sh` exit `0`)
-- [ ] CPT-002 Scaffold `cockpit/` from the starter kit under pnpm — esbuild
-      build, `manifest.json`, page loads from `~/.local/share/cockpit/hfcache`;
-      `scripts/check.sh` gains the conditional plugin gate; unit-test runner
-      chosen
+- [x] CPT-002 Scaffold `cockpit/` from the starter kit under pnpm (2026-07-30, this commit — decision 90. Derived from starter-kit @ `a099cb10` with cockpit `pkg/lib` pinned at `47108e2f` ("364 + 95 commits" — the deployed cockpit 364's own era), fetched by the Makefile into a throwaway git repository so cockpit objects never enter this one. Deviations from the kit as shipped: pnpm 11 via `PNPM_HOME` with a committed `pnpm-lock.yaml` and frozen installs (decision 88; `pnpm-workspace.yaml` carries pnpm 11's `allowBuilds` approvals for esbuild and @parcel/watcher, whose install scripts link the platform binary and build the native watcher); no gettext/po pipeline, no RPM/tarball/test-VM targets; `build.js` derives the bundled-package list from the pnpm `.pnpm` layout instead of package-lock.json; unit tests run under `node --test` — node 24 strips TypeScript natively, so the runner adds no dependency at all. `make` 4.4.1 installed host-side via dnf as the one new build tool (the Makefile is the workflow's spine and DoD's install path). The Makefile exports the resolved pnpm's directory onto recipe PATH, because lifecycle scripts need `node` beside pnpm and a non-login shell has neither. Gate wiring: `scripts/check.sh` runs `make -C cockpit check` (frozen install, ESLint, Stylelint, node:test, fresh production build) when `cockpit/`, pnpm, and make are all present, and prints a loud SKIP naming the missing tool otherwise. Proven here: `make` builds `dist/` in 2.4 s; `make lint test` clean with 1 test passing; `make devel-install` symlinks `dist` and `cockpit-bridge --packages` lists `hfcache: /home/<operator>/.local/share/cockpit/hfcache`; the manifest registers one entry labelled "hfcache" in the Tools section (the placement decision contract §8 left to scaffold time). `./scripts/check.sh` exit `0` with the plugin stage executed)
 - [ ] CPT-003 Invocation layer — envelope client (`schema_version` gate,
       exit-code and `HF*` taxonomy mapping), service-identity spawn helper,
       systemd D-Bus helpers; unit tests over the pure modules
@@ -2464,3 +2461,14 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     a page. **Excluded outright** (`CP-05`–`CP-08`): touching
     `hfcache.target`, enabling `hfcache-verify.timer` (handoff item 8 owns
     that calendar), `archive init` in any form, and any credential surface.
+
+90. **`cockpit/` carries LGPL-2.1-or-later beside the repository's MIT**
+    (2026-07-30, CPT-002). The plugin tree is a derivative of
+    cockpit-project/starter-kit @ `a099cb10` and consumes cockpit's `pkg/lib`
+    (fetched at build time, never committed), both LGPL-2.1-or-later. The
+    derived and adapted files keep that license with per-file SPDX headers,
+    and original plugin code added under `cockpit/` uses the same license so
+    the subtree has one answer rather than a file-by-file puzzle. The
+    top-level MIT `LICENSE` is unchanged and continues to cover everything
+    outside `cockpit/`. The alternative — relicensing the derived scaffolding
+    under MIT — is not this project's call to make.

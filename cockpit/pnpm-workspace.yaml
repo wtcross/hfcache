@@ -1,0 +1,6 @@
+# pnpm settings. `allowBuilds` approves dependency install scripts (pnpm 11
+# blocks them by default): esbuild's script links its platform binary,
+# @parcel/watcher builds its native watcher. Build-time only (CP-14).
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
