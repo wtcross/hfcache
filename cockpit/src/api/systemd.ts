@@ -53,6 +53,11 @@ export function stopUnit(name: string): Promise<unknown[]> {
     return client().call(MANAGER_PATH, MANAGER, 'StopUnit', [name, 'replace']);
 }
 
+export function restartUnit(name: string): Promise<unknown[]> {
+    assertOperable(name);
+    return client().call(MANAGER_PATH, MANAGER, 'RestartUnit', [name, 'replace']);
+}
+
 export function daemonReload(): Promise<unknown[]> {
     return client().call(MANAGER_PATH, MANAGER, 'Reload', []);
 }

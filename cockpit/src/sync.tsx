@@ -25,6 +25,7 @@ import { Flex, FlexItem } from "@patternfly/react-core/dist/esm/layouts/Flex/ind
 import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/index.js";
 
 import { UnitActivity } from './activity';
+import { ScheduleEditor } from './schedule';
 import { runHfcacheStreaming } from './api/hfcache';
 import { startUnit, stopUnit, SYNC_SERVICE, SYNC_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError } from './components';
@@ -312,10 +313,19 @@ const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
 
 export const SyncOperations = () => {
     const [showRecover, setShowRecover] = useState(false);
+    const [scheduleGeneration, setScheduleGeneration] = useState(0);
 
     return (
         <Stack hasGutter>
-            <StackItem><SyncControls onStopped={() => setShowRecover(true)} /></StackItem>
+            <StackItem>
+                <SyncControls
+                    key={scheduleGeneration}
+                    onStopped={() => setShowRecover(true)}
+                />
+            </StackItem>
+            <StackItem>
+                <ScheduleEditor onApplied={() => setScheduleGeneration(value => value + 1)} />
+            </StackItem>
             <StackItem><SelectorSync onInterrupted={() => setShowRecover(true)} /></StackItem>
             {showRecover && <StackItem><RecoverHint /></StackItem>}
         </Stack>
