@@ -8,13 +8,33 @@
 export const HFCACHE_CLI = '/opt/hfcache/current/.venv/bin/hfcache';
 export const HFCACHE_CONFIG = '/etc/hfcache/config.toml';
 export const SERVICE_IDENTITY = 'hfcache';
+/* The deployment's documented default credential name
+ * (docs/configuration.md §7). A deployment that renames
+ * `hub.credential_name` runs anonymously from the page, and doctor's
+ * `credential`/`hub_identity` rows say so (docs/cockpit.md §2). */
+export const CREDENTIAL_NAME = 'hf-token';
 
-/* The one invocation shape (CP-03): from the superuser bridge, drop to the
- * service identity and speak JSON. `--config` is stated even though it is
- * the default, matching the systemd units and the runbook's `$H`. */
+/* The one invocation shape (CP-03): a transient unit that drops to the
+ * service identity and speaks JSON. systemd-run rather than runuser
+ * (decision 92) so that PID 1 imports the deployment's encrypted Hub
+ * credential — `ImportCredential=` is silently skipped when none is
+ * installed, which is `token_mode = "optional"` restated, and the page
+ * never touches token bytes (CP-08) — and so the run carries the sync
+ * unit's environment, umask, and `MemoryHigh=` (decision 86).
+ * `--wait --pipe` propagates the CLI's exit code, which the envelope
+ * mapping depends on. `--config` is stated even though it is the
+ * default, matching the systemd units and the runbook's `$H`. */
 export function hfcacheArgv(command: string[], options?: { config?: string }): string[] {
     return [
-        'runuser', '-u', SERVICE_IDENTITY, '--',
+        'systemd-run', '--quiet', '--wait', '--pipe', '--collect',
+        `--property=User=${SERVICE_IDENTITY}`,
+        `--property=Group=${SERVICE_IDENTITY}`,
+        `--property=ImportCredential=${CREDENTIAL_NAME}`,
+        '--property=UMask=0027',
+        '--property=MemoryHigh=4G',
+        '--property=Environment=HF_HOME=/var/lib/hfcache/hf-home',
+        '--property=Environment=HF_XET_CACHE=/var/cache/hfcache/xet',
+        '--',
         HFCACHE_CLI, '--config', options?.config ?? HFCACHE_CONFIG, '--json',
         ...command,
     ];

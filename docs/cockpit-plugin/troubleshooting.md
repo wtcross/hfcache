@@ -45,16 +45,35 @@ deployed release.
 ## Spawn errors, or an error about missing output instead of a result
 
 The plugin invokes `/opt/hfcache/current/.venv/bin/hfcache` with
-`--config /etc/hfcache/config.toml` — the runbook's deployment shape. If
-the deployment moved, that path is stale. Prove the CLI works as the
-service identity from a shell:
+`--config /etc/hfcache/config.toml` in a transient systemd unit — the
+runbook's deployment shape (docs/cockpit.md §2). If the deployment moved,
+that path is stale. Prove the CLI works exactly as the plugin runs it:
 
 ```bash
-sudo runuser -u hfcache -- /opt/hfcache/current/.venv/bin/hfcache \
+sudo systemd-run --quiet --wait --pipe --collect \
+    -p User=hfcache -p Group=hfcache -p ImportCredential=hf-token \
+    -E HF_HOME=/var/lib/hfcache/hf-home \
+    -E HF_XET_CACHE=/var/cache/hfcache/xet \
+    -- /opt/hfcache/current/.venv/bin/hfcache \
     --config /etc/hfcache/config.toml --json version
 ```
 
 and check `install-release.sh --list` shows `current` where you expect.
+Run it in a terminal or pipe the output; redirecting stdout to a file makes
+`systemd-run --pipe` hand PID 1 a file descriptor SELinux rightly refuses
+(`init_t` writing a user-labelled file), which surfaces as a cryptic
+`Remote peer disconnected`. The plugin itself always spawns onto pipes.
+
+## Doctor reports the run as anonymous, or `HFHUB003` names `expected_account`
+
+The Hub credential reaches a run only when systemd supplies it: the
+scheduled sync's drop-in and the plugin's transient units both import the
+encrypted credential named `hf-token` from `/etc/credstore.encrypted/`
+(docs/cockpit.md §2). A run that reports `anonymous` had no credential to
+import — nothing is installed there, or the deployment renamed
+`hub.credential_name` away from the default the plugin imports. A plain
+`sudo -u hfcache hfcache doctor` from a shell is anonymous by design;
+reproduce with the systemd-run shape above instead.
 
 ## Build fails: `pnpm: command not found` or `node: command not found`
 

@@ -11,11 +11,28 @@ const SHA = '0123456789abcdef0123456789abcdef01234567';
 
 test('the invocation drops to the service identity and speaks JSON (CP-03)', () => {
     assert.deepEqual(hfcacheArgv(['status']), [
-        'runuser', '-u', 'hfcache', '--',
+        'systemd-run', '--quiet', '--wait', '--pipe', '--collect',
+        '--property=User=hfcache',
+        '--property=Group=hfcache',
+        '--property=ImportCredential=hf-token',
+        '--property=UMask=0027',
+        '--property=MemoryHigh=4G',
+        '--property=Environment=HF_HOME=/var/lib/hfcache/hf-home',
+        '--property=Environment=HF_XET_CACHE=/var/cache/hfcache/xet',
+        '--',
         '/opt/hfcache/current/.venv/bin/hfcache',
         '--config', '/etc/hfcache/config.toml', '--json',
         'status',
     ]);
+});
+
+test('the credential is imported by systemd, never read by the page (CP-08)', () => {
+    const argv = hfcacheArgv(['doctor', '--read-only']);
+    assert.ok(argv.includes('--property=ImportCredential=hf-token'));
+    // The command line names the credential, not a token file or path the
+    // page could read; decryption happens in PID 1 (docs/cockpit.md §2).
+    assert.ok(!argv.some(part => part.includes('token-file')));
+    assert.ok(!argv.some(part => part.includes('CREDENTIALS_DIRECTORY')));
 });
 
 test('a candidate configuration replaces the installed path (contract §6)', () => {

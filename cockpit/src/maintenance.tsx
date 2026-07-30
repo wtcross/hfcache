@@ -225,9 +225,10 @@ const RepairCard = () => {
                     <ModalBody>
                         Downloads that revision again and publishes a replacement instance; the
                         superseded instance stays readable for the configured grace period (at
-                        least seven days). This runs as a page process — closing the tab
-                        interrupts it, and repair's transaction is reconciled like any other
-                        (recover describes it afterwards). It shares the single archive lock.
+                        least seven days). This runs as a transient unit — closing the tab
+                        detaches this view while the repair continues, and its transaction is
+                        reconciled like any other (recover describes it afterwards). It shares
+                        the single archive lock.
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="danger" onClick={run}>Start repair</Button>

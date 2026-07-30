@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  *
  * Running the hfcache CLI from the page (docs/cockpit.md §2): superuser
- * bridge, then runuser to the service identity, JSON envelope in, JSON
- * envelope out — even on failure. This is the only module that spawns the
- * CLI; everything above it consumes envelopes.
+ * bridge, then a transient systemd unit as the service identity, JSON
+ * envelope in, JSON envelope out — even on failure. This is the only module
+ * that spawns the CLI; everything above it consumes envelopes.
  */
 
 import cockpit from 'cockpit';
@@ -58,10 +58,12 @@ export interface StreamRunOptions {
     onLine?: (line: string) => void;
 }
 
-/* A page-spawned mutating run (selector sync — decision 89): stderr merges
+/* A streamed mutating run (selector sync — decisions 89, 92): stderr merges
  * into the stream so the §24 checkpoint events are visible live, and the
- * envelope is recovered from the stream's tail. The caller owns stating the
- * page-lifetime consequence before starting one (docs/cockpit.md §5). */
+ * envelope is recovered from the stream's tail. The transient unit outlives
+ * a closed page — only this view and its envelope die with the page; the
+ * caller owns stating that consequence before starting one
+ * (docs/cockpit.md §5). */
 export async function runHfcacheStreaming(
     command: string[],
     options: StreamRunOptions = {}

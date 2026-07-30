@@ -216,9 +216,10 @@ const RevisionVerifyCard = () => {
             <CardBody>
                 <Stack hasGutter>
                     <StackItem>
-                        The mode for a targeted suspicion. Reads that one revision's bytes as a
-                        page process; interruption reads nothing further and changes nothing.
-                        Copy the full SHA from the Repositories tab.
+                        The mode for a targeted suspicion. Reads that one revision's bytes in
+                        a transient unit; closing the tab only detaches this view, and an
+                        interrupted read changes nothing. Copy the full SHA from the
+                        Repositories tab.
                     </StackItem>
                     <StackItem>
                         <TextInput

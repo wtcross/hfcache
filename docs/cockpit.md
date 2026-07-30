@@ -29,12 +29,12 @@ they disagree, this document wins and the operator pages are corrected.
 | --- | --- |
 | `CP-01` | The plugin invokes the installed CLI and systemd; it never reads or writes archive state directly and never re-implements resolution, validation, verification, or retention logic. One read-only exception: §4's run-report browsing |
 | `CP-02` | Every CLI invocation passes `--json`; the envelope is the only parsed surface. An envelope `schema_version` other than `1` is refused with an upgrade message, never guessed at. Stderr is display-only |
-| `CP-03` | Mutating actions require Cockpit administrative access. The CLI runs as the service identity, never as root |
+| `CP-03` | Mutating actions require Cockpit administrative access. The CLI runs as the service identity inside a transient systemd unit (§2), never as root |
 | `CP-04` | A full sync and a full verification run only through `hfcache-sync.service` and `hfcache-verify.service` — never as page-spawned processes |
 | `CP-05` | Pausing or resuming the schedule operates on `hfcache-sync.timer` only. The plugin never stops, starts, enables, or disables `hfcache.target` — stopping it unmounts `/srv/hfcache` (`docs/operations.md` §9) |
 | `CP-06` | The plugin never enables `hfcache-verify.timer`. It displays the timer's state and the reason it is disabled (operator handoff item 8). Enabling and disabling `hfcache-sync.timer` is permitted |
 | `CP-07` | `archive init`, in any form including `--inspect`, is outside the plugin's surface (`FS-21`; `docs/agents/environment.md`) |
-| `CP-08` | No credential surface: the plugin never reads `$CREDENTIALS_DIRECTORY` or a token file, never offers token entry, and renders only the `token_source` string from envelopes (`docs/security.md` T-07) |
+| `CP-08` | No credential surface: the plugin never reads `$CREDENTIALS_DIRECTORY` or a token file, never offers token entry, and renders only the `token_source` string from envelopes (`docs/security.md` T-07). The deployment's encrypted credential reaches spawned CLI runs only through systemd's `ImportCredential=` (§2), decrypted by PID 1, never by the page |
 | `CP-09` | The plugin never writes under `/srv/hfcache`. Its only direct read there is `runs/*.json`, performed as the service identity; every other statement about the archive comes from a CLI envelope |
 | `CP-10` | One mutating command at a time (`AD-17`). `HFMNT010` renders as a benign busy state naming the holder, never as a failure; the plugin never removes or bypasses the lock |
 | `CP-11` | Configuration changes go only through the §6 pipeline: candidate file, `config validate` exit `0`, atomic install preserving `0640 root:hfcache`, predecessor retained |
@@ -51,18 +51,51 @@ operator are already the boundary (`docs/security.md` §6), and the plugin
 adds no listener, daemon, or state of its own beyond the files §6 and §7
 name.
 
-From the root bridge, CLI invocations drop to the service identity:
+From the root bridge, CLI invocations run in a transient systemd unit that
+drops to the service identity (decision 92; before it, the shape was
+`runuser`):
 
 ```text
-runuser -u hfcache -- /opt/hfcache/current/.venv/bin/hfcache \
+systemd-run --quiet --wait --pipe --collect \
+    --property=User=hfcache --property=Group=hfcache \
+    --property=ImportCredential=hf-token \
+    --property=UMask=0027 --property=MemoryHigh=4G \
+    --property=Environment=HF_HOME=/var/lib/hfcache/hf-home \
+    --property=Environment=HF_XET_CACHE=/var/cache/hfcache/xet \
+    -- /opt/hfcache/current/.venv/bin/hfcache \
     --config /etc/hfcache/config.toml --json <command>
 ```
 
 Never root (`CP-03`): anything a command publishes must carry the service
-identity, and `/etc/hfcache/config.toml` is `0640 root:hfcache` — the same
-invocation shape as `docs/operations.md`'s `$H`, reached from root instead of
-from an operator login. systemd operations (units, timers, drop-ins,
-`daemon-reload`) and journal reads run as root via the bridge.
+identity, and `/etc/hfcache/config.toml` is `0640 root:hfcache`. systemd
+operations (units, timers, drop-ins, `daemon-reload`) and journal reads run
+as root via the bridge. What the transient unit adds over a plain drop:
+
+- **The deployment's Hub credential, without a credential surface**
+  (`CP-08`). `ImportCredential=hf-token` makes PID 1 decrypt
+  `/etc/credstore.encrypted/hf-token` — the same host-bound encrypted
+  credential `hfcache-sync.service` loads
+  (`packaging/systemd/hfcache-sync.service.d/credential.conf.example`) —
+  into the unit's ramfs credentials directory, where the CLI's own §7
+  resolution finds it. When no credential is installed the import is
+  silently skipped and the run is anonymous: `token_mode = "optional"`
+  restated at the unit layer. Token bytes never pass through the bridge or
+  the page. The name is the documented default; a deployment that renames
+  `hub.credential_name` runs anonymously from the page, and `doctor`'s
+  `credential` and `hub_identity` rows report exactly that.
+- **Environment and resource parity with the shipped units**: `HF_HOME`,
+  `HF_XET_CACHE`, `UMask=0027`, and `MemoryHigh=4G` match
+  `hfcache-sync.service`, so a page-spawned run cannot touch a home
+  directory the service identity does not have, and a selector sync streams
+  through the page cache under the same bound that protects the guest from
+  the decision-86 OOM.
+- **Faithful exit codes**: `--wait --pipe` propagate the CLI's exit status
+  to the spawn, which §4's mapping depends on, and stream stdout/stderr
+  unchanged. `--collect` keeps failed transient units from accumulating.
+
+The one CLI-adjacent exception stays `runuser`: §3's run-report reads are
+direct file reads as the service identity (`CP-09`), touch neither the Hub
+nor the configuration, and need none of the above.
 
 Without administrative access the page presents read-only systemd state and
 says why everything else is locked. There is no degraded data path: the
@@ -128,13 +161,19 @@ lose: the §22.5 sandbox, `MemoryHigh=`, the journal identity, and systemd's
 merge semantics for a timer elapse during a run.
 
 **Selector-restricted sync** is the deliberate exception (decision 89): it
-runs as a page-spawned CLI process, accepting that a closed tab interrupts
-it, because interruption is a crash shape the application is designed for —
-per-repository transactions, resumable cache partials (`AD-09`), and
-reconciliation (`docs/operations.md` §9). The UI states this before starting
-one, and after any interrupted mutating operation it surfaces
-`recover --dry-run`. A templated unit carrying selectors under the full
-hardening is the recorded follow-up seam, not part of version 1.
+runs from the page rather than through a shipped unit. Under the §2 shape
+that means a transient unit whose page-side waiter dies with the page while
+the unit itself continues (decision 92): closing the tab loses the live view
+and the final envelope, not the run, whose durable record is its run report
+like any other run's. Interruption remains a crash shape the application is
+designed for — per-repository transactions, resumable cache partials
+(`AD-09`), and reconciliation (`docs/operations.md` §9) — and after any
+mutating operation whose envelope was lost the UI surfaces
+`recover --dry-run`. The UI states the detach consequence before starting
+one. A templated `hfcache-sync@.service` carrying selectors under the full
+§22.5 hardening is still the recorded follow-up seam; decision 92's
+transient unit narrows the gap (identity, credential, memory bound) without
+closing it (sandbox).
 
 **Stopping a running sync** is `systemctl stop` (SIGTERM). The confirmation
 states the consequences plainly: everything already published stays

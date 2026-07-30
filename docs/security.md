@@ -237,9 +237,12 @@ every mutating path requires the superuser bridge, which only an
 administrative session obtains — the same boundary as a shell, and §6 already
 places root and the operator out of scope as adversaries. The plugin is
 static files under `/usr/share/cockpit/hfcache` with no listener, daemon, or
-durable state of its own; CLI work drops to the service identity and never
-runs as root (`CP-03`); it never reads `$CREDENTIALS_DIRECTORY`, offers token
-entry, or renders a credential (`CP-08`, upholding T-07); the archive is
+durable state of its own; CLI work drops to the service identity in a
+transient systemd unit and never runs as root (`CP-03`); it never reads
+`$CREDENTIALS_DIRECTORY`, offers token entry, or renders a credential — the
+deployment's encrypted Hub credential reaches spawned runs only through
+systemd's `ImportCredential=`, decrypted by PID 1 (`CP-08`, upholding T-07);
+the archive is
 reached only through CLI envelopes plus one read-only run-report read as the
 service identity (`CP-01`, `CP-09`); and `archive init`, `hfcache.target`,
 and `hfcache-verify.timer` are refused structurally in its API layer

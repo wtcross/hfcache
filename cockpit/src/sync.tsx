@@ -301,8 +301,10 @@ const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
                     onClose={() => setConfirming(false)}
                     onConfirm={run}
                 >
-                    This run is a page process, not a unit: closing the tab interrupts it.
-                    Interruption is a designed crash shape — per-repository transactions,
+                    This run is a transient unit spawned from this page: closing the tab
+                    detaches this view and loses the final result — the run itself continues
+                    and its run report records the outcome. Interruption, if the run does
+                    stop early, is a designed crash shape — per-repository transactions,
                     resumable downloads (AD-09) — and reconciliation is surfaced afterwards,
                     but the full-archive run belongs to the unit above (CP-04).
                 </ConfirmModal>

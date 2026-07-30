@@ -34,15 +34,18 @@ lock. `HFMNT010` renders as a plain busy notice naming the holder. Wait it
 out (a first sync of a large repository legitimately takes hours); never
 remove the lock.
 
-**Unit runs versus page processes.** A full sync and a full verification
+**Unit runs versus page-spawned runs.** A full sync and a full verification
 run as the shipped units and survive your browser (`CP-04`). Three
-operations run as page processes and are interrupted if the tab closes —
-the UI states this before starting each:
+operations are spawned from the page as transient systemd units
+(docs/cockpit.md §2): closing the tab detaches your view — the run itself
+continues, and a mutating run's outcome lands in its run report — but the
+final result envelope is lost to the page, so the UI states the consequence
+before starting each and surfaces reconciliation after a detach:
 
-| Page process | Why a closed tab is safe |
+| Page-spawned run | Why a closed tab is safe |
 | --- | --- |
-| Sync selected repositories | Interruption is a designed crash shape: per-repository transactions, resumable downloads; reconciliation surfaces afterwards |
-| Verify one revision | Read-only; stops reading, changes nothing |
+| Sync selected repositories | The run continues without the page; if it does stop early, interruption is a designed crash shape — per-repository transactions, resumable downloads — and reconciliation surfaces afterwards |
+| Verify one revision | Read-only; an interrupted read changes nothing |
 | Repair | Its transaction reconciles like any other; `recover` describes it |
 
 ## Overview
@@ -99,10 +102,10 @@ reloads systemd, and restarts the timer if it was active. **Reset to
 shipped schedule** removes the override the same way.
 
 **Sync selected repositories** offers the enabled, managed repositories as
-checkboxes and runs `sync TYPE:ID …` as a page process — keep the tab open;
-the confirmation states the consequence. Output streams live, and the
-result envelope renders at the end; an interrupted run surfaces
-reconciliation.
+checkboxes and runs `sync TYPE:ID …` as a page-spawned transient unit —
+keep the tab open to see the result; the confirmation states the
+consequence. Output streams live, and the result envelope renders at the
+end; after a detach or interruption the UI surfaces reconciliation.
 
 **Live activity** during unit runs follows the journal: the latest event
 per repository from the closed event vocabulary, plus the raw tail.
@@ -172,8 +175,8 @@ Ordered by escalation, and the estimate comes first deliberately:
   never offers to sync or prune from that state.
 - **Verify one revision** — `verify --revision TYPE:ID@SHA` with the full
   40-character SHA enforced as you type; copy the SHA from the
-  Repositories tab. Runs as a page process; it is read-only, so
-  interruption reads nothing further and changes nothing.
+  Repositories tab. Runs as a page-spawned transient unit; it is
+  read-only, so an interrupted read changes nothing.
 - **Quarterly timer** — display only (`CP-06`): the plugin shows
   `hfcache-verify.timer`'s state and why it ships disabled (its calendar
   must not overlap storage-side maintenance windows — an operator
@@ -206,5 +209,5 @@ copy it from the verification finding) with an optional reason recorded to
 the audit trail. The revision is re-downloaded in isolation and verified
 against the *original* manifest — if any expected digest differs, repair
 stops without switching, and the superseded instance stays readable through
-the grace period. It runs as a page process and shares the single archive
-lock.
+the grace period. It runs as a page-spawned transient unit and shares the
+single archive lock.
