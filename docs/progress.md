@@ -311,6 +311,43 @@ evidence and the reasoning).
 
 - [x] SYS-003 Bound sync and verify page cache; absolute dirty-page limits (2026-07-29, this commit — decision 86. `MemoryHigh=4G` on `hfcache-sync.service` and `hfcache-verify.service`, no `MemoryMax=`, because above `high` the kernel throttles and reclaims where `max` kills — a slow sync beats a dead one, and exit `40` from verify must never mean "the cap was tight". New `packaging/sysctl.d/hfcache.conf` sets `vm.dirty_background_bytes=1G` / `vm.dirty_bytes=2G` so the dirty share of the budget stays reclaimable-adjacent rather than the ratio default's ~4.8 GiB, which alone could fill the cap with pages reclaim cannot take. Deployment §9 installs the fragment and states the design, including the half only the hypervisor can do. Applied live: units installed per §10, `systemd-analyze verify` silent, `scripts/check-hardening.sh` all 23 checks pass on both units, sysctl values confirmed active. Validated against the real workload: the pre-change boot-time catch-up sync peaked at 18.3 GiB of a 23 GiB guest in 26 minutes; restarted under the cap it streams a 209 GB repository at `MemoryCurrent` ≈ 4.0 GiB, `MemoryPeak` 4.3 GiB. `./scripts/check.sh` exit `0`)
 
+## Cockpit administration plugin (CPT, 2026-07-30)
+
+A browser administration UI for the deployed writer, as a Cockpit package in
+`cockpit/`. `docs/cockpit.md` is the contract (`CP-01`–`CP-14`); decisions
+87–89 record the shape and what lost. Read the contract before working any
+package in this family.
+
+- [x] CPT-001 Cockpit plugin contract and work-package plan (2026-07-30, this commit — decisions 87–89. `docs/cockpit.md`: rules `CP-01`–`CP-14`; the privilege model — superuser bridge, then `runuser` to the service identity, root never runs the CLI; the operation surface mapped to `docs/cli.md` and `docs/operations.md` mechanisms; envelope and exit-code rendering; the configuration validate-install pipeline with `plan` previews against candidate files; the timer drop-in protocol; the pnpm toolchain and the conditional plugin gate; testing scope and version-1 non-goals. `AGENTS.md`'s context map gains the row routing plugin work to the contract. The 2026-07-30 feasibility review established the facts the contract encodes: no publish command exists — publication is a stage of `sync` and `repair` is the only republish; cockpit 364 is installed and its socket active on the writer; node LTS and pnpm are provisioned operator-side under `PNPM_HOME`. Doc-only: no source, no packaging, no durable format touched. `./scripts/check.sh` exit `0`)
+- [ ] CPT-002 Scaffold `cockpit/` from the starter kit under pnpm — esbuild
+      build, `manifest.json`, page loads from `~/.local/share/cockpit/hfcache`;
+      `scripts/check.sh` gains the conditional plugin gate; unit-test runner
+      chosen
+- [ ] CPT-003 Invocation layer — envelope client (`schema_version` gate,
+      exit-code and `HF*` taxonomy mapping), service-identity spawn helper,
+      systemd D-Bus helpers; unit tests over the pure modules
+- [ ] CPT-004 Dashboard — `status`, the `doctor` checklist, `version`, and the
+      warnings panel with `docs/operations.md` §8 guidance inline
+- [ ] CPT-005 Archive browser — `list --revisions` tables, per-revision
+      detail, run-report browser joined to the journal by `run_id`
+- [ ] CPT-006 Sync operations — unit start/stop with consequence dialogs,
+      schedule pause/resume (timer only, `CP-05`), selector sync, live
+      activity from the §24 journal event vocabulary
+- [ ] CPT-007 Verification — `--estimate`, `--revision`, full verification via
+      the unit, verify-timer state display (`CP-06`)
+- [ ] CPT-008 Configuration editor — form and text modes over the contract's
+      §6 pipeline, `HFCFG` codes mapped to fields, add-repository wizard with
+      candidate `plan` preview
+- [ ] CPT-009 Sync schedule editor — the `50-cockpit.conf` drop-in,
+      `systemd-analyze calendar` validation, next-elapse and `Persistent=`
+      semantics surfaced
+- [ ] CPT-010 Maintenance operations — `prune` and `recover` dry-run/apply
+      flows, `repair` launched from a verification finding
+- [ ] CPT-011 Packaging and deployment — `make -C cockpit install` to
+      `/usr/share/cockpit/hfcache`, deployment runbook section,
+      `docs/security.md` threat-model reconciliation, `docs/operations.md`
+      pointer
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -2367,3 +2404,63 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     overcommitting — as handoff item 12. This adds a resource control and
     weakens no §22.5 hardening; `check-hardening.sh` passed 23/23 on both
     units after the change.
+
+87. **A Cockpit plugin in `cockpit/`, contracted by `docs/cockpit.md`,
+    tracked as the `CPT` family** (2026-07-30, CPT-001). The operator wants
+    browser administration of the deployed writer — sync control and live
+    activity, verification, archive browsing, configuration and schedule
+    editing — and Cockpit already serves this host. Decided: a Cockpit
+    package in this repository under `cockpit/`, a client of the contracts
+    that exist (the CLI's JSON envelope, the configuration schema, and the
+    shipped units are its whole API), with a normative contract of its own
+    and requirement IDs (`CP-01`–`CP-14`) the implementation and tests can
+    cite; the family is tracked outside plan §28's phase set exactly as
+    decision 80 did for `DOC`. **Rejected: a separate repository.** The UI
+    encodes runbook semantics — the `hfcache.target` unmount footgun, the
+    verify-timer reservation, the §8 warning responses — and an encoding
+    that cannot change in the same commit as the contract it encodes will
+    drift; that is the same argument that keeps docs and code in one tree.
+    **Rejected: a plain no-build package** in the style of Cockpit's pinger
+    example — no toolchain, but hand-rolled tables and dialogs instead of
+    PatternFly's, visual drift from the rest of Cockpit, and none of the
+    starter kit's lint and test scaffolding; the toolchain cost is paid
+    once, at build time only.
+
+88. **The starter kit runs under pnpm; node is a build-time toolchain, not a
+    dependency** (2026-07-30, CPT-001). The operator provisioned node LTS
+    (v24) and pnpm 11 under `PNPM_HOME` (`~/.local/share/pnpm`), and pnpm
+    replaces the starter kit's npm throughout: one committed
+    `pnpm-lock.yaml`, frozen installs, the node version pinned in-repo at
+    scaffold time so builds reproduce. `FW-03`/`FW-04` are untouched — the
+    plugin ships static files, the application's runtime set stays three
+    packages, and nothing node produces runs outside the browser. The gate
+    grows a conditional plugin stage (frozen install, lint, production
+    build) that skips loudly when the toolchain is absent, because
+    `scripts/check.sh` must keep meaning the same thing on hosts without
+    node; the discipline that closes the skip's hole is that a `CPT`
+    package lands only from a host where the plugin stage ran, recorded in
+    its tracker evidence. **Rejected: distribution nodejs via dnf** —
+    root-owned and centrally updated, but the pnpm-managed toolchain was
+    already provisioned, and a second node on the host is a version-skew
+    source with no compensating benefit.
+
+89. **The operation surface bends to the CLI, not the reverse** (2026-07-30,
+    CPT-001). Three shapes settled with the operator. **No publish action:**
+    `docs/cli.md` §2 has no publish command — publication is an atomic
+    stage inside `sync`, and `repair` is the only republish — so the UI
+    says "Sync now" and renders published state from `list --revisions`,
+    rather than the CLI growing a command to match a button. **Selector
+    sync as a page-spawned process, in version 1:** a spawn dies with the
+    browser tab, accepted for selector-restricted runs because interruption
+    is a crash shape the application is designed for (`AD-09`,
+    per-repository transactions, `docs/operations.md` §9) and the UI
+    surfaces `recover --dry-run` afterward; the alternative — a templated
+    `hfcache-sync@.service` carrying selectors under the full §22.5
+    hardening — is recorded as the follow-up seam rather than built now,
+    packaging surface ahead of demonstrated need. Full sync and full
+    verification stay behind the shipped units unconditionally (`CP-04`):
+    the units carry the sandbox, `MemoryHigh=`, and the journal identity,
+    and Cockpit's own guidance is not to run long uninterruptible work from
+    a page. **Excluded outright** (`CP-05`–`CP-08`): touching
+    `hfcache.target`, enabling `hfcache-verify.timer` (handoff item 8 owns
+    that calendar), `archive init` in any form, and any credential surface.
