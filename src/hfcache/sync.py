@@ -18,7 +18,7 @@ disagreement stops the revision rather than being published as fact.
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, Literal, Self, final
+from typing import TYPE_CHECKING, Final, Literal, final
 
 from hfcache.dependencies import detect_dependencies, undeclared, undeclared_warnings
 from hfcache.errors import (
@@ -28,7 +28,7 @@ from hfcache.errors import (
     Problem,
     SynchronizationError,
 )
-from hfcache.hashing import sha256_file
+from hfcache.hashing import FileDigest, ObjectIdentity, sha256_file, sha256_identified_file
 from hfcache.identity import (
     CommitSha,
     PublicationId,
@@ -276,29 +276,6 @@ def _content_problems(
 
 @final
 @dataclass(frozen=True, slots=True)
-class ObjectIdentity:
-    """Which physical object a path leads to, on this filesystem, right now.
-
-    `(device, inode)` and nothing else. Plan §16.1 is explicit that a cache path,
-    a prior-run inode number, an mtime, a Git SHA-1, or an opaque Xet identifier
-    is *insufficient* to prove two files are the same bytes, and the reason is
-    that every one of them can be equal for objects that differ. An inode pair
-    read from the filesystem during this run is the one identity the kernel is
-    answering for at the moment it is asked.
-    """
-
-    device: int
-    inode: int
-
-    @classmethod
-    def of(cls, path: Path) -> Self:
-        """Read one object's identity, following the cache's symlink to it."""
-        info = path.resolve().stat()
-        return cls(device=info.st_dev, inode=info.st_ino)
-
-
-@final
-@dataclass(frozen=True, slots=True)
 class KnownDigest:
     """A digest this archive already computed, and the publication it belongs to."""
 
@@ -321,6 +298,7 @@ class HashedFile:
     path: str
     sha256: str
     size: int
+    object_identity: ObjectIdentity
     reused_from: KnownDigest | None = None
 
 
@@ -418,7 +396,7 @@ def hash_snapshot(
         source = snapshot / entry.path
         try:
             object_identity = ObjectIdentity.of(source)
-            size = source.resolve().stat().st_size
+            size = object_identity.size
         except OSError as exc:
             message = (
                 f"{entry.path} could not be examined before hashing ({exc.strerror}); the "
@@ -429,7 +407,14 @@ def hash_snapshot(
             ) from exc
 
         if (digest := hashed.get(object_identity)) is not None:
-            files.append(HashedFile(path=entry.path, sha256=digest, size=size))
+            files.append(
+                HashedFile(
+                    path=entry.path,
+                    sha256=digest,
+                    size=size,
+                    object_identity=object_identity,
+                )
+            )
             continue
 
         candidate = known.get(object_identity)
@@ -439,15 +424,31 @@ def hash_snapshot(
                     path=entry.path,
                     sha256=candidate.sha256,
                     size=size,
+                    object_identity=object_identity,
                     reused_from=candidate,
                 )
             )
             continue
 
-        read = sha256_file(source, error=SynchronizationError, code="HFSYN009")
+        read = sha256_identified_file(source, error=SynchronizationError, code="HFSYN009")
+        if read.identity != object_identity:
+            message = (
+                f"{entry.path} changed objects between examination and hashing; a digest "
+                "is carried into publication only for the exact object read"
+            )
+            raise SynchronizationError.single(
+                message, code="HFSYN009", location=entry.path, repository=identity.selector
+            )
         hashed[object_identity] = read.digest
         hashed_bytes += read.size
-        files.append(HashedFile(path=entry.path, sha256=read.digest, size=read.size))
+        files.append(
+            HashedFile(
+                path=entry.path,
+                sha256=read.digest,
+                size=read.size,
+                object_identity=object_identity,
+            )
+        )
 
     return HashedSnapshot(files=tuple(files), hashed_bytes=hashed_bytes, hashed_objects=len(hashed))
 
@@ -633,6 +634,7 @@ def publish_revision(  # noqa: PLR0913 - the §7.3 sequence's inputs, one argume
     identity: RepositoryIdentity,
     snapshot: Path,
     manifest: RevisionManifest,
+    hashed: HashedSnapshot,
     staging: StagingPaths,
     publication_mode: Literal["hardlink", "copy"],
     cache_root: Path,
@@ -667,12 +669,27 @@ def publish_revision(  # noqa: PLR0913 - the §7.3 sequence's inputs, one argume
     # came from: the tree that reaches `published/` then cannot contain a path
     # its own manifest does not list, by construction rather than by agreement
     # between three collections.
+    hashed_by_path = {entry.path: entry for entry in hashed.files}
     for entry in manifest.files:
+        evidence = hashed_by_path.get(entry.path)
+        if evidence is None or evidence.sha256 != entry.sha256 or evidence.size != entry.size:
+            message = (
+                f"manifest entry {entry.path} does not match this operation's transient "
+                "hash evidence; publication was refused"
+            )
+            raise SynchronizationError.single(
+                message,
+                code="HFSYN005",
+                location=entry.path,
+                repository=identity.selector,
+            )
         stage_file(
             snapshot / entry.path,
             staged_path(staging, entry.path),
             publication_mode=publication_mode,
             cache_root=cache_root,
+            expected=FileDigest(digest=evidence.sha256, size=evidence.size),
+            expected_identity=evidence.object_identity,
         )
     # `StagingPaths.manifest` is a sibling of `tree/`, so it does not travel with
     # the rename at checkpoint 5 — which is the point. §7.3 writes it here,
@@ -1044,6 +1061,7 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
         identity=identity,
         snapshot=snapshot,
         manifest=manifest,
+        hashed=hashed,
         staging=staging,
         publication_mode=config.storage.publication_mode,
         cache_root=layout.hub_cache,

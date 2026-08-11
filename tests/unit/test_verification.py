@@ -176,6 +176,7 @@ def publish(
         identity=identity,
         snapshot=snapshot,
         manifest=manifest,
+        hashed=hashed,
         staging=staging,
         publication_mode=publication_mode,
         cache_root=layout.hub_cache,

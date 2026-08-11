@@ -12,7 +12,12 @@ from typing import TYPE_CHECKING
 import pytest
 
 from hfcache.errors import ExitCode, IntegrityError, SynchronizationError
-from hfcache.hashing import CHUNK_BYTES, DIGEST_ALGORITHM, sha256_file
+from hfcache.hashing import (
+    CHUNK_BYTES,
+    DIGEST_ALGORITHM,
+    sha256_file,
+    sha256_identified_file,
+)
 from hfcache.taxonomy import classify
 
 if TYPE_CHECKING:
@@ -59,6 +64,25 @@ def test_a_file_larger_than_one_chunk_is_streamed_correctly(tmp_path: Path):
 
     assert result.size > CHUNK_BYTES
     assert result.digest == hashlib.sha256(payload).hexdigest()
+
+
+def test_an_identified_hash_describes_the_object_opened_through_a_symlink(tmp_path: Path):
+    payload = b"identity and digest come from one open descriptor\n"
+    blob = tmp_path / "blob"
+    blob.write_bytes(payload)
+    snapshot = tmp_path / "snapshot"
+    snapshot.symlink_to(blob)
+
+    result = sha256_identified_file(snapshot)
+    info = blob.stat()
+
+    assert result.digest == hashlib.sha256(payload).hexdigest()
+    assert result.size == len(payload)
+    assert (result.identity.device, result.identity.inode, result.identity.size) == (
+        info.st_dev,
+        info.st_ino,
+        info.st_size,
+    )
 
 
 def test_an_unreadable_object_is_reported_with_the_callers_code(tmp_path: Path):

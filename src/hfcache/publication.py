@@ -42,7 +42,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal, Self, final
 
 from hfcache.errors import IntegrityError, Problem, SynchronizationError
-from hfcache.hashing import sha256_file
+from hfcache.hashing import FileDigest, ObjectIdentity, sha256_file
 from hfcache.identity import TYPE_DIRECTORIES, CommitSha, PublicationId, RepositoryIdentity
 from hfcache.manifests import RevisionManifest
 from hfcache.models import Reference
@@ -62,7 +62,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from hfcache.config import RepositoryConfig
-    from hfcache.hashing import FileDigest
     from hfcache.identity import TransactionId
     from hfcache.paths import ArchiveLayout, StagingPaths
 
@@ -243,12 +242,14 @@ def projected_publication_bytes(
     return logical_bytes if publication_mode == "copy" else 0
 
 
-def stage_file(
+def stage_file(  # noqa: PLR0913 - source, destination, and their verification evidence
     source: Path,
     destination: Path,
     *,
     publication_mode: Literal["hardlink", "copy"],
     cache_root: Path,
+    expected: FileDigest,
+    expected_identity: ObjectIdentity,
 ) -> FileDigest:
     """Put one repository file into staging, and say what landed there.
 
@@ -259,18 +260,42 @@ def stage_file(
     space (`AD-11`), and `doctor` check 9 is what establishes that before a
     download begins.
 
-    The returned digest is of the bytes now in staging, not of the source, so a
-    caller writing a manifest is describing what it actually published.
+    ``expected`` and ``expected_identity`` are transient evidence from the
+    ingestion hash. Hardlink mode proves the landed path is that exact object
+    and carries the digest forward without another read. Copy mode hashes the
+    distinct landed object and compares it with the same evidence.
     """
     if problems := source_problems(source, cache_root=cache_root):
         raise SynchronizationError(problems)
+    try:
+        observed = ObjectIdentity.of(source)
+    except OSError as exc:
+        message = f"publication source {source} could not be examined: {exc.strerror}"
+        raise SynchronizationError.single(message, code="HFSYN005", location=str(source)) from exc
+    if observed != expected_identity or expected.size != expected_identity.size:
+        message = (
+            f"publication source {source} no longer matches the object hashed for this "
+            "operation; a replacement or size change is never staged"
+        )
+        raise SynchronizationError.single(message, code="HFSYN005", location=str(source))
     prepare_staged_parent(destination)
     if publication_mode == "hardlink":
-        return _link(source, destination)
-    return _copy(source, destination)
+        return _link(
+            source,
+            destination,
+            expected=expected,
+            expected_identity=expected_identity,
+        )
+    return _copy(source, destination, expected=expected)
 
 
-def _link(source: Path, destination: Path) -> FileDigest:
+def _link(
+    source: Path,
+    destination: Path,
+    *,
+    expected: FileDigest,
+    expected_identity: ObjectIdentity,
+) -> FileDigest:
     """Hardlink a cache blob into staging (plan §14.1 step 4).
 
     The destination is never `chmod`ed: it is the same inode as the cache blob,
@@ -278,7 +303,7 @@ def _link(source: Path, destination: Path) -> FileDigest:
     is enforced by the export and by directory permissions, not by file mode.
     """
     try:
-        os.link(source, destination)
+        os.link(source, destination, follow_symlinks=True)
     except OSError as exc:
         message = (
             f"{source} could not be hardlinked into staging at {destination}: {exc.strerror}. "
@@ -287,10 +312,29 @@ def _link(source: Path, destination: Path) -> FileDigest:
         raise SynchronizationError.single(
             message, code="HFSYN005", location=str(destination)
         ) from exc
-    return sha256_file(destination, error=SynchronizationError, code="HFSYN005")
+    try:
+        source_identity = ObjectIdentity.of(source)
+        landed_identity = ObjectIdentity.of(destination)
+    except OSError as exc:
+        cleanup = _remove_unproven_link(destination)
+        message = (
+            f"the hardlink at {destination} could not be proven after creation: "
+            f"{exc.strerror}{cleanup}"
+        )
+        raise SynchronizationError.single(
+            message, code="HFSYN005", location=str(destination)
+        ) from exc
+    if source_identity != expected_identity or landed_identity != expected_identity:
+        cleanup = _remove_unproven_link(destination)
+        message = (
+            f"the hardlink at {destination} is not the exact device, inode, and size "
+            f"hashed for this operation; the unproven link was refused{cleanup}"
+        )
+        raise SynchronizationError.single(message, code="HFSYN005", location=str(destination))
+    return expected
 
 
-def _copy(source: Path, destination: Path) -> FileDigest:
+def _copy(source: Path, destination: Path, *, expected: FileDigest) -> FileDigest:
     """Copy a resolved regular file into staging, then prove the copy (plan §14.3).
 
     Temporary sibling and atomic rename per file, so a crash leaves either the
@@ -298,8 +342,9 @@ def _copy(source: Path, destination: Path) -> FileDigest:
     hash of the source, because copy mode exists for the deployment where
     hardlinks are unavailable — often a different storage topology — and a copy
     that silently lost bytes would be published as though it were the revision.
+    The comparison is against the ingestion digest, not a fresh source read, so
+    a source replacement after verification cannot become the new expectation.
     """
-    expected = sha256_file(source, error=SynchronizationError, code="HFSYN005")
     temporary = temporary_sibling(destination)
     try:
         # `copyfile` follows the source and writes a plain regular file, so a
@@ -318,13 +363,25 @@ def _copy(source: Path, destination: Path) -> FileDigest:
 
     landed = sha256_file(destination, error=SynchronizationError, code="HFSYN005")
     if landed != expected:
+        cleanup = _remove_unproven_link(destination)
         message = (
             f"the copy of {source} at {destination} is {landed.size} bytes with digest "
-            f"{landed.digest}, but the source is {expected.size} bytes with digest "
-            f"{expected.digest}; a copy that lost bytes is never published"
+            f"{landed.digest}, but ingestion read {expected.size} bytes with digest "
+            f"{expected.digest}; a copy that lost or replaced bytes is never published"
+            f"{cleanup}"
         )
         raise SynchronizationError.single(message, code="HFSYN005", location=str(destination))
     return landed
+
+
+def _remove_unproven_link(destination: Path) -> str:
+    """Remove a staging entry this call created, reporting cleanup failure inline."""
+    try:
+        destination.unlink()
+        fsync_directory(destination.parent)
+    except OSError as exc:
+        return f"; cleanup could not remove it: {exc.strerror}"
+    return ""
 
 
 def promote_staging(layout: ArchiveLayout, staging: StagingPaths, destination: Path) -> None:

@@ -668,10 +668,16 @@ For every repository file:
 2. Confirm the source is contained by the operation's approved cache root: `.store/hub` for normal ingestion or one transaction-scoped `.store/repair/.../hub` root for repair.
 3. Create the destination parent directories in staging.
 4. Create a hardlink from source to destination.
-5. Preserve repository path spelling and case.
-6. Reject special files, devices, sockets, FIFOs, and path traversal.
+5. Re-prove that source and destination are the exact `(device, inode, size)`
+   object read by this operation's ingestion hash; carry that locally computed
+   digest forward without reading the same inode a second time.
+6. Preserve repository path spelling and case.
+7. Reject special files, devices, sockets, FIFOs, and path traversal.
 
-The application does not chmod hardlinked files because that would also change the cache inode. Read-only access is enforced by directory permissions and the consumer NFS export.
+The application does not chmod hardlinked files because that would also change
+the cache inode. Read-only access is enforced by directory permissions and the
+consumer NFS export. Same-operation digest carry-forward is not the retained-
+publication reuse described by §16.1: the new manifest records `hashed = true`.
 
 ### 14.2 Hardlink preflight
 

@@ -43,7 +43,7 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Final, Literal, final
 
 from hfcache.errors import ConfigurationError, HfcacheError, IntegrityError
-from hfcache.hashing import sha256_file
+from hfcache.hashing import ObjectIdentity, sha256_file
 from hfcache.identity import (
     COMMIT_SHA_LENGTH,
     CommitSha,
@@ -70,7 +70,6 @@ from hfcache.reporting import (
     VerificationScope,
 )
 from hfcache.storage import read_model, write_model
-from hfcache.sync import ObjectIdentity
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -1023,7 +1022,7 @@ def estimate_verification(layout: ArchiveLayout) -> VerificationEstimate:
                 unreadable += 1
                 continue
             key = (
-                ObjectIdentity(device=info.st_dev, inode=info.st_ino)
+                ObjectIdentity(device=info.st_dev, inode=info.st_ino, size=info.st_size)
                 if item.target.share_reads
                 # A copy-published file is its own physical object even when
                 # another tree holds identical bytes, so it is keyed by where it

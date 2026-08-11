@@ -381,6 +381,7 @@ def test_a_real_revision_is_published_end_to_end(  # noqa: PLR0915 - one archive
         identity=identity,
         snapshot=snapshot,
         manifest=manifest,
+        hashed=hashed,
         staging=staging,
         publication_mode="hardlink",
         cache_root=layout.hub_cache,

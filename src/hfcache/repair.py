@@ -44,7 +44,7 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any, Final, final
 
 from hfcache.errors import IntegrityError, Problem, RetentionError
-from hfcache.hashing import sha256_file
+from hfcache.hashing import FileDigest, sha256_file, sha256_identified_file
 from hfcache.hub import TreeEntry, delete_cache_revision
 from hfcache.identity import (
     CommitSha,
@@ -306,12 +306,16 @@ def repair_revision(  # noqa: PLR0913, PLR0915 - §7.5's fifteen checkpoints, in
     )
 
     staging = create_staging(layout, transaction_id)
+    hashed_by_path = {entry.path: entry for entry in hashed.files}
     for entry in manifest.files:
+        evidence = hashed_by_path[entry.path]
         stage_file(
             snapshot / entry.path,
             staged_path(staging, entry.path),
             publication_mode=config.storage.publication_mode,
             cache_root=cache,
+            expected=FileDigest(digest=evidence.sha256, size=evidence.size),
+            expected_identity=evidence.object_identity,
         )
     pending = staging.manifest
     write_model(pending, manifest, mode=PUBLISHED_FILE_MODE, code="HFRET007", error=RetentionError)
@@ -471,7 +475,7 @@ def _verify_against_original(
     for entry in original.files:
         source = snapshot / entry.path
         try:
-            digest = sha256_file(source, error=RetentionError, code="HFRET006")
+            digest = sha256_identified_file(source, error=RetentionError, code="HFRET006")
         except RetentionError as error:
             problems.extend(error.problems)
             continue
@@ -492,7 +496,14 @@ def _verify_against_original(
             )
             continue
         hashed_bytes += digest.size
-        files.append(HashedFile(path=entry.path, sha256=digest.digest, size=digest.size))
+        files.append(
+            HashedFile(
+                path=entry.path,
+                sha256=digest.digest,
+                size=digest.size,
+                object_identity=digest.identity,
+            )
+        )
     if problems:
         raise RetentionError(problems)
     return HashedSnapshot(files=tuple(files), hashed_bytes=hashed_bytes, hashed_objects=len(files))

@@ -225,6 +225,20 @@ interpretations, including both carried-in items.
 - [x] SEL-001 Validate all operations with SELinux enforcing (2026-07-26, this commit — SELinux `Enforcing` throughout, `/srv/hfcache` carrying the normal `nfs_t` filesystem label (§23 item 2), and the services running in the **default** systemd service domain `unconfined_service_t` (item 3). Labels were fixed first, per item 6: every local path's *type* already matched the policy default, but the paths created at a shell carried `unconfined_u` where a system-installed file should carry `system_u`, so `restorecon -RF` was run over `/opt/hfcache`, `/etc/hfcache`, `/var/lib/hfcache`, and `/var/cache/hfcache` — 7 082 paths relabelled, and a second pass would relabel none. `install-release.sh` now uses `-RF` for the same reason. **Every item-4 path exercised on the real dataset:** sync with real downloads through the hardened unit, hashing, hardlink publication, atomic directory rename, the §7.4 **prune** — all ten checkpoints committed, both audit records written, the per-SHA reference removed, trash and quarantine empty — full verification, and `recover --dry-run`. Getting to a live prune took a real retention rotation, because `storage.maximum_revisions` is pinned to 5 by the schema (`HFCFG011`) and `AD-04` triggers a prune only from a *successful publication* beyond the maximum: four more real commits of `fixtures_ade20k` were published, the sixth publication pruned generation 1 automatically, and restoring `revision = "main"` re-downloaded and republished the pruned SHA as generation 7 — which pruned generation 2 in turn. That is §29 step 15's revision change and retention simulation, observed rather than simulated. Afterwards: `verify --full` read 23 unique objects across 6 revisions and reported `clean`; `status` exits `0`, not degraded, no outstanding failures, nothing unfinished. **Zero AVC denials** — no `type=AVC`, `USER_AVC`, or `SELINUX_ERR` record in `/var/log/audit/audit.log` and no `avc: denied` in the journal, for a boot that predates `HOST-004`, so the search covers every operation this session performed. No local policy module was created and none is needed (items 7-9), and nothing was weakened: no `setenforce 0`, no permissive domain, no allow rule, no boolean or fcontext customization. The exercise found three real defects — `SYNC-005`, `VER-007`, and decision 61's `RestrictSUIDSGID` incompatibility — which is what exercising is for)
 - [x] SEC-001 Validate optional systemd credential support (2026-07-26, this commit — §22.6 item 4's drop-in is `packaging/systemd/hfcache-sync.service.d/credential.conf.example`, shipped with the release, **not installed**, and carrying the exact `systemd-creds encrypt` recipe plus its acceptance checks. It was installed, exercised, and removed here, because a drop-in nobody has run is a document rather than a control. Evidence, all of it against a deliberately fake token: the ciphertext does not contain the plaintext; `systemd-analyze verify` clean with the drop-in; the credential arrives at `$CREDENTIALS_DIRECTORY/hf-token` mode `0440` and the application resolves it with source `systemd-credential` and **decrypts to exactly the right bytes**, compared by digest rather than printed. `--token-file` resolves with source `token-file` (item 2) and a token file this identity cannot read is `HFARG005` at exit `10`, reported *by shape* — "is unreadable: Permission denied" — never by content. With `hub.expected_account` set, `whoami` is called and the Hub's 401 becomes a failed `hub_identity` check at exit `20` before any mutation (item 5), which is the credential-swapped-by-mistake case caught before a scheduled run uses it. **Ambient Hub environment variables are ignored entirely:** with `HF_TOKEN` and `HUGGING_FACE_HUB_TOKEN` both set in the unit's environment and no credential supplied, `hub_argument` is exactly `False` — not `None` (T-07). And the secret persisted nowhere it could (item 3): zero occurrences in the archive, in `runs/`, in `config.toml`, in `/var/lib/hfcache`, in `/var/cache/hfcache`, in the release tree, and zero in the journal under either service unit, under any transient probe, or under uid 981. The only journal occurrences at all are `sudo`'s own audit records of the *searches* — uid 1000, session scope — which is the search looking at itself. Cleaned up afterwards with `shred`: the deployment is anonymous, `doctor` reads `credential: pass` (no token) and `hub_identity: skipped`)
 
+- [x] SYNC-006 Carry same-operation digest evidence through hardlink staging
+  (2026-08-10, this commit — a 10.17 TB ingestion exposed that publication
+  hashed the canonical cache once and then read every logical hardlink again,
+  while discarding the second result. Hashing now records transient
+  `(device, inode, size)` evidence from the same open descriptor as the digest;
+  hardlink staging re-proves source and destination identity and carries that
+  digest without another content read. Copy mode still hashes its distinct
+  landed inode, now comparing it with the ingestion digest rather than a fresh
+  source hash. A replaced source or unproven link is refused before rename and
+  cleaned from staging. Repair uses the same evidence but retains its required
+  final-locator re-verification. No durable schema or checkpoint changed;
+  targeted hashing, sync, publication, verification, and crash-injection tests
+  plus the full quality gate cover the change.)
+
 **Phase 7 complete (writer side).** The application is deployed, the archive is
 initialized and healthy, and every unit is installed, validated, and hardened
 with each setting tested. Six work packages beyond the plan's Phase 7 list were
@@ -2551,3 +2565,18 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     or `kill -USR1 1`); the denial is correct, nothing is weakened, the
     plugin always spawns onto pipes, and the operator docs say "pipe, don't
     redirect".
+
+93. **A hardlink carries same-operation content evidence only with exact object
+    identity** (2026-08-10, SYNC-006). The ingestion hash now obtains
+    `(device, inode, size)` from the descriptor whose bytes it reads and keeps
+    that identity only in memory. Publication may avoid rereading a hardlink
+    because the link is the same inode, but only after both source and landed
+    destination are re-proven against that evidence; any mismatch removes the
+    unproven entry and stops before rename. This saves one complete logical-byte
+    read — about 25 hours for the observed 10.65 TB repository — without
+    weakening `AD-18`. Copy mode is deliberately different: its destination is
+    a new inode, so it remains hashed and compared with the ingestion digest.
+    **Rejected:** merely deleting the second hash with no identity proof, which
+    would make a snapshot-path replacement publish bytes the manifest did not
+    describe. **Rejected:** persisting device or inode values, because they are
+    transient filesystem evidence and unsafe to reuse across runs.

@@ -320,13 +320,23 @@ hashed locally before publication. A previously computed digest is reused only
 when the object is proven to be the same physical inode as an already-verified
 retained publication with the same size.
 
+Within the same ingestion operation, the digest just computed may be carried
+through hardlink staging without reading the bytes a second time only when the
+source still has the exact `(device, inode, size)` identity observed by that
+hash and the staged destination is proven to be that same object. This is not
+cross-run digest reuse: the manifest still records `hashed = true`, because the
+operation read the bytes itself.
+
 **Rationale.** A cache path, an mtime, a prior-run inode number, an upstream Git
 SHA-1, or an opaque Xet identifier describes *provenance*, not the bytes
 currently on disk. Only reading the bytes proves the bytes.
 
 **Consequences.** Upstream-supplied digests are recorded as additional comparison
 values, never as substitutes. A hash or completeness failure prevents
-publication; it never becomes the new expected value.
+publication; it never becomes the new expected value. Hardlink publication
+proves object identity rather than re-hashing an inode whose bytes this same
+operation already read; copy publication still hashes the distinct landed
+object and compares it with the first-pass digest.
 
 ## 4. Non-goals
 
@@ -582,7 +592,11 @@ immediately after a crash. Each is directly testable.
   by the operation's approved cache root — `.store/hub` for normal ingestion, one
   `.store/repair/<transaction-id>/hub` for repair — and to be a regular file.
   Devices, sockets, FIFOs, dangling links, and paths escaping the root are
-  rejected.
+  rejected. Hardlink staging additionally proves after link creation that the
+  destination has the exact `(device, inode, size)` identity observed by this
+  operation's hash. A mismatch removes the unproven staging entry and stops
+  before publication; this transient identity is never written to a manifest or
+  journal.
 
 ### Derived state
 

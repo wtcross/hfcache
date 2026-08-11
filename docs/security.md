@@ -101,6 +101,12 @@ re-reads the retained archive against immutable manifests. A verification failur
 never rewrites the expected digest, never auto-prunes, and never re-downloads over
 the evidence (`AD-13`); it exits `40` and records findings.
 
+Hardlink staging does not re-read bytes the same ingestion operation just
+hashed. It carries that digest only after proving the current source and staged
+destination both match the hash pass's `(device, inode, size)` identity; a
+replacement or mismatch is `HFSYN005` and is never published. Copy mode lands a
+different inode and therefore still hashes and compares the destination.
+
 ### T-04 — Corrupt bytes are laundered into the expected value
 
 **Capability.** A naive repair implementation re-downloads a damaged revision and

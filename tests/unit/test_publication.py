@@ -15,12 +15,13 @@ import hashlib
 import os
 import stat
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 
 from hfcache.archive import initialize_archive
 from hfcache.errors import ExitCode, IntegrityError, SynchronizationError
+from hfcache.hashing import FileDigest, ObjectIdentity, sha256_file
 from hfcache.identity import TransactionId, new_transaction_id
 from hfcache.paths import ArchiveLayout
 from hfcache.publication import (
@@ -369,6 +370,24 @@ def test_copy_publication_costs_a_second_copy_of_every_byte():
 PAYLOAD = b"the bytes of one repository file\n"
 
 
+def _stage_file(
+    source: Path,
+    destination: Path,
+    *,
+    publication_mode: Literal["hardlink", "copy"],
+    cache_root: Path,
+) -> FileDigest:
+    """Stage with the transient evidence a real ingestion hash supplies."""
+    return stage_file(
+        source,
+        destination,
+        publication_mode=publication_mode,
+        cache_root=cache_root,
+        expected=sha256_file(source),
+        expected_identity=ObjectIdentity.of(source),
+    )
+
+
 @pytest.fixture
 def cached(cache_root) -> Path:
     """A blob reached through a snapshot symlink, the way the Hub cache lays it out."""
@@ -386,7 +405,7 @@ def test_a_staged_file_holds_the_bytes_it_came_from(layout, transaction, cached,
     paths = create_staging(layout, transaction)
     destination = staged_path(paths, "model.safetensors")
 
-    digest = stage_file(cached, destination, publication_mode=mode, cache_root=cache_root)
+    digest = _stage_file(cached, destination, publication_mode=mode, cache_root=cache_root)
 
     assert destination.read_bytes() == PAYLOAD
     assert digest.size == len(PAYLOAD)
@@ -399,10 +418,93 @@ def test_hardlink_mode_publishes_the_same_inode(layout, transaction, cached, cac
     paths = create_staging(layout, transaction)
     destination = staged_path(paths, "model.safetensors")
 
-    stage_file(cached, destination, publication_mode="hardlink", cache_root=cache_root)
+    _stage_file(cached, destination, publication_mode="hardlink", cache_root=cache_root)
 
     assert destination.stat().st_ino == cached.resolve().stat().st_ino
     assert destination.stat().st_nlink == 2
+
+
+def test_hardlink_staging_does_not_hash_the_same_inode_again(
+    layout, transaction, cached, cache_root, monkeypatch: pytest.MonkeyPatch
+):
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+    expected = sha256_file(cached)
+    expected_identity = ObjectIdentity.of(cached)
+
+    def unexpected_hash(*args, **kwargs):
+        message = "hardlink staging must carry the ingestion digest"
+        raise AssertionError(message)
+
+    monkeypatch.setattr("hfcache.publication.sha256_file", unexpected_hash)
+    landed = stage_file(
+        cached,
+        destination,
+        publication_mode="hardlink",
+        cache_root=cache_root,
+        expected=expected,
+        expected_identity=expected_identity,
+    )
+
+    assert landed == expected
+    assert destination.samefile(cached)
+
+
+def test_a_source_replaced_after_hashing_is_never_hardlinked(
+    layout, transaction, cached, cache_root
+):
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+    expected = sha256_file(cached)
+    expected_identity = ObjectIdentity.of(cached)
+    replacement = cache_root / "blobs" / "replacement"
+    replacement.write_bytes(b"x" * len(PAYLOAD))
+    cached.unlink()
+    cached.symlink_to(replacement)
+
+    with pytest.raises(SynchronizationError) as caught:
+        stage_file(
+            cached,
+            destination,
+            publication_mode="hardlink",
+            cache_root=cache_root,
+            expected=expected,
+            expected_identity=expected_identity,
+        )
+
+    assert codes(caught.value.problems) == ["HFSYN005"]
+    assert not destination.exists()
+
+
+def test_an_unproven_link_is_removed_after_the_link_call(
+    layout,
+    transaction,
+    cached,
+    cache_root,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    paths = create_staging(layout, transaction)
+    destination = staged_path(paths, "model.safetensors")
+    expected = sha256_file(cached)
+    expected_identity = ObjectIdentity.of(cached)
+
+    def copy_instead_of_link(source, landed, *, follow_symlinks):
+        assert follow_symlinks is True
+        Path(landed).write_bytes(Path(source).resolve().read_bytes())
+
+    monkeypatch.setattr("hfcache.publication.os.link", copy_instead_of_link)
+    with pytest.raises(SynchronizationError) as caught:
+        stage_file(
+            cached,
+            destination,
+            publication_mode="hardlink",
+            cache_root=cache_root,
+            expected=expected,
+            expected_identity=expected_identity,
+        )
+
+    assert codes(caught.value.problems) == ["HFSYN005"]
+    assert not destination.exists()
 
 
 def test_copy_mode_publishes_a_separate_inode_and_never_a_symlink(
@@ -411,7 +513,7 @@ def test_copy_mode_publishes_a_separate_inode_and_never_a_symlink(
     paths = create_staging(layout, transaction)
     destination = staged_path(paths, "model.safetensors")
 
-    stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
+    _stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
 
     assert destination.stat().st_ino != cached.resolve().stat().st_ino
     assert not destination.is_symlink(), "a cache symlink is resolved, never reproduced"
@@ -424,7 +526,7 @@ def test_staging_creates_the_parent_directories_it_needs(
     paths = create_staging(layout, transaction)
     destination = staged_path(paths, "nested/deep/model.safetensors")
 
-    stage_file(cached, destination, publication_mode=mode, cache_root=cache_root)
+    _stage_file(cached, destination, publication_mode=mode, cache_root=cache_root)
 
     assert destination.is_file()
 
@@ -439,7 +541,7 @@ def test_a_source_outside_the_cache_root_is_never_staged(
     destination = staged_path(paths, "model.safetensors")
 
     with pytest.raises(SynchronizationError) as caught:
-        stage_file(outside, destination, publication_mode=mode, cache_root=cache_root)
+        _stage_file(outside, destination, publication_mode=mode, cache_root=cache_root)
 
     assert codes(caught.value.problems) == ["HFSYN004"]
     assert not destination.exists()
@@ -458,7 +560,7 @@ def test_an_unavailable_hardlink_is_never_downgraded_to_a_copy(
     destination = staged_path(paths, "model.safetensors")
 
     with pytest.raises(SynchronizationError) as caught:
-        stage_file(cached, destination, publication_mode="hardlink", cache_root=cache_root)
+        _stage_file(cached, destination, publication_mode="hardlink", cache_root=cache_root)
 
     assert codes(caught.value.problems) == ["HFSYN005"]
     assert "AD-11" in caught.value.problems[0].message
@@ -478,7 +580,7 @@ def test_a_copy_that_lost_bytes_is_never_published(
     destination = staged_path(paths, "model.safetensors")
 
     with pytest.raises(SynchronizationError) as caught:
-        stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
+        _stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
 
     assert codes(caught.value.problems) == ["HFSYN005"]
     assert "never published" in caught.value.problems[0].message
@@ -496,7 +598,7 @@ def test_a_copy_that_cannot_be_written_leaves_no_partial_file(
     destination = staged_path(paths, "model.safetensors")
 
     with pytest.raises(SynchronizationError) as caught:
-        stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
+        _stage_file(cached, destination, publication_mode="copy", cache_root=cache_root)
 
     assert codes(caught.value.problems) == ["HFSYN005"]
     assert list(destination.parent.iterdir()) == [], "no temporary survives the failure"
