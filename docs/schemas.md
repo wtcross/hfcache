@@ -461,6 +461,9 @@ or reporting command.
 
 `invocation_mode` is `systemd` or `interactive`. `outcome` is `success`,
 `success_with_warnings`, or `failed`, and always agrees with `exit_code`.
+`success` carries no warnings and `success_with_warnings` carries at least one;
+`failed` may also retain non-fatal warnings observed before or alongside the
+error.
 
 Per-repository `status` is one of:
 
@@ -470,8 +473,15 @@ Per-repository `status` is one of:
 | `ref_moved_to_retained_revision` | Resolved SHA is already retained but was not current; `current.json` was atomically moved to it |
 | `published` | A new revision was downloaded, verified, and published |
 | `completed_with_warnings` | Published, with non-fatal warnings such as `HFDEP001` |
-| `failed` | The repository did not publish; other repositories may have continued |
+| `failed` | The repository operation did not complete; publication fields show if a new revision landed before a later retention failure; other repositories may have continued |
 | `disabled` | Present in configuration with `enabled = false`; reported for completeness, not processed |
+
+A failed result retains planning and completed-transfer facts known before the
+failure: its resolved SHA, estimate file count, cache reuse, and
+`downloaded_bytes` when the Hub transfer completed before hashing or publication
+failed. Run totals sum those per-repository counters across every final status;
+downloaded queue-ahead content is therefore reported even when it was not
+published in this run.
 
 `pruned` is `null` or `{ "commit_sha", "publication_generation", "logical_bytes" }`
 describing the revision this repository's successful publication rotated out.
@@ -760,4 +770,3 @@ so two runs that did the same work produce the same bytes.
 `blocked` is not a failure of recovery. It is recovery correctly refusing to
 resolve a state that two valid executions could both have produced
 (`docs/architecture.md` §7.9); the run exits `20` and changes nothing.
-

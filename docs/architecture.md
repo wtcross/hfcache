@@ -338,6 +338,37 @@ proves object identity rather than re-hashing an inode whose bytes this same
 operation already read; copy publication still hashes the distinct landed
 object and compares it with the first-pass digest.
 
+### AD-19 — Download ahead with one bounded producer
+
+**Decision.** When repository-error continuation is enabled, resolve and
+estimate the selected queue before transferring bytes, admit its aggregate
+capacity requirement, and use one background repository-download producer while
+the main thread hashes and publishes completed snapshots in configuration order.
+The producer passes the existing `sync.max_workers` budget into its one active
+Hub transfer. It is drained before the whole-run archive lock is released.
+Strict stop-on-error runs remain fully serial.
+
+**Rationale.** Local SHA-256 reads can occupy the NFS path for many hours while
+leaving WAN bandwidth idle. One producer overlaps those independent resources
+without multiplying Xet's internal concurrency or creating a second archive
+writer. Planning and aggregate admission before the first transfer prevent a
+queue from knowingly exceeding the configured reserve.
+
+**Consequences.** Multiple ordinary publication transactions may wait at
+`download_completed`; existing per-transaction recovery handles them
+independently and the canonical Hub cache remains resumable. Publication,
+retention generations, results, and final errors stay deterministic in
+configuration order. No worker may outlive the archive lock. Running several
+repository transfers concurrently is a separate resource-model change and is
+not implied by `max_workers`. Hub-cache mutation and retention's whole-cache
+scan are process-serialized, and queue-ahead retention is deferred until every
+downloaded snapshot has been consumed. Copy-mode publication also rechecks
+capacity and holds the allocation guard while writing, so its distinct-inode
+copy cannot race a download for space; hardlink staging needs no such pause.
+On an unexpected foreground exception, work that has not started is cancelled
+and the sole active transfer is joined before the exception releases the lock;
+the command never drains the untouched remainder merely because it is stopping.
+
 ## 4. Non-goals
 
 These are deliberately out of scope for version 1. Each is a bounded decision
@@ -688,6 +719,12 @@ across hosts, and no ordering guarantee between two separate renames.
 ### 7.3 Publication transaction
 
 `operation = "publication"`, one per repository per newly observed SHA.
+
+A continuation-enabled sync may have several such transactions open at
+checkpoint 2: one repository is being hashed or published while the single
+download producer fills a later repository's canonical cache. They remain
+independent transactions and the recovery matrix below applies to each one;
+there is no queue-wide durable state or commit point.
 
 | # | Checkpoint | Atomic act | Evidence |
 | --- | --- | --- | --- |

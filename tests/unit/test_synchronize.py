@@ -17,10 +17,13 @@ happened.
 import fcntl
 import json
 import os
+import shutil
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from threading import Event, Lock, Thread
+from typing import TYPE_CHECKING, Any, override
 
 import pytest
 from typer.testing import CliRunner
@@ -30,7 +33,13 @@ from hfcache.archive import initialize_archive
 from hfcache.cli import app
 from hfcache.config import ApplicationConfig, load_config
 from hfcache.credentials import ResolvedToken, TokenSource
-from hfcache.errors import ExitCode, IntegrityError, SynchronizationError
+from hfcache.errors import (
+    ExitCode,
+    IntegrityError,
+    RetentionError,
+    SafetyError,
+    SynchronizationError,
+)
 from hfcache.hub import HubClient
 from hfcache.identity import CommitSha, RepositoryIdentity, new_run_id, new_transaction_id
 from hfcache.locking import lock_path
@@ -343,16 +352,359 @@ def test_the_catalog_describes_both_repositories_as_managed(client, layout, conf
     assert all(entry.enabled for entry in catalog.repositories)
 
 
-def test_repositories_are_processed_in_configuration_order(client, layout, config, hub):
+def test_repositories_are_processed_in_configuration_order(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch
+):
     # Not selector order and not alphabetical: two runs naming the same
     # repositories must do the same things in the same sequence.
     reversed_selection = list(reversed(config.repositories))
+    original_download = HubClient.download
+    original_publish = sync_module.publish_revision
+    download_order: list[RepositoryIdentity] = []
+    publication_order: list[RepositoryIdentity] = []
+
+    def observed_download(self, identity, commit_sha, *, cache_dir, max_workers):
+        download_order.append(identity)
+        return original_download(
+            self,
+            identity,
+            commit_sha,
+            cache_dir=cache_dir,
+            max_workers=max_workers,
+        )
+
+    def observed_publish(*args, **kwargs):
+        publication_order.append(kwargs["identity"])
+        return original_publish(*args, **kwargs)
+
+    monkeypatch.setattr(HubClient, "download", observed_download)
+    monkeypatch.setattr(sync_module, "publish_revision", observed_publish)
 
     outcome = run(client, layout, config, selected=reversed_selection)
 
     # The *report* is sorted for readability; what matters is that both ran.
     assert len(outcome.report.repositories) == 2
+    assert download_order == [MODEL, DATASET]
+    assert publication_order == [MODEL, DATASET]
+
+
+def test_download_prefetch_overlaps_hashing_with_one_four_worker_transfer(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch
+):
+    """Hash A while the sole producer downloads B, never two snapshots at once."""
+    original_download = HubClient.download
+    original_tree = HubClient.tree
+    original_hash = sync_module.hash_snapshot
+    original_capacity = sync_module.require_capacity
+    first_tree_started = Event()
+    second_download_entered = Event()
+    second_download_completed = Event()
+    counter_lock = Lock()
+    active = 0
+    peak = 0
+    worker_budgets: list[int] = []
+    capacity_needs: list[int] = []
+
+    def observed_capacity(layout, storage, *, needed_bytes):
+        capacity_needs.append(needed_bytes)
+        return original_capacity(layout, storage, needed_bytes=needed_bytes)
+
+    def observed_download(self, identity, commit_sha, *, cache_dir, max_workers):
+        nonlocal active, peak
+        with counter_lock:
+            active += 1
+            peak = max(peak, active)
+            worker_budgets.append(max_workers)
+        try:
+            if identity == DATASET:
+                second_download_entered.set()
+                assert first_tree_started.wait(timeout=5), "main-thread tree read never started"
+            downloaded = original_download(
+                self,
+                identity,
+                commit_sha,
+                cache_dir=cache_dir,
+                max_workers=max_workers,
+            )
+            if identity == DATASET:
+                second_download_completed.set()
+            return downloaded
+        finally:
+            with counter_lock:
+                active -= 1
+
+    def observed_tree(self, identity, commit_sha):
+        if identity == MODEL:
+            assert second_download_entered.wait(timeout=5), "the producer did not run ahead"
+            first_tree_started.set()
+        return original_tree(self, identity, commit_sha)
+
+    def waiting_hash(snapshot, tree, *, identity, known=None):
+        if identity == MODEL:
+            assert second_download_completed.wait(timeout=5), "the next download never overlapped"
+        return original_hash(snapshot, tree, identity=identity, known=known)
+
+    monkeypatch.setattr(HubClient, "download", observed_download)
+    monkeypatch.setattr(HubClient, "tree", observed_tree)
+    monkeypatch.setattr(sync_module, "hash_snapshot", waiting_hash)
+    monkeypatch.setattr(sync_module, "require_capacity", observed_capacity)
+
+    outcome = run(client, layout, config)
+
+    assert outcome.exit_code == ExitCode.SUCCESS
+    assert peak == 1
+    assert worker_budgets == [4, 4]
+    logical = sum(len(payload) for payload in CONTENT.values())
+    assert capacity_needs == [logical * 2, logical, logical]
+
+
+def test_queue_capacity_is_admitted_in_aggregate_before_any_transfer(
+    client, layout, config, hub, monkeypatch: pytest.MonkeyPatch
+):
+    logical = sum(len(payload) for payload in CONTENT.values())
+    requested: list[int] = []
+
+    def aggregate_only(_layout, _storage, *, needed_bytes):
+        requested.append(needed_bytes)
+        if needed_bytes > logical:
+            message = "the whole queue does not fit"
+            raise SafetyError.single(message, code="HFMNT011")
+        return []
+
+    monkeypatch.setattr(sync_module, "require_capacity", aggregate_only)
+
+    outcome = run(client, layout, config)
+
+    assert requested == [logical * 2]
+    assert hub.downloads == []
+    assert set(statuses(outcome).values()) == {"failed"}
+    assert all(result.errors == ("HFMNT011",) for result in outcome.report.repositories)
+
+
+def test_aggregate_admission_includes_every_copy_publication(
+    client, layout, tmp_path, hub, monkeypatch: pytest.MonkeyPatch
+):
+    path = tmp_path / "copy.toml"
+    document = CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+        "minimum_free_space_gib = 0",
+        'publication_mode = "copy"\nminimum_free_space_gib = 0',
+    )
+    path.write_text(document, encoding="utf-8")
+    copy_config = load_config(path)
+    logical = sum(len(payload) for payload in CONTENT.values())
+    requested: list[int] = []
+
+    def refuse_aggregate(_layout, _storage, *, needed_bytes):
+        requested.append(needed_bytes)
+        message = "the copy queue does not fit"
+        raise SafetyError.single(message, code="HFMNT011")
+
+    monkeypatch.setattr(sync_module, "require_capacity", refuse_aggregate)
+
+    outcome = run(client, layout, copy_config)
+
+    # Two repositories, each needing one cache copy and one publication copy.
+    assert requested == [logical * 4]
+    assert hub.downloads == []
+    assert set(statuses(outcome).values()) == {"failed"}
+
+
+def test_copy_publication_rechecks_capacity_after_prefetch_before_staging_bytes(
+    client, layout, tmp_path, hub, monkeypatch: pytest.MonkeyPatch
+):
+    path = tmp_path / "copy-recheck.toml"
+    document = CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+        "minimum_free_space_gib = 0",
+        'publication_mode = "copy"\nminimum_free_space_gib = 0',
+    )
+    path.write_text(document, encoding="utf-8")
+    copy_config = load_config(path)
+    logical = sum(len(payload) for payload in CONTENT.values())
+    requested: list[int] = []
+    publications: list[RepositoryIdentity] = []
+    original_publish = sync_module.publish_revision
+
+    def changing_capacity(_layout, _storage, *, needed_bytes):
+        requested.append(needed_bytes)
+        if needed_bytes == logical:
+            message = "copy headroom disappeared after prefetch"
+            raise SafetyError.single(message, code="HFMNT011")
+        return []
+
+    def observed_publish(*args, **kwargs):
+        publications.append(kwargs["identity"])
+        return original_publish(*args, **kwargs)
+
+    monkeypatch.setattr(sync_module, "require_capacity", changing_capacity)
+    monkeypatch.setattr(sync_module, "publish_revision", observed_publish)
+
+    outcome = run(client, layout, copy_config)
+
+    assert requested[0] == logical * 4  # aggregate cache + copy publication admission
+    assert requested.count(logical * 2) == 2  # one guarded transfer recheck per repository
+    assert requested.count(logical) == 2  # immediate guarded copy checks
     assert len(hub.downloads) == 2
+    assert publications == []
+    assert set(statuses(outcome).values()) == {"failed"}
+    assert all(result.errors == ("HFMNT011",) for result in outcome.report.repositories)
+    assert list(layout.staging.iterdir()) == []
+
+
+def test_copy_publication_and_prefetch_never_overlap_cache_allocation(  # noqa: PLR0915
+    client, layout, tmp_path, monkeypatch: pytest.MonkeyPatch
+):
+    path = tmp_path / "copy-serialized.toml"
+    document = CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+        "minimum_free_space_gib = 0",
+        'publication_mode = "copy"\nminimum_free_space_gib = 0',
+    )
+    path.write_text(document, encoding="utf-8")
+    copy_config = load_config(path)
+    original_download = HubClient.download
+    original_hash = sync_module.hash_snapshot
+    original_publish = sync_module.publish_revision
+    model_hash_finished = Event()
+    dataset_download_active = Event()
+    release_download = Event()
+    publication_entered = Event()
+    counter_lock = Lock()
+    active_allocators = 0
+    peak_allocators = 0
+
+    def enter_allocator() -> None:
+        nonlocal active_allocators, peak_allocators
+        with counter_lock:
+            active_allocators += 1
+            peak_allocators = max(peak_allocators, active_allocators)
+
+    def leave_allocator() -> None:
+        nonlocal active_allocators
+        with counter_lock:
+            active_allocators -= 1
+
+    def held_download(self, identity, commit_sha, *, cache_dir, max_workers):
+        enter_allocator()
+        try:
+            if identity == DATASET:
+                assert model_hash_finished.wait(timeout=5)
+                dataset_download_active.set()
+                assert release_download.wait(timeout=5)
+            return original_download(
+                self,
+                identity,
+                commit_sha,
+                cache_dir=cache_dir,
+                max_workers=max_workers,
+            )
+        finally:
+            leave_allocator()
+
+    def observed_hash(snapshot, tree, *, identity, known=None):
+        hashed = original_hash(snapshot, tree, identity=identity, known=known)
+        if identity == MODEL:
+            model_hash_finished.set()
+            assert dataset_download_active.wait(timeout=5)
+        return hashed
+
+    def observed_publish(*args, **kwargs):
+        publication_entered.set()
+        enter_allocator()
+        try:
+            return original_publish(*args, **kwargs)
+        finally:
+            leave_allocator()
+
+    monkeypatch.setattr(HubClient, "download", held_download)
+    monkeypatch.setattr(sync_module, "hash_snapshot", observed_hash)
+    monkeypatch.setattr(sync_module, "publish_revision", observed_publish)
+    outcomes: list[Any] = []
+    failures: list[BaseException] = []
+
+    def execute() -> None:
+        try:
+            outcomes.append(run(client, layout, copy_config))
+        except BaseException as error:  # noqa: BLE001 - transfer a thread failure to pytest
+            failures.append(error)
+
+    worker = Thread(target=execute, daemon=True)
+    worker.start()
+    assert dataset_download_active.wait(timeout=5)
+    assert not publication_entered.wait(timeout=0.2)
+    release_download.set()
+    worker.join(timeout=10)
+
+    assert not worker.is_alive()
+    assert failures == []
+    assert len(outcomes) == 1
+    assert outcomes[0].exit_code == ExitCode.SUCCESS
+    assert peak_allocators == 1
+
+
+def test_same_sha_prefetch_is_consumed_before_any_global_retention(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch
+):
+    """Pruning A cannot remove the complete same-SHA snapshot queued for B."""
+    published: list[RepositoryIdentity] = []
+    retained: list[RepositoryIdentity] = []
+    original_publish = sync_module.publish_revision
+
+    def observed_publish(*args, **kwargs):
+        identity = kwargs["identity"]
+        outcome = original_publish(*args, **kwargs)
+        published.append(identity)
+        return outcome
+
+    def globally_delete_commit(cache_layout, identity, _config, *, run_id):
+        del run_id
+        assert published == [MODEL, DATASET]
+        retained.append(identity)
+        for snapshot in cache_layout.hub_cache.glob(f"*/snapshots/{SHA_A}"):
+            shutil.rmtree(snapshot)
+
+    monkeypatch.setattr(sync_module, "publish_revision", observed_publish)
+    monkeypatch.setattr(sync_module, "_apply_retention", globally_delete_commit)
+
+    outcome = run(client, layout, config)
+
+    assert statuses(outcome) == {MODEL.selector: "published", DATASET.selector: "published"}
+    assert retained == [MODEL, DATASET]
+    assert list(layout.hub_cache.glob(f"*/snapshots/{SHA_A}")) == []
+    for identity in (MODEL, DATASET):
+        reference = read_reference(
+            layout, RepositoryLayout(archive=layout, identity=identity).current_ref
+        )
+        assert (layout.published / str(reference.tree) / "weights.bin").read_bytes() == CONTENT[
+            "weights.bin"
+        ]
+
+
+def test_a_deferred_prune_failure_reports_failure_but_keeps_the_publication(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch
+):
+    def fail_model_prune(_layout, identity, _config, *, run_id):
+        del run_id
+        if identity == MODEL:
+            message = "the deferred prune stopped"
+            raise RetentionError.single(message, code="HFRET002")
+
+    monkeypatch.setattr(sync_module, "_apply_retention", fail_model_prune)
+
+    outcome = run(client, layout, config)
+
+    assert outcome.exit_code == ExitCode.RETENTION
+    assert statuses(outcome) == {MODEL.selector: "failed", DATASET.selector: "published"}
+    model = next(
+        result for result in outcome.report.repositories if result.repository_id == MODEL.id
+    )
+    logical = sum(len(payload) for payload in CONTENT.values())
+    assert model.errors == ("HFRET002",)
+    assert model.downloaded_bytes == logical
+    assert model.hashed_bytes == logical
+    assert model.publication_id is not None
+    assert model.publication_generation == 1
+    assert model.resolved_commit_sha == SHA_A
+    assert model.pruned is None
+    assert RepositoryLayout(archive=layout, identity=MODEL).current_ref.is_file()
 
 
 def test_a_disabled_repository_is_reported_rather_than_omitted(client, layout, tmp_path):
@@ -504,6 +856,147 @@ def test_a_repository_that_fails_is_recorded_and_the_run_continues(client, layou
     assert statuses(outcome)[DATASET.selector] == "published"
 
 
+def test_an_estimate_failure_stays_with_its_repository_and_queues_later_work(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch
+):
+    original = HubClient.estimate
+
+    def refuse_first(self, identity, commit_sha, *, cache_dir, max_workers):
+        if identity == MODEL:
+            message = "model estimate failed"
+            raise SynchronizationError.single(message, code="HFHUB009")
+        return original(
+            self,
+            identity,
+            commit_sha,
+            cache_dir=cache_dir,
+            max_workers=max_workers,
+        )
+
+    monkeypatch.setattr(HubClient, "estimate", refuse_first)
+
+    outcome = run(client, layout, config)
+
+    assert statuses(outcome) == {MODEL.selector: "failed", DATASET.selector: "published"}
+    failed = next(
+        result for result in outcome.report.repositories if result.repository_id == MODEL.id
+    )
+    assert failed.errors == ("HFHUB009",)
+
+
+def test_a_prefetch_download_failure_does_not_abandon_the_remaining_queue(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch
+):
+    original = HubClient.download
+
+    def refuse_first(self, identity, commit_sha, *, cache_dir, max_workers):
+        if identity == MODEL:
+            message = "model transfer failed"
+            raise SynchronizationError.single(message, code="HFHUB009")
+        return original(
+            self,
+            identity,
+            commit_sha,
+            cache_dir=cache_dir,
+            max_workers=max_workers,
+        )
+
+    monkeypatch.setattr(HubClient, "download", refuse_first)
+
+    outcome = run(client, layout, config)
+
+    assert statuses(outcome) == {MODEL.selector: "failed", DATASET.selector: "published"}
+    failed = next(result for result in outcome.report.repositories if result.status == "failed")
+    assert failed.errors == ("HFHUB009",)
+    assert list(layout.staging.iterdir()) == []
+
+
+def test_an_interrupt_finishes_the_active_download_and_cancels_the_pending_queue(
+    client, layout, tmp_path, hub, monkeypatch: pytest.MonkeyPatch
+):
+    third = RepositoryIdentity.of("model", "organization/third-model")
+    path = tmp_path / "three-repositories.toml"
+    path.write_text(
+        CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0)
+        + '\n[[repositories]]\nid = "organization/third-model"\ntype = "model"\n',
+        encoding="utf-8",
+    )
+    three_repositories = load_config(path)
+    hub.heads[third.selector] = SHA_A
+    original_download = HubClient.download
+    second_started = Event()
+    release_second = Event()
+    seen: list[RepositoryIdentity] = []
+    shutdown_calls: list[tuple[bool, bool]] = []
+
+    def held_download(self, identity, commit_sha, *, cache_dir, max_workers):
+        seen.append(identity)
+        if identity == DATASET:
+            second_started.set()
+            assert release_second.wait(timeout=5), "interrupt shutdown did not release the writer"
+        return original_download(
+            self,
+            identity,
+            commit_sha,
+            cache_dir=cache_dir,
+            max_workers=max_workers,
+        )
+
+    class ObservedExecutor(ThreadPoolExecutor):
+        @override
+        def shutdown(self, wait: bool = True, *, cancel_futures: bool = False) -> None:
+            shutdown_calls.append((wait, cancel_futures))
+            if cancel_futures:
+                # Cancel the third future while the second is deterministically
+                # active, then let that sole cache writer complete and join it.
+                super().shutdown(wait=False, cancel_futures=True)
+                release_second.set()
+                if wait:
+                    super().shutdown(wait=True)
+                return
+            super().shutdown(wait=wait)
+
+    def interrupt_hash(_snapshot, _tree, *, identity, known=None):
+        del identity, known
+        assert second_started.wait(timeout=5), "the next transfer never became active"
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(HubClient, "download", held_download)
+    monkeypatch.setattr(sync_module, "ThreadPoolExecutor", ObservedExecutor)
+    monkeypatch.setattr(sync_module, "hash_snapshot", interrupt_hash)
+
+    with pytest.raises(KeyboardInterrupt):
+        run(client, layout, three_repositories)
+
+    assert shutdown_calls == [(True, True)]
+    assert seen == [MODEL, DATASET]
+
+
+def test_a_download_completed_before_hash_failure_is_counted_in_the_report(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch
+):
+    original = sync_module.hash_snapshot
+    logical = sum(len(payload) for payload in CONTENT.values())
+
+    def refuse_model_hash(snapshot, tree, *, identity, known=None):
+        if identity == MODEL:
+            message = "model hash failed"
+            raise SynchronizationError.single(message, code="HFSYN009")
+        return original(snapshot, tree, identity=identity, known=known)
+
+    monkeypatch.setattr(sync_module, "hash_snapshot", refuse_model_hash)
+
+    outcome = run(client, layout, config)
+
+    failed = next(result for result in outcome.report.repositories if result.status == "failed")
+    assert failed.repository_id == MODEL.id
+    assert failed.downloaded_bytes == logical
+    assert failed.resolved_commit_sha == SHA_A
+    assert outcome.report.totals.downloaded_bytes == logical * 2
+    assert statuses(outcome)[DATASET.selector] == "published"
+    assert list(layout.staging.iterdir()) == []
+
+
 def test_a_failed_transaction_is_closed_as_failed(client, layout, config, hub):
     # The journal has to say what happened: an open journal blocks the next run
     # (`TX-07`), and a run that failed for a reason the archive already knows
@@ -551,6 +1044,44 @@ def test_a_run_that_may_not_continue_stops_at_the_first_failure(client, layout, 
     outcome = run(client, layout, strict)
 
     # The dataset is never reached, so it has no entry at all.
+    assert list(statuses(outcome)) == [MODEL.selector]
+
+
+def test_strict_mode_never_prefetches_after_a_late_repository_failure(
+    client, layout, tmp_path, monkeypatch: pytest.MonkeyPatch
+):
+    path = tmp_path / "strict-hash.toml"
+    path.write_text(
+        CONFIG.format(root=layout.root, archive_id=ARCHIVE_ID, reserve_gib=0).replace(
+            "lock_wait_seconds = 0",
+            "lock_wait_seconds = 0\ncontinue_on_repository_error = false",
+        ),
+        encoding="utf-8",
+    )
+    strict = load_config(path)
+    original_download = HubClient.download
+    seen: list[RepositoryIdentity] = []
+
+    def observed_download(self, identity, commit_sha, *, cache_dir, max_workers):
+        seen.append(identity)
+        return original_download(
+            self,
+            identity,
+            commit_sha,
+            cache_dir=cache_dir,
+            max_workers=max_workers,
+        )
+
+    def refuse_hash(_snapshot, _tree, *, identity, known=None):
+        message = f"{identity.selector} hash failed"
+        raise SynchronizationError.single(message, code="HFSYN009")
+
+    monkeypatch.setattr(HubClient, "download", observed_download)
+    monkeypatch.setattr(sync_module, "hash_snapshot", refuse_hash)
+
+    outcome = run(client, layout, strict)
+
+    assert seen == [MODEL]
     assert list(statuses(outcome)) == [MODEL.selector]
 
 
@@ -755,23 +1286,34 @@ def test_a_run_leaves_the_plan_section_24_event_trail_on_stderr(config_file: Pat
     result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
 
     assert result.exit_code == ExitCode.SUCCESS
-    events = [
-        line.split(" ", 1)[0].removeprefix("event=")
-        for line in result.stderr.splitlines()
-        if line.startswith("event=")
-    ]
-    assert events == [
-        "run.started",
-        "repository.resolved",
-        "download.started",
-        "download.completed",
-        "publication.completed",
-        "repository.resolved",
-        "download.started",
-        "download.completed",
-        "publication.completed",
-        "run.completed",
-    ]
+    lines = [line for line in result.stderr.splitlines() if line.startswith("event=")]
+    events = [line.split(" ", 1)[0].removeprefix("event=") for line in lines]
+    assert events[0] == "run.started"
+    assert events[-1] == "run.completed"
+
+    # Publication and the next download deliberately overlap, so their global
+    # interleaving is scheduler-dependent.  Each repository's causal sequence
+    # remains fixed and readable.
+    for identity in (MODEL, DATASET):
+        per_repository = [
+            line.split(" ", 1)[0].removeprefix("event=")
+            for line in lines
+            if f"repository={identity.selector}" in line
+        ]
+        assert per_repository == [
+            "repository.resolved",
+            "repository.queued",
+            "download.started",
+            "download.completed",
+            "hash.started",
+            "hash.completed",
+            "publication.completed",
+        ]
+
+    completed = next(line for line in lines if line.startswith("event=hash.completed"))
+    assert "hashed_objects=" in completed
+    assert "hashed_bytes=" in completed
+    assert "reused_digests=" in completed
 
 
 @pytest.mark.usefixtures("_wired")
@@ -1738,6 +2280,25 @@ def test_an_undeclared_dependency_warns_and_still_exits_zero(client, layout, con
     assert "HFDEP001" in result.warnings
     assert outcome.exit_code == ExitCode.SUCCESS
     assert outcome.report.outcome == "success_with_warnings"
+
+
+def test_a_warning_is_preserved_when_another_repository_fails(client, layout, config, hub):
+    hub.revisions[SHA_A] = {
+        **CONTENT,
+        "README.md": b"---\nbase_model: meta-llama/Llama-3.1-8B\n---\n\n# A model\n",
+    }
+    del hub.heads[DATASET.selector]
+
+    outcome = run(client, layout, config)
+
+    assert outcome.exit_code == ExitCode.SYNC
+    assert outcome.report.outcome == "failed"
+    assert statuses(outcome) == {
+        MODEL.selector: "completed_with_warnings",
+        DATASET.selector: "failed",
+    }
+    assert "HFDEP001" in outcome.report.warnings
+    assert outcome.report.errors
 
 
 def test_the_dependency_is_written_into_the_immutable_manifest(client, layout, config, hub):

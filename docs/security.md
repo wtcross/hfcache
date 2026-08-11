@@ -219,6 +219,17 @@ Xet transfer cache is pinned to `/var/cache/hfcache/xet` on local disk, its peak
 usage is reported in every run report, and exceeding its advisory ceiling warns
 `HFWRN009`. A failed or aborted run never deletes a retained revision (`TX-06`).
 
+A continuation-enabled queue is admitted against its aggregate download and
+copy-publication requirement before the first transfer, then each transfer
+rechecks capacity immediately before it starts. Only one repository transfer is
+active, so `sync.max_workers` remains the global Hub worker budget rather than
+being multiplied by queue depth. The producer is drained before the archive
+lock is released, preventing an unowned background writer.
+Cache transfers and retention's whole-cache scan are process-serialized, and
+queue-ahead retention waits until every downloaded snapshot has been consumed.
+Copy publication rechecks space and holds the same allocation guard through
+staging, so a concurrent download cannot consume the headroom the copy proved.
+
 ### T-12 — An automated repair destroys good data
 
 **Capability.** Recovery logic encounters an ambiguous state and picks a

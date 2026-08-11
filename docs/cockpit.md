@@ -188,6 +188,12 @@ structured `event=` lines. The vocabulary is closed (`docs/plan.md` §24;
 does not know rather than failing on them. Progress is checkpoint-grained by
 design; the UI does not invent percentages the events do not carry.
 
+Queue-ahead syncs expose distinct repository states through
+`repository.queued`, `download.started`, `download.completed`, `hash.started`,
+`hash.completed`, and `publication.completed`. The latest-per-repository view
+therefore distinguishes idle WAN because local hashing is active from a stalled
+download, without claiming byte-level progress the application has not emitted.
+
 Before offering any mutating action the UI reads `is-active` for both
 services and reflects the single-writer reality (`CP-10`); it never polls the
 lock file itself.

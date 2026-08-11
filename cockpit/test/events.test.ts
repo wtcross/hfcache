@@ -42,8 +42,16 @@ test('non-logfmt journal lines are ignored', () => {
 });
 
 test('the vocabulary is the closed §24 set', () => {
-    assert.equal(EVENTS.length, 13);
-    for (const name of ['run.started', 'preflight.failed', 'publication.completed', 'run.completed']) {
+    assert.equal(EVENTS.length, 16);
+    for (const name of [
+        'run.started',
+        'preflight.failed',
+        'repository.queued',
+        'hash.started',
+        'hash.completed',
+        'publication.completed',
+        'run.completed',
+    ]) {
         assert.ok((EVENTS as readonly string[]).includes(name), name);
     }
 });

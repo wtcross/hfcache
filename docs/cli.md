@@ -245,6 +245,16 @@ new unique content, detect dependencies, write the manifest, build staging, rena
 it into place, publish the manifest, publish the per-SHA reference, replace
 `current.json`, rebuild the catalog, apply retention.
 
+With repository-error continuation enabled, resolution, estimation, and an
+aggregate capacity gate cover the selected queue before its first download.
+One background repository transfer may then run ahead while the main thread
+hashes and publishes earlier completed snapshots; both transfer and publication
+remain in configuration order, and the command drains the producer before
+returning. Retention is applied after every downloaded snapshot has been
+consumed, so its whole-cache scan cannot remove a queued revision with the same
+commit SHA in another repository. Stop-on-error mode retains the fully serial
+sequence.
+
 Reconciliation happens under the lock and **before the first Hub request**
 (`TX-07`): unfinished transaction journals are resolved, and one that asked for an
 operator stops the run at `20` with nothing downloaded and nothing changed. The
@@ -413,7 +423,7 @@ stdout only without `--json`; logs and progress always go to stderr. This means
 | `schema_version` | `1`; independent of the durable schema versions in `docs/schemas.md` |
 | `command` | Full command path, e.g. `sync`, `archive init`, `verify --full` |
 | `run_id` | Correlates the envelope with the durable run report and every log line |
-| `outcome` | `success` \| `success_with_warnings` \| `failed`; always agrees with `exit_code` |
+| `outcome` | `success` \| `success_with_warnings` \| `failed`; always agrees with `exit_code`; a failed envelope may also retain warnings |
 | `data` | Command-specific payload (§4.1) |
 | `warnings`, `errors` | Arrays of `{ "code", "repository", "message", "context" }`; `repository` is `null` for archive-level entries |
 

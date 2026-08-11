@@ -162,6 +162,15 @@ retired_instance_grace_hours = 168
 | `verification.lock_wait_seconds` | int | `86400` | `0 <= n <= 604800` |
 | `repair.retired_instance_grace_hours` | int | `168` | `168 <= n <= 8760` |
 
+`sync.max_workers` is the file-worker budget passed to the one active Hub
+repository transfer. Sync never multiplies it by downloading two repositories
+at once. With `continue_on_repository_error = true`, that one producer may
+download later admitted repositories while the main thread hashes and publishes
+an earlier one. With `false`, repositories remain fully serial so a failure
+cannot contact or mutate a later repository before the command stops. Copy-mode
+staging temporarily pauses cache transfers because both allocate dataset space;
+hardlink staging does not.
+
 The two `lock_wait_seconds` values are deliberately asymmetric. A scheduled sync
 waits one hour and then gives up, because the next timer firing is cheap. A
 quarterly verification waits 24 hours, because a legitimately long sync should

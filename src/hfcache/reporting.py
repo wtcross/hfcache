@@ -137,7 +137,9 @@ class Envelope(DurableModel):
         if succeeded != (self.outcome in _SUCCESSFUL_OUTCOMES):
             message = f"outcome {self.outcome!r} contradicts exit_code {self.exit_code}"
             raise ValueError(message)
-        if (self.outcome == "success_with_warnings") != bool(self.warnings):
+        if self.outcome != "failed" and (
+            (self.outcome == "success_with_warnings") != bool(self.warnings)
+        ):
             message = "success_with_warnings is reported exactly when warnings were recorded"
             raise ValueError(message)
         if self.outcome == "failed" and not self.errors:
@@ -298,7 +300,9 @@ class RunEnvelope(VersionedModel):
                 f"the same statement in two forms and automation reads both"
             )
             raise ValueError(message)
-        if (self.outcome == "success_with_warnings") != bool(self.warnings):
+        if self.outcome != "failed" and (
+            (self.outcome == "success_with_warnings") != bool(self.warnings)
+        ):
             message = "success_with_warnings is reported exactly when warnings were recorded"
             raise ValueError(message)
         return self

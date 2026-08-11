@@ -297,6 +297,23 @@ def test_success_with_warnings_requires_warnings():
         envelope(outcome="success_with_warnings")
 
 
+def test_success_cannot_hide_warnings():
+    with pytest.raises(ValueError, match="exactly when warnings"):
+        envelope(warnings=(EnvelopeProblem(code="HFDEP001", message="dependency"),))
+
+
+def test_a_failed_envelope_preserves_warnings_alongside_errors():
+    result = envelope(
+        exit_code=30,
+        outcome="failed",
+        errors=(EnvelopeProblem(code="HFHUB004", message="Hub failure"),),
+        warnings=(EnvelopeProblem(code="HFDEP001", message="undeclared dependency"),),
+    )
+
+    assert result.errors[0].code == "HFHUB004"
+    assert result.warnings[0].code == "HFDEP001"
+
+
 def test_warnings_do_not_make_an_envelope_fail():
     result = envelope(
         outcome="success_with_warnings",

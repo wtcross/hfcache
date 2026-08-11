@@ -15,8 +15,11 @@ that actually landed (`AD-18`). The two are compared here precisely so that a
 disagreement stops the revision rather than being published as fact.
 """
 
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from threading import Lock
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal, final
 
@@ -78,6 +81,9 @@ from hfcache.retention import apply_prune, plan_prune
 from hfcache.storage import fsync_directory, read_model, write_model
 from hfcache.taxonomy import aggregate_exit_code
 from hfcache.transactions import Transaction, open_transaction
+
+_CACHE_MUTATION_LOCK: Final = Lock()
+"""Serialize cache writes/scans and copy-mode publication allocation."""
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -817,6 +823,37 @@ class RepositoryOutcome:
     manifest: RevisionManifest | None = None
 
 
+@final
+@dataclass(frozen=True, slots=True)
+class RepositoryPlan:
+    """An immutable revision admitted for download during this run.
+
+    This is deliberately process-local.  Durable recovery remains the normal
+    publication journal plus the native Hub cache; a queue entry is intent, not
+    a filesystem fact, and therefore does not belong in either durable format.
+    """
+
+    estimate: DownloadEstimate
+    facts: RepositoryFacts
+    identity: RepositoryIdentity
+    repository: RepositoryConfig
+    started: datetime
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class DownloadedRepository:
+    """A locally complete snapshot whose publication transaction stays open."""
+
+    download_completed: datetime
+    download_started: datetime
+    plan: RepositoryPlan
+    snapshot: Path
+    staging: StagingPaths
+    transaction: Transaction
+    warnings: tuple[Problem, ...] = ()
+
+
 def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to run
     client: HubClient,
     layout: ArchiveLayout,
@@ -839,6 +876,41 @@ def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to
     the caller's, because it is a policy question — `sync.continue_on_repository_error`
     — and this function is where the work is, not where the policy is.
     """
+    planned = _plan_repository(client, layout, repository, config)
+    if isinstance(planned, RepositoryOutcome):
+        return planned
+
+    warnings = tuple(
+        require_capacity(layout, config.storage, needed_bytes=_required_bytes(planned, config))
+    )
+    _emit_capacity(planned, config)
+    _emit_queued(planned)
+    downloaded = _download_repository(
+        client,
+        layout,
+        planned,
+        config,
+        run_id=run_id,
+        admitted_warnings=warnings,
+        recheck_capacity=False,
+    )
+    return _finish_repository(
+        client,
+        layout,
+        downloaded,
+        config,
+        configured=configured,
+        run_id=run_id,
+    )
+
+
+def _plan_repository(
+    client: HubClient,
+    layout: ArchiveLayout,
+    repository: RepositoryConfig,
+    config: ApplicationConfig,
+) -> RepositoryPlan | RepositoryOutcome:
+    """Resolve and cost one repository without mutating cache or publication state."""
     identity = RepositoryIdentity.from_config(repository)
     started = _now()
     facts = client.repository(identity, repository.revision)
@@ -865,18 +937,57 @@ def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to
         cache_dir=layout.hub_cache,
         max_workers=config.sync.max_workers,
     )
-    needed = estimate.new_bytes + projected_publication_bytes(
-        estimate.logical_bytes, publication_mode=config.storage.publication_mode
+    return RepositoryPlan(
+        estimate=estimate,
+        facts=facts,
+        identity=identity,
+        repository=repository,
+        started=started,
     )
-    warnings = require_capacity(layout, config.storage, needed_bytes=needed)
+
+
+def _required_bytes(plan: RepositoryPlan, config: ApplicationConfig) -> int:
+    """Cache plus publication bytes this unresolved revision can consume."""
+    return plan.estimate.new_bytes + projected_publication_bytes(
+        plan.estimate.logical_bytes, publication_mode=config.storage.publication_mode
+    )
+
+
+def _emit_capacity(plan: RepositoryPlan, config: ApplicationConfig) -> None:
+    """Keep the existing one-line capacity evidence for each repository."""
     emit(
         "capacity.evaluated",
-        repository=identity.selector,
-        needed_bytes=needed,
-        new_bytes=estimate.new_bytes,
-        cached_bytes=estimate.cached_bytes,
-        logical_bytes=estimate.logical_bytes,
+        repository=plan.identity.selector,
+        needed_bytes=_required_bytes(plan, config),
+        new_bytes=plan.estimate.new_bytes,
+        cached_bytes=plan.estimate.cached_bytes,
+        logical_bytes=plan.estimate.logical_bytes,
     )
+
+
+def _emit_queued(plan: RepositoryPlan) -> None:
+    """Report an admitted immutable revision before its transfer can start."""
+    emit(
+        "repository.queued",
+        repository=plan.identity.selector,
+        commit_sha=plan.facts.commit_sha,
+        new_bytes=plan.estimate.new_bytes,
+        file_count=plan.estimate.file_count,
+    )
+
+
+def _download_repository(  # noqa: PLR0913 - queue admission and §7.3 identity
+    client: HubClient,
+    layout: ArchiveLayout,
+    plan: RepositoryPlan,
+    config: ApplicationConfig,
+    *,
+    run_id: RunId,
+    admitted_warnings: Sequence[Problem] = (),
+    recheck_capacity: bool,
+) -> DownloadedRepository:
+    """Download one queue entry; only one producer calls this at a time."""
+    warnings = list(admitted_warnings)
 
     transaction_id = new_transaction_id()
     transaction = open_transaction(
@@ -886,43 +997,102 @@ def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to
         run_id=run_id,
         archive_id=config.storage.archive_id,
         config_fingerprint=config.fingerprint(),
-        repository_id=identity.id,
-        repository_type=identity.type,
-        commit_sha=facts.commit_sha,
+        repository_id=plan.identity.id,
+        repository_type=plan.identity.type,
+        commit_sha=plan.facts.commit_sha,
     )
     try:
-        return _ingest(
-            client,
-            layout,
-            transaction,
-            repository=repository,
-            config=config,
-            identity=identity,
-            facts=facts,
-            estimate=estimate,
-            started=started,
-            configured=configured,
-            warnings=warnings,
-            run_id=run_id,
+        staging = create_staging(layout, transaction_id)
+        transaction.checkpoint(
+            "staging_created", staging_path=str(layout.archive_relative(staging.directory))
+        )
+        with _CACHE_MUTATION_LOCK:
+            if recheck_capacity:
+                warnings.extend(
+                    require_capacity(
+                        layout,
+                        config.storage,
+                        needed_bytes=_required_bytes(plan, config),
+                    )
+                )
+            download_started = _now()
+            emit(
+                "download.started",
+                repository=plan.identity.selector,
+                commit_sha=plan.facts.commit_sha,
+                new_bytes=plan.estimate.new_bytes,
+                file_count=plan.estimate.file_count,
+            )
+            client.download(
+                plan.identity,
+                plan.facts.commit_sha,
+                cache_dir=layout.hub_cache,
+                max_workers=config.sync.max_workers,
+            )
+            snapshot = client.verify_local(
+                plan.identity, plan.facts.commit_sha, cache_dir=layout.hub_cache
+            )
+        download_completed = _now()
+        transaction.checkpoint(
+            "download_completed",
+            commit_sha=plan.facts.commit_sha,
+            downloaded_bytes=plan.estimate.new_bytes,
+        )
+        emit(
+            "download.completed",
+            repository=plan.identity.selector,
+            commit_sha=plan.facts.commit_sha,
+            downloaded_bytes=plan.estimate.new_bytes,
+            seconds=round((download_completed - download_started).total_seconds(), 3),
         )
     except HfcacheError as error:
-        transaction.fail(error.problems[0].code, error.problems[0].message)
-        # §7.3's "Before 5 → roll back", performed by the command that knows it
-        # failed rather than left for a recovery that will never look. A journal
-        # closed `failed` is *resolved*, so `open_journals` skips it and
-        # `plan_recovery` never proposes a remedy for the staging it left — while
-        # `reconcile_storage` goes on reporting that directory as unfinished work
-        # and warns `HFWRN004` about it once it ages. That is decision 56's
-        # problem in the failure path, and this is the same answer.
-        #
-        # Only before the rename. At or after checkpoint 5 a tree is published
-        # and the staged manifest is the only thing that can validate it (§7.3),
-        # so it is preserved — a resolved journal past that point is a state an
-        # operator has to look at, and deleting its evidence first would be the
-        # wrong help.
-        if not _tree_was_renamed(transaction):
-            discard_staging(layout, transaction_id)
+        _fail_publication(layout, transaction, error)
         raise
+
+    return DownloadedRepository(
+        download_completed=download_completed,
+        download_started=download_started,
+        plan=plan,
+        snapshot=snapshot,
+        staging=staging,
+        transaction=transaction,
+        warnings=tuple(warnings),
+    )
+
+
+def _finish_repository(  # noqa: PLR0913 - the downloaded transaction's collaborators
+    client: HubClient,
+    layout: ArchiveLayout,
+    downloaded: DownloadedRepository,
+    config: ApplicationConfig,
+    *,
+    configured: Mapping[str, RepositoryConfig],
+    run_id: RunId,
+    defer_retention: bool = False,
+) -> RepositoryOutcome:
+    """Hash and publish a complete prefetched snapshot on the main thread."""
+    try:
+        return _finish_ingest(
+            client,
+            layout,
+            downloaded,
+            config,
+            configured=configured,
+            run_id=run_id,
+            defer_retention=defer_retention,
+        )
+    except HfcacheError as error:
+        _fail_publication(layout, downloaded.transaction, error)
+        raise
+
+
+def _fail_publication(layout: ArchiveLayout, transaction: Transaction, error: HfcacheError) -> None:
+    """Close a known failure and discard only safe pre-rename staging."""
+    transaction.fail(error.problems[0].code, error.problems[0].message)
+    # §7.3's "Before 5 → roll back".  Past checkpoint 5 the staged manifest
+    # is recovery evidence for a tree that already became visible.
+    if not _tree_was_renamed(transaction):
+        discard_staging(layout, TransactionId(transaction.journal.transaction_id))
 
 
 def _tree_was_renamed(transaction: Transaction) -> bool:
@@ -932,56 +1102,29 @@ def _tree_was_renamed(transaction: Transaction) -> bool:
     )
 
 
-def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
+def _finish_ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
     client: HubClient,
     layout: ArchiveLayout,
-    transaction: Transaction,
-    *,
-    repository: RepositoryConfig,
+    downloaded: DownloadedRepository,
     config: ApplicationConfig,
-    identity: RepositoryIdentity,
-    facts: RepositoryFacts,
-    estimate: DownloadEstimate,
-    started: datetime,
+    *,
     configured: Mapping[str, RepositoryConfig],
-    warnings: Sequence[Problem],
     run_id: RunId,
+    defer_retention: bool,
 ) -> RepositoryOutcome:
-    """Plan §13.2 steps 5-20, inside an open journal (§7.3 checkpoints 1-10)."""
+    """Plan §13.2 after download, inside its open publication journal."""
+    plan = downloaded.plan
+    repository = plan.repository
+    identity = plan.identity
+    facts = plan.facts
+    estimate = plan.estimate
+    started = plan.started
+    transaction = downloaded.transaction
     transaction_id = TransactionId(transaction.journal.transaction_id)
-    staging = create_staging(layout, transaction_id)
-    transaction.checkpoint(
-        "staging_created", staging_path=str(layout.archive_relative(staging.directory))
-    )
-
-    download_started = _now()
-    emit(
-        "download.started",
-        repository=identity.selector,
-        commit_sha=facts.commit_sha,
-        new_bytes=estimate.new_bytes,
-        file_count=estimate.file_count,
-    )
-    client.download(
-        identity,
-        facts.commit_sha,
-        cache_dir=layout.hub_cache,
-        max_workers=config.sync.max_workers,
-    )
-    snapshot = client.verify_local(identity, facts.commit_sha, cache_dir=layout.hub_cache)
-    download_completed = _now()
-    transaction.checkpoint(
-        "download_completed",
-        commit_sha=facts.commit_sha,
-        downloaded_bytes=estimate.new_bytes,
-    )
-    emit(
-        "download.completed",
-        repository=identity.selector,
-        commit_sha=facts.commit_sha,
-        downloaded_bytes=estimate.new_bytes,
-        seconds=round((download_completed - download_started).total_seconds(), 3),
-    )
+    staging = downloaded.staging
+    snapshot = downloaded.snapshot
+    download_started = downloaded.download_started
+    download_completed = downloaded.download_completed
 
     tree = client.tree(identity, facts.commit_sha)
     if problems := completeness_problems(
@@ -989,10 +1132,26 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
     ):
         raise SynchronizationError(problems)
 
+    emit(
+        "hash.started",
+        repository=identity.selector,
+        commit_sha=facts.commit_sha,
+        file_count=len(tree),
+    )
+    hash_started = _now()
     hashed = hash_snapshot(
         snapshot, tree, identity=identity, known=_known_digests(layout, identity)
     )
     verified = _now()
+    emit(
+        "hash.completed",
+        repository=identity.selector,
+        commit_sha=facts.commit_sha,
+        hashed_objects=hashed.hashed_objects,
+        hashed_bytes=hashed.hashed_bytes,
+        reused_digests=hashed.reused_digests,
+        seconds=round((verified - hash_started).total_seconds(), 3),
+    )
     transaction.checkpoint(
         "content_hashed",
         hashed_objects=hashed.hashed_objects,
@@ -1055,18 +1214,33 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
             published_at=_now(),
         ),
     )
-    outcome = publish_revision(
-        layout,
-        transaction,
-        identity=identity,
-        snapshot=snapshot,
-        manifest=manifest,
-        hashed=hashed,
-        staging=staging,
-        publication_mode=config.storage.publication_mode,
-        cache_root=layout.hub_cache,
-        configured=configured,
+    publication_warnings: Sequence[Problem] = ()
+    publication_guard = (
+        _CACHE_MUTATION_LOCK if config.storage.publication_mode == "copy" else nullcontext()
     )
+    with publication_guard:
+        if config.storage.publication_mode == "copy":
+            # Aggregate admission is conservative, not a reservation. Recheck
+            # after any prefetched cache writes and hold the same allocation
+            # guard through the copy so another transfer cannot consume the
+            # headroom this check just proved.
+            publication_warnings = require_capacity(
+                layout,
+                config.storage,
+                needed_bytes=manifest.total_bytes,
+            )
+        outcome = publish_revision(
+            layout,
+            transaction,
+            identity=identity,
+            snapshot=snapshot,
+            manifest=manifest,
+            hashed=hashed,
+            staging=staging,
+            publication_mode=config.storage.publication_mode,
+            cache_root=layout.hub_cache,
+            configured=configured,
+        )
     # Checkpoint 10's act (decision 56). The staging area held the tree, which
     # checkpoint 5 renamed away, and the pending manifest, which checkpoint 6
     # published — so what is left is a redundant copy of an artifact the archive
@@ -1096,14 +1270,15 @@ def _ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
         mode=config.storage.publication_mode,
     )
 
-    # Plan §13.2 step 20, and only here: retention is triggered by a *successful*
-    # publication (`AD-04`), so it runs after the publication transaction has
-    # committed rather than inside it. A prune that failed would then be its own
-    # failure with its own journal, and could never take the revision that was
-    # just published down with it.
-    pruned = _apply_retention(layout, identity, config, run_id=run_id)
+    # Strict runs retain immediately. Queue-ahead runs defer every prune until
+    # all snapshots have been consumed and the producer is drained: cache
+    # deletion is global by commit SHA, so pruning A must not remove a same-SHA
+    # snapshot B downloaded but has not hashed yet.
+    pruned = None
+    if not defer_retention:
+        pruned = _apply_retention(layout, identity, config, run_id=run_id)
 
-    reported = [*warnings, *dependency_warnings]
+    reported = [*downloaded.warnings, *publication_warnings, *dependency_warnings]
     return RepositoryOutcome(
         manifest=manifest,
         result=RepositoryRunResult(
@@ -1137,10 +1312,9 @@ def _apply_retention(
     Returns what went, for the run report, or `None` when nothing did — which is
     every run in steady state below the limit.
 
-    A prune failure does not fail the repository. The newly published revision is
-    kept and the archive reports temporary over-retention (`HFWRN001`), because
-    §15.2's failure rule is explicit that a failed prune removes nothing and
-    prefers keeping six revisions to losing one.
+    A prune failure leaves the newly published revision intact but propagates as
+    `HFRET002`, so the run can classify that repository as failed while preferring
+    temporary over-retention to losing a revision.
     """
     plan = plan_prune(
         layout,
@@ -1150,15 +1324,16 @@ def _apply_retention(
     )
     if plan is None:
         return None
-    record = apply_prune(
-        layout,
-        plan,
-        envelope={
-            "archive_id": config.storage.archive_id,
-            "config_fingerprint": config.fingerprint(),
-            "run_id": run_id,
-        },
-    )
+    with _CACHE_MUTATION_LOCK:
+        record = apply_prune(
+            layout,
+            plan,
+            envelope={
+                "archive_id": config.storage.archive_id,
+                "config_fingerprint": config.fingerprint(),
+                "run_id": run_id,
+            },
+        )
     emit(
         "retention.pruned",
         repository=identity.selector,
@@ -1325,39 +1500,37 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
         RepositoryIdentity.from_config(repository).selector: repository
         for repository in config.repositories
     }
-    results: list[RepositoryRunResult] = []
-    totals = {"downloaded_bytes": 0, "hashed_bytes": 0, "reused_bytes": 0}
-    for repository in selected:
-        if not repository.enabled:
-            results.append(_disabled_result(repository))
-            continue
-        try:
-            result = synchronize_repository(
-                client, layout, repository, config, run_id=run_id, configured=configured
-            ).result
-        except HfcacheError as error:
-            # Every local revision of this repository is preserved regardless
-            # (`AD-06`): a failure here means the run learned nothing new about
-            # it, never that what it already holds is suspect.
-            failed = _failed_result(repository, error)
-            emit(
-                "repository.failed",
-                repository=f"{failed.repository_type}:{failed.repository_id}",
-                codes=",".join(failed.errors),
-                # The first problem's message, which is the one an operator reads
-                # first anyway. `_scrub` still passes over it, because a message
-                # is free text and a path in it could carry anything.
-                detail=error.problems[0].message,
-                continuing=config.sync.continue_on_repository_error,
-            )
-            results.append(failed)
-            if not config.sync.continue_on_repository_error:
-                break
-            continue
-        results.append(result)
-        totals["downloaded_bytes"] += result.downloaded_bytes
-        totals["hashed_bytes"] += result.hashed_bytes
-        totals["reused_bytes"] += result.reused_bytes
+    selected_identities = {
+        RepositoryIdentity.from_config(repository).selector for repository in selected
+    }
+    ordered_selected = tuple(
+        repository
+        for repository in config.repositories
+        if RepositoryIdentity.from_config(repository).selector in selected_identities
+    )
+    if config.sync.continue_on_repository_error:
+        results = _synchronize_prefetched(
+            client,
+            layout,
+            config,
+            selected=ordered_selected,
+            configured=configured,
+            run_id=run_id,
+        )
+    else:
+        results = _synchronize_serial(
+            client,
+            layout,
+            config,
+            selected=ordered_selected,
+            configured=configured,
+            run_id=run_id,
+        )
+    totals = {
+        "downloaded_bytes": sum(result.downloaded_bytes for result in results),
+        "hashed_bytes": sum(result.hashed_bytes for result in results),
+        "reused_bytes": sum(result.reused_bytes for result in results),
+    }
 
     transaction.checkpoint(
         "repositories_processed",
@@ -1422,19 +1595,301 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
     return RunOutcome(report=report, report_path=path, exit_code=exit_code)
 
 
-def _failed_result(repository: RepositoryConfig, error: HfcacheError) -> RepositoryRunResult:
+def _synchronize_serial(  # noqa: PLR0913 - the run's immutable collaborators
+    client: HubClient,
+    layout: ArchiveLayout,
+    config: ApplicationConfig,
+    *,
+    selected: Sequence[RepositoryConfig],
+    configured: Mapping[str, RepositoryConfig],
+    run_id: RunId,
+) -> list[RepositoryRunResult]:
+    """Preserve stop-at-first-failure semantics without speculative Hub work."""
+    results: list[RepositoryRunResult] = []
+    for repository in selected:
+        if not repository.enabled:
+            results.append(_disabled_result(repository))
+            continue
+        try:
+            planned = _plan_repository(client, layout, repository, config)
+        except HfcacheError as error:
+            results.append(_record_failure(repository, error, continuing=False))
+            break
+        if isinstance(planned, RepositoryOutcome):
+            results.append(planned.result)
+            continue
+        try:
+            warnings = tuple(
+                require_capacity(
+                    layout, config.storage, needed_bytes=_required_bytes(planned, config)
+                )
+            )
+            _emit_capacity(planned, config)
+            _emit_queued(planned)
+            downloaded = _download_repository(
+                client,
+                layout,
+                planned,
+                config,
+                run_id=run_id,
+                admitted_warnings=warnings,
+                recheck_capacity=False,
+            )
+        except HfcacheError as error:
+            results.append(_record_failure(repository, error, continuing=False, plan=planned))
+            break
+        try:
+            result = _finish_repository(
+                client,
+                layout,
+                downloaded,
+                config,
+                configured=configured,
+                run_id=run_id,
+            ).result
+        except HfcacheError as error:
+            results.append(
+                _record_failure(
+                    repository,
+                    error,
+                    continuing=False,
+                    plan=planned,
+                    downloaded=True,
+                )
+            )
+            break
+        results.append(result)
+    return results
+
+
+def _synchronize_prefetched(  # noqa: PLR0912, PLR0913 - orchestration's collaborators/branches
+    client: HubClient,
+    layout: ArchiveLayout,
+    config: ApplicationConfig,
+    *,
+    selected: Sequence[RepositoryConfig],
+    configured: Mapping[str, RepositoryConfig],
+    run_id: RunId,
+) -> list[RepositoryRunResult]:
+    """Plan the queue, admit it as a whole, then overlap download and hashing.
+
+    The executor has one worker deliberately.  `sync.max_workers` remains the
+    global Hub file-worker budget because only one `snapshot_download` can be
+    active, while the calling thread is free to hash and publish the preceding
+    immutable snapshot.  Every future is consumed before the executor closes,
+    so the archive lock can never be released while a producer is still writing.
+    """
+    slots: list[RepositoryPlan | RepositoryRunResult] = []
+    plans: list[RepositoryPlan] = []
+    for repository in selected:
+        if not repository.enabled:
+            slots.append(_disabled_result(repository))
+            continue
+        try:
+            planned = _plan_repository(client, layout, repository, config)
+        except HfcacheError as error:
+            slots.append(_record_failure(repository, error, continuing=True))
+            continue
+        if isinstance(planned, RepositoryOutcome):
+            slots.append(planned.result)
+            continue
+        slots.append(planned)
+        plans.append(planned)
+
+    if not plans:
+        return [slot for slot in slots if isinstance(slot, RepositoryRunResult)]
+
+    total_needed = sum(_required_bytes(plan, config) for plan in plans)
+    try:
+        admitted_warnings = tuple(
+            require_capacity(layout, config.storage, needed_bytes=total_needed)
+        )
+    except HfcacheError as error:
+        # Queue-wide admission is all-or-none: no speculative transfer begins
+        # when the archive cannot hold every revision the run just resolved.
+        return [
+            slot
+            if isinstance(slot, RepositoryRunResult)
+            else _record_failure(slot.repository, error, continuing=True, plan=slot)
+            for slot in slots
+        ]
+
+    for plan in plans:
+        _emit_capacity(plan, config)
+        _emit_queued(plan)
+
+    executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="hfcache-download")
+    try:
+        downloads = {
+            plan.identity.selector: executor.submit(
+                _download_repository,
+                client,
+                layout,
+                plan,
+                config,
+                run_id=run_id,
+                admitted_warnings=admitted_warnings,
+                recheck_capacity=True,
+            )
+            for plan in plans
+        }
+
+        results: list[RepositoryRunResult] = []
+        for slot in slots:
+            if isinstance(slot, RepositoryRunResult):
+                results.append(slot)
+                continue
+            future = downloads[slot.identity.selector]
+            try:
+                downloaded = future.result()
+            except HfcacheError as error:
+                results.append(_record_failure(slot.repository, error, continuing=True, plan=slot))
+                continue
+            try:
+                result = _finish_repository(
+                    client,
+                    layout,
+                    downloaded,
+                    config,
+                    configured=configured,
+                    run_id=run_id,
+                    defer_retention=True,
+                ).result
+            except HfcacheError as error:
+                results.append(
+                    _record_failure(
+                        slot.repository,
+                        error,
+                        continuing=True,
+                        plan=slot,
+                        downloaded=True,
+                    )
+                )
+                continue
+            results.append(result)
+    except BaseException:
+        # A signal or unexpected main-thread failure must wait for the one
+        # active cache writer, but should not turn shutdown into a queue-wide
+        # download. Pending work has not mutated the archive and is safe to
+        # cancel; the active publication journal remains crash-recovery evidence.
+        executor.shutdown(wait=True, cancel_futures=True)
+        raise
+    else:
+        # Every future was consumed above. Keep the explicit wait as the lock
+        # release invariant if that loop changes later.
+        executor.shutdown(wait=True)
+    return _apply_deferred_retention(
+        results,
+        layout,
+        config,
+        run_id=run_id,
+    )
+
+
+def _apply_deferred_retention(
+    results: Sequence[RepositoryRunResult],
+    layout: ArchiveLayout,
+    config: ApplicationConfig,
+    *,
+    run_id: RunId,
+) -> list[RepositoryRunResult]:
+    """Prune successful queue entries only after every snapshot was consumed.
+
+    Results arrive in configuration order and stay in that order. A prune has
+    its own transaction, so its failure leaves the publication on disk, but the
+    established run-report contract still classifies that repository as failed.
+    """
+    updated: list[RepositoryRunResult] = []
+    for result in results:
+        if result.status not in {"published", "completed_with_warnings"}:
+            updated.append(result)
+            continue
+        identity = RepositoryIdentity.of(result.repository_type, result.repository_id)
+        try:
+            pruned = _apply_retention(layout, identity, config, run_id=run_id)
+        except HfcacheError as error:
+            failed = RepositoryRunResult.model_validate(
+                result.model_copy(
+                    update={
+                        "errors": tuple(sorted({problem.code for problem in error.problems})),
+                        "status": "failed",
+                    }
+                ).model_dump()
+            )
+            _emit_repository_failure(failed, error, continuing=True)
+            updated.append(failed)
+            continue
+        if pruned is not None:
+            updated_result = result.model_copy(update={"pruned": pruned})
+            updated.append(updated_result)
+            continue
+        updated.append(result)
+    return updated
+
+
+def _record_failure(
+    repository: RepositoryConfig,
+    error: HfcacheError,
+    *,
+    continuing: bool,
+    plan: RepositoryPlan | None = None,
+    downloaded: bool = False,
+) -> RepositoryRunResult:
+    """Build and emit one repository failure without losing known transfer facts."""
+    failed = _failed_result(repository, error, plan=plan, downloaded=downloaded)
+    _emit_repository_failure(failed, error, continuing=continuing)
+    return failed
+
+
+def _emit_repository_failure(
+    failed: RepositoryRunResult,
+    error: HfcacheError,
+    *,
+    continuing: bool,
+) -> None:
+    """Emit the stable failure event for either pre- or post-publication errors."""
+    emit(
+        "repository.failed",
+        repository=f"{failed.repository_type}:{failed.repository_id}",
+        codes=",".join(failed.errors),
+        # The first problem's message, which is the one an operator reads first
+        # anyway. `_scrub` still passes over it because free text can carry any
+        # path a hostile repository supplied.
+        detail=error.problems[0].message,
+        continuing=continuing,
+    )
+
+
+def _failed_result(
+    repository: RepositoryConfig,
+    error: HfcacheError,
+    *,
+    plan: RepositoryPlan | None = None,
+    downloaded: bool = False,
+) -> RepositoryRunResult:
     """One repository that failed, recorded so the run can continue past it.
 
     Every code the failure carried, not just the first: a completeness check
     reports one problem per missing file, and an operator fixing an incomplete
     download should see the shape of the gap rather than its first element.
     """
+    known: dict[str, Any] = {}
+    if plan is not None:
+        known = {
+            "duration_seconds": (_now() - plan.started).total_seconds(),
+            "file_count": plan.estimate.file_count,
+            "resolved_commit_sha": plan.facts.commit_sha,
+            "reused_bytes": plan.estimate.cached_bytes,
+        }
+        if downloaded:
+            known["downloaded_bytes"] = plan.estimate.new_bytes
     return RepositoryRunResult(
         errors=tuple(sorted({problem.code for problem in error.problems})),
         repository_id=repository.id,
         repository_type=repository.type,
         requested_revision=repository.revision,
         status="failed",
+        **known,
     )
 
 

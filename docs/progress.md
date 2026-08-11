@@ -225,20 +225,6 @@ interpretations, including both carried-in items.
 - [x] SEL-001 Validate all operations with SELinux enforcing (2026-07-26, this commit — SELinux `Enforcing` throughout, `/srv/hfcache` carrying the normal `nfs_t` filesystem label (§23 item 2), and the services running in the **default** systemd service domain `unconfined_service_t` (item 3). Labels were fixed first, per item 6: every local path's *type* already matched the policy default, but the paths created at a shell carried `unconfined_u` where a system-installed file should carry `system_u`, so `restorecon -RF` was run over `/opt/hfcache`, `/etc/hfcache`, `/var/lib/hfcache`, and `/var/cache/hfcache` — 7 082 paths relabelled, and a second pass would relabel none. `install-release.sh` now uses `-RF` for the same reason. **Every item-4 path exercised on the real dataset:** sync with real downloads through the hardened unit, hashing, hardlink publication, atomic directory rename, the §7.4 **prune** — all ten checkpoints committed, both audit records written, the per-SHA reference removed, trash and quarantine empty — full verification, and `recover --dry-run`. Getting to a live prune took a real retention rotation, because `storage.maximum_revisions` is pinned to 5 by the schema (`HFCFG011`) and `AD-04` triggers a prune only from a *successful publication* beyond the maximum: four more real commits of `fixtures_ade20k` were published, the sixth publication pruned generation 1 automatically, and restoring `revision = "main"` re-downloaded and republished the pruned SHA as generation 7 — which pruned generation 2 in turn. That is §29 step 15's revision change and retention simulation, observed rather than simulated. Afterwards: `verify --full` read 23 unique objects across 6 revisions and reported `clean`; `status` exits `0`, not degraded, no outstanding failures, nothing unfinished. **Zero AVC denials** — no `type=AVC`, `USER_AVC`, or `SELINUX_ERR` record in `/var/log/audit/audit.log` and no `avc: denied` in the journal, for a boot that predates `HOST-004`, so the search covers every operation this session performed. No local policy module was created and none is needed (items 7-9), and nothing was weakened: no `setenforce 0`, no permissive domain, no allow rule, no boolean or fcontext customization. The exercise found three real defects — `SYNC-005`, `VER-007`, and decision 61's `RestrictSUIDSGID` incompatibility — which is what exercising is for)
 - [x] SEC-001 Validate optional systemd credential support (2026-07-26, this commit — §22.6 item 4's drop-in is `packaging/systemd/hfcache-sync.service.d/credential.conf.example`, shipped with the release, **not installed**, and carrying the exact `systemd-creds encrypt` recipe plus its acceptance checks. It was installed, exercised, and removed here, because a drop-in nobody has run is a document rather than a control. Evidence, all of it against a deliberately fake token: the ciphertext does not contain the plaintext; `systemd-analyze verify` clean with the drop-in; the credential arrives at `$CREDENTIALS_DIRECTORY/hf-token` mode `0440` and the application resolves it with source `systemd-credential` and **decrypts to exactly the right bytes**, compared by digest rather than printed. `--token-file` resolves with source `token-file` (item 2) and a token file this identity cannot read is `HFARG005` at exit `10`, reported *by shape* — "is unreadable: Permission denied" — never by content. With `hub.expected_account` set, `whoami` is called and the Hub's 401 becomes a failed `hub_identity` check at exit `20` before any mutation (item 5), which is the credential-swapped-by-mistake case caught before a scheduled run uses it. **Ambient Hub environment variables are ignored entirely:** with `HF_TOKEN` and `HUGGING_FACE_HUB_TOKEN` both set in the unit's environment and no credential supplied, `hub_argument` is exactly `False` — not `None` (T-07). And the secret persisted nowhere it could (item 3): zero occurrences in the archive, in `runs/`, in `config.toml`, in `/var/lib/hfcache`, in `/var/cache/hfcache`, in the release tree, and zero in the journal under either service unit, under any transient probe, or under uid 981. The only journal occurrences at all are `sudo`'s own audit records of the *searches* — uid 1000, session scope — which is the search looking at itself. Cleaned up afterwards with `shred`: the deployment is anonymous, `doctor` reads `credential: pass` (no token) and `hub_identity: skipped`)
 
-- [x] SYNC-006 Carry same-operation digest evidence through hardlink staging
-  (2026-08-10, this commit — a 10.17 TB ingestion exposed that publication
-  hashed the canonical cache once and then read every logical hardlink again,
-  while discarding the second result. Hashing now records transient
-  `(device, inode, size)` evidence from the same open descriptor as the digest;
-  hardlink staging re-proves source and destination identity and carries that
-  digest without another content read. Copy mode still hashes its distinct
-  landed inode, now comparing it with the ingestion digest rather than a fresh
-  source hash. A replaced source or unproven link is refused before rename and
-  cleaned from staging. Repair uses the same evidence but retains its required
-  final-locator re-verification. No durable schema or checkpoint changed;
-  targeted hashing, sync, publication, verification, and crash-injection tests
-  plus the full quality gate cover the change.)
-
 **Phase 7 complete (writer side).** The application is deployed, the archive is
 initialized and healthy, and every unit is installed, validated, and hardened
 with each setting tested. Six work packages beyond the plan's Phase 7 list were
@@ -324,6 +310,40 @@ at 02:03:55 mid-way through a 1.5 TB download (decision 86 carries the
 evidence and the reasoning).
 
 - [x] SYS-003 Bound sync and verify page cache; absolute dirty-page limits (2026-07-29, this commit — decision 86. `MemoryHigh=4G` on `hfcache-sync.service` and `hfcache-verify.service`, no `MemoryMax=`, because above `high` the kernel throttles and reclaims where `max` kills — a slow sync beats a dead one, and exit `40` from verify must never mean "the cap was tight". New `packaging/sysctl.d/hfcache.conf` sets `vm.dirty_background_bytes=1G` / `vm.dirty_bytes=2G` so the dirty share of the budget stays reclaimable-adjacent rather than the ratio default's ~4.8 GiB, which alone could fill the cap with pages reclaim cannot take. Deployment §9 installs the fragment and states the design, including the half only the hypervisor can do. Applied live: units installed per §10, `systemd-analyze verify` silent, `scripts/check-hardening.sh` all 23 checks pass on both units, sysctl values confirmed active. Validated against the real workload: the pre-change boot-time catch-up sync peaked at 18.3 GiB of a 23 GiB guest in 26 minutes; restarted under the cap it streams a 209 GB repository at `MemoryCurrent` ≈ 4.0 GiB, `MemoryPeak` 4.3 GiB. `./scripts/check.sh` exit `0`)
+
+## Sync throughput and queue-ahead pipeline (SYNC, 2026-08-10)
+
+- [x] SYNC-006 Carry same-operation digest evidence through hardlink staging
+  (2026-08-10, commit `92ebdba` — a 10.17 TB ingestion exposed that publication
+  hashed the canonical cache once and then read every logical hardlink again,
+  while discarding the second result. Hashing now records transient
+  `(device, inode, size)` evidence from the same open descriptor as the digest;
+  hardlink staging re-proves source and destination identity and carries that
+  digest without another content read. Copy mode still hashes its distinct
+  landed inode, now comparing it with the ingestion digest rather than a fresh
+  source hash. A replaced source or unproven link is refused before rename and
+  cleaned from staging. Repair uses the same evidence but retains its required
+  final-locator re-verification. No durable schema or checkpoint changed;
+  targeted hashing, sync, publication, verification, and crash-injection tests
+  plus the full quality gate cover the change.)
+- [x] SYNC-007 Download the admitted queue while earlier repositories hash
+  (2026-08-10, this commit — the same live run showed the WAN idle for a serial
+  10.17 TB hash while nineteen later repositories could not begin. With
+  continuation enabled, sync now resolves and estimates every selected
+  repository, admits the aggregate download-plus-copy requirement before any
+  transfer, then uses one background repository producer whose sole transfer
+  receives the existing four-file-worker budget. The main thread consumes,
+  hashes, and publishes in configuration order while that producer downloads
+  ahead; strict stop-on-error mode stays fully serial. Each completed transfer
+  is an ordinary publication transaction at `download_completed`, so existing
+  recovery and the native resumable cache remain the durable state. Dynamic
+  capacity checks, copy-mode allocation exclusion, serialized cache scans, and
+  retention deferred until every queued snapshot is consumed close the races
+  introduced by overlap. Run reports retain completed transfer counters after a
+  later failure. New queued/hash events make WAN-idle local work explicit in
+  journald and Cockpit. Barrier, aggregate refusal, copy capacity, shared-SHA
+  retention, failure, ordering, strict-mode, recovery, logging, and full-gate
+  coverage exercise the pipeline.)
 
 ## Cockpit administration plugin (CPT, 2026-07-30)
 
@@ -2580,3 +2600,42 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     would make a snapshot-path replacement publish bytes the manifest did not
     describe. **Rejected:** persisting device or inode values, because they are
     transient filesystem evidence and unsafe to reuse across runs.
+
+94. **Queue-ahead uses one repository producer inside the existing run lock**
+    (2026-08-10, SYNC-007). Continuation-enabled sync plans the selected queue,
+    admits its aggregate requirement before transferring anything, and lets one
+    background repository transfer run while the main thread hashes and
+    publishes prior snapshots. That producer alone receives
+    `sync.max_workers=4`, so the setting remains a global Hub file-worker budget
+    rather than multiplying into unbounded Xet streams. Results and publication
+    remain in configuration order; stop-on-error runs remain serial because an
+    in-flight library transfer has no safe cancellation boundary. Multiple
+    queued-but-unstarted transfers are cancelled on an unexpected foreground
+    exception; the one active transfer is joined before the lock is released.
+    Multiple ordinary publication journals may wait at `download_completed`;
+    no queue format or checkpoint is added. Retention waits until every queued snapshot
+    is consumed because the installed Hub API deletes cache revisions by commit
+    hash across its scan, and the same Git SHA can exist in two repositories.
+    Cache writes and retention scans are serialized; copy-mode staging also
+    rechecks and holds allocation headroom, while hardlink staging can overlap.
+    **Rejected:** multiple repository downloads, which would multiply Xet's
+    internal concurrency under the 4 GiB service memory bound. **Rejected:** a
+    separate sync process, which would contend for the single-writer lock or
+    mutate cache outside its ownership. **Rejected:** enabling
+    `HF_XET_HIGH_PERFORMANCE`, whose installed-version buffer and stream limits
+    exceed the production memory model.
+
+95. **A failed report may retain warnings observed before another repository
+    failed** (2026-08-10, SYNC-007). Queue-wide planning makes an old reachable
+    defect immediate: one repository can complete with a dependency or capacity
+    warning and a later repository can fail, but both durable `RunReport` and
+    CLI `Envelope` validators previously required warnings if and only if the
+    outcome was `success_with_warnings`. The command then failed while trying to
+    describe the failure and lost its report. `success` still forbids warnings
+    and `success_with_warnings` still requires them; `failed` now permits them
+    alongside required errors. The field set and JSON shape do not change, so
+    schema version 1 remains; this is a field-combination widening like decision
+    78 and receives the same cross-version release drill. A pre-0.1.4 binary
+    cannot parse a mixed failed-plus-warning report, so rollback requires the
+    newest report to have a previously accepted combination or a later
+    compatible sync report to supersede it.

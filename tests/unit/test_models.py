@@ -539,6 +539,29 @@ def test_success_with_warnings_requires_warnings():
         RunReport.model_validate(payload)
 
 
+def test_a_successful_run_report_cannot_hide_warnings():
+    payload = examples.run_report().to_payload()
+    payload["warnings"] = ["HFDEP001"]
+
+    with pytest.raises(ValueError, match="exactly when warnings"):
+        RunReport.model_validate(payload)
+
+
+def test_a_failed_run_report_preserves_warnings_alongside_errors():
+    payload = examples.run_report().to_payload()
+    payload.update(
+        exit_code=30,
+        outcome="failed",
+        errors=["HFHUB004"],
+        warnings=["HFDEP001"],
+    )
+
+    report = RunReport.model_validate(payload)
+
+    assert report.errors == ("HFHUB004",)
+    assert report.warnings == ("HFDEP001",)
+
+
 def test_run_report_repositories_are_sorted_and_unique():
     payload = examples.run_report().to_payload()
     payload["repositories"] = [payload["repositories"][0], payload["repositories"][0]]

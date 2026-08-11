@@ -614,10 +614,28 @@ Do not:
 7. Create a durable run transaction journal.
 8. Process enabled repositories in deterministic configuration order.
 9. Continue after a repository failure only when configured.
+
 10. Rebuild the catalog from authoritative manifests and refs.
 11. Write the final run report and mark the transaction completed.
 12. Release the lock.
 13. Return the aggregate exit code.
+
+When continuation is enabled, steps 1–4 of §13.2 are first completed for every
+selected repository. The aggregate requirement is admitted before the first
+download. One background producer then downloads admitted repositories in
+configuration order, using `sync.max_workers` inside that single transfer,
+while the main thread hashes and publishes completed snapshots in the same
+order. Multiple repository transactions may therefore wait durably at
+`download_completed`, but only one repository download and one publication
+stage are active at a time. The producer is drained before the archive lock is
+released. On an unexpected foreground exception, pending transfers that have
+not started are cancelled and only the active transfer is joined. When
+continuation is disabled, the original fully serial sequence is retained so a
+failure cannot contact a later repository. Hub-cache mutation and
+retention's whole-cache scan are serialized, and queue-ahead retention waits
+until every downloaded snapshot has been consumed. Copy-mode staging rechecks
+capacity and pauses the producer while allocating its distinct files; hardlink
+staging continues to overlap because it allocates only directory entries.
 
 ### 13.2 Per-repository sequence
 
@@ -630,7 +648,10 @@ Do not:
    - Leave publication order unchanged.
    - Report `skipped` or `ref_moved_to_retained_revision`.
 3. Request a download dry run and calculate required new bytes.
-4. Verify configured free-space headroom before downloading.
+4. Verify configured free-space headroom before downloading. Queue-wide mode
+   performs both an aggregate admission check before any transfer and a dynamic
+   check immediately before each transfer; the first is conservative rather
+   than a capacity reservation.
 5. Download the complete snapshot into the private Hub cache.
 6. Run a local-only completeness check.
 7. Enumerate the exact repository path set from Hub tree metadata.
@@ -887,9 +908,19 @@ Every mutating command must verify:
    - Estimated download bytes.
    - Publication bytes when copy mode is enabled.
    - Configured reserve.
+
+   A queue-wide sync sums both byte classes across every admitted repository
+   before starting its first download. It never credits a future prune or cache
+   deletion. Each actual transfer rechecks its own requirement because free
+   space can change during a multi-day run. Copy mode rechecks its publication
+   bytes immediately before staging and excludes concurrent cache writes until
+   the copy completes.
 10. A small write, fsync, rename, and removal succeeds inside an application-owned preflight directory.
 
-Failure is exit code `20` before any Hub download begins.
+An initial or aggregate failure is exit code `20` before any Hub download
+begins. A dynamic per-transfer recheck may fail after earlier admitted
+repositories downloaded; that repository is not started, its failure is
+reported, and continuation policy decides whether later work proceeds.
 
 `hfcache doctor` reports these same requirements as named checks. The names, the
 order, which of them write, and the code each reports on failure are normative in
@@ -1160,6 +1191,10 @@ The initial public-only deployment does not require a token. Implement credentia
 
 - Log to stdout/stderr for journald collection.
 - Use structured events with stable event names and repository identifiers.
+- Distinguish admitted work (`repository.queued`), active Hub transfer
+  (`download.started`), downloaded cache content (`download.completed`), active
+  local hashing (`hash.started`), completed hashing (`hash.completed`), and
+  durable publication (`publication.completed`).
 - Include run ID in every log event.
 - Log durable operation checkpoints rather than per-chunk noise.
 - Emit download totals, logical archive size, reused bytes, newly stored bytes, hashing throughput, and prune results.

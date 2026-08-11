@@ -182,6 +182,13 @@ which journald turns into `PRIORITY`. The event names are a **closed
 vocabulary** — `hfcache.logging.EVENTS` is all of them — so a filter written
 today keeps matching.
 
+For a queue-ahead sync, read the latest event per repository:
+`repository.queued` is admitted but waiting, `download.started` is the only
+state expected to use Hub bandwidth, `download.completed` means the canonical
+cache is ready, and `hash.started` means low WAN traffic is normal because the
+foreground is reading local/NFS bytes. `hash.completed` is followed by staging
+and `publication.completed`; no byte percentage is implied between checkpoints.
+
 Storage is persistent and bounded at 1 GiB or one year, whichever binds first.
 Before that was configured the journal was volatile and every scheduled run was
 lost at reboot.
