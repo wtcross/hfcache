@@ -344,6 +344,16 @@ evidence and the reasoning).
   journald and Cockpit. Barrier, aggregate refusal, copy capacity, shared-SHA
   retention, failure, ordering, strict-mode, recovery, logging, and full-gate
   coverage exercise the pipeline.)
+- [x] SYNC-008 Keep hardlink failure injection aligned with the real syscall
+  (2026-08-11, this commit — the release-boundary gate caught one stale test
+  double: hardlink publication now calls `os.link(..., follow_symlinks=True)`,
+  but the `AD-11` failure injection still accepted only two positional
+  arguments and therefore raised an uncoded `TypeError` before the intended
+  `OSError` could prove `HFSYN005`. The fake now accepts and asserts the explicit
+  keyword, so the test exercises the production call shape and again proves
+  that an unavailable hardlink is never downgraded to a copy. The focused test
+  and `scripts/check.sh` both exit `0`; source and deployed behaviour are
+  unchanged.)
 
 ## Cockpit administration plugin (CPT, 2026-07-30)
 

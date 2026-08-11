@@ -552,7 +552,8 @@ def test_an_unavailable_hardlink_is_never_downgraded_to_a_copy(
 ):
     # `AD-11`: a mode is never silently downgraded. Failing here is what stops a
     # deployment from quietly consuming twice the planned space.
-    def refuse(source, destination):
+    def refuse(source, destination, *, follow_symlinks):
+        assert follow_symlinks is True
         raise OSError(1, "Operation not permitted", str(destination))
 
     monkeypatch.setattr("hfcache.publication.os.link", refuse)
