@@ -51,10 +51,11 @@ consumers at all.
 
 ## Status
 
-**`v0.1.3` — current release, deployed 2026-07-27.** The writer is complete
-and running against a live NFS-backed ZFS archive: it syncs, publishes, retains
-five revisions, prunes, verifies, repairs, and recovers, under systemd with
-SELinux enforcing and validated hardening. Release history is in
+**`v0.1.4` — release candidate validated 2026-08-11; `v0.1.3` remains
+deployed until the upgrade proof completes.** The writer is complete and
+running against a live NFS-backed ZFS archive: it syncs, publishes, retains five
+revisions, prunes, verifies, repairs, and recovers, under systemd with SELinux
+enforcing and validated hardening. Release history is in
 [`CHANGELOG.md`](CHANGELOG.md); the annotated tags carry the complete notes.
 
 What remains is operator work that this project cannot perform for itself — the

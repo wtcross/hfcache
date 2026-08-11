@@ -355,6 +355,32 @@ evidence and the reasoning).
   and `scripts/check.sh` both exit `0`; source and deployed behaviour are
   unchanged.)
 
+## Release 0.1.4 (REL, 2026-08-11)
+
+- [x] REL-005 Cut and compatibility-check the 0.1.4 release candidate
+  (2026-08-11, this commit — version and lock move together to 0.1.4;
+  `CHANGELOG.md` accounts for the complete 25-commit delta from the deployed
+  v0.1.3 tag — public/agent documentation, bounded service memory, the Cockpit
+  administration package, and `SYNC-006`–`SYNC-008` — while README states
+  honestly that v0.1.3 remains deployed until the upgrade proof completes. The
+  decision-95 cross-format drill used `docs/recovery.md` §6's isolated loopback
+  NFS archive, its own UUID, hfcache 0.1.4 with the production lock's exact
+  Hub/Python versions, and never `/srv/hfcache`. The 0.1.4 durable writer wrote
+  a schema-version-1 failed report carrying `HFWRN005` plus `HFRET002`; 0.1.4
+  accepted it and `status` showed `last_run_status: failed`, while the installed
+  0.1.3 reader refused the file as `HFVER007` and its lenient `status` fell back
+  to the preceding `skipped` report. A later older-valid 0.1.4 report made both
+  versions show `ref_moved_to_retained_revision`, proving supersession without
+  deleting history. Deployment §14 records that observed rollback rule and now
+  runs the current release's recovery/status checks before switching; §13 says
+  explicitly that stopping a timer does not stop its active service. The drill
+  export, mount, source, venv, and configuration were torn down after the proof.
+  Integration evidence: the real-Hub suite passes 24 tests; the live-NFS suite
+  passes 11 with its pre-initialization case skipped; `scripts/check.sh
+  --with-build` exits `0`, including the default suite, type/lint/format/lock
+  checks, 42 Cockpit tests and production build, wheel build, and clean-wheel
+  install smoke.)
+
 ## Cockpit administration plugin (CPT, 2026-07-30)
 
 A browser administration UI for the deployed writer, as a Cockpit package in

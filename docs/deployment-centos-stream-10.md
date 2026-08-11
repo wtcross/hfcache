@@ -504,6 +504,9 @@ srv-hfcache.mount          static
 ```bash
 # 1-2. quiesce, and prove nothing is running
 sudo systemctl stop hfcache-sync.timer
+# Stopping the timer does not stop an active service. Wait for it, or stop it
+# deliberately; never move `current` while either service or the lock is active.
+sudo systemctl stop hfcache-sync.service       # only when interruption is intended
 systemctl is-active hfcache-sync.timer hfcache-verify.timer \
                     hfcache-sync.service hfcache-verify.service
 sudo fuser -v /run/hfcache/hfcache.lock      # no holder = no active run
@@ -593,7 +596,12 @@ different procedure than the install would be a procedure nobody has tested.
 
 ```bash
 sudo systemctl stop hfcache-sync.timer
+systemctl is-active hfcache-sync.timer hfcache-verify.timer \
+                    hfcache-sync.service hfcache-verify.service
+sudo fuser -v /run/hfcache/hfcache.lock          # wait or stop before continuing
 sudo scripts/install-release.sh --list          # what is installed, and what is live
+sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml recover --dry-run
+sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml status
 sudo scripts/install-release.sh --switch <previous>
 sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml recover --dry-run
 sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml status
@@ -674,6 +682,25 @@ outstanding.** A clean `verify --full` first is what clears the entry — observ
 on the drill: after one, 0.1.2 read the same catalog fully, `verified` and not
 degraded. `status` on the *new* release before switching is the check, exactly
 where `recover --dry-run` sits in the sequence above.
+
+**0.1.4 widens another schema-version-1 combination:** a failed sync report may
+carry warnings observed before a later repository failed. The cross-format
+drill wrote that shape with 0.1.4. Its reader accepted `outcome: "failed"`, exit
+`50`, warning `HFWRN005`, and error `HFRET002`; 0.1.3 refused the same file as
+`HFVER007` because it required warnings if and only if the outcome was
+`success_with_warnings`. The refusal is safe, but one read path is deliberately
+lenient: 0.1.3 `status` skipped the incompatible newest report and showed the
+preceding compatible repository status, while 0.1.4 showed `failed`. A later
+ordinary compatible 0.1.4 report superseded the mixed report and both releases
+then read the later status without deleting or rewriting history.
+
+So: **roll back to 0.1.3 only when the newest sync report has an older-valid
+combination, or after a later compatible 0.1.4 sync report supersedes a mixed
+failure.** Success, success-with-warnings, and failure-without-warnings are
+older-valid; failure-with-warnings is not. Do not delete or rewrite the mixed
+report to make rollback appear clean. Stay on 0.1.4 (or roll forward to it) to
+inspect that report by run ID. This rule is in addition to the no-prune-in-flight
+rule above; a rollback farther to 0.1.2 also retains the null-SHA rule.
 
 Keep at least the previous release installed (plan §21.4 item 7). `--list` is how
 you see what you have:

@@ -7,6 +7,33 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## v0.1.4 — 2026-08-11
+
+Large archives no longer leave the Hub idle for days while one repository is
+hashed. One repository download now runs ahead of the serial hash/publication
+path, using the existing four-worker global budget, while hardlink publication
+carries proven same-inode digest evidence instead of rereading every byte.
+
+- Queue-wide admission, per-transfer capacity rechecks, serialized cache
+  mutation, deferred retention, and ordinary publication journals preserve the
+  single-writer and recovery contracts while downloads overlap hashing.
+- New `repository.queued`, `hash.started`, and `hash.completed` events make the
+  WAN-idle hashing phase and its progress explicit in journald and Cockpit.
+- The new Cockpit package supplies archive and run-report views, sync and
+  verification controls, dry-run-first maintenance, configuration and schedule
+  editors, and authenticated transient-unit invocations that import the same
+  encrypted Hub credential as the scheduled service.
+- Sync and verification units bound page-cache pressure with `MemoryHigh=4G`;
+  absolute dirty-page limits keep the writeback share reclaimable. Operations,
+  storage requirements, loopback quickstart, public-repository, and agent
+  workflow documentation now describe the deployed system.
+- A failed run report may retain warnings observed before a later failure.
+  This is a schema-version-1 field-combination widening: **rollback to 0.1.3
+  only when the newest sync report uses an older-valid combination, or after a
+  later compatible 0.1.4 sync supersedes it.** 0.1.3 rejects a mixed
+  failed-plus-warning report as `HFVER007`; `status` silently falls back to an
+  older readable report (`docs/deployment-centos-stream-10.md` §14).
+
 ## v0.1.3 — 2026-07-27
 
 The health headline cannot go quiet: an unparseable `refs/current.json` — the
