@@ -54,8 +54,8 @@ consumers at all.
 
 ## Status
 
-**`v0.1.5` — release candidate validated 2026-08-15; `v0.1.4` remains
-deployed until the live switch completes.** The writer is complete and
+**`v0.1.5` — release candidate deployed 2026-08-15; its final tag awaits the
+active catch-up sync and restarted full verification.** The writer is complete and
 running against a live NFS-backed ZFS archive: it syncs, publishes, retains five
 revisions, prunes, verifies, repairs, and recovers, under systemd with SELinux
 enforcing and validated hardening. Release history is in

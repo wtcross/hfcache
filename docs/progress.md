@@ -404,6 +404,30 @@ evidence and the reasoning).
   touched; release compatibility, deployment, and the requested live purge are
   separate release/operator work.)
 
+- [x] PUR-002 Purge live unmanaged repositories and resume catch-up sync
+  (2026-08-15, this commit — the operator approved stopping the approximately
+  12-hour full verification so the new lifecycle operation could proceed. The
+  0.1.5 release candidate was staged and switched only after installed 0.1.4
+  `recover --dry-run` reported zero actionable and blocked remedies and live
+  `status` reported no degraded or unfinished state. Production
+  `purge --dry-run --all-unmanaged` identified exactly nine repositories and
+  13 revisions totaling 1,693,558,139,707 logical bytes; `--apply` completed
+  one transaction per repository. A repeated dry run reported nothing to
+  purge, recovery remained clean, all nine containers disappeared from `list`,
+  and 13 retained manifests plus 13 purge records provide the audit trail.
+  Available storage increased by 1,682,634,178,560 bytes, from
+  20,868,706,074,624 to 22,551,340,253,184 bytes. The quarantine audit mapped
+  every directory back to its transaction: the sole entry for a removed
+  repository (`Qwen/Qwen3.6-35B-A3B`) contains only an empty `tree/`; all
+  1,556,293,529,827 quarantined bytes belong to configured
+  `unsloth/GLM-5.2-GGUF` and were preserved. Hardening checks, systemd unit
+  verification, and the recent AVC check were clean. The sync timer was
+  restored and run `3d006f9b888b49f0ae24a929ec66a2d4` started: all existing
+  repositories skipped, the four newly configured repositories queued, and
+  `/proc` write accounting proved `MiniMaxAI/MiniMax-Music3` was actively
+  downloading rather than stalled. Final tagging remains gated on that run and
+  a restarted full verification.)
+
 ## Release 0.1.5 (REL, 2026-08-15)
 
 - [x] REL-006 Cut and compatibility-check the repository-purge release
@@ -637,6 +661,17 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     `_protect_proc` is the one-line candidate fix, recorded here and not
     performed (it is deployment tooling outside the `CPT` family's
     surface).
+
+14. **Finish the 0.1.5 release proof after the active catch-up sync**
+    (2026-08-15, PUR-002). Wait for run
+    `3d006f9b888b49f0ae24a929ec66a2d4` to finish with `Result=success` and
+    `ExecMainStatus=0`; confirm all four queued repositories are published:
+    `MiniMaxAI/MiniMax-Music3`, `unsloth/Muse-Glimmer-30B-GGUF`,
+    `unsloth/gemma-4-31B-it-NVFP4`, and
+    `RedHatAI/Muse-Glimmer-30B-NVFP4`. Then start
+    `hfcache-verify.service`, require a clean full-verification report, and only
+    then create and push the annotated `v0.1.5` tag. The quarterly verification
+    timer remains disabled pending handoff item 8.
 
 ## Operator decisions needed
 
