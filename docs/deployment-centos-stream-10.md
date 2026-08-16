@@ -702,6 +702,28 @@ report to make rollback appear clean. Stay on 0.1.4 (or roll forward to it) to
 inspect that report by run ID. This rule is in addition to the no-prune-in-flight
 rule above; a rollback farther to 0.1.2 also retains the null-SHA rule.
 
+**0.1.5 adds a complete-repository purge plan and a prune-record reason.** The
+cross-format drill used the isolated loopback NFS archive from
+`docs/recovery.md` §6 with its own UUID and the 12.5 MB public test model. The
+0.1.5 writer synced generation 1, purged it completely, and left a committed
+prune-family journal plus byte-for-byte manifest and
+`operator_requested_repository_purge` record. The installed 0.1.4 commands
+then both succeeded: `status` reported no repositories and no unfinished work;
+`recover --dry-run` reported actionable `0`, blocked `0`. Re-adding the same
+repository and running a real 0.1.4 sync also succeeded and preserved
+publication generation 1 from the archived manifest. A second 0.1.5 purge left
+the same successful 0.1.4 status/recovery result.
+
+The one incompatible direct read is deliberate: 0.1.4's
+`PrunedRevisionRecord` model rejects the new reason literal. Normal 0.1.4
+commands do not parse that record after a completed purge, and the archived
+manifest remains the generation authority. So: **roll back to 0.1.4 only with
+no purge transaction in flight.** A completed purge is command-compatible,
+including later re-addition; use 0.1.5 for direct tooling that parses its
+`.prune.json` record, and never delete or rewrite the record to make an older
+parser accept it. The 0.1.4 failed-plus-warning report rule above remains an
+independent rollback condition.
+
 Keep at least the previous release installed (plan §21.4 item 7). `--list` is how
 you see what you have:
 

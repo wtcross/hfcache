@@ -7,6 +7,30 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## v0.1.5 — 2026-08-15
+
+Repositories intentionally removed from configuration can now be deleted with
+an explicit, dry-run-first, transactionally recoverable `purge` command.
+
+- `purge` accepts explicit whole-repository selectors or `--all-unmanaged`,
+  refuses configured repositories, and deletes one complete repository per
+  durable transaction. Unknown content is preserved rather than broadened into
+  the deletion scope.
+- Cache revisions are removed only through `huggingface_hub`; complete
+  publication references, trees, and manifests are tombstoned atomically.
+  Original manifests and one purge-reason record per revision remain under
+  `audit/pruned/`.
+- Pre-commit recovery restores every revision with references last;
+  post-commit recovery keeps the consumer-visible removal and finishes audit
+  and trash cleanup.
+- `PurgePlan` is a new schema-version-1 durable shape and
+  `operator_requested_repository_purge` widens the prune-record reason. The
+  0.1.4 reader accepts completed purge journals in `status` and
+  `recover --dry-run`, and can re-add/sync the purged SHA using the archived
+  manifest. Its generic prune-record parser rejects the new reason literal.
+  Therefore **roll back to 0.1.4 only with no purge transaction in flight**;
+  use 0.1.5 for direct purge-record inspection.
+
 ## v0.1.4 — 2026-08-11
 
 Large archives no longer leave the Hub idle for days while one repository is

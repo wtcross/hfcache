@@ -404,6 +404,26 @@ evidence and the reasoning).
   touched; release compatibility, deployment, and the requested live purge are
   separate release/operator work.)
 
+## Release 0.1.5 (REL, 2026-08-15)
+
+- [x] REL-006 Cut and compatibility-check the repository-purge release
+  candidate (2026-08-15, this commit — version and lock move together to 0.1.5;
+  `CHANGELOG.md` and README surface the explicit unmanaged-repository lifecycle
+  operation. The decision-97 cross-format drill used a throwaway loopback NFS
+  archive with its own UUID, never `/srv/hfcache`: 0.1.5 synced the 12.5 MB
+  public test model, purged it with a committed complete-repository plan, and
+  retained its manifest and purge record under `audit/pruned/`. Installed 0.1.4
+  `status` and `recover --dry-run` both exited `0`, with no repositories,
+  unfinished transactions, actionable remedies, or blocked remedies. A real
+  0.1.4 re-add/sync then succeeded and retained generation 1 from the archived
+  manifest; after a second 0.1.5 purge, the older status/recovery result stayed
+  clean. Direct 0.1.4 `PrunedRevisionRecord` validation alone refused the new
+  reason literal, which is now the precise rollback rule in deployment §14:
+  no purge in flight, and use 0.1.5 for direct purge-record tooling. The drill
+  export, mount, source, configuration, and local transfer cache were removed;
+  `nfs-server` was restored to inactive. `scripts/check.sh --with-build` exits
+  `0`; live switching and the requested purge remain the next operator step.)
+
 ## Cockpit administration plugin (CPT, 2026-07-30)
 
 A browser administration UI for the deployed writer, as a Cockpit package in
@@ -2724,3 +2744,18 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     repeated one-revision prune, which exposes partially retained repositories;
     and a new journal operation literal, which adds a second recovery regime
     without changing the commit semantics.
+
+97. **A completed 0.1.5 purge is operationally readable by 0.1.4; an open one
+    is the rollback barrier** (2026-08-15, REL-006). The cross-format drill wrote
+    the new `PurgePlan` and purge-reason record through the real 0.1.5 CLI on an
+    isolated NFS archive. Installed 0.1.4 ignored the resolved journal exactly
+    as intended: `status` and `recover --dry-run` were clean, and a real
+    re-add/sync preserved generation 1 using the archived manifest. Its direct
+    `PrunedRevisionRecord` parser rejected
+    `operator_requested_repository_purge`, but no normal completed-purge read
+    path needs that record. Therefore rollback requires no open purge journal;
+    completed purge state is otherwise command-compatible, while direct audit
+    tooling stays on 0.1.5. **Rejected:** declaring every completed purge a
+    rollback blocker, because the old commands demonstrably consume the state;
+    and weakening the record reason to an older value, because that would make
+    the audit lie about why the complete repository disappeared.
