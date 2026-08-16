@@ -737,6 +737,17 @@ Copy mode:
 - The current revision is never pruned.
 - No upstream error or configuration removal triggers pruning.
 
+Removing a repository from configuration therefore still changes no archive
+bytes. An operator who intends permanent removal must separately run
+`hfcache purge` with either explicit whole-repository selectors or
+`--all-unmanaged`; the command refuses repositories still in configuration and
+uses the prune transaction's commit point and recovery rules.
+
+*Amended 2026-08-15 at `PUR-001` (decision 96).* Configuration removal remains
+non-destructive. The explicit purge operation added by this amendment is a
+separate, operator-confirmed lifecycle action rather than an automatic retention
+side effect.
+
 ### 15.2 Sixth-revision algorithm
 
 After a sixth unique revision is successfully published:
@@ -886,7 +897,10 @@ Recovery must:
 3. Discover a final revision tree that was renamed successfully but not yet entered in the catalog, validate its manifest, and finish catalog/ref publication when unambiguous.
 4. Rebuild derived catalog entries from immutable manifests and refs when the catalog is missing or corrupt.
 5. Repair per-SHA instance refs or `refs/current.json` only when checkpoints and valid manifests identify exactly one correct target.
-6. Reconcile an interrupted prune from its tombstone and journal: roll back to six published revisions before the logical-commit checkpoint, or roll forward deferred trash cleanup after it.
+6. Reconcile an interrupted retention prune or explicit repository purge from
+   its tombstone and journal: before the logical-commit checkpoint restore every
+   removed revision; after it preserve the consumer-visible removal and finish
+   audit and trash cleanup.
 7. Report unknown files, unsupported journal versions, inconsistent manifests, and ambiguous ref state without deleting or rewriting them.
 8. Persist a recovery report and mark the originating transaction complete only after reconciliation succeeds.
 

@@ -29,7 +29,7 @@ script — from a shell ([`operations.md`](../operations.md)).
 | `50` | Retention or repair failed; the UI points at `recover --dry-run` |
 
 **"Busy" is not a failure.** One mutating command runs at a time across the
-whole archive — sync, verify, prune, repair, and recover share a single
+whole archive — sync, verify, prune, purge, repair, and recover share a single
 lock. `HFMNT010` renders as a plain busy notice naming the holder. Wait it
 out (a first sync of a large repository legitimately takes hours); never
 remove the lock.

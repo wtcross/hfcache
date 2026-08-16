@@ -21,6 +21,7 @@ from hfcache.models import (
     SCHEMA_VERSION,
     ArchiveSentinel,
     PrunePlan,
+    PurgePlan,
     Reference,
     RepairCleanup,
     RevisionSummary,
@@ -49,6 +50,7 @@ MODEL_FOR = {
     "manifest": RevisionManifest,
     "prune-plan": PrunePlan,
     "pruned-record": examples.PrunedRevisionRecord,
+    "purge-plan": PurgePlan,
     "reference": Reference,
     "repair-manifest": RevisionManifest,
     "repair-retirement": examples.RepairRetirementRecord,
@@ -428,6 +430,39 @@ def test_a_plan_with_a_repeated_generation_is_refused():
 def test_a_generation_below_one_is_refused():
     with pytest.raises(ValueError, match="greater than or equal to 1"):
         RevisionSummary(commit_sha=examples.SHA, publication_generation=0)
+
+
+# --------------------------------------------------------------------------- #
+# Purge plan validity (`docs/schemas.md` §8.1)
+# --------------------------------------------------------------------------- #
+
+
+def test_a_purge_plan_cache_scope_must_match_every_revision():
+    payload = examples.purge_plan().to_payload()
+    payload["cache_revisions_to_delete"] = [examples.OTHER_SHA]
+
+    with pytest.raises(ValueError, match="cache revisions must exactly match"):
+        PurgePlan.model_validate(payload)
+
+
+def test_a_purge_plan_must_contain_its_current_revision():
+    payload = examples.purge_plan().to_payload()
+    payload["current"]["commit_sha"] = examples.OTHER_SHA
+
+    with pytest.raises(ValueError, match="contain the current revision exactly once"):
+        PurgePlan.model_validate(payload)
+
+
+def test_a_purge_plan_must_not_repeat_a_commit():
+    payload = examples.purge_plan().to_payload()
+    duplicate = dict(payload["revisions"][0])
+    duplicate["publication_generation"] = 2
+    payload["revisions"].append(duplicate)
+    payload["cache_revisions_to_delete"].append(duplicate["commit_sha"])
+    payload["unique_bytes_released_estimate"] *= 2
+
+    with pytest.raises(ValueError, match="distinct commit SHAs"):
+        PurgePlan.model_validate(payload)
 
 
 # --------------------------------------------------------------------------- #

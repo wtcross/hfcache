@@ -35,7 +35,7 @@ run `hfcache archive init` — the archive exists.
 
 | Task at hand | Read |
 | --- | --- |
-| Understand the system | `docs/architecture.md` §1–§4: mission, decisions `AD-01`–`AD-18`, non-goals |
+| Understand the system | `docs/architecture.md` §1–§4: mission, decisions `AD-01`–`AD-20`, non-goals |
 | Change code, any area | The contract for that area (rows below), then `docs/agents/conventions.md` |
 | Storage layout, atomicity, crash recovery | `docs/architecture.md` §5–§7 |
 | Configuration keys or validation | `docs/configuration.md` |

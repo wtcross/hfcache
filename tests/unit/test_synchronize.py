@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any, override
 import pytest
 from typer.testing import CliRunner
 
+import hfcache.purge as purge_module
 from hfcache import sync as sync_module
 from hfcache.archive import initialize_archive
 from hfcache.cli import app
@@ -2370,3 +2371,111 @@ def test_a_dependency_that_is_also_configured_is_recorded_as_managed(
         (layout.published / str(reference.manifest)).read_text(encoding="utf-8")
     )
     assert manifest.dependencies[0].managed is True
+
+
+# --------------------------------------------------------------------------- #
+# `purge` command (`AD-20`, `PUR-001`)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.usefixtures("_wired")
+def test_purge_requires_an_explicit_scope(config_file: Path):
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "purge", "--dry-run"])
+
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG003"]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_purge_refuses_all_unmanaged_with_a_selector(config_file: Path):
+    result = CliRunner().invoke(
+        app,
+        [
+            "--json",
+            "--config",
+            str(config_file),
+            "purge",
+            "--dry-run",
+            "--all-unmanaged",
+            MODEL.selector,
+        ],
+    )
+
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG002"]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_purge_refuses_a_revision_selector(config_file: Path):
+    result = CliRunner().invoke(
+        app,
+        [
+            "--json",
+            "--config",
+            str(config_file),
+            "purge",
+            "--dry-run",
+            f"{MODEL.selector}@{SHA_A}",
+        ],
+    )
+
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG001"]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_purge_refuses_a_repository_still_in_configuration(config_file: Path):
+    result = CliRunner().invoke(
+        app,
+        [
+            "--json",
+            "--config",
+            str(config_file),
+            "purge",
+            "--dry-run",
+            MODEL.selector,
+        ],
+    )
+
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG007"]
+
+
+@pytest.mark.usefixtures("_wired")
+def test_purge_all_unmanaged_removes_only_repositories_absent_from_configuration(
+    config_file: Path,
+    layout: ArchiveLayout,
+    hub: FakeHub,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    hub.heads[MODEL.selector] = SHA_A
+    hub.heads[DATASET.selector] = SHA_A
+    synced = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    assert synced.exit_code == ExitCode.SUCCESS
+    reduced = tmp_path / "reduced.toml"
+    reduced.write_text(
+        config_file.read_text(encoding="utf-8").replace(
+            '[[repositories]]\nid = "organization/model-name"\ntype = "model"\n', ""
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(purge_module, "delete_cache_revisions", lambda *_args: 0)
+
+    dry_run = CliRunner().invoke(
+        app,
+        ["--json", "--config", str(reduced), "purge", "--dry-run", "--all-unmanaged"],
+    )
+    assert dry_run.exit_code == ExitCode.SUCCESS
+    assert [plan["repository_id"] for plan in json.loads(dry_run.stdout)["data"]["plans"]] == [
+        MODEL.id
+    ]
+    assert RepositoryLayout(archive=layout, identity=MODEL).directory.is_dir()
+
+    applied = CliRunner().invoke(
+        app,
+        ["--json", "--config", str(reduced), "purge", "--apply", "--all-unmanaged"],
+    )
+    assert applied.exit_code == ExitCode.SUCCESS
+    assert not RepositoryLayout(archive=layout, identity=MODEL).directory.exists()
+    assert RepositoryLayout(archive=layout, identity=DATASET).directory.is_dir()

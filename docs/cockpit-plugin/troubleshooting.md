@@ -30,7 +30,7 @@ without the superuser bridge the configuration is unreadable
 
 ## A busy notice names the archive lock (`HFMNT010`)
 
-Normal single-writer serialization, not a failure: sync, verify, prune,
+Normal single-writer serialization, not a failure: sync, verify, prune, purge,
 repair, and recover share one lock, and the notice names the holder. A
 first sync of a large repository legitimately runs for hours — check the
 Sync tab's live activity. Never delete the lock file.

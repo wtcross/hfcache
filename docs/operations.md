@@ -321,6 +321,43 @@ finishing a rotation that a previous run left incomplete.
 Neither `--dry-run` nor `--apply` is a default; omitting both is an error, because
 one describes and the other performs.
 
+### Removing repositories no longer configured
+
+Removing a repository from configuration does not delete it; `HFWRN007` is the
+deliberate reminder that its published revisions are still retained. Permanent
+removal is a separate two-step operation:
+
+```text
+$ hfcache purge --dry-run --all-unmanaged
+model:organization/old-model  purge 2 revisions, 486.1 MiB logical
+exit=0
+
+$ hfcache purge --apply --all-unmanaged
+model:organization/old-model  purge 2 revisions, 486.1 MiB logical
+exit=0
+```
+
+Prefer explicit selectors when the list is small:
+
+```text
+$ hfcache purge --dry-run model:organization/old-model
+$ hfcache purge --apply model:organization/old-model
+```
+
+Review the dry-run's exact repository IDs, revision count, and logical-byte
+estimate before apply. The command refuses a target still in configuration
+(`HFARG007`) and refuses unknown content rather than deleting it (`HFRET001`). It
+runs one durable transaction per repository, so an error after earlier entries
+committed leaves those earlier purges complete and the later repository
+untouched. Manifests and purge-reason records remain under `audit/pruned/`; the
+publication trees and supported Hub cache revisions do not. ZFS snapshots may
+continue to hold the physical blocks even after the logical-byte total is gone.
+
+After apply, run `recover --dry-run`. It should report no actionable purge. If
+the command was interrupted, `docs/recovery.md` §5 explains why recovery either
+restores the entire repository before the commit point or completes audit and
+trash cleanup after it.
+
 ```text
 $ hfcache recover --dry-run
 actionable  0
@@ -363,7 +400,7 @@ application outcome.
 | `20` | Mount, sentinel, permission, capacity, or lock safety | **Stop.** Nothing was downloaded or changed. §7.1 |
 | `30` | One or more repository sync failures | Other repositories may have succeeded. Read the run report |
 | `40` | Integrity verification failure | **Do not sync or prune.** Preserve evidence; go to `OPS-003` |
-| `50` | Prune or repair failure | The archive prefers over-retention; `recover --dry-run` |
+| `50` | Prune, purge, or repair failure | The archive prefers preservation; `recover --dry-run` |
 
 Observed on this deployment:
 
@@ -395,7 +432,7 @@ the reference unchanged, and the retention and repair suites assert `50`.
 ### 7.1 Exit 20 in practice
 
 The common cause is benign — another mutating command is already running. Exactly
-one runs at a time (`AD-17`), and sync, verify, prune, repair, and
+one runs at a time (`AD-17`), and sync, verify, prune, purge, repair, and
 `recover --apply` all share the one lock.
 
 ```text
@@ -443,7 +480,7 @@ in the run report, and in the journal.
 | `HFWRN004` | Stale staging directory | A run stopped part way and aged past `sync.stale_staging_age_hours`. `recover --dry-run` |
 | `HFWRN005` | Free space approaching the configured reserve | Capacity work. Note ZFS snapshots hold blocks after an application prune |
 | `HFWRN006` | Upstream repository unreachable | Nothing to do. Every local revision is preserved; this never triggers a prune |
-| `HFWRN007` | Archived repository is not in configuration | Expected after removing one. Its revisions are kept |
+| `HFWRN007` | Archived repository is not in configuration | Its revisions are kept. If removal is intentional, review `purge --dry-run` before `purge --apply` |
 | `HFWRN008` | Retired repair instance past its grace period | `recover --apply` quarantines it |
 | `HFWRN009` | Local Xet transfer cache exceeded its advisory ceiling | Writer-local disk, not the archive. Check `/var/cache/hfcache/xet` |
 | `HFWRN010` | Verification may overlap storage maintenance | Reschedule one of them |
@@ -628,6 +665,7 @@ $H verify --estimate          # size the maintenance window
 $H verify --full              # the quarterly integrity read
 $H recover --dry-run          # always safe, including on a stopped archive
 $H prune --dry-run            # what retention would rotate out
+$H purge --dry-run --all-unmanaged  # what explicit repository removal would delete
 
 sudo systemctl start hfcache-sync.service              # run a sync as production does
 sudo systemctl stop  hfcache-sync.timer                # pause the schedule

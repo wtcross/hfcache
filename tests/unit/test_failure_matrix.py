@@ -27,6 +27,7 @@ import pytest
 # neither miss a module the matrix names nor keep one it no longer does.
 MODULES: Final = (
     "tests.unit.test_crash_injection",
+    "tests.unit.test_purge",
     "tests.unit.test_recovery_planning",
     "tests.unit.test_synchronize",
     "tests.unit.test_verify_command",
@@ -156,6 +157,14 @@ MATRIX: Final[dict[str, tuple[tuple[str, str], ...]]] = {
         (
             "tests.unit.test_crash_injection",
             "test_a_rollback_that_cannot_restore_the_tree_is_hfret005",
+        ),
+        (
+            "tests.unit.test_purge",
+            "test_recovery_rolls_an_interrupted_precommit_purge_back",
+        ),
+        (
+            "tests.unit.test_purge",
+            "test_recovery_finishes_an_interrupted_postcommit_purge",
         ),
     ),
     # 9

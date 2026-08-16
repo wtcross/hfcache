@@ -251,6 +251,37 @@ def test_a_cleanup_deferred_checkpoint_on_a_prune_is_refused(layout: ArchiveLayo
     assert len(on_disk(transaction)["checkpoints"]) == 7, "the refusal wrote nothing"
 
 
+def test_a_purge_container_checkpoint_is_only_valid_after_manifest_tombstone(
+    layout: ArchiveLayout,
+):
+    transaction = begin(layout, "prune")
+    for name in CHECKPOINTS["prune"][:4]:
+        transaction.checkpoint(name)
+
+    with pytest.raises(SafetyError) as caught:
+        transaction.checkpoint("repository_container_removed")
+
+    assert codes(caught.value.problems) == ["HFTXN002"]
+    assert len(on_disk(transaction)["checkpoints"]) == 4, "the refusal wrote nothing"
+
+
+def test_a_purge_container_checkpoint_is_valid_before_catalog_publication(
+    layout: ArchiveLayout,
+):
+    transaction = begin(layout, "prune")
+    for name in CHECKPOINTS["prune"][:5]:
+        transaction.checkpoint(name)
+
+    transaction.checkpoint("repository_container_removed")
+    transaction.checkpoint("catalog_published")
+
+    assert [entry["name"] for entry in on_disk(transaction)["checkpoints"]] == [
+        *CHECKPOINTS["prune"][:5],
+        "repository_container_removed",
+        "catalog_published",
+    ]
+
+
 def test_a_recovery_journal_records_one_checkpoint_per_remediation(layout: ArchiveLayout):
     transaction = begin(layout, "recovery")
 

@@ -258,6 +258,25 @@ still work, so you always have a way to look.
 
 All four were provoked on the throwaway.
 
+### Interrupted repository purge
+
+Purge deliberately reuses the prune journal and its
+`prune_logically_committed` boundary. `recover --dry-run` therefore reports the
+same remedy names with complete-repository meaning:
+
+- `rollback_prune` before that checkpoint restores every manifest and tree,
+  then restores the complete `refs/` directory last. The repository is again
+  consumer-visible in full.
+- `complete_prune` at or after that checkpoint does not republish the repository.
+  It finishes byte-for-byte manifest archival, one purge-reason record per
+  revision, and transaction-owned trash cleanup.
+
+Do not move an open purge journal aside merely to unblock sync: doing so discards
+the record that says whether restoration or completion is safe. Run
+`recover --dry-run`, then `recover --apply` when the plan is actionable. A purge
+journal from a newer release also makes rollback across that release unsafe until
+the purge is resolved.
+
 ### `HFTXN001` — a journal this release does not understand
 
 ```text

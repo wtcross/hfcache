@@ -243,6 +243,15 @@ reported and preserved, never deleted (`FS-19`). Where a transaction can fail
 leaving more or less data, it leaves more (`TX-06`). Quarantined evidence is
 released only by explicit operator action.
 
+Whole-repository deletion is a separate `purge` command, never a consequence of
+an upstream error or configuration edit. It requires `--apply` plus explicit
+unmanaged selectors or `--all-unmanaged`, refuses every repository still in
+configuration, validates that references and manifests explain the complete
+shallow layout, and preserves any unknown entry. Each repository has its own
+durable transaction: pre-commit recovery restores it completely; post-commit
+recovery never silently republishes it and retains byte-for-byte manifests plus
+reason records under `audit/pruned/` (`AD-20`).
+
 ### T-13 — The management plugin widens the operator surface
 
 **Capability.** The Cockpit plugin (`docs/cockpit.md`) exposes operator

@@ -58,6 +58,7 @@ from hfcache.publication import (
     read_verification_catalog,
     retained_references,
 )
+from hfcache.purge import apply_purge, plan_all_purges
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery, reconcile
 from hfcache.repair import cleanup_warnings, preserved_bytes, repair_revision
 from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersions
@@ -1343,8 +1344,8 @@ def verify(
     holds, including repositories no longer in configuration (`AD-06`) — a
     quarterly job that skipped those would leave exactly the content nothing else
     touches unchecked. It takes the exclusive lock, which is what makes it
-    mutually exclusive with sync, prune, and repair, and runs with Hub networking
-    disabled because it re-reads what the archive already has.
+    mutually exclusive with sync, prune, purge, and repair, and runs with Hub
+    networking disabled because it re-reads what the archive already has.
 
     `--revision TYPE:ID@SHA` checks one retained revision, which is what an
     operator reaches for after a `--full` reported a finding and again after a
@@ -1755,6 +1756,155 @@ def _plans(layout: ArchiveLayout, wanted: set[str], *, maximum: int) -> tuple[Pr
         identity for identity in published_repositories(layout) if identity.selector in wanted
     ]
     return plan_all(layout, identities, maximum=maximum, generated_at=datetime.now(UTC))
+
+
+# --------------------------------------------------------------------------- #
+# purge (`docs/cli.md` §2, `AD-20`)
+# --------------------------------------------------------------------------- #
+
+
+def _purge_identities(
+    config: ApplicationConfig,
+    layout: ArchiveLayout,
+    selectors: list[str] | None,
+    *,
+    all_unmanaged: bool,
+) -> tuple[RepositoryIdentity, ...]:
+    """Resolve an explicit purge scope and refuse every managed repository."""
+    if all_unmanaged and selectors:
+        message = "--all-unmanaged and repository selectors are mutually exclusive"
+        raise ConfigurationError.single(message, code="HFARG002")
+    if not all_unmanaged and not selectors:
+        message = "purge requires repository selectors or --all-unmanaged"
+        raise ConfigurationError.single(message, code="HFARG003")
+
+    archived = {identity.selector: identity for identity in published_repositories(layout)}
+    managed = {
+        RepositoryIdentity.from_config(repository).selector for repository in config.repositories
+    }
+    if all_unmanaged:
+        return tuple(
+            identity for selector, identity in sorted(archived.items()) if selector not in managed
+        )
+
+    parsed = [parse_selector(selector) for selector in selectors or []]
+    revision_scoped = [str(selector) for selector in parsed if selector.commit_sha is not None]
+    if revision_scoped:
+        message = "purge removes whole repositories; revision-qualified selectors are refused"
+        raise ConfigurationError.single(message, code="HFARG001", location=revision_scoped[0])
+    wanted = {selector.identity.selector for selector in parsed}
+    problems = [
+        Problem(
+            code="HFARG004",
+            message=f"selector {selector} names no archived repository",
+            location=selector,
+        )
+        for selector in sorted((wanted - archived.keys()) - managed)
+    ]
+    problems.extend(
+        Problem(
+            code="HFARG007",
+            message=(
+                f"selector {selector} remains in configuration; remove it from configuration "
+                "before purging its archive"
+            ),
+            location=selector,
+        )
+        for selector in sorted(wanted & managed)
+    )
+    if problems:
+        raise ConfigurationError(problems)
+    return tuple(archived[selector] for selector in sorted(wanted))
+
+
+@app.command()
+def purge(
+    ctx: typer.Context,
+    selectors: SelectorArgument = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Print the exact purge plan and mutate nothing."),
+    ] = False,
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Execute the validated purge plan."),
+    ] = False,
+    all_unmanaged: Annotated[
+        bool,
+        typer.Option(
+            "--all-unmanaged",
+            help="Select every archived repository absent from configuration.",
+        ),
+    ] = False,
+) -> None:
+    """Permanently remove explicitly selected unmanaged repositories (`AD-20`)."""
+    started_at = utc_now()
+    options = _options(ctx)
+    command = f"purge {'--apply' if apply else '--dry-run'}"
+    try:
+        if dry_run == apply:
+            message = (
+                "exactly one of --dry-run and --apply is required: one describes permanent "
+                "removal and the other performs it"
+            )
+            raise ConfigurationError.single(message, code="HFARG002")
+        config = load_config(options.config_path)
+        layout = ArchiveLayout(root=config.storage.archive_root)
+        identities = _purge_identities(config, layout, selectors, all_unmanaged=all_unmanaged)
+    except HfcacheError as error:
+        _report_failure(ctx, command, started_at, error)
+
+    try:
+        if apply:
+            with guarded(
+                layout,
+                storage=config.storage,
+                command=command,
+                lock_wait_seconds=config.sync.lock_wait_seconds,
+            ):
+                envelope = _run_envelope(config) | {"run_id": new_run_id()}
+                reconcile(
+                    layout,
+                    stale_staging_age_hours=config.sync.stale_staging_age_hours,
+                    envelope=envelope,
+                    started_at=datetime.now(UTC),
+                )
+                # Re-resolve inside the lock: `--all-unmanaged` is a state-based
+                # scope, and the plan persisted by each transaction must describe
+                # the exact state being removed, not the pre-lock observation.
+                identities = _purge_identities(
+                    config, layout, selectors, all_unmanaged=all_unmanaged
+                )
+                plans = plan_all_purges(layout, identities, generated_at=datetime.now(UTC))
+                applied = [
+                    record.model_dump(mode="json")
+                    for plan in plans
+                    for record in apply_purge(layout, plan, envelope=envelope)
+                ]
+        else:
+            plans = plan_all_purges(layout, identities, generated_at=datetime.now(UTC))
+            applied = []
+    except HfcacheError as error:
+        _report_failure(ctx, command, started_at, error)
+
+    payload: dict[str, Any] = {
+        "plans": [plan.model_dump(mode="json") for plan in plans],
+        "applied": applied,
+    }
+    _emit(
+        ctx,
+        command,
+        payload,
+        started_at=started_at,
+        lines={
+            f"{plan.repository_type}:{plan.repository_id}": (
+                f"purge {len(plan.revisions)} revisions, "
+                f"{_bytes(plan.unique_bytes_released_estimate)} logical"
+            )
+            for plan in plans
+        }
+        or {"purge": "nothing to purge"},
+    )
 
 
 # --------------------------------------------------------------------------- #

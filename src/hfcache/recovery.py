@@ -55,7 +55,7 @@ from hfcache.identity import (
 )
 from hfcache.logging import emit
 from hfcache.manifests import RevisionManifest
-from hfcache.models import PrunedRevisionRecord, PrunePlan, Reference
+from hfcache.models import PrunedRevisionRecord, PrunePlan, PurgePlan, Reference
 from hfcache.paths import RepositoryLayout
 from hfcache.publication import (
     PUBLISHED_DIRECTORY_MODE,
@@ -68,6 +68,7 @@ from hfcache.publication import (
     rebuild_catalog,
     retained_references,
 )
+from hfcache.purge import complete_purge, rollback_purge
 from hfcache.repair import (
     PendingCleanup,
     finish_cleanup,
@@ -1180,6 +1181,8 @@ def _rollback_prune(layout: ArchiveLayout, transaction_id: TransactionId) -> dic
     """
     journal = read_journal(layout, layout.journal(transaction_id)).journal
     plan = _prune_plan(journal)
+    if isinstance(plan, PurgePlan):
+        return rollback_purge(layout, plan, transaction_id)
     identity = RepositoryIdentity.of(plan.repository_type, plan.repository_id)
     repository = RepositoryLayout(archive=layout, identity=identity)
     commit = CommitSha(plan.selected.commit_sha)
@@ -1219,6 +1222,8 @@ def _complete_prune(layout: ArchiveLayout, transaction_id: TransactionId) -> dic
     """
     journal = read_journal(layout, layout.journal(transaction_id)).journal
     plan = _prune_plan(journal)
+    if isinstance(plan, PurgePlan):
+        return complete_purge(layout, plan, transaction_id)
     identity = RepositoryIdentity.of(plan.repository_type, plan.repository_id)
     repository = RepositoryLayout(archive=layout, identity=identity)
     commit = CommitSha(plan.selected.commit_sha)
@@ -1288,7 +1293,7 @@ def _pruned_record(
     )
 
 
-def _prune_plan(journal: TransactionJournal) -> PrunePlan:
+def _prune_plan(journal: TransactionJournal) -> PrunePlan | PurgePlan:
     """The validated plan checkpoint 1 persisted, which names everything else."""
     payload = next(
         (
@@ -1305,6 +1310,8 @@ def _prune_plan(journal: TransactionJournal) -> PrunePlan:
     if payload is None:  # pragma: no cover - checkpoint 1 is a prune's first act
         message = f"prune journal {journal.transaction_id} records no plan; it cannot be resolved"
         raise SafetyError.single(message, code="HFTXN003", location=str(journal.transaction_id))
+    if payload.get("reason") == "operator_requested_repository_purge":
+        return PurgePlan.model_validate(payload)
     return PrunePlan.model_validate(payload)
 
 

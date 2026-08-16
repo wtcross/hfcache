@@ -68,6 +68,7 @@ __all__ = [
     "TreeEntry",
     "access_problems",
     "delete_cache_revision",
+    "delete_cache_revisions",
     "download_estimate",
     "endpoint_host",
     "hub_problem",
@@ -592,6 +593,29 @@ def delete_cache_revision(cache_dir: Path, commit_sha: CommitSha) -> int:
         message = (
             f"the cache revision {commit_sha} could not be deleted: {type(exc).__name__}: {exc}. "
             f"Published hardlinks keep the bytes regardless, so the revision is preserved"
+        )
+        raise RetentionError.single(message, code="HFRET002", location=str(cache_dir)) from exc
+    return int(strategy.expected_freed_size)
+
+
+def delete_cache_revisions(cache_dir: Path, commit_shas: Sequence[CommitSha]) -> int:
+    """Remove exact revisions from the private cache in one supported operation.
+
+    Purge uses one cache strategy for the complete repository plan. This keeps
+    the cache scan serialized and lets ``huggingface_hub`` account for blobs
+    shared by two revisions before it removes anything (`FS-14`).
+    """
+    from huggingface_hub import scan_cache_dir  # noqa: PLC0415 - see below
+
+    try:
+        strategy = scan_cache_dir(cache_dir).delete_revisions(*commit_shas)
+        strategy.execute()
+    except Exception as exc:
+        revisions = ", ".join(commit_shas)
+        message = (
+            f"the cache revisions {revisions} could not be deleted: "
+            f"{type(exc).__name__}: {exc}. Published hardlinks keep the bytes "
+            "regardless, so the revisions are preserved"
         )
         raise RetentionError.single(message, code="HFRET002", location=str(cache_dir)) from exc
     return int(strategy.expected_freed_size)

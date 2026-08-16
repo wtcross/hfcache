@@ -381,6 +381,29 @@ evidence and the reasoning).
   checks, 42 Cockpit tests and production build, wheel build, and clean-wheel
   install smoke.)
 
+## Explicit repository purge (PUR, 2026-08-15)
+
+- [x] PUR-001 Add explicit transactional removal for unmanaged repositories
+  (2026-08-15, this commit — decision 96. New `purge` requires either explicit
+  whole-repository selectors or `--all-unmanaged`, exactly one of `--dry-run`
+  and `--apply`, and refuses every repository still present in configuration
+  with `HFARG007`. Planning resolves every active reference, tree, and manifest
+  and rejects unknown shallow content under `FS-19`; apply uses one prune-family
+  transaction per repository, tombstones complete `refs/`, `revisions/`, and
+  manifest directories, removes cache revisions only through the installed Hub
+  API, and retains each original manifest byte-for-byte with a purge-reason
+  audit record. Pre-commit recovery restores the whole repository with refs
+  last; post-commit recovery never republishes it and completes audit/trash
+  cleanup. `PurgePlan` is a new schema-version-1 durable format and the audit
+  reason is a field-combination widening, both backed by golden/model tests;
+  CLI scope/refusal/apply tests, transaction checkpoint tests, direct recovery
+  tests, and the self-checking crash/failure matrix cover the new path. Operator,
+  recovery, security, CLI, schema, plan, and architecture contracts were updated
+  together. `scripts/check.sh` exits `0`: 1,650 default tests, wheel/sdist build,
+  and all 42 Cockpit tests plus production build. No live archive content was
+  touched; release compatibility, deployment, and the requested live purge are
+  separate release/operator work.)
+
 ## Cockpit administration plugin (CPT, 2026-07-30)
 
 A browser administration UI for the deployed writer, as a Cockpit package in
@@ -2675,3 +2698,29 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     cannot parse a mixed failed-plus-warning report, so rollback requires the
     newest report to have a previously accepted combination or a later
     compatible sync report to supersede it.
+
+96. **Whole-repository deletion is explicit, unmanaged-only, and reuses the
+    prune commit point** (2026-08-15, PUR-001). Removing configuration or losing
+    upstream still preserves every local revision (`AD-06`); permanent removal
+    requires a separate `purge` invocation with an explicit selector set or
+    `--all-unmanaged`, and `--apply` revalidates that scope under the writer lock.
+    One transaction owns one complete repository so a broad purge has honest
+    per-repository failure boundaries. Its `PurgePlan` names every active
+    publication; whole `refs/`, `revisions/`, and manifest directories move to
+    transaction trash, and an unknown entry refuses the repository instead of
+    broadening deletion. Reusing `operation = "prune"` and
+    `prune_logically_committed` keeps the established recovery rule: before the
+    boundary restore everything, after it never surprise consumers by
+    republishing and finish only audit/physical cleanup. A purge-only
+    `repository_container_removed` checkpoint is accepted at exactly its one
+    valid position; stripping it leaves the older prune sequence intact, so a
+    completed journal is safely ignored by older binaries. `PurgePlan` and the
+    `operator_requested_repository_purge` audit reason are durable-format
+    widenings: a previous release must never be used while a purge journal is
+    open, and release packaging must drill the previous reader against the new
+    completed artifacts before deployment. **Rejected:** deleting immediately
+    on a configuration edit, which turns mistakes into data loss; manual
+    filesystem removal, which bypasses `FS-14`, `FS-19`, audit, and recovery;
+    repeated one-revision prune, which exposes partially retained repositories;
+    and a new journal operation literal, which adds a second recovery regime
+    without changing the commit semantics.

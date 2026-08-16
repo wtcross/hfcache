@@ -27,6 +27,9 @@ consumers at all.
 - **Never destructive on error.** Upstream `403`, `404`, deletion, or removal from
   configuration preserves every local revision. Where a failure can leave more or
   less data, it leaves more.
+- **Explicit lifecycle removal.** `purge` deletes only complete repositories that
+  are already absent from configuration, after a reviewable dry-run, with
+  transaction recovery and byte-for-byte manifest audit evidence.
 - **Crash-safe.** Every mutation is a single atomic filesystem operation followed
   by a durable checkpoint. Every state a crash can leave has one correct resolution.
 - **Content is data, never code.** Nothing from a repository is executed,
@@ -79,7 +82,7 @@ the accepted implementation plan.
 | [`docs/quickstart.md`](docs/quickstart.md) | Run everything on one machine with a loopback NFS export |
 | [`docs/storage-requirements.md`](docs/storage-requirements.md) | What any NFSv4.2 server must provide: filesystem semantics, the two exports, identities |
 | [`docs/deployment-centos-stream-10.md`](docs/deployment-centos-stream-10.md) | Building the writer host, installing, upgrading, and rolling back |
-| [`docs/operations.md`](docs/operations.md) | Running it: sync, verify, prune, status, timers, exit codes, measured performance |
+| [`docs/operations.md`](docs/operations.md) | Running it: sync, verify, prune, purge, status, timers, exit codes, measured performance |
 | [`docs/recovery.md`](docs/recovery.md) | Corruption, repair, snapshot restore, lost writer, and the stopped-machine states |
 | [`docs/consumers.md`](docs/consumers.md) | Copying and verifying a revision from a downstream host |
 | [`docs/cockpit.md`](docs/cockpit.md) | The Cockpit plugin's contract: rules, privilege model, operation surface |

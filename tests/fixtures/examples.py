@@ -29,6 +29,7 @@ from hfcache.models import (
     PrunedRevisionRecord,
     PrunePlan,
     PruneSelection,
+    PurgePlan,
     Reference,
     RepairCleanup,
     RepairRetirementRecord,
@@ -412,6 +413,25 @@ def prune_plan() -> PrunePlan:
     )
 
 
+def purge_plan() -> PurgePlan:
+    """`docs/schemas.md` §8.1: one complete unmanaged repository."""
+    selected = prune_plan().selected
+    return PurgePlan(
+        cache_revisions_to_delete=(selected.commit_sha,),
+        current=RevisionSummary(
+            commit_sha=selected.commit_sha,
+            publication_generation=selected.publication_generation,
+        ),
+        generated_at=at("2026-08-15T21:00:00.000000Z"),
+        plan_id=PLAN,
+        reason="operator_requested_repository_purge",
+        repository_id=REPOSITORY_ID,
+        repository_type="model",
+        revisions=(selected,),
+        unique_bytes_released_estimate=selected.logical_bytes,
+    )
+
+
 def pruned_record() -> PrunedRevisionRecord:
     """`docs/schemas.md` §9.1."""
     plan = prune_plan()
@@ -492,6 +512,7 @@ EXAMPLES = {
     "manifest": manifest,
     "prune-plan": prune_plan,
     "pruned-record": pruned_record,
+    "purge-plan": purge_plan,
     "reference": reference,
     "repair-manifest": repair_manifest,
     "repair-retirement": repair_retirement,

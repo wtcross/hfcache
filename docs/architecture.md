@@ -260,9 +260,10 @@ and against the new tree before any reference moves.
 
 ### AD-14 — Every mutation is bounded by an atomic filesystem operation and a durable checkpoint
 
-**Decision.** Sync, publication, prune, repair, and recovery advance only through
-atomic `rename(2)` operations on the same filesystem, each recorded as an
-append-only checkpoint in a transaction journal after the operation is durable.
+**Decision.** Sync, publication, prune (including purge), repair, and recovery
+advance only through atomic `rename(2)` operations on the same filesystem, each
+recorded as an append-only checkpoint in a transaction journal after the
+operation is durable.
 
 **Rationale.** Crash safety cannot rest on the process finishing. It must rest on
 each intermediate on-disk state being unambiguous and forward-recoverable.
@@ -304,7 +305,7 @@ deletion.
 
 **Decision.** Exactly one host has read/write access, enforced by the export's
 exact-host restriction. Mutual exclusion between `sync`, `verify`, `prune`,
-`repair`, and `recover` is a local exclusive lock under `/run/hfcache`.
+`purge`, `repair`, and `recover` is a local exclusive lock under `/run/hfcache`.
 
 **Rationale.** With a single writer, local locking is sufficient and correct.
 Distributed locking over NFS is a well-known source of subtle failure and buys
@@ -368,6 +369,27 @@ copy cannot race a download for space; hardlink staging needs no such pause.
 On an unexpected foreground exception, work that has not started is cancelled
 and the sole active transfer is joined before the exception releases the lock;
 the command never drains the untouched remainder merely because it is stopping.
+
+### AD-20 — Repository removal is explicit, unmanaged, and transactional
+
+**Decision.** Configuration removal and upstream disappearance still preserve
+every local byte (`AD-06`). Permanent removal is a separate operator command,
+`purge`, which accepts only repositories already absent from configuration and
+requires exactly one of `--dry-run` or `--apply`. A broad invocation must say
+`--all-unmanaged`; an empty argument list never means all.
+
+**Rationale.** Long-lived archives need an intentional way to release content
+whose retention is no longer wanted, but making configuration edits destructive
+would turn a typo, partial deployment, or upstream failure into data loss. The
+separate command makes deletion visible, reviewable, and journalled.
+
+**Consequences.** Purge validates the complete shallow repository layout against
+retained references and immutable manifests before mutation. Any unexpected
+entry refuses the whole repository (`HFRET001`, `FS-19`). Cache revisions are
+removed only through `huggingface_hub`; references and revision trees are
+tombstoned before manifests; the existing prune commit point and recovery rule
+apply. Original manifests and one reason record per removed revision remain in
+`audit/pruned/`. Audit metadata is not archive content and is never purged.
 
 ## 4. Non-goals
 
@@ -637,7 +659,7 @@ immediately after a crash. Each is directly testable.
 
 ### Transactions and unknown data
 
-- **`FS-17`** — Every sync, publication, prune, repair, and recovery mutation has
+- **`FS-17`** — Every sync, publication, prune, purge, repair, and recovery mutation has
   a durable transaction journal under `.store/transactions/` whose checkpoints are
   appended only after the operation they describe is durable.
 - **`FS-18`** — Staging, trash, quarantine, and repair directories are named by
@@ -836,6 +858,33 @@ directory proven empty, not one decided to be unwanted.
 The archive never manually deletes a cache blob to force the retained count
 (`FS-14`), and no upstream error or configuration edit ever reaches this
 transaction (`AD-06`).
+
+#### Purge variant — complete unmanaged repository
+
+`purge --apply` reuses `operation = "prune"`, the checkpoint sequence above,
+and checkpoint 7 as its commit point. Its persisted `PurgePlan` names every
+active revision. Before opening the journal, planning proves the repository has
+exactly one current reference, one per-SHA reference/tree/manifest for every
+selected revision, and no unrecognized shallow entry. A repair instance still
+in its grace period or any unexplained entry refuses purge (`HFRET001`).
+
+The atomic acts at checkpoints 3–5 widen from one revision to the whole
+repository: rename `refs/` to `.store/trash/<txn>/refs`, rename `revisions/` to
+`.store/trash/<txn>/revisions`, then rename the repository's manifest directory
+to `.store/trash/<txn>/manifests`. Moving all references first preserves
+`FS-10`. A purge-only `repository_container_removed` checkpoint follows step 5:
+`rmdir` proves the now-empty repository container absent before catalog rebuild.
+It is a permitted conditional checkpoint, not part of ordinary prune's sequence.
+
+Before checkpoint 7, recovery restores revision trees and manifests before it
+restores `refs/`, rebuilds the catalog, and marks the transaction failed. At or
+after checkpoint 7, recovery never republishes: it writes every original
+manifest byte-for-byte plus a `PrunedRevisionRecord` whose reason is
+`operator_requested_repository_purge`, removes the transaction-owned tombstone,
+and removes only empty namespace containers with `rmdir`. A command purging
+several repositories is one transaction per repository; earlier committed
+repositories stay removed if a later repository fails, and retry plans only what
+remains. This is deletion with bounded failure, not cross-repository atomicity.
 
 ### 7.5 Repair transaction
 

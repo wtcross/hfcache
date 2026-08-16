@@ -606,6 +606,47 @@ hardlinked by another retained revision. It is explicitly an estimate of logical
 release: ZFS snapshots may continue to reference the blocks, so physical pool
 space may not change at all (`docs/plan.md` §15.3).
 
+### 8.1 Repository purge plan
+
+Produced by `purge --dry-run` and persisted in a prune journal before mutation:
+
+```json
+{
+  "cache_revisions_to_delete": [
+    "0123456789abcdef0123456789abcdef01234567"
+  ],
+  "current": {
+    "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+    "publication_generation": 1
+  },
+  "generated_at": "2026-08-15T21:00:00.000000Z",
+  "plan_id": "b71d0e4a3c8f42d190a6c5b3e7f18d24",
+  "reason": "operator_requested_repository_purge",
+  "repository_id": "organization/model-name",
+  "repository_type": "model",
+  "revisions": [
+    {
+      "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+      "file_count": 2,
+      "logical_bytes": 486123904,
+      "manifest": "published/manifests/models/organization/model-name/0123.../9f14....json",
+      "publication_generation": 1,
+      "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+      "tree": "published/repos/models/organization/model-name/revisions/0123.../9f14..."
+    }
+  ],
+  "schema_version": 1,
+  "unique_bytes_released_estimate": 486123904
+}
+```
+
+`revisions` is non-empty, sorted by distinct `publication_generation`, contains
+`current` exactly once, and corresponds exactly to
+`cache_revisions_to_delete`. The logical estimate equals the sum of selected
+revision sizes; hardlinks, compression, and ZFS snapshots make physical space
+release deliberately unknowable here. The plan's repository must be absent from
+configuration when both dry-run and apply resolve their scope (`AD-20`).
+
 ## 9. Audit records
 
 ### 9.1 Pruned revision — `audit/pruned/<type>/<org>/<repo>/<sha>/<pid>.prune.json`
@@ -621,8 +662,8 @@ after its bytes are gone: enough to prove what was there and why it went.
 | `publication_generation`, `publication_id`, `tree` | The instance removed |
 | `file_count`, `logical_bytes` | What it contained |
 | `pruned_at`, `manifest_archived_at` | Timing |
-| `retained_after` | The five `(commit_sha, publication_generation)` pairs left behind |
-| `reason` | `sixth_unique_revision_published` |
+| `retained_after` | The five pairs left by retention, or `[]` after repository purge |
+| `reason` | `sixth_unique_revision_published` \| `operator_requested_repository_purge` |
 
 ### 9.2 Repair retirement — `audit/repairs/<type>/<org>/<repo>/<sha>/<pid>.retirement.json`
 

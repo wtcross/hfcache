@@ -67,6 +67,7 @@ __all__ = [
     "PrunedRevisionRecord",
     "PublicationIdField",
     "PublishedPath",
+    "PurgePlan",
     "Reference",
     "RepairCleanup",
     "RepairRetirementRecord",
@@ -494,6 +495,62 @@ class PrunePlan(VersionedModel):
         return self
 
 
+@final
+class PurgePlan(VersionedModel):
+    """One unmanaged repository an operator explicitly chose to remove.
+
+    Unlike a retention prune, purge removes every retained revision together.
+    The tuple is ordered by immutable publication generation and names every
+    active tree and manifest the transaction is allowed to tombstone (`FS-19`).
+    """
+
+    cache_revisions_to_delete: Annotated[tuple[CommitShaField, ...], BeforeValidator(as_tuple)]
+    current: RevisionSummary
+    generated_at: Timestamp
+    plan_id: PublicationIdField
+    reason: Literal["operator_requested_repository_purge"]
+    repository_id: RepositoryIdField
+    repository_type: RepositoryTypeField
+    revisions: Annotated[tuple[PruneSelection, ...], BeforeValidator(as_tuple)]
+    unique_bytes_released_estimate: ByteCount
+
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        if not self.revisions:
+            message = "a purge plan must name at least one retained revision"
+            raise ValueError(message)
+        generations = [revision.publication_generation for revision in self.revisions]
+        if generations != sorted(generations) or len(set(generations)) != len(generations):
+            message = (
+                "purge revisions must be ordered by distinct publication generations (`FS-20`)"
+            )
+            raise ValueError(message)
+        commits = tuple(revision.commit_sha for revision in self.revisions)
+        if len(set(commits)) != len(commits):
+            message = "purge revisions must name distinct commit SHAs"
+            raise ValueError(message)
+        if self.cache_revisions_to_delete != commits:
+            message = "cache revisions must exactly match the ordered purge revisions"
+            raise ValueError(message)
+        current = [
+            revision
+            for revision in self.revisions
+            if revision.commit_sha == self.current.commit_sha
+        ]
+        if len(current) != 1:
+            message = "purge revisions must contain the current revision exactly once"
+            raise ValueError(message)
+        if current[0].publication_generation != self.current.publication_generation:
+            message = "purge current revision generation does not match its selected revision"
+            raise ValueError(message)
+        if self.unique_bytes_released_estimate != sum(
+            revision.logical_bytes for revision in self.revisions
+        ):
+            message = "purge logical-byte estimate must equal the selected revisions"
+            raise ValueError(message)
+        return self
+
+
 # --------------------------------------------------------------------------- #
 # §9 Audit records
 # --------------------------------------------------------------------------- #
@@ -515,7 +572,7 @@ class PrunedRevisionRecord(VersionedModel):
     publication_generation: Generation
     publication_id: PublicationIdField
     pruned_at: Timestamp
-    reason: Literal["sixth_unique_revision_published"]
+    reason: Literal["sixth_unique_revision_published", "operator_requested_repository_purge"]
     repository_id: RepositoryIdField
     repository_type: RepositoryTypeField
     retained_after: Annotated[tuple[RevisionSummary, ...], BeforeValidator(as_tuple)]

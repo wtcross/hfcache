@@ -52,9 +52,9 @@ TYPE:ID@SHA      model:organization/model-name@0123456789abcdef0123456789abcdef0
 `TYPE` is `model` or `dataset`. `ID` is a two-segment repository identifier.
 `SHA` is a full 40-character lowercase commit SHA. Abbreviated SHAs are rejected
 (`HFARG001`). A selector naming a repository absent from configuration is
-`HFARG004`, except for `status`, `list`, `verify`, and `repair`, which may
-legitimately address archived repositories that are no longer configured
-(`AD-06`).
+`HFARG004`, except for `status`, `list`, `verify`, `repair`, and `purge`, which
+may legitimately address archived repositories no longer configured. `purge`
+goes further and refuses a repository that remains configured (`AD-20`).
 
 ## 2. Commands
 
@@ -70,6 +70,7 @@ legitimately address archived repositories that are no longer configured
 | `list` | no | Archived repositories and revisions |
 | `verify` | no | Integrity verification in one of four modes |
 | `prune` | yes with `--apply` | Retention cleanup |
+| `purge` | yes with `--apply` | Permanently remove unmanaged repositories |
 | `recover` | yes with `--apply` | Reconcile unfinished transactions |
 | `repair` | yes | Reconstruct and republish a damaged known revision |
 | `version` | no | Application and dependency versions |
@@ -258,7 +259,8 @@ sequence.
 Reconciliation happens under the lock and **before the first Hub request**
 (`TX-07`): unfinished transaction journals are resolved, and one that asked for an
 operator stops the run at `20` with nothing downloaded and nothing changed. The
-same applies to `prune --apply` and `repair`, which are mutating commands too.
+same applies to `prune --apply`, `purge --apply`, and `repair`, which are mutating
+commands too.
 `status`, `list`, `verify`, and `recover --dry-run` still answer in that state.
 
 Exits `0`, `10`, `20`, `30`, `40`, or `50` per §3.
@@ -309,7 +311,7 @@ Exactly one mode option is required; two is `HFARG002`.
 | `--estimate` | No hashing. Reports unique bytes to read, measured throughput when known, estimated duration, repository and revision counts, and any detectable overlap with storage maintenance. Takes no lock and always exits `0`: nothing was read, so nothing can have been found wrong |
 
 `--full` acquires the verification lock, which is mutually exclusive with sync,
-prune, and repair. It runs with Hub networking disabled.
+prune, purge, and repair. It runs with Hub networking disabled.
 
 Exits `0` on a clean result and `40` on any integrity finding. A finding never
 rewrites a manifest, prunes a revision, or re-downloads over the evidence.
@@ -326,6 +328,32 @@ Exactly one of `--dry-run` / `--apply` is required. `--dry-run` prints the exact
 
 Retention normally runs inside `sync`; this command exists to inspect the plan
 and to complete retention deferred by an earlier failure.
+
+### `purge`
+
+```text
+hfcache [--config PATH] purge --dry-run TYPE:ID [TYPE:ID ...]
+hfcache [--config PATH] purge --apply TYPE:ID [TYPE:ID ...]
+hfcache [--config PATH] purge --dry-run --all-unmanaged
+hfcache [--config PATH] purge --apply --all-unmanaged
+```
+
+Exactly one of `--dry-run` / `--apply` is required, and scope must be either one
+or more whole-repository selectors or `--all-unmanaged`, never both. No scope is
+`HFARG003`; a revision-qualified selector is `HFARG001`; a target still present
+in configuration is `HFARG007`. `--dry-run` prints the exact `PurgePlan` and
+logical-byte estimate without taking the writer lock. `--apply` re-resolves the
+scope and plan under the exclusive lock after recovery, then removes one
+repository transaction at a time. It never contacts the Hub and never deletes a
+cache path directly (`FS-14`).
+
+Purge validates every shallow entry under the repository's `refs/`,
+`revisions/`, and manifest directories. Anything not explained by active
+references and immutable manifests refuses that repository with `HFRET001` and
+is preserved (`FS-19`). A completed purge removes publication content and cache
+revisions but retains byte-for-byte manifests and reason records under
+`audit/pruned/`. ZFS snapshots may continue holding physical blocks after the
+command succeeds.
 
 ### `recover`
 
@@ -446,6 +474,7 @@ Serialization follows the same deterministic rules as durable files
 | `list` | `repositories[]`, with `revisions[]` when `--revisions` is given |
 | `verify` | The `VerificationReport` body (`docs/schemas.md` §7). For `--estimate`, which produces no report because it verifies nothing: `mode`, `repositories`, `revisions`, `unique_objects`, `unique_bytes`, `unreadable_objects`, `measured_throughput_bytes_per_second`, `estimated_duration_seconds`, `storage_maintenance` |
 | `prune` | The `PrunePlan`, plus applied results for `--apply` |
+| `purge` | `plans[]` of `PurgePlan`, plus `applied[]` audit records for `--apply` |
 | `recover` | `findings[]`, `plan[]`, and applied results for `--apply` |
 | `repair` | Transaction ID, old and new publication IDs, verification result, grace expiry |
 | `version` | `application`, `python`, `huggingface_hub`, `transfer_backend` |
@@ -467,6 +496,7 @@ condition; a retired condition retires its code.
 | `HFARG004` | An argument names something the archive does not hold, for a command that requires it: a repository absent from configuration, a revision that is not retained, or a run id with no report |
 | `HFARG005` | `--token-file` is missing, unreadable, empty, not a regular file, or does not hold a single well-formed token |
 | `HFARG006` | The systemd credential named by `hub.credential_name` is present but unusable, or `$CREDENTIALS_DIRECTORY` is not an absolute path |
+| `HFARG007` | A `purge` target remains in configuration; remove it from configuration before archive deletion |
 
 ### 5.2 Storage and transaction safety — exit `20`
 
@@ -537,20 +567,20 @@ revision.
 | `HFVER007` | Manifest fails schema validation or internal consistency |
 | `HFVER008` | Reference names a missing or inconsistent tree or manifest, or a current reference that cannot be read |
 
-### 5.5 Retention, repair, and recovery — exit `50`
+### 5.5 Retention, purge, repair, and recovery — exit `50`
 
 | Code | Condition |
 | --- | --- |
-| `HFRET001` | Prune plan invalid or refused by validation |
+| `HFRET001` | A retention or purge plan is invalid or refused by validation |
 | `HFRET002` | Hub cache revision deletion failed |
 | `HFRET003` | Tombstone rename into `.store/trash` failed |
 | `HFRET004` | Catalog or reference update failed during prune |
-| `HFRET005` | Pre-commit rollback failed; six revisions could not be restored |
+| `HFRET005` | Pre-commit rollback failed; removed revision content could not be restored |
 | `HFRET006` | Repair download failed verification against the original manifest |
 | `HFRET007` | Repair publication failed |
 | `HFRET008` | Repair reference switch failed |
 | `HFRET009` | Post-grace cleanup failed |
-| `HFRET010` | `recover --apply` could not complete a validated plan |
+| `HFRET010` | Post-commit audit cleanup or `recover --apply` could not complete a validated plan |
 
 ### 5.6 Warnings — never change a `0` exit on their own
 

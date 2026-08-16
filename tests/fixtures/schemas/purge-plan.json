@@ -1,0 +1,27 @@
+{
+  "cache_revisions_to_delete": [
+    "0123456789abcdef0123456789abcdef01234567"
+  ],
+  "current": {
+    "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+    "publication_generation": 1
+  },
+  "generated_at": "2026-08-15T21:00:00.000000Z",
+  "plan_id": "b71d0e4a3c8f42d190a6c5b3e7f18d24",
+  "reason": "operator_requested_repository_purge",
+  "repository_id": "organization/model-name",
+  "repository_type": "model",
+  "revisions": [
+    {
+      "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+      "file_count": 2,
+      "logical_bytes": 486123904,
+      "manifest": "published/manifests/models/organization/model-name/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27.json",
+      "publication_generation": 1,
+      "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+      "tree": "published/repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27"
+    }
+  ],
+  "schema_version": 1,
+  "unique_bytes_released_estimate": 486123904
+}

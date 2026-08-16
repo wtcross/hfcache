@@ -128,17 +128,15 @@ so its sequence is as long as the work it found and cannot be enumerated here.
 Its two closing checkpoints are still ordered, by `_RECOVERY_CLOSING`.
 """
 
-PERMITTED_EXTRA_CHECKPOINTS: Final[Mapping[str, frozenset[str]]] = {}
-"""Checkpoints a valid execution may record outside the documented sequence.
+PERMITTED_EXTRA_CHECKPOINTS: Final[Mapping[str, frozenset[str]]] = {
+    "prune": frozenset({"repository_container_removed"}),
+}
+"""Conditional checkpoints outside the shared documented sequence.
 
-Empty since `RET-009`. §7.4 once named a `cleanup_deferred` checkpoint for a
-prune whose post-commit cleanup failed, and this mapping permitted it — but no
-execution ever recorded one: a failure in the post-commit steps leaves the
-journal open at its last checkpoint, which is exactly what makes the cleanup
-reachable from `recover`. A journal carrying the checkpoint was therefore
-written by no valid execution, and refusing it is the stronger guard. A future
-release that wants an extra checkpoint recorded adds its permit here, with the
-cross-format note a vocabulary widening requires.
+`repository_container_removed` is the purge-only act between manifest
+tombstoning and catalog publication (`PUR-001`). Ordinary retention never
+records it; stripping it leaves the shared prune sequence older journals use.
+Its placement is checked below rather than accepted anywhere.
 """
 
 _RECOVERY_CLOSING: Final = ("recovery_report_written", "recovery_completed")
@@ -374,6 +372,27 @@ def checkpoint_order_problems(journal: TransactionJournal) -> list[Problem]:
     permitted = PERMITTED_EXTRA_CHECKPOINTS.get(journal.operation, frozenset())
     core = [name for name in names if name not in permitted]
     if core == list(expected[: len(core)]):
+        if journal.operation == "prune" and "repository_container_removed" in names:
+            extra = names.index("repository_container_removed")
+            has_manifest = "manifest_tombstoned" in names
+            before = names.index("manifest_tombstoned") if has_manifest else -1
+            after = names.index("catalog_published") if "catalog_published" in names else len(names)
+            if (
+                not has_manifest
+                or names.count("repository_container_removed") != 1
+                or not before < extra < after
+            ):
+                message = (
+                    "repository_container_removed must occur exactly once between "
+                    "manifest_tombstoned and catalog_published"
+                )
+                return [
+                    Problem(
+                        code="HFTXN002",
+                        message=message,
+                        location=str(journal.transaction_id),
+                    )
+                ]
         return []
     message = (
         f"{journal.operation} journal {journal.transaction_id} records checkpoints {names}, "
