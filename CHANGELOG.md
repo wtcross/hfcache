@@ -7,6 +7,15 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## v0.1.6 — 2026-08-23
+
+Private and gated Hub repositories can now be archived through the explicit
+`hub.token_mode = "required"` policy. Required mode fails before Hub access
+when its credential is unavailable, verifies the configured account identity,
+and distinguishes an unaccepted gate from the public-only scope refusal that
+remains in `disabled` and `optional` modes. The Cockpit configuration form and
+operator runbooks cover the same restricted-repository workflow.
+
 ## v0.1.5 — 2026-08-15
 
 Repositories intentionally removed from configuration can now be deleted with

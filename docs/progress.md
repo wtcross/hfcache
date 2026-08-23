@@ -485,6 +485,15 @@ package in this family.
   revocation, purge, and rollback behavior. Verification: focused sync/crash
   suite, 184 passed; Hub live suite, 24 passed; `scripts/check.sh`.)
 
+## Release 0.1.6 (REL, 2026-08-23)
+
+- [x] REL-007 Cut the authenticated-repository release candidate
+  (2026-08-23, this commit — version and lock move together to 0.1.6;
+  `CHANGELOG.md` and README describe the explicit required-token policy.
+  HUB-010 changed no durable JSON shape, so decision 98's configuration
+  rollback barrier applies and no cross-format drill is required. Verification:
+  `scripts/check.sh --with-build`; Hub live suite, 24 passed.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
