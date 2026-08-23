@@ -118,14 +118,8 @@ def _parse_endpoint(value: object) -> str:
 
 
 def _parse_token_mode(value: object) -> str:
-    if value == "required":
-        message = (
-            "hub.token_mode = 'required' is reserved for future gated/private support "
-            "and is rejected in schema version 1"
-        )
-        raise CodedError(message, code="HFCFG015")
-    if value not in {"disabled", "optional"}:
-        message = f"hub.token_mode must be 'disabled' or 'optional', not {value!r}"
+    if value not in {"disabled", "optional", "required"}:
+        message = f"hub.token_mode must be 'disabled', 'optional', or 'required', not {value!r}"
         raise CodedError(message, code="HFCFG005")
     return value
 
@@ -147,7 +141,9 @@ Revision = Annotated[str, BeforeValidator(parse_revision)]
 AbsolutePath = Annotated[Path, BeforeValidator(_parse_absolute_path)]
 ArchiveId = Annotated[str, BeforeValidator(_parse_archive_id)]
 Endpoint = Annotated[str, BeforeValidator(_parse_endpoint)]
-TokenMode = Annotated[Literal["disabled", "optional"], BeforeValidator(_parse_token_mode)]
+TokenMode = Annotated[
+    Literal["disabled", "optional", "required"], BeforeValidator(_parse_token_mode)
+]
 
 
 class _Strict(BaseModel):

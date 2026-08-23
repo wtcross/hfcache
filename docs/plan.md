@@ -71,6 +71,15 @@ The first release will not:
 - Run directly on the TrueNAS host operating system.
 - Introduce Pydantic AI in version 1. The sequence is deterministic and does not need an agent or general workflow engine.
 
+*Amended 2026-08-23 at `HUB-010` (decision 98).* The gated/private non-goal
+above and the public-only statements in §§4, 9, 12, 22.6, and Phase 2 acceptance
+describe the original version-1 boundary and are superseded by
+`docs/architecture.md` `AD-21`. `hub.token_mode = "required"` now requires an
+explicit credential and enables restricted repository scope for deployments
+whose entire consumer export is inside the same authorization boundary.
+`disabled` and `optional` retain the public-only behavior. No durable JSON format
+changes.
+
 ## 4. Locked Architecture Decisions
 
 | Decision | Selected approach | Consequence |

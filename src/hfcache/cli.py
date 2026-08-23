@@ -95,7 +95,7 @@ DEFAULT_CONFIG_PATH = Path("/etc/hfcache/config.toml")
 
 app = typer.Typer(
     name="hfcache",
-    help=("Archive complete revisions of public Hugging Face repositories on long-term storage."),
+    help=("Archive complete revisions of Hugging Face repositories on long-term storage."),
     no_args_is_help=True,
     add_completion=False,
 )
@@ -672,6 +672,10 @@ def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
         _report_failure(ctx, "plan", started_at, error)
 
     client = HubClient.of(token, endpoint=config.hub.endpoint)
+    try:
+        client.require_identity(config.hub.expected_account)
+    except HfcacheError as error:
+        _report_failure(ctx, "plan", started_at, error)
     cache_dir = ArchiveLayout(root=config.storage.archive_root).hub_cache
     entries: list[dict[str, Any]] = []
     problems: list[Problem] = []
@@ -1065,6 +1069,7 @@ def _run(
             exclude=(transaction.journal.transaction_id,),
         )
         transaction.checkpoint("journals_reconciled", **reconciled.as_evidence())
+        client.require_identity(config.hub.expected_account)
         return synchronize(
             client,
             layout,
@@ -2059,6 +2064,7 @@ def repair(
                 envelope=envelope,
                 started_at=datetime.now(UTC),
             )
+            client.require_identity(config.hub.expected_account)
             outcome = repair_revision(
                 client,
                 layout,

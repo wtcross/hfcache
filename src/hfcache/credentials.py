@@ -42,6 +42,7 @@ __all__ = [
     "CREDENTIALS_DIRECTORY_VARIABLE",
     "MAXIMUM_TOKEN_FILE_BYTES",
     "NO_TOKEN",
+    "RepositoryScope",
     "ResolvedToken",
     "TokenSource",
     "ambient_token_variables",
@@ -83,6 +84,13 @@ class TokenSource(StrEnum):
     NONE = "none"
 
 
+class RepositoryScope(StrEnum):
+    """Which Hub repository access class this resolved credential authorizes."""
+
+    PUBLIC = "public"
+    RESTRICTED = "restricted"
+
+
 @final
 @dataclass(frozen=True, slots=True)
 class ResolvedToken:
@@ -98,17 +106,26 @@ class ResolvedToken:
     source: TokenSource
     origin: Path | None = None
     secret: str | None = field(default=None, repr=False)
+    repository_scope: RepositoryScope = RepositoryScope.PUBLIC
 
     def __post_init__(self) -> None:
         """Enforce the invariant every caller depends on: `NONE` means no secret."""
         if (self.source is TokenSource.NONE) != (self.secret is None):
             message = f"token source {self.source.value!r} is inconsistent with its secret"
             raise ValueError(message)
+        if self.repository_scope is RepositoryScope.RESTRICTED and self.secret is None:
+            message = "restricted repository scope requires a resolved credential"
+            raise ValueError(message)
 
     @property
     def has_token(self) -> bool:
         """Whether a credential was found."""
         return self.secret is not None
+
+    @property
+    def allows_restricted_repositories(self) -> bool:
+        """Whether configuration explicitly opted into private/gated scope (`AD-21`)."""
+        return self.repository_scope is RepositoryScope.RESTRICTED
 
     @property
     def hub_argument(self) -> str | Literal[False]:
@@ -231,7 +248,8 @@ def resolve_token(
 
     1. `--token-file PATH`, when an operator passed one.
     2. `${CREDENTIALS_DIRECTORY}/<credential_name>`, when systemd supplied one.
-    3. No token, so Hub calls pass `token=False`.
+    3. No token, so Hub calls pass `token=False` unless `token_mode =
+       "required"`, which is `HFARG008`.
 
     `token_mode = "disabled"` means no credential is read at all. Passing
     `--token-file` anyway is a contradiction rather than a preference, so it is
@@ -243,6 +261,11 @@ def resolve_token(
     Hub request is made.
     """
     environment = os.environ if environ is None else environ
+    repository_scope = (
+        RepositoryScope.RESTRICTED
+        if hub.token_mode == "required"  # noqa: S105 - a mode name, not a secret
+        else RepositoryScope.PUBLIC
+    )
 
     if hub.token_mode == "disabled":  # noqa: S105 - a mode name, not a secret
         if token_file is not None:
@@ -255,7 +278,12 @@ def resolve_token(
 
     if token_file is not None:
         secret = _read_secret(token_file, code="HFARG005", what="--token-file")
-        return ResolvedToken(source=TokenSource.TOKEN_FILE, origin=token_file, secret=secret)
+        return ResolvedToken(
+            source=TokenSource.TOKEN_FILE,
+            origin=token_file,
+            secret=secret,
+            repository_scope=repository_scope,
+        )
 
     credential = _systemd_credential_path(hub.credential_name, environment)
     if credential is not None:
@@ -265,8 +293,19 @@ def resolve_token(
             what=f"systemd credential {hub.credential_name!r}",
         )
         return ResolvedToken(
-            source=TokenSource.SYSTEMD_CREDENTIAL, origin=credential, secret=secret
+            source=TokenSource.SYSTEMD_CREDENTIAL,
+            origin=credential,
+            secret=secret,
+            repository_scope=repository_scope,
         )
+
+    if hub.token_mode == "required":  # noqa: S105 - a mode name, not a secret
+        message = (
+            "hub.token_mode is 'required', but neither --token-file nor systemd "
+            f"credential {hub.credential_name!r} resolved; restricted repository "
+            "scope requires an explicit credential"
+        )
+        raise ConfigurationError.single(message, code="HFARG008", location="hub.token_mode")
 
     return NO_TOKEN
 

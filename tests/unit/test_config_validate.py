@@ -235,6 +235,36 @@ def test_no_credential_resolves_to_anonymous(config_file: Path):
     assert envelope_of(result)["data"]["token_source"] == "none"
 
 
+def test_required_mode_without_a_credential_is_hfarg008(tmp_path: Path):
+    path = tmp_path / "required.toml"
+    path.write_text(
+        VALID.replace("schema_version = 1", 'schema_version = 1\n[hub]\ntoken_mode = "required"'),
+        encoding="utf-8",
+    )
+
+    result = invoke("--json", "--config", str(path), "config", "validate")
+
+    assert result.exit_code == ExitCode.CONFIGURATION
+    assert envelope_of(result)["errors"][0]["code"] == "HFARG008"
+
+
+def test_required_mode_accepts_an_explicit_token(tmp_path: Path):
+    path = tmp_path / "required.toml"
+    path.write_text(
+        VALID.replace("schema_version = 1", 'schema_version = 1\n[hub]\ntoken_mode = "required"'),
+        encoding="utf-8",
+    )
+    token = tmp_path / "token"
+    token.write_text("hf_aRealLookingTokenValue\n", encoding="utf-8")
+
+    result = invoke(
+        "--json", "--config", str(path), "--token-file", str(token), "config", "validate"
+    )
+
+    assert result.exit_code == ExitCode.SUCCESS
+    assert envelope_of(result)["data"]["token_source"] == "token-file"
+
+
 def test_a_token_file_is_resolved_and_reported_by_source(config_file: Path, tmp_path: Path):
     token = tmp_path / "token"
     token.write_text("hf_aRealLookingTokenValue\n", encoding="utf-8")

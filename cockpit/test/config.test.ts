@@ -31,6 +31,8 @@ test('the contract worked example parses into the form model', () => {
     const endpoint = GLOBAL_FIELDS.find(field => field.table === 'hub' && field.key === 'endpoint');
     assert.ok(endpoint);
     assert.equal(getField(document, endpoint), 'https://huggingface.co');
+    const tokenMode = GLOBAL_FIELDS.find(field => field.table === 'hub' && field.key === 'token_mode');
+    assert.deepEqual(tokenMode?.options, ['disabled', 'optional', 'required']);
 });
 
 test('serialization round-trips the document, comments aside', () => {

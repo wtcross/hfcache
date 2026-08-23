@@ -91,7 +91,7 @@ export interface FieldSpec {
 export const GLOBAL_FIELDS: FieldSpec[] = [
     { table: 'hub', key: 'endpoint', kind: 'str', hint: 'absolute https:// URL, no path, no trailing /' },
     { table: 'hub', key: 'expected_account', kind: 'str', hint: 'empty = anonymous, no identity check' },
-    { table: 'hub', key: 'token_mode', kind: 'enum', options: ['disabled', 'optional'], hint: '"required" is reserved in schema 1' },
+    { table: 'hub', key: 'token_mode', kind: 'enum', options: ['disabled', 'optional', 'required'], hint: 'required = credential mandatory and private/gated scope enabled' },
     { table: 'hub', key: 'credential_name', kind: 'str', hint: 'systemd credential name, [A-Za-z0-9._-]{1,64}' },
     { table: 'storage', key: 'archive_root', kind: 'str', hint: 'absolute path; must be the NFS mount (FS-02)' },
     { table: 'storage', key: 'archive_id', kind: 'str', hint: 'must match .hfcache-root; a mismatch is fatal (FS-03)' },

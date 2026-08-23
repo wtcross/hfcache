@@ -138,6 +138,33 @@ the dry-run size the TrueNAS quota decision needs, without downloading.
 
 ## 4. Syncing
 
+### Restricted repositories
+
+Private and gated repositories are an explicit deployment mode, not a property
+an installed token silently enables (`AD-21`). Set:
+
+```toml
+[hub]
+token_mode = "required"
+credential_name = "hf-token"
+expected_account = "the-service-account"
+```
+
+Install the encrypted systemd credential using
+`packaging/systemd/hfcache-sync.service.d/credential.conf.example`, then run the
+example's transient-unit `doctor --read-only` acceptance command. Require the
+`credential` row to name `systemd-credential`, the `hub_identity` row to name the
+configured account, and exit `0`. Run `plan` for each newly configured restricted
+repository before syncing, exactly as for a public repository.
+
+`token_mode = "optional"` remains public-only even when it finds that same
+credential; a private/gated repository is `HFHUB006`. `required` with no resolved
+credential is `HFARG008` before any Hub request. If upstream later revokes access,
+the next Hub operation fails but every retained publication remains readable.
+When continued retention is no longer authorized, remove the repository from
+configuration, review `purge --dry-run`, and only then use `purge --apply` — never
+delete archive paths manually (`AD-06`, `AD-20`, `FS-19`).
+
 The timer runs this daily at 02:00 with up to 30 minutes of randomized delay.
 To run it by hand, prefer the unit over the CLI, because the unit is what
 production uses — same sandbox, same environment, same identity:

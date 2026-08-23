@@ -1,8 +1,9 @@
 # hfcache
 
-Archive complete revisions of public Hugging Face model and dataset repositories
-on long-term storage, and publish them as immutable trees that downstream systems
-can copy and verify.
+Archive complete revisions of Hugging Face model and dataset repositories on
+long-term storage, and publish them as immutable trees that downstream systems
+can copy and verify. Public repositories work anonymously; private and gated
+repositories use an explicit required systemd credential.
 
 `hfcache` resolves a configured branch or tag to an immutable commit SHA,
 downloads the complete repository snapshot at that SHA through the official
@@ -34,6 +35,9 @@ consumers at all.
   by a durable checkpoint. Every state a crash can leave has one correct resolution.
 - **Content is data, never code.** Nothing from a repository is executed,
   imported, unpickled, or given `trust_remote_code`.
+- **Restricted access is explicit.** `hub.token_mode = "required"` enables
+  private and gated repositories only when a credential resolves. Every consumer
+  of the shared publication export must be authorized to receive that content.
 
 ## Requirements
 
@@ -47,8 +51,9 @@ consumers at all.
   [`docs/storage-requirements.md`](docs/storage-requirements.md) (the
   reference deployment uses TrueNAS). The archive root **must** be an NFS
   mount; preflight refuses anything else by design.
-- **Consumers** — any host that can mount the read-only export; the copy
-  helper needs only Python 3.
+- **Consumers** — any authorized host that can mount the read-only export; the
+  copy helper needs only Python 3. The export has no per-repository ACLs, so all
+  consumers must be permitted to read every configured restricted repository.
 - **No NAS yet?** [`docs/quickstart.md`](docs/quickstart.md) runs everything
   on one machine with a loopback NFS export.
 

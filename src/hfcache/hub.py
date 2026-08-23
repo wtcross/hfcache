@@ -19,9 +19,9 @@ a safety property, not a style preference:
   translating them once here is what lets the rest of the application reason
   about `HFHUB###` codes instead of about someone else's exception hierarchy.
 
-* **Private and gated repositories are refused** in schema version 1
-  (`HFHUB006`), before any content is fetched. An archive of content the
-  operator may lose access to is not an archive.
+* **Private and gated repositories require explicit scope** (`AD-21`). A token
+  resolved under `optional` still receives `HFHUB006`; only a required token
+  authorizes restricted metadata and content.
 
 Nothing here executes repository code, instantiates a model or a builder, or
 shells out to `hf`, `git`, or `git-lfs` (plan §12, `NG-*`). The Hub is a source
@@ -285,7 +285,12 @@ class HubApi(Protocol):
     ) -> str: ...
 
 
-def hub_problem(exc: Exception, *, identity: RepositoryIdentity | None = None) -> Problem:
+def hub_problem(
+    exc: Exception,
+    *,
+    identity: RepositoryIdentity | None = None,
+    allow_restricted: bool = False,
+) -> Problem:
     """Translate one library exception into the code an operator acts on.
 
     The ordering matters. `GatedRepoError` and `RepositoryNotFoundError` are both
@@ -295,9 +300,15 @@ def hub_problem(exc: Exception, *, identity: RepositoryIdentity | None = None) -
     """
     where = identity.selector if identity else None
     if isinstance(exc, GatedRepoError):
+        if allow_restricted:
+            message = (
+                f"{where or 'the repository'} is gated, but the resolved credential has not "
+                "been granted access; accept the repository gate for that Hub account"
+            )
+            return Problem(code="HFHUB005", message=message, location=where)
         message = (
-            f"{where or 'the repository'} is gated; schema version 1 archives public content "
-            f"only, because access that can be revoked is not an archive"
+            f"{where or 'the repository'} is gated, but restricted repository scope is not "
+            "enabled; set hub.token_mode = 'required' and supply an authorized credential"
         )
         return Problem(code="HFHUB006", message=message, location=where)
     if isinstance(exc, RepositoryNotFoundError):
@@ -363,6 +374,14 @@ class HubClient:
         """Build a client over the real `HfApi` for a configured endpoint."""
         return cls(api=HfApi(endpoint=endpoint), token=token, endpoint=endpoint)
 
+    def _problem(self, exc: Exception, *, identity: RepositoryIdentity | None = None) -> Problem:
+        """Classify a Hub failure against this client's configured access scope."""
+        return hub_problem(
+            exc,
+            identity=identity,
+            allow_restricted=self.token.allows_restricted_repositories,
+        )
+
     def whoami(self) -> HubIdentity:
         """Ask the Hub who this run is (plan §12 item 1).
 
@@ -375,16 +394,23 @@ class HubClient:
         try:
             response = self.api.whoami(token=self.token.hub_argument)
         except Exception as exc:
-            raise SynchronizationError([hub_problem(exc)]) from exc
+            raise SynchronizationError([self._problem(exc)]) from exc
         return HubIdentity(name=str(response.get("name", "")), authenticated=True)
+
+    def require_identity(self, expected_account: str) -> None:
+        """Prove a configured Hub identity before repository access (plan §13.1)."""
+        if not expected_account:
+            return
+        identity = self.whoami()
+        if problems := identity_problems(identity, expected_account):
+            raise SynchronizationError(problems)
 
     def repository(self, identity: RepositoryIdentity, revision: str) -> RepositoryFacts:
         """Resolve one repository reference to facts this application owns.
 
-        Refuses private and gated content before anything is fetched
-        (`HFHUB006`): an archive of content whose access can be revoked is not
-        an archive, and finding that out after a download is finding out too
-        late.
+        Private and gated content proceeds only when the token was resolved from
+        `token_mode = "required"` (`AD-21`). An optional token remains public-only
+        so credential installation cannot silently widen archive scope.
         """
         try:
             info = self.api.repo_info(
@@ -394,10 +420,12 @@ class HubClient:
                 token=self.token.hub_argument,
             )
         except Exception as exc:
-            raise SynchronizationError([hub_problem(exc, identity=identity)]) from exc
+            raise SynchronizationError([self._problem(exc, identity=identity)]) from exc
 
         facts = _facts(identity, info)
-        if problems := access_problems(facts):
+        if problems := access_problems(
+            facts, allow_restricted=self.token.allows_restricted_repositories
+        ):
             raise SynchronizationError(problems)
         return facts
 
@@ -425,7 +453,7 @@ class HubClient:
                 )
             )
         except Exception as exc:
-            raise SynchronizationError([hub_problem(exc, identity=identity)]) from exc
+            raise SynchronizationError([self._problem(exc, identity=identity)]) from exc
         return tree_entries(raw, identity=identity)
 
     def estimate(
@@ -459,7 +487,7 @@ class HubClient:
                 dry_run=True,
             )
         except Exception as exc:
-            raise SynchronizationError([hub_problem(exc, identity=identity)]) from exc
+            raise SynchronizationError([self._problem(exc, identity=identity)]) from exc
         if not isinstance(result, list):
             message = (
                 f"the dry run for {identity.selector} returned {type(result).__name__} rather "
@@ -510,7 +538,7 @@ class HubClient:
                 dry_run=False,
             )
         except Exception as exc:
-            raise SynchronizationError([hub_problem(exc, identity=identity)]) from exc
+            raise SynchronizationError([self._problem(exc, identity=identity)]) from exc
         return _snapshot_path(local, identity=identity, cache_dir=cache_dir)
 
     def verify_local(
@@ -705,20 +733,21 @@ def _facts(identity: RepositoryIdentity, info: object) -> RepositoryFacts:
     )
 
 
-def access_problems(facts: RepositoryFacts) -> list[Problem]:
-    """Refuse content schema version 1 does not archive (`HFHUB006`).
+def access_problems(facts: RepositoryFacts, *, allow_restricted: bool = False) -> list[Problem]:
+    """Refuse restricted metadata unless configuration explicitly enabled it.
 
-    Separated from the call so the policy is testable without a Hub, and so the
-    reason is stated once: private and gated repositories can have access
-    withdrawn, and an archive whose contents depend on a grant that may be
-    revoked is not doing the job it exists for.
+    Separated from the call so the policy is testable without a Hub. Public
+    scope remains the default even when an optional credential exists; only the
+    required-token path sets ``allow_restricted`` (`AD-21`).
     """
     if not (facts.private or facts.gated):
         return []
+    if allow_restricted:
+        return []
     kind = "private" if facts.private else "gated"
     message = (
-        f"{facts.identity.selector} is {kind}; schema version 1 archives public content only, "
-        f"because access that can be withdrawn is not an archive"
+        f"{facts.identity.selector} is {kind}, but restricted repository scope is not enabled; "
+        "set hub.token_mode = 'required' and supply an authorized credential"
     )
     return [Problem(code="HFHUB006", message=message, location=facts.identity.selector)]
 

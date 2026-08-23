@@ -127,6 +127,14 @@ and per-revision verification state.
 Two editing modes over one pipeline (`CP-11`), against
 `/etc/hfcache/config.toml`:
 
+For private or gated repositories choose `hub.token_mode = "required"`. This is
+the explicit restricted-scope opt-in; validation succeeds only when the plugin's
+transient unit imports the named systemd credential. `optional` remains public-
+only even if a credential is installed. The plugin never reads or accepts the
+token itself (`CP-08`); install it through the deployment's encrypted systemd-
+credential procedure, set `expected_account`, and confirm `doctor --read-only`
+before installing the repository change.
+
 - **Form mode** renders the schema: repository rows (id, type, revision —
   validated live, with abbreviated commit SHAs rejected just as the CLI
   would — enabled, declared dependencies, add/remove) and every global key

@@ -469,6 +469,22 @@ package in this family.
 - [x] CPT-012 Operator documentation: `docs/cockpit-plugin/` and README surfacing (2026-07-30, this commit — four operator-facing pages written against the contract for whoever deploys and uses the plugin: `docs/cockpit-plugin/README.md` (what it is, what it deliberately will not do, doc map), `installation.md` (requirements, production build and install, the build-elsewhere-copy-`dist/` path for hosts without node, development loop with the shadowing caveat, update, removal including the managed host state), `usage.md` (access model; the cross-cutting reading rules — exit-code alert table, `HFMNT010` as busy-not-failure, unit runs versus page processes — then every tab), and `troubleshooting.md` (eleven symptom→cause→fix entries, missing menu entry through leftover managed state). `cockpit/README.md` added as the subtree's pointer to contract and guide. Root `README.md` gains a Browser administration section, documentation-table rows for `docs/cockpit.md` and `docs/cockpit-plugin/`, the `cockpit/` repository-layout row, and the license split (MIT with the LGPL-2.1-or-later subtree, decision 90). `AGENTS.md`'s context map routes plugin work to the operator docs beside the contract; `docs/cockpit.md` names them non-normatively (contract wins on disagreement). One runbook correction folded in: deployment §16's build line becomes `make -C cockpit clean && make -C cockpit NODE_ENV=production` — `install` copies whatever `dist/` holds, so the bare `make` §16 showed would install an unminified development bundle, where CPT-011's actual install was the check target's production build; §16 now says what was done and why. Doc-only otherwise: no source, no packaging, no durable format touched. `./scripts/check.sh` exit `0` with the plugin stage)
 - [x] CPT-013 Authenticated plugin invocations: transient units with `ImportCredential` (2026-07-30, this commit — decision 92, prompted by a live `HFHUB003` from the plugin's doctor surface the day `hub.expected_account` was set: every `runuser`-spawned command was anonymous by construction. **Code:** `hfcacheArgv` becomes the §2 `systemd-run` shape (transient unit, service identity, `ImportCredential=hf-token`, `UMask`/`MemoryHigh`/`HF_HOME`/`HF_XET_CACHE` parity with the sync unit); UI copy in sync/verify/maintenance restates the new lifetime (closing the tab detaches the view; the run continues into its run report). **Contract:** `docs/cockpit.md` §2 rewritten around the transient unit with `CP-03`/`CP-08` amended and §5's selector-sync lifetime updated; `docs/security.md` T-13 controls note the PID-1-only decryption; `packaging/…/credential.conf.example` migrates the store to `/etc/credstore.encrypted/hf-token`, corrects its unit-binding claim to name binding, and its drop-in body to `ImportCredential=hf-token`; operator docs (`usage.md`, `troubleshooting.md`) updated, the latter gaining the anonymous-doctor entry and the pipe-don't-redirect note. **Systemd facts verified on this host (systemd 257):** exit codes propagate through `--wait --pipe` (a forced 20 arrived as 20); import of an absent credential is skipped with the unit starting normally; a transient unit survives its killed waiter (`active` until stopped); stdout redirected to a user-labelled file reproduces the `init_t`→`user_tmp_t` AVC and the API-bus drop, recovered with `SIGUSR1` — four denials in the audit log, all mine, all this probe. **Deployed and proven live:** credential migrated by byte-identical copy into `/etc/credstore.encrypted/` (old file removed after `cmp`), installed drop-in now the one-line import, `daemon-reload` + `systemd-analyze verify` clean, `systemctl show` reports `ImportCredential=hf-token`; the plugin's exact argv ran `doctor --read-only` end to end — envelope `schema_version` 1, `credential` row "token from systemd-credential", `hub_identity` row "the Hub reports this run as wtcross", exit `0`; production build installed to `/usr/share/cockpit/hfcache` (bundle greps for `systemd-run`), the 1.56 TB catch-up sync running untouched through the whole window. 42 unit tests (the argv-shape test rewritten for the new shape, plus a new CP-08 no-token-surface assertion); `./scripts/check.sh` exit `0` with the plugin stage)
 
+## Authenticated restricted repositories (HUB, 2026-08-23)
+
+- [x] HUB-010 Enable explicitly authenticated private and gated repository sync
+  (2026-08-23, this commit — `hub.token_mode = "required"` is now the sole
+  opt-in to restricted repository scope and requires an available credential;
+  `disabled` and `optional` remain public-only even when optional resolves a
+  token. Missing required credentials fail before Hub access as `HFARG008`;
+  repositories whose gate has not been accepted fail as `HFHUB005`, while
+  `HFHUB006` continues to diagnose restricted content outside required scope.
+  `hub.expected_account` is enforced before repository access by `plan`,
+  `sync`, and `repair`, and repair now classifies repository metadata before
+  downloading. AD-21 and the configuration, CLI, security, operations,
+  deployment, Cockpit, and consumer-boundary contracts define the policy,
+  revocation, purge, and rollback behavior. Verification: focused sync/crash
+  suite, 184 passed; Hub live suite, 24 passed; `scripts/check.sh`.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -2794,3 +2810,23 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     rollback blocker, because the old commands demonstrably consume the state;
     and weakening the record reason to an older value, because that would make
     the audit lie about why the complete repository disappeared.
+
+98. **Restricted Hub scope requires explicit `required` token policy and one
+    shared consumer authorization boundary** (2026-08-23, HUB-010). Setting
+    `hub.token_mode = "required"` both requires a credential and authorizes
+    private or gated repository metadata; `disabled` and `optional` remain
+    public-only so ambient optional credentials cannot silently broaden archive
+    scope. All configured consumers must be authorized for every archived
+    repository because the exported tree has no per-repository ACL layer.
+    Credential or gate revocation stops future fetches but does not delete
+    already published revisions; removal from configuration followed by an
+    explicit purge remains the deletion path. This widens configuration
+    acceptance without changing a durable JSON format. Rolling back to a
+    pre-HUB-010 binary requires stopping sync and temporarily returning the
+    configuration to `optional`, without syncing restricted repositories on
+    that release. AD-21 retires the original NG-06 public-only boundary.
+    **Rejected:** letting an optional token automatically broaden repository
+    scope, because ambient credential availability would change policy;
+    per-repository credentials or ACLs, because the deployment has one trusted
+    internal consumer boundary; automatic deletion on revocation, because it
+    would violate the archive's explicit-deletion rule.

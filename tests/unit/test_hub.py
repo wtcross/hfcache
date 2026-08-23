@@ -34,7 +34,7 @@ from huggingface_hub.errors import (
     RevisionNotFoundError,
 )
 
-from hfcache.credentials import ResolvedToken, TokenSource
+from hfcache.credentials import RepositoryScope, ResolvedToken, TokenSource
 from hfcache.errors import ExitCode, SynchronizationError
 from hfcache.hub import (
     OFFLINE_VARIABLE,
@@ -140,6 +140,14 @@ def anonymous() -> ResolvedToken:
 
 def authenticated() -> ResolvedToken:
     return ResolvedToken(source=TokenSource.SYSTEMD_CREDENTIAL, secret="hf_notARealToken")
+
+
+def restricted() -> ResolvedToken:
+    return ResolvedToken(
+        source=TokenSource.SYSTEMD_CREDENTIAL,
+        secret="hf_notARealToken",
+        repository_scope=RepositoryScope.RESTRICTED,
+    )
 
 
 def client(api: FakeApi, token: ResolvedToken | None = None) -> HubClient:
@@ -306,7 +314,7 @@ def test_a_response_without_a_full_commit_sha_is_hfhub007(returned):
 
 
 # --------------------------------------------------------------------------- #
-# What schema version 1 refuses
+# Restricted repository scope (`AD-21`)
 # --------------------------------------------------------------------------- #
 
 
@@ -318,13 +326,45 @@ def test_private_and_gated_repositories_are_refused(private, gated):
         client(api).repository(MODEL, "main")
 
     assert codes(caught.value.problems) == ["HFHUB006"]
-    assert "not an archive" in caught.value.problems[0].message
+    assert "token_mode = 'required'" in caught.value.problems[0].message
+
+
+@pytest.mark.parametrize(("private", "gated"), [(True, False), (False, True), (True, True)])
+def test_required_token_accepts_private_and_gated_repositories(private, gated):
+    api = FakeApi(info=Info(private=private, gated=gated))
+
+    facts = client(api, restricted()).repository(MODEL, "main")
+
+    assert facts.private is private
+    assert facts.gated is gated
+
+
+def test_optional_token_does_not_silently_enable_private_scope():
+    api = FakeApi(info=Info(private=True))
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api, authenticated()).repository(MODEL, "main")
+
+    assert codes(caught.value.problems) == ["HFHUB006"]
 
 
 def test_a_public_repository_is_accepted():
     facts = RepositoryFacts(identity=MODEL, commit_sha=CommitSha(SHA), private=False, gated=False)
 
     assert access_problems(facts) == []
+
+
+def test_restricted_scope_accepts_restricted_facts():
+    facts = RepositoryFacts(identity=MODEL, commit_sha=CommitSha(SHA), private=True, gated=False)
+
+    assert access_problems(facts, allow_restricted=True) == []
+
+
+def test_unaccepted_gate_is_forbidden_in_restricted_scope():
+    problem = hub_problem(gated("gated"), identity=MODEL, allow_restricted=True)
+
+    assert problem.code == "HFHUB005"
+    assert "granted access" in problem.message
 
 
 # --------------------------------------------------------------------------- #
@@ -842,6 +882,31 @@ def test_an_identity_that_is_not_the_configured_one_is_hfhub003():
 
     assert codes(problems) == ["HFHUB003"]
     assert problems[0].location == "hub.expected_account"
+
+
+def test_client_requires_the_configured_identity():
+    api = FakeApi(identity={"name": "hfcache-service"})
+
+    client(api, authenticated()).require_identity("hfcache-service")
+
+    assert api.calls == [{"method": "whoami", "token": "hf_notARealToken"}]
+
+
+def test_client_refuses_a_different_configured_identity():
+    api = FakeApi(identity={"name": "somebody-else"})
+
+    with pytest.raises(SynchronizationError) as caught:
+        client(api, authenticated()).require_identity("hfcache-service")
+
+    assert codes(caught.value.problems) == ["HFHUB003"]
+
+
+def test_client_skips_identity_request_when_no_account_is_configured():
+    api = FakeApi()
+
+    client(api).require_identity("")
+
+    assert api.calls == []
 
 
 # --------------------------------------------------------------------------- #

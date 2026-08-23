@@ -1,4 +1,4 @@
-"""Archive complete revisions of public Hugging Face repositories.
+"""Archive complete revisions of Hugging Face repositories.
 
 `hfcache` resolves a configured branch or tag to an immutable commit SHA,
 downloads the complete repository snapshot at that SHA, verifies every newly

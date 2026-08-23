@@ -77,12 +77,13 @@ as root via the bridge. What the transient unit adds over a plain drop:
   credential `hfcache-sync.service` loads
   (`packaging/systemd/hfcache-sync.service.d/credential.conf.example`) —
   into the unit's ramfs credentials directory, where the CLI's own §7
-  resolution finds it. When no credential is installed the import is
-  silently skipped and the run is anonymous: `token_mode = "optional"`
-  restated at the unit layer. Token bytes never pass through the bridge or
-  the page. The name is the documented default; a deployment that renames
-  `hub.credential_name` runs anonymously from the page, and `doctor`'s
-  `credential` and `hub_identity` rows report exactly that.
+  resolution finds it. When no credential is installed the import is silently
+  skipped: `token_mode = "optional"` runs anonymously, while `required` fails
+  with `HFARG008` before a Hub request. Token bytes never pass through the bridge
+  or the page. The name is the documented default; a deployment that renames
+  `hub.credential_name` resolves no page credential, which is anonymous under
+  `optional` and a clear refusal under `required`. `doctor`'s `credential` and
+  `hub_identity` rows report exactly what resolved.
 - **Environment and resource parity with the shipped units**: `HF_HOME`,
   `HF_XET_CACHE`, `UMask=0027`, and `MemoryHigh=4G` match
   `hfcache-sync.service`, so a page-spawned run cannot touch a home
@@ -232,6 +233,11 @@ the generated header comment names the plugin and the write time. **Text
 mode** edits the document verbatim for the operator who keeps comments. The
 editor writes only schema-version-1 keys; there is no token field to offer
 (`CP-08`, `HFCFG010`).
+
+The `token_mode` control offers `disabled`, `optional`, and `required`; choosing
+`required` is the explicit private/gated repository opt-in (`AD-21`). Candidate
+validation fails with `HFARG008` unless the transient validation unit imports the
+named credential. The plugin still has no token-entry surface (`CP-08`).
 
 The add-repository wizard is this pipeline with steps 3 and an optional
 selector sync (§5) attached — entry, validate, sizing preview, install, and

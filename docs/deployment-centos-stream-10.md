@@ -612,6 +612,16 @@ sudo systemctl start hfcache-sync.timer
 are versioned and a newer version is refused rather than read speculatively,
 which is what makes going back safe.
 
+**Restricted-scope configuration is an application compatibility boundary, not
+an archive-format boundary.** Releases before `HUB-010` reject
+`hub.token_mode = "required"` as `HFCFG015`. Before rolling back across that
+package, stop the sync timer and use the newer binary to install and validate a
+configuration with `token_mode = "optional"`; do not run a sync on the older
+release while private/gated repositories remain enabled. Existing restricted
+publications and all durable JSON remain readable because their formats did not
+change. Roll forward before restoring `required`. Never delete or rewrite archive
+data to make a rollback accept configuration.
+
 **Observed** — a real rollback from 0.1.1 to 0.1.0 and back:
 
 ```text
@@ -746,7 +756,7 @@ releases:
 | `findmnt -T /srv/hfcache` | `nfs4` from the NAS, `rw,nosuid,nodev,noexec,vers=4.2` |
 | `systemd-analyze verify` on all units | **no output** |
 | `check-hardening.sh` on both service units | 23 of 23 pass |
-| `hfcache doctor` | exit `0`; `hub_identity` may be `skipped` |
+| `hfcache doctor` | exit `0`; `hub_identity` may be `skipped` only for public scope, and must name the expected account for `token_mode = "required"` |
 | `hfcache status` | exit `0`, `degraded: false`, `unfinished_transactions: 0` |
 | `systemctl list-unit-files 'hfcache*'` | target and sync timer `enabled`, verify timer `disabled` |
 | `journalctl --disk-usage` | reports the `/var/log/journal` store |

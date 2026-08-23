@@ -88,6 +88,9 @@ This includes resolving the credential, so `--token-file` and an installed
 systemd credential are checked here rather than first failing during a scheduled
 run. `token_source` reports which source won — `token-file`,
 `systemd-credential`, or `none` — and never the value (`docs/security.md` T-07).
+Under `token_mode = "required"`, resolving to `none` is `HFARG008`; a green
+validation therefore proves the credential needed for restricted scope is
+present, though `doctor` is what proves its Hub identity and network validity.
 
 ### `archive init`
 
@@ -497,6 +500,7 @@ condition; a retired condition retires its code.
 | `HFARG005` | `--token-file` is missing, unreadable, empty, not a regular file, or does not hold a single well-formed token |
 | `HFARG006` | The systemd credential named by `hub.credential_name` is present but unusable, or `$CREDENTIALS_DIRECTORY` is not an absolute path |
 | `HFARG007` | A `purge` target remains in configuration; remove it from configuration before archive deletion |
+| `HFARG008` | `hub.token_mode = "required"` resolved neither an explicit token file nor the named systemd credential |
 
 ### 5.2 Storage and transaction safety — exit `20`
 
@@ -531,7 +535,7 @@ condition; a retired condition retires its code.
 | `HFHUB003` | Resolved identity does not match `expected_account` |
 | `HFHUB004` | Repository not found (`404`) |
 | `HFHUB005` | Access forbidden (`403`) |
-| `HFHUB006` | Repository is private or gated; refused in schema version 1 |
+| `HFHUB006` | Repository is private or gated while `token_mode` is `disabled` or `optional`; restricted scope was not explicitly enabled |
 | `HFHUB007` | Configured revision could not be resolved to a commit SHA |
 | `HFHUB008` | Repository tree metadata missing or incomplete |
 | `HFHUB009` | Snapshot download failed |

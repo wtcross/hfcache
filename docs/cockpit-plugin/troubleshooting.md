@@ -75,6 +75,13 @@ import — nothing is installed there, or the deployment renamed
 `sudo -u hfcache hfcache doctor` from a shell is anonymous by design;
 reproduce with the systemd-run shape above instead.
 
+Under `token_mode = "required"`, the same missing or mismatched credential is
+`HFARG008` rather than an anonymous fallback. `optional` may use a credential for
+identity and rate limits but remains public-only; `HFHUB006` for a private/gated
+repository means restricted scope was not explicitly enabled. After selecting
+`required`, use the systemd-run doctor shape above and require both a resolved
+`systemd-credential` and the expected Hub account before syncing.
+
 ## Build fails: `pnpm: command not found` or `node: command not found`
 
 pnpm lives in `PNPM_HOME` (`~/.local/share/pnpm` by default), which is on

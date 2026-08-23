@@ -1,7 +1,7 @@
 [project]
 name = "hfcache"
 version = "0.1.5"
-description = "Archive complete revisions of public Hugging Face repositories on long-term storage"
+description = "Archive complete revisions of Hugging Face repositories on long-term storage"
 readme = "README.md"
 requires-python = ">=3.14"
 license = "MIT"
@@ -187,4 +187,3 @@ untyped-def-behavior = "check-and-infer-return-type"
 # Suppressions must be pyrefly's own; another tool's ignore comment does not
 # silence a type error here.
 permissive-ignores = false
-

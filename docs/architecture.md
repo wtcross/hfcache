@@ -19,10 +19,12 @@ output, exit codes), `docs/security.md` (threat model and controls).
 
 ## 1. Mission
 
-`hfcache` archives **complete revisions of public Hugging Face model and dataset
+`hfcache` archives **complete revisions of Hugging Face model and dataset
 repositories** at resolved immutable commit SHAs onto long-term TrueNAS storage,
 and publishes them as immutable ordinary-file trees that downstream systems copy
-over a server-enforced read-only NFS export.
+over a server-enforced read-only NFS export. Public repositories work anonymously;
+private and gated repositories require the explicit authenticated scope in
+`AD-21`.
 
 The unit of value is a **repository-complete revision**: every file present in
 the upstream repository at one resolved commit SHA, locally SHA-256 verified,
@@ -63,6 +65,10 @@ never depend on the Hugging Face cache symlink layout.
 
 A downstream consumer is not trusted to be well-behaved, but is also not able to
 damage the archive: read-only enforcement is server-side, not advisory.
+Every principal allowed onto that consumer export is nevertheless inside the
+repository-content authorization boundary: the archive has one publication tree,
+not per-repository ACLs, so a consumer allowed to read it must be authorized to
+receive every configured public, private, and gated repository.
 
 ## 3. Architecture decisions
 
@@ -391,6 +397,40 @@ tombstoned before manifests; the existing prune commit point and recovery rule
 apply. Original manifests and one reason record per removed revision remain in
 `audit/pruned/`. Audit metadata is not archive content and is never purged.
 
+### AD-21 — Restricted Hub scope is explicit and shares one consumer boundary
+
+**Decision.** `hub.token_mode = "required"` is the sole opt-in for private and
+gated repositories. It must resolve an explicit `--token-file` or systemd
+credential before any Hub request; that credential is passed to every Hub call.
+`disabled` and `optional` remain public-only even when `optional` finds a token,
+so installing a credential cannot silently widen repository scope. Restricted
+content is published through the same immutable ordinary-file tree as public
+content, and every consumer of that tree must be inside the same authorization
+boundary as the credential owner.
+
+**Rationale.** The deployment is a private network with one internal consumer
+boundary. Within that boundary, refusing bytes the configured service account is
+authorized to retrieve prevents the archive from serving its actual mission.
+The mode must still be explicit: a token installed for identity checks or rate
+limits is not consent to retain and redistribute every repository it can see.
+
+**Consequences.** A missing required credential is `HFARG008` at exit `10`.
+`HFHUB006` remains the public-scope refusal for `disabled` and `optional`; under
+`required`, a gate the credential has not accepted is an access failure
+(`HFHUB005`). Hub revocation or repository removal stops future resolution but
+never deletes an already published revision (`AD-06`); an operator who must
+remove retained restricted content removes the repository from configuration and
+uses the explicit `purge --dry-run` / `purge --apply` workflow (`AD-20`). No
+durable JSON shape changes: access scope is configuration intent already covered
+by the configuration fingerprint.
+
+**Rejected.** Allowing restricted content whenever `optional` happens to find a
+token, because deployment state would change archive scope. Per-repository
+credentials or publication ACLs, because this deployment has one internal
+consumer boundary and those mechanisms would claim isolation the export does not
+provide. Automatic deletion on access revocation, because upstream state is not
+authority to destroy local archive data (`AD-06`, `FS-19`).
+
 ## 4. Non-goals
 
 These are deliberately out of scope for version 1. Each is a bounded decision
@@ -403,7 +443,7 @@ with a stated reason, not an oversight.
 | `NG-03` | Materializing dataset payloads hosted outside the Hub repository | Not part of repository completeness; unbounded and unverifiable |
 | `NG-04` | Guaranteeing a runnable software environment, dependency set, or image | Different product; the archive stores repository content |
 | `NG-05` | Automatic download of base models, adapters, tokenizers, or other transitive dependencies | `AD-07` |
-| `NG-06` | Gated or private repositories | Version 1 is public-only; the credential boundary stays future-compatible |
+| `NG-06` | Gated or private repositories (retired) | Superseded by `AD-21`; retained here as the historical scope identifier |
 | `NG-07` | Spaces, Storage Buckets, arbitrary Git repositories | Different resolution, layout, and completeness semantics |
 | `NG-08` | Serving models to inference engines | The archive is storage, not a runtime |
 | `NG-09` | Running models, importing modules, unpickling, `trust_remote_code` | `AD-15` |
@@ -415,6 +455,10 @@ Non-goals are not permanent bans. `NG-06` in particular is expected to become
 reachable without a schema redesign: the configuration already carries
 `token_mode`, `credential_name`, and `expected_account`, and the credential path
 is implemented in version 1 even though version 1 refuses non-public repositories.
+
+*Amended 2026-08-23 at `HUB-010` (`AD-21`).* That expected extension is now
+implemented: `required` enables authenticated private/gated scope, while the
+other modes retain the original public-only behavior. `NG-06` is retired.
 
 ## 5. Filesystem layout
 

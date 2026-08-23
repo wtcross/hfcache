@@ -25,6 +25,7 @@ from hfcache.credentials import (
     CREDENTIALS_DIRECTORY_VARIABLE,
     MAXIMUM_TOKEN_FILE_BYTES,
     NO_TOKEN,
+    RepositoryScope,
     ResolvedToken,
     TokenSource,
     ambient_token_variables,
@@ -55,6 +56,10 @@ def optional_hub() -> HubConfig:
 
 def disabled_hub() -> HubConfig:
     return HubConfig(token_mode="disabled")
+
+
+def required_hub() -> HubConfig:
+    return HubConfig(token_mode="required")
 
 
 def write_token(directory: Path, name: str = "hf-token", body: str = SECRET + "\n") -> Path:
@@ -153,6 +158,42 @@ def test_empty_credentials_directory_variable_is_treated_as_unset():
     resolved = resolve_token(optional_hub(), environ={CREDENTIALS_DIRECTORY_VARIABLE: ""})
 
     assert resolved.source is TokenSource.NONE
+
+
+def test_required_mode_without_any_credential_is_hfarg008():
+    assert codes_for(hub=required_hub(), environ={}) == ["HFARG008"]
+
+
+def test_required_mode_with_absent_named_credential_is_hfarg008(tmp_path: Path):
+    assert codes_for(
+        hub=required_hub(),
+        environ={CREDENTIALS_DIRECTORY_VARIABLE: str(tmp_path)},
+    ) == ["HFARG008"]
+
+
+def test_required_token_file_enables_restricted_repository_scope(tmp_path: Path):
+    resolved = resolve_token(required_hub(), token_file=write_token(tmp_path), environ={})
+
+    assert resolved.repository_scope is RepositoryScope.RESTRICTED
+    assert resolved.allows_restricted_repositories is True
+
+
+def test_required_systemd_credential_enables_restricted_repository_scope(tmp_path: Path):
+    write_token(tmp_path)
+
+    resolved = resolve_token(
+        required_hub(), environ={CREDENTIALS_DIRECTORY_VARIABLE: str(tmp_path)}
+    )
+
+    assert resolved.source is TokenSource.SYSTEMD_CREDENTIAL
+    assert resolved.repository_scope is RepositoryScope.RESTRICTED
+
+
+def test_optional_token_remains_public_repository_scope(tmp_path: Path):
+    resolved = resolve_token(optional_hub(), token_file=write_token(tmp_path), environ={})
+
+    assert resolved.repository_scope is RepositoryScope.PUBLIC
+    assert resolved.allows_restricted_repositories is False
 
 
 def test_process_environment_is_used_when_no_mapping_is_given(
@@ -378,6 +419,14 @@ def test_source_and_secret_must_agree():
 
     with pytest.raises(ValueError, match="inconsistent"):
         ResolvedToken(source=TokenSource.TOKEN_FILE, secret=None)
+
+
+def test_restricted_scope_requires_a_secret():
+    with pytest.raises(ValueError, match="restricted repository scope"):
+        ResolvedToken(
+            source=TokenSource.NONE,
+            repository_scope=RepositoryScope.RESTRICTED,
+        )
 
 
 # --------------------------------------------------------------------------- #

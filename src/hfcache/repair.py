@@ -201,7 +201,12 @@ def repair_revision(  # noqa: PLR0913, PLR0915 - §7.5's fifteen checkpoints, in
     are the post-grace cleanup and belong to this same transaction; leaving it
     open is what lets `recover` find the deferred work later, and is why
     `repair_committed` is a checkpoint rather than a call to `commit`.
+
+    Resolution by the exact SHA also proves the configured access scope before
+    the isolated download. This matters for repair because it otherwise begins
+    at `download` rather than sync's `repository` step (`AD-21`).
     """
+    client.repository(identity, commit_sha)
     stamp = now or _now()
     repository = RepositoryLayout(archive=layout, identity=identity)
     reference = read_reference(layout, repository.revision_ref(commit_sha))

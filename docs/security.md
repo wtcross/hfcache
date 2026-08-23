@@ -48,7 +48,7 @@ flowchart TB
 | Hub content | Be bytes | Be safe to execute, be well-formed, have safe paths, describe itself honestly |
 | Hub transport | Be authenticated and confidential under TLS | — |
 | Writer service identity | Mutate the archive | Escalate privilege, read operator secrets beyond its credential, write outside its paths |
-| Consumer hosts | Read `published/` | Write anything, reach any other part of the dataset |
+| Consumer hosts | Read every configured repository in `published/`, including restricted content when enabled | Write anything, reach any other part of the dataset |
 | Operator | Configure and initialize | — (an intentionally malicious operator is out of scope, §6) |
 
 ## 3. Threats and controls
@@ -172,16 +172,28 @@ implicit discovery.
 correctness hazard: a developer's cached credential cannot silently give a
 production run access that the configuration does not describe.
 
-### T-08 — Version 1 archives content it is not authorized to redistribute
+### T-08 — Restricted content crosses the intended authorization boundary
 
-**Capability.** A credential that can read private or gated repositories is
-present, and the configuration names one.
+**Capability.** A credential can read private or gated repositories, but a
+configuration or consumer export exposes those bytes beyond the people and
+systems authorized to receive them.
 
-**Controls.** Version 1 refuses any repository whose Hub metadata marks it private
-or gated, regardless of whether the supplied credential could read it
-(`HFHUB006`, `NG-06`). A credential in version 1 proves identity and raises rate
-limits; it never widens repository scope. `expected_account` is verified with
-`whoami` when configured.
+**Controls.** Restricted scope requires the explicit
+`hub.token_mode = "required"` policy and a resolved credential (`AD-21`); a token
+found under `optional` remains public-only and private/gated metadata is
+`HFHUB006`. Tokens never come from ambient discovery (`T-07`). The operator must
+place every consumer of the single `published/` export inside the same content-
+authorization boundary as the credential owner; the archive does not claim
+per-repository ACLs it cannot enforce. `hub.expected_account` plus `doctor`
+proves the installed credential is the intended Hub identity before enabling a
+sync. The mode and expected account are included in the configuration
+fingerprint, while the secret and its path are not.
+
+**Residual risk.** `hfcache` cannot interpret a repository's license or gate
+terms, nor can it learn that an off-host consumer later left the authorization
+boundary. Revoked upstream access stops future retrieval but deliberately does
+not destroy retained bytes (`AD-06`); the operator is responsible for applying
+the explicit purge workflow when continued retention is no longer authorized.
 
 ### T-09 — A supply-chain compromise reaches production
 
@@ -295,7 +307,7 @@ shell, which is this deployment's existing posture, not a new one.
 | 11 | SHA-256 manifest before publication | `AD-18` |
 | 12 | Secrets only via systemd credentials or `--token-file` | `docs/configuration.md` §7 |
 | 13 | Locked dependencies, frozen deployment install | `uv.lock`, `uv sync --frozen` |
-| 14 | Public-only repository scope in version 1 | `HFHUB006` |
+| 14 | Restricted scope requires explicit required-token mode and one authorized consumer boundary | `AD-21`, `HFARG008`, `HFHUB006` |
 | 15 | Explicit configuration required for any dependency archiving | `AD-07` |
 | 16 | Unknown state reported, never deleted or guessed | `AD-16`, `TX-06` |
 | 17 | Fail-closed preflight before any download | Exit `20` |

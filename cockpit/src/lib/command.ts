@@ -10,16 +10,16 @@ export const HFCACHE_CONFIG = '/etc/hfcache/config.toml';
 export const SERVICE_IDENTITY = 'hfcache';
 /* The deployment's documented default credential name
  * (docs/configuration.md §7). A deployment that renames
- * `hub.credential_name` runs anonymously from the page, and doctor's
- * `credential`/`hub_identity` rows say so (docs/cockpit.md §2). */
+ * `hub.credential_name` resolves no page token: `optional` is anonymous and
+ * `required` fails closed. Doctor reports the result (docs/cockpit.md §2). */
 export const CREDENTIAL_NAME = 'hf-token';
 
 /* The one invocation shape (CP-03): a transient unit that drops to the
  * service identity and speaks JSON. systemd-run rather than runuser
  * (decision 92) so that PID 1 imports the deployment's encrypted Hub
- * credential — `ImportCredential=` is silently skipped when none is
- * installed, which is `token_mode = "optional"` restated, and the page
- * never touches token bytes (CP-08) — and so the run carries the sync
+ * credential — `ImportCredential=` is silently skipped when none is installed.
+ * That is anonymous fallback under `optional` and `HFARG008` under `required`;
+ * the page never touches token bytes (CP-08) — and so the run carries the sync
  * unit's environment, umask, and `MemoryHigh=` (decision 86).
  * `--wait --pipe` propagates the CLI's exit code, which the envelope
  * mapping depends on. `--config` is stated even though it is the

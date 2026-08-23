@@ -1,7 +1,8 @@
 """Strict configuration validation (`docs/configuration.md`).
 
-Every `HFCFG###` code in the contract has a test that provokes it, so the
-taxonomy cannot drift away from the implementation.
+Every active `HFCFG###` code in the contract has a test that provokes it, so the
+taxonomy cannot drift away from the implementation. Retired codes remain
+documented but are not emitted by current configuration.
 """
 
 import copy
@@ -290,8 +291,10 @@ def test_hfcfg014_endpoint_must_be_https_host_only(endpoint: str):
     assert "HFCFG014" in codes_for(mutate(hub={"endpoint": endpoint}))
 
 
-def test_hfcfg015_required_token_mode_is_reserved():
-    assert "HFCFG015" in codes_for(mutate(hub={"token_mode": "required"}))
+def test_required_token_mode_is_accepted_for_restricted_repository_scope():
+    config = validate_config_mapping(mutate(hub={"token_mode": "required"}))
+
+    assert config.hub.token_mode == "required"
 
 
 def test_hfcfg016_repair_grace_has_a_seven_day_floor():
@@ -354,6 +357,13 @@ def test_fingerprint_excludes_the_credential_name():
     baseline = validate_config_mapping(base_mapping()).fingerprint()
     changed = validate_config_mapping(mutate(hub={"credential_name": "other-name"}))
     assert changed.fingerprint() == baseline
+
+
+def test_fingerprint_records_restricted_repository_scope():
+    public = validate_config_mapping(base_mapping()).fingerprint()
+    restricted = validate_config_mapping(mutate(hub={"token_mode": "required"})).fingerprint()
+
+    assert restricted != public
 
 
 # --------------------------------------------------------------------------- #

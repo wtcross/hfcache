@@ -130,13 +130,14 @@ class FakeHub:
     revisions: dict[str, dict[str, bytes]] = field(default_factory=dict)
     heads: dict[str, str] = field(default_factory=dict)
     downloads: list[str] = field(default_factory=list)
+    private: bool = False
     endpoint: str = "https://huggingface.co"
 
     def whoami(self, token: Any = None) -> dict:  # pragma: no cover - anonymous here
         return {"name": "anonymous"}
 
     def repo_info(self, repo_id: str, *, repo_type: str, revision: str, token: Any = None) -> Any:
-        return Info(sha=self.heads[f"{repo_type}:{repo_id}"])
+        return Info(sha=self.heads[f"{repo_type}:{repo_id}"], private=self.private)
 
     def list_repo_tree(self, repo_id: str, **arguments: Any) -> Any:
         return [
@@ -1158,6 +1159,44 @@ def test_the_sync_command_publishes_and_exits_zero(config_file: Path):
     payload = json.loads(result.stdout)["data"]
     assert {entry["status"] for entry in payload["repositories"]} == {"published"}
     assert payload["report"].startswith("runs/")
+
+
+@pytest.mark.usefixtures("_wired")
+def test_required_token_syncs_private_repositories(config_file: Path, tmp_path: Path, hub: FakeHub):
+    config_file.write_text(
+        config_file.read_text(encoding="utf-8").replace(
+            "[storage]", '[hub]\ntoken_mode = "required"\n\n[storage]'
+        ),
+        encoding="utf-8",
+    )
+    token = tmp_path / "token"
+    token.write_text("hf_privateRepositoryCredential\n", encoding="utf-8")
+    hub.private = True
+
+    result = CliRunner().invoke(
+        app,
+        ["--json", "--config", str(config_file), "--token-file", str(token), "sync"],
+    )
+
+    assert result.exit_code == ExitCode.SUCCESS
+    payload = json.loads(result.stdout)["data"]
+    assert {entry["status"] for entry in payload["repositories"]} == {"published"}
+
+
+@pytest.mark.usefixtures("_wired")
+def test_sync_refuses_a_mismatched_expected_account(config_file: Path, hub: FakeHub):
+    config_file.write_text(
+        config_file.read_text(encoding="utf-8").replace(
+            "[storage]", '[hub]\nexpected_account = "intended-account"\n\n[storage]'
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+
+    assert result.exit_code == ExitCode.SYNC
+    assert json.loads(result.stdout)["errors"][0]["code"] == "HFHUB003"
+    assert hub.downloads == []
 
 
 @pytest.mark.usefixtures("_wired")

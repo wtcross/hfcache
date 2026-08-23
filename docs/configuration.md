@@ -64,29 +64,37 @@ credential_name = "hf-token"
 | --- | --- | --- | --- |
 | `endpoint` | str | `"https://huggingface.co"` | Absolute `https://` URL, host required, no path, no query, no trailing `/` |
 | `expected_account` | str | `""` | Empty, or a Hub username/organization matching `[A-Za-z0-9][A-Za-z0-9._-]{0,95}` |
-| `token_mode` | str | `"optional"` | `"disabled"` \| `"optional"`; `"required"` is reserved and rejected in schema version 1 |
+| `token_mode` | str | `"optional"` | `"disabled"` \| `"optional"` \| `"required"` |
 | `credential_name` | str | `"hf-token"` | `[A-Za-z0-9._-]{1,64}`, and not `.` or `..` |
 
 `endpoint` must be `https://`. A plaintext endpoint is `HFCFG014`: TLS
 verification is not optional, and an archive whose provenance came over an
 unauthenticated channel is not worth verifying afterwards.
 
-`expected_account` empty means anonymous public access and no identity check.
-When it is set, the resolved identity from `whoami` must match exactly, or the
-command fails before any download.
+`expected_account` empty means no identity check. That is normal for anonymous
+public access; authenticated deployments should set it so `doctor` proves the
+credential belongs to the intended Hub account before a sync is enabled. When it
+is set, a resolved identity from `whoami` must match exactly (`HFHUB003`).
 
 `token_mode` semantics:
 
 | Value | Meaning |
 | --- | --- |
 | `"disabled"` | No credential is read or used. Hub calls always pass `token=False` |
-| `"optional"` | A credential is used if present. Its absence is not an error |
-| `"required"` | Reserved for the future gated/private work (`NG-06`). Rejected as `HFCFG015` in version 1 |
+| `"optional"` | A credential is used if present for identity and rate limits. Its absence is not an error; repository scope remains public-only |
+| `"required"` | A credential must resolve or the command fails with `HFARG008`; private and gated repository scope is enabled (`AD-21`) |
 
-In every mode, version 1 refuses repositories whose Hub metadata marks them
-private or gated, even when a supplied credential could read them. A credential
-in version 1 exists to prove identity and to raise rate limits — never to widen
-repository scope.
+`required` is deliberately both an availability requirement and the restricted-
+content opt-in. A token found under `optional` never widens repository scope:
+metadata marked private or gated remains `HFHUB006`. This prevents installing a
+rate-limit or identity credential from silently changing what the archive may
+retain. Under `required`, readable private and gated repositories proceed through
+the same complete-revision pipeline as public repositories. Every consumer of
+the publication export must be authorized to receive that content (`AD-21`).
+
+Losing upstream access does not remove a local revision. Future Hub calls fail,
+while existing publications remain until the operator removes the repository
+from configuration and explicitly applies `purge` (`AD-06`, `AD-20`).
 
 ## 4. `[storage]`
 
@@ -258,7 +266,8 @@ Resolution order, first match wins:
 1. `--token-file PATH` when explicitly passed to an operator-run command. The file
    is read as UTF-8, stripped of a single trailing newline, and never logged.
 2. `${CREDENTIALS_DIRECTORY}/<credential_name>` when systemd supplies it.
-3. No token — Hub calls pass `token=False`.
+3. No token — Hub calls pass `token=False` in `disabled` or `optional`; `required`
+   instead fails with `HFARG008` before any Hub request.
 
 Ambient discovery is disabled in every case: `HF_TOKEN`, `HUGGING_FACE_HUB_TOKEN`,
 `~/.cache/huggingface/token`, and any other implicit source is ignored. Hub calls
@@ -287,9 +296,10 @@ into a header. Every rejection names the file and the defect, never the content.
 | `--token-file` given and unusable | `HFARG005` |
 | `--token-file` given with `token_mode = "disabled"` | `HFARG002` |
 | `$CREDENTIALS_DIRECTORY` unset or empty | No token; not an error |
-| Credential named by `credential_name` absent from that directory | No token; not an error |
+| Credential named by `credential_name` absent from that directory under `optional` | No token; not an error |
 | That credential's name exists but is unusable | `HFARG006` |
 | `$CREDENTIALS_DIRECTORY` set to a relative path | `HFARG006` |
+| No explicit or systemd credential resolves while `token_mode = "required"` | `HFARG008` |
 
 The asymmetry in the middle rows is deliberate. `token_mode = "optional"` means a
 *missing* credential is normal, so absence resolves to anonymous access. A
@@ -320,7 +330,7 @@ silently chosen.
 | `HFCFG012` | `archive_id` is not a canonical UUID |
 | `HFCFG013` | `credential_name` grammar is invalid |
 | `HFCFG014` | `hub.endpoint` is not a valid `https://` URL |
-| `HFCFG015` | `token_mode = "required"` is reserved in schema version 1 |
+| `HFCFG015` | Retired at `HUB-010`; earlier releases used it to reject `token_mode = "required"` |
 | `HFCFG016` | `repair.retired_instance_grace_hours` below the seven-day floor |
 
 All configuration failures exit `10` (§`docs/cli.md`), before any lock is taken,
