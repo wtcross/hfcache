@@ -7,6 +7,7 @@
 | Derived from | `docs/plan.md` §6.3, §33; `docs/schemas.md` §3, §4 |
 | Helper | `examples/copy-revision.py`, shipped in the release at `/opt/hfcache/current/examples/` |
 | Host setup | `scripts/setup-hfcache-consumer-model-store.sh` (`OPS-009`) |
+| Serving | `scripts/consumer-serve-hfcache-model.sh` (`OPS-010`) |
 
 This is the **downstream** side of the archive: how a machine that is not the
 writer takes a copy of a model or dataset revision and proves the bytes are the
@@ -160,6 +161,38 @@ The copy is assembled in a temporary directory beside `--destination` and rename
 into place only after it verifies, so an interrupted run never leaves something
 that looks finished. `verified: true` means every byte was read and hashed on
 this host — not that the archive says so.
+
+### Serve a verified local model
+
+`scripts/consumer-serve-hfcache-model.sh` starts the OpenAI-compatible vLLM
+server in a foreground container. It accepts the vLLM image, an already
+verified local model directory, and a vLLM YAML configuration file, in that
+order:
+
+```bash
+scripts/consumer-serve-hfcache-model.sh \
+  docker.io/vllm/vllm-openai:latest \
+  ~/.cache/hfcache/unsloth/Qwen3.8-27B-NVFP4/ \
+  ./qwen3.8-vllm.yaml
+```
+
+The launcher prefers Podman when both Podman and Docker are installed; use
+`--runtime docker` or `--runtime podman` to select one explicitly. It gives an
+NVIDIA GPU to the container, publishes container port 8000 on host port 8000,
+and uses host IPC as vLLM recommends for PyTorch shared memory. The model is
+mounted at `/opt/hfcache/model` and the configuration at
+`/etc/vllm/config.yaml`, both read-only and with a private container SELinux
+label. It then explicitly runs:
+
+```text
+vllm serve /opt/hfcache/model --config /etc/vllm/config.yaml
+```
+
+Do not put a different `model` value in the YAML: the launcher's positional
+model path is the verified tree to serve. The container is removed when vLLM
+stops, and the script returns vLLM's exit status. It deliberately does not
+verify the model again; use only a destination for which `copy-revision.py`
+reported `verified: true`.
 
 ---
 

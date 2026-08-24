@@ -512,6 +512,21 @@ package in this family.
   40 deselected, sdist and wheel built; Cockpit stage skipped on this consumer
   because pnpm or make is absent.)
 
+- [x] OPS-010 Add the verified-model vLLM container launcher
+  (2026-08-24, this commit —
+  `scripts/consumer-serve-hfcache-model.sh` accepts an operator-selected vLLM
+  image, verified local model tree, and YAML configuration; resolves and
+  validates the host paths; and execs a foreground `vllm serve` container with
+  the model and config privately SELinux-labelled and read-only. It prefers
+  Podman, supports explicit Podman or Docker selection with each runtime's
+  NVIDIA GPU flag, publishes port 8000, uses host IPC, removes the stopped
+  container, and propagates its exit status. The consumer runbook records the
+  exact container paths and invocation. No GPU container was launched because
+  no deployment image, model, or config was placed in scope. Seven focused
+  script tests exercise validation and both generated runtime shapes;
+  `scripts/check.sh`: 1,680 passed, 40 deselected, sdist and wheel built;
+  Cockpit stage skipped on this consumer because pnpm or make is absent.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -2859,3 +2874,5 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     would violate the archive's explicit-deletion rule.
 
 99. **Consumer revision creation and serving promotion have separate ownership boundaries** (2026-08-24, OPS-009). The locked `vllm` identity owns only `<model>/revisions/`, where every `copy-revision.py` invocation receives a new non-existent destination; root owns the model root and therefore the eventual `current` pointer changed only after manifest verification. This makes targeting a live serving path unavailable to the copy identity, which matters because the reference helper deliberately removes an existing destination before promotion. The 100 GiB figure is an existing-model-plus-available capacity check, not a claimed filesystem reservation: deployments needing isolation use a dedicated filesystem or quota. **Rejected:** making the whole model root writable by `vllm`, because a serving process could replace its own promotion pointer; preallocating a 100 GiB reserve file, because it consumes the capacity intended for model copies and requires a second unsafe shrink/replenish protocol.
+
+100. **Serving consumes the verified ordinary-file tree through read-only container mounts** (2026-08-24, OPS-010). The image, model directory, and YAML configuration are explicit inputs because vLLM, CUDA, and model-specific settings belong to the consumer deployment rather than the archive contract. The launcher resolves both host paths, mounts the model and config privately SELinux-labelled and read-only, and supplies the mounted model path positionally to an explicit `vllm serve`; it does not repeat manifest verification already completed by the copy helper. Podman is preferred on this CentOS-family deployment, with Docker selectable for consumer portability, and the wrapper stays foreground so signals and the serving exit status retain their ordinary meanings. **Rejected:** installing or pinning vLLM on the host, which would add deployment-specific runtime dependencies to hfcache; disabling SELinux labelling for bind-mount access, which would weaken the host boundary; and silently taking a model identifier from YAML, which could serve something other than the verified directory the operator named.
