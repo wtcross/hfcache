@@ -2,6 +2,7 @@
 .scratch/
 .tokensave/
 .claude/
+.serena/
 
 # Python
 __pycache__/
@@ -22,3 +23,6 @@ htmlcov/
 # Type checker caches
 .ruff_cache/
 .pyrefly_cache/
+
+# VLLM configs
+.vllm-configs/
