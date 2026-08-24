@@ -6,19 +6,22 @@
 | Work package | `OPS-007` |
 | Derived from | `docs/plan.md` §6.3, §33; `docs/schemas.md` §3, §4 |
 | Helper | `examples/copy-revision.py`, shipped in the release at `/opt/hfcache/current/examples/` |
+| Host setup | `scripts/setup-hfcache-consumer-model-store.sh` (`OPS-009`) |
 
 This is the **downstream** side of the archive: how a machine that is not the
 writer takes a copy of a model or dataset revision and proves the bytes are the
 ones the archive published.
 
-Everything here needs only a read-only NFS mount and Python 3. It does not need
+Copying needs only a read-only NFS mount and Python 3. It does not need
 `hfcache` installed, does not need the Hub, and does not need network access at
-all. That is deliberate — a consumer should not have to install this project to
-read what it produced.
+all. The optional host-setup script in §3 additionally assumes a Linux host's
+standard account-management tools and runs as root. A consumer still does not
+install the Python project merely to read what the archive produced.
 
-**Every command block below was run.** Output is real; where it is abbreviated it
-is marked `…`, and nothing is invented. The one exception is marked explicitly in
-§7, and says why.
+Archive-copy command blocks below were run. Output is real; where it is
+abbreviated it is marked `…`, and nothing is invented. The §3 host-provisioning
+command is an operator action and is marked separately; §7 describes the other
+deliberately unexecuted alternative.
 
 ---
 
@@ -76,6 +79,51 @@ verify against neither.
 ---
 
 ## 3. Copying a revision
+
+### Preparing a revisioned model store
+
+`scripts/setup-hfcache-consumer-model-store.sh` prepares the local store used by
+a vLLM consumer. It defaults to `unsloth/Qwen3.8-27B-NVFP4`, installs this
+document's helper root-owned at
+`/usr/local/libexec/hfcache/copy-revision.py`, creates the locked `vllm:vllm`
+service identity, and creates this boundary:
+
+```text
+/var/lib/hfcache-models/unsloth/Qwen3.8-27B-NVFP4/
+└── revisions/  # the only directory writable by vllm
+```
+
+The model root stays `root:vllm` so a later `current` serving pointer is changed
+separately, only after a copy verifies. The script checks for 100 GiB of
+existing-model-plus-available capacity. A plain directory cannot reserve blocks;
+use a dedicated filesystem or quota when that capacity must be isolated from
+other workloads.
+
+From a checkout or installed release, run:
+
+```bash
+sudo scripts/setup-hfcache-consumer-model-store.sh
+```
+
+If only the two consumer files were transferred, name the helper explicitly:
+
+```bash
+sudo ./setup-hfcache-consumer-model-store.sh ./copy-revision.py
+```
+
+These host-mutating commands are not run by the repository gate. On the
+consumer, they are idempotent after the first successful run and print the
+installed paths, service identity, available capacity, and a safe unique
+destination template.
+
+Every invocation of `copy-revision.py` must use a new, non-existent path below
+`revisions/`. It must never target the model root, `current`, or another live
+serving path: immediately before its verified rename the helper removes an
+existing destination (`examples/copy-revision.py`, `attempt()`). Root ownership
+of the model root makes that separation a filesystem boundary, not only an
+operator convention.
+
+### Copy and verify
 
 ```bash
 python3 /path/to/copy-revision.py \

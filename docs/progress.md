@@ -494,6 +494,24 @@ package in this family.
   rollback barrier applies and no cross-format drill is required. Verification:
   `scripts/check.sh --with-build`; Hub live suite, 24 passed.)
 
+## Consumer model-store provisioning (OPS, 2026-08-24)
+
+- [x] OPS-009 Add the consumer model-store setup script
+  (2026-08-24, this commit — `scripts/setup-hfcache-consumer-model-store.sh`
+  formalizes the downstream host setup for
+  `unsloth/Qwen3.8-27B-NVFP4`: it validates 100 GiB of
+  existing-model-plus-available capacity before mutation, installs
+  `copy-revision.py` root-owned under `/usr/local/libexec/hfcache/`, creates or
+  converges a locked `vllm:vllm` service identity, refuses symlinked store
+  boundaries, and makes only the model's `revisions/` directory writable by
+  vLLM while root retains the future serving-pointer boundary. The consumer
+  runbook documents installation from a checkout, release, or separately
+  transferred pair and the mandatory new-destination rule. No consumer-host
+  state was mutated by this repository package; that root action remains for
+  the operator. Three focused script tests; `scripts/check.sh`: 1,673 passed,
+  40 deselected, sdist and wheel built; Cockpit stage skipped on this consumer
+  because pnpm or make is absent.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -2839,3 +2857,5 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     per-repository credentials or ACLs, because the deployment has one trusted
     internal consumer boundary; automatic deletion on revocation, because it
     would violate the archive's explicit-deletion rule.
+
+99. **Consumer revision creation and serving promotion have separate ownership boundaries** (2026-08-24, OPS-009). The locked `vllm` identity owns only `<model>/revisions/`, where every `copy-revision.py` invocation receives a new non-existent destination; root owns the model root and therefore the eventual `current` pointer changed only after manifest verification. This makes targeting a live serving path unavailable to the copy identity, which matters because the reference helper deliberately removes an existing destination before promotion. The 100 GiB figure is an existing-model-plus-available capacity check, not a claimed filesystem reservation: deployments needing isolation use a dedicated filesystem or quota. **Rejected:** making the whole model root writable by `vllm`, because a serving process could replace its own promotion pointer; preallocating a 100 GiB reserve file, because it consumes the capacity intended for model copies and requires a second unsafe shrink/replenish protocol.
