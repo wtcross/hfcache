@@ -108,7 +108,7 @@ side channel would violate `CP-01`.
 | UI operation | Mechanism | Contract |
 | --- | --- | --- |
 | Health dashboard | `status --json` — the six archive-health fields, free space against reserve, per-repository state | `docs/operations.md` §1 |
-| Archived repositories and revisions | `list --revisions --json`, including `managed: false` entries | `docs/cli.md` §2 |
+| Archived repositories and revisions | `list --revisions --json`, including `managed: false` entries; repository names link to their type-aware Hugging Face pages | `docs/cli.md` §2 |
 | Sizing preview | `plan --json`, optionally against a candidate configuration (§6) | `docs/operations.md` §3 |
 | Sync now (all repositories) | `systemctl start hfcache-sync.service` | `CP-04`; `docs/operations.md` §4 |
 | Sync selected repositories | Page-spawned CLI `sync TYPE:ID …` (§5) | decision 89 |
@@ -134,6 +134,13 @@ is an atomic stage inside `sync`, and `repair` is the only command that
 republishes (decision 89). The UI presents "Sync now" and renders published
 state — publication ID, generation, timestamp, verification state — from
 `list --revisions`.
+
+Repository links are browser-only navigation to the canonical
+`https://huggingface.co` web origin: models use `/<owner>/<name>` and datasets
+use `/datasets/<owner>/<name>`. Each identifier segment is percent-encoded, and
+the link opens in a new tab with no opener or referrer relationship. It carries
+no Hub credential (`CP-08`) and remains available for unmanaged repositories,
+whose configuration entry no longer exists (`AD-06`).
 
 ## 4. Envelope and error handling
 

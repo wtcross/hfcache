@@ -116,11 +116,12 @@ percentages the events do not carry.
 
 `list --revisions --json`: every archived repository — including
 **unmanaged** ones no longer in the configuration — with its current
-commit, retained count, and current-revision size. Expanding a row lists
-every retained revision: generation (current marked), the full 40-character
-commit SHA (displayed in full precisely so it can be copied into the
-verification and repair forms), file count, size, publication timestamp,
-and per-revision verification state.
+commit, retained count, and current-revision size. The repository name opens
+its type-aware Hugging Face page in a new tab; this browser link carries no
+archive credential. Expanding a row lists every retained revision: generation
+(current marked), the full 40-character commit SHA (displayed in full precisely
+so it can be copied into the verification and repair forms), file count, size,
+publication timestamp, and per-revision verification state.
 
 ## Configuration
 

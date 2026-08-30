@@ -19,7 +19,9 @@ import {
     EnabledLabel, EnvelopeAlert, Loading, QueryError, Sha, UnmanagedLabel, VerificationLabel,
 } from './components';
 import { useHfcache } from './hooks';
+import type { RepositoryType } from './lib/command';
 import { formatBytes, formatTimestamp, shortSha } from './lib/format';
+import { huggingFaceRepositoryUrl } from './lib/repository';
 
 /* The list payload (docs/cli.md §4.1), fields as deployed at 0.1.3. */
 export interface ListRevision {
@@ -34,7 +36,7 @@ export interface ListRevision {
 
 export interface ListRepository {
     repository_id: string;
-    repository_type: string;
+    repository_type: RepositoryType;
     enabled: boolean;
     managed: boolean;
     current_commit_sha: string | null;
@@ -114,7 +116,21 @@ export const ArchiveBrowser = () => {
                                         props: { key: `${repository.repository_type}:${repository.repository_id}` },
                                         expandedContent: <RevisionsTable repository={repository} />,
                                         columns: [
-                                            repository.repository_id,
+                                            {
+                                                title: (
+                                                    <a
+                                                        href={huggingFaceRepositoryUrl(
+                                                            repository.repository_type,
+                                                            repository.repository_id,
+                                                        )}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        aria-label={`Open ${repository.repository_id} on Hugging Face in a new tab`}
+                                                    >
+                                                        {repository.repository_id}
+                                                    </a>
+                                                ),
+                                            },
                                             repository.repository_type,
                                             {
                                                 title: (
