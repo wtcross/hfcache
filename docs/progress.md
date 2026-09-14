@@ -638,20 +638,38 @@ package in this family.
   1,750 Python tests, 45 Cockpit tests, production builds, and four installed
   wheel smoke tests. No durable formats change.)
 
-- [ ] OPS-012 Deploy 0.1.10 and clean the reviewed quarantine findings.
-  The reviewed inventory contains 41 entries with only empty directories and
-  one Qwen/Qwen3-4B-Base entry with six redundant files totaling 1,688,517 bytes.
-  A separately started sync (`bf1f901508ae4fb4990157d69125ab78`) began during
-  release preparation and holds the writer lock while downloading three new
-  models. The operator explicitly authorized pause, cleanup, and restart.
-  Recover only that stopped run's proven empty initial staging under decision
-  104, preserving its download cache. Its explicit-ID cleanup must recheck
-  provenance and byte identity for the original 42 entries and the newly
-  recovered empty entry, then
-  prove quarantine empty, original journals and all publication refs unchanged,
-  retained files intact, status/recovery clean, and the enabled sync timer
-  restored. Local operational evidence belongs under `.git/qua001/`; record
-  the measured NAS free-space delta and completion evidence here afterward.
+- [x] OPS-012 Deploy 0.1.10 and clean the reviewed quarantine findings
+  (2026-09-14, this commit — deployed only through `install-release.sh`, with
+  the prior versions retained. Config validation preserved fingerprint
+  `f9388bb0…` and the maximum of three; all five deployed Cockpit files match
+  the production build. The operator explicitly authorized stopping sync
+  `bf1f901508ae4fb4990157d69125ab78`, cleaning, and restarting with its cache.
+  Confirmed service/PID termination and the free writer lock. Decision 104's
+  exact two-journal, empty-staging recovery preview was reviewed and applied
+  through the installed application: report
+  `083ee779e9614f6faec1261a179a6a84`, with cache metadata and all references
+  unchanged. No configuration age or timestamps were altered.
+  The final explicit-ID dry run covered 43 entries: the original 42 plus that
+  interrupted download's empty staging. Cleanup run
+  `e64f33e61b0340099badc82d795f36f2` removed all 43 entries, 86 directories,
+  and six files totaling 1,688,517 logical bytes. Quarantine and the pre-restart
+  Findings list are empty; status is not degraded, unfinished/deferred counts
+  are zero, and recovery has zero actionable or blocked remedies. All 363
+  journals and 228 publication refs are byte-identical across cleanup; the
+  original 360 journals also match their pre-interruption aggregate digest.
+  Current and cache copies of the six files pass fresh digest checks; their
+  link counts changed from three to two. Across all 17,028 cache entries,
+  only those six inodes' expected ctime/link metadata changed. The paused
+  model's 83,351,737,205 cached bytes remain, including incomplete downloads.
+  NFS available space stayed at 13,802,195,124,224 bytes before and after:
+  zero measurable NAS space increase, because the removed file links shared
+  retained data. Sync restarted as `58dd7515d03b40398d20ac859ad2d86b`, resolving
+  the same first commit and starting its download with 364,597,537,255 newly
+  required bytes; the sync timer is active and enabled, verification disabled.
+  The resumed run is still in progress; normal active staging may appear in
+  Overview, while quarantine remains clear. Evidence is in `.git/qua001/`.
+  `scripts/check.sh` exits `0`: 1,750 Python tests, 45 Cockpit tests, and
+  production builds. Formal release proof remains handoff item 15.)
 
 ## Live rollout checkpoints (§29, writer-side)
 
@@ -857,21 +875,19 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     then create and push the annotated `v0.1.5` tag. The quarterly verification
     timer remains disabled pending handoff item 8.
 
-15. **Finish the current 0.1.7 candidate's formal release proof**
-    (2026-09-14, OPS-011). The requested configuration change and pruning use
-    installed 0.1.7, with 0.1.6 retained for rollback. Formal tagging remains
-    subject to `docs/agents/release.md`: a successful service sync, clean full
-    verification, and the release hardening checks. The pre-cleanup estimate
-    covers 24.59 TB and approximately 8.55 days at the last measured throughput;
-    that old measurement is an estimate, not a fresh performance result. This
-    retention-only operation does not start that broad read or fetch the three
-    configured repositories that are not yet archived. The sync timer resumes
-    its existing schedule; the verification timer stays disabled pending item 8.
-    Complete these checks and tag the current candidate rather than tagging a
-    superseded deployed version from item 14.
-    REL-009 staged 0.1.8; QUA-002 installed 0.1.9 for OPS-012's explicitly
-    authorized pause/cleanup/restart. QUA-003 prepares the compatibility fix
-    in 0.1.10. Once OPS-012 completes, use 0.1.10 for this formal release proof.
+15. **Finish the current 0.1.10 candidate's formal release proof**
+    (2026-09-14, OPS-012). Retention and quarantine cleanup are complete on
+    installed 0.1.10, with previous releases retained for rollback. Formal
+    tagging remains subject to `docs/agents/release.md`: a successful service
+    sync, clean full verification, and the release hardening checks. Resumed
+    run `58dd7515d03b40398d20ac859ad2d86b` is downloading the three newly
+    configured models. Require its successful completion, then refresh
+    `verify --estimate` before scheduling the full read. The earlier estimate
+    covered 24.59 TB and approximately 8.55 days at old measured throughput;
+    it is not a fresh estimate for the expanded archive. The sync timer is
+    active on its existing schedule; verification stays disabled pending
+    item 8. Complete these checks and tag the current candidate rather than
+    a superseded deployed version from item 14.
 
 ## Operator decisions needed
 
