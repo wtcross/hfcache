@@ -559,6 +559,32 @@ package in this family.
   1,689 Python tests, 45 Cockpit tests, production build, and four installed
   wheel smoke tests.)
 
+- [x] OPS-011 Deploy three-revision retention and prune the live model history
+  (2026-09-14, this commit — staged and switched to 0.1.7 only through
+  `scripts/install-release.sh`; the new binary accepted both the existing
+  five-revision configuration and the proposed three-revision configuration.
+  Atomically installed the single-key change, preserving `0640 root:hfcache`
+  and the predecessor at `/etc/hfcache/config.toml.ret010.bak`. Installed the
+  production Cockpit build and matched all five deployed files by digest.
+  Explicit selectors covered seven enabled, archived models. Three reviewed
+  prune rounds removed 7, 5, and 1 revisions, respectively: runs
+  `2af25a222431434e8ef0a2f0e387b554`, `39e199c3e88440a9bfbbc95746e9dcc7`,
+  and `943dce8e642349a2824c9d96ac3629e7`, all success without warnings.
+  The archive now has 129 revisions across the same 99 models, every model
+  at or below three. Exact surviving SHA/publication/generation tuples match
+  the original inventory minus the 13 reviewed removals; every current
+  reference is unchanged. Deleted SHA containers and cache revisions are
+  absent, all 13 archived manifests match their original digests, and prune
+  audit records remain. Status is not degraded, with zero unfinished
+  transactions or deferred cleanup; recovery has zero actionable or blocked
+  remedies and the final prune plan is empty. Logical removed tree bytes total
+  7,666,936,383,779, but nearly all content was shared: unique retained file
+  bytes fell by only 218,458 across 15 objects. Repeated NFS free-space reads
+  stayed at 13,880,416,796,672 bytes, so there was no measurable NAS free-space
+  increase at its 1 MiB reporting granularity. The enabled sync timer resumed;
+  verification remains disabled. `scripts/check.sh` exit `0`, including the
+  plugin stage. Formal release proof remains handoff item 15.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -762,6 +788,19 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     `hfcache-verify.service`, require a clean full-verification report, and only
     then create and push the annotated `v0.1.5` tag. The quarterly verification
     timer remains disabled pending handoff item 8.
+
+15. **Finish the current 0.1.7 candidate's formal release proof**
+    (2026-09-14, OPS-011). The requested configuration change and pruning use
+    installed 0.1.7, with 0.1.6 retained for rollback. Formal tagging remains
+    subject to `docs/agents/release.md`: a successful service sync, clean full
+    verification, and the release hardening checks. The pre-cleanup estimate
+    covers 24.59 TB and approximately 8.55 days at the last measured throughput;
+    that old measurement is an estimate, not a fresh performance result. This
+    retention-only operation does not start that broad read or fetch the three
+    configured repositories that are not yet archived. The sync timer resumes
+    its existing schedule; the verification timer stays disabled pending item 8.
+    Complete these checks and tag the current candidate rather than tagging a
+    superseded deployed version from item 14.
 
 ## Operator decisions needed
 
