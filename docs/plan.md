@@ -886,6 +886,15 @@ Start with a quarterly cadence. Re-evaluate only after measuring archive size an
 11. After the grace expires, a checkpointed cleanup moves the unreferenced old tree into `.store/quarantine/<transaction-id>/` and its byte-for-byte original manifest into `audit/repairs/`.
 12. Retain quarantined evidence until the operator confirms storage health and explicitly approves cleanup.
 
+    **QUA-001 amendment (2026-09-14, decision 103).** Explicit
+    `quarantine --dry-run` / `--apply` can discard already recovered publication
+    staging when it contains only empty directories or files proven redundant
+    with freshly verified current publication files. It requires explicit
+    transaction IDs and both terminal publication and committed recovery
+    provenance. This does not release repaired or unvalidatable published trees.
+    The narrow, repeatable cleanup uses the original durable journals rather than
+    opening a new transaction shape (`docs/architecture.md` §7.8.1).
+
 Every step is checkpointed and recoverable. A crash before a ref switch leaves the old ref and tree valid; a crash between the per-SHA and current-ref switches also leaves `refs/current.json` pointing to an existing old tree, and recovery can finish the second switch. An in-flight consumer that resolved the old ref can finish during the grace period; if its final verification fails, it rereads the ref and restarts. Repair never treats newly observed corrupt bytes as the new expected value.
 
 ## 17. Dependency Detection
@@ -1293,9 +1302,16 @@ dependency.undeclared
 publication.completed
 retention.pruned
 retention.deferred
+quarantine.cleaned
 repository.failed
 run.completed
 ```
+
+**QUA-001 amendment (2026-09-14, decision 103).** `quarantine.cleaned`
+records explicit cleanup of recovered staging, with source and recovery
+transaction IDs, repository, quarantine path, removed file and directory counts,
+logical removed bytes, and whether the target was already absent. It changes no
+durable archive JSON vocabulary.
 
 ## 25. Security Controls
 

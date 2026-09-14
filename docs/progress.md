@@ -585,6 +585,26 @@ package in this family.
   verification remains disabled. `scripts/check.sh` exit `0`, including the
   plugin stage. Formal release proof remains handoff item 15.)
 
+## Explicit quarantine cleanup (QUA, 2026-09-14)
+
+- [x] QUA-001 Add explicit cleanup of proven redundant recovered staging
+  (2026-09-14, this commit — decision 103. The new `quarantine` command takes
+  explicit transaction IDs and either `--dry-run` or `--apply`. Terminal
+  publication and committed recovery journals must prove ownership of every
+  target; unfinished transactions, unknown content, symlinks, and special files
+  are refused. Only empty directories or files freshly proven identical to a
+  retained current publication can be removed. Apply validates the entire
+  batch under the writer lock, then uses anchored directory/file descriptors,
+  identity checks, and fresh hashes through each unlink. Interrupted cleanup
+  resumes from its proven remaining subset. Original journals and publication
+  references remain unchanged; no new durable JSON shape is introduced.
+  CLI/recovery contracts and Cockpit's event vocabulary cover the operation.
+  Verification: 53 cleanup scenarios, including swapped ancestor directories,
+  shared hardlinks, incomplete provenance, whole-batch refusal, and partial
+  cleanup; 118 focused tests passed. `scripts/check.sh` exit `0`: 1,743 Python
+  tests, 45 Cockpit tests, types, lint, and production builds. Live NFS suite:
+  11 passed, one expected initialized-archive skip.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -2978,3 +2998,24 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     configurations, which needlessly breaks upgrades; and manually removing
     archive files, which bypasses the cache ownership, audit, and recovery
     contracts.
+
+103. **Only resolved, proven redundant staging quarantine may be released**
+    (2026-09-14, QUA-001). The operator requested immediate cleanup of the
+    Overview's quarantine findings. The application now gains an explicit-ID,
+    dry-run/apply cleanup path; manual archive deletion remains prohibited.
+    A completed failed publication and its committed recovery checkpoint must
+    jointly prove each target's provenance. Empty directories carry no content;
+    remaining files must match the current retained manifest and freshly read
+    current file bytes before they can be discarded. The complete batch is
+    validated first, apply holds the writer lock, unresolved journals refuse
+    cleanup, symlinks and unexplained entries are preserved, and each deletion
+    rechecks its evidence. Original journals and published content remain intact.
+    This is a narrow `TX-01` exception: no second cleanup journal is needed for
+    monotonic removal of already resolved redundant data, since a crash leaves
+    a subset that the same command can prove again. No durable JSON shape or
+    checkpoint vocabulary changes. **Rejected:** blanket recursive deletion,
+    which can erase unique or unresolved evidence; an automatic age-based purge,
+    which treats age as deletion authority; and a new checkpoint format for
+    these redundant artifacts, which would introduce recovery and rollback
+    obligations without preserving additional content. Repair quarantine and
+    unvalidatable publication trees remain outside this command's scope.

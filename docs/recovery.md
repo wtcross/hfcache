@@ -241,12 +241,27 @@ $ hfcache --json status | jq '.data.archive | {quarantined_bytes, deferred_clean
 {"quarantined_bytes": 12512611, "deferred_cleanup": 0}
 ```
 
-**Quarantine is retained until you decide otherwise.** This application has no
-code path that removes it on a schedule (plan §16.5 item 12). Releasing it is an
-operator judgement — confirm the storage is healthy and the replacement has
-verified at least once since, then remove the directory by hand. Until then it is
-the evidence of what the bytes were, and `quarantined_bytes` in `status` is how
-you notice it is holding space.
+**Quarantine is retained until you decide otherwise.** No schedule removes it
+(plan §16.5 item 12). Repaired or unvalidatable published trees remain evidence;
+the supported cleanup below deliberately excludes them. Do not manually delete
+archive paths (`docs/agents/environment.md`).
+
+For abandoned publication staging that recovery has already rolled back, use
+the exact transaction IDs shown by `status` or the Cockpit Overview:
+
+```text
+hfcache quarantine --dry-run TRANSACTION_ID ...
+hfcache quarantine --apply TRANSACTION_ID ...
+```
+
+Review the dry run before applying the same explicit IDs. Empty directories are
+eligible; remaining files must first be proven identical to verified files in
+the repository's current retained publication. The command preserves journals
+and refuses unique or unexplained evidence. It can safely resume an interrupted
+cleanup and does not require manually editing the archive. `status` then omits
+the removed entries, and refreshing Cockpit updates the Findings table.
+`recover --apply` itself never empties quarantine. `quarantined_bytes` reports
+the logical file bytes still held there, not uniquely reclaimable NAS space.
 
 ---
 

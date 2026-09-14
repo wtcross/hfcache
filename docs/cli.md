@@ -72,6 +72,7 @@ goes further and refuses a repository that remains configured (`AD-20`).
 | `prune` | yes with `--apply` | Retention cleanup |
 | `purge` | yes with `--apply` | Permanently remove unmanaged repositories |
 | `recover` | yes with `--apply` | Reconcile unfinished transactions |
+| `quarantine` | yes with `--apply` | Remove explicitly selected, proven redundant recovered staging |
 | `repair` | yes | Reconstruct and republish a damaged known revision |
 | `version` | no | Application and dependency versions |
 
@@ -380,6 +381,27 @@ fully validated plan and is idempotent — running it twice is harmless.
 Recovery is roll-forward oriented. It never replaces an expected digest, chooses a
 revision by modification time, or deletes unknown data (`AD-16`).
 
+### `quarantine`
+
+```text
+hfcache [--config PATH] quarantine --dry-run TRANSACTION_ID ...
+hfcache [--config PATH] quarantine --apply TRANSACTION_ID ...
+```
+
+Exactly one mode and at least one explicit 32-character lowercase hexadecimal
+transaction ID are required. These arguments identify quarantine entries rather
+than repositories. There is no implicit all-entries mode.
+
+Only staging quarantined by a completed recovery of a failed, unpublished
+publication is eligible (`docs/architecture.md` §7.8.1). Empty directories may
+be removed. Files may be removed only after both they and their same-path current
+published copies verify against the current retained manifest. Repair quarantine,
+unique content, unknown entries, symlinks, inconsistent evidence, or unfinished
+transactions refuse the operation. Plans validate the complete requested set
+before any removal; apply revalidates under the writer lock. An interrupted
+cleanup is safely repeatable, and original transaction journals and published
+content are preserved. No Hub request is made.
+
 ### `repair`
 
 ```text
@@ -482,6 +504,7 @@ Serialization follows the same deterministic rules as durable files
 | `prune` | The `PrunePlan`, plus applied results for `--apply` |
 | `purge` | `plans[]` of `PurgePlan`, plus `applied[]` audit records for `--apply` |
 | `recover` | `findings[]`, `plan[]`, and applied results for `--apply` |
+| `quarantine` | Explicit transaction cleanup plans and applied results; published content and original journals remain unchanged |
 | `repair` | Transaction ID, old and new publication IDs, verification result, grace expiry |
 | `version` | `application`, `python`, `huggingface_hub`, `transfer_backend` |
 
@@ -587,7 +610,7 @@ revision.
 | `HFRET007` | Repair publication failed |
 | `HFRET008` | Repair reference switch failed |
 | `HFRET009` | Post-grace cleanup failed |
-| `HFRET010` | Post-commit audit cleanup or `recover --apply` could not complete a validated plan |
+| `HFRET010` | Post-commit audit cleanup, recovery, or explicit quarantine cleanup could not validate or complete its plan |
 
 ### 5.6 Warnings — never change a `0` exit on their own
 

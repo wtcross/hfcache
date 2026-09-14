@@ -119,6 +119,7 @@ def test_every_plan_event_family_is_in_the_vocabulary():
         "publication.completed",
         "retention.pruned",
         "retention.deferred",
+        "quarantine.cleaned",
         "repository.failed",
         "run.completed",
     }

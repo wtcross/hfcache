@@ -73,7 +73,7 @@ The six fields to read, and what a non-default value means:
 | --- | --- | --- |
 | `reachable` | `true` | The mount is gone. Nothing will run; see §7 |
 | `unfinished_transactions` | `0` | A run stopped part way. `recover --dry-run` (§6) |
-| `findings` | `[]` | Warnings are outstanding. Each carries an `HFWRN` code; §8 |
+| `findings` | `[]` | Observed transaction-area entries; resolved quarantine can appear without warnings. Explicit cleanup is described in `docs/recovery.md` §4 |
 | `unknown_entries` | `[]` | Files the application cannot explain, preserved not deleted |
 | `verification.degraded` | `false` | A verification found something. §4 |
 | `deferred_cleanup` | `0` | A prune committed but its bytes are still on the dataset; §5 |

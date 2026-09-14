@@ -24,6 +24,7 @@ export const EVENTS = [
     'publication.completed',
     'retention.pruned',
     'retention.deferred',
+    'quarantine.cleaned',
     'repository.failed',
     'run.completed',
 ] as const;

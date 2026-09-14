@@ -33,6 +33,7 @@ from hfcache.identity import (
     CommitSha,
     PublicationId,
     RepositoryIdentity,
+    TransactionId,
     new_run_id,
     new_transaction_id,
     parse_selector,
@@ -59,6 +60,7 @@ from hfcache.publication import (
     retained_references,
 )
 from hfcache.purge import apply_purge, plan_all_purges
+from hfcache.quarantine import apply_quarantine_cleanup, plan_quarantine_cleanups
 from hfcache.recovery import apply_recovery, measure_health, plan_recovery, reconcile
 from hfcache.repair import cleanup_warnings, preserved_bytes, repair_revision
 from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersions
@@ -1650,6 +1652,80 @@ def _finding_problems(report: VerificationReport) -> list[Problem]:
         )
         for (kind, repository_type, repository_id), count in sorted(counted.items())
     ]
+
+
+# --------------------------------------------------------------------------- #
+# quarantine (`docs/cli.md` §2, decision 103)
+# --------------------------------------------------------------------------- #
+
+
+@app.command()
+def quarantine(
+    ctx: typer.Context,
+    transaction_ids: Annotated[
+        list[str] | None,
+        typer.Argument(help="Explicit transaction ids of abandoned staging quarantine entries."),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Validate the exact cleanup plan and mutate nothing."),
+    ] = False,
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Permanently remove the proven redundant quarantine entries."),
+    ] = False,
+) -> None:
+    """Clean explicitly selected abandoned staging after proving its content redundant."""
+    started_at = utc_now()
+    options = _options(ctx)
+    command = f"quarantine {'--apply' if apply else '--dry-run'}"
+    try:
+        if dry_run == apply:
+            message = "exactly one of --dry-run and --apply is required"
+            raise ConfigurationError.single(message, code="HFARG002")
+        if not transaction_ids:
+            message = "quarantine cleanup requires explicit transaction ids"
+            raise ConfigurationError.single(message, code="HFARG003")
+        config = load_config(options.config_path)
+        layout = ArchiveLayout(root=config.storage.archive_root)
+        identifiers = tuple(TransactionId(value) for value in sorted(set(transaction_ids)))
+        for identifier in identifiers:
+            try:
+                layout.quarantine_for(identifier)
+            except ValueError as exc:
+                raise ConfigurationError.single(
+                    str(exc), code="HFARG001", location=str(identifier)
+                ) from exc
+        if apply:
+            with guarded(
+                layout,
+                storage=config.storage,
+                command=command,
+                lock_wait_seconds=config.sync.lock_wait_seconds,
+            ):
+                # Decision 103: reject unfinished work, then prevalidate the
+                # entire selection. Cleanup never recovers unrelated work.
+                plans = plan_quarantine_cleanups(layout, identifiers)
+                applied = [apply_quarantine_cleanup(layout, plan) for plan in plans]
+        else:
+            plans = plan_quarantine_cleanups(layout, identifiers)
+            applied = []
+    except HfcacheError as error:
+        _report_failure(ctx, command, started_at, error)
+    _emit(
+        ctx,
+        command,
+        {"plans": [plan.to_dict() for plan in plans], "applied": applied},
+        started_at=started_at,
+        lines={
+            str(plan.transaction_id): (
+                "already absent"
+                if plan.already_absent
+                else f"{len(plan.files)} redundant files, {plan.logical_bytes} logical bytes"
+            )
+            for plan in plans
+        },
+    )
 
 
 # --------------------------------------------------------------------------- #

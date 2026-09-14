@@ -82,10 +82,11 @@ EVENTS: Final = (
     "publication.completed",
     "retention.pruned",
     "retention.deferred",
+    "quarantine.cleaned",
     "repository.failed",
     "run.completed",
 )
-"""Plan §24's recommended families, adopted verbatim as the stable vocabulary."""
+"""Plan §24's stable vocabulary, including the decision 103 cleanup amendment."""
 
 DEBUG_EVENTS: Final = (
     "preflight.check",

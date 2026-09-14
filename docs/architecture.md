@@ -756,7 +756,12 @@ have exactly one correct resolution.
 
 - **`TX-01`** — Every mutating operation opens a journal at
   `.store/transactions/<transaction-id>.json` before its first mutation, and the
-  journal is durable before that mutation begins.
+  journal is durable before that mutation begins. **QUA-001 amendment
+  (2026-09-14, decision 103):** explicit removal of already resolved, proven
+  redundant staging quarantine uses the existing terminal publication and
+  committed recovery journals as its durable authority (§7.8.1). It opens no
+  new journal and changes no publication state; any interrupted removal is
+  resumed by revalidating the remaining subset.
 - **`TX-02`** — A checkpoint is recorded **after** the operation it names is
   durable, never before. The journal is a record of what has happened, not of what
   is intended (`AD-14`). This is why recovery can trust it without replaying.
@@ -774,7 +779,8 @@ have exactly one correct resolution.
   reversible (`AD-16`).
 - **`TX-07`** — Every mutating command reconciles unfinished journals **before**
   contacting the Hub or changing archive state, under the same exclusive lock it
-  will hold for its own work.
+  will hold for its own work. Quarantine cleanup checks that no unfinished
+  journal remains and refuses otherwise; it does not recover unrelated work.
 
 ### 7.2 The atomic operations this design relies on
 
@@ -1051,6 +1057,42 @@ for that transaction exists, and its age exceeds `sync.stale_staging_age_hours`.
 Anything failing those conditions is reported as `HFWRN003` and preserved. The
 application has no code path that deletes a file it cannot explain (`FS-19`,
 `AD-16`).
+
+#### 7.8.1 Explicit cleanup of recovered staging quarantine
+
+**QUA-001 amendment (2026-09-14, decision 103).** `quarantine --dry-run` and
+`quarantine --apply` require explicit transaction IDs. Only abandoned publication
+staging already moved into quarantine by a committed recovery operation is
+eligible. Its source journal must be a completed, failed publication with the
+recognized recovery rollback reason and checkpoints strictly before publication.
+The matching committed recovery checkpoint must name that source transaction,
+its quarantine path, and the original staging path. Repair evidence and trees
+quarantined because their validation manifest was lost remain outside this
+command's authority.
+
+The plan validates every requested entry before any removal. The root may be
+empty or contain only a real `tree/` directory and its descendants. Every
+nonempty file must have a matching path, size, and digest in the same
+repository's current retained publication manifest. Both the current file and
+the quarantined file are read and hashed against that digest. Symlinks, special
+files, unexpected root entries, inconsistent references, and unexplained journal
+evidence refuse cleanup. Empty directories need no replacement content.
+
+Apply holds the ordinary writer lock and the archive identity/preflight guards,
+refuses unfinished transactions, and revalidates before deletion. It unlinks
+only individually proven redundant files, then uses bottom-up `rmdir` for
+directories; a directory with unexpected contents refuses removal. Every
+completed removal is made durable. Original journals, recovery reports,
+published references, manifests, and retained files remain unchanged.
+
+This cleanup has no publication commit point to roll back: the source operation
+was already resolved, and every discarded byte has a freshly verified retained
+copy. A crash leaves a subset of the same redundant files and empty directories.
+The same explicit command revalidates that subset and resumes; an already absent
+target with valid journal provenance is a successful no-op. The CLI envelope
+reports plans and applied results; no durable JSON shape or checkpoint vocabulary
+is added. Quarantine is never removed automatically or through an implicit
+all-entries selector.
 
 ### 7.9 What stops the machine
 
