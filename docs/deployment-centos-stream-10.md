@@ -744,7 +744,7 @@ it does not restore deleted revisions. Archive JSON formats and the historical
 retention reason remain compatible. Required-token rollback rules above still
 apply independently when going back before 0.1.6.
 
-**0.1.8–0.1.9 quarantine-cleanup rollback (QUA-001/QUA-002, decisions 103–104).** Cleanup changes
+**0.1.8–0.1.10 quarantine-cleanup rollback (QUA-001–QUA-003, decisions 103–105).** Cleanup changes
 no durable JSON shape and preserves its original terminal publication and
 committed recovery journals. After the cleanup process releases the writer
 lock, 0.1.7 can read the remaining archive using the same configuration; it

@@ -34,7 +34,7 @@ from hfcache.publication import (
 )
 from hfcache.quarantine import apply_quarantine_cleanup, plan_quarantine_cleanup
 from hfcache.recovery import apply_recovery, plan_recovery, reconcile_storage
-from hfcache.transactions import open_transaction, read_journal
+from hfcache.transactions import CHECKPOINTS, open_transaction, read_journal
 from tests.fixtures import examples
 
 NOW = datetime.now(UTC)
@@ -223,6 +223,69 @@ def test_empty_cleanup_preserves_all_journals_and_unselected_entries(layout: Arc
     assert {path: path.read_bytes() for path in layout.transactions.glob("*.json")} == before
     findings = reconcile_storage(layout, stale_staging_age_hours=24).findings
     assert [finding.transaction_id for finding in findings] == [str(other)]
+
+
+def test_unrelated_terminal_legacy_prune_does_not_block_cleanup(layout: ArchiveLayout):
+    identifier = abandoned(layout)
+    transaction = open_transaction(
+        layout,
+        operation="prune",
+        transaction_id=new_transaction_id(),
+        run_id=new_run_id(),
+        archive_id=examples.ARCHIVE_ID,
+        config_fingerprint=examples.FINGERPRINT,
+    )
+    for name in CHECKPOINTS["prune"]:
+        transaction.checkpoint(name)
+    transaction.commit()
+    journal = layout.journal(TransactionId(transaction.journal.transaction_id))
+    # The two real July 26 terminal prunes predate containers_removed. They
+    # remain readable durable history, and confer no ownership of this target.
+    change_json(
+        journal,
+        lambda data: data.update(
+            checkpoints=[
+                checkpoint | {"sequence": index}
+                for index, checkpoint in enumerate(
+                    (
+                        checkpoint
+                        for checkpoint in data["checkpoints"]
+                        if checkpoint["name"] != "containers_removed"
+                    ),
+                    start=1,
+                )
+            ]
+        ),
+    )
+    before = journal.read_bytes()
+
+    plan = plan_quarantine_cleanup(layout, identifier)
+    apply_quarantine_cleanup(layout, plan)
+
+    assert not layout.quarantine_for(identifier).exists()
+    assert journal.read_bytes() == before
+
+
+@pytest.mark.parametrize("authority", ["source", "recovery"])
+def test_cleanup_authority_still_requires_valid_checkpoint_order(
+    layout: ArchiveLayout, authority: str
+):
+    identifier = abandoned(layout, last_checkpoint="download_completed")
+    journal = layout.journal(identifier) if authority == "source" else recovery_journal(layout)
+
+    def reorder(data):
+        if authority == "source":
+            data["checkpoints"][:2] = reversed(data["checkpoints"][:2])
+            for index, checkpoint in enumerate(data["checkpoints"], start=1):
+                checkpoint["sequence"] = index
+        else:
+            data["checkpoints"][0]["name"] = "recovery_completed"
+
+    change_json(journal, reorder)
+
+    with pytest.raises(RetentionError):
+        plan_quarantine_cleanup(layout, identifier)
+    assert layout.quarantine_for(identifier).is_dir()
 
 
 def test_duplicate_cleanup_reads_and_preserves_current_bytes(layout: ArchiveLayout):

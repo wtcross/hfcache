@@ -605,7 +605,7 @@ package in this family.
   tests, 45 Cockpit tests, types, lint, and production builds. Live NFS suite:
   11 passed, one expected initialized-archive skip.)
 
-## Releases 0.1.8–0.1.9 (REL/QUA, 2026-09-14)
+## Releases 0.1.8–0.1.10 (REL/QUA, 2026-09-14)
 
 - [x] REL-009 Cut the explicit quarantine cleanup release candidate
   (2026-09-14, this commit — version and lock move together to 0.1.8;
@@ -627,7 +627,18 @@ package in this family.
   1,747 Python tests, 45 Cockpit tests, production builds, and four installed
   wheel smoke tests. No durable JSON change or cross-format drill is needed.)
 
-- [ ] OPS-012 Deploy 0.1.9 and clean the reviewed quarantine findings.
+- [x] QUA-003 Scope checkpoint validation to quarantine deletion authority
+  (2026-09-14, this commit — decision 105 corrects rejection of two completed
+  July 26 prune journals whose historical sequence lacks `containers_removed`.
+  Their records remain intact; actual source/recovery proof ordering remains
+  mandatory. Three regression cases cover legacy history and malformed source
+  and recovery ordering. All 43 live plans passed as the service identity using
+  the updated module: six files, 86 directories, 1,688,517 logical bytes.
+  Version 0.1.10 supersedes 0.1.9. `scripts/check.sh --with-build` exits `0`:
+  1,750 Python tests, 45 Cockpit tests, production builds, and four installed
+  wheel smoke tests. No durable formats change.)
+
+- [ ] OPS-012 Deploy 0.1.10 and clean the reviewed quarantine findings.
   The reviewed inventory contains 41 entries with only empty directories and
   one Qwen/Qwen3-4B-Base entry with six redundant files totaling 1,688,517 bytes.
   A separately started sync (`bf1f901508ae4fb4990157d69125ab78`) began during
@@ -858,10 +869,9 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     its existing schedule; the verification timer stays disabled pending item 8.
     Complete these checks and tag the current candidate rather than tagging a
     superseded deployed version from item 14.
-    REL-009 staged 0.1.8 without switching; QUA-002 prepares 0.1.9 for OPS-012's
-    explicitly authorized pause/cleanup/restart. Until that deployment
-    completes, 0.1.7 remains current. Once OPS-012 completes, use 0.1.9 for this
-    formal release proof.
+    REL-009 staged 0.1.8; QUA-002 installed 0.1.9 for OPS-012's explicitly
+    authorized pause/cleanup/restart. QUA-003 prepares the compatibility fix
+    in 0.1.10. Once OPS-012 completes, use 0.1.10 for this formal release proof.
 
 ## Operator decisions needed
 
@@ -3080,3 +3090,15 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     timestamps or journal identities to satisfy a guard; globally shortening
     the age policy; and broadening the exception to populated or later-stage
     interrupted publications. No durable format changes are introduced.
+
+105. **Only journals supplying deletion authority need current checkpoint order**
+    (2026-09-14, QUA-003). The live cleanup preview correctly stopped before
+    deletion but rejected two unrelated, completed historical prune journals.
+    Parsing and resolution checks still apply to every inventory record;
+    unsupported fields, unreadable records, and unfinished transactions still
+    refuse cleanup. Full checkpoint-order checks apply to the selected source
+    publications and their matching committed recovery proofs. Unrelated
+    completed history is preserved and cannot grant deletion authority, so its
+    older checkpoint sequence must not prevent an independently proven cleanup.
+    This follows normal recovery's treatment of already resolved journals and
+    changes no durable format or source evidence.

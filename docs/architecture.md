@@ -1098,6 +1098,12 @@ reports plans and applied results; no durable JSON shape or checkpoint vocabular
 is added. Quarantine is never removed automatically or through an implicit
 all-entries selector.
 
+Journal inventory still refuses unreadable records, unsupported fields, and
+unfinished work. A completed journal unrelated to the selected staging does
+not have to match the current checkpoint sequence: it supplies no deletion
+authority. The selected publication journals and their matching committed
+recovery proofs must pass the full checkpoint checks (QUA-003, decision 105).
+
 #### 7.8.2 Explicit cancellation of an interrupted download
 
 **QUA-002 amendment (2026-09-14, decision 104).** An operator may intentionally

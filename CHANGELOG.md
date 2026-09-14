@@ -7,6 +7,14 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## v0.1.10 — 2026-09-14
+
+Completed journals unrelated to selected quarantine entries no longer block
+cleanup solely because they use an older checkpoint sequence. Selected source
+publications and their recovery proofs still require full validation, and
+unfinished work and unsupported records still refuse cleanup. No archive
+formats change.
+
 ## v0.1.9 — 2026-09-14
 
 Quarantine cleanup also accepts valid early download journals that have no

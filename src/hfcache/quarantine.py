@@ -169,8 +169,8 @@ def _journal(layout: ArchiveLayout, path: Path) -> TransactionJournal:
     _plain_path(layout, path)
     file = read_journal(layout, path)
     journal = file.journal
-    if file.unknown or checkpoint_order_problems(journal):
-        _refuse(path, "the journal has unsupported fields or invalid checkpoint order")
+    if file.unknown:
+        _refuse(path, "the journal has unsupported fields")
     if path != layout.journal(TransactionId(journal.transaction_id)):
         _refuse(path, "the journal transaction id does not match its filename")
     return journal
@@ -197,6 +197,8 @@ def _ownership(
     source = next((item for item in journals if item.transaction_id == identifier), None)
     if source is None:
         _refuse(path, "the original publication journal is missing")
+    if checkpoint_order_problems(source):
+        _refuse(path, "the source publication journal has invalid checkpoint order")
     _plain_path(layout, layout.sentinel)
     sentinel = read_model(layout.sentinel, ArchiveSentinel, error=RetentionError, code="HFRET010")
     names = tuple(checkpoint.name for checkpoint in source.checkpoints)
@@ -240,6 +242,11 @@ def _ownership(
                 for checkpoint in journal.checkpoints
             )
         ):
+            if checkpoint_order_problems(journal):
+                _refuse(
+                    layout.journal(TransactionId(journal.transaction_id)),
+                    "the recovery proof journal has invalid checkpoint order",
+                )
             return (
                 RepositoryIdentity.of(source.repository_type, source.repository_id),
                 TransactionId(journal.transaction_id),

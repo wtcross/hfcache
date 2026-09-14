@@ -60,7 +60,7 @@ consumers at all.
 
 ## Status
 
-**`v0.1.9` — explicit quarantine cleanup release candidate.** The writer is complete
+**`v0.1.10` — explicit quarantine cleanup release candidate.** The writer is complete
 and running against a live NFS-backed ZFS archive: it syncs public, private, and
 gated repositories, publishes, retains a bounded revision history, prunes,
 verifies, repairs, recovers, and cleans proven redundant quarantine entries,
