@@ -7,6 +7,17 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## v0.1.7 — 2026-09-14
+
+`storage.maximum_revisions` now defaults to three. Explicit five-revision
+policies remain valid; the Cockpit form offers both supported values. Adopting
+three on an existing archive requires validated configuration and repeated
+reviewed prune rounds, preserving the current revision and manifest audit
+evidence. Retention ordering and durable JSON formats are unchanged.
+
+Before rolling back to an older binary, restore an explicit
+`maximum_revisions = 5`. That restores the older policy, not deleted revisions.
+
 ## v0.1.6 — 2026-08-23
 
 Private and gated Hub repositories can now be archived through the explicit

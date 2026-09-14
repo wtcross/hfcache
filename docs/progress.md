@@ -547,6 +547,18 @@ package in this family.
   Verification: 267 focused Python tests; `scripts/check.sh` exit `0`, with
   1,689 Python tests and all 45 Cockpit tests, types, lint, and production build.)
 
+## Release 0.1.7 (REL, 2026-09-14)
+
+- [x] REL-008 Cut the three-revision retention release candidate
+  (2026-09-14, this commit — version and lock move together to 0.1.7;
+  README and changelog describe the default and explicit-five compatibility.
+  Deployment §14 records the configuration rollback barrier. The installed
+  0.1.6 binary rejects the proposed live value of three with `HFCFG011`,
+  exit `10`, as expected. No durable JSON format changes, so no cross-format
+  archive drill is required. `scripts/check.sh --with-build` exits `0`:
+  1,689 Python tests, 45 Cockpit tests, production build, and four installed
+  wheel smoke tests.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

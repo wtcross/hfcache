@@ -734,6 +734,16 @@ including later re-addition; use 0.1.5 for direct tooling that parses its
 parser accept it. The 0.1.4 failed-plus-warning report rule above remains an
 independent rollback condition.
 
+**0.1.7 retention-policy rollback (RET-010, decision 102).** Older binaries
+reject `storage.maximum_revisions = 3`. Stop the sync timer, finish any open
+transaction with the newer binary, and atomically install a validated
+configuration with an explicit `maximum_revisions = 5` before switching back.
+An omitted value also means five to an older binary, but the explicit value
+keeps the rollback policy reviewable. This changes the future retention limit;
+it does not restore deleted revisions. Archive JSON formats and the historical
+retention reason remain compatible. Required-token rollback rules above still
+apply independently when going back before 0.1.6.
+
 Keep at least the previous release installed (plan §21.4 item 7). `--list` is how
 you see what you have:
 
