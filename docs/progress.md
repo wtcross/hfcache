@@ -535,6 +535,18 @@ package in this family.
   `scripts/check.sh`: 1,680 passed, 40 deselected, sdist and wheel built;
   Cockpit stage skipped on this consumer because pnpm or make is absent.)
 
+## Three-revision retention (RET, 2026-09-14)
+
+- [x] RET-010 Default to three retained revisions, preserving explicit five
+  (2026-09-14, this commit — decision 102. Strict configuration accepts `3`
+  or `5`, with omission selecting `3`; Cockpit offers the same numeric choices.
+  Contracts, examples, and operator guidance describe adoption, rollback, and
+  repeated prune rounds. Existing explicit-five scenarios remain covered;
+  new regression coverage proves fourth-publication rotation and reducing an
+  existing five-revision history to three. No durable JSON shape changes.
+  Verification: 267 focused Python tests; `scripts/check.sh` exit `0`, with
+  1,689 Python tests and all 45 Cockpit tests, types, lint, and production build.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -2895,3 +2907,23 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     because the parent row represents the repository and its expansion already
     presents every retained revision; making one revision the navigation target
     would misstate that scope.
+
+102. **Retention defaults to three while explicit five remains compatible**
+    (2026-09-14, RET-010). The operator requested a smaller default and immediate
+    cleanup of older revisions in configured models. Schema version 1 now
+    accepts exactly `3` or `5` for `storage.maximum_revisions`, defaulting to
+    `3`; the key is not renamed. Existing explicit-five configurations retain
+    their policy, and adopting three is an explicit configuration migration on
+    this writer. This deliberately widens configuration acceptance without
+    changing durable JSON shapes or checkpoint semantics. The historical
+    `sixth_unique_revision_published` audit reason remains the schema-1 name for
+    exceeding the configured retention limit. Before rolling back to an older
+    binary, restore an explicit value of `5`; deleted revisions are not restored
+    by that policy rollback. Latest means immutable publication generation, and
+    the current revision remains protected. Cleanup uses reviewed, explicitly
+    selected model prune rounds because each invocation removes at most one
+    revision per repository. **Rejected:** allowing arbitrary retention counts,
+    which broadens policy beyond the request; rejecting existing explicit-five
+    configurations, which needlessly breaks upgrades; and manually removing
+    archive files, which bypasses the cache ownership, audit, and recovery
+    contracts.

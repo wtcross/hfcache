@@ -241,6 +241,10 @@ mode** edits the document verbatim for the operator who keeps comments. The
 editor writes only schema-version-1 keys; there is no token field to offer
 (`CP-08`, `HFCFG010`).
 
+`storage.maximum_revisions` offers the integer policies `3` and `5`; an omitted
+key displays the default `3` without rewriting an explicit `5` (`RET-010`,
+decision 102).
+
 The `token_mode` control offers `disabled`, `optional`, and `required`; choosing
 `required` is the explicit private/gated repository opt-in (`AD-21`). Candidate
 validation fails with `HFARG008` unless the transient validation unit imports the

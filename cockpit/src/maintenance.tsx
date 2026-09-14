@@ -246,9 +246,10 @@ export const Maintenance = () => (
             <DryRunApplyCard
                 title="Retention (prune)"
                 command="prune"
-                intro={'Retention normally runs inside sync: a sixth published revision rotates the ' +
+                intro={'Retention normally runs inside sync: a publication beyond the configured limit rotates the ' +
                     'oldest non-current one out (AD-04). This exists to inspect the plan and to ' +
-                    'finish a rotation an earlier failure deferred.'}
+                    'finish a deferred rotation or apply a lower limit. Each invocation removes at most one ' +
+                    'revision per repository; review and repeat until no eligible excess remains.'}
                 applyWarning={'Executes exactly the plan the dry run described. Where a prune can ' +
                     'fail leaving more or less data, it leaves more (TX-06).'}
             />

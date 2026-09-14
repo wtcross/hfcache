@@ -329,8 +329,11 @@ hfcache [--config PATH] prune --apply [TYPE:ID ...]
 Exactly one of `--dry-run` / `--apply` is required. `--dry-run` prints the exact
 `PrunePlan` that `--apply` would execute and mutates nothing.
 
-Retention normally runs inside `sync`; this command exists to inspect the plan
-and to complete retention deferred by an earlier failure.
+Retention normally runs inside `sync`; this command also inspects the plan,
+completes retention deferred by an earlier failure, and applies a lower
+`storage.maximum_revisions`. Each invocation removes at most one eligible
+revision per selected repository; after lowering a limit, review and repeat
+until no eligible excess remains.
 
 ### `purge`
 
@@ -591,7 +594,7 @@ revision.
 | Code | Condition |
 | --- | --- |
 | `HFDEP001` | An undeclared dependency was detected in repository metadata |
-| `HFWRN001` | Temporary over-retention: a deferred prune left six revisions published |
+| `HFWRN001` | Temporary over-retention: published revisions exceed the configured limit |
 | `HFWRN002` | Deferred physical cleanup: logical prune committed, trash removal outstanding |
 | `HFWRN003` | Unknown files present in an application-owned area; preserved, not deleted |
 | `HFWRN004` | Stale staging directory detected |

@@ -598,8 +598,14 @@ any mutation.
 
 A plan is valid only if `selected` is the lowest `publication_generation` in
 `retained`, is not `current`, and `len(retained)` exceeds
-`storage.maximum_revisions`. A plan failing any of these is refused, and the
-sixth revision is retained.
+`storage.maximum_revisions`. A plan failing any of these is refused, and all
+revisions are retained.
+
+**RET-010 amendment (2026-09-14, decision 102).** The schema-version-1 reason
+`sixth_unique_revision_published` is the legacy name for retention beyond the
+configured limit, including the default of three and an explicit reduction from
+five. It is preserved for existing readers; it does not assert that six
+revisions were present. `retained` and `retained_after` record the actual counts.
 
 `unique_bytes_released_estimate` is **logical** and excludes bytes still
 hardlinked by another retained revision. It is explicitly an estimate of logical
@@ -662,7 +668,7 @@ after its bytes are gone: enough to prove what was there and why it went.
 | `publication_generation`, `publication_id`, `tree` | The instance removed |
 | `file_count`, `logical_bytes` | What it contained |
 | `pruned_at`, `manifest_archived_at` | Timing |
-| `retained_after` | The five pairs left by retention, or `[]` after repository purge |
+| `retained_after` | The pairs left after one retention removal, or `[]` after repository purge |
 | `reason` | `sixth_unique_revision_published` \| `operator_requested_repository_purge` |
 
 ### 9.2 Repair retirement — `audit/repairs/<type>/<org>/<repo>/<sha>/<pid>.retirement.json`

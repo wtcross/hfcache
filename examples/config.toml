@@ -31,7 +31,7 @@ archive_id = "00000000-0000-0000-0000-000000000000"
 publication_mode = "hardlink"  # "copy" only after a capacity review
 minimum_free_space_gib = 100
 minimum_free_space_percent = 10
-maximum_revisions = 5
+maximum_revisions = 3
 
 [sync]
 max_workers = 4

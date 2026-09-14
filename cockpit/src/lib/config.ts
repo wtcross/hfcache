@@ -83,7 +83,8 @@ export interface FieldSpec {
     kind: 'str' | 'int' | 'bool' | 'enum';
     min?: number;
     max?: number;
-    options?: string[];
+    options?: (string | number)[];
+    defaultValue?: number;
     hint: string;
 }
 
@@ -98,7 +99,7 @@ export const GLOBAL_FIELDS: FieldSpec[] = [
     { table: 'storage', key: 'publication_mode', kind: 'enum', options: ['hardlink', 'copy'], hint: 'copy doubles stored bytes (AD-11)' },
     { table: 'storage', key: 'minimum_free_space_gib', kind: 'int', min: 0, max: 1048576, hint: 'reserve floor in GiB' },
     { table: 'storage', key: 'minimum_free_space_percent', kind: 'int', min: 0, max: 100, hint: 'reserve floor as percent; the greater wins' },
-    { table: 'storage', key: 'maximum_revisions', kind: 'int', min: 5, max: 5, hint: 'must be 5 in schema version 1 (HFCFG011)' },
+    { table: 'storage', key: 'maximum_revisions', kind: 'int', options: [3, 5], defaultValue: 3, hint: '3 by default; 5 preserves the original policy (HFCFG011)' },
     { table: 'sync', key: 'max_workers', kind: 'int', min: 1, max: 32, hint: 'download workers' },
     { table: 'sync', key: 'lock_wait_seconds', kind: 'int', min: 0, max: 86400, hint: 'a scheduled sync waits this long for the lock' },
     { table: 'sync', key: 'continue_on_repository_error', kind: 'bool', hint: 'one failure does not abandon the run; exit stays non-zero' },
@@ -113,8 +114,9 @@ export const GLOBAL_FIELDS: FieldSpec[] = [
 export function getField(document: ConfigDocument, spec: FieldSpec): unknown {
     const table = document[spec.table];
     if (typeof table !== 'object' || table === null)
-        return undefined;
-    return (table as Record<string, unknown>)[spec.key];
+        return spec.defaultValue;
+    const value = (table as Record<string, unknown>)[spec.key];
+    return value === undefined ? spec.defaultValue : value;
 }
 
 export function setField(document: ConfigDocument, spec: FieldSpec, value: unknown): ConfigDocument {

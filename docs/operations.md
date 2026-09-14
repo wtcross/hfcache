@@ -93,7 +93,8 @@ model:hf-internal-testing/tiny-random-gpt2   1 revisions  current 71034c5d8bde85
 exit=0
 ```
 
-Five revisions is the steady-state maximum per repository (`AD-04`). One means
+Three revisions is the default steady-state maximum per repository (`AD-04`);
+the example above uses an explicit five-revision policy. One means
 the repository has only ever published once, not that anything is wrong.
 
 `list` reports what is **archived**, which is not the same as what is
@@ -340,10 +341,24 @@ retention  nothing to prune
 exit=0
 ```
 
-Pruning is not something you normally run. Retention is applied automatically by
-a **successful publication** beyond the maximum (`AD-04`): the sixth unique
-revision rotates the oldest non-current one out. `prune --apply` exists for
-finishing a rotation that a previous run left incomplete.
+Retention is applied automatically by a **successful publication** beyond
+`storage.maximum_revisions` (`AD-04`): at the default of three, a fourth unique
+revision rotates the oldest non-current one out. `prune --apply` also finishes
+a rotation that a previous run left incomplete or applies a reduced limit.
+
+To adopt three revisions from an existing explicit five-revision policy, edit
+`storage.maximum_revisions = 3` through the validated configuration pipeline
+(`docs/cockpit.md` §6). The key is `maximum_revisions`, not `max_revisions`. Changing it alone
+does not delete anything. Review `prune --dry-run` with explicit repository
+selectors and run `prune --apply` with the same selectors. Each invocation
+removes at most one eligible revision per repository, ordered by immutable
+publication generation; review and repeat until the dry run has no plans.
+`list` then confirms the retained revisions. The current revision is always
+protected. Select only the repositories whose history should be reduced;
+disabled configured repositories can still be selected, while unmanaged ones
+cannot.
+Manifest audit evidence survives deletion; filesystem or ZFS snapshots may
+continue to hold physical blocks after the application removes its copies.
 
 Neither `--dry-run` nor `--apply` is a default; omitting both is an error, because
 one describes and the other performs.
@@ -501,7 +516,7 @@ in the run report, and in the journal.
 | Code | Meaning | Response |
 | --- | --- | --- |
 | `HFDEP001` | Undeclared dependency detected in repository metadata | Add it to `declared_dependencies`, or configure the dependency as its own repository. Never downloaded implicitly |
-| `HFWRN001` | Temporary over-retention: a deferred prune left six revisions | `recover --dry-run`, then `prune --apply` |
+| `HFWRN001` | Temporary over-retention: retained revisions exceed the configured limit | `recover --dry-run`, then `prune --apply` |
 | `HFWRN002` | Logical prune committed, trash removal outstanding | Physical only; the revision is gone logically. `recover --apply` retries the cleanup |
 | `HFWRN003` | Unknown files in an application-owned area | **Preserved, never deleted.** Identify them before removing anything by hand |
 | `HFWRN004` | Stale staging directory | A run stopped part way and aged past `sync.stale_staging_age_hours`. `recover --dry-run` |

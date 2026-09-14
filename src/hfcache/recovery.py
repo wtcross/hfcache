@@ -688,9 +688,9 @@ def _prune_remediation(journal: TransactionJournal, last: str | None) -> Planned
 
     Checkpoint 7 divides the transaction into two opposite regimes, and the
     resolution follows the regime rather than the step. Before it: roll back, so
-    all six revisions are published again — over-retention is always preferable
+    all previously retained revisions are published again — over-retention is always preferable
     to a revision that should not have gone (`TX-06`). At or after it: never
-    republish, because five revisions are what consumers already see and the
+    republish, because the remaining revisions are what consumers already see and the
     archive recorded that decision; only the post-commit cleanup is retried.
     """
     names = [checkpoint.name for checkpoint in journal.checkpoints]
@@ -705,7 +705,7 @@ def _prune_remediation(journal: TransactionJournal, last: str | None) -> Planned
             **common,
             remedy="complete_prune",
             reason=(
-                "the prune passed its commit point, so the five consumer-visible revisions "
+                "the prune passed its commit point, so the remaining consumer-visible revisions "
                 "stand and only the deferred cleanup is finished"
             ),
         )
@@ -713,7 +713,7 @@ def _prune_remediation(journal: TransactionJournal, last: str | None) -> Planned
         **common,
         remedy="rollback_prune",
         reason=(
-            "the prune stopped before its commit point, so the sixth revision is republished; "
+            "the prune stopped before its commit point, so the selected revision is republished; "
             "over-retention is reportable and a deletion is not reversible"
         ),
     )
@@ -1172,7 +1172,7 @@ def publish_current_if_newest(
 
 
 def _rollback_prune(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
-    """Put the sixth revision back (§7.4, before the commit point).
+    """Put the selected revision back (§7.4, before the commit point).
 
     Every step is the inverse of one the prune performed, in reverse order, and
     each tolerates not having been needed: a rollback from checkpoint 2 finds the
@@ -1215,8 +1215,8 @@ def _rollback_prune(layout: ArchiveLayout, transaction_id: TransactionId) -> dic
 def _complete_prune(layout: ArchiveLayout, transaction_id: TransactionId) -> dict[str, Any]:
     """Finish the post-commit cleanup a prune deferred (§7.4, at or after 7).
 
-    Never republishes. Five revisions are what consumers already see and the
-    archive recorded that decision at checkpoint 7; re-adding the sixth would
+    Never republishes. The remaining revisions are what consumers already see and the
+    archive recorded that decision at checkpoint 7; re-adding the removed revision would
     contradict it. What is left is the audit record and the physical removal of
     the tombstone, and both are idempotent.
     """

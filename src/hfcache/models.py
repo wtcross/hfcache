@@ -463,7 +463,7 @@ class PrunePlan(VersionedModel):
     The validity rules are enforced here rather than at the call site: a plan is
     valid only if `selected` is the lowest generation in `retained`, is not
     `current`, and `retained` exceeds the retention limit. A plan that fails any
-    of them is refused and the sixth revision stays (`AD-04`, `AD-05`).
+    of them is refused and every revision stays (`AD-04`, `AD-05`).
     """
 
     cache_revisions_to_delete: Annotated[tuple[CommitShaField, ...], BeforeValidator(as_tuple)]

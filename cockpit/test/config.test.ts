@@ -58,6 +58,20 @@ test('setField copies rather than mutating', () => {
     assert.equal(getField(document, spec), 4);
 });
 
+test('retention defaults to numeric three and preserves an explicit five (RET-010)', () => {
+    const spec = GLOBAL_FIELDS.find(field => field.table === 'storage' && field.key === 'maximum_revisions');
+    assert.ok(spec);
+    assert.equal(spec.kind, 'int');
+    assert.deepEqual(spec.options, [3, 5]);
+    assert.equal(getField(parseConfig(workedExample()), spec), 3);
+    const omitted = parseConfig('schema_version = 1\n[storage]\n');
+    assert.equal(getField(omitted, spec), 3);
+    const explicitFive = setField(omitted, spec, 5);
+    const roundTrip = parseConfig(serializeConfig(explicitFive, new Date('2026-09-14T00:00:00Z')));
+    assert.equal(getField(roundTrip, spec), 5);
+    assert.equal(getField(omitted, spec), 3);
+});
+
 test('the reference-name grammar matches configuration.md §6', () => {
     assert.equal(validateRevisionReference('main'), null);
     assert.equal(validateRevisionReference('refs/pr/1'.replace('refs/', 'pr-')), null);

@@ -105,7 +105,7 @@ archive_id = "replace-with-provisioned-uuid"
 publication_mode = "hardlink"
 minimum_free_space_gib = 100
 minimum_free_space_percent = 10
-maximum_revisions = 5
+maximum_revisions = 3
 ```
 
 | Key | Type | Default | Constraint |
@@ -115,7 +115,7 @@ maximum_revisions = 5
 | `publication_mode` | str | `"hardlink"` | `"hardlink"` \| `"copy"` |
 | `minimum_free_space_gib` | int | `100` | `0 <= n <= 1048576` |
 | `minimum_free_space_percent` | int | `10` | `0 <= n <= 100` |
-| `maximum_revisions` | int | `5` | Must equal `5` |
+| `maximum_revisions` | int | `3` | `3` or `5` |
 
 `archive_id` must equal the UUID inside `.hfcache-root` at the archive root
 (`FS-01`, `FS-03`). It is the interlock that stops a misconfigured or remounted
@@ -134,10 +134,21 @@ no quota is set. Preflight requires free capacity to exceed the estimated
 download bytes, plus the publication bytes when copy mode is enabled, plus that
 reserve.
 
-`maximum_revisions` must be `5` in schema version 1 (`HFCFG011`). It is present
-as a named field so retention logic reads from configuration rather than a
-literal, and so generalizing it later is a schema change with a migration rather
-than a silent behavioural shift.
+`maximum_revisions` defaults to `3`; an explicit `5` remains supported
+(`HFCFG011`). These are the only accepted values. Retention orders revisions by
+immutable publication generation, never timestamps (`AD-04`, `AD-05`), and
+always protects the current revision.
+
+**RET-010 amendment (2026-09-14, decision 102).** Schema version 1 now accepts
+`3` as well as the original `5`, and omission selects `3`. This deliberately
+widens the configuration policy without changing archive JSON formats. Existing
+files with an explicit `5` keep their policy; adopting the new default requires
+setting `3` or removing that explicit value. Before rolling back to a pre-RET-010
+binary, explicitly set `maximum_revisions = 5` and validate with that binary.
+Changing the value does not itself delete revisions: review and apply `prune`
+repeatedly until no eligible excess remains (`docs/operations.md` §6). A new sync
+publication adds one revision and removes one, so it cannot by itself reduce an
+existing over-retained history to the lower limit.
 
 ## 5. `[sync]`, `[verification]`, `[repair]`
 
@@ -326,7 +337,7 @@ silently chosen.
 | `HFCFG008` | Invalid repository identifier grammar |
 | `HFCFG009` | Invalid revision or reference-name grammar |
 | `HFCFG010` | A literal secret appears in configuration |
-| `HFCFG011` | `maximum_revisions` is not `5` |
+| `HFCFG011` | `maximum_revisions` is neither `3` nor `5` |
 | `HFCFG012` | `archive_id` is not a canonical UUID |
 | `HFCFG013` | `credential_name` grammar is invalid |
 | `HFCFG014` | `hub.endpoint` is not a valid `https://` URL |
@@ -372,7 +383,7 @@ archive_id = "00000000-0000-0000-0000-000000000000"   # must match .hfcache-root
 publication_mode = "hardlink"
 minimum_free_space_gib = 100
 minimum_free_space_percent = 10
-maximum_revisions = 5
+maximum_revisions = 3
 
 [sync]
 max_workers = 4

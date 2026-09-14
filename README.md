@@ -23,8 +23,9 @@ consumers at all.
   include or exclude filters exist, by design.
 - **Verified before publication.** Newly introduced unique content is read and
   hashed locally. Upstream-supplied digests are comparison values, never substitutes.
-- **Bounded retention.** Five unique revisions per repository. A sixth successful
-  publication prunes the oldest eligible one; the current revision is never pruned.
+- **Bounded retention.** Three unique revisions per repository by default, with
+  five supported explicitly. A publication beyond the limit prunes the oldest
+  eligible one; the current revision is never pruned.
 - **Never destructive on error.** Upstream `403`, `404`, deletion, or removal from
   configuration preserves every local revision. Where a failure can leave more or
   less data, it leaves more.
@@ -61,8 +62,8 @@ consumers at all.
 
 **`v0.1.6` — authenticated-repository release candidate.** The writer is complete
 and running against a live NFS-backed ZFS archive: it syncs public, private, and
-gated repositories, publishes, retains five
-revisions, prunes, verifies, repairs, and recovers, under systemd with SELinux
+gated repositories, publishes, retains a bounded revision history, prunes,
+verifies, repairs, and recovers, under systemd with SELinux
 enforcing and validated hardening. Release history is in
 [`CHANGELOG.md`](CHANGELOG.md); the annotated tags carry the complete notes.
 

@@ -17,6 +17,15 @@
 | Completeness level | Repository-complete at an immutable Hub revision |
 | Retention | Five successfully published revisions per repository |
 
+**RET-010 amendment (2026-09-14, decision 102).** The fixed-five policy in this
+original plan is superseded by a default of three retained revisions, with an
+explicit five still accepted (`docs/configuration.md` §4, `AD-04`). References
+below to five-revision accumulation and sixth-revision rotation describe the
+original policy and remain valid tests of an explicit five. The same transaction
+and ordering rules apply at three; a fourth successful publication rotates one
+eligible revision. Archive JSON shapes and legacy retention reason names stay
+unchanged. Older binaries require an explicit `maximum_revisions = 5` on rollback.
+
 ## Plan Map
 
 - [Purpose, goals, and architecture decisions](#1-purpose)
@@ -431,6 +440,11 @@ declared_dependencies = []
 - `schema_version` is mandatory and initially equals `1`.
 - Every Pydantic configuration model uses strict validation, `extra="forbid"`, and frozen instances after loading.
 - `maximum_revisions` must equal `5` in the first release. Generalize only after a deliberate schema change.
+
+  **RET-010 amendment (2026-09-14, decision 102):** configuration schema version
+  1 deliberately widens this field to `3` or `5`, defaulting to `3`; see
+  `docs/configuration.md` §4 for adoption and rollback. No durable JSON format
+  changes, and explicit existing `5` values keep their policy.
 - `type` is limited to `model` or `dataset`.
 - `revision` may be a branch, tag, or full commit SHA.
 - Duplicate `(type, id)` entries are rejected.
@@ -758,6 +772,12 @@ separate, operator-confirmed lifecycle action rather than an automatic retention
 side effect.
 
 ### 15.2 Sixth-revision algorithm
+
+**RET-010 amendment (2026-09-14, decision 102).** This remains the transaction
+algorithm for any supported retention limit. At the new default, read fourth
+and three in place of sixth and five. After explicitly reducing a limit,
+`prune --apply` still removes at most one revision per repository per invocation;
+review and repeat until no eligible excess remains (`docs/operations.md` §6).
 
 After a sixth unique revision is successfully published:
 

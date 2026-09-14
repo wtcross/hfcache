@@ -56,16 +56,16 @@ const FieldRow = ({ spec, value, error, onChange }: {
                 onChange={(_event, checked) => onChange(checked)}
             />
         );
-    } else if (spec.kind === 'enum') {
+    } else if (spec.kind === 'enum' || spec.options !== undefined) {
         control = (
             <FormSelect
                 id={path}
                 aria-label={path}
                 value={String(value ?? '')}
-                onChange={(_event, selected) => onChange(selected)}
+                onChange={(_event, selected) => onChange(spec.kind === 'int' ? Number(selected) : selected)}
             >
                 {(spec.options ?? []).map(option => (
-                    <FormSelectOption key={option} value={option} label={option} />
+                    <FormSelectOption key={option} value={option} label={String(option)} />
                 ))}
             </FormSelect>
         );

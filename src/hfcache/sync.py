@@ -1307,7 +1307,7 @@ def _apply_retention(
     *,
     run_id: RunId,
 ) -> PrunedRevision | None:
-    """Rotate the oldest revision out if this publication was the sixth (§15.2).
+    """Rotate the oldest revision out if this publication exceeded the limit (§15.2).
 
     Returns what went, for the run report, or `None` when nothing did — which is
     every run in steady state below the limit.

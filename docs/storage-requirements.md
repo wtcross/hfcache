@@ -80,8 +80,9 @@ delete — at the server. Prove both from a real consumer host
 
 ## 5. Capacity
 
-Size for the configured repositories times up to five retained revisions
-each, plus the private download cache — hardlink publication makes a revision
+Size for the configured repositories times `storage.maximum_revisions` retained
+revisions each (three by default, or five explicitly), plus the private download
+cache — hardlink publication makes a revision
 nearly free when its blobs are already cached (`AD-11`). `hfcache plan`
 reports dry-run sizes without downloading anything, and
 `storage.minimum_free_space_gib` / `minimum_free_space_percent` set the

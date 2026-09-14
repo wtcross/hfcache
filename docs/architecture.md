@@ -118,15 +118,22 @@ polling far more aggressively or reading Git history.
 **Consequences.** Retention depth is measured in observations, not commits.
 Operators tune depth by tuning the timer, and the plan documents this explicitly.
 
-### AD-04 — Retention keeps five unique published revisions per repository
+### AD-04 — Retention defaults to three unique published revisions per repository
 
-**Decision.** Each repository retains at most five unique commit SHAs. A sixth
-successfully published revision prunes the oldest eligible revision. The current
-revision is never pruned.
+**Decision.** Each repository retains at most `storage.maximum_revisions` unique
+commit SHAs: three by default, with five supported explicitly. A successfully
+published revision beyond that limit prunes the oldest eligible revision. The
+current revision is never pruned.
 
 **Rationale.** Bounded, predictable storage with enough depth to roll back a bad
-upstream change. Five is fixed in schema version 1 so retention reasoning,
-tests, and capacity planning have one shape.
+upstream change. Three is the operator-requested default; explicit five-revision
+policies remain valid so upgrading does not invalidate existing configuration.
+
+**RET-010 amendment (2026-09-14, decision 102).** The original decision fixed
+five in schema version 1. Accepting three and five and defaulting to three is a
+deliberate compatibility widening of configuration; no archive JSON format
+changes. Rollback to an older binary requires an explicit five-revision policy
+(`docs/configuration.md` §4).
 
 **Consequences.** Ordering must be immutable and independent of clocks
 (`AD-05`). Pruning is a transaction that can fail without destroying data
@@ -836,8 +843,11 @@ exist on either side of it.
 
 ### 7.4 Prune transaction
 
-`operation = "prune"`, triggered only by the successful publication of a unique
-revision beyond `storage.maximum_revisions`.
+`operation = "prune"`, triggered by the successful publication of a unique
+revision beyond `storage.maximum_revisions`, or an explicit `prune --apply`
+to finish deferred retention or apply a lower configured limit. One invocation
+removes at most one eligible revision per repository; repeat a reviewed prune
+after lowering the limit until no eligible excess remains.
 
 | # | Checkpoint | Atomic act | Evidence |
 | --- | --- | --- | --- |
@@ -858,8 +868,8 @@ step 4). The reverse order would leave a window in which a reference names a tre
 that has already been renamed away, violating `FS-10`. Recovery does not need the
 reference to find the tree — the persisted plan already names it.
 
-Cache deletion at step 2 happens while all six revisions are still published, and
-uses supported `huggingface_hub` cache APIs only (`FS-14`). The published
+Cache deletion at step 2 happens while all retained revisions are still
+published, and uses supported `huggingface_hub` cache APIs only (`FS-14`). The published
 hardlinks keep the bytes alive regardless of what the cache does.
 
 **The commit point is checkpoint 7.** It divides the transaction into two
@@ -867,8 +877,8 @@ different failure regimes:
 
 | Failure | Behaviour |
 | --- | --- |
-| Before checkpoint 7 | **Roll back.** Restore the manifest, the tree, the per-SHA reference, and the catalog, so all six revisions are published again. Cache deletion may already have happened; that is harmless, because the publication hardlinks hold the bytes. Report `HFRET001`–`HFRET004` and warn `HFWRN001` for temporary over-retention |
-| At or after checkpoint 7 | **Never republish.** Exactly five revisions are consumer-visible and the complete manifest is still recoverable from trash. A failure in steps 8–10 leaves the journal open at the last recorded checkpoint; `recover` reports the prune as `complete_prune` and finishes only the cleanup, and `HFWRN002` comes from observing the outstanding tombstone during reconciliation |
+| Before checkpoint 7 | **Roll back.** Restore the manifest, the tree, the per-SHA reference, and the catalog, so all previously retained revisions are published again. Cache deletion may already have happened; that is harmless, because the publication hardlinks hold the bytes. Report `HFRET001`–`HFRET004` and warn `HFWRN001` for temporary over-retention |
+| At or after checkpoint 7 | **Never republish.** One fewer revision is consumer-visible and the complete manifest is still recoverable from trash. A failure in steps 8–10 leaves the journal open at the last recorded checkpoint; `recover` reports the prune as `complete_prune` and finishes only the cleanup, and `HFWRN002` comes from observing the outstanding tombstone during reconciliation |
 | Rollback itself fails | `HFRET005`, `state = "needs_operator"`. The transaction stops and preserves everything it holds |
 
 **Checkpoint 10 removes the containers steps 4 and 5 emptied.** Tombstoning moves

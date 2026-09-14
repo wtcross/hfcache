@@ -19,7 +19,7 @@ export const WARNING_GUIDANCE: Record<string, WarningGuidance> = {
             'repository. Never downloaded implicitly.',
     },
     HFWRN001: {
-        meaning: 'Temporary over-retention: a deferred prune left six revisions',
+        meaning: 'Temporary over-retention: retained revisions exceed the configured limit',
         response: 'Run recover --dry-run, then prune --apply.',
     },
     HFWRN002: {

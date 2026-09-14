@@ -32,7 +32,7 @@ import hfcache.purge as purge_module
 from hfcache import sync as sync_module
 from hfcache.archive import initialize_archive
 from hfcache.cli import app
-from hfcache.config import ApplicationConfig, load_config
+from hfcache.config import ApplicationConfig, load_config, validate_config_mapping
 from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import (
     ExitCode,
@@ -78,6 +78,7 @@ archive_root = "{root}"
 archive_id = "{archive_id}"
 minimum_free_space_gib = {reserve_gib}
 minimum_free_space_percent = 0
+maximum_revisions = 5
 
 [sync]
 lock_wait_seconds = 0
@@ -1850,6 +1851,27 @@ def test_five_revisions_are_kept_unchanged(client, layout, config, hub):
     assert [reference.publication_generation for reference in references] == [1, 2, 3, 4, 5]
 
 
+def test_default_retention_keeps_three_and_a_fourth_removes_the_oldest(client, layout, config, hub):
+    """RET-010: omission adopts three while explicit five remains compatible."""
+    mapping = config.model_dump(mode="json")
+    del mapping["storage"]["maximum_revisions"]
+    default_config = validate_config_mapping(mapping)
+    published = heads_through(client, layout, default_config, hub, 3)
+    assert [r.commit_sha for r in retained_references(layout, MODEL)] == published
+
+    fourth = f"{4:040d}"
+    hub.revisions[fourth] = {**CONTENT, "generation.txt": b"3"}
+    hub.heads[MODEL.selector] = fourth
+    run(client, layout, default_config)
+
+    retained = retained_references(layout, MODEL)
+    assert [r.commit_sha for r in retained] == [*published[1:], fourth]
+    assert [r.publication_generation for r in retained] == [2, 3, 4]
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    assert read_reference(layout, repository.current_ref).commit_sha == fourth
+    assert not repository.revision(CommitSha(published[0])).exists()
+
+
 def test_a_sixth_revision_removes_the_oldest(client, layout, config, hub):
     published = heads_through(client, layout, config, hub, 6)
 
@@ -2060,7 +2082,7 @@ def test_prune_dry_run_describes_the_revision_it_would_remove(config_file: Path,
     lowered = config_file.parent / "lowered.toml"
     lowered.write_text(
         config_file.read_text(encoding="utf-8").replace(
-            "[sync]", "maximum_revisions = 5\n\n[sync]"
+            "maximum_revisions = 5", "maximum_revisions = 3"
         ),
         encoding="utf-8",
     )
@@ -2068,6 +2090,28 @@ def test_prune_dry_run_describes_the_revision_it_would_remove(config_file: Path,
     result = CliRunner().invoke(app, ["--json", "--config", str(lowered), "prune", "--dry-run"])
 
     assert result.exit_code == ExitCode.SUCCESS
+    plans = json.loads(result.stdout)["data"]["plans"]
+    assert len(plans) == 1
+    assert plans[0]["selected"]["publication_generation"] == 2
+    assert len(retained_references(layout, MODEL)) == 5
+
+    # One reviewed invocation removes one revision per repository (§7.4).
+    for generation, remaining in [(2, 4), (3, 3)]:
+        result = CliRunner().invoke(
+            app, ["--json", "--config", str(lowered), "prune", "--apply", MODEL.selector]
+        )
+        assert result.exit_code == ExitCode.SUCCESS
+        applied = json.loads(result.stdout)["data"]["applied"]
+        assert len(applied) == 1
+        assert applied[0]["publication_generation"] == generation
+        assert len(retained_references(layout, MODEL)) == remaining
+
+    retained = retained_references(layout, MODEL)
+    assert [r.publication_generation for r in retained] == [4, 5, 6]
+    repository = RepositoryLayout(archive=layout, identity=MODEL)
+    assert read_reference(layout, repository.current_ref).publication_generation == 6
+    result = CliRunner().invoke(app, ["--json", "--config", str(lowered), "prune", "--dry-run"])
+    assert json.loads(result.stdout)["data"]["plans"] == []
 
 
 @pytest.mark.usefixtures("_wired")

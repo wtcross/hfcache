@@ -64,7 +64,7 @@ def test_minimal_configuration_loads_with_documented_defaults():
     assert config.hub.token_mode == "optional"
     assert config.storage.archive_root == Path("/srv/hfcache")
     assert config.storage.publication_mode == "hardlink"
-    assert config.storage.maximum_revisions == MAXIMUM_REVISIONS
+    assert config.storage.maximum_revisions == MAXIMUM_REVISIONS == 3
     assert config.storage.minimum_free_space_gib == 100
     assert config.storage.minimum_free_space_percent == 10
     assert config.sync.max_workers == 4
@@ -266,10 +266,28 @@ def test_hfcfg010_literal_secrets_are_refused(key: str):
     assert "hf_averysecretvalue" not in str(raised.value)
 
 
-def test_hfcfg011_maximum_revisions_is_fixed_at_five():
+@pytest.mark.parametrize("maximum", [0, 1, 2, 4, 6, 9])
+def test_hfcfg011_maximum_revisions_accepts_only_supported_policies(maximum: int):
     mapping = base_mapping()
-    mapping["storage"]["maximum_revisions"] = 3
+    mapping["storage"]["maximum_revisions"] = maximum
     assert "HFCFG011" in codes_for(mapping)
+
+
+@pytest.mark.parametrize("maximum", [3, 5])
+def test_explicit_retention_policies_are_preserved(maximum: int):
+    mapping = base_mapping()
+    mapping["storage"]["maximum_revisions"] = maximum
+    config = validate_config_mapping(mapping)
+    assert config.storage.maximum_revisions == maximum
+
+
+def test_retention_default_and_explicit_three_have_the_same_fingerprint():
+    mapping = base_mapping()
+    default = validate_config_mapping(mapping)
+    mapping["storage"]["maximum_revisions"] = 3
+    assert validate_config_mapping(mapping).fingerprint() == default.fingerprint()
+    mapping["storage"]["maximum_revisions"] = 5
+    assert validate_config_mapping(mapping).fingerprint() != default.fingerprint()
 
 
 @pytest.mark.parametrize("archive_id", ["not-a-uuid", "3F2A1C88-7B40-4A2E-9C1D-0E5B6A7F8D90", ""])

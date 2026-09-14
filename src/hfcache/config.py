@@ -51,8 +51,8 @@ __all__ = [
 
 SCHEMA_VERSION = 1
 
-MAXIMUM_REVISIONS = 5
-"""Fixed in schema version 1 (`docs/configuration.md` §4)."""
+MAXIMUM_REVISIONS = 3
+"""Default retention depth (`docs/configuration.md` §4, decision 102)."""
 
 REPAIR_GRACE_FLOOR_HOURS = 168
 """Seven days. A superseded repair instance must stay readable at least this long."""
@@ -193,10 +193,10 @@ class StorageConfig(_Strict):
 
     @model_validator(mode="after")
     def _check(self) -> Self:
-        if self.maximum_revisions != MAXIMUM_REVISIONS:
+        if self.maximum_revisions not in {3, 5}:
             message = (
-                f"storage.maximum_revisions must be {MAXIMUM_REVISIONS} in schema version "
-                f"{SCHEMA_VERSION}; generalizing it is a schema change with a migration"
+                "storage.maximum_revisions must be 3 or 5; "
+                "3 is the default and 5 preserves the original retention policy"
             )
             raise CodedError(message, code="HFCFG011")
         return self

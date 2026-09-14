@@ -1,4 +1,4 @@
-"""Which revisions the archive keeps, and which one goes when a sixth arrives.
+"""Which revisions the archive keeps when the configured limit is exceeded.
 
 Plan §15. The whole policy rests on one property, `AD-05`: **retention order is
 the immutable per-repository `publication_generation`, and nothing else.**
@@ -166,7 +166,7 @@ def prune_candidate(
     each refusal is a case where doing nothing is the correct behaviour rather
     than a limitation.
 
-    * **Not over the limit** — including the ordinary case of exactly five. A
+    * **Not over the limit** — including exactly the configured maximum. A
       prune is triggered by a *successful publication beyond* the maximum
       (`AD-04`), never by a count that happens to be high.
     * **The oldest is current** — the current revision is never pruned (§15.1).
@@ -299,6 +299,8 @@ def plan_prune(
         ),
         generated_at=generated_at,
         plan_id=new_publication_id(),
+        # Legacy schema-version-1 name for exceeding the configured limit
+        # (`docs/schemas.md` §8, decision 102); readers keep the same format.
         reason="sixth_unique_revision_published",
         repository_id=identity.id,
         repository_type=identity.type,
@@ -327,7 +329,7 @@ def plan_all(
     """Every prune the archive currently needs, in repository order.
 
     One plan per repository at most: §15.2 removes *the* oldest eligible
-    revision after a sixth is published, not every revision above the limit. A
+    revision after the limit is exceeded, not every revision above the limit. A
     repository somehow holding eight would be brought down one revision per run,
     which is slower and is the behaviour that cannot delete four things by
     mistake.
@@ -412,8 +414,8 @@ def apply_prune(
     failure regimes that behave oppositely. Before it, a failure rolls the
     archive back to six published revisions — over-retention is always preferable
     to a revision that should not have gone. At or after it, a failure never
-    republishes: exactly five revisions are consumer-visible and the complete
-    manifest is still recoverable from trash, so re-adding the sixth would
+    republishes: the remaining revisions are consumer-visible and the complete
+    manifest is still recoverable from trash, so re-adding the removed revision would
     contradict a decision the archive already recorded.
 
     The order of steps 3 and 4 is deliberate and reversed from plan §15.2's
@@ -424,7 +426,7 @@ def apply_prune(
     Recovery never needed the reference to find the tree: the persisted plan
     names it.
 
-    Cache deletion at step 2 happens while all six revisions are still published,
+    Cache deletion at step 2 happens while all retained revisions are still published,
     so the published hardlinks hold the bytes whatever the cache does.
     """
     stamp = now or datetime.now(UTC)
@@ -490,7 +492,7 @@ def apply_prune(
     )
 
     # The commit point. Above it the archive can still be put back; below it,
-    # five revisions are what consumers see and that is now the truth.
+    # the remaining revisions are what consumers see and that is now the truth.
     transaction.checkpoint("prune_logically_committed", retained=len(plan.retained) - 1)
 
     record = PrunedRevisionRecord(
