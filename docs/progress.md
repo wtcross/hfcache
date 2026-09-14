@@ -605,6 +605,30 @@ package in this family.
   tests, 45 Cockpit tests, types, lint, and production builds. Live NFS suite:
   11 passed, one expected initialized-archive skip.)
 
+## Release 0.1.8 (REL, 2026-09-14)
+
+- [x] REL-009 Cut the explicit quarantine cleanup release candidate
+  (2026-09-14, this commit — version and lock move together to 0.1.8;
+  README/changelog describe the explicit cleanup scope and deployment §14
+  records unchanged-format rollback to 0.1.7. No cross-format archive drill
+  is needed. `scripts/check.sh --with-build` exits `0`: 1,743 Python tests,
+  45 Cockpit tests, production build, and four installed-wheel smoke tests.
+  The live NFS suite already passed at QUA-001. The running 0.1.7 sync
+  must finish before the staged candidate becomes current.)
+
+- [ ] OPS-012 Deploy 0.1.8 and clean the 42 reviewed quarantine findings.
+  The reviewed inventory contains 41 entries with only empty directories and
+  one Qwen/Qwen3-4B-Base entry with six redundant files totaling 1,688,517 bytes.
+  A separately started sync (`bf1f901508ae4fb4990157d69125ab78`) began during
+  release preparation and holds the writer lock while downloading three new
+  models. Do not interrupt it to manufacture an idle deployment window.
+  Stage the release and queue `hfcache-quarantine-cleanup.service` after that
+  run. Its explicit-ID cleanup must recheck provenance and byte identity, then
+  prove quarantine empty, original journals and all publication refs unchanged,
+  retained files intact, status/recovery clean, and the enabled sync timer
+  restored. Local operational evidence belongs under `.git/qua001/`; record
+  the measured NAS free-space delta and completion evidence here afterward.
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -821,6 +845,9 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     its existing schedule; the verification timer stays disabled pending item 8.
     Complete these checks and tag the current candidate rather than tagging a
     superseded deployed version from item 14.
+    REL-009 prepares 0.1.8 for OPS-012's cleanup after the separately started
+    sync finishes; until that deployment completes, 0.1.7 remains current.
+    Once OPS-012 completes, use 0.1.8 for this formal release proof.
 
 ## Operator decisions needed
 

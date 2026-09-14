@@ -744,6 +744,14 @@ it does not restore deleted revisions. Archive JSON formats and the historical
 retention reason remain compatible. Required-token rollback rules above still
 apply independently when going back before 0.1.6.
 
+**0.1.8 quarantine-cleanup rollback (QUA-001, decision 103).** Cleanup changes
+no durable JSON shape and preserves its original terminal publication and
+committed recovery journals. After the cleanup process releases the writer
+lock, 0.1.7 can read the remaining archive using the same configuration; it
+simply has no `quarantine` command. Removed redundant quarantine entries are
+not restored by rollback. The retention-policy barrier above still applies
+when going back before 0.1.7.
+
 Keep at least the previous release installed (plan §21.4 item 7). `--list` is how
 you see what you have:
 

@@ -7,6 +7,20 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## v0.1.8 — 2026-09-14
+
+Recovered staging can now be cleaned with explicit transaction IDs through
+`quarantine --dry-run` and `quarantine --apply`. Cleanup requires terminal
+publication and committed recovery evidence, refuses unfinished transactions
+and unknown content, and removes only empty directories or files freshly
+verified against a retained current publication. Anchored filesystem operations
+protect the deletion boundary; interrupted cleanup can be safely retried.
+Original journals, published models, and durable JSON formats remain unchanged.
+Cockpit recognizes the cleanup event in its activity feed.
+
+Rollback to 0.1.7 preserves the three-revision policy and existing archive
+formats; it simply lacks the new cleanup command.
+
 ## v0.1.7 — 2026-09-14
 
 `storage.maximum_revisions` now defaults to three. Explicit five-revision

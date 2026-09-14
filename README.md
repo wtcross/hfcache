@@ -60,10 +60,11 @@ consumers at all.
 
 ## Status
 
-**`v0.1.7` — three-revision retention release candidate.** The writer is complete
+**`v0.1.8` — explicit quarantine cleanup release candidate.** The writer is complete
 and running against a live NFS-backed ZFS archive: it syncs public, private, and
 gated repositories, publishes, retains a bounded revision history, prunes,
-verifies, repairs, and recovers, under systemd with SELinux
+verifies, repairs, recovers, and cleans proven redundant quarantine entries,
+under systemd with SELinux
 enforcing and validated hardening. Release history is in
 [`CHANGELOG.md`](CHANGELOG.md); the annotated tags carry the complete notes.
 
