@@ -263,6 +263,24 @@ the removed entries, and refreshing Cockpit updates the Findings table.
 `recover --apply` itself never empties quarantine. `quarantined_bytes` reports
 the logical file bytes still held there, not uniquely reclaimable NAS space.
 
+### Maintenance after an intentionally stopped download
+
+Stopping a sync with `systemctl stop hfcache-sync.service` preserves its Hub
+download cache but can leave an open publication journal. Ordinary recovery
+still waits for `sync.stale_staging_age_hours`; stopping the service does not
+silently waive that rule. When the operator explicitly chooses immediate
+maintenance followed by restart, architecture §7.8.2 permits a supervised
+exception for the exact stopped run's proven empty, `staging_created`-only
+publication. Confirm the service/PID has exited, hold the writer lock, reject
+other unfinished work, and review the exact identities and empty staging before
+using the installed recovery planner with a zero-hour threshold. Apply through
+the normal recovery API and preserve its journals and report. Do not edit the
+configuration, timestamps, source journals, or download cache to force recovery.
+Explicitly clean the resulting empty quarantine along with the original
+reviewed entries, then restart the sync service and restore its timer. A
+download interrupted after later checkpoints or with populated staging does
+not qualify for this exception.
+
 ---
 
 ## 5. When the machine stops (`HFTXN001`–`HFTXN004`)

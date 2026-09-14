@@ -605,7 +605,7 @@ package in this family.
   tests, 45 Cockpit tests, types, lint, and production builds. Live NFS suite:
   11 passed, one expected initialized-archive skip.)
 
-## Release 0.1.8 (REL, 2026-09-14)
+## Releases 0.1.8–0.1.9 (REL/QUA, 2026-09-14)
 
 - [x] REL-009 Cut the explicit quarantine cleanup release candidate
   (2026-09-14, this commit — version and lock move together to 0.1.8;
@@ -616,14 +616,27 @@ package in this family.
   The live NFS suite already passed at QUA-001. The running 0.1.7 sync
   must finish before the staged candidate becomes current.)
 
-- [ ] OPS-012 Deploy 0.1.8 and clean the 42 reviewed quarantine findings.
+- [x] QUA-002 Support cleanup after explicitly interrupted empty staging
+  (2026-09-14, this commit — decision 104 permits the supervised recovery
+  procedure, using the existing recovery APIs without changing their automatic
+  age policy. Cleanup accepts valid early journals with no publication ID;
+  terminal recovery proof and the prepublication checkpoint boundary still
+  apply. Four new regression cases cover the real early journal shapes and
+  refusal after publication rename. Version/lock/changelog/README move to
+  0.1.9, superseding staged 0.1.8. `scripts/check.sh --with-build` exits `0`:
+  1,747 Python tests, 45 Cockpit tests, production builds, and four installed
+  wheel smoke tests. No durable JSON change or cross-format drill is needed.)
+
+- [ ] OPS-012 Deploy 0.1.9 and clean the reviewed quarantine findings.
   The reviewed inventory contains 41 entries with only empty directories and
   one Qwen/Qwen3-4B-Base entry with six redundant files totaling 1,688,517 bytes.
   A separately started sync (`bf1f901508ae4fb4990157d69125ab78`) began during
   release preparation and holds the writer lock while downloading three new
-  models. Do not interrupt it to manufacture an idle deployment window.
-  Stage the release and queue `hfcache-quarantine-cleanup.service` after that
-  run. Its explicit-ID cleanup must recheck provenance and byte identity, then
+  models. The operator explicitly authorized pause, cleanup, and restart.
+  Recover only that stopped run's proven empty initial staging under decision
+  104, preserving its download cache. Its explicit-ID cleanup must recheck
+  provenance and byte identity for the original 42 entries and the newly
+  recovered empty entry, then
   prove quarantine empty, original journals and all publication refs unchanged,
   retained files intact, status/recovery clean, and the enabled sync timer
   restored. Local operational evidence belongs under `.git/qua001/`; record
@@ -845,9 +858,10 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     its existing schedule; the verification timer stays disabled pending item 8.
     Complete these checks and tag the current candidate rather than tagging a
     superseded deployed version from item 14.
-    REL-009 prepares 0.1.8 for OPS-012's cleanup after the separately started
-    sync finishes; until that deployment completes, 0.1.7 remains current.
-    Once OPS-012 completes, use 0.1.8 for this formal release proof.
+    REL-009 staged 0.1.8 without switching; QUA-002 prepares 0.1.9 for OPS-012's
+    explicitly authorized pause/cleanup/restart. Until that deployment
+    completes, 0.1.7 remains current. Once OPS-012 completes, use 0.1.9 for this
+    formal release proof.
 
 ## Operator decisions needed
 
@@ -3046,3 +3060,23 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     these redundant artifacts, which would introduce recovery and rollback
     obligations without preserving additional content. Repair quarantine and
     unvalidatable publication trees remain outside this command's scope.
+
+104. **Confirmed operator cancellation may replace the empty-staging age heuristic**
+    (2026-09-14, QUA-002). The operator explicitly chose to pause the active
+    sync, clean quarantine, and restart with its download cache preserved.
+    Ordinary recovery would wait 24 hours even though that exact writer was
+    deliberately stopped. For the identified run only, service/PID termination,
+    the exclusive writer lock, exact journal/run/repository/commit evidence,
+    and an empty `staging_created`-only publication permit the installed
+    recovery planner's explicit zero-hour threshold. Reject other unfinished
+    work, review the plan, recompute it under the standard preflight/lock, and
+    apply through the existing journaled recovery code. No configuration or
+    timestamps are changed; automatic recovery retains its age policy. The
+    cache and published references remain intact. Recovery creates an ordinary
+    empty quarantine entry that the explicit cleanup command can remove.
+    Valid early download journals have a null publication ID, so cleanup must
+    accept that existing shape when terminal recovery proves ownership.
+    **Rejected:** killing the writer and deleting staging by hand; inventing
+    timestamps or journal identities to satisfy a guard; globally shortening
+    the age policy; and broadening the exception to populated or later-stage
+    interrupted publications. No durable format changes are introduced.

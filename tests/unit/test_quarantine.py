@@ -79,7 +79,7 @@ def invoke(config: Path, *arguments: str):
     return runner.invoke(app, ["--json", "--config", str(config), "quarantine", *arguments])
 
 
-def begin(layout: ArchiveLayout):
+def begin(layout: ArchiveLayout, *, publication_id: str | None = examples.REPLACEMENT):
     return open_transaction(
         layout,
         transaction_id=new_transaction_id(),
@@ -90,12 +90,18 @@ def begin(layout: ArchiveLayout):
         repository_id=MODEL.id,
         repository_type=MODEL.type,
         commit_sha=examples.OTHER_SHA,
-        publication_id=examples.REPLACEMENT,
+        publication_id=publication_id,
     )
 
 
-def abandoned(layout: ArchiveLayout, files: dict[str, bytes] | None = None) -> TransactionId:
-    transaction = begin(layout)
+def abandoned(
+    layout: ArchiveLayout,
+    files: dict[str, bytes] | None = None,
+    *,
+    publication_id: str | None = examples.REPLACEMENT,
+    last_checkpoint: str = "staging_created",
+) -> TransactionId:
+    transaction = begin(layout, publication_id=publication_id)
     identifier = TransactionId(transaction.journal.transaction_id)
     staging = create_staging(layout, identifier)
     for relative, content in (files or {}).items():
@@ -105,6 +111,19 @@ def abandoned(layout: ArchiveLayout, files: dict[str, bytes] | None = None) -> T
     transaction.checkpoint(
         "staging_created", staging_path=str(layout.archive_relative(staging.directory))
     )
+    if last_checkpoint != "staging_created":
+        transaction.checkpoint(
+            "download_completed",
+            commit_sha=examples.OTHER_SHA,
+            downloaded_bytes=sum(map(len, (files or {}).values())),
+        )
+    if last_checkpoint == "content_hashed":
+        transaction.checkpoint(
+            "content_hashed",
+            hashed_objects=len(files or {}),
+            hashed_bytes=sum(map(len, (files or {}).values())),
+            reused_digests=0,
+        )
     old = (NOW - timedelta(hours=48)).timestamp()
     os.utime(staging.directory, (old, old))
     recovery = plan_recovery(layout, stale_staging_age_hours=24, now=NOW)
@@ -479,8 +498,35 @@ def test_new_file_in_empty_directory_is_never_recursively_deleted(
     assert (target / "tree" / "new-evidence").read_bytes() == b"preserve"
 
 
-def test_a_publication_that_reached_rename_is_not_staging_cleanup(layout: ArchiveLayout):
-    identifier = abandoned(layout)
+@pytest.mark.parametrize(
+    "last_checkpoint", ["staging_created", "download_completed", "content_hashed"]
+)
+def test_recovered_download_without_publication_id_can_clean_empty_staging(
+    layout: ArchiveLayout, last_checkpoint: str
+):
+    # SYNC-007 opens the download journal before a publication instance exists.
+    # Real recovery supplies the terminal source and committed quarantine proof.
+    identifier = abandoned(layout, publication_id=None, last_checkpoint=last_checkpoint)
+    journal = layout.journal(identifier)
+    before = journal.read_bytes()
+    source = read_journal(layout, journal).journal
+    assert source.publication_id is None
+    assert source.state == "failed"
+    assert source.checkpoints[-1].name == last_checkpoint
+
+    plan = plan_quarantine_cleanup(layout, identifier)
+    result = apply_quarantine_cleanup(layout, plan)
+
+    assert result["removed_files"] == 0
+    assert not layout.quarantine_for(identifier).exists()
+    assert journal.read_bytes() == before
+
+
+@pytest.mark.parametrize("publication_id", [None, examples.REPLACEMENT])
+def test_a_publication_that_reached_rename_is_not_staging_cleanup(
+    layout: ArchiveLayout, publication_id: str | None
+):
+    identifier = abandoned(layout, publication_id=publication_id)
 
     def add_published_checkpoints(data):
         first = data["checkpoints"][0]

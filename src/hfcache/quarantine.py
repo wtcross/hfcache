@@ -213,9 +213,12 @@ def _ownership(
         or source.repository_type is None
         or source.repository_id is None
         or source.commit_sha is None
-        or source.publication_id is None
     ):
         _refuse(path, "the source is not a completed recovery rollback of unpublished staging")
+    # Download-ahead journals have no publication id: ingestion allocates it
+    # later in the manifest, without rewriting this optional journal scope.
+    # The pre-publication checkpoint prefix and committed recovery proof own
+    # this staging directory independently of a publication instance (TX-03).
     staging = layout.staging_for(identifier).directory
     if staging.exists() or staging.is_symlink():
         _refuse(staging, "the original staging path is still present")

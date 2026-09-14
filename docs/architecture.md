@@ -716,6 +716,8 @@ immediately after a crash. Each is directly testable.
 - **`FS-18`** — Staging, trash, quarantine, and repair directories are named by
   transaction ID. A directory in these areas is only ever acted upon when it
   matches that naming contract, has a journal, and exceeds the configured age.
+  Explicit operator cancellation of proven empty staging may substitute
+  confirmed writer termination for the age heuristic (§7.8.2).
 - **`FS-19`** — Files and directories the application does not recognise are
   reported and preserved. Nothing outside the application's own naming contracts
   is deleted, moved, or rewritten (`AD-16`).
@@ -1053,6 +1055,8 @@ does not know.
 addressed by transaction ID (`FS-18`). An entry in one of these areas is acted on
 only when all three hold: its name matches the transaction-ID grammar, a journal
 for that transaction exists, and its age exceeds `sync.stale_staging_age_hours`.
+The explicitly supervised empty-staging cancellation in §7.8.2 is the narrow
+exception to that age requirement.
 
 Anything failing those conditions is reported as `HFWRN003` and preserved. The
 application has no code path that deletes a file it cannot explain (`FS-19`,
@@ -1093,6 +1097,29 @@ target with valid journal provenance is a successful no-op. The CLI envelope
 reports plans and applied results; no durable JSON shape or checkpoint vocabulary
 is added. Quarantine is never removed automatically or through an implicit
 all-entries selector.
+
+#### 7.8.2 Explicit cancellation of an interrupted download
+
+**QUA-002 amendment (2026-09-14, decision 104).** An operator may intentionally
+stop an identified sync to perform maintenance and resume its cached download
+afterward. For that exact run only, confirmed service termination and possession
+of the exclusive writer lock may replace the age heuristic when the publication
+journal records only `staging_created` and its staging root/tree contain no
+files or unexplained entries. Run ID, transaction IDs, repository, commit, and
+checkpoint evidence must match the reviewed interruption; any other unfinished
+transaction refuses this supervised procedure.
+
+Use the installed application's `plan_recovery` with an explicit zero-hour
+threshold for this reviewed scope, then its ordinary journaled `apply_recovery`
+under the standard preflight and lock. Review the exact plan before applying;
+rebuild it under the lock, use the real current time, and preserve the configured
+staleness threshold. This is an operator procedure, not an automatic recovery
+policy or a general CLI age override. Recovery closes the interrupted run and
+quarantines its empty staging using the existing durable records. Published
+references and all Hub download-cache files remain untouched. The new empty
+quarantine may then be explicitly cleaned under §7.8.1 before restarting sync.
+A valid early download journal may have no publication ID; completed recovery
+provenance still establishes ownership of that staging transaction.
 
 ### 7.9 What stops the machine
 

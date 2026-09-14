@@ -7,6 +7,15 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## v0.1.9 — 2026-09-14
+
+Quarantine cleanup also accepts valid early download journals that have no
+publication ID, once committed recovery proves their rollback. The runbook
+documents immediate recovery of proven empty staging after an explicitly
+authorized sync interruption, preserving cached downloads for restart. This
+supervised exception leaves the configured age threshold and automatic
+recovery policy unchanged. Durable archive formats remain compatible.
+
 ## v0.1.8 — 2026-09-14
 
 Recovered staging can now be cleaned with explicit transaction IDs through
