@@ -17,10 +17,14 @@ file — edit this one.
 
 1. `git log --oneline -20` and `git status` — trust the repository over any
    summary of prior sessions, including compacted context.
-2. The tail of `docs/progress.md` — current state, **Operator handoff**, and
-   the numbered **Decisions** log. It is the authoritative work-package
-   tracker.
-3. `docs/agents/workflow.md` — how work is selected, committed, and recorded.
+2. `docs/plans/current.md` — the sole active-plan selector. If active, read
+   that dated plan and its next task; load other tasks only for dependencies
+   or relevant context. Task files own execution status. No active plan does
+   not authorize starting an old backlog item.
+3. Relevant recent entries in `docs/progress.md`, **Operator handoff**, and
+   the numbered **Decisions** log — historical evidence and outstanding
+   operator/backlog context, not the active task queue.
+4. `docs/agents/workflow.md` — how work is committed and recorded.
    Nothing lands outside that loop.
 
 **This working copy may be on the production writer VM**
@@ -42,7 +46,8 @@ run `hfcache archive init` — the archive exists.
 | Durable JSON formats | `docs/schemas.md`, and `docs/agents/release.md` on the drill a format change requires |
 | CLI surface, exit codes, error taxonomy | `docs/cli.md` |
 | Threat model and controls | `docs/security.md` |
-| A new feature, plan, or work package | `docs/invariants.md` navigation and affected sections; `docs/adr/README.md` and relevant records; then `docs/plan.md` (start at its Plan Map) and the Decisions log in `docs/progress.md` |
+| Draft, activate, resume, or close a plan; add a task | `docs/agents/planning.md`, then `docs/plans/current.md` and the relevant dated plan/task; implementation authorization permits activation, while a draft alone does not |
+| A new feature or work package | The planning row above, affected `docs/invariants.md` sections, and relevant records from `docs/adr/README.md`; load `docs/plan.md` only where its original contract applies |
 | Introduce or change an invariant or architectural decision | `docs/invariants.md` upkeep rules, `docs/adr/README.md` maintenance rules, and `docs/agents/workflow.md`; update the register, affected ADRs, contracts, and tracker in the same work package |
 | Cut or deploy a release | `docs/agents/release.md`, then `docs/deployment-centos-stream-10.md` §13–§14 |
 | Operate or debug the live archive | `docs/operations.md`, `docs/recovery.md` |
@@ -55,6 +60,13 @@ run `hfcache archive init` — the archive exists.
 - **Docs are contracts.** Behaviour that contradicts `docs/` is changed by
   changing the contract first, in the same commit, with the reasoning recorded
   (`docs/architecture.md` §9; `docs/agents/workflow.md`).
+- **Plan before implementation.** Keep one active plan selected by
+  `docs/plans/current.md`. Store plans as
+  `docs/plans/YYYY-MM-DD-plan-<slug>.md` and one task per work package in
+  `docs/plans/tasks/`, following `docs/agents/planning.md`. Create task records
+  before execution, maintain them in the implementation commit, and preserve
+  completed plans/tasks. Keep small changes proportional with a brief plan
+  and one task. Existing backlog is activated only within authorized scope.
 - **Tests parse the docs.** `tests/unit/test_transactions.py` parses the
   checkpoint tables in `docs/architecture.md` §7, and
   `tests/unit/test_verification.py` reads `docs/cli.md`. A documentation edit
@@ -67,7 +79,8 @@ run `hfcache archive init` — the archive exists.
 - **The gate is `scripts/check.sh`** — lock check, format, lint, types, the
   default test suite, and a build. Every commit passes it.
 - **Commits** are `<WORK-PACKAGE-ID>: <summary>`, one work package per commit,
-  with `docs/progress.md` updated in the same commit.
+  with task evidence, relevant plan/current updates, and the completed
+  `docs/progress.md` entry in the same commit.
 - **No new runtime dependencies** without a recorded decision
   (`docs/architecture.md` `FW-03`/`FW-04`).
 - **Never delete what you cannot explain** (`FS-19`, `AD-16`) — a rule for the
@@ -89,6 +102,7 @@ uv run pytest -m build           # opt-in: builds artifacts in a throwaway venv
 | Document | Contents |
 | --- | --- |
 | `docs/agents/workflow.md` | Session protocol, the work-package loop, decisions, pushing |
+| `docs/agents/planning.md` | Plan/task authority, activation, lifecycle, templates, and resumption |
 | `docs/agents/conventions.md` | Code, test, and documentation conventions, with reasons |
 | `docs/agents/environment.md` | The writer VM, the live archive, and the hard limits there |
 | `docs/agents/release.md` | Release checklist: gates, format drill, deploy, tag, push |

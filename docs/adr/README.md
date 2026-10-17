@@ -22,7 +22,11 @@ Records were reconstructed from the governing documents, implementation,
 tests, and actual introducing/amending git commits. Original dates describe
 when the decision was made, not the backfill date (2026-10-17). Source prose
 and its evidence remain available; no missing alternative is invented. The
-progress log remains append-only and authoritative for work-package status.
+progress Decisions log remains append-only and the progress file retains
+completed work-package evidence and Operator handoff. Under
+[decision 107](decision-107.md), [current.md](../plans/current.md) selects the
+active plan, and task files own active execution status; historical backlog
+does not activate itself.
 
 ## Topic map
 
@@ -39,7 +43,7 @@ progress log remains append-only and authoritative for work-package status.
 | Consumers and serving | [AD-10](ad-10.md) | [Independent copy helper](decision-067.md), [promotion ownership](decision-099.md), [serving mounts](decision-100.md) |
 | Cockpit administration | [Plugin boundary](decision-087.md) | [Operation surface](decision-089.md), [bundled TOML](decision-091.md), [credential import](decision-092.md), [repository links](decision-101.md) |
 | Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
-| Documentation and work-package process | [Router](decision-081.md), [workflow](decision-082.md), [register upkeep](decision-106.md) | [Portable runbooks](decision-085.md), [current invariant register](../invariants.md) |
+| Documentation and work-package process | [Router](decision-081.md), [workflow](decision-082.md), [register upkeep](decision-106.md), [plan/task authority](decision-107.md) | [Portable runbooks](decision-085.md), [current invariant register](../invariants.md), [planning guide](../agents/planning.md) |
 
 ## Maintenance rules
 
@@ -61,7 +65,8 @@ For every change or new plan being implemented:
    decision gets a new record; link both directions and identify whether it
    supersedes the whole record or just one policy. Never reuse an identifier.
 5. Keep contracts, invariants, ADRs, index, plan amendments where needed, and
-   `docs/progress.md` together in the implementation commit. Run the repository
+   the task/plan/current records and completed `docs/progress.md` evidence
+   together in the implementation commit. Run the repository
    gate and verify local documentation links and record coverage before
    committing, as required by [the workflow](../agents/workflow.md).
 
@@ -224,3 +229,4 @@ status and current-contract links before applying a historical choice.
 | 104 | [Confirmed operator cancellation may replace the empty-staging age heuristic](decision-104.md) |
 | 105 | [Only journals supplying deletion authority need current checkpoint order](decision-105.md) |
 | 106 | [Current invariants and individual ADRs accompany every implementation](decision-106.md) |
+| 107 | [Active plans and task records own execution; progress retains the audit](decision-107.md) |

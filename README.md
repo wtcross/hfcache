@@ -74,8 +74,11 @@ a second client, reboot persistence, and enabling the quarterly verification
 timer. All of it is listed, with copy-pasteable instructions and acceptance
 checks, under **Operator handoff** in `docs/progress.md`.
 
-`docs/progress.md` is the authoritative work-package tracker; `docs/plan.md` is
-the accepted implementation plan.
+[The current tracker](docs/plans/current.md) selects the active plan; dated
+plans and individual task files own scope and execution status.
+`docs/progress.md` retains completed work-package evidence, Decisions, Operator
+handoff, and the unmigrated backlog. `docs/plan.md` remains the historical
+implementation plan and contract reference.
 
 ## Documentation
 
@@ -96,8 +99,10 @@ the accepted implementation plan.
 | [`docs/consumers.md`](docs/consumers.md) | Copying and verifying a revision from a downstream host |
 | [`docs/cockpit.md`](docs/cockpit.md) | The Cockpit plugin's contract: rules, privilege model, operation surface |
 | [`docs/cockpit-plugin/`](docs/cockpit-plugin/) | Installing and using the Cockpit plugin |
-| [`docs/plan.md`](docs/plan.md) | The accepted implementation plan |
-| [`docs/progress.md`](docs/progress.md) | Work-package tracker and operator handoff |
+| [`docs/plan.md`](docs/plan.md) | Original implementation plan and contract/history reference |
+| [`docs/plans/current.md`](docs/plans/current.md) | Active-plan selector and next task |
+| [`docs/plans/`](docs/plans/README.md) | Dated plans and individual work-package task records |
+| [`docs/progress.md`](docs/progress.md) | Completed work-package audit, Decisions, operator handoff, and historical backlog |
 
 [`docs/storage-requirements.md`](docs/storage-requirements.md) states what any
 NFSv4.2 server must provide. `docs/truenas.md` — the reference deployment's
@@ -129,7 +134,8 @@ against.
 | `src/hfcache/` | The application: one package on `huggingface-hub`, `pydantic`, `typer`, and the standard library |
 | `cockpit/` | The Cockpit administration plugin: a browser UI over the CLI and the systemd units |
 | `docs/` | The contracts and runbooks in the table above |
-| `docs/agents/` | Agent-facing workflow, conventions, environment, and release docs |
+| `docs/agents/` | Agent-facing planning, workflow, conventions, environment, and release docs |
+| `docs/plans/` | Current-plan selector, dated plans, and individual task records |
 | `packaging/` | systemd units and timers, journald and tmpfiles drop-ins |
 | `scripts/` | `check.sh` (the quality gate), `install-release.sh`, and the hardening probe pair |
 | `examples/` | A runnable `config.toml`, and `copy-revision.py` — the consumer-side helper |

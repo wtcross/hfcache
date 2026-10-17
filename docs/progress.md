@@ -1,5 +1,14 @@
 # Implementation Progress
 
+**Current authority (`DOC-010`, 2026-10-17, decision 107).**
+`docs/plans/current.md` selects active work; dated plans own scope/order and
+individual task files own execution status and evidence. This file retains
+completed work-package evidence, Decisions, Operator handoff, and unmigrated
+historical backlog. Its earlier tracker/startup instructions below remain
+history, superseded for active work by `docs/agents/planning.md` and
+`docs/agents/workflow.md`. An unchecked historical item is not authorization
+to activate it.
+
 Authoritative work-package tracker for `docs/plan.md` §28, maintained under the
 §36 Autonomous Implementation Protocol. Update this file **in the same commit**
 as the work it records: mark the box, append `(YYYY-MM-DD, <short commit ref or
@@ -720,6 +729,24 @@ package in this family.
   `docs/invariants.md` and `docs/adr/ad-05.md` distinguish the normative
   constraint from this existing enforcement gap. No runtime or policy change
   is made by the documentation backfill.)
+
+## Dated plans and individual tasks (DOC, 2026-10-17)
+
+- [x] DOC-010 Establish plan and task tracking
+  (2026-10-17, this commit — decision 107;
+  [plan](plans/2026-10-17-plan-planning-workflow.md),
+  [task](plans/tasks/doc-010-planning-workflow.md). The new current selector,
+  dated plans, and task files own active execution; progress retains completed
+  audit evidence, Decisions, Operator handoff, and unmigrated backlog.
+  The agent planning guide defines lifecycle, proportional templates,
+  authorization, stable work-package IDs, dependencies, and retained history.
+  Agent/human entry points and affected prior ADRs reflect the new authority;
+  `INV-011` records the planning invariant. The setup plan/task are complete
+  and retained; current selects no active plan, and existing backlog is not
+  migrated or activated. Invariant/ADR review completed. Documentation
+  link/anchor, plan/task identity/state, and ADR coverage checks pass.
+  `scripts/check.sh` exits `0`: lock, format, lint, types, 1,750 Python tests,
+  45 Cockpit tests, package builds, and production plugin build.)
 
 ## Live rollout checkpoints (§29, writer-side)
 
@@ -3199,3 +3226,35 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     generating records without source or git evidence, because plausible
     retrospective reasoning is not provenance. See
     [the individual record](adr/decision-106.md).
+
+107. **Active plans and task records own execution; progress retains the audit**
+    (2026-10-17, DOC-010). The user requested dated plan records, a current
+    active-plan tracker, and individual Markdown task files. They confirmed
+    that the new files own active work, implementation authorization permits
+    activation without a separate approval step, drafting alone does not
+    activate, and setup finishes with no active plan or backlog migration.
+    `docs/plans/current.md` selects at most one active plan and points to the
+    next task/blockers. Stable `YYYY-MM-DD-plan-<slug>.md` files own plan scope,
+    lifecycle, and ordered task links; individual files under `tasks/` use
+    existing work-package IDs and own task execution status, dependencies,
+    acceptance, and evidence. Completed, cancelled, and superseded records
+    remain at their original paths. Small implementation changes use a brief
+    plan and single task; read-only and draft-only work needs no activation.
+    `docs/progress.md` retains completed work-package audit, Decisions,
+    Operator handoff, and unmigrated historical backlog, rather than another
+    active queue. This supersedes the progress-only selection and tracker
+    authority in decisions 82 and 106 while retaining their commit, safety,
+    invariant, and ADR upkeep rules. `docs/agents/planning.md` owns lifecycle
+    and templates; `AGENTS.md` loads current, its selected dated plan, and
+    the relevant task progressively. `docs/plan.md` remains the original
+    contract/history reference. `INV-011` records the new workflow constraint.
+    **Rejected:** duplicate mutable task status in progress, plan tables, and
+    task files, because they can disagree about completion; treating draft
+    plans or old unchecked backlog as execution authority, because neither
+    establishes the requested scope; mandatory separate activation approval,
+    because the user chose implementation authorization as sufficient; and
+    deleting or bulk-migrating historical records, because they preserve
+    evidence and were not selected for current work. See
+    [the individual record](adr/decision-107.md),
+    [setup plan](plans/2026-10-17-plan-planning-workflow.md), and
+    [DOC-010 task](plans/tasks/doc-010-planning-workflow.md).

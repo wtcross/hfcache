@@ -480,11 +480,28 @@ Evidence: [plugin tests](../cockpit/test/) and the
   opt-in. Every work-package commit updates progress and passes
   `scripts/check.sh`; durable-format fixtures and checkpoint-contract tests
   remain synchronized with their contracts.
+- **`INV-011` — Active work has one plan and explicit task authority.**
+  `docs/plans/current.md` selects at most one active dated plan. Each
+  implementation work package has an individual task file before execution;
+  the task owns status, dependencies, acceptance criteria, and evidence. The
+  dated plan owns scope and task order; current is a short selector and next-
+  task pointer. User authorization to implement permits activation, while a
+  draft or an old backlog item alone does not. Preserve plan/task identities
+  and completed or superseded records. Keep active records and completed
+  progress evidence consistent in the implementation commit. The historical
+  progress log retains completed work packages, Decisions, Operator handoff,
+  and unmigrated backlog, without duplicating the active queue.
 
 Contract: [framework boundary](architecture.md#8-framework-boundary),
-[conventions](agents/conventions.md), and [workflow](agents/workflow.md).
+[conventions](agents/conventions.md), [workflow](agents/workflow.md), and
+[planning lifecycle](agents/planning.md).
 Enforcement and evidence: [dependency/tool configuration](../pyproject.toml),
 [locked dependencies](../uv.lock), [gate](../scripts/check.sh),
 [test isolation](../tests/conftest.py),
 [failure matrix](../tests/unit/test_failure_matrix.py), and
 [checkpoint tests](../tests/unit/test_transactions.py).
+Planning evidence: [current selector](plans/current.md),
+[retained setup plan](plans/2026-10-17-plan-planning-workflow.md), and
+[DOC-010 task](plans/tasks/doc-010-planning-workflow.md).
+`INV-011` is a repository workflow requirement reviewed through these records
+and git; the application test suite does not enforce planning lifecycle.

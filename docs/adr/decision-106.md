@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Accepted |
+| Status | Accepted; tracking authority amended by decision 107 |
 | Date | 2026-10-17 |
 | Work package | `DOC-009` |
 | Provenance | This commit; [progress decision 106](../progress.md#decisions) |
@@ -60,6 +60,12 @@ separate, explicit contract/code decision; this backfill does not silently
 weaken the requirement or claim the implementation satisfies it.
 
 ## Evidence and related records
+
+**2026-10-17 amendment (`DOC-010`).**
+[Decision 107](decision-107.md) refines the tracker role: dated plans and task
+files own active execution, selected by `docs/plans/current.md`; progress
+retains the chronological completed audit, Decisions, and Operator handoff.
+Invariant/ADR review and upkeep remain required for every implementation.
 
 - [ADR upkeep and required fields](README.md#maintenance-rules).
 - [Current invariants and their implementation/test evidence](../invariants.md).

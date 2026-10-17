@@ -68,6 +68,12 @@ it.
   ADRs in the same work package. Reuse existing requirement IDs; retain
   historical reasoning and link its replacement. The workflow and ADR index
   specify the record format and review obligations.
+- **Plans and tasks have one authority each.** Follow
+  `docs/agents/planning.md`: `docs/plans/current.md` selects the active plan,
+  the dated plan defines scope/order, and task files own execution status and
+  acceptance evidence. Use existing work-package IDs and retain completed
+  records. `docs/progress.md` holds the completed audit, Decisions, and
+  Operator handoff rather than duplicate active-task checkboxes.
 - **Two tests read the docs at run time.**
   `tests/unit/test_transactions.py` parses the §7.3–§7.5 checkpoint tables of
   `docs/architecture.md` and requires the documented sequence to be the

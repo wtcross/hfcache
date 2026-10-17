@@ -31,6 +31,13 @@ The current workflow distinguishes maintainer push access from contributor work;
 this historical adoption of remotes does not itself grant push authorization.
 The plan remains the original build-out record.
 
+2026-10-17 (`DOC-010`): [Decision 107](decision-107.md) supersedes the
+progress-only selection and tracker-authority part of this decision.
+`docs/plans/current.md` now selects the active plan, individual task files
+own execution status, and progress retains completed evidence, Decisions,
+Operator handoff, and unmigrated backlog. The workflow, commit discipline,
+host limits, and maintainer push rules remain in force.
+
 ## Provenance and governing evidence
 
 The source entry first appears in

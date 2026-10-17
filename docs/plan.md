@@ -17,6 +17,17 @@
 | Completeness level | Repository-complete at an immutable Hub revision |
 | Retention | Five successfully published revisions per repository |
 
+**Planning authority amendment (2026-10-17, `DOC-010`, decision 107).**
+This document is the original accepted implementation plan and remains a
+contract/history reference; it is not the current execution plan. New plans
+live at `docs/plans/YYYY-MM-DD-plan-<slug>.md` with individual task records
+under `docs/plans/tasks/`. `docs/plans/current.md` selects the sole active
+plan; task files own execution status. `docs/progress.md` retains completed
+work-package audit, Decisions, Operator handoff, and unmigrated backlog.
+Use `docs/agents/planning.md` and `docs/agents/workflow.md` for present-day
+planning and execution. Original metadata and package lists below do not
+activate work or supersede that authority.
+
 **RET-010 amendment (2026-09-14, decision 102).** The fixed-five policy in this
 original plan is superseded by a default of three retained revisions, with an
 explicit five still accepted (`docs/configuration.md` §4, `AD-04`). References
@@ -349,6 +360,14 @@ invariants and architectural choices must be recorded there. Start at their
 navigation/index and load only the relevant entries (`AGENTS.md`,
 `docs/agents/workflow.md`). Historical decisions remain append-only, with
 explicit amendments and supersession links.
+
+**Amended 2026-10-17 (`DOC-010`, decision 107).** `docs/plans/` adds the
+short `current.md` selector, stable dated plans, and `tasks/` files identified
+by existing work-package IDs. `docs/agents/planning.md` defines authority,
+activation, lifecycle, templates, and progressive loading. Implementation
+authorization activates a plan; a draft alone does not. Completed plans and
+tasks are preserved, and existing backlog is not migrated or activated as
+part of introducing the workflow.
 
 ## 8. Python and Dependency Management
 
@@ -1962,6 +1981,13 @@ mirror) and pushing is part of the loop, so §36.2's "no remote is configured;
 do not push" no longer holds; startup routes through `AGENTS.md`'s context map
 rather than re-reading this plan in full; and §36.4–§36.5's scope limits
 continue unrelaxed in `docs/agents/environment.md`.
+
+**Amended 2026-10-17 (`DOC-010`, decision 107).** Present-day selection
+starts at `docs/plans/current.md`, then loads only its dated plan and selected
+task. Task files own active status; progress keeps completed audit evidence,
+Decisions, and Operator handoff. Follow `docs/agents/planning.md` for plan
+activation and lifecycle. §36.1's full-plan read and first-unchecked selection
+remain historical instructions, not a current task scheduler.
 
 ### 36.1 Session startup — every session, including resumption
 
