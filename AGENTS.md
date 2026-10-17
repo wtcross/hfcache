@@ -1,6 +1,6 @@
 # Agent context router
 
-`hfcache` archives complete revisions of public Hugging Face model and dataset
+`hfcache` archives complete revisions of Hugging Face model and dataset
 repositories at resolved immutable commit SHAs onto NFS-backed ZFS storage, and
 publishes them as immutable, manifest-verified ordinary-file trees. `README.md`
 is the human overview; `docs/` holds the contracts the implementation is
@@ -35,14 +35,15 @@ run `hfcache archive init` — the archive exists.
 
 | Task at hand | Read |
 | --- | --- |
-| Understand the system | `docs/architecture.md` §1–§4: mission, decisions `AD-01`–`AD-20`, non-goals |
-| Change code, any area | The contract for that area (rows below), then `docs/agents/conventions.md` |
+| Understand the system | `docs/invariants.md` navigation, then `docs/architecture.md` §1–§4: mission, decisions `AD-01`–`AD-21`, non-goals |
+| Change code, any area | The affected sections of `docs/invariants.md`, the area contract (rows below), and `docs/agents/conventions.md`; use `docs/adr/README.md` to load only relevant decisions |
 | Storage layout, atomicity, crash recovery | `docs/architecture.md` §5–§7 |
 | Configuration keys or validation | `docs/configuration.md` |
 | Durable JSON formats | `docs/schemas.md`, and `docs/agents/release.md` on the drill a format change requires |
 | CLI surface, exit codes, error taxonomy | `docs/cli.md` |
 | Threat model and controls | `docs/security.md` |
-| A new feature or work package | `docs/plan.md` (start at its Plan Map) and the Decisions log in `docs/progress.md` |
+| A new feature, plan, or work package | `docs/invariants.md` navigation and affected sections; `docs/adr/README.md` and relevant records; then `docs/plan.md` (start at its Plan Map) and the Decisions log in `docs/progress.md` |
+| Introduce or change an invariant or architectural decision | `docs/invariants.md` upkeep rules, `docs/adr/README.md` maintenance rules, and `docs/agents/workflow.md`; update the register, affected ADRs, contracts, and tracker in the same work package |
 | Cut or deploy a release | `docs/agents/release.md`, then `docs/deployment-centos-stream-10.md` §13–§14 |
 | Operate or debug the live archive | `docs/operations.md`, `docs/recovery.md` |
 | Consumer-side behaviour | `docs/consumers.md` and `examples/copy-revision.py` |
@@ -58,6 +59,11 @@ run `hfcache archive init` — the archive exists.
   checkpoint tables in `docs/architecture.md` §7, and
   `tests/unit/test_verification.py` reads `docs/cli.md`. A documentation edit
   can fail the suite; run the gate.
+- **Keep invariants and ADRs current.** Every change or plan being implemented
+  must review the affected invariants and decisions. Add new invariants to
+  `docs/invariants.md`; record new architectural decisions in `docs/adr/`,
+  and amend or explicitly supersede affected records in the same commit.
+  Start at each index and load relevant sections, not the entire ADR history.
 - **The gate is `scripts/check.sh`** — lock check, format, lint, types, the
   default test suite, and a build. Every commit passes it.
 - **Commits** are `<WORK-PACKAGE-ID>: <summary>`, one work package per commit,

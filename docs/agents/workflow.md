@@ -32,7 +32,14 @@ instead; the plan is read when the task needs it.
 
 ## The loop, for each package
 
-1. **Contract first.** If behaviour will change, amend the governing document
+1. **Contract first.** For every change or new plan being implemented, read
+   the affected sections of `docs/invariants.md` and use `docs/adr/README.md`
+   to find the relevant decisions. Review the proposed behaviour against both.
+   Add any new invariant to the register, and update or explicitly supersede
+   every affected invariant and ADR, in the same commit as implementation.
+   A new architectural decision requires its own ADR. Changes that affect
+   neither need no artificial register edit or decision record.
+   If behaviour will change, amend the governing document
    in the same change, and record the reasoning as a decision. Where docs and
    code already disagree, fixing the doc to match built behaviour and fixing
    the code to match the doc are both legitimate; choose explicitly and say
@@ -42,10 +49,19 @@ instead; the plan is read when the task needs it.
    warrants them: `-m live` after Hub-adapter changes, `-m nfs` on the writer
    after storage or mount changes, `--with-build` at release boundaries.
 4. Update `docs/progress.md` — the checkbox entry, plus **Decisions** for
-   anything that deviates from a plan or contract, plus **Operator handoff**
+   architectural choices and anything that deviates from a plan or contract,
+   with links to the corresponding ADRs, plus **Operator handoff**
    for anything the session cannot perform itself.
 5. Commit. Never squash away a package boundary; the history is the audit
    trail the tracker cites.
+
+Before committing, check that the invariant register still states the current
+rules, new decisions have individual ADRs and index entries, affected older
+ADRs link to amendments or superseding records, and the work-package entry
+records this review. Review the same set when implementing an already accepted
+plan: acceptance does not exempt its implementation from keeping these records
+current. The area contracts remain the detailed specifications; the register
+collects current constraints and ADRs retain the reasons for them.
 
 ## Decisions
 
@@ -56,6 +72,16 @@ decision makes standing text in `docs/plan.md` or another contract wrong, the
 same commit adds a dated, attributed amendment beside that text; the original
 is never silently rewritten (plan §30's `OPS-001` note and §36's supersession
 note are the pattern).
+
+Every new architectural choice also has a standalone record under `docs/adr/`
+and an entry in its index. Use `decision-NNN.md` for the matching numbered
+progress decision. If a choice introduces an `AD-nn` requirement in
+`docs/architecture.md`, add its `ad-nn.md` record too and cross-link the two;
+these are the architectural rule and its implementation rationale. Existing
+identifiers and historical decision text are never renumbered or deleted.
+When a choice changes, write a new decision and update the older ADR's status
+and amendment/supersession links, retaining the original reasoning. Follow the
+record fields and provenance rules in `docs/adr/README.md`.
 
 ## Remotes and pushing
 

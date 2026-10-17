@@ -12,6 +12,12 @@ Session startup: read `docs/plan.md` in full, then this file, then
 `git log --oneline -20`; re-run the §8.4 quality gates if source exists;
 continue at the first unchecked item in phase order.
 
+**Session protocol amendment (2026-10-17, `DOC-009`, decision 106).**
+The startup paragraph above is the build-out record, superseded by
+`docs/agents/workflow.md` at decision 82. `AGENTS.md` routes current sessions;
+changes and plan implementations also review the affected invariants and ADRs
+using `docs/invariants.md` and `docs/adr/README.md` progressively.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)
@@ -682,6 +688,38 @@ package in this family.
   lock, formatting, lint, types, 1,750 Python tests, 45 Cockpit tests, and
   package and production plugin builds. The merge is ready for normal
   fast-forward pushes to both remotes; no history is rewritten.)
+
+## Invariant and architectural decision registers (DOC, 2026-10-17)
+
+- [x] DOC-009 Register current invariants and backfill individual ADRs
+  (2026-10-17, this commit — decision 106;
+  `docs/invariants.md` collects current constraints with contract and
+  implementation/test evidence. `docs/adr/README.md` indexes individual
+  architecture, framework, verification, scheduling, and numbered progress
+  decisions: 130 ADRs, with original git provenance and explicit amendments.
+  `AGENTS.md`, the workflow, conventions, and plan require affected invariants
+  and ADRs to accompany every change or new plan implementation. Reconciled
+  stale contract wording against existing decisions 20, 60, 61, 66, 96, 98,
+  and 102; no application behaviour or durable format changes. Invariant and
+  ADR review completed; the pre-existing lifetime-generation conformance gap
+  is explicitly tracked as `RET-011`. Validation: all 105 historical decision
+  bodies preserved, ADR coverage/index and local link/anchor checks pass,
+  and cited local git commit objects resolve. `scripts/check.sh` exits `0`:
+  lock, format, lint, types, 1,750 Python tests, 45 Cockpit tests, wheel/sdist,
+  and the production plugin build.)
+
+- [ ] RET-011 Resolve the publication-generation contract/implementation gap
+  (identified 2026-10-17 during `DOC-009`; `AD-05` / `FS-20` require lifetime
+  per-SHA generations and allocation from retained manifests plus pruned audit
+  records. `publication.next_generation` currently reads retained references
+  only, and `test_a_pruned_sha_that_returns_is_republished_into_a_fresh_container`
+  explicitly assigns generation 7 to a returning pruned SHA. A whole-repository
+  purge also empties the retained set while preserving generation audit.
+  Reconcile the intended rule and allocator deliberately, with a new decision
+  and regression evidence for re-observation, purge/re-add, and recovery.
+  `docs/invariants.md` and `docs/adr/ad-05.md` distinguish the normative
+  constraint from this existing enforcement gap. No runtime or policy change
+  is made by the documentation backfill.)
 
 ## Live rollout checkpoints (§29, writer-side)
 
@@ -3130,3 +3168,34 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     older checkpoint sequence must not prevent an independently proven cleanup.
     This follows normal recovery's treatment of already resolved journals and
     changes no durable format or source evidence.
+
+106. **Current invariants and individual ADRs accompany every implementation**
+    (2026-10-17, DOC-009). `docs/invariants.md` is the current cross-contract
+    register; `docs/adr/README.md` indexes standalone records for every existing
+    `AD-nn`, the framework boundary, offline verification, systemd scheduling,
+    and every numbered progress decision. Backfill preserves original dates,
+    work packages, reasoning, alternatives, and git provenance rather than
+    assigning new origins to old choices. Historical records carry explicit
+    amendments and supersession links; current contracts and the invariant
+    register state the effective policy. Every change or new plan being
+    implemented must review affected invariants and ADRs, add new invariants
+    and architectural choices, and maintain changed or superseded records in
+    the same work package. `AGENTS.md` routes progressively through the
+    register navigation and ADR index to only the relevant records, while
+    the workflow makes this review part of contract-first implementation and
+    commit completion. The append-only progress log remains the work tracker
+    and chronological decision source. Backfill also reconciles existing
+    journal unknown-key handling (decision 20), deployed hardening (60, 61,
+    66), explicit deletion (96, 102), and restricted authorization (98) where
+    standing prose lagged implementation; no new runtime policy or format is
+    introduced. The audit labels the existing `AD-05` / `FS-20` lifetime-
+    generation and audit-union conformance gap and tracks `RET-011` for an
+    explicit future contract/code decision rather than silently weakening the
+    requirement. **Rejected:** a single growing decision document as the only
+    lookup surface, because it hides related reasoning across work packages;
+    forcing every session to read the full ADR history, because that defeats
+    progressive context loading; replacing existing IDs or rewriting the old
+    decision log, because source and tests already cite that audit trail; and
+    generating records without source or git evidence, because plausible
+    retrospective reasoning is not provenance. See
+    [the individual record](adr/decision-106.md).

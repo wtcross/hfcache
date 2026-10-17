@@ -17,6 +17,13 @@ Companion contracts: `docs/configuration.md` (configuration schema),
 `docs/schemas.md` (durable JSON schemas), `docs/cli.md` (command surface, JSON
 output, exit codes), `docs/security.md` (threat model and controls).
 
+The current cross-contract invariant register is `docs/invariants.md`;
+individual decision records and their history are indexed by
+`docs/adr/README.md`. New or changed invariants and architectural choices are
+recorded there in the same work package as the change or plan implementation
+(`docs/agents/workflow.md`). This document remains the detailed architectural
+contract.
+
 ## 1. Mission
 
 `hfcache` archives **complete revisions of Hugging Face model and dataset
@@ -156,6 +163,14 @@ distinct SHAs may never share a generation. Generation allocation reads the unio
 of retained manifests and pruned-revision records so a prune-then-crash cannot
 reissue a value.
 
+**DOC-009 conformance finding (2026-10-17).** These are the declared
+`AD-05` / `FS-20` requirements. The current allocator reads retained
+references only, and a regression test assigns a fresh generation when a
+pruned SHA returns. Pending `RET-011` in `docs/progress.md` records this
+existing contract/implementation gap; `docs/adr/ad-05.md` preserves the
+decision and evidence. This finding does not weaken the requirement or
+change runtime behaviour.
+
 ### AD-06 — Upstream disappearance never deletes local content
 
 **Decision.** A `403`, `404`, deleted repository, gated repository, network
@@ -166,8 +181,14 @@ it, and deletes nothing.
 An availability error is the moment the archive matters most; it must never be
 the trigger that empties it.
 
-**Consequences.** Pruning is driven exclusively by *successful publication* of a
-new revision, never by an error path or a configuration edit.
+**Consequences.** Automatic retention follows *successful publication* of a
+new revision, never an error path or a configuration edit alone. An explicit
+reviewed `prune` may enforce a lowered retention limit (§7.4); permanent removal
+of an unmanaged repository requires the separate `purge` workflow (`AD-20`).
+
+**DOC-009 clarification (2026-10-17, decision 106).** This consequence now
+names the existing explicit deletion paths from `PUR-001` and `RET-010`
+(decisions 96 and 102); preservation on upstream failure is unchanged.
 
 ### AD-07 — Dependencies are detected statically and warned about, never resolved
 
@@ -458,10 +479,12 @@ with a stated reason, not an oversight.
 | `NG-11` | Running on the TrueNAS host operating system | Storage appliances are not application hosts; the writer is a dedicated VM |
 | `NG-12` | A workflow engine, state-machine framework, or Pydantic AI in version 1 | `FW-01` |
 
-Non-goals are not permanent bans. `NG-06` in particular is expected to become
-reachable without a schema redesign: the configuration already carries
-`token_mode`, `credential_name`, and `expected_account`, and the credential path
-is implemented in version 1 even though version 1 refuses non-public repositories.
+Non-goals are not permanent bans. `NG-06` was retired by `HUB-010`
+(2026-08-23, decision 98) without a durable-schema redesign: the existing
+`token_mode`, `credential_name`, and `expected_account` configuration supports
+the explicit restricted scope in `AD-21`. `disabled` and `optional` remain
+public-only. This paragraph was reconciled with that amendment at `DOC-009`
+(2026-10-17, decision 106).
 
 *Amended 2026-08-23 at `HUB-010` (`AD-21`).* That expected extension is now
 implemented: `required` enables authenticated private/gated scope, while the

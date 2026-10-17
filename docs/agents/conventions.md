@@ -61,6 +61,13 @@ it.
   `schemas.md`, `cli.md`, and `security.md` are contracts the implementation
   is written against; `operations.md`, `recovery.md`, `consumers.md`, and
   `deployment-centos-stream-10.md` are runbooks kept true to the deployment.
+- **Invariants and decision records accompany implementation.** For every
+  change or plan being implemented, review the affected sections of
+  `docs/invariants.md` and the relevant records indexed by `docs/adr/README.md`.
+  Add new invariants, maintain affected ones, and add or explicitly supersede
+  ADRs in the same work package. Reuse existing requirement IDs; retain
+  historical reasoning and link its replacement. The workflow and ADR index
+  specify the record format and review obligations.
 - **Two tests read the docs at run time.**
   `tests/unit/test_transactions.py` parses the §7.3–§7.5 checkpoint tables of
   `docs/architecture.md` and requires the documented sequence to be the

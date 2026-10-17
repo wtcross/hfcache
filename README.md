@@ -82,6 +82,8 @@ the accepted implementation plan.
 | Document | Contents |
 | --- | --- |
 | [`docs/architecture.md`](docs/architecture.md) | Architecture decisions, filesystem layout and invariants, transaction and crash-recovery boundaries |
+| [`docs/invariants.md`](docs/invariants.md) | Current invariant register, governing contracts, and implementation evidence |
+| [`docs/adr/`](docs/adr/README.md) | Individual architectural decision records, provenance, amendments, and maintenance rules |
 | [`docs/configuration.md`](docs/configuration.md) | Every configuration key, its constraints, and credential handling |
 | [`docs/schemas.md`](docs/schemas.md) | Durable JSON formats: manifests, references, catalog, reports, journals |
 | [`docs/cli.md`](docs/cli.md) | Command surface, JSON output, exit codes, error taxonomy |

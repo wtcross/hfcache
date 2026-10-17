@@ -40,8 +40,16 @@ Every file carries `schema_version` as its first meaningful field.
   read speculatively. The command stops, reports the file and both versions, and
   changes nothing (`AD-16`). This is what makes a rollback to a previous release
   safe: an older binary refuses newer state instead of misinterpreting it.
-- Unknown keys inside a known version are preserved when a file is rewritten and
-  reported as an anomaly. They are never silently dropped.
+- Known-version models reject unknown keys and report their locations; they
+  never silently drop them. The journal reader is the explicit exception:
+  it retains unknown top-level fields separately and preserves them on a
+  rewrite. Preservation does not authorize recovery or deletion when that
+  command requires supported, unambiguous evidence.
+
+**DOC-009 clarification (2026-10-17, decision 106).** The unknown-key rule
+now states the journal-only preservation exception already decided at
+`CFG-004` (decision 20) and implemented by `transactions.read_journal` /
+`JournalFile.dump`. Strict models and durable formats are unchanged.
 
 ## 2. Archive sentinel — `.hfcache-root`
 

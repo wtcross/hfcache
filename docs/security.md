@@ -321,7 +321,7 @@ setting that breaks a legitimate operation is not silently dropped: the failing
 requirement and the narrower alternative are documented (`docs/plan.md` §22.5).
 
 ```text
-NoNewPrivileges=true          ProtectKernelTunables=true    RestrictSUIDSGID=true
+NoNewPrivileges=true          ProtectKernelTunables=true
 PrivateTmp=true               ProtectKernelModules=true     RestrictNamespaces=true
 PrivateDevices=true           ProtectKernelLogs=true        LockPersonality=true
 ProtectSystem=strict          ProtectControlGroups=true     SystemCallArchitectures=native
@@ -331,10 +331,20 @@ ProcSubset=pid                RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 ```
 
 Writable paths are limited to the NFS archive and the systemd-managed state,
-cache, and runtime directories. The verification unit additionally runs with
-`HF_HUB_OFFLINE=1`; `PrivateNetwork=true` is tested against the deployed mount and
-enabled only if the already-mounted filesystem stays reliable under reconnect,
-with the narrower egress control documented otherwise.
+cache, and runtime directories. `RestrictSUIDSGID=true` is deliberately absent:
+it blocks the setgid directory creation that publication requires. The narrower
+controls are `nosuid,nodev,noexec` on the archive, `NoNewPrivileges=true`, and
+empty capability sets (decision 61). The probe must test `mkdir` followed by
+`chmod` and assert the resulting setgid mode (decision 66).
+
+The verification unit additionally runs with `HF_HUB_OFFLINE=1` and
+`IPAddressDeny=any` (decision 60). `PrivateNetwork=true` remains an
+operator-supervised reconnect evaluation, not an enabled protection.
+
+**DOC-009 reconciliation (2026-10-17, decision 106).** These statements
+reflect the existing deployed-unit decisions 60, 61, and 66. The authorization
+statements in §§6–7 also reflect `HUB-010` / `AD-21`; no runtime control or
+authorization policy changes here.
 
 SELinux remains enforcing throughout development and acceptance testing.
 Denials are resolved by fixing ownership, labels, or unit restrictions first, and
@@ -356,7 +366,7 @@ not address.
 | Judging whether archived content is itself safe or lawful to use | The archive stores faithfully; consumers evaluate what they run (`NG-04`, `NG-08`) |
 | Upstream publishing backdoored content that hashes consistently | Correctly archived by definition; detecting it is a different product |
 | Denial of service against the Hub, or by the Hub against us | Handled as an availability condition (`HFHUB001`, `HFWRN006`), not a security control |
-| Confidentiality of archive content | All version 1 content is public by definition (`NG-06`) |
+| Confidentiality beyond the configured consumer boundary | Restricted content is supported under `AD-21`; the export has no per-repository ACLs or protection from an authorized consumer redistributing bytes (`T-08`) |
 
 ## 7. Verifying these claims
 
@@ -364,7 +374,7 @@ not address.
 | --- | --- |
 | No repository code executes | Unit tests assert no `import`, `exec`, `pickle`, or model-construction path exists in ingestion; live tests archive a repository containing `*.py` and custom code and confirm none is loaded |
 | Path escapes are rejected | Property-based tests over adversarial path sets, including traversal, absolute, special-file, case-collision, and normalization-collision cases |
-| Public-only scope holds | A credential able to read gated content does not expand version 1 scope |
+| Restricted scope is explicit | Hub tests reject private/gated metadata under `disabled` and `optional`, accept it only under `required` with a credential, and reject missing required credentials; the operator validates the shared consumer boundary (`T-08`) |
 | Secrets never surface | Redaction tests over log lines, run reports, manifests, journals, and error messages at maximum verbosity |
 | Fail-closed preflight | Unmounted, read-only, wrong-sentinel, and below-reserve archives each exit `20` with no Hub request issued |
 | Consumer cannot write | Server-side create, modify, rename, and delete attempts from a consumer client all fail (operator-run; `NAS-004`/`NAS-005`) |

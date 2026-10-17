@@ -339,6 +339,17 @@ complete notes.
 (`docs/recovery.md` §6's loopback archive, promoted) and the server-agnostic
 statement of what §20's TrueNAS configuration provides.
 
+**Amended 2026-10-17 (`DOC-009`, decision 106).** `docs/invariants.md`
+collects the current project invariants with their existing requirement IDs
+and links to the detailed contracts. `docs/adr/` holds individual decision
+records, backfilled from the architecture, progress log, implementation, and
+git history. Every change or new plan being implemented reviews the affected
+invariants and ADRs and keeps both current in the same work package; new
+invariants and architectural choices must be recorded there. Start at their
+navigation/index and load only the relevant entries (`AGENTS.md`,
+`docs/agents/workflow.md`). Historical decisions remain append-only, with
+explicit amendments and supersession links.
+
 ## 8. Python and Dependency Management
 
 ### 8.1 Runtime baseline
