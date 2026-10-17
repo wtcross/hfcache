@@ -671,6 +671,18 @@ package in this family.
   `scripts/check.sh` exits `0`: 1,750 Python tests, 45 Cockpit tests, and
   production builds. Formal release proof remains handoff item 15.)
 
+## Repository synchronization (OPS, 2026-10-17)
+
+- [x] OPS-013 Reconcile local and remote main histories
+  (2026-10-17, this commit — refreshed both remotes: GitHub main at
+  `e35048a` is an ancestor of local main, while Forgejo main at `7368973`
+  contains only the additional `.scratch/` ignore rule. Merged that commit
+  without conflicts, retaining all nine local commits through `82bfb7a`
+  and every existing work-package boundary. `scripts/check.sh` exits `0`:
+  lock, formatting, lint, types, 1,750 Python tests, 45 Cockpit tests, and
+  package and production plugin builds. The merge is ready for normal
+  fast-forward pushes to both remotes; no history is rewritten.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
