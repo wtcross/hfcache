@@ -716,7 +716,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         def read(queries: MetadataQueries, _: PolicySnapshot) -> tuple[ServiceResult, None]:
             inspected = queries.inspect_archive()
             return ServiceResult(
-                "archive init --inspect",
+                "archive init",
                 inspected.as_payload(),
                 errors=inspected.problems,
                 exit_code=20 if inspected.problems else 0,

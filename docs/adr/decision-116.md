@@ -1,7 +1,7 @@
 # Decision 116 — Admit typed command routes without widening server authority
 
 - Status: Accepted; implemented by API-009; maintenance extended by
-  [decision 117](decision-117.md).
+  [decision 117](decision-117.md), candidates/readers by [119](decision-119.md).
 - Date: 2026-10-17.
 - Work package: API-009, this commit.
 - Source: [progress decision 116](../progress.md#decisions),
@@ -85,3 +85,15 @@ Evidence: [model/authority tests](../../tests/unit/test_command_models.py),
 [real HTTP/domain tests](../../tests/unit/test_api_commands.py),
 [adversarial concurrency/disconnect tests](../../tests/unit/test_api_command_adversarial.py)
 and the completed [task](../plans/tasks/api-009-sync-verification-and-diagnostics-api.md).
+
+## API-012 candidate implementation amendment
+
+[Decision 119](decision-119.md) wires bounded candidate content into writer-only
+validate/plan. Pure syntax validity is independent of compatibility and credential
+availability; valid incompatible content stays valid, and broken installed policy
+permits unknown-compatibility syntax validation. Planning rechecks all six authority
+fields before installed credential use after queue waiting, because credential
+name is excluded from the policy fingerprint. Candidate policy cannot replace the
+installed admitted fingerprint or become configuration-install authority. Omitting
+the new field preserves historical installed-plan canonical key mappings; explicit
+null is refused. No new durable shape/dependency is introduced.

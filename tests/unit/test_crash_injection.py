@@ -56,6 +56,7 @@ from hfcache.repair import (
 from hfcache.storage import parse_mount_table, read_model
 from hfcache.sync import synchronize
 from hfcache.transactions import Transaction, open_journals, open_transaction, read_journal
+from tests.api_cli import api_cli
 from tests.unit.test_synchronize import (
     ARCHIVE_ID,
     CONFIG,
@@ -650,7 +651,8 @@ def test_status_surfaces_the_due_cleanup(client, layout, config, config_path):
     damage(layout, SHA_A)
     repair(client, layout, config, now=datetime.now(UTC) - timedelta(hours=GRACE_HOURS + 1))
 
-    result = runner.invoke(app, ["--config", str(config_path), "--json", "status"])
+    with api_cli(config_path) as remote:
+        result = remote.invoke(["status"])
     envelope_body = json.loads(result.stdout)
 
     assert [warning["code"] for warning in envelope_body["warnings"]] == ["HFWRN008"]
@@ -663,7 +665,8 @@ def test_status_reports_what_quarantine_is_holding(client, layout, config, confi
     repair(client, layout, config, now=NOW)
     apply(layout, config, now=NOW + timedelta(hours=GRACE_HOURS + 1))
 
-    result = runner.invoke(app, ["--config", str(config_path), "--json", "status"])
+    with api_cli(config_path) as remote:
+        result = remote.invoke(["status"])
     archive = json.loads(result.stdout)["data"]["archive"]
 
     assert archive["quarantined_bytes"] == sum(len(payload) for payload in CONTENT.values())

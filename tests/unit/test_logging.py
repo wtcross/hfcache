@@ -427,7 +427,9 @@ def test_the_envelope_and_the_log_name_the_same_run(config_file: Path):
     # §24 wants the run id in every event; §4 wants it in the envelope. A command
     # that writes no durable report used to mint a second id for the envelope,
     # which gave an operator two identifiers and no way to join them.
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "config", "validate"])
+    result = CliRunner().invoke(
+        app, ["--json", "--config", str(config_file), "config", "validate", "--local"]
+    )
 
     assert result.exit_code == 0
     assert json.loads(result.stdout)["run_id"] == current_run_id()

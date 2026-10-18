@@ -208,6 +208,17 @@ lock file itself.
 
 ## 6. Configuration editing
 
+**API-012 candidate transport amendment (2026-10-18, [decision 119](adr/decision-119.md)).**
+CLI validate/plan now upload bounded candidate content from their host; the API
+never opens the candidate path or installs it. Syntax-valid authority changes can
+validate while reporting false compatibility; candidate planning requires the six
+installed authority fields to match and uses installed credentials. With invalid
+installed policy, valid syntax can report unknown compatibility. Only a compatible
+preview grants the existing sizing evidence, never apply/install authority.
+Privileged atomic installation/backups below remain outside REST. API-015 owns
+the shipped caller/API-credential/UI integration; this amendment does not claim
+that deployed Cockpit has migrated or give browser code a bearer.
+
 The pipeline, in order, all steps mandatory (`CP-11`):
 
 1. **Candidate.** The edited document is written to

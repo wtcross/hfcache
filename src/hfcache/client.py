@@ -37,7 +37,7 @@ from hfcache.redaction import redact_text
 from hfcache.taxonomy import classify
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Mapping
+    from collections.abc import Callable, Iterator, Mapping, Sequence
 
     from hfcache.client_config import ClientConfig
 
@@ -48,6 +48,7 @@ _MAX_HEADER_BYTES = 32768
 _MAX_LENGTH_DIGITS = 20
 _MAX_EVENT_PAGE = 10000
 _MAX_CACHED_OPERATIONS = 128
+_MAX_CANDIDATE_BYTES = 1048576
 _PAGE_ROUTES = frozenset(
     {
         "/api/v1/status",
@@ -610,7 +611,42 @@ class ApiClient:
         return self.read("/api/v1/health")
 
     def validate_installed(self) -> ClientRead:
-        payload, _ = self._exchange("POST", "/api/v1/config/validate", body={})
+        return self._validation({})
+
+    @staticmethod
+    def _candidate_text(content: str) -> str:
+        try:
+            if (
+                not isinstance(content, str)
+                or not 0 < len(content.encode("utf-8")) <= _MAX_CANDIDATE_BYTES
+            ):
+                raise ClientProtocolError
+        except UnicodeError:
+            raise ClientProtocolError from None
+        return content
+
+    def validate_candidate(self, content: str) -> ClientRead:
+        """Send bounded content only; the client never interprets a server pathname."""
+        return self._validation({"candidate": self._candidate_text(content)})
+
+    def plan_candidate(
+        self,
+        content: str,
+        selectors: Sequence[str] = (),
+        *,
+        key: str | None = None,
+        on_key: Callable[[str], None] | None = None,
+    ) -> Submission:
+        """Exact content and canonical server selectors bind one non-replaying job."""
+        return self.submit(
+            "/api/v1/plans",
+            {"candidate": self._candidate_text(content), "selectors": list(selectors)},
+            key=key,
+            on_key=on_key,
+        )
+
+    def _validation(self, body: Mapping[str, Any]) -> ClientRead:
+        payload, _ = self._exchange("POST", "/api/v1/config/validate", body=body)
         try:
             result = ClientRead.model_validate(payload)
         except ValueError, HfcacheError:

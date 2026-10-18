@@ -164,9 +164,31 @@ wire versions/identity under finite per-response/page/read-retry/poll budgets.
 Old operation observations retain admitted UUID/fingerprint and exact domain
 Envelope/run identity. Keys exist before POST; uncertainty preserves the original
 key/route without automatic replay or cancellation of accepted work. No local
-archive fallback or automatic daemon startup exists. Global CLI options are stored
-now; public runtime migration remains API-012/013. This client changes no FS/TX,
+archive fallback or automatic daemon startup exists. API-012 uses the global CLI
+choices for reader/candidate modes; mutation/operation UX remains API-013. This client changes no FS/TX,
 durable shape, dependency, publication copy rule or writer authority.
+
+### 2.6 Reader CLI and candidate policy (API-012)
+
+[Decision 119](adr/decision-119.md) uses the typed client for actual reader modes,
+rendering exact server Envelope IDs/times/status/exit through one stdout result.
+Complete page reconstruction and inventory/revision joins enforce finite aggregate
+bounds and current-publication consistency; they cannot silently discard rows or
+substitute observer metadata. Explicit local validation remains bootstrap, never
+fallback. Remote inspection uses the configured writer target; optional root
+restatement compares returned authority without accessing a client archive path.
+
+Candidate content is read on the CLI host and syntax-validated independently of
+installed compatibility/credentials. Compatible planning rechecks all six authority
+fields after queue waiting before using installed Hub policy/credentials, while
+previewing candidate repository/policy intent. Valid incompatible proposals stay
+valid, and broken installed policy permits unknown-compatibility syntax validation.
+The receipt retains installed admitted fingerprint; absent candidate preserves
+historical plan key digests and explicit null refuses. HTTPCore 1.0.9 becomes an
+explicit base dependency for resource-safe Unix client transport; its locked
+package/version is unchanged. No API configuration install,
+new durable shape, writer authority or MCP is introduced. CP-11's
+privileged host installation/backups and later shipped caller integration remain.
 
 ## 3. Architecture decisions
 
@@ -1385,6 +1407,17 @@ API-008 owns execution. Later receipts store nonsecret principal identity, never
 credential values. Whole-archive authorization, AD-21 and immutable archive
 schemas retain their existing meaning. [Server](server.md) records every key
 and the precise implemented/pending boundary.
+
+### Unix client resource ownership (API-012, 2026-10-18)
+
+[Decision 119](adr/decision-119.md) promotes already-locked HTTPCore 1.0.9 to a
+direct base dependency (`>=1.0.9,<2`). A narrow Unix-only HTTPX public transport
+uses its public connection-pool/network interfaces and closes owned sockets on
+failed connects and response cleanup. This fixes an observed unavailable-API
+descriptor leak while retaining maintained HTTP framing/pooling. TCP/TLS stays on
+HTTPX; no IP fallback, private pool mutation, global patch or suppressed resource
+warning is permitted. This is the scoped FW-03/FW-04 amendment; no new package,
+version, orchestration framework or durable authority is added.
 
 ### Authenticated metadata transport amendment (API-006, 2026-10-17)
 

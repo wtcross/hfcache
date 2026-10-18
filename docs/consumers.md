@@ -86,10 +86,21 @@ checks identity and containment and never substitutes a newer current instance
 when a requested instance has vanished. These services add no artifact transfer
 channel; the read-only export and independent copy verification remain the
 consumer data path. API-006 now adds authenticated REST metadata discovery;
-API-backed CLI migration and MCP remain later tasks. No production listener
-installation is asserted by the implementation tests.
+API-012 now supplies API-backed CLI metadata discovery and independent reader
+settings; MCP remains gated. No production listener installation is asserted by
+the implementation tests.
 
 ### Optional authenticated discovery
+
+A reader may install the base package and provision only the independent
+[client settings/API reader credential](api-client.md); no archive TOML, service
+UID, Hub credential or archive mount is needed for metadata commands. API-012's
+`status`, `list --revisions`, server version, inspection and estimate report the
+writer, never silently read a local archive after connection failure. Complete
+pagination/joined inventory is bounded and inconsistent evidence fails visibly.
+The independent copy helper below still needs its read-only mount and Python,
+with no project installation; API discovery does not replace its one-reference
+copy attempt or complete local path/size/SHA-256 verification.
 
 An authorized REST reader or writer can discover repositories through
 `GET /api/v1/repositories`, walking `next_cursor` until null. Revision pages are

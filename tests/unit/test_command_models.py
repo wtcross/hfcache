@@ -39,7 +39,7 @@ def test_selection_is_immutable_canonical_identity_not_requested_revision(model)
     original.clear()
     assert parsed.selectors == ("dataset:organization/data", SELECTOR)
     assert model.model_validate({}).selectors == ()
-    assert parsed.model_dump(mode="json") == {"selectors": ["dataset:organization/data", SELECTOR]}
+    assert parsed.canonical_body() == {"selectors": ["dataset:organization/data", SELECTOR]}
 
 
 @pytest.mark.parametrize("value", [1, True, None, {}, [], 1.25])
@@ -107,11 +107,18 @@ def test_diagnostics_requires_explicit_strict_effect_choice(body):
         DiagnosticsSubmission.model_validate(body)
 
 
-@pytest.mark.parametrize("model", [InstalledValidationSubmission, PlanSubmission])
+@pytest.mark.parametrize("model", [InstalledValidationSubmission])
 def test_candidate_or_server_path_is_not_an_implemented_http_command(model):
     for body in ({"candidate": CANDIDATE}, {"config": "/tmp/arbitrary.toml"}):
         with pytest.raises(ValidationError):
             model.model_validate(body)
+
+
+def test_plan_accepts_candidate_content_but_never_a_server_path():
+    assert PlanSubmission(candidate=CANDIDATE).candidate == CANDIDATE
+    for body in ({"candidate": None}, {"config": "/tmp/arbitrary.toml"}):
+        with pytest.raises(ValidationError):
+            PlanSubmission.model_validate(body)
 
 
 def test_response_schema_resolves_nested_receipt_and_candidate_hook_is_content_only():

@@ -1063,6 +1063,43 @@ package in this family.
   archive shape/MCP or production operation; live/NFS/installed-host and extra
   build-marker suites did not run. Next selected task is API-012 pending.)
 
+- [x] API-012 Migrate reader CLI and candidate validation/planning
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-012-migrate-read-cli-and-candidates.md)).
+  Actual reader modes use authenticated HTTP without local writer loaders,
+  archive fallback or required client archive paths. Exact server Envelope IDs,
+  times, warnings/errors/domain exits survive one terminal rendering. Complete
+  bounded page reconstruction and inventory/revision joins preserve unmanaged/
+  empty rows and refuse inconsistent current publication identity. Help/local
+  version and explicit local validation stay bootstrap; non-inspect missing root
+  retains usage exit 2 and legacy config/Hub overrides refuse before file access.
+  Writer candidate content validation separates validity from false/unknown
+  compatibility without credentials/Hub/probes; installed-authority planning
+  rechecks all six fields after waiting, uses installed credentials/fingerprint,
+  binds exact TOML text and preserves old absent-candidate key digests. Explicit
+  null refuses. CP-11 host installation/backups remain outside REST. All 29 HTTP
+  parity rows are implemented; mutating CLI and host/MCP acceptance remain gated.
+  Required missing-UDS testing exposed a real dependency socket leak before the
+  gate. Public Unix HTTPX/HTTPCore interfaces now close owned failed sockets and
+  response resources while maintained HTTPCore retains HTTP framing/pooling and
+  TCP/TLS stays on HTTPX. Direct HTTPCore retains locked 1.0.9 without a new
+  package/version; no private mutation/global patch/IP fallback/warning suppression.
+  Decision 119 and 087/108/112/116/118, AD-21/framework amendments record FW-04
+  correctness rationale, reviewed invariants/CP-11 and affected contracts/examples.
+  Focused candidate HTTP: 55 passed in 7.28 seconds; reader CLI: 84 in 16.65;
+  local validation: 25 in 0.84; final CLI integration: 28 in 3.61; transport: 20
+  in 0.55; real Unix/TCP/TLS: 3 in 2.14. Two legacy fixture-overlap assertions
+  were corrected before the gate, with all 13 query cases then green. First full
+  `rtk proxy bash -c 'bash scripts/check.sh > .scratch/api-012-gate.log 2>&1'`
+  exits 0: lock/sync, 345 formatted files, lint/types, 2,953 Python tests
+  (40 deselected, 195.16 seconds), 0.1.10 sdist/wheel, locked isolated base/server
+  install/import/help/version, 45 Cockpit tests and production build. No gate
+  failure/correction/retry or post-freeze source change. Final links/current/
+  dependencies, 29 implemented / 0 planned rows, 119 indexed decision/ADR records
+  and whitespace pass. No durable format/MCP or production operation; live/NFS/
+  installed-host and additional build-marker suites did not run. Next selected
+  task is API-013 pending, after this package's commit.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3731,3 +3768,24 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      and key/route too, because even a valid 500 can follow durable admission.
      CLI runtime migration remains API-012/013;
      no durable archive shape, runtime dependency, MCP or production change.
+
+119. **Preserve server read identity and separate candidate validity from authority**
+     (2026-10-18, API-012). [ADR](adr/decision-119.md): CLI metadata/read-only jobs
+     use the independent typed client without local archive fallback, retaining
+     exact server Envelopes, times, domain IDs, errors and complete paged data.
+     Inspection uses the configured server target; an optional root restatement
+     checks the returned root and does not select it. Local help/version and
+     explicit config validation --local remain bootstrap exceptions. Other API
+     reads reject archive-config and Hub-token overrides. Candidate TOML is bounded
+     local content, never a server file path; syntax-valid incompatible proposals
+     remain valid with compatibility=false and mismatch names, without credentials.
+     Candidate planning requires all six authority fields to match before installed
+     credential use, while previewing candidate repository/policy intent. Retain
+     installed admitted fingerprint and preserve old installed-plan key digests
+     when candidate is absent. Installation/backups stay privileged host work.
+     Promote already-locked HTTPCore 1.0.9 to a direct base dependency for a public
+     Unix-only adapter that owns failed sockets and response cleanup, retaining
+     maintained HTTP framing/pooling and TCP/TLS through HTTPX. No private pool
+     mutation, global patch, IP fallback or warning suppression; the observed
+     missing-socket leak provides material FW-04 correctness rationale. No new
+     package/version, durable shape, MCP or production change.

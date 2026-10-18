@@ -401,9 +401,10 @@ Installed validation resolves only that source or the installed systemd source,
 without a Hub request. Pure bounded candidate assessment compares root/UUID,
 endpoint, token mode, credential name and expected account; it never resolves a
 candidate credential, reads a candidate-selected path, contacts the Hub or installs
-policy. Current HTTP candidate fields remain refused until API-012. See
+policy. API-012 now exposes writer-only candidate content validation/planning,
+with fresh installed-authority checks before Hub work. See
 [decision 116](adr/decision-116.md), [body/role rules](api.md#implemented-command-resources-api-009)
-and [candidate authority](configuration.md#12-candidate-authority-preparation-api-009).
+and [candidate authority](configuration.md#12-candidate-authority-validation-and-planning-api-012).
 
 **Explicit maintenance boundary (API-010).** Reader previews and writer-only
 apply resources have separate URLs and strict scopes; all are keyed bounded jobs.
@@ -440,8 +441,30 @@ local archive fallback, daemon startup or cancellation of accepted work follows.
 Old operation results retain admitted UUID/fingerprint and exact domain IDs/exit.
 The optional installed client file is a declared source, not permission to discover
 Hub/API tokens elsewhere. Global CLI options are stored now; operational migration
-remains API-012/013. See [decision 118](adr/decision-118.md) and
+is completed for reads/candidates by API-012; mutating CLI UX remains API-013.
+See [decision 118](adr/decision-118.md) and
 [client setup/troubleshooting](api-client.md).
+
+**Reader/candidate integration (API-012).** Migrated reads report writer truth
+without client archive TOML/mount/service identity/Hub credentials or local fallback.
+Exact server Envelope IDs/times/exit are retained; complete finite page aggregation
+and current-publication joins refuse inconsistent evidence. Remote inspection
+requires no client path, and optional root restatement cannot select server paths.
+Local help/version and explicit local config validation are bootstrap exceptions.
+Explicit archive `--config` on other API reads and Hub-token overrides are refused.
+
+Writer candidate validation reads bounded UTF-8 content from the CLI host, never
+a pathname on the server, and resolves no credential/Hub/probe. Valid incompatible
+policy stays valid with false compatibility and mismatch names; broken installed
+policy permits syntax validity with unknown compatibility. Neither result grants
+planning/install authority. Candidate planning rechecks root/UUID/endpoint/token
+mode/credential name/expected account before installed credential use, including
+the credential name excluded from policy fingerprints. Candidate policy controls
+preview intent only; installed limits/admitted fingerprint remain authoritative.
+Exact candidate text binds a key; absent fields preserve old installed-plan digests
+and explicit null refuses. REST cannot install policy/backups or give browsers
+bearers. See [decision 119](adr/decision-119.md), [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012)
+and [CLI migration](api-client.md#cli-migration-api-012).
 
 ## 4. Controls summary
 

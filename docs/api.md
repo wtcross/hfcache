@@ -4,7 +4,8 @@ Status: API-006 implements authenticated archive metadata and API-007 adds
 bounded receipt/admission primitives and operation observation; API-009 adds
 typed command routes, with guarded maintenance/initialization added by API-010,
 under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
-Candidate operations and API-backed public CLI migration remain planned. No
+API-012 adds candidate validation/planning and reader CLI integration; side-
+effecting public CLI migration remains API-013. No
 production installation or listener start is asserted by implementation evidence.
 
 ## Service and transport boundary
@@ -29,26 +30,26 @@ pending evidence rather than claims that a proposed route works. Preserve
 one row for each mode when filling them. `archive` means the cross-process
 local flock through all domain persistence; `worker archive` means that same
 lock is owned by the offline executor. A preview cannot grant apply authority.
-An implemented read row means its HTTP resource exists; the public CLI still
-uses its local service until API-011–013 migrate it.
+An implemented row means its HTTP resource exists; API-012 migrates reader/
+candidate CLI modes while API-013 still owns side-effecting CLI migration.
 
 | CLI mode | Service | Route | Role | Lock | Hub | Execution | Effects | CLI test | API test | State |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| version --server | version | GET /version | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| version --server | version | GET /version | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | capabilities | capabilities | GET /capabilities | R | none | no | Q | none | pending CLI migration | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
-| archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_candidates.py; tests/unit/test_api_candidates_adversarial.py | implemented |
+| archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | pending | pending | planned |
+| plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_candidates.py; tests/unit/test_api_candidates_adversarial.py | implemented |
 | sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| status [selectors] | archive_status | GET /status | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| status [selectors] | archive_status | GET /status | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
@@ -108,7 +109,7 @@ These services preserve domain ordering and classified partial results; public
 commands own the common archive lock once. Adapters and later operation runners
 must call them without an outer archive lock. Verification persistence now stays
 inside its lock/preflight boundary (decision 110). API-009/010 expose the command resources below through those services;
-candidate routes and remote CLI modes remain with their implementing tasks.
+API-012 adds candidate routes/reader CLI modes; API-013 retains mutating CLI modes.
 
 ## Implemented metadata resources (API-006)
 
@@ -225,9 +226,9 @@ present, or when diagnostics does not contain literal `read_only=true`.
 | --- | --- | --- | --- |
 | `POST /syncs` | `selectors` array, default `[]` | W; ordinary whole-run sync, archive mutation/automatic retention under the shared lock | Keyed job, 202 |
 | `POST /verifications` | Required `mode`: `new`, `full` or `revision`; nullable `revision`/`run_id` as below | W; private offline verification, report/catalog persistence under worker-owned lock | Keyed job, 202 |
-| `POST /plans` | `selectors` array, default `[]` | R; installed-policy Hub planning, no archive mutation/lock | Keyed job, 202 |
+| `POST /plans` | `selectors` array, default `[]`; optional bounded TOML `candidate` (API-012) | R installed / W candidate; Hub planning with installed authority, no archive mutation/lock | Keyed job, 202 |
 | `POST /diagnostics` | Required strict `read_only` boolean | R for `true`, W for `false`; Hub checks in both, write probes/lock only for `false` | Keyed job, 202 |
-| `POST /config/validate` | Exactly `{}` | R; current installed-policy/credential-source validation, no Hub request, receipt or archive mutation | Immediate `ReadResponse`, 200 |
+| `POST /config/validate` | `{}` for installed policy, or bounded TOML `candidate` (API-012) | R installed / W candidate; no Hub request, receipt or archive mutation | Immediate `ReadResponse`, 200 |
 
 Sync/plan accept at most 100 selectors, each at most 256 characters, parsed by
 existing repository validators and canonicalized as a sorted distinct repository
@@ -329,10 +330,56 @@ schema-1 validation result in `ReadResponse.envelope`; classified policy/credent
 failures remain failed Envelopes at HTTP 200. It reports nonsecret token-source
 classification and never returns a credential.
 
-Candidate content is not accepted on these routes yet: raw `candidate` presence
-is 403 for a reader, then an unknown-field 422 for a writer. The reserved bounded
-`CandidatePayload` and pure authority-assessment hooks are API-012 preparation,
-not candidate HTTP availability, arbitrary server-file loading or installation.
+### Candidate content and installed authority (API-012)
+
+`candidate` is TOML text, not a server pathname. Raw field presence requires writer
+capability before DTO validation, including explicit null; readers use the installed
+shape without that field. Only an absent field means installed intent; explicit
+null is refused. For plans, only an absent candidate is omitted from canonical
+request projection, preserving the previous
+installed `{"selectors": [...]}` key digest. Candidate text binds the request as
+exact text; different text is a different keyed request even if policy is equivalent.
+
+Local CLI content reads and server candidate assessment are bounded to 1 MiB of
+UTF-8. The server's total JSON request bound applies independently; escaping/wrapper
+overhead may cause 413 even before the content limit. Unknown dispatch fields,
+top-level token/source/endpoint overrides and arbitrary-path dispatch remain refused.
+Proposed authority changes inside candidate policy can be assessed without use.
+These routes never
+install configuration, create an archive or resolve candidate-selected credentials.
+
+Valid candidate validation includes the four legacy validation payload fields
+plus `valid`, `syntax_valid`, `authority_compatible`, `authority_mismatches` and
+`installed_policy_valid`, with `token_source="not-resolved"`. Invalid candidates
+retain the validity/compatibility flags and ordered errors without inventing
+unavailable counts/fingerprints. Valid syntax/policy
+with incompatible authority stays valid at exit 0, reports compatibility false
+and only fixed mismatch field names. If installed policy is currently unavailable/
+invalid, candidate syntax validation still works: a valid candidate has true
+validity, null compatibility and `installed_policy_valid=false`. Null compatibility
+is unknown, not authority to plan. Invalid candidate syntax/policy retains its
+ordered safe classified errors. No credential, Hub request, archive probe or
+configuration installation occurs during candidate validation.
+
+Candidate planning is a keyed writer job. It requires all six installed authority
+fields to match before credential-bearing work: archive root/UUID, Hub endpoint,
+token mode, credential name and expected account. Compatible candidate repository,
+retention and worker policy can be previewed, while only the installed credential
+is resolved. Incompatibility or malformed policy yields 202 admission followed by
+the exact classified failed terminal Envelope, not Hub work against the proposed
+endpoint. The receipt/result wrapper retains the installed admitted fingerprint;
+candidate intent cannot replace its operation authority. Recheck all six fields
+again immediately before Hub work after queue waiting: `hub.credential_name` is
+excluded from the policy fingerprint, so fingerprint equality alone cannot prove
+that credential authority still matches. Syntax validation alone
+never grants planning, installation or later mutation authority.
+
+The CLI reads `--config` on its own host for validate/plan and submits content.
+Other migrated reads reject explicit archive `--config` and Hub `--token-file`.
+Exact server Envelope IDs/times survive rendering, complete page reconstruction
+and inventory/revision consistency checks. See [decision 119](adr/decision-119.md),
+[client migration](api-client.md#cli-migration-api-012) and
+[candidate configuration](configuration.md#12-candidate-authority-validation-and-planning-api-012).
 
 ## Implemented maintenance resources (API-010)
 
@@ -571,7 +618,7 @@ reloads installed policy under the service-owned lock and refuses stale scope
 before mutation without duplicate/nested lock acquisition. Verification delegates
 to the private socket executor, which owns its lock through report/catalog
 persistence. API-009/010 implement the command/maintenance resources above;
-candidate HTTP remains API-012.
+API-012 adds candidate HTTP; public mutating CLI integration remains API-013.
 
 Disconnect and Ctrl-C stop observation. They do not cancel accepted work. Later
 API-backed clients emit the nonsecret key before mutation submission and operation
@@ -714,8 +761,8 @@ records file ownership, transitions, event/result bounds and compatibility.
 API-005 supplies strict configuration, credential loading, fixed capability
 principals and a reusable FastAPI bearer adapter. API-006 authenticates all
 metadata HTTP routes/errors/schema/docs and applies transport bounds. API-009/010
-extend those controls to keyed command/maintenance jobs. Candidate operations
-remain API-012; MCP and installed-host acceptance remain gated.
+extend those controls to keyed command/maintenance jobs. API-012 adds candidate operations and reader integration; MCP and installed-host
+acceptance remain gated.
 
 | Credential class | Accepted interface | Core capability | REST read | REST write |
 | --- | --- | --- | --- | --- |
@@ -724,7 +771,7 @@ remain API-012; MCP and installed-host acceptance remain gated.
 | MCP reader | Future MCP only | `mcp-read` | 401 `HFAPI001` | 401 `HFAPI001` |
 | Absent, invalid or malformed bearer | none | none | 401 `HFAPI001` | 401 `HFAPI001` |
 
-Capabilities do not grant an unimplemented candidate/MCP route or bypass the
+Capabilities do not grant an unimplemented MCP route or bypass the
 initialization gate, locked scope/evidence checks or domain refusal.
 Cross-interface credentials are rejected as unauthenticated. Missing,
 malformed and invalid authentication uses the same safe detail `Not authenticated`
@@ -775,10 +822,10 @@ POST replay or new-key retry follows lost acknowledgement. HFAPI017/018 classify
 client configuration/protocol at exit 10; HFAPI019/020 classify connectivity/
 uncertain submission at exit 20, retaining existing server/domain codes.
 
-Global selection options are parsed/stored now; public read/candidate migration
-remains API-012 and command/operation UX remains API-013. This package changes no
-parity row availability, durable shape, dependency, writer authority or MCP gate.
-See [decision 118](adr/decision-118.md).
+API-012 uses the global choices for public reader/candidate modes, completing all
+29 HTTP parity rows. Command/operation UX remains API-013. These integrations
+change no durable shape, writer authority or MCP gate. See
+[decision 118](adr/decision-118.md) and [decision 119](adr/decision-119.md).
 
 ## Acceptance boundaries
 

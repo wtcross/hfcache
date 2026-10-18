@@ -469,15 +469,23 @@ state root; API-014 owns installed socket/identity/no-IP provisioning. See
 [server verifier settings](server.md#private-verifier-client-settings-api-008)
 and [decision 115](adr/decision-115.md).
 
-## 12. Candidate authority preparation (API-009)
+## 12. Candidate authority validation and planning (API-012)
 
-[`services.candidates`](../src/hfcache/services/candidates.py) supplies pure
-API-012 hooks, not a configuration-install or arbitrary-file API.
-`assess_candidate(content, installed)` accepts only nonempty TOML text bounded
-to 1 MiB of UTF-8, validates the existing archive-policy schema and returns a
-`CandidateAssessment(config, mismatches)`. Syntax/policy validity and authority
-compatibility are separate: a syntactically valid candidate may require an
-operator authority/restart procedure before any planning.
+[`services.candidates`](../src/hfcache/services/candidates.py) validates bounded
+candidate TOML content without loading a server-selected file. The pure API-009
+hooks now support API-012 validation/planning; an explicit CLI `--config` for those
+commands reads at most 1 MiB of nonempty regular UTF-8 content on the CLI host,
+checks stable descriptor metadata and uploads text. It never sends a pathname
+for the server to open. The total JSON request cap may refuse escaping/overhead
+independently. Other migrated API reads reject archive-config/Hub-token overrides.
+
+Syntax/policy validity and installed authority compatibility are separate. Candidate
+validation uses no credential/Hub/probe and reports `token_source=not-resolved`.
+Valid incompatible policy remains valid with compatibility false and ordered
+mismatch field names. A valid candidate can also be syntax-validated while installed
+policy is broken/unavailable: compatibility is null and `installed_policy_valid`
+is false, not permission to plan. Validity proves no credential availability or
+Hub/account/network identity. Invalid policy retains safe ordered classified errors.
 
 `authority_mismatches` compares these fields in fixed order and returns only
 field names, never proposed/installed values:
@@ -491,19 +499,23 @@ field names, never proposed/installed values:
 | `hub.credential_name` | Prevent selecting another protected source |
 | `hub.expected_account` | Preserve the expected Hub account |
 
-`require_compatible_authority` refuses a mismatch with `HFAPI007`/409. These hooks
-never load a caller-selected file, resolve any credential, contact the Hub,
-install policy or mutate/archive-probe a path. Future candidate planning must
-still use only the installed authorized Hub credential after compatibility checks.
-The startup-only `serve --hub-token-file` remains fixed server authority and is
-never a candidate/request field. Repository/retention/worker-policy previews do
-not grant authority to change the six fields above.
+Only compatible candidates can enter credential-bearing planning, using installed
+authorized credentials with candidate repository/retention/worker intent. Proposed
+authority changes can be validated but require privileged operator installation
+before planning; startup-pinned root/UUID changes also require restart. A plan is a keyed writer job, retains the
+installed admitted fingerprint and cannot authorize apply. All six authority
+fields are checked again after queue waiting before Hub work, including the
+credential name deliberately excluded from the policy fingerprint. The startup-only
+`serve --hub-token-file` remains installed server authority, never request input.
 
-The reserved `CandidatePayload(candidate: str)` is a schema hook. Current
-`POST /plans` and `POST /config/validate` accept installed-policy DTOs only;
-candidate presence is reader 403 / writer unknown-field 422. API-012 owns the
-full client/Cockpit candidate content pipeline. See [decision 116](adr/decision-116.md)
-and [command resource contract](api.md#implemented-command-resources-api-009).
+Only an absent candidate means installed intent; explicit null is refused. The
+absent optional field is omitted from plan canonical bodies, preserving existing
+installed-plan key digests.
+Candidate exact text binds a new request; no raw candidate body is durable control
+state. REST cannot install policy or backups. Cockpit's candidate → validate →
+preview → privileged atomic install/backup boundary (CP-11) remains, with shipped
+caller/credential integration completed by API-015. See [decision 119](adr/decision-119.md)
+and [candidate wire contract](api.md#candidate-content-and-installed-authority-api-012).
 
 ## 13. Independent reader/client configuration (API-011)
 
@@ -525,6 +537,7 @@ No Hub/ambient bearer/proxy discovery or local archive fallback is permitted.
 The [client contract](api-client.md#client-configuration-and-setup) records exact
 fields/defaults/ranges and safe file/URL rules. Settings/selection failures use
 HFAPI017; protected credential failures retain HFAPI003. Separate client settings
-never enter archive-policy fingerprints or receipts. CLI global options are stored
-in API-011; operational HTTP migration remains API-012/013. See
+never enter archive-policy fingerprints or receipts. API-012 uses the stored
+global choices for reader/candidate modes; side-effecting CLI migration remains
+API-013. See
 [decision 118](adr/decision-118.md).

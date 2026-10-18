@@ -293,14 +293,14 @@ def test_candidate_presence_requires_writer_before_dto_validation(configured, ro
 
 
 @pytest.mark.parametrize("route", ["/api/v1/plans", "/api/v1/config/validate"])
-def test_candidate_http_payload_remains_unimplemented_without_echo_or_admission(configured, route):
+def test_explicit_null_candidate_is_refused_without_echo_or_admission(configured, route):
     app, _, archive = configured
 
     status, payload, _ = asyncio.run(
         _raw(
             app,
             route,
-            body=json.dumps({"candidate": f'credential="{OPAQUE}"'}).encode(),
+            body=json.dumps({"candidate": None}).encode(),
             headers=[(b"idempotency-key", b"candidate-reserved")],
         )
     )

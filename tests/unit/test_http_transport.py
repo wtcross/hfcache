@@ -27,7 +27,7 @@ def test_httpx_factory_ignores_ambient_auth_proxies_and_never_follows_redirects(
         "machine archive.example.com login user password ambient-secret"
     )
     monkeypatch.setattr(httpx, "HTTPTransport", transport)
-    with create_http_client(unix_socket=tmp_path / "api.sock") as client:
+    with create_http_client() as client:
         assert client.get("https://archive.example.com/version").status_code == 302
         assert client.timeout.connect == 5
         assert client.timeout.pool == 5
@@ -37,7 +37,6 @@ def test_httpx_factory_ignores_ambient_auth_proxies_and_never_follows_redirects(
     assert "authorization" not in requests[0].headers
     assert arguments["trust_env"] is False
     assert arguments["retries"] == 0
-    assert arguments["uds"] == str(tmp_path / "api.sock")
     assert arguments["verify"].verify_mode == ssl.CERT_REQUIRED
     assert arguments["verify"].check_hostname is True
     assert arguments["limits"].max_connections == 8

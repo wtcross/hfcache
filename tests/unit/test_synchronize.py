@@ -60,6 +60,7 @@ from hfcache.services.context import ExecutionContext
 from hfcache.storage import parse_mount_table
 from hfcache.sync import synchronize
 from hfcache.transactions import open_transaction, read_journal
+from tests.api_cli import api_cli
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -1502,7 +1503,8 @@ def test_a_completed_run_leaves_nothing_reading_as_unfinished(config_file: Path,
 
     assert result.exit_code == ExitCode.SUCCESS
     assert list(layout.staging.iterdir()) == []
-    status = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+    with api_cli(config_file) as remote:
+        status = remote.invoke(["status"])
     archive = json.loads(status.stdout)["data"]["archive"]
     assert archive["unfinished_transactions"] == 0
     assert archive["findings"] == []
@@ -1685,7 +1687,8 @@ def test_a_clean_run_reports_no_errors_and_exits_zero(client, layout, config):
 def test_status_reports_retained_and_current_state(config_file: Path):
     CliRunner().invoke(app, ["--config", str(config_file), "sync"])
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["status"])
 
     entries = {
         f"{e['repository_type']}:{e['repository_id']}": e
@@ -1700,7 +1703,8 @@ def test_status_reports_retained_and_current_state(config_file: Path):
 @pytest.mark.usefixtures("_wired")
 def test_status_answers_for_a_repository_that_was_never_synced(config_file: Path):
     # A configured repository with nothing archived yet is a normal state.
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["status"])
 
     entry = json.loads(result.stdout)["data"]["repositories"][0]
     assert result.exit_code == ExitCode.SUCCESS
@@ -1714,7 +1718,8 @@ def test_status_never_contacts_the_hub(config_file: Path, hub: FakeHub):
     # It must answer when the Hub is unreachable, so it does not resolve.
     hub.heads.clear()
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["status"])
 
     assert result.exit_code == ExitCode.SUCCESS
     assert {e["upstream_state"] for e in json.loads(result.stdout)["data"]["repositories"]} == {
@@ -1728,7 +1733,8 @@ def test_list_reads_manifests_and_references_not_the_catalog(config_file: Path, 
     # The catalog is derived and can be missing (`FS-16`); `list` answers anyway.
     layout.repositories_catalog.unlink()
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "list"])
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["list"])
 
     entries = json.loads(result.stdout)["data"]["repositories"]
     assert result.exit_code == ExitCode.SUCCESS
@@ -1743,9 +1749,8 @@ def test_list_revisions_describes_each_retained_revision(config_file: Path, hub:
     hub.heads[MODEL.selector] = SHA_B
     CliRunner().invoke(app, ["--config", str(config_file), "sync"])
 
-    result = CliRunner().invoke(
-        app, ["--json", "--config", str(config_file), "list", "--revisions"]
-    )
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["list", "--revisions"])
 
     entries = {e["repository_id"]: e for e in json.loads(result.stdout)["data"]["repositories"]}
     revisions = entries[MODEL.id]["revisions"]
@@ -1758,9 +1763,8 @@ def test_list_revisions_describes_each_retained_revision(config_file: Path, hub:
 def test_list_restricts_to_one_repository_type(config_file: Path):
     CliRunner().invoke(app, ["--config", str(config_file), "sync"])
 
-    result = CliRunner().invoke(
-        app, ["--json", "--config", str(config_file), "list", "--type", "dataset"]
-    )
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["list", "--type", "dataset"])
 
     entries = json.loads(result.stdout)["data"]["repositories"]
     assert [e["repository_id"] for e in entries] == [DATASET.id]
@@ -1770,18 +1774,16 @@ def test_list_restricts_to_one_repository_type(config_file: Path):
 def test_list_restricts_to_its_selectors(config_file: Path):
     CliRunner().invoke(app, ["--config", str(config_file), "sync"])
 
-    result = CliRunner().invoke(
-        app, ["--json", "--config", str(config_file), "list", "model:organization/model-name"]
-    )
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["list", "model:organization/model-name"])
 
     entries = json.loads(result.stdout)["data"]["repositories"]
     assert [e["repository_id"] for e in entries] == [MODEL.id]
 
 
 def test_list_refuses_a_type_that_is_not_a_repository_type(config_file: Path):
-    result = CliRunner().invoke(
-        app, ["--json", "--config", str(config_file), "list", "--type", "space"]
-    )
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["list", "--type", "space"])
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG002"]
@@ -1791,14 +1793,16 @@ def test_list_refuses_a_type_that_is_not_a_repository_type(config_file: Path):
 def test_list_prints_one_line_per_repository(config_file: Path):
     CliRunner().invoke(app, ["--config", str(config_file), "sync"])
 
-    result = CliRunner().invoke(app, ["--config", str(config_file), "list"])
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["list"], json_output=False)
 
     assert "1 revisions" in result.output
     assert SHA_A in result.output
 
 
 def test_list_answers_for_an_archive_with_nothing_published(config_file: Path):
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "list"])
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["list"])
 
     assert result.exit_code == ExitCode.SUCCESS
     assert json.loads(result.stdout)["data"]["repositories"] == []
@@ -1812,7 +1816,8 @@ def test_status_answers_over_a_damaged_reference(config_file: Path, layout):
     repository = RepositoryLayout(archive=layout, identity=MODEL)
     repository.current_ref.write_text("{ not json", encoding="utf-8")
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["status"])
 
     entries = {
         f"{e['repository_type']}:{e['repository_id']}": e
@@ -1832,7 +1837,8 @@ def test_status_skips_a_run_report_it_cannot_read(config_file: Path, layout):
     for report in layout.runs.glob("*.json"):
         report.write_text("{ not json", encoding="utf-8")
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "status"])
+    with api_cli(config_file) as remote:
+        result = remote.invoke(["status"])
 
     entries = json.loads(result.stdout)["data"]["repositories"]
     assert result.exit_code == ExitCode.SUCCESS
@@ -1847,7 +1853,8 @@ def test_status_reports_no_last_run_when_the_archive_is_absent(tmp_path: Path):
         encoding="utf-8",
     )
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(path), "status"])
+    with api_cli(path) as remote:
+        result = remote.invoke(["status"])
 
     entries = json.loads(result.stdout)["data"]["repositories"]
     assert result.exit_code == ExitCode.SUCCESS

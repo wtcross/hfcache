@@ -1,7 +1,8 @@
 # Decision 112 — Separate server authority and verified bearer capabilities
 
 - Status: Accepted; implemented incrementally by API-005, with metadata-route/lifespan enforcement advanced by [decision 113](decision-113.md)
-  and command authority extended by [decision 116](decision-116.md).
+  and command authority extended by [decision 116](decision-116.md). Direct
+  HTTPCore use is amended by [decision 119](decision-119.md).
 - Date: 2026-10-17.
 - Work package: API-005, this commit.
 - Source: [progress decision 112](../progress.md#decisions),
@@ -53,6 +54,11 @@ implemented extra instead of silently skipping its tests, and smoke-installs
 both locked base/server wheels into real isolated environments. Python 3.14 lock and
 installation evidence belongs to this package; no existing dependency is
 upgraded merely to add this boundary.
+
+**2026-10-18 API-012 amendment:** [decision 119](decision-119.md) makes
+already-locked HTTPCore 1.0.9 an explicit base dependency (`>=1.0.9,<2`) for a
+public Unix-only transport adapter that closes failed connections. No package or
+version upgrade, private HTTPX pool mutation or custom HTTP parser is introduced.
 
 The small `create_http_client` primitive constructs verified default/custom-CA
 HTTPX transport with optional Unix sockets, no environment discovery, redirects

@@ -94,3 +94,12 @@ Official HTTPX documentation checked for the already locked 0.28.1 client API:
 [environment discovery controls](https://www.python-httpx.org/environment_variables/)
 and [streaming responses](https://www.python-httpx.org/quickstart/#streaming-responses).
 No new dependency/version resolution is introduced by this package.
+
+## API-012 reader integration amendment
+
+[Decision 119](decision-119.md) migrates actual read CLI modes through this client,
+preserving exact server Envelope IDs/times/exit and complete finite page/joined
+inventory. Explicit local validation stays bootstrap, never a fallback. Candidate
+content is read on the CLI host, validated separately from authority compatibility
+and planned only with installed credentials. Side-effecting CLI/operation UX
+remains API-013; the client adds no archive filesystem authority.

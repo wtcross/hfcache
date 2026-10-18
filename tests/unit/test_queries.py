@@ -6,12 +6,11 @@ from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
 
-from hfcache.cli import app
 from hfcache.config import ApplicationConfig
 from hfcache.errors import ConfigurationError, Problem
 from hfcache.identity import RunId
+from hfcache.metadata import MetadataReader
 from hfcache.services.context import ExecutionContext, ServiceResult, new_operation_id
 from hfcache.services.queries import (
     LocalQueries,
@@ -20,6 +19,7 @@ from hfcache.services.queries import (
     query_version,
     validate_config,
 )
+from tests.api_cli import api_cli
 from tests.fixtures import examples
 
 
@@ -201,15 +201,21 @@ def test_service_modules_and_read_protocol_have_no_transport_or_command_authorit
 
 
 @pytest.mark.parametrize("command", ["status", "list"])
-def test_cli_query_envelopes_delegate_and_allow_unmanaged_selectors(queries, command):
+def test_cli_query_envelopes_delegate_and_allow_unmanaged_selectors(
+    queries, command, tmp_path_factory, monkeypatch
+):
     identity = _publication(queries)
-    path = queries.layout.root / "config.toml"
+    capacity = MetadataReader(queries.layout.root).capacity()
+    monkeypatch.setattr(MetadataReader, "capacity", lambda _self: capacity)
+    # Daemon control state stays outside the archive it observes.
+    path = tmp_path_factory.mktemp("query-cli") / "config.toml"
     path.write_text(
         f'schema_version = 1\n[storage]\narchive_root = "{queries.layout.root}"\n'
         f'archive_id = "{examples.ARCHIVE_ID}"\n',
         encoding="utf-8",
     )
-    result = CliRunner().invoke(app, ["--json", "--config", str(path), command, identity.selector])
+    with api_cli(path) as remote:
+        result = remote.invoke([command, identity.selector])
 
     assert result.exit_code == 0, result.output
     envelope = json.loads(result.stdout)

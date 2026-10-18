@@ -1,6 +1,6 @@
 # Decision 108 — Typed services and maintained transport implementations
 
-- Status: Accepted target contract; dependency/configuration/authentication enforcement advanced by [decision 112](decision-112.md), with transport integration still incremental.
+- Status: Accepted target contract; dependency/configuration/authentication enforcement advanced by [decision 112](decision-112.md), with reader/candidate integration and explicit HTTPCore use amended by [decision 119](decision-119.md).
 - Date: 2026-10-17.
 - Work package: API-001, this commit.
 - Source: [progress decision 108](../progress.md),
@@ -71,3 +71,13 @@ original keys on submission uncertainty. No archive policy, optional server/MCP
 framework, ambient credential/proxy, local fallback or daemon-start authority is
 introduced. Global endpoint/source options are stored; operational CLI migration
 remains API-012/013. No additional dependency is required.
+
+## API-012 reader and Unix transport implementation (2026-10-18)
+
+[Decision 119](decision-119.md) migrates actual reader/candidate CLI modes and
+promotes already-locked HTTPCore 1.0.9 to an explicit base dependency for a public
+Unix-only HTTPX adapter. Socket ownership fixes observed failed-connect leakage,
+while HTTPCore retains HTTP parsing/pooling and TCP/TLS stays on HTTPX. No package
+or version upgrade, private pool mutation, global patch, IP fallback or warning
+suppression is introduced. The exact server/domain authority and remaining
+framework/MCP exclusions stand.

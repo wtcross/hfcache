@@ -28,6 +28,7 @@ from hfcache.hub import DownloadEstimate, HubClient, RepositoryFacts, TreeEntry
 from hfcache.identity import CommitSha, new_run_id, new_transaction_id
 from hfcache.paths import ArchiveLayout
 from hfcache.transactions import open_transaction
+from tests.api_cli import api_cli
 
 runner = CliRunner()
 
@@ -213,6 +214,14 @@ def invoke(config_file: Path, *arguments: str):
     return runner.invoke(app, ["--json", "--config", str(config_file), *arguments])
 
 
+def invoke_api(
+    config_file: Path, *arguments: str, json_output=True, hub_token_file: Path | None = None
+):
+    """Keep legacy output assertions behind the installed writer's real HTTP boundary."""
+    with api_cli(config_file, hub_token_file=hub_token_file, reader=True) as remote:
+        return remote.invoke(list(arguments), json_output=json_output)
+
+
 def data_of(result) -> dict:
     return json.loads(result.stdout)["data"]
 
@@ -345,7 +354,7 @@ def test_read_only_says_what_it_cannot_prove(initialized_config: Path):
     # `docs/cli.md` §2: these are reported as unproven rather than passed. A
     # capability is only demonstrated by exercising it, and a mount that must not
     # be touched is one where it is unknown.
-    checks = checks_of(invoke(initialized_config, "doctor", "--read-only"))
+    checks = checks_of(invoke_api(initialized_config, "doctor", "--read-only"))
 
     for name in UNPROVABLE_READ_ONLY:
         assert checks[name]["outcome"] == "skipped"
@@ -353,21 +362,21 @@ def test_read_only_says_what_it_cannot_prove(initialized_config: Path):
 
 
 def test_read_only_writes_nothing_even_where_it_could(initialized_config: Path, mounted_root: Path):
-    result = invoke(initialized_config, "doctor", "--read-only")
+    result = invoke_api(initialized_config, "doctor", "--read-only")
 
     assert checks_of(result)["directory_writability"]["outcome"] == "skipped"
     assert list((mounted_root / ".store" / "health").iterdir()) == []
 
 
 def test_read_only_still_proves_everything_that_only_reads(initialized_config: Path):
-    checks = checks_of(invoke(initialized_config, "doctor", "--read-only"))
+    checks = checks_of(invoke_api(initialized_config, "doctor", "--read-only"))
 
     for name in (*MOUNT_CHECKS, "staging_filesystem"):
         assert checks[name]["outcome"] == "pass", name
 
 
 def test_read_only_never_reports_a_capability_as_passing(config_file: Path):
-    checks = data_of(invoke(config_file, "doctor", "--read-only"))["checks"]
+    checks = data_of(invoke_api(config_file, "doctor", "--read-only"))["checks"]
 
     passing = {check["name"] for check in checks if check["outcome"] == "pass"}
     assert not passing & set(UNPROVABLE_READ_ONLY)
@@ -468,7 +477,7 @@ def test_a_certificate_that_does_not_verify_is_hfhub002(
 def test_the_hub_checks_run_under_read_only(initialized_config: Path):
     # They read only, and proving a deployment can reach the Hub is exactly what
     # an operator wants from a mount that must not be touched.
-    checks = checks_of(invoke(initialized_config, "doctor", "--read-only"))
+    checks = checks_of(invoke_api(initialized_config, "doctor", "--read-only"))
 
     assert checks["hub_dns"]["outcome"] == "pass"
     assert checks["hub_tls"]["outcome"] == "pass"
@@ -487,7 +496,7 @@ def test_identity_is_not_verified_when_no_account_is_configured(initialized_conf
 
 
 def test_plan_covers_only_enabled_repositories(config_file: Path):
-    entries = data_of(invoke(config_file, "plan"))["repositories"]
+    entries = data_of(invoke_api(config_file, "plan"))["repositories"]
 
     assert [entry["repository_id"] for entry in entries] == [
         "zeta/last-in-file",
@@ -497,7 +506,7 @@ def test_plan_covers_only_enabled_repositories(config_file: Path):
 
 
 def test_plan_reports_the_configured_reference_verbatim(config_file: Path):
-    entries = data_of(invoke(config_file, "plan"))["repositories"]
+    entries = data_of(invoke_api(config_file, "plan"))["repositories"]
 
     assert entries[0]["requested_revision"] == "v2.0"
     assert entries[1]["requested_revision"] == "main"
@@ -506,8 +515,10 @@ def test_plan_reports_the_configured_reference_verbatim(config_file: Path):
 def test_plan_keeps_configuration_order_not_selector_order(config_file: Path):
     # Two invocations naming the same set must behave identically, so the order
     # is the file's rather than the command line's.
-    forwards = invoke(config_file, "plan", "model:zeta/last-in-file", "dataset:alpha/first-in-file")
-    backwards = invoke(
+    forwards = invoke_api(
+        config_file, "plan", "model:zeta/last-in-file", "dataset:alpha/first-in-file"
+    )
+    backwards = invoke_api(
         config_file, "plan", "dataset:alpha/first-in-file", "model:zeta/last-in-file"
     )
 
@@ -517,7 +528,7 @@ def test_plan_keeps_configuration_order_not_selector_order(config_file: Path):
 def test_plan_resolves_each_enabled_repository_to_a_full_sha(config_file: Path):
     # The same resolution a sync performs, so a clean `plan` is evidence the
     # sync will get as far as downloading.
-    entries = data_of(invoke(config_file, "plan"))["repositories"]
+    entries = data_of(invoke_api(config_file, "plan"))["repositories"]
 
     assert [entry["resolved_commit_sha"] for entry in entries] == [SHA, SHA]
     assert {entry["upstream_state"] for entry in entries} == {"available"}
@@ -540,7 +551,7 @@ def test_plan_reports_what_is_true_of_an_unavailable_repository(
     # reported it.
     monkeypatch.setattr(HubClient, "repository", _fails_with(code))
 
-    result = invoke(config_file, "plan")
+    result = invoke_api(config_file, "plan")
     entries = data_of(result)["repositories"]
 
     assert result.exit_code == ExitCode.SYNC
@@ -563,7 +574,7 @@ def test_one_repository_failing_does_not_hide_the_others(
 
     monkeypatch.setattr(HubClient, "repository", repository)
 
-    result = invoke(config_file, "plan")
+    result = invoke_api(config_file, "plan")
     entries = {entry["repository_id"]: entry for entry in data_of(result)["repositories"]}
 
     assert result.exit_code == ExitCode.SYNC
@@ -573,7 +584,7 @@ def test_one_repository_failing_does_not_hide_the_others(
 
 
 def test_plan_prints_the_resolved_sha_beside_the_selector(config_file: Path):
-    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+    result = invoke_api(config_file, "plan", json_output=False)
 
     assert f"model:zeta/last-in-file@v2.0  {SHA}" in result.output
 
@@ -581,14 +592,14 @@ def test_plan_prints_the_resolved_sha_beside_the_selector(config_file: Path):
 def test_plan_takes_no_lock_and_reads_no_archive(config_file: Path):
     # `storage.archive_root` is a path that does not exist. `plan` mutates
     # nothing and takes no lock (`docs/cli.md` §2), so this still succeeds.
-    assert invoke(config_file, "plan").exit_code == ExitCode.SUCCESS
+    assert invoke_api(config_file, "plan").exit_code == ExitCode.SUCCESS
 
 
 def test_plan_reports_the_revisions_size_and_what_would_be_downloaded(config_file: Path):
     # The two numbers are not interchangeable, which is why both are reported:
     # one is how large the revision is, the other how much is not already
     # cached. This is the output the dataset quota is sized from.
-    entry = data_of(invoke(config_file, "plan"))["repositories"][0]
+    entry = data_of(invoke_api(config_file, "plan"))["repositories"][0]
 
     assert entry["file_count"] == len(TREE)
     assert entry["logical_bytes"] == LOGICAL_BYTES
@@ -599,7 +610,7 @@ def test_hardlink_publication_projects_no_publication_bytes(config_file: Path):
     # Hardlinks point at cache blobs already on the dataset, so publication
     # costs nothing beyond metadata (`AD-11`). The mode travels with the number
     # so the zero is explicable.
-    entry = data_of(invoke(config_file, "plan"))["repositories"][0]
+    entry = data_of(invoke_api(config_file, "plan"))["repositories"][0]
 
     assert entry["publication_mode"] == "hardlink"
     assert entry["projected_publication_bytes"] == 0
@@ -612,7 +623,7 @@ def test_copy_publication_projects_a_second_physical_copy(tmp_path: Path):
         encoding="utf-8",
     )
 
-    entry = data_of(invoke(path, "plan"))["repositories"][0]
+    entry = data_of(invoke_api(path, "plan"))["repositories"][0]
 
     assert entry["publication_mode"] == "copy"
     assert entry["projected_publication_bytes"] == LOGICAL_BYTES
@@ -629,7 +640,7 @@ def test_the_estimate_uses_the_cache_a_sync_would_write_to(config_file: Path):
 
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(HubClient, "estimate", estimate)
-        invoke(config_file, "plan")
+        invoke_api(config_file, "plan")
 
     assert seen
     assert all(path == ArchiveLayout(root=Path(ABSENT_ROOT)).hub_cache for path in seen)
@@ -641,7 +652,7 @@ def test_a_tree_failure_keeps_the_sha_and_leaves_the_sizes_null(
     # A partial answer that says which part is missing beats one that guesses.
     monkeypatch.setattr(HubClient, "tree", _raises("HFHUB008"))
 
-    result = invoke(config_file, "plan")
+    result = invoke_api(config_file, "plan")
     entry = data_of(result)["repositories"][0]
 
     assert result.exit_code == ExitCode.SYNC
@@ -656,7 +667,7 @@ def test_an_estimate_failure_still_reports_the_revisions_size(
 ):
     monkeypatch.setattr(HubClient, "estimate", _raises("HFHUB009"))
 
-    result = invoke(config_file, "plan")
+    result = invoke_api(config_file, "plan")
     entry = data_of(result)["repositories"][0]
 
     assert result.exit_code == ExitCode.SYNC
@@ -665,7 +676,7 @@ def test_an_estimate_failure_still_reports_the_revisions_size(
 
 
 def test_plan_prints_the_sizes_beside_the_sha(config_file: Path):
-    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+    result = invoke_api(config_file, "plan", json_output=False)
 
     assert "2 files, 4.0 KiB, 3.0 KiB new" in result.output
 
@@ -679,8 +690,8 @@ def test_plan_prints_publication_bytes_only_when_copy_mode_adds_them(
         encoding="utf-8",
     )
 
-    copying = runner.invoke(app, ["--config", str(path), "plan"])
-    linking = runner.invoke(app, ["--config", str(config_file), "plan"])
+    copying = invoke_api(path, "plan", json_output=False)
+    linking = invoke_api(config_file, "plan", json_output=False)
 
     assert "4.0 KiB to publish" in copying.output
     assert "to publish" not in linking.output
@@ -691,7 +702,7 @@ def test_plan_prints_the_upstream_state_when_nothing_resolved(
 ):
     monkeypatch.setattr(HubClient, "repository", _fails_with("HFHUB004"))
 
-    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+    result = invoke_api(config_file, "plan", json_output=False)
 
     assert "model:zeta/last-in-file@v2.0  missing" in result.output
 
@@ -701,7 +712,7 @@ def test_plan_prints_the_sha_alone_when_the_tree_failed(
 ):
     monkeypatch.setattr(HubClient, "tree", _raises("HFHUB008"))
 
-    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+    result = invoke_api(config_file, "plan", json_output=False)
 
     assert f"model:zeta/last-in-file@v2.0  {SHA}" in result.output
     assert "files," not in result.output
@@ -712,7 +723,7 @@ def test_plan_prints_the_size_without_a_new_byte_count_when_the_estimate_failed(
 ):
     monkeypatch.setattr(HubClient, "estimate", _raises("HFHUB009"))
 
-    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+    result = invoke_api(config_file, "plan", json_output=False)
 
     assert "2 files, 4.0 KiB" in result.output
     assert "new" not in result.output
@@ -740,7 +751,7 @@ def test_byte_counts_are_rendered_at_a_scale_an_operator_can_read(value, rendere
 
 
 def test_status_reports_every_configured_repository_including_disabled(config_file: Path):
-    entries = data_of(invoke(config_file, "status"))["repositories"]
+    entries = data_of(invoke_api(config_file, "status"))["repositories"]
 
     assert len(entries) == 3
     assert [entry["enabled"] for entry in entries] == [True, True, False]
@@ -750,13 +761,13 @@ def test_status_reports_every_configured_repository_including_disabled(config_fi
 def test_status_marks_upstream_unknown_rather_than_contacting_the_hub(config_file: Path):
     # `docs/cli.md` §2: status never fails merely because the Hub is
     # unreachable. It reports local truth and marks upstream `unknown`.
-    entries = data_of(invoke(config_file, "status"))["repositories"]
+    entries = data_of(invoke_api(config_file, "status"))["repositories"]
 
     assert {entry["upstream_state"] for entry in entries} == {"unknown"}
 
 
 def test_status_reports_the_archive_it_is_configured_for(config_file: Path):
-    archive = data_of(invoke(config_file, "status"))["archive"]
+    archive = data_of(invoke_api(config_file, "status"))["archive"]
 
     assert archive == {
         "archive_id": ARCHIVE_ID,
@@ -773,7 +784,7 @@ def test_status_reports_the_archive_it_is_configured_for(config_file: Path):
 
 
 def test_status_reports_health_when_the_archive_can_be_measured(initialized_config: Path):
-    archive = data_of(invoke(initialized_config, "status"))["archive"]
+    archive = data_of(invoke_api(initialized_config, "status"))["archive"]
 
     assert archive["reachable"]
     assert archive["available_bytes"] > 0
@@ -789,7 +800,7 @@ def test_status_surfaces_what_the_transaction_areas_hold(
     (mounted_root / ".store" / "staging" / ("a" * 32)).mkdir()
     (mounted_root / ".store" / "trash" / ("b" * 32)).mkdir()
 
-    result = invoke(initialized_config, "status")
+    result = invoke_api(initialized_config, "status")
     archive = data_of(result)["archive"]
 
     assert archive["unfinished_transactions"] == 1
@@ -799,7 +810,7 @@ def test_status_surfaces_what_the_transaction_areas_hold(
 
 
 def test_status_answers_when_the_archive_is_absent(config_file: Path):
-    assert invoke(config_file, "status").exit_code == ExitCode.SUCCESS
+    assert invoke_api(config_file, "status").exit_code == ExitCode.SUCCESS
 
 
 def test_status_needs_no_credential(config_file: Path, tmp_path: Path):
@@ -808,10 +819,7 @@ def test_status_needs_no_credential(config_file: Path, tmp_path: Path):
     empty = tmp_path / "token"
     empty.write_text("", encoding="utf-8")
 
-    result = runner.invoke(
-        app,
-        ["--json", "--config", str(config_file), "--token-file", str(empty), "status"],
-    )
+    result = invoke_api(config_file, "status", hub_token_file=empty)
 
     assert result.exit_code == ExitCode.SUCCESS
 
@@ -823,14 +831,16 @@ def test_status_needs_no_credential(config_file: Path, tmp_path: Path):
 
 @pytest.mark.parametrize("command", ["plan", "status"])
 def test_a_selector_restricts_the_command(config_file: Path, command):
-    entries = data_of(invoke(config_file, command, "dataset:alpha/first-in-file"))["repositories"]
+    entries = data_of(invoke_api(config_file, command, "dataset:alpha/first-in-file"))[
+        "repositories"
+    ]
 
     assert [entry["repository_id"] for entry in entries] == ["alpha/first-in-file"]
 
 
 @pytest.mark.parametrize("command", ["plan", "status"])
 def test_a_malformed_selector_is_hfarg001(config_file: Path, command):
-    result = invoke(config_file, command, "not-a-selector")
+    result = invoke_api(config_file, command, "not-a-selector")
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG001"
@@ -838,7 +848,7 @@ def test_a_malformed_selector_is_hfarg001(config_file: Path, command):
 
 @pytest.mark.parametrize("command", ["plan", "status"])
 def test_an_abbreviated_sha_in_a_selector_is_hfarg001(config_file: Path, command):
-    result = invoke(config_file, command, "model:zeta/last-in-file@0123456")
+    result = invoke_api(config_file, command, "model:zeta/last-in-file@0123456")
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG001"
@@ -846,14 +856,14 @@ def test_an_abbreviated_sha_in_a_selector_is_hfarg001(config_file: Path, command
 
 @pytest.mark.parametrize("command", ["plan", "status"])
 def test_an_unconfigured_selector_is_hfarg004(config_file: Path, command):
-    result = invoke(config_file, command, "model:absent/repository")
+    result = invoke_api(config_file, command, "model:absent/repository")
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG004"
 
 
 def test_every_unconfigured_selector_is_reported_at_once(config_file: Path):
-    result = invoke(config_file, "plan", "model:absent/one", "model:absent/two")
+    result = invoke_api(config_file, "plan", "model:absent/one", "model:absent/two")
 
     errors = json.loads(result.stdout)["errors"]
     assert [error["code"] for error in errors] == ["HFARG004", "HFARG004"]
@@ -865,14 +875,14 @@ def test_every_unconfigured_selector_is_reported_at_once(config_file: Path):
 
 def test_the_type_is_part_of_the_selector_match(config_file: Path):
     # `alpha/first-in-file` is a dataset. Naming it as a model selects nothing.
-    result = invoke(config_file, "status", "model:alpha/first-in-file")
+    result = invoke_api(config_file, "status", "model:alpha/first-in-file")
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert json.loads(result.stdout)["errors"][0]["code"] == "HFARG004"
 
 
 def test_a_disabled_repository_can_still_be_selected_by_status(config_file: Path):
-    entries = data_of(invoke(config_file, "status", "model:organization/turned-off"))[
+    entries = data_of(invoke_api(config_file, "status", "model:organization/turned-off"))[
         "repositories"
     ]
 
@@ -880,7 +890,7 @@ def test_a_disabled_repository_can_still_be_selected_by_status(config_file: Path
 
 
 def test_selecting_only_a_disabled_repository_gives_plan_nothing_to_do(config_file: Path):
-    result = invoke(config_file, "plan", "model:organization/turned-off")
+    result = invoke_api(config_file, "plan", "model:organization/turned-off")
 
     assert result.exit_code == ExitCode.SUCCESS
     assert data_of(result)["repositories"] == []
@@ -892,7 +902,7 @@ def test_selecting_only_a_disabled_repository_gives_plan_nothing_to_do(config_fi
 
 
 def test_plan_prints_selectors_an_operator_can_paste_back(config_file: Path):
-    result = runner.invoke(app, ["--config", str(config_file), "plan"])
+    result = invoke_api(config_file, "plan", json_output=False)
 
     assert result.exit_code == ExitCode.SUCCESS
     assert "model:zeta/last-in-file@v2.0" in result.output
@@ -907,7 +917,7 @@ def test_status_prints_its_warnings_where_a_pipe_will_not_swallow_them(
     # list while an operator watching the terminal still sees them.
     (mounted_root / ".store" / "trash" / ("b" * 32)).mkdir()
 
-    result = runner.invoke(app, ["--config", str(initialized_config), "status"])
+    result = invoke_api(initialized_config, "status", json_output=False)
 
     assert result.exit_code == ExitCode.SUCCESS
     assert "HFWRN002" not in result.stdout
@@ -915,7 +925,7 @@ def test_status_prints_its_warnings_where_a_pipe_will_not_swallow_them(
 
 
 def test_status_prints_each_repository_with_its_state(config_file: Path):
-    result = runner.invoke(app, ["--config", str(config_file), "status"])
+    result = invoke_api(config_file, "status", json_output=False)
 
     assert "model:zeta/last-in-file  enabled" in result.output
     assert "model:organization/turned-off  disabled" in result.output
@@ -923,7 +933,7 @@ def test_status_prints_each_repository_with_its_state(config_file: Path):
 
 @pytest.mark.parametrize("command", ["plan", "status"])
 def test_quiet_suppresses_the_human_summary(config_file: Path, command):
-    result = runner.invoke(app, ["--quiet", "--config", str(config_file), command])
+    result = invoke_api(config_file, "--quiet", command, json_output=False)
 
     assert result.exit_code == ExitCode.SUCCESS
     assert result.output == ""

@@ -129,8 +129,8 @@ plugin's current interface. The activated
 [REST-first implementation plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
 introduces authenticated remote management incrementally;
 [the API contract](docs/api.md) marks metadata, operation observation and typed
-sync/verification/planning/diagnostic/installed-validation and maintenance routes
-as implemented; candidate routes remain planned. Every route, health/schema/docs
+sync/verification/planning/diagnostic/installed-validation, maintenance and
+candidate routes as implemented; API-012 migrates reader commands. Every route, health/schema/docs
 and error surface authenticates; discovery preserves exact publication identity and
 `published/`-relative reference locators. Bulk copies still use the read-only
 export and independent verification in [the consumer runbook](docs/consumers.md).
@@ -179,8 +179,8 @@ Runtime directories and protected API credentials must already be provisioned;
 installing the extra starts no listener and changes no deployed writer.
 API-007 adds bounded local receipt/idempotency primitives and authenticated
 operation observation. Control-state history survives client loss and is never
-automatically replayed; interrupted history is retained. API-backed CLI migration
-and systemd packaging remain later tasks.
+automatically replayed; interrupted history is retained. Reader CLI integration
+is API-012; mutation CLI and systemd packaging remain later tasks.
 API-008 supplies one bounded execution lane and private verifier protocol/process
 primitives. Installed socket activation and OS no-IP enforcement still require
 API-014; the library offline flag alone is insufficient. MCP stays behind the REST acceptance
@@ -195,8 +195,8 @@ API-010 adds separate maintenance preview/apply URLs, exact-manifest repair and
 explicit configured-target initialization. Every job is keyed; previews grant no
 apply authority. Initialization alone requires the disabled-by-default maintenance
 switch, writer confirmation and restated root/UUID, never automatic startup/recovery.
-The existing production archive must not be initialized again. Pure candidate
-authority hooks prepare API-012 without enabling candidate routes.
+The existing production archive must not be initialized again. API-012 exposes
+candidate validation/planning with installed authority and credentials.
 
 API-011 adds the independent synchronous base client and separate strict reader
 settings, with verified TLS/Unix transport, explicit API credentials, bounded
@@ -204,9 +204,22 @@ pages/polling and retained-key uncertainty. Reader hosts need no archive TOML,
 mount, service UID, Hub credential or server extra. See
 [`docs/api-client.md`](docs/api-client.md) and
 [`packaging/client.example.toml`](packaging/client.example.toml). The four new
-CLI endpoint/source options are stored now; ordinary command execution remains
-local until API-012/013 migrate it. No automatic daemon start, archive fallback or
+CLI endpoint/source options now drive API-012 reader modes; side-effecting command
+migration remains API-013. No automatic daemon start, archive fallback or
 POST replay is added.
+
+API-012 routes status/list/inspection/estimate, installed/candidate validation,
+planning and read-only diagnostics through the API, preserving exact server
+Envelopes and complete finite inventory pages. `version --server` inspects the
+writer; help/local version and `config validate --local` remain independent
+bootstrap paths. `--config` means bounded local candidate content only for API
+validate/plan; other migrated reads reject it and legacy Hub-token overrides.
+Valid candidate syntax is separate from installed-authority compatibility, and
+planning never redirects installed credentials. Configuration installation/backups
+remain privileged host work; no reader fallback accesses a local archive.
+The Unix client adapter closes failed connections through public HTTPX/HTTPCore
+interfaces. HTTPCore becomes direct at its already-locked 1.0.9 version; no package
+or version upgrade is added.
 
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —

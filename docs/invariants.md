@@ -352,7 +352,8 @@ History: `SYNC-007` (`54e4671`), decision 94.
   endpoint-group/source precedence; it loads no archive policy (decision 118). Pure
   candidate syntax assessment is separate from authority compatibility; no request
   can redirect installed credentials through candidate endpoint/source changes
-  (decision 116). See
+  (decisions 116/119). Valid incompatible syntax remains valid; unavailable installed
+  policy gives unknown compatibility, never permission to plan. See
   [configuration §1–§2, §6](configuration.md#1-validation-rules-that-apply-to-every-field).
 - **`INV-002` — Credentials have only explicit sources and never become
   evidence.** Accept only an explicit token file or systemd credential, with
@@ -365,7 +366,9 @@ History: `SYNC-007` (`54e4671`), decision 94.
   A reader resolves only its selected protected API file/named systemd source;
   no Hub/netrc/ambient token or anonymous fallback after source failure.
   The server's explicit Hub file is a trusted startup option, never request input;
-  candidate assessment resolves no proposed credential. Repair audit reasons
+  candidate validation resolves no credential. Candidate planning rechecks all six
+  installed authority fields after queue waiting before using installed credentials,
+  including credential name excluded from the policy fingerprint (decision 119). Repair audit reasons
   redact registered credential values after credential resolution and before
   durable domain writing (decision 117).
   Never emit secrets in configuration errors, logs, manifests, journals,
@@ -458,6 +461,9 @@ route enforcement from installed host acceptance.
   failures preserve the schema-1 error Envelope under `--json` (decision 113).
   API-009's 202 is admission only; exact result retrieval preserves the shared
   terminal Envelope, including partial failure and domain exit priority.
+  API-012 renders the exact server Envelope identity/timestamps for remote reads
+  and completed jobs. Page joins keep the first server invocation metadata,
+  include all rows under finite bounds and refuse inconsistent publication evidence.
 - **`INV-007` — Verification reports evidence without rewriting it.** Verify
   the complete path set, sizes, and local SHA-256 bytes; an integrity finding
   exits `40`, preserves content/expectations, and never performs repair or
@@ -612,8 +618,8 @@ API-001 introduces these constraints for the activated plan. API-006 implements
 authenticated metadata HTTP and its foreground bootstrap; API-007 adds durable
 admission primitives and operation observation. API-008 adds execution/private
 verification and API-009 adds the typed command subset. API-010 adds guarded
-maintenance and initialization; candidate operations remain pending until API-012.
-Client migration, installed isolation hardening and MCP remain pending.
+maintenance and initialization; API-012 adds candidate operations and read CLI
+integration. Mutating client UX, installed isolation hardening and MCP remain pending.
 [API](api.md) and [server](server.md) track exact availability; implementing tasks
 own proof.
 
@@ -627,8 +633,8 @@ own proof.
   API-006. API-009 [command adapters](../src/hfcache/api/commands.py) retain shared
   sync ordering, reconciliation, capacity, continuation, producer joins and exact
   verification delegation, covered by [HTTP/domain tests](../tests/unit/test_api_commands.py).
-  API-011 supplies the independent typed client/configuration; public CLI runtime
-  migration remains API-012/013 and MCP-002 later.
+  API-011 supplies the independent typed client/configuration and API-012 migrates
+  read CLI/candidates; mutating CLI migration remains API-013 and MCP-002 later.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
@@ -646,8 +652,9 @@ own proof.
   mixed capability before DTO validation. Explicit JSON/media/encoding/depth and
   byte limits cover chunked inputs; unknown paths/credential overrides cannot
   become execution authority. API-010 extends the same boundary to explicit
-  maintenance routes and gates initialization before body reception. Candidate
-  and MCP paths remain pending. API-011's independent client uses explicit API
+  maintenance routes and gates initialization before body reception. API-012
+  candidate presence requires writer capability before DTO validation; only bounded
+  TOML content, not server paths/credentials, can be submitted. MCP remains pending. API-011's independent client uses explicit API
   sources, verified TLS/Unix transport, no redirect/ambient proxy forwarding and
   finite response/page/read-retry/poll budgets with strict identity/version checks.
   It never falls back to archive filesystem access or starts a daemon.
@@ -679,7 +686,9 @@ own proof.
   its four keyed job routes with normalized typed bodies and 202 observation links;
   matching retries preserve the original binding. API-010 extends keyed admission
   to separate maintenance preview/apply, repair and guarded initialization URLs;
-  previews grant no future apply authority. API-011 generates/exposes a retained
+  previews grant no future apply authority. API-012's absent candidate field preserves
+  historical installed-plan canonical key mappings; exact candidate text binds a
+  new request and the receipt retains installed admitted fingerprint. API-011 generates/exposes a retained
   key before POST and reports uncertainty without automatic replay; lookup and
   finite observation never cancel accepted work. Public CLI safety messages and
   command migration remain API-013.
@@ -706,6 +715,16 @@ own proof.
   [actual locked base/server import smoke](../scripts/check-installations.py).
   Reader metadata does not change FS-12/INV-008's exact publication copy/verification
   authority; bulk transfer remains the independent consumer workflow.
+  API-012 enforcement/evidence: [reader CLI](../src/hfcache/cli.py),
+  [finite aggregation/transport rendering](../src/hfcache/cli_client.py),
+  [pure validation/authority](../src/hfcache/services/candidates.py),
+  [candidate HTTP](../src/hfcache/api/commands.py),
+  [authenticated CLI fixture](../tests/api_cli.py),
+  [read CLI tests](../tests/unit/test_readonly_commands.py),
+  [candidate tests](../tests/unit/test_api_candidates.py) and
+  [reader/candidate adversarial tests](../tests/unit/test_api_candidates_adversarial.py);
+  [decision 119](adr/decision-119.md). Server installation/host acceptance remains
+  separate from these hermetic tests.
 - **`INV-015` — Verification isolation encloses persistence.** Non-estimate
   verification locks target resolution, hashing, report write and catalog merge
   in a credential-free no-IP executor. Estimates remain metadata reads.
@@ -736,4 +755,8 @@ FW-01/FW-03 above retain their historical baseline with the explicit
 dependencies and the bounded non-resuming lane are permitted incrementally.
 [Decision 112](adr/decision-112.md) records the actual HTTPX and `server` extra
 addition and its material correctness rationale; FastMCP remains pending.
+[Decision 119](adr/decision-119.md) adds an explicit HTTPCore declaration at the
+already-locked 1.0.9 version for resource-safe public Unix transport interfaces.
+Enforcement: [Unix transport](../src/hfcache/unix_http.py) and
+[descriptor/stream regressions](../tests/unit/test_unix_http.py).
 No other workflow framework or runtime dependency is authorized.

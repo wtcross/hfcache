@@ -6,8 +6,8 @@ API-007 adds bounded receipt/admission primitives and operation observation;
 API-008 adds the heavyweight lane and private verifier process/protocol; API-009
 adds typed sync, verification, planning, diagnostics and installed validation.
 API-010 adds explicit maintenance preview/apply, repair and guarded initialization.
-Candidate operations, CLI migration and installed service hardening remain later
-tasks.
+API-012 adds candidate operations and reader CLI integration; mutating CLI and
+installed service hardening remain later tasks.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
@@ -218,24 +218,27 @@ boundary; they do not enable MCP imports, tools or endpoints now.
 
 ## Package and client-transport primitives (API-005)
 
-HTTPX is a direct base dependency; FastAPI/Uvicorn are available only through the
+HTTPX and HTTPCore are direct base dependencies; FastAPI/Uvicorn are available only through the
 `server` extra. The Python 3.14 locked versions and official sources are recorded
 in [decision 112](adr/decision-112.md). The default gate synchronizes that extra,
 runs its tests without optional-import skips, builds the wheel and installs the
 locked base and server variants into real isolated environments. Those smoke
 checks import the CLI/auth core, exercise help/schema-1 local version, confirm
 base has no FastAPI/Uvicorn, import the server adapter with the extra, and confirm
-FastMCP is absent in both.
+FastMCP is absent in both. API-012's [decision 119](adr/decision-119.md) makes the
+already-locked HTTPCore 1.0.9 explicit for resource-safe Unix transport; no package
+or version upgrade is added.
 
 [`create_http_client`](../src/hfcache/http_transport.py) supplies a directly used
 HTTPX construction boundary used by API-011: verified default/custom-CA TLS, optional
 Unix-socket transport, no ambient proxy/credential discovery, redirects disabled
-and no transport retries. It bounds connections to 8 (4 keepalive) and timeouts
+and no transport retries. Unix transport uses a narrow public adapter with owned
+socket cleanup, while TCP/TLS stays on HTTPX. It bounds connections to 8 (4 keepalive) and timeouts
 to 5 seconds for connect/pool and 30 seconds for read/write. Callers own closing
 the client. The primitive itself sends no request; API-011's independent typed
 [client](api-client.md) supplies endpoint, bearer, strict response and finite
 observation policy without importing the optional server framework. Public CLI
-runtime migration remains API-012/013.
+reader migration is API-012; side-effecting runtime migration remains API-013.
 
 ## Implemented metadata lifespan (API-006)
 
@@ -302,10 +305,22 @@ startup performs no Hub call. No HTTP body can select a token, source file,
 endpoint, archive root or arbitrary command. Verification receives none of those
 credentials and always delegates through the configured private executor.
 
-The pure [candidate hooks](configuration.md#12-candidate-authority-preparation-api-009)
-compare installed authority without resolving proposed credentials or contacting
-the Hub. Current routes reject candidate fields; the complete candidate/client
-pipeline belongs to API-012. No configuration-install endpoint is provided.
+API-012's [candidate content](configuration.md#12-candidate-authority-validation-and-planning-api-012)
+uses `ValidationSubmission` and `PlanSubmission` with bounded `CandidateText`.
+Validation resolves no credential/Hub/probe, reports validity separately from
+compatibility and can syntax-validate while installed policy is broken. Planning
+uses `parse_candidate` / `prepare_candidate_plan`, retaining every ordered safe
+error as an admitted terminal Envelope. The runner's fresh-only prepare callback
+never runs for a matching retry. `PlanSubmission.canonical_body()` omits only the
+absent candidate field to preserve old installed key digests; explicit null refuses.
+
+Compatible candidate policy is frozen in memory; before Hub work after queue
+waiting, compare all six fields again with fresh installed authority, including
+credential name excluded from policy fingerprints. Only installed Hub policy/
+credential is used, while candidate repository/retention/worker intent is previewed.
+Admission/queue limits and receipt/result wrapper fingerprint remain installed
+policy, not candidate authority. No candidate source path is opened on the server,
+no raw candidate is durable and no configuration-install endpoint exists.
 
 ## Maintenance and initialization authority (API-010)
 
@@ -594,8 +609,9 @@ policy and real egress enforcement remain the later packaging acceptance gate.
 API-008's lane and API-007's registry already share the unprivileged application
 and separate bounded metadata pool across both listeners. The daemon-instance
 lock prevents competing registries; actual archive work retains the operation-
-scoped flock. API-009/010 add typed command routes; later tasks add candidate,
-client and unit integration without another execution authority. Metadata reads create no archive layout or catalog.
+scoped flock. API-009/010 add typed command routes and API-012 adds candidate/
+reader integration; later tasks add mutating CLI/unit integration without another
+execution authority. Metadata reads create no archive layout or catalog.
 Systemd remains scheduling authority.
 
 API-004 establishes shared correlation primitives ahead of this server:

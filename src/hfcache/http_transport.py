@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 import httpx
 
+from hfcache.unix_http import UnixHTTPTransport
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -19,12 +21,15 @@ def create_http_client(
     """Construct an explicitly verified client; callers own closing its resources."""
     context = ssl.create_default_context(cafile=ca_file)
     limits = httpx.Limits(max_connections=8, max_keepalive_connections=4)
-    transport = httpx.HTTPTransport(
-        uds=str(unix_socket) if unix_socket is not None else None,
-        verify=context,
-        trust_env=False,
-        retries=0,
-        limits=limits,
+    transport = (
+        UnixHTTPTransport(unix_socket, limits=limits)
+        if unix_socket is not None
+        else httpx.HTTPTransport(
+            verify=context,
+            trust_env=False,
+            retries=0,
+            limits=limits,
+        )
     )
     return httpx.Client(
         transport=transport,

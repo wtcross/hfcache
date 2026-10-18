@@ -779,3 +779,17 @@ versions when implementing, especially FastMCP imports and test transports:
   are client config/protocol exit 10; HFAPI019/020 connectivity/uncertainty exit 20.
   Global CLI options are stored only; runtime migration remains API-012/013. No
   parity availability, archive shape, dependency, MCP or production operation changes.
+
+- 2026-10-18 API-012: Decision 119 migrates actual reader CLI modes with exact
+  server Envelope identity/times and complete finite consistent page joins. Explicit
+  local validation is bootstrap, never fallback; inspection selects no client path.
+  Writer candidate content validation separates syntax/policy validity from false
+  or unknown installed compatibility, without credentials/Hub/probes. Candidate
+  planning rechecks all six fields after queue waiting before installed credential
+  use, retains installed admitted fingerprint and old absent-candidate key digests;
+  explicit null refuses. All 29 HTTP parity rows are implemented. CP-11's privileged
+  installation/backups remain outside REST; mutating CLI, shipped caller/host
+  integration and MCP retain later task gates. Already-locked HTTPCore 1.0.9 is
+  declared directly for a public Unix-only transport adapter that closes failed
+  sockets; FW-04 rationale is in decision 119. No new package/version, durable
+  shape or production operation is introduced.

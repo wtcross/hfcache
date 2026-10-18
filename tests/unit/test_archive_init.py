@@ -21,6 +21,7 @@ from typer.testing import CliRunner
 
 from hfcache.cli import app
 from hfcache.errors import ExitCode
+from tests.api_cli import api_cli
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -78,6 +79,9 @@ def invoke(config_file: Path, *arguments: str):
 
 
 def init(config_file: Path, root: Path, *arguments: str):
+    if "--inspect" in arguments:
+        with api_cli(config_file) as remote:
+            return remote.invoke(["archive", "init", "--archive-root", str(root), *arguments])
     return invoke(config_file, "archive", "init", "--archive-root", str(root), *arguments)
 
 
@@ -398,18 +402,10 @@ def test_the_human_summary_names_the_archive_it_created(config_file: Path, mount
 
 
 def test_the_human_summary_of_an_inspection_names_the_state(config_file: Path, mounted: Path):
-    result = runner.invoke(
-        app,
-        [
-            "--config",
-            str(config_file),
-            "archive",
-            "init",
-            "--archive-root",
-            str(mounted),
-            "--inspect",
-        ],
-    )
+    with api_cli(config_file) as remote:
+        result = remote.invoke(
+            ["archive", "init", "--archive-root", str(mounted), "--inspect"], json_output=False
+        )
 
     assert "uninitialized" in result.output
     assert "nfs4" in result.output

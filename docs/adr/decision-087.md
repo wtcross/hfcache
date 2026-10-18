@@ -3,6 +3,7 @@
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
+Reader/candidate API integration is amended by [decision 119](decision-119.md).
 
 - Original decision date: 2026-07-30.
 - Original work package: `CPT-001`.
@@ -47,3 +48,13 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [cockpit/test/command.test.ts](../../cockpit/test/command.test.ts).
+
+## 2026-10-18 candidate pipeline amendment (API-012)
+
+The CLI's reader and candidate modes now use authenticated REST. CP-11 retains
+candidate → validation → preview → privileged atomic installation/backup. Pure
+candidate validity is separate from installed authority compatibility; only a
+compatible proposal can plan with installed credentials. REST grants no policy
+installation authority. This package supplies those CLI/API semantics; API-015
+still owns the shipped Cockpit caller and credential integration, without browser
+bearers. See [decision 119](decision-119.md) and [Cockpit contract](../cockpit.md).

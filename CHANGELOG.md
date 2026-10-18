@@ -51,8 +51,8 @@ production state was created or changed.
 The daemon now has one bounded execution lane with one queue/lock waiting
 deadline and an under-lock admitted-policy check. Private verification delegates
 through a peer-checked bounded Unix protocol with exact durable outcomes and
-restart reconciliation; accepted work is never automatically replayed. Candidate
-routes and installed systemd/no-IP enforcement remain later tasks. No in-process production verification fallback or MCP dependency is added.
+restart reconciliation; accepted work is never automatically replayed. Installed
+systemd/no-IP enforcement remains later work. No in-process production verification fallback or MCP dependency is added.
 
 Typed REST commands now admit sync, all actual verification modes, installed
 planning and explicit read-only/probing diagnostics with durable keyed 202
@@ -60,8 +60,8 @@ receipts. Status/events and exact terminal Envelopes preserve domain outcomes;
 losing an observer does not cancel execution. Installed configuration validation
 is an immediate query. Strict authenticated JSON/role boundaries forbid request
 paths, credential overrides and implicit probes. A trusted startup Hub token-file
-option supports development; pure candidate authority assessment prepares later
-client work without accepting candidates yet. No new durable format/dependency,
+option supports development; candidate authority assessment supports the bounded
+validation/planning pipeline below. No new durable format/dependency,
 MCP capability or production operation is introduced.
 
 Typed REST maintenance now separates reader previews from writer applies for
@@ -72,8 +72,8 @@ checks preserve unknown data, audits, commit recovery and grace periods. Repair
 audit reasons redact registered API/Hub secrets after credential resolution.
 Initialization alone needs the disabled-by-default server maintenance gate,
 confirmation and the configured root/UUID restated; startup/health/recovery never
-initialize. All 27 existing-operation rows are implemented; the two candidate
-rows and client/host/MCP acceptance remain later work. No production operation,
+initialize. All 29 HTTP mode rows now have resources; mutating CLI/host/MCP
+acceptance remains later work. No production operation,
 new durable format or runtime dependency is introduced.
 
 An independent synchronous typed API client and strict schema-1 reader settings
@@ -82,9 +82,22 @@ finite response/page/read-retry/poll budgets and strict response/identity checks
 Old operation fingerprints and exact domain results are preserved. Lost POST
 acknowledgement retains its original key and uncertainty without automatic replay.
 Reader hosts need no archive policy/mount/Hub credential or server extra. New CLI
-selection options are stored; operational migration remains API-012/013. Client
+selection options drive reader modes; mutating CLI migration remains API-013. Client
 config/protocol failures exit 10 and connectivity/uncertainty exit 20. No new durable
 archive shape, dependency, MCP or production operation is introduced.
+
+Read CLI modes now use the authenticated API with complete finite pagination,
+consistent inventory/revision joins and exact server Envelope identities/times/
+exits. Help/local version and explicit `config validate --local` remain bootstrap;
+API errors never fall back to a local archive. Bounded candidate TOML content is
+validated separately from authority compatibility, including unknown compatibility
+when installed policy is broken. Candidate planning rechecks installed authority
+before installed credential use, retains installed admitted fingerprints and old
+installed-plan key digests, and never installs configuration. All 29 HTTP parity
+rows are implemented; side-effecting CLI and installed-host/MCP gates remain.
+Unix client connections now close failed sockets through public HTTPX/HTTPCore
+interfaces; HTTPCore is direct at its already-locked 1.0.9 version. No new package,
+version, durable shape or production operation is introduced.
 
 ## v0.1.10 — 2026-09-14
 

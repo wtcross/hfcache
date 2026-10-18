@@ -39,7 +39,9 @@ def test_an_unreadable_configuration_is_exit_ten_and_not_a_usage_error(tmp_path)
     path.write_text("schema_version = 1\n", encoding="utf-8")
     path.chmod(0o000)
 
-    unreadable = runner.invoke(app, ["--json", "--config", str(path), "status"])
+    unreadable = runner.invoke(
+        app, ["--json", "--config", str(path), "config", "validate", "--local"]
+    )
     assert unreadable.exit_code == ExitCode.CONFIGURATION
     assert [error["code"] for error in json.loads(unreadable.stdout)["errors"]] == ["HFCFG001"]
 

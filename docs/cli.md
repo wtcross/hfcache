@@ -51,6 +51,17 @@ remain independent of configuration/credentials/server. The
 observation, safe errors and retained-key uncertainty. No direct archive fallback
 or automatic daemon startup is introduced.
 
+**2026-10-18 API-012 amendment:** metadata reads, installed/candidate validation,
+planning and explicitly read-only diagnostics now use the typed API client
+([decision 119](adr/decision-119.md)). Remote rendering retains the exact server
+Envelope IDs/timestamps/status/errors and walks complete pages within finite
+aggregate limits. Help/local version and explicit `config validate --local` remain
+local bootstrap; no API failure falls back to archive filesystem access. The
+[client migration table](api-client.md#cli-migration-api-012) identifies migrated
+modes while side-effecting CLI migration remains API-013. Candidate files are read
+on the CLI host and uploaded as bounded TOML content, never interpreted as server
+paths. Validity and installed-authority compatibility are reported separately.
+
 ## 1. Invocation shape
 
 ```text
@@ -66,19 +77,28 @@ invocation:
 
 | Global option | Default | Meaning |
 | --- | --- | --- |
-| `--config PATH` | `/etc/hfcache/config.toml` | Configuration file |
+| `--config PATH` | `/etc/hfcache/config.toml` | Local archive policy for bootstrap/unmigrated commands; an explicit flag means candidate content only for API validate/plan and is rejected by other migrated reads |
 | `--json` | off | Emit the machine-readable envelope (§4) on stdout and nothing else |
 | `--verbose` / `-v` | off | Adds the `hfcache.logging.DEBUG_EVENTS` detail to the §24 event log. Repeatable, and repeats beyond the first are currently equivalent to one, because the vocabulary bottoms out at `DEBUG`. Never enables secret logging |
 | `--quiet` / `-q` | off | Suppress progress and informational output; warnings and errors still print |
 | `--no-color` | auto | Force plain output; also implied when stdout is not a terminal |
 | `--token-file PATH` | none | Read a token from this file for an operator-run command (§`docs/configuration.md` §7) |
-| `--client-config PATH` | none | Select separate strict client TOML; API-011 stores the option, runtime migration follows in API-012/013 |
+| `--client-config PATH` | optional `/etc/hfcache/client.toml` | Separate strict API client settings for migrated commands |
 | `--api-url URL` | none | Explicit API URL, mutually exclusive with `--api-socket`; overrides the configured endpoint group |
 | `--api-socket PATH` | none | Explicit API Unix socket; overrides the configured endpoint group |
 | `--api-token-file PATH` | none | Explicit API credential source, distinct from the Hub `--token-file` |
 
 `--json` and `--quiet` are compatible. `--json` and `--verbose` are compatible;
 verbosity affects stderr logging, never the stdout envelope.
+
+For migrated API reads, the default archive configuration path is never loaded.
+An explicit `--config` is accepted only for candidate validate/plan, including
+when its value happens to equal the legacy default path. Other migrated reads
+refuse it with an actionable migration error. Legacy Hub `--token-file` is refused
+for every API operation; select `--api-token-file` or client settings instead.
+Explicit `config validate --local` remains the Hub-token/bootstrap exception.
+Endpoint/source precedence follows [client configuration](api-client.md).
+
 
 Progress rendering is disabled automatically when stdout is not a terminal, so
 journald never receives progress spam.
@@ -149,35 +169,59 @@ one-terminal-envelope discipline; it is outside remote operation parity.
 ### `config validate`
 
 ```text
-hfcache [--config PATH] config validate
+hfcache [CLIENT OPTIONS] config validate
+hfcache [CLIENT OPTIONS] --config CANDIDATE_PATH config validate
+hfcache [--config PATH] [--token-file PATH] config validate --local
 ```
 
-Performs exactly the validation every mutating command performs, and touches
-nothing — no lock, no mount check, no network. Exits `0` or `10`.
+Without explicit archive `--config`, validate installed writer policy through the
+API, including its selected installed Hub credential source. It takes no archive
+lock/probe or Hub request. The four legacy payload fields stay `config_fingerprint`,
+`repositories`, `enabled_repositories` and `token_source`; installed failures retain
+the exact classified server Envelope.
 
-This includes resolving the credential, so `--token-file` and an installed
-systemd credential are checked here rather than first failing during a scheduled
-run. `token_source` reports which source won — `token-file`,
-`systemd-credential`, or `none` — and never the value (`docs/security.md` T-07).
-Under `token_mode = "required"`, resolving to `none` is `HFARG008`; a green
-validation therefore proves the credential needed for restricted scope is
-present, though `doctor` is what proves its Hub identity and network validity.
+An explicit `--config` uploads bounded local TOML content with writer API capability.
+Candidate validation resolves no credential and reports `token_source=not-resolved`,
+syntax/policy validity separately from authority compatibility, and only mismatch
+field names. Valid but incompatible content exits 0 with compatibility false;
+valid content with unavailable/invalid installed policy remains valid with unknown
+(null) compatibility and `installed_policy_valid=false`. It does not prove Hub
+credential availability/account/network validity or authorize planning/install.
+Malformed candidate policy retains its classified errors and exit 10.
+
+`--local` is an explicit offline/bootstrap mode that loads local archive TOML and
+resolves its explicit Hub token file/systemd source under existing rules. It makes
+no API/Hub request, mount check, lock or mutation and is never an automatic fallback.
+Local `token_source` remains `token-file`, `systemd-credential` or `none`; required
+mode with no credential remains HFARG008. It can validate the writer's bootstrap
+policy without an API, but ordinary reader commands never need that file.
 
 ### `archive init`
 
 ```text
 hfcache [--config PATH] archive init --archive-root PATH --confirm [--archive-id UUID]
-hfcache [--config PATH] archive init --archive-root PATH --inspect
+hfcache [CLIENT OPTIONS] archive init --inspect [--archive-root PATH]
 ```
 
 | Option | Meaning |
 | --- | --- |
-| `--archive-root PATH` | Required, and must equal `storage.archive_root`. Stating it twice is deliberate: initialization is the one irreversible act, so it does not take its target from a file alone |
+| `--archive-root PATH` | Required unless `--inspect` and must equal `storage.archive_root` for initialization; optional inspection restatement only checks the returned writer root |
 | `--confirm` | Required for mutation. Without it, the command explains what it would do and exits `10` |
 | `--archive-id UUID` | Restates the provisioned `storage.archive_id`, for the same reason `--archive-root` restates the root. It must agree with configuration (`HFARG002`) |
-| `--inspect` | Never mutates; reports whether the target matches the known-empty layout contract. Mutually exclusive with `--confirm` (`HFARG002`) |
+| `--inspect` | API read of the configured writer target; no client archive path is required. Optional `--archive-root` checks the returned root. Mutually exclusive with `--confirm` (`HFARG002`) |
 
-The command proves the target is the expected read/write NFS mount, refuses a
+Inspection uses `GET /archive/inspection` and retains the legacy Envelope command
+`archive init`. It never stats/opens/probes the client host's archive path. Optional
+`--archive-root` is a redundant comparison against the returned root, not a server
+path selector. `--inspect` refuses `--confirm` or `--archive-id`; only optional
+root restatement is accepted. Explicit archive `--config` and Hub `--token-file`
+are refused.
+Without `--inspect`, omitting `--archive-root` retains the usage-error exit `2`;
+the missing required option does not become a domain exit `10`.
+The confirmed local initialization path remains until API-013; none of this
+constitutes authorization to initialize an existing production archive.
+
+The confirmed initialization command proves the target is the expected read/write NFS mount, refuses a
 pre-existing sentinel or unknown content (`FS-22`), creates the directory
 structure with the documented ownership and modes, fsyncs it, writes
 `.hfcache-root` last (`FS-23`), and prints the UUID it wrote so the operator can
@@ -518,12 +562,14 @@ without changing the published revision (`AD-13`).
 ### `version`
 
 ```text
-hfcache version
+hfcache [CLIENT OPTIONS] version [--server]
 ```
 
-Application version, Python version, `huggingface_hub` version, and the resolved
-transfer backend. Never reads configuration or touches the archive, so it works on
-a broken deployment.
+Without `--server`, report local application, Python, `huggingface_hub` and
+resolved transfer-backend versions without reading configuration or accessing the
+archive/API. This remains usable on a broken deployment. `--server` instead
+authenticates to the selected API and preserves the writer's exact version
+Envelope, including its invocation identity and timestamps.
 
 ## 3. Exit codes
 
@@ -592,7 +638,7 @@ Serialization follows the same deterministic rules as durable files
 
 | Command | `data` contains |
 | --- | --- |
-| `config validate` | `config_fingerprint`, `repositories`, `enabled_repositories`, `token_source` |
+| `config validate` | Installed/local: `config_fingerprint`, `repositories`, `enabled_repositories`, `token_source`. Candidate: validity/compatibility flags and safe mismatch names as specified above; valid candidates also retain the four legacy fields with `token_source="not-resolved"` |
 | `archive init` | `archive_id`, `archive_root`, `created_directories`, `removed_temporaries`, `sentinel`, `adopted_published`. With `--inspect`, or on a refusal: `state`, `initializable`, `mount`, `existing_directories`, `missing_directories`, `unknown_entries`, `unknown_entry_count`, `leftover_temporaries`, `adopted_published`, `archive_id`, `archive_root` |
 | `doctor` | `checks[]` of `{ name, outcome, detail }`, in execution order |
 | `plan` | `repositories[]` of `enabled`, `repository_type`, `repository_id`, `requested_revision`, `resolved_commit_sha`, `upstream_state`, `file_count`, `logical_bytes`, `estimated_new_bytes`, `projected_publication_bytes`, `publication_mode`, plus retained/current state |

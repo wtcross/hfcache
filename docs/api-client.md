@@ -2,8 +2,9 @@
 
 Status: API-011 implements independent client/configuration primitives under the
 [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md). Its task records validation;
-public operational CLI migration remains API-012/013. Global endpoint/source options
-are stored now without switching existing command execution to HTTP. No production
+API-012 now migrates reader commands and candidate validation/planning; side-
+effecting command/operation UX migration remains API-013. Global endpoint/source
+options select management settings for migrated modes. No production
 client/server rollout is asserted.
 
 [Decision 118](adr/decision-118.md) defines one explicit API authority, finite safe
@@ -22,8 +23,8 @@ the local Unix-socket default `/run/hfcache/api.sock`.
 `resolve_client_config(path=None, ...)` uses optional installed
 `/etc/hfcache/client.toml`: a missing default permits defaults, while an explicit
 missing file or an installed unusable/malformed file fails HFAPI017. It reads no
-archive TOML. The current CLI only stores option values; resolving settings occurs
-when a client is deliberately constructed, or in later migrated commands.
+archive TOML. API-012's migrated commands resolve these settings only when invoked;
+local help/version and explicit local validation do not construct an API client.
 
 API credential precedence is explicit `--api-token-file`, then configured token
 file, then explicitly named systemd API credential. Resolve only the selected
@@ -104,6 +105,15 @@ Encoded request bodies also obey `max_response_bytes` and depth/finite-value
 validation before transmission; these client ceilings never override the server's
 possibly smaller request limit.
 
+Unix connections use a narrow public HTTPX/HTTPCore adapter that closes owned
+sockets on failed connects and response cleanup; no IP fallback is permitted.
+TCP/TLS continues through HTTPX. HTTPCore is an explicit base dependency at the
+already-locked 1.0.9 version; [decision 119](adr/decision-119.md#uds-descriptor-ownership-and-fw-04)
+records the observed missing-socket leak and supported-interface rationale.
+[`unix_http`](../src/hfcache/unix_http.py) owns descriptor creation/connect and
+stream cleanup; [failure-path tests](../tests/unit/test_unix_http.py) retain
+exception tracebacks while checking that failures release descriptors.
+
 Negotiate API/envelope compatibility and needed capabilities explicitly. Preserve
 request IDs as request correlation, operation IDs as admission identity and domain
 run IDs as report/result evidence. An old operation retains its admitted archive
@@ -144,10 +154,12 @@ Trusted transport/clock injection supports hermetic tests, not a remote option.
 The interface provides `read(path, params=...)`, `iter_pages(path, field, ...)`,
 `submit(path, body, key=None, on_key=...)`, `lookup(key)`, `operation(id)`, `events(id, after, limit)`,
 `result(id)` and `poll(id, ...)`, plus `version()`, `health()` and
-`validate_installed()`. Submission returns its retained key alongside
+`validate_installed()`, `validate_candidate(content)` and
+`plan_candidate(content, selectors=(), key=None, on_key=None)`. Submission returns its retained key alongside
 the typed acceptance; an unusable post-transmission acknowledgement raises
-HFAPI020 with original key/route instead of replaying. `on_key` exposes the generated/explicit key before the HTTP send so later CLI
-adapters can preserve a lookup handle even if acknowledgement is lost. The
+HFAPI020 with original key/route instead of replaying. `on_key` exposes the generated/explicit key before the HTTP send so callers
+can preserve a lookup handle even if acknowledgement is lost. Public CLI key/
+operation observation controls remain API-013. The
 selected credential is loaded once per client object; construct a new client
 after deliberately changing its source/value rather than discovering replacements
 or borrowing another credential during a request.
@@ -159,8 +171,8 @@ derived same-operation paths; it never follows arbitrary server links or redirec
 UUID/fingerprint/command and refuses cursor cycles, duplicate primary row identities
 and max-page exhaustion. SHA-256 identity digests use a cumulative digest-byte
 ceiling of `max_response_bytes`, without aggregating result rows. Per-page request/
-domain observation IDs may legitimately differ; the future CLI adapter owns
-reconstruction and keeps the first Envelope's invocation metadata. A valid failed
+domain observation IDs may legitimately differ; the CLI adapter reconstructs
+complete data and keeps the first Envelope's invocation metadata. A valid failed
 domain Envelope is yielded intact and terminates the walk, even when its failure
 data lacks the requested array; its exit must not become a generic protocol error.
 Exact nonpage responses reject a nonnull wrapper `next_cursor`.
@@ -190,9 +202,73 @@ Construction loads settings/credentials but sends no request; the explicit
 negotiation and version calls above contact only the configured management API.
 The client has no artifact-byte transfer or local archive reader.
 
-CLI read/candidate migration remains API-012 and commands/operation UX remains
-API-013. The independent [consumer helper](consumers.md) still owns bulk
+API-012 uses these primitives for migrated reads/candidates; side-effecting
+commands/operation UX remain API-013. The independent [consumer helper](consumers.md) still owns bulk
 copy and complete local verification against exact publication identity.
+
+## CLI migration (API-012)
+
+The migrated modes below report writer truth through the API. Reader setup needs
+only this client configuration/credential, not `/etc/hfcache/config.toml`, archive
+mount, service UID or Hub credential. Connection failure is a transport error;
+there is no local archive fallback or automatic daemon start.
+
+| CLI mode | Current boundary |
+| --- | --- |
+| help; `version` | Local, configuration/server independent |
+| `version --server` | Authenticated server version, exact server Envelope |
+| `status [selectors]` | API pages reconstructed completely |
+| `list [selectors] [--type] [--revisions]` | API inventory plus exact revision rows when requested; consistent join or visible refusal |
+| `archive init --inspect` | Configured writer inspection, no required client root; optional root only checks returned authority |
+| `verify --estimate` | API metadata; no client hashing/probes |
+| `config validate` | Installed writer policy/source validation through API |
+| `--config PATH config validate` | Writer-only bounded local candidate content; syntax/policy validity separate from compatibility |
+| `config validate --local` | Explicit local/bootstrap validation, never automatic fallback |
+| `plan [selectors]`; `--config PATH plan [selectors]` | Keyed installed reader / candidate writer job, then exact terminal Envelope |
+| `doctor --read-only` | Keyed reader diagnostic job; installed Hub checks, no write probes |
+| `serve` | Writer-local foreground bootstrap |
+| sync, actual verification, probing doctor, maintenance/confirmed init | Existing local service boundary until API-013 migrates them |
+| Public operation show/wait/lookup/detach options | API-013; library observation already exists |
+
+Remote JSON rendering preserves the complete server Envelope command/run ID,
+started/finished timestamps, status/warnings/errors, exit and payload; client
+request/observer IDs never replace domain evidence. Joined/paged data retains the
+first appropriate server Envelope's invocation metadata. Human output keeps the
+same supported shapes and warning behavior. A 202 receipt is never rendered as
+a completed result; plan/read-only diagnostics await their terminal Envelope.
+
+The CLI's aggregate result is finite too: accumulated rows must fit the
+configured response budget or fail visibly. It never silently truncates inventory.
+`list --revisions` combines base inventory and revision pages, preserving base
+empty/unmanaged rows and checking archive/fingerprint, row membership/counts,
+current revision/publication identity and uniqueness. Changed/inconsistent evidence
+is a refusal rather than mixed publication metadata. Pages are still not an
+archive-wide snapshot.
+
+An explicit global `--config` is candidate content only for validate/plan, even
+when equal to the legacy default path. Other migrated API modes reject it, and
+all API modes reject Hub `--token-file`; use `--client-config` / API credentials.
+Local validation explicitly selects `--local`. Candidate file content is bounded
+independently of the server JSON cap; escaping/wrapper overhead can produce 413.
+A valid incompatible candidate remains valid but cannot plan through changed
+root/UUID/endpoint/credential authority. If installed policy is broken, syntax
+validation can still succeed with unknown compatibility. Neither result installs
+policy or grants mutation authority.
+
+Representative reader invocations, after separately provisioning the API:
+
+```text
+hfcache --client-config /etc/hfcache/client.toml --json status
+hfcache --client-config /etc/hfcache/client.toml list --revisions --type model
+hfcache --client-config /etc/hfcache/client.toml version --server
+hfcache --client-config /etc/hfcache/client.toml archive init --inspect
+```
+
+Candidate validate/plan requires the writer API source; `--config` names a file on
+the CLI host, never a server file to open. Installation/backups remain privileged
+host work. Shipped Cockpit/systemd caller and credential integration remain the
+later API-014/015 work; browser code never receives the API bearer. See
+[decision 119](adr/decision-119.md) and [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012).
 
 ## Troubleshooting and rollback
 

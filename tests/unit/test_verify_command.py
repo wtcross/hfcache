@@ -32,6 +32,7 @@ from hfcache.publication import (
 )
 from hfcache.reporting import FullVerificationSummary, RunReport, VerificationCatalog
 from hfcache.storage import parse_mount_table, write_model
+from tests.api_cli import api_cli
 from tests.unit.test_verification import (
     ARCHIVE_ID,
     DATASET,
@@ -145,6 +146,9 @@ def write_run_report(
 
 
 def invoke(config_path: Path, *arguments: str):
+    if "--estimate" in arguments:
+        with api_cli(config_path) as remote:
+            return remote.invoke(["verify", *arguments])
     return runner.invoke(app, ["--config", str(config_path), "--json", "verify", *arguments])
 
 
@@ -712,7 +716,8 @@ def test_estimate_answers_on_an_archive_with_nothing_published(config_path, arch
 
 def test_the_human_estimate_names_the_unknown_duration(config_path, archive):
     publish(archive)
-    result = runner.invoke(app, ["--config", str(config_path), "verify", "--estimate"])
+    with api_cli(config_path) as remote:
+        result = remote.invoke(["verify", "--estimate"], json_output=False)
     assert result.exit_code == ExitCode.SUCCESS
     assert "never measured" in result.stdout
 
@@ -1155,12 +1160,14 @@ def test_a_report_that_cannot_be_written_is_reported(config_path, archive, monke
 
 
 def status_of(config_path: Path) -> dict:
-    result = runner.invoke(app, ["--config", str(config_path), "--json", "status"])
+    with api_cli(config_path) as remote:
+        result = remote.invoke(["status"])
     return json.loads(result.stdout)["data"]
 
 
 def listed(config_path: Path) -> dict:
-    result = runner.invoke(app, ["--config", str(config_path), "--json", "list", "--revisions"])
+    with api_cli(config_path) as remote:
+        result = remote.invoke(["list", "--revisions"])
     return json.loads(result.stdout)["data"]
 
 
@@ -1267,7 +1274,8 @@ def test_the_human_status_says_the_archive_is_degraded(config_path, archive):
     published = publish(archive)
     (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
     assert invoke(config_path, "--full").exit_code == ExitCode.INTEGRITY
-    result = runner.invoke(app, ["--config", str(config_path), "status"])
+    with api_cli(config_path) as remote:
+        result = remote.invoke(["status"], json_output=False)
     assert result.exit_code == ExitCode.SUCCESS
     assert "archive degraded" in result.output
     assert "failed" in result.output
