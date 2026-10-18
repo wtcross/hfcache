@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [REST/MCP documentation alignment](2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
-| Next task | [DOC-013](tasks/doc-013-human-mcp-guide-and-tool-contract.md) |
+| Next task | [DOC-014](tasks/doc-014-current-operations-and-recovery-runbooks.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

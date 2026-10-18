@@ -98,7 +98,7 @@ observer disappeared. See [uncertain outcomes](recovery.md#10-operation-history-
 
 MCP requires deliberate server enablement and a separate protected MCP-reader
 source; the REST credential above cannot authorize it. The
-[protected-file example](mcp.md#protected-file-example-client-mcp-004) uses the
+[protected-file example](mcp.md#connect) uses the
 locked SDK and canonical `/mcp/` URL, with finite response/page/deadline bounds.
 It returns discovery counts, never file payloads, jobs or complete-copy authority.
 Whole-archive restricted metadata is visible to that capability; there is no

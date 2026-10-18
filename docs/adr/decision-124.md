@@ -146,7 +146,7 @@ schema, job path or production operation is added. See [MCP](../mcp.md) and the
 ## 2026-10-18 mounted security traceability (MCP-003)
 
 [MCP-003](../agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md) maps this
-existing decision to required [threat/control/test evidence](../mcp.md#threat-control-and-test-traceability-mcp-003).
+existing decision to required [threat/control/test evidence](../mcp.md#read-only-boundary).
 Parent-lifespan mounted authorization, closed registry/arguments, whole-state
 snapshots, malformed evidence and secret containment, finite mixed-interface
 work and cancellation/drain ownership are proofs of the existing boundary.
@@ -166,7 +166,7 @@ The [protected-file example](../../examples/mcp-client.py) uses the locked SDK's
 explicit HTTP transport, finite response/page/overall budgets, verified trust and
 no redirect/ambient proxy or executable-string inference. It returns discovery
 counts, never a durable artifact or command receipt. The
-[MCP setup/session/rotation guide](../mcp.md#protected-file-example-client-mcp-004)
+[MCP setup/session/rotation guide](../mcp.md#connect)
 and [cost/refusal guidance](../mcp.md#resource-costs-and-troubleshooting) complete
 client expectations under this existing decision. No new tool/role/config schema
 or architectural choice is selected. REST off/on authentication/OpenAPI/command

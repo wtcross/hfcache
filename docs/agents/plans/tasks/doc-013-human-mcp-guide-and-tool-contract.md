@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [DOC-012](doc-012-human-rest-and-client-reference.md) |
 | Phase | 2 — Human-facing guides |
@@ -23,11 +23,11 @@ Keep and improve `examples/mcp-client.py` instructions: protected token pathname
 
 ## Acceptance
 
-- [ ] A reader can understand enablement, connect, list tools and interpret a result without following any implementation-history link.
-- [ ] The documented nine names and schemas match actual mounted `tools/list`; no execution capability appears.
-- [ ] Native and rootless credential/setup instructions are explicitly distinct and match templates/helpers.
-- [ ] The guide explains finite JSON/stateless/authentication/rotation/limits accurately and contains no task or plan references.
-- [ ] The protected-file example remains bounded, secret-safe and tested against disposable mounted HTTP fixtures.
+- [x] A reader can understand enablement, connect, list tools and interpret a result without following any implementation-history link.
+- [x] The documented nine names and schemas match actual mounted `tools/list`; no execution capability appears.
+- [x] Native and rootless credential/setup instructions are explicitly distinct and match templates/helpers.
+- [x] The guide explains finite JSON/stateless/authentication/rotation/limits accurately and contains no task or plan references.
+- [x] The protected-file example remains bounded, secret-safe and tested against disposable mounted HTTP fixtures.
 
 ## Contracts, invariants and ADRs
 
@@ -57,15 +57,32 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after DOC-012 75cbea1. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+2026-10-18, this commit: the entire guide now leads with connection, nine tools,
+identity/pagination, rotation, bounds and distinct installation profiles. Prior
+MCP/consumer bodies and hashes remain under agent history. Descriptive anchors
+and inbound links are repaired; ten transitional entries removed (993 to 983).
+Native optional staging/named-source delivery is distinct from the selected
+MCP-enabled rootless template's Podman file source. Exact allowlist, schemas,
+full-source cursor binding, finite/stateless negotiation, ignored optional task
+metadata without execution authority, no-write/no-Hub and whole-archive trust
+remain unchanged. Example help describes protected paths and bounded options.
+
+Focused mounted transport/tools/client/security/acceptance/links/migration:
+223 passed in 41.19s. Tool-table equality and actual disposable HTTP/TLS example
+output now supplement independent registry/schema/bounds checks. Ruff/Pyrefly
+(0 errors) passed. Full `scripts/check.sh` exited 0: 4173 passed/40 opt-in
+deselected in 482.75s, build, three locked installation profiles, actual Cockpit
+lint/135 tests (0 skipped)/production build. Log `/tmp/hfcache-doc013-gate.log`.
+Independent read-only review found no material omissions. Reviewed INV-002/003/
+007/010/016 and ADR124/125: no technical invariant, schema, dependency or runtime
+change; no new ADR needed. No production operation or credential access ran.
+
+See [completed progress entry](../../progress.md#mcp-user-guide-2026-10-18).
+Next ready task: DOC-014. Final authorized branch pushes follow plan acceptance.

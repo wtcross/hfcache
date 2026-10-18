@@ -476,7 +476,7 @@ MCP package or credential; enabled mode requires both optional dependencies and
 a protected distinct source. Do not reuse a REST/Hub secret or add a literal
 token to TOML. MCP-001 activates transport; MCP-002 registers nine narrow
 metadata tools without another setting or schema change.
-See [MCP enablement](mcp.md#enablement-and-authority) and
+See [MCP enablement](mcp.md#deployment-profiles) and
 [decision 124](adr/decision-124.md).
 
 ## 12. Candidate authority validation and planning (API-012)
@@ -571,7 +571,7 @@ configuration or execution queue. See [decision 121](adr/decision-121.md).
 
 MCP client guidance uses an explicit protected MCP-reader file and canonical
 HTTP endpoint, not archive TOML, the REST client's credential or a new config
-schema. See [the runnable setup example](mcp.md#protected-file-example-client-mcp-004)
+schema. See [the runnable setup example](mcp.md#connect)
 and [resource limits](mcp.md#resource-costs-and-troubleshooting). Credential/source
 settings remain startup-only; rotation requires the normal API drain/restart and
 new clients. Disabled mode requires neither optional package nor MCP source.

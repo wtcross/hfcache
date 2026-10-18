@@ -8240,56 +8240,6 @@
       "maximum": 2
     },
     {
-      "path": "docs/mcp.md",
-      "token": "API-017",
-      "maximum": 1
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "MCP-001",
-      "maximum": 2
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "MCP-002",
-      "maximum": 3
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "MCP-003",
-      "maximum": 3
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "MCP-004",
-      "maximum": 6
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "agents/plans/tasks/mcp-001-mount-authenticated-fastmcp.md",
-      "maximum": 1
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "agents/plans/tasks/mcp-002-curated-read-only-tools.md",
-      "maximum": 1
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md",
-      "maximum": 1
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md",
-      "maximum": 2
-    },
-    {
-      "path": "docs/mcp.md",
-      "token": "agents/progress.md#operator-handoff",
-      "maximum": 2
-    },
-    {
       "path": "docs/operations.md",
       "token": "API-008",
       "maximum": 1

@@ -952,7 +952,7 @@ complete manifest until all required collections are reconstructed. See
 [MCP output/pages](../../../mcp.md#metadata-output-and-pages) and [consumer identity](../../../consumers.md).
 
 
-MCP-004's [protected-file client/setup](../../../mcp.md#protected-file-example-client-mcp-004)
+MCP-004's [protected-file client/setup](../../../mcp.md#connect)
 walks metadata and exact publication projections under independent finite bounds;
 its summary is not a REST Envelope, operation receipt or file transfer. Client
 rotation recreates the connection after normal server restart; session IDs never

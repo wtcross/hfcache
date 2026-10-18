@@ -223,7 +223,7 @@ optional `mcp` extra, alongside `server`; disabled installs need no MCP package
 or credential. MCP-002 exposes nine curated metadata tools through a narrow read
 protocol, with typed bounded pages and no jobs/Hub/probes or arbitrary file reads.
 The [protected-file example client](examples/mcp-client.py),
-[setup/session/rotation guide](docs/mcp.md#protected-file-example-client-mcp-004)
+[setup/session/rotation guide](docs/mcp.md#connect)
 and [cost/error limits](docs/mcp.md#resource-costs-and-troubleshooting) describe
 controlled internal metadata access. The MCP reader can see the whole archive,
 including restricted metadata; it cannot use REST or create jobs. No OAuth

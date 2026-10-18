@@ -113,7 +113,7 @@ Rollback to a server-only/pre-MCP target requires deliberate disabled MCP config
 before startup; older binaries can parse the existing slot but refuse enablement.
 There is no migration or automatic transport fallback, and `--with-mcp` cannot
 add packages to an existing switch target. Preserve normal executor drain and
-state/lock guards. See [MCP rollback](../mcp.md#rollback-and-deployment-limits).
+state/lock guards. See [MCP rollback](../mcp.md#deployment-profiles).
 
 ```bash
 sudo systemctl stop hfcache-sync.timer          # quiesce — never hfcache.target

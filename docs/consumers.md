@@ -442,10 +442,9 @@ Helper exit codes — these are the helper's own, not the application's §11.2 s
 | `1` | Failed after exhausting `--attempts`; retryable in kind |
 | `2` | Bad invocation, or an archive state retrying will not fix |
 
-## MCP metadata discovery (MCP-002)
+## MCP metadata discovery
 
-This section describes repository behavior and interface examples, not a deployed
-MCP session exercised on the installed archive. [MCP tools](mcp.md#curated-metadata-tools-mcp-002)
+[MCP tools](mcp.md#available-tools)
 provide bounded metadata only, never a file-transfer channel, command or Hub
 fetch. The same whole-archive authorization applies, including restricted data.
 
@@ -478,7 +477,7 @@ operator acceptance requirements remain unchanged.
 
 
 The [protected-file example](../examples/mcp-client.py) and
-[setup/rotation guide](mcp.md#protected-file-example-client-mcp-004) demonstrate
+[setup/rotation guide](mcp.md#connect) demonstrate
 inventory and one-current/exact-manifest discovery without a local archive mount
 or writer credential. Output is a bounded count summary, not a reconstructed
 manifest or permission to promote. Keep the exact publication fixed during a

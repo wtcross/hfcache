@@ -2,7 +2,8 @@
 """Read bounded MCP discovery metadata with a provisioned protected bearer.
 
 Requires the locked hfcache server+MCP environment. This is discovery, not a
-consumer copy or verification implementation (INV-002/003/008, decisions 124/125).
+consumer copy or integrity verification. Read current once and retain its exact
+publication identity while walking both manifest collections.
 No token belongs in an argument, URL, environment variable or committed config.
 """
 
@@ -418,16 +419,51 @@ class _Parser(argparse.ArgumentParser):
 
 def main(argv: list[str] | None = None) -> int:
     parser = _Parser(description=__doc__)
-    parser.add_argument("--url", required=True)
-    parser.add_argument("--token-file", type=Path, required=True)
-    parser.add_argument("--ca-file", type=Path)
-    parser.add_argument("--expected-archive-id")
-    parser.add_argument("--page-size", type=int, default=100)
-    parser.add_argument("--max-pages", type=int, default=1000)
-    parser.add_argument("--timeout", type=float, default=30.0)
-    parser.add_argument("--mode", choices=("auto", "legacy"), default="auto")
-    parser.add_argument("--type", choices=("model", "dataset"), dest="repository_type")
-    parser.add_argument("--repository", dest="repository_id")
+    parser.add_argument(
+        "--url", required=True, help="Canonical /mcp/ HTTPS endpoint, including any public prefix."
+    )
+    parser.add_argument(
+        "--token-file",
+        type=Path,
+        required=True,
+        help="Absolute protected MCP-reader token pathname; never a literal token.",
+    )
+    parser.add_argument(
+        "--ca-file", type=Path, help="CA certificate file; system trust is used when omitted."
+    )
+    parser.add_argument("--expected-archive-id", help="Expected canonical archive UUID.")
+    parser.add_argument(
+        "--page-size",
+        type=int,
+        default=100,
+        help="Entries per page (default: 100; server maximum applies).",
+    )
+    parser.add_argument(
+        "--max-pages", type=int, default=1000, help="Total metadata-call budget (default: 1000)."
+    )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=30.0,
+        help="Overall deadline in seconds (default: 30; at most 300).",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("auto", "legacy"),
+        default="auto",
+        help="Negotiation mode: modern auto or explicit legacy initialize.",
+    )
+    parser.add_argument(
+        "--type",
+        choices=("model", "dataset"),
+        dest="repository_type",
+        help="Repository type; requires --repository.",
+    )
+    parser.add_argument(
+        "--repository",
+        dest="repository_id",
+        help="Repository ID for exact publication discovery; requires --type.",
+    )
     try:
         args = vars(parser.parse_args(argv))
         args["endpoint"] = args.pop("url")

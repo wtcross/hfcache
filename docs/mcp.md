@@ -1,71 +1,19 @@
-# Optional MCP metadata interface
+# Read-only MCP metadata interface
 
-MCP-001 adds an optional authenticated Streamable HTTP transport after committed
-REST acceptance. MCP-002 adds the explicit nine-tool metadata read interface,
-with repository acceptance recorded in its task. No command/job interface is exposed.
-[Decision 124](adr/decision-124.md) records dependency/auth/lifecycle rationale;
-the [transport task](agents/plans/tasks/mcp-001-mount-authenticated-fastmcp.md) owns its
-acceptance evidence. [Decision 125](adr/decision-125.md) and the
-[tool task](agents/plans/tasks/mcp-002-curated-read-only-tools.md) own curated exposure
-and its registry/schema/side-effect proof.
-MCP-003 supplies mounted security/side-effect evidence; MCP-004 completes the
-protected-file client and required build acceptance. The
-[acceptance task](agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) records
-actual runs. MCP repository acceptance is complete; final API-017 closure and
-installed-host operator holds remain separate.
+hfcache provides an optional MCP interface for exploring archive metadata. Its
+nine tools inspect status, repositories, retained revisions, references, manifests
+and existing run or verification reports, and estimate verification work. They
+cannot start jobs, download repositories, repair/delete data or perform integrity
+verification.
 
-## Enablement and authority
+Connect to the writer's `/mcp/` endpoint with a separately provisioned MCP-reader
+bearer. It grants metadata access across the entire archive, including restricted
+repositories; every client must be entitled to that scope. REST and Hugging Face
+credentials are separate and cannot substitute for it. Requests use authenticated
+Streamable HTTP with finite JSON responses and no OAuth login/token issuance.
+Off-host connections require verified HTTPS.
 
-Install the server and MCP extras together, then deliberately set the existing
-server `mcp_enabled = true` and provision a separate protected
-`[credentials.mcp_reader]` source. No token value belongs in TOML, a URL, command
-argument, browser code or logs. The [server configuration](server.md) and
-[security contract](security.md) define protected file/named credential rules.
-Disabled MCP imports no FastMCP package, resolves no MCP credential and mounts no
-MCP endpoint; ordinary base and REST-only installations remain independent.
-
-The MCP reader is a distinct fixed whole-archive capability. REST writer/reader
-bearers cannot access MCP, and the MCP bearer cannot access REST. Production
-verification uses the supported FastMCP `TokenVerifier` extension over the shared
-protected opaque-token registry, never its development static verifier. A valid
-session identifier alone grants no access; every transport request authenticates.
-Authentication/credential rotation is startup-only and requires restart.
-
-This is pre-provisioned bearer authentication for controlled internal clients.
-No OAuth discovery/registration, consent, login or token issuance is provided.
-Choose a client that can supply its provisioned bearer over verified HTTPS;
-public OAuth-only clients are not automatically compatible. Examples must never
-contain real tokens or imply an unperformed host installation.
-
-For locked checkout development, select both extras:
-
-```bash
-uv sync --locked --extra server --extra mcp
-```
-
-The release installer supports explicit `--with-mcp` for build/stage operations;
-it is refused with list/switch modes and does not modify config or start services.
-Default staging remains server-only. Enabling against a release without the
-optional package fails closed; staging alone does not provision authentication.
-
-The shipped server example's optional named source is `hfcache.mcp-reader`.
-Default API units import only their existing credentials, so a named MCP source
-requires deliberate delivery to the API service. An operator-selected drop-in
-may add this declaration after provisioning its encrypted credential:
-
-```ini
-[Service]
-LoadCredentialEncrypted=hfcache.mcp-reader:/etc/credstore.encrypted/hfcache.mcp-reader
-```
-
-Then `[credentials.mcp_reader] systemd_name = "hfcache.mcp-reader"` selects that
-name in server TOML. A protected explicit file is the alternative; neither path
-permits a literal value in configuration or request input. This is an installation
-example, not an executed host change. The private verification worker must receive
-neither MCP nor REST/Hub credentials; standard stores are masked, while custom
-source paths require explicit masks/probes under existing operator holds.
-
-## Protected-file example client (MCP-004)
+## Connect
 
 [`examples/mcp-client.py`](../examples/mcp-client.py) is a deterministic metadata
 client for the locked FastMCP 4.1.1 interface. It does not run an agent, accept a
@@ -86,8 +34,7 @@ uv run --locked --extra server --extra mcp python examples/mcp-client.py \
     --expected-archive-id 01234567-89ab-4cde-8fab-0123456789ab
 ```
 
-This is an operator-adapted setup example, not a command run on the production
-archive. Choose the real authority, public prefix, protected source and archive
+Choose your provisioned authority, public prefix, protected source and archive
 UUID. Use `--ca-file /etc/hfcache/archive-ca.pem` for a private CA rather than
 disabling verification. The source is validated/registered before network I/O;
 it is the MCP credential, never `hfcache.api` or the Hub secret. The example
@@ -118,7 +65,7 @@ headers and cursor continuity, and rejects repeated cursors/inconsistent or
 unfinished walks. `metadata_pages` counts all metadata calls, including the unpaged
 current reference. It returns counts, not file content or an authoritative durable
 manifest. Reconstructing and independently verifying a complete consumer copy
-remains the [consumer workflow](consumers.md#mcp-metadata-discovery-mcp-002).
+remains the [consumer workflow](consumers.md#mcp-metadata-discovery).
 No archive mount/config, Hub credential, REST writer token or local mutation
 fallback is required or used.
 
@@ -127,10 +74,9 @@ the server's smaller configured cap still applies. It disables redirects,
 ambient proxies and implicit credential discovery, retains certificate
 verification and caches no credential or result to disk. Errors use fixed safe
 diagnostics rather than rejected input or SDK tracebacks. These client bounds do
-not expand server budgets or authorize execution. Actual positive/negative
-example execution belongs to the MCP-004 task evidence.
+not expand server budgets or authorize execution.
 
-### Wire, sessions and reconnect
+### Negotiation and reconnect
 
 MCP protocol negotiation, the independent `MetadataRead.schema_version=1` and
 its nested domain Envelope schema are different compatibility boundaries. Check
@@ -153,88 +99,7 @@ checked against locked 4.1.1. Upstream OAuth/STDIO/in-memory/task examples do no
 add those interfaces or authority to this server. A desktop/browser client that
 requires OAuth discovery cannot use this pre-provisioned endpoint automatically.
 
-### Rotation and disabled operation
-
-Authentication sources are loaded at startup, not watched. Replacing the source
-file alone does not revoke an in-memory old credential. An operator provisions a
-new distinct MCP secret, follows the existing API drain/restart procedure with
-that source, then recreates clients so they reread it. No session ID bridges the
-rotation. Verify old credentials refuse, the new credential sees the exact nine
-tools and separate REST credentials retain their own authority. Do not give the
-private verification worker the MCP source or use the REST token as a workaround.
-These are operator acceptance instructions, not service changes performed here.
-
-When disabled, no MCP package/source/endpoint is required and REST auth/lifecycle
-stays independent. Enabling needs both installed extras and a usable distinct
-source before startup. The default packaged unit does not import an optional MCP
-credential; named-source delivery is the explicit drop-in above. Reverting to a
-server-only/pre-MCP target requires deliberately disabling MCP before restart;
-there is no automatic fallback, source copying or archive/config schema migration.
-
-## Transport and lifecycle
-
-The fixed canonical `/mcp/` HTTP application shares one FastAPI/Uvicorn process
-with REST.
-Existing REST startup enters before the explicitly composed MCP lifespan; MCP
-closes before REST ownership drains/releases. Failure unwinds resources without
-replacing the archive/instance locks or starting a nested server/event loop.
-
-MCP retains Host/Origin/TLS/proxy and public-prefix enforcement. Only corroborated
-trusted native Unix transport may use unprefixed paths, following
-[decision 123](adr/decision-123.md); request headers cannot manufacture locality.
-The supported mount uses `http_app(path="/", stateless_http=True)` under
-`Mount("/mcp", ...)`. Requests to `/mcp` receive a safe relative 307 to `/mcp/`
-only after authentication and transport/body/query checks; no query or caller
-header is copied into Location. This narrow MCP spelling redirect does not
-re-enable REST slash redirects. Configured public TCP prefixes apply to the mount;
-corroborated native Unix may use its native spelling under decision 123.
-
-Stateless mode retains no server-side legacy session or resumption history.
-Clients can negotiate and make protocol requests, but a session header never
-creates an authorization bypass or an execution receipt. MCP-001 selects
-`json_response=True`: each response is finite JSON, not a retained SSE feed. The locked SDK handles
-POST/DELETE; stateless GET is authenticated before its method refusal. Both the
-outer registry and supported production FastMCP verifier enforce MCP-only class
-authority on every request. No OAuth discovery routes are mounted. The actual SDK/streaming-client modern
-and legacy behavior is acceptance evidence, not an OAuth-client compatibility
-promise.
-
-One trusted path projection handles public-prefix collisions with `/api/v1` and
-`/mcp`: prefer the configured-prefix spelling when the remainder identifies an
-interface; otherwise permit the native interface spelling only for corroborated
-Unix scope. The same projection selects interface authentication, static writer/
-body policy, effective root, redirects and links. A public root `/mcp` cannot
-turn its REST paths into MCP-authenticated requests; native MCP remains reachable.
-
-Every MCP request rejects query parameters. POST requires the shared bounded
-strict JSON-object/media/encoding/UTF-8/depth/duplicate-key policy; other methods
-require empty bodies before SDK method handling. Existing `max_request_bytes`
-applies. MCP transport has a separate in-flight ceiling equal to
-`metadata_workers + metadata_queue`. A request reserves its slot immediately
-after successful authentication, before body collection, and releases on response/
-disconnect/failure. Slow chunked bodies therefore count; excess requests refuse
-instead of retaining an unbounded session queue. It buffers each finite response
-before sending headers,
-refuses over `max_response_bytes`, sanitizes registered secrets in JSON/text and
-checks the encoded bound again. Thus an oversized response cannot become a
-truncated successful stream. The original and sanitized bodies are bounded;
-this transport does not promise an unbounded incremental SSE feed. SDK errors and
-scoped diagnostics are sanitized, without returning raw tracebacks or registering
-new execution authority. The lifespan bridge records SDK warning/error provenance
-through stable closed-vocabulary `mcp.diagnostic` and captured correlation;
-`sdk_level` retains original lowercase severity and `sdk_logger` is bounded to
-256 characters and sanitized. Diagnostic text is fixed: the bridge never evaluates
-SDK messages, formatting arguments or exceptions, which may contain rejected
-inputs. Messages below WARNING are suppressed and original SDK handlers restore
-on exit.
-
-This is operational evidence, not a command outcome or checkpoint. JSON-RPC
-errors preserve their integer code but use fixed safe messages and drop SDK error
-message/data/details; raw Pydantic rejected values never become protocol output.
-Registered-secret sanitization still covers successful values/IDs, with unsafe
-numeric identities refused rather than echoed.
-
-## Curated metadata tools (MCP-002)
+## Available tools
 
 [Decision 125](adr/decision-125.md) permits exactly the following nine names.
 No resources or prompts are registered. Every adapter receives only the narrow
@@ -344,14 +209,19 @@ No partial page, malformed artifact or missing state grants execution authority.
 
 The transport cannot submit jobs, run actual verification, perform diagnostics/
 probes, use Hub credentials, rebuild catalogs, recover/cleanup or install config.
-Registry/schema equality and before/after archive/control-state snapshots must
-prove this for successful and failed mounted calls; annotations alone do not.
+Read-only annotations describe this boundary; the narrow read capability and
+request validation enforce it.
 
-Archive/receipt/config schemas, domain algorithms and whole-archive authorization
-are unchanged. Local socket/streaming tests and locked wheel installs do not prove
-deployed systemd/cgroup credentials, no-IP masks, browser/PAM, SELinux/NFS or
-rollback/drain acceptance. Existing [operator holds](agents/progress.md#operator-handoff)
-remain deployment prerequisites; no production operation is authorized.
+## Authentication and rotation
+
+Authentication sources are loaded at startup, not watched. Replacing the source
+file alone does not revoke an in-memory old credential. An operator provisions a
+new distinct MCP secret, follows the existing API drain/restart procedure with
+that source, then recreates clients so they reread it. No session ID bridges the
+rotation. Verify old credentials refuse, the new credential sees the exact nine
+tools and separate REST credentials retain their own authority. Do not give the
+private verification worker the MCP source or use the REST token as a workaround.
+
 
 ## Resource costs and troubleshooting
 
@@ -396,143 +266,146 @@ diagnostics rather than enabling raw rejected-value/debug output.
 | Unknown schema, timeout or disconnect | Refuse incomplete output, close/recreate the client and repeat discovery if needed; no MCP execution receipt, replay/cancel or automatic recovery is involved |
 | Unverified/unknown catalog state | Honest missing/stale evidence, not a failed request or authorization to rebuild; only separately authorized actual verification can establish confidence |
 
-## Threat, control and test traceability (MCP-003)
+## Deployment profiles
 
-These are required acceptance claims under decisions 124/125 and INV-002/003/
-007/010/016. The [MCP-003 task](agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
-owns executed results; a listed control or test reference alone is not evidence
-that its latest run passed. Mounted tests must enter the parent FastAPI lifespan
-and use supported streaming HTTP or disposable sockets, not only direct SDK calls.
+| Installation | Enablement and source |
+| --- | --- |
+| Base reader or REST-only | MCP is disabled by default; no optional import, source resolution or mount occurs |
+| Native service | Stage with explicit `--with-mcp`, install server and MCP extras, set `mcp_enabled=true`, and deliberately deliver a distinct protected source |
+| Selected rootless template | Already sets `mcp_enabled=true`; the fixed helper mounts the named Podman MCP-reader secret at `/run/secrets/hfcache.mcp-reader` |
 
-| Threat or failure | Required control and observable refusal | Concrete test entry point |
-| --- | --- | --- |
-| Missing/cross-class bearer, reused session identity or protocol-method bypass | Authenticate each request before body/protocol handling; an MCP bearer cannot reach REST and a session ID grants no authority | [test_every_mounted_method_authenticates_before_protocol_or_session_use](../tests/unit/test_mcp_transport.py), [test_stateless_handshake_issues_no_session_authority_and_every_followup_reauthenticates](../tests/unit/test_mcp_transport.py) |
-| Host/Origin/prefix/proxy confusion | One trusted interface projection and corroborated Unix scope retain transport policy; alias redirects cannot reflect caller data | [test_real_unix_native_and_tcp_public_mcp_share_one_authenticated_lifespan](../tests/unit/test_mcp_transport.py), [test_slash_alias_is_authenticated_and_cannot_reflect_query_or_proxy_prefix](../tests/unit/test_mcp_transport.py) |
-| Writer name, hidden tool/resource/prompt, generic invocation or mutation-shaped arguments | Exact nine-name registry and typed closed schemas; unsupported tool spellings/tool-argument fields refuse without command or state effects | [test_actual_mounted_registry_has_exact_typed_allowlist_and_read_only_hints](../tests/unit/test_mcp_tools.py), [test_every_tool_rejects_mutation_fields_without_archive_or_control_writes](../tests/unit/test_mcp_security.py), [test_all_writer_command_names_and_generic_dispatch_aliases_are_unknown](../tests/unit/test_mcp_security.py), [test_resources_prompts_and_background_tasks_cannot_expand_the_registry](../tests/unit/test_mcp_security.py) |
-| A read creates reports, receipts, directories, locks, caches or recovery output | Narrow read capability plus per-call archive/control-state snapshots and command/Hub/credential/archive-byte-hash tripwires; hints alone are insufficient | [test_every_success_and_failed_tool_preserves_archive_and_operation_state](../tests/unit/test_mcp_tools.py), [test_exact_registry_and_valid_reads_preserve_archive_control_and_runtime_directories](../tests/unit/test_mcp_security.py) |
-| Malformed or stale evidence becomes authority or a newer publication is substituted | Validate original evidence and exact identity before projection; refuse malformed/wrong-kind/stale data, never reconstruct it or infer confidence | [test_exact_manifest_never_substitutes_current_after_stale_or_unsafe_identity](../tests/unit/test_mcp_tools.py), [test_verification_report_requires_actual_verification_evidence](../tests/unit/test_mcp_tools.py), [test_corrupt_original_reports_refuse_without_repair_or_diagnostic_echo](../tests/unit/test_mcp_security_evidence.py) |
-| Secret or rejected input escapes in output, errors, cursor hashes or SDK logs | Registered-value sanitization before encoded output/hash, fixed safe errors/diagnostics and no raw rejected-value formatting; unsafe identities refuse | [test_archive_strings_remain_inert_data_and_registered_tokens_never_reach_tool_outputs](../tests/unit/test_mcp_tools.py), [test_malformed_protocol_does_not_echo_rejected_values_in_output_or_diagnostics](../tests/unit/test_mcp_transport.py), [test_numeric_registered_secret_changes_do_not_fingerprint_report_cursors](../tests/unit/test_mcp_security_evidence.py), [test_registered_secret_in_actual_report_response_is_redacted_or_refused](../tests/unit/test_mcp_security_evidence.py) |
-| Large metadata/slow body/read consumes unbounded work or returns truncated success | Explicit body/scan/artifact/page/response ceilings and bounded transport/shared metadata capacity; exhaustion is visible failure and ownership releases safely | [test_actual_mounted_protocol_enforces_byte_budgets_and_recovers_capacity](../tests/unit/test_mcp_transport.py), [test_exhausted_metadata_budget_is_visible_failure_never_an_empty_success](../tests/unit/test_mcp_tools.py) |
-| Missing catalog or partial archive becomes a false verified result | Preserve unknown instance-bound confidence; reads never hash archive content, persist findings or rebuild catalog state | [test_bad_derived_catalogs_stay_unknown_and_are_never_rebuilt](../tests/unit/test_mcp_tools.py), [test_partial_archive_estimate_reports_missing_bytes_without_hashing_or_false_confidence](../tests/unit/test_mcp_tools.py) |
-| Observer cancellation, mixed REST/MCP work or shutdown loses active read ownership | Offload through the shared bounded pool, keep independent correlation and retain a worker lease until actual completion; drain before releasing lifecycle ownership | [test_blocked_estimator_uses_shared_pool_without_blocking_metadata_or_leaking_slots](../tests/unit/test_mcp_pool.py), [test_parallel_mcp_reads_during_rest_sync_and_verification_keep_ids_and_authority](../tests/unit/test_mcp_concurrency.py), [test_cancelled_mcp_observer_keeps_metadata_lease_until_worker_finishes](../tests/unit/test_mcp_concurrency.py), [test_shutdown_after_cancelled_mcp_read_waits_for_worker_and_instance_ownership](../tests/unit/test_mcp_concurrency.py) |
-| Disabled MCP gains a dependency, credential read or endpoint | Disabled mode imports/resolves neither optional runtime nor MCP source; isolated base/server installations remain usable | [test_disabled_mcp_neither_reads_inert_credential_nor_mounts_endpoint](../tests/unit/test_mcp_transport.py), [isolated wheel profiles](../scripts/check-installations.py) |
+For native builds, `scripts/install-release.sh --with-mcp` selects the optional
+closure only during build/stage; it refuses list/switch combinations. It neither
+changes configuration nor starts services, and cannot add packages to a switch
+target. Default native staging remains server-only. Enabled startup without the
+optional package or usable distinct source fails closed.
 
-The locked SDK may ignore legacy top-level `params.task` metadata on an otherwise
-valid allowlisted `tools/call` and perform the ordinary finite synchronous read.
-The accepted behavior is no task handle, retained task, operation/job or state
-effect, not blanket refusal of every optional protocol field. Unsupported task
-RPC methods refuse; mutation-shaped fields inside the tool's arguments remain
-closed and refuse. `task=False` and hints describe no background authority, not a
-promise about every SDK extension field.
+The native example selects `[credentials.mcp_reader]` with
+`systemd_name = "hfcache.mcp-reader"`. Default native units do not import this
+optional source. After provisioning the encrypted credential, a deliberate native
+API-service drop-in can deliver it:
 
-Malformed original report proof covers run/recovery/verification evidence and
-JSON, version, run/archive/time identity, symlink and duplicate-file damage.
-[test_unexpected_reader_exception_is_masked_over_actual_http_and_in_diagnostics](../tests/unit/test_mcp_security_evidence.py)
-requires fixed safe failure over the actual mounted boundary and captured logs.
-Registered string report values redact; unsafe registered numeric values may
-refuse at the parent boundary with HFAPI008/HTTP 500 rather than return changed
-or exposed evidence. The numeric cursor substitution test independently proves
-that hidden numeric values do not enter client-visible continuation fingerprints.
+```ini
+[Service]
+LoadCredentialEncrypted=hfcache.mcp-reader:/etc/credstore.encrypted/hfcache.mcp-reader
+```
 
-Repository proof completed 2026-10-18 with the first full gate exiting 0; the task
-records 3,522 Python tests, all three locked wheel profiles and 127 Cockpit tests.
-Dedicated MCP client/final acceptance remains MCP-004. No runtime behavior or
-architectural decision changed in this proof package.
+A protected explicit `file` source is the alternative. This is separate from the
+rootless helper's file-mounted Podman secret delivery; host `ImportCredential`
+is not the container source. See [server credentials](server.md#credentials-and-capabilities)
+and [container roles](containers.md). The private verifier receives no REST, MCP
+or Hub credential; custom source locations require explicit isolation acceptance.
 
-### Snapshot and concurrency method
+Rollback to a server-only or pre-MCP runtime requires deliberately disabling MCP
+before normal drain/restart. There is no automatic fallback or schema migration.
+Preserve previous trees, receipt stores, scheduled handles and shared lock inodes.
+The selected deployment remains guarded/read-only; see the dated
+[deployment status](deployment-status.md) for recorded scope and outstanding
+NAS, isolation, consumer and browser acceptance. Repository fixtures do not prove
+installed SELinux/NFS, credential delivery, cgroups or real drain/rollback.
 
-No-hash assertions concern verification/ingestion hashing of archived payload
-bytes. Cursor hashing of sanitized metadata and credential-digest authentication
-remain intentional and are not archive verification.
+## Disposable example workflow
 
-Take application-state baselines after ordinary lifespan initialization and
-credential loading. For every valid/invalid tool, compare all relevant archive
-and operation-state paths, ordinary file contents and modes, including refs,
-manifests, object/publication content, catalogs, reports, journals and pending
-operation evidence. Adding a path is a change even when no existing file changed.
-Do not treat filesystem atime updates as application writes. Normal sanitized
-operational logging is the documented exception; it cannot create archive or
-operation evidence. Test fixtures may deliberately corrupt evidence before the
-baseline to verify fail-closed behavior, but the read must preserve that evidence.
+The mounted example fixture creates its own archive, protected synthetic bearer,
+API/control state and loopback listener. Run the bounded discovery workflow from
+a locked checkout without a deployed service or archive mount:
 
-During a concurrent REST command, its authorized fixture mutations remain
-attributable to that command. MCP must add no admission/domain/Hub/credential/
-archive-byte-hash invocation or derived artifact. Responsiveness alone does not prove this
-boundary. Distinct request/run correlation must survive overlapping reads, and
-cancellation closes observation without treating a still-running read as finished.
-The supported streaming observer may detach while the server conservatively
-retains both its transport request slot and metadata-worker lease until actual
-completion. Shutdown may join at the MCP layer before the REST pool closes;
-neither observer cancellation nor a pending drain proves capacity is already free. Pages remain bounded
-observations rather than a global archive snapshot; status headline/warnings may
-change between pages while row-bound cursors remain valid.
+```bash
+uv run --locked --extra server --extra mcp pytest \
+    tests/unit/test_mcp_client.py \
+    -k test_example_walks_actual_mounted_pages_and_one_exact_publication --no-cov
+```
 
-### Residual deployment assumptions
+For its four repositories and selected `model:alpha/model`, page size 1 reads
+current once and then three file pages and two dependency pages at that exact
+publication. Both supported negotiation modes run over disposable HTTP and TLS.
+The example's successful output is:
 
-The narrow tool capability is an application boundary inside the shared API
-process, not a separate process sandbox. The MCP credential intentionally reads
-the whole archive, including restricted metadata. No per-repository ACL or individual attribution is claimed. A trusted
-client must protect its provisioned bearer and use verified TLS or the protected
-authenticated Unix path; session identifiers are not credentials. Exposed names,
-report messages and dependency observations remain untrusted data even after
-successful validation, never instructions to execute.
+```json
+{"kind":"discovery_summary","manifest_dependencies":2,"manifest_files":3,"metadata_pages":10,"repository_count":4}
+```
 
-Hermetic mounted/streaming/socket tests and archive snapshots prove application
-behavior under the tested process and filesystem conditions. They do not certify
-installed socket ownership, TLS/proxy deployment, credential delivery/rotation,
-worker no-IP/source masks, cgroups, custom source paths, SELinux/NFS, browser/PAM
-or real drain/rollback behavior. Dependency/parser/SDK compromise and privileged
-host/operator compromise remain outside the narrow tool capability proof. Keep
-[operator holds 16–18](agents/progress.md#operator-handoff) open until separately
-performed; no production operation or hardening change is part of these tests.
+A timeout, exhausted page/byte budget, changed identity or failed page emits the
+fixed safe diagnostic, exits 1 and produces no partial summary. Restart discovery
+as a new attempt; do not splice pages from different attempts.
 
-## Rollback and deployment limits
+## Transport and lifecycle
 
-The existing config slot is already readable by predecessor feature releases,
-but pre-MCP runtimes refuse enabled MCP. Before rollback to a server-only or
-pre-MCP target, deliberately disable MCP in server configuration under the
-normal restart/drain procedure. There is no schema migration or automatic
-fallback. `--with-mcp` stages a chosen dependency profile; it cannot add packages
-to an existing `--switch` target. Preserve previous trees, operation/scheduled
-history and all existing quiescence/lock guards. Neither staging nor these
-examples performs a production service change.
+The fixed canonical `/mcp/` HTTP application shares one FastAPI/Uvicorn process
+with REST.
+Existing REST startup enters before the explicitly composed MCP lifespan; MCP
+closes before REST ownership drains/releases. Failure unwinds resources without
+replacing the archive/instance locks or starting a nested server/event loop.
 
-## Enforcement and evidence
+MCP retains Host/Origin/TLS/proxy and public-prefix enforcement. Only corroborated
+trusted native Unix transport may use unprefixed paths, following
+[decision 123](adr/decision-123.md); request headers cannot manufacture locality.
+The supported mount uses `http_app(path="/", stateless_http=True)` under
+`Mount("/mcp", ...)`. Requests to `/mcp` receive a safe relative 307 to `/mcp/`
+only after authentication and transport/body/query checks; no query or caller
+header is copied into Location. This narrow MCP spelling redirect does not
+re-enable REST slash redirects. Configured public TCP prefixes apply to the mount;
+corroborated native Unix may use its native spelling under decision 123.
 
-[`hfcache.mcp`](../src/hfcache/mcp.py) provides `OpaqueTokenVerifier`,
-`create_mcp_app`, `BoundedMCPTransport` and scoped `mcp_diagnostics`. The
-[outer boundary/application](../src/hfcache/api/app.py) owns interface projection,
-shared transport/body checks and composed lifecycle. The
-[credential core](../src/hfcache/api/auth.py) owns active protected source loading
-and constant-time class separation. [Mounted streaming/security tests](../tests/unit/test_mcp_transport.py)
-and [direct verifier/lifecycle/limit tests](../tests/unit/test_mcp_mount.py)
-exercise supported SDK paths rather than an in-memory direct server shortcut.
+Stateless mode retains no server-side legacy session or resumption history.
+Clients can negotiate and make protocol requests, but a session header never
+creates an authorization bypass or an execution receipt. The transport uses
+`json_response=True`: each response is finite JSON, not a retained SSE feed. The locked SDK handles
+POST/DELETE; stateless GET is authenticated before its method refusal. Both the
+outer registry and supported production FastMCP verifier enforce MCP-only class
+authority on every request. No OAuth discovery routes are mounted. Modern and legacy SDK support does not provide OAuth-client compatibility.
 
-[Locked isolated installation checks](../scripts/check-installations.py) preserve
-base, server-only and server+MCP profiles, including cold CLI imports independent
-of optional frameworks. [Installer tests](../tests/unit/test_release_installer.py)
-cover explicit dependency selection without host operations. Task evidence owns
-actual executed counts and the full gate; pending host checks stay separate.
+One trusted path projection handles public-prefix collisions with `/api/v1` and
+`/mcp`: prefer the configured-prefix spelling when the remainder identifies an
+interface; otherwise permit the native interface spelling only for corroborated
+Unix scope. The same projection selects interface authentication, static writer/
+body policy, effective root, redirects and links. A public root `/mcp` cannot
+turn its REST paths into MCP-authenticated requests; native MCP remains reachable.
 
-MCP-002 enforcement is split deliberately: the transport-neutral
-[MetadataReadQueries/MetadataRead/QueryPage backend](../src/hfcache/services/mcp_queries.py)
-projects existing [shared authoritative reads](../src/hfcache/services/queries.py).
-[MetadataReadPort and nine explicit functions](../src/hfcache/mcp_tools.py) expose
-only named reads; the [app-owned adapter](../src/hfcache/api/mcp_reads.py) and
-[application wiring](../src/hfcache/api/app.py) alone own bounded offload and
-request context. The SDK request is not a tool argument or backend capability.
-[Backend tests](../tests/unit/test_mcp_queries.py) and
-[mounted registry/tool tests](../tests/unit/test_mcp_tools.py) provide task evidence.
-[Shared metadata-pool tests](../tests/unit/test_mcp_pool.py) prove off-loop work
-and refusal at the shared capacity limit.
+Every MCP request rejects query parameters. POST requires the shared bounded
+strict JSON-object/media/encoding/UTF-8/depth/duplicate-key policy; other methods
+require empty bodies before SDK method handling. Existing `max_request_bytes`
+applies. MCP transport has a separate in-flight ceiling equal to
+`metadata_workers + metadata_queue`. A request reserves its slot immediately
+after successful authentication, before body collection, and releases on response/
+disconnect/failure. Slow chunked bodies therefore count; excess requests refuse
+instead of retaining an unbounded session queue. It buffers each finite response
+before sending headers,
+refuses over `max_response_bytes`, sanitizes registered secrets in JSON/text and
+checks the encoded bound again. Thus an oversized response cannot become a
+truncated successful stream. The original and sanitized bodies are bounded;
+this transport does not promise an unbounded incremental SSE feed. SDK errors and
+scoped diagnostics are sanitized, without returning raw tracebacks or registering
+new execution authority. The lifespan bridge records SDK warning/error provenance
+through stable closed-vocabulary `mcp.diagnostic` and captured correlation;
+`sdk_level` retains original lowercase severity and `sdk_logger` is bounded to
+256 characters and sanitized. Diagnostic text is fixed: the bridge never evaluates
+SDK messages, formatting arguments or exceptions, which may contain rejected
+inputs. Messages below WARNING are suppressed and original SDK handlers restore
+on exit.
 
+This is operational evidence, not a command outcome or checkpoint. JSON-RPC
+errors preserve their integer code but use fixed safe messages and drop SDK error
+message/data/details; raw Pydantic rejected values never become protocol output.
+Registered-secret sanitization still covers successful values/IDs, with unsafe
+numeric identities refused rather than echoed.
 
-MCP-004 client/packaging acceptance uses [the runnable example](../examples/mcp-client.py),
-[actual example socket tests](../tests/unit/test_mcp_client.py),
-[negative client/trust/budget tests](../tests/unit/test_mcp_client_security.py) and
-[REST/rotation/packaging acceptance](../tests/unit/test_mcp_acceptance.py). The
-[MCP-004 task](agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns precise
-commands/counts and the required --with-build gate, including all implemented
-extras, three real locked wheel profiles and Cockpit. Cold base/REST-only imports,
-unchanged verifier no-IP/credential/timer policy and disabled/enabled REST parity
-are repository claims; operator-only deployment holds are not inferred passes.
+## Read-only boundary
+
+Tool schemas are closed. Unsupported names, arbitrary paths/URLs, credentials,
+mutation fields and execution RPCs refuse. The locked SDK may ignore legacy
+`params.task` metadata on an otherwise valid read: that still performs an ordinary
+finite synchronous read, with no task handle, retained task, job or state effect.
+No resources/prompts or generic invocation interface is exposed.
+
+The tool boundary is inside the shared API process, not a separate process sandbox.
+Archive strings and dependency observations remain untrusted data, never executable
+instructions. Unknown catalogs stay unknown; reads do not repair evidence or
+rebuild derived state. Metadata/credential digest hashing is distinct from hashing
+archived payloads. Ordinary sanitized logs and filesystem atime effects do not
+constitute archive or operation-state mutation.
+
+Cancellation closes observation but an active bounded read can retain its transport
+slot and worker lease until actual completion. Shutdown joins that work before
+releasing instance ownership. Concurrent authorized REST mutations belong to those
+commands; MCP adds no admission, Hub request, credential resolution or artifact.

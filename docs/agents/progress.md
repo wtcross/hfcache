@@ -59,6 +59,18 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   passed. Reviewed INV-002/005/006/016 and ADR119/120/121/123; no runtime/format/
   dependency/architectural change. No live operation; existing restrictions stay.
 
+## MCP user guide (2026-10-18)
+
+- [x] DOC-013 Make the MCP guide user centered (2026-10-18, this commit —
+  [task](plans/tasks/doc-013-human-mcp-guide-and-tool-contract.md)). Replaced
+  chronology with connection/tool/identity/rotation/limit/profile guidance;
+  preserved original bodies/hashes and repaired descriptive links. Actual mounted
+  registry and disposable HTTP/TLS output now check the human tables/example.
+  Focused 223 passed; full `scripts/check.sh`: 4173 passed/40 deselected,
+  build/three locked profiles and actual Cockpit lint/135 tests/build passed.
+  INV-002/003/007/010/016, ADR124/125 reviewed: no runtime/format/dependency change.
+  Whole-archive trust and nine-read-only-tool boundary preserved. No host action.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)

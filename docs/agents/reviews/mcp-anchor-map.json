@@ -1,0 +1,13 @@
+{
+  "protected-file-example-client-mcp-004": "connect",
+  "curated-metadata-tools-mcp-002": "available-tools",
+  "threat-control-and-test-traceability-mcp-003": "read-only-boundary",
+  "mcp-metadata-discovery-mcp-002": "mcp-metadata-discovery",
+  "enablement-and-authority": "deployment-profiles",
+  "wire-sessions-and-reconnect": "negotiation-and-reconnect",
+  "rotation-and-disabled-operation": "authentication-and-rotation",
+  "rollback-and-deployment-limits": "deployment-profiles",
+  "enforcement-and-evidence": "read-only-boundary",
+  "snapshot-and-concurrency-method": "read-only-boundary",
+  "residual-deployment-assumptions": "read-only-boundary"
+}

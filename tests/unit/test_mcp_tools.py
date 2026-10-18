@@ -3,9 +3,11 @@
 import asyncio
 import hashlib
 import json
+import re
 import stat
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, replace
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import httpx2
@@ -367,6 +369,9 @@ def test_actual_mounted_registry_has_exact_typed_allowlist_and_read_only_hints(a
             tools = await client.list_tools()
             assert {tool.name for tool in tools} == TOOLS.keys()
             assert len(tools) == 9
+            guide = (Path(__file__).parents[2] / "docs/mcp.md").read_text()
+            table = guide.split("| Tool | Inputs |", 1)[1].split("### Metadata output", 1)[0]
+            assert re.findall(r"^\| `([a-z_]+)` \|", table, re.MULTILINE) == list(TOOLS)
             assert await client.list_resources() == []
             assert await client.list_prompts() == []
             for tool in tools:

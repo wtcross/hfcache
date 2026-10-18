@@ -791,7 +791,7 @@ drains/releases its ownership. Disabled mode imports no package, loads no MCP
 credential and mounts no transport. The nine curated metadata tools are defined
 below; no OpenAPI conversion, resource/prompt or command path is exposed.
 [MCP contract](../../../mcp.md) owns exact mounted-path/session behavior,
-[protected-file client setup](../../../mcp.md#protected-file-example-client-mcp-004) and
+[protected-file client setup](../../../mcp.md#connect) and
 supported internal-client limitations.
 
 Development install selects both extras with
@@ -828,7 +828,7 @@ sanitized before any cursor hashing.
 Missing/corrupt catalogs remain unknown, estimate never hashes/persists, and no
 request rebuilds, probes, repairs or creates an operation. Classified safe tool
 failures contain codes/fixed text rather than rejected values or fabricated
-success wrappers. [MCP tool contract](../../../mcp.md#curated-metadata-tools-mcp-002) owns
+success wrappers. [MCP tool contract](../../../mcp.md#available-tools) owns
 exact inputs, output fields, costs, ordering and refusal behavior. Existing
 transport/auth/lifecycle, configured resource limits and operator holds remain.
 

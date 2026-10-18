@@ -665,7 +665,7 @@ readers retain AD-21's whole-archive authorization, without per-repository ACLs.
 
 ## Mounted MCP security proof (MCP-003)
 
-The [threat/control/test map](mcp.md#threat-control-and-test-traceability-mcp-003)
+The [threat/control/test map](mcp.md#read-only-boundary)
 connects each acceptance claim to concrete mounted tests. It applies existing
 T-01/02/07/08/12 and INV-002/003/007/010/016; it adds no tool, role or command
 capability. The [task record](agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
@@ -707,7 +707,7 @@ integration result silently closes those holds or authorizes production changes.
 
 ## Protected MCP client acceptance (MCP-004)
 
-The [example/setup](mcp.md#protected-file-example-client-mcp-004) uses a protected
+The [example/setup](mcp.md#connect) uses a protected
 operator-provisioned MCP-reader file, explicit validated HTTP transport, verified
 TLS/optional CA and finite response/page/deadline bounds. Token values never
 belong in config/argv/URLs/browser storage; no ambient provider, redirect/proxy

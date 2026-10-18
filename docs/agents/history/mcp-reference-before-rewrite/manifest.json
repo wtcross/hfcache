@@ -1,0 +1,14 @@
+[
+  {
+    "source": "docs/mcp.md",
+    "git": "75cbea1",
+    "sha256": "4910fbe5600b3f7207b8468d8cf022f19cece2b06d445a87752bd226583d759a",
+    "snapshot": "docs/agents/history/mcp-reference-before-rewrite/mcp.md"
+  },
+  {
+    "source": "docs/consumers.md",
+    "git": "75cbea1",
+    "sha256": "d4a4c2925984ae5b74b22ea22aa253614a41d34c7d3545f13e9e59ffe78bd9a2",
+    "snapshot": "docs/agents/history/mcp-reference-before-rewrite/consumers.md"
+  }
+]

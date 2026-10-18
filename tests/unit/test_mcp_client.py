@@ -140,6 +140,9 @@ def test_example_walks_actual_mounted_pages_and_one_exact_publication(
                 stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
                 assert process.returncode == 0, stderr.decode()
                 assert json.loads(stdout) == {"kind": "discovery_summary", **result}
+                guide = (Path(__file__).parents[2] / "docs/mcp.md").read_text()
+                documented = guide.split("```json\n", 1)[1].split("\n```", 1)[0]
+                assert json.loads(stdout) == json.loads(documented)
                 assert stderr == b""
                 assert settings.token_file.read_bytes() not in stdout + stderr
                 assert (

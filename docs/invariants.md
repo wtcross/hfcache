@@ -604,7 +604,7 @@ Its task records the separate previous-binary compatibility drill.
   manifest/report pages are explicit projections, never complete durable records.
   Reconstruct all selected collections and validate before consumer verification;
   a vanished requested instance refuses instead of substituting a new current.
-  See [MCP metadata tools](mcp.md#curated-metadata-tools-mcp-002), decision 125.
+  See [MCP metadata tools](mcp.md#available-tools), decision 125.
 - **`INV-009` — Copying and serving promotion have separate ownership.** The
   consumer copy identity writes only a new, non-existent destination under
   `<model>/revisions/`; root owns the model root and the serving pointer.
@@ -953,13 +953,13 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [mounted registry/tools](../tests/unit/test_mcp_tools.py).
   See [MCP](mcp.md), [decision 124](adr/decision-124.md) and
   [decision 125](adr/decision-125.md). The
-  [MCP-003 threat/control/test map](mcp.md#threat-control-and-test-traceability-mcp-003)
+  [MCP-003 threat/control/test map](mcp.md#read-only-boundary)
   distinguishes application snapshots and mixed-interface ownership from
   installed-host assumptions, with [malformed evidence/secret proof](../tests/unit/test_mcp_security_evidence.py),
   [closed authority/state snapshots](../tests/unit/test_mcp_security.py) and
   [mixed-interface/cancellation/drain tests](../tests/unit/test_mcp_concurrency.py).
   MCP-004 client/packaging guidance: [protected-file example](../examples/mcp-client.py),
-  [setup/version/rotation/cost contract](mcp.md#protected-file-example-client-mcp-004)
+  [setup/version/rotation/cost contract](mcp.md#connect)
   and [REST/auth/rotation/unit acceptance](../tests/unit/test_mcp_acceptance.py).
   The independent REST base client retains no MCP runtime requirement; example
   discovery grants no complete-artifact/copy or command authority.
