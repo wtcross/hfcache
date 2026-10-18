@@ -3,8 +3,6 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/agents/history/plan.md` §1–§6, §13–§19, §25 |
-| Work packages | `ARC-001`, `ARC-002`, `ARC-006`, `ARC-008` |
 | Schema baseline | All durable formats begin at `schema_version = 1` |
 
 This document is the architectural contract the implementation is written
@@ -17,12 +15,9 @@ Companion contracts: `docs/configuration.md` (configuration schema),
 `docs/schemas.md` (durable JSON schemas), `docs/cli.md` (command surface, JSON
 output, exit codes), `docs/security.md` (threat model and controls).
 
-The current cross-contract invariant register is `docs/invariants.md`;
-individual decision records and their history are indexed by
-`docs/adr/README.md`. New or changed invariants and architectural choices are
-recorded there in the same work package as the change or plan implementation
-(`docs/agents/workflow.md`). This document remains the detailed architectural
-contract.
+The [invariant register](invariants.md) collects current cross-contract
+constraints. [Architectural decisions](adr/README.md) retain rationale,
+alternatives and amendments; this document owns the detailed architecture.
 
 ## 1. Mission
 
@@ -77,7 +72,7 @@ repository-content authorization boundary: the archive has one publication tree,
 not per-repository ACLs, so a consumer allowed to read it must be authorized to
 receive every configured public, private, and gated repository.
 
-### 2.2 Transport-neutral services (API-002/API-003)
+### 2.2 Transport-neutral services
 
 `services/context.py` carries immutable execution/result records, independent
 of transport frameworks. `services/queries.py` owns local metadata orchestration
@@ -100,7 +95,7 @@ Metadata queries take no archive lock and do not rebuild state. Consumers must
 handle a publication disappearing between separate reads, as required by FS-12.
 
 Public command services acquire the common archive lock once; adapters and
-future operation runners must not wrap them in a second acquisition. Domain
+operation runners must not wrap them in a second acquisition. Domain
 helpers invoked inside that ownership do not acquire service locks. Sync keeps
 its download producer joined before the service releases the lock (AD-19).
 All non-estimate verification modes hold lock-before-storage-preflight through
@@ -112,7 +107,7 @@ valid sentinel before inspecting or creating one would contradict their purpose.
 Read-only doctor, initialization inspection/no-confirm, plans and previews take
 no archive lock. Verification does not reconcile or contact the Hub.
 
-### 2.3 Typed HTTP command admission (API-009)
+### 2.3 Typed HTTP command admission
 
 [Decision 116](adr/decision-116.md) exposes explicit strict command routes through
 `api/commands.py`; `api/command_models.py` owns transport DTOs independently of
@@ -125,7 +120,7 @@ Durable keyed 202 admission is distinct from an exact terminal domain Envelope.
 Plans/read-only diagnostics still use the bounded lane because they can resolve
 installed Hub credentials, contact the Hub and write control-state evidence.
 Only installed validation is an immediate query. Candidate hooks remain pure
-syntax/authority assessment for API-012; a request cannot redirect an installed
+syntax/authority assessment for API-backed reader CLI; a request cannot redirect an installed
 credential to a proposed endpoint or select a server-local configuration path.
 
 AD-01–03/17–19, TX-07 and capacity/verification/failure invariants are unchanged:
@@ -134,13 +129,14 @@ and continuation policy, joined producer lifetime, exact report identity and
 retention authority remain in their existing shared implementations. No durable
 shape, runtime dependency, MCP capability or deployed host boundary changes.
 
-### 2.4 Explicit maintenance transport (API-010)
+### 2.4 Explicit maintenance transport
 
 [Decision 117](adr/decision-117.md) extends typed keyed command admission to
 separate maintenance preview/apply resources, exact-manifest repair and guarded
 initialization. URL identity determines preview versus apply; a request never
-supplies an executable plan or implicit apply default. Every side effect requires
+supplies an executable plan or implicit apply default. Every archive-affecting operation requires
 a writer and repeats policy/scope/evidence checks inside the service-owned flock.
+Reader-authorized previews still persist local receipt/event/result history.
 Preview output grants no subsequent mutation authority. Recovery ambiguity,
 quarantine batch proof, one-round prune, unmanaged-only purge, canonical cache
 APIs, original manifests/audits and prune's commit boundary remain unchanged.
@@ -152,7 +148,7 @@ checks and writes the sentinel last; startup, health, recovery and missing senti
 never initialize. This exposes existing service authority without adding a new
 archive algorithm, durable format, dependency or production action.
 
-### 2.5 Independent synchronous API client (API-011)
+### 2.5 Independent synchronous API client
 
 [Decision 118](adr/decision-118.md) adds a base client with separate strict reader
 configuration, without archive TOML/mounts, Hub credentials or optional server/MCP
@@ -164,15 +160,16 @@ wire versions/identity under finite per-response/page/read-retry/poll budgets.
 Old operation observations retain admitted UUID/fingerprint and exact domain
 Envelope/run identity. Keys exist before POST; uncertainty preserves the original
 key/route without automatic replay or cancellation of accepted work. No local
-archive fallback or automatic daemon startup exists. API-012 uses the global CLI
-choices for reader/candidate modes and API-013 completes operational CLI/observation.
+archive fallback or automatic daemon startup exists. API-backed reader CLI uses the global CLI
+choices for reader/candidate modes and CLI operation observation completes operational CLI/observation.
 This client changes no FS/TX,
 durable shape, dependency, publication copy rule or writer authority.
 
-### 2.6 Reader CLI and candidate policy (API-012)
+### 2.6 Reader CLI and candidate policy
 
 [Decision 119](adr/decision-119.md) uses the typed client for actual reader modes,
-rendering exact server Envelope IDs/times/status/exit through one stdout result.
+preserving server Envelope IDs/times/status/exit in JSON and classified human
+rendering through one terminal result.
 Complete page reconstruction and inventory/revision joins enforce finite aggregate
 bounds and current-publication consistency; they cannot silently discard rows or
 substitute observer metadata. Explicit local validation remains bootstrap, never
@@ -189,14 +186,15 @@ historical plan key digests and explicit null refuses. HTTPCore 1.0.9 becomes an
 explicit base dependency for resource-safe Unix client transport; its locked
 package/version is unchanged. No API configuration install,
 new durable shape, writer authority or MCP is introduced. CP-11's
-privileged host installation/backups and later shipped caller integration remain.
+privileged host installation/backups and exact candidate/base confirmation remain.
 
-### 2.7 Operational CLI and observation (API-013)
+### 2.7 Operational CLI and observation
 
 [Decision 120](adr/decision-120.md) removes the operational CLI's direct mutation
 backend. Pure request objects can be shared without importing executors; typed
 HTTP leaves credentials, preflight, recovery, flock and private verification with
-the writer. Default stdout is the exact terminal server Envelope; explicit detach
+the writer. JSON stdout preserves the exact terminal server Envelope; human output
+summarizes it. Explicit detach
 is schema-1 `operation_admission`, not a domain-success Envelope. Show/lookup
 preserve server metadata Envelopes and wait preserves the stored command result.
 
@@ -205,13 +203,15 @@ One finite observation deadline covers sanitized sequenced events/status/result
 reads and retries. Timeout/Ctrl-C/connection loss retain handles and uncertainty;
 client departure never cancels or replays accepted work. The optional legacy init
 UUID comes only from authenticated inspection while root/confirmation remain
-explicit; no-confirm refusal submits nothing. Installed units/callers and OS
-isolation proof remain later work, with no durable/dependency/MCP change here.
+explicit; no-confirm refusal submits nothing. Native activated services and selected rootless worker-created listeners are
+separate profiles. See [deployment status](deployment-status.md) for recorded
+installed scope and outstanding isolation/NAS/workload acceptance.
 
 ## 3. Architecture decisions
 
-Each decision is locked for schema version 1. Changing one is a deliberate
-versioned change, not an implementation detail.
+These decisions govern current contracts. A change requires an explicit
+technical decision and compatibility assessment; incompatible versions refuse.
+Documented same-version extensions retain their specific rollback barriers.
 
 ### AD-01 — The archive unit is a complete snapshot at one resolved commit SHA
 
@@ -267,7 +267,7 @@ current revision is never pruned.
 upstream change. Three is the operator-requested default; explicit five-revision
 policies remain valid so upgrading does not invalidate existing configuration.
 
-**RET-010 amendment (2026-09-14, decision 102).** The original decision fixed
+**retention amendment (2026-09-14, decision 102).** The original decision fixed
 five in schema version 1. Accepting three and five and defaulting to three is a
 deliberate compatibility widening of configuration; no archive JSON format
 changes. Rollback to an older binary requires an explicit five-revision policy
@@ -294,13 +294,13 @@ distinct SHAs may never share a generation. Generation allocation reads the unio
 of retained manifests and pruned-revision records so a prune-then-crash cannot
 reissue a value.
 
-**DOC-009 conformance finding (2026-10-17).** These are the declared
-`AD-05` / `FS-20` requirements. The current allocator reads retained
-references only, and a regression test assigns a fresh generation when a
-pruned SHA returns. Pending `RET-011` in `docs/agents/progress.md` records this
-existing contract/implementation gap; `docs/adr/ad-05.md` preserves the
-decision and evidence. This finding does not weaken the requirement or
-change runtime behaviour.
+**Known conformance gap.** AD-05/FS-20 require lifetime generations and allocation
+against retained manifests plus pruned audit. The current allocator scans retained
+references only; a pruned/reintroduced SHA receives a fresh generation and whole
+purge can empty its allocation set while audit survives. See
+[AD-05 rationale and source/test evidence](adr/ad-05.md). Repair and retained-SHA
+reobservation preserve generation. This limitation is explicit; the stronger
+requirement is not claimed as implemented or weakened here.
 
 ### AD-06 — Upstream disappearance never deletes local content
 
@@ -316,10 +316,6 @@ the trigger that empties it.
 new revision, never an error path or a configuration edit alone. An explicit
 reviewed `prune` may enforce a lowered retention limit (§7.4); permanent removal
 of an unmanaged repository requires the separate `purge` workflow (`AD-20`).
-
-**DOC-009 clarification (2026-10-17, decision 106).** This consequence now
-names the existing explicit deletion paths from `PUR-001` and `RET-010`
-(decisions 96 and 102); preservation on upstream failure is unchanged.
 
 ### AD-07 — Dependencies are detected statically and warned about, never resolved
 
@@ -406,12 +402,12 @@ and a second source of truth that can disagree with the tree.
 rebuilt from immutable manifests and references. Recovery reads durable evidence
 rather than replaying a log of intentions.
 
-**API-007 amendment (2026-10-17, decision 114).** Service-private local operation
+**operation control state amendment (2026-10-17, decision 114).** Service-private local operation
 receipts/results add an independent versioned JSON control-state family, outside
 archive/publication trees. The receipt is admission/key authority; only its
 indexes are derived. It never supersedes archive evidence or reconstructs a
 command from a journal. The no-database rule remains unchanged; see
-[schemas §13](schemas.md#13-service-private-operation-control-state-api-007).
+[schemas §13](schemas.md#13-service-private-operation-control-state).
 
 ### AD-13 — Repair replaces a damaged instance without changing what the revision *is*
 
@@ -623,14 +619,14 @@ with a stated reason, not an oversight.
 | `NG-11` | Running on the TrueNAS host operating system | Storage appliances are not application hosts; the writer is a dedicated VM |
 | `NG-12` | A workflow engine, state-machine framework, or Pydantic AI in version 1 | `FW-01` |
 
-Non-goals are not permanent bans. `NG-06` was retired by `HUB-010`
+Non-goals are not permanent bans. `NG-06` was retired by `Hub access`
 (2026-08-23, decision 98) without a durable-schema redesign: the existing
 `token_mode`, `credential_name`, and `expected_account` configuration supports
 the explicit restricted scope in `AD-21`. `disabled` and `optional` remain
-public-only. This paragraph was reconciled with that amendment at `DOC-009`
+public-only. This paragraph was reconciled with that amendment at `documentation maintenance`
 (2026-10-17, decision 106).
 
-*Amended 2026-08-23 at `HUB-010` (`AD-21`).* That expected extension is now
+*Amended 2026-08-23 at `Hub access` (`AD-21`).* That expected extension is now
 implemented: `required` enables authenticated private/gated scope, while the
 other modes retain the original public-only behavior. `NG-06` is retired.
 
@@ -728,7 +724,7 @@ change a mode. So the only moment its mode can be set is at creation, and
 `publication.create_staging` sets it with `mkdir` **followed by an explicit
 `chmod`**. The `chmod` is not redundant with `mkdir`'s mode argument: POSIX does
 not guarantee `mkdir` honours setgid there, and this NFSv4 server does not — `mkdir`
-alone yields `0750`, `mkdir`+`chmod` yields `2750` (`docs/agents/progress.md` decision 66).
+alone yields `0750`, `mkdir`+`chmod` yields `2750` (the deployment/security contract decision 66).
 Removing it would drop the group the read identity depends on, silently, and the
 failure would appear on a consumer host rather than this one.
 
@@ -927,7 +923,7 @@ have exactly one correct resolution.
 
 - **`TX-01`** — Every mutating operation opens a journal at
   `.store/transactions/<transaction-id>.json` before its first mutation, and the
-  journal is durable before that mutation begins. **QUA-001 amendment
+  journal is durable before that mutation begins. **quarantine cleanup amendment
   (2026-09-14, decision 103):** explicit removal of already resolved, proven
   redundant staging quarantine uses the existing terminal publication and
   committed recovery journals as its durable authority (§7.8.1). It opens no
@@ -1059,7 +1055,7 @@ different failure regimes:
 | Rollback itself fails | `HFRET005`, `state = "needs_operator"`. The transaction stops and preserves everything it holds |
 
 **Checkpoint 10 removes the containers steps 4 and 5 emptied.** Tombstoning moves
-the publication *instance* and its manifest out, and both live one level below a
+The publication *instance* and its manifest out, and both live one level below a
 `<sha>` directory — so `revisions/<sha>/` and `manifests/<sha>/` are left holding
 nothing, inside the consumer-visible subtree. Nothing derived is wrong when they
 linger: `list`, `status`, the catalog, `next_generation`, and `verify` all resolve
@@ -1174,7 +1170,7 @@ transactions and linked to them by `run_id`.
 | # | Checkpoint | Evidence |
 | --- | --- | --- |
 | 1 | `run_started` | Run ID, configuration fingerprint, archive ID |
-| 2 | `preflight_passed` | The `FS-02`/`FS-03`/§19 check results |
+| 2 | `preflight_passed` | The `FS-02`/`FS-03` storage preflight results |
 | 3 | `journals_reconciled` | Transaction IDs reconciled, or none found |
 | 4 | `repositories_processed` | Per-repository status set |
 | 5 | `catalog_rebuilt` | Catalog path and digest |
@@ -1190,7 +1186,7 @@ touch anything (`TX-01`), so it is itself unfinished for as long as the run
 executes and the run **excludes itself** from what it reconciles at checkpoint 3 —
 a transaction cannot recover itself. And a run journal a crash left open has one
 resolution whatever checkpoint it reached: close it. It owns no filesystem state,
-and the one whole-run step that changes the archive — plan §13.1 step 10's catalog
+and the one whole-run step that changes the archive — the sync run's catalog
 rebuild — reads configuration to decide which repositories are managed (`AD-06`),
 which recovery does not take. The next run performs it; the catalog is derived
 (`FS-16`).
@@ -1233,7 +1229,7 @@ application has no code path that deletes a file it cannot explain (`FS-19`,
 
 #### 7.8.1 Explicit cleanup of recovered staging quarantine
 
-**QUA-001 amendment (2026-09-14, decision 103).** `quarantine --dry-run` and
+**quarantine cleanup amendment (2026-09-14, decision 103).** `quarantine --dry-run` and
 `quarantine --apply` require explicit transaction IDs. Only abandoned publication
 staging already moved into quarantine by a committed recovery operation is
 eligible. Its source journal must be a completed, failed publication with the
@@ -1271,11 +1267,11 @@ Journal inventory still refuses unreadable records, unsupported fields, and
 unfinished work. A completed journal unrelated to the selected staging does
 not have to match the current checkpoint sequence: it supplies no deletion
 authority. The selected publication journals and their matching committed
-recovery proofs must pass the full checkpoint checks (QUA-003, decision 105).
+recovery proofs must pass the full checkpoint checks (quarantine cleanup, decision 105).
 
 #### 7.8.2 Explicit cancellation of an interrupted download
 
-**QUA-002 amendment (2026-09-14, decision 104).** An operator may intentionally
+**quarantine cleanup amendment (2026-09-14, decision 104).** An operator may intentionally
 stop an identified sync to perform maintenance and resume its cached download
 afterward. For that exact run only, confirmed actual writer/executor termination and possession
 of the exclusive writer lock may replace the age heuristic when the publication
@@ -1296,17 +1292,17 @@ quarantine may then be explicitly cleaned under §7.8.1 before restarting sync.
 A valid early download journal may have no publication ID; completed recovery
 provenance still establishes ownership of that staging transaction.
 
-**API-008 clarification (2026-10-17, decision 115).** With API-backed execution,
-the CLI or its scheduled service is an observer, while the daemon lane or private
+**bounded runner and private verifier clarification (2026-10-17, decision 115).** With API-backed execution,
+The CLI or its scheduled service is an observer, while the daemon lane or private
 verifier owns the work. Stopping that client, closing Cockpit or losing HTTP does
 not establish writer termination. Identify the exact operation/domain run and
 the real executor, prove it has ended, then acquire the common archive flock and
 apply the same narrow evidence checks above. A released lock or PID alone is
 insufficient. This does not waive the normal stale-age policy or activate a new
-cancellation endpoint. The currently shipped direct-service workflow is migrated
-only by the later client/packaging tasks; no production service change is claimed.
+cancellation endpoint. The shipped scheduled services are API observers, not archive executors;
+compatible API/verifier reconciliation and drain retain this boundary.
 
-**API-014 clarification (2026-10-18, [decision 121](adr/decision-121.md)).**
+**scheduled observation clarification (2026-10-18, [decision 121](adr/decision-121.md)).**
 The packaged sync/verify services are observers with retained pending handles.
 Stop API activation and drain the actual daemon while its private verifier remains
 available for exact outcome handoff, then stop/drain private activation/service
@@ -1367,34 +1363,32 @@ home-grown engine accreted inside `hfcache`. Reaching for a general abstraction
 before one of those three conditions holds is the failure mode this boundary
 exists to prevent.
 
-### 2026-10-17 API-001 amendment
+### 2026-10-17 REST service boundary amendment
 
-Decisions [108](adr/decision-108.md) and [109](adr/decision-109.md) amend
-FW-01/FW-03 for the activated [REST-first plan](agents/plans/2026-10-17-plan-rest-api-and-mcp.md).
-The typed services retain ordinary domain functions and existing archive authority.
-The closed dependency list permits incremental `httpx` (base), FastAPI/Uvicorn
-(`server`), and standalone `fastmcp` (`mcp`, only after REST acceptance). None is
-installed by API-001. Protocol correctness, verified transports and maintained
-lifespan/auth implementations justify these explicit FW-04 exceptions.
+Decisions [108](adr/decision-108.md) and [109](adr/decision-109.md) narrowly
+qualify FW-01/FW-03. Typed services retain ordinary domain functions and archive
+authority. Base HTTPX/HTTPCore, optional server FastAPI/Uvicorn and optional MCP
+FastMCP supply maintained verified transport/protocol/lifespan/authentication
+benefits under FW-04; they do not supply domain orchestration.
 
 The sole task-queue exception is one bounded FIFO execution lane with
 non-resuming service-private receipts. No DAG, broker, archive database, automatic
 replay, checkpoint orchestration, or in-app scheduler is permitted. A receipt
 never supersedes archive evidence. [API](api.md) and [server](server.md) state
-the target contracts and their implementation status.
+current contracts and capabilities.
 
-### 2026-10-18 MCP-001 transport amendment
+### 2026-10-18 Optional MCP transport
 
 [Decision 124](adr/decision-124.md) implements decision 108's standalone FastMCP
-exception only after API-016 committed REST acceptance. The optional `mcp` extra
+exception for the optional metadata protocol. The optional `mcp` extra
 supplies maintained streaming protocol/auth/lifespan behavior; base and REST-only
 installations stay independent. One explicitly composed application retains REST
 startup/ownership and a production shared-registry MCP-reader verifier. Disabled
 MCP imports/resolves neither package nor credential. No automatic OpenAPI tool
 conversion, command/job path, workflow framework or durable authority is added;
-curated read-only tools remain MCP-002. Existing FS/TX and whole-archive rules stand.
+exactly nine curated read-only tools have no execution authority. Existing FS/TX and whole-archive rules stand.
 
-### 2026-10-18 MCP-002 metadata capability amendment
+### 2026-10-18 Curated MCP metadata capability
 
 [Decision 125](adr/decision-125.md) adds exactly nine explicit typed metadata
 tools through a narrow read protocol and app-owned bounded metadata offload.
@@ -1407,7 +1401,7 @@ never become newer current content. Existing FS-08–12/16, unknown confidence,
 whole-archive authorization and consumer verification remain; no domain algorithm,
 durable/config schema, dependency, job authority or production change is added.
 
-### Execution context and process boundaries (API-004, 2026-10-17)
+### Execution context and process boundaries (2026-10-17)
 
 [Decision 111](adr/decision-111.md) amends the process-per-CLI assumption in
 logging decision 64. The module-level event vocabulary remains closed, but its
@@ -1429,14 +1423,13 @@ Shared verification constructs no Hub client or credential and never mutates
 process-wide networking environment. `offline.initialize_offline_process()` is
 reserved for dedicated-process startup before Hub imports/use; its permanent
 `HF_HUB_OFFLINE=1` is a library guard, not an IP-socket sandbox. The shipped
-verification unit keeps its existing offline/no-IP policy. API-008/014 must
-establish that boundary around the later verifier, including persistence; there
+native/rootless verification profiles retain offline/no-IP policy through
+persistence. The private executor owns that boundary; there
 is no network-enabled ASGI fallback. Durable `invocation_mode` remains
 `systemd`/`interactive` and describes the executing host process, not submitter
-or timer provenance. Later API receipts carry authenticated submitter metadata.
-API-004 adds no listener, dependency, executor or MCP implementation.
+or timer provenance. Separate API receipts carry credential-class submitter metadata.
 
-### Server configuration and authentication primitives (API-005, 2026-10-17)
+### Server configuration and authentication primitives (2026-10-17)
 
 [Decision 112](adr/decision-112.md) implements the scoped dependency addition:
 HTTPX is a direct base dependency; FastAPI/Uvicorn and required transitives are
@@ -1444,7 +1437,7 @@ in the optional `server` extra. The standard library retains TOML, JSON, hashing
 files, locking and logging. Maintained verified transports, HTTP parsing and ASGI
 security/lifecycle interfaces justify the FW-04 exception; domain orchestration
 and archive authority remain unchanged. The gate installs the extra, while base
-CLI imports need no optional server package. No FastMCP dependency is added.
+CLI imports need no optional server package. The base/server profile needs no FastMCP; the optional MCP extra is separate.
 
 `ServerConfig` is strict, frozen and independent of archive policy. Transport/auth
 changes require restart. `InstalledPolicy.snapshot()` reloads archive policy
@@ -1454,13 +1447,13 @@ reader/writer capability principals; required writer failure stops startup and
 an unprovisioned optional reader grants no access. Opaque values are registered
 for redaction, duplicate credentials refuse startup, and comparisons are
 constant-time. A small optional FastAPI bearer adapter reuses the verifier.
-This package adds no runtime route or listener: API-006 owns HTTP protection and
-API-008 owns execution. Later receipts store nonsecret principal identity, never
+This design adds no runtime route or listener: metadata lifecycle owns HTTP protection and
+bounded runner and private verifier owns execution. Later receipts store nonsecret principal identity, never
 credential values. Whole-archive authorization, AD-21 and immutable archive
 schemas retain their existing meaning. [Server](server.md) records every key
-and the precise implemented/pending boundary.
+and the current resource and deployment boundaries.
 
-### Unix client resource ownership (API-012, 2026-10-18)
+### Unix client resource ownership (2026-10-18)
 
 [Decision 119](adr/decision-119.md) promotes already-locked HTTPCore 1.0.9 to a
 direct base dependency (`>=1.0.9,<2`). A narrow Unix-only HTTPX public transport
@@ -1471,7 +1464,7 @@ HTTPX; no IP fallback, private pool mutation, global patch or suppressed resourc
 warning is permitted. This is the scoped FW-03/FW-04 amendment; no new package,
 version, orchestration framework or durable authority is added.
 
-### Authenticated metadata transport amendment (API-006, 2026-10-17)
+### Authenticated metadata transport amendment (2026-10-17)
 
 [Decision 113](adr/decision-113.md) adds an injectable read application and
 explicit foreground `serve` bootstrap. One authenticated lifespan, private daemon
@@ -1490,7 +1483,7 @@ for every metadata request. No bulk file server, write/job route, new dependency
 MCP or production deployment is added. The daemon bootstrap has no success
 stdout Envelope; its classified startup failures retain normal JSON errors.
 
-### Durable admission and observation amendment (API-007, 2026-10-17)
+### Durable admission and observation amendment (2026-10-17)
 
 [Decision 114](adr/decision-114.md) implements decision 109's bounded registry
 without adding an execution engine. Independently versioned local JSON receipts
@@ -1501,8 +1494,8 @@ request digest is a comparison value, not an instruction to resume work.
 
 Authenticated REST readers may observe all operation metadata/results under
 AD-21; key lookup alone is restricted to the caller's namespace. Startup never
-replays or automatically queues old work. API-007 provides explicit interruption
-classification; API-008 must first reconcile exact surviving workers. Retain
+replays or automatically queues old work. The receipt store supports explicit interruption classification; the API runner
+and private verifier first reconcile exact surviving execution. Retain
 interrupted, ambiguous, malformed, unknown-version and nonterminal records;
 refuse count/space admission rather than evicting unexpired 30-day key bindings.
 Only validated terminal success/failure state may expire. Missing history is
@@ -1510,14 +1503,14 @@ uncertainty, not nonexecution or a reason to replay archive journals.
 
 This scoped FW-01 exception retains FW-02, AD-12/14/16, ordinary domain functions,
 archive flock and every FS/TX boundary. The independent control-state schema does
-not widen archive JSON. API-007 exposes observation and core admission primitives;
-the actual heavy lane, stale-policy revalidation and verifier remain API-008,
-command POST routes API-009/010, and MCP remains behind REST acceptance.
-See [schemas §13](schemas.md#13-service-private-operation-control-state-api-007),
+not widen archive JSON. The receipt store owns durable admission/observation. The API runner owns the
+heavy lane and stale-policy guard; typed command routes delegate to services and
+the private verifier. Optional MCP retains its separate read-only boundary.
+See [schemas §13](schemas.md#13-service-private-operation-control-state),
 [API lifecycle](api.md#admission-idempotency-and-lifecycle) and
 [uncertain-submission recovery](recovery.md#preserve-four-kinds-of-authority).
 
-### Bounded lane and private verifier amendment (API-008, 2026-10-17)
+### Bounded lane and private verifier amendment (2026-10-17)
 
 [Decision 115](adr/decision-115.md) implements the one-lane exception without
 replacing local cross-process locking. Trusted context-scoped hooks give the
@@ -1536,27 +1529,25 @@ restarts, while healthy metadata stays available; only trusted missing/interrupt
 evidence permits parent interruption. A private durable `running` label without
 an owned live thread does not prove liveness.
 
-No durable archive/schema family or dependency changes. API-009/010 retain public
-submissions and API-014 packages socket-activated units, credential-source masking
-and `IPAddressDeny=any`; actual enforcement remains installed-host acceptance.
+Typed routes retain public submission. Native activated services and rootless
+worker-created listeners apply profile-specific credential masks/no-IP policy;
+actual enforcement requires installed evidence.
 Startup offline initialization
 is only a library switch. See [server](server.md), [API lifecycle](api.md#admission-idempotency-and-lifecycle),
 INV-014/015 and the [supervised recovery boundary](#782-explicit-cancellation-of-an-interrupted-download).
 
-## 9. Phase 0 acceptance
+## 9. Contract authority
 
-Phase 0's stated acceptance criteria, and where each is satisfied:
+Durable formats carry explicit independent versions and refuse unsupported
+state; schema-version equality alone does not prove compatibility. Every mutation
+has the atomic boundary/evidence named in §7. Requirements never depend on full
+Git history or execution of repository-supplied code. Complete snapshots resolve
+to immutable SHAs; dependency detection parses static metadata only.
 
-| Criterion | Where |
-| --- | --- |
-| All durable formats have schema versions | `docs/schemas.md` §1.1 fixes the versioning rule, and every format in §2–§10 carries `schema_version`. A newer version is refused rather than read speculatively, which is what makes release rollback safe |
-| Every mutation has an identified atomic boundary | §7.3–§7.7 name every checkpoint, the single atomic act behind it, and its evidence. §7.2 lists the five primitives relied on and states that nothing else is assumed |
-| No requirement depends on full Git history or repository code execution | `NG-01`/`NG-02` remove the history dependency; `AD-01` makes the resolved commit SHA the only identifier needed. `AD-15`/`NG-09` and threat `T-01` remove code execution, including from dependency detection, which parses static metadata only |
-
-Contracts produced by Phase 0: this document, `docs/configuration.md`,
-`docs/schemas.md`, `docs/cli.md`, and `docs/security.md`. Implementation phases
-are written against these; a change to behaviour that contradicts one of them is a
-change to the contract first.
+Architecture, configuration, schemas, CLI and security are current contracts.
+Behavior contradicting a contract requires an explicit contract change with its
+technical rationale and validation. Stable invariants and ADR amendments retain
+the resulting constraints and compatibility limits.
 
 ## Copy publication mechanics
 

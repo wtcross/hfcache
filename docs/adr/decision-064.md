@@ -1,4 +1,6 @@
-# Decision 064: The event log is emitted, not returned; and its vocabulary is closed
+# The event log is emitted, not returned; and its vocabulary is closed
+
+- Decision identity: 064.
 
 Status: amended by [decision 111](decision-111.md) for execution correlation and
 [decision 124](decision-124.md) for bounded MCP diagnostics;
@@ -7,9 +9,6 @@ implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `OBS-002`.
-- Source: [decision 64 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -22,8 +21,7 @@ alternative was an `EventLog` instance passed from the CLI down through
 survives a second concurrent run in one process — and `AD-17` says there is
 exactly one writer and the lock is local, so a second run in one process is
 not a state this application has. What the threaded version would actually
-have bought is an extra parameter on eleven functions whose signatures plan
-§13.2 already fixes, and `# noqa: PLR0913` on several of them. The module
+have bought is an extra parameter on eleven functions in the original serial sync path, and `# noqa: PLR0913` on several of them. The module
 keeps its state resettable and `reset()` is what the suite uses between
 tests, so the usual objection — leakage — is closed where it could bite.
 
@@ -57,7 +55,7 @@ envelope reports the id `configure` bound, and the claim is true.
 `cleanup_deferred`: the name is removed because an open post-commit journal
 already expresses deferred work. The logging vocabulary remains closed.
 
-[Decision 111](decision-111.md) (`API-004`, 2026-10-17, this commit) amends
+[Decision 111](decision-111.md) (2026-10-17) amends
 the one-run-per-process assumption. A daemon can interleave metadata requests
 with a guarded writer without creating a second archive writer. Correlation
 therefore uses an immutable context-scoped snapshot, captured at event emission
@@ -70,7 +68,7 @@ also extends redaction to opaque credentials and exception/problem diagnostics.
 
 The source entry first appears in
 [78f373c](https://github.com/wtcross/hfcache/commit/78f373ca627cf94fa9143a82051edcb2d41ae9b8)
-(2026-07-27, `OBS-002: implement §24's structured event log`). The decision text
+(2026-07-27, `reporting: implement §24's structured event log`). The decision text
 above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 
@@ -83,7 +81,7 @@ Implementation or shipped-artifact evidence:
 Relevant verification:
 [tests/unit/test_logging.py](../../tests/unit/test_logging.py).
 
-## 2026-10-18 optional MCP diagnostic amendment (MCP-001)
+## 2026-10-18 optional MCP diagnostic amendment
 
 [Decision 124](decision-124.md) adds the stable warning event `mcp.diagnostic`
 to the closed `EVENTS` vocabulary. The lifespan-scoped bridge suppresses SDK

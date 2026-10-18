@@ -1,33 +1,28 @@
-# Decision 004: Prune removes the per-SHA reference before tombstoning the tree
+# Remove prune references before tombstoning content
+
+- Decision identity: 004.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-24.
-- Original work package: `ARC-006`.
-- Source: [decision 4 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
-## Decision, context, and consequences
+## Context, decision and consequences
 
-Plan §15.2 ordered these the other way — tombstone the
-tree and manifest at step 8, remove `refs/revisions/<sha>.json` at step 9.
-That leaves a window in which a reference names a tree that has already been
-renamed into trash, which breaks the invariant that every existing reference
-resolves (`FS-10`) and would be visible to `verify` and `repair`, both of
-which resolve per-SHA refs. Recovery never needed the reference to find the
-tree: the persisted `PrunePlan` already names it. Every property plan §15.2
-asserts is preserved — cache deletion still happens while all six revisions
-are published, rollback before the commit point still restores six revisions,
-and the complete manifest is still recoverable from trash. Plan §15.2 steps
-8–9 are updated in this commit.
+Removing content before its retained reference leaves a visible ref pointing at
+trash and violates FS-10. Remove the reference first; the persisted PrunePlan
+already identifies the tree for recovery. Cache deletion remains before logical
+commit, rollback restores all retained trees/manifests then refs last, and original
+manifests remain recoverable from owned trash. Post-commit recovery completes audit
+and cleanup rather than republishing. This ordering keeps deletion and crash
+recovery explicit without inventing a second commit point.
 
 ## Provenance and governing evidence
 
 The source entry first appears in
 [d1d2f00](https://github.com/wtcross/hfcache/commit/d1d2f007e32ccb3b037c89df988213e67a2e52df)
-(2026-07-24, `ARC-006: define transaction and crash-recovery boundaries`). The
+(2026-07-24, `contract definition: define transaction and crash-recovery boundaries`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

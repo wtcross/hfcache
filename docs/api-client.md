@@ -105,7 +105,7 @@ possibly smaller request limit.
 Unix connections use a narrow public HTTPX/HTTPCore adapter that closes owned
 sockets on failed connects and response cleanup; no IP fallback is permitted.
 TCP/TLS continues through HTTPX. HTTPCore is an explicit base dependency at the
-already-locked 1.0.9 version; [decision 119](adr/decision-119.md#uds-descriptor-ownership-and-fw-04)
+already-locked 1.0.9 version; [decision 119](adr/decision-119.md#context-decision-and-rationale)
 records the observed missing-socket leak and supported-interface rationale.
 [`unix_http`](../src/hfcache/unix_http.py) owns descriptor creation/connect and
 stream cleanup; [failure-path tests](../tests/unit/test_unix_http.py) retain

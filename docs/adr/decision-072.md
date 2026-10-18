@@ -1,21 +1,20 @@
-# Decision 072: A throwaway archive has to be a real NFS mount, so the writer exports one to itself
+# A throwaway archive has to be a real NFS mount, so the writer exports one to itself
+
+- Decision identity: 072.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `OPS-003`.
-- Source: [decision 72 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
-Plan §28 says the corruption and repair
+The original acceptance record says the corruption and repair
 runbook is "exercised on a **throwaway archive**, never on `/srv/hfcache`",
 and does not say what a throwaway archive is. It cannot be a directory.
 
-§19's preflight requires the archive root to be a **mount point whose
+Storage preflight requires the archive root to be a **mount point whose
 filesystem type is `nfs` or `nfs4`**, read from `/proc/self/mountinfo`, and
 there is no configuration escape hatch and no environment override — the test
 suite substitutes the mount table by monkeypatching a module constant, which
@@ -40,10 +39,10 @@ export path itself is what you mount. And the throwaway needs its **own
 misdirected command, and reusing the real UUID would defeat exactly the check
 that protects the real archive.
 
-The runbook ships the recipe (`docs/recovery.md` §6) rather than leaving it
+The runbook ships the recipe in the recovery guide rather than leaving it
 implicit, because a repair rehearsal an operator cannot perform is a repair
-procedure nobody has tested — which is the same argument `SEC-001` and
-`OBS-001` made for exercising the credential drop-in and the failure hook.
+procedure nobody has tested — which is the same argument `security controls` and
+`reporting` made for exercising the credential drop-in and the failure hook.
 
 ## Later history and current interpretation
 
@@ -55,13 +54,12 @@ environment hard limits and the current recovery runbook govern any execution.
 
 The source entry first appears in
 [9bd269a](https://github.com/wtcross/hfcache/commit/9bd269a925222c720d0e9b815d04b9648eac3513)
-(2026-07-27, `OPS-003: corruption and repair runbook, exercised on a throwaway
-archive`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-27, `operational tooling: corruption and repair runbook, exercised on a throwaway
+archive`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/recovery.md](../recovery.md),
 [docs/storage-requirements.md](../storage-requirements.md),
-[docs/agents/environment.md](../agents/environment.md).
+[recorded deployment scope](../deployment-status.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/storage.py](../../src/hfcache/storage.py),

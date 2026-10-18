@@ -1,0 +1,1188 @@
+{
+  "docs/architecture.md": {
+    "hfcache-architecture": "hfcache-architecture",
+    "1-mission": "1-mission",
+    "2-system-context": "2-system-context",
+    "21-trust-and-authority-boundaries": "21-trust-and-authority-boundaries",
+    "22-transport-neutral-services-api-002api-003": "22-transport-neutral-services",
+    "23-typed-http-command-admission-api-009": "23-typed-http-command-admission",
+    "24-explicit-maintenance-transport-api-010": "24-explicit-maintenance-transport",
+    "25-independent-synchronous-api-client-api-011": "25-independent-synchronous-api-client",
+    "26-reader-cli-and-candidate-policy-api-012": "26-reader-cli-and-candidate-policy",
+    "27-operational-cli-and-observation-api-013": "27-operational-cli-and-observation",
+    "3-architecture-decisions": "3-architecture-decisions",
+    "ad-01--the-archive-unit-is-a-complete-snapshot-at-one-resolved-commit-sha": "ad-01--the-archive-unit-is-a-complete-snapshot-at-one-resolved-commit-sha",
+    "ad-02--the-first-sync-preserves-the-latest-observed-revision-there-is-no-backfill": "ad-02--the-first-sync-preserves-the-latest-observed-revision-there-is-no-backfill",
+    "ad-03--subsequent-revisions-are-whatever-each-scheduled-run-observes": "ad-03--subsequent-revisions-are-whatever-each-scheduled-run-observes",
+    "ad-04--retention-defaults-to-three-unique-published-revisions-per-repository": "ad-04--retention-defaults-to-three-unique-published-revisions-per-repository",
+    "ad-05--retention-order-comes-from-an-immutable-publication-generation-never-from-time": "ad-05--retention-order-comes-from-an-immutable-publication-generation-never-from-time",
+    "ad-06--upstream-disappearance-never-deletes-local-content": "ad-06--upstream-disappearance-never-deletes-local-content",
+    "ad-07--dependencies-are-detected-statically-and-warned-about-never-resolved": "ad-07--dependencies-are-detected-statically-and-warned-about-never-resolved",
+    "ad-08--hub-access-is-the-official-python-client-only": "ad-08--hub-access-is-the-official-python-client-only",
+    "ad-09--the-native-hub-cache-on-the-archive-dataset-is-the-canonical-download-store": "ad-09--the-native-hub-cache-on-the-archive-dataset-is-the-canonical-download-store",
+    "ad-10--consumers-receive-an-immutable-ordinary-file-publication-tree": "ad-10--consumers-receive-an-immutable-ordinary-file-publication-tree",
+    "ad-11--publication-hardlinks-within-the-dataset-copy-mode-is-explicit-and-never-a-silent-fallback": "ad-11--publication-hardlinks-within-the-dataset-copy-mode-is-explicit-and-never-a-silent-fallback",
+    "ad-12--durable-state-is-json-on-the-filesystem-there-is-no-database": "ad-12--durable-state-is-json-on-the-filesystem-there-is-no-database",
+    "ad-13--repair-replaces-a-damaged-instance-without-changing-what-the-revision-is": "ad-13--repair-replaces-a-damaged-instance-without-changing-what-the-revision-is",
+    "ad-14--every-mutation-is-bounded-by-an-atomic-filesystem-operation-and-a-durable-checkpoint": "ad-14--every-mutation-is-bounded-by-an-atomic-filesystem-operation-and-a-durable-checkpoint",
+    "ad-15--repository-content-is-data-never-code": "ad-15--repository-content-is-data-never-code",
+    "ad-16--ambiguity-stops-the-machine-it-never-triggers-a-guess": "ad-16--ambiguity-stops-the-machine-it-never-triggers-a-guess",
+    "ad-17--one-writer-locking-is-local": "ad-17--one-writer-locking-is-local",
+    "ad-18--ingestion-verification-hashes-bytes-it-does-not-trust-identifiers": "ad-18--ingestion-verification-hashes-bytes-it-does-not-trust-identifiers",
+    "ad-19--download-ahead-with-one-bounded-producer": "ad-19--download-ahead-with-one-bounded-producer",
+    "ad-20--repository-removal-is-explicit-unmanaged-and-transactional": "ad-20--repository-removal-is-explicit-unmanaged-and-transactional",
+    "ad-21--restricted-hub-scope-is-explicit-and-shares-one-consumer-boundary": "ad-21--restricted-hub-scope-is-explicit-and-shares-one-consumer-boundary",
+    "4-non-goals": "4-non-goals",
+    "5-filesystem-layout": "5-filesystem-layout",
+    "51-archive-tree": "51-archive-tree",
+    "52-ownership-and-modes": "52-ownership-and-modes",
+    "53-path-grammar": "53-path-grammar",
+    "repository-relative-file-paths": "repository-relative-file-paths",
+    "6-filesystem-invariants": "6-filesystem-invariants",
+    "identity-and-location": "identity-and-location",
+    "immutability": "immutability",
+    "references": "references",
+    "cache-and-blobs": "cache-and-blobs",
+    "derived-state": "derived-state",
+    "transactions-and-unknown-data": "transactions-and-unknown-data",
+    "initialization": "initialization",
+    "7-transaction-and-crash-recovery-boundaries": "7-transaction-and-crash-recovery-boundaries",
+    "71-rules-that-hold-for-every-transaction": "71-rules-that-hold-for-every-transaction",
+    "72-the-atomic-operations-this-design-relies-on": "72-the-atomic-operations-this-design-relies-on",
+    "73-publication-transaction": "73-publication-transaction",
+    "74-prune-transaction": "74-prune-transaction",
+    "purge-variant--complete-unmanaged-repository": "purge-variant--complete-unmanaged-repository",
+    "75-repair-transaction": "75-repair-transaction",
+    "76-sync-run-transaction": "76-sync-run-transaction",
+    "77-recovery-transaction": "77-recovery-transaction",
+    "78-stale-artifacts-and-unknown-data": "78-stale-artifacts-and-unknown-data",
+    "781-explicit-cleanup-of-recovered-staging-quarantine": "781-explicit-cleanup-of-recovered-staging-quarantine",
+    "782-explicit-cancellation-of-an-interrupted-download": "782-explicit-cancellation-of-an-interrupted-download",
+    "79-what-stops-the-machine": "79-what-stops-the-machine",
+    "8-framework-boundary": "8-framework-boundary",
+    "2026-10-17-api-001-amendment": "2026-10-17-rest-service-boundary-amendment",
+    "2026-10-18-mcp-001-transport-amendment": "2026-10-18-optional-mcp-transport-transport-amendment",
+    "2026-10-18-mcp-002-metadata-capability-amendment": "2026-10-18-curated-metadata-tools-metadata-capability-amendment",
+    "execution-context-and-process-boundaries-api-004-2026-10-17": "execution-context-and-process-boundaries-2026-10-17",
+    "server-configuration-and-authentication-primitives-api-005-2026-10-17": "server-configuration-and-authentication-primitives-2026-10-17",
+    "unix-client-resource-ownership-api-012-2026-10-18": "unix-client-resource-ownership-2026-10-18",
+    "authenticated-metadata-transport-amendment-api-006-2026-10-17": "authenticated-metadata-transport-amendment-2026-10-17",
+    "durable-admission-and-observation-amendment-api-007-2026-10-17": "durable-admission-and-observation-amendment-2026-10-17",
+    "bounded-lane-and-private-verifier-amendment-api-008-2026-10-17": "bounded-lane-and-private-verifier-amendment-2026-10-17",
+    "9-phase-0-acceptance": "9-phase-0-acceptance",
+    "copy-publication-mechanics": "copy-publication-mechanics"
+  },
+  "docs/invariants.md": {
+    "hfcache-invariants": "hfcache-invariants",
+    "using-and-maintaining-this-register": "using-and-maintaining-this-register",
+    "identity-and-location": "identity-and-location",
+    "snapshots-and-publication": "snapshots-and-publication",
+    "retention-and-repair": "retention-and-repair",
+    "transactions-and-recovery": "transactions-and-recovery",
+    "bounded-synchronization": "bounded-synchronization",
+    "configuration-and-security": "configuration-and-security",
+    "durable-formats-and-reporting": "durable-formats-and-reporting",
+    "consumer-boundary": "consumer-boundary",
+    "cockpit-boundary": "cockpit-boundary",
+    "framework-and-engineering": "framework-and-engineering",
+    "remote-management-incremental-enforcement": "remote-management-incremental-enforcement",
+    "ubi-10-image-foundation-qualification-ops-019": "ubi-10-image-foundation-qualification"
+  },
+  "docs/configuration.md": {
+    "hfcache-configuration-contract": "hfcache-configuration-contract",
+    "1-validation-rules-that-apply-to-every-field": "1-validation-rules-that-apply-to-every-field",
+    "2-top-level": "2-top-level",
+    "3-hub": "3-hub",
+    "4-storage": "4-storage",
+    "5-sync-verification-repair": "5-sync-verification-repair",
+    "6-repositories": "6-repositories",
+    "7-credentials": "7-credentials",
+    "71-what-a-credential-file-must-contain": "71-what-a-credential-file-must-contain",
+    "72-when-each-source-fails": "72-when-each-source-fails",
+    "8-configuration-error-codes": "8-configuration-error-codes",
+    "9-configuration-fingerprint": "9-configuration-fingerprint",
+    "10-worked-example": "10-worked-example",
+    "etchfcacheconfigtoml--owner-roothfcache-mode-0640": "etchfcacheconfigtoml--owner-roothfcache-mode-0640",
+    "11-separate-server-and-client-configuration": "11-separate-server-and-client-configuration",
+    "12-candidate-authority-validation-and-planning-api-012": "12-candidate-authority-validation-and-planning",
+    "13-independent-readerclient-configuration-api-011": "13-independent-readerclient-configuration",
+    "rootless-deployment-selector-ops-015": "rootless-deployment-selector"
+  },
+  "docs/schemas.md": {
+    "hfcache-durable-schemas": "hfcache-durable-schemas",
+    "1-conventions": "1-conventions",
+    "11-version-compatibility": "11-version-compatibility",
+    "2-archive-sentinel--hfcache-root": "2-archive-sentinel--hfcache-root",
+    "3-revision-manifest": "3-revision-manifest",
+    "31-top-level-fields": "31-top-level-fields",
+    "32-files": "32-files",
+    "33-dependencies": "33-dependencies",
+    "34-verification": "34-verification",
+    "35-repair": "35-repair",
+    "4-references": "4-references",
+    "41-refscurrentjson": "41-refscurrentjson",
+    "42-refsrevisionsshajson": "42-refsrevisionsshajson",
+    "5-catalog": "5-catalog",
+    "51-catalogrepositoriesjson": "51-catalogrepositoriesjson",
+    "52-catalogverificationjson": "52-catalogverificationjson",
+    "6-run-report": "6-run-report",
+    "7-verification-report": "7-verification-report",
+    "8-prune-plan": "8-prune-plan",
+    "81-repository-purge-plan": "81-repository-purge-plan",
+    "9-audit-records": "9-audit-records",
+    "91-pruned-revision--auditprunedtypeorgreposhapidprunejson": "91-pruned-revision--auditprunedtypeorgreposhapidprunejson",
+    "92-repair-retirement--auditrepairstypeorgreposhapidretirementjson": "92-repair-retirement--auditrepairstypeorgreposhapidretirementjson",
+    "10-transaction-journal": "10-transaction-journal",
+    "11-validation-summary": "11-validation-summary",
+    "12-recovery-report": "12-recovery-report",
+    "13-service-private-operation-control-state-api-007": "13-service-private-operation-control-state",
+    "131-receipt-event-and-result-models": "131-receipt-event-and-result-models",
+    "132-lifecycle-and-retention": "132-lifecycle-and-retention",
+    "14-scheduled-client-observation-handle-api-014": "14-scheduled-client-observation-handle",
+    "15-rootless-runtime-deployment-profile-ops-015": "15-rootless-runtime-deployment-profile",
+    "16-rootless-release-manifest-and-artifact-index-ops-015": "16-rootless-release-manifest-and-artifact-index"
+  },
+  "docs/security.md": {
+    "hfcache-security-model": "hfcache-security-model",
+    "1-assets": "1-assets",
+    "2-trust-boundaries": "2-trust-boundaries",
+    "3-threats-and-controls": "3-threats-and-controls",
+    "t-01--malicious-repository-content-executes-on-the-writer": "t-01--malicious-repository-content-executes-on-the-writer",
+    "t-02--repository-paths-escape-the-publication-tree": "t-02--repository-paths-escape-the-publication-tree",
+    "t-03--content-is-corrupted-in-transit-or-at-rest-and-the-corruption-is-accepted": "t-03--content-is-corrupted-in-transit-or-at-rest-and-the-corruption-is-accepted",
+    "t-04--corrupt-bytes-are-laundered-into-the-expected-value": "t-04--corrupt-bytes-are-laundered-into-the-expected-value",
+    "t-05--a-downstream-consumer-modifies-or-deletes-archive-content": "t-05--a-downstream-consumer-modifies-or-deletes-archive-content",
+    "t-06--the-archive-is-written-to-the-wrong-place": "t-06--the-archive-is-written-to-the-wrong-place",
+    "t-07--a-token-leaks": "t-07--a-token-leaks",
+    "t-08--restricted-content-crosses-the-intended-authorization-boundary": "t-08--restricted-content-crosses-the-intended-authorization-boundary",
+    "t-09--a-supply-chain-compromise-reaches-production": "t-09--a-supply-chain-compromise-reaches-production",
+    "t-10--a-local-unprivileged-user-on-the-writer-influences-a-run": "t-10--a-local-unprivileged-user-on-the-writer-influences-a-run",
+    "t-11--resource-exhaustion-turns-into-data-loss": "t-11--resource-exhaustion-turns-into-data-loss",
+    "t-12--an-automated-repair-destroys-good-data": "t-12--an-automated-repair-destroys-good-data",
+    "t-13--the-management-plugin-widens-the-operator-surface": "t-13--the-management-plugin-widens-the-operator-surface",
+    "t-14--a-management-caller-gains-unintended-authority": "t-14--a-management-caller-gains-unintended-authority",
+    "4-controls-summary": "4-controls-summary",
+    "5-systemd-hardening-posture": "5-systemd-hardening-posture",
+    "6-explicitly-out-of-scope": "6-explicitly-out-of-scope",
+    "7-verifying-these-claims": "7-verifying-these-claims",
+    "optional-mcp-transport-boundary-mcp-001": "optional-mcp-transport-boundary",
+    "curated-mcp-read-capability-mcp-002": "curated-mcp-read-capability",
+    "mounted-mcp-security-proof-mcp-003": "mounted-mcp-security-proof",
+    "protected-mcp-client-acceptance-mcp-004": "protected-mcp-client-acceptance",
+    "rootless-runtime-scope-ops-015": "rootless-runtime-scope",
+    "confined-private-listener-ownership-ops-017": "confined-private-listener-ownership",
+    "ubi-10-image-input-boundary-ops-019": "ubi-10-image-input-boundary",
+    "installed-peer-control-acceptance-ops-018-2026-10-18": "installed-peer-control-acceptance-2026-10-18",
+    "hub-adapter-boundary": "hub-adapter-boundary",
+    "hardening-diagnostics": "hardening-diagnostics"
+  },
+  "docs/adr/ad-01.md": {
+    "ad-01--archive-complete-snapshots-at-resolved-immutable-commits": "ad-01--archive-complete-snapshots-at-resolved-immutable-commits",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-02.md": {
+    "ad-02--begin-with-the-latest-observed-revision-without-backfill": "ad-02--begin-with-the-latest-observed-revision-without-backfill",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-03.md": {
+    "ad-03--retain-revisions-observed-by-scheduled-runs": "ad-03--retain-revisions-observed-by-scheduled-runs",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-04.md": {
+    "ad-04--bound-retention-to-three-revisions-by-default-and-preserve-explicit-five": "ad-04--bound-retention-to-three-revisions-by-default-and-preserve-explicit-five",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-05.md": {
+    "ad-05--order-retention-by-immutable-publication-generation": "ad-05--order-retention-by-immutable-publication-generation",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "known-implementation-gap": "known-implementation-gap",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-06.md": {
+    "ad-06--preserve-local-content-when-upstream-or-configuration-changes": "ad-06--preserve-local-content-when-upstream-or-configuration-changes",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-07.md": {
+    "ad-07--detect-dependencies-statically-and-never-fetch-them-implicitly": "ad-07--detect-dependencies-statically-and-never-fetch-them-implicitly",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-08.md": {
+    "ad-08--reach-the-hub-through-the-official-injectable-python-adapter": "ad-08--reach-the-hub-through-the-official-injectable-python-adapter",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-09.md": {
+    "ad-09--keep-the-canonical-hub-download-cache-on-the-archive-dataset": "ad-09--keep-the-canonical-hub-download-cache-on-the-archive-dataset",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-10.md": {
+    "ad-10--publish-immutable-ordinary-file-trees-for-consumers": "ad-10--publish-immutable-ordinary-file-trees-for-consumers",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "2026-10-18-curated-metadata-tool-amendment-mcp-002": "2026-10-18-curated-metadata-tool-amendment"
+  },
+  "docs/adr/README.md": {
+    "architectural-decision-records": "architectural-decision-records",
+    "coverage-and-provenance": "coverage-and-provenance",
+    "topic-map": "topic-map",
+    "maintenance-rules": "identity-and-authority",
+    "architecture-records": "architecture-records",
+    "numbered-progress-decisions": "numbered-progress-decisions"
+  },
+  "docs/adr/decision-001.md": {
+    "decision-001-docsschemasmd-added-beyond-the-plan-7-documentation-set": "docsschemasmd-added-beyond-the-plan-7-documentation-set",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-002.md": {
+    "decision-002-docsclimd-added-beyond-the-plan-7-documentation-set": "docsclimd-added-beyond-the-plan-7-documentation-set",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-003.md": {
+    "decision-003-exit-code-aggregation-order-fixed-as-40-50-30": "exit-code-aggregation-order-fixed-as-40-50-30",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-004.md": {
+    "decision-004-prune-removes-the-per-sha-reference-before-tombstoning-the-tree": "prune-removes-the-per-sha-reference-before-tombstoning-the-tree",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-005.md": {
+    "decision-005-syncstale_staging_age_hours-added-to-the-configuration-schema": "syncstale_staging_age_hours-added-to-the-configuration-schema",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-006.md": {
+    "decision-006-mit-license-uv_build-backend": "mit-license-uv_build-backend",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-007.md": {
+    "decision-007-python-314-pin-confirmed-hf-xet-is-a-required-dependency-not-an-extra": "python-314-pin-confirmed-hf-xet-is-a-required-dependency-not-an-extra",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-008.md": {
+    "decision-008-scripts-added-to-the-project-layout-no-ci-provider-configuration": "scripts-added-to-the-project-layout-no-ci-provider-configuration",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-009.md": {
+    "decision-009---token-file-with-token_mode--disabled-is-hfarg002-not-a-silent-choice": "--token-file-with-token_mode--disabled-is-hfarg002-not-a-silent-choice",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-010.md": {
+    "decision-010-hfarg006-added-for-a-systemd-credential-that-is-present-but-unusable": "hfarg006-added-for-a-systemd-credential-that-is-present-but-unusable",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-011.md": {
+    "decision-011-a-credential-file-is-validated-never-sanitized": "a-credential-file-is-validated-never-sanitized",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-012.md": {
+    "decision-012-hubcredential_name-may-not-be--or-": "hubcredential_name-may-not-be--or-",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-013.md": {
+    "decision-013-a-references-paths-are-relative-to-published-every-other-artifacts-are-archive-relative": "a-references-paths-are-relative-to-published-every-other-artifacts-are-archive-relative",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-014.md": {
+    "decision-014-the-repository-relative-path-grammar-is-published": "the-repository-relative-path-grammar-is-published",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-015.md": {
+    "decision-015-collision-folding-is-deliberately-stricter-than-any-one-filesystem": "collision-folding-is-deliberately-stricter-than-any-one-filesystem",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-016.md": {
+    "decision-016-five-identifier-grammars-accepted-a-trailing-newline-fixed": "five-identifier-grammars-accepted-a-trailing-newline-fixed",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-017.md": {
+    "decision-017-credentialspy-and-identitypy-added-to-the-plan-7-module-list": "credentialspy-and-identitypy-added-to-the-plan-7-module-list",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-018.md": {
+    "decision-018-durable-files-are-indented-the---json-envelope-is-not": "durable-files-are-indented-the---json-envelope-is-not",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-019.md": {
+    "decision-019-reading-a-durable-artifact-takes-the-callers-error-class-and-code": "reading-a-durable-artifact-takes-the-callers-error-class-and-code",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-020.md": {
+    "decision-020-11s-unknown-keys-are-preserved-when-rewritten-applies-only-to-the-journal": "11s-unknown-keys-are-preserved-when-rewritten-applies-only-to-the-journal",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-021.md": {
+    "decision-021-a-pydantic-validator-must-raise-valueerror-never-typeerror": "a-pydantic-validator-must-raise-valueerror-never-typeerror",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-022.md": {
+    "decision-022-config-validate-reports-token_source": "config-validate-reports-token_source",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-023.md": {
+    "decision-023-a-whole-table-constraint-is-not-reported-alongside-a-bad-field-in-the-same-table": "a-whole-table-constraint-is-not-reported-alongside-a-bad-field-in-the-same-table",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-024.md": {
+    "decision-024-a-partially-implemented-command-reports-what-it-probed-not-a-placeholder": "a-partially-implemented-command-reports-what-it-probed-not-a-placeholder",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-025.md": {
+    "decision-025-the-taxonomy-is-checked-against-the-documents-that-define-it-in-both-directions": "the-taxonomy-is-checked-against-the-documents-that-define-it-in-both-directions",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-026.md": {
+    "decision-026-the---json-envelope-is-a-model-not-a-dict": "the---json-envelope-is-a-model-not-a-dict",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-027.md": {
+    "decision-027-archive-init-writes-the-configured-archive-id-it-does-not-mint-one": "archive-init-writes-the-configured-archive-id-it-does-not-mint-one",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-028.md": {
+    "decision-028-sto-000-lands-the-primitives-it-cannot-be-correct-without": "storage-primitives-lands-the-primitives-it-cannot-be-correct-without",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-029.md": {
+    "decision-029-archive-init---inspect-exits-0-for-an-already-initialized-archive": "archive-init---inspect-exits-0-for-an-already-initialized-archive",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-030.md": {
+    "decision-030-a-leftover-tmp--sibling-is-part-of-the-known-empty-layout-contract": "a-leftover-tmp--sibling-is-part-of-the-known-empty-layout-contract",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-031.md": {
+    "decision-031-published-adoption-compares-ownership-against-the-archive-root": "published-adoption-compares-ownership-against-the-archive-root",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-032.md": {
+    "decision-032-a-write-that-fails-after-every-check-passed-is-hfmnt008": "a-write-that-fails-after-every-check-passed-is-hfmnt008",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-033.md": {
+    "decision-033-the-check-runner-is-its-own-module-preflightpy": "the-check-runner-is-its-own-module-preflightpy",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-034.md": {
+    "decision-034-archive_root-reports-hfmnt015-as-well-as-hfmnt001": "archive_root-reports-hfmnt015-as-well-as-hfmnt001",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-035.md": {
+    "decision-035-a-skipped-check-has-three-meanings-and-the-gate-reads-them-differently": "a-skipped-check-has-three-meanings-and-the-gate-reads-them-differently",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-036.md": {
+    "decision-036-archivepy-split-out-of-storagepy": "archivepy-split-out-of-storagepy",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-037.md": {
+    "decision-037-the-sentinel-check-owns-the-archive-is-not-initialized": "the-sentinel-check-owns-the-archive-is-not-initialized",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-038.md": {
+    "decision-038-hfwrn005-fires-at-a-tenth-of-the-reserve": "hfwrn005-fires-at-a-tenth-of-the-reserve",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-039.md": {
+    "decision-039-free_space-does-not-need-an-initialized-archive": "free_space-does-not-need-an-initialized-archive",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-040.md": {
+    "decision-040-lockingpy-added-to-the-plan-7-module-list": "lockingpy-added-to-the-plan-7-module-list",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "api-003-amendment-2026-10-17": "guarded-command-services-amendment-2026-10-17"
+  },
+  "docs/adr/decision-041.md": {
+    "decision-041-the-capability-probes-stay-inside-storehealth": "the-capability-probes-stay-inside-storehealth",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-042.md": {
+    "decision-042-checkpoint-evidence-names-paths-by-key-suffix": "checkpoint-evidence-names-paths-by-key-suffix",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-043.md": {
+    "decision-043-the-recovery-report-is-a-run-report": "the-recovery-report-is-a-run-report",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-044.md": {
+    "decision-044-projected_publication_bytes-is-measured-under-the-configured-mode-not-hypothetically-under-copy": "projected_publication_bytes-is-measured-under-the-configured-mode-not-hypothetically-under-copy",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-045.md": {
+    "decision-045-an-empty-tree-listing-is-reported-an-entry-with-no-path-is-refused": "an-empty-tree-listing-is-reported-an-entry-with-no-path-is-refused",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-046.md": {
+    "decision-046-a-hashing-failures-error-class-must-match-its-codes-family": "a-hashing-failures-error-class-must-match-its-codes-family",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-047.md": {
+    "decision-047-hfsyn009-added-for-content-that-cannot-be-read-while-hashing": "hfsyn009-added-for-content-that-cannot-be-read-while-hashing",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-048.md": {
+    "decision-048-hfcache-list-lands-at-sync-002": "hfcache-list-lands-at-synchronization",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-049.md": {
+    "decision-049-a-verification-finding-may-name-no-publication-instance-and-hfarg004-now-covers-a-revision-or-a-run-this-archive-does-not-hold": "a-verification-finding-may-name-no-publication-instance-and-hfarg004-now-covers-a-revision-or-a-run-this-archive-does-not-hold",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-050.md": {
+    "decision-050-verify---estimate-reports-storage-maintenance-as-undetectable": "verify---estimate-reports-storage-maintenance-as-undetectable",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-051.md": {
+    "decision-051-verification_state-comes-from-catalogverificationjson-and-a-revision-nothing-has-re-read-is-unverified": "verification_state-comes-from-catalogverificationjson-and-a-revision-nothing-has-re-read-is-unverified",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-052.md": {
+    "decision-052-storagewrite_model-takes-the-callers-error-class-not-just-its-code": "storagewrite_model-takes-the-callers-error-class-not-just-its-code",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-053.md": {
+    "decision-053-evidence-for-a-path-a-later-checkpoint-moves-carries-no-_path-suffix": "evidence-for-a-path-a-later-checkpoint-moves-carries-no-_path-suffix",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-054.md": {
+    "decision-054-repairpy-added-beyond-plan-7s-module-list": "repairpy-added-beyond-plan-7s-module-list",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-055.md": {
+    "decision-055-a-crashed-sync-run-journal-closes-it-does-not-stop-the-machine": "a-crashed-sync-run-journal-closes-it-does-not-stop-the-machine",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-056.md": {
+    "decision-056-a-committed-publication-or-repair-discards-its-staging-area": "a-committed-publication-or-repair-discards-its-staging-area",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-057.md": {
+    "decision-057-the---config-and---token-file-options-do-not-check-readability-at-parse-time": "the---config-and---token-file-options-do-not-check-readability-at-parse-time",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-058.md": {
+    "decision-058-the-archive-mount-is-defined-by-explicit-units-and-the-fstab-line-is-retired": "the-archive-mount-is-defined-by-explicit-units-and-the-fstab-line-is-retired",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-059.md": {
+    "decision-059-the-hardening-is-tested-by-a-probe-that-reads-the-deployed-unit": "the-hardening-is-tested-by-a-probe-that-reads-the-deployed-unit",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "explicit-diagnostic-and-evidence-amendment": "explicit-diagnostic-and-evidence-amendment"
+  },
+  "docs/adr/decision-060.md": {
+    "decision-060-ipaddressdenyany-on-the-verification-unit-rather-than-privatenetworktrue": "ipaddressdenyany-on-the-verification-unit-rather-than-privatenetworktrue",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "explicit-diagnostic-and-evidence-amendment": "explicit-diagnostic-and-evidence-amendment"
+  },
+  "docs/adr/decision-061.md": {
+    "decision-061-restrictsuidsgidtrue-is-the-one-225-setting-not-applied": "restrictsuidsgidtrue-is-the-one-225-setting-not-applied",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "api-014-executorclient-role-amendment-2026-10-18": "scheduled-observation-executorclient-role-amendment-2026-10-18"
+  },
+  "docs/adr/decision-062.md": {
+    "decision-062-the-reported-verification-state-is-keyed-by-publication-instance-not-by-sha": "the-reported-verification-state-is-keyed-by-publication-instance-not-by-sha",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-063.md": {
+    "decision-063-24s-host-half-is-two-shipped-files-not-two-runbook-steps": "24s-host-half-is-two-shipped-files-not-two-runbook-steps",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-064.md": {
+    "decision-064-the-event-log-is-emitted-not-returned-and-its-vocabulary-is-closed": "the-event-log-is-emitted-not-returned-and-its-vocabulary-is-closed",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "2026-10-18-optional-mcp-diagnostic-amendment-mcp-001": "2026-10-18-optional-mcp-diagnostic-amendment"
+  },
+  "docs/adr/decision-065.md": {
+    "decision-065-plan-30-step-1-would-have-unmounted-the-archive-and-a-rollback-needs-two-releases": "plan-30-step-1-would-have-unmounted-the-archive-and-a-rollback-needs-two-releases",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "api-014-quiescence-and-compatibility-amendment-2026-10-18": "scheduled-observation-quiescence-and-compatibility-amendment-2026-10-18",
+    "2026-10-18-data-preserving-local-rollout-amendment-ops-014": "2026-10-18-data-preserving-local-rollout-amendment"
+  },
+  "docs/adr/decision-066.md": {
+    "decision-066-a-setgid-directory-on-this-mount-is-made-by-chmod-not-by-mkdirs-mode-argument": "a-setgid-directory-on-this-mount-is-made-by-chmod-not-by-mkdirs-mode-argument",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-067.md": {
+    "decision-067-the-consumer-helper-is-examplescopy-revisionpy-and-it-may-not-import-hfcache": "the-consumer-helper-is-examplescopy-revisionpy-and-it-may-not-import-hfcache",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-068.md": {
+    "decision-068-a-prunes-container-cleanup-is-checkpoint-10-after-the-commit-point-and-its-atomic-act-is-rmdir": "a-prunes-container-cleanup-is-checkpoint-10-after-the-commit-point-and-its-atomic-act-is-rmdir",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-069.md": {
+    "decision-069-there-is-no-testsintegration-the-tier-lives-beside-its-fixtures-and-266s-map-is-a-test-rather-than-a-comment": "there-is-no-testsintegration-the-tier-lives-beside-its-fixtures-and-266s-map-is-a-test-rather-than-a-comment",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-070.md": {
+    "decision-070-an-artifact-that-will-not-parse-is-not-an-absent-artifact": "an-artifact-that-will-not-parse-is-not-an-absent-artifact",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-071.md": {
+    "decision-071-the-release-is-deployed-from-a-wheel-already-it-is-not-deployed-from-dist-and-it-should-not-be": "the-release-is-deployed-from-a-wheel-already-it-is-not-deployed-from-dist-and-it-should-not-be",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-072.md": {
+    "decision-072-a-throwaway-archive-has-to-be-a-real-nfs-mount-so-the-writer-exports-one-to-itself": "a-throwaway-archive-has-to-be-a-real-nfs-mount-so-the-writer-exports-one-to-itself",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-073.md": {
+    "decision-073-verification-enumerates-the-retained-set-and-currentjson-is-not-in-it": "verification-enumerates-the-retained-set-and-currentjson-is-not-in-it",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-074.md": {
+    "decision-074-the-interpreter-directory-is-part-of-the-deployment-and-was-outside-every-sweep": "the-interpreter-directory-is-part-of-the-deployment-and-was-outside-every-sweep",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-075.md": {
+    "decision-075-the-first-release-is-v012-because-that-is-what-is-deployed": "the-first-release-is-v012-because-that-is-what-is-deployed",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "2026-10-18-data-preserving-local-rollout-amendment-ops-014": "2026-10-18-data-preserving-local-rollout-amendment"
+  },
+  "docs/adr/decision-076.md": {
+    "decision-076-the-rename-decision-69-deferred-is-performed-and-the-index-that-made-it-safe-now-checks-itself": "the-rename-decision-69-deferred-is-performed-and-the-index-that-made-it-safe-now-checks-itself",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-077.md": {
+    "decision-077-the-docs-move-to-the-code-because-the-built-mechanism-already-delivers-74s-semantics-and-a-failure-time-checkpoint-buys-recovery-nothing": "the-docs-move-to-the-code-because-the-built-mechanism-already-delivers-74s-semantics-and-a-failure-time-checkpoint-buys-recovery-nothing",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-078.md": {
+    "decision-078-commit_sha-widens-to-nullable-with-no-schema-bump-and-the-entry-the-retained-key-rule-cannot-see-gets-its-own-clearing-rule": "commit_sha-widens-to-nullable-with-no-schema-bump-and-the-entry-the-retained-key-rule-cannot-see-gets-its-own-clearing-rule",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-079.md": {
+    "decision-079-013-is-tagged-because-it-is-deployed-and-it-is-still-not-100": "013-is-tagged-because-it-is-deployed-and-it-is-still-not-100",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "2026-10-18-data-preserving-local-rollout-amendment-ops-014": "2026-10-18-data-preserving-local-rollout-amendment"
+  },
+  "docs/adr/decision-131.md": {
+    "decision-131--explicit-disposable-probes-and-qualified-isolation-evidence": "explicit-disposable-probes-and-qualified-isolation-evidence",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-evidence": "consequences-and-evidence",
+    "native-layout-qualification": "native-layout-qualification"
+  },
+  "docs/adr/decision-132.md": {
+    "decision-132--positively-classify-native-releases-before-effects": "positively-classify-native-releases-before-effects",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-evidence": "consequences-and-evidence"
+  },
+  "docs/adr/decision-083.md": {
+    "decision-083-changelogmd-beside-the-annotated-tags-and-readme-status-stops-accreting-release-notes": "changelogmd-beside-the-annotated-tags-and-readme-status-stops-accreting-release-notes",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-084.md": {
+    "decision-084-placeholders-replace-environment-specifics-records-included": "placeholders-replace-environment-specifics-records-included",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-085.md": {
+    "decision-085-the-storage-contract-becomes-server-agnostic-and-evaluation-gets-a-first-run": "the-storage-contract-becomes-server-agnostic-and-evaluation-gets-a-first-run",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-086.md": {
+    "decision-086-guest-memory-is-bounded-in-the-units-not-trusted-to-the-host": "guest-memory-is-bounded-in-the-units-not-trusted-to-the-host",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-087.md": {
+    "decision-087-a-cockpit-plugin-in-cockpit-contracted-by-docscockpitmd-tracked-as-the-cpt-family": "a-cockpit-plugin-in-cockpit-contracted-by-docscockpitmd-tracked-as-the-cpt-family",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "2026-10-18-candidate-pipeline-amendment-api-012": "2026-10-18-candidate-pipeline-amendment",
+    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
+  },
+  "docs/adr/decision-088.md": {
+    "decision-088-the-starter-kit-runs-under-pnpm-node-is-a-build-time-toolchain-not-a-dependency": "the-starter-kit-runs-under-pnpm-node-is-a-build-time-toolchain-not-a-dependency",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-089.md": {
+    "decision-089-the-operation-surface-bends-to-the-cli-not-the-reverse": "the-operation-surface-bends-to-the-cli-not-the-reverse",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
+  },
+  "docs/adr/decision-090.md": {
+    "decision-090-cockpit-carries-lgpl-21-or-later-beside-the-repositorys-mit": "cockpit-carries-lgpl-21-or-later-beside-the-repositorys-mit",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-091.md": {
+    "decision-091-smol-toml-is-bundled-for-configuration-round-tripping": "smol-toml-is-bundled-for-configuration-round-tripping",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
+  },
+  "docs/adr/decision-092.md": {
+    "decision-092-plugin-cli-invocations-run-in-transient-units-that-import-the-deployments-encrypted-hub-credential": "plugin-cli-invocations-run-in-transient-units-that-import-the-deployments-encrypted-hub-credential",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
+    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
+  },
+  "docs/adr/decision-093.md": {
+    "decision-093-a-hardlink-carries-same-operation-content-evidence-only-with-exact-object-identity": "a-hardlink-carries-same-operation-content-evidence-only-with-exact-object-identity",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-094.md": {
+    "decision-094-queue-ahead-uses-one-repository-producer-inside-the-existing-run-lock": "queue-ahead-uses-one-repository-producer-inside-the-existing-run-lock",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-095.md": {
+    "decision-095-a-failed-report-may-retain-warnings-observed-before-another-repository-failed": "a-failed-report-may-retain-warnings-observed-before-another-repository-failed",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-096.md": {
+    "decision-096-whole-repository-deletion-is-explicit-unmanaged-only-and-reuses-the-prune-commit-point": "whole-repository-deletion-is-explicit-unmanaged-only-and-reuses-the-prune-commit-point",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-097.md": {
+    "decision-097-a-completed-015-purge-is-operationally-readable-by-014-an-open-one-is-the-rollback-barrier": "a-completed-015-purge-is-operationally-readable-by-014-an-open-one-is-the-rollback-barrier",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-098.md": {
+    "decision-098-restricted-hub-scope-requires-explicit-required-token-policy-and-one-shared-consumer-authorization-boundary": "restricted-hub-scope-requires-explicit-required-token-policy-and-one-shared-consumer-authorization-boundary",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-099.md": {
+    "decision-099-consumer-revision-creation-and-serving-promotion-have-separate-ownership-boundaries": "consumer-revision-creation-and-serving-promotion-have-separate-ownership-boundaries",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-100.md": {
+    "decision-100-serving-consumes-the-verified-ordinary-file-tree-through-read-only-container-mounts": "serving-consumes-the-verified-ordinary-file-tree-through-read-only-container-mounts",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-101.md": {
+    "decision-101-repository-names-are-canonical-type-aware-external-links": "repository-names-are-canonical-type-aware-external-links",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-102.md": {
+    "decision-102-retention-defaults-to-three-while-explicit-five-remains-compatible": "retention-defaults-to-three-while-explicit-five-remains-compatible",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-103.md": {
+    "decision-103-only-resolved-proven-redundant-staging-quarantine-may-be-released": "only-resolved-proven-redundant-staging-quarantine-may-be-released",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-104.md": {
+    "decision-104-confirmed-operator-cancellation-may-replace-the-empty-staging-age-heuristic": "confirmed-operator-cancellation-may-replace-the-empty-staging-age-heuristic",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/decision-105.md": {
+    "decision-105-only-journals-supplying-deletion-authority-need-current-checkpoint-order": "only-journals-supplying-deletion-authority-need-current-checkpoint-order",
+    "decision-context-and-consequences": "decision-context-and-consequences",
+    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
+  },
+  "docs/adr/ad-11.md": {
+    "ad-11--use-hardlink-publication-by-default-and-require-explicit-copy-mode": "ad-11--use-hardlink-publication-by-default-and-require-explicit-copy-mode",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-12.md": {
+    "ad-12--keep-durable-authority-in-versioned-filesystem-json": "ad-12--keep-durable-authority-in-versioned-filesystem-json",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "2026-10-17-control-state-amendment-api-007": "2026-10-17-control-state-amendment"
+  },
+  "docs/adr/ad-13.md": {
+    "ad-13--repair-an-instance-without-redefining-the-revision": "ad-13--repair-an-instance-without-redefining-the-revision",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-14.md": {
+    "ad-14--bound-mutations-by-durable-checkpoints-and-atomic-filesystem-acts": "ad-14--bound-mutations-by-durable-checkpoints-and-atomic-filesystem-acts",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-15.md": {
+    "ad-15--treat-repository-content-as-untrusted-data": "ad-15--treat-repository-content-as-untrusted-data",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "2026-10-18-curated-metadata-tool-amendment-mcp-002": "2026-10-18-curated-metadata-tool-amendment"
+  },
+  "docs/adr/ad-16.md": {
+    "ad-16--preserve-ambiguity-and-stop-instead-of-guessing": "ad-16--preserve-ambiguity-and-stop-instead-of-guessing",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "api-010-transport-clarification-2026-10-17": "maintenance-routes-transport-clarification-2026-10-17",
+    "api-013-observation-clarification-2026-10-18": "cli-operation-observation-observation-clarification-2026-10-18"
+  },
+  "docs/adr/ad-17.md": {
+    "ad-17--use-one-writer-host-and-one-local-exclusive-lock": "ad-17--use-one-writer-host-and-one-local-exclusive-lock",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "api-003-amendment-2026-10-17": "guarded-command-services-amendment-2026-10-17",
+    "api-008-execution-amendment-2026-10-17": "bounded-runner-and-private-verifier-execution-amendment-2026-10-17",
+    "api-010-maintenance-transport-amendment-2026-10-17": "maintenance-routes-maintenance-transport-amendment-2026-10-17",
+    "api-013-observer-ownership-clarification-2026-10-18": "cli-operation-observation-observer-ownership-clarification-2026-10-18",
+    "api-014-unit-lifecycle-amendment-2026-10-18": "scheduled-observation-unit-lifecycle-amendment-2026-10-18"
+  },
+  "docs/adr/ad-18.md": {
+    "ad-18--prove-archived-bytes-by-local-sha-256-and-exact-object-identity": "ad-18--prove-archived-bytes-by-local-sha-256-and-exact-object-identity",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-19.md": {
+    "ad-19--overlap-downloads-with-hashing-through-one-bounded-producer": "ad-19--overlap-downloads-with-hashing-through-one-bounded-producer",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/ad-20.md": {
+    "ad-20--remove-whole-repositories-only-through-explicit-unmanaged-purge": "ad-20--remove-whole-repositories-only-through-explicit-unmanaged-purge",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "api-010-transport-clarification-2026-10-17": "maintenance-routes-transport-clarification-2026-10-17"
+  },
+  "docs/adr/ad-21.md": {
+    "ad-21--require-explicit-restricted-hub-scope-and-one-consumer-authorization-boundary": "ad-21--require-explicit-restricted-hub-scope-and-one-consumer-authorization-boundary",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "2026-10-18-readercandidate-amendment-api-012": "2026-10-18-readercandidate-amendment",
+    "2026-10-18-mcp-reader-transport-amendment-mcp-001": "2026-10-18-mcp-reader-transport-amendment",
+    "2026-10-18-curated-metadata-tool-amendment-mcp-002": "2026-10-18-curated-metadata-tool-amendment"
+  },
+  "docs/adr/fw-01.md": {
+    "fw-01--keep-deterministic-functions-and-a-closed-runtime-dependency-set": "fw-01--keep-deterministic-functions-and-a-closed-runtime-dependency-set",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "2026-10-17-amendment-api-001": "2026-10-17-amendment",
+    "2026-10-17-implementation-amendment-api-005": "2026-10-17-implementation-amendment",
+    "2026-10-17-receipt-implementation-amendment-api-007": "2026-10-17-receipt-implementation-amendment",
+    "2026-10-17-lane-implementation-amendment-api-008": "2026-10-17-lane-implementation-amendment",
+    "2026-10-18-unix-client-transport-amendment-api-012": "2026-10-18-unix-client-transport-amendment",
+    "2026-10-18-scheduled-observation-refinement-api-014": "2026-10-18-scheduled-observation-refinement",
+    "2026-10-18-optional-mcp-dependency-amendment-mcp-001": "2026-10-18-optional-mcp-dependency-amendment"
+  },
+  "docs/adr/offline-verification.md": {
+    "quarterly-full-verification-reads-the-retained-archive-offline": "quarterly-full-verification-reads-the-retained-archive-offline",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence",
+    "api-003-amendment-2026-10-17": "guarded-command-services-amendment-2026-10-17",
+    "api-004-amendment-2026-10-17": "scoped-execution-context-amendment-2026-10-17",
+    "api-008-protocol-amendment-2026-10-17": "bounded-runner-and-private-verifier-protocol-amendment-2026-10-17",
+    "api-014-packaged-executor-amendment-2026-10-18": "scheduled-observation-packaged-executor-amendment-2026-10-18",
+    "confined-rootless-listener-amendment-ops-017-2026-10-18": "confined-rootless-listener-amendment-2026-10-18"
+  },
+  "docs/adr/decision-108.md": {
+    "decision-108--typed-services-and-maintained-transport-implementations": "typed-services-and-maintained-transport-implementations",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-005-implementation-2026-10-17": "server-authentication-implementation-2026-10-17",
+    "api-009-command-transport-2026-10-17": "command-routes-command-transport-2026-10-17",
+    "api-011-client-implementation-2026-10-17": "independent-rest-client-client-implementation-2026-10-17",
+    "api-012-reader-and-unix-transport-implementation-2026-10-18": "api-backed-reader-cli-reader-and-unix-transport-implementation-2026-10-18",
+    "2026-10-18-optional-mcp-transport-amendment-mcp-001": "2026-10-18-optional-mcp-transport-amendment"
+  },
+  "docs/adr/decision-109.md": {
+    "decision-109--bounded-non-resuming-operation-receipts": "bounded-non-resuming-operation-receipts",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "2026-10-17-implementation-amendment-api-007": "2026-10-17-implementation-amendment",
+    "2026-10-17-execution-amendment-api-008": "2026-10-17-execution-amendment"
+  },
+  "docs/adr/decision-110.md": {
+    "decision-110--guard-complete-command-execution-and-verification-persistence": "guard-complete-command-execution-and-verification-persistence",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-008-runner-amendment-2026-10-17": "bounded-runner-and-private-verifier-runner-amendment-2026-10-17"
+  },
+  "docs/adr/decision-111.md": {
+    "decision-111--scope-execution-correlation-and-offline-process-initialization": "scope-execution-correlation-and-offline-process-initialization",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "rootless-execution-amendment-ops-015-2026-10-18": "rootless-execution-amendment-2026-10-18"
+  },
+  "docs/adr/decision-112.md": {
+    "decision-112--separate-server-authority-and-verified-bearer-capabilities": "separate-server-authority-and-verified-bearer-capabilities",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "dependencies-and-official-documentation": "dependencies-and-official-documentation",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-009-authority-amendment": "command-routes-authority-amendment",
+    "api-011-client-authority-amendment": "independent-rest-client-client-authority-amendment",
+    "2026-10-18-optional-mcp-transport-amendment-mcp-001": "2026-10-18-optional-mcp-transport-amendment"
+  },
+  "docs/adr/decision-113.md": {
+    "decision-113--serve-bounded-metadata-through-one-authenticated-lifespan": "serve-bounded-metadata-through-one-authenticated-lifespan",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment-api-016": "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment",
+    "2026-10-18-optional-mcp-transport-amendment-mcp-001": "2026-10-18-optional-mcp-transport-amendment",
+    "2026-10-18-curated-metadata-tool-amendment-mcp-002": "2026-10-18-curated-metadata-tool-amendment"
+  },
+  "docs/adr/decision-114.md": {
+    "decision-114--persist-non-resuming-admission-without-discarding-uncertainty": "persist-non-resuming-admission-without-discarding-uncertainty",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-011-retained-key-client-observation-2026-10-17": "independent-rest-client-retained-key-client-observation-2026-10-17",
+    "api-013-cli-admission-and-observation-2026-10-18": "cli-operation-observation-cli-admission-and-observation-2026-10-18"
+  },
+  "docs/adr/decision-115.md": {
+    "decision-115--execute-one-bounded-lane-and-reconcile-the-exact-verifier": "execute-one-bounded-lane-and-reconcile-the-exact-verifier",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-014-activation-and-executor-policy-2026-10-18": "scheduled-observation-activation-and-executor-policy-2026-10-18",
+    "rootless-listener-ownership-amendment-ops-017-2026-10-18": "rootless-listener-ownership-amendment-2026-10-18"
+  },
+  "docs/adr/decision-116.md": {
+    "decision-116--admit-typed-command-routes-without-widening-server-authority": "admit-typed-command-routes-without-widening-server-authority",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-012-candidate-implementation-amendment": "api-backed-reader-cli-candidate-implementation-amendment"
+  },
+  "docs/adr/decision-117.md": {
+    "decision-117--revalidate-explicit-maintenance-authority-at-execution": "revalidate-explicit-maintenance-authority-at-execution",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-013-cli-compatibility-amendment-2026-10-18": "cli-operation-observation-cli-compatibility-amendment-2026-10-18"
+  },
+  "docs/adr/decision-118.md": {
+    "decision-118--observe-one-api-authority-without-replaying-uncertain-submissions": "observe-one-api-authority-without-replaying-uncertain-submissions",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-012-reader-integration-amendment": "api-backed-reader-cli-reader-integration-amendment",
+    "api-013-operational-cli-amendment-2026-10-18": "cli-operation-observation-operational-cli-amendment-2026-10-18",
+    "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment-api-016": "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment",
+    "2026-10-18-bounded-small-page-observation-correction-api-017": "2026-10-18-bounded-small-page-observation-correction"
+  },
+  "docs/adr/decision-119.md": {
+    "decision-119--preserve-server-read-identity-and-separate-candidate-validity-from-authority": "preserve-server-read-identity-and-separate-candidate-validity-from-authority",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "uds-descriptor-ownership-and-fw-04": "context-decision-and-rationale",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-013-operational-observation-amendment-2026-10-18": "cli-operation-observation-operational-observation-amendment-2026-10-18",
+    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
+  },
+  "docs/adr/decision-120.md": {
+    "decision-120--separate-command-execution-from-resumable-cli-observation": "separate-command-execution-from-resumable-cli-observation",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "api-014-scheduled-observer-refinement-2026-10-18": "scheduled-observation-scheduled-observer-refinement-2026-10-18",
+    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment",
+    "2026-10-18-bounded-small-page-observation-correction-api-017": "2026-10-18-bounded-small-page-observation-correction",
+    "cli-presentation-clarification": "cli-presentation-clarification"
+  },
+  "docs/adr/decision-121.md": {
+    "decision-121--activate-one-server-and-retain-scheduled-observation-without-replay": "activate-one-server-and-retain-scheduled-observation-without-replay",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment",
+    "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment-api-016": "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment",
+    "2026-10-18-data-preserving-local-rollout-amendment-ops-014": "2026-10-18-data-preserving-local-rollout-amendment",
+    "2026-10-18-explicit-rootless-runtime-amendment-ops-015": "2026-10-18-explicit-rootless-runtime-amendment",
+    "rootless-worker-created-listener-amendment-ops-017-2026-10-18": "rootless-worker-created-listener-amendment-2026-10-18",
+    "native-release-classification": "native-release-classification"
+  },
+  "docs/adr/decision-122.md": {
+    "decision-122--preserve-cockpit-authority-through-the-api-client-and-guarded-candidates": "preserve-cockpit-authority-through-the-api-client-and-guarded-candidates",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment-api-016": "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment",
+    "2026-10-18-explicit-rootless-runtime-amendment-ops-015": "2026-10-18-explicit-rootless-runtime-amendment"
+  },
+  "docs/adr/decision-123.md": {
+    "decision-123--keep-public-prefixes-separate-from-native-unix-rest-paths": "keep-public-prefixes-separate-from-native-unix-rest-paths",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-relationships": "consequences-and-relationships",
+    "2026-10-18-optional-mcp-transport-amendment-mcp-001": "2026-10-18-optional-mcp-transport-amendment"
+  },
+  "docs/adr/decision-124.md": {
+    "decision-124--add-an-optional-authenticated-mcp-transport-after-rest-acceptance": "add-an-optional-authenticated-mcp-transport-after-rest-acceptance",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "evidence-and-relationships": "evidence-and-relationships",
+    "2026-10-18-curated-metadata-tool-amendment-mcp-002": "2026-10-18-curated-metadata-tool-amendment",
+    "2026-10-18-mounted-security-traceability-mcp-003": "2026-10-18-mounted-security-traceability",
+    "2026-10-18-client-and-packaging-acceptance-mcp-004": "2026-10-18-client-and-packaging-acceptance"
+  },
+  "docs/adr/decision-125.md": {
+    "decision-125--expose-nine-typed-metadata-tools-through-a-narrow-read-capability": "expose-nine-typed-metadata-tools-through-a-narrow-read-capability",
+    "context-and-decision": "context-and-decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-and-evidence": "consequences-and-evidence",
+    "2026-10-18-mounted-security-traceability-mcp-003": "2026-10-18-mounted-security-traceability",
+    "2026-10-18-client-and-packaging-acceptance-mcp-004": "2026-10-18-client-and-packaging-acceptance"
+  },
+  "docs/adr/systemd-scheduling.md": {
+    "keep-host-scheduling-in-systemd-timers-and-drop-ins": "keep-host-scheduling-in-systemd-timers-and-drop-ins",
+    "context": "context",
+    "decision": "decision",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences": "consequences",
+    "history-and-evidence": "history-and-evidence"
+  },
+  "docs/adr/decision-126.md": {
+    "decision-126--guard-a-local-rollout-without-nas-writes-or-false-acceptance": "guard-a-local-rollout-without-nas-writes-or-false-acceptance",
+    "context-and-decision": "context-and-decision",
+    "honest-partial-release-acceptance": "honest-partial-release-acceptance",
+    "rationale-and-alternatives": "rationale-and-alternatives",
+    "consequences-relationships-and-evidence": "consequences-relationships-and-evidence",
+    "ops-014-implementation-evidence": "guarded-deployment-implementation-evidence",
+    "2026-10-18-explicit-rootless-runtime-amendment-ops-015": "2026-10-18-explicit-rootless-runtime-amendment",
+    "permanent-host-boot-guard-ops-016-2026-10-18": "context-decision-and-rationale",
+    "confined-listener-correction-scope-ops-017-2026-10-18": "confined-listener-correction-scope-2026-10-18",
+    "ops-018-installed-checkpoint-2026-10-18": "installed-listener-acceptance-installed-checkpoint-2026-10-18"
+  },
+  "docs/adr/decision-127.md": {
+    "decision-127--run-reviewed-rootless-containers-without-forced-executor-cleanup": "run-reviewed-rootless-containers-without-forced-executor-cleanup",
+    "context-and-decision": "context-and-decision",
+    "images-identity-and-activation": "images-identity-and-activation",
+    "network-tls-secrets-and-filesystem-isolation": "network-tls-secrets-and-filesystem-isolation",
+    "clients-cockpit-and-protected-installation": "clients-cockpit-and-protected-installation",
+    "rationale-and-relationships": "rationale-and-relationships",
+    "seccomp-implementation-correction-from-actual-proof": "seccomp-implementation-correction-from-actual-proof",
+    "host-boot-policy-refinement-ops-016-2026-10-18": "host-boot-policy-refinement-2026-10-18",
+    "worker-owned-listener-amendment-ops-017-2026-10-18": "worker-owned-listener-amendment-2026-10-18",
+    "ubi-10-image-foundation-amendment-ops-019-2026-10-18": "ubi-10-image-foundation-amendment-2026-10-18",
+    "ops-018-installed-checkpoint-2026-10-18": "installed-listener-acceptance-installed-checkpoint-2026-10-18"
+  },
+  "docs/adr/decision-128.md": {
+    "decision-128--create-the-rootless-verifier-listener-inside-its-confinement": "create-the-rootless-verifier-listener-inside-its-confinement",
+    "context-and-decision": "context-and-decision",
+    "listener-ownership-and-shutdown": "listener-ownership-and-shutdown",
+    "container-and-readiness-boundary": "container-and-readiness-boundary",
+    "consequences-and-alternatives": "consequences-and-alternatives",
+    "ubi-source-prerequisite-ops-019-2026-10-18": "ubi-source-prerequisite-2026-10-18"
+  },
+  "docs/adr/decision-129.md": {
+    "decision-129--build-all-service-image-stages-on-pinned-ubi-10-micro": "build-all-service-image-stages-on-pinned-ubi-10-micro",
+    "context-and-choice": "context-and-choice",
+    "interpreter-and-binary-inputs": "interpreter-and-binary-inputs",
+    "exact-optional-installer-pruning": "context-decision-and-rationale",
+    "provenance-isolation-and-release-boundary": "provenance-isolation-and-release-boundary"
+  }
+}

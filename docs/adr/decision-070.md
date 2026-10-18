@@ -1,13 +1,12 @@
-# Decision 070: An artifact that will not parse is not an absent artifact
+# An artifact that will not parse is not an absent artifact
+
+- Decision identity: 070.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `REP-001`.
-- Source: [decision 70 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -40,19 +39,18 @@ work. Where a function has to answer "is there any", callers that will act on
 `unreadable_retirements` exists to be asked the second question and the
 remediation is `BLOCKED` with `HFTXN003` when the answer is yes.
 
-Found by running `OPS-003`'s drill rather than by the suite, and it took a
+Found by running `operational tooling`'s drill rather than by the suite, and it took a
 real deployment to surface: every test that damages a retirement record
 damages it while checking something else, so nothing had ever asked recovery
-what it made of one. That is the same argument `SEL-001` made for rolling out
+what it made of one. That is the same argument  made for rolling out
 before declaring anything done, and this is the fifth defect it has produced.
 
 ## Provenance and governing evidence
 
 The source entry first appears in
 [cd10962](https://github.com/wtcross/hfcache/commit/cd10962ebe6912677dea987dc9b681ec148927dc)
-(2026-07-27, `REP-001: an unreadable retirement record stops recovery, not the
-journal`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-27, `repair: an unreadable retirement record stops recovery, not the
+journal`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/architecture.md](../architecture.md),
 [docs/recovery.md](../recovery.md).

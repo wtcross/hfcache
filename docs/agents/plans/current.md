@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [REST/MCP documentation alignment](2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
-| Next task | [DOC-016](tasks/doc-016-human-architecture-config-schemas-and-adrs.md) |
+| Next task | [DOC-017](tasks/doc-017-reader-first-onboarding-and-human-navigation.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

@@ -1,13 +1,12 @@
-# Decision 093: A hardlink carries same-operation content evidence only with exact object identity
+# A hardlink carries same-operation content evidence only with exact object identity
+
+- Decision identity: 093.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-10.
-- Original work package: `SYNC-006`.
-- Source: [decision 93 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -35,7 +34,7 @@ different inode, a previous run, or a copied destination.
 
 The source entry first appears in
 [92ebdba](https://github.com/wtcross/hfcache/commit/92ebdba2d1462c0febf0333a4da161e75f459dec)
-(2026-08-10, `SYNC-006: avoid redundant hardlink content reads`). The decision
+(2026-08-10, `synchronization: avoid redundant hardlink content reads`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 

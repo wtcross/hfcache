@@ -1,13 +1,12 @@
-# Decision 046: A hashing failure's error class must match its code's family
+# A hashing failure's error class must match its code's family
+
+- Decision identity: 046.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
-- Original work package: `HUB-007`.
-- Source: [decision 46 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -15,7 +14,7 @@ Current contracts and later qualifications below govern.
 `IntegrityError`, so `publication.stage_file`'s three calls — which correctly
 pass `HFSYN005` — would have exited `40` for a condition `docs/cli.md` §5.3
 classifies as `30`. Nothing had surfaced it yet, because publication is not
-reachable from a command until `HUB-009`; it would have arrived as an
+reachable from a command until `Hub access`; it would have arrived as an
 operator being told the archive is corrupt when a download failed.
 
 Two ways an exit is determined coexist in this codebase: `HfcacheError`
@@ -36,7 +35,7 @@ call site, which is where a mistake is legible.
 
 The source entry first appears in
 [45f1ccf](https://github.com/wtcross/hfcache/commit/45f1ccf55656760db38e5242f3ef827bd07ef6de)
-(2026-07-26, `HUB-007: hash every newly introduced unique physical object`). The
+(2026-07-26, `Hub access: hash every newly introduced unique physical object`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

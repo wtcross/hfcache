@@ -1,4 +1,6 @@
-# Decision 092: Plugin CLI invocations run in transient units that import the deployment's encrypted Hub credential
+# Plugin CLI invocations run in transient units that import the deployment's encrypted Hub credential
+
+- Decision identity: 092.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
@@ -6,9 +8,6 @@ Current contracts and later qualifications below govern.
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 - Original decision date: 2026-07-30.
-- Original work package: `CPT-013`.
-- Source: [decision 92 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -65,7 +64,7 @@ application refuses missing credentials. Transient-unit lifetime supersedes
 
 The source entry first appears in
 [99ef932](https://github.com/wtcross/hfcache/commit/99ef93274a7119c662ed8a8a0eb4af0194e416d6)
-(2026-07-30, `CPT-013: authenticated plugin invocations — transient units with
+(2026-07-30, `Cockpit integration: authenticated plugin invocations — transient units with
 ImportCredential`). The decision text above preserves the complete reasoning in
 the current historical log, including its recorded alternatives and
 consequences.
@@ -81,7 +80,7 @@ Relevant verification:
 [cockpit/test/command.test.ts](../../cockpit/test/command.test.ts).
 
 
-## 2026-10-18 Cockpit API integration amendment (API-015)
+## 2026-10-18 Cockpit API integration amendment
 
 The credential-delivery mechanism remains systemd, but its authority changes:
 transient API clients import only `hfcache.api`, use fixed client TOML/socket and

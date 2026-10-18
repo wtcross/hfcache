@@ -1,13 +1,12 @@
-# Decision 052: `storage.write_model` takes the caller's error class, not just its code
+# `storage.write_model` takes the caller's error class, not just its code
+
+- Decision identity: 052.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
-- Original work package: `VER-005`.
-- Source: [decision 52 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -34,7 +33,7 @@ at exit time during an incident.
 
 The source entry first appears in
 [6c5389b](https://github.com/wtcross/hfcache/commit/6c5389bb95aa95380c13757cd7af9e26d21f2885)
-(2026-07-26, `VER-005: persist verification reports and report current health`).
+(2026-07-26, `verification: persist verification reports and report current health`).
 The decision text above preserves the complete reasoning in the current
 historical log, including its recorded alternatives and consequences.
 

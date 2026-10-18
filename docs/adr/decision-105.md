@@ -1,13 +1,12 @@
-# Decision 105: Only journals supplying deletion authority need current checkpoint order
+# Only journals supplying deletion authority need current checkpoint order
+
+- Decision identity: 105.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-09-14.
-- Original work package: `QUA-003`.
-- Source: [decision 105 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -33,7 +32,7 @@ completed journals cannot authorize deletion.
 
 The source entry first appears in
 [c2b52ff](https://github.com/wtcross/hfcache/commit/c2b52ffbfbdd72e7de561c12f63b552511c22e67)
-(2026-09-14, `QUA-003: accept unrelated completed legacy journals`). The
+(2026-09-14, `quarantine cleanup: accept unrelated completed legacy journals`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

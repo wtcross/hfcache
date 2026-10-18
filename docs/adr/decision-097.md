@@ -1,13 +1,12 @@
-# Decision 097: A completed 0.1.5 purge is operationally readable by 0.1.4; an open one is the rollback barrier
+# A completed 0.1.5 purge is operationally readable by 0.1.4; an open one is the rollback barrier
+
+- Decision identity: 097.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-15.
-- Original work package: `REL-006`.
-- Source: [decision 97 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -35,12 +34,11 @@ direct-parser limitation remain explicit.
 
 The source entry first appears in
 [f49edd9](https://github.com/wtcross/hfcache/commit/f49edd969b9cd103559260c7092c17a4d78a1468)
-(2026-08-15, `REL-006: cut and compatibility-check 0.1.5`). The decision text
+(2026-08-15, `release preparation: cut and compatibility-check 0.1.5`). The decision text
 above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 
 Current governing documents:
-[docs/agents/release.md](../agents/release.md),
 [docs/deployment-centos-stream-10.md](../deployment-centos-stream-10.md).
 
 Implementation or shipped-artifact evidence:

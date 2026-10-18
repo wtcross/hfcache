@@ -67,7 +67,7 @@ files own active execution, selected by `docs/agents/plans/current.md`; progress
 retains the chronological completed audit, Decisions, and Operator handoff.
 Invariant/ADR review and upkeep remain required for every implementation.
 
-- [ADR upkeep and required fields](../../adr/README.md#maintenance-rules).
+- [ADR upkeep and required fields](../../adr/README.md#identity-and-authority).
 - [Current invariants and their implementation/test evidence](../../invariants.md).
 - [Plan layout amendment](../history/plan.md#7-project-layout).
 - [Architecture companion register](../../architecture.md),

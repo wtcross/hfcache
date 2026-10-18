@@ -1,13 +1,12 @@
-# Decision 095: A failed report may retain warnings observed before another repository failed
+# A failed report may retain warnings observed before another repository failed
+
+- Decision identity: 095.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-10.
-- Original work package: `SYNC-007`.
-- Source: [decision 95 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -35,13 +34,13 @@ release barriers in the release runbook.
 
 The source entry first appears in
 [54e4671](https://github.com/wtcross/hfcache/commit/54e4671cec9cd2a2f82bfa73372e78478d29e7f4)
-(2026-08-10, `SYNC-007: download ahead while repositories hash`). The decision
+(2026-08-10, `synchronization: download ahead while repositories hash`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 
 Current governing documents: [docs/schemas.md](../schemas.md),
 [docs/cli.md](../cli.md),
-[docs/agents/release.md](../agents/release.md).
+[recorded deployment scope](../deployment-status.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/models.py](../../src/hfcache/models.py),

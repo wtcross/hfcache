@@ -1,13 +1,12 @@
-# Decision 026: The `--json` envelope is a model, not a dict
+# The `--json` envelope is a model, not a dict
+
+- Decision identity: 026.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `CFG-007`.
-- Source: [decision 26 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -25,9 +24,8 @@ change for different reasons.
 
 The source entry first appears in
 [49e61af](https://github.com/wtcross/hfcache/commit/49e61af233c9cca40a3e2ec09d69086eca31e011)
-(2026-07-25, `CFG-007: implement the error taxonomy and the typed JSON
-envelope`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-25, `configuration validation: implement the error taxonomy and the typed JSON
+envelope`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/cli.md](../cli.md).
 

@@ -1,13 +1,12 @@
-# Decision 042: Checkpoint evidence names paths by key suffix
+# Checkpoint evidence names paths by key suffix
+
+- Decision identity: 042.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `STO-010`.
-- Source: [decision 42 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -41,9 +40,8 @@ their old paths still exist.
 
 The source entry first appears in
 [7333c2f](https://github.com/wtcross/hfcache/commit/7333c2f06eeb10057b0085879a110ed804d15ffe)
-(2026-07-25, `STO-010: implement durable transaction journals and checkpoint
-evidence`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-25, `storage primitives: implement durable transaction journals and checkpoint
+evidence`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/schemas.md](../schemas.md),
 [docs/architecture.md](../architecture.md).

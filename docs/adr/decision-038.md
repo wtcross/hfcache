@@ -1,13 +1,12 @@
-# Decision 038: `HFWRN005` fires at a tenth of the reserve
+# `HFWRN005` fires at a tenth of the reserve
+
+- Decision identity: 038.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `STO-003`.
-- Source: [decision 38 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -30,9 +29,8 @@ comfortable before it started.
 
 The source entry first appears in
 [5935ef8](https://github.com/wtcross/hfcache/commit/5935ef8268f37efbea4ed8a490a3ef961fee5630)
-(2026-07-25, `STO-003: implement free-space measurement, the reserve, and doctor
-check 12`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-25, `storage primitives: implement free-space measurement, the reserve, and doctor
+check 12`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/cli.md](../cli.md),
 [docs/configuration.md](../configuration.md).

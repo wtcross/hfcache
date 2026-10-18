@@ -1,13 +1,12 @@
-# Decision 102: Retention defaults to three while explicit five remains compatible
+# Retention defaults to three while explicit five remains compatible
+
+- Decision identity: 102.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-09-14.
-- Original work package: `RET-010`.
-- Source: [decision 102 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -41,7 +40,7 @@ identifier, not a claim that every present prune follows a sixth revision.
 
 The source entry first appears in
 [ec3e630](https://github.com/wtcross/hfcache/commit/ec3e630cfe63c007f342996bf3f02e7fd0b9b0ec)
-(2026-09-14, `RET-010: default to three retained revisions`). The decision text
+(2026-09-14, `retention: default to three retained revisions`). The decision text
 above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 

@@ -1,13 +1,12 @@
-# Decision 078: `commit_sha` widens to nullable with no schema bump, and the entry the retained-key rule cannot see gets its own clearing rule
+# `commit_sha` widens to nullable with no schema bump, and the entry the retained-key rule cannot see gets its own clearing rule
+
+- Decision identity: 078.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `VER-009`.
-- Source: [decision 78 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -42,8 +41,8 @@ with its repository. The code comment on `_still_outstanding` names the
 assumption that must be revisited if a narrower mode ever grows the check.
 
 **No `schema_version` bump, and the consequence is documented rather than
-engineered away.** The precedent is `containers_removed` (`RET-008`,
-`REL-001`): a field-level change an older release *refuses* cleanly needs
+engineered away.** The precedent is `containers_removed` (`retention`,
+`release preparation`): a field-level change an older release *refuses* cleanly needs
 a rollback constraint, not a version fence. An 0.1.2 binary meeting a
 null-SHA catalog fails field validation, which `read_verification_catalog`
 turns into `None` — every revision reads `unverified`, confidence lowered
@@ -51,7 +50,7 @@ and never raised, exactly the direction `FS-16` requires derived state to
 err in. The verification *report* is write-only, so nothing older parses
 it back. What is genuinely lost on rollback is the degraded signal itself:
 0.1.2's `status` reports `unverified`, not `degraded`, over the same
-archive. Hence the release-note constraint `REL-004` records: roll back to
+archive. Hence the release-note constraint `release preparation` records: roll back to
 0.1.2 only with no null-SHA finding outstanding, clearing it via a clean
 `--full` first.
 
@@ -67,12 +66,12 @@ null-SHA widening. Later independent compatibility constraints are recorded in
 
 The source entry first appears in
 [605b50f](https://github.com/wtcross/hfcache/commit/605b50f7242fd0b956df05fe63cc9e04535e6d12)
-(2026-07-27, `VER-009: an unparseable current.json produces a durable finding`).
+(2026-07-27, `verification: an unparseable current.json produces a durable finding`).
 The decision text above preserves the complete reasoning in the current
 historical log, including its recorded alternatives and consequences.
 
 Current governing documents: [docs/schemas.md](../schemas.md),
-[docs/agents/release.md](../agents/release.md).
+[recorded deployment scope](../deployment-status.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/models.py](../../src/hfcache/models.py),

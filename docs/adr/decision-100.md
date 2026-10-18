@@ -1,13 +1,12 @@
-# Decision 100: Serving consumes the verified ordinary-file tree through read-only container mounts
+# Serving consumes the verified ordinary-file tree through read-only container mounts
+
+- Decision identity: 100.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-24.
-- Original work package: `OPS-010`.
-- Source: [decision 100 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -17,7 +16,7 @@ The image, model directory, and YAML configuration are explicit inputs because v
 
 The source entry first appears in
 [827e9b2](https://github.com/wtcross/hfcache/commit/827e9b2c3271bf25e4543ec4fce41316e09c9257)
-(2026-08-24, `OPS-010: add verified-model vLLM launcher`). The decision text
+(2026-08-24, `operational tooling: add verified-model vLLM launcher`). The decision text
 above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 

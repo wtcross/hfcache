@@ -642,7 +642,7 @@ multi-hour systemd oneshots. It retains a strict private key/operation handle;
 existing history only permits lookup/observation and never POST replay. This does
 not make ordinary CLI waits unbounded or add a public execution route. See
 [scheduled service contract](../../../api-client.md#scheduled-service-observation),
-[schema§14](../../../schemas.md#14-scheduled-client-observation-handle-api-014) and
+[schema§14](../../../schemas.md#14-scheduled-client-observation-handle) and
 [decision 121](../../../adr/decision-121.md).
 
 ## 3. Exit codes

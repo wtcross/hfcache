@@ -1,13 +1,12 @@
-# Decision 018: Durable files are indented; the `--json` envelope is not
+# Durable files are indented; the `--json` envelope is not
+
+- Decision identity: 018.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `CFG-004`.
-- Source: [decision 18 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -27,7 +26,7 @@ aspirational.
 
 The source entry first appears in
 [2133496](https://github.com/wtcross/hfcache/commit/21334967781eef8ee37600ed63fad4e42e404180)
-(2026-07-25, `CFG-004: implement the durable manifest and report models`). The
+(2026-07-25, `configuration validation: implement the durable manifest and report models`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

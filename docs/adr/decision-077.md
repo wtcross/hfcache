@@ -1,13 +1,12 @@
-# Decision 077: The docs move to the code, because the built mechanism already delivers §7.4's semantics and a failure-time checkpoint buys recovery nothing
+# The docs move to the code, because the built mechanism already delivers §7.4's semantics and a failure-time checkpoint buys recovery nothing
+
+- Decision identity: 077.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `RET-009`.
-- Source: [decision 77 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -45,7 +44,7 @@ permit was dead: no journal has ever contained the checkpoint (the live
 archive's 34 were scanned, zero matches), so no existing journal becomes
 refusable. Re-adding it later, should a release ever want the checkpoint
 recorded, is a one-line permit plus the standard cross-format note — the
-same widening path `containers_removed` took at `RET-008`.
+same widening path `containers_removed` took at `retention`.
 
 ## Later history and current interpretation
 
@@ -57,7 +56,7 @@ This supersedes the temporary `cleanup_deferred` permit described in [decision
 
 The source entry first appears in
 [8f0af80](https://github.com/wtcross/hfcache/commit/8f0af80b55b19400b5ab97fd5d75d92c772e9787)
-(2026-07-27, `RET-009: reconcile §7.4's cleanup_deferred claim with the
+(2026-07-27, `retention: reconcile §7.4's cleanup_deferred claim with the
 implementation`). The decision text above preserves the complete reasoning in
 the current historical log, including its recorded alternatives and
 consequences.

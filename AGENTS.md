@@ -50,7 +50,7 @@ run `hfcache archive init` — the archive exists.
 | Threat model and controls | `docs/security.md` |
 | Draft, activate, resume, or close a plan; add a task | `docs/agents/planning.md` and `docs/agents/invariants.md`, then `docs/agents/plans/current.md` and the relevant dated plan/task; implementation authorization permits activation, while a draft alone does not |
 | A new feature or work package | The planning row above, affected `docs/invariants.md` sections, and relevant records from `docs/adr/README.md`; use `docs/agents/historical-contract-map.md` for former plan requirements |
-| Introduce or change an invariant or architectural decision | `docs/invariants.md` upkeep rules, `docs/adr/README.md` maintenance rules, and `docs/agents/workflow.md`; update the register, affected ADRs, contracts, and tracker in the same work package |
+| Introduce or change an invariant or architectural decision | `docs/agents/technical-record-policy.md`, `docs/invariants.md`, `docs/adr/README.md`, and `docs/agents/workflow.md`; update the register, affected ADRs, contracts, and tracker in the same work package |
 | Cut or deploy a release | `docs/agents/release.md`, then `docs/deployment-centos-stream-10.md` §13–§14 |
 | Operate or debug the live archive | `docs/operations.md`, `docs/recovery.md` |
 | Consumer-side behaviour | `docs/consumers.md` and `examples/copy-revision.py` |

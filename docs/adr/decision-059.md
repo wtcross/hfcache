@@ -1,21 +1,19 @@
-# Decision 059: The hardening is tested by a probe that reads the deployed unit
+# The hardening is tested by a probe that reads the deployed unit
+
+- Decision identity: 059.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
-- Original work package: `SYS-002`.
-- Source: [decision 59 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
-§22.5 says "test each setting against
-`huggingface_hub`, `hf_xet`, DNS, TLS, NFS, and Python native extensions",
+The deployment hardening contract requires tests against
+`huggingface_hub`, `hf_xet`, DNS, TLS, NFS, and Python native extensions,
 and a checklist an operator ticks is not a test. `scripts/check-hardening.sh`
-and `scripts/hardening-probe.py` are added beyond plan §7's layout, which is
-amended in this commit.
+and `scripts/hardening-probe.py` exercise the installed settings.
 
 One design decision carries the value: the probe does **not** restate the
 settings. `check-hardening.sh` reads the `[Service]` properties out of the
@@ -64,7 +62,7 @@ setgid/hardlink checks and records the hardening incompatibility; [decision
 
 The source entry first appears in
 [999ed19](https://github.com/wtcross/hfcache/commit/999ed19a88059a155e462b962505e6687c78c786)
-(2026-07-26, `SYS-002: apply the §22.5 hardening and test every setting`). The
+(2026-07-26, `host integration: apply the §22.5 hardening and test every setting`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

@@ -119,7 +119,7 @@ possibly smaller request limit.
 Unix connections use a narrow public HTTPX/HTTPCore adapter that closes owned
 sockets on failed connects and response cleanup; no IP fallback is permitted.
 TCP/TLS continues through HTTPX. HTTPCore is an explicit base dependency at the
-already-locked 1.0.9 version; [decision 119](../../../adr/decision-119.md#uds-descriptor-ownership-and-fw-04)
+already-locked 1.0.9 version; [decision 119](../../../adr/decision-119.md#context-decision-and-rationale)
 records the observed missing-socket leak and supported-interface rationale.
 [`unix_http`](../../../../src/hfcache/unix_http.py) owns descriptor creation/connect and
 stream cleanup; [failure-path tests](../../../../tests/unit/test_unix_http.py) retain
@@ -300,7 +300,7 @@ the CLI host, never a server file to open. Installation/backups remain privilege
 host work. API-014 packages scheduled callers and API-015 integrates Cockpit's
 API-only client/candidate pipeline; actual host acceptance stays
 an explicit hold and browser code never receives the API bearer. See
-[decision 119](../../../adr/decision-119.md) and [candidate contract](../../../configuration.md#12-candidate-authority-validation-and-planning-api-012).
+[decision 119](../../../adr/decision-119.md) and [candidate contract](../../../configuration.md#12-candidate-authority-validation-and-planning).
 
 ## Submit, detach and resume (API-013)
 
@@ -429,7 +429,7 @@ separate from daemon-only Hub `hf-token`. Clients use AF_UNIX and need no archiv
 access; actual verifier imports no credential and has independent no-IP/source
 masking. Host enforcement remains deployment acceptance.
 
-The private [schema-1 handle](../../../schemas.md#14-scheduled-client-observation-handle-api-014)
+The private [schema-1 handle](../../../schemas.md#14-scheduled-client-observation-handle)
 binds fixed command, canonical endpoint, expected UUID and REST-writer class to
 one key and optional accepted ID. Fsync key before the sole POST. Any existing
 handle, including a crash before POST, permits only lookup/observation. Unknown/

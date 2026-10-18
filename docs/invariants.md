@@ -1,7 +1,6 @@
 # hfcache invariants
 
-This is the living register of conditions that every implementation and new
-plan must preserve. It collects the current contracts; the linked documents
+This is the living register of current system constraints. It collects the current contracts; the linked documents
 retain their detailed validation rules, checkpoint tables, and operational
 procedures. The [ADR index](adr/README.md) records why these boundaries exist.
 Historical decisions do not override a later, explicitly superseding decision.
@@ -12,34 +11,13 @@ boundaries defined in [architecture §6–§7](architecture.md#6-filesystem-inva
 including recoverable crash states; they do not claim that several independent
 filesystem operations form one atomic operation.
 
-## Using and maintaining this register
+## Using this register
 
-Before implementing a change or a new plan, review the affected sections below
-and follow their links to the governing contracts. In the same work package:
-
-1. Add every newly introduced invariant here, and update any invariant whose
-   guarantee, scope, or exception changes. Update its governing contract and
-   the relevant [ADRs](adr/README.md) alongside the implementation or plan.
-2. Cite the existing requirement ID when one exists (`AD`, `FS`, `TX`, `FW`,
-   `CP`, or another contract's established namespace). Use a new sequential
-   `INV-nnn` ID only for a constraint without an existing requirement ID.
-3. Preserve IDs. When a guarantee is retired or superseded, retain its ID and
-   state its replacement and the decision authorizing the change; never reuse
-   the ID for a different guarantee. Keep historical alternatives in the ADRs,
-   rather than presenting them as current invariants.
-4. Keep source and verification links useful. New enforcement belongs in the
-   appropriate code and meaningful tests; a documentation entry alone does not
-   establish the guarantee. Run the work package's required gate and record the
-   evidence in [progress](agents/progress.md), following the
-   [workflow](agents/workflow.md).
-
-Every implemented change and new plan requires this review. A change that
-introduces or changes no invariant need not edit this file or invent an ADR.
-A change that creates a disagreement between this register, a governing
-contract, and the code must resolve it explicitly in the same work package,
-with the reasoning recorded. A pre-existing conformance gap discovered outside
-that change's scope must be labelled here and tracked in progress; do not
-present its requirement as an enforced guarantee or silently weaken it.
+Requirements retain stable identities. Detailed contracts define scope and
+validation; ADR status/amendment links explain why a requirement changed.
+An explicitly labelled conformance gap is not an enforced guarantee. Source and
+meaningful verification links identify enforcement; a documentation entry alone
+does not establish it.
 
 Read only the affected areas:
 
@@ -81,7 +59,7 @@ Read only the affected areas:
 
 Contract: [architecture §5–§7](architecture.md#5-filesystem-layout),
 [CLI initialization and doctor](cli.md#archive-init), and
-[agent environment](agents/environment.md).
+[recorded deployment scope](deployment-status.md).
 Enforcement: [storage](../src/hfcache/storage.py),
 [preflight](../src/hfcache/preflight.py),
 [initialization](../src/hfcache/archive.py), and
@@ -91,7 +69,7 @@ Evidence: [preflight tests](../tests/unit/test_preflight.py),
 [locking tests](../tests/unit/test_locking.py), and opt-in
 [real-mount tests](../tests/system/test_live_mount.py).
 
-API-010 transport enforcement: explicit confirmation/restatement of configured
+maintenance routes transport enforcement: explicit confirmation/restatement of configured
 root/UUID, writer capability and the disabled-by-default initialization-only
 maintenance gate; see [decision 117](adr/decision-117.md),
 [typed routes](../src/hfcache/api/maintenance.py) and
@@ -162,9 +140,9 @@ Evidence: [Hub tests](../tests/unit/test_hub.py),
 [complete-sync tests](../tests/unit/test_synchronize.py).
 Metadata enforcement: [shared no-follow reader/budgets](../src/hfcache/metadata.py),
 [query identity/confidence checks](../src/hfcache/services/queries.py), and
-[read-boundary regressions](../tests/unit/test_query_boundary.py), API-006.
-History: `HUB-007` (`45f1ccf`) established physical-object hashing;
-`SYNC-006` (`92ebdba`) added same-operation hardlink identity proof.
+[read-boundary regressions](../tests/unit/test_query_boundary.py), metadata lifecycle.
+History: `Hub access` (`45f1ccf`) established physical-object hashing;
+`synchronization` (`92ebdba`) added same-operation hardlink identity proof.
 
 ## Retention and repair
 
@@ -207,7 +185,7 @@ History: `HUB-007` (`45f1ccf`) established physical-object hashing;
   original locator for at least 168 hours. Post-grace evidence enters
   quarantine and is never automatically deleted.
 
-**Known conformance gap (`RET-011`).** The lifetime-generation and audit-union
+**Known conformance gap.** The lifetime-generation and audit-union
 requirements above remain the declared `AD-05`/`FS-20` contract, but current
 implementation evidence does not establish them.
 [`next_generation`](../src/hfcache/publication.py) scans retained references
@@ -215,9 +193,11 @@ only. The regression test
 `test_a_pruned_sha_that_returns_is_republished_into_a_fresh_container` in
 [the sync suite](../tests/unit/test_synchronize.py) explicitly expects a pruned
 SHA to return with a fresh generation of 7. Retained-SHA reobservation and repair
-preserve their generation; the pruned/reintroduced case needs an explicit future
-contract or code decision. The [progress tracker](agents/progress.md) records this gap;
-this register must not silently treat the stronger contract as already enforced.
+preserve their generation. Whole purge can empty retained references while audit
+survives. The stronger lifetime/audit-aware allocation requirement remains an
+explicit conformance gap, not a deployed guarantee. Current cannot be reconstructed
+solely from maximum generation: valid sync can return to an older retained SHA.
+
 
 Contract: [architecture retention, purge, and repair](architecture.md#74-prune-transaction),
 [storage policy](configuration.md#4-storage), and
@@ -229,18 +209,18 @@ Evidence: [retention tests](../tests/unit/test_retention.py),
 [purge rollback/commit tests](../tests/unit/test_purge.py),
 [crash tests](../tests/unit/test_crash_injection.py), and
 [complete-sync tests](../tests/unit/test_synchronize.py).
-History: `PUR-001` (`7370af2`) adds explicit purge;
-`RET-010` (`ec3e630`) replaces the original fixed-five default. The schema-1
+History:  (`7370af2`) adds explicit purge;
+`retention` (`ec3e630`) replaces the original fixed-five default. The schema-1
 audit reason `sixth_unique_revision_published` remains its historical name for
 exceeding the configured limit; it does not require retaining five.
 
-API-010 transport enforcement retains one-round prune, unmanaged-only purge,
+maintenance routes transport enforcement retains one-round prune, unmanaged-only purge,
 original-manifest repair and canonical-cache deletion through the
 [typed maintenance routes](../src/hfcache/api/maintenance.py).
 [Real HTTP/domain tests](../tests/unit/test_api_maintenance.py) and
 [adversarial maintenance tests](../tests/unit/test_api_maintenance_adversarial.py)
 cover fresh locked scope/proof and exact classified outcomes. Previews are keyed
-control-state jobs and confer no deletion authority; RET-011 remains unchanged.
+control-state jobs and confer no deletion authority; retention remains unchanged.
 
 ## Transactions and recovery
 
@@ -300,10 +280,10 @@ Evidence: [checkpoint-contract tests](../tests/unit/test_transactions.py),
 [recovery planning tests](../tests/unit/test_recovery_planning.py),
 [crash injection](../tests/unit/test_crash_injection.py), and
 [quarantine proof/race tests](../tests/unit/test_quarantine.py).
-History: `QUA-001` (`1ad4181`), `QUA-002` (`7b5e4e2`), and
-`QUA-003` (`c2b52ff`) define the narrow cleanup and cancellation exceptions.
+History: `quarantine cleanup` (`1ad4181`), `quarantine cleanup` (`7b5e4e2`), and
+`quarantine cleanup` (`c2b52ff`) define the narrow cleanup and cancellation exceptions.
 
-API-010's [maintenance transport](../src/hfcache/api/maintenance.py) calls these
+maintenance routes's [maintenance transport](../src/hfcache/api/maintenance.py) calls these
 same services; it accepts no executable preview/plan. Queued work revalidates the
 admitted fingerprint under lock, and each apply reconstructs current scope and
 proof. [HTTP/domain](../tests/unit/test_api_maintenance.py) and
@@ -336,7 +316,7 @@ Contract: [AD-19](architecture.md#ad-19--download-ahead-with-one-bounded-produce
 Enforcement: [sync producer/admission](../src/hfcache/sync.py) and
 [Hub cache guard](../src/hfcache/hub.py).
 Evidence: [queue, interruption, strict-mode, and capacity tests](../tests/unit/test_synchronize.py).
-History: `SYNC-007` (`54e4671`), decision 94.
+History: `synchronization` (`54e4671`), decision 94.
 
 ## Configuration and security
 
@@ -363,8 +343,10 @@ History: `SYNC-007` (`54e4671`), decision 94.
   fail. That anonymous fallback applies to Hub policy; API writer authentication
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
-  Cockpit transient clients import named API-only `hfcache.api`; Hub authority
-  remains daemon-side and the page never handles a bearer (decision 122).
+  The shipped Cockpit rootless launcher mounts API-only Podman `hfcache.api`
+  inside its finite client; no host ImportCredential applies. Native named
+  systemd credentials remain a separate supported source. Hub authority stays
+  daemon-side and the page never handles a bearer.
   A reader resolves only its selected protected API file/named systemd source;
   no Hub/netrc/ambient token or anonymous fallback after source failure.
   The server's explicit Hub file is a trusted startup option, never request input;
@@ -400,8 +382,8 @@ History: `SYNC-007` (`54e4671`), decision 94.
   or proxy-TLS checks. Missing/malformed local evidence fails closed.
   See [security §2–§5](security.md#2-trust-boundaries),
   [deployment](deployment-centos-stream-10.md), and
-  [agent environment](agents/environment.md).
-  API-014 packages no-IP/offline and credential-source masking around the actual
+  [recorded deployment scope](deployment-status.md).
+  scheduled observation packages no-IP/offline and credential-source masking around the actual
   private verifier; the AF_UNIX scheduled client uses API credentials separately.
   Custom source locations require explicit masks/probes, and repository unit/
   activation tests do not establish installed cgroup/SELinux/NFS enforcement.
@@ -412,13 +394,13 @@ History: `SYNC-007` (`54e4671`), decision 94.
   Evidence: [unit contracts](../tests/unit/test_systemd_units.py) and
   [probe fixtures](../tests/unit/test_hardening_probe.py), decision
   [121](adr/decision-121.md); installed acceptance remains separate.
-  **OPS-014 scoped rollout (2026-10-18, [decision 126](adr/decision-126.md)).**
+  **guarded deployment scoped rollout (2026-10-18, [decision 126](adr/decision-126.md)).**
   Current local-host deployment authority requires a persistent client read-only
   NAS guard, blocked legacy writers and retained actual-executor/local-flock
   quiescence proof. NAS content/metadata writes, relabel/chown/copyup and other-
   host changes are forbidden; sync remains stopped and verify scheduling disabled.
   Local disposable/container proofs do not pass forbidden real storage checks.
-  **OPS-015 profile (2026-10-18, [decision 127](adr/decision-127.md)).**
+  **rootless runtime profile (2026-10-18, [decision 127](adr/decision-127.md)).**
   Explicit rootless user services and a system target bridge use Caddy/one API/
   isolated FD3 worker and container clients. Immutable never-pull/no-replace/
   no-init/no-auto-remove persistent-role commands, infinite non-killing drain and actual libpod
@@ -435,15 +417,15 @@ History: `SYNC-007` (`54e4671`), decision 94.
   [protected installer](../scripts/install-container-release.py),
   [runtime tests](../tests/unit/test_container_service.py) and
   [selection/rollback tests](../tests/unit/test_container_release_installer.py).
-  OPS-016 pins the readonly boot guard/helper outside current, with host
+  host read-only guard pins the readonly boot guard/helper outside current, with host
   /proc/1/mountinfo proof before READY and lifetime original-flock ownership.
   A private sandbox's read-only view cannot prove the host mount; the guard is
   not continuous monitoring. Bridge readiness dependency/no user-default app
   autostart and nontruncating boot files preserve the controlled holder transfer.
   Enforcement: [fixed host guard](../scripts/hold-readonly-guard.py) and
   [guard/unit/tmpfiles tests](../tests/unit/test_readonly_guard.py); actual host
-  readiness/lock transfer is separately recorded in OPS-016.
-  **OPS-017 listener ownership ([decision 128](adr/decision-128.md)).** Planned
+  readiness/lock transfer is separately recorded in host read-only guard.
+  **Worker listener ownership ([decision 128](adr/decision-128.md)).**
   rootless PID1 startup explicitly creates its own private socket after rejecting
   inherited activation/FDs before resources. Instance/pinned-parent/created-inode
   ownership lasts through joined shutdown and exact cleanup; existing/replaced
@@ -451,8 +433,9 @@ History: `SYNC-007` (`54e4671`), decision 94.
   local-filesystem proof precede parent traversal/bind, with no realpath/NAS stat.
   Worker writable private directory/API read-only view and real
   container-proxied READY change no SELinux/seccomp/credential authority. Native
-  FD3 activation stays strict. Actual production container-peer proof is later
-  OPS-018 acceptance; the deployed 0.2.0 worker hold is not cleared by source tests.
+  FD3 activation stays strict. Recorded 0.2.1 installed peer connectivity is distinct from outstanding NAS
+  workload acceptance; rollback to 0.2.0 retains its connection limitation.
+  See [deployment status](deployment-status.md).
   Enforcement/evidence: [owned listener](../src/hfcache/verification_listener.py),
   [bootstrap](../src/hfcache/verification_worker.py) and
   [kernel/cleanup tests](../tests/unit/test_verification_listener.py).
@@ -476,13 +459,13 @@ Evidence: [configuration tests](../tests/unit/test_config.py),
 [preflight tests](../tests/unit/test_preflight.py).
 Off-host export enforcement and installed host hardening require the documented
 operator acceptance checks; unit tests cannot prove those deployment facts.
-History: `HUB-010` (`c082f87`), decision 98, supersedes public-only scope.
-API-005 enforcement: [server configuration and policy snapshots](../src/hfcache/server_config.py),
+History: `Hub access` (`c082f87`), decision 98, supersedes public-only scope.
+server authentication enforcement: [server configuration and policy snapshots](../src/hfcache/server_config.py),
 [protected API credentials and fixed capabilities](../src/hfcache/api/auth.py),
 [optional FastAPI adapter](../src/hfcache/api/security.py),
 [configuration/reload tests](../tests/unit/test_server_config.py), and
 [adversarial credential/capability tests](../tests/unit/test_server_auth_adversarial.py).
-API-009 command/authority enforcement: [typed DTOs](../src/hfcache/api/command_models.py),
+command routes command/authority enforcement: [typed DTOs](../src/hfcache/api/command_models.py),
 [shared-service route adapters](../src/hfcache/api/commands.py),
 [pure candidate assessment](../src/hfcache/services/candidates.py),
 [model/authority tests](../tests/unit/test_command_models.py),
@@ -502,10 +485,10 @@ route enforcement from installed host acceptance.
   reject unknown fields; the journal reader separately preserves unknown
   top-level fields across rewrites (decision 20). Preservation alone grants no
   recovery/deletion authority. See [schemas §1, §10–§11](schemas.md#1-conventions).
-  API-007's independent local receipt/event/reference version rejects missing,
+  operation control state's independent local receipt/event/reference version rejects missing,
   noninteger, duplicate-key and unsupported state; it does not widen archive
   formats. Receipt/result updates use the same durable serializer and fsync
-  boundary. See [schemas §13](schemas.md#13-service-private-operation-control-state-api-007).
+  boundary. See [schemas §13](schemas.md#13-service-private-operation-control-state).
 - **`INV-006` — CLI output and failure classification are stable contracts.**
   `--json` emits exactly one schema-1 envelope on stdout, including failures;
   stderr is display/event output. Quiet preserves warnings/errors and mandatory
@@ -522,22 +505,22 @@ route enforcement from installed host acceptance.
   copied into workers; server request/operation IDs cannot replace domain
   run/journal identities. Daemon logger configuration is startup-only.
   Durable `invocation_mode` describes the execution host, not timer or submitter
-  origin; API-007 receipts record the authenticated credential-class submitter
+  origin; API receipts record the authenticated credential-class submitter
   separately (decisions 111/114), without claiming individual user attribution.
-  The API-006 foreground `serve` bootstrap is a narrow exception: normal daemon
+  The foreground `serve` bootstrap is a narrow exception: normal daemon
   execution has no terminal success Envelope/stdout, while classified startup
   failures preserve the schema-1 error Envelope under `--json` (decision 113).
-  API-009's 202 is admission only; exact result retrieval preserves the shared
+  The command service's 202 is admission only; exact result retrieval preserves the shared
   terminal Envelope, including partial failure and domain exit priority.
-  API-012 renders the exact server Envelope identity/timestamps for remote reads
-  and completed jobs. Page joins keep the first server invocation metadata,
+  The CLI preserves exact server Envelope identity/timestamps in JSON for remote
+  reads and completed jobs; human rendering summarizes classified results. Page joins keep the first server invocation metadata,
   include all rows under finite bounds and refuse inconsistent publication evidence.
-  API-013 defaults all jobs to exact terminal Envelopes. Explicit detach is a
+  CLI observation defaults jobs to classified terminal output, preserving the
+  exact stored Envelope in JSON/results. Explicit detach is a
   separately identified schema-1 `operation_admission`, without a fabricated
   command outcome/exit. Show/lookup keep exact server metadata Envelopes.
   Mandatory validated key/accepted-ID safety messages stay on stderr even quiet;
-  bounded sanitized event progress never fragments stdout. API-017 corrects
-  observation under small server page/retention caps: omitted adaptive event
+  bounded sanitized event progress never fragments stdout. Observation under small server page/retention caps uses omitted adaptive event
   limits and complete retained-page draining share the same absolute deadline;
   each drain's final empty page counts toward max_pages. Explicit integer limits
   retain their meaning. [Real CLI socket/private-worker integration](../tests/unit/test_interface_integration.py)
@@ -579,13 +562,13 @@ Correlation/diagnostic enforcement: [execution context](../src/hfcache/services/
 [sync producer](../src/hfcache/sync.py), and
 [isolation tests](../tests/unit/test_execution_isolation.py).
 Durable shape, enum, and field-combination changes require the
-[release compatibility drill](agents/release.md); schema version 1 is not a
+[recorded deployment scope](deployment-status.md); schema version 1 is not a
 blanket claim that old binaries accept every later widening.
-API-007 control-state enforcement: [receipt models/store](../src/hfcache/api/operations.py),
+operation control state control-state enforcement: [receipt models/store](../src/hfcache/api/operations.py),
 [golden operation fixtures](../tests/fixtures/schemas/operation-receipt.json),
 [lifecycle/idempotency/result tests](../tests/unit/test_operations.py), and
 [fault/concurrent admission/retention tests](../tests/unit/test_operation_store_adversarial.py).
-Its task records the separate previous-binary compatibility drill.
+Previous-binary compatibility is a separate assessment from schema equality.
 
 ## Consumer boundary
 
@@ -600,7 +583,7 @@ Its task records the separate previous-binary compatibility drill.
   only the read-only publication export and never use it as `HF_HOME` or
   `HF_HUB_CACHE`. See [consumer contract](consumers.md#2-the-contract-in-one-paragraph)
   and [independent implementations](consumers.md#7-doing-it-without-the-helper).
-  MCP-002 discovery retains exact publication IDs and locator bases; partial
+  curated metadata tools discovery retains exact publication IDs and locator bases; partial
   manifest/report pages are explicit projections, never complete durable records.
   Reconstruct all selected collections and validate before consumer verification;
   a vanished requested instance refuses instead of substituting a new current.
@@ -655,7 +638,7 @@ Enforcement: [CLI/unit API](../cockpit/src/api/hfcache.ts),
 [config API](../cockpit/src/api/config.ts),
 [schedule API](../cockpit/src/api/schedule.ts), and
 [command boundary](../cockpit/src/lib/command.ts).
-API-015 enforcement: [bounded observation runner](../cockpit/src/lib/runner.ts),
+Cockpit API integration enforcement: [bounded observation runner](../cockpit/src/lib/runner.ts),
 [UTF-8 framing](../cockpit/src/lib/stream.ts),
 [validated notices](../cockpit/src/lib/events.ts),
 [terminal classification](../cockpit/src/lib/envelope.ts) and
@@ -700,36 +683,26 @@ Evidence: [plugin tests](../cockpit/test) and the
   use injectable deterministic fakes. Live Hub/off-host network and real NFS tests
   are opt-in; actual disposable Unix/loopback TCP/TLS tests run in the default gate.
   The default gate builds and smoke-installs locked base/server/server+MCP wheels;
-  additional build-marker tests remain opt-in. Every work-package commit updates progress and passes
+  additional build-marker tests remain opt-in. The quality gate is
   `scripts/check.sh`; durable-format fixtures and checkpoint-contract tests
   remain synchronized with their contracts.
 
 Contract: [framework boundary](architecture.md#8-framework-boundary),
-[conventions](agents/conventions.md), [workflow](agents/workflow.md), and
-[planning lifecycle](agents/planning.md).
+[development and validation](development.md).
 Enforcement and evidence: [dependency/tool configuration](../pyproject.toml),
 [locked dependencies](../uv.lock), [gate](../scripts/check.sh),
 [test isolation](../tests/conftest.py),
 [failure matrix](../tests/unit/test_failure_matrix.py), and
 [checkpoint tests](../tests/unit/test_transactions.py).
 
-## Remote management (incremental enforcement)
+## Remote management
 
-API-001 introduces these constraints for the activated plan. API-006 implements
-authenticated metadata HTTP and its foreground bootstrap; API-007 adds durable
-admission primitives and operation observation. API-008 adds execution/private
-verification and API-009 adds the typed command subset. API-010 adds guarded
-maintenance and initialization; API-012 adds candidate operations/read CLI and
-API-013 completes operational CLI/observation. API-014 packages named activation
-and actual-executor isolation policy with disposable runtime tests; API-015 integrates Cockpit's
-API-only clients and guarded configuration pipeline. API-016 validates complete
-REST acceptance. MCP-001 adds optional authenticated transport; MCP-002 adds nine
-explicit metadata tools through a narrow read protocol. MCP-003 proves mounted
-security and side-effect boundaries; MCP-004 records completed client/package
-acceptance.
-Final plan closure and installed-host enforcement retain their separate gates.
-[API](api.md) and [server](server.md) track exact availability; implementing tasks
-own proof.
+Authenticated REST uses typed query/command services, bounded receipt-backed
+execution and a separate private verifier. Public CLI and Cockpit clients retain
+server authority and finite observation. Optional MCP exposes exactly nine read
+tools with no execution capability. [API](api.md), [server](server.md), [MCP](mcp.md)
+and [deployment status](deployment-status.md) define current behavior and the
+limits of recorded installed acceptance.
 
 - **`INV-012` — Adapters share one domain implementation.** HTTP/MCP
   adapters call typed services, never Typer/public CLI callbacks or each other's
@@ -737,38 +710,38 @@ own proof.
   Remote access
   changes no FS/TX, whole-archive authorization, or publication locator rule.
   Query enforcement: [shared services](../src/hfcache/services/queries.py),
-  introduced by API-002; command enforcement:
-  [guarded services](../src/hfcache/services/commands.py), introduced by API-003.
+  introduced by shared queries; command enforcement:
+  [guarded services](../src/hfcache/services/commands.py), introduced by guarded command services.
   Metadata transport enforcement: [read application](../src/hfcache/api/app.py),
-  API-006. API-009 [command adapters](../src/hfcache/api/commands.py) retain shared
+  metadata lifecycle. command routes [command adapters](../src/hfcache/api/commands.py) retain shared
   sync ordering, reconciliation, capacity, continuation, producer joins and exact
   verification delegation, covered by [HTTP/domain tests](../tests/unit/test_api_commands.py).
-  API-011 supplies the independent typed client/configuration and API-012 migrates
-  read CLI/candidates. API-013's operational CLI uses pure request types and typed
-  HTTP only, with no direct mutation backend imports or local fallback. MCP-002
+  independent REST client supplies the independent typed client/configuration and API-backed reader CLI migrates
+  read CLI/candidates. CLI operation observation's operational CLI uses pure request types and typed
+  HTTP only, with no direct mutation backend imports or local fallback. curated metadata tools
   uses the same validated metadata readers through explicit narrow adapters;
   no REST writer route is converted into an MCP tool.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
-  Off-host access verifies TLS. Enforcement: API-005/006/011 and MCP-001/003.
-  API-005 supplies strict server configuration, explicit credential validation,
+  Off-host access verifies TLS. Enforcement uses the server registry, typed client and optional MCP boundary.
+  server authentication supplies strict server configuration, explicit credential validation,
   fixed REST principals/capabilities and the optional FastAPI bearer adapter.
-  API-006 now authenticates metadata routes, unknown paths/methods, docs and
+  metadata lifecycle now authenticates metadata routes, unknown paths/methods, docs and
   schema before routing/body validation, with strict Host/Origin/proxy/prefix,
   request/response/work limits and sanitized typed errors. Cursor pages bind
   filters/policy and row contents; changed rows fail continuation rather than
   silently skipping them. Shared read budgets and a pool lease cover active
   streams until completion/disconnect. Exact published-relative reference
-  locators do not become HTTP artifact paths. API-009 command POSTs authenticate
+  locators do not become HTTP artifact paths. command routes command POSTs authenticate
   before receiving a body, authorize static writer routes before reading it and
   mixed capability before DTO validation. Explicit JSON/media/encoding/depth and
   byte limits cover chunked inputs; unknown paths/credential overrides cannot
-  become execution authority. API-010 extends the same boundary to explicit
-  maintenance routes and gates initialization before body reception. API-012
+  become execution authority. maintenance routes extends the same boundary to explicit
+  maintenance routes and gates initialization before body reception. API-backed reader CLI
   candidate presence requires writer capability before DTO validation; only bounded
-  TOML content, not server paths/credentials, can be submitted. MCP-001 adds its
-separate protected verifier only after REST acceptance. API-011's independent client uses explicit API
+  TOML content, not server paths/credentials, can be submitted. optional MCP transport adds its
+separate protected verifier only after REST acceptance. independent REST client's independent client uses explicit API
   sources, verified TLS/Unix transport, no redirect/ambient proxy forwarding and
   finite response/page/read-retry/poll budgets with strict identity/version checks.
   It never falls back to archive filesystem access or starts a daemon.
@@ -781,7 +754,7 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [typed command/adversarial tests](../tests/unit/test_api_command_adversarial.py);
   decisions [113](adr/decision-113.md)/[116](adr/decision-116.md).
   This is no production deployment proof.
-  API-016 corroborates trusted native Unix scope using both peer/local address
+  REST acceptance corroborates trusted native Unix scope using both peer/local address
   evidence; prefix and proxy-TLS exceptions share that predicate, without header
   authority or global prefix/cache mutation. Enforcement/evidence:
   [HTTP boundary](../src/hfcache/api/app.py),
@@ -800,26 +773,26 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   key lookup searches only the caller's namespace. Unexpired terminal bindings
   retain the configured 30-day default window; count/byte limits refuse admission
   rather than evicting them. Interrupted/ambiguous/nonterminal/unsupported state
-  never ages out. API-007 implements core/HTTP observation.
-  API-008 adds the bounded FIFO lane, one absolute queue/lock deadline and a
+  never ages out. operation control state implements core/HTTP observation.
+  bounded runner and private verifier adds the bounded FIFO lane, one absolute queue/lock deadline and a
   fresh fingerprint guard inside the service-owned archive lock. A runner never
   pre-locks or nests that service. Exact surviving verifier evidence is reconciled
   before interruption; unavailable/unsafe status preserves active receipts and
-  closes execution across restarts. Metadata stays diagnosable. API-009 submits
+  closes execution across restarts. Metadata stays diagnosable. command routes submits
   its four keyed job routes with normalized typed bodies and 202 observation links;
-  matching retries preserve the original binding. API-010 extends keyed admission
+  matching retries preserve the original binding. maintenance routes extends keyed admission
   to separate maintenance preview/apply, repair and guarded initialization URLs;
-  previews grant no future apply authority. API-012's absent candidate field preserves
+  previews grant no future apply authority. API-backed reader CLI's absent candidate field preserves
   historical installed-plan canonical key mappings; exact candidate text binds a
-  new request and the receipt retains installed admitted fingerprint. API-011 generates/exposes a retained
+  new request and the receipt retains installed admitted fingerprint. independent REST client generates/exposes a retained
   key before POST and reports uncertainty without automatic replay; lookup and
-  finite observation never cancel accepted work. API-013 prints validated key
+  finite observation never cancel accepted work. CLI operation observation prints validated key
   before POST and operation ID after acceptance even quiet. One deadline covers
   event/status/result reads and retries; timeout/Ctrl-C retains handles and says
   accepted work may continue. Show/wait/lookup observe without submitting,
   cancellation or new-key replay. Detached admission never claims domain completion.
   Decisions [109](adr/decision-109.md),
-  [114](adr/decision-114.md) and [115](adr/decision-115.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state-api-007).
+  [114](adr/decision-114.md) and [115](adr/decision-115.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state).
   Enforcement/evidence: [core store](../src/hfcache/api/operations.py),
   [HTTP observation](../src/hfcache/api/app.py),
   [core tests](../tests/unit/test_operations.py),
@@ -830,7 +803,7 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [runner/deadline/reconciliation tests](../tests/unit/test_runner.py).
   Trusted private running/domain-run progress updates the parent receipt; a stale
   private label without a live owned thread cannot establish executor liveness.
-  API-011 client enforcement: [strict settings/sources](../src/hfcache/client_config.py),
+  independent REST client client enforcement: [strict settings/sources](../src/hfcache/client_config.py),
   [typed wire models](../src/hfcache/client_models.py) and
   [synchronous transport/observation](../src/hfcache/client.py);
   [decision 118](adr/decision-118.md), [client contract](api-client.md).
@@ -841,7 +814,7 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [actual locked base/server import smoke](../scripts/check-installations.py).
   Reader metadata does not change FS-12/INV-008's exact publication copy/verification
   authority; bulk transfer remains the independent consumer workflow.
-  API-012 enforcement/evidence: [reader CLI](../src/hfcache/cli.py),
+  API-backed reader CLI enforcement/evidence: [reader CLI](../src/hfcache/cli.py),
   [finite aggregation/transport rendering](../src/hfcache/cli_client.py),
   [pure validation/authority](../src/hfcache/services/candidates.py),
   [candidate HTTP](../src/hfcache/api/commands.py),
@@ -851,7 +824,7 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [reader/candidate adversarial tests](../tests/unit/test_api_candidates_adversarial.py);
   [decision 119](adr/decision-119.md). Server installation/host acceptance remains
   separate from these hermetic tests.
-  API-013 enforcement/evidence: [pure request types](../src/hfcache/services/requests.py),
+  CLI operation observation enforcement/evidence: [pure request types](../src/hfcache/services/requests.py),
   [bootstrap descriptions](../src/hfcache/services/bootstrap.py),
   [operational CLI](../src/hfcache/cli.py),
   [submission/observation helpers](../src/hfcache/cli_client.py),
@@ -861,14 +834,14 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [writer observation/adversarial tests](../tests/unit/test_cli_operations_adversarial.py);
   [decision 120](adr/decision-120.md). No client/service-stop proof replaces exact
   executor ownership or installed OS isolation acceptance.
-  API-014 uses one application for named Unix/optional TCP activation and retains
+  scheduled observation uses one application for named Unix/optional TCP activation and retains
   shared runtime lock inodes. Scheduled strict private schema-1 handles bind fixed
   sync/verify-full, endpoint/expected UUID/class and key/op, never bearer/digest/
   body/queue. Fsync key before sole POST; existing history permits lookup/observe
   only, repeated finite windows preserve oneshot lifetime, and exact terminal
   evidence alone permits removal. Unknown/malformed/future/mismatched state is
   preserved at exit 20. [Decision 121](adr/decision-121.md) and
-  [schema§14](schemas.md#14-scheduled-client-observation-handle-api-014).
+  [schema§14](schemas.md#14-scheduled-client-observation-handle).
   Enforcement/evidence: [activation](../src/hfcache/server.py),
   [scheduled observer](../src/hfcache/scheduled_client.py),
   [release guard](../scripts/release-functions.sh),
@@ -879,29 +852,26 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   verification locks target resolution, hashing, report write and catalog merge
   in a credential-free no-IP executor. Estimates remain metadata reads.
   Lock/persistence enforcement: [command services](../src/hfcache/services/commands.py)
-  and [multiprocess tests](../tests/unit/test_command_locking.py), API-003.
-  API-008 implements the strict peer-checked private protocol, dedicated startup
-  and exact durable outcome/reconciliation primitives; API-014 packages
-  credential-free/no-IP units while installed enforcement remains host acceptance. No unsafe
-  ASGI-process fallback. API-004 removes the shared-service offline environment
-  toggle and provides [startup-only offline initialization](../src/hfcache/offline.py)
+  and [multiprocess tests](../tests/unit/test_command_locking.py), guarded command services.
+  The API runner/private verifier implement the strict peer-checked private protocol, dedicated startup
+  and exact durable outcome/reconciliation primitives; Native units supply credential-free/no-IP policy while installed enforcement remains host acceptance. No unsafe
+  ASGI-process fallback. Shared services never toggle the offline environment. Dedicated startup uses [startup-only offline initialization](../src/hfcache/offline.py)
   for the dedicated process, verified in [child-process tests](../tests/unit/test_offline_process.py).
   That helper alone does not deny IP sockets; decision [111](adr/decision-111.md).
   Protocol/process enforcement: [private client/framing/peer validation](../src/hfcache/verification_protocol.py),
   [worker runtime](../src/hfcache/verification_executor.py),
   [inherited-socket startup](../src/hfcache/verification_worker.py), and
   [executor/protocol tests](../tests/unit/test_verification_executor.py);
-  decision [115](adr/decision-115.md). API-009's writer-only verification route
+  decision [115](adr/decision-115.md). The command service's writer-only verification route
   has no HTTP-process execution path; [route tests](../tests/unit/test_api_commands.py)
   prove all three modes delegate and refuse unavailable private execution.
   These tests do not prove installed OS egress.
-  API-014 packaging/evidence: [worker service](../packaging/systemd/hfcache-verification.service),
+  Native packaging/evidence: [worker service](../packaging/systemd/hfcache-verification.service),
   [private socket](../packaging/systemd/hfcache-verification.socket),
   [activation/bootstrap tests](../tests/unit/test_verification_worker_bootstrap.py)
   and [unit contracts](../tests/unit/test_systemd_units.py); decision
-  [121](adr/decision-121.md). At API-014 completion, actual installed peer/cgroup/
-  source-masking probes remained held; OPS-018 now records that local acceptance.
-  Live NAS/storage and other-host checks remain unrun.
+  [121](adr/decision-121.md). See [deployment status](deployment-status.md) for
+  recorded installed peer/confinement scope and outstanding NAS/other-host work.
   [Decision 128](adr/decision-128.md) adds a distinct PID1-only container-listener
   mode without a native bind fallback. Early inherited-FD/activation/credential
   audit precedes owned resources and shared imports; parent/instance ownership
@@ -910,16 +880,13 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   worker's private directory becomes writable; API stays read-only. Offline/no-IP,
   no credentials, exact private protocol/results and no replay remain. Rootless
   API Requires+After worker.service; dormant .socket/native activation remain
-  separate. Source/fixture evidence cannot close installed SELinux hold 22.
-  Actual [OPS-018 installed acceptance](agents/plans/tasks/ops-018-container-worker-rollout.md)
-  now closes that connection hold for 0.2.1 under Enforcing, including after drain/
-  restart. Live NAS verification/workload acceptance remains unrun; rollback to
+  separate. Source fixtures and host probes do not prove actual container peer access.
+  [Recorded 0.2.1 scope](deployment-status.md) includes the installed peer path
+  under Enforcing before/after drain/restart. Live NAS verification/workload acceptance remains unrun; rollback to
   0.2.0 restores its recorded connection limitation.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
-  persistence, recovery, or operation admission. API-016 completed before MCP-001
-  adds optional transport. MCP-002 registers exactly the nine approved metadata
-  tools, no resources/prompts or REST OpenAPI conversion; only the distinct
+  persistence, recovery, or operation admission. The optional transport registers exactly nine approved metadata tools, no resources/prompts or REST OpenAPI conversion; only the distinct
   MCP-reader credential is accepted through a
   production supported verifier. Disabled mode imports/resolves neither package
   nor credential; one composed lifespan retains REST ownership and transport
@@ -930,7 +897,7 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   projection governs authentication, static writer/body policy and links, including
   configured-prefix collisions. Finite MCP replies are buffered/sanitized and
   bounded before headers; separate in-flight capacity adds no retained queue.
-  MCP-002 tool functions receive only a narrow async read protocol, no SDK app/
+  curated metadata tools tool functions receive only a narrow async read protocol, no SDK app/
   request context, commands, Hub/credential resolver or writable helpers. Typed
   metadata results use explicit manifest/report projections. Inventory cursors
   bind complete selected rows/filter/policy while status headline/warnings remain
@@ -939,9 +906,8 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   publication reads never substitute current, and estimates/catalog reads never
   increase confidence or trigger persistence/rebuild. Registry/schema equality
   and success/failure archive/control-state snapshots prove the boundary;
-  annotations alone do not. Dedicated mounted security proof is MCP-003; final
-  MCP client/package acceptance is recorded by completed MCP-004; installed-host checks remain
-  explicit deployment holds.
+  annotations alone do not. Mounted fixtures test registry/side effects and client behavior; installed
+  acceptance remains separately scoped by the deployment status.
   Enforcement: [optional verifier/finite transport](../src/hfcache/mcp.py),
   [application boundary/lifecycle](../src/hfcache/api/app.py),
   [direct verifier/lifecycle tests](../tests/unit/test_mcp_mount.py) and
@@ -953,12 +919,12 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [mounted registry/tools](../tests/unit/test_mcp_tools.py).
   See [MCP](mcp.md), [decision 124](adr/decision-124.md) and
   [decision 125](adr/decision-125.md). The
-  [MCP-003 threat/control/test map](mcp.md#read-only-boundary)
+  [mounted security checks threat/control/test map](mcp.md#read-only-boundary)
   distinguishes application snapshots and mixed-interface ownership from
   installed-host assumptions, with [malformed evidence/secret proof](../tests/unit/test_mcp_security_evidence.py),
   [closed authority/state snapshots](../tests/unit/test_mcp_security.py) and
   [mixed-interface/cancellation/drain tests](../tests/unit/test_mcp_concurrency.py).
-  MCP-004 client/packaging guidance: [protected-file example](../examples/mcp-client.py),
+  protected MCP client client/packaging guidance: [protected-file example](../examples/mcp-client.py),
   [setup/version/rotation/cost contract](mcp.md#connect)
   and [REST/auth/rotation/unit acceptance](../tests/unit/test_mcp_acceptance.py).
   The independent REST base client retains no MCP runtime requirement; example
@@ -966,7 +932,7 @@ separate protected verifier only after REST acceptance. API-011's independent cl
 
 FW-01/FW-03 above retain their historical baseline with the explicit
 [108](adr/decision-108.md)/[109](adr/decision-109.md) amendment: scoped transport
-dependencies and the bounded non-resuming lane are permitted incrementally.
+dependencies and the bounded non-resuming lane are narrow explicit exceptions.
 [Decision 112](adr/decision-112.md) records the actual HTTPX and `server` extra
 addition and its material correctness rationale.
 [Decision 124](adr/decision-124.md) adds standalone FastMCP only in the optional
@@ -979,7 +945,7 @@ Enforcement: [Unix transport](../src/hfcache/unix_http.py) and
 [descriptor/stream regressions](../tests/unit/test_unix_http.py).
 No other workflow framework or runtime dependency is authorized.
 
-## UBI 10 image-foundation qualification (OPS-019)
+## UBI 10 image-foundation qualification
 
 [Decision 129](adr/decision-129.md) applies INV-003/005/010/015 to new service
 foundations: all app/Caddy FROM stages use pinned minimal-viable UBI 10 micro.
@@ -999,4 +965,4 @@ Evidence: [app build tests](../tests/unit/test_container_runtime.py),
 [Caddy build tests](../tests/unit/test_caddy_container_build.py),
 [fetch tests](../tests/unit/test_fetch_container_python.py) and
 [foundation tests](../tests/unit/test_container_foundation.py), with actual
-image/worker/TLS fixture records in the OPS-019 task and clean repeats in REL-013.
+image/worker/TLS fixture records and clean immutable artifact identities.

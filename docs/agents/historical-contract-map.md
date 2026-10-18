@@ -28,7 +28,7 @@ results and rationale are retained in git and the migration manifest.
 | 26 | Development complete test tiers/failure matrix; executable failure-matrix tests |
 | 27 | Storage capacity/performance checklist; operations measurements |
 | 28–29, 33 | Historical implementation acceptance; current rollout in deployment and consumers |
-| 30 | Deployment upgrade/rollback; schemas compatibility |
+| 30 | Deployment upgrade/rollback; schemas compatibility, including backup and explicit-command safeguards for manifest migrations |
 | 31 | Recovery runbook |
 | 32 | Security/storage and technical ADR rationale |
 | 34–35 | Historical site facts; effective writability in storage/architecture/CLI doctor |
@@ -50,3 +50,16 @@ Source/test comments now cite living contracts, including formerly unqualified
 `plan §…` references. Mechanical path/link repairs retain historical factual prose.
 Original hashes are validated against git, rather than claimed to equal the
 reference-repaired or substantively amended destination bytes.
+
+## Technical-contract consolidation
+
+DOC-016 rechecked the standing requirements against architecture, invariants,
+configuration, schemas, security and every human technical ADR. The complete
+pre-rewrite bytes and hashes are preserved in
+[the technical reference manifest](history/technical-contracts-before-rewrite/manifest.json).
+Technical ADRs retain decision identity, original dates, alternatives, consequences
+and implementation/test evidence; their maintenance policy now lives in
+[technical record policy](technical-record-policy.md). No archive format, checkpoint
+name/order, authentication authority or lock lifetime changes. AD-05/FS-20 retain
+the lifetime-generation requirement and explicitly disclose the existing retained-ref
+allocator conformance gap; this editorial package does not activate retention work.

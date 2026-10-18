@@ -262,7 +262,7 @@ no /srv, NFS aliases, unreviewed symlinks, unexplained prior stages or mutable
 artifacts. Only the current selector and nine exact protected execution bindings
 are the reviewed symlink exceptions; artifact reads remain no-follow.
 A bounded root-protected container-release.json authenticates fixed input files
-and immutable identities; [schema 16](schemas.md#16-rootless-release-manifest-and-artifact-index-ops-015)
+and immutable identities; [schema 16](schemas.md#16-rootless-release-manifest-and-artifact-index)
 defines it and the independent artifact-index.json.
 
 Staging under /opt/hfcache/releases/<version> copies authenticated sources and
@@ -363,7 +363,7 @@ All other foundation assertions remain required.
 
 ### Exact runtime installer omission
 
-[Decision 129](adr/decision-129.md#exact-optional-installer-pruning) permits only
+[Decision 129](adr/decision-129.md#context-decision-and-rationale) permits only
 the inspected PBS prefix's bin/pip, bin/pip3, bin/pip3.14,
 lib/python3.14/site-packages/pip, pip-26.1.2.dist-info in that same directory and
 lib/python3.14/ensurepip (including its bundled wheel) to be omitted inside the

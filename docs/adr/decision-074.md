@@ -1,23 +1,22 @@
-# Decision 074: The interpreter directory is part of the deployment and was outside every sweep
+# The interpreter directory is part of the deployment and was outside every sweep
+
+- Decision identity: 074.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `REL-002`.
-- Source: [decision 74 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
 `install-release.sh` makes the release tree
-root-owned and read-only to the service identity, because plan §21.4 wants
+root-owned and read-only to the service identity, because the host deployment contract wants
 the account that runs the archive unable to modify the code that runs it. It
 does that with `chown -R` and `chmod -R` over `${RELEASE}`.
 
 `/opt/hfcache/python` is not under `${RELEASE}`. It holds the uv-managed
-CPython 3.14.6 that `HOST-004` installed there precisely so the venv would not
+CPython 3.14.6 installed there precisely so the venv would not
 depend on an interpreter under `/home` or on the distribution's 3.12, and it
 is deliberately *not* rebuilt per release — one interpreter serves every
 release, which is what makes a rollback a symlink switch. So the per-release
@@ -27,7 +26,7 @@ The exposure is small and worth stating precisely rather than dramatising: a
 zero-byte lock file that uv uses to serialise interpreter installs, with the
 interpreter binaries themselves root-owned `0755`. No code execution follows
 from writing it. But it is a world-writable regular file inside the prefix
-§21.4 says is root-owned, an unprivileged local user could interfere with a
+the native deployment contract requires to be root-owned, an unprivileged local user could interfere with a
 future `uv python install`, and "the deployment contains nothing
 world-writable" is a cheaper property to hold than to reason about each time.
 
@@ -47,7 +46,7 @@ result into a one-line fix.
 
 The source entry first appears in
 [fa3818a](https://github.com/wtcross/hfcache/commit/fa3818afcde23b336d26dbffcac28fe1f599a4bb)
-(2026-07-27, `REL-002: final quality and security gates`). The decision text
+(2026-07-27, `release preparation: final quality and security gates`). The decision text
 above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 
@@ -59,4 +58,4 @@ Implementation or shipped-artifact evidence:
 [scripts/install-release.sh](../../scripts/install-release.sh).
 
 Verification or recorded operational evidence:
-[docs/agents/progress.md](../agents/progress.md).
+[recorded deployment scope](../deployment-status.md).

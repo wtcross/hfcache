@@ -1,13 +1,12 @@
-# Decision 053: Evidence for a path a later checkpoint moves carries no `_path` suffix
+# Evidence for a path a later checkpoint moves carries no `_path` suffix
+
+- Decision identity: 053.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
-- Original work package: `VER-006`.
-- Source: [decision 53 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -49,7 +48,7 @@ manifests removed during committed staging cleanup.
 
 The source entry first appears in
 [f04aa31](https://github.com/wtcross/hfcache/commit/f04aa31e2b3d6f24753b1f24aac8947b5dab8740)
-(2026-07-26, `VER-006: repair a damaged instance, and finish what a crash left
+(2026-07-26, `verification: repair a damaged instance, and finish what a crash left
 open`). The decision text above preserves the complete reasoning in the current
 historical log, including its recorded alternatives and consequences.
 

@@ -1,19 +1,18 @@
-# Decision 057: The `--config` and `--token-file` options do not check readability at parse time
+# The `--config` and `--token-file` options do not check readability at parse time
+
+- Decision identity: 057.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
-- Original work package: `HOST-004`.
-- Source: [decision 57 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
 Found the moment
 `/etc/hfcache/config.toml` was installed at its documented `0640
-root:hfcache` (plan §21.2): every command run as an ordinary account began
+root:hfcache` (the host deployment contract): every command run as an ordinary account began
 exiting `2` from typer's argument parser — including `hfcache version` and
 `hfcache --help`, which never open the file.
 
@@ -37,11 +36,11 @@ it properly rather than that more identities can read it.
 
 The source entry first appears in
 [41690bd](https://github.com/wtcross/hfcache/commit/41690bd7cd5da5231e74e504489f1eba60dc945b)
-(2026-07-26, `SYNC-004: discard a committed transaction's staging area`). The
+(2026-07-26, `synchronization: discard a committed transaction's staging area`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
-The named work package's implementation commit is
+The introducing implementation commit is
 [88eb3f0](https://github.com/wtcross/hfcache/commit/88eb3f0772b6a02cf8c11b0d11a75d545dcfcd56).
 The source-entry introduction and implementation are recorded separately rather
 than inferred to be the same commit.

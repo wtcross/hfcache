@@ -1,13 +1,12 @@
-# Decision 049: A verification finding may name no publication instance, and `HFARG004` now covers a revision or a run this archive does not hold
+# A verification finding may name no publication instance, and `HFARG004` now covers a revision or a run this archive does not hold
+
+- Decision identity: 049.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
-- Original work package: `VER-001`.
-- Source: [decision 49 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -45,7 +44,7 @@ identity alone was the original widening.
 
 The source entry first appears in
 [677dc17](https://github.com/wtcross/hfcache/commit/677dc1795b2ac10ad22e8f0c1fb809e4f0c6e981)
-(2026-07-26, `VER-001: verify the content one run introduced`). The decision
+(2026-07-26, `verification: verify the content one run introduced`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 

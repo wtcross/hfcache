@@ -1,13 +1,12 @@
-# Decision 094: Queue-ahead uses one repository producer inside the existing run lock
+# Queue-ahead uses one repository producer inside the existing run lock
+
+- Decision identity: 094.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-10.
-- Original work package: `SYNC-007`.
-- Source: [decision 94 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -44,7 +43,7 @@ snapshots are consumed. It does not introduce multiple writer processes.
 
 The source entry first appears in
 [54e4671](https://github.com/wtcross/hfcache/commit/54e4671cec9cd2a2f82bfa73372e78478d29e7f4)
-(2026-08-10, `SYNC-007: download ahead while repositories hash`). The decision
+(2026-08-10, `synchronization: download ahead while repositories hash`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 

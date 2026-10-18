@@ -1,17 +1,16 @@
-# Decision 068: A prune's container cleanup is checkpoint 10, after the commit point, and its atomic act is `rmdir`
+# A prune's container cleanup is checkpoint 10, after the commit point, and its atomic act is `rmdir`
+
+- Decision identity: 068.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `RET-008`.
-- Source: [decision 68 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
-Plan §15.2 and
+The retention contract and
 `docs/architecture.md` §7.4 both described a prune that tombstones the
 publication instance and its manifest and then stops. Both are amended here,
 because that leaves two directories that nothing ever removes.
@@ -55,7 +54,7 @@ else propagates, because reporting a permission failure as though the
 directory had merely been busy would hide it forever.
 
 The live archive was brought into conformance in the same commit rather than
-left as a documented exception, because `OPS-003` documents this tree's shape
+left as a documented exception, because `operational tooling` documents this tree's shape
 next and a runbook describing a shape the archive contradicts is worse than
 either. The removal used `rmdir`, which cannot destroy content;
 `verify --full` afterwards read 23 unique objects across 6 revisions and
@@ -72,7 +71,7 @@ explicit five.
 
 The source entry first appears in
 [5dc8d0a](https://github.com/wtcross/hfcache/commit/5dc8d0aa24f81f485ea0d2d81cdd149c5b726df2)
-(2026-07-27, `RET-008: remove the containers a prune empties`). The decision
+(2026-07-27, `retention: remove the containers a prune empties`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 

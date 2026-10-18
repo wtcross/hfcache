@@ -3,8 +3,6 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/agents/history/plan.md` §12, §20.2, §21.2, §22.5, §23, §25 |
-| Work package | `ARC-007` |
 
 This document states what `hfcache` protects, who it protects it from, what it
 explicitly does not defend against, and which control enforces each claim. A
@@ -148,7 +146,7 @@ filesystem, or into an unrelated dataset.
 is a mount point distinct from its parent, is an NFS/NFSv4 filesystem, is
 read/write, and carries a sentinel whose UUID matches `storage.archive_id`
 (`FS-01`–`FS-03`). Writability is proven by a real create/fsync/rename/delete
-probe, because the Mapall export makes `st_uid` comparison meaningless (§`docs/agents/history/plan.md` §35.3).
+probe, because the Mapall export makes `st_uid` comparison meaningless (§the architecture contract).
 The bare `/srv/hfcache` mount point is root-owned and not writable by the service
 identity, so an unmounted archive fails closed rather than filling the root
 filesystem. Failure is exit `20` before the first byte is fetched.
@@ -177,8 +175,8 @@ lifetime, never clear it between requests. Logs capture sanitized fields at
 emission and sanitize formatting; `Problem` snapshots and its public rendering,
 and application exception string/repr paths, sanitize diagnostics too. Preserve
 safe code/shape evidence without exposing raw exceptions, request input or
-tracebacks to a caller. API-005 registers resolved API credentials before use;
-API-006 must apply the same boundary to route validation/exception output.
+tracebacks to a caller. server authentication registers resolved API credentials before use;
+metadata lifecycle must apply the same boundary to route validation/exception output.
 See [decision 111](adr/decision-111.md).
 
 **Consequence beyond leakage.** Disabling ambient discovery also removes a
@@ -190,8 +188,9 @@ constructs a Hub client, resolves a credential, or changes process-wide offline
 environment settings. The shipped unit supplies `HF_HUB_OFFLINE=1` and
 `IPAddressDeny=any`. The dedicated executor initializes the offline flag
 once before Hub imports and independently requires the no-IP sandbox; the
-startup helper alone is not an egress control. API-008/014 implement/package that
-executor, while its installed-host acceptance remains held. A network-enabled ASGI process is never a fallback verifier.
+startup helper alone is not an egress control. The private executor and its
+profile-specific confinement own that boundary; installed acceptance remains
+separate from source or transient native probe evidence. A network-enabled ASGI process is never a fallback verifier.
 
 ### T-08 — Restricted content crosses the intended authorization boundary
 
@@ -226,8 +225,8 @@ install time.
 systemd unit and never during a scheduled run, so a sync can never resolve or
 fetch a package. The uv version is pinned, its release artifact verified, and its
 self-update behaviour disabled. Release trees and virtual environments are
-root-owned and read-only to the service identity. The runtime dependency set is
-deliberately three packages.
+root-owned and read-only to the service identity. The runtime dependency set is closed except for the explicit maintained
+client/server/optional MCP protocol exceptions in FW-03/FW-04.
 
 ### T-10 — A local unprivileged user on the writer influences a run
 
@@ -300,8 +299,10 @@ fixed privileged config/candidate/backup/lock paths are documented separately.
 CLI work drops to the service identity in a
 transient systemd unit and never runs as root (`CP-03`); it never reads
 `$CREDENTIALS_DIRECTORY`, offers token entry, or renders a credential — the
-deployment's encrypted API-only `hfcache.api` credential reaches transient clients
-only through systemd, decrypted by PID 1 (`CP-08`, upholding T-07). Hub authority
+fixed rootless launcher mounts named Podman API-only `hfcache.api` as a
+protected file inside the finite client (`CP-08`, upholding T-07). Native systemd
+credential delivery remains a separate supported profile; the shipped plugin
+has no host ImportCredential path. Hub authority
 stays on the daemon; no browser/environment/argument bearer is introduced;
 the archive is
 reached only through CLI envelopes plus one read-only run-report read as the
@@ -327,12 +328,12 @@ shell, which is this deployment's existing posture, not a new one.
 **Capability.** A caller presents a malformed, leaked or wrong-interface bearer,
 or a changed configuration redirects a long-lived server's authority.
 
-**Implemented controls (API-005).** Strict separate server configuration keeps
+**Implemented controls.** Strict separate server configuration keeps
 transport/auth settings immutable until restart. Fresh archive-policy snapshots
 retain the startup root/UUID and fail a changed authority closed. Required REST
 writer and optional reader/MCP sources use only explicit protected files or named
 systemd credentials; an unconfigured optional class grants nobody access. Every
-active source must load. MCP-001 ignores the MCP source while disabled; enabled
+active source must load. optional MCP transport ignores the MCP source while disabled; enabled
 MCP requires it and the optional package. Descriptor-pinned no-follow reads validate inode
 type, owner, mode, group access, single hardlink, bounded content and stable
 metadata. The API token grammar rejects Hub-style `hf_` values. Exact opaque
@@ -346,7 +347,7 @@ REST authentication failures use sanitized `HFAPI001`/401 plus a Bearer challeng
 capability denial is `HFAPI002`/403. Unsafe/malformed/racing credential sources
 and duplicate class values fail startup with `HFAPI003`/`HFAPI004`. The reusable
 FastAPI bearer adapter calls the application-owned verifier; extraction alone
-does not authenticate. API-006's outer boundary now authenticates metadata routes,
+does not authenticate. metadata lifecycle's outer boundary now authenticates metadata routes,
 unknown paths/methods, health, schema and optional docs before routing/body
 validation. It rejects malformed Host/duplicate Origin, bounds headers/query/
 body/normal and streamed responses, disables slash redirects and raw framework
@@ -354,18 +355,19 @@ request logging, and returns sanitized typed problems with no-store/nosniff/fram
 headers. Explicit trusted TLS proxy rules and one Unix/TCP lifespan are tested
 on disposable sockets. Shared no-follow reader/work budgets cover legacy local
 query paths too; unsafe derived catalogs retain unknown confidence and never
-grant repair authority. API-008 supplies the execution/protocol boundary; API-014
+grant repair authority. bounded runner and private verifier supplies the execution/protocol boundary; scheduled observation
 packages service hardening while installed enforcement remains operator
-acceptance. No production listener or rollout is asserted. See
+acceptance. Recorded installed 0.2.1 peer connectivity has narrower scope than outstanding
+NAS/domain/other-host acceptance; see [deployment status](deployment-status.md). See
 [decision 112](adr/decision-112.md) and [server policy](server.md).
 
-**Control-state boundary (API-007).** Local receipts bind admission to a fixed
+**Control-state boundary.** Local receipts bind admission to a fixed
 credential-class principal and hashed idempotency key before acknowledgement or
 execution. Store no raw key, bearer, token digest/path or candidate request body.
 The key digest is private comparison state and is omitted from HTTP metadata.
 All authenticated REST readers may observe operation metadata/events/results
 under the whole-archive boundary; key lookup searches only the caller's namespace.
-The separate API-014 scheduled observer stores its generated nonsecret key in
+The separate scheduled observation scheduled observer stores its generated nonsecret key in
 private local state for lookup-only recovery, never a bearer or token digest;
 that does not add raw keys to server receipts/HTTP metadata.
 Rotation preserves that class identity, without creating individual-user audit
@@ -377,10 +379,10 @@ key cannot be evicted for capacity; interrupted/ambiguous/nonterminal history
 cannot expire. Unsupported or unexplained state is preserved and fails admission
 closed. Restart does not replay queued/running receipts or reconstruct submissions
 from archive journals. Missing/expired history remains uncertain. See
-[decision 114](adr/decision-114.md), [schema](schemas.md#13-service-private-operation-control-state-api-007)
+[decision 114](adr/decision-114.md), [schema](schemas.md#13-service-private-operation-control-state)
 and [recovery guidance](recovery.md#preserve-four-kinds-of-authority).
 
-**Execution boundary (API-008).** One bounded lane and one absolute waiting
+**Execution boundary.** One bounded lane and one absolute waiting
 deadline limit heavy work; command services still own the common flock and
 compare fresh installed policy inside it before mutation. Strict bounded
 verification-only frames and kernel peer UID checks on a protected Unix socket
@@ -393,7 +395,7 @@ evidence and disables execution across restarts; it cannot erase the barrier by
 marking an unreachable worker interrupted. Reader metadata remains available.
 
 These process/protocol checks do not enforce OS egress restrictions or identify
-arbitrary unknown secrets. API-014 packages socket activation, service identities,
+arbitrary unknown secrets. scheduled observation packages socket activation, service identities,
 credential-source masking and `IPAddressDeny=any`; actual cgroup/credential/
 SELinux/NFS enforcement remains installed hardening acceptance. Custom development
 source paths need explicit masks/probes. Standalone development invocation cannot claim that
@@ -401,7 +403,7 @@ sandbox. No request starts a generic subprocess or invokes systemctl/sudo.
 See [decision 115](adr/decision-115.md) and
 [private verification trust](server.md#verification-wire-and-local-trust).
 
-**Typed command boundary (API-009).** Sync and every actual verification require
+**Typed command boundary.** Sync and every actual verification require
 writers before body reception. Mixed-route capability checks happen after bounded
 strict JSON parsing but before DTO validation: candidate presence requires a writer,
 and diagnostics permits a reader only for literal `read_only=true`. Missing mode
@@ -418,12 +420,12 @@ Installed validation resolves only that source or the installed systemd source,
 without a Hub request. Pure bounded candidate assessment compares root/UUID,
 endpoint, token mode, credential name and expected account; it never resolves a
 candidate credential, reads a candidate-selected path, contacts the Hub or installs
-policy. API-012 now exposes writer-only candidate content validation/planning,
+policy. API-backed reader CLI now exposes writer-only candidate content validation/planning,
 with fresh installed-authority checks before Hub work. See
 [decision 116](adr/decision-116.md), [body/role rules](api.md#command-requests)
-and [candidate authority](configuration.md#12-candidate-authority-validation-and-planning-api-012).
+and [candidate authority](configuration.md#12-candidate-authority-validation-and-planning).
 
-**Explicit maintenance boundary (API-010).** Reader previews and writer-only
+**Explicit maintenance boundary.** Reader previews and writer-only
 apply resources have separate URLs and strict scopes; all are keyed bounded jobs.
 No omitted mode authorizes mutation, no caller-supplied plan is executable and
 no preview grants a later capability. Under-lock fresh policy/scope/proof checks
@@ -443,13 +445,13 @@ the sentinel last. Startup, health, recovery and missing sentinel never initiali
 See [decision 117](adr/decision-117.md), [maintenance resources](api.md#maintenance-requests)
 and [server gate](server.md#command-admission-and-policy-authority).
 
-**Reader/client authority (API-011).** Separate strict client settings select one
+**Reader/client authority.** Separate strict client settings select one
 URL/socket endpoint and explicit protected API source; no archive configuration,
 Hub token, service UID or mount is required. Explicit endpoint overrides replace
 the configured group. Verified TLS/default or explicit CA trust, safe prefix URLs,
 no redirects/ambient proxies/netrc and exact same-operation link checks keep the
 bearer bound to the intended authority. Local Unix sockets still authenticate.
-API-016 distinguishes only trusted supported native Unix scope for unprefixed
+REST acceptance distinguishes only trusted supported native Unix scope for unprefixed
 REST: `client=None` plus `server=(absolute Unix socket pathname, None)`.
 Peer absence alone may be a socket error and cannot bypass prefix/proxy-TLS;
 missing/malformed local evidence fails closed. TCP keeps configured public
@@ -465,12 +467,12 @@ local archive fallback, daemon startup or cancellation of accepted work follows.
 Old operation results retain admitted UUID/fingerprint and exact domain IDs/exit.
 The optional installed client file is a declared source, not permission to discover
 Hub/API tokens elsewhere. Global CLI options are stored now; operational migration
-is completed for reads/candidates by API-012 and operational CLI/observation by
-API-013.
+is completed for reads/candidates by API-backed reader CLI and operational CLI/observation by
+CLI operation observation.
 See [decision 118](adr/decision-118.md) and
 [client setup/troubleshooting](api-client.md).
 
-**Reader/candidate integration (API-012).** Migrated reads report writer truth
+**Reader/candidate integration.** Migrated reads report writer truth
 without client archive TOML/mount/service identity/Hub credentials or local fallback.
 Exact server Envelope IDs/times/exit are retained; complete finite page aggregation
 and current-publication joins refuse inconsistent evidence. Remote inspection
@@ -488,10 +490,10 @@ the credential name excluded from policy fingerprints. Candidate policy controls
 preview intent only; installed limits/admitted fingerprint remain authoritative.
 Exact candidate text binds a key; absent fields preserve old installed-plan digests
 and explicit null refuses. REST cannot install policy/backups or give browsers
-bearers. See [decision 119](adr/decision-119.md), [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012)
+bearers. See [decision 119](adr/decision-119.md), [candidate contract](configuration.md#12-candidate-authority-validation-and-planning)
 and [CLI migration](api-client.md#cli-dispatch).
 
-**Operational CLI observation (API-013).** No operational command imports or
+**Operational CLI observation.** No operational command imports or
 invokes a direct local mutation backend. Pure requests and typed HTTP retain
 server-owned credential/preflight/flock/recovery/private-verification authority.
 Validated nonsecret keys and accepted operation IDs are safety handles, emitted
@@ -500,7 +502,8 @@ events/status/result reads share one finite deadline. Observer interruption reta
 handles and says accepted work may continue, never cancellation/new-key replay.
 Retained-key validated 5xx failures carry the same uncertainty warning, and event
 rendering escapes nonprintable/control text to preserve one plain stderr line.
-Default exact terminal Envelopes and explicit identified detach cannot be confused.
+JSON exact terminal Envelopes and separately identified detach cannot be confused;
+human rendering summarizes classified terminal data.
 No-confirm init is inspection/refusal only, not a privileged submission. See
 [decision 120](adr/decision-120.md) and [CLI operations](cli.md#operations).
 
@@ -526,7 +529,7 @@ No-confirm init is inspection/refusal only, not a privileged submission. See
 | 16 | Unknown state reported, never deleted or guessed | `AD-16`, `TX-06` |
 | 17 | Fail-closed preflight before any download | Exit `20` |
 | 18 | Management UI confined to operator surfaces, with the limits structural | `docs/cockpit.md` `CP-01`–`CP-14` |
-| 19 | Fixed capabilities, restart-only auth and bounded typed command/metadata routes | `T-14`, `docs/server.md`, API-005/006/009 |
+| 19 | Fixed capabilities, restart-only auth and bounded typed command/metadata routes | `T-14`, `docs/server.md`, server registry, metadata boundary and typed command routes |
 
 ## 5. systemd hardening posture
 
@@ -557,12 +560,12 @@ The verification unit additionally runs with `HF_HUB_OFFLINE=1` and
 `IPAddressDeny=any` (decision 60). `PrivateNetwork=true` remains an
 operator-supervised reconnect evaluation, not an enabled protection.
 
-**DOC-009 reconciliation (2026-10-17, decision 106).** These statements
+**documentation maintenance reconciliation (2026-10-17, decision 106).** These statements
 reflect the existing deployed-unit decisions 60, 61, and 66. The authorization
-statements in §§6–7 also reflect `HUB-010` / `AD-21`; no runtime control or
+statements in §§6–7 also reflect `Hub access` / `AD-21`; no runtime control or
 authorization policy changes here.
 
-**API-014 role amendment (2026-10-18, [decision 121](adr/decision-121.md)).**
+**scheduled observation role amendment (2026-10-18, [decision 121](adr/decision-121.md)).**
 The setgid-compatible archive policy now applies to actual API/private-verifier
 executors; AF_UNIX scheduled clients mask archive access and can safely enable
 `RestrictSUIDSGID=true`. Worker startup is offline and imports no credentials;
@@ -577,7 +580,7 @@ SELinux remains enforcing throughout development and acceptance testing.
 Denials are resolved by fixing ownership, labels, or unit restrictions first, and
 only then by a narrowly scoped local policy module with documented source, build,
 installation, verification, and removal steps. `setenforce 0`, permissive domains,
-and blanket allow rules are not production solutions (`docs/agents/history/plan.md` §23).
+and blanket allow rules are not production solutions (the architecture contract).
 
 ## 6. Explicitly out of scope
 
@@ -604,10 +607,10 @@ not address.
 | Restricted scope is explicit | Hub tests reject private/gated metadata under `disabled` and `optional`, accept it only under `required` with a credential, and reject missing required credentials; the operator validates the shared consumer boundary (`T-08`) |
 | Secrets never surface | Redaction tests over log lines, run reports, manifests, journals, and error messages at maximum verbosity |
 | Fail-closed preflight | Unmounted, read-only, wrong-sentinel, and below-reserve archives each exit `20` with no Hub request issued |
-| Consumer cannot write | Server-side create, modify, rename, and delete attempts from a consumer client all fail (operator-run; `NAS-004`/`NAS-005`) |
+| Consumer cannot write | Server-side create, modify, rename, and delete attempts from a consumer client all fail (operator-run; `storage administration`/`storage administration`) |
 | Hardening does not break operation | `systemd-analyze verify` clean, a full sync under enforcing SELinux with no unexplained AVC denial |
 
-## Optional MCP transport boundary (MCP-001)
+## Optional MCP transport boundary
 
 [Decision 124](adr/decision-124.md) adds only an explicitly enabled authenticated
 Streamable HTTP mount after committed REST acceptance. Production verification
@@ -621,15 +624,15 @@ permitted. Disabled mode imports/resolves neither package nor MCP credential.
 
 Transport checks retain strict Host/Origin/TLS/proxy/public prefix, corroborated
 native Unix identity and finite resource limits. MCP startup composes with REST
-ownership and fails closed if its package/credential is unavailable. No tool,
-resource, prompt, arbitrary dispatcher, OAuth login/discovery or credential
-issuance is supplied in this package. Pre-provisioned bearer clients must protect
+ownership and fails closed if its package/credential is unavailable. Exactly
+nine curated metadata tools are exposed; no resource, prompt, arbitrary dispatcher,
+OAuth login/discovery or credential issuance is supplied. Pre-provisioned bearer clients must protect
 and send their credential over the configured verified transport; compatibility
 with OAuth-only clients is not promised. Exact wire/session and streaming
-acceptance belongs to [the MCP contract](mcp.md) and implementing task evidence.
+behavior is specified by [the MCP contract](mcp.md).
 No host hardening or production installation is inferred from those tests.
 
-MCP-001 selects stateless HTTP, without a retained legacy session/resumption
+The transport uses stateless HTTP, without a retained legacy session/resumption
 store. Canonical `/mcp/` is separate from REST's strict slash behavior; only the
 specific authenticated `/mcp` spelling may redirect using a safe relative
 Location after transport/body/query validation, never caller input reflection.
@@ -643,7 +646,7 @@ are buffered/sanitized and capped before headers, with no truncated-success or
 retained SSE/session queue. Registered numeric RPC identities that cannot be
 safely reflected must refuse rather than leak or silently change identity.
 
-## Curated MCP read capability (MCP-002)
+## Curated MCP read capability
 
 [Decision 125](adr/decision-125.md) adds exactly nine typed metadata tools, with
 no resources/prompts, automatic OpenAPI conversion, generic command/path/URL
@@ -663,12 +666,12 @@ projections never grant complete-manifest authority or promote unknown confidenc
 exact SHA/publication requests cannot fall back to newer current content. MCP
 readers retain AD-21's whole-archive authorization, without per-repository ACLs.
 
-## Mounted MCP security proof (MCP-003)
+## Mounted MCP security proof
 
 The [threat/control/test map](mcp.md#read-only-boundary)
 connects each acceptance claim to concrete mounted tests. It applies existing
 T-01/02/07/08/12 and INV-002/003/007/010/016; it adds no tool, role or command
-capability. The [task record](agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
+capability. The [recorded deployment scope](deployment-status.md)
 owns actual runs and separates repository proof from deployment assumptions.
 
 | Security boundary | Required proof |
@@ -701,11 +704,12 @@ budgets limit a request's resources, not every denial-of-service strategy by an
 authorized client. Locked dependencies and the unprivileged sandbox reduce but
 do not eliminate parser/SDK or host compromise risk. Actual TLS/proxy/socket/
 credential delivery and rotation, worker egress/source masking, cgroup/SELinux/
-NFS/drain/rollback and browser acceptance remain operator holds 16–18. No local
-integration result silently closes those holds or authorizes production changes.
+NFS/workload/other-host/browser acceptance remain separately scoped by
+[deployment status](deployment-status.md). Local integration results never
+authorize production changes or certify unrelated controls.
 
 
-## Protected MCP client acceptance (MCP-004)
+## Protected MCP client acceptance
 
 The [example/setup](mcp.md#connect) uses a protected
 operator-provisioned MCP-reader file, explicit validated HTTP transport, verified
@@ -720,11 +724,12 @@ source in a new context. Separate REST sources and whole-archive authorization
 remain unchanged. [Disabled/enabled/rotation/packaging tests](../tests/unit/test_mcp_acceptance.py)
 cover application behavior and unchanged credential-free/no-IP worker/timer
 policy, not actual installed enforcement. Client/socket tests use owned disposable
-fixtures; operator holds 16–18 still gate TLS/firewall/socket/source delivery,
-worker egress/custom masks, cgroup/SELinux/NFS and real drain/rollback acceptance.
+fixtures. TLS/firewall/socket/source delivery, worker egress/custom masks,
+cgroup/SELinux/NFS and real drain/rollback each require applicable installed
+evidence; see [deployment status](deployment-status.md).
 
 
-## Rootless runtime scope (OPS-015)
+## Rootless runtime scope
 
 [Decision 127](adr/decision-127.md) changes the selected local deployment, not
 whole-archive roles or FS/TX/domain authority. Explicit user-manager rootless
@@ -746,12 +751,12 @@ on another host in this scope.
 
 [Decision 126](adr/decision-126.md) continues to forbid NAS content/metadata writes
 and other-host changes. Every NAS bind is read-only without chown/relabel/copyup;
-OPS-015 fixtures bind no NAS at all. Source masks, read-only roots and local state
+rootless runtime fixtures bind no NAS at all. Source masks, read-only roots and local state
 are actual proof obligations, not claims that containers alone establish isolation.
 The fixed Cockpit client launcher retains admin/candidate/observation boundaries
 without a browser bearer, generic executable input or bare-host fallback.
 
-OPS-016 adds fixed root-protected host boot policy independently of current.
+host read-only guard adds fixed root-protected host boot policy independently of current.
 Its standard-library notify guard runs UID/GID 981, proves original local-lock
 ownership and host NFS-ro from /proc/1/mountinfo before READY, then retains its
 flock. This is not continuous monitoring. Strict sandbox self mountinfo cannot
@@ -760,9 +765,9 @@ control only. Application containers still get no host PID/proc authority.
 The bridge requires guard readiness and the user default target cannot start the
 app target. No generic paths/commands or app imports are added to the guard.
 
-## Confined private listener ownership (OPS-017)
+## Confined private listener ownership
 
-[Decision 128](adr/decision-128.md) corrects the planned rootless listener's
+[Decision 128](adr/decision-128.md) qualifies the rootless worker-created listener’s
 creation context rather than granting a new SELinux permission. Explicit direct
 PID1 --container-listener refuses inherited FDs above stderr, activation fields
 and known credential environment before resources/shared imports. The worker
@@ -780,10 +785,10 @@ Network=none, native AF_UNIX-only seccomp, no secrets/source-store masks, read-o
 root, empty caps, NNP, UID/cgroup limits and the shared archive lock remain.
 Actual worker-proxied READY follows listener/store/runtime initialization, not
 process launch. No allow module, label override/disable, `+` execution, host worker
-or network-enabled fallback is authorized. Actual production API-container peer
-access must close hold 22 in OPS-018; source tests and host probes cannot do so.
+or network-enabled fallback is authorized. Actual API-container peer access requires installed proof; source tests and
+host probes alone cannot establish it. Recorded 0.2.1 scope is described below.
 
-## UBI 10 image-input boundary (OPS-019)
+## UBI 10 image-input boundary
 
 [Decision 129](adr/decision-129.md) pins every service FROM stage to UBI 10 micro.
 Minimal supplies only Red Hat CA PEM, uv only a build executable and Caddy only
@@ -794,9 +799,9 @@ and tools: isolation claims rely on actual fixed authority/confinement, not tool
 absence. No secret-bearing fetch, runtime package/pull, SELinux allow/label or
 executor/drain shortcut is added. Repeat actual UBI proof before clean rollout.
 
-### Installed peer-control acceptance (OPS-018, 2026-10-18)
+### Installed peer-control acceptance (2026-10-18)
 
-[OPS-018](agents/plans/tasks/ops-018-container-worker-rollout.md) closes hold 22 with actual
+[Recorded deployment scope](deployment-status.md) includes actual
 installed API-container framed PROBE under Enforcing before/after drain/restart.
 No allow/process-label/seccomp/executor bypass is used;0.2.0 failure stays history.
 This accepts listener connectivity and inspected confinement, not live NAS

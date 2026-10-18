@@ -1,13 +1,12 @@
-# Decision 090: `cockpit/` carries LGPL-2.1-or-later beside the repository's MIT
+# `cockpit/` carries LGPL-2.1-or-later beside the repository's MIT
+
+- Decision identity: 090.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-30.
-- Original work package: `CPT-002`.
-- Source: [decision 90 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -31,7 +30,7 @@ does not relicense that subtree.
 
 The source entry first appears in
 [e0d1f2c](https://github.com/wtcross/hfcache/commit/e0d1f2cedc5572f53b97d086cccbb4ec95872b03)
-(2026-07-30, `CPT-002: scaffold cockpit/ from the starter kit under pnpm`). The
+(2026-07-30, `Cockpit integration: scaffold cockpit/ from the starter kit under pnpm`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

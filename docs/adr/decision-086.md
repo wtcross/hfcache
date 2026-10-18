@@ -1,13 +1,12 @@
-# Decision 086: Guest memory is bounded in the units, not trusted to the host
+# Guest memory is bounded in the units, not trusted to the host
+
+- Decision identity: 086.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-29.
-- Original work package: `SYS-003`.
-- Source: [decision 86 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -36,8 +35,8 @@ bound covers both it and the xet chunk cache without a dependency on
 library internals; and fixing it host-side only, because the units
 should be safe guests on any hypervisor, not just a correctly configured
 one. The host retains its half — returning reclaimed pages or not
-overcommitting — as handoff item 12. This adds a resource control and
-weakens no §22.5 hardening; `check-hardening.sh` passed 23/23 on both
+overcommitting — as a separate operator prerequisite. This adds a resource control and
+weakens no installed service hardening; `check-hardening.sh` passed 23/23 on both
 units after the change.
 
 ## Later history and current interpretation
@@ -50,9 +49,8 @@ model with one bounded download producer.
 
 The source entry first appears in
 [2a2ee59](https://github.com/wtcross/hfcache/commit/2a2ee59df0621b9de0bf58fc75e07ea3a5d71e13)
-(2026-07-29, `SYS-003: bound sync and verify page cache; absolute dirty-page
-limits`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-29, `host integration: bound sync and verify page cache; absolute dirty-page
+limits`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/security.md](../security.md),
 [docs/deployment-centos-stream-10.md](../deployment-centos-stream-10.md).

@@ -1,13 +1,12 @@
-# Decision 011: A credential file is validated, never sanitized
+# A credential file is validated, never sanitized
+
+- Decision identity: 011.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-24.
-- Original work package: `CFG-002`.
-- Source: [decision 11 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -25,7 +24,7 @@ large file into memory before its contents are found unusable. Recorded as
 
 The source entry first appears in
 [8e407b6](https://github.com/wtcross/hfcache/commit/8e407b60271e7365d1ca18a554d4afcf91086b83)
-(2026-07-24, `CFG-002: implement the token-source abstraction`). The decision
+(2026-07-24, `configuration validation: implement the token-source abstraction`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 

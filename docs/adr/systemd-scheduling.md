@@ -3,12 +3,7 @@
 - Status: accepted; an existing locked plan decision without an AD number;
   provenance clarified by [111](decision-111.md), API client lifecycle amended by
   [121](decision-121.md).
-- Original record: 2026-07-24, `87323c2` (initial plan, §4 and §22).
-- ADR backfill: 2026-10-17.
-- Authority: [plan §22](../agents/history/plan.md#22-systemd-design),
-  [operations §9](../operations.md), and
-  [Cockpit schedule contract](../cockpit.md#7-sync-schedule) remain
-  normative. Maintain this record under [the ADR policy](README.md).
+- Original record: 2026-07-24, `87323c2` (original architectural decision).
 
 ## Context
 
@@ -31,7 +26,7 @@ verification on the first Wednesday of January, April, July, and October
 at 04:00. Use `Persistent=true`, documented random delays, and calendar
 validation with `systemd-analyze calendar`. Operator schedule changes use
 drop-ins rather than editing shipped units. Cockpit pauses or resumes only
-the sync timer, because stopping the target also affects the archive mount.
+The sync timer, because stopping the target also affects the archive mount.
 
 ## Rationale and alternatives
 
@@ -57,7 +52,7 @@ shared application lock (AD-17). The verification timer still requires
 operator coordination before activation. Judge `systemd-analyze verify`
 by its output, since an ordering diagnostic can accompany exit zero.
 
-**API-004 clarification (2026-10-17, [decision 111](decision-111.md)).**
+**scoped execution context clarification (2026-10-17, [decision 111](decision-111.md)).**
 The durable `invocation_mode` retains `systemd`/`interactive` and describes the
 executing host process via `INVOCATION_ID`. In a systemd-hosted daemon it cannot
 prove whether a timer, manual CLI or Cockpit client submitted work. Future
@@ -66,7 +61,7 @@ scheduler, calendar change, unit installation or timer activation is introduced.
 
 ## History and evidence
 
-**API-014 amendment (2026-10-18, [decision 121](decision-121.md)).**
+**scheduled observation amendment (2026-10-18, [decision 121](decision-121.md)).**
 The named sync/verify oneshots now observe fixed API jobs through AF_UNIX with a
 distinct API credential. Keep calendars, disabled verify timer, OnFailure and
 target/mount behavior. A private schema-1 pending handle persists the key before
@@ -80,11 +75,10 @@ runtime locks must survive unit stops. Repository fixtures do not establish real
 systemd/cgroup/SELinux/NFS acceptance; those remain deployment holds.
 
 `87323c2` (2026-07-24) records scheduling authority and initial calendars.
-`2fd432a` (`SYS-001`, 2026-07-26),
+`2fd432a` (2026-07-26),
 [decision 58](decision-058.md), installs and validates all seven units
-and records disabled-timer and mount-ordering corrections. `ea8c02c`
-(`DOC-008`, 2026-07-28) documents long-running timer semantics.
-`1a0be5d` (`CPT-009`, 2026-07-30) implements the Cockpit drop-in editor.
+and records disabled-timer and mount-ordering corrections. `ea8c02c` (2026-07-28) documents long-running timer semantics.
+`1a0be5d` (2026-07-30) implements the Cockpit drop-in editor.
 
 - [Shipped sync timer](../../packaging/systemd/hfcache-sync.timer).
 - [Shipped verification timer](../../packaging/systemd/hfcache-verify.timer).

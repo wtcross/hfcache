@@ -3,13 +3,11 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/agents/history/plan.md` §6.3, §10, §15.2, §16, §18 |
-| Work package | `ARC-004` |
 | Schema version | All formats begin at `1` |
 
-Every durable artifact `hfcache` writes is versioned JSON. Archive formats live
-on the archive filesystem; API-007's independent control-state format (§13) and
-API-014's scheduled observation handle (§14) live in private local storage.
+Durable archive and operation evidence is versioned JSON. Policy and rendered
+TOML are distinct configuration domains. Archive formats live
+on the archive filesystem; independent operation control state (§13) and scheduled observation handles (§14) live in private local storage.
 There is no database (`AD-12`). This document defines each format
 precisely enough that a reader with no access to the source can validate an
 archive, and that a future version can be recognised and refused rather than
@@ -17,7 +15,9 @@ misread.
 
 ## 1. Conventions
 
-These apply to every file in this document.
+These are the archive-model serialization conventions; independent control,
+handle and deployment families explicitly identify their own validators and any
+family-specific representation below.
 
 | Rule | Requirement |
 | --- | --- |
@@ -34,7 +34,9 @@ These apply to every file in this document.
 
 ### 1.1 Version compatibility
 
-Every file carries `schema_version` as its first meaningful field.
+Every file requires explicit version metadata. JSON key order does not make
+`schema_version` the first serialized key: keys remain sorted. A mandatory
+version field is distinct from optional model defaults.
 
 - A file whose `schema_version` is **less** than the running version is read
   through an explicit migration path, or the command stops and names the file.
@@ -48,12 +50,10 @@ Every file carries `schema_version` as its first meaningful field.
   rewrite. Preservation does not authorize recovery or deletion when that
   command requires supported, unambiguous evidence.
 
-**DOC-009 clarification (2026-10-17, decision 106).** The unknown-key rule
-now states the journal-only preservation exception already decided at
-`CFG-004` (decision 20) and implemented by `transactions.read_journal` /
-`JournalFile.dump`. Strict models and durable formats are unchanged.
+The journal-only preservation rule is enforced by `transactions.read_journal`
+and `JournalFile.dump` (decision 20); it does not widen strict model authority.
 
-MCP-002's `MetadataRead` and paged manifest/report projections are transport
+MCP `MetadataRead` and paged manifest/report projections are transport
 objects, not durable formats or a schema widening. Artifact projections are
 explicitly marked `projection=true` and omit collections from original headers. Header totals
 and report provenance still describe complete validated source evidence. Reassemble
@@ -61,6 +61,10 @@ all required pages/collections and validate before treating them as the original
 manifest/report; never feed a partial header/page to a durable model or consumer
 verification as complete. Exact identity/locator bases remain unchanged. See
 [MCP output/pages](mcp.md#metadata-output-and-pages), [decision 125](adr/decision-125.md).
+
+Durable schema migrations must be backward-aware. They must never rewrite all
+manifests without both a backup and an explicit migration command. Ordinary
+startup, reads and recovery do not authorize such a migration.
 
 ## 2. Archive sentinel — `.hfcache-root`
 
@@ -490,7 +494,7 @@ or reporting command.
 host process has systemd's `INVOCATION_ID`. It is not proof that a timer, rather
 than a manual client, submitted work. A systemd-hosted daemon retains `systemd`
 for its domain reports; authenticated submitter and request/operation relationships
-belong to the later API receipt metadata, not a new run-report enum or field
+belong to separate API receipt metadata, not a new run-report enum or field
 ([decision 111](adr/decision-111.md)). No durable schema changes here.
 
 `outcome` is `success`,
@@ -575,7 +579,7 @@ reference that would not parse: such a reference names no publication instance,
 so there is none to record, and naming whichever instance the filesystem happens
 to hold would assert precisely what the unreadable reference failed to say.
 `finding.commit_sha` is `null` only for the narrower case of a `current.json`
-that would not parse (`VER-009`): a per-SHA reference carries its SHA in its
+that would not parse: a per-SHA reference carries its SHA in its
 filename, so even unreadable it still names a revision, but `current.json` names
 nothing at all. Such a finding carries `commit_sha: null`,
 `publication_id: null`, and no `path`, and the model refuses a null `commit_sha`
@@ -635,7 +639,7 @@ A plan is valid only if `selected` is the lowest `publication_generation` in
 `storage.maximum_revisions`. A plan failing any of these is refused, and all
 revisions are retained.
 
-**RET-010 amendment (2026-09-14, decision 102).** The schema-version-1 reason
+**retention amendment (2026-09-14, decision 102).** The schema-version-1 reason
 `sixth_unique_revision_published` is the legacy name for retention beyond the
 configured limit, including the default of three and an explicit reduction from
 five. It is preserved for existing readers; it does not assert that six
@@ -644,7 +648,7 @@ revisions were present. `retained` and `retained_after` record the actual counts
 `unique_bytes_released_estimate` is **logical** and excludes bytes still
 hardlinked by another retained revision. It is explicitly an estimate of logical
 release: ZFS snapshots may continue to reference the blocks, so physical pool
-space may not change at all (`docs/agents/history/plan.md` §15.3).
+space may not change at all (the architecture contract).
 
 ### 8.1 Repository purge plan
 
@@ -791,11 +795,21 @@ changes nothing (`AD-16`).
 
 ## 11. Validation summary
 
-Every schema in this document is implemented as a versioned Pydantic model with
-`extra="forbid"`, and every writer serializes through one shared deterministic
-JSON function so the conventions in §1 cannot drift per call site. The unit suite
-holds a golden fixture for each format; a serialization change that alters bytes
-without a `schema_version` bump fails the suite.
+Archive/report models use strict versioned Pydantic validation and the shared
+deterministic serializer. Operation receipts/events/result references, scheduled
+handles and runtime/release records have independent strict validators and version
+checks; runtime/release records are not all VersionedModel subclasses. The
+journal-only unknown-top-level-field preservation exception remains explicit.
+Golden fixtures detect changed bytes; they do not prove old-reader compatibility.
+A shape or validator change requires a deliberate compatibility assessment even
+when its version remains 1.
+
+Archive JSON/layout, archive TOML, server/client TOML, HTTP ReadResponse/Envelope,
+MCP wire negotiation, MCP metadata projections, API receipt state, scheduled
+handles and runtime/release manifests evolve independently. Equal version numbers
+do not equate their schemas. Preserve receipts/handles across rollback; absent
+old readers cannot prove nonexecution or permit replay. Partial MCP projections
+must be fully reconstructed and validated before use as durable artifacts.
 
 ## 12. Recovery report
 
@@ -852,7 +866,7 @@ so two runs that did the same work produce the same bytes.
 resolve a state that two valid executions could both have produced
 (`docs/architecture.md` §7.9); the run exits `20` and changes nothing.
 
-## 13. Service-private operation control state (API-007)
+## 13. Service-private operation control state
 
 This is an independent schema-version-1 control-state family under the configured
 local API state directory, default `/var/lib/hfcache/api/`. It is never stored in
@@ -942,13 +956,11 @@ receipt is observation authority, not an executable state-machine graph.
 Known-version models reject unknown fields. Unknown-version, malformed, unsafe
 and unexplained records are preserved and block new admission; healthy records
 can still be observed by validated ID. In-memory indexes are derived only from
-receipts, never from archive journals. Restart does not make an existing queued/running record runnable. API-007
-startup opens the store without classification or replay; `interrupt_unfinished()`
-is an explicit classification primitive. API-008 must first reconcile an exact
-surviving worker and durable outcome, then classify unresolved nonterminal
-records interrupted. A retained `running` label alone is not proof of liveness.
+receipts, never from archive journals. Restart does not make an existing queued/running record runnable. Store opening itself performs no replay/classification. The runner first
+reconciles exact surviving verifier state and durable outcome, then explicitly
+classifies unresolved nonterminal records interrupted. A retained `running` label alone is not proof of liveness.
 
-**API-008 execution amendment (2026-10-17, decision 115).** The runner now owns
+**bounded runner and private verifier execution amendment (2026-10-17, decision 115).** The runner now owns
 reconcile-before-interruption without replay. Its queue deadline and callable
 work remain in memory; no executable request or restart queue is added to this
 schema. The separate verifier uses the same receipt/event/reference family under
@@ -973,16 +985,11 @@ byte budgets refuse admission; history loss is uncertainty, not nonexecution.
 Compatibility is independent of archive format compatibility: a binary predating
 this family has no operation-history reader and must not be used to decide a
 lost submission's outcome. Preserve the state directory through rollback and
-consult it with a compatible server before retrying. The throwaway API-007 drill
-installed actual predecessor `a856397`/`0.1.10` and tagged `v0.1.3` wheels offline.
-Both lacked the operation module/CLI command (exit `2`) and preserved all three
-synthetic state files byte-for-byte without creating an archive. This is absent
-reader support, not proof of nonexecution or a successful old-format read.
-No production installation occurred. The [task](agents/plans/tasks/api-007-operation-receipts-and-idempotency.md)
-records the command/evidence; [rollback §14](deployment-centos-stream-10.md#rollback-compatibility)
-records the observed rule. See [decision 114](adr/decision-114.md).
+consult it with a compatible server before retrying. Absent predecessor commands/readers are not successful old-format reads or proof
+of nonexecution. See [rollback](deployment-centos-stream-10.md#rollback-compatibility)
+and [receipt rationale](adr/decision-114.md).
 
-## 14. Scheduled client observation handle (API-014)
+## 14. Scheduled client observation handle
 
 This private local format is independent of archive schemas, API receipts and
 client TOML. It preserves observation across scheduled-client restarts, never
@@ -1033,18 +1040,11 @@ on throwaway handles; unsupported old behavior never proves nonexecution.
 Golden evidence: [scheduled-observation.json](../tests/fixtures/schemas/private/scheduled-observation.json)
 and [private handle tests](../tests/unit/test_scheduled_client.py). The format's
 version is independent of archive `SCHEMA_VERSION` / `VersionedModel`.
-The actual API-014 drill built/installed predecessor `a01875c` / 0.1.10 on
-CPython 3.14.6 with locked offline dependencies. Its module invocation exited 1
-for both schema 1 and future 2 because `hfcache.scheduled_client` did not exist;
-both pending files stayed byte-identical. Current `ObservationFile` read schema 1,
-and current module invocation refused future 2 at HFAPI014 / exit 20 without
-changing bytes. This proves absence of old reader support and current refusal,
-not old-format acceptance or nonexecution. No archive operation or production
-installation occurred; the [task](agents/plans/tasks/api-014-systemd-and-deployment-integration.md)
-records commands/results and rollback rules.
+Older releases without scheduled observer support cannot resolve retained handles.
+Current readers accept supported schema 1 and refuse future versions without
+changing their bytes; retain compatible observation before deliberate retry.
 
-
-## 15. Rootless runtime deployment profile (OPS-015)
+## 15. Rootless runtime deployment profile
 
 The selected release's rendered/runtime.json is independent schema 1, separate
 from archive JSON, API receipts and scheduled observation state. The helper pins
@@ -1060,11 +1060,11 @@ ownership, no group/other writes, a bounded single-link regular no-follow
 descriptor, duplicate-free JSON and stable metadata. Caller/runtime-directory
 checks fail closed. Release artifact identity has a separate protected manifest;
 its settled format/compatibility evidence is recorded with the implementation.
-No archive durable format or operation replay rule changes. OPS-015 acceptance
-remains actual task evidence, not a deployed profile assertion.
+No archive durable format or operation replay rule changes. Installed acceptance
+is separately scoped by [deployment status](deployment-status.md).
 
 
-## 16. Rootless release manifest and artifact index (OPS-015)
+## 16. Rootless release manifest and artifact index
 
 These independent schema-1 deployment records are separate from runtime.json,
 archive JSON and service receipts. [Installer](../scripts/install-container-release.py)
@@ -1101,8 +1101,7 @@ index and recomputed rendering under the held original local flock, then atomica
 changes current and fsyncs its parent. If rename succeeded but directory fsync
 fails, exit 20 preserves the new selector and both trees; inspect before retry,
 without automatic rollback/cleanup or a false unchanged-state claim. A hash is
-artifact identity, not credentials or proof of domain outcome. Actual tests and compatibility evidence remain task-
-owned; no automatic cleanup, runtime activation, NAS write or archive schema
+artifact identity, not credentials or proof of domain outcome. No automatic cleanup, runtime activation, NAS write or archive schema
 migration follows from these formats.
 
 Fixed root-owned libexec/system/user-unit links must point through current to

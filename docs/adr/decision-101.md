@@ -1,13 +1,12 @@
-# Decision 101: Repository names are canonical, type-aware external links
+# Repository names are canonical, type-aware external links
+
+- Decision identity: 101.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-30.
-- Original work package: `CPT-014`.
-- Source: [decision 101 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -25,7 +24,7 @@ would misstate that scope.
 
 The source entry first appears in
 [f56cec2](https://github.com/wtcross/hfcache/commit/f56cec20d3a152821701b4bb1c1fc31870830535)
-(2026-08-30, `CPT-014: link repository rows to Hugging Face`). The decision text
+(2026-08-30, `Cockpit integration: link repository rows to Hugging Face`). The decision text
 above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 

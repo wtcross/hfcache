@@ -1,17 +1,16 @@
-# Decision 073: Verification enumerates the retained set, and `current.json` is not in it
+# Verification enumerates the retained set, and `current.json` is not in it
+
+- Decision identity: 073.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `VER-008`.
-- Source: [decision 73 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
-Plan §16.2 step 3 says the quarterly job "validates
+The verification contract says the quarterly job "validates
 refs, manifests, and publication paths", and `docs/schemas.md` §4.2 states an
 invariant in plain words: `current.json` always names a SHA that also has a
 `refs/revisions/<sha>.json`, and both agree on `publication_id`. Nothing
@@ -61,7 +60,7 @@ durable.
 
 The source entry first appears in
 [a3e991a](https://github.com/wtcross/hfcache/commit/a3e991a8affdd07c4d39728a7b310d25e959a4bd)
-(2026-07-27, `VER-008: full verification never read refs/current.json`). The
+(2026-07-27, `verification: full verification never read refs/current.json`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

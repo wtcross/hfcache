@@ -37,7 +37,7 @@
 ## Contracts, invariants, and ADRs
 
 [Release policy](../../release.md), [rootless contract](../../../containers.md),
-[deployment](../../../deployment-centos-stream-10.md), [schemas 15/16](../../../schemas.md#15-rootless-runtime-deployment-profile-ops-015),
+[deployment](../../../deployment-centos-stream-10.md), [schemas 15/16](../../../schemas.md#15-rootless-runtime-deployment-profile),
 INV-005/010/011/014/015, decisions 65/75/79/121/126/127. Preserve workflow's one
 work package per commit, exact source/artifact identity and all retained state.
 

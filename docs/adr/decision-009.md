@@ -1,13 +1,12 @@
-# Decision 009: `--token-file` with `token_mode = "disabled"` is `HFARG002`, not a silent choice
+# `--token-file` with `token_mode = "disabled"` is `HFARG002`, not a silent choice
+
+- Decision identity: 009.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-24.
-- Original work package: `CFG-002`.
-- Source: [decision 9 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -19,13 +18,13 @@ mode. Ignoring the flag is worse: the operator believes the run was
 authenticated and nothing says otherwise. So the combination is refused before
 any Hub request, consistent with `AD-11`'s rule that a mode is never silently
 downgraded. `docs/configuration.md` §7.2 and the `HFARG002` row in
-`docs/cli.md` §5.1 are updated in this commit.
+`docs/cli.md` §5.1 are updated.
 
 ## Provenance and governing evidence
 
 The source entry first appears in
 [8e407b6](https://github.com/wtcross/hfcache/commit/8e407b60271e7365d1ca18a554d4afcf91086b83)
-(2026-07-24, `CFG-002: implement the token-source abstraction`). The decision
+(2026-07-24, `configuration validation: implement the token-source abstraction`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 

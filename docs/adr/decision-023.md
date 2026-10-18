@@ -1,13 +1,12 @@
-# Decision 023: A whole-table constraint is not reported alongside a bad field in the same table
+# A whole-table constraint is not reported alongside a bad field in the same table
+
+- Decision identity: 023.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `CFG-005`.
-- Source: [decision 23 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -26,7 +25,7 @@ silently.
 
 The source entry first appears in
 [9477861](https://github.com/wtcross/hfcache/commit/947786190912145451439f970bea478037896b07)
-(2026-07-25, `CFG-005: implement config validate`). The decision text above
+(2026-07-25, `configuration validation: implement config validate`). The decision text above
 preserves the complete reasoning in the current historical log, including its
 recorded alternatives and consequences.
 

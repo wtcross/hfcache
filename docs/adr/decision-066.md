@@ -1,17 +1,16 @@
-# Decision 066: A setgid directory on this mount is made by `chmod`, not by `mkdir`'s mode argument
+# A setgid directory on this mount is made by `chmod`, not by `mkdir`'s mode argument
+
+- Decision identity: 066.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
-- Original work package: `HARD-001`.
-- Source: [decision 66 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
-Not a deviation from a plan sentence —
+An operational observability gap —
 the plan never says *how* `0o2750` is achieved — but a durable fact about the
 archive's mode contract that two documents imply the opposite of, and that
 the standing guard on that contract was silently wrong about.
@@ -54,7 +53,7 @@ contract remains the reason for the unit exception.
 
 The source entry first appears in
 [a919c35](https://github.com/wtcross/hfcache/commit/a919c35e66aaebd67ee97963f16cf3e39f83d421)
-(2026-07-27, `HARD-001: make the setgid probe test the call the application
+(2026-07-27, `: make the setgid probe test the call the application
 makes`). The decision text above preserves the complete reasoning in the current
 historical log, including its recorded alternatives and consequences.
 

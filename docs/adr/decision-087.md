@@ -1,4 +1,6 @@
-# Decision 087: A Cockpit plugin in `cockpit/`, contracted by `docs/cockpit.md`, tracked as the `CPT` family
+# Keep the Cockpit plugin and its technical contract in the application repository
+
+- Decision identity: 087.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
@@ -7,9 +9,6 @@ Reader/candidate API integration is amended by [decision 119](decision-119.md).
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 - Original decision date: 2026-07-30.
-- Original work package: `CPT-001`.
-- Source: [decision 87 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -21,10 +20,9 @@ package in this repository under `cockpit/`, a client of the contracts
 that exist (the CLI's JSON envelope, the configuration schema, and the
 shipped units are its whole API), with a normative contract of its own
 and requirement IDs (`CP-01`–`CP-14`) the implementation and tests can
-cite; the family is tracked outside plan §28's phase set exactly as
-decision 80 did for `DOC`. **Rejected: a separate repository.** The UI
+cite. **Rejected: a separate repository.** The UI
 encodes runbook semantics — the `hfcache.target` unmount footgun, the
-verify-timer reservation, the §8 warning responses — and an encoding
+verify-timer reservation, the CLI warning responses — and an encoding
 that cannot change in the same commit as the contract it encodes will
 drift; that is the same argument that keeps docs and code in one tree.
 **Rejected: a plain no-build package** in the style of Cockpit's pinger
@@ -37,7 +35,7 @@ once, at build time only.
 
 The source entry first appears in
 [ebc112f](https://github.com/wtcross/hfcache/commit/ebc112f30995e70a1ad3c6d214ee53b803f43b7f)
-(2026-07-30, `CPT-001: Cockpit plugin contract and work-package plan`). The
+(2026-07-30, `Cockpit integration: Cockpit plugin contract and integration design`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
@@ -50,18 +48,18 @@ Implementation or shipped-artifact evidence:
 Relevant verification:
 [cockpit/test/command.test.ts](../../cockpit/test/command.test.ts).
 
-## 2026-10-18 candidate pipeline amendment (API-012)
+## 2026-10-18 candidate pipeline amendment
 
 The CLI's reader and candidate modes now use authenticated REST. CP-11 retains
 candidate → validation → preview → privileged atomic installation/backup. Pure
 candidate validity is separate from installed authority compatibility; only a
 compatible proposal can plan with installed credentials. REST grants no policy
-installation authority. This package supplies those CLI/API semantics; API-015
+installation authority. This design supplies those CLI/API semantics; Cockpit API integration
 still owns the shipped Cockpit caller and credential integration, without browser
 bearers. See [decision 119](decision-119.md) and [Cockpit contract](../cockpit.md).
 
 
-## 2026-10-18 Cockpit API integration amendment (API-015)
+## 2026-10-18 Cockpit API integration amendment
 
 The plugin remains a CLI/systemd client, now with fixed local API settings and
 API-only systemd `hfcache.api` authority. Strict bounded terminal Envelopes retain

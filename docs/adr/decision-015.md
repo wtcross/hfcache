@@ -1,13 +1,12 @@
-# Decision 015: Collision folding is deliberately stricter than any one filesystem
+# Collision folding is deliberately stricter than any one filesystem
+
+- Decision identity: 015.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `CFG-003`.
-- Source: [decision 15 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -26,7 +25,7 @@ confuse, and would refuse legitimate names for nothing.
 
 The source entry first appears in
 [b7e2686](https://github.com/wtcross/hfcache/commit/b7e268626b7e9c5248a00cb437b8d0a2982bfc34)
-(2026-07-25, `CFG-003: implement repository identity and safe path mapping`).
+(2026-07-25, `configuration validation: implement repository identity and safe path mapping`).
 The decision text above preserves the complete reasoning in the current
 historical log, including its recorded alternatives and consequences.
 

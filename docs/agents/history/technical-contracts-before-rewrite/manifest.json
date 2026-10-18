@@ -1,0 +1,938 @@
+[
+  {
+    "source": "docs/architecture.md",
+    "git": "b38d376",
+    "sha256": "b5e2bf4083922e6fcb67ee9625c5e57159a994c15ec1f9f476af5972bb7b9af3",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/architecture.md"
+  },
+  {
+    "source": "docs/invariants.md",
+    "git": "b38d376",
+    "sha256": "3925b76ed96372c374b7c43c82d3127b867d619a84039d8ec4b5ae496d25ed57",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/invariants.md"
+  },
+  {
+    "source": "docs/configuration.md",
+    "git": "b38d376",
+    "sha256": "7792aaf33087ca11071ed6125aab904ae26ff41951b106413e0680e8ce5bdea5",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/configuration.md"
+  },
+  {
+    "source": "docs/schemas.md",
+    "git": "b38d376",
+    "sha256": "5b4769c47d7fbb353b3e6008683be85f732291d994fd6a539d44cba840c189e1",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/schemas.md"
+  },
+  {
+    "source": "docs/security.md",
+    "git": "b38d376",
+    "sha256": "34f1c48af3c3d554629076f0f7f4e9acbb2c806ecaa14d4a6e6f36d898b0dadd",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/security.md"
+  },
+  {
+    "source": "docs/adr/ad-01.md",
+    "git": "b38d376",
+    "sha256": "d0be9300dc72242d64134d5f9084ef68c0c3315585f9ecd550b41e53eca197c9",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-01.md"
+  },
+  {
+    "source": "docs/adr/ad-02.md",
+    "git": "b38d376",
+    "sha256": "9dfdbdc33e8640e50b0812bb111de227f67541fc2b0227e75a8c80bec7ed2f7c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-02.md"
+  },
+  {
+    "source": "docs/adr/ad-03.md",
+    "git": "b38d376",
+    "sha256": "63f59a0fed03949b65951acf945e58ee19f3dc49862160607ea0a585ce1cd34d",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-03.md"
+  },
+  {
+    "source": "docs/adr/ad-04.md",
+    "git": "b38d376",
+    "sha256": "c1c318ad97cb9d6390513dea638079592b7c677501e8bbd4ee894b87fcac50e7",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-04.md"
+  },
+  {
+    "source": "docs/adr/ad-05.md",
+    "git": "b38d376",
+    "sha256": "2344a0213877233e94a17df252026698bf363f5a2ae3d59d3edc4195b2aa26f2",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-05.md"
+  },
+  {
+    "source": "docs/adr/ad-06.md",
+    "git": "b38d376",
+    "sha256": "7435f57c36102e9e8dfe6fa7bc51ef439e753e202243dda2d8232a77d2fb6008",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-06.md"
+  },
+  {
+    "source": "docs/adr/ad-07.md",
+    "git": "b38d376",
+    "sha256": "a8ce0ac2b0f364a292ab3c44ce3802b1becb3f618fa47cec6097cff3f89353d8",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-07.md"
+  },
+  {
+    "source": "docs/adr/ad-08.md",
+    "git": "b38d376",
+    "sha256": "2311cfc3e58f6c1cc9b1e54476c901a8d159315639787a3bc807963aa989db11",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-08.md"
+  },
+  {
+    "source": "docs/adr/ad-09.md",
+    "git": "b38d376",
+    "sha256": "c79cfe3651ce89c9e6870a1ab3850f7f547140a22b47fd66076345d9904fca94",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-09.md"
+  },
+  {
+    "source": "docs/adr/ad-10.md",
+    "git": "b38d376",
+    "sha256": "63e53073846a2f7cb1cf4a4b105d27dfd27760d513b3d840e54365d6f3880fb8",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-10.md"
+  },
+  {
+    "source": "docs/adr/README.md",
+    "git": "b38d376",
+    "sha256": "b56c9103473563f1727c257a844f3cd96627b6efa3e3e7adcea39b7365f014f9",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/README.md"
+  },
+  {
+    "source": "docs/adr/decision-001.md",
+    "git": "b38d376",
+    "sha256": "7a356b1045bb5e82514fe636564b5576a3765e80f51fa67cb74359fff189f7a3",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-001.md"
+  },
+  {
+    "source": "docs/adr/decision-002.md",
+    "git": "b38d376",
+    "sha256": "7410c50ba6c4dfbaefbce20850483eefcfe7c17e15824126a723b4f66249d817",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-002.md"
+  },
+  {
+    "source": "docs/adr/decision-003.md",
+    "git": "b38d376",
+    "sha256": "9744e351ba494f41756f991e28de017e758a337bd61c8a34fe5eb9162d460dc3",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-003.md"
+  },
+  {
+    "source": "docs/adr/decision-004.md",
+    "git": "b38d376",
+    "sha256": "fb97556fd83315686ec3f85e0c4616810b217c89ab590f4655964e868f05ed08",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-004.md"
+  },
+  {
+    "source": "docs/adr/decision-005.md",
+    "git": "b38d376",
+    "sha256": "62903ef96cc11b79d65b195db77f0dc5f26623c96cd9491d18cfdf145ff1da20",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-005.md"
+  },
+  {
+    "source": "docs/adr/decision-006.md",
+    "git": "b38d376",
+    "sha256": "23e9e03db6bdaf151917695c3f063e06aca51424e7f0b9f26ea9bda64696bc26",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-006.md"
+  },
+  {
+    "source": "docs/adr/decision-007.md",
+    "git": "b38d376",
+    "sha256": "04100e85e6ec53f37477e5499e9cab278d10c52d623079f64f22a89b7173e587",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-007.md"
+  },
+  {
+    "source": "docs/adr/decision-008.md",
+    "git": "b38d376",
+    "sha256": "50f44874f043f50bb9997be8ce56368ea4d6e04578c8dee66bc37aa8040afc05",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-008.md"
+  },
+  {
+    "source": "docs/adr/decision-009.md",
+    "git": "b38d376",
+    "sha256": "66243af7e863f558060c4bd20701366aa7e0fb0d29ebcb6efd2cb15574459a60",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-009.md"
+  },
+  {
+    "source": "docs/adr/decision-010.md",
+    "git": "b38d376",
+    "sha256": "b98580d70f006b6aa02881e8817f1176124441aab5bf1c9e477684794b8befb1",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-010.md"
+  },
+  {
+    "source": "docs/adr/decision-011.md",
+    "git": "b38d376",
+    "sha256": "b2a9f2cfc32e4a6c299f22cdf165ddf66e81f820eebbf36f24f81d8706922e77",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-011.md"
+  },
+  {
+    "source": "docs/adr/decision-012.md",
+    "git": "b38d376",
+    "sha256": "39e04dd0ab71a43d27599681d26f2328951904588dbfa13b6ae1e714c64a6a2f",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-012.md"
+  },
+  {
+    "source": "docs/adr/decision-013.md",
+    "git": "b38d376",
+    "sha256": "11a354f619c174026cebf6f67241b6eca353d91e29049a71b1f7a20e9ccff670",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-013.md"
+  },
+  {
+    "source": "docs/adr/decision-014.md",
+    "git": "b38d376",
+    "sha256": "884ff84f61fd0c2ef7bed3daa1a3ef23f5751bde450240643f9ec6786fe2cd79",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-014.md"
+  },
+  {
+    "source": "docs/adr/decision-015.md",
+    "git": "b38d376",
+    "sha256": "3019d22ea376ae755a48cd289794d31c51c735652c8c9b1fe4596abd7de2ff40",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-015.md"
+  },
+  {
+    "source": "docs/adr/decision-016.md",
+    "git": "b38d376",
+    "sha256": "ab6d84a01c6ce97e2a509cb281e0346fff0d417693e01452512b0800ca3d75b2",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-016.md"
+  },
+  {
+    "source": "docs/adr/decision-017.md",
+    "git": "b38d376",
+    "sha256": "f6867624e14b40eb5a9c680991cf7a45178fadbfa06fe1da40770a1aebfcdffd",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-017.md"
+  },
+  {
+    "source": "docs/adr/decision-018.md",
+    "git": "b38d376",
+    "sha256": "1dd2fbfad676ddf4bdcc4b914a558c4027a99dd4852e0ed87f729f76e9f85064",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-018.md"
+  },
+  {
+    "source": "docs/adr/decision-019.md",
+    "git": "b38d376",
+    "sha256": "064372a2aa97d1df32a43212678b5c0e2e96793db083d1403ba0b1db97fcd408",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-019.md"
+  },
+  {
+    "source": "docs/adr/decision-020.md",
+    "git": "b38d376",
+    "sha256": "0c1be32ff4fc09f7d8652e541afd9bd3629621685ea0e5f83602694818c070fe",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-020.md"
+  },
+  {
+    "source": "docs/adr/decision-021.md",
+    "git": "b38d376",
+    "sha256": "3e37fee20b83e4f4627c630081add9dfad905f4f2f54f11e16a95707029ca0bf",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-021.md"
+  },
+  {
+    "source": "docs/adr/decision-022.md",
+    "git": "b38d376",
+    "sha256": "84d78a507d29ce2431bbd86f6349efc4e6e862b5c920d9c4fbec8f83b52f8a1f",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-022.md"
+  },
+  {
+    "source": "docs/adr/decision-023.md",
+    "git": "b38d376",
+    "sha256": "9f62c7912243575207a6240f19aa31cb22b33a59acf3f6e36d75445fcd4f5fb3",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-023.md"
+  },
+  {
+    "source": "docs/adr/decision-024.md",
+    "git": "b38d376",
+    "sha256": "f6d1dcdbe5915eb385f121b67722de80655b03ae347fe416cabe11813884efab",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-024.md"
+  },
+  {
+    "source": "docs/adr/decision-025.md",
+    "git": "b38d376",
+    "sha256": "7faa49d894062d43523a0e2c2ec3f45f386be7cbda74e7df8b148d56ec6f1a78",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-025.md"
+  },
+  {
+    "source": "docs/adr/decision-026.md",
+    "git": "b38d376",
+    "sha256": "41c4b09e9b21514b2246a7a298ebf9f81cb7d48b264571e8ec347e9a44487148",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-026.md"
+  },
+  {
+    "source": "docs/adr/decision-027.md",
+    "git": "b38d376",
+    "sha256": "ae00b9c5afefe068a0b1dc0b69916e7da2c6c67b6ab04ca80059171405e39a49",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-027.md"
+  },
+  {
+    "source": "docs/adr/decision-028.md",
+    "git": "b38d376",
+    "sha256": "fd54b66c7b7247aead643542b5321c16e30b89edf44503296ed2da2f9f39e956",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-028.md"
+  },
+  {
+    "source": "docs/adr/decision-029.md",
+    "git": "b38d376",
+    "sha256": "ed0f6225c05ba506c80d50181b8555e74bf6543e43c5fb277ad10f717868a316",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-029.md"
+  },
+  {
+    "source": "docs/adr/decision-030.md",
+    "git": "b38d376",
+    "sha256": "63df8a500459efdbbab17fed0fc49289032463a354630ce07c38b120bb9e05aa",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-030.md"
+  },
+  {
+    "source": "docs/adr/decision-031.md",
+    "git": "b38d376",
+    "sha256": "181a94de54fab1cb666f6bd9214b6f9b29f92940c5a280eafd890f3c477b0bdf",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-031.md"
+  },
+  {
+    "source": "docs/adr/decision-032.md",
+    "git": "b38d376",
+    "sha256": "3af531c86e49ea36e9292eb369309a4119d014cd9610adea5881c473a56fccf9",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-032.md"
+  },
+  {
+    "source": "docs/adr/decision-033.md",
+    "git": "b38d376",
+    "sha256": "0c901b4df5fa6ed1bbeeb52e65eb4bf229b93f19a91fac653e86b45e6152b067",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-033.md"
+  },
+  {
+    "source": "docs/adr/decision-034.md",
+    "git": "b38d376",
+    "sha256": "ddf4cc446eaa34dbe6ac834da8bb91dcbb9505a22bec93d7ffabdf0f8872decd",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-034.md"
+  },
+  {
+    "source": "docs/adr/decision-035.md",
+    "git": "b38d376",
+    "sha256": "2cfcbb24044fe1f48c80e84009186a81839b1c9cb62924536b370615b2ed388c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-035.md"
+  },
+  {
+    "source": "docs/adr/decision-036.md",
+    "git": "b38d376",
+    "sha256": "b5a68f822d77acd16950c6582a1e68bc83777e8e82855ad22ceef93019b2abd0",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-036.md"
+  },
+  {
+    "source": "docs/adr/decision-037.md",
+    "git": "b38d376",
+    "sha256": "35cf3191d79723d389a3fed23aa9323f3520f0d7ed2e57dce9450b704eb950c0",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-037.md"
+  },
+  {
+    "source": "docs/adr/decision-038.md",
+    "git": "b38d376",
+    "sha256": "0ef99e2f6052377bb3f33110a0ed8e2a0f2ce47c90976cb6e656f83b153769e1",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-038.md"
+  },
+  {
+    "source": "docs/adr/decision-039.md",
+    "git": "b38d376",
+    "sha256": "09ed793555c028afe091f40d08bd9cb7fd64cb7eb47cc8e3c5e0996d43a1179a",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-039.md"
+  },
+  {
+    "source": "docs/adr/decision-040.md",
+    "git": "b38d376",
+    "sha256": "d0ec4be0a30d17ada548db9dbdbd3cd8d7a203c7ebe90460819e9dedf7161a62",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-040.md"
+  },
+  {
+    "source": "docs/adr/decision-041.md",
+    "git": "b38d376",
+    "sha256": "9f36b15c8e15b0a58112188013cbe7c9a25d7d5da4c483b0b8fb587ef6b3db7c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-041.md"
+  },
+  {
+    "source": "docs/adr/decision-042.md",
+    "git": "b38d376",
+    "sha256": "816b47e28523eac85486b6db41c6801d880429765e5585b1b861b4849fcacaef",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-042.md"
+  },
+  {
+    "source": "docs/adr/decision-043.md",
+    "git": "b38d376",
+    "sha256": "eec4820b005e5c46bbce0ce800bc11290e1e1466d8b0085c3f86e76e889ea97c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-043.md"
+  },
+  {
+    "source": "docs/adr/decision-044.md",
+    "git": "b38d376",
+    "sha256": "e7e42f8c6531b6bb371503f829a8c2c17a4ec10ca691dc49f6446ae20ab417a3",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-044.md"
+  },
+  {
+    "source": "docs/adr/decision-045.md",
+    "git": "b38d376",
+    "sha256": "4c8d3fab842f0c37f59022ab1343b8509d5d327f68e774ca643435b89061e11c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-045.md"
+  },
+  {
+    "source": "docs/adr/decision-046.md",
+    "git": "b38d376",
+    "sha256": "9fad88647a1eddc2152b8ccf71b68b85875cdb9915a0828f3232e6b7558b75a1",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-046.md"
+  },
+  {
+    "source": "docs/adr/decision-047.md",
+    "git": "b38d376",
+    "sha256": "e58b9a562ac4e6f2f9a39432ec833b32079404a278b31c1136eba8dde85a615c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-047.md"
+  },
+  {
+    "source": "docs/adr/decision-048.md",
+    "git": "b38d376",
+    "sha256": "7584b52d0f58b996018d98695ad7112163d0416cf32420d59617ff1e445fcdaf",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-048.md"
+  },
+  {
+    "source": "docs/adr/decision-049.md",
+    "git": "b38d376",
+    "sha256": "c25f0d90f933ae95e5bb7ebe5da43b831a31f310d908e901d082a2c82039b649",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-049.md"
+  },
+  {
+    "source": "docs/adr/decision-050.md",
+    "git": "b38d376",
+    "sha256": "1027555e765e625e63856ee13cb8efc9e1ee112d06402e415ca9d726bc5a396f",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-050.md"
+  },
+  {
+    "source": "docs/adr/decision-051.md",
+    "git": "b38d376",
+    "sha256": "5a04f9e3b1b04bf6b4d1ef2b2ebee68b99a7fa0693c5a699725313ecfa2a820f",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-051.md"
+  },
+  {
+    "source": "docs/adr/decision-052.md",
+    "git": "b38d376",
+    "sha256": "c996cebb870484ef45bf6cae035e890aad341ccb984c7a22bff4210aa5d724db",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-052.md"
+  },
+  {
+    "source": "docs/adr/decision-053.md",
+    "git": "b38d376",
+    "sha256": "594217af8916b5d7728870c085a0db6ec84c387c91292f3ab655abdd2251fbdc",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-053.md"
+  },
+  {
+    "source": "docs/adr/decision-054.md",
+    "git": "b38d376",
+    "sha256": "949590d79db55b5756e80bce3dfce772bd405d02eb883ae99b40acb4743a5cba",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-054.md"
+  },
+  {
+    "source": "docs/adr/decision-055.md",
+    "git": "b38d376",
+    "sha256": "93b09b8f4d52e39f260770db0f62f08398503ef899c5b7277ee5a908b326b696",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-055.md"
+  },
+  {
+    "source": "docs/adr/decision-056.md",
+    "git": "b38d376",
+    "sha256": "cff5d52435cf61ae8e9e1ded07d3c50def0962c51c933497480ffc8c770bb0c0",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-056.md"
+  },
+  {
+    "source": "docs/adr/decision-057.md",
+    "git": "b38d376",
+    "sha256": "c20123e3fea391107b403b28b15c31199aa6dd873028d40fb4b2d0c1112971ea",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-057.md"
+  },
+  {
+    "source": "docs/adr/decision-058.md",
+    "git": "b38d376",
+    "sha256": "e4abfef894c7f30b58b52a725357d792ff752d37288ccaf853e3daabaa731c2a",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-058.md"
+  },
+  {
+    "source": "docs/adr/decision-059.md",
+    "git": "b38d376",
+    "sha256": "9040bf2ec85604be755821e09fc2832341ef2435d1981bc4d717475a6db21046",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-059.md"
+  },
+  {
+    "source": "docs/adr/decision-060.md",
+    "git": "b38d376",
+    "sha256": "c35e9bb1ad52bb39245862ba6191310e90aff3563a83ada36eb4e793bd494359",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-060.md"
+  },
+  {
+    "source": "docs/adr/decision-061.md",
+    "git": "b38d376",
+    "sha256": "cec2c234c9a93e7ef12fab4a867c98df10dfa82cf7a20e2b29b52cb10b17696d",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-061.md"
+  },
+  {
+    "source": "docs/adr/decision-062.md",
+    "git": "b38d376",
+    "sha256": "b739f137f495c330b0cafd83af8a0e6be5536727a7db30032f8b411f5deb33d4",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-062.md"
+  },
+  {
+    "source": "docs/adr/decision-063.md",
+    "git": "b38d376",
+    "sha256": "6f623c7168bbefa1451d29ad98bd44d1651aa311122e257c61a3b80828d5b286",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-063.md"
+  },
+  {
+    "source": "docs/adr/decision-064.md",
+    "git": "b38d376",
+    "sha256": "c218fd8758a5c0625d153246ce3a711fd5ab14d85e38215d3fd47db9b90842b6",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-064.md"
+  },
+  {
+    "source": "docs/adr/decision-065.md",
+    "git": "b38d376",
+    "sha256": "1d1890e3039e87909885152dc0291e6ee1169a61dee4794b9432402ad253e6b8",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-065.md"
+  },
+  {
+    "source": "docs/adr/decision-066.md",
+    "git": "b38d376",
+    "sha256": "2f2d1113ed1701f37c8be1b1b33720df08042d02367bb5d3d5591ab9affabf17",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-066.md"
+  },
+  {
+    "source": "docs/adr/decision-067.md",
+    "git": "b38d376",
+    "sha256": "de1b17c81546e6d55932661db5848b02c31cf9cb66436b4e9d773c5496026493",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-067.md"
+  },
+  {
+    "source": "docs/adr/decision-068.md",
+    "git": "b38d376",
+    "sha256": "eadf6a6c9bfa029e76c4911ef419cb9dd800c4a881f14ca1a87c7c57a5d5fa3a",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-068.md"
+  },
+  {
+    "source": "docs/adr/decision-069.md",
+    "git": "b38d376",
+    "sha256": "6e6d49ccb954336f5aad1656ad12bb3696b2fd064b7ab51133816e532602c6fd",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-069.md"
+  },
+  {
+    "source": "docs/adr/decision-070.md",
+    "git": "b38d376",
+    "sha256": "49d5e9ee0c88ecfe2c5661390e686d19e28a441f960ab6bb48ca80a5e7c699cb",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-070.md"
+  },
+  {
+    "source": "docs/adr/decision-071.md",
+    "git": "b38d376",
+    "sha256": "d2fcc4e68b1f71ba6b8c700c38da9177e7efec943e6b4c4368d6bcf394e25493",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-071.md"
+  },
+  {
+    "source": "docs/adr/decision-072.md",
+    "git": "b38d376",
+    "sha256": "1a20d9971b8bcd0b8116bdceb1eb8fb97bbcd49ab3c6ffb6e579cf88f137ce1f",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-072.md"
+  },
+  {
+    "source": "docs/adr/decision-073.md",
+    "git": "b38d376",
+    "sha256": "f939566f2a6cf5befc88ea104ca91ff04c39ae5bb1df36f6c995e792f03ae26a",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-073.md"
+  },
+  {
+    "source": "docs/adr/decision-074.md",
+    "git": "b38d376",
+    "sha256": "3e7cc0259823ca5f9c2ebf312dc5641c63ee8434ae0396d6ba621281e8724fd0",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-074.md"
+  },
+  {
+    "source": "docs/adr/decision-075.md",
+    "git": "b38d376",
+    "sha256": "af2d0bae31e1db0fc04c0308141d52084e288d1239f51e107e36c44af0843ded",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-075.md"
+  },
+  {
+    "source": "docs/adr/decision-076.md",
+    "git": "b38d376",
+    "sha256": "57e58969f8313dcbbc252f84a700d3816c55dcbb14bd87b32c326e289cf91fa0",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-076.md"
+  },
+  {
+    "source": "docs/adr/decision-077.md",
+    "git": "b38d376",
+    "sha256": "a5f65d8f7d5edb451b0441be2e2377f47beb825e2a3b92e7d28fc711a55ea780",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-077.md"
+  },
+  {
+    "source": "docs/adr/decision-078.md",
+    "git": "b38d376",
+    "sha256": "e24b988883bdd0f5223f7df7f0ad8ef46343250eb6458401fd927dd92acdf2b6",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-078.md"
+  },
+  {
+    "source": "docs/adr/decision-079.md",
+    "git": "b38d376",
+    "sha256": "eb65a09f63fdda9c32e0b706c7a1addb1f4f94a6d21eaa6ce88b8fa16fa91ce2",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-079.md"
+  },
+  {
+    "source": "docs/adr/decision-131.md",
+    "git": "b38d376",
+    "sha256": "c668a504efaefb2a4959cdd32b4cb3b89750b327e9edc7f82bf34415db11cb52",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-131.md"
+  },
+  {
+    "source": "docs/adr/decision-132.md",
+    "git": "b38d376",
+    "sha256": "ab30e5a6df72a26a65723ef0e4c5fb45cfe3fdd82d3d1eb8d3d33b518422e3e8",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-132.md"
+  },
+  {
+    "source": "docs/adr/decision-083.md",
+    "git": "b38d376",
+    "sha256": "3952bc56ebb10112b9d50044606bd08b2c4c379f7dccdbedaf211d6aa86ea3c7",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-083.md"
+  },
+  {
+    "source": "docs/adr/decision-084.md",
+    "git": "b38d376",
+    "sha256": "fc09d0bf380deb79d69b865990061efcee07566e55de6a189b890715cefb1bee",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-084.md"
+  },
+  {
+    "source": "docs/adr/decision-085.md",
+    "git": "b38d376",
+    "sha256": "5b7a3521742b42693042ffd2866fd55d343701bf9c8664924c75fa3a212bce0e",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-085.md"
+  },
+  {
+    "source": "docs/adr/decision-086.md",
+    "git": "b38d376",
+    "sha256": "d3d5ff9a6aaaf000a52f4e99a78fc730b4f8b506d7c190ed5c099ec0d1e21465",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-086.md"
+  },
+  {
+    "source": "docs/adr/decision-087.md",
+    "git": "b38d376",
+    "sha256": "45a99011b6b1123e45f7fe08eb48235eecb1645343819180dbce2a28a7532967",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-087.md"
+  },
+  {
+    "source": "docs/adr/decision-088.md",
+    "git": "b38d376",
+    "sha256": "a2bee718fddb0d9c62188beddd9c48508d82b3151f2ff5149788039a700d9b6c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-088.md"
+  },
+  {
+    "source": "docs/adr/decision-089.md",
+    "git": "b38d376",
+    "sha256": "c901a23bf370ea8f176b0a1c2d45e15c886b57b647ca318c8e9737a9ab48c347",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-089.md"
+  },
+  {
+    "source": "docs/adr/decision-090.md",
+    "git": "b38d376",
+    "sha256": "6e38b9d97b72acc61e04b0abf566e2a94372a5c70cc12f5b88f1574170031864",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-090.md"
+  },
+  {
+    "source": "docs/adr/decision-091.md",
+    "git": "b38d376",
+    "sha256": "ffcf2a015581ee4b3887df3aa2d83d0ea308b229bb9e81949ba94cc3467edadb",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-091.md"
+  },
+  {
+    "source": "docs/adr/decision-092.md",
+    "git": "b38d376",
+    "sha256": "efe3c666f6ee920c5e98c7c462b14055abf6fff200095e431c2314fcc802208e",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-092.md"
+  },
+  {
+    "source": "docs/adr/decision-093.md",
+    "git": "b38d376",
+    "sha256": "eb34236391144e8b01cda6ea6e995e6b6c3d81e08184c9fcd3d2d51de75e21e8",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-093.md"
+  },
+  {
+    "source": "docs/adr/decision-094.md",
+    "git": "b38d376",
+    "sha256": "4bdc49b627d560fa2bb8355f7b9421b1399e6b25ede0761a6d85517edb5dc53e",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-094.md"
+  },
+  {
+    "source": "docs/adr/decision-095.md",
+    "git": "b38d376",
+    "sha256": "925473721fec71b0e62017bf501404d824a2a3c804066e70be4d493aa29a5ace",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-095.md"
+  },
+  {
+    "source": "docs/adr/decision-096.md",
+    "git": "b38d376",
+    "sha256": "5a590829c13436f8693503ab28482cf75e81f801948d2bc722ae189f16a68208",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-096.md"
+  },
+  {
+    "source": "docs/adr/decision-097.md",
+    "git": "b38d376",
+    "sha256": "a17e10b861c28ab74c4d9e3a0e02e4e80c99e6d78dd265b6039f1d6d13071bc1",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-097.md"
+  },
+  {
+    "source": "docs/adr/decision-098.md",
+    "git": "b38d376",
+    "sha256": "07a9a743a7f9ca1729e06bdd618db8bfd0e89cd8653d953a13c14f9f87b7464b",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-098.md"
+  },
+  {
+    "source": "docs/adr/decision-099.md",
+    "git": "b38d376",
+    "sha256": "0b8d2e4475e7e387adcafca69aec5f6e5db872ca67b1451c60b4a68ab614c702",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-099.md"
+  },
+  {
+    "source": "docs/adr/decision-100.md",
+    "git": "b38d376",
+    "sha256": "a9b459e1fc23bf329c82a73bb67d479cb07df9a49475a0c20205ee384953559b",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-100.md"
+  },
+  {
+    "source": "docs/adr/decision-101.md",
+    "git": "b38d376",
+    "sha256": "c703eadf6b3a58002cdd8e303bb96c39cdc4fa7da01c81e515d779c6890250da",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-101.md"
+  },
+  {
+    "source": "docs/adr/decision-102.md",
+    "git": "b38d376",
+    "sha256": "fa36d61e61278bca7e9e7ad78ff7a5c8e95a0e5e1a9fcc0bea27a197e65dd2e1",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-102.md"
+  },
+  {
+    "source": "docs/adr/decision-103.md",
+    "git": "b38d376",
+    "sha256": "333f7b59ce5f93746fa5cc230cabb34058c5c86e3c7d04b2822904a4a85e28e9",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-103.md"
+  },
+  {
+    "source": "docs/adr/decision-104.md",
+    "git": "b38d376",
+    "sha256": "0c3bd1eeba4dc20707733484cdc6ccd8cda1c512e49a8f93630fc34502e0a3dc",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-104.md"
+  },
+  {
+    "source": "docs/adr/decision-105.md",
+    "git": "b38d376",
+    "sha256": "66a821a35027e74aa3adc1090d062b37fdbc3b67c9cc3151d8abce5f603484af",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-105.md"
+  },
+  {
+    "source": "docs/adr/ad-11.md",
+    "git": "b38d376",
+    "sha256": "710d1d83ced441f988aa577c91f59e4f831dbadcccabc94c13bc4ed0f91d55ec",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-11.md"
+  },
+  {
+    "source": "docs/adr/ad-12.md",
+    "git": "b38d376",
+    "sha256": "dee798502aa7cf5044d879f3e4fcd2af3e283edd277b784fe9ce12c123e0218d",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-12.md"
+  },
+  {
+    "source": "docs/adr/ad-13.md",
+    "git": "b38d376",
+    "sha256": "7791bde915c5707e034988184f8b9f14595a06ba402e5c64b371a7fe55d1e46d",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-13.md"
+  },
+  {
+    "source": "docs/adr/ad-14.md",
+    "git": "b38d376",
+    "sha256": "efd2df6283288f3fa7315d9f3a8de39bfe798f9271080465a9813ff98df9f623",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-14.md"
+  },
+  {
+    "source": "docs/adr/ad-15.md",
+    "git": "b38d376",
+    "sha256": "e32ed86c0dc1d265582026b999a38c54f40a873c5ed14286614acf5cb8639f86",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-15.md"
+  },
+  {
+    "source": "docs/adr/ad-16.md",
+    "git": "b38d376",
+    "sha256": "de2a92be4278e2f32ad4a0ed514b866dee2aae0f2e3134b0bd11adde6001829c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-16.md"
+  },
+  {
+    "source": "docs/adr/ad-17.md",
+    "git": "b38d376",
+    "sha256": "4f55bd65a6baabb41131c3032d14edd4911f01fc6ceac65033abfd1116ae425e",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-17.md"
+  },
+  {
+    "source": "docs/adr/ad-18.md",
+    "git": "b38d376",
+    "sha256": "60f9935de239c06436f46edb27ee53d199c5914865ad8da559f2aff0ac87f77b",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-18.md"
+  },
+  {
+    "source": "docs/adr/ad-19.md",
+    "git": "b38d376",
+    "sha256": "625e2cc4b0fea7c6eb276ff366f2c4da1491ce22bb5995f1096e0cfa9d7c6268",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-19.md"
+  },
+  {
+    "source": "docs/adr/ad-20.md",
+    "git": "b38d376",
+    "sha256": "b09f84c7e2242b80d3a6a3ee94a5894478aa99d9ac14dce13f950d9aac95eecc",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-20.md"
+  },
+  {
+    "source": "docs/adr/ad-21.md",
+    "git": "b38d376",
+    "sha256": "9bc8db774d8e45f16f0729f4f4ffc4f3266281d48c596edf7ffc160f86670eae",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/ad-21.md"
+  },
+  {
+    "source": "docs/adr/fw-01.md",
+    "git": "b38d376",
+    "sha256": "e3ad68a14e2f0e91eb26dd12bc79ba1b9619bc98af2737afb2c5d70e3a2d938d",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/fw-01.md"
+  },
+  {
+    "source": "docs/adr/offline-verification.md",
+    "git": "b38d376",
+    "sha256": "7720c2e87588e757fa9a0f3aafc2d2bc0b125f6bfac31e1b0e2ff6b5f8eb72a4",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/offline-verification.md"
+  },
+  {
+    "source": "docs/adr/decision-108.md",
+    "git": "b38d376",
+    "sha256": "2d8622a55ab677bf5ad724d17fab3e63c9e7fd822e1adafcb21f8525460e0d14",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-108.md"
+  },
+  {
+    "source": "docs/adr/decision-109.md",
+    "git": "b38d376",
+    "sha256": "d785e5049da8b00f06965be3eff11fdc8fd0dcca985dc86a1f9ae148565719a8",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-109.md"
+  },
+  {
+    "source": "docs/adr/decision-110.md",
+    "git": "b38d376",
+    "sha256": "d44da88b61bf030f3dfa1aba97aeca7740d63c9bee6a5f654f31059c0e0fae03",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-110.md"
+  },
+  {
+    "source": "docs/adr/decision-111.md",
+    "git": "b38d376",
+    "sha256": "9881e6cbb72abf64e4ad694b74053e2d657ee897132c4a80cebb725114648d17",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-111.md"
+  },
+  {
+    "source": "docs/adr/decision-112.md",
+    "git": "b38d376",
+    "sha256": "91702957b2d356abdb3f6d65c786d90449f6026608059264ea0c8c281c26a742",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-112.md"
+  },
+  {
+    "source": "docs/adr/decision-113.md",
+    "git": "b38d376",
+    "sha256": "e35014a4bcdc32e199f4c263de29ac7fcf170ce9447737eb703bae6278301961",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-113.md"
+  },
+  {
+    "source": "docs/adr/decision-114.md",
+    "git": "b38d376",
+    "sha256": "bb8eb8bcfd27ee6055efda137c5cb644351270e5e42f441a4fdbe92d6dff0431",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-114.md"
+  },
+  {
+    "source": "docs/adr/decision-115.md",
+    "git": "b38d376",
+    "sha256": "1ef7f36f15b61ae133be83bc9b808d79086163b78714f939f4118871dc9645ac",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-115.md"
+  },
+  {
+    "source": "docs/adr/decision-116.md",
+    "git": "b38d376",
+    "sha256": "1bfbe070b47a8d41f364bf1d6b3fe5546e6190061c154f26f90afb227d90a989",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-116.md"
+  },
+  {
+    "source": "docs/adr/decision-117.md",
+    "git": "b38d376",
+    "sha256": "6368a47fc73028702cd0da20677cd3f4f9a6ab694162a664db113d4fdec55efc",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-117.md"
+  },
+  {
+    "source": "docs/adr/decision-118.md",
+    "git": "b38d376",
+    "sha256": "2793b4eabe0c6f5a41a1bda0f24ad9bf05983ffb7a6b20ecfeba90d104b481e1",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-118.md"
+  },
+  {
+    "source": "docs/adr/decision-119.md",
+    "git": "b38d376",
+    "sha256": "1a6d5c0c7ee23452976e172201833df6d7dd2dc1c1f8e6ead388ef5cd6722d86",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-119.md"
+  },
+  {
+    "source": "docs/adr/decision-120.md",
+    "git": "b38d376",
+    "sha256": "d9d6cb550049806c4b688fecf9ce7d54fcb973b588307084645fc845445b4fcd",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-120.md"
+  },
+  {
+    "source": "docs/adr/decision-121.md",
+    "git": "b38d376",
+    "sha256": "fbdf622a233403a3f7b64431df681503292efc42c6e712786acbe02367968180",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-121.md"
+  },
+  {
+    "source": "docs/adr/decision-122.md",
+    "git": "b38d376",
+    "sha256": "b99e3366cd6ebc55af85247e1cd697019e17ef020f352e21af5fe6d2858a926d",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-122.md"
+  },
+  {
+    "source": "docs/adr/decision-123.md",
+    "git": "b38d376",
+    "sha256": "0d61152c037a45715bc47706156095e748ac95dc6dfcef07a6107b2d9d63abde",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-123.md"
+  },
+  {
+    "source": "docs/adr/decision-124.md",
+    "git": "b38d376",
+    "sha256": "2cc9843ff807772efbd0400b194ec9321df13f547dad294314880d12b40de587",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-124.md"
+  },
+  {
+    "source": "docs/adr/decision-125.md",
+    "git": "b38d376",
+    "sha256": "2ae02d879ebc028592ca89f01cf9fff8bafcfd32f05efba841fa67a9bf122438",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-125.md"
+  },
+  {
+    "source": "docs/adr/systemd-scheduling.md",
+    "git": "b38d376",
+    "sha256": "cc51ec1460cf113e623f9d0f1f3a9ded2a4c2957076b1b2bcf80ed33eee7df04",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/systemd-scheduling.md"
+  },
+  {
+    "source": "docs/adr/decision-126.md",
+    "git": "b38d376",
+    "sha256": "1b8009ba2c18ced9e051da4628552503049e0d84fecc7dd4a4fd11c634a79e90",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-126.md"
+  },
+  {
+    "source": "docs/adr/decision-127.md",
+    "git": "b38d376",
+    "sha256": "78c0df81428068f450f7a335e720841767fc0baace3b06ba8efb1e51c322fc2e",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-127.md"
+  },
+  {
+    "source": "docs/adr/decision-128.md",
+    "git": "b38d376",
+    "sha256": "934fd22cd46d8b32a1b1341a9b47a43aa8d85aae46f89bca770ae7e11f297a44",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-128.md"
+  },
+  {
+    "source": "docs/adr/decision-129.md",
+    "git": "b38d376",
+    "sha256": "1688e4b6a9597f815b34cc539a7cf0a3c30211311fae0c65be6c99eb7925c02c",
+    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-129.md"
+  }
+]

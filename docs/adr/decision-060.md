@@ -1,17 +1,16 @@
-# Decision 060: `IPAddressDeny=any` on the verification unit rather than `PrivateNetwork=true`
+# `IPAddressDeny=any` on the verification unit rather than `PrivateNetwork=true`
+
+- Decision identity: 060.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
-- Original work package: `SYS-002`.
-- Source: [decision 60 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
-§22.3 asks that
+The NFS hard-mount deployment contract asks that
 `PrivateNetwork=true` be tested on the deployed NFS mount and enabled "if the
 already-mounted filesystem remains reliable **under reconnect**".
 
@@ -20,9 +19,9 @@ alike, a probe read all 21 published files — 12 721 220 bytes — off the
 already-mounted archive while outbound TCP and DNS both failed. Steady-state
 reads are fine either way, so that is not what decides it.
 
-The condition is the reconnect, and it cannot be met here: §36.4 defers NFS
+The condition is the reconnect, and it cannot be met here: the recorded deployment restrictions defer NFS
 interruption against the live mount to an operator-supervised window, so this
-session has no way to provoke one. §22.3's own instruction for that case is to
+session has no way to provoke one. The hard-mount contract’s instruction for that case is to
 keep the command application-offline and document the narrower host egress
 control — so `HF_HUB_OFFLINE=1` stays, the structural guarantee stays
 (`verify` builds no `HubClient` and resolves no credential, asserted in the
@@ -37,7 +36,7 @@ process in a namespace holding only loopback, and any NFS behaviour that
 depends on the caller's namespace — an upcall, a referral, a re-established
 connection — becomes a question this deployment cannot currently answer.
 
-Handoff item 10 carries the `PrivateNetwork=true` evaluation for the operator
+The deployment acceptance checklist leaves the `PrivateNetwork=true` evaluation to the operator
 window that can answer it.
 
 ## Later history and current interpretation
@@ -50,7 +49,7 @@ under an interrupted NFS connection.
 
 The source entry first appears in
 [999ed19](https://github.com/wtcross/hfcache/commit/999ed19a88059a155e462b962505e6687c78c786)
-(2026-07-26, `SYS-002: apply the §22.5 hardening and test every setting`). The
+(2026-07-26, `host integration: apply the §22.5 hardening and test every setting`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

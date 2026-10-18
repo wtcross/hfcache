@@ -108,7 +108,7 @@ these are the architectural rule and its implementation rationale. Existing
 identifiers and historical decision text are never renumbered or deleted.
 When a choice changes, write a new decision and update the older ADR's status
 and amendment/supersession links, retaining the original reasoning. Follow the
-record fields and provenance rules in `docs/adr/README.md`.
+record fields and provenance rules in `docs/agents/technical-record-policy.md`.
 
 ## Remotes and pushing
 

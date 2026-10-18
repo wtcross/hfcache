@@ -1,13 +1,12 @@
-# Decision 103: Only resolved, proven redundant staging quarantine may be released
+# Only resolved, proven redundant staging quarantine may be released
+
+- Decision identity: 103.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-09-14.
-- Original work package: `QUA-001`.
-- Source: [decision 103 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -43,7 +42,7 @@ unexplained or unresolved data.
 
 The source entry first appears in
 [1ad4181](https://github.com/wtcross/hfcache/commit/1ad41815d5d57ac5f0ca59513878b9d8a9a9d8f1)
-(2026-09-14, `QUA-001: clean proven redundant recovered staging`). The decision
+(2026-09-14, `quarantine cleanup: clean proven redundant recovered staging`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 

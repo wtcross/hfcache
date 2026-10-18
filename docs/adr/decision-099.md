@@ -1,13 +1,12 @@
-# Decision 099: Consumer revision creation and serving promotion have separate ownership boundaries
+# Consumer revision creation and serving promotion have separate ownership boundaries
+
+- Decision identity: 099.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-24.
-- Original work package: `OPS-009`.
-- Source: [decision 99 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -17,7 +16,7 @@ The locked `vllm` identity owns only `<model>/revisions/`, where every `copy-rev
 
 The source entry first appears in
 [0309edb](https://github.com/wtcross/hfcache/commit/0309edb5b3397204c69deee3dc860ac0f867d675)
-(2026-08-24, `OPS-009: add consumer model-store setup`). The decision text above
+(2026-08-24, `operational tooling: add consumer model-store setup`). The decision text above
 preserves the complete reasoning in the current historical log, including its
 recorded alternatives and consequences.
 

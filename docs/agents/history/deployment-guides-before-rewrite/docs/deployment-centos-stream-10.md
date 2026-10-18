@@ -401,7 +401,7 @@ daemon-only; the actual verifier imports neither. The worker masks
 `/etc/hfcache/credentials` and `/var/lib/hfcache/hf-home`; custom development
 credential-file locations require explicit additional mask and probe. The
 scheduled client configuration must pin the expected archive UUID, and private
-per-unit state must preserve unresolved [observation handles](../../../../schemas.md#14-scheduled-client-observation-handle-api-014).
+per-unit state must preserve unresolved [observation handles](../../../../schemas.md#14-scheduled-client-observation-handle).
 The verify timer stays disabled. Shared runtime lock inodes must survive unit
 stops; no service may clear another executor's lock.
 
@@ -851,7 +851,7 @@ retry. An older binary's missing command/history cannot establish nonexecution.
 Never delete local receipts, regenerate keys or reconstruct commands from archive
 journals to make a rollback proceed. Actual runner/drain and packaged deployment
 acceptance remain later tasks; this drill installs no production release and
-does not authorize host operations. See [schema §13](../../../../schemas.md#13-service-private-operation-control-state-api-007)
+does not authorize host operations. See [schema §13](../../../../schemas.md#13-service-private-operation-control-state)
 and the [API-007 evidence](../../../plans/tasks/api-007-operation-receipts-and-idempotency.md).
 
 **API-014 scheduled-handle rollback barrier (2026-10-18, decision 121).**
@@ -862,7 +862,7 @@ both private schema 1 and future 2 and preserves their bytes. The current reader
 accepts schema 1 and refuses future 2 with HFAPI014/20, also preserving bytes.
 The locked offline drill performed no archive operation or production install;
 details are in the [task](../../../plans/tasks/api-014-systemd-and-deployment-integration.md)
-and [schema§14](../../../../schemas.md#14-scheduled-client-observation-handle-api-014).
+and [schema§14](../../../../schemas.md#14-scheduled-client-observation-handle).
 
 An old binary's missing observer support cannot establish nonexecution. Keep a
 compatible API/observer available to reconcile exact retained outcomes before
@@ -1194,7 +1194,7 @@ application images and selected immutable helper/config stay at clean 481fcc4.
 No deployed README/health/full-storage claim precedes actual listener readiness.
 Live archive reads/writes and write-bearing acceptance remain unrun/forbidden
 under the current restriction; version/capabilities/registry checks need no NAS
-file I/O. See [decision 126](../../../../adr/decision-126.md#permanent-host-boot-guard-ops-016-2026-10-18).
+file I/O. See [decision 126](../../../../adr/decision-126.md#context-decision-and-rationale).
 
 OPS-016's actual local rollout is partial: TLS/API/MCP/container-client and drain
 pass, but SELinux blocks API-container access to the user-manager-created private

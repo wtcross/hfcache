@@ -1,22 +1,21 @@
-# Decision 056: A committed publication or repair discards its staging area
+# A committed publication or repair discards its staging area
+
+- Decision identity: 056.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
-- Original work package: `SYNC-004`.
-- Source: [decision 56 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
 Found by running `status` on the live archive at
-the §29 rollout checkpoint: after two successful publications it reported
+the initial rollout: after two successful publications it reported
 `unfinished_transactions: 2`, with two `.store/staging/<txn>/` directories
 holding nothing but a copy of a manifest that was already published.
 
-`publication.discard_staging` had existed since `STO-006` and was called by
+`publication.discard_staging` had existed in the storage primitives and was called by
 nothing but its own tests. `promote_staging` renames `tree/` out of the
 staging directory and the pending manifest is its *sibling*, so it stays —
 which is the whole point between checkpoints 5 and 6, and pure residue after
@@ -42,7 +41,7 @@ deleting the staged manifest no longer can: that deletion now correctly
 means "the tree cannot be validated" and quarantines it (§7.3's caveat). The
 `HFTXN003` case is provoked instead by deleting the *published tree*
 checkpoint 5 named, which is a genuine journal-contradicts-filesystem state.
-`docs/architecture.md` §7.3 and §7.5 are amended in this commit.
+`docs/architecture.md` §7.3 and §7.5 are amended.
 
 ## Later history and current interpretation
 
@@ -54,7 +53,7 @@ staging discard does not grant authority to discard arbitrary failed staging.
 
 The source entry first appears in
 [41690bd](https://github.com/wtcross/hfcache/commit/41690bd7cd5da5231e74e504489f1eba60dc945b)
-(2026-07-26, `SYNC-004: discard a committed transaction's staging area`). The
+(2026-07-26, `synchronization: discard a committed transaction's staging area`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

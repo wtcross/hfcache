@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [DOC-015](doc-015-deployment-runtime-and-cockpit-guide-alignment.md) |
 | Phase | 2 — Human-facing guides |
@@ -25,11 +25,11 @@ Remove duplicate status/progress sections only after their technical requirement
 
 ## Acceptance
 
-- [ ] Human technical docs have no implementation tracking links, work-package IDs or agent workflow instructions.
-- [ ] All standing invariants and old-plan-only technical requirements are represented in current human contracts with no silent weakening.
-- [ ] Schema/version/path-base/credential domains are distinct and match implementation.
-- [ ] Technical ADR alternatives and consequences remain; purely agent records are confined to agents and no human link points to them.
-- [ ] Checkpoint/taxonomy/format tests retain equivalent coverage and all links/anchors resolve.
+- [x] Human technical docs have no implementation tracking links, work-package IDs or agent workflow instructions.
+- [x] All standing invariants and old-plan-only technical requirements are represented in current human contracts with no silent weakening.
+- [x] Schema/version/path-base/credential domains are distinct and match implementation.
+- [x] Technical ADR alternatives and consequences remain; purely agent records are confined to agents and no human link points to them.
+- [x] Checkpoint/taxonomy/format tests retain equivalent coverage and all links/anchors resolve.
 
 ## Contracts, invariants and ADRs
 
@@ -59,15 +59,35 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after DOC-015 b38d376. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+Completed 2026-10-18, this commit. Consolidated five primary technical contracts
+and 151 human ADR/index records, retaining original identity/date, alternatives,
+consequences and implementation/test evidence. Preserved all 156 pre-rewrite
+sources with Git hashes in the technical-reference snapshot manifest. Agent
+maintenance rules moved to the agent technical-record policy; descriptive anchors
+and inbound links were repaired. Transitional tracking rows fell from 899 to 42,
+confined to README, changelog and consumer onboarding for DOC-017.
+
+Reviewed every affected invariant/ADR topic, distinct credential/configuration and
+compatibility domains, lock lifetimes and transaction checkpoints. No runtime,
+format, dependency or new architectural decision. The AD-05/FS-20 generation
+requirement remains strong and its existing implementation gap is explicit; no
+retention backlog was activated. Historical-plan migration safeguard for bulk
+manifest rewrite now explicitly requires backup and a migration command.
+
+Validation: 493 focused transaction/model/config/verification/auth/lock/failure-
+matrix/reference/migration tests passed in 11.31s; final link/anchor scan reported
+zero broken human links. Full `scripts/check.sh` exited 0: 4210 passed,
+40 opt-in deselected in 477.78s; distribution build, all three locked installation
+profiles and actual Cockpit lint/typecheck/135 tests/build passed. Final
+transaction/reference/migration checks also passed after editorial review.
+No live/NFS/installed-host operations ran; guards, stores, locks, credentials,
+NAS-read-only state and disabled calendar remain untouched.
+
+See [completed progress evidence](../../progress.md#technical-contract-consolidation-2026-10-18).

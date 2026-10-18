@@ -99,6 +99,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   CP-01–14 and ADR121/126–129/131/132 reviewed; no runtime/schema/dependency change.
   No host action; guard/NAS-ro/locks/stores/handles/calendar restrictions unchanged.
 
+## Technical contract consolidation (2026-10-18)
+
+- [x] DOC-016 Consolidate living technical contracts and architectural rationale
+  (2026-10-18, this commit — [task](plans/tasks/doc-016-human-architecture-config-schemas-and-adrs.md)).
+  Reworked five technical contracts and 151 ADR/index records with 156 preserved
+  Git-hashed sources, descriptive anchors, current normative homes and separate
+  agent maintenance policy. Original decision identities/rationale remain.
+  Bulk-manifest migration backup/explicit-command safeguard restored. No runtime,
+  durable-format, dependency or architectural choice changed; AD-05/FS-20 existing
+  generation gap remains disclosed without weakening requirements or activating
+  backlog. Focused 493 passed; human link/anchor scan zero broken. Full gate:
+  4210 passed/40 deselected in 477.78s, build/three locked profiles and actual
+  Cockpit lint/types/135 tests/build passed. No host/NAS/manager action.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)
@@ -2050,7 +2064,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     and prove a stopped observer never authorizes duplicate execution. Use
     [deployment](../deployment-centos-stream-10.md#upgrade-and-drain),
     [server](../server.md#scheduled-observation-and-lifecycle-controls) and
-    [scheduled schema](../schemas.md#14-scheduled-client-observation-handle-api-014).
+    [scheduled schema](../schemas.md#14-scheduled-client-observation-handle).
     No production deployment, service/timer/mount manipulation or archive operation
     is authorized by implementation of this plan.
 

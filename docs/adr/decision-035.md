@@ -1,19 +1,18 @@
-# Decision 035: A skipped check has three meanings, and the gate reads them differently
+# A skipped check has three meanings, and the gate reads them differently
+
+- Decision identity: 035.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `STO-001`.
-- Source: [decision 35 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
 `docs/cli.md` §2 described `skipped` for two
 situations — `--read-only`, and an archive that is not initialized — and
-plan §19 requires the same checks to be a *hard* preflight for every
+The storage preflight contract requires the same checks to be a *hard* preflight for every
 mutating command. Those two cannot both be satisfied by one boolean: an
 uninitialized archive is a fine answer for `doctor`, which reports it and
 exits `0`, and an impossible one for a command that is about to write.
@@ -32,7 +31,7 @@ would make a single missing directory look like four problems.
 `require_storage_safety` deliberately takes no `--read-only` option: a
 command about to write has no business asking for one, and an option that
 silences a check is an option that lets one through. `docs/cli.md` §2
-updated in this commit.
+updated.
 
 ## Later history and current interpretation
 
@@ -45,9 +44,8 @@ gate mapping.
 
 The source entry first appears in
 [c8ac36a](https://github.com/wtcross/hfcache/commit/c8ac36a48c216fb9f3535e496c28c83d2a0a6e8b)
-(2026-07-25, `STO-001: implement the shared storage preflight and doctor's mount
-checks`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-25, `storage primitives: implement the shared storage preflight and doctor's mount
+checks`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/cli.md](../cli.md).
 

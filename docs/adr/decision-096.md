@@ -1,13 +1,12 @@
-# Decision 096: Whole-repository deletion is explicit, unmanaged-only, and reuses the prune commit point
+# Whole-repository deletion is explicit, unmanaged-only, and reuses the prune commit point
+
+- Decision identity: 096.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-15.
-- Original work package: `PUR-001`.
-- Source: [decision 96 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -47,7 +46,7 @@ tooling must understand the new reason.
 
 The source entry first appears in
 [7370af2](https://github.com/wtcross/hfcache/commit/7370af22b53d9a8ec6af855b74005f394b35ad89)
-(2026-08-15, `PUR-001: add transactional unmanaged repository purge`). The
+(2026-08-15, `: add transactional unmanaged repository purge`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

@@ -398,7 +398,7 @@ Other migrated reads reject explicit archive `--config` and Hub `--token-file`.
 Exact server Envelope IDs/times survive rendering, complete page reconstruction
 and inventory/revision consistency checks. See [decision 119](../../../adr/decision-119.md),
 [client migration](../../../api-client.md#cli-dispatch) and
-[candidate configuration](../../../configuration.md#12-candidate-authority-validation-and-planning-api-012).
+[candidate configuration](../../../configuration.md#12-candidate-authority-validation-and-planning).
 
 ## Implemented maintenance resources (API-010)
 
@@ -662,7 +662,7 @@ expire. Ambiguous, malformed, unsafe and unknown-version records are preserved
 and fail admission closed. Healthy validated IDs remain observable. Delete only
 validated owned succeeded/failed history after expiry. Expired/missing history
 is uncertainty, not proof of nonexecution or permission to replay. See the
-independent [schema/compatibility contract](../../../schemas.md#13-service-private-operation-control-state-api-007)
+independent [schema/compatibility contract](../../../schemas.md#13-service-private-operation-control-state)
 and [recovery runbook](../../../recovery.md#preserve-four-kinds-of-authority).
 
 Unavailable/unsafe verifier status specifically preserves the parent's active
@@ -776,7 +776,7 @@ Envelope before streaming with the existing bounded JSON encoder/lease. Source
 bytes are capped by `operation_max_result_bytes`; normal metadata uses
 `max_response_bytes`, and encoded result responses use the existing large-evidence
 ceiling of eight times `max_artifact_bytes`. No endpoint serves arbitrary control
-files. The independent [durable schema](../../../schemas.md#13-service-private-operation-control-state-api-007)
+files. The independent [durable schema](../../../schemas.md#13-service-private-operation-control-state)
 records file ownership, transitions, event/result bounds and compatibility.
 
 ## Credentials and configuration

@@ -3,8 +3,6 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/agents/history/plan.md` §9, §12, §22.6 |
-| Work package | `ARC-003` |
 | Schema version | `1` |
 | Default location | `/etc/hfcache/config.toml` |
 
@@ -12,6 +10,13 @@ Configuration is TOML, parsed with `tomllib`, and validated into strict, frozen
 Pydantic models. It is the complete statement of operator intent. Everything it
 describes is validated **before** any network request or filesystem mutation, so
 an invalid configuration can never partially apply.
+
+Archive policy determines repository/storage intent. Server TOML separately
+owns restart-only transport, credential classes and budgets; client TOML owns
+independent endpoints, trust and REST sources. The protected rendered rootless
+runtime/release profile is a fourth domain, not extra archive policy keys.
+Candidate syntax validity and installed-authority compatibility remain distinct.
+See [server](server.md), [client](api-client.md) and [runtime](containers.md).
 
 ## 1. Validation rules that apply to every field
 
@@ -21,13 +26,14 @@ an invalid configuration can never partially apply.
   and `1` is not a boolean. TOML already distinguishes these, so a type error
   always means the operator wrote the wrong thing.
 - **Models are frozen.** Each loaded configuration snapshot is immutable; no
-  code path mutates it. The isolated CLI keeps one snapshot for its invocation.
+  code path mutates it. Explicit local validation keeps one snapshot for its invocation.
   A long-lived server freezes archive policy afresh for each request/admission,
   while server transport/auth settings require restart (§11).
 - **All filesystem paths are absolute** and are normalized before use.
 - **No secret is ever a literal value.** There is no field anywhere in this schema
   that accepts a token. A token reaches the process only through a systemd
-  credential or an explicit `--token-file` (§7).
+  credential or an explicit executor-local file (§7). Public API clients use
+  separate REST settings and cannot forward a Hub `--token-file`.
 - **Validation is total.** `hfcache config validate` performs exactly the same
   validation the mutating commands do, and mutates nothing.
 
@@ -46,8 +52,10 @@ schema_version = 1
 | `schema_version` | int | yes | — | Must equal `1` |
 
 `schema_version` is mandatory and has no default, so an unversioned file is an
-error rather than an assumption. A future version bump is the only supported way
-to change the meaning of any key below.
+error rather than an assumption. Unsupported versions refuse. Compatible extensions can retain version 1 only
+with explicit validation/rollback rules. Version 1 permits retention 3 or 5,
+defaulting to 3; older readers require explicit 5 and validation before rollback.
+Changing policy alone never prunes data.
 
 Permitted tables: `[hub]`, `[storage]`, `[sync]`, `[verification]`, `[repair]`,
 and the `[[repositories]]` array. Any other table is `HFCFG003`.
@@ -92,7 +100,7 @@ metadata marked private or gated remains `HFHUB006`. This prevents installing a
 rate-limit or identity credential from silently changing what the archive may
 retain. Under `required`, readable private and gated repositories proceed through
 the same complete-revision pipeline as public repositories. Every consumer of
-the publication export must be authorized to receive that content (`AD-21`).
+The publication export must be authorized to receive that content (`AD-21`).
 
 Losing upstream access does not remove a local revision. Future Hub calls fail,
 while existing publications remain until the operator removes the repository
@@ -141,11 +149,11 @@ reserve.
 immutable publication generation, never timestamps (`AD-04`, `AD-05`), and
 always protects the current revision.
 
-**RET-010 amendment (2026-09-14, decision 102).** Schema version 1 now accepts
+**retention amendment (2026-09-14, decision 102).** Schema version 1 now accepts
 `3` as well as the original `5`, and omission selects `3`. This deliberately
 widens the configuration policy without changing archive JSON formats. Existing
 files with an explicit `5` keep their policy; adopting the new default requires
-setting `3` or removing that explicit value. Before rolling back to a pre-RET-010
+setting `3` or removing that explicit value. Before rolling back to a pre-retention
 binary, explicitly set `maximum_revisions = 5` and validate with that binary.
 Changing the value does not itself delete revisions: review and apply `prune`
 repeatedly until no eligible excess remains (`docs/operations.md` §6). A new sync
@@ -286,7 +294,7 @@ Ambient discovery is disabled in every case: `HF_TOKEN`, `HUGGING_FACE_HUB_TOKEN
 `~/.cache/huggingface/token`, and any other implicit source is ignored. Hub calls
 pass an explicit `token=False` or an explicit token string, never `token=None`,
 so a developer's or service account's cached credential cannot silently change
-what a production run does (`docs/agents/history/plan.md` §12).
+what a production run does (the architecture contract).
 
 A token is never written to the archive, a manifest, a run report, a log line, or
 a journal entry.
@@ -343,7 +351,7 @@ silently chosen.
 | `HFCFG012` | `archive_id` is not a canonical UUID |
 | `HFCFG013` | `credential_name` grammar is invalid |
 | `HFCFG014` | `hub.endpoint` is not a valid `https://` URL |
-| `HFCFG015` | Retired at `HUB-010`; earlier releases used it to reject `token_mode = "required"` |
+| `HFCFG015` | Retired at `Hub access`; earlier releases used it to reject `token_mode = "required"` |
 | `HFCFG016` | `repair.retired_instance_grace_hours` below the seven-day floor |
 
 All configuration failures exit `10` (§`docs/cli.md`), before any lock is taken,
@@ -353,7 +361,7 @@ any Hub request is made, or any path is mutated.
 
 Run reports and transaction journals record a **configuration fingerprint** so an
 archived artifact can be traced to the intent that produced it, without storing
-the configuration itself.
+The configuration itself.
 
 The fingerprint is the lowercase hex SHA-256 of the canonical JSON serialization
 of the loaded configuration — sorted keys, no insignificant whitespace, UTF-8 —
@@ -439,15 +447,14 @@ changed archive root or UUID requires a server restart and cannot hot-switch the
 server to another archive. Invalid updated policy fails new archive work closed;
 version/health remain able to diagnose invalid updated policy without repair.
 
-API-008's operation runner reloads policy under the service-owned archive lock
+The API runner reloads policy under the service-owned archive lock
 and compares it with the admitted fingerprint before mutation. A changed policy refuses stale
 queued work; it does not quietly execute against new scope. Policy loading does
 not install a candidate or change `/etc/hfcache`, and candidate-selected paths or
-Hub endpoints cannot redirect the installed credential. API-005 supplies these
-configuration/authority primitives; API-006/008 wire them into HTTP and queued
-execution. [Decision 112](adr/decision-112.md) records the boundary.
+Hub endpoints cannot redirect the installed credential. Server configuration pins authority; the HTTP boundary and runner enforce it
+for requests and queued execution. [Decision 112](adr/decision-112.md) records the boundary.
 
-API-007 adds restart-only `state_directory` and operation-storage limits to the
+The receipt store uses restart-only `state_directory` and operation-storage limits to the
 server domain, documented in [server resource settings](server.md#resource-settings).
 The default local directory is `/var/lib/hfcache/api`; it is independent of
 archive policy, publication/export trees and archive UUID changes. Never use it
@@ -456,34 +463,34 @@ archive UUID/fingerprint without storing an archive root, credential or candidat
 body. Retention defaults to 30 days for validated succeeded/failed history;
 unexpired bindings cannot be evicted for count caps, and interrupted/ambiguous/
 nonterminal state never ages out. Storage exhaustion refuses admission. See
-[decision 114](adr/decision-114.md) and [schema §13](schemas.md#13-service-private-operation-control-state-api-007).
+[decision 114](adr/decision-114.md) and [schema §13](schemas.md#13-service-private-operation-control-state).
 
-API-008's separate `[verification]` table configures only the protected private
+bounded runner and private verifier's separate `[verification]` table configures only the protected private
 Unix-socket client, expected peer UID and bounded exchange/poll/frame policy.
 The socket defaults to `/run/hfcache/verification.sock`; omission of the peer UID
 uses the API process's effective UID. These settings require restart and cannot
 be overridden by an inbound request. They grant no process-launch, arbitrary
 configuration path or credential-forwarding authority. The dedicated worker's
 trusted service startup supplies its fixed archive config and separate private
-state root. API-014 packages socket/identity/no-IP policy; installed enforcement
+state root. scheduled observation packages socket/identity/no-IP policy; installed enforcement
 remains operator acceptance. See
 [server verifier settings](server.md#private-verifier-client-settings)
 and [decision 115](adr/decision-115.md).
 
-MCP-001 uses the existing restart-only `mcp_enabled` and
+optional MCP transport uses the existing restart-only `mcp_enabled` and
 `credentials.mcp_reader` fields, without a schema change. Disabled mode loads no
 MCP package or credential; enabled mode requires both optional dependencies and
 a protected distinct source. Do not reuse a REST/Hub secret or add a literal
-token to TOML. MCP-001 activates transport; MCP-002 registers nine narrow
+token to TOML. optional MCP transport activates transport; curated metadata tools registers nine narrow
 metadata tools without another setting or schema change.
 See [MCP enablement](mcp.md#deployment-profiles) and
 [decision 124](adr/decision-124.md).
 
-## 12. Candidate authority validation and planning (API-012)
+## 12. Candidate authority validation and planning
 
 [`services.candidates`](../src/hfcache/services/candidates.py) validates bounded
-candidate TOML content without loading a server-selected file. The pure API-009
-hooks now support API-012 validation/planning; an explicit CLI `--config` for those
+candidate TOML content without loading a server-selected file. The pure command routes
+hooks now support API-backed reader CLI validation/planning; an explicit CLI `--config` for those
 commands reads at most 1 MiB of nonempty regular UTF-8 content on the CLI host,
 checks stable descriptor metadata and uploads text. It never sends a pathname
 for the server to open. The total JSON request cap may refuse escaping/overhead
@@ -512,7 +519,7 @@ field names, never proposed/installed values:
 Only compatible candidates can enter credential-bearing planning, using installed
 authorized credentials with candidate repository/retention/worker intent. Proposed
 authority changes can be validated but require privileged operator installation
-before planning; startup-pinned root/UUID changes also require restart. A plan is a keyed writer job, retains the
+before planning; startup-pinned root/UUID changes also require restart. A candidate plan is a keyed writer job, retains the
 installed admitted fingerprint and cannot authorize apply. All six authority
 fields are checked again after queue waiting before Hub work, including the
 credential name deliberately excluded from the policy fingerprint. The startup-only
@@ -532,7 +539,7 @@ manual operator guidance. API-only clients never receive Hub authority. See
 and [decision 119](adr/decision-119.md)
 and [candidate wire contract](api.md#candidate-content-and-installed-authority).
 
-## 13. Independent reader/client configuration (API-011)
+## 13. Independent reader/client configuration
 
 [Client configuration](api-client.md) is a separate strict schema-1 TOML domain,
 implemented by `ClientConfig` / `resolve_client_config`. It contains API endpoint,
@@ -552,18 +559,18 @@ No Hub/ambient bearer/proxy discovery or local archive fallback is permitted.
 The [client contract](api-client.md#client-configuration-and-setup) records exact
 fields/defaults/ranges and safe file/URL rules. Settings/selection failures use
 HFAPI017; protected credential failures retain HFAPI003. Separate client settings
-never enter archive-policy fingerprints or receipts. API-012 uses the stored
-global choices for reader/candidate modes; API-013 completes operational CLI and
+never enter archive-policy fingerprints or receipts. API-backed reader CLI uses the stored
+global choices for reader/candidate modes; CLI operation observation completes operational CLI and
 explicit observation through the same authority. See
 [decision 118](adr/decision-118.md).
 
-API-014's [scheduled-client example](../packaging/scheduled-client.example.toml)
+scheduled observation's [scheduled-client example](../packaging/scheduled-client.example.toml)
 uses this same client schema and the API-only named credential `hfcache.api`.
 Scheduled sync/verify-full requires an explicit `expected_archive_id` before any
 HTTP or private state allocation; replace the example UUID with the installed
 archive UUID. Its `wait_timeout` bounds each observation window, while the
 scheduled oneshot repeats windows through exact terminal output. The private
-[observation handle](schemas.md#14-scheduled-client-observation-handle-api-014)
+[observation handle](schemas.md#14-scheduled-client-observation-handle)
 binds endpoint/UUID/REST-writer class across restarts and token rotation; it never
 contains a bearer, credential digest or archive policy. It is not another client
 configuration or execution queue. See [decision 121](adr/decision-121.md).
@@ -577,7 +584,7 @@ settings remain startup-only; rotation requires the normal API drain/restart and
 new clients. Disabled mode requires neither optional package nor MCP source.
 
 
-## Rootless deployment selector (OPS-015)
+## Rootless deployment selector
 
 The selected container release adds independent protected rendered/runtime.json,
 not archive/server/client TOML fields. The helper pins its physical release tree;
@@ -585,11 +592,11 @@ the selected rendered directory is mounted read-only at /etc/hfcache/containers
 and selected client.toml at /etc/hfcache/client.toml inside containers. No static
 /etc runtime-profile copy bypasses the atomic current selector.
 [Runtime profile contract](containers.md#protected-runtime-profile) and
-[schema 15](schemas.md#15-rootless-runtime-deployment-profile-ops-015) define the
+[schema 15](schemas.md#15-rootless-runtime-deployment-profile) define the
 strict five-field integer schema 1, matching host service identity and immutable
 image IDs. Fixed role paths and named secrets remain trusted helper policy,
 not request-supplied configuration. Read-only directory binds expose atomic
 installed policy replacements to fresh admissions while preserving admitted
 fingerprints. Source-store masks, secret separation and the no-NAS-write guard
-remain; see [decision 127](adr/decision-127.md). Production profile selection and
-versioned release artifacts remain later tasks, not a live rollout claim here.
+remain; see [decision 127](adr/decision-127.md). The selected rootless profile and its recorded acceptance limits are described
+in [deployment status](deployment-status.md). Native and rootless delivery differ.

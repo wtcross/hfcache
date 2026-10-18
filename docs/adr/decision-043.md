@@ -1,13 +1,12 @@
-# Decision 043: The recovery report is a run report
+# The recovery report is a run report
+
+- Decision identity: 043.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `STO-011`.
-- Source: [decision 43 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -24,7 +23,7 @@ So it is `RecoveryReport`, the §6 envelope with a `remediations[]` body,
 written to the same `runs/` path — exactly the relationship the verification
 report already has to the run report, and for the same reason: one operator
 reads all three, so the shared part is one class rather than three that
-drift. Documented as `docs/schemas.md` §12 in this commit.
+drift. Documented as `docs/schemas.md` §12.
 
 `outcome: "pending"` is recorded for a remediation deliberately left alone —
 staging too young to be certainly abandoned. That is a real answer and worth
@@ -35,7 +34,7 @@ considered the directory and chose to wait, not that it missed it.
 
 The source entry first appears in
 [95f8f81](https://github.com/wtcross/hfcache/commit/95f8f81e518324a4f0ea823771cf0144dd9764af)
-(2026-07-25, `STO-011: implement dry-run and apply recovery planning`). The
+(2026-07-25, `storage primitives: implement dry-run and apply recovery planning`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

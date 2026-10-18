@@ -1,13 +1,12 @@
-# Decision 104: Confirmed operator cancellation may replace the empty-staging age heuristic
+# Confirmed operator cancellation may replace the empty-staging age heuristic
+
+- Decision identity: 104.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-09-14.
-- Original work package: `QUA-002`.
-- Source: [decision 104 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -41,7 +40,7 @@ during cleanup.
 
 The source entry first appears in
 [7b5e4e2](https://github.com/wtcross/hfcache/commit/7b5e4e2a0866937c4f3eed5f1d60642d643135bf)
-(2026-09-14, `QUA-002: clean recovered interrupted download staging`). The
+(2026-09-14, `quarantine cleanup: clean recovered interrupted download staging`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 

@@ -1,13 +1,12 @@
-# Decision 032: A write that fails after every check passed is `HFMNT008`
+# A write that fails after every check passed is `HFMNT008`
+
+- Decision identity: 032.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `STO-000`.
-- Source: [decision 32 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -26,9 +25,8 @@ safe.
 
 The source entry first appears in
 [5a6fa18](https://github.com/wtcross/hfcache/commit/5a6fa1816bedacf014f135468241f99ca42cca60)
-(2026-07-25, `STO-000: implement guarded one-time archive initialization and
-inspection`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-25, `storage primitives: implement guarded one-time archive initialization and
+inspection`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/architecture.md](../architecture.md),
 [docs/cli.md](../cli.md).

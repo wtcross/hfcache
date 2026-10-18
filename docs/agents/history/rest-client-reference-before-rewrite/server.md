@@ -92,7 +92,7 @@ python -m hfcache.scheduled_client --client-config PATH --state-directory PATH s
 python -m hfcache.scheduled_client --client-config PATH --state-directory PATH verify-full
 ```
 
-Its private [schema-1 pending handle](../../../schemas.md#14-scheduled-client-observation-handle-api-014)
+Its private [schema-1 pending handle](../../../schemas.md#14-scheduled-client-observation-handle)
 requires explicit expected archive UUID and binds fixed intent, endpoint and
 REST-writer namespace without credential digest. Fsync one generated key before
 the sole POST; persist accepted ID. Existing state permits lookup/observation
@@ -419,7 +419,7 @@ startup performs no Hub call. No HTTP body can select a token, source file,
 endpoint, archive root or arbitrary command. Verification receives none of those
 credentials and always delegates through the configured private executor.
 
-API-012's [candidate content](../../../configuration.md#12-candidate-authority-validation-and-planning-api-012)
+API-012's [candidate content](../../../configuration.md#12-candidate-authority-validation-and-planning)
 uses `ValidationSubmission` and `PlanSubmission` with bounded `CandidateText`.
 Validation resolves no credential/Hub/probe, reports validity separately from
 compatibility and can syntax-validate while installed policy is broken. Planning
@@ -543,7 +543,7 @@ Operation observation uses authenticated bounded HTTP metadata work, never the
 archive flock or a domain command. All REST read-capable principals share this
 whole-archive metadata/result boundary; idempotency lookup alone uses the caller's
 credential-class namespace. The [API contract](../../../api.md#admission-idempotency-and-lifecycle)
-defines wire/status/event semantics; [schemas §13](../../../schemas.md#13-service-private-operation-control-state-api-007)
+defines wire/status/event semantics; [schemas §13](../../../schemas.md#13-service-private-operation-control-state)
 defines the independent local family and retention compatibility. API-008 supplies
 heavy execution/private verification; API-009/010 expose the typed command routes.
 

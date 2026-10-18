@@ -768,7 +768,7 @@ window or deleting uncertain evidence. Restore capacity by addressing storage or
 retention policy under operator control, not by removing unexpired bindings.
 Changing retention is an explicit retry-history decision; communicate the new
 window to callers. There is no automatic exactly-once guarantee across crashes.
-See [the receipt schema](../../../schemas.md#13-service-private-operation-control-state-api-007)
+See [the receipt schema](../../../schemas.md#13-service-private-operation-control-state)
 and [decision 114](../../../adr/decision-114.md).
 
 **API-008 reconciliation.** The execution runner examines existing nonterminal

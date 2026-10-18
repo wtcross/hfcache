@@ -103,7 +103,7 @@ pending handles, both operation stores and previous release trees through rollba
 If `/var/lib/hfcache/scheduled` contains a pending handle, the installer refuses a
 target whose actual installed Python lacks `hfcache.scheduled_client`; state links
 also refuse. Trusted custom state layout uses `HFCACHE_CLIENT_STATE_DIRECTORY`.
-The new [handle schema](../schemas.md#14-scheduled-client-observation-handle-api-014)
+The new [handle schema](../schemas.md#14-scheduled-client-observation-handle)
 requires actual old/current binary compatibility drill in addition to archive
 format drills. Real socket/cgroup/no-IP/no-credential/SELinux/NFS and executor-aware
 hardening proof remain deployment prerequisites; repository fixtures do not pass

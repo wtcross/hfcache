@@ -1,13 +1,12 @@
-# Decision 083: `CHANGELOG.md` beside the annotated tags, and README `Status` stops accreting release notes
+# `CHANGELOG.md` beside the annotated tags, and README `Status` stops accreting release notes
+
+- Decision identity: 083.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-28.
-- Original work package: `DOC-003`.
-- Source: [decision 83 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -28,15 +27,14 @@ gives.
 
 The source entry first appears in
 [c444a5c](https://github.com/wtcross/hfcache/commit/c444a5cc8914c0070e38491fca41e23595506102)
-(2026-07-28, `DOC-003: CHANGELOG.md, and README status becomes a pointer`). The
+(2026-07-28, `documentation maintenance: CHANGELOG.md, and README status becomes a pointer`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
-Current governing documents:
-[docs/agents/release.md](../agents/release.md).
+
 
 Implementation or shipped-artifact evidence: [CHANGELOG.md](../../CHANGELOG.md),
 [README.md](../../README.md).
 
 Verification or recorded operational evidence:
-[docs/agents/progress.md](../agents/progress.md).
+[recorded deployment scope](../deployment-status.md).

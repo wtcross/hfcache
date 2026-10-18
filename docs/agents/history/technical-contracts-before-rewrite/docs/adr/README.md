@@ -1,0 +1,261 @@
+> Historical technical reference preserved before consolidation. Current authority is the living contract.
+
+# Architectural decision records
+
+Start with the topic map below, then read only the records relevant to the
+change. [The invariant register](../../../../../invariants.md) states current constraints;
+[architecture](../../../../../architecture.md) and the other area contracts contain the
+detailed requirements. ADRs explain the choices, alternatives, consequences,
+and amendment history. A historical accepted decision is not evidence that
+its original policy is still current: follow its status and amendment links.
+
+## Coverage and provenance
+
+The initial backfill preserves the existing `AD-01`–`AD-21` identifiers and
+all 105 numbered decisions already in [the progress log](../../../../progress.md#decisions),
+including operational, release, and tooling choices whose consequences explain
+the architecture. Three additional records capture existing framework,
+verification, and scheduling decisions that had no individual `AD-nn` section.
+Decision 106 records this documentation change. Existing identifiers are not
+renumbered: `ad-04.md` is architecture `AD-04`, while `decision-004.md` is
+progress decision 4, a different choice.
+
+Records were reconstructed from the governing documents, implementation,
+tests, and actual introducing/amending git commits. Original dates describe
+when the decision was made, not the backfill date (2026-10-17). Source prose
+and its evidence remain available; no missing alternative is invented. The
+progress Decisions log remains append-only and the progress file retains
+completed work-package evidence and Operator handoff. Under
+[decision 107](../../../../adr/decision-107.md), [current.md](../../../../plans/current.md) selects the
+active plan, and task files own active execution status; historical backlog
+does not activate itself.
+
+## Topic map
+
+| Area | Start here | Related implementation decisions |
+| --- | --- | --- |
+| Complete snapshots and observations | [AD-01](../../../../../adr/ad-01.md), [AD-02](../../../../../adr/ad-02.md), [AD-03](../../../../../adr/ad-03.md) | [Safe paths](../../../../../adr/decision-014.md), [collision policy](../../../../../adr/decision-015.md) |
+| Storage, publication, and hashing | [AD-09](../../../../../adr/ad-09.md), [AD-10](../../../../../adr/ad-10.md), [AD-11](../../../../../adr/ad-11.md), [AD-18](../../../../../adr/ad-18.md) | [Path bases](../../../../../adr/decision-013.md), [same-operation inode evidence](../../../../../adr/decision-093.md) |
+| Retention, repair, and deletion | [AD-04](../../../../../adr/ad-04.md), [AD-05](../../../../../adr/ad-05.md), [AD-06](../../../../../adr/ad-06.md), [AD-13](../../../../../adr/ad-13.md), [AD-20](../../../../../adr/ad-20.md) | [Prune commit semantics](../../../../../adr/decision-077.md), [purge](../../../../../adr/decision-096.md), [three-revision default](../../../../../adr/decision-102.md), [HTTP maintenance authority](../../../../../adr/decision-117.md) |
+| Recovery and quarantine | [AD-12](../../../../../adr/ad-12.md), [AD-14](../../../../../adr/ad-14.md), [AD-16](../../../../../adr/ad-16.md), [AD-17](../../../../../adr/ad-17.md) | [Journal unknown fields](../../../../../adr/decision-020.md), [cleanup authority](../../../../../adr/decision-103.md), [supervised cancellation](../../../../../adr/decision-104.md), [legacy history](../../../../../adr/decision-105.md), [CLI observation without replay](../../../../../adr/decision-120.md) |
+| Hub access, credentials, and dependencies | [AD-07](../../../../../adr/ad-07.md), [AD-08](../../../../../adr/ad-08.md), [AD-15](../../../../../adr/ad-15.md), [AD-21](../../../../../adr/ad-21.md) | [Credential validation](../../../../../adr/decision-011.md), [explicit restricted scope](../../../../../adr/decision-098.md), [server credentials and capabilities](../../../../../adr/decision-112.md), [command/candidate authority](../../../../../adr/decision-116.md), [candidate validity/authority](../../../../../adr/decision-119.md), [distinct MCP-reader transport](../../../../../adr/decision-124.md), [curated metadata read capability](../../../../../adr/decision-125.md) |
+| Sync throughput and capacity | [AD-19](../../../../../adr/ad-19.md) | [Bounded memory](../../../../../adr/decision-086.md), [one producer](../../../../../adr/decision-094.md), [failed reports with warnings](../../../../../adr/decision-095.md), [context propagation](../../../../../adr/decision-111.md) |
+| Verification and durable reporting | [Offline verification](../../../../../adr/offline-verification.md) | [Verification state](../../../../../adr/decision-051.md), [publication identity](../../../../../adr/decision-062.md), [retained set](../../../../../adr/decision-073.md), [nullable corrupt identity](../../../../../adr/decision-078.md), [complete verification lock](../../../../../adr/decision-110.md), [execution/process isolation](../../../../../adr/decision-111.md), [private verifier/reconciliation](../../../../../adr/decision-115.md), [confined worker listener](../../../../../adr/decision-128.md) |
+| Deployment, scheduling, and hardening | [Scheduling authority](../../../../../adr/systemd-scheduling.md) | [Mount units](../../../../../adr/decision-058.md), [hardening probe](../../../../../adr/decision-059.md), [offline egress](../../../../../adr/decision-060.md), [setgid exception](../../../../../adr/decision-061.md), [safe deploy](../../../../../adr/decision-065.md), [activated services/scheduled observation](../../../../../adr/decision-121.md), [Data-preserving local rollout](../../../../../adr/decision-126.md), [Rootless lifecycle](../../../../../adr/decision-127.md), [worker-owned listener/readiness](../../../../../adr/decision-128.md) |
+| Consumers and serving | [AD-10](../../../../../adr/ad-10.md) | [Independent copy helper](../../../../../adr/decision-067.md), [promotion ownership](../../../../../adr/decision-099.md), [serving mounts](../../../../../adr/decision-100.md), [public/native Unix API prefixes](../../../../../adr/decision-123.md), [optional authenticated MCP transport](../../../../../adr/decision-124.md), [nine narrow metadata tools](../../../../../adr/decision-125.md) |
+| Cockpit administration | [Plugin boundary](../../../../../adr/decision-087.md) | [Operation surface](../../../../../adr/decision-089.md), [bundled TOML](../../../../../adr/decision-091.md), [credential import](../../../../../adr/decision-092.md), [repository links](../../../../../adr/decision-101.md), [candidate validity/authority](../../../../../adr/decision-119.md), [API client and guarded candidate flow](../../../../../adr/decision-122.md) |
+| Framework, dependencies, and development | [FW-01–FW-04](../../../../../adr/fw-01.md) | [Transport boundary](../../../../../adr/decision-108.md), [submission receipts](../../../../../adr/decision-109.md), [scoped correlation/redaction](../../../../../adr/decision-111.md), [optional MCP protocol/diagnostics](../../../../../adr/decision-124.md), [server dependency/configuration boundary](../../../../../adr/decision-112.md), [authenticated metadata lifespan](../../../../../adr/decision-113.md), [durable admission without replay](../../../../../adr/decision-114.md), [bounded execution/private verifier](../../../../../adr/decision-115.md), [typed command admission](../../../../../adr/decision-116.md), [explicit maintenance authority](../../../../../adr/decision-117.md), [independent typed client](../../../../../adr/decision-118.md), [reader/candidate integration](../../../../../adr/decision-119.md), [operational CLI observation](../../../../../adr/decision-120.md), [scheduled observation continuity](../../../../../adr/decision-121.md), [Runtime baseline](../../../../../adr/decision-007.md), [provider-neutral gate](../../../../../adr/decision-008.md), [plugin toolchain](../../../../../adr/decision-088.md) |
+
+MCP mounted security proof under the existing 124/125 decisions is traced in the
+[MCP threat/control/test map](../../../../../mcp.md#read-only-boundary)
+and its [MCP-003 task](../../../../plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md).
+Proof-only work introduces no placeholder architectural decision.
+[MCP-004 client/package acceptance](../../../../plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md)
+completes the existing 124/125 guidance through a
+[protected-file client](../../../../../mcp.md#connect), without a
+new decision or capability.
+
+## Maintenance rules
+
+For every change or new plan being implemented:
+
+1. Review the affected invariant sections and relevant ADRs before implementing.
+   Record this review in the work-package evidence. When no invariant or
+   architectural choice changes, do not create a placeholder ADR.
+2. Add every new invariant to `docs/invariants.md` in the same work package;
+   update changed constraints and detailed contracts together. Preserve IDs,
+   and explicitly record any retirement, replacement, or narrow exception.
+3. Record each new architectural choice in the numbered progress Decisions
+   log and in `decision-NNN.md`, using the same number, padded to at least
+   three digits. Add it to this index and the relevant topic row. A new
+   `AD-nn` architectural rule also receives its corresponding `ad-nn.md` and
+   architecture section, with links between the rule and its progress record.
+4. Amend an existing ADR's status and amendment links when the choice evolves.
+   Retain its original context, decision, rationale, and evidence. A replacement
+   decision gets a new record; link both directions and identify whether it
+   supersedes the whole record or just one policy. Never reuse an identifier.
+5. Keep contracts, invariants, ADRs, index, plan amendments where needed, and
+   the task/plan/current records and completed `docs/agents/progress.md` evidence
+   together in the implementation commit. Run the repository
+   gate and verify local documentation links and record coverage before
+   committing, as required by [the workflow](../../../../workflow.md).
+
+Each new record must identify:
+
+- **Identity and status:** stable source ID, title, original decision date,
+  work package, and `Proposed`, `Accepted`, `Amended`, or `Superseded` status
+  (qualified historical status is appropriate for backfilled records).
+- **Context and decision:** the problem or constraint and the selected approach.
+- **Rationale and alternatives:** why it was selected and what was rejected.
+  If the historical source does not document an alternative, say so.
+- **Consequences:** resulting behaviour, tradeoffs, compatibility, and limits.
+- **Evidence and relationships:** source contract/plan/progress links, relevant
+  implementation and tests, introducing/amending commits, and any predecessor
+  or replacement. A new uncommitted decision cites its work package and
+  "this commit"; do not invent a hash before the commit exists.
+
+The two legacy namespaces and three named records above remain stable.
+Do not create a third sequence for new decisions; use the progress number.
+
+## Architecture records
+
+| ID | Decision |
+| --- | --- |
+| `AD-01` | [The archive unit is a complete snapshot at one resolved commit SHA](../../../../../adr/ad-01.md) |
+| `AD-02` | [The first sync preserves the latest observed revision; there is no backfill](../../../../../adr/ad-02.md) |
+| `AD-03` | [Subsequent revisions are whatever each scheduled run observes](../../../../../adr/ad-03.md) |
+| `AD-04` | [Retention defaults to three unique published revisions per repository](../../../../../adr/ad-04.md) |
+| `AD-05` | [Retention order comes from an immutable publication generation, never from time](../../../../../adr/ad-05.md) |
+| `AD-06` | [Upstream disappearance never deletes local content](../../../../../adr/ad-06.md) |
+| `AD-07` | [Dependencies are detected statically and warned about, never resolved](../../../../../adr/ad-07.md) |
+| `AD-08` | [Hub access is the official Python client only](../../../../../adr/ad-08.md) |
+| `AD-09` | [The native Hub cache on the archive dataset is the canonical download store](../../../../../adr/ad-09.md) |
+| `AD-10` | [Consumers receive an immutable ordinary-file publication tree](../../../../../adr/ad-10.md) |
+| `AD-11` | [Publication hardlinks within the dataset; copy mode is explicit and never a silent fallback](../../../../../adr/ad-11.md) |
+| `AD-12` | [Durable state is JSON on the filesystem; there is no database](../../../../../adr/ad-12.md) |
+| `AD-13` | [Repair replaces a damaged instance without changing what the revision *is*](../../../../../adr/ad-13.md) |
+| `AD-14` | [Every mutation is bounded by an atomic filesystem operation and a durable checkpoint](../../../../../adr/ad-14.md) |
+| `AD-15` | [Repository content is data, never code](../../../../../adr/ad-15.md) |
+| `AD-16` | [Ambiguity stops the machine; it never triggers a guess](../../../../../adr/ad-16.md) |
+| `AD-17` | [One writer; locking is local](../../../../../adr/ad-17.md) |
+| `AD-18` | [Ingestion verification hashes bytes; it does not trust identifiers](../../../../../adr/ad-18.md) |
+| `AD-19` | [Download ahead with one bounded producer](../../../../../adr/ad-19.md) |
+| `AD-20` | [Repository removal is explicit, unmanaged, and transactional](../../../../../adr/ad-20.md) |
+| `AD-21` | [Restricted Hub scope is explicit and shares one consumer boundary](../../../../../adr/ad-21.md) |
+| `FW-01`–`FW-04` | [Deterministic functions and a closed runtime dependency set](../../../../../adr/fw-01.md) |
+| Verification policy | [Quarterly offline verification against immutable manifests](../../../../../adr/offline-verification.md) |
+| Scheduling authority | [systemd owns scheduling and lifecycle](../../../../../adr/systemd-scheduling.md) |
+
+## Numbered progress decisions
+
+These entries retain their original chronology. Read the individual record's
+status and current-contract links before applying a historical choice.
+
+| Source decision | Record |
+| --- | --- |
+| 1 | [`docs/schemas.md` added beyond the plan §7 documentation set](../../../../../adr/decision-001.md) |
+| 2 | [`docs/cli.md` added beyond the plan §7 documentation set](../../../../../adr/decision-002.md) |
+| 3 | [Exit-code aggregation order fixed as `40`, `50`, `30`](../../../../../adr/decision-003.md) |
+| 4 | [Prune removes the per-SHA reference before tombstoning the tree](../../../../../adr/decision-004.md) |
+| 5 | [`sync.stale_staging_age_hours` added to the configuration schema](../../../../../adr/decision-005.md) |
+| 6 | [MIT license, `uv_build` backend](../../../../../adr/decision-006.md) |
+| 7 | [Python 3.14 pin confirmed; `hf-xet` is a required dependency, not an extra](../../../../../adr/decision-007.md) |
+| 8 | [`scripts/` added to the project layout; no CI-provider configuration](../../../../../adr/decision-008.md) |
+| 9 | [`--token-file` with `token_mode = "disabled"` is `HFARG002`, not a silent choice](../../../../../adr/decision-009.md) |
+| 10 | [`HFARG006` added for a systemd credential that is present but unusable](../../../../../adr/decision-010.md) |
+| 11 | [A credential file is validated, never sanitized](../../../../../adr/decision-011.md) |
+| 12 | [`hub.credential_name` may not be `.` or `..`](../../../../../adr/decision-012.md) |
+| 13 | [A reference's paths are relative to `published/`, every other artifact's are archive-relative](../../../../../adr/decision-013.md) |
+| 14 | [The repository-relative path grammar is published](../../../../../adr/decision-014.md) |
+| 15 | [Collision folding is deliberately stricter than any one filesystem](../../../../../adr/decision-015.md) |
+| 16 | [Five identifier grammars accepted a trailing newline; fixed](../../../../../adr/decision-016.md) |
+| 17 | [`credentials.py` and `identity.py` added to the plan §7 module list](../../../../../adr/decision-017.md) |
+| 18 | [Durable files are indented; the `--json` envelope is not](../../../../../adr/decision-018.md) |
+| 19 | [Reading a durable artifact takes the caller's error class *and* code](../../../../../adr/decision-019.md) |
+| 20 | [§1.1's "unknown keys are preserved when rewritten" applies only to the journal](../../../../../adr/decision-020.md) |
+| 21 | [A Pydantic validator must raise `ValueError`, never `TypeError`](../../../../../adr/decision-021.md) |
+| 22 | [`config validate` reports `token_source`](../../../../../adr/decision-022.md) |
+| 23 | [A whole-table constraint is not reported alongside a bad field in the same table](../../../../../adr/decision-023.md) |
+| 24 | [A partially implemented command reports what it probed, not a placeholder](../../../../../adr/decision-024.md) |
+| 25 | [The taxonomy is checked against the documents that define it, in both directions](../../../../../adr/decision-025.md) |
+| 26 | [The `--json` envelope is a model, not a dict](../../../../../adr/decision-026.md) |
+| 27 | [`archive init` writes the configured archive id; it does not mint one](../../../../../adr/decision-027.md) |
+| 28 | [`STO-000` lands the primitives it cannot be correct without](../../../../../adr/decision-028.md) |
+| 29 | [`archive init --inspect` exits `0` for an already-initialized archive](../../../../../adr/decision-029.md) |
+| 30 | [A leftover `.tmp-` sibling is part of the known-empty layout contract](../../../../../adr/decision-030.md) |
+| 31 | [`published/` adoption compares ownership against the archive root](../../../../../adr/decision-031.md) |
+| 32 | [A write that fails after every check passed is `HFMNT008`](../../../../../adr/decision-032.md) |
+| 33 | [The check runner is its own module, `preflight.py`](../../../../../adr/decision-033.md) |
+| 34 | [`archive_root` reports `HFMNT015` as well as `HFMNT001`](../../../../../adr/decision-034.md) |
+| 35 | [A skipped check has three meanings, and the gate reads them differently](../../../../../adr/decision-035.md) |
+| 36 | [`archive.py` split out of `storage.py`](../../../../../adr/decision-036.md) |
+| 37 | [The `sentinel` check owns "the archive is not initialized"](../../../../../adr/decision-037.md) |
+| 38 | [`HFWRN005` fires at a tenth of the reserve](../../../../../adr/decision-038.md) |
+| 39 | [`free_space` does not need an initialized archive](../../../../../adr/decision-039.md) |
+| 40 | [`locking.py` added to the plan §7 module list](../../../../../adr/decision-040.md) |
+| 41 | [The capability probes stay inside `.store/health/`](../../../../../adr/decision-041.md) |
+| 42 | [Checkpoint evidence names paths by key suffix](../../../../../adr/decision-042.md) |
+| 43 | [The recovery report is a run report](../../../../../adr/decision-043.md) |
+| 44 | [`projected_publication_bytes` is measured under the configured mode, not hypothetically under copy](../../../../../adr/decision-044.md) |
+| 45 | [An empty tree listing is reported; an entry with no path is refused](../../../../../adr/decision-045.md) |
+| 46 | [A hashing failure's error class must match its code's family](../../../../../adr/decision-046.md) |
+| 47 | [`HFSYN009` added for content that cannot be read while hashing](../../../../../adr/decision-047.md) |
+| 48 | [`hfcache list` lands at `SYNC-002`](../../../../../adr/decision-048.md) |
+| 49 | [A verification finding may name no publication instance, and `HFARG004` now covers a revision or a run this archive does not hold](../../../../../adr/decision-049.md) |
+| 50 | [`verify --estimate` reports storage maintenance as `undetectable`](../../../../../adr/decision-050.md) |
+| 51 | [`verification_state` comes from `catalog/verification.json`, and a revision nothing has re-read is `unverified`](../../../../../adr/decision-051.md) |
+| 52 | [`storage.write_model` takes the caller's error class, not just its code](../../../../../adr/decision-052.md) |
+| 53 | [Evidence for a path a later checkpoint moves carries no `_path` suffix](../../../../../adr/decision-053.md) |
+| 54 | [`repair.py` added beyond plan §7's module list](../../../../../adr/decision-054.md) |
+| 55 | [A crashed sync run journal closes; it does not stop the machine](../../../../../adr/decision-055.md) |
+| 56 | [A committed publication or repair discards its staging area](../../../../../adr/decision-056.md) |
+| 57 | [The `--config` and `--token-file` options do not check readability at parse time](../../../../../adr/decision-057.md) |
+| 58 | [The archive mount is defined by explicit units and the fstab line is retired](../../../../../adr/decision-058.md) |
+| 59 | [The hardening is tested by a probe that reads the deployed unit](../../../../../adr/decision-059.md) |
+| 60 | [`IPAddressDeny=any` on the verification unit rather than `PrivateNetwork=true`](../../../../../adr/decision-060.md) |
+| 61 | [`RestrictSUIDSGID=true` is the one §22.5 setting not applied](../../../../../adr/decision-061.md) |
+| 62 | [The reported verification state is keyed by publication instance, not by SHA](../../../../../adr/decision-062.md) |
+| 63 | [§24's host half is two shipped files, not two runbook steps](../../../../../adr/decision-063.md) |
+| 64 | [The event log is emitted, not returned; and its vocabulary is closed](../../../../../adr/decision-064.md) |
+| 65 | [Plan §30 step 1 would have unmounted the archive; and a rollback needs two releases](../../../../../adr/decision-065.md) |
+| 66 | [A setgid directory on this mount is made by `chmod`, not by `mkdir`'s mode argument](../../../../../adr/decision-066.md) |
+| 67 | [The consumer helper is `examples/copy-revision.py`, and it may not import `hfcache`](../../../../../adr/decision-067.md) |
+| 68 | [A prune's container cleanup is checkpoint 10, after the commit point, and its atomic act is `rmdir`](../../../../../adr/decision-068.md) |
+| 69 | [There is no `tests/integration/`; the tier lives beside its fixtures, and §26.6's map is a test rather than a comment](../../../../../adr/decision-069.md) |
+| 70 | [An artifact that will not parse is not an absent artifact](../../../../../adr/decision-070.md) |
+| 71 | [The release is deployed from a wheel already; it is not deployed from `dist/`, and it should not be](../../../../../adr/decision-071.md) |
+| 72 | [A throwaway archive has to be a real NFS mount, so the writer exports one to itself](../../../../../adr/decision-072.md) |
+| 73 | [Verification enumerates the retained set, and `current.json` is not in it](../../../../../adr/decision-073.md) |
+| 74 | [The interpreter directory is part of the deployment and was outside every sweep](../../../../../adr/decision-074.md) |
+| 75 | [The first release is `v0.1.2`, because that is what is deployed](../../../../../adr/decision-075.md) |
+| 76 | [The rename decision 69 deferred is performed, and the index that made it safe now checks itself](../../../../../adr/decision-076.md) |
+| 77 | [The docs move to the code, because the built mechanism already delivers §7.4's semantics and a failure-time checkpoint buys recovery nothing](../../../../../adr/decision-077.md) |
+| 78 | [`commit_sha` widens to nullable with no schema bump, and the entry the retained-key rule cannot see gets its own clearing rule](../../../../../adr/decision-078.md) |
+| 79 | [0.1.3 is tagged because it is deployed, and it is still not 1.0.0](../../../../../adr/decision-079.md) |
+| 83 | [`CHANGELOG.md` beside the annotated tags, and README `Status` stops accreting release notes](../../../../../adr/decision-083.md) |
+| 84 | [Placeholders replace environment specifics, records included](../../../../../adr/decision-084.md) |
+| 85 | [The storage contract becomes server-agnostic, and evaluation gets a first run](../../../../../adr/decision-085.md) |
+| 86 | [Guest memory is bounded in the units, not trusted to the host](../../../../../adr/decision-086.md) |
+| 87 | [A Cockpit plugin in `cockpit/`, contracted by `docs/cockpit.md`, tracked as the `CPT` family](../../../../../adr/decision-087.md) |
+| 88 | [The starter kit runs under pnpm; node is a build-time toolchain, not a dependency](../../../../../adr/decision-088.md) |
+| 89 | [The operation surface bends to the CLI, not the reverse](../../../../../adr/decision-089.md) |
+| 90 | [`cockpit/` carries LGPL-2.1-or-later beside the repository's MIT](../../../../../adr/decision-090.md) |
+| 91 | [`smol-toml` is bundled for configuration round-tripping](../../../../../adr/decision-091.md) |
+| 92 | [Plugin CLI invocations run in transient units that import the deployment's encrypted Hub credential](../../../../../adr/decision-092.md) |
+| 93 | [A hardlink carries same-operation content evidence only with exact object identity](../../../../../adr/decision-093.md) |
+| 94 | [Queue-ahead uses one repository producer inside the existing run lock](../../../../../adr/decision-094.md) |
+| 95 | [A failed report may retain warnings observed before another repository failed](../../../../../adr/decision-095.md) |
+| 96 | [Whole-repository deletion is explicit, unmanaged-only, and reuses the prune commit point](../../../../../adr/decision-096.md) |
+| 97 | [A completed 0.1.5 purge is operationally readable by 0.1.4; an open one is the rollback barrier](../../../../../adr/decision-097.md) |
+| 98 | [Restricted Hub scope requires explicit `required` token policy and one shared consumer authorization boundary](../../../../../adr/decision-098.md) |
+| 99 | [Consumer revision creation and serving promotion have separate ownership boundaries](../../../../../adr/decision-099.md) |
+| 100 | [Serving consumes the verified ordinary-file tree through read-only container mounts](../../../../../adr/decision-100.md) |
+| 101 | [Repository names are canonical, type-aware external links](../../../../../adr/decision-101.md) |
+| 102 | [Retention defaults to three while explicit five remains compatible](../../../../../adr/decision-102.md) |
+| 103 | [Only resolved, proven redundant staging quarantine may be released](../../../../../adr/decision-103.md) |
+| 104 | [Confirmed operator cancellation may replace the empty-staging age heuristic](../../../../../adr/decision-104.md) |
+| 105 | [Only journals supplying deletion authority need current checkpoint order](../../../../../adr/decision-105.md) |
+| 108 | [Typed services and maintained transport implementations](../../../../../adr/decision-108.md) |
+| 109 | [Bounded non-resuming operation receipts](../../../../../adr/decision-109.md) |
+| 110 | [Guard complete command execution and verification persistence](../../../../../adr/decision-110.md) |
+| 111 | [Scope execution correlation and offline process initialization](../../../../../adr/decision-111.md) |
+| 112 | [Separate server authority and verified bearer capabilities](../../../../../adr/decision-112.md) |
+| 113 | [Serve bounded metadata through one authenticated lifespan](../../../../../adr/decision-113.md) |
+| 114 | [Persist non-resuming admission without discarding uncertainty](../../../../../adr/decision-114.md) |
+| 115 | [Execute one bounded lane and reconcile the exact verifier](../../../../../adr/decision-115.md) |
+| 116 | [Admit typed command routes without widening server authority](../../../../../adr/decision-116.md) |
+| 117 | [Revalidate explicit maintenance authority at execution](../../../../../adr/decision-117.md) |
+| 118 | [Observe one API authority without replaying uncertain submissions](../../../../../adr/decision-118.md) |
+| 119 | [Preserve server read identity and separate candidate validity from authority](../../../../../adr/decision-119.md) |
+| 120 | [Separate command execution from resumable CLI observation](../../../../../adr/decision-120.md) |
+| 121 | [Activate one server and retain scheduled observation without replay](../../../../../adr/decision-121.md) |
+| 122 | [Preserve Cockpit authority through the API client and guarded candidates](../../../../../adr/decision-122.md) |
+| 123 | [Keep public prefixes separate from native Unix REST paths](../../../../../adr/decision-123.md) |
+| 124 | [Add an optional authenticated MCP transport after REST acceptance](../../../../../adr/decision-124.md) |
+| 125 | [Expose nine typed metadata tools through a narrow read capability](../../../../../adr/decision-125.md) |
+| 126 | [Guard a local rollout without NAS writes or false acceptance](../../../../../adr/decision-126.md) |
+| 127 | [Run reviewed rootless containers without forced executor cleanup](../../../../../adr/decision-127.md) |
+| 128 | [Create the rootless verifier listener inside its confinement](../../../../../adr/decision-128.md) |
+| 129 | [Build all service image stages on pinned UBI 10 micro](../../../../../adr/decision-129.md) |
+| 131 | [Explicit disposable probes and qualified isolation evidence](../../../../../adr/decision-131.md) |
+| 132 | [Positively classify native releases before effects](../../../../../adr/decision-132.md) |

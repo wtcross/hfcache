@@ -1,17 +1,16 @@
-# Decision 030: A leftover `.tmp-` sibling is part of the known-empty layout contract
+# A leftover `.tmp-` sibling is part of the known-empty layout contract
+
+- Decision identity: 030.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
-- Original work package: `STO-000`.
-- Source: [decision 30 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
-§6.2 permits retrying a failed initialization once
+The initialization contract permits retrying a failed initialization once
 `--inspect` confirms the partial paths match the contract, but a crash
 between the sentinel's temporary write and its rename leaves a file the
 contract did not name — so the retry would refuse as "unknown content" and
@@ -27,9 +26,8 @@ performs and it is on a file the command owns, so `FS-19` is intact.
 
 The source entry first appears in
 [5a6fa18](https://github.com/wtcross/hfcache/commit/5a6fa1816bedacf014f135468241f99ca42cca60)
-(2026-07-25, `STO-000: implement guarded one-time archive initialization and
-inspection`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-25, `storage primitives: implement guarded one-time archive initialization and
+inspection`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/architecture.md](../architecture.md),
 [docs/cli.md](../cli.md).

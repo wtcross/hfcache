@@ -1,13 +1,12 @@
-# Decision 098: Restricted Hub scope requires explicit `required` token policy and one shared consumer authorization boundary
+# Restricted Hub scope requires explicit `required` token policy and one shared consumer authorization boundary
+
+- Decision identity: 098.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-23.
-- Original work package: `HUB-010`.
-- Source: [decision 98 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -21,7 +20,7 @@ Credential or gate revocation stops future fetches but does not delete
 already published revisions; removal from configuration followed by an
 explicit purge remains the deletion path. This widens configuration
 acceptance without changing a durable JSON format. Rolling back to a
-pre-HUB-010 binary requires stopping sync and temporarily returning the
+pre-Hub access binary requires stopping sync and temporarily returning the
 configuration to `optional`, without syncing restricted repositories on
 that release. AD-21 retires the original NG-06 public-only boundary.
 **Rejected:** letting an optional token automatically broaden repository
@@ -42,7 +41,7 @@ with this qualification. AD-21 preserves the original scope and why it changed.
 
 The source entry first appears in
 [c082f87](https://github.com/wtcross/hfcache/commit/c082f8763aecff0b100d6877041b0d5662d1be0a)
-(2026-08-23, `HUB-010: enable authenticated repository scope`). The decision
+(2026-08-23, `Hub access: enable authenticated repository scope`). The decision
 text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 

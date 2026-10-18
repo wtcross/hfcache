@@ -1,4 +1,6 @@
-# Decision 089: The operation surface bends to the CLI, not the reverse
+# The operation surface bends to the CLI, not the reverse
+
+- Decision identity: 089.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
@@ -6,9 +8,6 @@ Current contracts and later qualifications below govern.
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 - Original decision date: 2026-07-30.
-- Original work package: `CPT-001`.
-- Source: [decision 89 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -22,14 +21,14 @@ browser tab, accepted for selector-restricted runs because interruption
 is a crash shape the application is designed for (`AD-09`,
 per-repository transactions, `docs/operations.md` §9) and the UI
 surfaces `recover --dry-run` afterward; the alternative — a templated
-`hfcache-sync@.service` carrying selectors under the full §22.5
+`hfcache-sync@.service` carrying selectors under the full service
 hardening — is recorded as the follow-up seam rather than built now,
 packaging surface ahead of demonstrated need. Full sync and full
 verification stay behind the shipped units unconditionally (`CP-04`):
 the units carry the sandbox, `MemoryHigh=`, and the journal identity,
 and Cockpit's own guidance is not to run long uninterruptible work from
 a page. **Excluded outright** (`CP-05`–`CP-08`): touching
-`hfcache.target`, enabling `hfcache-verify.timer` (handoff item 8 owns
+`hfcache.target`, enabling `hfcache-verify.timer` (operator approval owns
 that calendar), `archive init` in any form, and any credential surface.
 
 ## Later history and current interpretation
@@ -43,7 +42,7 @@ excluded actions remain.
 
 The source entry first appears in
 [ebc112f](https://github.com/wtcross/hfcache/commit/ebc112f30995e70a1ad3c6d214ee53b803f43b7f)
-(2026-07-30, `CPT-001: Cockpit plugin contract and work-package plan`). The
+(2026-07-30, `Cockpit integration: Cockpit plugin contract and integration design`). The
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
@@ -58,7 +57,7 @@ Relevant verification:
 [cockpit/test/command.test.ts](../../cockpit/test/command.test.ts).
 
 
-## 2026-10-18 Cockpit API integration amendment (API-015)
+## 2026-10-18 Cockpit API integration amendment
 
 Page/transient observer loss and stopping the sync client no longer imply
 execution interruption. Accepted work belongs to the API/private worker; expose

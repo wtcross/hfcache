@@ -1,4 +1,6 @@
-# Decision 061: `RestrictSUIDSGID=true` is the one §22.5 setting not applied
+# Preserve required setgid directories with compensating privilege controls
+
+- Decision identity: 061.
 
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
@@ -6,9 +8,6 @@ Current contracts and later qualifications below govern.
 Executor/client unit roles are amended by [decision 121](decision-121.md).
 
 - Original decision date: 2026-07-26.
-- Original work package: `SEL-001`.
-- Source: [decision 61 in the append-only Decisions log](../agents/progress.md#decisions).
-- Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
 
@@ -19,7 +18,7 @@ The failing requirement. `publication.create_staging` creates the staging
 tree at `PUBLISHED_DIRECTORY_MODE = 0o2750` — setgid — because publication is
 a rename and a rename does not change a mode, so that is the only moment the
 published directory's mode can be set. The setgid bit is what carries the
-group the consumer export's read identity depends on (§5.2), and the
+group the consumer export's read identity depends on (architecture ownership rules), and the
 `published/` anchor the NAS was provisioned with is `2750` for the same
 reason. `RestrictSUIDSGID=true` is implemented as a seccomp filter on the
 mode argument of `mkdir`/`chmod`/`mknod`, so it refuses that call outright.
@@ -63,9 +62,8 @@ hardening.
 
 The source entry first appears in
 [657d5a7](https://github.com/wtcross/hfcache/commit/657d5a711bd442a09511915f94c0eebc4359d52f)
-(2026-07-26, `SEL-001: validate every archive operation with SELinux
-enforcing`). The decision text above preserves the complete reasoning in the
-current historical log, including its recorded alternatives and consequences.
+(2026-07-26, `: validate every archive operation with SELinux
+enforcing`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/security.md](../security.md),
 [docs/architecture.md](../architecture.md).
@@ -77,7 +75,7 @@ Implementation or shipped-artifact evidence:
 Relevant verification:
 [scripts/hardening-probe.py](../../scripts/hardening-probe.py).
 
-## API-014 executor/client role amendment (2026-10-18)
+## scheduled observation executor/client role amendment (2026-10-18)
 
 [Decision 121](decision-121.md) moves archive execution to API/private-verifier
 units. Those actual executors retain the setgid-compatible hardening exception
