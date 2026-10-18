@@ -120,22 +120,30 @@ UID/GID 981 holds the original noncreating flock and proves host NFS-ro via
 app-target enablement preserve normal boot order; root alone performs the
 quiescent holder handoff with NAS-ro/masks continuous. The guard is not a
 continuous monitor and a private read-only sandbox view is not host proof.
-Application/immutable artifacts remain clean 481fcc4; host policy, actual
-activation and residual holds are separately recorded in
+At OPS-016, application artifacts were clean 481fcc4; current 0.2.1 artifacts
+are clean 4088994. Unchanged independent host policy, its original activation
+and residual holds are separately recorded in
 [OPS-016](../plans/tasks/ops-016-local-rootless-deployment.md).
 
 The selected [listener correction](../plans/2026-10-18-plan-container-worker-listener.md)
 follows the local 0.2.0 partial release. OPS-017 is source/owned-fixture work only:
 explicit PID1 worker-created listener and container READY under existing
-confinement, preserving strict native FD3 activation. Root alone performs later
-guarded artifact selection/host acceptance. Installed 0.2.0 and its API-to-worker
-SELinux hold remain until actual OPS-018 container-peer PROBE; no host-origin
-probe or source test can clear it. No NAS file I/O/jobs, policy/label/seccomp
+confinement, preserving strict native FD3 activation. Root alone performs
+guarded selection/host acceptance. Completed OPS-018 now selects 0.2.1 and closes
+the connection hold through actual installed API-container PROBE; no host-origin
+probe or source test supplied that proof. No NAS file I/O/jobs, policy/label/seccomp
 weakening, other-host change, remote publication or automatic backlog activation.
 
-OPS-019 now precedes fresh REL-013 artifacts under Tyler's UBI 10 requirement.
+Completed OPS-019 supplies fresh REL-013 artifacts under Tyler's UBI 10 requirement.
 All built service FROM stages use pinned micro, with only reviewed binary/Red
 Hat CA-data donors; [decision 129](../adr/decision-129.md) governs implementation.
-Old Debian candidates/stopped gate are superseded evidence. Existing 0.2.0
-runtime, Enforcing policy, permanent guard, NAS-ro and writer masks remain.
+Old Debian candidates/stopped gate are superseded evidence. Current 0.2.1
+retains Enforcing policy, permanent guard, NAS-ro and writer masks.
 No source/base work permits NAS file I/O/jobs, other-host change or remote push.
+
+### 0.2.1 local checkpoint (OPS-018, 2026-10-18)
+
+Actual installed API-container PROBE/notify/TLS/drain in
+[OPS-018](../plans/tasks/ops-018-container-worker-rollout.md) closes connection
+hold 22 for clean 0.2.1 UBI artifacts. Every NAS-ro/guard/writer-mask/state/hardening
+boundary remains; no NAS I/O/job or other-host/remote action is authorized.

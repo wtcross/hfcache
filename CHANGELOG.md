@@ -7,37 +7,38 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
-## 0.2.1 — Preparing
+## 0.2.1 — Deployed locally; tag pending
 
-OPS-019 implements pinned UBI 10 micro for all service-image FROM stages, with
-only verified executable/Red Hat CA-data donors and authenticated portable Python.
-Dirty preview foundation/worker/TLS proofs and the full gate pass. Earlier
-Debian/Alpine candidates and their stopped gate are superseded; fresh clean
-artifacts and proof follow the source commit.
+All service-image FROM stages use pinned UBI 10 micro, with authenticated portable
+Python and only verified executable/Red Hat CA-data donors. Clean artifacts from
+source 4088994 and the actual guarded rollout pass foundation, compatibility,
+notify/container-peer/isolation, TLS/REST/MCP/client and non-killing drain/restart
+acceptance. Earlier Debian/dirty/stopped/failed candidates remain explicit history.
 
-Source implements the rootless worker-listener correction: explicit direct PID1 startup creates
-the private AF_UNIX socket under the worker's existing confinement, with strict
-early inheritance audit, instance/pinned-parent/exact-inode ownership through
-joined cleanup and real container-proxied READY before API startup. Native named
-FD3 activation stays strict. No SELinux policy/label, seccomp, credential or
-verification-domain authority is widened; no dependency/durable format change
-is intended. Clean artifacts and installed proof are later tasks: **not deployed
-or tagged**. The 0.2.0 worker hold and NAS restrictions below remain explicit.
-Source/kernel tests, actual explicitly dirty container-peer/notify/isolation
-preview and the full --with-build gate pass; these do not certify a clean release
-artifact or installed API-to-worker acceptance.
+The direct PID1 worker creates its private AF_UNIX listener under existing
+confinement, with strict early inheritance audit, instance/pinned-parent/exact-inode
+ownership through joined cleanup and real container-proxied READY before API
+startup. Actual installed API-container PROBE passes under SELinux Enforcing,
+closing the 0.2.0 connection hold for this deployment. Native named FD3 stays strict;
+no SELinux policy/process-label, seccomp, credential, domain, dependency or durable
+schema authority is widened. Full --with-build gates pass.
+
+**Local annotated 0.2.1 tag is not yet created.** NAS remains read-only, legacy
+writers masked and verification scheduling disabled. Live NAS verification/jobs,
+full storage/NFS workload, other-host and remote acceptance are not claimed.
+Disposable complete-domain evidence uses explicitly simulated NFS only.
 
 ## 0.2.0 — 2026-10-18, local partial-acceptance release
 
-The local rootless Caddy/API deployment is running and has local annotated
+The historical local rootless Caddy/API deployment has local annotated
 tag `v0.2.0`; no remote publication. Operational CLI commands
 require the authenticated API, and the selected rootless Podman deployment uses
 Caddy, a separate private verifier and container clients. This is a breaking
 CLI/deployment boundary. Final immutable artifacts come from clean source
 481fcc4; actual TLS/auth/registry/container-client/isolation and drain pass.
-SELinux still blocks API-container access to the private worker: host-origin
-peer probes do not establish end-to-end verification, which remains a release
-hold pending a reviewed activation/label design. NAS stays
+At 0.2.0 deployment, SELinux blocked API-container access to the private worker:
+host-origin peer probes did not establish end-to-end readiness. That limitation
+remains part of rollback to 0.2.0, rather than being relabelled as passing. NAS stays
 read-only, legacy writers stay blocked and forbidden live storage acceptance is
 not claimed. The local rollout plan retains these partial-acceptance holds.
 The implementation history below records its earlier scope and evidence, rather
@@ -64,7 +65,8 @@ Final real CLI-to-socket acceptance also corrects event observation for servers
 with small page/retained-event limits. Omitted limits use the server's adaptive
 default; retained event pages drain through empty within the existing deadline
 and page budgets, preserving exact outcomes and recovery handles. The current
-quickstart uses authenticated client setup; operator rollout checks remain pending.
+quickstart uses authenticated client setup. Local 0.2.1 listener/proxy acceptance
+is recorded above; NAS workload, calendar and other-host checks remain unrun.
 
 All operational commands now delegate to typed services. Non-estimate
 verification holds the common archive lock and storage preflight through scope

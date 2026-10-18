@@ -2,7 +2,8 @@
 
 - Status: Accepted and implemented in OPS-019, with actual dirty UBI preview
   foundation/worker/TLS proof and the full gate passing. REL-013 records fresh
-  clean artifact acceptance; installed OPS-018 acceptance remains pending.
+  clean artifact acceptance and OPS-018 records actual installed UBI runtime/peer/
+  lifecycle acceptance. Live NAS workloads and other-host acceptance remain unrun.
 - Date: 2026-10-18.
 - Work package: OPS-019, this commit.
 - Source: [progress decision 129](../progress.md#decisions),

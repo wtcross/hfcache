@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Historical writer deployment evidence; current API/MCP rollout checklist is pending operator acceptance |
+| Status | Historical writer evidence; local 0.2.1 listener checkpoint accepted; NAS/workload and remaining operator holds explicit |
 | Work package | `OPS-001` |
 | Derived from | `docs/plan.md` §21, §22, §29, §30, §35 |
 | Companion | `docs/operations.md` for running it once it is up |
@@ -1249,3 +1249,13 @@ The initial REL-013 gate was stopped, not passed. Fresh clean UBI artifacts and
 all acceptance repeat after committed OPS-019; no stage/selector/runtime change
 or worker-hold closure is claimed here. Keep NAS-ro/guard/masks/Enforcing policy,
 all state and locks, and all forbidden NAS/other-host/calendar limits unchanged.
+
+## 23. Corrected UBI listener installed (OPS-018, 2026-10-18)
+
+[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) selects protected 0.2.1
+source 4088994 UBI artifacts. Actual installed API-container PROBE under Enforcing
+passes before/after clean drain/restart, closing hold 22; TLS/auth/MCP/client and
+unchanged guard/locks/stores/secrets/effective confinement are recorded. The old
+socket is retained by exact same-/run rename, with persistent ledger. No NAS I/O/
+job/storage or other-host acceptance is claimed; verification scheduling stays
+disabled and writer masks remain. Local 0.2.1 tag is pending REL-014.

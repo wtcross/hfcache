@@ -64,39 +64,30 @@ consumers at all.
 
 ## Status
 
-**Preparing `0.2.1`; not deployed or tagged.** [OPS-019](docs/plans/tasks/ops-019-ubi10-runtime-images.md)
-implements pinned UBI 10 micro for every service-image build stage. Actual dirty
-preview foundation, worker and TLS proofs plus the full gate pass; fresh clean
-artifacts remain the next task. Earlier Debian candidates are superseded. The
-[worker-listener correction](docs/plans/2026-10-18-plan-container-worker-listener.md)
-creates the private socket inside the already confined worker and provides
-real container readiness. Native FD3 activation and existing hardening remain;
-the deployed 0.2.0 worker hold stays open until actual later rollout acceptance.
+**`0.2.1` is deployed locally; its local release tag is pending.** All service
+images now use pinned UBI 10 micro. The confined worker creates its own private
+listener and sends actual readiness before API startup. The installed API
+container's private probe passes under SELinux Enforcing, including after clean
+drain/restart, closing the former worker-connectivity hold. Verified local TLS,
+REST/authentication, the exact nine MCP tools and the fixed container client pass.
+Native FD3 activation and existing hardening remain unchanged.
 
-**`0.2.0` is running locally with partial acceptance and a local annotated tag.** Caddy and the
-API run rootless, and verified local TLS, version/authentication, the exact nine
-MCP tools and the container CLI pass. The private worker's local isolation checks
-pass, but API-to-worker access is still blocked by SELinux; end-to-end verifier
-readiness is not accepted. Operational CLI commands use the authenticated API.
-The [completed feature plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
-records REST/CLI and optional read-only MCP acceptance; [OPS-015](docs/plans/tasks/ops-015-rootless-container-runtime.md)
-records actual local container proof. These changes establish the breaking 0.2.0
-CLI/deployment boundary.
+[REL-013](docs/plans/tasks/rel-013-container-worker-artifacts.md) records exact clean
+artifacts from immutable source `4088994`; [OPS-018](docs/plans/tasks/ops-018-container-worker-rollout.md)
+records the guarded deployment and actual installed acceptance. Disposable complete
+verification-mode tests use simulated NFS and do not establish live NAS readiness.
+The NAS stays read-only, legacy writers remain masked and verification scheduling
+stays disabled. No NAS file I/O/jobs or other-host/remote action is authorized.
+See the [container contract](docs/containers.md),
+[operator checklist](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+and [current plan](docs/plans/2026-10-18-plan-container-worker-listener.md).
 
-The [local rollout](docs/plans/2026-10-18-plan-local-rootless-rollout.md) keeps NAS
-read-only and legacy writers blocked. [REL-012](docs/plans/tasks/rel-012-clean-container-release-artifacts.md)
-identifies immutable artifacts from clean committed source `481fcc4`;
-[OPS-016](docs/plans/tasks/ops-016-local-rootless-deployment.md) records actual
-host changes and the remaining worker-access hold. Live NAS jobs and full storage
-acceptance remain unrun; no NAS content/metadata writes or other-host changes are
-authorized. See the [container contract](docs/containers.md) and
-[operator checklist](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).
-
-[Local release closure](docs/plans/tasks/rel-011-local-release-and-handoff.md)
-records the passing final gate and local annotated `v0.2.0` tag. Its reviewed
-deployment commit is `11ddd55`; the application artifact source remains `481fcc4`.
-No tag or branch is published remotely, and release closure clears no worker or
-storage acceptance hold.
+The local annotated `v0.2.0` tag and its partial-acceptance history remain intact.
+That deployment used application source `481fcc4` and evidence commit `11ddd55`;
+its API-to-worker SELinux failure returns on rollback unless deliberately corrected.
+The [completed feature plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md) records
+the breaking API-only operational CLI/optional read-only MCP boundary. No tag or
+branch has been published remotely.
 
 **Recorded deployment baseline: `0.1.10` — explicit quarantine cleanup release candidate.** This historical deployment demonstrated
 operation against a live NFS-backed ZFS archive: syncing public, private, and

@@ -170,7 +170,7 @@ Verify syntax with a disposable user runtime directory; never aim verification
 at the live manager socket. Inspect the actual bridge drop-in and prove its
 hardened connection before claiming target readiness.
 
-### Actual partial acceptance and worker hold
+### 0.2.0 partial acceptance and historical worker hold
 
 OPS-016 starts the local 0.2.0 Caddy/API runtime and proves verified TLS, API/MCP
 authentication/registry, container client, isolation and non-killing drain.
@@ -180,11 +180,14 @@ earlier NAS-free VerificationClient fixtures also used a host process. Neither
 proves API-container-to-worker connectivity. End-to-end verification is not
 accepted. Keep Enforcing policy, container labels and execution boundaries; no
 allow rule, label-disable or host execution bypass is an approved quick fix.
-A reviewed label-at-creation/container-activation design is operator backlog,
-not an activated implementation task. Preserve the
+At OPS-016 conclusion, a reviewed label-at-creation/container-activation design
+was unselected operator backlog. **2026-10-18 update:** decisions 128/129 and
+committed source 4088994/REL-013 clean UBI artifacts support completed OPS-018.
+Actual installed API-container PROBE now closes connection hold 22 for 0.2.1;
+source/fixture evidence alone never supplied that proof. Preserve the
 [explicit hold](progress.md#operator-handoff) and all NAS-write/full-domain holds.
 
-### Planned 0.2.1 listener correction (OPS-017)
+### 0.2.1 listener correction (OPS-017)
 
 [Decision 128](adr/decision-128.md) selects explicit --container-listener in the
 direct PID1 worker. Before own resources/NSS/shared imports, reject inherited FDs
@@ -212,8 +215,9 @@ artifact/binding dormant RefuseManualStart=yes, preserving nine bindings; native
 socket activation stays unchanged. Infinite non-killing drain and stop ordering
 remain. Actual container-proxied notification and separate API-container PROBE
 under Enforcing SELinux are proof obligations, not supplied by host probes or
-podman exec isolation alone. 0.2.0 remains deployed with its hold until clean
-REL-013 artifacts and actual OPS-018 acceptance; no NAS job is authorized.
+podman exec isolation alone. At the source-package boundary 0.2.0 remained
+selected; completed REL-013/OPS-018 now record clean UBI 0.2.1 and actual installed
+acceptance. No NAS job is authorized; 0.2.0 rollback retains its old hold.
 
 ## Filesystem, secrets and resource limits
 
@@ -297,7 +301,9 @@ explicit ENV/user/entrypoint/mask mountpoints. Normal build/start never pulls;
 explicit host prefetch obtains only pinned public inputs without app secrets.
 Record every base/donor/interpreter/binary/CA/source/wheel/closure hash. Repeat
 fresh dirty then clean UBI proofs; old candidate results are superseded, not UBI
-or installed acceptance. Production 0.2.0/hold 22 and all confinement/NAS limits remain.
+or installed acceptance. At OPS-019 completion production 0.2.0/hold 22 remained;
+completed OPS-018 now records installed 0.2.1/connection-hold closure below. All
+confinement/NAS limits remain.
 
 ### Protected portable-Python fetch
 
@@ -359,3 +365,13 @@ UBI build layer before final COPY. Keep original verified archive/context bytes.
 No wildcard/system cleanup or domain-required library/app change. Foundation
 must prove PATH and module absence of pip/ensurepip/uv; failed previews stay
 preserved and new contexts/images are built, never relabelled as passing.
+
+### Installed0.2.1 acceptance (OPS-018, 2026-10-18)
+
+[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) selects clean source 4088994
+UBI app/Caddy artifacts and proves actual installed API-container PROBE under
+Enforcing before/after clean drain/restart. Connection hold 22 closes for this
+listener; 0.2.0 failure remains a rollback limitation. Verified TLS/auth/MCP/client,
+worker READY/effective confinement and unchanged locks/stores/secrets pass.
+The independent host guard/NAS-ro/writer masks remain. No live NAS job, storage
+verification or general NFS/other-host acceptance follows from these checks.

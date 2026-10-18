@@ -929,8 +929,10 @@ native mode ignores this notification mechanism.
 The indexed rootless .socket is dormant RefuseManualStart=yes with no automatic
 references; native package activation stays unchanged. Private framing, peer UID,
 exact result/reconciliation, lock/preflight and infinite drain remain unchanged.
-Actual new-image and production container-peer acceptance are later tasks; the
-installed 0.2.0 SELinux hold and all NAS workload restrictions remain explicit.
+At OPS-017 completion, actual new-image and installed container-peer acceptance
+were later tasks. Completed REL-013/OPS-018 now record clean UBI artifacts and
+installed peer acceptance; the 0.2.0 rollback limitation and all NAS workload
+restrictions remain explicit.
 
 Concrete helpers in hfcache.verification_listener are reserve_listener(),
 owned_listener(channel, path) and notify_ready(stop). OwnedListener carries the
@@ -947,4 +949,14 @@ explicit executable/Red Hat CA-data donors are permitted; no foreign OS/CA/defau
 inheritance or runtime resolution/pull. Recreate reviewed ENV/user/entrypoint/
 mask directories explicitly. Roles/routes/private wire/durable formats/native
 and owned startup/readiness/isolation/drain remain unchanged. Old Debian proof
-is superseded; new clean and installed acceptance still await dependent tasks.
+is superseded. The source package deferred clean/installed acceptance to
+REL-013/OPS-018; those tasks now record actual clean UBI and local peer/lifecycle
+acceptance. No live NAS verification or workload acceptance follows.
+
+### Installed-listener evidence (OPS-018, 2026-10-18)
+
+[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) records actual installed
+API-container private PROBE/worker READY and repeated TLS/drain acceptance under
+Enforcing on clean 0.2.1 UBI artifacts. This closes the old connection hold only;
+native activation, exact protocol/result authority and forbidden NAS workloads
+remain unchanged. Rollback to 0.2.0 returns its known peer-connectivity limitation.

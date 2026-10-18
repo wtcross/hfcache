@@ -21,7 +21,7 @@
    0.2.1 tag identifying the reviewed release and its deployed artifact source.
    Do not move an existing tag or push/publish to a remote. Record its actual
    target and annotation, not a provisional command as success.
-4. Complete the scoped plan and clear only its active selector once all four
+4. Complete the scoped plan and clear only its active selector once all five
    tasks' acceptance and commits exist. Retain all task, plan, failed attempt,
    rollback and partial release history; unrelated backlog stays unselected.
 

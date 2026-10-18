@@ -194,7 +194,7 @@ owner and coordinated source freeze before its gate.
   REL-013 returns pending and now depends on OPS-019. Its initial clean Debian
   build/proof/compatibility evidence is superseded; root stops its gate with
   TERM15 after 4m25.945s, not passing despite wrapper exit0. Domain execution is
-  held. Version remains pre-release 0.2.1; production 0.2.0/hold22/NAS barriers
+  held. Version remains pre-release 0.2.1; production 0.2.0/hold 22/NAS barriers
   remain unchanged. Fresh clean UBI artifacts/acceptance follow OPS-019's commit.
 
 - 2026-10-18: Technical review selects decision 129: every FROM stage uses pinned
@@ -211,7 +211,7 @@ owner and coordinated source freeze before its gate.
   the fresh NAS-masked --with-build exits 0 with 4,057 Python/40 deselected,
   three locked profiles, 135 Cockpit tests/build and four wheel smokes. REL-013
   is next pending until this commit and must repeat clean UBI acceptance.
-  Production 0.2.0/hold22/NAS/guard/writer-mask/state/remote barriers remain.
+  Production 0.2.0/hold 22/NAS/guard/writer-mask/state/remote barriers remain.
 
 - 2026-10-18: REL-013 reactivated after UBI source commit
   4088994f2b1e02f00a3c1e47cb8ebe662ca64a1b. Clean detached source is
@@ -229,3 +229,20 @@ owner and coordinated source freeze before its gate.
   and four wheel smokes. Earlier superseded/failed evidence remains intact.
   OPS-018 stays pending until this evidence commit; production 0.2.0/hold 22,
   guard/NAS/writer-mask/state/remote restrictions remain unchanged.
+
+- 2026-10-18: OPS-018 activated after clean-artifact evidence commit 586b7c1.
+  Root alone selects REL-013's protected 0.2.1/immutable 4088994 images under the
+  existing guard/NAS-ro/mask/state barriers. Old host socket retirement requires
+  exact-identity same-/run rename plus persistent ledger. No actual acceptance
+  is claimed by activation; hold 22 stays open until installed API-container
+  PROBE, with no NAS I/O/jobs, remote action or hardening change.
+
+- 2026-10-18: OPS-018 completes guarded local 0.2.1 deployment from source 4088994
+  and exact clean UBI images/index. Actual installed API-container PROBE passes
+  under Enforcing before/after clean drain/restart, closing connection hold 22.
+  Guard/original locks/stores/secrets/masks/NAS-ro persist; old socket/failures
+  remain retained. Verified TLS/auth/MCP/client/effective-unit/isolation checks
+  and full masked --with-build pass (4,057 Python/40 deselected, three profiles,
+  135 Cockpit tests/build, four wheel smokes). REL-014 stays pending until this
+  rollout commits. No 0.2.1 tag or NAS workload/storage/other-host/remote acceptance
+  is claimed; rollback to 0.2.0 restores its known connection limitation.

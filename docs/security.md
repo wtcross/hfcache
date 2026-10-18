@@ -792,3 +792,11 @@ preserve NNP/cap-drop; TLS trust verification stays enabled. Micro contains shel
 and tools: isolation claims rely on actual fixed authority/confinement, not tool
 absence. No secret-bearing fetch, runtime package/pull, SELinux allow/label or
 executor/drain shortcut is added. Repeat actual UBI proof before clean rollout.
+
+### Installed peer-control acceptance (OPS-018, 2026-10-18)
+
+[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) closes hold 22 with actual
+installed API-container framed PROBE under Enforcing before/after drain/restart.
+No allow/process-label/seccomp/executor bypass is used;0.2.0 failure stays history.
+This accepts listener connectivity and inspected confinement, not live NAS
+verification/workload or other-host security acceptance.

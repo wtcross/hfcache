@@ -1,8 +1,9 @@
 # Decision 128 — Create the rootless verifier listener inside its confinement
 
-- Status: Accepted; implemented by OPS-017 with source/kernel/dirty-preview
-  evidence and the full build gate. Clean release/installed acceptance remains
-  REL-013/OPS-018; deployed 0.2.0 hold 22 is unchanged.
+- Status: Accepted; implemented by OPS-017, with clean UBI artifacts in REL-013
+  and actual installed API-container peer/notify/drain acceptance in OPS-018.
+  Hold 22 closes for 0.2.1;0.2.0 failure remains historical and returns on rollback.
+  Live NAS verification/storage acceptance remains unrun.
 - Date: 2026-10-18.
 - Work package: OPS-017, this commit.
 - Source: [progress decision 128](../progress.md#decisions),

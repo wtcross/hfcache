@@ -317,3 +317,11 @@ Actual micro includes required tools; no shell-free claim or package transaction
 All runtime/SELinux/secret/lock/drain boundaries stand. Preserve old artifact/
 proof/tag history as superseded or deployed evidence; repeat fresh clean REL-013
 acceptance after OPS-019 commits. No production/NAS change follows from this source.
+
+## OPS-018 installed checkpoint (2026-10-18)
+
+[OPS-018](../plans/tasks/ops-018-container-worker-rollout.md) records actual installed
+notify ordering/API-container peer/TLS and non-killing drain/restart on the clean
+UBI artifacts. Hold 22 closes for the owned listener; nine bindings, independent
+guard, masks/locks/stores/secrets and confinement stay intact. NAS workloads and
+other-host acceptance remain unrun;0.2.0 rollback restores its old peer limitation.

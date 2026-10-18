@@ -1705,6 +1705,24 @@ package in this family.
   NAS-ro/writer masks/stores/handles and forbidden NAS I/O/jobs/other-host/remote
   actions remain unchanged.)
 
+- [x] OPS-018 Deploy and accept the corrected listener locally
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-container-worker-listener.md),
+  [task](plans/tasks/ops-018-container-worker-rollout.md)). Protected0.2.1 source
+  4088994/clean UBI images/index is selected under original guard/NAS-ro/masks;
+  exact old socket is retained by same-filesystem rename. Actual installed
+  API-container PROBE passes under Enforcing before/after non-killing drain/
+  restart, closing hold 22 for this listener. Verified TLS/REST/auth/MCP9/fixed
+  client, real READY/peer/isolation/effective units and unchanged stores/locks/
+  six secrets pass. Refused intermediate snapshots/quiescence and ledger typo
+  remain explicit. Full masked --with-build exits 0:423 formatted/Ruff/types 0;
+  4,057 Python/40 deselected in 473.93s; three locked profiles; 135 Cockpit tests/
+  build and four wheel smokes. Reviewed INV-002/003/005–007/010–016, AD-16/17/21,
+  FS/TX and decisions 65/115/121/126–129; no source/dependency/schema/authority
+  change. Living status/contracts/handoff/ADR links and final records/whitespace
+  reconcile. REL-014 stays pending until commit; 0.2.1 tag not yet created.
+  Old 0.2.0 failure/rollback and all NAS I/O/jobs/storage/calendar/other-host/
+  remote holds remain; no NAS workload or hardening bypass occurred.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -2015,19 +2033,21 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     or restore sync/verification scheduling automatically. No remote publication,
     other-host change or ACME is authorized.
 
-22. **Private-worker SELinux connection hold (OPS-016, 2026-10-18):** the local
-    0.2.0 Caddy/API metadata/proxy runtime and nonforce drain pass, but SELinux
-    denies API container_t connectto to the user-manager-created unconfined_t
-    private verification socket. Actual host UID 981 framed FD3 peer probes pass;
-    earlier NAS-free VerificationClient fixtures also ran on the host. Neither
-    proves API-container-to-worker readiness. Review socket label-at-creation/
-    container activation under a new authorized task; this is backlog only.
-    Do not add an allow, change container labels, disable SELinux or bypass the
-    isolated executor to force a pass. Keep the permanent guard/original inode,
-    read-only NAS, legacy writer masks, both stores/handles and rollback evidence.
-    End-to-end verification and all forbidden NAS-write/full-domain/NFS workload
-    checks remain unaccepted. A local partial-acceptance release must state this
-    hold explicitly; it cannot claim general writer readiness.
+22. **Private-worker SELinux hold — closed for 0.2.1 by OPS-018 (2026-10-18):**
+    The original 0.2.0 Caddy/API runtime passed proxy/metadata checks but SELinux
+    denied container_t connectto to the user-manager-created unconfined_t socket.
+    Host UID 981/FD3 probes and host-origin fixtures never proved API-container
+    access. That failed evidence remains intact and is a rollback limitation.
+    Decisions 128/129, committed listener/UBI source and clean REL-013 artifacts
+    now support actual installed [OPS-018](plans/tasks/ops-018-container-worker-rollout.md)
+    acceptance: API-container framed PROBE passes with expected UID 981 under
+    Enforcing before and after real non-killing drain/restart. Final proof
+    2f879ff38f17df7eb9f1f0a4a5c602b4c6c13f56c6ccc35bd6fd826c8331034f
+    closes this connection hold only. No allow rule, process-label override,
+    unconfined/host executor or seccomp relaxation is used. Keep independent
+    guard/original lock, read-only NAS, writer masks, stores/handles and history.
+    Live NAS verification/jobs/full-domain/NFS workload, calendar and other-host
+    acceptance remain unrun; this is not general writer-readiness certification.
 
 ## Operator decisions needed
 
@@ -4677,4 +4697,4 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      interpreter/binary/CA inputs. Repeat dirty then clean UBI proofs, preserve
      superseded candidate/stopped-gate evidence, and retain listener/SELinux/
      secret/seccomp/lock/drain/NAS constraints. REL-013 waits committed OPS-019;
-     deployed0.2.0/hold22 and all forbidden NAS/remote actions remain unchanged.
+     deployed0.2.0/hold 22 and all forbidden NAS/remote actions remain unchanged.

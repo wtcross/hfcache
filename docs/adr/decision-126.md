@@ -176,3 +176,11 @@ its SELinux hold. Later clean build and guarded rollout tasks must prove actual
 API-container peer access without policy/label/hardening bypass. Fixed host boot
 guard, original lock, read-only NAS, writer masks and forbidden live workloads
 remain. No NAS file I/O/jobs, other-host action or remote publication is granted.
+
+## OPS-018 installed checkpoint (2026-10-18)
+
+[OPS-018](../plans/tasks/ops-018-container-worker-rollout.md) deploys clean 0.2.1 UBI
+artifacts and closes the connection hold with actual installed API-container
+PROBE under Enforcing, repeated after non-killing drain/restart. Original host
+policy/guard/lock, NAS-ro, masks and stores remain; no live NAS workload is run.
+The preserved 0.2.0 failure returns on rollback and grants no cleanup authority.

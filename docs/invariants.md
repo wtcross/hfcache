@@ -900,7 +900,9 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [private socket](../packaging/systemd/hfcache-verification.socket),
   [activation/bootstrap tests](../tests/unit/test_verification_worker_bootstrap.py)
   and [unit contracts](../tests/unit/test_systemd_units.py); decision
-  [121](adr/decision-121.md). Real peer/cgroup/source-masking probes remain held.
+  [121](adr/decision-121.md). At API-014 completion, actual installed peer/cgroup/
+  source-masking probes remained held; OPS-018 now records that local acceptance.
+  Live NAS/storage and other-host checks remain unrun.
   [Decision 128](adr/decision-128.md) adds a distinct PID1-only container-listener
   mode without a native bind fallback. Early inherited-FD/activation/credential
   audit precedes owned resources and shared imports; parent/instance ownership
@@ -910,6 +912,10 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   no credentials, exact private protocol/results and no replay remain. Rootless
   API Requires+After worker.service; dormant .socket/native activation remain
   separate. Source/fixture evidence cannot close installed SELinux hold 22.
+  Actual [OPS-018 installed acceptance](plans/tasks/ops-018-container-worker-rollout.md)
+  now closes that connection hold for 0.2.1 under Enforcing, including after drain/
+  restart. Live NAS verification/workload acceptance remains unrun; rollback to
+  0.2.0 restores its recorded connection limitation.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. API-016 completed before MCP-001
