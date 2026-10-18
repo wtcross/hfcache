@@ -2171,3 +2171,15 @@ historical CLI-only and closed transport/runtime assumptions. Ordinary domain
 functions and archive evidence remain authoritative; incremental adapters and
 a bounded non-resuming submission lane add remote management. See [API](api.md)
 for target coverage and implementation status. No production rollout is claimed.
+
+
+**2026-10-18 local rollout scope amendment (OPS-014, decision 126).** New user
+authority permits reviewed local release/deployment with Caddy/rootless runtime,
+but forbids NAS content/metadata writes, other-host changes, remote push and ACME
+issuance. The current [local rollout plan](plans/2026-10-18-plan-local-rootless-rollout.md)
+and [decision 126](adr/decision-126.md) require persistent read-only NAS/client
+and blocked-writer guards. Historical sync/full-verify/archive-writing hardening
+acceptance and timer resumption are forbidden in this scope and remain NOT RUN;
+local deployed tags must state partial acceptance. Existing hardening, archive
+identity, evidence/lock retention and rollback rules remain binding. This does not
+activate unrelated original backlog or claim any host action already occurred.

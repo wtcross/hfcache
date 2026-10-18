@@ -412,6 +412,12 @@ History: `SYNC-007` (`54e4671`), decision 94.
   Evidence: [unit contracts](../tests/unit/test_systemd_units.py) and
   [probe fixtures](../tests/unit/test_hardening_probe.py), decision
   [121](adr/decision-121.md); installed acceptance remains separate.
+  **OPS-014 scoped rollout (2026-10-18, [decision 126](adr/decision-126.md)).**
+  Current local-host deployment authority requires a persistent client read-only
+  NAS guard, blocked legacy writers and retained actual-executor/local-flock
+  quiescence proof. NAS content/metadata writes, relabel/chown/copyup and other-
+  host changes are forbidden; sync remains stopped and verify scheduling disabled.
+  Local disposable/container proofs do not pass forbidden real storage checks.
 - **`INV-004` — Capacity admission includes publication cost and reserve.**
   Require free capacity beyond estimated download bytes, explicit copy-mode
   publication bytes, and the greater of the GiB and percentage reserves.

@@ -13,6 +13,25 @@ create a tag or authorize any step below. Commit and wheel/sdist hashes identify
 an artifact; equal displayed versions do not. Actual previous-feature/baseline
 compatibility evidence must not be relabelled as a deployed previous release.
 
+## Current data-preserving local release scope (OPS-014)
+
+The new [local rollout plan](../plans/2026-10-18-plan-local-rootless-rollout.md)
+authorizes reviewed local release/deployment/tagging while forbidding all NAS
+content/metadata writes and changes to other hosts. [Decision 126](../adr/decision-126.md)
+narrowly adapts acceptance: do not execute the historical supervised sync, live
+full verification, archive-writing hardening workload or automatic sync-timer
+resumption below. Their status remains NOT RUN, not passing. Actual local
+container/proxy/credential/isolation checks and disposable local fixtures provide
+explicit partial acceptance only. Preserve the read-only client mount, blocked
+writers, retained state and actual executor drain/lock guards.
+
+A local annotated tag must identify the actually deployed reviewed artifact and
+state these remaining restrictions. No remote push, registry publication or ACME
+issuance is authorized; the historical publishing steps below are excluded.
+Version/profile/image selection and all actual outcomes remain their task's work,
+not an authorization to bypass missing proof. All ordinary safety requirements
+continue unless this stricter no-write scope forbids a specific acceptance step.
+
 ## Preconditions
 
 - Working tree clean; every package in the release committed and tracked in

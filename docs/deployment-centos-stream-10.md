@@ -1099,3 +1099,35 @@ systemd restrictions to make acceptance pass.
   calendar approval. Record actual tests, failures and residual restrictions;
   missing host evidence remains an open hold. Repository plan completion does
   not authorize production start, destructive work, release/tag or push.
+
+
+## 18. Authorized local data-preserving rollout (OPS-014)
+
+Tyler authorized a local release/rollout on 2026-10-18 and required Caddy plus
+rootless Podman runtime. The [selected plan](plans/2026-10-18-plan-local-rootless-rollout.md)
+and [decision 126](adr/decision-126.md) govern this scoped work; historical
+no-deploy feature authority remains history. No other host/NAS configuration,
+remote push/registry publication or ACME issuance is authorized. Existing
+appropriate secrets may be reused without printing values; API/MCP classes stay
+separate from the Hub source. Container architecture and installed proof are
+OPS-015 work, not yet an accomplished deployment.
+
+Root first snapshots local units/configuration/state and blocks legacy scheduled
+writers. Verify timer stays disabled and sync stays stopped. Prove actual executor
+quiescence and retain the existing noncreating local flock; unknown activity
+refuses. Do not stop the lifecycle target, kill work, unlink locks or reset
+observation history. Enforce a client-side read-only remount and persistent local
+mount-unit override without unmount/disconnect or NAS file I/O. No NAS content,
+metadata, ownership, mode or label change is permitted. Later containers also
+require read-only NAS binds without chown/relabel/copyup and local writable state.
+
+The ordinary sync/full-verify/archive-hardening commands in earlier release
+procedures are forbidden here: they write reports/catalogs/probes even without a
+payload download. Do not resume sync scheduling or call skipped tests passing.
+Reviewed actual container/TLS/credential/activation/isolation checks and local
+throwaway fixtures provide explicitly partial acceptance. Record every actual
+change, failure, NOT RUN check, artifact identity and retained rollback constraint.
+Production metadata reads also require review against the no-metadata-change
+constraint; client read-only access does not itself certify server access-time
+policy. Local release tagging never closes the remaining NAS/other-host/calendar
+holds. No guard action or deployment is claimed before its task records evidence.

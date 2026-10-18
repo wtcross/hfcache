@@ -120,3 +120,13 @@ docs and a copied native OpenAPI view cannot mutate shared public routing/schema
 state; no unit, client config or private handle schema changes. Actual source/
 socket acceptance does not replace installed cgroup/hardening proof. See
 [decision 123](decision-123.md).
+
+
+## 2026-10-18 data-preserving local rollout amendment (OPS-014)
+
+[Decision 126](decision-126.md) records new local-host release/rollout authority
+with an absolute NAS content/metadata-write ban and no other-host changes. Retain
+artifact identity, actual-executor quiescence and state/lock preservation; live
+sync/full verification/archive-write acceptance is forbidden and remains NOT RUN.
+Any local deployed tag records this partial acceptance explicitly. No remote push
+or ACME issuance is authorized. Rootless runtime design/proof belongs to OPS-015.

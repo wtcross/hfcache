@@ -2,12 +2,14 @@
 
 | Field | Value |
 | --- | --- |
-| State | None |
-| Active plan | None |
-| Next task | None |
-| Blockers | None |
+| State | Active |
+| Active plan | [Local rootless rollout](2026-10-18-plan-local-rootless-rollout.md) |
+| Next task | [OPS-015](tasks/ops-015-rootless-container-runtime.md) |
+| Blockers | None; later tasks wait for committed predecessors |
 | Updated | 2026-10-18 |
 
-No plan is active. The completed [REST API and MCP plan](2026-10-17-plan-rest-api-and-mcp.md)
-and its task records retain scope, execution and acceptance evidence. Unrelated
-historical backlog and production rollout remain outside this completed selection.
+OPS-014 is completed in its implementation commit; OPS-015 is next pending and
+must be activated only after that commit exists. The read-only NAS mount and
+blocked writers remain guarded. User-authorized local changes must preserve NAS
+content/metadata and leave other hosts unchanged. No remote push or unrelated
+backlog is selected; completed REST/MCP feature records remain history.

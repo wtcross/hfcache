@@ -91,3 +91,25 @@ not a production release or permission to manipulate host services/state. Keep
 both operation stores and scheduled observation handles through approved drain/
 rollback, and preserve the disabled verification calendar. No repository plan
 closure clears the actual no-IP/credential/NFS/SELinux/TLS/firewall holds.
+
+
+## Current scoped local rollout authority (OPS-014, 2026-10-18)
+
+Tyler's newer authorization selects the
+[local rootless rollout](../plans/2026-10-18-plan-local-rootless-rollout.md),
+qualifying the earlier feature task's no-host-action boundary. Only root performs
+reviewed local host mutations. No NAS content or metadata writes, other-host
+changes, remote push/registry publication or ACME issuance is permitted. Reuse
+appropriate existing local secrets without printing them; credential classes
+remain separate. The actual rootless Caddy/API/worker/client design follows in
+OPS-015, after the guard task is completed and committed.
+
+Before rollout, record local state, block legacy scheduling/writers, prove actual
+executor quiescence and retain the noncreating local flock. Enforce a client-side
+read-only remount plus persistent local mount-unit override without unmount,
+disconnect, NAS file I/O or server policy changes. Keep sync stopped and verify
+timer disabled. Never use NAS chown/relabel/copyup or a write probe to prove this
+barrier; preserve SELinux/hardening, lock inodes, both operation stores and pending
+observation handles. Unknown activity/state refuses further work. Host-local
+throwaway tests are distinct from forbidden real storage acceptance; see
+[decision 126](../adr/decision-126.md) and the selected task for actual evidence.

@@ -62,3 +62,13 @@ Implementation or shipped-artifact evidence:
 
 Verification or recorded operational evidence:
 [docs/progress.md](../../docs/progress.md).
+
+
+## 2026-10-18 data-preserving local rollout amendment (OPS-014)
+
+[Decision 126](decision-126.md) records new local-host release/rollout authority
+with an absolute NAS content/metadata-write ban and no other-host changes. Retain
+artifact identity, actual-executor quiescence and state/lock preservation; live
+sync/full verification/archive-write acceptance is forbidden and remains NOT RUN.
+Any local deployed tag records this partial acceptance explicitly. No remote push
+or ACME issuance is authorized. Rootless runtime design/proof belongs to OPS-015.

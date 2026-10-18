@@ -1493,6 +1493,46 @@ package in this family.
   not run; the required build-marked subset was. No production archive/service
   operation, installation, deployment, release/version bump, push, merge or tag.)
 
+## Local rootless rollout (OPS/REL, 2026-10-18)
+
+- [x] OPS-014 Establish authorized local rollout guardrails without NAS writes
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-local-rootless-rollout.md),
+  [task](plans/tasks/ops-014-local-rollout-guardrails.md)).
+  New user authority permits reviewed local release/rootless Caddy runtime work,
+  while NAS content/metadata writes and other-host changes remain forbidden.
+  Decision 126 and environment/release/deployment/original-plan/invariant/ADR
+  amendments record actual-executor guards and honest partial acceptance.
+  Root's transition exits 0 at 14:08:47Z; root-owned 0700 backup preserves original units,
+  drop-ins, target wants/config, reproducible root-owned 0600 transition and before/after
+  snapshots with exact hashes in the task. No UID 981 process preceded mutation.
+  Sync/verify timers are stopped, disabled and masked; both services inactive,
+  MainPID 0/cgroups empty and masked. Existing lifecycle target stays active and
+  SELinux Enforcing. Persistent mount override and client remount make actual
+  NFS read-only without disconnect/unmount or NAS file I/O. Original local
+  device 27/inode 2273 flock stays held by guard PID 653008; independent conflict
+  proof and post-gate recheck pass. No lock replacement/truncation/removal or
+  secret values printed. Required gate runs as tyler behind an empty read-only
+  tmpfs covering NAS, protecting even default collection's live-mount import.
+  Initial direct-redirection launch was denied by SELinux before startup; no
+  policy relaxed. First executing gate failed three interactive event assertions
+  (3 failed/3,621 passed/40 deselected/454.50s) because inherited INVOCATION_ID
+  selected legitimate systemd `<6>` priority prefixes. Failed log retained; no
+  production/test source change. Corrected exact command in task clears only
+  test identity variables and confirms actual exit 0 at 14:25:55Z: lock/both-extra
+  sync, 395 formatted files, Ruff clean, whole Pyrefly 0 errors (11 suppressed,
+  59 warnings not shown), 3,624 passed, 40 deselected in 455.10 seconds;
+  0.1.10 sdist/wheel and three actual locked base/server/server+MCP installation/
+  import/help/version profiles. Cockpit lint/style/types, 127 tests in 2.027
+  seconds and production build in 1,257 ms pass. Task retains final gate log
+  SHA and service duration 8 minutes 19.635 seconds. No extra build-marker subset was
+  required for this guard-only package. INV-003/010/011/014/015, AD-16/17, FS-18/19,
+  decisions 65/75/79/121 reviewed; links/dependencies/current/unique decision 126/matrix and
+  whitespace pass. No dependency/schema/domain/version/container/release/tag
+  change. OPS-015 next pending until this commit; no later task activated.
+  Live sync/full-verify/NAS-write/probe/hardening/other-host acceptance remains
+  forbidden and NOT RUN. No production switch, container startup, merge/tag/push,
+  registry publication or ACME issuance. Operator handoff 20 retains live guards.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -1774,6 +1814,19 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     0.1.10 is unchanged, not a release/tag; choose commit and artifact hashes
     deliberately before an authorized rollout. Implementation completion never
     performs or approves these host/release actions.
+
+20. **Data-preserving local rollout guard (OPS-014, 2026-10-18):** the new
+    [local plan](plans/2026-10-18-plan-local-rootless-rollout.md) authorizes reviewed
+    local rootless rollout work only. NAS is client-read-only, both legacy
+    timers/services are masked, sync stopped and verify scheduling disabled;
+    retained guard ownership and protected backups are recorded in the
+    [task](plans/tasks/ops-014-local-rollout-guardrails.md). Do not restore writer
+    activation or read-write NAS access as an automatic release step. Preserve
+    existing lock inodes, service/scheduled evidence and old artifacts. Full
+    NAS-write/domain acceptance, other-host/NAS changes and verify calendar work
+    remain forbidden or separately held, not passed by local fixture/gate proof.
+    OPS-015 architecture, later deployment and local release/tagging require their
+    committed dependencies; no remote push/registry publication/ACME is authorized.
 
 ## Operator decisions needed
 
@@ -4352,3 +4405,20 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      unknown catalogs stay unknown and estimates never hash/persist confidence.
      No dependency/durable/config change, job authority or later-task work;
      registry/schema, mounted parity and side-effect proof belong to this task.
+
+126. **Guard a local rollout without NAS writes or false acceptance**
+     (2026-10-18, OPS-014). [ADR](adr/decision-126.md): new user authority permits
+     reviewed changes, local release/tagging and rootless Caddy/API/worker/client
+     rollout on this host only. NAS content/metadata writes and other-host changes
+     remain forbidden; no remote push/registry publication or ACME issuance.
+     Before rollout, root records local state without secrets/NAS file I/O,
+     blocks legacy scheduling/writers, proves actual executor quiescence plus a
+     retained noncreating local flock, and enforces a persistent client-side
+     read-only mount without unmount/disconnect. Subsequent NAS binds remain
+     read-only without chown/relabel/copyup. Keep sync stopped and verify timer
+     disabled; preserve unknown receipts/handles/locks and hardening. Required
+     live sync/full-verify/NAS probes cannot run under this constraint: local
+     disposable and actual host isolation evidence remains explicitly partial,
+     with forbidden checks NOT RUN. Local tag↔deployed artifact identity remains,
+     with honest remaining holds; it never certifies skipped storage acceptance.
+     OPS-015 owns the actual rootless architecture and proof, not this policy.
