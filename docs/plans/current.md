@@ -4,14 +4,14 @@
 | --- | --- |
 | State | Active |
 | Active plan | [Container worker listener](2026-10-18-plan-container-worker-listener.md) |
-| Next task | [REL-013](tasks/rel-013-container-worker-artifacts.md) |
-| Blockers | None; REL-013 stays pending until completed OPS-019 commits |
+| Next task | [OPS-018](tasks/ops-018-container-worker-rollout.md) |
+| Blockers | None; OPS-018 stays pending until completed REL-013 commits |
 | Updated | 2026-10-18 |
 
-OPS-019 is completed in this package with accepted UBI source and actual dirty
-preview/full-gate evidence. No task is in progress until its commit permits
-REL-013 activation. That task must build both clean UBI images and repeat clean
-acceptance; superseded Debian evidence and stopped/failed attempts stay preserved.
-Deployed/tagged 0.2.0 and hold22 remain unchanged. Preserve the original lock
-guard, read-only NAS, writer masks, secrets/state and hardening; no NAS file I/O/
-jobs, other-host changes or remote publication are authorized.
+REL-013 completes clean UBI artifact/fixture/stage acceptance from immutable
+source 4088994. No task is in progress until its evidence commit permits OPS-018
+activation. The protected 0.2.1 stage is not selected; production 0.2.0/hold 22 remain.
+All superseded/stopped/failed evidence stays preserved. Keep the independent
+permanent guard/original locks, NAS read-only, writer masks, stores/handles,
+secrets and hardening. No NAS file I/O/jobs, other-host changes or remote
+publication are authorized.

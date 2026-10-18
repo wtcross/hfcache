@@ -1685,6 +1685,26 @@ package in this family.
   0.2.0, guard/NAS-ro/writer masks/stores/handles and forbidden NAS I/O/jobs/
   other-host/remote actions remain unchanged.)
 
+- [x] REL-013 Build clean UBI 0.2.1 artifacts and prove container peer access
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-container-worker-listener.md),
+  [task](plans/tasks/rel-013-container-worker-artifacts.md)). Immutable clean source
+  4088994 produces exact wheel/sdist/app/Caddy/provenance with unchanged closure;
+  actual foundation, user notify/container-origin peer/isolation/cleanup, verified
+  fixture TLS/REST/MCP/client and 126 compatibility observations pass. Separate
+  simulated-NFS HTTP domain proves three complete modes and exact integrity 40/
+  receipt/key/retry/result semantics; no real-NAS or deterministic active-observer
+  drop/restart claim. Protected 0.2.1 stage/index 64 files passes actual UID 981
+  access and 36 control-reader cases, preserving both stages/fixtures. Clean-source
+  masked --with-build exits 0: 423 formatted/Ruff/whole types 0; 4,057 Python/
+  40 deselected in 510.38s; three locked profiles; 135 Cockpit tests/build and four
+  wheel smokes. Reviewed INV-002/003/005–007/010–016, AD-16/17/21, FS/TX and
+  decisions 65/75/79/115/121/126–129; no source/dependency/schema/domain change.
+  Records/links/current/whitespace reconcile; OPS-018 stays pending until commit.
+  Superseded Debian/dirty/stopped/failed evidence remains. Images are not loaded
+  into the production engine/selected; production 0.2.0/hold 22, permanent guard/
+  NAS-ro/writer masks/stores/handles and forbidden NAS I/O/jobs/other-host/remote
+  actions remain unchanged.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

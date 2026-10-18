@@ -1,8 +1,8 @@
 # Decision 129 — Build all service image stages on pinned UBI 10 micro
 
 - Status: Accepted and implemented in OPS-019, with actual dirty UBI preview
-  foundation/worker/TLS proof and the full gate passing. Clean REL-013 artifacts
-  and installed OPS-018 acceptance remain separate pending tasks.
+  foundation/worker/TLS proof and the full gate passing. REL-013 records fresh
+  clean artifact acceptance; installed OPS-018 acceptance remains pending.
 - Date: 2026-10-18.
 - Work package: OPS-019, this commit.
 - Source: [progress decision 129](../progress.md#decisions),

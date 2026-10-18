@@ -212,3 +212,20 @@ owner and coordinated source freeze before its gate.
   three locked profiles, 135 Cockpit tests/build and four wheel smokes. REL-013
   is next pending until this commit and must repeat clean UBI acceptance.
   Production 0.2.0/hold22/NAS/guard/writer-mask/state/remote barriers remain.
+
+- 2026-10-18: REL-013 reactivated after UBI source commit
+  4088994f2b1e02f00a3c1e47cb8ebe662ca64a1b. Clean detached source is
+  /var/tmp/hfcache-rel013-ubi-source; all-new .scratch/rel-013-ubi-* artifact/
+  context/proof/gate outputs preserve earlier Debian attempts. Both UBI images
+  and all clean acceptance must be repeated with no immutable source/package
+  input changes. Main-checkout edits record evidence only. OPS-018/hold 22 and
+  production 0.2.0/NAS/guard/writer-mask/state/remote barriers remain unchanged.
+
+- 2026-10-18: REL-013 completes fresh clean UBI artifacts from immutable 4088994,
+  with actual foundation/notify/container-peer/isolation/TLS/compatibility,
+  separately labeled simulated-NFS complete HTTP domain, protected stage/index
+  and service/control-reader acceptance. Clean-source NAS-masked --with-build
+  exits 0: 4,057 Python/40 deselected, three locked profiles, 135 Cockpit tests/build
+  and four wheel smokes. Earlier superseded/failed evidence remains intact.
+  OPS-018 stays pending until this evidence commit; production 0.2.0/hold 22,
+  guard/NAS/writer-mask/state/remote restrictions remain unchanged.
