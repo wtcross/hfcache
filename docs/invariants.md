@@ -68,10 +68,11 @@ Read only the affected areas:
   filesystem; promotion must use an atomic rename rather than a cross-device
   copy. Explicit copy publication changes how files reach staging, not the
   atomic promotion requirement.
-- **`FS-21`–`FS-23`** — Only explicit `archive init` creates the sentinel and
-  initial layout, never sync, recovery, or a timer. It refuses existing archive
-  identity, unknown content, and symlinks; only the documented empty,
-  correctly owned and moded `published/` and application-owned interrupted-init
+- **`FS-21`–`FS-23`** — Only the explicit initialization operation, through
+  CLI `archive init` or the guarded REST configured-target resource, creates the
+  sentinel and initial layout; never sync, recovery, startup, health or a timer.
+  It refuses existing archive identity, unknown content and symlinks; only the
+  documented empty, correctly owned and moded `published/` and application-owned interrupted-init
   states may be adopted or retried. The sentinel is written last and never
   rewritten. This deployment already exists: agents must never run init.
 - **`AD-17`** — Exactly one host has archive write authority, enforced by the
@@ -89,6 +90,14 @@ Evidence: [preflight tests](../tests/unit/test_preflight.py),
 [initialization tests](../tests/unit/test_archive_init.py),
 [locking tests](../tests/unit/test_locking.py), and opt-in
 [real-mount tests](../tests/system/test_live_mount.py).
+
+API-010 transport enforcement: explicit confirmation/restatement of configured
+root/UUID, writer capability and the disabled-by-default initialization-only
+maintenance gate; see [decision 117](adr/decision-117.md),
+[typed routes](../src/hfcache/api/maintenance.py) and
+[HTTP initialization tests](../tests/unit/test_api_maintenance.py).
+A request cannot choose a different archive, and disabling the gate after restart
+refuses POST retries without hiding original operation observation.
 
 ## Snapshots and publication
 
@@ -225,6 +234,14 @@ History: `PUR-001` (`7370af2`) adds explicit purge;
 audit reason `sixth_unique_revision_published` remains its historical name for
 exceeding the configured limit; it does not require retaining five.
 
+API-010 transport enforcement retains one-round prune, unmanaged-only purge,
+original-manifest repair and canonical-cache deletion through the
+[typed maintenance routes](../src/hfcache/api/maintenance.py).
+[Real HTTP/domain tests](../tests/unit/test_api_maintenance.py) and
+[adversarial maintenance tests](../tests/unit/test_api_maintenance_adversarial.py)
+cover fresh locked scope/proof and exact classified outcomes. Previews are keyed
+control-state jobs and confer no deletion authority; RET-011 remains unchanged.
+
 ## Transactions and recovery
 
 - **`AD-14`, `FS-17`, `TX-01`, `TX-02`** — Normal archive mutation opens a
@@ -286,6 +303,14 @@ Evidence: [checkpoint-contract tests](../tests/unit/test_transactions.py),
 History: `QUA-001` (`1ad4181`), `QUA-002` (`7b5e4e2`), and
 `QUA-003` (`c2b52ff`) define the narrow cleanup and cancellation exceptions.
 
+API-010's [maintenance transport](../src/hfcache/api/maintenance.py) calls these
+same services; it accepts no executable preview/plan. Queued work revalidates the
+admitted fingerprint under lock, and each apply reconstructs current scope and
+proof. [HTTP/domain](../tests/unit/test_api_maintenance.py) and
+[adversarial tests](../tests/unit/test_api_maintenance_adversarial.py) cover stale
+scope, ambiguous/altered evidence, original audits and lost observations;
+[decision 117](adr/decision-117.md). No new checkpoint or deletion authority.
+
 ## Bounded synchronization
 
 - **`AD-19`** — Continuation-enabled sync resolves and estimates its selected
@@ -336,7 +361,9 @@ History: `SYNC-007` (`54e4671`), decision 94.
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
   The server's explicit Hub file is a trusted startup option, never request input;
-  candidate assessment resolves no proposed credential.
+  candidate assessment resolves no proposed credential. Repair audit reasons
+  redact registered credential values after credential resolution and before
+  durable domain writing (decision 117).
   Never emit secrets in configuration errors, logs, manifests, journals,
   reports, operation state or fingerprints. Register exact resolved opaque credentials before
   use; sanitize nested diagnostic contexts and exception/public output as well
@@ -580,8 +607,9 @@ and git; the application test suite does not enforce planning lifecycle.
 API-001 introduces these constraints for the activated plan. API-006 implements
 authenticated metadata HTTP and its foreground bootstrap; API-007 adds durable
 admission primitives and operation observation. API-008 adds execution/private
-verification and API-009 adds the typed command subset. Maintenance, candidate
-operations, client migration, installed isolation hardening and MCP remain pending.
+verification and API-009 adds the typed command subset. API-010 adds guarded
+maintenance and initialization; candidate operations remain pending until API-012.
+Client migration, installed isolation hardening and MCP remain pending.
 [API](api.md) and [server](server.md) track exact availability; implementing tasks
 own proof.
 
@@ -612,7 +640,9 @@ own proof.
   before receiving a body, authorize static writer routes before reading it and
   mixed capability before DTO validation. Explicit JSON/media/encoding/depth and
   byte limits cover chunked inputs; unknown paths/credential overrides cannot
-  become execution authority. Maintenance/candidate/MCP paths remain pending.
+  become execution authority. API-010 extends the same boundary to explicit
+  maintenance routes and gates initialization before body reception. Candidate
+  and MCP paths remain pending.
   Enforcement/evidence: [boundary/resources](../src/hfcache/api/app.py),
   [pool/instance lock](../src/hfcache/api/lifecycle.py),
   [single Unix/TCP bootstrap](../src/hfcache/server.py),
@@ -638,9 +668,11 @@ own proof.
   pre-locks or nests that service. Exact surviving verifier evidence is reconciled
   before interruption; unavailable/unsafe status preserves active receipts and
   closes execution across restarts. Metadata stays diagnosable. API-009 submits
-  four keyed job routes with normalized typed bodies and 202 observation links;
-  matching retries preserve the original binding. Maintenance submissions and
-  public client safety remain API-010/013. Decisions [109](adr/decision-109.md),
+  its four keyed job routes with normalized typed bodies and 202 observation links;
+  matching retries preserve the original binding. API-010 extends keyed admission
+  to separate maintenance preview/apply, repair and guarded initialization URLs;
+  previews grant no future apply authority. Public client safety remains API-013.
+  Decisions [109](adr/decision-109.md),
   [114](adr/decision-114.md) and [115](adr/decision-115.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state-api-007).
   Enforcement/evidence: [core store](../src/hfcache/api/operations.py),
   [HTTP observation](../src/hfcache/api/app.py),

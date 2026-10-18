@@ -128,9 +128,9 @@ plugin's current interface. The activated
 [REST-first implementation plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
 introduces authenticated remote management incrementally;
 [the API contract](docs/api.md) marks metadata, operation observation and typed
-sync/verification/planning/diagnostic/installed-validation routes as implemented;
-maintenance and candidate routes remain planned. Every metadata route, health/schema/docs and error
-surface authenticates; discovery preserves exact publication identity and
+sync/verification/planning/diagnostic/installed-validation and maintenance routes
+as implemented; candidate routes remain planned. Every route, health/schema/docs
+and error surface authenticates; discovery preserves exact publication identity and
 `published/`-relative reference locators. Bulk copies still use the read-only
 export and independent verification in [the consumer runbook](docs/consumers.md).
 [`docs/cockpit-plugin/`](docs/cockpit-plugin/) covers installation and
@@ -190,7 +190,12 @@ events and exact terminal results. Sync/actual verification require a writer;
 installed planning and explicitly read-only diagnostics permit readers but may
 contact the Hub. `serve --hub-token-file PATH` is a trusted startup development
 source, separate from API bearers; requests cannot choose credentials or paths.
-Pure candidate authority hooks prepare API-012 without enabling candidate routes.
+API-010 adds separate maintenance preview/apply URLs, exact-manifest repair and
+explicit configured-target initialization. Every job is keyed; previews grant no
+apply authority. Initialization alone requires the disabled-by-default maintenance
+switch, writer confirmation and restated root/UUID, never automatic startup/recovery.
+The existing production archive must not be initialized again. Pure candidate
+authority hooks prepare API-012 without enabling candidate routes.
 
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —

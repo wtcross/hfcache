@@ -46,6 +46,7 @@ from hfcache.publication import projected_publication_bytes, published_repositor
 from hfcache.purge import apply_purge, plan_all_purges
 from hfcache.quarantine import apply_quarantine_cleanup, plan_quarantine_cleanups
 from hfcache.recovery import apply_recovery, plan_recovery, reconcile
+from hfcache.redaction import redact_text
 from hfcache.repair import repair_revision
 from hfcache.reporting import RecoveryReport, RunReport, RuntimeVersions
 from hfcache.retention import apply_prune, plan_all
@@ -667,7 +668,9 @@ class CommandServices:
                         self.config,
                         identity=parsed.identity,
                         commit_sha=request.commit_sha,
-                        reason=request.reason,
+                        # Credentials are registered by resolve_token above; audit
+                        # must not preserve a known bearer or Hub secret (INV-002).
+                        reason=redact_text(request.reason),
                         envelope=envelope,
                         run_id=self.context.run_id,
                     )

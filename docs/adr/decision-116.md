@@ -1,6 +1,7 @@
 # Decision 116 — Admit typed command routes without widening server authority
 
-- Status: Accepted; implemented by API-009.
+- Status: Accepted; implemented by API-009; maintenance extended by
+  [decision 117](decision-117.md).
 - Date: 2026-10-17.
 - Work package: API-009, this commit.
 - Source: [progress decision 116](../progress.md#decisions),

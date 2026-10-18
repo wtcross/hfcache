@@ -32,6 +32,16 @@ and expose their exact terminal Envelope through operation polling. Maintenance
 routes and candidate HTTP/CLI integration remain later tasks; no deployment is
 asserted.
 
+**2026-10-17 API-010 amendment:** separate maintenance preview/apply routes,
+exact-manifest repair and guarded initialization extend the REST surface
+([decision 117](adr/decision-117.md)). The HTTP URL defines mode; no omitted
+boolean or posted preview authorizes apply. Apply retains shared locked policy/
+scope/evidence checks and exact terminal Envelopes. Initialization alone requires
+the disabled-by-default server maintenance gate, strict confirmation and restated
+configured root/UUID; ordinary maintenance does not use that switch. The public
+CLI remains local until its migration packages; these routes are not a deployed
+writer or authorization for production initialization.
+
 ## 1. Invocation shape
 
 ```text
@@ -387,9 +397,9 @@ no Hub client or credential and makes no process-environment change. The shipped
 verification unit additionally supplies `HF_HUB_OFFLINE=1` and denies IP sockets;
 the shared service alone does not claim an operating-system egress restriction.
 See [decision 110](adr/decision-110.md) and the
-[API-004 isolation amendment](adr/decision-111.md). The later isolated REST
-executor remains planned; the shared service must not toggle the ASGI process's
-offline flag.
+[API-004 isolation amendment](adr/decision-111.md). API-008/009 now supply the
+private REST executor/delegation; API-014 still owns installed no-IP hardening.
+The shared service must not toggle the ASGI process's offline flag.
 
 Exits `0` on a clean result and `40` on any integrity finding. A finding never
 rewrites a manifest, prunes a revision, or re-downloads over the evidence.

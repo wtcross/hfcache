@@ -713,8 +713,8 @@ run-report access. An operation ID selects metadata; it grants no authority.
 Idempotency lookup additionally searches only the authenticated credential-class
 namespace. Rotation retains that coarse identity; changing from writer to reader
 is a different lookup namespace. No individual-submitter attribution is promised.
-API-007 supplies observation/admission primitives only; public submission and
-CLI `operations` commands remain later tasks.
+API-007 supplies observation/admission primitives; API-009/010 now expose typed
+command submissions, while public CLI `operations` commands remain later tasks.
 
 When an acknowledgement is lost, look up the original key without submitting
 another command. A match identifies the original operation even if archive policy
@@ -732,8 +732,10 @@ work as `interrupted`; API-008 must reconcile exact surviving workers first.
 permission to repeat the action. Use existing validated run,
 report and transaction evidence to diagnose archive state through this runbook.
 A PID, released flock, elapsed timeout, vanished client or disconnected socket is
-insufficient proof of completion or termination. The later verifier integration
-must identify an exact surviving operation and durable outcome before reattaching.
+insufficient proof of completion or termination. API-008 identifies the exact
+surviving verifier operation and durable outcome before reattaching. Unavailable
+or unsafe status preserves active evidence and closes execution admission across
+restarts; it does not prove the worker ended.
 
 Keep malformed, unknown-version, unsafe, interrupted, ambiguous and nonterminal
 records. Do not delete them to make admission succeed. Preserve an incident copy
@@ -774,3 +776,37 @@ never unlink a potentially held instance/store/archive lock. A saved worker
 terminal result is execution evidence; a lost observer, free lock, PID or old
 `running` label is not. See [decision 115](adr/decision-115.md) and
 [server restart/drain](server.md#restart-and-drain).
+
+## 11. REST maintenance without stale authority (API-010)
+
+This section describes hermetic HTTP/domain acceptance, not an installed service
+rollout. The existing local CLI remains until its client migration. Separate
+preview/apply [maintenance resources](api.md#implemented-maintenance-resources-api-010)
+call the same services and retain all refusal/recovery rules above. Previews are
+keyed read-capable jobs, not executable capabilities. Writer apply submits only
+strict explicit scope; no preview/result body or proof is trusted. The runner
+revalidates admitted policy under the service-owned archive lock before domain
+work, and the shared service derives fresh scope and evidence there.
+
+Purge still refuses a configured/newly configured repository and unknown shallow
+entries. Recovery preserves blocked-plan diagnostics and does not guess among
+ambiguous outcomes. Quarantine proves every selected transaction and retained
+replacement before removing any batch entry; it refuses repair/unique/unknown
+content and unfinished work without recovering unrelated transactions. Repair
+retains original manifest expectations, generation, audit and grace-period rules.
+Prune/purge interruption follows the existing pre/post-logical-commit boundary;
+no new checkpoint or HTTP-specific recovery algorithm is introduced.
+
+A lost acknowledgement or observation is not cancellation or proof of nonexecution.
+Look up the original key, inspect its exact operation, then retrieve its exact
+terminal Envelope, including domain exit/refusal and partial diagnostics. Do not
+resubmit uncertain work with a new key, hand-edit history or reconstruct commands
+from journals. Operation history loss remains uncertainty even when archive
+recovery can explain some filesystem evidence.
+
+Initialization is separately disabled by default, requires writer confirmation
+and restated configured root/UUID, and uses its own locked known-layout checks.
+The maintenance switch gates initialization only. Disabled initialization POST
+retries remain refused while authenticated original history/lookup stays available.
+Neither recovery, health nor missing sentinel triggers initialization; this
+archive already exists and must not be initialized again.

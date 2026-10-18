@@ -28,7 +28,7 @@ timers use. Running as yourself will fail — `/etc/hfcache/config.toml` is
 
 ---
 
-## REST command observation (API-009)
+## REST command observation (API-009/API-010)
 
 This section describes implemented development/test behavior, not a production
 rollout or commands exercised on the installed writer. The existing local CLI and
@@ -51,6 +51,24 @@ do not generate another key to repeat uncertain work. All REST readers share the
 whole-archive history boundary; lookup searches only the caller's credential class.
 Installed validation uses `{}` and returns its classified validation Envelope
 immediately, without a key, Hub request or archive mutation.
+
+API-010 adds [separate maintenance preview/apply resources](api.md#implemented-maintenance-resources-api-010),
+repair and guarded initialization. Preview jobs need a key and leave archive state
+unchanged; an independent writer apply request sends explicit scope, never the
+returned plan, and proves current policy/evidence under lock. Prune is one eligible
+revision per repository per round. Purge refuses configured targets and unexplained
+layout. Quarantine requires an explicit proven transaction-ID batch, preserves
+repair/unknown evidence and does not recover unrelated transactions. Repair uses
+the original immutable manifest and preserves the prior locator through its grace
+period. A terminal refused/failed maintenance Envelope retains the domain code
+and diagnostic payload; neither 202 nor result HTTP 200 proves successful action.
+
+The server maintenance switch gates initialization only and is disabled by default;
+other maintenance routes retain their own writer/domain safeguards. Initialization
+additionally requires confirmation and the configured root/UUID restated, never
+an alternate path. Startup, health, recovery and a missing sentinel never init.
+The existing production archive is already initialized; this implementation's
+initialization evidence uses fake-root fixtures and authorizes no production action.
 
 ## 1. Is the archive healthy?
 

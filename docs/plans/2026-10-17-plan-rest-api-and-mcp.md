@@ -757,3 +757,15 @@ versions when implementing, especially FastMCP imports and test transports:
   escape. Pure bounded candidate hooks compare six installed authority fields;
   current candidate routes remain refused until API-012. No new durable shape,
   runtime dependency, MCP or installed-host rollout is introduced.
+
+- 2026-10-17 API-010: Decision 117 exposes ten guarded maintenance/init rows
+  through separate typed preview/apply URLs, keyed 202 and exact domain results.
+  Fresh locked policy/scope/proof, one-round prune, unmanaged-only purge,
+  quarantine batch proof, original-manifest repair and existing commit recovery
+  remain authoritative; previews cannot be posted as plans. Initialization alone
+  needs the disabled-by-default restart-only maintenance gate plus explicit
+  confirmation/restated configured root/UUID; its early gate also precedes POST
+  retry handling while original GET history stays observable. FS-21 now names the
+  explicit initialization operation through either adapter. All 27 existing rows
+  are implemented, with the two candidate rows pending API-012. No dependency,
+  durable shape, MCP or production operation is introduced.

@@ -1,7 +1,7 @@
-"""Authenticated bounded read application; importing creates no app or listener.
+"""Authenticated bounded query and command adapters; importing creates no listener.
 
-Decision 113 and plan §§3-4 keep metadata behind typed services. No admission,
-writer command, credential resolver or Hub client is exposed as a route.
+Decisions 113-117 and plan §§3-6 keep archive authority behind typed services,
+durable admission, and the shared guarded execution lane.
 """
 
 import asyncio
@@ -27,10 +27,12 @@ from starlette.exceptions import HTTPException
 from hfcache.api.auth import Capability, CredentialRegistry, load_credentials, require_capability
 from hfcache.api.commands import install_command_routes
 from hfcache.api.lifecycle import MetadataPool, instance_lock
+from hfcache.api.maintenance import install_maintenance_routes
 from hfcache.api.models import ApiProblem, OperationView, PageQuery, ReadResponse
 from hfcache.api.operations import OperationLimits, OperationReceipt, OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.errors import (
+    AuthorizationError,
     CodedError,
     ConfigurationError,
     HfcacheError,
@@ -282,8 +284,16 @@ class Boundary:
         command = scope["method"] == "POST" and path in getattr(
             self.owner.state, "command_routes", ()
         )
-        if command and path in {PREFIX + "/syncs", PREFIX + "/verifications"}:
+        if command and path in getattr(
+            self.owner.state, "writer_routes", {PREFIX + "/syncs", PREFIX + "/verifications"}
+        ):
             require_capability(principal, Capability.WRITE)
+        if (
+            command
+            and path == PREFIX + "/archive/initializations"
+            and not self.server.maintenance_enabled
+        ):
+            raise AuthorizationError
         self.validate_transport(scope)
         if not command:
             return b"" if await _empty_body(receive, self.server.limits.max_request_bytes) else None
@@ -983,4 +993,5 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
             )
 
     install_command_routes(app, server, render)
+    install_maintenance_routes(app, server)
     return app

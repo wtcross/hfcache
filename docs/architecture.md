@@ -134,6 +134,24 @@ and continuation policy, joined producer lifetime, exact report identity and
 retention authority remain in their existing shared implementations. No durable
 shape, runtime dependency, MCP capability or deployed host boundary changes.
 
+### 2.4 Explicit maintenance transport (API-010)
+
+[Decision 117](adr/decision-117.md) extends typed keyed command admission to
+separate maintenance preview/apply resources, exact-manifest repair and guarded
+initialization. URL identity determines preview versus apply; a request never
+supplies an executable plan or implicit apply default. Every side effect requires
+a writer and repeats policy/scope/evidence checks inside the service-owned flock.
+Preview output grants no subsequent mutation authority. Recovery ambiguity,
+quarantine batch proof, one-round prune, unmanaged-only purge, canonical cache
+APIs, original manifests/audits and prune's commit boundary remain unchanged.
+
+Initialization requires the disabled-by-default server maintenance gate plus
+confirmation/restatement of the configured root/UUID. This gate covers
+initialization only. Shared initialization uses its own locked mount/known-layout
+checks and writes the sentinel last; startup, health, recovery and missing sentinel
+never initialize. This exposes existing service authority without adding a new
+archive algorithm, durable format, dependency or production action.
+
 ## 3. Architecture decisions
 
 Each decision is locked for schema version 1. Changing one is a deliberate
@@ -821,9 +839,11 @@ immediately after a crash. Each is directly testable.
 
 ### Initialization
 
-- **`FS-21`** — `hfcache archive init` is the only way to create the sentinel and
-  the top-level directories. It is an explicit operator action, never reached from
-  a timer, a sync, or an automatic recovery path.
+- **`FS-21`** — The explicit archive initialization operation is the only way to
+  create the sentinel and top-level directories. It is exposed by `archive init`
+  and the guarded configured-target REST initialization resource (decision 117).
+  It is an explicit operator action, never reached from a timer, sync, daemon
+  startup, health check or automatic recovery path.
 - **`FS-22`** — Initialization refuses a target that is not the expected
   read/write NFS mount, already has a sentinel, or holds unknown content or
   symlinks. The single exception is one pre-existing **empty** `published/`

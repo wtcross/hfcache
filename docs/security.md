@@ -405,6 +405,26 @@ policy. Current HTTP candidate fields remain refused until API-012. See
 [decision 116](adr/decision-116.md), [body/role rules](api.md#implemented-command-resources-api-009)
 and [candidate authority](configuration.md#12-candidate-authority-preparation-api-009).
 
+**Explicit maintenance boundary (API-010).** Reader previews and writer-only
+apply resources have separate URLs and strict scopes; all are keyed bounded jobs.
+No omitted mode authorizes mutation, no caller-supplied plan is executable and
+no preview grants a later capability. Under-lock fresh policy/scope/proof checks
+refuse queued staleness, newly configured purge targets and changed quarantine
+evidence. Unknown content, repair quarantine and ambiguous transactions remain
+preserved; original manifests/audits and existing pre/post-commit recovery rules
+remain authoritative. Repair uses the installed Hub credential and exact original
+expectations, not a request-selected endpoint or replacement digest.
+
+The restart-only maintenance switch is disabled by default and gates initialization
+only, before body reception/POST retry handling. Even a previously bound key does
+not bypass a disabled gate; authenticated lookup/status/result still observe it.
+Enabled initialization additionally requires writer capability, strict confirmation
+and the configured root/UUID restated. These fields cannot select another archive.
+Initialization's own locked checks refuse existing/unsafe/unknown state and write
+the sentinel last. Startup, health, recovery and missing sentinel never initialize.
+See [decision 117](adr/decision-117.md), [maintenance resources](api.md#implemented-maintenance-resources-api-010)
+and [server gate](server.md#maintenance-and-initialization-authority-api-010).
+
 ## 4. Controls summary
 
 | # | Control | Enforced by |

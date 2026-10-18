@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 
     from fastapi import FastAPI
 
+    from hfcache.api.command_models import CommandModel
     from hfcache.api.operations import Admission, OperationReceipt
     from hfcache.reporting import Envelope
     from hfcache.server_config import PolicySnapshot, ServerConfig
@@ -40,6 +41,7 @@ COMMAND_ROUTES = frozenset(
     PREFIX + suffix
     for suffix in ("/syncs", "/verifications", "/plans", "/diagnostics", "/config/validate")
 )
+WRITER_ROUTES = frozenset({PREFIX + "/syncs", PREFIX + "/verifications"})
 
 
 class Render(Protocol):
@@ -99,80 +101,90 @@ def _accepted(request: Request, admission: Admission, server: ServerConfig) -> R
     )
 
 
-async def _offload(request: Request, work: Callable[[], Response]) -> Response:
+async def offload_command(request: Request, work: Callable[[], Response]) -> Response:
     lease = request.app.state.pool.submit(work)
     request.state.metadata_leases.append(lease)
     return await lease.future
 
 
+def command_service(
+    request: Request, snapshot: PolicySnapshot, context: ExecutionContext
+) -> CommandServices:
+    """Use only the trusted lifespan credential path, never a request-selected file."""
+    return CommandServices(snapshot.config, context, token_file=request.app.state.hub_token_file)
+
+
+def admit_command(  # noqa: PLR0913 - explicit trusted route execution policy
+    request: Request,
+    body: CommandModel,
+    server: ServerConfig,
+    *,
+    route: str,
+    command: str,
+    execute: Callable[[PolicySnapshot, ExecutionContext], ServiceResult | Envelope],
+    requires_lock: bool,
+    delegated: bool = False,
+) -> Response:
+    """One durable keyed admission boundary shared by typed command adapters."""
+    _no_query(request)
+    key = _key(request)
+    budget = (
+        (lambda snapshot: snapshot.config.verification.lock_wait_seconds)
+        if delegated
+        else (lambda snapshot: snapshot.config.sync.lock_wait_seconds)
+    )
+    admitted = request.app.state.runner.submit(
+        request.state.principal,
+        key,
+        route,
+        body.model_dump(mode="json"),
+        command=command,
+        execute=execute,
+        wait_seconds=budget,
+        requires_lock=requires_lock,
+        delegated=delegated,
+        context=request.state.execution_context,
+    )
+    return _accepted(request, admitted, server)
+
+
 def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -> None:
-    app.state.command_routes = COMMAND_ROUTES
-
-    def service(snapshot: PolicySnapshot, context: ExecutionContext) -> CommandServices:
-        return CommandServices(snapshot.config, context, token_file=app.state.hub_token_file)
-
-    def admit(  # noqa: PLR0913 - explicit trusted route execution policy
-        request: Request,
-        body: SyncSubmission | VerificationSubmission | DiagnosticsSubmission,
-        *,
-        route: str,
-        command: str,
-        execute: Callable[[PolicySnapshot, ExecutionContext], ServiceResult | Envelope],
-        requires_lock: bool,
-        delegated: bool = False,
-    ) -> Response:
-        _no_query(request)
-        key = _key(request)
-        budget = (
-            (lambda snapshot: snapshot.config.verification.lock_wait_seconds)
-            if delegated
-            else (lambda snapshot: snapshot.config.sync.lock_wait_seconds)
-        )
-        admitted = app.state.runner.submit(
-            request.state.principal,
-            key,
-            route,
-            body.model_dump(mode="json"),
-            command=command,
-            execute=execute,
-            wait_seconds=budget,
-            requires_lock=requires_lock,
-            delegated=delegated,
-            context=request.state.execution_context,
-        )
-        return _accepted(request, admitted, server)
+    app.state.command_routes = frozenset(getattr(app.state, "command_routes", ())) | COMMAND_ROUTES
+    app.state.writer_routes = frozenset(getattr(app.state, "writer_routes", ())) | WRITER_ROUTES
 
     @app.post(PREFIX + "/syncs", response_model=AcceptanceResponse, status_code=202)
     async def sync(request: Request, body: SyncSubmission) -> Response:
         require_capability(request.state.principal, Capability.WRITE)
-        return await _offload(
+        return await offload_command(
             request,
-            lambda: admit(
+            lambda: admit_command(
                 request,
                 body,
+                server,
                 route=PREFIX + "/syncs",
                 command="sync",
                 requires_lock=True,
-                execute=lambda snapshot, context: service(snapshot, context).synchronize(
-                    SelectionRequest(body.selectors)
-                ),
+                execute=lambda snapshot, context: command_service(
+                    request, snapshot, context
+                ).synchronize(SelectionRequest(body.selectors)),
             ),
         )
 
     @app.post(PREFIX + "/plans", response_model=AcceptanceResponse, status_code=202)
     async def plan(request: Request, body: PlanSubmission) -> Response:
         require_capability(request.state.principal, Capability.READ)
-        return await _offload(
+        return await offload_command(
             request,
-            lambda: admit(
+            lambda: admit_command(
                 request,
                 body,
+                server,
                 route=PREFIX + "/plans",
                 command="plan",
                 requires_lock=False,
-                execute=lambda snapshot, context: service(snapshot, context).plan_sync(
-                    SelectionRequest(body.selectors)
-                ),
+                execute=lambda snapshot, context: command_service(
+                    request, snapshot, context
+                ).plan_sync(SelectionRequest(body.selectors)),
             ),
         )
 
@@ -181,17 +193,18 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
         require_capability(
             request.state.principal, Capability.READ if body.read_only else Capability.WRITE
         )
-        return await _offload(
+        return await offload_command(
             request,
-            lambda: admit(
+            lambda: admit_command(
                 request,
                 body,
+                server,
                 route=PREFIX + "/diagnostics",
                 command="doctor",
                 requires_lock=not body.read_only,
-                execute=lambda snapshot, context: service(snapshot, context).diagnose(
-                    DoctorRequest(read_only=body.read_only)
-                ),
+                execute=lambda snapshot, context: command_service(
+                    request, snapshot, context
+                ).diagnose(DoctorRequest(read_only=body.read_only)),
             ),
         )
 
@@ -210,11 +223,12 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
                 remaining_wait_seconds() or 0.0,
             )
 
-        return await _offload(
+        return await offload_command(
             request,
-            lambda: admit(
+            lambda: admit_command(
                 request,
                 body,
+                server,
                 route=PREFIX + "/verifications",
                 command=verification.command,
                 requires_lock=False,
@@ -243,4 +257,4 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
                 )
             return render(request, result, snapshot=snapshot)
 
-        return await _offload(request, work)
+        return await offload_command(request, work)

@@ -51,8 +51,8 @@ production state was created or changed.
 The daemon now has one bounded execution lane with one queue/lock waiting
 deadline and an under-lock admitted-policy check. Private verification delegates
 through a peer-checked bounded Unix protocol with exact durable outcomes and
-restart reconciliation; accepted work is never automatically replayed. Maintenance/candidate routes and installed systemd/no-IP enforcement remain later
-tasks. No in-process production verification fallback or MCP dependency is added.
+restart reconciliation; accepted work is never automatically replayed. Candidate
+routes and installed systemd/no-IP enforcement remain later tasks. No in-process production verification fallback or MCP dependency is added.
 
 Typed REST commands now admit sync, all actual verification modes, installed
 planning and explicit read-only/probing diagnostics with durable keyed 202
@@ -63,6 +63,18 @@ paths, credential overrides and implicit probes. A trusted startup Hub token-fil
 option supports development; pure candidate authority assessment prepares later
 client work without accepting candidates yet. No new durable format/dependency,
 MCP capability or production operation is introduced.
+
+Typed REST maintenance now separates reader previews from writer applies for
+prune, purge, recovery and quarantine, plus exact-manifest repair and guarded
+initialization. Every route uses keyed admission and exact domain results;
+previews grant no future apply authority. Locked fresh policy/scope/evidence
+checks preserve unknown data, audits, commit recovery and grace periods. Repair
+audit reasons redact registered API/Hub secrets after credential resolution.
+Initialization alone needs the disabled-by-default server maintenance gate,
+confirmation and the configured root/UUID restated; startup/health/recovery never
+initialize. All 27 existing-operation rows are implemented; the two candidate
+rows and client/host/MCP acceptance remain later work. No production operation,
+new durable format or runtime dependency is introduced.
 
 ## v0.1.10 — 2026-09-14
 

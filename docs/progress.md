@@ -998,6 +998,36 @@ package in this family.
   live/NFS/installed-host and extra build-marker suites did not run. Maintenance,
   clients/candidates and installed hardening remain later tasks. Next is API-010.)
 
+- [x] API-010 Expose explicit guarded maintenance and initialization
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-010-guarded-maintenance-api.md)).
+  Ten typed fixed resources separate prune/purge/recovery/quarantine preview and
+  apply, plus repair and initialization, through shared keyed admission and exact
+  terminal Envelopes. No posted plan, omitted mode or preview grants apply authority.
+  Writer side effects revalidate fresh installed policy/scope/proof under the
+  shared service lock; queued managed purge and changed two-ID quarantine evidence
+  refuse while preserving every file. One-round prune/current refs, canonical-cache
+  deletion, original manifest/audit, commit recovery and exact repair/generation/
+  168-hour grace remain unchanged. Repair audit reasons redact registered API/Hub
+  secrets after credential resolution. Initialization alone requires the disabled
+  restart-only maintenance gate before body/POST retry, strict confirmation and
+  configured root/UUID restated; old GET history stays observable. Synthetic tests
+  prove no implicit health/startup/recovery initialization. Decision 117 and
+  116/AD-16/17/20 amendments, FS-21's explicit-operation clarification, invariants
+  and API/server/CLI/security/architecture/runbook/README/plan/Unreleased agree.
+  Reviewed AD-06/13–17/20, FS-14/19/21–23, TX-06/07 and related invariants;
+  RET-011 remains separate. Focused model/service/runner: 143 passed in 5.11
+  seconds; adversarial: 127 in 15.19; seven real HTTP/shared-domain cases pass.
+  First full `rtk proxy bash scripts/check.sh` exits 0: lock/sync, 327 formatted
+  files, lint/types, 2,685 Python tests (40 deselected, 163.41 seconds), 0.1.10
+  sdist/wheel, locked isolated base/server install/import/help/version, 45 Cockpit
+  tests and production build. No functional fix/gate failure; one module-docstring
+  correction had supplemental checks and was included in final builds/installs.
+  Final links/current/dependencies, 27 implemented / 2 planned rows, 117 decision/
+  ADR records and whitespace pass. No new durable shape/dependency/MCP or
+  production operation; live/NFS/installed-host and extra build-marker suites did
+  not run. Clients/candidates/installed hardening retain later gates. Next is API-011.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3634,3 +3664,16 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      token overrides and implicit probe modes. Candidate HTTP/CLI pipeline stays
      API-012; maintenance, client and installed-worker hardening remain later.
      No archive/receipt format, dependency, MCP or production change is added.
+
+117. **Revalidate explicit maintenance authority at execution**
+     (2026-10-17, API-010). [ADR](adr/decision-117.md): separate typed preview/
+     apply URLs preserve explicit scope; every job requires durable idempotency,
+     every side effect requires a writer, and previews confer no apply authority.
+     Fresh locked policy/scope/guard/evidence validation preserves one-round prune,
+     unmanaged-only purge, quarantine batch proof, exact-manifest repair and
+     pre/post-commit recovery without widening deletion authority. Unknown evidence
+     remains preserved. The disabled-by-default maintenance switch gates only
+     explicitly confirmed initialization of the restated configured root/UUID;
+     never initialize from startup, health, recovery or a missing sentinel.
+     Reject generic execution, posted plans, mode defaults, unknown-data cleanup
+     and silent replay. No durable schema/dependency/MCP or production change.

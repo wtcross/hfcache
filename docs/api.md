@@ -2,10 +2,10 @@
 
 Status: API-006 implements authenticated archive metadata and API-007 adds
 bounded receipt/admission primitives and operation observation; API-009 adds
-typed command routes under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
-Maintenance/initialization routes, candidate operations and API-backed public CLI
-migration remain planned. No production installation or listener start is asserted
-by implementation evidence.
+typed command routes, with guarded maintenance/initialization added by API-010,
+under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
+Candidate operations and API-backed public CLI migration remain planned. No
+production installation or listener start is asserted by implementation evidence.
 
 ## Service and transport boundary
 
@@ -39,7 +39,7 @@ uses its local service until API-011–013 migrate it.
 | config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
 | archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | pending | pending | planned |
+| archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
 | doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
@@ -52,15 +52,15 @@ uses its local service until API-011–013 migrate it.
 | verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| prune --dry-run | preview_prune | POST /prune-plans | R | none | no | J | receipt only | pending | pending | planned |
-| prune --apply | apply_prune | POST /prunes | W | archive | no | J | receipt; guarded domain mutation/audit | pending | pending | planned |
-| purge --dry-run [selectors XOR --all-unmanaged] | preview_purge | POST /purge-plans | R | none | no | J | receipt only | pending | pending | planned |
-| purge --apply [selectors XOR --all-unmanaged] | apply_purge | POST /purges | W | archive | no | J | receipt; guarded domain mutation/audit | pending | pending | planned |
-| recover --dry-run | preview_recovery | POST /recovery-plans | R | none | no | J | receipt only | pending | pending | planned |
-| recover --apply | apply_recovery | POST /recoveries | W | archive | no | J | receipt; guarded domain mutation/audit | pending | pending | planned |
-| quarantine --dry-run IDs | preview_quarantine | POST /quarantine-plans | R | none | no | J | receipt only | pending | pending | planned |
-| quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | pending | pending | planned |
-| repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | pending | pending | planned |
+| prune --dry-run | preview_prune | POST /prune-plans | R | none | no | J | receipt only | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| prune --apply | apply_prune | POST /prunes | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| purge --dry-run [selectors XOR --all-unmanaged] | preview_purge | POST /purge-plans | R | none | no | J | receipt only | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| purge --apply [selectors XOR --all-unmanaged] | apply_purge | POST /purges | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| recover --dry-run | preview_recovery | POST /recovery-plans | R | none | no | J | receipt only | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| recover --apply | apply_recovery | POST /recoveries | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| quarantine --dry-run IDs | preview_quarantine | POST /quarantine-plans | R | none | no | J | receipt only | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
 | reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py; tests/unit/test_query_boundary.py | implemented |
 | operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | pending CLI migration | tests/unit/test_api_operations.py; tests/unit/test_operations.py; tests/unit/test_operation_store_adversarial.py | implemented |
 
@@ -107,7 +107,7 @@ API-003 adds `CommandServices` and immutable requests for the command rows above
 These services preserve domain ordering and classified partial results; public
 commands own the common archive lock once. Adapters and later operation runners
 must call them without an outer archive lock. Verification persistence now stays
-inside its lock/preflight boundary (decision 110). API-009 exposes the command subset below through those services; maintenance,
+inside its lock/preflight boundary (decision 110). API-009/010 expose the command resources below through those services;
 candidate routes and remote CLI modes remain with their implementing tasks.
 
 ## Implemented metadata resources (API-006)
@@ -120,7 +120,7 @@ run IDs retain domain grammars. No path parameter is an arbitrary filesystem pat
 | GET resource | Result in `envelope.data` | Pagination |
 | --- | --- | --- |
 | `/version` | Existing local version payload; no archive-policy read per request | none |
-| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; API-009 advertises `operations=true` for its implemented command subset and `operation_history=true`; MCP remains false | none |
+| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; API-009/010 advertise `operations=true`, `operation_history=true` and the actual `maintenance_enabled` initialization gate; MCP remains false | none |
 | `/health` | Daemon readiness, policy-validation state and read-only archive inspection when available | none |
 | `/status` | Archive headline plus repository status rows | `repositories` |
 | `/repositories` | Published inventory, including unmanaged repositories | `repositories` |
@@ -276,7 +276,7 @@ to bypass the capability boundary.
 
 ### Admission model and exact results
 
-The four job resources require exactly one valid `Idempotency-Key`. They use the
+These four job resources require exactly one valid `Idempotency-Key`. They use the
 installed snapshot's `sync.lock_wait_seconds` for sync/planning/diagnostics and
 `verification.lock_wait_seconds` for verification; one absolute budget spans
 admission/queue and lock/delegation waiting. Matching retries consult the durable
@@ -333,6 +333,108 @@ Candidate content is not accepted on these routes yet: raw `candidate` presence
 is 403 for a reader, then an unknown-field 422 for a writer. The reserved bounded
 `CandidatePayload` and pure authority-assessment hooks are API-012 preparation,
 not candidate HTTP availability, arbitrary server-file loading or installation.
+
+## Implemented maintenance resources (API-010)
+
+API-010 extends the same strict authenticated POST boundary, keyed 202
+`AcceptanceResponse`, bounded lane and exact-result observation to ten explicit
+maintenance resources. The active task records actual validation evidence.
+Every route rejects query parameters and unknown fields. The URL fixes preview
+versus apply: no `apply`, `dry_run`, `mode`, `preview` or executable `plan` field
+is accepted. Every route requires an idempotency key, including previews that
+write control-state receipts while leaving the archive unchanged.
+
+| Route under `/api/v1` | Strict JSON object | Role and locked behavior |
+| --- | --- | --- |
+| `POST /prune-plans` | `selectors`, default `[]` | R; current installed-policy preview, no archive lock |
+| `POST /prunes` | Same selector body | W; fresh locked plan/apply, at most one eligible revision per selected repository |
+| `POST /purge-plans` | `selectors`, default `[]`; `all_unmanaged`, default `false`; exactly one scope | R; unmanaged whole-repository preview, no archive lock |
+| `POST /purges` | Same explicit scope body | W; fresh locked unmanaged scope/layout proof and per-repository transactions |
+| `POST /recovery-plans` | Exactly `{}` | R; describe current recovery evidence/refusals, no archive lock |
+| `POST /recoveries` | Exactly `{}` | W; reconstruct/validate recovery under lock, never execute a supplied plan |
+| `POST /quarantine-plans` | Required `transaction_ids` array | R; prove the complete explicitly named batch, no archive lock |
+| `POST /quarantine-cleanups` | Same explicit ID body | W; fresh locked batch proof/removal, no unrelated reconciliation |
+| `POST /repairs` | Required `revision`; optional `reason`, default `operator_requested` | W; exact-SHA original-manifest repair under lock, using installed Hub authority |
+| `POST /archive/initializations` | Required `archive_root`, `archive_id` and `confirm=true` | W plus enabled maintenance gate; restate configured authority, initialize only after its own locked checks |
+
+Prune selectors follow sync's configured selection grammar and sorted distinct
+canonical repository set, with at most 100 items of 256 characters; a valid SHA
+suffix does not override installed policy. Purge uses whole-repository selectors
+only and rejects any SHA suffix. Nonempty selectors and `all_unmanaged=true` are
+mutually exclusive; empty selectors with false/missing `all_unmanaged` is invalid.
+Configuration removal alone never purges anything, and an explicitly configured
+target remains ineligible. Quarantine requires 1–100 explicit 32-lowercase-hex
+transaction IDs, sorted/deduplicated before canonical hashing, not paths or an
+implicit all-entries scope. Repair requires one
+`TYPE:ID@` full lowercase 40-character SHA and at most 2,048 characters of audit
+reason (empty text retains the existing CLI semantics); it accepts no endpoint,
+credential or source-path override. The shared repair service redacts registered
+credential values from the audit reason after resolving its installed Hub source
+and before passing the reason to durable repair/audit writing.
+
+Apply does not accept the preview payload, preview operation ID or client-provided
+filesystem proof. It reacquires the shared service's archive lock, checks the
+admitted fingerprint against freshly installed policy and repeats the operation's
+guards/scope/evidence checks. A queued stale policy is a refusal before mutation;
+a purge target becoming configured cannot acquire deletion authority from its
+old preview. Quarantine proof covers every requested entry before any removal;
+changed bytes, unknown files, repair evidence or unfinished transactions refuse
+and remain preserved. Recovery ambiguity retains its diagnostic payload and
+safety classification rather than guessing or initializing an archive.
+
+Prune/purge retain the existing logical commit point: before it, recovery restores
+content; afterwards it finishes audit/physical cleanup without republishing.
+Canonical cache deletion uses supported Hub APIs, audits/original manifests stay
+preserved and empty containers use `rmdir`. Repair reproduces original expectations,
+reverifies a new publication instance before reference switches, preserves the
+SHA's generation and keeps the predecessor at its locator through the grace period.
+The separate documented RET-011 generation gap is not resolved by these routes.
+
+### Initialization gate and observation
+
+`maintenance_enabled=false` is the restart-only default and gates initialization
+only. A disabled initialization POST is `HFAPI002`/403 before body reception or
+POST retry handling, even when its key was bound before a restart. Original
+lookup/status/events/result reads remain available. Other maintenance resources
+retain their own capabilities/domain safeguards and do not require that switch.
+Initialization additionally requires strict literal `confirm=true`, an absolute
+`archive_root` normalized by the DTO and canonical UUID `archive_id` equal to the
+installed configured values. The path is bounded to 4,096 UTF-8 bytes and refuses
+dot/traversal components, backslashes and nonprintable characters. Malformed
+path/UUID/confirmation is a 422 wire refusal; a valid but mismatched root/UUID
+can be admitted but ends with the existing HFARG002 / exit 10 and no initialization.
+This is redundant confirmation, never caller-selected root or UUID authority. Existing/unknown content, unsafe mounts and a pre-existing
+sentinel remain domain refusals; the sentinel is written last. There is no implicit
+initialization from startup, health, recovery, missing-sentinel diagnosis or
+ordinary operations.
+
+For an authenticated preview, a representative request is:
+
+```http
+POST /api/v1/purge-plans
+Content-Type: application/json
+Idempotency-Key: example-purge-preview
+
+{"selectors":["model:retired/model-name"]}
+```
+
+An independently authorized `POST /api/v1/purges` uses only the same explicit scope
+and a distinct deliberate operation key, after reviewing the current evidence.
+Never copy the returned plan into the request. Quarantine preview uses, for example,
+`{"transaction_ids":["0123456789abcdef0123456789abcdef"]}`; apply uses the separate
+`/quarantine-cleanups` URL and proves the batch again. Repair uses
+`{"revision":"model:organization/model-name@0123456789abcdef0123456789abcdef01234567","reason":"operator_requested"}`.
+Initialization requires a deliberately provisioned throwaway/configured target,
+the explicit server gate and all three required confirmation fields; these route
+examples do not authorize initializing an existing production archive.
+
+Every 202 is admission only. Poll status/events and retrieve the exact terminal
+Envelope, including domain errors, partial recovery diagnostics and application
+exit classification. Result HTTP 200 does not prove successful deletion/repair;
+a refusal is still a failed Envelope. On lost acknowledgement, use the original
+key's lookup, never a new key to repeat uncertain mutation. Restart never replays
+receipts or reconstructs work from journals. No production operation or installed
+host-hardening proof is supplied by hermetic HTTP/domain tests.
 
 ## Execution correlation (API-004)
 
@@ -459,7 +561,7 @@ does not resubmit or move the key into a URL. The core admission outcomes are:
 | Missing/expired history | `HFAPI013`/404 with unknown execution outcome; never automatic replay |
 
 API-007 exposes non-submitting lookup; API-009 now provides the strict command
-POST examples above, while maintenance/initialization routes remain API-010.
+POST examples above; API-010 adds the same boundary to maintenance/initialization.
 
 States: queued, waiting_lock, running, succeeded, failed, interrupted. Store the
 exact terminal Envelope in a validated bounded result reference. Interrupted
@@ -468,8 +570,8 @@ applies one absolute waiting deadline across queue, delegation and lock time,
 reloads installed policy under the service-owned lock and refuses stale scope
 before mutation without duplicate/nested lock acquisition. Verification delegates
 to the private socket executor, which owns its lock through report/catalog
-persistence. API-009 implements the command subset above; maintenance and
-initialization POST resources remain API-010.
+persistence. API-009/010 implement the command/maintenance resources above;
+candidate HTTP remains API-012.
 
 Disconnect and Ctrl-C stop observation. They do not cancel accepted work. Later
 API-backed clients emit the nonsecret key before mutation submission and operation
@@ -549,7 +651,8 @@ update or unrelated corrupt receipt. Collection/key-lookup scans refuse unsafe,
 unsupported or unexplained state instead of silently dropping it.
 Capabilities advertises `operation_history=true` and, since API-009,
 `operations=true` for its implemented command routes. Roles still apply; this
-flag does not imply maintenance/candidate routes or full REST acceptance.
+flag does not imply candidate routes or full REST acceptance. API-010 includes
+maintenance routes and advertises `maintenance_enabled` for initialization only.
 
 | Route under `/api/v1` | `envelope.data` / behavior |
 | --- | --- |
@@ -610,8 +713,9 @@ records file ownership, transitions, event/result bounds and compatibility.
 
 API-005 supplies strict configuration, credential loading, fixed capability
 principals and a reusable FastAPI bearer adapter. API-006 authenticates all
-metadata HTTP routes/errors/schema/docs and applies transport bounds. Jobs,
-candidate operations and write endpoints remain planned.
+metadata HTTP routes/errors/schema/docs and applies transport bounds. API-009/010
+extend those controls to keyed command/maintenance jobs. Candidate operations
+remain API-012; MCP and installed-host acceptance remain gated.
 
 | Credential class | Accepted interface | Core capability | REST read | REST write |
 | --- | --- | --- | --- | --- |
@@ -620,7 +724,8 @@ candidate operations and write endpoints remain planned.
 | MCP reader | Future MCP only | `mcp-read` | 401 `HFAPI001` | 401 `HFAPI001` |
 | Absent, invalid or malformed bearer | none | none | 401 `HFAPI001` | 401 `HFAPI001` |
 
-These capability results do not imply that a planned job/write route exists.
+Capabilities do not grant an unimplemented candidate/MCP route or bypass the
+initialization gate, locked scope/evidence checks or domain refusal.
 Cross-interface credentials are rejected as unauthenticated. Missing,
 malformed and invalid authentication uses the same safe detail `Not authenticated`
 and `WWW-Authenticate: Bearer realm="hfcache"`; capability refusal is `Forbidden`.

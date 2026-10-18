@@ -5,8 +5,9 @@ controlled application lifespan over API-005 configuration/auth primitives.
 API-007 adds bounded receipt/admission primitives and operation observation;
 API-008 adds the heavyweight lane and private verifier process/protocol; API-009
 adds typed sync, verification, planning, diagnostics and installed validation.
-Maintenance, candidate operations, CLI migration and installed service hardening
-remain later tasks.
+API-010 adds explicit maintenance preview/apply, repair and guarded initialization.
+Candidate operations, CLI migration and installed service hardening remain later
+tasks.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
@@ -42,7 +43,7 @@ the certificate/key before accepting connections.
 | `listener` | table, defaults below | Unix/TCP/TLS and browser/proxy policy |
 | `limits` | table, defaults below | Bounded resource policy for metadata, command routes and runner |
 | `verification` | table, defaults below | Private executor client policy; no worker process is launched |
-| `maintenance_enabled` | bool, `false` | Later archive initialization requires this gate plus writer capability and domain confirmation |
+| `maintenance_enabled` | bool, `false` | Initialization only: requires this gate plus writer capability and explicit configured-target confirmation |
 | `interactive_docs` | bool, `false` | Enables authenticated `/api/v1/docs`; `/api/v1/openapi.json` is always authenticated |
 | `mcp_enabled` | bool, `false` | Requires an `mcp_reader` source in the model; runtime startup refuses enablement before the REST/MCP gate |
 | `log_level` | str, `"info"` | `debug`, `info`, `warning` or `error`; startup-only |
@@ -304,6 +305,42 @@ compare installed authority without resolving proposed credentials or contacting
 the Hub. Current routes reject candidate fields; the complete candidate/client
 pipeline belongs to API-012. No configuration-install endpoint is provided.
 
+## Maintenance and initialization authority (API-010)
+
+[`install_maintenance_routes`](../src/hfcache/api/maintenance.py) binds
+[strict maintenance DTOs](../src/hfcache/api/maintenance_models.py) to shared
+`CommandServices`, reusing `admit_command`, `offload_command` and `command_service`
+from the ordinary command adapter. The trusted helpers preserve one admission,
+context, installed Hub source and snapshot wait budget; they do not introduce
+another dispatcher or domain algorithm. Capabilities advertises the actual
+`maintenance_enabled` flag so authenticated clients can distinguish initialization
+availability from ordinary maintenance.
+
+Separate typed preview/apply resources use the same keyed admission/observation
+contract and shared services. Writer-only apply, repair and initialization routes
+authorize before body reception; reader previews remain heavy jobs with receipt
+writes, not metadata/MCP tools. URL identity determines mode, and supplied plans,
+paths, credential overrides or implicit apply booleans are refused. Locked apply
+revalidates installed fingerprint, scope, guards and filesystem evidence; preview
+output grants no later authority. See [maintenance resources](api.md#implemented-maintenance-resources-api-010).
+
+`maintenance_enabled` is disabled by default and controls initialization only.
+It is immutable with the server configuration until restart. When disabled,
+`POST /archive/initializations` refuses `HFAPI002`/403 before receiving a body or
+handling an old POST binding; the original key lookup/history remains observable.
+Other maintenance routes keep their own role and domain checks. Enabling this
+setting alone performs no archive work and grants no path-selection authority.
+The initialization DTO must explicitly confirm and restate the configured
+absolute root/canonical UUID. Its shared service owns the lock and fresh
+initialization checks; existing sentinel, unsafe/unknown layout or mismatched
+authority refuses. No startup/health/recovery path calls initialization.
+
+Disabling the gate later is an operator restart choice, not cancellation of work
+already accepted. Drain accepted work before completing the old process's shutdown.
+The service cannot install archive policy, remove unknown evidence to make init
+succeed, or initialize an alternate root from a request. Installed systemd/service
+acceptance remains API-014; this package uses throwaway HTTP/domain fixtures only.
+
 ## Foreground listener bootstrap (API-006)
 
 `hfcache serve --server-config /etc/hfcache/server.toml` explicitly starts the
@@ -376,8 +413,8 @@ archive flock or a domain command. All REST read-capable principals share this
 whole-archive metadata/result boundary; idempotency lookup alone uses the caller's
 credential-class namespace. The [API contract](api.md#admission-idempotency-and-lifecycle)
 defines wire/status/event semantics; [schemas §13](schemas.md#13-service-private-operation-control-state-api-007)
-defines the independent local family and retention compatibility. Heavy execution,
-submission routes and isolated verification remain later tasks.
+defines the independent local family and retention compatibility. API-008 supplies
+heavy execution/private verification; API-009/010 expose the typed command routes.
 
 ## Bounded execution and private verification (API-008)
 
@@ -555,8 +592,8 @@ policy and real egress enforcement remain the later packaging acceptance gate.
 API-008's lane and API-007's registry already share the unprivileged application
 and separate bounded metadata pool across both listeners. The daemon-instance
 lock prevents competing registries; actual archive work retains the operation-
-scoped flock. Later tasks add command routes and client/unit integration, not a
-second execution authority. Metadata reads create no archive layout or catalog.
+scoped flock. API-009/010 add typed command routes; later tasks add candidate,
+client and unit integration without another execution authority. Metadata reads create no archive layout or catalog.
 Systemd remains scheduling authority.
 
 API-004 establishes shared correlation primitives ahead of this server:

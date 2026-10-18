@@ -2,7 +2,10 @@
 
 import ast
 import json
+from contextlib import nullcontext
+from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from typer.testing import CliRunner
@@ -12,6 +15,7 @@ from hfcache.archive import initialize_archive
 from hfcache.cli import app
 from hfcache.config import ApplicationConfig
 from hfcache.errors import ExitCode, IntegrityError
+from hfcache.redaction import register_secret
 from hfcache.reporting import RecoveryReport
 from hfcache.services import commands
 from hfcache.services.context import ExecutionContext
@@ -212,3 +216,47 @@ def test_cli_imports_only_service_or_bootstrap_interfaces():
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("hfcache."):
             assert (node.module or "").split(".")[1] not in forbidden
+
+
+@pytest.mark.parametrize("contains_secret", [False, True])
+def test_repair_reason_is_sanitized_after_resolving_hub_token_before_durable_audit(
+    service, tmp_path, monkeypatch, contains_secret
+):
+    api_token = "opaque-api-credential-do-not-persist"
+    hub_token = "opaque-hub-credential-discovered-later"
+    register_secret(api_token)
+    reason = (
+        f"operator reviewed {api_token} and {hub_token}"
+        if contains_secret
+        else "operator reviewed checksum evidence — preserve original"
+    )
+    # Construct the request before the Hub token is loaded/registered. Parse-time
+    # redaction alone cannot protect the later durable retirement reason (INV-002).
+    request = commands.RepairRequest(f"{MODEL.selector}@{SHA_A}", reason=reason)
+    path = tmp_path / "hub-token"
+    path.write_text(hub_token)
+    path.chmod(0o600)
+    service = replace(service, token_file=path)
+    recorded = []
+
+    def repair(*_args, **options):
+        recorded.append(options["reason"])
+        return SimpleNamespace(as_payload=lambda: {"reason": options["reason"]})
+
+    monkeypatch.setattr(commands, "guarded", lambda *_a, **_kw: nullcontext())
+    monkeypatch.setattr(commands, "reconcile", lambda *_a, **_kw: None)
+    monkeypatch.setattr(
+        commands.HubClient,
+        "of",
+        lambda *_a, **_kw: SimpleNamespace(require_identity=lambda _: None),
+    )
+    monkeypatch.setattr(commands, "repair_revision", repair)
+    outcome = service.repair(request)
+
+    assert outcome.exit_code == 0
+    assert recorded == [
+        "operator reviewed [redacted] and [redacted]" if contains_secret else reason
+    ]
+    assert api_token not in recorded[0]
+    assert hub_token not in recorded[0]
+    assert request.reason == reason
