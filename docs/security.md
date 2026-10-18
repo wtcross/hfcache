@@ -168,9 +168,29 @@ and cached home-directory tokens are ignored, and Hub calls pass an explicit
 `token=False` or an explicit token — never `token=None`, which would re-enable
 implicit discovery.
 
+The shared sanitizer removes sensitive keys and recognized Hub/bearer/signed-URL
+shapes, plus exact credential values registered by loaders before use. This last
+boundary covers opaque API tokens without assuming an `hf_` prefix; no regex can
+recognize every unknown arbitrary secret. Keep registration for the process
+lifetime, never clear it between requests. Logs capture sanitized fields at
+emission and sanitize formatting; `Problem` snapshots and its public rendering,
+and application exception string/repr paths, sanitize diagnostics too. Preserve
+safe code/shape evidence without exposing raw exceptions, request input or
+tracebacks to a caller. API-005/006 must register their resolved API credentials
+and apply this boundary to transport errors. These interfaces remain planned.
+See [decision 111](adr/decision-111.md).
+
 **Consequence beyond leakage.** Disabling ambient discovery also removes a
 correctness hazard: a developer's cached credential cannot silently give a
 production run access that the configuration does not describe.
+
+Verification has a separate authority boundary: shared verification never
+constructs a Hub client, resolves a credential, or changes process-wide offline
+environment settings. The shipped unit supplies `HF_HUB_OFFLINE=1` and
+`IPAddressDeny=any`. A future dedicated executor initializes the offline flag
+once before Hub imports and must independently retain the no-IP sandbox; the
+startup helper alone is not an egress control. API-008/014 own that executor and
+its host acceptance. A network-enabled ASGI process is never a fallback verifier.
 
 ### T-08 — Restricted content crosses the intended authorization boundary
 

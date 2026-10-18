@@ -91,6 +91,44 @@ inside its lock/preflight boundary (decision 110). This establishes local servic
 behavior only: HTTP routes and remote CLI modes remain planned until their
 implementing acceptance tasks complete.
 
+## Execution correlation (API-004)
+
+[Decision 111](adr/decision-111.md) separates four identities without changing
+schema-1 archive records. A trusted server boundary mints a fresh `request_id`
+for each received request; caller headers cannot select the authoritative ID.
+Admission later mints an independent `operation_id`, shared by its submission,
+observation requests and execution. A domain `run_id` continues to identify the
+CLI Envelope and any durable run report. A `transaction_id` continues to identify
+one archive journal; a run may contain several transactions. These IDs use the
+existing 32-lowercase-hex grammar. A request is not a run or a transaction, and
+retrying or polling an operation does not mint a replacement domain identity.
+Receipt relationships and authenticated submitter metadata land in API-007/008.
+
+`ExecutionContext` holds the run ID and optional request/operation IDs.
+Its `activate()` scope binds an immutable `ContextVar` correlation snapshot and
+restores the prior scope after success or failure. Command services activate
+their context; adapters must scope local query work too. `emit` captures that
+snapshot in the log record when the event is emitted, so delayed formatting
+cannot borrow another request's identity. Reserved event, level and correlation
+fields supplied by a call site cannot override the captured values. Each service
+thread submission copies its own context through `submit_with_context`; the
+existing sync producer now uses the same boundary. Reused workers retain no
+completed request scope.
+
+`configure_daemon` installs one request-neutral handler and level at startup;
+repeated startup calls are idempotent. Requests never call CLI `configure` or
+reset handlers. Quiet/verbose preferences belong to client rendering and bounded
+event selection, not a process-wide logger level. The isolated CLI retains its
+per-invocation startup configuration and stderr-only event output.
+
+Shared verification constructs no Hub client or credential and never changes
+`os.environ`. The removed scoped offline toggle cannot affect concurrent work.
+`offline.initialize_offline_process()` is a startup-only primitive for the later
+dedicated executor: call it before importing or using Hub libraries and retain
+the flag for that process's lifetime. The helper does not deny IP sockets.
+API-008/014 must separately establish the credential-free no-IP sandbox; no
+ASGI-process verification fallback is permitted.
+
 ## Wire validation and errors
 
 Wire models are separate from durable archive models. Forbid unknown keys,
@@ -109,6 +147,14 @@ A terminal failed domain Envelope is retrieved with HTTP 200 and retains its
 application exit code (priority 40, 50, 30); HTTP success never means domain
 success. New HFAPI client config/auth failures exit 10; unavailable or uncertain
 execution exits 20.
+
+The shared sanitizer removes sensitive keys, known Hub/bearer/signed-URL shapes
+and exact registered credential values from diagnostic trees. Opaque tokens must
+be registered when loaded, before use; arbitrary unknown strings cannot be
+recognized as secrets. `Problem` snapshots sanitized diagnostics, and public
+rendering plus exception string/repr paths sanitize again to cover late
+registration or mutable legacy contexts. API-005/006 must apply the same rule to
+inbound API credentials and transport validation/exception output.
 
 Inventory, revisions, reports, operations, and events use bounded cursor pages
 with deterministic ordering documented as each route lands. Clients walk all

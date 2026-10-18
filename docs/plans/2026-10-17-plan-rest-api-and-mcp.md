@@ -704,3 +704,10 @@ versions when implementing, especially FastMCP imports and test transports:
   includes `POST /syncs` (writer/job), correcting the omission from §4's
   proposed route table without changing scope. API-002 will correct the
   characterized unmanaged status/list selector discrepancy to the CLI contract.
+
+- 2026-10-17 API-004: Decision 111 replaces the shared-service offline environment
+  toggle with structural no-Hub/no-credential verification and a startup-only
+  initializer for the later dedicated executor. It also scopes correlation and
+  distinguishes execution-host invocation mode from future receipt submitter
+  metadata. API-008/014 still own the credential-free no-IP executor; no ASGI
+  fallback, durable archive schema change, dependency or MCP work is introduced.

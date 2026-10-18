@@ -1,15 +1,30 @@
 """Immutable execution identity and transport-independent schema-1 results."""
 
 from collections.abc import Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from types import MappingProxyType
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from hfcache.errors import ExitCode, Problem
 from hfcache.identity import RunId, new_run_id, parse_run_id
+from hfcache.logging import scoped_context
 from hfcache.models import format_timestamp, parse_timestamp
 from hfcache.reporting import Envelope, EnvelopeProblem
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+
+def new_request_id() -> str:
+    """Mint a transport request ID on the trusted boundary, never from a header."""
+    return new_run_id()
+
+
+def new_operation_id() -> str:
+    """Mint an admission ID independent of its requests, run and transactions."""
+    return new_run_id()
 
 
 def _freeze(value: object) -> object:
@@ -29,13 +44,15 @@ def _thaw(value: object) -> object:
 
 
 def _freeze_problem(problem: Problem) -> Problem:
-    return Problem(
+    snapshot = Problem(
         code=problem.code,
         message=problem.message,
         location=problem.location,
         repository=problem.repository,
-        context=cast("dict[str, Any]", _freeze(problem.context)),
+        context=problem.context,
     )
+    object.__setattr__(snapshot, "context", _freeze(snapshot.context))
+    return snapshot
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,15 +61,40 @@ class ExecutionContext:
 
     run_id: RunId
     started_at: datetime
+    request_id: str | None = None
+    operation_id: str | None = None
 
     def __post_init__(self) -> None:
         parse_run_id(self.run_id)
+        for identifier in (self.request_id, self.operation_id):
+            if identifier is not None:
+                parse_run_id(identifier)
         object.__setattr__(self, "started_at", parse_timestamp(self.started_at))
 
     @classmethod
-    def create(cls) -> ExecutionContext:
+    def create(
+        cls, *, request_id: str | None = None, operation_id: str | None = None
+    ) -> ExecutionContext:
         """Create a context for an invocation without a durable run report."""
-        return cls(run_id=new_run_id(), started_at=datetime.now(UTC))
+        return cls(
+            run_id=new_run_id(),
+            started_at=datetime.now(UTC),
+            request_id=request_id,
+            operation_id=operation_id,
+        )
+
+    @classmethod
+    def new_request(cls) -> ExecutionContext:
+        """Mint authoritative request and invocation identities at the server boundary."""
+        return cls.create(request_id=new_request_id())
+
+    @contextmanager
+    def activate(self) -> Iterator[ExecutionContext]:
+        """Activate this execution without changing global log level or handlers."""
+        with scoped_context(
+            run_id=self.run_id, request_id=self.request_id, operation_id=self.operation_id
+        ):
+            yield self
 
 
 @dataclass(frozen=True, slots=True)

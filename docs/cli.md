@@ -341,10 +341,14 @@ preflight before resolving its target scope. It holds ownership through hashing,
 report write and the catalog read/merge/write. It is mutually exclusive with all
 archive writers; a storage-preflight refusal exits `20` before report creation.
 Target reference/manifest damage still produces verification findings. Estimates
-take no lock, hash nothing and persist nothing. `--full` additionally retains its
-scoped Hub offline guard; verification constructs no Hub client or credential.
-See [decision 110](adr/decision-110.md). The later isolated REST executor remains
-planned; this package does not add a listener or process-wide networking change.
+take no lock, hash nothing and persist nothing. Every mode structurally constructs
+no Hub client or credential and makes no process-environment change. The shipped
+verification unit additionally supplies `HF_HUB_OFFLINE=1` and denies IP sockets;
+the shared service alone does not claim an operating-system egress restriction.
+See [decision 110](adr/decision-110.md) and the
+[API-004 isolation amendment](adr/decision-111.md). The later isolated REST
+executor remains planned; the shared service must not toggle the ASGI process's
+offline flag.
 
 Exits `0` on a clean result and `40` on any integrity finding. A finding never
 rewrites a manifest, prunes a revision, or re-downloads over the evidence.
@@ -667,6 +671,10 @@ manifest and the run report, is surfaced by `status`, and leaves the exit code a
   never printed, logged, or written to any durable artifact — at any verbosity.
 - Error messages name the *shape* of a secret problem, never the value: a token
   found in configuration is reported by key path, not by content.
+- Credential loaders register accepted secret values before use, including
+  opaque values without an `hf_` prefix. Shared diagnostic sanitization covers
+  nested keys/values, `Problem` output and exception string/repr paths; output
+  sanitizes again if a secret was registered after a problem was constructed.
 - Log events are structured, carry the `run_id`, use stable event names
   (`run.started`, `repository.resolved`, `download.completed`,
   `dependency.undeclared`, `publication.completed`, `retention.pruned`,
@@ -679,9 +687,17 @@ manifest and the run report, is surfaced by `status`, and leaves the exit code a
   otherwise be ambiguous. Under systemd each line carries a `<N>` syslog prefix,
   which journald turns into `PRIORITY`, so `journalctl -p err -u
   hfcache-sync.service` selects failures; run by hand there is no prefix.
+- Run correlation is scoped to execution contexts and captured when an event
+  is emitted. Optional server-generated request/operation IDs join the run ID;
+  call-site fields cannot override them. Worker submissions explicitly copy
+  their context, including the sync download producer, and restore the worker's
+  previous scope on return or failure. See [decision 111](adr/decision-111.md).
 - Levels follow the options: `--quiet` is `WARNING`, the default is `INFO`, and
   `-v` is `DEBUG`. The §24 families are emitted at the default level rather than
   behind a flag, because they are the record an unattended run leaves and the
   systemd units pass no flags.
+- That per-invocation configuration is for the isolated CLI. A daemon configures
+  its handler and level once at startup; a client's quiet/verbose preference
+  affects rendering/event selection and cannot reconfigure the server logger.
 - Absolute filesystem paths are printed for operator commands, but every path
   written into a durable artifact is archive-relative (`docs/schemas.md` §1).

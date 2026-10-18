@@ -30,7 +30,6 @@ from hfcache.errors import SynchronizationError
 from hfcache.hub import (
     HubClient,
     endpoint_host,
-    networking_disabled,
     resolve_host,
     verify_tls,
 )
@@ -306,9 +305,7 @@ def test_the_dry_run_and_the_tree_agree_about_the_revisions_size(client: HubClie
 
 
 @pytest.mark.parametrize("identity", [MODEL, DATASET], ids=["model", "dataset"])
-def test_a_real_revision_is_published_end_to_end(  # noqa: PLR0915 - one archive, resolve to verify
-    client: HubClient, identity, tmp_path
-):
+def test_a_real_revision_is_published_end_to_end(client: HubClient, identity, tmp_path):
     # Phase 4's acceptance, on a throwaway archive: one public model and one
     # public dataset can be archived, every Hub path appears in the publication,
     # and the references a consumer reads resolve to what they name.
@@ -411,10 +408,10 @@ def test_a_real_revision_is_published_end_to_end(  # noqa: PLR0915 - one archive
     assert list(snapshot_paths(outcome.tree)) == [entry.path for entry in published.files]
 
     # Phase 6's acceptance on the same real content: reading it all back
-    # verifies clean, with the network taken away for the whole of it, and one
-    # read per physical object rather than one per path.
-    with networking_disabled():
-        verified = verify_targets(resolve_archive(layout), started_at=started)
+    # verifies clean without constructing any Hub client, and reads each
+    # physical object once. Isolated-process offline initialization and the
+    # no-IP executor sandbox have their separate acceptance tests (API-004).
+    verified = verify_targets(resolve_archive(layout), started_at=started)
     assert verified.findings == ()
     assert verified.outcome == "clean"
     assert verified.revisions == 1
@@ -428,8 +425,7 @@ def test_a_real_revision_is_published_end_to_end(  # noqa: PLR0915 - one archive
     manifest_bytes = (layout.published / str(reference.manifest)).read_bytes()
     damaged.unlink()
     damaged.write_bytes(bytes([before[0] ^ 0xFF]) + before[1:])
-    with networking_disabled():
-        found = verify_targets(resolve_archive(layout), started_at=started)
+    found = verify_targets(resolve_archive(layout), started_at=started)
     assert [finding.kind for finding in found.findings] == ["digest_mismatch"]
     assert (layout.published / str(reference.manifest)).read_bytes() == manifest_bytes
     assert repository.revision_ref(facts.commit_sha).is_file()

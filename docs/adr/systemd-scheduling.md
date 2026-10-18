@@ -1,6 +1,6 @@
 # Keep host scheduling in systemd timers and drop-ins
 
-- Status: accepted; an existing locked plan decision without an AD number.
+- Status: accepted; an existing locked plan decision without an AD number; provenance clarified by [decision 111](decision-111.md).
 - Original record: 2026-07-24, `87323c2` (initial plan, §4 and §22).
 - ADR backfill: 2026-10-17.
 - Authority: [plan §22](../plan.md#22-systemd-design),
@@ -54,6 +54,13 @@ down. Manual invocations and different services remain serialized by the
 shared application lock (AD-17). The verification timer still requires
 operator coordination before activation. Judge `systemd-analyze verify`
 by its output, since an ordering diagnostic can accompany exit zero.
+
+**API-004 clarification (2026-10-17, [decision 111](decision-111.md)).**
+The durable `invocation_mode` retains `systemd`/`interactive` and describes the
+executing host process via `INVOCATION_ID`. In a systemd-hosted daemon it cannot
+prove whether a timer, manual CLI or Cockpit client submitted work. Future
+operation receipts carry authenticated submitter metadata separately. No new
+scheduler, calendar change, unit installation or timer activation is introduced.
 
 ## History and evidence
 

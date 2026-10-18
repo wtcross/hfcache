@@ -31,6 +31,7 @@ from stat import S_ISREG
 from typing import TYPE_CHECKING, Literal, NoReturn, final
 
 from hfcache.errors import ConfigurationError
+from hfcache.redaction import register_secret
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -204,6 +205,7 @@ def _read_secret(path: Path, *, code: str, what: str) -> str:
             f"the file must hold the token alone, with at most one trailing newline"
         )
         raise ConfigurationError.single(message, code=code, location=str(path))
+    register_secret(secret)
     return secret
 
 

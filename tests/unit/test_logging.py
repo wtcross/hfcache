@@ -27,6 +27,7 @@ from hfcache.logging import (
     emit,
     level_for,
     reset,
+    scoped_context,
     under_systemd,
 )
 
@@ -219,6 +220,19 @@ def test_binding_a_run_renames_subsequent_events(stream: io.StringIO):
     emit("run.completed", command="sync")
     first, second = (fields(line)["run_id"] for line in stream.getvalue().splitlines())
     assert (first, second) == ("0" * 32, "f" * 32)
+
+
+def test_delayed_record_formatting_uses_emission_context(stream, monkeypatch):
+    logger = stdlib_logging.getLogger(LOGGER_NAME)
+    handler = logger.handlers[0]
+    records = []
+    monkeypatch.setattr(handler, "emit", records.append)
+    with scoped_context(run_id="a" * 32, request_id="b" * 32):
+        emit("run.started")
+    with scoped_context(run_id="c" * 32):
+        rendered = fields(handler.format(records[0]))
+    assert rendered["run_id"] == "a" * 32
+    assert rendered["request_id"] == "b" * 32
 
 
 def test_an_unbound_run_still_produces_a_parseable_line(stream: io.StringIO):

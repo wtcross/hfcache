@@ -441,6 +441,9 @@ copy cannot race a download for space; hardlink staging needs no such pause.
 On an unexpected foreground exception, work that has not started is cancelled
 and the sole active transfer is joined before the exception releases the lock;
 the command never drains the untouched remainder merely because it is stopping.
+The producer receives an independent copy of the active execution context;
+its events retain the foreground run/request/operation correlation, and worker
+return or failure restores the worker's prior scope (decision 111).
 
 ### AD-20 — Repository removal is explicit, unmanaged, and transactional
 
@@ -1254,6 +1257,35 @@ non-resuming service-private receipts. No DAG, broker, archive database, automat
 replay, checkpoint orchestration, or in-app scheduler is permitted. A receipt
 never supersedes archive evidence. [API](api.md) and [server](server.md) state
 the target contracts and their implementation status.
+
+### Execution context and process boundaries (API-004, 2026-10-17)
+
+[Decision 111](adr/decision-111.md) amends the process-per-CLI assumption in
+logging decision 64. The module-level event vocabulary remains closed, but its
+correlation is now an immutable `ContextVar` snapshot: a domain run ID plus
+optional server-generated request and operation IDs. Scope exit restores earlier
+bindings after success or exceptions. Event emission captures the snapshot in
+the log record, so formatting on a later context cannot change provenance.
+Service thread submissions copy context deliberately, including AD-19's producer.
+Run/report identities and individual transaction journals retain their existing
+relationships; transport IDs never replace them or enter durable archive schemas.
+
+Daemon logging installs one request-neutral handler and startup level; no
+request quiet/verbose preference can change them. Isolated CLI startup retains
+its own configuration. Credential loaders register exact opaque values before
+use, and shared sanitization protects logs, problem diagnostics and application
+exception output as well as recognizable token and signed-URL shapes.
+
+Shared verification constructs no Hub client or credential and never mutates
+process-wide networking environment. `offline.initialize_offline_process()` is
+reserved for dedicated-process startup before Hub imports/use; its permanent
+`HF_HUB_OFFLINE=1` is a library guard, not an IP-socket sandbox. The shipped
+verification unit keeps its existing offline/no-IP policy. API-008/014 must
+establish that boundary around the later verifier, including persistence; there
+is no network-enabled ASGI fallback. Durable `invocation_mode` remains
+`systemd`/`interactive` and describes the executing host process, not submitter
+or timer provenance. Later API receipts carry authenticated submitter metadata.
+API-004 adds no listener, dependency, executor or MCP implementation.
 
 ## 9. Phase 0 acceptance
 

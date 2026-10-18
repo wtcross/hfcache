@@ -31,7 +31,7 @@ from hfcache.credentials import (
     ambient_token_variables,
     resolve_token,
 )
-from hfcache.errors import ConfigurationError, ExitCode
+from hfcache.errors import ConfigurationError, ExitCode, Problem
 
 SECRET = "hf_ExampleTokenValueNotARealCredential"
 
@@ -66,6 +66,16 @@ def write_token(directory: Path, name: str = "hf-token", body: str = SECRET + "\
     path = directory / name
     path.write_text(body, encoding="utf-8")
     return path
+
+
+def test_resolved_opaque_credentials_are_registered_before_use(tmp_path):
+    opaque = "opaque-credential-Q1w2e3r4t5y6u7i8o9p0"
+    token = resolve_token(optional_hub(), token_file=write_token(tmp_path, body=opaque))
+
+    assert token.hub_argument == opaque
+    problem = Problem(code="HFHUB001", message=f"failed with {opaque}", context={"detail": opaque})
+    assert opaque not in repr(problem)
+    assert opaque not in str(problem.as_envelope_entry())
 
 
 def codes_for(**kwargs: Any) -> list[str]:

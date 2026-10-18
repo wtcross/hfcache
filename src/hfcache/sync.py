@@ -40,7 +40,7 @@ from hfcache.identity import (
     new_publication_id,
     new_transaction_id,
 )
-from hfcache.logging import emit
+from hfcache.logging import emit, submit_with_context
 from hfcache.manifests import (
     FileEntry,
     FileProvenance,
@@ -1721,7 +1721,8 @@ def _synchronize_prefetched(  # noqa: PLR0912, PLR0913 - orchestration's collabo
     executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="hfcache-download")
     try:
         downloads = {
-            plan.identity.selector: executor.submit(
+            plan.identity.selector: submit_with_context(
+                executor,
                 _download_repository,
                 client,
                 layout,

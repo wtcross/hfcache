@@ -37,12 +37,12 @@ does not activate itself.
 | Retention, repair, and deletion | [AD-04](ad-04.md), [AD-05](ad-05.md), [AD-06](ad-06.md), [AD-13](ad-13.md), [AD-20](ad-20.md) | [Prune commit semantics](decision-077.md), [purge](decision-096.md), [three-revision default](decision-102.md) |
 | Recovery and quarantine | [AD-12](ad-12.md), [AD-14](ad-14.md), [AD-16](ad-16.md), [AD-17](ad-17.md) | [Journal unknown fields](decision-020.md), [cleanup authority](decision-103.md), [supervised cancellation](decision-104.md), [legacy history](decision-105.md) |
 | Hub access, credentials, and dependencies | [AD-07](ad-07.md), [AD-08](ad-08.md), [AD-15](ad-15.md), [AD-21](ad-21.md) | [Credential validation](decision-011.md), [explicit restricted scope](decision-098.md) |
-| Sync throughput and capacity | [AD-19](ad-19.md) | [Bounded memory](decision-086.md), [one producer](decision-094.md), [failed reports with warnings](decision-095.md) |
-| Verification and durable reporting | [Offline verification](offline-verification.md) | [Verification state](decision-051.md), [publication identity](decision-062.md), [retained set](decision-073.md), [nullable corrupt identity](decision-078.md), [complete verification lock](decision-110.md) |
+| Sync throughput and capacity | [AD-19](ad-19.md) | [Bounded memory](decision-086.md), [one producer](decision-094.md), [failed reports with warnings](decision-095.md), [context propagation](decision-111.md) |
+| Verification and durable reporting | [Offline verification](offline-verification.md) | [Verification state](decision-051.md), [publication identity](decision-062.md), [retained set](decision-073.md), [nullable corrupt identity](decision-078.md), [complete verification lock](decision-110.md), [execution/process isolation](decision-111.md) |
 | Deployment, scheduling, and hardening | [Scheduling authority](systemd-scheduling.md) | [Mount units](decision-058.md), [hardening probe](decision-059.md), [offline egress](decision-060.md), [setgid exception](decision-061.md), [safe deploy](decision-065.md) |
 | Consumers and serving | [AD-10](ad-10.md) | [Independent copy helper](decision-067.md), [promotion ownership](decision-099.md), [serving mounts](decision-100.md) |
 | Cockpit administration | [Plugin boundary](decision-087.md) | [Operation surface](decision-089.md), [bundled TOML](decision-091.md), [credential import](decision-092.md), [repository links](decision-101.md) |
-| Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Transport boundary](decision-108.md), [submission receipts](decision-109.md), [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
+| Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Transport boundary](decision-108.md), [submission receipts](decision-109.md), [scoped correlation/redaction](decision-111.md), [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
 | Documentation and work-package process | [Router](decision-081.md), [workflow](decision-082.md), [register upkeep](decision-106.md), [plan/task authority](decision-107.md) | [Portable runbooks](decision-085.md), [current invariant register](../invariants.md), [planning guide](../agents/planning.md) |
 
 ## Maintenance rules
@@ -233,3 +233,4 @@ status and current-contract links before applying a historical choice.
 | 108 | [Typed services and maintained transport implementations](decision-108.md) |
 | 109 | [Bounded non-resuming operation receipts](decision-109.md) |
 | 110 | [Guard complete command execution and verification persistence](decision-110.md) |
+| 111 | [Scope execution correlation and offline process initialization](decision-111.md) |

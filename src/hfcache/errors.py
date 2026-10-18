@@ -7,7 +7,9 @@ different condition, and a retired condition retires its code.
 
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Any, Self
+from typing import Any, Self, cast
+
+from hfcache.redaction import redact_text, sanitize
 
 __all__ = [
     "CodedError",
@@ -75,20 +77,39 @@ class Problem:
     repository: str | None = None
     context: dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        """Snapshot safe diagnostics before exceptions or durable code can inspect them."""
+        object.__setattr__(self, "message", redact_text(self.message))
+        if self.location is not None:
+            object.__setattr__(self, "location", redact_text(self.location))
+        if self.repository is not None:
+            object.__setattr__(self, "repository", redact_text(self.repository))
+        object.__setattr__(self, "context", cast("dict[str, Any]", sanitize(self.context)))
+
     def as_envelope_entry(self) -> dict[str, Any]:
         """Render this problem in the `docs/cli.md` §4 envelope shape."""
-        return {
-            "code": self.code,
-            "context": dict(self.context) | ({"location": self.location} if self.location else {}),
-            "message": self.message,
-            "repository": self.repository,
-        }
+        return cast(
+            "dict[str, Any]",
+            sanitize(
+                {
+                    "code": self.code,
+                    "context": dict(self.context)
+                    | ({"location": self.location} if self.location else {}),
+                    "message": self.message,
+                    "repository": self.repository,
+                }
+            ),
+        )
 
     def as_line(self) -> str:
         """Render this problem for human-readable output."""
         where = f" [{self.location}]" if self.location else ""
         who = f" ({self.repository})" if self.repository else ""
-        return f"{self.code}{who}{where}: {self.message}"
+        return redact_text(f"{self.code}{who}{where}: {self.message}")
+
+    def __repr__(self) -> str:
+        """Avoid auto-dataclass repr bypassing credentials registered after construction."""
+        return f"Problem({self.as_envelope_entry()!r})"
 
 
 class HfcacheError(Exception):
@@ -100,6 +121,13 @@ class HfcacheError(Exception):
         self.problems: tuple[Problem, ...] = tuple(problems)
         summary = "; ".join(problem.as_line() for problem in self.problems)
         super().__init__(summary or self.__class__.__name__)
+
+    def __str__(self) -> str:
+        """Also cover credentials registered after this exception was constructed."""
+        return redact_text(super().__str__())
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({str(self)!r})"
 
     @classmethod
     def single(

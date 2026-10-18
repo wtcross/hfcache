@@ -862,6 +862,7 @@ def apply_recovery(
     *,
     envelope: Mapping[str, Any],
     started_at: datetime,
+    run_id: RunId | None = None,
 ) -> tuple[Path, tuple[Remediation, ...]]:
     """Perform a validated plan, journalled, and write the durable report.
 
@@ -876,7 +877,7 @@ def apply_recovery(
     if plan.blocked:
         raise SafetyError(list(plan.problems))
 
-    run_id = new_run_id()
+    run_id = new_run_id() if run_id is None else run_id
     transaction = open_transaction(
         layout,
         transaction_id=new_transaction_id(),

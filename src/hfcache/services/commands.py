@@ -20,7 +20,7 @@ from hfcache.errors import (
     Problem,
     SafetyError,
 )
-from hfcache.hub import HubClient, networking_disabled
+from hfcache.hub import HubClient
 from hfcache.identity import (
     CommitSha,
     RepositoryIdentity,
@@ -31,7 +31,7 @@ from hfcache.identity import (
     parse_selector,
 )
 from hfcache.locking import exclusive_lock, lock_path
-from hfcache.logging import bind_run, emit, under_systemd
+from hfcache.logging import emit, under_systemd
 from hfcache.paths import ArchiveLayout
 from hfcache.preflight import (
     READ_ONLY,
@@ -212,447 +212,468 @@ class CommandServices:
 
     def initialize_archive(self, request: InitializationRequest) -> ServiceResult:
         """Inspect and initialize under the common lock, without requiring a sentinel."""
-        command = "archive init"
-        payload: dict[str, Any] = {}
-        try:
-            _check_init_options(
-                self.config,
-                archive_root=request.archive_root,
-                archive_id=request.archive_id,
-                confirm=request.confirm,
-                inspect=request.inspect,
-            )
-            # Inspection/no-confirm remain read-only. Explicit creation owns the
-            # lock before its fresh inspection; sentinel preflight cannot run
-            # before the command whose purpose is to create that sentinel.
-            lock = (
-                exclusive_lock(
-                    lock_path(), command=command, wait_seconds=self.config.sync.lock_wait_seconds
+        with self.context.activate():
+            command = "archive init"
+            payload: dict[str, Any] = {}
+            try:
+                _check_init_options(
+                    self.config,
+                    archive_root=request.archive_root,
+                    archive_id=request.archive_id,
+                    confirm=request.confirm,
+                    inspect=request.inspect,
                 )
-                if request.confirm
-                else nullcontext()
-            )
-            with lock:
-                inspection = LocalQueries(self.config).inspect_archive()
-                payload = inspection.as_payload()
-                if inspection.problems:
-                    raise SafetyError(inspection.problems)
-                if request.inspect:
-                    return ServiceResult(command, payload)
-                if not inspection.initializable:
-                    message = (
-                        f"archive {self.layout.root} is already initialized; "
-                        "initialization happens once, because a second sentinel would give an "
-                        "existing archive a new identity"
+                # Inspection/no-confirm remain read-only. Explicit creation owns the
+                # lock before its fresh inspection; sentinel preflight cannot run
+                # before the command whose purpose is to create that sentinel.
+                lock = (
+                    exclusive_lock(
+                        lock_path(),
+                        command=command,
+                        wait_seconds=self.config.sync.lock_wait_seconds,
                     )
-                    raise SafetyError.single(
-                        message, code="HFMNT014", location=str(self.layout.root)
-                    )
-                if not request.confirm:
-                    message = (
-                        f"--confirm is required to initialize {self.layout.root}; "
-                        "nothing was changed. "
-                        "The reported state is what initialization would act on"
-                    )
-                    raise ConfigurationError.single(
-                        message, code="HFARG003", location=str(self.layout.root)
-                    )
-                initialized = initialize_archive(
-                    self.layout, archive_id=self.config.storage.archive_id
+                    if request.confirm
+                    else nullcontext()
                 )
-                return ServiceResult(command, initialized.as_payload())
-        except HfcacheError as error:
-            return _failure(command, error, payload)
+                with lock:
+                    inspection = LocalQueries(self.config).inspect_archive()
+                    payload = inspection.as_payload()
+                    if inspection.problems:
+                        raise SafetyError(inspection.problems)
+                    if request.inspect:
+                        return ServiceResult(command, payload)
+                    if not inspection.initializable:
+                        message = (
+                            f"archive {self.layout.root} is already initialized; "
+                            "initialization happens once, because a second sentinel would give an "
+                            "existing archive a new identity"
+                        )
+                        raise SafetyError.single(
+                            message, code="HFMNT014", location=str(self.layout.root)
+                        )
+                    if not request.confirm:
+                        message = (
+                            f"--confirm is required to initialize {self.layout.root}; "
+                            "nothing was changed. "
+                            "The reported state is what initialization would act on"
+                        )
+                        raise ConfigurationError.single(
+                            message, code="HFARG003", location=str(self.layout.root)
+                        )
+                    initialized = initialize_archive(
+                        self.layout, archive_id=self.config.storage.archive_id
+                    )
+                    return ServiceResult(command, initialized.as_payload())
+            except HfcacheError as error:
+                return _failure(command, error, payload)
 
     def diagnose(self, request: DoctorRequest) -> ServiceResult:
         """Run every diagnostic check; probe writes hold the shared lock."""
-        command = "doctor"
-        try:
-            token = resolve_token(self.config.hub, token_file=self.token_file)
-            lock = (
-                nullcontext()
-                if request.read_only
-                else exclusive_lock(
-                    lock_path(), command=command, wait_seconds=self.config.sync.lock_wait_seconds
-                )
-            )
-            with lock:
-                checks = [
-                    Check.passed(
-                        "configuration",
-                        f"{self.config_label} is valid; "
-                        f"fingerprint {self.config.fingerprint()[:12]}",
-                    ),
-                    *storage_checks(
-                        self.layout, storage=self.config.storage, read_only=request.read_only
-                    ),
-                    Check.passed("credential", token.describe()),
-                    Check.passed(
-                        "hub_endpoint",
-                        f"{self.config.hub.endpoint} is a well-formed https endpoint",
-                    ),
-                    *hub_checks(
-                        self.config.hub, HubClient.of(token, endpoint=self.config.hub.endpoint)
-                    ),
-                ]
-                if request.read_only:
-                    probed = {check.name for check in checks}
-                    checks.extend(
-                        Check.skipped(name, READ_ONLY)
-                        for name in UNPROVABLE_READ_ONLY
-                        if name not in probed
+        with self.context.activate():
+            command = "doctor"
+            try:
+                token = resolve_token(self.config.hub, token_file=self.token_file)
+                lock = (
+                    nullcontext()
+                    if request.read_only
+                    else exclusive_lock(
+                        lock_path(),
+                        command=command,
+                        wait_seconds=self.config.sync.lock_wait_seconds,
                     )
-                ordered = order_checks(checks)
-                problems = tuple(problem for check in ordered for problem in check.problems)
-                warnings = tuple(warning for check in ordered for warning in check.warnings)
-                failed = any(check.outcome == "fail" for check in ordered)
-                return ServiceResult(
-                    command,
-                    {"checks": [check.as_entry() for check in ordered]},
-                    warnings=warnings,
-                    errors=problems,
-                    exit_code=int(ExitCode.SAFETY) if failed else 0,
                 )
-        except HfcacheError as error:
-            return _failure(command, error)
+                with lock:
+                    checks = [
+                        Check.passed(
+                            "configuration",
+                            f"{self.config_label} is valid; "
+                            f"fingerprint {self.config.fingerprint()[:12]}",
+                        ),
+                        *storage_checks(
+                            self.layout, storage=self.config.storage, read_only=request.read_only
+                        ),
+                        Check.passed("credential", token.describe()),
+                        Check.passed(
+                            "hub_endpoint",
+                            f"{self.config.hub.endpoint} is a well-formed https endpoint",
+                        ),
+                        *hub_checks(
+                            self.config.hub, HubClient.of(token, endpoint=self.config.hub.endpoint)
+                        ),
+                    ]
+                    if request.read_only:
+                        probed = {check.name for check in checks}
+                        checks.extend(
+                            Check.skipped(name, READ_ONLY)
+                            for name in UNPROVABLE_READ_ONLY
+                            if name not in probed
+                        )
+                    ordered = order_checks(checks)
+                    problems = tuple(problem for check in ordered for problem in check.problems)
+                    warnings = tuple(warning for check in ordered for warning in check.warnings)
+                    failed = any(check.outcome == "fail" for check in ordered)
+                    return ServiceResult(
+                        command,
+                        {"checks": [check.as_entry() for check in ordered]},
+                        warnings=warnings,
+                        errors=problems,
+                        exit_code=int(ExitCode.SAFETY) if failed else 0,
+                    )
+            except HfcacheError as error:
+                return _failure(command, error)
 
     def plan_sync(self, request: SelectionRequest = ALL_CONFIGURED) -> ServiceResult:
         """Resolve and cost configured repositories without locks or archive writes."""
-        try:
-            token = resolve_token(self.config.hub, token_file=self.token_file)
-            selected = _select(self.config, list(request.selectors))
-            client = HubClient.of(token, endpoint=self.config.hub.endpoint)
-            client.require_identity(self.config.hub.expected_account)
-            entries: list[dict[str, Any]] = []
-            problems: list[Problem] = []
-            for repository in selected:
-                if repository.enabled:
-                    entry, failure = _planned(
-                        client, repository, self.config, cache_dir=self.layout.hub_cache
-                    )
-                    entries.append(entry)
-                    if failure is not None:
-                        problems.append(failure)
-            return ServiceResult(
-                "plan",
-                {"repositories": entries},
-                errors=tuple(problems),
-                exit_code=int(ExitCode.SYNC) if problems else 0,
-            )
-        except HfcacheError as error:
-            return _failure("plan", error)
+        with self.context.activate():
+            try:
+                token = resolve_token(self.config.hub, token_file=self.token_file)
+                selected = _select(self.config, list(request.selectors))
+                client = HubClient.of(token, endpoint=self.config.hub.endpoint)
+                client.require_identity(self.config.hub.expected_account)
+                entries: list[dict[str, Any]] = []
+                problems: list[Problem] = []
+                for repository in selected:
+                    if repository.enabled:
+                        entry, failure = _planned(
+                            client, repository, self.config, cache_dir=self.layout.hub_cache
+                        )
+                        entries.append(entry)
+                        if failure is not None:
+                            problems.append(failure)
+                return ServiceResult(
+                    "plan",
+                    {"repositories": entries},
+                    errors=tuple(problems),
+                    exit_code=int(ExitCode.SYNC) if problems else 0,
+                )
+            except HfcacheError as error:
+                return _failure("plan", error)
 
     def synchronize(self, request: SelectionRequest = ALL_CONFIGURED) -> ServiceResult:
         """Guard, reconcile, then run the existing bounded/joined transfer engine."""
-        try:
-            token = resolve_token(self.config.hub, token_file=self.token_file)
-            selected = _select(self.config, list(request.selectors))
-            client = HubClient.of(token, endpoint=self.config.hub.endpoint)
-            envelope = _run_envelope(self.config)
-            with guarded(
-                self.layout,
-                storage=self.config.storage,
-                command="sync",
-                lock_wait_seconds=self.config.sync.lock_wait_seconds,
-            ) as checks:
-                bind_run(self.context.run_id)
-                emit(
-                    "run.started",
-                    command="sync",
-                    archive_id=str(envelope["archive_id"]),
-                    config_fingerprint=str(envelope["config_fingerprint"]),
-                    repositories=len(selected),
-                    invocation=str(envelope["invocation_mode"]),
-                )
-                outcome = _run(
-                    client,
+        with self.context.activate():
+            try:
+                token = resolve_token(self.config.hub, token_file=self.token_file)
+                selected = _select(self.config, list(request.selectors))
+                client = HubClient.of(token, endpoint=self.config.hub.endpoint)
+                envelope = _run_envelope(self.config)
+                with guarded(
                     self.layout,
-                    self.config,
-                    selected=selected,
-                    envelope=envelope,
-                    checks=checks,
+                    storage=self.config.storage,
+                    command="sync",
+                    lock_wait_seconds=self.config.sync.lock_wait_seconds,
+                ) as checks:
+                    emit(
+                        "run.started",
+                        command="sync",
+                        archive_id=str(envelope["archive_id"]),
+                        config_fingerprint=str(envelope["config_fingerprint"]),
+                        repositories=len(selected),
+                        invocation=str(envelope["invocation_mode"]),
+                    )
+                    outcome = _run(
+                        client,
+                        self.layout,
+                        self.config,
+                        selected=selected,
+                        envelope=envelope,
+                        checks=checks,
+                        run_id=self.context.run_id,
+                        started_at=self.context.started_at,
+                    )
+                payload = outcome.report.model_dump(mode="json")
+                payload["report"] = str(self.layout.archive_relative(outcome.report_path))
+                problems = tuple(
+                    Problem(
+                        code=code,
+                        message=f"{item.repository_type}:{item.repository_id} failed",
+                        repository=f"{item.repository_type}:{item.repository_id}",
+                    )
+                    for item in outcome.report.repositories
+                    for code in item.errors
+                )
+                warnings = tuple(
+                    Problem(
+                        code=code,
+                        message=f"{item.repository_type}:{item.repository_id} warned",
+                        repository=f"{item.repository_type}:{item.repository_id}",
+                    )
+                    for item in outcome.report.repositories
+                    for code in item.warnings
+                )
+                return ServiceResult(
+                    "sync",
+                    payload,
+                    warnings,
+                    problems,
+                    int(outcome.exit_code),
                     run_id=self.context.run_id,
-                    started_at=self.context.started_at,
                 )
-            payload = outcome.report.model_dump(mode="json")
-            payload["report"] = str(self.layout.archive_relative(outcome.report_path))
-            problems = tuple(
-                Problem(
-                    code=code,
-                    message=f"{item.repository_type}:{item.repository_id} failed",
-                    repository=f"{item.repository_type}:{item.repository_id}",
-                )
-                for item in outcome.report.repositories
-                for code in item.errors
-            )
-            warnings = tuple(
-                Problem(
-                    code=code,
-                    message=f"{item.repository_type}:{item.repository_id} warned",
-                    repository=f"{item.repository_type}:{item.repository_id}",
-                )
-                for item in outcome.report.repositories
-                for code in item.warnings
-            )
-            return ServiceResult(
-                "sync",
-                payload,
-                warnings,
-                problems,
-                int(outcome.exit_code),
-                run_id=self.context.run_id,
-            )
-        except HfcacheError as error:
-            return _failure("sync", error)
+            except HfcacheError as error:
+                return _failure("sync", error)
 
     def verify(self, request: VerificationRequest) -> ServiceResult:
         """Resolve, hash, write report, and merge catalog within one archive lock."""
-        command = request.command
-        payload: dict[str, Any] = {}
-        try:
-            mode = request.mode
-            if mode == "estimate":
-                return LocalQueries(self.config).estimate_verification()
-            guard = guarded(
-                self.layout,
-                storage=self.config.storage,
-                command=command,
-                lock_wait_seconds=self.config.verification.lock_wait_seconds,
-            )
-            offline = networking_disabled() if mode == "full" else nullcontext()
-            with guard, offline:
-                if mode == "full":
-                    targets = resolve_archive(self.layout)
-                elif mode == "revision":
-                    targets = (_named_revision(self.layout, str(request.revision)),)
-                else:
-                    targets = resolve_run(self.layout, _run_to_verify(self.layout, request.run_id))
-                outcome = verify_targets(targets, started_at=self.context.started_at)
-                report = build_report(
-                    outcome,
-                    envelope=_run_envelope(self.config),
+        with self.context.activate():
+            command = request.command
+            payload: dict[str, Any] = {}
+            try:
+                mode = request.mode
+                if mode == "estimate":
+                    return LocalQueries(self.config).estimate_verification()
+                guard = guarded(
+                    self.layout,
+                    storage=self.config.storage,
                     command=command,
-                    mode=mode,
-                    run_id=self.context.run_id,
+                    lock_wait_seconds=self.config.verification.lock_wait_seconds,
                 )
-                payload = report.model_dump(mode="json")
-                report_path = persist_verification(self.layout, report, outcome, mode=mode)
-                payload["report"] = str(self.layout.archive_relative(report_path))
-                bind_run(report.run_id)
-                emit(
-                    "verification.completed",
-                    command=command,
-                    outcome=report.verification_outcome,
-                    exit_code=report.exit_code,
-                    repositories=report.scope.repositories,
-                    revisions=report.scope.revisions,
-                    objects_read=report.scope.unique_objects_read,
-                    bytes_read=report.scope.unique_bytes_read,
-                    findings=len(report.findings),
-                    report=payload["report"],
-                )
-                return ServiceResult(
-                    command,
-                    payload,
-                    errors=tuple(_finding_problems(report)),
-                    exit_code=report.exit_code,
-                    run_id=RunId(report.run_id),
-                )
-        except HfcacheError as error:
-            return _failure(command, error, payload)
+                with guard:
+                    if mode == "full":
+                        targets = resolve_archive(self.layout)
+                    elif mode == "revision":
+                        targets = (_named_revision(self.layout, str(request.revision)),)
+                    else:
+                        targets = resolve_run(
+                            self.layout, _run_to_verify(self.layout, request.run_id)
+                        )
+                    outcome = verify_targets(targets, started_at=self.context.started_at)
+                    report = build_report(
+                        outcome,
+                        envelope=_run_envelope(self.config),
+                        command=command,
+                        mode=mode,
+                        run_id=self.context.run_id,
+                    )
+                    payload = report.model_dump(mode="json")
+                    report_path = persist_verification(self.layout, report, outcome, mode=mode)
+                    payload["report"] = str(self.layout.archive_relative(report_path))
+                    emit(
+                        "verification.completed",
+                        command=command,
+                        outcome=report.verification_outcome,
+                        exit_code=report.exit_code,
+                        repositories=report.scope.repositories,
+                        revisions=report.scope.revisions,
+                        objects_read=report.scope.unique_objects_read,
+                        bytes_read=report.scope.unique_bytes_read,
+                        findings=len(report.findings),
+                        report=payload["report"],
+                    )
+                    return ServiceResult(
+                        command,
+                        payload,
+                        errors=tuple(_finding_problems(report)),
+                        exit_code=report.exit_code,
+                        run_id=RunId(report.run_id),
+                    )
+            except HfcacheError as error:
+                return _failure(command, error, payload)
 
     def prune(self, request: MaintenanceRequest) -> ServiceResult:
         """Plan under ownership on apply, preserving reconciliation-before-work."""
-        command = f"prune {'--apply' if request.apply else '--dry-run'}"
-        try:
-            request.require_mode()
-            wanted = {
-                RepositoryIdentity.from_config(repository).selector
-                for repository in _select(self.config, list(request.selectors))
-            }
-            if request.apply:
-                with guarded(
-                    self.layout,
-                    storage=self.config.storage,
-                    command=command,
-                    lock_wait_seconds=self.config.sync.lock_wait_seconds,
-                ):
-                    envelope = _run_envelope(self.config) | {"run_id": self.context.run_id}
-                    self._reconcile(envelope)
+        with self.context.activate():
+            command = f"prune {'--apply' if request.apply else '--dry-run'}"
+            try:
+                request.require_mode()
+                wanted = {
+                    RepositoryIdentity.from_config(repository).selector
+                    for repository in _select(self.config, list(request.selectors))
+                }
+                if request.apply:
+                    with guarded(
+                        self.layout,
+                        storage=self.config.storage,
+                        command=command,
+                        lock_wait_seconds=self.config.sync.lock_wait_seconds,
+                    ):
+                        envelope = _run_envelope(self.config) | {"run_id": self.context.run_id}
+                        self._reconcile(envelope)
+                        plans = _plans(
+                            self.layout, wanted, maximum=self.config.storage.maximum_revisions
+                        )
+                        applied = [
+                            apply_prune(self.layout, plan, envelope=envelope) for plan in plans
+                        ]
+                else:
                     plans = _plans(
                         self.layout, wanted, maximum=self.config.storage.maximum_revisions
                     )
-                    applied = [apply_prune(self.layout, plan, envelope=envelope) for plan in plans]
-            else:
-                plans = _plans(self.layout, wanted, maximum=self.config.storage.maximum_revisions)
-                applied = []
-            return ServiceResult(
-                command,
-                {
-                    "plans": [plan.model_dump(mode="json") for plan in plans],
-                    "applied": [record.model_dump(mode="json") for record in applied],
-                },
-            )
-        except HfcacheError as error:
-            return _failure(command, error)
+                    applied = []
+                return ServiceResult(
+                    command,
+                    {
+                        "plans": [plan.model_dump(mode="json") for plan in plans],
+                        "applied": [record.model_dump(mode="json") for record in applied],
+                    },
+                )
+            except HfcacheError as error:
+                return _failure(command, error)
 
     def purge(self, request: MaintenanceRequest) -> ServiceResult:
         """Re-resolve explicit unmanaged scope under the apply lock after recovery."""
-        command = f"purge {'--apply' if request.apply else '--dry-run'}"
-        try:
-            request.require_mode()
-            identities = _purge_identities(
-                self.config,
-                self.layout,
-                list(request.selectors),
-                all_unmanaged=request.all_unmanaged,
-            )
-            if request.apply:
-                with guarded(
+        with self.context.activate():
+            command = f"purge {'--apply' if request.apply else '--dry-run'}"
+            try:
+                request.require_mode()
+                identities = _purge_identities(
+                    self.config,
                     self.layout,
-                    storage=self.config.storage,
-                    command=command,
-                    lock_wait_seconds=self.config.sync.lock_wait_seconds,
-                ):
-                    envelope = _run_envelope(self.config) | {"run_id": self.context.run_id}
-                    self._reconcile(envelope)
-                    identities = _purge_identities(
-                        self.config,
+                    list(request.selectors),
+                    all_unmanaged=request.all_unmanaged,
+                )
+                if request.apply:
+                    with guarded(
                         self.layout,
-                        list(request.selectors),
-                        all_unmanaged=request.all_unmanaged,
-                    )
+                        storage=self.config.storage,
+                        command=command,
+                        lock_wait_seconds=self.config.sync.lock_wait_seconds,
+                    ):
+                        envelope = _run_envelope(self.config) | {"run_id": self.context.run_id}
+                        self._reconcile(envelope)
+                        identities = _purge_identities(
+                            self.config,
+                            self.layout,
+                            list(request.selectors),
+                            all_unmanaged=request.all_unmanaged,
+                        )
+                        plans = plan_all_purges(
+                            self.layout, identities, generated_at=datetime.now(UTC)
+                        )
+                        applied = [
+                            record.model_dump(mode="json")
+                            for plan in plans
+                            for record in apply_purge(self.layout, plan, envelope=envelope)
+                        ]
+                else:
                     plans = plan_all_purges(self.layout, identities, generated_at=datetime.now(UTC))
-                    applied = [
-                        record.model_dump(mode="json")
-                        for plan in plans
-                        for record in apply_purge(self.layout, plan, envelope=envelope)
-                    ]
-            else:
-                plans = plan_all_purges(self.layout, identities, generated_at=datetime.now(UTC))
-                applied = []
-            return ServiceResult(
-                command,
-                {"plans": [plan.model_dump(mode="json") for plan in plans], "applied": applied},
-            )
-        except HfcacheError as error:
-            return _failure(command, error)
+                    applied = []
+                return ServiceResult(
+                    command,
+                    {"plans": [plan.model_dump(mode="json") for plan in plans], "applied": applied},
+                )
+            except HfcacheError as error:
+                return _failure(command, error)
 
     def recover(self, request: MaintenanceRequest) -> ServiceResult:
         """Report blocked plans alongside refusals; never reconcile implicitly."""
-        command = f"recover {'--apply' if request.apply else '--dry-run'}"
-        payload: dict[str, Any] = {}
-        report_id: RunId | None = None
-        try:
-            request.require_mode()
-            guard = (
-                guarded(
-                    self.layout,
-                    storage=self.config.storage,
-                    command=command,
-                    lock_wait_seconds=self.config.sync.lock_wait_seconds,
-                )
-                if request.apply
-                else nullcontext()
-            )
-            with guard:
-                plan = plan_recovery(
-                    self.layout, stale_staging_age_hours=self.config.sync.stale_staging_age_hours
-                )
-                payload = plan.as_payload()
-                if not plan.blocked and request.apply:
-                    report_path, applied = apply_recovery(
+        with self.context.activate():
+            command = f"recover {'--apply' if request.apply else '--dry-run'}"
+            payload: dict[str, Any] = {}
+            report_id: RunId | None = None
+            try:
+                request.require_mode()
+                guard = (
+                    guarded(
                         self.layout,
-                        plan,
-                        envelope=_run_envelope(self.config),
-                        started_at=self.context.started_at,
+                        storage=self.config.storage,
+                        command=command,
+                        lock_wait_seconds=self.config.sync.lock_wait_seconds,
                     )
-                    payload |= {
-                        "applied": len(applied),
-                        "report": str(self.layout.archive_relative(report_path)),
-                    }
-                    report_id = RunId(
-                        read_model(
-                            report_path, RecoveryReport, error=IntegrityError, code="HFVER007"
-                        ).run_id
+                    if request.apply
+                    else nullcontext()
+                )
+                with guard:
+                    plan = plan_recovery(
+                        self.layout,
+                        stale_staging_age_hours=self.config.sync.stale_staging_age_hours,
                     )
-            if plan.blocked:
-                raise SafetyError(list(plan.problems))
-            return ServiceResult(command, payload, run_id=report_id)
-        except HfcacheError as error:
-            return _failure(command, error, payload)
+                    payload = plan.as_payload()
+                    if not plan.blocked and request.apply:
+                        report_path, applied = apply_recovery(
+                            self.layout,
+                            plan,
+                            envelope=_run_envelope(self.config),
+                            started_at=self.context.started_at,
+                            run_id=self.context.run_id,
+                        )
+                        payload |= {
+                            "applied": len(applied),
+                            "report": str(self.layout.archive_relative(report_path)),
+                        }
+                        report_id = RunId(
+                            read_model(
+                                report_path, RecoveryReport, error=IntegrityError, code="HFVER007"
+                            ).run_id
+                        )
+                if plan.blocked:
+                    raise SafetyError(list(plan.problems))
+                return ServiceResult(command, payload, run_id=report_id)
+            except HfcacheError as error:
+                return _failure(command, error, payload)
 
     def quarantine(self, request: QuarantineRequest) -> ServiceResult:
         """Refuse unfinished unrelated work; never run reconciliation for cleanup."""
-        command = f"quarantine {'--apply' if request.apply else '--dry-run'}"
-        try:
-            if request.dry_run == request.apply:
-                message = "exactly one of --dry-run and --apply is required"
-                raise ConfigurationError.single(message, code="HFARG002")
-            if not request.transaction_ids:
-                message = "quarantine cleanup requires explicit transaction ids"
-                raise ConfigurationError.single(message, code="HFARG003")
-            identifiers = tuple(
-                TransactionId(value) for value in sorted(set(request.transaction_ids))
-            )
-            for identifier in identifiers:
-                try:
-                    self.layout.quarantine_for(identifier)
-                except ValueError as exc:
-                    raise ConfigurationError.single(
-                        str(exc), code="HFARG001", location=str(identifier)
-                    ) from exc
-            guard = (
-                guarded(
-                    self.layout,
-                    storage=self.config.storage,
-                    command=command,
-                    lock_wait_seconds=self.config.sync.lock_wait_seconds,
+        with self.context.activate():
+            command = f"quarantine {'--apply' if request.apply else '--dry-run'}"
+            try:
+                if request.dry_run == request.apply:
+                    message = "exactly one of --dry-run and --apply is required"
+                    raise ConfigurationError.single(message, code="HFARG002")
+                if not request.transaction_ids:
+                    message = "quarantine cleanup requires explicit transaction ids"
+                    raise ConfigurationError.single(message, code="HFARG003")
+                identifiers = tuple(
+                    TransactionId(value) for value in sorted(set(request.transaction_ids))
                 )
-                if request.apply
-                else nullcontext()
-            )
-            with guard:
-                plans = plan_quarantine_cleanups(self.layout, identifiers)
-                applied = (
-                    [apply_quarantine_cleanup(self.layout, plan) for plan in plans]
+                for identifier in identifiers:
+                    try:
+                        self.layout.quarantine_for(identifier)
+                    except ValueError as exc:
+                        raise ConfigurationError.single(
+                            str(exc), code="HFARG001", location=str(identifier)
+                        ) from exc
+                guard = (
+                    guarded(
+                        self.layout,
+                        storage=self.config.storage,
+                        command=command,
+                        lock_wait_seconds=self.config.sync.lock_wait_seconds,
+                    )
                     if request.apply
-                    else []
+                    else nullcontext()
                 )
-            return ServiceResult(
-                command, {"plans": [plan.to_dict() for plan in plans], "applied": applied}
-            )
-        except HfcacheError as error:
-            return _failure(command, error)
+                with guard:
+                    plans = plan_quarantine_cleanups(self.layout, identifiers)
+                    applied = (
+                        [apply_quarantine_cleanup(self.layout, plan) for plan in plans]
+                        if request.apply
+                        else []
+                    )
+                return ServiceResult(
+                    command, {"plans": [plan.to_dict() for plan in plans], "applied": applied}
+                )
+            except HfcacheError as error:
+                return _failure(command, error)
 
     def repair(self, request: RepairRequest) -> ServiceResult:
         """Repair one immutable SHA against its original expectations (AD-13)."""
-        try:
-            parsed = request.target
-            token = resolve_token(self.config.hub, token_file=self.token_file)
-            client = HubClient.of(token, endpoint=self.config.hub.endpoint)
-            envelope = _run_envelope(self.config)
-            with guarded(
-                self.layout,
-                storage=self.config.storage,
-                command="repair",
-                lock_wait_seconds=self.config.sync.lock_wait_seconds,
-            ):
-                self._reconcile(envelope)
-                client.require_identity(self.config.hub.expected_account)
-                outcome = repair_revision(
-                    client,
+        with self.context.activate():
+            try:
+                parsed = request.target
+                token = resolve_token(self.config.hub, token_file=self.token_file)
+                client = HubClient.of(token, endpoint=self.config.hub.endpoint)
+                envelope = _run_envelope(self.config)
+                with guarded(
                     self.layout,
-                    self.config,
-                    identity=parsed.identity,
-                    commit_sha=request.commit_sha,
-                    reason=request.reason,
-                    envelope=envelope,
-                    run_id=self.context.run_id,
-                )
-            return ServiceResult("repair", outcome.as_payload(), run_id=self.context.run_id)
-        except HfcacheError as error:
-            return _failure("repair", error)
+                    storage=self.config.storage,
+                    command="repair",
+                    lock_wait_seconds=self.config.sync.lock_wait_seconds,
+                ):
+                    self._reconcile(envelope)
+                    client.require_identity(self.config.hub.expected_account)
+                    outcome = repair_revision(
+                        client,
+                        self.layout,
+                        self.config,
+                        identity=parsed.identity,
+                        commit_sha=request.commit_sha,
+                        reason=request.reason,
+                        envelope=envelope,
+                        run_id=self.context.run_id,
+                    )
+                return ServiceResult("repair", outcome.as_payload(), run_id=self.context.run_id)
+            except HfcacheError as error:
+                return _failure("repair", error)
 
     def _reconcile(self, envelope: Mapping[str, Any]) -> None:
         """Private helper requiring the caller's existing common-lock ownership."""
@@ -1066,11 +1087,9 @@ def _run_envelope(config: ApplicationConfig) -> dict[str, Any]:
         "config_fingerprint": config.fingerprint(),
         "hostname": socket.gethostname(),
         "huggingface_hub_version": versions.huggingface_hub,
-        # `under_systemd` reads INVOCATION_ID, which systemd sets for every unit
-        # it starts and nothing else sets — the one signal that distinguishes a
-        # timer run from an operator at a terminal. Shared with the event log so
-        # the run report and the journal cannot disagree about where a run came
-        # from, and so the log knows whether to emit syslog priority prefixes.
+        # Schema 1 describes the execution host only. A daemon's systemd unit
+        # does not prove timer/client origin; submitter metadata belongs to the
+        # future operation receipt, never a new durable enum (decision 111).
         "invocation_mode": "systemd" if under_systemd() else "interactive",
         "python_version": versions.python,
     }

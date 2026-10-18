@@ -14,10 +14,11 @@ outside it. A typo is a test failure rather than a line nobody greps for, and an
 operator's `journalctl … event=publication.completed` keeps working across
 releases.
 
-*The run id in every event.* `emit` injects it; no call site passes it. There is
-always one, because `configure` binds a fresh id and `cli.emit_envelope` reports
-that same id when a command writes no durable report — so the envelope on stdout
-and the lines on stderr always name the same invocation.
+*Execution correlation in every event.* `emit` captures the current context at
+record creation, including its domain run ID and optional request/operation IDs.
+Scoped bindings restore after success or failure; thread submissions explicitly
+copy context. CLI startup binds one invocation; daemon startup binds no request.
+Call-site fields cannot replace authoritative IDs (decision 111).
 
 *Durable checkpoints, not per-chunk noise.* The default level emits one line per
 thing that became durable. Nothing here is called from inside a transfer or a
@@ -26,8 +27,9 @@ repositories it touched, never of how many bytes it moved.
 
 *Never a token, header, or signed URL.* Two layers. Structurally, only named
 fields reach `emit`, and no call site passes a credential. Mechanically,
-`_scrub` redacts by key and by value shape anyway, because the structural
-argument holds only until someone adds a call site.
+the shared sanitizer redacts sensitive keys, registered opaque values and known
+credential/URL shapes. Unknown arbitrary secrets cannot be recognized by regex;
+credential loaders register exact values before use.
 
 Output is logfmt on **stderr** — `docs/cli.md` §4 reserves stdout for the JSON
 envelope, so piping stdout stays safe at any verbosity. Under systemd each line
@@ -45,23 +47,36 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 import sys
-from typing import Final, TextIO
+from contextlib import contextmanager
+from contextvars import ContextVar, copy_context
+from dataclasses import dataclass, replace
+from threading import RLock
+from typing import TYPE_CHECKING, Final, TextIO
 
 from hfcache.identity import new_run_id
+from hfcache.redaction import REDACTED, redact_text, sanitize
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+    from concurrent.futures import Executor, Future
 
 __all__ = [
     "DEBUG_EVENTS",
     "EVENTS",
     "LOGGER_NAME",
     "REDACTED",
+    "Correlation",
     "bind_run",
     "configure",
+    "configure_daemon",
+    "current_correlation",
     "current_run_id",
     "emit",
     "level_for",
     "reset",
+    "scoped_context",
+    "submit_with_context",
     "under_systemd",
 ]
 
@@ -103,31 +118,6 @@ They are not part of the §24 contract and may change; the `EVENTS` names may no
 _ERROR: Final = frozenset({"preflight.failed", "repository.failed"})
 _WARNING: Final = frozenset({"dependency.undeclared", "retention.deferred"})
 
-REDACTED: Final = "[redacted]"
-
-_SECRET_KEYS: Final = frozenset(
-    {
-        "access_token",
-        "api_key",
-        "authorization",
-        "cookie",
-        "credential",
-        "header",
-        "password",
-        "secret",
-        "token",
-    }
-)
-"""Field names that never carry a loggable value (`docs/security.md` T-07)."""
-
-_SECRET_VALUE: Final = re.compile(r"(?:hf_[A-Za-z0-9]{8,}|bearer\s+\S+)", re.IGNORECASE)
-"""A Hub token or an `Authorization` value that reached a field by another name."""
-
-_SIGNED_URL: Final = re.compile(
-    r"https?://\S*[?&](?:x-amz-|x-goog-|sig=|signature=|token=)", re.IGNORECASE
-)
-"""A presigned download URL. Plan §24 forbids logging these specifically."""
-
 _PRIORITY: Final = {
     logging.ERROR: "<3>",
     logging.WARNING: "<4>",
@@ -135,7 +125,20 @@ _PRIORITY: Final = {
     logging.DEBUG: "<7>",
 }
 
-_run_id: str | None = None
+
+@dataclass(frozen=True, slots=True)
+class Correlation:
+    """Nonsecret request/operation relationships; durable run IDs remain independent."""
+
+    run_id: str | None = None
+    request_id: str | None = None
+    operation_id: str | None = None
+
+
+_EMPTY_CORRELATION = Correlation()
+_correlation = ContextVar("hfcache_correlation", default=_EMPTY_CORRELATION)
+_configuration_lock = RLock()
+_daemon_configured = False
 
 
 def under_systemd() -> bool:
@@ -143,8 +146,8 @@ def under_systemd() -> bool:
 
     `INVOCATION_ID` is set for every unit systemd starts and for nothing else,
     which is the one signal that does not depend on the environment an operator
-    happens to have. Also what `cli._run_envelope` reports as `invocation_mode`,
-    so the run report and the log agree about where a run came from.
+    happens to have. The durable `invocation_mode` describes this execution host,
+    not an authenticated submitter or proof of timer origin (decision 111).
     """
     return bool(os.environ.get("INVOCATION_ID"))
 
@@ -187,12 +190,7 @@ def _scrub(key: str, value: object) -> str:
     are cheap and neither is the real guarantee: the real one is that no call
     site passes a credential. This is what keeps that true when one does.
     """
-    if key.lower() in _SECRET_KEYS:
-        return REDACTED
-    text = str(value)
-    if _SECRET_VALUE.search(text) or _SIGNED_URL.search(text):
-        return REDACTED
-    return _quote(text)
+    return _quote(redact_text(str(sanitize(value, key=key))))
 
 
 class _LogfmtFormatter(logging.Formatter):
@@ -205,12 +203,26 @@ class _LogfmtFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         fields: dict[str, object] = getattr(record, "fields", {})
         event = getattr(record, "event", record.getMessage())
+        correlation = getattr(record, "correlation", current_correlation())
         parts = [
             f"event={_scrub('event', event)}",
             f"level={record.levelname.lower()}",
-            f"run_id={_scrub('run_id', _run_id or '-')}",
+            f"run_id={_scrub('run_id', correlation.run_id or '-')}",
         ]
-        parts.extend(f"{key}={_scrub(key, fields[key])}" for key in sorted(fields))
+        relationships = {
+            key: value
+            for key, value in (
+                ("request_id", correlation.request_id),
+                ("operation_id", correlation.operation_id),
+            )
+            if value is not None
+        }
+        # Caller fields cannot replace authoritative correlation captured at emit.
+        reserved = {"event", "level", "run_id", "request_id", "operation_id"}
+        combined = {
+            key: value for key, value in fields.items() if key not in reserved
+        } | relationships
+        parts.extend(f"{key}={_scrub(key, combined[key])}" for key in sorted(combined))
         line = " ".join(parts)
         if self._prefix:
             return f"{_PRIORITY[record.levelno]}{line}"
@@ -224,47 +236,97 @@ def configure(
     stream: TextIO | None = None,
     run_id: str | None = None,
 ) -> None:
-    """Install the stderr handler and bind a run id. Idempotent.
+    """Configure isolated CLI startup; daemon request code must never call this.
 
-    Called once from the CLI callback, before any command runs, so a failure in
-    argument handling is still logged. Replacing the handler rather than adding
-    one is what makes it safe to call repeatedly, which the test suite does.
+    Called once from the CLI callback before command execution. Replacing rather
+    than adding a handler supports repeated isolated CLI invocations in tests.
+    A configured daemon refuses this entry point instead of changing its policy.
     """
-    logger = logging.getLogger(LOGGER_NAME)
-    for existing in list(logger.handlers):
-        logger.removeHandler(existing)
-    handler = logging.StreamHandler(stream if stream is not None else sys.stderr)
-    handler.setFormatter(_LogfmtFormatter(prefix=under_systemd()))
-    logger.addHandler(handler)
-    logger.setLevel(level_for(verbose=verbose, quiet=quiet))
-    # Never up to the root logger: a dependency that configured logging must not
-    # be able to duplicate these lines or redirect them onto stdout.
-    logger.propagate = False
+    with _configuration_lock:
+        if _daemon_configured:
+            message = "daemon logging is configured at startup; requests cannot reconfigure it"
+            raise RuntimeError(message)
+        _install(stream=stream, level=level_for(verbose=verbose, quiet=quiet))
     bind_run(run_id if run_id is not None else new_run_id())
 
 
-def bind_run(run_id: str | None) -> None:
-    """Name the run every subsequent event belongs to.
+def _install(*, stream: TextIO | None, level: int) -> None:
+    logger = logging.getLogger(LOGGER_NAME)
+    for existing in list(logger.handlers):
+        logger.removeHandler(existing)
+        existing.close()
+    handler = logging.StreamHandler(stream if stream is not None else sys.stderr)
+    handler.setFormatter(_LogfmtFormatter(prefix=under_systemd()))
+    logger.addHandler(handler)
+    logger.setLevel(level)
+    logger.propagate = False
 
-    Commands that write a durable report call this with that report's id, so the
-    log, the envelope, and `runs/<…>.json` all carry one identifier (§24).
+
+def configure_daemon(*, stream: TextIO | None = None, level: int = logging.INFO) -> None:
+    """Install one request-neutral handler at daemon startup; repeat calls are no-ops.
+
+    Request quiet/verbose flags belong to client rendering and event selection,
+    never to this process-wide logger's configuration (decision 111).
     """
-    global _run_id  # noqa: PLW0603 - one process, one run; see the module docstring
-    _run_id = run_id
+    global _daemon_configured  # noqa: PLW0603 - process startup configuration, not request state
+    with _configuration_lock:
+        if not _daemon_configured:
+            _install(stream=stream, level=level)
+            _daemon_configured = True
+            _correlation.set(Correlation())
+
+
+def current_correlation() -> Correlation:
+    """Return this task/thread's frozen nonsecret correlation snapshot."""
+    return _correlation.get()
+
+
+@contextmanager
+def scoped_context(
+    *, run_id: str | None, request_id: str | None = None, operation_id: str | None = None
+) -> Iterator[Correlation]:
+    """Bind execution IDs and restore the previous scope on every exit path."""
+    correlation = Correlation(run_id, request_id, operation_id)
+    token = _correlation.set(correlation)
+    try:
+        yield correlation
+    finally:
+        _correlation.reset(token)
+
+
+def submit_with_context[**P, ResultT](
+    executor: Executor, function: Callable[P, ResultT], /, *args: P.args, **kwargs: P.kwargs
+) -> Future[ResultT]:
+    """Submit one independent context copy; reused worker threads retain no scope."""
+    context = copy_context()
+    return executor.submit(context.run, function, *args, **kwargs)
+
+
+def bind_run(run_id: str | None) -> None:
+    """Set the current scope's run identity for isolated CLI compatibility.
+
+    Request and worker execution use scoped_context/ExecutionContext.activate so
+    completion and exceptions restore the caller's previous identity (§24).
+    """
+    _correlation.set(replace(current_correlation(), run_id=run_id))
 
 
 def current_run_id() -> str | None:
     """The bound run id, for `cli.emit_envelope` to report as its own."""
-    return _run_id
+    return current_correlation().run_id
 
 
 def reset() -> None:
     """Drop the handler and the bound run id, so one test cannot leak into another."""
-    logger = logging.getLogger(LOGGER_NAME)
-    for existing in list(logger.handlers):
-        logger.removeHandler(existing)
-    logger.setLevel(logging.NOTSET)
-    bind_run(None)
+    global _daemon_configured  # noqa: PLW0603 - explicit process teardown/test reset
+    with _configuration_lock:
+        logger = logging.getLogger(LOGGER_NAME)
+        for existing in list(logger.handlers):
+            logger.removeHandler(existing)
+            existing.close()
+        logger.setLevel(logging.NOTSET)
+        _daemon_configured = False
+    _correlation.set(Correlation())
 
 
 def emit(name: str, /, **fields: object) -> None:
@@ -286,4 +348,8 @@ def emit(name: str, /, **fields: object) -> None:
     else:
         message = f"{name!r} is not a known event; see hfcache.logging.EVENTS"
         raise ValueError(message)
-    logging.getLogger(LOGGER_NAME).log(level, name, extra={"event": name, "fields": fields})
+    logging.getLogger(LOGGER_NAME).log(
+        level,
+        name,
+        extra={"event": name, "fields": sanitize(fields), "correlation": current_correlation()},
+    )

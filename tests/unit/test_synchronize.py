@@ -15,6 +15,7 @@ happened.
 """
 
 import fcntl
+import io
 import json
 import os
 import shutil
@@ -44,6 +45,7 @@ from hfcache.errors import (
 from hfcache.hub import HubClient
 from hfcache.identity import CommitSha, RepositoryIdentity, new_run_id, new_transaction_id
 from hfcache.locking import exclusive_lock, lock_path
+from hfcache.logging import configure_daemon, current_run_id, reset, scoped_context
 from hfcache.manifests import RevisionManifest
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.publication import published_repositories, read_reference, retained_references
@@ -2585,3 +2587,43 @@ def test_purge_all_unmanaged_removes_only_repositories_absent_from_configuration
     assert applied.exit_code == ExitCode.SUCCESS
     assert not RepositoryLayout(archive=layout, identity=MODEL).directory.exists()
     assert RepositoryLayout(archive=layout, identity=DATASET).directory.is_dir()
+
+
+@pytest.mark.usefixtures("_wired")
+@pytest.mark.parametrize("worker_failure", [False, True])
+@pytest.mark.parametrize("systemd_host", [False, True])
+def test_service_and_sync_producer_keep_execution_context_and_host_provenance(
+    config, monkeypatch, worker_failure, systemd_host
+):
+    captured = io.StringIO()
+    if systemd_host:
+        monkeypatch.setenv("INVOCATION_ID", "a" * 32)
+    else:
+        monkeypatch.delenv("INVOCATION_ID", raising=False)
+    configure_daemon(stream=captured)
+    context = ExecutionContext.create(request_id="b" * 32, operation_id="c" * 32)
+    original = HubClient.download
+
+    def download(self, identity, commit_sha, **kwargs):
+        if worker_failure and identity == MODEL:
+            message = "transfer failed inside the producer context"
+            raise SynchronizationError.single(message, code="HFHUB009")
+        return original(self, identity, commit_sha, **kwargs)
+
+    monkeypatch.setattr(HubClient, "download", download)
+    try:
+        with scoped_context(run_id="d" * 32):
+            result = CommandServices(config, context).synchronize()
+            assert current_run_id() == "d" * 32
+        assert current_run_id() is None
+    finally:
+        reset()
+    assert result.exit_code == (ExitCode.SYNC if worker_failure else ExitCode.SUCCESS)
+    assert result.run_id == context.run_id
+    assert result.data["invocation_mode"] == ("systemd" if systemd_host else "interactive")
+    lines = captured.getvalue().splitlines()
+    assert any("event=download.started " in line for line in lines)
+    assert any("event=download.completed " in line for line in lines)
+    assert all(f"run_id={context.run_id}" in line for line in lines)
+    assert all("request_id=" + "b" * 32 in line for line in lines)
+    assert all("operation_id=" + "c" * 32 in line for line in lines)

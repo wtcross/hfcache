@@ -1,6 +1,7 @@
 # Decision 064: The event log is emitted, not returned; and its vocabulary is closed
 
-Status: accepted when recorded; retained as historical evidence. Dated
+Status: amended by [decision 111](decision-111.md) for execution correlation;
+accepted when recorded and retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
@@ -54,6 +55,15 @@ envelope reports the id `configure` bound, and the claim is true.
 [Decision 77](decision-077.md) supersedes the temporary retained permit for
 `cleanup_deferred`: the name is removed because an open post-commit journal
 already expresses deferred work. The logging vocabulary remains closed.
+
+[Decision 111](decision-111.md) (`API-004`, 2026-10-17, this commit) amends
+the one-run-per-process assumption. A daemon can interleave metadata requests
+with a guarded writer without creating a second archive writer. Correlation
+therefore uses an immutable context-scoped snapshot, captured at event emission
+and copied into worker submissions. Scoped exit restores earlier bindings;
+daemon logger configuration is startup-only. The module-level event API,
+stderr output and closed vocabulary remain. Shared exact-value registration
+also extends redaction to opaque credentials and exception/problem diagnostics.
 
 ## Provenance and governing evidence
 

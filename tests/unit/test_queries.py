@@ -12,7 +12,7 @@ from hfcache.cli import app
 from hfcache.config import ApplicationConfig
 from hfcache.errors import ConfigurationError, Problem
 from hfcache.identity import RunId
-from hfcache.services.context import ExecutionContext, ServiceResult
+from hfcache.services.context import ExecutionContext, ServiceResult, new_operation_id
 from hfcache.services.queries import (
     LocalQueries,
     MetadataQueries,
@@ -89,6 +89,22 @@ def test_execution_identity_rejects_invalid_run_id_and_naive_time():
         ExecutionContext(
             RunId(examples.RUN), examples.at("2026-07-24T20:00:00.000000Z").replace(tzinfo=None)
         )
+
+
+def test_server_minted_correlation_is_independent_and_does_not_widen_schema1():
+    first = ExecutionContext.new_request()
+    second = ExecutionContext.new_request()
+    operation_id = new_operation_id()
+    identifiers = {first.run_id, first.request_id, second.run_id, second.request_id, operation_id}
+    assert len(identifiers) == 5
+    assert all(value is not None and len(value) == 32 for value in identifiers)
+    payload = ServiceResult("version", {}).envelope(first).model_dump(mode="json")
+    assert payload["run_id"] == first.run_id
+    assert payload["schema_version"] == 1
+    assert "request_id" not in payload
+    assert "operation_id" not in payload
+    with pytest.raises(ValueError, match="run id"):
+        ExecutionContext.create(request_id="../untrusted-request")
 
 
 def test_status_keeps_configuration_order_and_appends_unmanaged_inventory(queries):

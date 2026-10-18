@@ -10,7 +10,6 @@ import hashlib
 import json
 import os
 import shutil
-from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path  # noqa: TC003 - fixtures take and return one at run time
 
@@ -21,7 +20,7 @@ from hfcache import verification as verification_module
 from hfcache.archive import initialize_archive
 from hfcache.cli import app
 from hfcache.errors import ExitCode
-from hfcache.hub import OFFLINE_VARIABLE, networking_disabled
+from hfcache.hub import OFFLINE_VARIABLE
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, new_run_id
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.paths import ArchiveLayout, RepositoryLayout
@@ -426,22 +425,27 @@ def test_full_exits_forty_on_corrupted_content(config_path, archive):
     assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFVER001"]
 
 
-def test_full_runs_with_hub_networking_disabled(config_path, archive, monkeypatch):
-    """`docs/cli.md` §2. Observed from inside the run rather than inferred from
-    the environment afterwards, which would look identical if it never ran."""
+@pytest.mark.parametrize("offline_value", [None, "0", "1"])
+def test_full_never_changes_process_hub_offline_environment(
+    config_path, archive, monkeypatch, offline_value
+):
+    """API-004: offline process setup belongs outside shared request execution."""
     publish(archive)
-    observed: list[str | None] = []
-    real = networking_disabled
+    if offline_value is None:
+        monkeypatch.delenv(OFFLINE_VARIABLE, raising=False)
+    else:
+        monkeypatch.setenv(OFFLINE_VARIABLE, offline_value)
+    original = verification_module.verify_targets
+    observed = []
 
-    @contextmanager
-    def recording():
-        with real():
-            observed.append(os.environ.get(OFFLINE_VARIABLE))
-            yield
+    def inspect(*args, **kwargs):
+        observed.append(os.environ.get(OFFLINE_VARIABLE))
+        return original(*args, **kwargs)
 
-    monkeypatch.setattr("hfcache.services.commands.networking_disabled", recording)
+    monkeypatch.setattr("hfcache.services.commands.verify_targets", inspect)
     assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
-    assert observed == ["1"]
+    assert observed == [offline_value]
+    assert os.environ.get(OFFLINE_VARIABLE) == offline_value
 
 
 def test_full_builds_no_hub_client(config_path, archive, monkeypatch):

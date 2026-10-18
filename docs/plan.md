@@ -1212,6 +1212,13 @@ Set `HF_HUB_OFFLINE=1` for verification. Test `PrivateNetwork=true` on the deplo
 
 **Settled 2026-07-26 (decision 60):** both were tested and both leave the already-mounted archive fully readable, but the reconnect condition cannot be met by the autonomous session (§36.4 defers NFS interruption to an operator window). So the unit keeps `HF_HUB_OFFLINE=1` and adds `IPAddressDeny=any`, which filters the unit's own sockets through its cgroup without moving it into another network namespace — the NFS client's RPC sockets are the kernel's and stay untouched. The `PrivateNetwork=true` evaluation is an operator handoff item.
 
+**API-004 amendment (2026-10-17, [decision 111](adr/decision-111.md)).**
+Shared verification never changes `HF_HUB_OFFLINE` in a request and structurally
+constructs no Hub client/credential. A dedicated verification process initializes
+the offline flag once before Hub imports/use and independently retains the
+no-IP unit sandbox; the startup helper itself denies no sockets. The shipped
+unit's egress policy remains, and the new REST executor is API-008/014 work.
+
 ### 22.4 Timers
 
 Use these initial deployment calendars, expressed in the VM's `America/New_York` timezone:
@@ -1324,6 +1331,19 @@ that report's id, joining the log, the envelope, and `runs/<...>.json`.
 and read by nothing. Secrets are refused by field name and by value shape —
 `hf_` tokens, `Bearer` values, and presigned URLs — on top of the structural fact
 that no call site passes a credential.
+
+**API-004 amendment (2026-10-17, [decision 111](adr/decision-111.md)).**
+The module-level event vocabulary remains, but process-global run correlation
+is replaced by an immutable context-scoped snapshot, captured when an event is
+emitted and explicitly copied into worker submissions, including the sync
+producer. Scope exit restores prior bindings after success or exceptions.
+Server-generated request/operation IDs supplement existing run/journal IDs;
+call-site fields cannot override authoritative correlation. Daemon logging is
+configured once at startup; per-request quiet/verbose preferences affect client
+rendering/event selection. The isolated CLI keeps its startup configuration.
+Exact opaque credentials are registered before use and sanitized from nested
+diagnostics and exception output. `invocation_mode=systemd` describes the host
+process, not proof of timer/client origin; later receipts carry the submitter.
 
 Recommended event families:
 

@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-004](tasks/api-004-isolate-execution-context.md) |
+| Next task | [API-005](tasks/api-005-server-config-and-bearer-auth.md) |
 | Blockers | None |
 | Updated | 2026-10-17 |
 

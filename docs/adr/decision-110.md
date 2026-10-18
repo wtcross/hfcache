@@ -1,6 +1,6 @@
 # Decision 110 — Guard complete command execution and verification persistence
 
-- Status: Accepted and implemented.
+- Status: Accepted and implemented; deferred environment policy amended by [decision 111](decision-111.md).
 - Date: 2026-10-17.
 - Work package: API-003, this commit.
 - Source: [progress decision 110](../progress.md#decisions),
@@ -55,6 +55,14 @@ visible in CLI output.
 The scoped full-verification environment guard remains until API-004; this
 package adds no concurrent server, networking mechanism, REST route, dependency,
 or MCP code. The isolated no-IP executor remains API-008/014 work.
+
+**API-004 amendment (2026-10-17, [decision 111](decision-111.md)).**
+The deferred guard is now removed: shared verification never changes the process
+environment and constructs no Hub client/credential. Dedicated-process offline
+initialization is startup-only and does not replace the future executor's
+no-IP sandbox. Context-scoped correlation now preserves exact run identities
+across concurrent requests and copied sync-worker context. The lock/persistence
+decision above remains authoritative; no durable schema is changed.
 
 Evidence: [phase and multiprocess merge regression tests](../../tests/unit/test_command_locking.py),
 [command guard and refusal tests](../../tests/unit/test_command_services.py),

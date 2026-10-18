@@ -1,6 +1,6 @@
 # Quarterly full verification reads the retained archive offline
 
-- Status: accepted; an existing locked plan decision without an AD number; amended by decision 110.
+- Status: accepted; an existing locked plan decision without an AD number; amended by decisions 110 and 111.
 - Original record: 2026-07-24, `87323c2` (initial plan, §4 and §16).
 - ADR backfill: 2026-10-17.
 - Authority: [plan §16](../plan.md#16-integrity-and-verification),
@@ -66,7 +66,7 @@ verification and its no-client/shared-lock tests. `2fd432a` (`SYS-001`,
 control and the deferred private-network reconnect test.
 
 - [Full verification implementation](../../src/hfcache/verification.py).
-- [Scoped Hub offline guard](../../src/hfcache/hub.py).
+- [Startup-only offline initialization](../../src/hfcache/offline.py) (decision 111 replaces the historical scoped guard).
 - [Full-verification and no-network tests](../../tests/unit/test_verify_command.py).
 - [Object identity, completeness, and corruption tests](../../tests/unit/test_verification.py).
 - [Shipped verification service](../../packaging/systemd/hfcache-verify.service).
@@ -84,3 +84,18 @@ lock, while using their own checks so uninitialized storage remains diagnosable
 and initializable. Read-only doctor and initialization inspection take no lock.
 Public command services acquire once; adapters/runners must not pre-lock them.
 This amendment changes no durable schema or systemd scheduling authority.
+
+## API-004 amendment (2026-10-17)
+
+[Decision 111](decision-111.md) removes the scoped process-environment toggle:
+shared verification constructs no Hub client or credential and never writes
+`os.environ`, including every verification mode. The existing service's
+`HF_HUB_OFFLINE=1` and no-IP sandbox remain. A dedicated executor initializes
+the library flag once before importing or using Hub libraries and separately
+retains its socket restrictions; the helper does not enforce egress policy.
+That executor and host acceptance remain API-008/014. The standalone shared
+service makes only its structural no-Hub guarantee, and no network-enabled
+ASGI fallback is permitted. Verification lock/report/catalog ownership from
+decision 110 remains unchanged. [Isolation tests](../../tests/unit/test_execution_isolation.py)
+and [child-process startup tests](../../tests/unit/test_offline_process.py) cover
+these boundaries without claiming installed-host acceptance.

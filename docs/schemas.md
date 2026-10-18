@@ -475,7 +475,14 @@ or reporting command.
 }
 ```
 
-`invocation_mode` is `systemd` or `interactive`. `outcome` is `success`,
+`invocation_mode` is `systemd` or `interactive`, describing whether the executing
+host process has systemd's `INVOCATION_ID`. It is not proof that a timer, rather
+than a manual client, submitted work. A systemd-hosted daemon retains `systemd`
+for its domain reports; authenticated submitter and request/operation relationships
+belong to the later API receipt metadata, not a new run-report enum or field
+([decision 111](adr/decision-111.md)). No durable schema changes here.
+
+`outcome` is `success`,
 `success_with_warnings`, or `failed`, and always agrees with `exit_code`.
 `success` carries no warnings and `success_with_warnings` carries at least one;
 `failed` may also retain non-fatal warnings observed before or alongside the

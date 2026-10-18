@@ -141,7 +141,7 @@ def test_recovery_result_carries_the_exact_durable_report_identity(service):
         error=IntegrityError,
         code="HFVER007",
     )
-    assert result.run_id == report.run_id
+    assert result.run_id == report.run_id == service.context.run_id
     assert result.envelope(service.context).run_id == report.run_id
 
 

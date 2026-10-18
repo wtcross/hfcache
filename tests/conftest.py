@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from hfcache.redaction import clear_registered_secrets
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -30,6 +32,14 @@ _AMBIENT_HUB_VARS = (
     "HF_ENDPOINT",
     "HF_HUB_OFFLINE",
 )
+
+
+@pytest.fixture(autouse=True)
+def _isolate_registered_secrets():
+    """Known credential values are process-local configuration, isolated per test."""
+    clear_registered_secrets()
+    yield
+    clear_registered_secrets()
 
 
 @pytest.fixture(scope="session")

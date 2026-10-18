@@ -809,6 +809,34 @@ package in this family.
   operation. Full-only offline env handling remains API-004; HTTP/isolated
   executor and MCP remain planned. Next selected task is API-004.)
 
+- [x] API-004 Isolate execution correlation and offline initialization
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-004-isolate-execution-context.md).
+  ContextVar snapshots replace process-global run correlation; emission-time
+  capture and reserved fields preserve authoritative run/request/operation IDs.
+  Concurrent scopes, exceptions and reused workers restore earlier context;
+  sync's existing producer explicitly copies it. Daemon logging is configured
+  once, while the isolated CLI retains per-invocation configuration.
+  Exact registered opaque credentials are removed from nested diagnostics,
+  logs, Problem output and exception string/repr paths, including late
+  registration and mutable legacy contexts. All shared verification modes
+  construct no Hub client/credential and never write the environment.
+  Startup-only offline initialization is tested in child processes; it does
+  not enforce no-IP sockets. API-008/014 still own the isolated executor.
+  Reviewed AD-19, INV-002/005/006/007/012/015 and related ADRs; decision 111
+  amends decision 64, offline verification, decision 110's deferred guard,
+  AD-19 and scheduling provenance. API/server, architecture/invariants, CLI,
+  security, schema provenance, original-plan amendments and Unreleased agree.
+  Durable invocation_mode remains execution-host evidence, with submitter
+  metadata deferred to receipts. Focused suites pass 310 and 163 tests; sync
+  propagation/interruption selection passes 6 (113 deselected).
+  `rtk proxy bash scripts/check.sh` exits 0 on its first full attempt: lock,
+  formatting, lint, types, 1,835 Python tests (40 deselected), 45 Cockpit tests,
+  wheel/sdist and production plugin build. Local links, task/current/dependency
+  records, parity matrix, all 111 numbered decision/ADR records and whitespace
+  pass. No durable schema/dependency, ASGI/MCP code or production operation;
+  opt-in live/NFS/host checks did not run. Next selected task is API-005.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3347,3 +3375,21 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      inspection, estimates and previews remain unlocked. AD-17, offline
      verification, INV-007/015 and historical doctor decision 40 are amended;
      existing FS/TX, quarantine and joined-transfer semantics stay authoritative.
+
+111. **Scope execution correlation and offline process initialization**
+     (2026-10-17, API-004). [ADR](adr/decision-111.md): retain the closed event
+     interface with immutable context-scoped run/request/operation correlation,
+     captured at emission and deliberately copied into each worker, including
+     the sync producer. Restore prior scope after success/failure; configure a
+     daemon's handler/level once, with client verbosity confined to rendering
+     and event selection. Reject process-global IDs, formatting-time provenance
+     and per-request logger/environment reconfiguration. Shared verification
+     constructs no Hub client/credential and never writes `os.environ`;
+     dedicated-process offline initialization is startup-only and independently
+     needs the future API-008/014 no-IP sandbox. Register exact opaque secrets
+     before use and sanitize nested diagnostics and exception/problem output.
+     Domain IDs and schema-1 invocation-mode vocabulary remain; execution-host
+     `systemd` is not proof of timer/client origin, so later receipts carry the
+     authenticated submitter. Amend decision 64, offline verification,
+     decision 110's deferred guard, AD-19 and scheduling provenance; no durable
+     schema/dependency, listener, ASGI or MCP implementation is introduced.

@@ -23,6 +23,12 @@ verification updates from losing unrelated state. Probing diagnostics and
 confirmed initialization also serialize on that lock. Dry runs and metadata
 reads remain lock-free; durable formats are unchanged.
 
+Execution correlation now stays within each task and worker thread, with stable
+run identities and optional request/operation IDs. Shared verification no longer
+toggles process-wide Hub networking flags. Registered opaque credentials are
+redacted from nested diagnostics and exception output. Daemon startup primitives
+are ready; the HTTP server and isolated verification executor remain planned.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

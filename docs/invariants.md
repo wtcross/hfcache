@@ -321,7 +321,9 @@ History: `SYNC-007` (`54e4671`), decision 94.
   every Hub call passes an explicit token or `False`, never `None`. Missing
   optional credentials permit anonymous access; installed unusable credentials
   fail. Never emit secrets in configuration errors, logs, manifests, journals,
-  reports, or fingerprints. See [configuration §7, §9](configuration.md#7-credentials)
+  reports, or fingerprints. Register exact resolved opaque credentials before
+  use; sanitize nested diagnostic contexts and exception/public output as well
+  as recognized token shapes (decision 111). See [configuration §7, §9](configuration.md#7-credentials)
   and [security T-07](security.md#t-07--a-token-leaks).
 - **`AD-21`** — Only `hub.token_mode = "required"` enables private/gated
   repository scope, and a credential must resolve before any Hub request.
@@ -347,12 +349,13 @@ History: `SYNC-007` (`54e4671`), decision 94.
 
 Enforcement: [configuration](../src/hfcache/config.py),
 [credentials](../src/hfcache/credentials.py), [Hub policy](../src/hfcache/hub.py),
-[redaction](../src/hfcache/logging.py), and
+[shared redaction](../src/hfcache/redaction.py), [logging](../src/hfcache/logging.py), and
 [capacity/preflight](../src/hfcache/preflight.py).
 Evidence: [configuration tests](../tests/unit/test_config.py),
 [credential tests](../tests/unit/test_credentials.py),
 [Hub tests](../tests/unit/test_hub.py),
-[redaction tests](../tests/unit/test_logging.py), and
+[redaction tests](../tests/unit/test_logging.py),
+[opaque-token and exception tests](../tests/unit/test_execution_isolation.py), and
 [preflight tests](../tests/unit/test_preflight.py).
 Off-host export enforcement and installed host hardening require the documented
 operator acceptance checks; unit tests cannot prove those deployment facts.
@@ -377,13 +380,20 @@ History: `HUB-010` (`c082f87`), decision 98, supersedes public-only scope.
   `success_with_warnings` requires them, and `failed` may retain earlier
   warnings alongside its errors. See [CLI §3–§6](cli.md#3-exit-codes) and
   [run reports](schemas.md#6-run-report).
+  Execution correlation is context-scoped, captured when emitted and explicitly
+  copied into workers; server request/operation IDs cannot replace domain
+  run/journal identities. Daemon logger configuration is startup-only.
+  Durable `invocation_mode` describes the execution host, not timer or submitter
+  origin; authenticated submitter metadata belongs to later receipts (decision 111).
 - **`INV-007` — Verification reports evidence without rewriting it.** Verify
   the complete path set, sizes, and local SHA-256 bytes; an integrity finding
   exits `40`, preserves content/expectations, and never performs repair or
   prune. All non-estimate modes acquire the common lock, prove storage safety,
   then resolve targets, hash, persist the report and read/merge/write the catalog
   before releasing it (decision 110). Atomic replacement does not serialize
-  merges. Verification uses no Hub download. Estimates do no hashing and confer
+  merges. Shared verification constructs no Hub client/credential and changes no
+  process-wide offline environment. Verification uses no Hub download.
+  Estimates do no hashing and confer
   no verification confidence. Confidence belongs to the exact
   `(type, repository, SHA, publication ID)` instance; absent/unreadable derived
   state or a null publication ID must never raise confidence. Outstanding
@@ -404,6 +414,10 @@ Evidence: [golden formats](../tests/fixtures/schemas/),
 [CLI tests](../tests/unit/test_cli.py),
 [verification tests](../tests/unit/test_verification.py), and
 [verification lock/interleaving tests](../tests/unit/test_command_locking.py).
+Correlation/diagnostic enforcement: [execution context](../src/hfcache/services/context.py),
+[event capture and copied workers](../src/hfcache/logging.py),
+[sync producer](../src/hfcache/sync.py), and
+[isolation tests](../tests/unit/test_execution_isolation.py).
 Durable shape, enum, and field-combination changes require the
 [release compatibility drill](agents/release.md); schema version 1 is not a
 blanket claim that old binaries accept every later widening.
@@ -539,7 +553,10 @@ track the target; implementing tasks own proof.
   Lock/persistence enforcement: [command services](../src/hfcache/services/commands.py)
   and [multiprocess tests](../tests/unit/test_command_locking.py), API-003.
   Credential-free no-IP executor enforcement remains API-008/014. No unsafe
-  ASGI-process fallback.
+  ASGI-process fallback. API-004 removes the shared-service offline environment
+  toggle and provides [startup-only offline initialization](../src/hfcache/offline.py)
+  for that later process, verified in [child-process tests](../tests/unit/test_offline_process.py).
+  That helper alone does not deny IP sockets; decision [111](adr/decision-111.md).
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. Enforcement: MCP-001–004,
