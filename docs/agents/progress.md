@@ -71,6 +71,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   INV-002/003/007/010/016, ADR124/125 reviewed: no runtime/format/dependency change.
   Whole-archive trust and nine-read-only-tool boundary preserved. No host action.
 
+## API operating and recovery runbooks (2026-10-18)
+
+- [x] DOC-014 Update operating and recovery procedures for the API (2026-10-18,
+  this commit — [task](plans/tasks/doc-014-current-operations-and-recovery-runbooks.md)).
+  Replaced historical aliases/transcripts with explicit client arrays, effects,
+  uncertainty/drain and evidence-preserving workflows; original bodies/hashes
+  retained and anchors repaired. Shell syntax/actual CLI parsing, maintenance/
+  private-worker/reader/no-replay fixtures pass. Fixed a test fault factory's
+  fixture lifetime and added restoration regression. Focused 180 plus final 50
+  checks passed. Full `scripts/check.sh`: 4209 passed/40 deselected, build/three
+  locked profiles and actual Cockpit lint/135 tests/build passed. AD-13/16/17,
+  FS-19, TX-06/07 reviewed; editorial/test alignment, no runtime/schema/ADR change.
+  Existing guards and live acceptance restrictions remain; no host operation ran.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)

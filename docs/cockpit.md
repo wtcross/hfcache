@@ -231,7 +231,7 @@ and offers authenticated `operations lookup -- KEY` / `operations wait -- ID` gu
 A lost result, timeout, page closure or stopped client is uncertain observation,
 not proof of execution failure/nonexecution. Never automatically submit another
 key, invoke recovery, or infer that an archive lock is free. Use exact operation
-history and the [executor drain/recovery runbook](recovery.md#10-operation-history-and-uncertain-submissions).
+history and the [executor drain/recovery runbook](recovery.md#preserve-four-kinds-of-authority).
 
 The sync stop control stops only `hfcache-sync.service`'s observation. Its dialog
 states that accepted server work may continue and that the pending handle is

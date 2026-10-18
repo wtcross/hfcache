@@ -374,7 +374,7 @@ hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 opera
 Use the same configured authority and credential class for key lookup. A stopped
 client or sync/verify client service stops observation, not the server executor;
 use [server drain](../../../server.md#restart-and-drain) and
-[recovery](../../../recovery.md#10-operation-history-and-uncertain-submissions) for execution
+[recovery](../../../recovery.md#preserve-four-kinds-of-authority) for execution
 ownership. [Decision 120](../../../adr/decision-120.md) records this boundary. Shipped
 systemd integration is packaged by API-014 with deployment holds; Cockpit uses
 the API-only client integration described below.
@@ -457,7 +457,7 @@ server's accepted operation.
 | HFAPI018 / exit 10 | Unsupported/malformed/version/identity-inconsistent read response or pre-send protocol refusal; inspect compatible API/schema/expected archive identity |
 | HFAPI019 / exit 20 | Connectivity/read budget or finite observation deadline; preserve any known operation ID and continue observation deliberately |
 | HFAPI020 / exit 20 | Unusable post-transmission acknowledgement; retain original key/route and perform authenticated lookup without a new-key replay |
-| HFAPI013 or HFAPI015 / exit 20 | Missing/expired or unfinished/interrupted outcome; preserve uncertainty and follow the [recovery runbook](../../../recovery.md#10-operation-history-and-uncertain-submissions) |
+| HFAPI013 or HFAPI015 / exit 20 | Missing/expired or unfinished/interrupted outcome; preserve uncertainty and follow the [recovery runbook](../../../recovery.md#preserve-four-kinds-of-authority) |
 | Terminal domain Envelope | Preserve its command/run/error/partial-result exit classification; transport HTTP 200 is not domain success |
 
 The independent client TOML requires schema 1; archive JSON/receipt versions do

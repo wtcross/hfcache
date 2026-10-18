@@ -633,7 +633,7 @@ Validated 5xx refusals with a retained key also say work may continue; a usable
 error acknowledgement can still follow durable admission.
 The observation deadline differs from HTTP connect/read limits and the server's
 queue/lock budget. Stopping a client process/service stops observation only.
-See [recovery](../../../recovery.md#10-operation-history-and-uncertain-submissions) and
+See [recovery](../../../recovery.md#preserve-four-kinds-of-authority) and
 [decision 120](../../../adr/decision-120.md).
 
 **API-014 scheduled exception:** the fixed internal

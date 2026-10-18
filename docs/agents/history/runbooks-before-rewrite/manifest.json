@@ -1,0 +1,14 @@
+[
+  {
+    "source": "docs/operations.md",
+    "git": "8f42935",
+    "sha256": "df2ed8c74f56b362f3b8c41aa55a0d5de9e6cc0f5414e602da300915596563cd",
+    "snapshot": "docs/agents/history/runbooks-before-rewrite/operations.md"
+  },
+  {
+    "source": "docs/recovery.md",
+    "git": "8f42935",
+    "sha256": "6f2016dad6b3c291bdb658d92e333a12038202d15d4ee39a2a27eaf7bb684016",
+    "snapshot": "docs/agents/history/runbooks-before-rewrite/recovery.md"
+  }
+]

@@ -41,6 +41,7 @@ class ApiCli:
     def __init__(self, token, settings, application, web, exchange):
         self.token, self.settings, self.application, self.web = token, settings, application, web
         self.exchange = exchange
+        self.patch: pytest.MonkeyPatch
         self.runner = CliRunner()
 
     def invoke(self, arguments, *, json_output=True):
@@ -173,9 +174,15 @@ def api_cli(
                     patch.setattr(
                         "hfcache.cli.configure_logging", lambda **_: bind_run(new_run_id())
                     )
-                    yield ApiCli(
-                        read_token if reader else writer, settings, application, web, exchange
+                    remote = ApiCli(
+                        read_token if reader else writer,
+                        settings,
+                        application,
+                        web,
+                        exchange,
                     )
+                    remote.patch = patch
+                    yield remote
         finally:
             # The app has drained and joined before restoring test process state.
             reset()

@@ -7,6 +7,7 @@ from threading import Event
 import httpx
 import pytest
 
+from hfcache import cli_client
 from hfcache.client import ApiClient
 from hfcache.hub import HubClient
 from hfcache.paths import RepositoryLayout
@@ -66,9 +67,11 @@ class ObservedTransport(httpx.BaseTransport):
         return response
 
 
-def _transport(monkeypatch, remote, **options):
+def _transport(_monkeypatch, remote, **options):
     transport = ObservedTransport(remote.exchange, **options)
-    monkeypatch.setattr(
+    # Restore faults before the surrounding HTTP harness closes, so later tests
+    # cannot inherit a factory bound to a closed fixture service.
+    remote.patch.setattr(
         "hfcache.cli_client.ApiClient", lambda settings: ApiClient(settings, transport=transport)
     )
     return transport
@@ -295,3 +298,12 @@ def test_operations_wait_resumes_event_cursor_and_returns_exact_terminal_envelop
         assert events
         assert events[0]["after"] == str(after)
         assert not any(method == "POST" for method, _, _ in transport.requests)
+
+
+def test_fault_transport_restores_before_closed_http_fixture_can_escape(api_archive):
+    server, _, _, _ = api_archive
+    original = cli_client.ApiClient
+    with pytest.MonkeyPatch.context() as faults, api_cli(server.archive_config) as remote:
+        _transport(faults, remote)
+        assert cli_client.ApiClient is not original
+    assert cli_client.ApiClient is original

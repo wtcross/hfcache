@@ -78,7 +78,7 @@ through the same client authority. HFAPI013 missing history and HFAPI015
 interrupted/no-result state do not prove nonexecution; HFAPI019 observation and
 HFAPI020 lost-ack uncertainty preserve handles. Never submit a new key or run
 recovery merely because an observer stopped. For actual executor termination,
-follow [server drain and supervised recovery](../recovery.md#10-operation-history-and-uncertain-submissions).
+follow [server drain and supervised recovery](../recovery.md#preserve-four-kinds-of-authority).
 
 ## Candidate validity succeeds but install stays disabled
 

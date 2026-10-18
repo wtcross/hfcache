@@ -663,7 +663,7 @@ and fail admission closed. Healthy validated IDs remain observable. Delete only
 validated owned succeeded/failed history after expiry. Expired/missing history
 is uncertainty, not proof of nonexecution or permission to replay. See the
 independent [schema/compatibility contract](../../../schemas.md#13-service-private-operation-control-state-api-007)
-and [recovery runbook](../../../recovery.md#10-operation-history-and-uncertain-submissions).
+and [recovery runbook](../../../recovery.md#preserve-four-kinds-of-authority).
 
 Unavailable/unsafe verifier status specifically preserves the parent's active
 receipt and disables fresh execution across restarts, while metadata remains

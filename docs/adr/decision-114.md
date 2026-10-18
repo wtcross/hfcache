@@ -77,7 +77,7 @@ and no MCP dependency or endpoint is introduced.
 define the independent version and compatibility boundary. The
 [API contract](../api.md#admission-idempotency-and-lifecycle) defines observation,
 failure and retention semantics; [server configuration](../server.md) defines
-the bounded local state. The [recovery runbook](../recovery.md#10-operation-history-and-uncertain-submissions)
+the bounded local state. The [recovery runbook](../recovery.md#preserve-four-kinds-of-authority)
 keeps control-plane history loss separate from archive transaction recovery.
 The task records the throwaway previous-binary compatibility drill and final gate.
 

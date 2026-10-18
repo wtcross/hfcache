@@ -1515,7 +1515,7 @@ the actual heavy lane, stale-policy revalidation and verifier remain API-008,
 command POST routes API-009/010, and MCP remains behind REST acceptance.
 See [schemas §13](schemas.md#13-service-private-operation-control-state-api-007),
 [API lifecycle](api.md#admission-idempotency-and-lifecycle) and
-[uncertain-submission recovery](recovery.md#10-operation-history-and-uncertain-submissions).
+[uncertain-submission recovery](recovery.md#preserve-four-kinds-of-authority).
 
 ### Bounded lane and private verifier amendment (API-008, 2026-10-17)
 

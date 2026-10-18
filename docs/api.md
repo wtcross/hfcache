@@ -307,7 +307,7 @@ and interrupted receipts reserve maximum receipt/result space and never expire;
 terminal records use actual bytes. Preserve unsafe, malformed and unknown-version
 records; admission fails closed while healthy IDs remain observable. Delete only
 validated owned succeeded/failed history after expiry. See [control-state schemas](schemas.md)
-and the [recovery runbook](recovery.md#10-operation-history-and-uncertain-submissions).
+and the [recovery runbook](recovery.md#preserve-four-kinds-of-authority).
 
 ## Wire validation and errors
 

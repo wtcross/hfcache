@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [DOC-013](doc-013-human-mcp-guide-and-tool-contract.md) |
 | Phase | 2 — Human-facing guides |
@@ -25,11 +25,11 @@ Link to a human deployment-status/acceptance checklist for current NAS-read-only
 
 ## Acceptance
 
-- [ ] All runnable operational examples use the current API-only CLI and correctly scoped credentials/settings.
-- [ ] Historical command transcripts no longer dominate or contradict current instructions; preserved evidence remains traceable internally.
-- [ ] Recovery distinguishes archive journals, API receipts, verifier receipts and scheduled observation handles without merging their authority.
-- [ ] The rehearsal can be driven against owned fixtures with no real NAS, secrets or production service access.
-- [ ] No human task/plan references remain; no procedure implies lifting read-only guards or enables a timer automatically.
+- [x] All runnable operational examples use the current API-only CLI and correctly scoped credentials/settings.
+- [x] Historical command transcripts no longer dominate or contradict current instructions; preserved evidence remains traceable internally.
+- [x] Recovery distinguishes archive journals, API receipts, verifier receipts and scheduled observation handles without merging their authority.
+- [x] The rehearsal can be driven against owned fixtures with no real NAS, secrets or production service access.
+- [x] No human task/plan references remain; no procedure implies lifting read-only guards or enables a timer automatically.
 
 ## Contracts, invariants and ADRs
 
@@ -59,15 +59,40 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after DOC-013 8f42935. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+2026-10-18, this commit: rewrote both runbooks around API clients and current
+profile restrictions. Preserved original transcripts/source hashes under agent
+history and repaired descriptive anchors. Exact transitional entries reduced
+983 to 954. Shell arrays replace direct-writer aliases. Every workflow states
+capability, control/archive/Hub effects, acceptance prerequisites and outcome.
+Uncertainty precedes filesystem recovery; lookup differs from quiescence and
+compatible-service reopening. Four evidence domains, original-key/no replay,
+original-manifest repair, current-publication quarantine proof, restore/refusal
+rules and damaged-current ambiguity are explicit. No timer or guard is enabled.
+
+New tests syntax-check all shell fences and parse 32 operational examples through
+the real command tree without invoking callbacks. Existing negative CLI tests
+prove legacy config refusal/no local fallback and original-key behavior. Designated
+maintenance/private-worker/adversarial fixtures use owned temporary state only.
+The focused ordering exposed a fault-injection patch outliving its HTTP fixture;
+its ownership now follows that fixture, with an explicit restoration regression.
+No runtime application behavior changed.
+
+Focused suites: 180 passed in 22.16s; final parsing/links/fixture regression:
+50 passed in 2.93s. Ruff/format/Pyrefly (0 errors) passed. `scripts/check.sh`
+exited 0: 4209 passed/40 opt-in deselected in 476.05s, build, all three locked
+profiles and actual Cockpit lint/135 tests (0 skipped)/production build. Log:
+`/tmp/hfcache-doc014-gate.log`. Initial focused failures (broken storage link and
+fixture patch lifetime) were corrected, not counted as acceptance.
+
+Reviewed AD-13/16/17, FS-19, TX-06/07 and receipt/verifier/scheduled invariants.
+Corrected stale prose to existing code/contracts; no format, dependency,
+architectural decision or new invariant. No live NAS/Hub/host operation ran.
+See [completed progress entry](../../progress.md#api-operating-and-recovery-runbooks-2026-10-18).
+Next ready task DOC-015; final authorized branch pushes follow plan acceptance.

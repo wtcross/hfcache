@@ -71,7 +71,7 @@ client setting selects a different server archive or grants write authority.
 ## 3. Writer work and reconnect
 
 A writer uses its distinct provisioned REST-writer source and the same client
-contract. Follow [operations](operations.md#cli-submit-and-reconnect-api-013)
+contract. Follow [operations](operations.md#resolve-uncertain-work-before-starting-more)
 for authorized plan/sync/verification/maintenance work on the intended target.
 Writer capability does not bypass common locks, fresh scope/evidence checks,
 private verification or explicit initialization guards. No archive mutation is needed
@@ -92,7 +92,7 @@ H operations lookup -- '<original-key>'
 Replace the quoted placeholders with retained handles; keep `--` so a key cannot
 be parsed as an option. Missing/expired history does not prove nonexecution.
 Do not replay with a new key, cancel execution or run recovery because an
-observer disappeared. See [uncertain outcomes](recovery.md#10-operation-history-and-uncertain-submissions).
+observer disappeared. See [uncertain outcomes](recovery.md#preserve-four-kinds-of-authority).
 
 ## 4. Optional MCP metadata
 
@@ -112,7 +112,7 @@ archive UUID/paths, protected REST sources, separate server/client settings and
 the private verification executor. Use [server/bootstrap configuration](server.md)
 and the [deployment checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
 for the actual API/private-worker boundary; reader setup does not create it.
-The [recovery rehearsal](recovery.md#6-building-a-throwaway-archive-to-rehearse-on)
+The [recovery rehearsal](recovery.md#rehearse-with-disposable-services)
 retains the historical disposable-storage context, not permission to touch a
 production mount. Do not create/delete shared `/run/hfcache`, mount/export paths,
 state or locks on an existing writer to follow a quickstart.
