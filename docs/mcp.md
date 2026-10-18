@@ -153,8 +153,8 @@ returned source ordering is unchanged.
 | `get_revision_manifest` | Required repository_type/repository_id/commit_sha/publication_id; `collection="files"` or `"dependencies"`; limit/cursor | Exact immutable manifest instance, explicit selected-collection projection; full artifact validation may cost more than one page |
 | `list_run_reports` | limit/cursor | Validated existing run IDs in reverse chronological filename order; never executes a run |
 | `get_run_report` | Required run_id; limit/cursor | Existing run/recovery/verification report, explicit primary-collection projection and original evidence identity |
-| `get_verification_report` | Required run_id; limit/cursor | Existing VerificationReport only; wrong report type refuses HFARG004; no hashing or persistence |
-| `estimate_verification` | None | Existing stat/metadata estimator, no hashes/writes/Hub/lock or increase in verification confidence; large scans remain bounded work |
+| `get_verification_report` | Required run_id; limit/cursor | Existing VerificationReport only; wrong report type refuses HFARG004; no archive-byte hashing or persistence |
+| `estimate_verification` | None | Existing stat/metadata estimator, no archive-byte hashing/writes/Hub/lock or increase in verification confidence; large scans remain bounded work |
 
 ### Metadata output and pages
 
@@ -241,6 +241,96 @@ are unchanged. Local socket/streaming tests and locked wheel installs do not pro
 deployed systemd/cgroup credentials, no-IP masks, browser/PAM, SELinux/NFS or
 rollback/drain acceptance. Existing [operator holds](progress.md#operator-handoff)
 remain deployment prerequisites; no production operation is authorized.
+
+## Threat, control and test traceability (MCP-003)
+
+These are required acceptance claims under decisions 124/125 and INV-002/003/
+007/010/016. The [MCP-003 task](plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
+owns executed results; a listed control or test reference alone is not evidence
+that its latest run passed. Mounted tests must enter the parent FastAPI lifespan
+and use supported streaming HTTP or disposable sockets, not only direct SDK calls.
+
+| Threat or failure | Required control and observable refusal | Concrete test entry point |
+| --- | --- | --- |
+| Missing/cross-class bearer, reused session identity or protocol-method bypass | Authenticate each request before body/protocol handling; an MCP bearer cannot reach REST and a session ID grants no authority | [test_every_mounted_method_authenticates_before_protocol_or_session_use](../tests/unit/test_mcp_transport.py), [test_stateless_handshake_issues_no_session_authority_and_every_followup_reauthenticates](../tests/unit/test_mcp_transport.py) |
+| Host/Origin/prefix/proxy confusion | One trusted interface projection and corroborated Unix scope retain transport policy; alias redirects cannot reflect caller data | [test_real_unix_native_and_tcp_public_mcp_share_one_authenticated_lifespan](../tests/unit/test_mcp_transport.py), [test_slash_alias_is_authenticated_and_cannot_reflect_query_or_proxy_prefix](../tests/unit/test_mcp_transport.py) |
+| Writer name, hidden tool/resource/prompt, generic invocation or mutation-shaped arguments | Exact nine-name registry and typed closed schemas; unsupported tool spellings/tool-argument fields refuse without command or state effects | [test_actual_mounted_registry_has_exact_typed_allowlist_and_read_only_hints](../tests/unit/test_mcp_tools.py), [test_every_tool_rejects_mutation_fields_without_archive_or_control_writes](../tests/unit/test_mcp_security.py), [test_all_writer_command_names_and_generic_dispatch_aliases_are_unknown](../tests/unit/test_mcp_security.py), [test_resources_prompts_and_background_tasks_cannot_expand_the_registry](../tests/unit/test_mcp_security.py) |
+| A read creates reports, receipts, directories, locks, caches or recovery output | Narrow read capability plus per-call archive/control-state snapshots and command/Hub/credential/archive-byte-hash tripwires; hints alone are insufficient | [test_every_success_and_failed_tool_preserves_archive_and_operation_state](../tests/unit/test_mcp_tools.py), [test_exact_registry_and_valid_reads_preserve_archive_control_and_runtime_directories](../tests/unit/test_mcp_security.py) |
+| Malformed or stale evidence becomes authority or a newer publication is substituted | Validate original evidence and exact identity before projection; refuse malformed/wrong-kind/stale data, never reconstruct it or infer confidence | [test_exact_manifest_never_substitutes_current_after_stale_or_unsafe_identity](../tests/unit/test_mcp_tools.py), [test_verification_report_requires_actual_verification_evidence](../tests/unit/test_mcp_tools.py), [test_corrupt_original_reports_refuse_without_repair_or_diagnostic_echo](../tests/unit/test_mcp_security_evidence.py) |
+| Secret or rejected input escapes in output, errors, cursor hashes or SDK logs | Registered-value sanitization before encoded output/hash, fixed safe errors/diagnostics and no raw rejected-value formatting; unsafe identities refuse | [test_archive_strings_remain_inert_data_and_registered_tokens_never_reach_tool_outputs](../tests/unit/test_mcp_tools.py), [test_malformed_protocol_does_not_echo_rejected_values_in_output_or_diagnostics](../tests/unit/test_mcp_transport.py), [test_numeric_registered_secret_changes_do_not_fingerprint_report_cursors](../tests/unit/test_mcp_security_evidence.py), [test_registered_secret_in_actual_report_response_is_redacted_or_refused](../tests/unit/test_mcp_security_evidence.py) |
+| Large metadata/slow body/read consumes unbounded work or returns truncated success | Explicit body/scan/artifact/page/response ceilings and bounded transport/shared metadata capacity; exhaustion is visible failure and ownership releases safely | [test_actual_mounted_protocol_enforces_byte_budgets_and_recovers_capacity](../tests/unit/test_mcp_transport.py), [test_exhausted_metadata_budget_is_visible_failure_never_an_empty_success](../tests/unit/test_mcp_tools.py) |
+| Missing catalog or partial archive becomes a false verified result | Preserve unknown instance-bound confidence; reads never hash archive content, persist findings or rebuild catalog state | [test_bad_derived_catalogs_stay_unknown_and_are_never_rebuilt](../tests/unit/test_mcp_tools.py), [test_partial_archive_estimate_reports_missing_bytes_without_hashing_or_false_confidence](../tests/unit/test_mcp_tools.py) |
+| Observer cancellation, mixed REST/MCP work or shutdown loses active read ownership | Offload through the shared bounded pool, keep independent correlation and retain a worker lease until actual completion; drain before releasing lifecycle ownership | [test_blocked_estimator_uses_shared_pool_without_blocking_metadata_or_leaking_slots](../tests/unit/test_mcp_pool.py), [test_parallel_mcp_reads_during_rest_sync_and_verification_keep_ids_and_authority](../tests/unit/test_mcp_concurrency.py), [test_cancelled_mcp_observer_keeps_metadata_lease_until_worker_finishes](../tests/unit/test_mcp_concurrency.py), [test_shutdown_after_cancelled_mcp_read_waits_for_worker_and_instance_ownership](../tests/unit/test_mcp_concurrency.py) |
+| Disabled MCP gains a dependency, credential read or endpoint | Disabled mode imports/resolves neither optional runtime nor MCP source; isolated base/server installations remain usable | [test_disabled_mcp_neither_reads_inert_credential_nor_mounts_endpoint](../tests/unit/test_mcp_transport.py), [isolated wheel profiles](../scripts/check-installations.py) |
+
+The locked SDK may ignore legacy top-level `params.task` metadata on an otherwise
+valid allowlisted `tools/call` and perform the ordinary finite synchronous read.
+The accepted behavior is no task handle, retained task, operation/job or state
+effect, not blanket refusal of every optional protocol field. Unsupported task
+RPC methods refuse; mutation-shaped fields inside the tool's arguments remain
+closed and refuse. `task=False` and hints describe no background authority, not a
+promise about every SDK extension field.
+
+Malformed original report proof covers run/recovery/verification evidence and
+JSON, version, run/archive/time identity, symlink and duplicate-file damage.
+[test_unexpected_reader_exception_is_masked_over_actual_http_and_in_diagnostics](../tests/unit/test_mcp_security_evidence.py)
+requires fixed safe failure over the actual mounted boundary and captured logs.
+Registered string report values redact; unsafe registered numeric values may
+refuse at the parent boundary with HFAPI008/HTTP 500 rather than return changed
+or exposed evidence. The numeric cursor substitution test independently proves
+that hidden numeric values do not enter client-visible continuation fingerprints.
+
+Repository proof completed 2026-10-18 with the first full gate exiting 0; the task
+records 3,522 Python tests, all three locked wheel profiles and 127 Cockpit tests.
+Dedicated MCP client/final acceptance remains MCP-004. No runtime behavior or
+architectural decision changed in this proof package.
+
+### Snapshot and concurrency method
+
+No-hash assertions concern verification/ingestion hashing of archived payload
+bytes. Cursor hashing of sanitized metadata and credential-digest authentication
+remain intentional and are not archive verification.
+
+Take application-state baselines after ordinary lifespan initialization and
+credential loading. For every valid/invalid tool, compare all relevant archive
+and operation-state paths, ordinary file contents and modes, including refs,
+manifests, object/publication content, catalogs, reports, journals and pending
+operation evidence. Adding a path is a change even when no existing file changed.
+Do not treat filesystem atime updates as application writes. Normal sanitized
+operational logging is the documented exception; it cannot create archive or
+operation evidence. Test fixtures may deliberately corrupt evidence before the
+baseline to verify fail-closed behavior, but the read must preserve that evidence.
+
+During a concurrent REST command, its authorized fixture mutations remain
+attributable to that command. MCP must add no admission/domain/Hub/credential/
+archive-byte-hash invocation or derived artifact. Responsiveness alone does not prove this
+boundary. Distinct request/run correlation must survive overlapping reads, and
+cancellation closes observation without treating a still-running read as finished.
+The supported streaming observer may detach while the server conservatively
+retains both its transport request slot and metadata-worker lease until actual
+completion. Shutdown may join at the MCP layer before the REST pool closes;
+neither observer cancellation nor a pending drain proves capacity is already free. Pages remain bounded
+observations rather than a global archive snapshot; status headline/warnings may
+change between pages while row-bound cursors remain valid.
+
+### Residual deployment assumptions
+
+The narrow tool capability is an application boundary inside the shared API
+process, not a separate process sandbox. The MCP credential intentionally reads
+the whole archive, including restricted metadata. No per-repository ACL or individual attribution is claimed. A trusted
+client must protect its provisioned bearer and use verified TLS or the protected
+authenticated Unix path; session identifiers are not credentials. Exposed names,
+report messages and dependency observations remain untrusted data even after
+successful validation, never instructions to execute.
+
+Hermetic mounted/streaming/socket tests and archive snapshots prove application
+behavior under the tested process and filesystem conditions. They do not certify
+installed socket ownership, TLS/proxy deployment, credential delivery/rotation,
+worker no-IP/source masks, cgroups, custom source paths, SELinux/NFS, browser/PAM
+or real drain/rollback behavior. Dependency/parser/SDK compromise and privileged
+host/operator compromise remain outside the narrow tool capability proof. Keep
+[operator holds 16–18](progress.md#operator-handoff) open until separately
+performed; no production operation or hardening change is part of these tests.
 
 ## Rollback and deployment limits
 

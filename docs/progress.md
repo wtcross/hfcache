@@ -1354,6 +1354,49 @@ package in this family.
   operator holds 16–18 remain separate. Live Hub/NFS and extra build-marker suites
   were not run.)
 
+- [x] MCP-003 Prove mounted MCP authentication and read-only behavior
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)).
+  Twenty-seven concrete test functions map threats to existing authentication,
+  exact registry/closed arguments, whole-state preservation, secret/evidence/
+  confidence containment and bounded mixed-interface/cancellation/drain controls.
+  New mounted proofs snapshot all post-startup archive/control/config/credential/
+  runtime paths/content/modes for each valid/invalid call, with explicit admission/
+  command/Hub/credential/probe/archive-byte-hash tripwires. Atime is excluded and
+  sanitized operational logs remain the documented exception. Three original
+  report types × seven corruption classes preserve malformed evidence; numeric
+  cursor substitution cannot fingerprint a hidden registered value. String output
+  redacts and unsafe numeric output safely refuses; unexpected reader errors and
+  logs expose no private input/bearer. Root evidence: 25 passed in 6.50 seconds,
+  after a test-only missing fixture import correction before its actual proof run.
+  Closed authority: 12 in 9.84, covering all nine tools × 17 mutation field sets,
+  writer/generic/OpenAPI/hashed aliases and empty resources/templates/prompts.
+  Optional legacy params.task can yield the same finite approved read without
+  task handle/retained task/job/admission; unsupported task RPCs refuse. No claim
+  that all optional SDK fields reject. Intentional sanitized-metadata cursor hashes
+  and authentication digests are distinct from prohibited archive-byte hashing.
+  Four mixed-interface/cancellation/drain cases pass in 4.52 seconds: fake-Hub
+  sync and actual framed verification keep the common lock while MCP reads remain
+  responsive, preserve three-root state and distinct correlation, and add no
+  authority/confidence. Observer detachment may retain both request and worker
+  leases until completion; MCP-first drain preserves ownership. Parsed anchors/
+  REST parity: 63 in 1.04; AST resolves all 27 mapped functions. First full
+  `rtk proxy bash scripts/check.sh > .scratch/mcp-003-gate.log 2>&1` exits 0:
+  lock/both-extra sync, 383 formatted files, Ruff clean, whole Pyrefly 0 errors
+  (11 suppressed, 59 warnings not shown), 3,522 Python tests (40 deselected,
+  417.54 seconds), 0.1.10 sdist/wheel and all three actual locked isolated
+  base/server/server+MCP installation/import/help/version checks. Cockpit lint/
+  style/types, 127 tests in 2.112 seconds and production build in 1,234 ms pass.
+  No full-gate failure/correction/restart or runtime source change. AD-21,
+  124/125 and INV-002/003/007/010/016 are reviewed; current MCP/security proof
+  links and residual assumptions amend evidence, without a new decision. Stale
+  executor/profile availability wording is corrected. Final links/current/
+  dependencies, unchanged 29 REST modes, 125 unique indexed decisions, mapped
+  functions and whitespace pass. No role/tool/domain/FS/TX/dependency/config/
+  durable change or production operation/deployment/push/merge/tag. MCP-004 is
+  next pending after this commit; final API-017 and operator holds 16–18 remain
+  separate. Live Hub/NFS and extra build-marker suites were not run.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

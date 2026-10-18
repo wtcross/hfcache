@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [MCP-003](tasks/mcp-003-mcp-security-and-side-effect-tests.md) |
+| Next task | [MCP-004](tasks/mcp-004-mcp-client-docs-and-acceptance.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

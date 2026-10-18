@@ -634,7 +634,7 @@ Evidence: [plugin tests](../cockpit/test/) and the
   Default tests stay offline/hermetic and strip ambient credentials; Hub tests
   use injectable deterministic fakes. Live Hub/off-host network and real NFS tests
   are opt-in; actual disposable Unix/loopback TCP/TLS tests run in the default gate.
-  The default gate builds and smoke-installs locked base/server wheels;
+  The default gate builds and smoke-installs locked base/server/server+MCP wheels;
   additional build-marker tests remain opt-in. Every work-package commit updates progress and passes
   `scripts/check.sh`; durable-format fixtures and checkpoint-contract tests
   remain synchronized with their contracts.
@@ -872,7 +872,8 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   publication reads never substitute current, and estimates/catalog reads never
   increase confidence or trigger persistence/rebuild. Registry/schema equality
   and success/failure archive/control-state snapshots prove the boundary;
-  annotations alone do not. Full MCP exposure/acceptance remains MCP-003/004.
+  annotations alone do not. Dedicated mounted security proof is MCP-003; final
+  MCP acceptance remains MCP-004.
   Enforcement: [optional verifier/finite transport](../src/hfcache/mcp.py),
   [application boundary/lifecycle](../src/hfcache/api/app.py),
   [direct verifier/lifecycle tests](../tests/unit/test_mcp_mount.py) and
@@ -883,7 +884,12 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   Evidence: [backend](../tests/unit/test_mcp_queries.py) and
   [mounted registry/tools](../tests/unit/test_mcp_tools.py).
   See [MCP](mcp.md), [decision 124](adr/decision-124.md) and
-  [decision 125](adr/decision-125.md).
+  [decision 125](adr/decision-125.md). The
+  [MCP-003 threat/control/test map](mcp.md#threat-control-and-test-traceability-mcp-003)
+  distinguishes application snapshots and mixed-interface ownership from
+  installed-host assumptions, with [malformed evidence/secret proof](../tests/unit/test_mcp_security_evidence.py),
+  [closed authority/state snapshots](../tests/unit/test_mcp_security.py) and
+  [mixed-interface/cancellation/drain tests](../tests/unit/test_mcp_concurrency.py).
 
 FW-01/FW-03 above retain their historical baseline with the explicit
 [108](adr/decision-108.md)/[109](adr/decision-109.md) amendment: scoped transport

@@ -45,6 +45,11 @@ does not activate itself.
 | Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Transport boundary](decision-108.md), [submission receipts](decision-109.md), [scoped correlation/redaction](decision-111.md), [optional MCP protocol/diagnostics](decision-124.md), [server dependency/configuration boundary](decision-112.md), [authenticated metadata lifespan](decision-113.md), [durable admission without replay](decision-114.md), [bounded execution/private verifier](decision-115.md), [typed command admission](decision-116.md), [explicit maintenance authority](decision-117.md), [independent typed client](decision-118.md), [reader/candidate integration](decision-119.md), [operational CLI observation](decision-120.md), [scheduled observation continuity](decision-121.md), [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
 | Documentation and work-package process | [Router](decision-081.md), [workflow](decision-082.md), [register upkeep](decision-106.md), [plan/task authority](decision-107.md) | [Portable runbooks](decision-085.md), [current invariant register](../invariants.md), [planning guide](../agents/planning.md) |
 
+MCP mounted security proof under the existing 124/125 decisions is traced in the
+[MCP threat/control/test map](../mcp.md#threat-control-and-test-traceability-mcp-003)
+and its [MCP-003 task](../plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md).
+Proof-only work introduces no placeholder architectural decision.
+
 ## Maintenance rules
 
 For every change or new plan being implemented:

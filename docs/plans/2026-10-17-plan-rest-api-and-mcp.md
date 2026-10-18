@@ -904,3 +904,21 @@ versions when implementing, especially FastMCP imports and test transports:
   source change. Current selects MCP-003 pending after this commit; dedicated
   MCP security/final acceptance and operator holds remain separate. No dependency,
   durable/config format, production operation or later-task implementation.
+
+
+- 2026-10-18 MCP-003: Activated after committed MCP-002 (`35e5f51`) under the
+  authorized sequential plan. Existing decisions 124/125 govern mounted
+  authentication/session/prefix isolation, exact registry/closed arguments,
+  post-startup whole-state snapshots, malformed evidence/secret/confidence
+  containment and bounded mixed-interface/cancellation/drain ownership. MCP and
+  security docs map threats to controls/tests and retain explicit deployment
+  assumptions; no new decision, role/tool/durable/dependency change is selected.
+  Repository proof completed 2026-10-18: malformed evidence/secret selection
+  passes 25 tests, closed authority/state snapshots 12 and mixed-interface/
+  cancellation/drain 4. The 27-function traceability map distinguishes application
+  proof, finite legacy task metadata and real deployment assumptions. First full
+  `scripts/check.sh` exits 0 with 3,522 Python tests (40 deselected, 417.54 seconds),
+  0.1.10 builds, all three actual locked wheel installation profiles and 127
+  Cockpit tests/production build. No full-gate correction/restart or runtime source
+  change; no new decision or format/dependency. Current selects MCP-004 pending
+  after this commit, with final MCP/API-017 acceptance and operator holds separate.

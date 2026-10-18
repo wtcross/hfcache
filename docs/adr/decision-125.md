@@ -122,3 +122,20 @@ seconds), all three locked wheel profiles and 127 Cockpit tests/production build
 No gate correction or post-freeze source change. The task owns exact commands,
 results and remaining operator holds; MCP-003/004 and final acceptance remain
 pending after this package's commit.
+
+## 2026-10-18 mounted security traceability (MCP-003)
+
+[MCP-003](../plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md) maps this
+existing decision to required [threat/control/test evidence](../mcp.md#threat-control-and-test-traceability-mcp-003).
+Parent-lifespan mounted authorization, closed registry/arguments, whole-state
+snapshots, malformed evidence and secret containment, finite mixed-interface
+work and cancellation/drain ownership are proofs of the existing boundary.
+They add no role/tool/durable format or architectural choice. Post-startup
+baselines exclude atime and permit sanitized operational logging; concurrent REST
+fixture effects remain attributable to REST. Actual host credential/egress/
+transport/SELinux/NFS/drain/rollback acceptance remains separate operator work.
+Repository proof completed 2026-10-18: the first full gate exits 0 with 3,522
+Python tests (40 deselected, 417.54 seconds), all three locked wheel profiles and
+127 Cockpit tests/production build. No runtime source or architectural choice
+changed. The task owns exact evidence; MCP-004/API-017 and real host acceptance
+remain separate. No new numbered decision is introduced for these proofs.

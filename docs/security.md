@@ -188,10 +188,10 @@ production run access that the configuration does not describe.
 Verification has a separate authority boundary: shared verification never
 constructs a Hub client, resolves a credential, or changes process-wide offline
 environment settings. The shipped unit supplies `HF_HUB_OFFLINE=1` and
-`IPAddressDeny=any`. A future dedicated executor initializes the offline flag
-once before Hub imports and must independently retain the no-IP sandbox; the
-startup helper alone is not an egress control. API-008/014 own that executor and
-its host acceptance. A network-enabled ASGI process is never a fallback verifier.
+`IPAddressDeny=any`. The dedicated executor initializes the offline flag
+once before Hub imports and independently requires the no-IP sandbox; the
+startup helper alone is not an egress control. API-008/014 implement/package that
+executor, while its installed-host acceptance remains held. A network-enabled ASGI process is never a fallback verifier.
 
 ### T-08 — Restricted content crosses the intended authorization boundary
 
@@ -649,8 +649,8 @@ no resources/prompts, automatic OpenAPI conversion, generic command/path/URL
 fetcher or hidden writable capability. Tool functions receive a narrow async read
 protocol only, not SDK Context/Request/app objects or command, Hub, credential
 resolver or writable helpers. Bounded metadata workers call validated shared
-readers with fresh pinned installed policy; no tool creates a receipt, hashes,
-probes, recovers/cleans, installs config or rebuilds catalogs.
+readers with fresh pinned installed policy; no tool creates a receipt, hashes
+archive payload bytes, probes, recovers/cleans, installs config or rebuilds catalogs.
 
 Read-only/non-destructive/closed-world hints are descriptive, not enforcement.
 Archive-derived names, dependency observations, report messages and metadata
@@ -661,3 +661,44 @@ use stable codes/fixed safe text without raw rejected values. Explicit artifact
 projections never grant complete-manifest authority or promote unknown confidence;
 exact SHA/publication requests cannot fall back to newer current content. MCP
 readers retain AD-21's whole-archive authorization, without per-repository ACLs.
+
+## Mounted MCP security proof (MCP-003)
+
+The [threat/control/test map](mcp.md#threat-control-and-test-traceability-mcp-003)
+connects each acceptance claim to concrete mounted tests. It applies existing
+T-01/02/07/08/12 and INV-002/003/007/010/016; it adds no tool, role or command
+capability. The [task record](plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
+owns actual runs and separates repository proof from deployment assumptions.
+
+| Security boundary | Required proof |
+| --- | --- |
+| Transport and credential class | Parent lifespan plus actual streaming/session requests, all methods and bearer classes, REST isolation and Host/Origin/prefix/proxy refusal; session replay never substitutes for authentication |
+| Closed authority and untrusted input | Exact registry/resources/prompts and closed argument schemas, writer-name/dispatch/path/credential attempts, fixed safe errors and no execution of archive-derived strings |
+| Evidence preservation and confidentiality | Before/after full paths/content/modes for every valid/invalid tool, no command/Hub/credential/archive-byte-hashing work, malformed original evidence preserved, no secret in wire/error/log or cursor binding, no false verification confidence |
+| Bounded mixed-interface lifetime | Concurrent REST/MCP reads remain responsive with separate correlation and finite budgets; cancellation and drain retain real request/worker ownership without adding MCP artifacts |
+
+No background authority means no retained task/job or operation receipt. The
+locked SDK can ignore legacy top-level `params.task` metadata and execute the
+same approved finite read; it need not reject every optional protocol field.
+Unsupported task RPCs and mutation-shaped tool arguments still refuse.
+
+Archive-byte-hashing refusals do not prohibit intentional sanitized-metadata
+cursor hashes or credential authentication digests. Baselines follow normal
+startup allocations; per-call reads must not create new
+archive/control state. Atime changes are not application writes. Sanitized
+operational logging is the sole documented non-archive exception. REST fixture
+mutations during mixed-interface tests must remain attributable to that REST
+command, not hidden MCP work. Malformed fixture evidence is introduced before the
+baseline and must not be repaired or deleted by observation.
+
+The narrow tool capability is an application boundary within the shared API
+process, not a separate process sandbox. Whole-archive metadata authority
+intentionally includes restricted repositories; it supplies neither per-repository
+ACLs nor individual identity. Registered-value
+redaction does not promise detection of every arbitrary unknown secret. Finite
+budgets limit a request's resources, not every denial-of-service strategy by an
+authorized client. Locked dependencies and the unprivileged sandbox reduce but
+do not eliminate parser/SDK or host compromise risk. Actual TLS/proxy/socket/
+credential delivery and rotation, worker egress/source masking, cgroup/SELinux/
+NFS/drain/rollback and browser acceptance remain operator holds 16–18. No local
+integration result silently closes those holds or authorizes production changes.
