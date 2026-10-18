@@ -1394,6 +1394,19 @@ MCP imports/resolves neither package nor credential. No automatic OpenAPI tool
 conversion, command/job path, workflow framework or durable authority is added;
 curated read-only tools remain MCP-002. Existing FS/TX and whole-archive rules stand.
 
+### 2026-10-18 MCP-002 metadata capability amendment
+
+[Decision 125](adr/decision-125.md) adds exactly nine explicit typed metadata
+tools through a narrow read protocol and app-owned bounded metadata offload.
+Tools receive no SDK app/request context, commands, Hub/credential resolver or
+writable helpers; no resources/prompts or automatic OpenAPI conversion exists.
+Explicit manifest/report projections preserve full-source header meaning and
+exact original identities while bounding collection pages. Full-content/policy/
+scope-bound cursors refuse changed continuation, and vanished exact publications
+never become newer current content. Existing FS-08–12/16, unknown confidence,
+whole-archive authorization and consumer verification remain; no domain algorithm,
+durable/config schema, dependency, job authority or production change is added.
+
 ### Execution context and process boundaries (API-004, 2026-10-17)
 
 [Decision 111](adr/decision-111.md) amends the process-per-CLI assumption in

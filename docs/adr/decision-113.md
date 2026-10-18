@@ -1,6 +1,7 @@
 # Decision 113 — Serve bounded metadata through one authenticated lifespan
 
 - MCP transport amendment: [decision 124](decision-124.md).
+- Curated tool amendment: [decision 125](decision-125.md).
 - Status: Accepted; implemented by API-006.
 - Date: 2026-10-17.
 - Work package: API-006, this commit.
@@ -148,3 +149,22 @@ prompts; curated reads and side-effect proof remain MCP-002. No archive/config/
 durable format, domain workflow, production deployment or host-proof change.
 See [MCP](../mcp.md) for exact supported protocol/path/session behavior and the
 [MCP-001 task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.
+
+## 2026-10-18 curated metadata tool amendment (MCP-002)
+
+[Decision 125](decision-125.md) registers exactly nine typed metadata tools via
+an explicit narrow read capability, with no resources/prompts, OpenAPI conversion,
+SDK app/request context, command/Hub/credential resolver or writable helper.
+Read-only annotations describe the capability; registry/schema equality and
+success/failure archive/control-state snapshots must prove it.
+
+Shared validated readers preserve exact SHA/publication identity, canonical
+locator bases and unknown derived confidence without writes or reconstruction.
+Manifest/report pages are explicit projections, not complete durable artifacts;
+headers preserve original totals/report provenance and complete source content
+binds cursors. Missing/stale instances refuse rather than substituting current.
+Archive-derived strings and dependency observations remain untrusted data, never
+instructions or executable content. Consumer copy/verification/promotion and
+whole-archive authorization remain unchanged. No dependency, config/durable
+schema, job path or production operation is added. See [MCP](../mcp.md) and the
+[MCP-002 task](../plans/tasks/mcp-002-curated-read-only-tools.md).

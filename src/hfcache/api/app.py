@@ -670,15 +670,62 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         # Optional import is deliberately below the enabled branch: base/server
         # installations and disabled credentials have no MCP dependency.
         try:
+            from fastmcp.server.dependencies import (  # noqa: PLC0415 - optional extra
+                get_http_request,
+            )
+
+            from hfcache.api.mcp_reads import (  # noqa: PLC0415 - optional adapter
+                MetadataReadAdapter,
+            )
             from hfcache.mcp import (  # noqa: PLC0415 - optional extra
                 BoundedMCPTransport,
                 create_mcp_app,
+            )
+            from hfcache.services.mcp_queries import (  # noqa: PLC0415 - optional read projection
+                MetadataRead,
+                MetadataReadQueries,
+                QueryPage,
             )
         except ImportError:
             message = "MCP is enabled but its optional runtime is unavailable"
             raise ConfigurationError.single(message, code="HFCFG005") from None
 
-        app.state.mcp_app = create_mcp_app(lambda: getattr(app.state, "credentials", None))
+        async def execute_mcp(
+            read: Callable[[MetadataReadQueries], QueryPage],
+        ) -> MetadataRead:
+            pool = getattr(app.state, "pool", None)
+            if pool is None or pool.closed:
+                message = "metadata service is not started or is draining"
+                raise SafetyError.single(message, code="HFAPI009")
+            request = get_http_request()
+            context = request.state.execution_context
+
+            def work() -> MetadataRead:
+                snapshot = app.state.policy.snapshot()
+                page = read(
+                    MetadataReadQueries(
+                        factory(snapshot.config),
+                        fingerprint=snapshot.fingerprint,
+                        max_page_size=server.limits.max_page_size,
+                    )
+                )
+                return MetadataRead(
+                    request_id=context.request_id,
+                    archive_id=snapshot.config.storage.archive_id,
+                    config_fingerprint=snapshot.fingerprint,
+                    envelope=page.result.envelope(context),
+                    next_cursor=page.next_cursor,
+                )
+
+            lease = pool.submit(work)
+            request.state.metadata_leases.append(lease)
+            return await lease.future
+
+        app.state.mcp_app = create_mcp_app(
+            lambda: getattr(app.state, "credentials", None),
+            MetadataReadAdapter(execute_mcp),
+            max_page_size=server.limits.max_page_size,
+        )
         app.state.mcp_server = app.state.mcp_app.state.fastmcp_server
         app.state.mcp_transport = BoundedMCPTransport(
             app.state.mcp_app,

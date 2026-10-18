@@ -1,10 +1,13 @@
 # Optional MCP transport
 
 MCP-001 adds an optional authenticated Streamable HTTP transport after committed
-REST acceptance. Repository transport acceptance is complete; no curated tools
-are implemented by this package. MCP-002 owns the explicit read-only toolset.
+REST acceptance. MCP-002 adds the explicit nine-tool metadata read interface,
+with repository acceptance recorded in its task. No command/job interface is exposed.
 [Decision 124](adr/decision-124.md) records dependency/auth/lifecycle rationale;
-the [task](plans/tasks/mcp-001-mount-authenticated-fastmcp.md) owns actual evidence.
+the [transport task](plans/tasks/mcp-001-mount-authenticated-fastmcp.md) owns its
+acceptance evidence. [Decision 125](adr/decision-125.md) and the
+[tool task](plans/tasks/mcp-002-curated-read-only-tools.md) own curated exposure
+and its registry/schema/side-effect proof.
 
 ## Enablement and authority
 
@@ -120,14 +123,118 @@ message/data/details; raw Pydantic rejected values never become protocol output.
 Registered-secret sanitization still covers successful values/IDs, with unsafe
 numeric identities refused rather than echoed.
 
-## Current exposure and limitations
+## Curated metadata tools (MCP-002)
 
-No tools, resources or prompts are registered in MCP-001. The transport is not a
-REST OpenAPI conversion, command dispatcher, URL fetcher or arbitrary file reader.
-It cannot submit jobs, run verification, perform diagnostics/probes, use Hub
-credentials, rebuild catalogs or install configuration. Future tool enforcement
-must use narrow read-service interfaces, explicit allowlists and no-side-effect
-proof; `readOnlyHint` annotations alone grant no security.
+[Decision 125](adr/decision-125.md) permits exactly the following nine names.
+No resources or prompts are registered. Every adapter receives only the narrow
+async read protocol, with app-owned bounded metadata offload to a transport-neutral
+backend. No SDK Context/Request/app object, command service, Hub client, credential
+resolver, writable helper or arbitrary path/URL dispatcher is available. Tool
+annotations are read-only, non-destructive, idempotent and closed-world, with no
+background task execution; those hints do not enforce the boundary.
+
+`repository_type` is `model` or `dataset`. Repository IDs and full SHA/publication/
+run IDs use the shared validated grammars. Common page arguments are `limit=None`
+and `cursor=None`; omission resolves to min(100, configured server maximum).
+Requested limits are strict integers 1–10,000 and cannot exceed that maximum.
+Cursors are at most 256 characters. Inventory selector lists are at most 64
+strings of at most 256 characters each; no selector is a filesystem locator.
+Selectors retain shared inventory semantics: a valid full-SHA suffix is accepted
+but ignored for repository scope. Cursor scope uses sorted unique canonical
+TYPE:ID identities, so suffix/order/duplicates do not change logical selection;
+returned source ordering is unchanged.
+
+| Tool | Inputs | Read source, result and cost |
+| --- | --- | --- |
+| `get_archive_status` | `selectors=None`, `repository_type=None`, limit/cursor | Shared status/health metadata, including configured empty repositories and archived unmanaged data; scans bounded metadata, never probes or repairs |
+| `list_repositories` | Same inventory arguments | Authoritative archived repository inventory including unmanaged entries; domain order, bounded page |
+| `list_revisions` | Same inventory arguments | Archived revisions with exact publication identity and honest verification state; bounded flattened revision page |
+| `get_current_reference` | Required repository_type/repository_id | One validated current reference with `locator_base="published/"`; validates retained agreement and exact manifest/generation, never returns arbitrary file bytes |
+| `get_revision_manifest` | Required repository_type/repository_id/commit_sha/publication_id; `collection="files"` or `"dependencies"`; limit/cursor | Exact immutable manifest instance, explicit selected-collection projection; full artifact validation may cost more than one page |
+| `list_run_reports` | limit/cursor | Validated existing run IDs in reverse chronological filename order; never executes a run |
+| `get_run_report` | Required run_id; limit/cursor | Existing run/recovery/verification report, explicit primary-collection projection and original evidence identity |
+| `get_verification_report` | Required run_id; limit/cursor | Existing VerificationReport only; wrong report type refuses HFARG004; no hashing or persistence |
+| `estimate_verification` | None | Existing stat/metadata estimator, no hashes/writes/Hub/lock or increase in verification confidence; large scans remain bounded work |
+
+### Metadata output and pages
+
+Every successful tool returns strict frozen `MetadataRead`: independent integer
+`schema_version=1`, server `request_id`, `archive_id`, fresh installed
+`config_fingerprint`, the existing typed `envelope`, and nullable `next_cursor`.
+The envelope preserves the shared service's classified outcome/warnings/errors.
+Its query metadata does not replace original report header run ID, configuration
+fingerprint or timestamps. Request, operation and domain run identities remain
+distinct; metadata tools create no operation or admission receipt. The wrapper
+archive UUID comes from startup-pinned installed policy, not proof that each call
+revalidates the sentinel. Reports check their archive UUID; references/manifests
+check repository/SHA/publication/generation and canonical locators. Query outcome
+success is not a clean-integrity claim: status can successfully report degradation,
+and missing verification confidence remains unknown.
+
+Status preserves configured TOML order followed by unmanaged identities in
+byte-wise (type, ID) order; repository inventory uses that byte-wise identity
+order. Flattened revision pages follow repository order and ascending immutable
+publication generation within each repository. Manifest files retain byte-wise
+path order and dependencies retain (source_file, source_field, detected_id)
+order; report entries retain validated original array order. Empty/unmanaged
+semantics match shared readers. Report ID listing checks filename identity and
+ordinary-file containment, not every report body; exact report reads validate
+body/filename/time/run/archive agreement. Inventory/status/revision cursors bind tool, normalized filters, installed
+fingerprint and the complete selected row collection. Status archive headline
+and warnings are fresh observations per page; changing free space/headroom alone
+does not invalidate repository-row continuation. Immutable manifest/report
+cursors additionally bind all sanitized source headers and collections, including
+unreturned ones. Registered secret values (including known numeric literals) are
+sanitized before hashing, so hidden secret substitutions cannot create distinct
+credential-derived cursors. Changed visible bound content or policy refuses
+HFAPI007; continuation is never a silent skip or global archive snapshot. Follow every
+next_cursor until null to complete a selected collection. Scan/artifact/response
+budget exhaustion refuses visibly rather than masquerading as an empty page.
+Page limits count entries, not encoded bytes: even one large header/entry can
+exceed the response cap and refuse rather than silently dropping fields.
+
+Manifest data is `{projection:true, manifest:<header>, collection, entries,
+total_entries, tree_base:"archive-root/"}`. The header excludes both `files` and
+`dependencies`; collection selects one. Header `file_count`/`total_bytes` describe
+the original complete validated artifact, not the returned page. Gather both
+collections before reconstructing the durable manifest; never feed a partial
+projection to copy/verification as though it were a complete manifest.
+
+Report data is `{projection:true, report_type, report:<header>, collection,
+entries, total_entries}`. Report types `run`/`recovery`/`verification` use primary
+collections `repositories`/`remediations`/`findings`. The header excludes only that
+primary collection and retains original evidence identity/times; reattach the
+complete collection to reconstruct the original. The specialized verification
+read never substitutes another report type or executes verification.
+
+### Identity, confidence and refusal
+
+Read current once, then request its explicit full SHA/publication ID. Both current
+and exact metadata retain validated canonical locators and generation. A vanished
+or mismatched exact publication refuses; the tool never substitutes a newer
+current instance. Reference locators are relative to published/, manifest tree
+locators to archive root, never an HTTP/MCP URL. Bulk copying remains the read-only
+export and independent consumer workflow.
+
+Absent/corrupt/unsafe derived catalogs retain unknown confidence and never trigger
+repair/rebuild. Existing report failures remain evidence, not an instruction to
+repair. Estimation is cost information, not verified integrity. Archive-derived
+strings are untrusted data and must never be executed or treated as instructions.
+Grammar/scope/identity/cursor/limit failures and missing/wrong-type evidence refuse
+explicitly. Classified backend failures are MCP ToolError with stable code(s) and
+fixed `metadata query failed`, never fabricated success metadata or an unknown
+fingerprint. A supported SDK call-error middleware maps argument validation to
+fixed HFAPI006 and unknown tool to HFAPI007; an exact-name guard refuses aliases
+and unapproved names before SDK lookup/tracing. It never echoes rejected inputs.
+Unexpected errors remain fixed/masked. HTTP/protocol success alone does not mean
+a successful metadata call; inspect MCP isError and the returned domain Envelope.
+This protocol guard supplies no SDK context/app capability to the nine functions.
+No partial page, malformed artifact or missing state grants execution authority.
+
+The transport cannot submit jobs, run actual verification, perform diagnostics/
+probes, use Hub credentials, rebuild catalogs, recover/cleanup or install config.
+Registry/schema equality and before/after archive/control-state snapshots must
+prove this for successful and failed mounted calls; annotations alone do not.
 
 Archive/receipt/config schemas, domain algorithms and whole-archive authorization
 are unchanged. Local socket/streaming tests and locked wheel installs do not prove
@@ -162,3 +269,15 @@ base, server-only and server+MCP profiles, including cold CLI imports independen
 of optional frameworks. [Installer tests](../tests/unit/test_release_installer.py)
 cover explicit dependency selection without host operations. Task evidence owns
 actual executed counts and the full gate; pending host checks stay separate.
+
+MCP-002 enforcement is split deliberately: the transport-neutral
+[MetadataReadQueries/MetadataRead/QueryPage backend](../src/hfcache/services/mcp_queries.py)
+projects existing [shared authoritative reads](../src/hfcache/services/queries.py).
+[MetadataReadPort and nine explicit functions](../src/hfcache/mcp_tools.py) expose
+only named reads; the [app-owned adapter](../src/hfcache/api/mcp_reads.py) and
+[application wiring](../src/hfcache/api/app.py) alone own bounded offload and
+request context. The SDK request is not a tool argument or backend capability.
+[Backend tests](../tests/unit/test_mcp_queries.py) and
+[mounted registry/tool tests](../tests/unit/test_mcp_tools.py) provide task evidence.
+[Shared metadata-pool tests](../tests/unit/test_mcp_pool.py) prove off-loop work
+and refusal at the shared capacity limit.

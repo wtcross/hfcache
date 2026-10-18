@@ -7,7 +7,8 @@ under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 API-012 adds candidate validation/planning/read CLI and API-013 completes
 operational CLI/observation. API-014 packages activated/scheduled services and
 API-015 integrates Cockpit; API-016 completes REST acceptance. MCP-001 adds an
-optional authenticated transport with no tools yet; see [MCP](mcp.md). No
+optional authenticated transport; MCP-002 adds nine curated metadata tools
+through a narrow read protocol; see [MCP](mcp.md). No
 production installation or listener start is asserted by implementation evidence.
 
 ## Service and transport boundary
@@ -780,7 +781,8 @@ principals and a reusable FastAPI bearer adapter. API-006 authenticates all
 metadata HTTP routes/errors/schema/docs and applies transport bounds. API-009/010
 extend those controls to keyed command/maintenance jobs. API-012 adds candidate
 operations and reader integration. MCP-001 supplies optional authenticated
-transport only; curated tools and installed-host acceptance retain their gates.
+transport; MCP-002 adds nine curated metadata reads. Complete MCP and installed-
+host acceptance retain their gates.
 
 | Credential class | Accepted interface | Core capability | REST read | REST write |
 | --- | --- | --- | --- | --- |
@@ -928,6 +930,18 @@ into tools. After committed REST acceptance the optional `/mcp` transport shares
 one app/lifespan, preserves transport checks and accepts only the distinct MCP
 reader credential. Disabled mode imports/resolves neither its package nor its
 credential. No tool/resources/prompts or job execution is added by MCP-001;
-MCP-002 owns curated read services and side-effect proof. Protocol messages are
+MCP-002 now supplies exactly nine curated read services with typed metadata
+wrappers, explicit artifact projections and registry/side-effect proof. It never
+converts these REST routes to tools or exposes semantic read jobs such as planning,
+diagnostics or maintenance previews. Protocol messages are
 MCP wire objects, not fabricated REST domain Envelopes or admission receipts.
 See [the MCP contract](mcp.md) and [decision 124](adr/decision-124.md).
+
+MCP manifest/report results are paged projections, while these REST resources
+retain their full-artifact contract. Both use shared authoritative readers,
+exact identities and honest confidence. MCP immutable-artifact cursors bind all
+sanitized source headers/collections; inventory cursors bind complete selected
+rows while status headline/warnings remain fresh per page. Limits count entries rather than guaranteeing every header
+or single entry fits the wire byte cap. No projection is a bulk transfer or a
+complete manifest until all required collections are reconstructed. See
+[MCP output/pages](mcp.md#metadata-output-and-pages) and [consumer identity](consumers.md).

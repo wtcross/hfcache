@@ -53,6 +53,15 @@ now states the journal-only preservation exception already decided at
 `CFG-004` (decision 20) and implemented by `transactions.read_journal` /
 `JournalFile.dump`. Strict models and durable formats are unchanged.
 
+MCP-002's `MetadataRead` and paged manifest/report projections are transport
+objects, not durable formats or a schema widening. Artifact projections are
+explicitly marked `projection=true` and omit collections from original headers. Header totals
+and report provenance still describe complete validated source evidence. Reassemble
+all required pages/collections and validate before treating them as the original
+manifest/report; never feed a partial header/page to a durable model or consumer
+verification as complete. Exact identity/locator bases remain unchanged. See
+[MCP output/pages](mcp.md#metadata-output-and-pages), [decision 125](adr/decision-125.md).
+
 ## 2. Archive sentinel — `.hfcache-root`
 
 Written exactly once by `archive init`, last in the sequence, after the directory

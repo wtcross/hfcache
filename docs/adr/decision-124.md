@@ -1,5 +1,6 @@
 # Decision 124 — Add an optional authenticated MCP transport after REST acceptance
 
+- Curated tool amendment: [decision 125](decision-125.md).
 - Status: Accepted; implemented by MCP-001.
 - Date: 2026-10-18.
 - Work package: MCP-001, this commit.
@@ -122,3 +123,22 @@ build gate. The task preserves actual streaming/auth/lifecycle/limit and optiona
 installation evidence, plus the earlier nine test-fixture failures and public
 exchange correction. No post-definitive-gate source change. MCP-002 remains
 pending for curated tools; deployment/credential/hardening holds remain explicit.
+
+## 2026-10-18 curated metadata tool amendment (MCP-002)
+
+[Decision 125](decision-125.md) registers exactly nine typed metadata tools via
+an explicit narrow read capability, with no resources/prompts, OpenAPI conversion,
+SDK app/request context, command/Hub/credential resolver or writable helper.
+Read-only annotations describe the capability; registry/schema equality and
+success/failure archive/control-state snapshots must prove it.
+
+Shared validated readers preserve exact SHA/publication identity, canonical
+locator bases and unknown derived confidence without writes or reconstruction.
+Manifest/report pages are explicit projections, not complete durable artifacts;
+headers preserve original totals/report provenance and complete source content
+binds cursors. Missing/stale instances refuse rather than substituting current.
+Archive-derived strings and dependency observations remain untrusted data, never
+instructions or executable content. Consumer copy/verification/promotion and
+whole-archive authorization remain unchanged. No dependency, config/durable
+schema, job path or production operation is added. See [MCP](../mcp.md) and the
+[MCP-002 task](../plans/tasks/mcp-002-curated-read-only-tools.md).

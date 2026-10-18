@@ -147,6 +147,15 @@ prompts or command paths. The installer gains explicit `--with-mcp` dependency
 selection without automatic enablement/provisioning. No durable/config schema or
 production deployment change.
 
+Nine explicit MCP metadata tools now use a narrow read capability, with typed
+schema-1 results, exact publication/report identity and bounded content-bound
+pages. Manifest/report projections are marked partial, retain full-source header
+meaning and refuse changed/stale evidence. No resources/prompts, job/Hub/probe/
+credential/file-fetch authority or catalog repair is exposed. Fixed classified
+errors contain no rejected inputs; registry/schema and side-effect tests govern
+read-only claims rather than annotations. No dependency/durable/config or
+production deployment change.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

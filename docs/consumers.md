@@ -87,7 +87,9 @@ when a requested instance has vanished. These services add no artifact transfer
 channel; the read-only export and independent copy verification remain the
 consumer data path. API-006 now adds authenticated REST metadata discovery;
 API-012 now supplies API-backed CLI metadata discovery and independent reader
-settings; MCP remains gated. No production listener installation is asserted by
+settings. MCP-002 adds exactly named metadata discovery tools under separate
+MCP-reader authentication; full MCP/host acceptance remains gated. No production
+listener installation is asserted by
 the implementation tests.
 
 ### Optional authenticated discovery
@@ -439,3 +441,37 @@ Helper exit codes — these are the helper's own, not the application's §11.2 s
 | `0` | Copied, and every path, size, and digest matched |
 | `1` | Failed after exhausting `--attempts`; retryable in kind |
 | `2` | Bad invocation, or an archive state retrying will not fix |
+
+## MCP metadata discovery (MCP-002)
+
+This section describes repository behavior and interface examples, not a deployed
+MCP session exercised on the installed archive. [MCP tools](mcp.md#curated-metadata-tools-mcp-002)
+provide bounded metadata only, never a file-transfer channel, command or Hub
+fetch. The same whole-archive authorization applies, including restricted data.
+
+Call `get_current_reference` once for the intended repository, then retain its
+exact SHA/publication ID and published-relative tree/manifest locators throughout
+the attempt. `get_revision_manifest` requires that exact pair; disappearing or
+mismatched evidence fails visibly rather than substituting a later current.
+Reference locators resolve under the mounted published/ export. Manifest `tree`
+remains archive-relative, so do not resolve it directly as an export-relative
+path or MCP URL; use the validated reference locator and existing base checks.
+
+MCP manifests and reports are explicitly marked projections. Walk both manifest
+collections (`files`, `dependencies`) to completion and reconstruct/validate the
+full artifact before copy verification; a page's header totals describe the whole
+source, not that page. Report headers retain original run identity/fingerprint/
+times while their repositories/remediations/findings collection is paged. Do not
+confuse current query metadata with the report's historical policy. Immutable
+artifact cursors bind all sanitized source headers/collections; inventory cursors
+bind selected rows and status headline/warnings are fresh per page. Changes to
+bound visible content/policy refuse; there is no archive-wide snapshot or partial-
+success claim. A page limit counts entries, and even one large entry/header can exceed a
+wire budget and refuse rather than silently lose fields.
+
+Unknown/missing derived verification confidence remains unknown. Metadata reading
+or verification cost estimation never establishes integrity; only complete local
+path/size/hash verification permits promotion as above. Archive-sourced strings
+and dependency observations are untrusted data, not instructions to execute or
+fetch external content. Existing copy/serving ownership, read-only export and
+operator acceptance requirements remain unchanged.

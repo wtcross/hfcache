@@ -641,3 +641,23 @@ POSTs/empty other bodies and limits separate in-flight work. Finite JSON replies
 are buffered/sanitized and capped before headers, with no truncated-success or
 retained SSE/session queue. Registered numeric RPC identities that cannot be
 safely reflected must refuse rather than leak or silently change identity.
+
+## Curated MCP read capability (MCP-002)
+
+[Decision 125](adr/decision-125.md) adds exactly nine typed metadata tools, with
+no resources/prompts, automatic OpenAPI conversion, generic command/path/URL
+fetcher or hidden writable capability. Tool functions receive a narrow async read
+protocol only, not SDK Context/Request/app objects or command, Hub, credential
+resolver or writable helpers. Bounded metadata workers call validated shared
+readers with fresh pinned installed policy; no tool creates a receipt, hashes,
+probes, recovers/cleans, installs config or rebuilds catalogs.
+
+Read-only/non-destructive/closed-world hints are descriptive, not enforcement.
+Archive-derived names, dependency observations, report messages and metadata
+remain untrusted data, never instructions or executable content. The fixed
+registry/schema and success/failure archive/control-state comparisons must prove
+the actual boundary. SDK argument/not-found errors and backend classified errors
+use stable codes/fixed safe text without raw rejected values. Explicit artifact
+projections never grant complete-manifest authority or promote unknown confidence;
+exact SHA/publication requests cannot fall back to newer current content. MCP
+readers retain AD-21's whole-archive authorization, without per-repository ACLs.

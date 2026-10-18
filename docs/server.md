@@ -320,7 +320,8 @@ fail authentication after restart. No request mutates the registry or discovers
 replacement credentials automatically. MCP-001 activates the existing MCP source
 only when `mcp_enabled` is true; disabled MCP never reads that source. Enabling
 requires a usable distinct credential and the optional package. It supplies the
-transport only, with no tools/resources/prompts until MCP-002. See [MCP](mcp.md).
+transport, with MCP-002 exposing exactly nine metadata tools through a narrow
+read protocol; no resources/prompts or command paths. See [MCP](mcp.md).
 
 ## Package and client-transport primitives (API-005)
 
@@ -801,3 +802,25 @@ responses are bounded and sanitized before headers; the separate MCP in-flight
 ceiling is metadata workers plus metadata pending capacity, with no retained
 session queue. [MCP transport rules](mcp.md#transport-and-lifecycle) detail query,
 body, response and rollback behavior.
+
+## Curated MCP metadata authority (MCP-002)
+
+[Decision 125](adr/decision-125.md) registers exactly nine typed metadata tools,
+no prompts/resources or OpenAPI conversion. A narrow async read capability
+connects adapters to app-owned bounded metadata offload and transport-neutral
+validated readers. Tool functions receive no SDK Context/Request/app object,
+command/Hub/credential resolver, writable helper or path/URL dispatcher.
+
+Each read uses a fresh immutable installed policy and shared safe reader budgets;
+current wrapper identity does not replace original historical report evidence.
+Explicit manifest/report projections and full sanitized-artifact cursors preserve
+exact publication/run identity under finite limits. Inventory/status cursors bind
+selected rows, filters and policy; status headline/warnings are fresh per page,
+so benign free-space changes do not break continuation. Registered secrets are
+sanitized before any cursor hashing.
+Missing/corrupt catalogs remain unknown, estimate never hashes/persists, and no
+request rebuilds, probes, repairs or creates an operation. Classified safe tool
+failures contain codes/fixed text rather than rejected values or fabricated
+success wrappers. [MCP tool contract](mcp.md#curated-metadata-tools-mcp-002) owns
+exact inputs, output fields, costs, ordering and refusal behavior. Existing
+transport/auth/lifecycle, configured resource limits and operator holds remain.

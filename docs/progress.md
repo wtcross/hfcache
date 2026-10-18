@@ -1313,6 +1313,47 @@ package in this family.
   after this commit; curated tools/side-effect proof and operator holds 16–18
   remain separate. Live Hub/NFS and extra build-marker suites were not run.)
 
+- [x] MCP-002 Expose nine typed metadata tools through a narrow read capability
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/mcp-002-curated-read-only-tools.md)).
+  Exactly nine explicit async tools receive only a narrow read protocol; app-owned
+  bounded offload invokes shared safe metadata readers. No resources/prompts,
+  SDK app/request capability, commands, Hub/credential/write helper or arbitrary
+  path/URL input. Typed schema-1 MetadataRead retains fresh query/archive/policy
+  identity and domain Envelope, while report headers keep original run identity,
+  fingerprint and times. Explicit manifest/report projections preserve complete
+  headers/totals and require collection reconstruction before durable validation.
+  Exact publication reads never substitute current. Inventory cursors bind
+  canonical selected rows/filter/policy, with fresh per-page headline/warnings;
+  deterministic free-space drift preserves continuation and nested warnings.
+  Immutable artifact cursors bind all sanitized headers/collections, including
+  unreturned data. A two-registered-string swap proves visible-source binding
+  stability; encoded numeric literals are scrubbed in source. SHA suffix/order/
+  duplicate selector equivalence preserves domain ordering. Unknown catalogs
+  remain unknown and estimates never hash/persist confidence. Fixed safe ToolError
+  projection covers backend and SDK validation/unknown names; exact-name guard
+  precedes SDK lookup/tracing and refuses aliases. Registry/schema equality and
+  successful/failed mounted state snapshots plus command/Hub/credential/hash
+  tripwires prove the boundary beyond hints. Mounted 65 passed in 18.71 seconds;
+  final mounted/pool 66 in 18.68; final guard/pool 3 in 2.03; direct/legacy 32 in 2.03;
+  transport/core 63 in 14.82; parsed REST matrix/anchors 63 in 1.14. Shared pool
+  proves off-loop work, saturation, responsive REST and lease release. First full
+  `rtk proxy bash scripts/check.sh > .scratch/mcp-002-gate.log 2>&1` exits 0:
+  lock/both-extra sync, 380 formatted files, Ruff clean, whole Pyrefly 0 (11 suppressed,
+  59 warnings not shown), 3,481 Python tests (40 deselected, 401.60 seconds), 0.1.10
+  sdist/wheel and all three actual locked isolated base/server/server+MCP
+  installation/import/help/version checks. Cockpit lint/style/types, 127 tests
+  (0 failures, 2.093 seconds) and production build 1,246 ms pass. No gate failure/
+  correction/restart or post-freeze source change. Decision 125 and AD-10/15/21,
+  113/124 amendments, FS-08–12/16, INV-005/007/008/012–016 and affected MCP/server/
+  API/config/security/consumer/schema/architecture/README/Unreleased agree.
+  Final links/anchors/current/dependencies, 29 unchanged REST modes, 125 unique
+  indexed decision/ADR records and whitespace pass. No new dependency/durable/
+  config or domain algorithm, whole-archive role, production operation/deployment/
+  push/merge/tag. MCP-003 is next pending after this commit; MCP-004/API-017 and
+  operator holds 16–18 remain separate. Live Hub/NFS and extra build-marker suites
+  were not run.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -4138,3 +4179,22 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      code/fixed message without raw SDK details. No OpenAPI conversion or
      tools/resources/prompts in this package; curated read-only tools remain MCP-002. No durable shape/workflow/domain authority
      or production deployment change; actual acceptance remains task evidence.
+
+125. **Expose nine typed metadata tools through a narrow read capability**
+     (2026-10-18, MCP-002). [ADR](adr/decision-125.md): register exactly the plan's
+     nine metadata names, no resources/prompts or generic dispatch. Adapters get
+     only a narrow async read protocol, never SDK app/request context, commands,
+     Hub/credentials, writes or arbitrary path/URL authority. App-owned bounded
+     offload invokes shared validated readers; annotations describe rather than
+     enforce read-only behavior. Strict schema-1 MetadataRead wraps fresh request/
+     archive/policy identity plus domain Envelope and optional cursor. Explicit
+     manifest/report projections preserve original headers/totals/run identity
+     while paging selected collections; never claim a partial durable record is
+     complete. Inventory/status cursors bind sanitized selected rows/filter/
+     policy; status headline/warnings stay fresh per page so free-space changes
+     do not break continuation. Immutable artifact cursors bind all sanitized
+     headers/collections; known secret literals cannot enter hash fingerprints.
+     Changed bound content/policy refuses rather than silently skipping. Exact SHA/publication reads never fall back to current;
+     unknown catalogs stay unknown and estimates never hash/persist confidence.
+     No dependency/durable/config change, job authority or later-task work;
+     registry/schema, mounted parity and side-effect proof belong to this task.

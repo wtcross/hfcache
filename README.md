@@ -186,7 +186,8 @@ primitives. API-014 packages activation/no-IP policy; installed OS enforcement
 remains operator acceptance. The library offline flag alone is insufficient.
 REST acceptance is committed. MCP-001 adds standalone FastMCP only through the
 optional `mcp` extra, alongside `server`; disabled installs need no MCP package
-or credential. The authenticated transport registers no tools yet (MCP-002).
+or credential. MCP-002 exposes nine curated metadata tools through a narrow read
+protocol, with typed bounded pages and no jobs/Hub/probes or arbitrary file reads.
 See [MCP setup and limitations](docs/mcp.md). Disposable-socket TLS tests use the OpenSSL CLI
 as a development test tool; Python production dependencies remain locked.
 API-009 exposes keyed command admission with HTTP 202 and authenticated status,

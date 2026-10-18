@@ -12,6 +12,7 @@ from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp.utilities.asgi_transport import StreamingASGITransport, run_asgi_lifespan
 
 from hfcache.api.app import create_app
+from hfcache.mcp_tools import TOOL_NAMES
 from hfcache.server import build_server, listeners
 from hfcache.server_config import validate_server_config_mapping
 from tests.unit.test_server_bootstrap import (
@@ -81,9 +82,7 @@ def protocol_response(response):
 
 
 @pytest.mark.parametrize("mode", ["auto", "legacy"])
-def test_supported_streaming_http_client_negotiates_actual_mounted_empty_server(
-    policy, tmp_path, mode
-):
+def test_supported_streaming_http_client_negotiates_actual_mounted_server(policy, tmp_path, mode):
     app = create_app(policy, instance_lock_path=tmp_path / "daemon.lock")
 
     async def request():
@@ -108,8 +107,7 @@ def test_supported_streaming_http_client_negotiates_actual_mounted_empty_server(
         async with run_asgi_lifespan(app):
             async with Client(transport, mode=mode, timeout=3, init_timeout=3) as client:
                 assert client.is_connected()
-                # MCP-001 supplies only protocol transport; MCP-002 owns tools.
-                assert await client.list_tools() == []
+                assert {tool.name for tool in await client.list_tools()} == TOOL_NAMES
                 assert await client.list_resources() == []
                 assert await client.list_prompts() == []
                 assert transport.get_session_id() is None
@@ -411,7 +409,9 @@ def test_stateless_handshake_issues_no_session_authority_and_every_followup_reau
                 )
                 assert refused.status_code == 401
             accepted = await client.post("/mcp/", headers=headers() | session, json=followup)
-            assert protocol_response(accepted)["result"] == {"tools": []}
+            assert {
+                tool["name"] for tool in protocol_response(accepted)["result"]["tools"]
+            } == TOOL_NAMES
             assert "mcp-session-id" not in accepted.headers
             assert app.state.operations.list() == ()
 

@@ -546,6 +546,11 @@ Its task records the separate previous-binary compatibility drill.
   only the read-only publication export and never use it as `HF_HOME` or
   `HF_HUB_CACHE`. See [consumer contract](consumers.md#2-the-contract-in-one-paragraph)
   and [independent implementations](consumers.md#7-doing-it-without-the-helper).
+  MCP-002 discovery retains exact publication IDs and locator bases; partial
+  manifest/report pages are explicit projections, never complete durable records.
+  Reconstruct all selected collections and validate before consumer verification;
+  a vanished requested instance refuses instead of substituting a new current.
+  See [MCP metadata tools](mcp.md#curated-metadata-tools-mcp-002), decision 125.
 - **`INV-009` — Copying and serving promotion have separate ownership.** The
   consumer copy identity writes only a new, non-existent destination under
   `<model>/revisions/`; root owns the model root and the serving pointer.
@@ -669,8 +674,9 @@ maintenance and initialization; API-012 adds candidate operations/read CLI and
 API-013 completes operational CLI/observation. API-014 packages named activation
 and actual-executor isolation policy with disposable runtime tests; API-015 integrates Cockpit's
 API-only clients and guarded configuration pipeline. API-016 validates complete
-REST acceptance. MCP-001 adds optional authenticated transport only; curated tools
-remain MCP-002 and installed-host enforcement remains operator-held.
+REST acceptance. MCP-001 adds optional authenticated transport; MCP-002 adds nine
+explicit metadata tools through a narrow read protocol. Complete MCP acceptance
+and installed-host enforcement retain their later gates.
 [API](api.md) and [server](server.md) track exact availability; implementing tasks
 own proof.
 
@@ -845,8 +851,9 @@ separate protected verifier only after REST acceptance. API-011's independent cl
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. API-016 completed before MCP-001
-  adds optional transport. MCP-001 registers no tools/resources/prompts, converts
-  no REST OpenAPI and accepts only the distinct MCP-reader credential through a
+  adds optional transport. MCP-002 registers exactly the nine approved metadata
+  tools, no resources/prompts or REST OpenAPI conversion; only the distinct
+  MCP-reader credential is accepted through a
   production supported verifier. Disabled mode imports/resolves neither package
   nor credential; one composed lifespan retains REST ownership and transport
   security. Stateless HTTP retains no legacy session/resumption store; session IDs
@@ -856,12 +863,27 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   projection governs authentication, static writer/body policy and links, including
   configured-prefix collisions. Finite MCP replies are buffered/sanitized and
   bounded before headers; separate in-flight capacity adds no retained queue.
-  Curated narrow read-service tools and their side-effect proof remain MCP-002–004.
+  MCP-002 tool functions receive only a narrow async read protocol, no SDK app/
+  request context, commands, Hub/credential resolver or writable helpers. Typed
+  metadata results use explicit manifest/report projections. Inventory cursors
+  bind complete selected rows/filter/policy while status headline/warnings remain
+  fresh per page; immutable artifact cursors bind all sanitized headers/collections.
+  Registered secrets never enter cursor hashing; changed bound content refuses. Exact SHA/
+  publication reads never substitute current, and estimates/catalog reads never
+  increase confidence or trigger persistence/rebuild. Registry/schema equality
+  and success/failure archive/control-state snapshots prove the boundary;
+  annotations alone do not. Full MCP exposure/acceptance remains MCP-003/004.
   Enforcement: [optional verifier/finite transport](../src/hfcache/mcp.py),
   [application boundary/lifecycle](../src/hfcache/api/app.py),
   [direct verifier/lifecycle tests](../tests/unit/test_mcp_mount.py) and
   [mounted streaming/security tests](../tests/unit/test_mcp_transport.py).
-  See [MCP](mcp.md) and [decision 124](adr/decision-124.md).
+  Curated enforcement: [read-only projection backend](../src/hfcache/services/mcp_queries.py),
+  [nine tool functions/read port](../src/hfcache/mcp_tools.py) and
+  [app-owned bounded facade](../src/hfcache/api/mcp_reads.py).
+  Evidence: [backend](../tests/unit/test_mcp_queries.py) and
+  [mounted registry/tools](../tests/unit/test_mcp_tools.py).
+  See [MCP](mcp.md), [decision 124](adr/decision-124.md) and
+  [decision 125](adr/decision-125.md).
 
 FW-01/FW-03 above retain their historical baseline with the explicit
 [108](adr/decision-108.md)/[109](adr/decision-109.md) amendment: scoped transport

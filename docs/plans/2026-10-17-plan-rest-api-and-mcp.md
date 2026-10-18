@@ -881,3 +881,26 @@ versions when implementing, especially FastMCP imports and test transports:
   correction are retained in the task; no runtime/semantic change was required.
   Current selects MCP-002 pending after this commit. Tools and installed-host
   acceptance remain separate; no production operation or later-task work occurred.
+
+- 2026-10-18 MCP-002: Decision 125 exposes exactly nine typed metadata tools
+  through a narrow read capability and bounded app-owned offload, no resources/
+  prompts, SDK app/request context, commands, Hub/credential resolver or writes.
+  Strict MetadataRead wraps domain results/current query identity without
+  replacing original report provenance. Explicit manifest/report projections
+  preserve complete-source headers/totals; content/policy/scope/collection-bound
+  cursors and exact SHA/publication requests refuse changed/stale evidence.
+  Estimates/catalog reads never hash/persist/increase confidence or rebuild.
+  Registry/schema and mounted success/failure side-effect proof own acceptance;
+  no dependency/durable/config or production change, and later tasks remain pending.
+
+
+  Repository acceptance completed 2026-10-18: actual mounted registry/tool cases
+  pass 65 tests; final mounted/pool selection passes 66 and direct/legacy readers
+  32. Fresh status headline/warnings do not invalidate row-bound continuation;
+  immutable artifacts bind all sanitized headers/collections. The first full
+  `scripts/check.sh` exits 0 with 3,481 Python tests (40 deselected, 401.60 seconds),
+  0.1.10 builds, all three actual locked wheel installation profiles and 127
+  Cockpit tests/production build. No gate failure/correction/restart or post-freeze
+  source change. Current selects MCP-003 pending after this commit; dedicated
+  MCP security/final acceptance and operator holds remain separate. No dependency,
+  durable/config format, production operation or later-task implementation.

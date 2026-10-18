@@ -474,7 +474,8 @@ MCP-001 uses the existing restart-only `mcp_enabled` and
 `credentials.mcp_reader` fields, without a schema change. Disabled mode loads no
 MCP package or credential; enabled mode requires both optional dependencies and
 a protected distinct source. Do not reuse a REST/Hub secret or add a literal
-token to TOML. This activates transport only; curated tools remain MCP-002.
+token to TOML. MCP-001 activates transport; MCP-002 registers nine narrow
+metadata tools without another setting or schema change.
 See [MCP enablement](mcp.md#enablement-and-authority) and
 [decision 124](adr/decision-124.md).
 
