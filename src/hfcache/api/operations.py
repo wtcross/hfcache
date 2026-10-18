@@ -507,13 +507,16 @@ class OperationStore:
             records, _ = self._scan()
             return tuple(reversed(records))
 
-    def admit(
+    def admit(  # noqa: PLR0913 - trusted admission guards and exact worker identity
         self,
         principal: Principal,
         key: str,
         route: str,
         request: Mapping[str, Any],
         snapshot: Callable[[], PolicySnapshot],
+        *,
+        operation_id: str | None = None,
+        before_admit: Callable[[], None] | None = None,
     ) -> Admission:
         require_capability(principal, Capability.READ)
         key_hash = _key_digest(key)
@@ -530,7 +533,11 @@ class OperationStore:
                 None,
             )
             if previous is not None:
-                if previous.request_digest != digest or previous.route != route:
+                if (
+                    previous.request_digest != digest
+                    or previous.route != route
+                    or (operation_id is not None and previous.operation_id != operation_id)
+                ):
                     raise RequestError(
                         code="HFAPI012",
                         status_code=409,
@@ -538,6 +545,10 @@ class OperationStore:
                     )
                 os.fsync(self._fd)
                 return Admission(previous, created=False)
+            if operation_id is not None and not _ID.fullmatch(operation_id):
+                raise OperationError
+            if before_admit is not None:
+                before_admit()
             reservation = self.limits.max_receipt_bytes + self.limits.max_result_bytes
             reserved = sum(reservation for record in records if record.state not in _TERMINAL)
             terminal_bytes = total - sum(
@@ -554,7 +565,7 @@ class OperationStore:
                 raise OperationError
             policy = snapshot()
             now = self.clock()
-            operation_id = secrets.token_hex(16)
+            operation_id = operation_id or secrets.token_hex(16)
             if operation_id in {record.operation_id for record in records}:
                 raise OperationError
             receipt = OperationReceipt(

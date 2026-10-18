@@ -22,23 +22,28 @@ import json
 import os
 import time
 from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final
 
-from hfcache.errors import Problem, SafetyError
+from hfcache.errors import OperationError, Problem, SafetyError
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
 __all__ = [
     "LOCK_DIRECTORY",
     "LOCK_DIRECTORY_MODE",
     "LOCK_MODE",
     "LOCK_NAME",
+    "CommandLockControl",
     "exclusive_lock",
     "lock_path",
     "read_holder",
+    "remaining_wait_seconds",
+    "scoped_command_lock",
 ]
 
 LOCK_DIRECTORY = Path("/run/hfcache")
@@ -62,6 +67,49 @@ the hour a scheduled sync waits and the day a verification waits
 (`docs/configuration.md` §5), and long enough that an hour of waiting is 3600
 cheap syscalls rather than a spin.
 """
+
+
+def _noop() -> None:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class CommandLockControl:
+    """Trusted operation budget/hooks; the command itself still owns its flock."""
+
+    deadline: float | None
+    revalidate: Callable[[], None]
+    waiting: Callable[[], None] = _noop
+    acquired: Callable[[], None] = _noop
+    nonblocking: bool = False
+    allow_lock: bool = True
+    clock: Callable[[], float] = time.monotonic
+
+
+_command_control: ContextVar[CommandLockControl | None] = ContextVar("command_lock", default=None)
+_controlled_owner: ContextVar[bool] = ContextVar("command_lock_owned", default=False)
+
+
+@contextmanager
+def scoped_command_lock(control: CommandLockControl) -> Iterator[None]:
+    """Scope callbacks/deadline without acquiring, nesting or transferring a lock."""
+    if _command_control.get() is not None:
+        raise OperationError(
+            code="HFAPI015", status_code=409, message="Nested command lock control is forbidden"
+        )
+    token = _command_control.set(control)
+    try:
+        yield
+    finally:
+        _command_control.reset(token)
+
+
+def remaining_wait_seconds() -> float | None:
+    """Remaining admitted queue/lock budget; delegation must not reset it."""
+    control = _command_control.get()
+    if control is None or control.deadline is None:
+        return None
+    return max(0.0, control.deadline - control.clock())
 
 
 def lock_path(directory: Path | None = None) -> Path:
@@ -93,7 +141,7 @@ def exclusive_lock(
     path: Path,
     *,
     command: str,
-    wait_seconds: int,
+    wait_seconds: float,
     poll_seconds: float = _POLL_SECONDS,
 ) -> Iterator[Path]:
     """Hold the exclusive lock for the body, or raise `HFMNT010` (plan §19 item 8).
@@ -108,13 +156,27 @@ def exclusive_lock(
     delay it rather than race it (`docs/configuration.md` §5). Zero means try
     once and give up.
     """
+    control = _command_control.get()
+    if control is not None:
+        if not control.allow_lock or _controlled_owner.get():
+            raise OperationError(
+                code="HFAPI015",
+                status_code=409,
+                message="Parent or nested command lock acquisition is forbidden",
+            )
+        control.waiting()
     path.parent.mkdir(mode=LOCK_DIRECTORY_MODE, parents=True, exist_ok=True)
     descriptor = os.open(path, os.O_RDWR | os.O_CREAT, LOCK_MODE)
     try:
         _acquire(descriptor, path, command=command, wait_seconds=wait_seconds, poll=poll_seconds)
+        token = _controlled_owner.set(control is not None)
         try:
+            if control is not None:
+                control.revalidate()
+                control.acquired()
             yield path
         finally:
+            _controlled_owner.reset(token)
             # Clear the record before releasing, so the next command to fail an
             # acquisition never reports a process that has already finished.
             _write_holder(descriptor, {})
@@ -125,16 +187,31 @@ def exclusive_lock(
         os.close(descriptor)
 
 
-def _acquire(descriptor: int, path: Path, *, command: str, wait_seconds: int, poll: float) -> None:
+def _acquire(
+    descriptor: int, path: Path, *, command: str, wait_seconds: float, poll: float
+) -> None:
     """Poll for the lock until the configured wait is spent."""
-    deadline = time.monotonic() + wait_seconds
+    control = _command_control.get()
+    clock = control.clock if control is not None else time.monotonic
+    deadline = clock() + wait_seconds
+    if control is not None and control.deadline is not None:
+        if not control.nonblocking and clock() >= control.deadline:
+            raise _refusal(path, command=command, wait_seconds=wait_seconds)
+        deadline = min(deadline, control.deadline)
+    first_attempt = True
     while True:
+        if not first_attempt and clock() >= deadline:
+            raise _refusal(path, command=command, wait_seconds=wait_seconds)
+        first_attempt = False
         try:
             fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
-            if time.monotonic() >= deadline:
+            if control is not None and control.nonblocking:
                 raise _refusal(path, command=command, wait_seconds=wait_seconds) from None
-            time.sleep(poll)
+            remaining = deadline - clock()
+            if remaining <= 0:
+                raise _refusal(path, command=command, wait_seconds=wait_seconds) from None
+            time.sleep(min(poll, remaining))
         else:
             _write_holder(
                 descriptor,
@@ -149,7 +226,7 @@ def _acquire(descriptor: int, path: Path, *, command: str, wait_seconds: int, po
             return
 
 
-def _refusal(path: Path, *, command: str, wait_seconds: int) -> SafetyError:
+def _refusal(path: Path, *, command: str, wait_seconds: float) -> SafetyError:
     """Report `HFMNT010`, naming the holder when it left a record."""
     holder = read_holder(path)
     who = (

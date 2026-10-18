@@ -593,7 +593,7 @@ condition; a retired condition retires its code.
 | `HFAPI003` | A configured API credential source is missing, unsafe, changes while read or contains a malformed token |
 | `HFAPI004` | The same API credential value is assigned to more than one capability class |
 | `HFAPI006` | Invalid API request or exceeded request/response bound; HTTP 422 or 413 |
-| `HFAPI007` | API resource/method is absent (HTTP 404/405), or a page cursor is stale (HTTP 409) |
+| `HFAPI007` | API resource/method is absent (HTTP 404/405), a page cursor is stale (HTTP 409), or admitted policy changed before execution |
 | `HFAPI010` | API Host/Origin/TLS/proxy security policy refuses a request; HTTP 400 or 403 |
 | `HFAPI012` | An idempotency key conflicts with its previously admitted route/request; HTTP 409 |
 
@@ -631,6 +631,7 @@ result and does not override a domain Envelope's application exit classification
 | `HFAPI013` | Operation history/result is missing or expired; execution outcome remains unknown; HTTP 404 |
 | `HFAPI014` | Operation control storage is unsafe, full, unavailable or unexplained; HTTP 503 |
 | `HFAPI015` | Operation state/transition or result availability is invalid or uncertain; HTTP 409 |
+| `HFAPI016` | Isolated verification executor is unavailable, unsafe or fails protocol/peer validation; HTTP 503 |
 
 ### 5.3 Hub and synchronization — exit `30`
 

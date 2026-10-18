@@ -52,3 +52,12 @@ admission at count/byte limits rather than evicting unexpired 30-day bindings.
 Malformed/unknown-version state is preserved and fails admission closed. No
 heavy worker or command submission route is added by API-007; API-008/009 retain
 those responsibilities and no automatic replay is introduced.
+
+## 2026-10-17 execution amendment (API-008)
+
+[Decision 115](decision-115.md) implements the bounded FIFO lane, shared absolute
+queue/lock deadline, service-owned under-lock policy comparison and exact private
+verifier reconciliation. Existing receipts are never requeued after restart;
+matching surviving worker/outcome evidence is reconciled before interruption.
+No workflow engine, journal-driven execution or in-process verifier fallback is
+permitted. API-014 retains installed no-IP/credential-free hardening acceptance.

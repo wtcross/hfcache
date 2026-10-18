@@ -494,6 +494,24 @@ systemctl is-active hfcache-sync.service hfcache-verify.service
 The lock is `flock(2)`, so the kernel releases it when the holder dies. A crashed
 run never leaves a lock to clear by hand.
 
+**API-008 execution boundary.** The daemon-instance, receipt-store and archive
+locks have different owners and lifetimes. The daemon's one bounded FIFO lane
+does not replace the archive flock. One admitted waiting deadline covers queue
+residence and the remaining archive-lock wait; policy is reloaded and compared
+inside the service-owned lock before mutation. Metadata reads use their separate
+bounded pool and remain available while the heavy lane waits.
+
+With API-backed clients, a stopped sync/verify client service or closed observer
+does not stop the actual writer. Inspect the authenticated operation history and
+exact private verifier status/outcome through the server; never start a duplicate
+operation because a client disappeared. Drain first stops admission, then joins
+accepted work and sync producers before safety ownership is released. Forced
+termination preserves receipts/journals for diagnosis. Never unlink a lock inode
+or infer execution outcome solely from its being free. Public submission/client
+and systemd migration remain later tasks; this is no installed-host proof.
+See [server lifecycle](server.md), [uncertain submissions](recovery.md#10-operation-history-and-uncertain-submissions)
+and [decision 115](adr/decision-115.md).
+
 The other causes of `20` are the §19 storage requirements, and every one of them
 is reported by name:
 

@@ -245,11 +245,12 @@ per-invocation startup configuration and stderr-only event output.
 
 Shared verification constructs no Hub client or credential and never changes
 `os.environ`. The removed scoped offline toggle cannot affect concurrent work.
-`offline.initialize_offline_process()` is a startup-only primitive for the later
-dedicated executor: call it before importing or using Hub libraries and retain
+`offline.initialize_offline_process()` is the startup-only primitive for the
+API-008 dedicated executor: call it before importing or using Hub libraries and retain
 the flag for that process's lifetime. The helper does not deny IP sockets.
-API-008/014 must separately establish the credential-free no-IP sandbox; no
-ASGI-process verification fallback is permitted.
+API-008 supplies the dedicated process/protocol and credential checks; API-014
+must establish installed credential-free/no-IP hardening. No ASGI-process
+verification fallback is permitted.
 
 ## Wire validation and errors
 
@@ -292,9 +293,9 @@ Existing large reports stream without unbounded duplicate buffers.
 
 Decisions [109](adr/decision-109.md) and [114](adr/decision-114.md) permit a
 bounded non-resuming submission registry, separate from archive journals.
-API-007 implements durable admission primitives and HTTP observation; it adds no
-command POST route or actual heavy worker. API-008 supplies one heavyweight FIFO
-lane (16 pending by default), policy/lock revalidation and isolated verification;
+API-007 implements durable admission primitives and HTTP observation. API-008
+supplies one heavyweight FIFO lane (16 pending by default), policy/lock
+revalidation and private verification protocol/process primitives;
 API-009/010 add command submissions. The bounded metadata pool and daemon-instance
 lock already exist. Never hold the archive flock for daemon lifetime. The process
 is single-worker without auto-reload; heavy work stays outside the ASGI event loop.
@@ -341,10 +342,11 @@ examples become executable only when API-009/010 provide their strict routes.
 States: queued, waiting_lock, running, succeeded, failed, interrupted. Store the
 exact terminal Envelope in a validated bounded result reference. Interrupted
 means uncertain execution outcome and has no fabricated domain report. API-008
-must apply one waiting budget to queue and lock time, reload installed policy
-under lock and refuse stale scope before mutation, without duplicate/nested lock
-acquisition. Verification delegates to a private socket executor that owns its
-lock through report/catalog persistence. API-007 never invokes those commands.
+applies one absolute waiting deadline across queue, delegation and lock time,
+reloads installed policy under the service-owned lock and refuses stale scope
+before mutation without duplicate/nested lock acquisition. Verification delegates
+to the private socket executor, which owns its lock through report/catalog
+persistence. Public command POST routes remain unavailable until API-009/010.
 
 Disconnect and Ctrl-C stop observation. They do not cancel accepted work. Later
 API-backed clients emit the nonsecret key before mutation submission and operation
@@ -355,10 +357,11 @@ arbitrary journald output.
 Shutdown stops admission, drains/joins workers, and preserves receipts. Restart
 never automatically reruns old queued/running work. API-007 opens the store
 without classification; an explicit `interrupt_unfinished()` primitive is
-available. API-008 must reconcile exact surviving workers before marking
-unresolved nonterminal receipts interrupted. The future verifier integration must reattach
-an exactly identified surviving worker or classify uncertainty without fabricating
-a report. PID, released lock, elapsed time or disconnected client do not prove
+available. API-008 reconciles exact surviving workers before marking unresolved
+nonterminal receipts interrupted: recover an exact durable terminal Envelope or
+reattach/await an exactly identified live worker without re-execution. Missing or
+unavailable proof retains uncertainty, never a fabricated report. PID, released
+lock, elapsed time or disconnected client do not prove
 completion. Terminal key/result retention defaults to 30 days. Count/byte caps
 refuse new admission rather than evicting unexpired bindings. Nonterminal and
 interrupted records retain their receipt/result space reservation; they never
@@ -368,6 +371,49 @@ validated owned succeeded/failed history after expiry. Expired/missing history
 is uncertainty, not proof of nonexecution or permission to replay. See the
 independent [schema/compatibility contract](schemas.md#13-service-private-operation-control-state-api-007)
 and [recovery runbook](recovery.md#10-operation-history-and-uncertain-submissions).
+
+Unavailable/unsafe verifier status specifically preserves the parent's active
+receipt and disables fresh execution across restarts, while metadata remains
+observable. Only trusted missing/interrupted evidence permits parent interrupted
+classification. A transport failure cannot be converted to an interrupted marker
+that a subsequent startup would skip while reopening the lane. Restored exact
+status resolves this barrier without replay.
+
+### Heavy-lane execution boundary (API-008)
+
+Only new durable admission can create runnable work; retrying/observing an old
+operation cannot. The single FIFO lane bounds pending work separately from
+metadata workers. Full/draining admission returns `HFAPI009`/503. One absolute
+host-monotonic deadline consumes queue residence and the remaining service-owned
+archive-lock wait. A deadline bounds waiting to start, not the duration of a
+running sync/verification. The under-lock guard reloads installed policy and
+compares the admitted fingerprint before mutation; the daemon never pre-locks a
+service or passes a held lock to the verifier.
+
+The default lane permits one active item plus `max_queued_operations` pending.
+Zero waiting budget is an idle-lane single lock attempt and cannot queue behind
+another item. Expiry before execution records a failed `HFAPI015` Envelope;
+archive-lock timeout keeps `HFMNT010`, and an under-lock changed fingerprint keeps
+`HFAPI007`. These terminal domain/admission results are later retrieved with
+HTTP 200 and their original exit classification, not translated into fabricated
+success. Immediate full/draining refusal is `HFAPI009`/503 without new work.
+Observation timeouts do not cancel accepted execution.
+
+Every non-estimate verification requires the configured private executor.
+Fresh admission probes availability before persisting a new receipt; matching
+idempotent retries return the old binding without a new probe. A probe never
+submits work.
+`HFAPI016`/503, exit 20, reports unavailable/untrusted socket, peer, frame or
+executor evidence. No generic command/config/path/credential crosses that
+protocol, and no production fallback executes verification in ASGI. The private
+worker preserves the API operation ID in its own schema-1 receipt and returns
+the exact domain Envelope. Status lookup never submits; matching retry never
+double-starts. Exact trusted running progress updates the parent receipt's phase
+and domain run ID. A private `running` label with no owned live execution thread
+is unavailable evidence and keeps the execution barrier closed. OS no-IP
+enforcement and socket-activated unit acceptance remain
+API-014, not a property of the process's library offline flag. See
+[wire/trust/deadline details](server.md#verification-wire-and-local-trust).
 
 ### Implemented operation observation (API-007)
 

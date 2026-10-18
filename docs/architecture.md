@@ -1179,7 +1179,7 @@ recovery proofs must pass the full checkpoint checks (QUA-003, decision 105).
 
 **QUA-002 amendment (2026-09-14, decision 104).** An operator may intentionally
 stop an identified sync to perform maintenance and resume its cached download
-afterward. For that exact run only, confirmed service termination and possession
+afterward. For that exact run only, confirmed actual writer/executor termination and possession
 of the exclusive writer lock may replace the age heuristic when the publication
 journal records only `staging_created` and its staging root/tree contain no
 files or unexplained entries. Run ID, transaction IDs, repository, commit, and
@@ -1197,6 +1197,16 @@ references and all Hub download-cache files remain untouched. The new empty
 quarantine may then be explicitly cleaned under §7.8.1 before restarting sync.
 A valid early download journal may have no publication ID; completed recovery
 provenance still establishes ownership of that staging transaction.
+
+**API-008 clarification (2026-10-17, decision 115).** With API-backed execution,
+the CLI or its scheduled service is an observer, while the daemon lane or private
+verifier owns the work. Stopping that client, closing Cockpit or losing HTTP does
+not establish writer termination. Identify the exact operation/domain run and
+the real executor, prove it has ended, then acquire the common archive flock and
+apply the same narrow evidence checks above. A released lock or PID alone is
+insufficient. This does not waive the normal stale-age policy or activate a new
+cancellation endpoint. The currently shipped direct-service workflow is migrated
+only by the later client/packaging tasks; no production service change is claimed.
 
 ### 7.9 What stops the machine
 
@@ -1363,6 +1373,31 @@ command POST routes API-009/010, and MCP remains behind REST acceptance.
 See [schemas §13](schemas.md#13-service-private-operation-control-state-api-007),
 [API lifecycle](api.md#admission-idempotency-and-lifecycle) and
 [uncertain-submission recovery](recovery.md#10-operation-history-and-uncertain-submissions).
+
+### Bounded lane and private verifier amendment (API-008, 2026-10-17)
+
+[Decision 115](adr/decision-115.md) implements the one-lane exception without
+replacing local cross-process locking. Trusted context-scoped hooks give the
+service one absolute queue/lock deadline and a fresh fingerprint comparison
+inside its own flock before preflight/mutation. Zero wait permits only an idle
+single attempt. Metadata uses a separate bounded pool; drain joins the lane and
+sync producer before releasing their safety ownership.
+
+The private verifier accepts only strict bounded peer-checked scope/operation/
+fingerprint messages, owns complete verification persistence and retains exact
+outcomes in the existing independent local schema. The daemon never spawns a
+generic command or runs production verification in-process. Restart imports an
+exact terminal outcome or awaits an exact live worker without resubmission.
+Unsafe/unavailable status preserves active receipts and closes execution across
+restarts, while healthy metadata stays available; only trusted missing/interrupted
+evidence permits parent interruption. A private durable `running` label without
+an owned live thread does not prove liveness.
+
+No durable archive/schema family or dependency changes. API-009/010 retain public
+submissions and API-014 retains socket-activated units, credential-free environment,
+`IPAddressDeny=any` and installed-host acceptance. Startup offline initialization
+is only a library switch. See [server](server.md), [API lifecycle](api.md#admission-idempotency-and-lifecycle),
+INV-014/015 and the [supervised recovery boundary](#782-explicit-cancellation-of-an-interrupted-download).
 
 ## 9. Phase 0 acceptance
 

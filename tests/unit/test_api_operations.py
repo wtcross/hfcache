@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import threading
 
 import httpx
 import pytest
@@ -9,7 +10,7 @@ import pytest
 from hfcache.api.app import create_app
 from hfcache.api.auth import CredentialClass, Principal
 from hfcache.api.operations import OperationLimits, OperationStore
-from hfcache.errors import ConfigurationError, Problem
+from hfcache.errors import ConfigurationError, Problem, SafetyError
 from hfcache.logging import reset
 from hfcache.server_config import InstalledPolicy, validate_server_config_mapping
 from hfcache.services.context import ExecutionContext, ServiceResult
@@ -176,12 +177,16 @@ def test_event_pages_have_explicit_dropped_prefix_and_sequence_cursor(configured
 def test_every_operation_surface_authenticates_and_never_executes(configured, suffix):
     server, policy, store, lock = configured
     receipt = admitted(store, policy)
-    before = {
-        path.name: path.read_bytes() for path in server.state_directory.iterdir() if path.is_file()
-    }
     app = create_app(server, operation_store=store, instance_lock_path=lock)
 
     async def read(client):
+        # Startup classifies abandoned queued work; observations themselves do
+        # not mutate history or invoke a command.
+        before = {
+            path.name: path.read_bytes()
+            for path in server.state_directory.iterdir()
+            if path.is_file()
+        }
         path = f"/api/v1/operations/{receipt.operation_id}{suffix}"
         assert (await client.get(path)).status_code == 401
         response = await client.get(path, headers=READER_HEADERS)
@@ -190,12 +195,13 @@ def test_every_operation_surface_authenticates_and_never_executes(configured, su
             assert response.json()["code"] == "HFAPI015"
             assert response.json()["exit_code"] == 20
         assert (await client.post("/api/v1/syncs", headers=WRITER_HEADERS)).status_code == 404
+        assert {
+            path.name: path.read_bytes()
+            for path in server.state_directory.iterdir()
+            if path.is_file()
+        } == before
 
     asyncio.run(requests(app, read))
-    after = {
-        path.name: path.read_bytes() for path in server.state_directory.iterdir() if path.is_file()
-    }
-    assert after == before
     assert not policy.root.exists()
 
 
@@ -301,10 +307,10 @@ def test_operation_collection_pages_keep_identity_during_status_updates_and_refu
     configured,
 ):
     server, policy, store, lock = configured
-    receipts = [admitted(store, policy, key=f"submission-{number}") for number in range(3)]
     app = create_app(server, operation_store=store, instance_lock_path=lock)
 
     async def read(client):
+        receipts = [admitted(store, policy, key=f"submission-{number}") for number in range(3)]
         first = (await client.get("/api/v1/operations", headers=READER_HEADERS)).json()
         assert len(first["envelope"]["data"]["operations"]) == 2
         assert first["next_cursor"] is not None
@@ -327,3 +333,100 @@ def test_operation_collection_pages_keep_identity_during_status_updates_and_refu
         assert stale.status_code == 409
 
     asyncio.run(requests(app, read))
+
+
+def test_unreachable_old_verifier_preserves_receipt_and_blocks_admission_but_serves_reads(
+    configured,
+):
+    server, policy, store, lock = configured
+    receipt = store.admit(
+        Principal(CredentialClass.REST_WRITER),
+        "old-verification",
+        "/api/v1/verifications",
+        {"mode": "full"},
+        policy.snapshot,
+    ).receipt
+    app = create_app(server, operation_store=store, instance_lock_path=lock)
+
+    async def read(client):
+        assert store.get(receipt.operation_id).state == "queued"
+        assert (await client.get("/api/v1/version", headers=READER_HEADERS)).status_code == 200
+        with pytest.raises(SafetyError):
+            app.state.runner.submit(
+                Principal(CredentialClass.REST_WRITER),
+                "new-work",
+                "/api/v1/plans",
+                {},
+                command="plan",
+                execute=lambda *_: pytest.fail("unsafe admission"),
+                wait_seconds=1,
+                requires_lock=False,
+            )
+        assert len(store.list()) == 1
+
+    asyncio.run(requests(app, read))
+
+
+@pytest.mark.parametrize("cancel_shutdown", [False, True])
+def test_metadata_remains_responsive_and_lifespan_joins_active_domain_work(
+    configured, cancel_shutdown
+):
+    server, _, store, lock = configured
+    app = create_app(server, operation_store=store, instance_lock_path=lock)
+    entered, release, finished = threading.Event(), threading.Event(), threading.Event()
+
+    def execute(snapshot, context):
+        entered.set()
+        assert release.wait(5)
+        finished.set()
+        return ServiceResult("plan", {"ready": True})
+
+    async def exercise():
+        lifespan = app.router.lifespan_context(app)
+        await lifespan.__aenter__()
+        closing = None
+        try:
+            receipt = app.state.runner.submit(
+                Principal(CredentialClass.REST_WRITER),
+                "active-work",
+                "/api/v1/plans",
+                {},
+                command="plan",
+                execute=execute,
+                wait_seconds=10,
+                requires_lock=False,
+            ).receipt
+            assert await asyncio.to_thread(entered.wait, 5)
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+            ) as client:
+                response = await client.get("/api/v1/version", headers=READER_HEADERS)
+                assert response.status_code == 200
+                assert not finished.is_set()
+            closing = asyncio.create_task(lifespan.__aexit__(None, None, None))
+            await asyncio.sleep(0)
+            assert not closing.done()
+            assert not finished.is_set()
+            if cancel_shutdown:
+                closing.cancel()
+                await asyncio.sleep(0)
+                closing.cancel()
+                await asyncio.sleep(0)
+                assert not closing.done()
+            release.set()
+            await asyncio.gather(closing, return_exceptions=True)
+            assert finished.is_set()
+            assert (
+                json.loads(store.root.joinpath(receipt.operation_id + ".json").read_bytes())[
+                    "state"
+                ]
+                == "succeeded"
+            )
+        finally:
+            release.set()
+            if closing is None:
+                await lifespan.__aexit__(None, None, None)
+            else:
+                await asyncio.gather(closing, return_exceptions=True)
+
+    asyncio.run(exercise())

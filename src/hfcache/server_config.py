@@ -202,6 +202,14 @@ class ServerLimits(_Strict):
     operation_retention_days: int = Field(default=30, ge=1, le=36500)
 
 
+class VerificationExecutorConfig(_Strict):
+    unix_socket: AbsolutePath = Path("/run/hfcache/verification.sock")
+    expected_peer_uid: int | None = Field(default=None, ge=0)
+    timeout_seconds: float = Field(default=5.0, gt=0, le=60, allow_inf_nan=False)
+    poll_seconds: float = Field(default=0.2, gt=0, le=60, allow_inf_nan=False)
+    max_frame_bytes: int = Field(default=16777216, ge=1024, le=16777216)
+
+
 class ServerConfig(_Strict):
     schema_version: Annotated[Literal[1], BeforeValidator(_schema)]
     archive_config: AbsolutePath = Path("/etc/hfcache/config.toml")
@@ -209,6 +217,7 @@ class ServerConfig(_Strict):
     credentials: ServerCredentials
     listener: ListenerConfig = Field(default_factory=ListenerConfig)
     limits: ServerLimits = Field(default_factory=ServerLimits)
+    verification: VerificationExecutorConfig = Field(default_factory=VerificationExecutorConfig)
     maintenance_enabled: bool = False
     interactive_docs: bool = False
     mcp_enabled: bool = False

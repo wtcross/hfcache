@@ -1,6 +1,6 @@
 # Quarterly full verification reads the retained archive offline
 
-- Status: accepted; an existing locked plan decision without an AD number; amended by decisions 110 and 111.
+- Status: accepted; an existing locked plan decision without an AD number; amended by decisions 110, 111 and 115.
 - Original record: 2026-07-24, `87323c2` (initial plan, §4 and §16).
 - ADR backfill: 2026-10-17.
 - Authority: [plan §16](../plan.md#16-integrity-and-verification),
@@ -99,3 +99,18 @@ ASGI fallback is permitted. Verification lock/report/catalog ownership from
 decision 110 remains unchanged. [Isolation tests](../../tests/unit/test_execution_isolation.py)
 and [child-process startup tests](../../tests/unit/test_offline_process.py) cover
 these boundaries without claiming installed-host acceptance.
+
+## API-008 protocol amendment (2026-10-17)
+
+[Decision 115](decision-115.md) supplies a private peer-checked bounded
+verification-only socket protocol and separate entry point, with exact durable
+operation outcomes and restart reattachment. The shared service still owns its
+flock through report/catalog persistence, with an under-lock fresh policy check.
+No credential or caller-selected command/config/path crosses this boundary, and
+the HTTP process has no in-process production fallback.
+
+API-008's dedicated startup initializes the library offline flag before Hub
+imports/use; that flag alone cannot deny IP sockets. Socket-activated units,
+credential-free environment provisioning, `IPAddressDeny=any` and installed-host
+hardening evidence remain API-014. Standalone development tests prove protocol,
+identity and structural no-Hub behavior without claiming OS egress isolation.

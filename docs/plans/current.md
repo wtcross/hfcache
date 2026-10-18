@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-008](tasks/api-008-bounded-runner-and-offline-executor.md) |
+| Next task | [API-009](tasks/api-009-sync-verification-and-diagnostics-api.md) |
 | Blockers | None |
 | Updated | 2026-10-17 |
 

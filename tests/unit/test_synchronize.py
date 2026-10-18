@@ -31,6 +31,9 @@ from typer.testing import CliRunner
 
 import hfcache.purge as purge_module
 from hfcache import sync as sync_module
+from hfcache.api.auth import CredentialClass, Principal
+from hfcache.api.operations import OperationStore
+from hfcache.api.runner import OperationRunner
 from hfcache.archive import initialize_archive
 from hfcache.cli import app
 from hfcache.config import ApplicationConfig, load_config, validate_config_mapping
@@ -51,6 +54,7 @@ from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.publication import published_repositories, read_reference, retained_references
 from hfcache.reporting import RepositoriesCatalog, RunReport
 from hfcache.retention import plan_prune
+from hfcache.server_config import InstalledPolicy
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ExecutionContext
 from hfcache.storage import parse_mount_table
@@ -2627,3 +2631,71 @@ def test_service_and_sync_producer_keep_execution_context_and_host_provenance(
     assert all(f"run_id={context.run_id}" in line for line in lines)
     assert all("request_id=" + "b" * 32 in line for line in lines)
     assert all("operation_id=" + "c" * 32 in line for line in lines)
+
+
+@pytest.mark.usefixtures("_wired")
+def test_runner_drain_joins_real_sync_producer_before_releasing_archive_lock(
+    config_file, layout, tmp_path, monkeypatch
+):
+    """INV-014/AD-19: closing the server joins the actual sole cache writer."""
+    entered = Event()
+    release = Event()
+    draining = Event()
+    drained = Event()
+    original = HubClient.download
+
+    def held_download(self, identity, commit_sha, **kwargs):
+        if identity == DATASET:
+            entered.set()
+            assert release.wait(5), "test did not release active sync producer"
+        return original(self, identity, commit_sha, **kwargs)
+
+    monkeypatch.setattr(HubClient, "download", held_download)
+    policy = InstalledPolicy(config_file, layout.root, ARCHIVE_ID)
+    with OperationStore(tmp_path / "api-state") as store:
+        runner = OperationRunner(store, policy)
+        runner.start()
+        receipt = runner.submit(
+            Principal(CredentialClass.REST_WRITER),
+            "sync-drain",
+            "/api/v1/syncs",
+            {},
+            command="sync",
+            execute=lambda snapshot, context: CommandServices(
+                snapshot.config, context
+            ).synchronize(),
+            wait_seconds=10,
+        ).receipt
+
+        def drain():
+            draining.set()
+            runner.drain()
+            drained.set()
+
+        shutdown = Thread(target=drain)
+        try:
+            assert entered.wait(5), "real producer did not reach second download"
+            shutdown.start()
+            assert draining.wait(5)
+            assert not drained.is_set()
+            with (
+                pytest.raises(SafetyError),
+                exclusive_lock(
+                    lock_path(), command="competing writer during drain", wait_seconds=0
+                ),
+            ):
+                pytest.fail("drain released archive lock before producer completion")
+            release.set()
+            shutdown.join(timeout=10)
+            assert drained.is_set()
+            result = runner.wait(receipt.operation_id, timeout=5)
+            assert result.exit_code == 0
+            assert {row["status"] for row in result.data["repositories"]} == {"published"}
+            assert result.run_id == store.get(receipt.operation_id).domain_run_id
+        finally:
+            release.set()
+            if shutdown.ident is not None:
+                shutdown.join(timeout=10)
+            runner.close()
+    with exclusive_lock(lock_path(), command="after drained producer", wait_seconds=0):
+        pass

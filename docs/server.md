@@ -2,8 +2,9 @@
 
 Status: API-006 implements authenticated metadata HTTP resources and their
 controlled application lifespan over API-005 configuration/auth primitives.
-API-007 adds bounded receipt/admission primitives and operation observation.
-Heavy execution, command submissions, CLI migration and service packaging remain later tasks.
+API-007 adds bounded receipt/admission primitives and operation observation;
+API-008 adds the heavyweight lane and private verifier process/protocol. Command
+submissions, CLI migration and installed service hardening remain later tasks.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
@@ -38,6 +39,7 @@ the certificate/key before accepting connections.
 | `credentials` | required table | Required writer source and optional reader/MCP sources below |
 | `listener` | table, defaults below | Unix/TCP/TLS and browser/proxy policy |
 | `limits` | table, defaults below | Bounded resource policy for later routes/runner |
+| `verification` | table, defaults below | Private executor client policy; no worker process is launched |
 | `maintenance_enabled` | bool, `false` | Later archive initialization requires this gate plus writer capability and domain confirmation |
 | `interactive_docs` | bool, `false` | Enables authenticated `/api/v1/docs`; `/api/v1/openapi.json` is always authenticated |
 | `mcp_enabled` | bool, `false` | Requires an `mcp_reader` source in the model; runtime startup refuses enablement before the REST/MCP gate |
@@ -104,8 +106,8 @@ Envelopes. Retention never ages out interrupted/ambiguous/nonterminal work;
 unexpired terminal keys cannot be evicted for the count cap. Admission reserves
 the maximum receipt plus result allowance for each nonterminal/interrupted
 operation, while succeeded/failed history consumes actual bytes. Refuse new
-admission if that count/space reservation does not fit. Job execution/queue
-policy remains API-008; [API lifecycle](api.md#admission-idempotency-and-lifecycle)
+admission if that count/space reservation does not fit. API-008 implements the
+execution/queue policy below; [API lifecycle](api.md#admission-idempotency-and-lifecycle)
 defines the safety boundary.
 
 API-006 applies finite metadata entry/artifact/total-byte budgets through shared
@@ -114,6 +116,22 @@ underlying scan; budget exhaustion returns visible `HFAPI005`/503. It never
 becomes an empty page or raises verification confidence. The local CLI's default
 queries retain complete results without HTTP ceilings. No metadata scan hashes
 artifact content or creates/repairs an archive.
+
+### Private verifier client settings (API-008)
+
+| `[verification]` key | Default | Constraint |
+| --- | --- | --- |
+| `unix_socket` | `/run/hfcache/verification.sock` | Absolute normalized protected Unix-socket path |
+| `expected_peer_uid` | omitted | Nonnegative integer when set; omission uses the API process's effective UID |
+| `timeout_seconds` | `5.0` | Finite number, greater than 0 and at most 60; each bounded control exchange |
+| `poll_seconds` | `0.2` | Finite number, greater than 0 and at most 60; exact operation observation interval |
+| `max_frame_bytes` | `16777216` | Integer `1024`–`16777216` |
+
+These are restart-only server-side client settings, not caller-selected request
+values or worker-launch permissions. Omit `expected_peer_uid` to use the service
+UID; TOML has no null literal. The worker's separate store uses fixed default
+`OperationLimits` from API-007, independently of API receipt-limit overrides.
+Its state directory must be provisioned separately, never nested with API state.
 
 ### Archive-policy reload
 
@@ -124,7 +142,7 @@ fingerprint. Earlier snapshots remain unchanged. Invalid updates fail new
 archive work; changed root/UUID fails closed with `HFCFG005` until restart.
 API credentials never enter the archive snapshot or fingerprint; no new server
 fingerprint format exists. API-006 takes a snapshot for each archive query;
-API-008 must additionally reload/compare policy under the archive lock before a
+API-008 additionally reloads/compares policy under the archive lock before a
 queued mutation. These primitives do not install policy or switch archive
 authority. Version/capabilities do not need a fresh archive snapshot; health can
 diagnose failed updated policy without silently switching archive authority.
@@ -309,7 +327,8 @@ work runnable. Receipts themselves bind keys; indexes/scans are derived and no
 command body is retained for replay.
 
 Startup opens the store and shutdown closes its pinned descriptors. API-007
-does not run a worker, expire history or automatically classify old receipts.
+alone did not run a worker, expire history or classify old receipts; API-008 now
+adds the runner/reconciliation lifecycle described below.
 `interrupt_unfinished()` and `expire()` are explicit core primitives, not HTTP
 mutation endpoints. API-008 must reconcile exact surviving executors before
 classifying unresolved work. Unsupported/malformed/unexplained state is preserved
@@ -324,13 +343,181 @@ defines wire/status/event semantics; [schemas §13](schemas.md#13-service-privat
 defines the independent local family and retention compatibility. Heavy execution,
 submission routes and isolated verification remain later tasks.
 
-## Execution and deployment target (not yet implemented)
+## Bounded execution and private verification (API-008)
 
-The later execution target adds one heavyweight worker to API-007's admission
-registry in the same unprivileged application and bounded metadata pool. Both listeners
-share that application; the daemon-instance lock prevents competing registries. Actual
-archive work retains the existing local flock; metadata reads do not create
-archive layout or rebuild catalogs. Systemd remains scheduling authority.
+One heavyweight FIFO lane is separate from the bounded metadata pool. Admission
+must be durable before an item becomes runnable. Matching idempotent retries
+return the original operation and never add another queue item. The pending
+count is bounded by `max_queued_operations`; saturation and drain refuse new
+admission rather than creating an unbounded executor queue.
+
+Admission captures one absolute host-monotonic waiting deadline. Queue residence,
+private delegation and archive-lock acquisition consume that budget without
+resetting it. Domain execution may outlast its waiting deadline after safely
+starting; the deadline is not an unsupervised cancellation timer. The trusted
+`CommandLockControl` scope carries deadline, waiting/acquired and policy hooks
+into the service-owned archive lock. The runner never pre-locks a command or
+transfers its flock to another process. Under-lock policy reload must match the
+admitted fingerprint before preflight/mutation; stale work fails visibly. Plain
+local services retain their existing lock behavior when no control is scoped.
+Zero wait permits one immediate lock attempt only when the lane is idle; it
+never waits behind existing work. `max_queued_operations=0` still permits one
+active item and no pending item. Matching retries remain observable even when
+new admission is closed or capacity is full.
+
+`OperationRunner(store, policy, max_pending=16, check_verification_available=...)`
+owns this lane. Trusted adapters
+call `submit(..., command, execute(snapshot, context), wait_seconds, ...)`;
+the callable and frozen policy remain in memory, while only the receipt/digests
+are durable. `start(reconcile=...)`, `stop_admission()`, `drain()`/`close()` and
+`wait()` define lifecycle/observation. A wait timeout never cancels or requeues.
+Trusted `delegated=True` forbids parent archive-lock acquisition; the verifier
+acquires in its own process. `requires_lock=False` is only for a genuine
+non-mutating heavy read, which validates its snapshot before execution. These
+flags are not caller-selectable request fields. A successful locking task must
+prove that its service-owned guard ran; an arbitrary unlocked callback cannot
+claim success. Unexpected local execution/result-persistence failure halts the
+lane and preserves interruption rather than inventing a replacement result.
+Fresh verification admission probes the configured executor before writing a
+new receipt; a missing/untrusted adapter refuses with `HFAPI016`. Matching
+idempotent retries bypass this fresh-only probe and retain their original binding.
+The probe never submits or starts verification.
+
+The separate verifier uses the same complete target/hash/report/catalog lock
+boundary. The HTTP process imports its protocol/client without executing archive
+verification. A missing/untrusted executor is `HFAPI016`, HTTP 503 / exit 20;
+there is no production in-process fallback, process spawning from a request or
+generic systemctl/sudo command. Socket-activated systemd units and installed
+no-IP/credential-free hardening remain API-014, not proof supplied by API-008.
+
+### Verification wire and local trust
+
+[`verification_protocol`](../src/hfcache/verification_protocol.py) defines a
+schema-version-1 private stream protocol. Each UTF-8 JSON frame has a four-byte
+network-order unsigned length, bounded before reading the body; the absolute
+maximum is 16 MiB. An explicit integer `schema_version=1` is required; missing,
+boolean and unsupported versions refuse. Strict models reject unknown fields, duplicate JSON keys,
+contradictory actions, malformed IDs/digests, unsupported versions and nonfinite
+deadlines. This is not an HTTP endpoint or a general RPC command surface.
+
+| `WorkerRequest.action` | Allowed fields beyond `schema_version`/`action` |
+| --- | --- |
+| `probe` | None; availability only, no operation or archive work |
+| `status` | Exact `operation_id` and expected `config_fingerprint`; never submits |
+| `submit` | Same identity plus strict `scope`, finite nonnegative `lock_deadline` and optional `try_lock` boolean |
+
+`VerificationScope` permits only `mode = new | full | revision`. `revision` is
+required exactly for revision mode and must contain an immutable full SHA;
+`run_id` is optional only for new mode. Estimates stay ordinary metadata reads
+and cannot use this executor. No request contains a configuration path, archive
+root, arbitrary command, candidate policy or credential.
+
+`lock_deadline` is the original absolute host-monotonic deadline, computed from
+the runner's remaining budget before connection. Both processes use the same
+host clock; the worker additionally bounds it by its installed verification
+lock-wait policy. IPC never starts a fresh waiting timer. `try_lock=true` is the
+original zero-wait single-attempt mode, permitted only on submit; it cannot turn
+a positive budget into a new timeout. Replies contain
+`outcome = available | found | missing | unavailable | conflict`, nullable exact
+`receipt` and nullable exact terminal `envelope`. A `found` reply needs its
+receipt; succeeded/failed additionally require a matching domain run ID/exit
+Envelope. The production client verifies requested operation ID/fingerprint,
+fixed verification route and startup-pinned archive UUID before any progress or
+result is trusted. A wrong archive is unsafe `HFAPI016`, never trusted missing
+history. The reply's exact Envelope, serialized with the shared durable encoder,
+must match its receipt result-reference SHA-256 and byte count as well as domain
+run ID/exit coherence; wire frame length is a separate bound.
+Trusted running progress also propagates the private receipt's domain run ID
+into the parent API receipt; callers do not select that execution evidence.
+A nonterminal private label alone is insufficient: status must prove the worker
+still owns a live thread for that exact operation, otherwise it is unavailable.
+
+Client connection opens every socket-path component no-follow through pinned
+descriptors, checks the parent is root/service-owned and not group/world
+writable, and requires an expected-owner socket of mode `0600` or `0660`.
+It connects through that pinned parent, verifies Linux `SO_PEERCRED` UID and
+checks that the named socket inode did not change. The worker verifies the
+connecting API peer UID too. A path check alone, local socket transport alone or
+caller PID does not authenticate this boundary. Protected parent/socket setup
+and exact service identities are operator provisioning requirements.
+
+### Restart and drain
+
+Reconcile old nonterminal API receipts before admitting new execution. An exact
+surviving verifier is awaited/reattached, and its exact durable terminal Envelope
+can finish the API receipt after an acknowledgement/daemon crash without rerun.
+Trusted missing/interrupted worker history permits parent interrupted
+classification, preserving uncertainty. Unavailable, unsafe or mismatched peer/
+protocol evidence does not prove the old worker ended: preserve the parent's
+active receipt and close execution admission. Keep that barrier across later
+daemon restarts until exact status is restored; do not mark it interrupted merely
+to make a subsequent restart skip it and reopen the lane. Metadata and healthy
+exact-ID history stay available. `health.ready` still describes the daemon,
+not proof that execution admission is open. A delegation losing trusted status after submit
+likewise halts the lane while preserving active evidence. Never requeue an old
+queued/running receipt or reconstruct a command from archive journals.
+
+Drain stops admission first and joins accepted work. A sync still joins its one
+active producer before the archive lock is released. Client disconnect/Ctrl-C
+stops observation; it does not cancel the real writer. Forced process death
+leaves receipts/journals for diagnosis. Recovery must identify the actual
+executor and operation, preserving the narrow supervised-cancellation checks.
+The app drains the heavyweight runner before closing metadata workers, control
+store descriptors and the daemon-instance lock. A blocked/heavy item does not
+occupy the metadata pool; lightweight HTTP reads remain responsive while it runs.
+Lifespan cleanup shields the entire runner/metadata drain against repeated task
+cancellation before releasing store/instance ownership. This is joined graceful
+shutdown, not a claim that SIGKILL can finish work.
+
+### Dedicated worker bootstrap and limitations
+
+`python -m hfcache.verification_worker` is a private service-manager entry point,
+not a public remote CLI command. It requires trusted local `--config`,
+`--state-directory`, `--socket` and `--api-uid` settings and exactly one inherited
+systemd listening descriptor at FD 3 (`LISTEN_PID`/`LISTEN_FDS` must match).
+It neither binds a new socket nor accepts a caller-selected configuration over
+IPC. The inherited listener must already be a listening Unix stream socket at
+the protected configured name. The state root cannot overlap the installed
+archive root. Keep API and verifier state roots separate, never nested, because
+each flat store preserves/refuses unexplained entries.
+
+The bootstrap validates activation, known credential environment sources and
+unexpected inherited descriptors before shared runtime imports can open their
+own files. It sets `HF_HUB_OFFLINE=1` once before importing shared command/Hub
+modules. It refuses known Hub/API/MCP credential sources, including
+`CREDENTIALS_DIRECTORY`, and live inherited descriptors above FD 3 rather than
+carrying API secrets into the worker. No credential is resolved by the
+verification path. These checks do not discover every arbitrary secret string
+or deny IP sockets: API-014 must provision the independent credential-free
+environment, socket activation, permissions and `IPAddressDeny=any` sandbox.
+Standalone development execution alone cannot make that installed-host claim.
+
+The worker holds a retained sibling `<state-name>.instance.lock` before opening
+its store. A newly started worker therefore cannot be its previous still-live
+instance; old unresolved private receipts are explicitly interrupted, never
+requeued. It admits a trusted exact API operation ID into the existing
+OperationStore schema-1 family and records its exact terminal Envelope before
+reporting completion. Status lookup never submits. Repeating a matching submit
+returns the old binding; changing scope/fingerprint conflicts rather than
+starting a second verification. Only one active verification thread runs.
+
+SIGTERM/SIGINT stop accepting control connections and join active verification;
+they do not abandon its lock/report/catalog boundary. Classified setup refusals
+exit 20 without raw exception/credential output; local argument-usage errors
+retain argparse exit 2. Domain exits remain in the exact operation Envelope,
+independent of the long-lived worker's process lifecycle. The API client never launches this
+process, inherits its environment or falls back to local verification. Disposable
+socket/process tests establish these primitives; installed units, timeout/drain
+policy and real egress enforcement remain the later packaging acceptance gate.
+
+## Remaining deployment and client target
+
+API-008's lane and API-007's registry already share the unprivileged application
+and separate bounded metadata pool across both listeners. The daemon-instance
+lock prevents competing registries; actual archive work retains the operation-
+scoped flock. Later tasks add command routes and client/unit integration, not a
+second execution authority. Metadata reads create no archive layout or catalog.
+Systemd remains scheduling authority.
 
 API-004 establishes shared correlation primitives ahead of this server:
 configure logging once at startup, generate authoritative request and admission

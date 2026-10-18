@@ -28,6 +28,13 @@ tcp_port = 8787
 # Direct off-host TCP requires [listener.tls] certificate/private_key paths.
 # A local TLS proxy instead requires proxy_tls=true and explicit trusted_proxies.
 
+[verification]
+unix_socket = "/run/hfcache/verification.sock"
+# expected_peer_uid defaults to the API service's own UID.
+timeout_seconds = 5.0
+poll_seconds = 0.2
+max_frame_bytes = 16777216
+
 [limits]
 max_request_bytes = 1048576
 max_page_size = 1000

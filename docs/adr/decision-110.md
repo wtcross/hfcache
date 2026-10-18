@@ -1,6 +1,7 @@
 # Decision 110 — Guard complete command execution and verification persistence
 
-- Status: Accepted and implemented; deferred environment policy amended by [decision 111](decision-111.md).
+- Status: Accepted and implemented; deferred environment policy amended by [decision 111](decision-111.md),
+  runner deadline/policy hooks extended by [decision 115](decision-115.md).
 - Date: 2026-10-17.
 - Work package: API-003, this commit.
 - Source: [progress decision 110](../progress.md#decisions),
@@ -67,3 +68,11 @@ decision above remains authoritative; no durable schema is changed.
 Evidence: [phase and multiprocess merge regression tests](../../tests/unit/test_command_locking.py),
 [command guard and refusal tests](../../tests/unit/test_command_services.py),
 and the existing sync/crash/verification/maintenance suites.
+
+## API-008 runner amendment (2026-10-17)
+
+[Decision 115](decision-115.md) preserves service-owned acquisition while adding
+one absolute admission deadline and a fresh policy guard inside the acquired
+archive lock. Runners pass these hooks instead of taking another flock. The
+private verifier applies the same guard and complete persistence ownership;
+process delegation changes neither domain locking nor recovery authority.

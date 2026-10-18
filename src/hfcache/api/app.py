@@ -4,6 +4,7 @@ Decision 113 and plan §§3-4 keep metadata behind typed services. No admission,
 writer command, credential resolver or Hub client is exposed as a route.
 """
 
+import asyncio
 import base64
 import hashlib
 import ipaddress
@@ -26,10 +27,12 @@ from hfcache.api.auth import Capability, CredentialRegistry, load_credentials, r
 from hfcache.api.lifecycle import MetadataPool, instance_lock
 from hfcache.api.models import ApiProblem, OperationView, PageQuery, ReadResponse
 from hfcache.api.operations import OperationLimits, OperationReceipt, OperationStore
+from hfcache.api.runner import OperationRunner
 from hfcache.errors import (
     CodedError,
     ConfigurationError,
     HfcacheError,
+    OperationError,
     RequestError,
     SafetyError,
 )
@@ -41,14 +44,16 @@ from hfcache.reporting import Envelope
 from hfcache.server_config import InstalledPolicy, PolicySnapshot, ServerConfig
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.queries import LocalQueries, PublicationQuery, RepositoryQuery, query_version
+from hfcache.verification_protocol import VerificationClient
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Callable, Iterator
+    from collections.abc import AsyncIterator, Callable, Coroutine, Iterator
 
     from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
     from hfcache.config import ApplicationConfig
     from hfcache.services.queries import MetadataQueries
+    from hfcache.verification_protocol import VerificationDelegate
 
 PREFIX = "/api/v1"
 _CHUNK = 8192
@@ -74,6 +79,20 @@ async def _empty_body(receive: Receive, maximum: int) -> bool:
     if size:
         raise RequestError
     return True
+
+
+async def _finish_owned(work: Coroutine[Any, Any, None]) -> None:
+    """Delay lifespan cancellation until owned domain and metadata work has joined."""
+    joining = asyncio.create_task(work)
+    cancelled = False
+    while not joining.done():
+        try:
+            await asyncio.shield(joining)
+        except asyncio.CancelledError:
+            cancelled = True
+    joining.result()
+    if cancelled:
+        raise asyncio.CancelledError
 
 
 def _problem(context: ExecutionContext, error: HfcacheError) -> JSONResponse:
@@ -349,6 +368,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
     query_factory: Callable[[ApplicationConfig], MetadataQueries] | None = None,
     instance_lock_path: Path | None = None,
     operation_store: OperationStore | None = None,
+    verification_executor: VerificationDelegate | None = None,
 ) -> FastAPI:
     """Create routes only; lifespan owns all filesystem/startup effects."""
 
@@ -395,13 +415,51 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                 application.state.pool = MetadataPool(
                     workers=limits.metadata_workers, pending=limits.metadata_queue
                 )
+                settings = server.verification
+
+                def worker_progress(receipt: OperationReceipt) -> None:
+                    if receipt.state == "running":
+                        application.state.runner.mark_running(
+                            receipt.operation_id, receipt.domain_run_id
+                        )
+
+                application.state.verifier = verification_executor or VerificationClient(
+                    settings.unix_socket,
+                    expected_uid=settings.expected_peer_uid,
+                    timeout_seconds=settings.timeout_seconds,
+                    poll_seconds=settings.poll_seconds,
+                    max_frame_bytes=settings.max_frame_bytes,
+                    progress=worker_progress,
+                    expected_archive_id=application.state.policy.archive_id,
+                )
+                application.state.runner = OperationRunner(
+                    store,
+                    application.state.policy,
+                    max_pending=limits.max_queued_operations,
+                    check_verification_available=application.state.verifier.check_available,
+                )
                 application.state.instance_id = ExecutionContext.create().run_id
                 application.state.version = query_version()
                 try:
+                    try:
+                        await asyncio.to_thread(
+                            application.state.runner.start,
+                            reconcile=application.state.verifier.reconcile,
+                        )
+                    except OperationError:
+                        # Unsafe history disables admission, while healthy exact
+                        # observations and metadata remain available for diagnosis.
+                        application.state.runner.stop_admission()
                     yield
                 finally:
-                    await application.state.pool.close()
-                    application.state.credentials = None
+                    application.state.runner.stop_admission()
+
+                    async def drain() -> None:
+                        await asyncio.to_thread(application.state.runner.drain)
+                        await application.state.pool.close()
+                        application.state.credentials = None
+
+                    await _finish_owned(drain())
 
     app = FastAPI(
         lifespan=lifespan,

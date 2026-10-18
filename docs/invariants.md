@@ -253,6 +253,9 @@ exceeding the configured limit; it does not require retaining five.
   the exclusive lock, exact reviewed run/journal evidence, and empty
   `staging_created`-only staging permit an explicitly scoped zero-hour recovery
   plan. The configured automatic age policy remains intact.
+  For API-backed execution, prove termination of the actual operation/executor;
+  a stopped observer/client service, vanished PID or free lock alone is not that
+  proof (decision 115). The supervised exception is not a cancellation endpoint.
 - **`TX-01` exception, `FS-19`** — Explicit quarantine cleanup is limited to
   selected transaction IDs whose completed failed publication and matching
   committed recovery journal prove abandoned pre-publication staging. Validate
@@ -605,24 +608,41 @@ track exact availability; implementing tasks own proof.
   key lookup searches only the caller's namespace. Unexpired terminal bindings
   retain the configured 30-day default window; count/byte limits refuse admission
   rather than evicting them. Interrupted/ambiguous/nonterminal/unsupported state
-  never ages out. Enforcement: API-007 core/HTTP observation; heavy execution and
-  client safety remain API-008/013. Decisions [109](adr/decision-109.md) and
-  [114](adr/decision-114.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state-api-007).
+  never ages out. API-007 implements core/HTTP observation.
+  API-008 adds the bounded FIFO lane, one absolute queue/lock deadline and a
+  fresh fingerprint guard inside the service-owned archive lock. A runner never
+  pre-locks or nests that service. Exact surviving verifier evidence is reconciled
+  before interruption; unavailable/unsafe status preserves active receipts and
+  closes execution across restarts. Metadata stays diagnosable. Public submission/
+  client safety remains API-009/013. Decisions [109](adr/decision-109.md),
+  [114](adr/decision-114.md) and [115](adr/decision-115.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state-api-007).
   Enforcement/evidence: [core store](../src/hfcache/api/operations.py),
   [HTTP observation](../src/hfcache/api/app.py),
   [core tests](../tests/unit/test_operations.py),
   [adversarial store tests](../tests/unit/test_operation_store_adversarial.py), and
   [HTTP history tests](../tests/unit/test_api_operations.py).
+  Execution enforcement: [runner](../src/hfcache/api/runner.py),
+  [context-scoped lock control](../src/hfcache/locking.py), and
+  [runner/deadline/reconciliation tests](../tests/unit/test_runner.py).
+  Trusted private running/domain-run progress updates the parent receipt; a stale
+  private label without a live owned thread cannot establish executor liveness.
 - **`INV-015` — Verification isolation encloses persistence.** Non-estimate
   verification locks target resolution, hashing, report write and catalog merge
   in a credential-free no-IP executor. Estimates remain metadata reads.
   Lock/persistence enforcement: [command services](../src/hfcache/services/commands.py)
   and [multiprocess tests](../tests/unit/test_command_locking.py), API-003.
-  Credential-free no-IP executor enforcement remains API-008/014. No unsafe
+  API-008 implements the strict peer-checked private protocol, dedicated startup
+  and exact durable outcome/reconciliation primitives; API-014 retains installed
+  credential-free/no-IP unit enforcement and host acceptance. No unsafe
   ASGI-process fallback. API-004 removes the shared-service offline environment
   toggle and provides [startup-only offline initialization](../src/hfcache/offline.py)
-  for that later process, verified in [child-process tests](../tests/unit/test_offline_process.py).
+  for the dedicated process, verified in [child-process tests](../tests/unit/test_offline_process.py).
   That helper alone does not deny IP sockets; decision [111](adr/decision-111.md).
+  Protocol/process enforcement: [private client/framing/peer validation](../src/hfcache/verification_protocol.py),
+  [worker runtime](../src/hfcache/verification_executor.py),
+  [inherited-socket startup](../src/hfcache/verification_worker.py), and
+  [executor/protocol tests](../tests/unit/test_verification_executor.py);
+  decision [115](adr/decision-115.md). These tests do not prove installed OS egress.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. Enforcement: MCP-001–004,

@@ -1,6 +1,7 @@
 # Decision 114 — Persist non-resuming admission without discarding uncertainty
 
 - Status: Accepted; implemented by API-007.
+- Execution/reconciliation extension: [decision 115](decision-115.md), API-008.
 - Date: 2026-10-17.
 - Work package: API-007, this commit.
 - Source: [progress decision 114](../progress.md#decisions),

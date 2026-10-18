@@ -271,7 +271,7 @@ still waits for `sync.stale_staging_age_hours`; stopping the service does not
 silently waive that rule. When the operator explicitly chooses immediate
 maintenance followed by restart, architecture §7.8.2 permits a supervised
 exception for the exact stopped run's proven empty, `staging_created`-only
-publication. Confirm the service/PID has exited, hold the writer lock, reject
+publication. Confirm the actual writer/executor has exited, hold the writer lock, reject
 other unfinished work, and review the exact identities and empty staging before
 using the installed recovery planner with a zero-hour threshold. Apply through
 the normal recovery API and preserve its journals and report. Do not edit the
@@ -280,6 +280,15 @@ Explicitly clean the resulting empty quarantine along with the original
 reviewed entries, then restart the sync service and restore its timer. A
 download interrupted after later checkpoints or with populated staging does
 not qualify for this exception.
+
+For API-backed execution, a stopped CLI/systemd client or closed Cockpit session
+is not proof that accepted work ended. Identify the exact operation, its domain
+run/transactions and real daemon/verifier executor; reconcile exact worker status
+or durable outcome before considering interruption. A PID or released lock alone
+is insufficient. API-008 preserves this distinction; public client/service
+migration remains later work. The supervised zero-age exception above still
+requires every original identity/emptiness/lock check and grants no general
+cancel/replay authority. See [decision 115](adr/decision-115.md).
 
 ---
 
@@ -741,3 +750,27 @@ Changing retention is an explicit retry-history decision; communicate the new
 window to callers. There is no automatic exactly-once guarantee across crashes.
 See [the receipt schema](schemas.md#13-service-private-operation-control-state-api-007)
 and [decision 114](adr/decision-114.md).
+
+**API-008 reconciliation.** The execution runner examines existing nonterminal
+receipts before accepting fresh execution. For verification it asks the protected
+private executor about the exact operation/fingerprint and archive identity.
+A matching terminal Envelope can close the API receipt without rerunning work;
+a matching live operation is awaited/reattached. Only unresolved history is
+classified interrupted. Ordinary old queued/running commands are never requeued.
+If the worker is unavailable or its identity/outcome cannot be proved, preserve
+the active API receipt and keep execution admission closed across restarts.
+Metadata/healthy exact-ID reads remain available for diagnosis. Do not change the
+receipt to interrupted merely to get past the next startup: that would discard
+the execution barrier while an unreachable worker may still run. Trusted missing/
+interrupted worker evidence permits parent interruption; restored exact live or
+terminal status permits reattachment/result recovery. Do not use a new key to
+retry automatically.
+
+The worker's own separate store uses the existing schema and a retained sibling
+instance lock. A restarted executor cannot be the previous live instance; it
+marks unresolved private receipts interrupted rather than restarting them.
+Never delete or merge API/verifier stores to make a result appear complete, and
+never unlink a potentially held instance/store/archive lock. A saved worker
+terminal result is execution evidence; a lost observer, free lock, PID or old
+`running` label is not. See [decision 115](adr/decision-115.md) and
+[server restart/drain](server.md#restart-and-drain).

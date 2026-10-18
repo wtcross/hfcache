@@ -737,3 +737,13 @@ versions when implementing, especially FastMCP imports and test transports:
   interrupted/ambiguous/nonterminal history never expires. Startup never replays;
   explicit interruption waits for later exact-worker reconciliation. No heavy lane, command POST route or MCP work is
   added; API-008/009/010 retain execution/submission responsibilities.
+
+- 2026-10-17 API-008: Decision 115 implements the bounded FIFO execution lane,
+  one absolute queue/lock deadline and service-owned under-lock policy guard.
+  The private verifier carries the same host-monotonic deadline across bounded
+  peer-checked Unix IPC and reuses the independent operation-store schema for
+  exact durable outcomes. Reconcile a surviving exact worker before interruption;
+  never replay old work. Client disappearance is not writer termination.
+  Public POST routes remain API-009/010; socket activation, credential-free/no-IP
+  systemd enforcement and installed-host acceptance remain API-014. No new
+  dependency, durable archive family or MCP work is introduced.

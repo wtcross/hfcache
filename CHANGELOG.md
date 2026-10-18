@@ -47,8 +47,15 @@ bounded sanitized events/results and authenticated observation. Matching retries
 retain their original binding across policy changes and credential rotation.
 Startup never replays unfinished history; explicit interruption records uncertainty.
 Retention never
-evicts unexpired keys or uncertain work for capacity. Heavy execution and command
-submission routes remain later work. No production state was created or changed.
+evicts unexpired keys or uncertain work for capacity. Command submission routes
+remain later work. No production state was created or changed.
+
+The daemon now has one bounded execution lane with one queue/lock waiting
+deadline and an under-lock admitted-policy check. Private verification delegates
+through a peer-checked bounded Unix protocol with exact durable outcomes and
+restart reconciliation; accepted work is never automatically replayed. Public
+command submission routes and installed systemd/no-IP enforcement remain later
+tasks. No in-process production verification fallback or MCP dependency is added.
 
 ## v0.1.10 — 2026-09-14
 

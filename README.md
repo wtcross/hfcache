@@ -178,8 +178,10 @@ installing the extra starts no listener and changes no deployed writer.
 API-007 adds bounded local receipt/idempotency primitives and authenticated
 operation observation. Control-state history survives client loss and is never
 automatically replayed; interrupted history is retained. Job/write submission
-routes, heavy execution, API-backed CLI migration, systemd packaging and the isolated
-verification executor remain later tasks. MCP stays behind the REST acceptance
+routes, API-backed CLI migration and systemd packaging remain later tasks.
+API-008 supplies one bounded execution lane and private verifier protocol/process
+primitives. Installed socket activation and OS no-IP enforcement still require
+API-014; the library offline flag alone is insufficient. MCP stays behind the REST acceptance
 gate and adds no dependency yet. Disposable-socket TLS tests use the OpenSSL CLI
 as a development test tool; Python production dependencies remain locked.
 

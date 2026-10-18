@@ -930,6 +930,42 @@ package in this family.
   installed-host and extra build-marker suites did not run. No production archive/
   listener operation, deployment, push, merge or tag. Next selected task is API-008.)
 
+- [x] API-008 Run one bounded lane and the private verification executor
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-008-bounded-runner-and-offline-executor.md).
+  One bounded FIFO lane retains durable admission, frozen context/policy and one
+  absolute host-monotonic queue/lock deadline. Service-owned flock hooks compare
+  fresh policy before preflight/mutation, without parent/nested acquisition;
+  zero wait is one idle attempt. Metadata stays independent and responsive.
+  A strict peer/path-checked bounded verification-only protocol delegates real
+  shared verification and complete report/catalog ownership. Exact operation /
+  archive/fingerprint and result-reference hash/bytes precede trusted progress
+  or completion. Fresh admissions probe availability; matching retries bypass it.
+  Restart imports exact terminal evidence or reserves the lane for a live owned
+  worker without replay. Unavailable/unsafe status preserves active receipts
+  and blocks execution across restarts, while trusted missing/interrupted status
+  permits interruption. Repeated cancellation/drain joins work and sync producers
+  before store/instance/archive ownership ends. Decision 115 and affected ADR,
+  invariant, architecture/API/server/schema/security/runbook records agree.
+  No new dependency, durable family, public POST route or MCP is introduced.
+  Focused selections: owned final 71 tests, broader 187, root HTTP/verifier 63,
+  real producer drain 1 (119 deselected), corrected process startup 3 (42
+  deselected). The first full gate passed 2,307 tests, but a subsequent real
+  FD-3 activation probe found trusted imports opened /dev/urandom before the
+  inherited-FD audit. Strict activation/environment/descriptor validation now
+  precedes those imports; positive activation and extra credential-FD refusal
+  regressions cover it. The corrected manual probe is available, exits 0,
+  creates no archive/operation records and emits no stdout/stderr. Definitive
+  `rtk proxy bash scripts/check.sh` exits 0: lock/format/lint/types, 2,309 Python
+  tests (40 deselected, 124.99 seconds), 0.1.10 sdist/wheel, isolated locked
+  base/server install/import/help/version, 45 Cockpit tests and production build.
+  No gate attempt failed; the separate positive probe exposed the corrected bug.
+  Final links/current/dependencies, 9 implemented / 20 planned rows, 115 decision /
+  ADR records and whitespace pass. Live/NFS, installed-host and extra build-marker
+  suites did not run. Actual systemd credential-free/no-IP acceptance remains
+  API-014; a library offline flag alone is insufficient. No production archive /
+  listener operation, deployment, push, merge or tag. Next selected task is API-009.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3535,3 +3571,20 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      authoritative key indexes, FIFO history eviction and broker/database/resume
      engines. This implements decision 109's narrow FW-01 exception and retains
      FW-02/AD-12/14/16; heavy execution and command submission remain later tasks.
+
+115. **Execute one bounded lane and reconcile the exact verifier**
+     (2026-10-17, API-008). [ADR](adr/decision-115.md): one FIFO lane shares an
+     absolute queue/lock deadline and passes policy/deadline hooks into the
+     service-owned flock. Revalidate the admitted fingerprint under lock before
+     mutation; keep sync producers joined inside ownership. Delegate verification
+     only through a bounded peer-checked private protocol, retaining exact durable
+     operation outcomes. Reconcile the exact surviving verifier before marking
+     unresolved history interrupted; never replay receipts/journals or infer
+     completion from PID, lock release or client loss. Reject reset timeouts,
+     nested flocks, generic execution and in-process verification fallback.
+     API-014 still owns actual credential-free/no-IP systemd hardening; a startup
+     offline flag alone is not egress enforcement. No dependency or MCP is added.
+     Unreachable/unsafe worker status preserves active receipts and disables
+     execution across restarts; only trusted missing/interrupted evidence allows
+     parent interruption. Reject immediate interruption on transport loss because
+     a later restart would otherwise reopen the lane while a worker may survive.

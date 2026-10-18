@@ -439,8 +439,8 @@ changed archive root or UUID requires a server restart and cannot hot-switch the
 server to another archive. Invalid updated policy fails new archive work closed;
 version/health must remain able to diagnose it when their routes land.
 
-The later operation runner must reload policy under the archive lock and compare
-it with the admitted fingerprint before mutation. A changed policy refuses stale
+API-008's operation runner reloads policy under the service-owned archive lock
+and compares it with the admitted fingerprint before mutation. A changed policy refuses stale
 queued work; it does not quietly execute against new scope. Policy loading does
 not install a candidate or change `/etc/hfcache`, and candidate-selected paths or
 Hub endpoints cannot redirect the installed credential. API-005 supplies these
@@ -457,3 +457,14 @@ body. Retention defaults to 30 days for validated succeeded/failed history;
 unexpired bindings cannot be evicted for count caps, and interrupted/ambiguous/
 nonterminal state never ages out. Storage exhaustion refuses admission. See
 [decision 114](adr/decision-114.md) and [schema §13](schemas.md#13-service-private-operation-control-state-api-007).
+
+API-008's separate `[verification]` table configures only the protected private
+Unix-socket client, expected peer UID and bounded exchange/poll/frame policy.
+The socket defaults to `/run/hfcache/verification.sock`; omission of the peer UID
+uses the API process's effective UID. These settings require restart and cannot
+be overridden by an inbound request. They grant no process-launch, arbitrary
+configuration path or credential-forwarding authority. The dedicated worker's
+trusted service startup supplies its fixed archive config and separate private
+state root; API-014 owns installed socket/identity/no-IP provisioning. See
+[server verifier settings](server.md#private-verifier-client-settings-api-008)
+and [decision 115](adr/decision-115.md).

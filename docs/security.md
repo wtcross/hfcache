@@ -364,6 +364,26 @@ from archive journals. Missing/expired history remains uncertain. See
 [decision 114](adr/decision-114.md), [schema](schemas.md#13-service-private-operation-control-state-api-007)
 and [recovery guidance](recovery.md#10-operation-history-and-uncertain-submissions).
 
+**Execution boundary (API-008).** One bounded lane and one absolute waiting
+deadline limit heavy work; command services still own the common flock and
+compare fresh installed policy inside it before mutation. Strict bounded
+verification-only frames and kernel peer UID checks on a protected Unix socket
+replace any in-process verification fallback. The dedicated inherited-socket
+bootstrap refuses known credential environment sources and unexpected inherited
+descriptors, initializes the library offline flag before shared imports and
+never resolves a Hub/API credential. Protocol outcomes retain exact operation/
+fingerprint/domain-result identity. Unavailable/unsafe status preserves active
+evidence and disables execution across restarts; it cannot erase the barrier by
+marking an unreachable worker interrupted. Reader metadata remains available.
+
+These process/protocol checks do not enforce OS egress restrictions or identify
+arbitrary unknown secrets. API-014 must provision socket activation, service
+identities, a credential-free environment, `IPAddressDeny=any` and installed
+hardening acceptance. Standalone development invocation cannot claim that
+sandbox. No request starts a generic subprocess or invokes systemctl/sudo.
+See [decision 115](adr/decision-115.md) and
+[private verification trust](server.md#verification-wire-and-local-trust).
+
 ## 4. Controls summary
 
 | # | Control | Enforced by |

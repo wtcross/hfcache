@@ -938,6 +938,22 @@ is an explicit classification primitive. API-008 must first reconcile an exact
 surviving worker and durable outcome, then classify unresolved nonterminal
 records interrupted. A retained `running` label alone is not proof of liveness.
 
+**API-008 execution amendment (2026-10-17, decision 115).** The runner now owns
+reconcile-before-interruption without replay. Its queue deadline and callable
+work remain in memory; no executable request or restart queue is added to this
+schema. The separate verifier uses the same receipt/event/reference family under
+its own private local root. Its trusted internal admission preserves the exact
+API operation ID and uses that ID for private deduplication; the original client
+key is never forwarded. Its service-principal class is internal execution
+metadata, while the API receipt retains the authenticated submitter class.
+Exact terminal Envelopes bridge daemon observation loss without changing domain
+report identity. No field, enum or archive schema is widened by this reuse.
+Unavailable or unsafe private status leaves an active API receipt intact and
+execution admission closed across restarts. Only trusted missing/interrupted
+worker evidence permits parent interruption; a transport failure is never proof
+that the executor ended. This keeps uncertainty visible without adding a new
+durable state enum or weakening the retained-history rule.
+
 Only validated application-owned terminal success/failure history may expire
 after the configured retention period (default 30 days). Unexpired bindings
 cannot be evicted to satisfy a count cap. Nonterminal, interrupted, malformed,
