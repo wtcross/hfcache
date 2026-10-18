@@ -270,7 +270,7 @@ results by default; explicit `--detach` identifies admission separately. Validat
 submission keys and accepted operation IDs are printed even in quiet mode, with
 bounded sanitized progress on stderr. `operations show`, `lookup` and `wait`
 resume observation without submission; Ctrl-C/timeouts preserve handles and do
-not cancel accepted work. Use [the client runbook](docs/api-client.md#submit-detach-and-resume-api-013)
+not cancel accepted work. Use [the client runbook](docs/api-client.md#submit-detach-and-resume)
 for finite wait, same-key retry and uncertainty. Initialization keeps explicit
 root/confirmation and the server's disabled gate; no-confirm inspection never
 submits. API-014 packages systemd integration and API-015 integrates Cockpit's

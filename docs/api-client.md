@@ -1,23 +1,14 @@
-# API client contract
+# REST client reference
 
-Status: API-011 implements independent client/configuration primitives under the
-[active plan](agents/plans/2026-10-17-plan-rest-api-and-mcp.md). Its task records validation;
-API-012 migrates reader commands/candidates and API-013 migrates operational
-commands plus explicit operation observation. Global endpoint/source
-options select management settings. No production
-client/server rollout is asserted.
+Use the same synchronous client library for REST readers and writers. Reader
+hosts need only the base wheel, endpoint and separate protected API credential;
+they need no archive mount/TOML, service UID, Hub credential or server/MCP extra.
+No API failure falls back to local archive execution or starts a daemon.
 
-[Decision 118](adr/decision-118.md) defines one explicit API authority, finite safe
-observation and retained-key uncertainty. Reader and writer clients use the same
-synchronous library; readers need no archive TOML/mount, service UID, Hub credential
-or optional server/MCP package. The client never silently falls back to local
-archive access or starts a daemon.
-
-This is the REST CLI/library client. The optional
-[MCP example client](mcp.md#protected-file-example-client-mcp-004) uses a different
-protected MCP-reader source, SDK protocol and `/mcp/` endpoint; these REST global
-options and API-only `hfcache.api` do not authorize it. Neither interface forwards
-credentials across classes or falls back to local archive access.
+The optional [MCP example](mcp.md) uses its own SDK, MCP-reader bearer and `/mcp/`
+endpoint. REST, MCP and Hub credentials are separate and never forwarded between
+interfaces. [REST routes and effects](api.md#routes-and-effects) define current
+capabilities; [CLI output](cli.md) defines terminal and admission rendering.
 
 ## Endpoint and credential selection
 
@@ -51,7 +42,7 @@ named systemd credential directory when no token file wins. Names use
 regular UTF-8 TOML file of at most 1 MiB; final symlinks, unstable descriptor
 metadata, unreadable files and malformed TOML fail safely without input echo.
 Protected token loading separately checks every path component/inode as documented
-by the [server credential contract](server.md#implemented-credential-and-capability-boundary-api-005).
+by the [server credential contract](server.md#credentials-and-capabilities).
 A missing/unsafe selected credential retains HFAPI003 / exit 10.
 
 | Setting | Default | Range / purpose |
@@ -164,7 +155,7 @@ The interface provides `read(path, params=...)`, `iter_pages(path, field, ...)`,
 `plan_candidate(content, selectors=(), key=None, on_key=None)`. Submission returns its retained key alongside
 the typed acceptance; an unusable post-transmission acknowledgement raises
 HFAPI020 with original key/route instead of replaying. `on_key` exposes the generated/explicit key before the HTTP send so callers
-can preserve a lookup handle even if acknowledgement is lost. API-013's CLI prints
+can preserve a lookup handle even if acknowledgement is lost. The CLI prints
 that validated handle before sending, even in quiet mode. The
 selected credential is loaded once per client object; construct a new client
 after deliberately changing its source/value rather than discovering replacements
@@ -183,7 +174,7 @@ domain Envelope is yielded intact and terminates the walk, even when its failure
 data lacks the requested array; its exit must not become a generic protocol error.
 Exact nonpage responses reject a nonnull wrapper `next_cursor`.
 
-API-013 adds `operation_response(id)` / `lookup_response(key)` returning validated
+`operation_response(id)` / `lookup_response(key)` return validated
 `ClientRead` with the exact server metadata Envelope; the existing operation/
 lookup conveniences still return its typed receipt. `observe(id, timeout=...,
 on_event=..., after=0)` observes exact result and optional sanitized bounded event
@@ -226,13 +217,13 @@ Construction loads settings/credentials but sends no request; the explicit
 negotiation and version calls above contact only the configured management API.
 The client has no artifact-byte transfer or local archive reader.
 
-API-012/013 use these primitives for operational CLI modes and explicit resumable
+The CLI uses these primitives for operational CLI modes and explicit resumable
 observation. The independent [consumer helper](consumers.md) still owns bulk
 copy and complete local verification against exact publication identity.
 
-## CLI migration (API-012)
+## CLI dispatch
 
-The migrated modes below report writer truth through the API. Reader setup needs
+The modes below report writer truth through the API. Reader setup needs
 only this client configuration/credential, not `/etc/hfcache/config.toml`, archive
 mount, service UID or Hub credential. Connection failure is a transport error;
 there is no local archive fallback or automatic daemon start.
@@ -272,7 +263,7 @@ is a refusal rather than mixed publication metadata. Pages are still not an
 archive-wide snapshot.
 
 An explicit global `--config` is candidate content only for validate/plan, even
-when equal to the legacy default path. Other migrated API modes reject it, and
+when equal to the legacy default path. Other API modes reject it, and
 all API modes reject Hub `--token-file`; use `--client-config` / API credentials.
 Local validation explicitly selects `--local`. Candidate file content is bounded
 independently of the server JSON cap; escaping/wrapper overhead can produce 413.
@@ -291,13 +282,11 @@ hfcache --client-config /etc/hfcache/client.toml archive init --inspect
 ```
 
 Candidate validate/plan requires the writer API source; `--config` names a file on
-the CLI host, never a server file to open. Installation/backups remain privileged
-host work. API-014 packages scheduled callers and API-015 integrates Cockpit's
-API-only client/candidate pipeline; actual host acceptance stays
-an explicit hold and browser code never receives the API bearer. See
-[decision 119](adr/decision-119.md) and [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012).
+the CLI host, never a server file to open. Installation/backups remain privileged host work. Browser code never receives
+the API bearer. See [candidate authority](configuration.md) and the client
+integration/profile guidance below.
 
-## Submit, detach and resume (API-013)
+## Submit, detach and resume
 
 All operational modes use the API without a direct local mutation backend.
 Archive root/UUID, Hub credentials, preflight, common flock, scope/recovery proof
@@ -324,7 +313,9 @@ terminal Envelope with this object.
 Envelopes (`operations show` / `operations lookup`) with `data.operation`.
 `operations wait [--after N] -- '<operation-id>'` observes without submitting. The cursor resumes
 sanitized bounded event pages; explicit oldest-sequence/truncated metadata reports
-retention gaps. Quiet suppresses event progress, never mandatory safety handles.
+retention gaps. Ordinary progress requires both streams to be terminals with quiet off.
+Gap notices, warnings/errors and mandatory safety handles remain on stderr even
+with quiet and JSON.
 No raw logs or event fields can become executable input or stdout JSON fragments.
 The CLI escapes nonprintable Unicode/control characters in event text, keeping
 each event one plain stderr line.
@@ -357,7 +348,7 @@ Confirmed submission still requires strict server DTO/maintenance guards. Existi
 archives must not be initialized again.
 
 For a separately provisioned writer API source, these examples illustrate the
-interface; they are not production operations executed by this work package:
+interface; run only against a separately authorized scope:
 
 ```text
 hfcache --client-config /etc/hfcache/client.toml --json --detach sync
@@ -370,13 +361,11 @@ Use the same configured authority and credential class for key lookup. A stopped
 client or sync/verify client service stops observation, not the server executor;
 use [server drain](server.md#restart-and-drain) and
 [recovery](recovery.md#10-operation-history-and-uncertain-submissions) for execution
-ownership. [Decision 120](adr/decision-120.md) records this boundary. Shipped
-systemd integration is packaged by API-014 with deployment holds; Cockpit uses
-the API-only client integration described below.
+ownership. [Decision 120](adr/decision-120.md) records this boundary. Scheduled clients and Cockpit use the profile-specific boundaries below.
 
-## Native Unix and public prefixes (API-016)
+## Native Unix and public prefixes
 
-API-016's native Unix refinement keeps fixed unprefixed local API paths usable
+Native Unix keeps fixed unprefixed local API paths usable
 even when the same server has a public TCP `root_path`. Only trusted supported
 Unix transport scope (`client=None` plus absolute Unix-path/None-port `server`)
 selects that behavior; a missing peer alone is insufficient. Authentication/Host/Origin/bounds
@@ -386,30 +375,41 @@ schema is added; see [decision 123](adr/decision-123.md). Native Unix also accep
 the configured-prefixed spelling and emits matching operation/docs links; its
 unprefixed OpenAPI view uses `/` without mutating the public cached schema.
 
-## Cockpit client integration (API-015)
+## Cockpit client integration
 
-The root bridge starts a service-identity transient CLI unit with fixed
-`--client-config /etc/hfcache/client.toml --api-socket /run/hfcache/api.sock --json`
-and systemd `ImportCredential=hfcache.api`. Provision that name for the REST
-writer class, separately from daemon Hub `hf-token`; no bearer reaches the page,
-argv or ambient environment. Ordinary runtime calls omit archive `--config`.
-Candidate validate/plan alone uploads the fixed protected candidate file, guarded
-with exact candidate and installed-base content under the privileged config flock.
+The selected guarded rootless profile uses the fixed host client
+`/usr/local/libexec/hfcache-client`, which launches the API-only image client
+through fixed local Podman and a file-mounted `hfcache.api` secret. It does not use
+host `ImportCredential`. API/worker sockets are `/run/hfcache/api/api.sock` and
+`/run/hfcache/verification/verification.sock`; their services use the user manager.
+Legacy system-bus writer controls remain blocked on this profile; never redirect
+identically named units to another manager. The independent host guard and all
+read-only restrictions remain.
 
-The plugin requires a strict terminal schema-1 Envelope up to 16 MiB, independently
-collecting bounded progress (8 KiB line, 64 KiB retained diagnostics) and validated
-key/operation handles. Lost/uncertain observation, client stop and page closure
-never cancel accepted execution or justify recovery/replay. Reconnect using the
-same authenticated lookup/wait authority. Candidate syntax, installed compatibility,
-required preview and exact installed confirmation are distinct gates; unknown or
-incompatible authority blocks plugin installation. See
-[Cockpit](cockpit.md), [configuration pipeline](cockpit.md#6-configuration-editing)
-and [decision 122](adr/decision-122.md). Real installed credential/hardening proof
-remains operator acceptance.
+A native Cockpit integration would require a service-identity transient host
+CLI with fixed client configuration, `/run/hfcache/api.sock`, JSON and systemd
+`ImportCredential=hfcache.api`. That credential is REST-writer only, separate from
+daemon Hub `hf-token`. The shipped plugin has no native launcher selector; it
+uses the fixed rootless wrapper above. No bearer reaches browser code, argv or
+ambient environment.
+Ordinary runtime calls omit archive `--config`; candidate validate/plan alone
+uploads protected candidate content under exact candidate/base checks and the
+privileged configuration flock.
 
-## Scheduled service observation (API-014)
+The plugin requires a strict terminal schema-1 Envelope up to 16 MiB and separately
+bounded diagnostics (8 KiB line, 64 KiB retained) and validated recovery handles.
+Client stop, page closure or uncertainty never cancels accepted work or grants
+recovery/replay authority. Candidate syntax, installed compatibility, required
+preview and exact installed confirmation are distinct gates. Unknown/incompatible
+authority blocks installation. The host-local report browser is a documented
+exception, not another operational backend. See [Cockpit](cockpit.md) and
+[configuration editing](cockpit.md#6-configuration-editing).
 
-Ordinary CLI waits remain finite. The packaged sync/verify oneshots use
+## Scheduled service observation
+
+The guarded rootless deployment does not enable legacy calendars. In the
+supported native scheduling profile, ordinary CLI waits remain finite and the
+packaged sync/verify oneshots use
 [`scheduled_client`](../src/hfcache/scheduled_client.py) for only fixed `sync` or
 `verify-full`, keeping the unit active across repeated finite windows until the
 exact terminal Envelope/exit is observed. Later timer ticks therefore merge into
@@ -424,7 +424,7 @@ separate from daemon-only Hub `hf-token`. Clients use AF_UNIX and need no archiv
 access; actual verifier imports no credential and has independent no-IP/source
 masking. Host enforcement remains deployment acceptance.
 
-The private [schema-1 handle](schemas.md#14-scheduled-client-observation-handle-api-014)
+The private [schema-1 handle](schemas.md)
 binds fixed command, canonical endpoint, expected UUID and REST-writer class to
 one key and optional accepted ID. Fsync key before the sole POST. Any existing
 handle, including a crash before POST, permits only lookup/observation. Unknown/
@@ -432,7 +432,7 @@ malformed/future/mismatched history stays at HFAPI014/20; missing remote history
 HFAPI013 or interrupted HFAPI015 grants no replay. Same-class credential rotation
 can recover without a stored bearer/digest. Only exact terminal evidence permits
 pending-file unlink/fsync; retained lock inode is never removed. Preserve state
-on rollback and follow [actual executor drain](deployment-centos-stream-10.md#13-upgrade-plan-30),
+on rollback and follow [actual executor drain](deployment-centos-stream-10.md),
 not client-service termination. [Decision 121](adr/decision-121.md) records the
 required refinement and repository-versus-host acceptance boundary.
 
@@ -455,11 +455,8 @@ server's accepted operation.
 | HFAPI013 or HFAPI015 / exit 20 | Missing/expired or unfinished/interrupted outcome; preserve uncertainty and follow the [recovery runbook](recovery.md#10-operation-history-and-uncertain-submissions) |
 | Terminal domain Envelope | Preserve its command/run/error/partial-result exit classification; transport HTTP 200 is not domain success |
 
-The independent client TOML requires schema 1; archive JSON/receipt versions do
-not change. An actual isolated predecessor `66d85a3` wheel on Python 3.14.6 rejects
-`--client-config` with usage exit 2, while the new local version command accepts
-the stored option and exits 0 without resolving it. Both preserve the complete
-client file byte-for-byte and perform no API/Hub/archive operation. Keep client
-settings on rollback; lack of old option/client support is not permission to
-remove credentials/history or infer that an operation never executed. The task
-records the compatibility drill and definitive gate evidence.
+Client TOML requires integer schema 1 independently of archive/receipt versions.
+An older client without API-option support can reject `--client-config` with
+usage exit 2; keep settings and retained observation state through rollback.
+Unsupported client options never authorize deleting credentials/history or
+inferring that accepted work did not execute.

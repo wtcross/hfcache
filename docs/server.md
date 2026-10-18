@@ -1,122 +1,41 @@
-# Writer server contract
+# Writer server reference
 
-Status: API-006 implements authenticated metadata HTTP resources and their
-controlled application lifespan over API-005 configuration/auth primitives.
-API-007 adds bounded receipt/admission primitives and operation observation;
-API-008 adds the heavyweight lane and private verifier process/protocol; API-009
-adds typed sync, verification, planning, diagnostics and installed validation.
-API-010 adds explicit maintenance preview/apply, repair and guarded initialization.
-API-012 adds candidate/read CLI, API-013 operational CLI/observation and API-014
-activated service/scheduled-client packaging; installed-host acceptance remains
-an explicit deployment hold.
-See [the API contract](api.md) and [active plan](agents/plans/2026-10-17-plan-rest-api-and-mcp.md).
-No service is installed or listening as a result of this document.
+Run one authenticated writer application with one registry, metadata pool, heavy
+lane and daemon-instance lock across its enabled listeners. The daemon does not
+hold the archive-operation lock for its lifetime. Run a single process without
+auto-reload; heavy work stays outside the ASGI event loop. Operational clients
+use [REST](api.md), while the separate offline worker performs verification.
+No request starts a daemon/worker or falls back to local verification.
 
-## Public prefix and native Unix requests (API-016)
+## Deployment profiles
 
-[Decision 123](adr/decision-123.md) keeps the configured public `root_path` and
-TLS/proxy/Host/Origin boundary for TCP. Actual supported Uvicorn AF_UNIX requests,
-identified only by trusted transport scope `client=None` corroborated by
-`server=(absolute Unix socket pathname, None)`, may use native
-unprefixed `/api/v1` paths. They still require REST bearer authentication,
-Host/Origin checks and all bounds. Headers/forwarded metadata never select this
-authority; arbitrary ASGI integrations are not a substitute for the supported
-transport's peer information.
-Missing peer alone can also mean a socket error; it never grants native prefix
-or proxy-TLS exemption. TCP has an IP/numeric-port local address, and absent or
-malformed local evidence cannot bypass either boundary.
+| Profile | Executables and managers | Listener and credentials |
+| --- | --- | --- |
+| Guarded rootless | Fixed `/usr/local/libexec/hfcache-client` and container-service launcher; image Python/application under `/opt/hfcache/.venv/bin`; user API/worker/Caddy services behind system bridge/independent host guard | Unix-only API `/run/hfcache/api/api.sock` behind Caddy TLS; notify-ready worker-created `/run/hfcache/verification/verification.sock`; explicit Podman secret files, none in worker |
+| Native | Host release `.venv/bin`, system API/worker services and named socket activation | API `/run/hfcache/api.sock`, private `/run/hfcache/verification.sock`; systemd named credentials, worker receives none |
 
-Operation links and docs/schema URLs use a trusted effective prefix for that
-request, without shared mutable prefix state. Public OpenAPI remains deterministic
-with the configured public prefix. The local scheduled/Cockpit client needs no
-new prefix setting or schema; TCP must still use its public path and established
-TLS/proxy policy. Locked-source and real disposable Unix/TCP tests are required;
-installed-host acceptance remains separately held.
-Unix also accepts the configured-prefixed spelling, with response links matching
-the trusted spelling used. Unprefixed Unix OpenAPI uses a response copy with
-`servers=[{"url":"/"}]`; prefixed/TCP responses keep the configured public prefix.
-The cached public schema is never mutated by a native request.
+The selected recorded rootless profile keeps NAS read-only, writer masks,
+disabled calendars, both operation stores, pending handles and original locks.
+Its API requires the ready worker **service**. The indexed rootless `.socket`
+artifact stays dormant with `RefuseManualStart=yes`; native named-FD3 activation
+remains supported. Native tools positively classify release layouts and refuse
+container/mixed/unknown targets. No identical unit name implicitly selects another
+manager. See [scripts](scripts.md), [containers](containers.md) and
+[recorded deployment restrictions](deployment-status.md).
 
-## Activated services and scheduled observation (API-014)
+## Public prefix and native Unix requests
 
-[Decision 121](adr/decision-121.md) packages one server application/lifespan for
-systemd-activated Unix plus optional TCP sockets. Both API listeners use
-`FileDescriptorName=hfcache-api`; activation does not create a second registry,
-pool or execution lane. The shipped arrangement matches the configured private
-Unix socket and loopback TCP port 8787. Foreground development binding remains
-explicit; no source/test result claims a production listener was started.
-Adopt activation only with complete, matching `LISTEN_PID`, `LISTEN_FDS` and
-`LISTEN_FDNAMES` metadata and the exact enabled Unix/TCP listener set. Identify
-sockets by validated family/address/name, never descriptor order; activated paths
-are neither rebound nor unlinked by the application. Partial/mismatched activation
-fails rather than silently binding a new listener. See systemd's
-[descriptor contract](https://www.freedesktop.org/software/systemd/man/latest/sd_listen_fds.html)
-and [socket units](https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html).
-Validate protected Unix UID/mode/group/parent and exact IPv6-only listener policy;
-never call shutdown on manager sockets. When present, `LISTEN_PIDFDID` must match
-the process's own pidfd, and activation variables are cleared before serving.
+TCP uses the configured public `root_path`. Native unprefixed REST requires both
+`client=None` and a corroborating local `(absolute Unix path, None port)` server
+address; missing peer alone is insufficient. Headers cannot assert locality.
+Native Unix also accepts public-prefixed spelling, and operation/docs links use
+the trusted effective prefix. Prefix overlap recognizes a valid prefixed REST/MCP
+remainder first. Native unprefixed OpenAPI gets a response copy with server `/`;
+the public cached schema is not mutated. Authentication, Host/Origin policy and
+all resource limits apply to either spelling.
 
-The dedicated worker uses its own socket/service and
-`FileDescriptorName=hfcache-verification`, unprivileged hfcache identity,
-`IPAddressDeny=any`, startup offline initialization and no Hub/API/MCP credential
-imports. Resolve trusted peer identity through mutually exclusive `--api-user`
-account name or `--api-uid`, with effective UID as default, never system-manager
-`%U`. Reject credential environment spellings including `HUGGINGFACE_HUB_TOKEN`.
-Hide `/run/credentials`, `/etc/credstore`, `/etc/credstore.encrypted`,
-`/etc/hfcache/credentials` and daemon HF_HOME `/var/lib/hfcache/hf-home`
-from the worker. Custom development token-file paths
-outside those stores require explicit additional sandbox restrictions; no
-arbitrary-path credential-isolation guarantee is asserted.
-Inherited-descriptor/environment validation precedes NSS/account resolution and
-shared imports, so their legitimate runtime descriptors cannot be mistaken for
-inherited credential descriptors.
+## Server configuration
 
-Sync/verify units keep their names/calendars, terminal exit and OnFailure hooks;
-the verify timer remains disabled pending operator calendar approval. Their
-AF_UNIX scheduled clients import only the distinct API credential `hfcache.api`.
-The daemon imports that API source plus separate Hub `hf-token`; worker imports
-neither. Use the same systemd credential name on server and clients so encrypted
-credential-name binding is preserved. Shared runtime lock inodes survive client/
-server/worker lifecycle; target/mount behavior and scheduling authority do not
-change.
-
-The fixed client entrypoint is:
-
-```text
-python -m hfcache.scheduled_client --client-config PATH --state-directory PATH sync
-python -m hfcache.scheduled_client --client-config PATH --state-directory PATH verify-full
-```
-
-Its private [schema-1 pending handle](schemas.md#14-scheduled-client-observation-handle-api-014)
-requires explicit expected archive UUID and binds fixed intent, endpoint and
-REST-writer namespace without credential digest. Fsync one generated key before
-the sole POST; persist accepted ID. Existing state permits lookup/observation
-only. Repeated finite windows keep the oneshot active through multi-hour execution
-until exact terminal Envelope/exit, preventing timer overlap. Unknown/malformed/
-future/mismatched handles remain at HFAPI014/20, missing remote history never
-permits replay, and same-class token rotation can recover. Only validated exact
-terminal outcome permits owned-handle removal/fsync. This is not a request queue.
-Only the module entrypoint temporarily handles SIGINT/SIGTERM as observation
-interruption, returns HFAPI019 / exit 20 with preserved-state recovery notices,
-and restores both prior handlers. Importing it or calling `run_scheduled` installs
-no signal handler. Client interruption never cancels accepted execution.
-
-Repository unit/activation/installer/disposable drain/rollback fixtures and
-`systemd-analyze verify` are distinct from operator deployment acceptance. Real
-systemd activation, executor cgroup no-IP/no-credential enforcement, SELinux/NFS
-and executor-aware hardening probes remain explicit deployment holds; no host
-service, timer, mount or production archive operation is authorized here.
-
-Activated process fixtures observe API drain followed by raw `-SIGTERM` because
-[locked Uvicorn replays its captured signal](https://github.com/Kludex/uvicorn/blob/0.54.0/uvicorn/server.py)
-after shutdown. Systemd treats SIGTERM as clean for these non-oneshot services
-([service termination rules](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#Restart=));
-the worker's explicit handler returns 0. Neither process status alone substitutes
-for exact operation outcomes or actual executor-drain proof.
-
-## Implemented configuration boundary (API-005)
-
-[Decision 112](adr/decision-112.md) introduces
 [`ServerConfig`](../src/hfcache/server_config.py) independently of the archive
 TOML. `load_server_config` reads UTF-8 TOML and
 `validate_server_config_mapping` applies strict frozen models with unknown keys
@@ -127,7 +46,7 @@ Validation exposes stable code/shape diagnostics without echoing input values,
 unknown caller-selected keys or raw TOML exception text. Existing HFCFG codes
 classify missing/unreadable files, malformed TOML, unknown fields, schema version
 and invalid constraints. The configuration model itself adds no durable JSON
-format; API-007's independent local receipt schema is described separately below.
+format; The independent local receipt schema is described separately below.
 
 The server configuration default is `/etc/hfcache/server.toml`.
 [`packaging/server.toml`](../packaging/server.toml) is an example for this separate
@@ -141,14 +60,14 @@ the certificate/key before accepting connections.
 | --- | --- | --- |
 | `schema_version` | required integer | Exactly `1` |
 | `archive_config` | path, `/etc/hfcache/config.toml` | Installed archive policy, not caller-selected candidate authority |
-| `state_directory` | path, `/var/lib/hfcache/api` | Local service-private API-007 control state; outside publication trees |
+| `state_directory` | path, `/var/lib/hfcache/api` | Local service-private control state; outside publication trees |
 | `credentials` | required table | Required writer source and optional reader/MCP sources below |
 | `listener` | table, defaults below | Unix/TCP/TLS and browser/proxy policy |
 | `limits` | table, defaults below | Bounded resource policy for metadata, command routes and runner |
 | `verification` | table, defaults below | Private executor client policy; no worker process is launched |
 | `maintenance_enabled` | bool, `false` | Initialization only: requires this gate plus writer capability and explicit configured-target confirmation |
 | `interactive_docs` | bool, `false` | Enables authenticated `/api/v1/docs`; `/api/v1/openapi.json` is always authenticated |
-| `mcp_enabled` | bool, `false` | MCP-001 optional transport; requires installed `mcp` extra plus usable distinct `mcp_reader` source, restart-only |
+| `mcp_enabled` | bool, `false` | Optional MCP transport; requires installed `mcp` extra plus usable distinct `mcp_reader` source, restart-only |
 | `log_level` | str, `"info"` | `debug`, `info`, `warning` or `error`; startup-only |
 
 ### Listener settings
@@ -178,7 +97,7 @@ Unix sockets authenticate exactly as TCP does. Non-loopback TCP requires direct
 TLS. An off-host TLS proxy connects only to loopback TCP and requires
 `proxy_tls=true` plus explicit trusted proxy addresses; forwarded headers are
 never trusted from everyone. The config model validates those combinations;
-API-006 applies Host/Origin/proxy-prefix policy at the HTTP boundary.
+The HTTP boundary applies Host/Origin/proxy-prefix policy at the HTTP boundary.
 No wildcard CORS, token query parameters or URL userinfo is permitted by the
 management contract. The client always verifies off-host TLS.
 
@@ -203,27 +122,21 @@ management contract. The client always verifies off-host TLS.
 | `operation_max_store_bytes` | `268435456` | `1048576`–`17179869184` |
 | `operation_retention_days` | `30` | `1`–`36500` |
 
-API-006 enforces read-page/body/response/work and metadata-pool limits; shutdown
-joins its workers.
-API-007 uses `retained_terminal_operations` as a conservative ceiling across
-all retained receipts, not permission to evict history. The operation-specific
-limits bound its independently versioned local store, events and terminal
-Envelopes. Retention never ages out interrupted/ambiguous/nonterminal work;
-unexpired terminal keys cannot be evicted for the count cap. Admission reserves
-the maximum receipt plus result allowance for each nonterminal/interrupted
-operation, while succeeded/failed history consumes actual bytes. Refuse new
-admission if that count/space reservation does not fit. API-008 implements the
-execution/queue policy below; [API lifecycle](api.md#admission-idempotency-and-lifecycle)
-defines the safety boundary.
+Read/body/response/work limits are enforced, and shutdown joins workers.
+`retained_terminal_operations` conservatively caps **all** retained receipts; it
+does not permit eviction of unexpired or unresolved history. Nonterminal and
+interrupted operations reserve maximum receipt/result space, while terminal
+succeeded/failed records consume actual bytes. Count/space pressure refuses
+admission. Retention never expires ambiguous/nonterminal/interrupted evidence.
 
-API-006 applies finite metadata entry/artifact/total-byte budgets through shared
-`QueryBounds`. A page size limits its returned items, not the cost of the bounded
-underlying scan; budget exhaustion returns visible `HFAPI005`/503. It never
-becomes an empty page or raises verification confidence. The local CLI's default
-queries retain complete results without HTTP ceilings. No metadata scan hashes
-artifact content or creates/repairs an archive.
+Metadata entry/artifact/aggregate-byte budgets apply to the complete underlying
+scan, regardless of page size. Exhaustion returns HFAPI005/503, never a partial
+success or higher verification confidence. Public operational CLI collection also
+uses bounded HTTP and aggregate limits; it is complete or fails explicitly.
+Metadata scans do not hash payload content, initialize or repair an archive.
+See [response budgets](api.md#pagination-and-budgets).
 
-### Private verifier client settings (API-008)
+### Private verifier client settings
 
 | `[verification]` key | Default | Constraint |
 | --- | --- | --- |
@@ -236,7 +149,7 @@ artifact content or creates/repairs an archive.
 These are restart-only server-side client settings, not caller-selected request
 values or worker-launch permissions. Omit `expected_peer_uid` to use the service
 UID; TOML has no null literal. The worker's separate store uses fixed default
-`OperationLimits` from API-007, independently of API receipt-limit overrides.
+`OperationLimits`, independently of API receipt-limit overrides.
 Its state directory must be provisioned separately, never nested with API state.
 
 ### Archive-policy reload
@@ -247,20 +160,20 @@ a frozen `PolicySnapshot(config, fingerprint)` using the existing archive
 fingerprint. Earlier snapshots remain unchanged. Invalid updates fail new
 archive work; changed root/UUID fails closed with `HFCFG005` until restart.
 API credentials never enter the archive snapshot or fingerprint; no new server
-fingerprint format exists. API-006 takes a snapshot for each archive query;
-API-008 additionally reloads/compares policy under the archive lock before a
+fingerprint format exists. Each archive query takes a snapshot;
+queued mutation additionally reloads/compares policy under the archive lock before a
 queued mutation. These primitives do not install policy or switch archive
 authority. Version/capabilities do not need a fresh archive snapshot; health can
 diagnose failed updated policy without silently switching archive authority.
 
-## Implemented credential and capability boundary (API-005)
+## Credentials and capabilities
 
 `[credentials.writer]` is mandatory. `[credentials.reader]` and
 `[credentials.mcp_reader]` are optional. Each configured source contains exactly
 one `file` absolute path or `systemd_name`; the latter resolves only through the
 absolute `CREDENTIALS_DIRECTORY` supplied by systemd. Names use
 `[A-Za-z0-9._-]{1,64}`, excluding `.` and `..`. An absent optional source disables
-that class. Every active configured source must load successfully; MCP-001 skips
+that class. Every active configured source must load successfully; Disabled MCP skips
 the MCP source entirely while disabled, even if configured. Missing, unsafe,
 racing or malformed active sources fail startup with `HFAPI003`, and duplicate
 active class values fail with `HFAPI004`. No ambient Hub/API
@@ -306,10 +219,10 @@ The optional [`api.security`](../src/hfcache/api/security.py) adapter supplies
 `BearerAuthentication(registry)` and `RequireCapability(authentication, capability)`.
 It validates the original single bounded Authorization field before FastAPI can
 normalize input, delegates verification to the core and preserves those
-responses. The adapter itself creates no application. API-006's outer boundary
+responses. The adapter itself creates no application. The outer HTTP boundary
 uses the same core verifier before framework routing/validation on every HTTP
 surface, including health, capabilities, docs, OpenAPI, unknown paths and method
-errors, and sanitizes validation/exception output. API-007 receipts store only the
+errors, and sanitizes validation/exception output. Receipts store only the
 nonsecret principal and operation/domain correlation, never a token, credential
 digest or source path. Their private idempotency-key digest is a separate
 comparison value and is never exposed by HTTP.
@@ -317,194 +230,59 @@ comparison value and is never exposed by HTTP.
 Rotation means replace the protected credential, then restart the server to load
 it. Existing clients must use the new value on subsequent requests; stale tokens
 fail authentication after restart. No request mutates the registry or discovers
-replacement credentials automatically. MCP-001 activates the existing MCP source
+replacement credentials automatically. Enabling MCP activates the existing MCP source
 only when `mcp_enabled` is true; disabled MCP never reads that source. Enabling
-requires a usable distinct credential and the optional package. It supplies the
-transport, with MCP-002 exposing exactly nine metadata tools through a narrow
+requires a usable distinct credential and the optional package. It exposes
+exactly nine metadata tools through a narrow
 read protocol; no resources/prompts or command paths. See [MCP](mcp.md).
 
-## Package and client-transport primitives (API-005)
+## Metadata lifespan and request boundary
 
-HTTPX and HTTPCore are direct base dependencies; the `server` extra declares
-FastAPI/Uvicorn. The Python 3.14 locked versions and official sources are recorded
-in [decision 112](adr/decision-112.md). The default gate synchronizes implemented extras,
-runs its tests without optional-import skips, builds the wheel and installs the
-locked base and server variants into real isolated environments. Those smoke
-checks import the CLI/auth core, exercise help/schema-1 local version, confirm
-base has no FastAPI/Uvicorn, import the server adapter with the extra, and confirm
-FastMCP is absent in both. MCP-001 adds a third locked server+MCP installation
-variant and synchronizes both extras in the full development gate, retaining the
-base/server absence checks. See [decision 124](adr/decision-124.md). API-012's [decision 119](adr/decision-119.md) makes the
-already-locked HTTPCore 1.0.9 explicit for resource-safe Unix transport; no package
-or version upgrade is added.
+Authenticate before routing, body reception/validation and ordinary errors on
+every HTTP surface, including health, schema/docs, unknown routes and methods.
+Enforce Host/Origin, content type, header/query/body/response bounds and sanitized
+errors. No wildcard CORS, query bearer or reflected redirect is permitted.
+Trusted proxies are explicit; headers cannot upgrade caller capabilities.
 
-[`create_http_client`](../src/hfcache/http_transport.py) supplies a directly used
-HTTPX construction boundary used by API-011: verified default/custom-CA TLS, optional
-Unix-socket transport, no ambient proxy/credential discovery, redirects disabled
-and no transport retries. Unix transport uses a narrow public adapter with owned
-socket cleanup, while TCP/TLS stays on HTTPX. It bounds connections to 8 (4 keepalive) and timeouts
-to 5 seconds for connect/pool and 30 seconds for read/write. Callers own closing
-the client. The primitive itself sends no request; API-011's independent typed
-[client](api-client.md) supplies endpoint, bearer, strict response and finite
-observation policy without importing the optional server framework. Public CLI
-reader migration is API-012 and operational command/observation migration API-013.
+The daemon holds `/run/hfcache/api.lock` throughout its lifespan, separately
+from the operation-store lock and archive flock. Its pre-existing parent is
+opened without following symlinks; the lock must be an effective-user-owned,
+regular, single-link mode-0600 inode. Invalid or already-held locks fail with
+`HFAPI011`. The application never unlinks this lock.
 
-## Implemented metadata lifespan (API-006)
+One bounded metadata pool is shared across listeners. Capacity covers both the
+worker and response/stream lifetime, including disconnected observers, so a client
+cannot release a slot while its scan still runs. Request cancellation never
+abandons ownership prematurely. Metadata uses safe no-follow reads and frozen
+policy snapshots; it neither hashes repository content nor reconstructs a catalog.
+Health readiness does not certify archive integrity or open execution admission.
 
-[`create_app`](../src/hfcache/api/app.py) accepts a frozen server config and
-optional credential registry, installed policy, query factory and instance-lock
-path for hermetic tests, plus the trusted startup-only `hub_token_file` source.
-Import/factory construction starts no listener and performs no archive
-initialization, repair or Hub call. The lifespan owns real
-startup effects: acquire the local daemon lock,
-configure logging once, load explicit API credentials, pin installed archive
-policy, construct the bounded metadata pool and cache policy-independent version
-information. Failure does not create the archive or reconstruct a catalog.
+Request IDs are server-generated, separate from operation IDs and domain report/
+journal run IDs. Execution correlation is context-scoped and copied into workers;
+invocation mode describes the execution host, not a timer/submitter origin.
+A credential class is not individual user attribution. Logging is configured at
+startup; client verbosity does not reconfigure the daemon. Diagnostics register
+exact secrets before use and sanitize again on presentation, without echoing input.
 
-The default daemon lock is `/run/hfcache/api.lock`, separate from the archive
-flock. Its parent must already exist and every component is opened no-follow.
-The retained lock inode must be a regular single-link file, owned by the effective
-server user and mode `0600`; a held/unsafe/unavailable lock refuses with
-`HFAPI011`. It is never unlinked. The lock covers the application lifespan,
-not archive mutation; operation-scoped archive flock ownership remains unchanged.
+## Command admission and policy authority
 
-Blocking queries run in `metadata_workers` threads, with total capacity bounded
-by workers plus `metadata_queue`. Each submission gets an independent copied
-execution context. Capacity remains reserved for worker completion and request/
-stream completion, including a disconnected observer whose worker is still
-running. Full/draining admission returns `HFAPI009`/503. Version/capabilities
-remain independent of archive scans. Shutdown closes pool admission and joins
-its workers before releasing the instance lock; it never cancels an archive
-operation or infers a durable result from a lost observer.
+[The route matrix](api.md#routes-and-effects) is the canonical mode/capability/
+effects inventory. Synchronous validation creates no receipt. Keyed plans,
+diagnostics and maintenance previews create local control history even when they
+preserve archived content. Plans and both diagnostic modes contact the Hub.
+Apply reloads policy and reconstructs scope/evidence under the shared lock; posted
+previews never grant apply authority. Initialization alone additionally requires
+`maintenance_enabled`, writer authority, configured root/UUID and literal confirmation.
 
-The API contract records exact [resources/wire models](api.md#implemented-metadata-resources-api-006),
-page ordering and source/response bounds. Read-only inspection uses the bounded
-no-follow metadata hook; unsafe/corrupt/missing sentinel state produces unusable
-diagnostics without changing it. `health.ready` reports the daemon rather than
-archive integrity, mount safety or initialization. No health path probes writes,
-rebuilds a catalog or constructs a Hub credential. Ref/manifest checks do not
-claim per-request sentinel proof; report identity and catalog confidence retain
-their own documented validation rules.
+Candidate TOML is bounded content, never a server pathname, installation, Hub
+source or durable replay body. Validity and installed compatibility are separate.
+Planning compares root/UUID/Hub endpoint/token mode/credential name/expected
+account and rechecks before execution, always using installed credentials.
+The receipt retains admitted identity; matching retries do not reload changed
+policy or enqueue again. No request can supply a generic executor, command,
+configuration path, network credential or lifecycle-control escape.
 
-## Command admission and Hub authority (API-009)
-
-[`install_command_routes`](../src/hfcache/api/commands.py) binds explicit strict
-[command DTOs](../src/hfcache/api/command_models.py) to the shared services and
-bounded runner. The [API contract](api.md#implemented-command-resources-api-009)
-records exact body/capability rules, 202 models, key lookup and terminal results.
-Sync and every actual verification require writer capability; installed planning
-and explicitly read-only diagnostics permit REST readers while retaining Hub,
-resource and control-state effects. Probing diagnostics require a writer and the
-service-owned lock. Installed validation is an immediate query, not a job.
-
-The outer boundary authenticates before receiving a body, authorizes known writer
-routes before reading it, and enforces mixed-route capabilities before typed
-validation. It accepts one bounded strict JSON object with explicit media/encoding
-rules and sanitized errors. Metadata/observation remain responsive while accepted
-heavy work runs. A 202 proves durable admission only; the exact result Envelope
-retains domain failure/partial-result classifications. A lost/oversized admission
-response cannot prove nonexecution; the original key identifies its binding.
-
-`serve --hub-token-file PATH` is a trusted development/startup option forwarded
-to `create_app(..., hub_token_file=...)`, separate from API bearer credentials.
-Only that explicit server-local file or the installed systemd Hub credential
-source can supply Hub authority, under the existing token-mode/account rules.
-Adapters resolve it when the shared command or installed validation requires it;
-startup performs no Hub call. No HTTP body can select a token, source file,
-endpoint, archive root or arbitrary command. Verification receives none of those
-credentials and always delegates through the configured private executor.
-
-API-012's [candidate content](configuration.md#12-candidate-authority-validation-and-planning-api-012)
-uses `ValidationSubmission` and `PlanSubmission` with bounded `CandidateText`.
-Validation resolves no credential/Hub/probe, reports validity separately from
-compatibility and can syntax-validate while installed policy is broken. Planning
-uses `parse_candidate` / `prepare_candidate_plan`, retaining every ordered safe
-error as an admitted terminal Envelope. The runner's fresh-only prepare callback
-never runs for a matching retry. `PlanSubmission.canonical_body()` omits only the
-absent candidate field to preserve old installed key digests; explicit null refuses.
-
-Compatible candidate policy is frozen in memory; before Hub work after queue
-waiting, compare all six fields again with fresh installed authority, including
-credential name excluded from policy fingerprints. Only installed Hub policy/
-credential is used, while candidate repository/retention/worker intent is previewed.
-Admission/queue limits and receipt/result wrapper fingerprint remain installed
-policy, not candidate authority. No candidate source path is opened on the server,
-no raw candidate is durable and no configuration-install endpoint exists.
-
-## Maintenance and initialization authority (API-010)
-
-[`install_maintenance_routes`](../src/hfcache/api/maintenance.py) binds
-[strict maintenance DTOs](../src/hfcache/api/maintenance_models.py) to shared
-`CommandServices`, reusing `admit_command`, `offload_command` and `command_service`
-from the ordinary command adapter. The trusted helpers preserve one admission,
-context, installed Hub source and snapshot wait budget; they do not introduce
-another dispatcher or domain algorithm. Capabilities advertises the actual
-`maintenance_enabled` flag so authenticated clients can distinguish initialization
-availability from ordinary maintenance.
-
-Separate typed preview/apply resources use the same keyed admission/observation
-contract and shared services. Writer-only apply, repair and initialization routes
-authorize before body reception; reader previews remain heavy jobs with receipt
-writes, not metadata/MCP tools. URL identity determines mode, and supplied plans,
-paths, credential overrides or implicit apply booleans are refused. Locked apply
-revalidates installed fingerprint, scope, guards and filesystem evidence; preview
-output grants no later authority. See [maintenance resources](api.md#implemented-maintenance-resources-api-010).
-
-`maintenance_enabled` is disabled by default and controls initialization only.
-It is immutable with the server configuration until restart. When disabled,
-`POST /archive/initializations` refuses `HFAPI002`/403 before receiving a body or
-handling an old POST binding; the original key lookup/history remains observable.
-Other maintenance routes keep their own role and domain checks. Enabling this
-setting alone performs no archive work and grants no path-selection authority.
-The initialization DTO must explicitly confirm and restate the configured
-absolute root/canonical UUID. Its shared service owns the lock and fresh
-initialization checks; existing sentinel, unsafe/unknown layout or mismatched
-authority refuses. No startup/health/recovery path calls initialization.
-
-Disabling the gate later is an operator restart choice, not cancellation of work
-already accepted. Drain accepted work before completing the old process's shutdown.
-The service cannot install archive policy, remove unknown evidence to make init
-succeed, or initialize an alternate root from a request. Installed systemd/service
-acceptance remains API-014; this package uses throwaway HTTP/domain fixtures only.
-
-## Foreground listener bootstrap (API-006)
-
-`hfcache serve --server-config /etc/hfcache/server.toml` explicitly starts the
-configured server; it requires the `server` extra. This implementation was tested
-on disposable local sockets, not started against the production archive.
-One Uvicorn instance/worker, one ASGI lifespan, credential registry and metadata
-pool serve both configured listeners. Direct TLS applies to TCP only; the Unix
-socket stays ordinary local HTTP for deny-all-IP clients. TLS certificates and
-keys must load successfully before accepting work. Auto-reload is not enabled,
-and proxy headers are disabled in Uvicorn so the application owns explicit trust.
-Bootstrap reserves addresses before Uvicorn validates TLS and starts the
-lifespan/listeners. Reserved sockets accept no plaintext connections during that
-interval. Invalid TLS closes them and removes only the owned unchanged Unix inode.
-
-Runtime directories must already exist. The Unix socket binds through a pinned
-no-follow parent descriptor, initially mode `0600`, then the configured
-`0600`/`0660`. Startup never adopts or unlinks an existing path. Cleanup removes
-only the exact socket inode this process created; a replaced name is preserved.
-A socket left after a crash requires an operator to prove it unused before
-cleanup. The daemon lock inode is always retained. No directory or archive
-initialization is hidden in listener setup.
-
-Uvicorn raw access/error/ASGI tracing is disabled to avoid logging request URLs
-or headers; the application retains sanitized problems and structured event
-correlation. The foreground wrapper preserves typed lifespan startup failures
-instead of reducing unsafe credentials or invalid archive policy to a generic
-unavailable error. `serve --json` writes a classified startup failure Envelope;
-normal daemon execution writes no success Envelope/stdout. Uvicorn's graceful
-HTTP shutdown timeout uses `shutdown_timeout_seconds`, followed by joined
-metadata-worker shutdown. Tests use ephemeral TCP/Unix sockets and disposable
-OpenSSL-generated certificates to prove TLS verification and CA rejection;
-OpenSSL is a test tool, not a runtime dependency or production certificate change.
-The small `ListenerServer.startup` override is tied to the locked Uvicorn
-0.54 lifecycle and is covered by those real-socket tests; revisit it during a
-Uvicorn upgrade. Proven local Unix requests remain available when TCP uses a
-trusted TLS proxy; TCP peers must satisfy explicit numeric proxy/HTTPS checks.
-
-## Implemented operation control state (API-007)
+## Operation control state
 
 The application lifespan owns one `OperationStore` under `state_directory`,
 separate from the archive lock and publication/export tree. The configured state
@@ -525,24 +303,22 @@ reservation budgets refuse admission. A failed storage/fsync/write never makes
 work runnable. Receipts themselves bind keys; indexes/scans are derived and no
 command body is retained for replay.
 
-Startup opens the store and shutdown closes its pinned descriptors. API-007
-alone did not run a worker, expire history or classify old receipts; API-008 now
-adds the runner/reconciliation lifecycle described below.
-`interrupt_unfinished()` and `expire()` are explicit core primitives, not HTTP
-mutation endpoints. API-008 must reconcile exact surviving executors before
-classifying unresolved work. Unsupported/malformed/unexplained state is preserved
-and blocks scan/admission, while healthy exact-ID reads and policy-independent
-diagnostics remain available. A retained `running` label never proves liveness.
+Startup opens the store; shutdown closes its pinned descriptors only after
+joined execution drain. Reconcile exact surviving executors before classifying
+unresolved receipts. Unsupported/malformed/unexplained state is preserved and
+blocks scan/admission, while healthy exact-ID reads and policy-independent
+diagnostics remain available. A retained running label never proves liveness.
+Core interrupt/expiry primitives are not HTTP mutation endpoints.
 
 Operation observation uses authenticated bounded HTTP metadata work, never the
 archive flock or a domain command. All REST read-capable principals share this
 whole-archive metadata/result boundary; idempotency lookup alone uses the caller's
 credential-class namespace. The [API contract](api.md#admission-idempotency-and-lifecycle)
-defines wire/status/event semantics; [schemas §13](schemas.md#13-service-private-operation-control-state-api-007)
-defines the independent local family and retention compatibility. API-008 supplies
-heavy execution/private verification; API-009/010 expose the typed command routes.
+defines wire/status/event semantics; [control-state schemas](schemas.md)
+defines the independent local family and retention compatibility. The execution
+lane and strict route matrix preserve these boundaries.
 
-## Bounded execution and private verification (API-008)
+## Bounded execution and private verification
 
 One heavyweight FIFO lane is separate from the bounded metadata pool. Admission
 must be durable before an item becomes runnable. Matching idempotent retries
@@ -581,7 +357,7 @@ Fresh verification admission probes the configured executor before writing a
 new receipt; a missing/untrusted adapter refuses with `HFAPI016`. Matching
 idempotent retries bypass this fresh-only probe and retain their original binding.
 The probe never submits or starts verification.
-API-009 permits a trusted `wait_seconds(snapshot)` selector as well as a numeric
+Fresh admission permits a trusted `wait_seconds(snapshot)` selector as well as a numeric
 budget, so fresh admission uses the installed sync/verification waiting policy
 without loading changed policy on an idempotent retry. No request field supplies
 that callable or changes the server's waiting policy.
@@ -590,9 +366,10 @@ The separate verifier uses the same complete target/hash/report/catalog lock
 boundary. The HTTP process imports its protocol/client without executing archive
 verification. A missing/untrusted executor is `HFAPI016`, HTTP 503 / exit 20;
 there is no production in-process fallback, process spawning from a request or
-generic systemctl/sudo command. API-014 packages socket-activated units and
-no-IP/credential-source policy; installed enforcement remains operator acceptance,
-not proof supplied by API-008.
+generic systemctl/sudo command. The supported native
+units and rootless roles enclose the actual executor in credential-free/offline
+confinement. Installed peer/cgroup/SELinux/network proof is distinct from source
+fixtures; no process-spawning or in-process verification fallback exists.
 
 ### Verification wire and local trust
 
@@ -675,288 +452,93 @@ shutdown, not a claim that SIGKILL can finish work.
 
 ### Dedicated worker bootstrap and limitations
 
-`python -m hfcache.verification_worker` is a private service-manager entry point,
-not a public remote CLI command. It requires trusted local `--config`,
-`--state-directory`, `--socket` and `--api-uid` settings and exactly one inherited
-systemd listening descriptor at FD 3 (`LISTEN_PID`/`LISTEN_FDS` must match).
-It neither binds a new socket nor accepts a caller-selected configuration over
-IPC. The inherited listener must already be a listening Unix stream socket at
-the protected configured name. The state root cannot overlap the installed
-archive root. Keep API and verifier state roots separate, never nested, because
-each flat store preserves/refuses unexplained entries.
+`python -m hfcache.verification_worker` is a private local service entrypoint,
+not a public command-dispatch interface. It takes trusted local `--config`,
+`--state-directory` and `--socket`; optional `--api-user` and `--api-uid` are
+mutually exclusive, defaulting to effective UID. System-manager `%U` is not the
+service peer identity. API/worker stores must not nest or overlap the archive.
 
-The bootstrap validates activation, known credential environment sources and
-unexpected inherited descriptors before shared runtime imports can open their
-own files. It sets `HF_HUB_OFFLINE=1` once before importing shared command/Hub
-modules. It refuses known Hub/API/MCP credential sources, including
-`CREDENTIALS_DIRECTORY`, and live inherited descriptors above FD 3 rather than
-carrying API secrets into the worker. No credential is resolved by the
-verification path. These checks do not discover every arbitrary secret string
-or deny IP sockets: API-014 packages the independent credential-free environment,
-socket activation, permissions and `IPAddressDeny=any` sandbox, with actual
-installed enforcement still requiring operator acceptance.
-Standalone development execution alone cannot make that installed-host claim.
+Native bootstrap requires exactly named FD3 and matching `LISTEN_PID`,
+`LISTEN_FDS`, `LISTEN_FDNAMES` and optional PIDFD identity, with no extra inherited
+descriptors. It validates the existing protected listening Unix stream socket;
+it never binds/rebinds, unlinks or shuts down an activated socket.
 
-The worker holds a retained sibling `<state-name>.instance.lock` before opening
-its store. A newly started worker therefore cannot be its previous still-live
-instance; old unresolved private receipts are explicitly interrupted, never
-requeued. It admits a trusted exact API operation ID into the existing
-OperationStore schema-1 family and records its exact terminal Envelope before
-reporting completion. Status lookup never submits. Repeating a matching submit
-returns the old binding; changing scope/fingerprint conflicts rather than
-starting a second verification. Only one active verification thread runs.
+Rootless owned-listener bootstrap is direct Python PID1. It refuses all
+`LISTEN_*` activation state and descriptors above stderr, reserving FD3 before
+NSS/shared imports. Prove local paths/mount information (bounded to 1 MiB) before
+traversal; require the exact UID/GID parent at 0700, create a 0600 socket with
+backlog 8, retain parent/instance/socket identities and clean only the unchanged
+owned inode after joined shutdown. Unknown stale sockets remain preserved.
+Notify has a 1-second timeout; READY follows listener/instance/store/worker
+initialization and never follows stop. API ordering follows that real readiness.
 
-SIGTERM/SIGINT stop accepting control connections and join active verification;
-they do not abandon its lock/report/catalog boundary. Classified setup refusals
-exit 20 without raw exception/credential output; local argument-usage errors
-retain argparse exit 2. Domain exits remain in the exact operation Envelope,
-independent of the long-lived worker's process lifecycle. The API client never launches this
-process, inherits its environment or falls back to local verification. Disposable
-socket/process tests establish these primitives; installed units, timeout/drain
-policy and real egress enforcement remain the later packaging acceptance gate.
+Both bootstraps reject known Hub/API/MCP credential environment sources before
+shared imports, set `HF_HUB_OFFLINE=1` once, and resolve no verification credential.
+These checks cannot discover arbitrary secret strings or alone deny IP sockets.
+Actual units/containers must enforce no-IP, source masking, seccomp/capabilities
+and SELinux; standalone or host-origin tests cannot certify an installed container.
 
-## Remaining deployment and client target
+The worker holds retained sibling `<state-name>.instance.lock` before its store.
+Old unresolved private receipts are interrupted only after proving this is a new
+instance, never requeued. Matching trusted operation/scope/fingerprint submit
+returns the existing binding; changed identity conflicts. One verification thread
+owns its full lock/hash/report/catalog boundary. The strict private protocol has
+no estimate, arbitrary command, configuration, candidate or credential fields.
+Control timeout is 5 seconds; accept polling 0.2 seconds. SIGTERM/SIGINT stop
+control admission and join active verification. Setup refusal exits 20, argument
+usage 2; domain outcomes remain in exact Envelopes, independently of process exit.
 
-API-008's lane and API-007's registry already share the unprivileged application
-and separate bounded metadata pool across both listeners. The daemon-instance
-lock prevents competing registries; actual archive work retains the operation-
-scoped flock. API-009/010 add typed command routes and API-012 adds candidate/
-reader integration; API-013 adds operational CLI/observation and API-014 unit integration without another
-execution authority. Metadata reads create no archive layout or catalog.
-Systemd remains scheduling authority.
+## Foreground listener bootstrap
 
-API-013's CLI uses pure request types and typed HTTP without importing the direct
-operational backend. It prints validated key/accepted operation handles even quiet,
-waits for exact terminal results by default and identifies explicit detach as
-admission only. One finite observer deadline includes sanitized events/status/
-result reads; observer departure never cancels or replays accepted work. Optional
-CLI initialization UUID comes from authenticated inspection, preserving the
-server's strict DTO and disabled initialization gate. Client-only no-confirm
-refusal submits nothing. See [decision 120](adr/decision-120.md) and
-[client operation handling](api-client.md#submit-detach-and-resume-api-013).
+`hfcache serve --server-config /etc/hfcache/server.toml` requires the server extra.
+Listener, TLS, auth registry and configuration checks precede admission. Foreground
+Unix startup refuses existing names, binds through a pinned no-follow parent and
+cleans only its unchanged owned inode. Activated listeners are validated, never
+rebound/unlinked/shut down by the application. Named Unix/optional TCP activation
+shares one application/lifespan. Activation requires matching `LISTEN_PID`,
+`LISTEN_FDS` and `LISTEN_FDNAMES`, with every name exactly `hfcache-api` and
+exactly the enabled listener set. Classification uses socket family/address,
+not descriptor order; IPv6 listeners must be IPv6-only. An optional
+`LISTEN_PIDFDID` must match. Activation variables are cleared after capture, and
+malformed activation never falls back to fresh binding. No initialization or Hub
+request occurs on startup.
 
-API-004 establishes shared correlation primitives ahead of this server:
-configure logging once at startup, generate authoritative request and admission
-IDs, activate an immutable execution context per request/operation, and copy it
-deliberately into worker submissions. Never change logger levels/handlers or
-offline environment flags per request. Domain run and journal identities retain
-their existing meanings. A report's `invocation_mode=systemd` describes the daemon
-host, not the timer/client that submitted work; API-007 receipts carry the
-authenticated credential-class submitter separately. See [decision 111](adr/decision-111.md) and
-[API correlation](api.md#execution-correlation-api-004).
+Raw Uvicorn access/error logging and ASGI tracing are disabled;
+`proxy_headers=False` prevents implicit forwarded-header trust. TLS setup never
+accepts plaintext first. `shutdown_timeout_seconds` bounds HTTP shutdown before
+joined worker cleanup.
 
-Archive policy reloads per admission; server listener and credentials require
-restart. Root/UUID changes require restart and cannot hot-switch authority.
-Configuration is operator-owned; REST cannot write `/etc/hfcache`. New config
-cannot redirect an existing credential to a candidate-selected Hub endpoint.
+`--hub-token-file` is an explicit server-local development/startup source, separate
+from rejected global client `--token-file`. Requests never choose it. Native named
+Hub delivery and selected rootless file-mounted Podman delivery remain distinct;
+verification receives neither. Normal daemon execution emits no terminal success
+Envelope; classified startup failure can emit schema-1 failure under `--json`.
 
-Verification is delegated only to a narrow socket-activated executor with
-`HF_HUB_OFFLINE=1`, `IPAddressDeny=any`, no credentials, peer identity checks,
-bounded framed requests, and operation-correlated durable outcomes. It owns
-the archive lock through hashing, report write, and catalog merge. No production
-fallback runs it in the network-enabled HTTP process. Hermetic tests inject
-an executor; host hardening remains an operator acceptance prerequisite.
-`offline.initialize_offline_process()` sets only the library flag at dedicated
-process startup, before Hub imports/use; it does not enforce no-IP isolation.
+## Scheduled observation and lifecycle controls
 
-Drain stops admission and joins work; disconnecting a scheduled CLI or Cockpit
-client leaves accepted work running. Recovery evidence must identify the real
-executor and operation, not a vanished CLI process. Preserve FS-18's narrow
-supervised-cancellation rule. Never unlink a potentially held lock file.
+Native sync/verify oneshots use the API-only scheduled observer for fixed sync or
+full verification. It fsyncs a key before the sole POST and retains a strict private
+handle across repeated finite windows. Existing handles, including uncertain
+pre-POST crashes, permit lookup/observation only. Matching exact terminal evidence
+alone permits owned handle unlink/fsync. Rotation within the same class preserves
+lookup; malformed/future/mismatched history stays preserved at exit 20.
+The selected guarded rootless profile does not enable legacy schedules.
 
-Packaging will preserve sync/verify service names as authenticated Unix HTTP
-clients. The actual verifier and its client both retain deny-all IP policy.
-Deployment requires locked server extras, protected API credentials, socket
-ownership, startup ordering, TLS/Host/Origin/proxy configuration, graceful drain,
-rollback barriers, NFS and hardening acceptance, and the disabled verify timer.
-No host policy changes or production listener starts are authorized here.
+Stopping a client never proves writer/verifier termination. Drain actual API work
+while private worker status/result handoff remains available, then drain private
+activation/service. Keep shared runtime lock inodes, both stores, scheduled handles
+and previous artifacts through upgrade/rollback. Unknown activity refuses selection;
+no killing, lock replacement, state clearing or target stop establishes quiescence.
+See [client observation](api-client.md#scheduled-service-observation) and
+[deployment](deployment-centos-stream-10.md) for profile-specific operator steps.
 
-## Optional MCP transport (MCP-001)
+## Optional MCP transport
 
-After committed API-016 acceptance, [decision 124](adr/decision-124.md) permits
-standalone FastMCP through the separate optional `mcp` extra. The existing
-`mcp_enabled` switch is false by default; no new config version is introduced.
-Enablement is deliberate startup policy, not an API call. The custom supported
-production token verifier accepts only the active protected MCP-reader class;
-REST/Hub credentials and bare session IDs cannot authorize MCP.
-
-The fixed canonical `/mcp/` application shares the server's listener, transport checks and
-explicit composed lifespan. REST resources enter first; MCP closes before REST
-drains/releases its ownership. Disabled mode imports no package, loads no MCP
-credential and mounts no transport. The nine curated metadata tools are defined
-below; no OpenAPI conversion, resource/prompt or command path is exposed.
-[MCP contract](mcp.md) owns exact mounted-path/session behavior,
-[protected-file client setup](mcp.md#protected-file-example-client-mcp-004) and
-supported internal-client limitations.
-
-Development install selects both extras with
-`uv sync --locked --extra server --extra mcp`. The release installer gains an
-explicit `--with-mcp` selection while its default remains server-only; that flag
-selects dependencies/smoke for a release tree, not config enablement, credentials
-or service changes. Existing quiescence, pending-state and rollback guards remain.
-Actual deployment/hardening acceptance stays operator-held.
-
-MCP-001 uses one trusted route projection for public/native collisions: configured
-prefix plus recognized REST/MCP remainder takes precedence, otherwise only
-corroborated Unix native spelling is accepted. Authentication, early writer/body
-checks, effective root and links use that same result. Stateless finite JSON
-responses are bounded and sanitized before headers; the separate MCP in-flight
-ceiling is metadata workers plus metadata pending capacity, with no retained
-session queue. [MCP transport rules](mcp.md#transport-and-lifecycle) detail query,
-body, response and rollback behavior.
-
-## Curated MCP metadata authority (MCP-002)
-
-[Decision 125](adr/decision-125.md) registers exactly nine typed metadata tools,
-no prompts/resources or OpenAPI conversion. A narrow async read capability
-connects adapters to app-owned bounded metadata offload and transport-neutral
-validated readers. Tool functions receive no SDK Context/Request/app object,
-command/Hub/credential resolver, writable helper or path/URL dispatcher.
-
-Each read uses a fresh immutable installed policy and shared safe reader budgets;
-current wrapper identity does not replace original historical report evidence.
-Explicit manifest/report projections and full sanitized-artifact cursors preserve
-exact publication/run identity under finite limits. Inventory/status cursors bind
-selected rows, filters and policy; status headline/warnings are fresh per page,
-so benign free-space changes do not break continuation. Registered secrets are
-sanitized before any cursor hashing.
-Missing/corrupt catalogs remain unknown, estimate never hashes/persists, and no
-request rebuilds, probes, repairs or creates an operation. Classified safe tool
-failures contain codes/fixed text rather than rejected values or fabricated
-success wrappers. [MCP tool contract](mcp.md#curated-metadata-tools-mcp-002) owns
-exact inputs, output fields, costs, ordering and refusal behavior. Existing
-transport/auth/lifecycle, configured resource limits and operator holds remain.
-
-
-## MCP client and packaging acceptance (MCP-004)
-
-The [example client](../examples/mcp-client.py) selects a provisioned protected
-MCP-reader file and explicit verified HTTP endpoint, never the REST CLI source
-or a Hub token. Named server source delivery remains an explicit API-service
-drop-in, not a default unit import. Client URLs include the configured public
-prefix and canonical /mcp/; ordinary local REST clients retain their separate
-native Unix interface. See [costs/troubleshooting](mcp.md#resource-costs-and-troubleshooting).
-
-Auth sources are restart-only: changing a file does not mutate the running
-registry. Normal drain/restart and a new client context are required for rotation;
-separate REST writer authority remains unchanged. The default unit/profile keeps
-MCP off. REST-only and REST+MCP must retain identical REST routes, OpenAPI/security
-scheme, class checks, service ownership and command behavior. The verifier still
-receives no credential and retains its no-IP policy; scheduled timer clients
-remain API-only. [Acceptance tests](../tests/unit/test_mcp_acceptance.py) map these
-repository claims, without proving installed socket/firewall/cgroup/credential/
-SELinux/NFS/drain behavior or enabling the verify timer.
-
-
-## Final rollout boundary (API-017)
-
-The [consolidated operator checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
-retains credential/whole-archive, actual TLS/proxy/firewall/socket, artifact/profile,
-activation/egress/source masks, NFS/SELinux/hardening, client and state-retaining
-drain/rollback requirements. Repository acceptance does not perform them. Preserve
-API and verifier stores plus scheduled pending handles; missing old readers or
-history never proves nonexecution. The verification timer remains disabled until
-its separate calendar approval. Version 0.1.10 is unchanged source metadata,
-not an artifact identity or new deployed release.
-
-
-## Rootless container profile (OPS-015)
-
-[Decision 127](adr/decision-127.md) selects explicit rootless USER systemd services
-for the local rollout, with a system hfcache.target bridge starting the user
-hfcache.target's Caddy, API and private worker socket. It supersedes the initial
-Quadlet proposal; generated replace/forced-cleanup/short-stop defaults are not
-accepted. Fixed never-pull/no-replace/no-init/no-auto-remove persistent-role argv and non-killing
-infinite drain preserve exact surviving executor authority. Unknown containers,
-failed stop or unexplained libpod cgroups refuse progress; no forced removal.
-Only finite stateless observer clients may auto-remove their own containers;
-accepted work and durable evidence remain independently server-owned.
-
-Caddy uses existing verified TLS on 8443 and a protected API Unix upstream, no
-ACME/admin/raw-header logging or artifact file service. The single API keeps its
-registry/pools/lifespan. Private verification has distinct socket/state, actual
-FD3/PID1/peer mapping, Network=none plus baseline-preserving Unix-only socket creation and no secrets/host credential paths. Only actual container proofs establish
-these properties; earlier bare-host activation evidence is not substituted.
-
-Mount the same existing local flock inode across API/worker, policy directories
-read-only for atomic reload visibility and separate private stores. Credentials
-are protected Podman secrets only in intended containers, never image/env/argv
-or worker. Every NAS bind stays read-only without chown/relabel/copyup. OPS-015
-proof uses only owned local fixtures with no NAS bind or production switch;
-[decision 126](adr/decision-126.md) and the held host guard remain. Rootless
-installer/current selection is separate from the retained historical native
-profile. Settled image/profile/helper/unit APIs and actual gate evidence follow
-in the [task](agents/plans/tasks/ops-015-rootless-container-runtime.md), not a release claim.
-
-Detailed [rootless runtime/build/profile contract](containers.md) owns the selected deployment boundaries and actual task evidence.
-
-## Confined worker-created listener (OPS-017)
-
-[Decision 128](adr/decision-128.md) adds explicit --container-listener to the
-private worker, only as direct container PID1. Default native named inherited-FD3
-activation retains its strict canonical listener/descriptor rules and never binds
-as a fallback. Owned mode rejects every inherited FD above stderr, LISTEN_*
-activation field and existing forbidden credential environment source before
-NSS/shared imports, policy/state access or creating its own resources. Offline
-initialization still precedes shared runtime imports.
-After the inheritance audit, reserve the owned unbound AF_UNIX socket as FD3
-before NSS/shared imports open their descriptors; bind only under later instance/
-parent ownership. Own bootstrap descriptors must not appear as inherited secrets.
-Owned SIGTERM/SIGINT handlers are installed just after the cold audit, before FD3
-reservation/NSS/imports, and share one stop Event through runtime. A stop during
-initialization must suppress later readiness; native signal placement is unchanged.
-
-Hold the worker instance lock before binding. Pin the no-follow private parent,
-requiring effective UID/GID and mode 0700; preserve/refuse every existing final
-path. Bind through its proc-fd address with restrictive umask/socket mode 0600,
-retain created device/inode and validate that exact bound spelling plus configured
-path owner/mode/inode. Normalize only the owned socket to internal FD3. Parent/
-instance ownership encloses runtime join and exact-own-inode cleanup; replacement,
-stale socket, locks and stores are never automatically removed or replayed.
-
-Before traversing that parent, owned mode refuses lexical socket/archive-root
-overlap in either direction and requires proven local filesystem metadata from
-bounded fixed /proc/self/mountinfo. Unknown/network mounts refuse before open/
-bind; no realpath or NAS stat is used to establish this guard. Native inherited
-activation retains its existing behavior.
-
-Only the worker private-directory bind becomes writable, with API read-only.
-Rootless worker.service uses Type=notify/NotifyAccess=all and --sdnotify=container;
-READY is sent by the direct worker only after listener, instance, store and worker
-initialization. API Requires+After worker.service; target starts that service.
-Owned mode requires valid NOTIFY_SOCKET and sends no READY after a stop request;
-native mode ignores this notification mechanism.
-The indexed rootless .socket is dormant RefuseManualStart=yes with no automatic
-references; native package activation stays unchanged. Private framing, peer UID,
-exact result/reconciliation, lock/preflight and infinite drain remain unchanged.
-At OPS-017 completion, actual new-image and installed container-peer acceptance
-were later tasks. Completed REL-013/OPS-018 now record clean UBI artifacts and
-installed peer acceptance; the 0.2.0 rollback limitation and all NAS workload
-restrictions remain explicit.
-
-Concrete helpers in hfcache.verification_listener are reserve_listener(),
-owned_listener(channel, path) and notify_ready(stop). OwnedListener carries the
-trusted bound_address and created (dev, ino); executor validate_listener accepts
-that paired trusted evidence only for owned mode. Native defaults are unchanged.
-The helper module is stdlib-only; local child-driver tests that simulate PID1
-preconditions are distinct from actual container/manager proof.
-
-## UBI 10 service-image foundation (OPS-019)
-
-[Decision 129](adr/decision-129.md) requires pinned UBI 10 micro for every FROM
-stage, verified portable CPython 3.14.6 and unchanged app dependencies. Only
-explicit executable/Red Hat CA-data donors are permitted; no foreign OS/CA/default
-inheritance or runtime resolution/pull. Recreate reviewed ENV/user/entrypoint/
-mask directories explicitly. Roles/routes/private wire/durable formats/native
-and owned startup/readiness/isolation/drain remain unchanged. Old Debian proof
-is superseded. The source package deferred clean/installed acceptance to
-REL-013/OPS-018; those tasks now record actual clean UBI and local peer/lifecycle
-acceptance. No live NAS verification or workload acceptance follows.
-
-### Installed-listener evidence (OPS-018, 2026-10-18)
-
-[OPS-018](agents/plans/tasks/ops-018-container-worker-rollout.md) records actual installed
-API-container private PROBE/worker READY and repeated TLS/drain acceptance under
-Enforcing on clean 0.2.1 UBI artifacts. This closes the old connection hold only;
-native activation, exact protocol/result authority and forbidden NAS workloads
-remain unchanged. Rollback to 0.2.0 returns its known peer-connectivity limitation.
+Base and REST-only profiles keep `mcp_enabled=false`: no optional import, credential
+read or endpoint mount. Enabling requires the locked MCP extra, a separate usable
+MCP-reader source and restart. Compose its lifespan with the same application;
+it has nine narrow read tools, finite authenticated requests and no writes,
+commands, resources/prompts or OAuth issuance. The selected rootless template
+already enables MCP with its own file secret; native provisioning remains explicit.
+[MCP](mcp.md) owns connect/tool/rotation/budget details. Source/fixture acceptance
+does not certify installed NAS, egress, SELinux or other-host operation.

@@ -467,7 +467,7 @@ configuration path or credential-forwarding authority. The dedicated worker's
 trusted service startup supplies its fixed archive config and separate private
 state root. API-014 packages socket/identity/no-IP policy; installed enforcement
 remains operator acceptance. See
-[server verifier settings](server.md#private-verifier-client-settings-api-008)
+[server verifier settings](server.md#private-verifier-client-settings)
 and [decision 115](adr/decision-115.md).
 
 MCP-001 uses the existing restart-only `mcp_enabled` and
@@ -530,7 +530,7 @@ invalidate readiness; incompatible/unknown authority blocks plugin install with
 manual operator guidance. API-only clients never receive Hub authority. See
 [decision 122](adr/decision-122.md), [Cockpit pipeline](cockpit.md#6-configuration-editing)
 and [decision 119](adr/decision-119.md)
-and [candidate wire contract](api.md#candidate-content-and-installed-authority-api-012).
+and [candidate wire contract](api.md#candidate-content-and-installed-authority).
 
 ## 13. Independent reader/client configuration (API-011)
 

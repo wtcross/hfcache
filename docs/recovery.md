@@ -797,7 +797,7 @@ terminal result is execution evidence; a lost observer, free lock, PID or old
 
 This section describes hermetic HTTP/domain acceptance, not an installed service
 rollout. API-013's CLI uses these resources without a direct local backend. Separate
-preview/apply [maintenance resources](api.md#implemented-maintenance-resources-api-010)
+preview/apply [maintenance resources](api.md#maintenance-requests)
 call the same services and retain all refusal/recovery rules above. Previews are
 keyed read-capable jobs, not executable capabilities. Writer apply submits only
 strict explicit scope; no preview/result body or proof is trusted. The runner
@@ -865,7 +865,7 @@ that the writer/verifier stopped. Do not start a new-key duplicate, cancel work,
 delete history or release mounts because the observer ended. Follow §10 and the
 server drain/reconciliation procedure. See [decision 120](adr/decision-120.md),
 [CLI operations](cli.md#operations) and
-[client resume](api-client.md#submit-detach-and-resume-api-013).
+[client resume](api-client.md#submit-detach-and-resume).
 
 
 Final feature rollout follows the [API-017 operator checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).

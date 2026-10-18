@@ -388,7 +388,7 @@ and loopback `127.0.0.1:8787` listeners, both named `hfcache-api`; one applicati
 adopts the exact configured set. Disabling TCP requires a paired socket drop-in
 that resets `ListenStream=` to Unix only and server `tcp_enabled=false`, not a
 second app. The worker descriptor is `hfcache-verification`, with account/euid
-peer checks; never substitute manager `%U`. [Server](server.md#activated-services-and-scheduled-observation-api-014)
+peer checks; never substitute manager `%U`. [Server](server.md#scheduled-observation-and-lifecycle-controls)
 owns exact activation/credential/sandbox rules. These are packaged source
 requirements, not evidence that any host unit was installed or started here.
 

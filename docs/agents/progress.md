@@ -45,6 +45,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   host restrictions unchanged. The later user instruction permits github/forgejo
   feature-branch pushes after final acceptance only. No host/live operation ran.
 
+## REST and client reference (2026-10-18)
+
+- [x] DOC-012 Publish current REST and client guides (2026-10-18, this commit —
+  [task](plans/tasks/doc-012-human-rest-and-client-reference.md)). Four guides now
+  describe current auth, modes/effects, strict wire/config boundaries, bounded
+  complete collection, immutable identity and lost-ack recovery without tracking.
+  Prior bodies/hashes and descriptive anchor map retained under agents; 69 exact
+  transitional entries retired. Independent parity keeps all 29 CLI modes and
+  selected real evidence; registry checks cover 34 routes/39 rows/15 strict POST
+  models. Focused checks 88 passed; full `scripts/check.sh`: 4173 passed/40
+  deselected, build/three locked profiles and actual Cockpit lint/135 tests/build
+  passed. Reviewed INV-002/005/006/016 and ADR119/120/121/123; no runtime/format/
+  dependency/architectural change. No live operation; existing restrictions stay.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)
@@ -1995,7 +2009,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     verifier/scheduled state. Rehearse actual server/worker drain before switch,
     and prove a stopped observer never authorizes duplicate execution. Use
     [deployment](../deployment-centos-stream-10.md#13-upgrade-plan-30),
-    [server](../server.md#activated-services-and-scheduled-observation-api-014) and
+    [server](../server.md#scheduled-observation-and-lifecycle-controls) and
     [scheduled schema](../schemas.md#14-scheduled-client-observation-handle-api-014).
     No production deployment, service/timer/mount manipulation or archive operation
     is authorized by implementation of this plan.

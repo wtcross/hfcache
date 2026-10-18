@@ -1,0 +1,26 @@
+[
+  {
+    "source": "docs/api.md",
+    "git": "5503e3b",
+    "sha256": "2157e87084ecc226c2c86a4baf950358ec5bd89e235b013c5b7fa9ab140b8952",
+    "snapshot": "docs/agents/history/rest-client-reference-before-rewrite/api.md"
+  },
+  {
+    "source": "docs/api-client.md",
+    "git": "5503e3b",
+    "sha256": "ebcf784abbe110a3e08eb64f6ce1156a4200c02c73595392360607af4cd8ba1c",
+    "snapshot": "docs/agents/history/rest-client-reference-before-rewrite/api-client.md"
+  },
+  {
+    "source": "docs/server.md",
+    "git": "5503e3b",
+    "sha256": "c60a9d7adf9d608b28d81d4b257521ca5f013ce9f5765d64574692c79e2f84df",
+    "snapshot": "docs/agents/history/rest-client-reference-before-rewrite/server.md"
+  },
+  {
+    "source": "docs/cli.md",
+    "git": "5503e3b",
+    "sha256": "ff2682195ba9b605eb043c0da6933c15f6a6b269d0ba0df62444cd05306a2bb3",
+    "snapshot": "docs/agents/history/rest-client-reference-before-rewrite/cli.md"
+  }
+]

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [API-018](api-018-cli-help-output-and-migration-remnants.md) |
 | Phase | 2 — Human-facing guides |
@@ -25,11 +25,11 @@ Document reference locator bases and exact publication identity separately from 
 
 ## Acceptance
 
-- [ ] Every implemented route/mode is documented once and tested against the live application registry in fixtures; no nonexistent convenience endpoint is shown.
-- [ ] Auth, credentials, local/remote bootstrap exceptions and side-effect classifications match code.
-- [ ] Lost acknowledgement/reconnect, failed terminal outcomes and bounded collection have complete human instructions.
-- [ ] The two guides and related server corrections contain no agent implementation references or human-to-agent links.
-- [ ] Examples use only synthetic secrets/data and are parse-/fixture-tested without production access.
+- [x] Every implemented route/mode is documented once and tested against the live application registry in fixtures; no nonexistent convenience endpoint is shown.
+- [x] Auth, credentials, local/remote bootstrap exceptions and side-effect classifications match code.
+- [x] Lost acknowledgement/reconnect, failed terminal outcomes and bounded collection have complete human instructions.
+- [x] The two guides and related server corrections contain no agent implementation references or human-to-agent links.
+- [x] Examples use only synthetic secrets/data and are parse-/fixture-tested without production access.
 
 ## Contracts, invariants and ADRs
 
@@ -59,15 +59,36 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after completed API-018 5503e3b. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+2026-10-18, this commit: all acceptance checks completed. Rewrote the four
+REST/client/server/CLI guides as current human contracts. Preserved their prior
+bodies and source hashes under agent history; repaired descriptive anchors and
+all inbound interface links. Reduced exact transitional matches from 1062 to 993.
+The 39 mode rows cover all 34 registered method/path pairs (33 with docs disabled),
+15 strict POST DTOs, independent 29-mode CLI parity/evidence and concrete effects.
+The protected-file SDK snippet executes with a synthetic token and real client
+over MockTransport, with exact headers and unchanged credential bytes.
+
+Focused registry/parity/example/migration checks: 88 passed in 5.43s; related
+verification/preflight/example checks: 133 passed. Ruff format/lint and Pyrefly
+(0 errors) passed. `scripts/check.sh` exited 0: 4173 passed/40 opt-in deselected
+in 477.21s, build, all three locked wheel profiles, actual Cockpit lint/135 tests
+(0 skipped)/production build. Log: `/tmp/hfcache-doc012-gate.log`.
+
+Independent reviews restored strict request-body rules, daemon lock ownership,
+complete activation checks, shutdown/logging safeguards and nullable verification
+scope. Native Cockpit integration requirements are distinguished from the shipped
+rootless launcher. Reviewed INV-002/005/006/016 and decisions 119/120/121/123:
+editorial/test alignment only; no technical invariant, format, dependency or
+runtime behavior change, so no new ADR. Generation conformance limitation stays
+explicit. No host/archive/network workload ran. Final feature-branch pushes are
+authorized after plan acceptance; other restrictions remain.
+
+See [completed progress entry](../../progress.md#rest-and-client-reference-2026-10-18).
+Next ready task: DOC-013.

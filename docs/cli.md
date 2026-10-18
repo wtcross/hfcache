@@ -62,7 +62,7 @@ verbosity affects stderr logging, never the stdout envelope.
 For operational API modes, the default archive configuration path is never loaded.
 An explicit `--config` is accepted only for candidate validate/plan, including
 when its value happens to equal the legacy default path. Other operational modes
-refuse it with an actionable migration error. Legacy Hub `--token-file` is refused
+refuse it with an actionable configuration error. Legacy Hub `--token-file` is refused
 for every API operation; select `--api-token-file` or client settings instead.
 Explicit `config validate --local` remains the Hub-token/bootstrap exception.
 Endpoint/source precedence follows [client configuration](api-client.md).
@@ -253,9 +253,8 @@ precondition. Every diagnostic row remains reportable against uninitialized
 storage. `--read-only` takes no lock and runs no write probes (decision 110).
 
 `checks[]` is emitted in this order. The names are normative — automation keys on
-them and `status` quotes them — and a check is **absent** until the package that
-performs it lands, rather than being reported as skipped or passed
-(`docs/agents/progress.md` decision 24).
+them and `status` quotes them — and every current check is reported as pass, fail or skipped for an explicit
+prerequisite. Missing prerequisites never certify a capability.
 
 | # | `name` | Proves | Writes | Code on failure |
 | --- | --- | --- | --- | --- |
@@ -296,12 +295,11 @@ already reported as its own check, so it is never restated.
 The same ordered checks are what a mutating command's preflight runs, and it
 reads a skip differently: `doctor` reports one and still exits `0`, while a
 command that is about to write refuses, because it may not assume a check it
-never ran would have passed. Every problem found is reported at once
-(`docs/agents/history/plan.md` §19).
+never ran would have passed. Every problem found is reported at once.
 
 Writability is proven only by the check-7 probe, never by comparing `st_uid`
 against the local service uid — under the Mapall writer export the owner has no
-local account (`docs/agents/history/plan.md` §35.3).
+local account. See [storage requirements](storage-requirements.md).
 
 `--read-only` runs only the checks that mutate nothing — every row above whose
 `Writes` column is `no` — for use on a mount that must not be touched. It cannot
@@ -324,10 +322,10 @@ hfcache [CLIENT OPTIONS] [--config CANDIDATE_PATH] plan [TYPE:ID ...]
 Resolves each enabled repository's configured reference to a full commit SHA and
 reports, per repository: the resolved SHA, whether it is already retained or
 current, the repository's logical size, the estimated new bytes to download, and
-the publication bytes projected under the configured `publication_mode`. Mutates
-nothing and takes no lock.
+the publication bytes projected under the configured `publication_mode`. Takes
+no archive lock and changes no archive content; its keyed job writes control receipts.
 
-Three Hub reads per repository, in the order §13.2 of `docs/agents/history/plan.md` puts them:
+Three Hub reads per repository run in order:
 resolve the reference, enumerate the revision's tree, then cost the download with
 a `snapshot_download` dry run against the same private cache a sync would write
 to. The dry run creates nothing — not even the cache directory — so this command
@@ -338,8 +336,8 @@ observed.
 
 `projected_publication_bytes` is `0` under `publication_mode = "hardlink"`, since
 a hardlink points at a cache blob already on the dataset; under `"copy"` it is the
-logical size, because copy mode writes a second physical copy of every byte
-(`AD-11`). The mode is reported beside it so the zero is explicable, and a
+logical size, because copy mode writes another ordinary-file copy (`AD-11`).
+Physical allocation still depends on filesystem compression/deduplication. The mode is reported beside it so the zero is explicable, and a
 deployment weighing the switch reads the copy-mode figure off `logical_bytes`.
 
 This is the command run before enabling a large repository, and its output is what
@@ -400,8 +398,7 @@ Status emits configured repositories in configuration order, then unmanaged
 published repositories in canonical `(type, id)` order. An explicit selector
 restricts the configured/published union; one absent from both is `HFARG004`.
 For an unmanaged status row, `managed` is false and configuration-only values
-are null. API-002 corrects the old implementation's configured-only selector
-handling to this contract; no new durable schema is introduced.
+are null.
 
 ### `list`
 
@@ -430,7 +427,7 @@ Exactly one mode option is required; two is `HFARG002`.
 | `--new` | Content introduced by one run. Defaults to the most recent run report in `runs/`; `--run-id` selects another |
 | `--full` | Every retained revision reachable from `refs/revisions/<sha>.json`. The quarterly job |
 | `--revision` | One retained revision |
-| `--estimate` | No hashing. Reports unique bytes to read, measured throughput when known, estimated duration, repository and revision counts, and any detectable overlap with storage maintenance. Takes no lock and always exits `0`: nothing was read, so nothing can have been found wrong |
+| `--estimate` | No hashing. Reports unique bytes to read, measured throughput when known, estimated duration, repository and revision counts, and any detectable overlap with storage maintenance. Takes no lock; the estimate itself makes no integrity finding. Transport/configuration/metadata refusals can still fail |
 
 Every non-estimate mode acquires the common archive lock, using
 `verification.lock_wait_seconds`, then passes storage mount/sentinel/capability
@@ -443,9 +440,9 @@ no Hub client or credential and makes no process-environment change. The shipped
 verification unit additionally supplies `HF_HUB_OFFLINE=1` and denies IP sockets;
 the shared service alone does not claim an operating-system egress restriction.
 See [decision 110](adr/decision-110.md) and the
-[API-004 isolation amendment](adr/decision-111.md). API-008/009 now supply the
-private REST executor/delegation. API-014 packages no-IP hardening around that
-executor; installed enforcement remains operator acceptance.
+[offline isolation rationale](adr/decision-111.md). The private REST executor
+owns hashing and persistence under its native/rootless confinement; installed
+enforcement requires actual executor acceptance.
 The shared service must not toggle the ASGI process's offline flag.
 
 Exits `0` on a clean result and `40` on any integrity finding. A finding never
@@ -631,13 +628,13 @@ queue/lock budget. Stopping a client process/service stops observation only.
 See [recovery](recovery.md#10-operation-history-and-uncertain-submissions) and
 [decision 120](adr/decision-120.md).
 
-**API-014 scheduled exception:** the fixed internal
+**Scheduled observation:** the fixed internal
 `python -m hfcache.scheduled_client` entrypoint repeats finite observations for
 multi-hour systemd oneshots. It retains a strict private key/operation handle;
 existing history only permits lookup/observation and never POST replay. This does
 not make ordinary CLI waits unbounded or add a public execution route. See
-[scheduled service contract](api-client.md#scheduled-service-observation-api-014),
-[schema§14](schemas.md#14-scheduled-client-observation-handle-api-014) and
+[scheduled service contract](api-client.md#scheduled-service-observation),
+[schema§14](schemas.md) and
 [decision 121](adr/decision-121.md).
 
 ## 3. Exit codes
@@ -663,7 +660,7 @@ envelope's `errors` array regardless of which one becomes the exit code, so
 nothing is hidden by aggregation.
 
 A run that continues past an individual repository failure still exits non-zero,
-so systemd records the unit as failed (`docs/agents/history/plan.md` §11.2).
+so systemd records the unit as failed.
 
 ## 4. JSON output
 
@@ -891,8 +888,8 @@ manifest and the run report, is surfaced by `status`, and leaves the exit code a
   `run.completed`, and the closed event vocabulary below), and record durable
   checkpoints rather than per-chunk progress. The vocabulary is closed:
   `hfcache.logging.EVENTS` is the whole of it, and emitting a name outside it
-  raises rather than writing a line no filter will match. MCP-001 adds the stable
-  warning `mcp.diagnostic` for bounded sanitized SDK warning/error diagnostics;
+  raises rather than writing a line no filter will match. The stable
+  warning `mcp.diagnostic` records bounded sanitized SDK warning/error diagnostics;
   lower SDK levels are suppressed, `sdk_level` retains original severity and
   `sdk_logger` is bounded/sanitized. Diagnostic text is fixed; SDK messages,
   arguments and exceptions are never formatted into it. It is operational evidence, not a domain

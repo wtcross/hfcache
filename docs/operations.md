@@ -25,7 +25,7 @@ H="sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/
 That historical alias and its captured output do not describe the feature
 branch's API-only client setup. Current operational commands use separate
 [client settings and API credentials](api-client.md), and packaged scheduled
-clients use their [retained observation handles](server.md#activated-services-and-scheduled-observation-api-014).
+clients use their [retained observation handles](server.md#scheduled-observation-and-lifecycle-controls).
 Provision the named API credential through the documented service boundary;
 the ordinary CLI does not read archive TOML or inherit the Hub credential.
 The service account still has a `nologin` shell. Actual installed-host migration
@@ -40,7 +40,7 @@ rollout or commands exercised on the installed writer. API-012/013 now route the
 source CLI through authenticated HTTP; API-014 packages scheduling/credentials,
 with actual host acceptance still a deployment hold. Historical installed command/unit blocks below are evidence,
 not assertions that this feature branch was deployed.
-The [API contract](api.md#implemented-command-resources-api-009) gives authenticated
+The [API contract](api.md#command-requests) gives authenticated
 POST examples and exact body/role rules. Sync and all actual verification need a
 writer; installed planning and `read_only=true` diagnostics permit readers but can
 contact the Hub and use installed credentials. Read-only diagnostics suppresses
@@ -59,7 +59,7 @@ whole-archive history boundary; lookup searches only the caller's credential cla
 Installed validation uses `{}` and returns its classified validation Envelope
 immediately, without a key, Hub request or archive mutation.
 
-API-010 adds [separate maintenance preview/apply resources](api.md#implemented-maintenance-resources-api-010),
+API-010 adds [separate maintenance preview/apply resources](api.md#maintenance-requests),
 repair and guarded initialization. Preview jobs need a key and leave archive state
 unchanged; an independent writer apply request sends explicit scope, never the
 returned plan, and proves current policy/evidence under lock. Prune is one eligible
@@ -112,7 +112,7 @@ client service or closing its terminal does not stop the server executor. Use
 server drain and exact operation/verifier evidence before any recovery or mount
 change; do not infer termination from a client PID, elapsed timeout or free lock.
 See [decision 120](adr/decision-120.md), [CLI operations](cli.md#operations) and
-[client setup](api-client.md#submit-detach-and-resume-api-013).
+[client setup](api-client.md#submit-detach-and-resume).
 
 Initialization still requires the restated root and confirmation, plus the
 server's initialization-only disabled maintenance gate. Omitted optional UUID

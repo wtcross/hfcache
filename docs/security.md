@@ -420,7 +420,7 @@ endpoint, token mode, credential name and expected account; it never resolves a
 candidate credential, reads a candidate-selected path, contacts the Hub or installs
 policy. API-012 now exposes writer-only candidate content validation/planning,
 with fresh installed-authority checks before Hub work. See
-[decision 116](adr/decision-116.md), [body/role rules](api.md#implemented-command-resources-api-009)
+[decision 116](adr/decision-116.md), [body/role rules](api.md#command-requests)
 and [candidate authority](configuration.md#12-candidate-authority-validation-and-planning-api-012).
 
 **Explicit maintenance boundary (API-010).** Reader previews and writer-only
@@ -440,8 +440,8 @@ Enabled initialization additionally requires writer capability, strict confirmat
 and the configured root/UUID restated. These fields cannot select another archive.
 Initialization's own locked checks refuse existing/unsafe/unknown state and write
 the sentinel last. Startup, health, recovery and missing sentinel never initialize.
-See [decision 117](adr/decision-117.md), [maintenance resources](api.md#implemented-maintenance-resources-api-010)
-and [server gate](server.md#maintenance-and-initialization-authority-api-010).
+See [decision 117](adr/decision-117.md), [maintenance resources](api.md#maintenance-requests)
+and [server gate](server.md#command-admission-and-policy-authority).
 
 **Reader/client authority (API-011).** Separate strict client settings select one
 URL/socket endpoint and explicit protected API source; no archive configuration,
@@ -489,7 +489,7 @@ preview intent only; installed limits/admitted fingerprint remain authoritative.
 Exact candidate text binds a key; absent fields preserve old installed-plan digests
 and explicit null refuses. REST cannot install policy/backups or give browsers
 bearers. See [decision 119](adr/decision-119.md), [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012)
-and [CLI migration](api-client.md#cli-migration-api-012).
+and [CLI migration](api-client.md#cli-dispatch).
 
 **Operational CLI observation (API-013).** No operational command imports or
 invokes a direct local mutation backend. Pure requests and typed HTTP retain

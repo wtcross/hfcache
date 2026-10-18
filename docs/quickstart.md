@@ -28,7 +28,7 @@ Development selection alone starts no listener and deploys nothing.
 Ask the operator for the intended API URL or Unix socket, archive UUID and a
 protected REST-reader credential file. The credential is not a Hub or MCP token;
 no token value belongs in configuration, argv, URLs or browser storage. See the
-[protected source rules](server.md#implemented-credential-and-capability-boundary-api-005).
+[protected source rules](server.md#credentials-and-capabilities).
 
 Create `quickstart-client.toml`, substituting the provisioned authority/path/UUID:
 

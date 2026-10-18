@@ -620,7 +620,7 @@ exact terminal server Envelope; explicit detach is identified schema-1 admission
 never fabricated command success. Validated key and accepted-ID safety handles
 appear on stderr even quiet, and bounded sanitized events/status/result reads
 share a finite observer deadline. Timeout/Ctrl-C stops observation without cancel/
-replay. See [CLI](../../cli.md#operations) and [client resume](../../api-client.md#submit-detach-and-resume-api-013).
+replay. See [CLI](../../cli.md#operations) and [client resume](../../api-client.md#submit-detach-and-resume).
 Installed unit/caller migration and host acceptance remain later tasks; no
 production operation or rollout is asserted.
 

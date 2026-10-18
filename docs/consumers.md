@@ -131,7 +131,7 @@ inconsistent or vanished evidence fails visibly, with no newer-instance fallback
 The existing copy helper still reads its own NFS reference once per copy attempt;
 it does not consume a REST discovery response. API discovery neither transfers
 artifact bytes nor replaces independent complete-path/size/SHA-256 verification.
-The [API contract](api.md#implemented-metadata-resources-api-006) defines wire
+The [API contract](api.md#metadata-reads) defines wire
 fields, pagination, limits and authenticated report streams.
 
 ## 3. Copying a revision

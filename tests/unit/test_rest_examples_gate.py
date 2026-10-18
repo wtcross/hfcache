@@ -7,11 +7,16 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+import httpx
 import pytest
 
+from hfcache import client as client_module
+from hfcache import client_config
+from hfcache.client import ApiClient
 from hfcache.client_config import resolve_client_config
 from hfcache.config import load_config
 from hfcache.server_config import load_server_config
+from tests.unit.test_api_client_adversarial import BASE, TOKEN, _capabilities, _read, _response
 
 ROOT = Path(__file__).resolve().parents[2]
 INTERFACE_DOCS = (
@@ -54,6 +59,41 @@ def test_all_five_current_configuration_examples_use_their_strict_independent_lo
     parsed = loader(path)
     assert parsed.schema_version == 1
     assert path.read_bytes() == before
+
+
+def test_documented_protected_file_sdk_example_sends_the_selected_header(tmp_path, monkeypatch):
+    token = tmp_path / "reader.token"
+    token.write_text(TOKEN)
+    token.chmod(0o600)
+    settings = tmp_path / "client.toml"
+    settings.write_text(f'schema_version=1\napi_url="{BASE}"\napi_token_file="{token}"\n')
+    before = (settings.read_bytes(), token.read_bytes())
+    seen = []
+
+    def respond(request):
+        seen.append((request.url.path, request.headers.get("Authorization")))
+        if request.url.path.endswith("/capabilities"):
+            return _response(_capabilities())
+        payload = _read(data={"application": "fixture"})
+        payload["envelope"]["command"] = "version"
+        return _response(payload)
+
+    monkeypatch.setattr(client_config, "DEFAULT_CLIENT_CONFIG", settings)
+    monkeypatch.setattr(
+        client_module,
+        "ApiClient",
+        lambda config: ApiClient(config, transport=httpx.MockTransport(respond)),
+    )
+    document = (ROOT / "docs/api-client.md").read_text()
+    (example,) = re.findall(r"(?ms)^```python\n(.*?)^```", document)
+    namespace = {}
+    exec(compile(example, "documented SDK example", "exec"), namespace)
+    assert seen == [
+        ("/management/api/v1/capabilities", "Bearer " + TOKEN),
+        ("/management/api/v1/version", "Bearer " + TOKEN),
+    ]
+    assert namespace["envelope"].command == "version"
+    assert (settings.read_bytes(), token.read_bytes()) == before
 
 
 def without_fences(text):

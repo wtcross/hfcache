@@ -63,7 +63,7 @@ planning and explicitly read-only diagnostics now use the typed API client
 Envelope IDs/timestamps/status/errors and walks complete pages within finite
 aggregate limits. Help/local version and explicit `config validate --local` remain
 local bootstrap; no API failure falls back to archive filesystem access. The
-[client migration table](../../api-client.md#cli-migration-api-012) identifies migrated
+[client migration table](../../api-client.md#cli-dispatch) identifies migrated
 modes while side-effecting CLI migration remains API-013. Candidate files are read
 on the CLI host and uploaded as bounded TOML content, never interpreted as server
 paths. Validity and installed-authority compatibility are reported separately.
@@ -82,7 +82,7 @@ local help/version, `serve` and `config validate --local` bootstrap exceptions.
 API-014 packages scheduled observers and API-015 integrates Cockpit. Native Unix
 uses fixed unprefixed paths even with a public TCP prefix; public clients retain
 their configured URL prefix/security. [Decision 123](../../adr/decision-123.md) and the
-[complete parity matrix](../../api.md#operation-parity-matrix) govern REST acceptance;
+[complete parity matrix](../../api.md#routes-and-effects) govern REST acceptance;
 MCP remains absent until API-016 passes and commits. No deployment is asserted.
 
 **MCP-001 amendment (2026-10-18).** API-016 acceptance is committed; optional

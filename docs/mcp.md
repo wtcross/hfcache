@@ -71,7 +71,7 @@ source paths require explicit masks/probes under existing operator holds.
 client for the locked FastMCP 4.1.1 interface. It does not run an agent, accept a
 command/tool name, discover credentials or install anything. An operator must
 first provision a distinct MCP-reader secret through the protected file rules in
-[server authentication](server.md#implemented-credential-and-capability-boundary-api-005).
+[server authentication](server.md#credentials-and-capabilities).
 Token acquisition is operator provisioning, not OAuth discovery. Supply only the
 absolute protected file pathname; never put its contents in argv, URLs, JSON,
 shell history or browser storage.

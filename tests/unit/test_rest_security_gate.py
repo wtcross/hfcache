@@ -10,6 +10,7 @@ from hfcache.api.app import create_app
 from hfcache.logging import reset
 from hfcache.server_config import validate_server_config_mapping
 from tests.fixtures.examples import ARCHIVE_ID
+from tests.unit.test_rest_parity_gate import matrix_rows
 
 WRITER = "acceptance-writer-" + "W" * 40
 READER = "acceptance-reader-" + "R" * 40
@@ -165,6 +166,43 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
         expected.remove(("GET", PREFIX + "/docs"))
     assert actual == expected
     assert len(actual) == (34 if docs_enabled else 33)
+    documented = {
+        (row[0].split(" ", 1)[0], PREFIX + row[0].split(" ", 1)[1])
+        for row in matrix_rows()
+        if docs_enabled or row[0] != "GET /docs"
+    }
+    assert documented == actual
+    assert not archive.exists()
+    assert not lock.exists()
+
+
+def test_documented_post_routes_use_the_strict_named_request_models(configured):
+    server, archive, lock = configured
+    schema = create_app(server, instance_lock_path=lock).openapi()
+    models = {
+        "/config/validate": "ValidationSubmission",
+        "/plans": "PlanSubmission",
+        "/diagnostics": "DiagnosticsSubmission",
+        "/syncs": "SyncSubmission",
+        "/verifications": "VerificationSubmission",
+        "/prune-plans": "PruneSubmission",
+        "/prunes": "PruneSubmission",
+        "/purge-plans": "PurgeSubmission",
+        "/purges": "PurgeSubmission",
+        "/recovery-plans": "RecoverySubmission",
+        "/recoveries": "RecoverySubmission",
+        "/quarantine-plans": "QuarantineSubmission",
+        "/quarantine-cleanups": "QuarantineSubmission",
+        "/repairs": "RepairSubmission",
+        "/archive/initializations": "InitializationSubmission",
+    }
+    assert set(models) == set(READER_POSTS) | set(WRITER_POSTS)
+    for path, model in models.items():
+        body = schema["paths"][PREFIX + path]["post"]["requestBody"]
+        assert (
+            body["content"]["application/json"]["schema"]["$ref"] == "#/components/schemas/" + model
+        )
+        assert schema["components"]["schemas"][model]["additionalProperties"] is False
     assert not archive.exists()
     assert not lock.exists()
 

@@ -1,0 +1,61 @@
+{
+  "docs/api.md": {
+    "writer-rest-api-contract": "rest-api-reference",
+    "service-and-transport-boundary": "connect-and-authenticate",
+    "operation-parity-matrix": "routes-and-effects",
+    "shared-query-results-api-002": "metadata-reads",
+    "implemented-metadata-resources-api-006": "metadata-reads",
+    "read-and-problem-wire-models": "read-response",
+    "query-parameters-and-page-ordering": "pagination-and-budgets",
+    "response-and-evidence-budgets": "pagination-and-budgets",
+    "implemented-command-resources-api-009": "command-requests",
+    "post-body-boundary": "command-requests",
+    "admission-model-and-exact-results": "admission-idempotency-and-lifecycle",
+    "candidate-content-and-installed-authority-api-012": "candidate-content-and-installed-authority",
+    "implemented-maintenance-resources-api-010": "maintenance-requests",
+    "initialization-gate-and-observation": "maintenance-requests",
+    "execution-correlation-api-004": "read-response",
+    "heavy-lane-execution-boundary-api-008": "admission-idempotency-and-lifecycle",
+    "implemented-operation-observation-api-007": "admission-idempotency-and-lifecycle",
+    "credentials-and-configuration": "connect-and-authenticate",
+    "independent-typed-client-api-011": "connect-and-authenticate",
+    "cli-admission-and-observation-api-013": "reconnect-after-lost-acknowledgement",
+    "acceptance-boundaries": "connect-and-authenticate",
+    "optional-mcp-interface-mcp-001": "connect-and-authenticate"
+  },
+  "docs/api-client.md": {
+    "api-client-contract": "rest-client-reference",
+    "cli-migration-api-012": "cli-dispatch",
+    "submit-detach-and-resume-api-013": "submit-detach-and-resume",
+    "native-unix-and-public-prefixes-api-016": "native-unix-and-public-prefixes",
+    "cockpit-client-integration-api-015": "cockpit-client-integration",
+    "scheduled-service-observation-api-014": "scheduled-service-observation"
+  },
+  "docs/server.md": {
+    "writer-server-contract": "writer-server-reference",
+    "public-prefix-and-native-unix-requests-api-016": "public-prefix-and-native-unix-requests",
+    "activated-services-and-scheduled-observation-api-014": "scheduled-observation-and-lifecycle-controls",
+    "implemented-configuration-boundary-api-005": "server-configuration",
+    "private-verifier-client-settings-api-008": "private-verifier-client-settings",
+    "implemented-credential-and-capability-boundary-api-005": "credentials-and-capabilities",
+    "package-and-client-transport-primitives-api-005": "deployment-profiles",
+    "implemented-metadata-lifespan-api-006": "metadata-lifespan-and-request-boundary",
+    "command-admission-and-hub-authority-api-009": "command-admission-and-policy-authority",
+    "maintenance-and-initialization-authority-api-010": "command-admission-and-policy-authority",
+    "foreground-listener-bootstrap-api-006": "foreground-listener-bootstrap",
+    "implemented-operation-control-state-api-007": "operation-control-state",
+    "bounded-execution-and-private-verification-api-008": "bounded-execution-and-private-verification",
+    "remaining-deployment-and-client-target": "deployment-profiles",
+    "optional-mcp-transport-mcp-001": "optional-mcp-transport",
+    "curated-mcp-metadata-authority-mcp-002": "optional-mcp-transport",
+    "mcp-client-and-packaging-acceptance-mcp-004": "optional-mcp-transport",
+    "final-rollout-boundary-api-017": "deployment-profiles",
+    "rootless-container-profile-ops-015": "deployment-profiles",
+    "confined-worker-created-listener-ops-017": "dedicated-worker-bootstrap-and-limitations",
+    "ubi-10-service-image-foundation-ops-019": "deployment-profiles",
+    "installed-listener-evidence-ops-018-2026-10-18": "deployment-profiles"
+  },
+  "docs/cli.md": {
+    "hfcache-command-line-contract": "command-line-reference"
+  }
+}

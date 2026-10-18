@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from tests.rest_parity import PARITY, Evidence, ParityMode
+from tests.rest_reference import PARITY_REFERENCE, REFERENCE
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -15,10 +16,12 @@ ROOT = Path(__file__).resolve().parents[2]
 @cache
 def matrix_rows() -> tuple[tuple[str, ...], ...]:
     document = (ROOT / "docs/api.md").read_text()
-    section = document.split("## Operation parity matrix\n", 1)[1].split("\n## ", 1)[0]
+    section = document.split("## Routes and effects\n", 1)[1].split("\n## ", 1)[0]
     lines = [line for line in section.splitlines() if line.startswith("| ")]
-    assert lines[0].startswith("| CLI mode | Service | Route | Role |")
-    return tuple(tuple(part.strip() for part in line.split("|")[1:-1]) for line in lines[2:])
+    assert lines[0].startswith("| Method/path | Mode | CLI mapping | Capability |")
+    return tuple(
+        tuple(part.strip().strip("`") for part in line.split("|")[1:-1]) for line in lines[2:]
+    )
 
 
 @cache
@@ -64,32 +67,50 @@ def parameter_values(
     return tuple(found)
 
 
-def citations(references: tuple[Evidence, ...]) -> tuple[str, ...]:
-    return tuple(reference.citation for reference in references)
-
-
-def cell_citations(cell: str) -> tuple[str, ...]:
-    # Concrete names are stable documentation links, independent of pytest IDs.
-    return tuple(part.strip().strip("`") for part in cell.split(";"))
-
-
 def test_manifest_has_exactly_all_29_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
-    assert len(PARITY) == len(rows) == 29
+    assert len(PARITY) == len(PARITY_REFERENCE) == 29
+    assert len(REFERENCE) == len(rows) == 39
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
-    assert [mode.cli_mode for mode in PARITY] == [row[0] for row in rows]
-    assert all(len(row) == 11 for row in rows)
+    assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
+    assert rows == REFERENCE
+    assert len({row[:2] for row in rows}) == 39
+    assert all(len(row) == 9 for row in rows)
 
 
 @pytest.mark.parametrize("mode", PARITY, ids=lambda mode: mode.cli_mode)
 def test_each_semantic_mode_matches_documented_authority_and_concrete_evidence(mode: ParityMode):
-    row = next(row for row in matrix_rows() if row[0] == mode.cli_mode)
-    assert row[:8] == mode.contract
-    assert row[10] == "implemented"
     assert mode.cli_tests
     assert mode.api_tests
-    assert cell_citations(row[8]) == citations(mode.cli_tests)
-    assert cell_citations(row[9]) == citations(mode.api_tests)
+    expansions = {
+        "read_evidence": (
+            "GET /runs",
+            "GET /runs/{run_id}",
+            "GET /repositories/{repository_type}/{namespace}/{name}/references/{revision}",
+            (
+                "GET /repositories/{repository_type}/{namespace}/{name}"
+                "/manifests/{commit_sha}/{publication_id}"
+            ),
+        ),
+        "observe_operation": (
+            "GET /operations",
+            "GET /operations/lookup",
+            "GET /operations/{operation_id}",
+            "GET /operations/{operation_id}/result",
+            "GET /operations/{operation_id}/events",
+        ),
+    }
+    assert tuple(key[0] for key in PARITY_REFERENCE[mode.cli_mode]) == expansions.get(
+        mode.service, (mode.route,)
+    )
+    for key in PARITY_REFERENCE[mode.cli_mode]:
+        row = next(row for row in matrix_rows() if row[:2] == key)
+        assert row[3].split()[0] == mode.role
+        assert row[4] == ("keyed job" if mode.execution == "J" else "synchronous")
+        assert row[5] == mode.lock
+        assert row[6] == ("yes" if mode.hub in {"yes", "explicit"} else "no")
+        assert row[7] == mode.effects.removeprefix("receipt; ").replace("receipt only", "none")
+        assert row[8] == ("receipt, events and result" if mode.execution == "J" else "none")
 
 
 @pytest.mark.parametrize("mode", PARITY, ids=lambda mode: mode.cli_mode)
@@ -110,6 +131,9 @@ def test_heavy_verification_modes_trace_real_private_worker_and_exact_cli_mode()
         ("verify --revision", "'revision'"),
     ):
         mode = next(mode for mode in PARITY if mode.cli_mode == label)
+        assert PARITY_REFERENCE[label] == (
+            ("POST /verifications", f"mode={ast.literal_eval(worker_case)}"),
+        )
         assert mode.role == "W"
         assert mode.lock == "worker archive"
         assert any(
