@@ -1,5 +1,6 @@
 # Decision 123 — Keep public prefixes separate from native Unix REST paths
 
+- MCP transport amendment: [decision 124](decision-124.md).
 - Status: Accepted; implemented by API-016.
 - Date: 2026-10-18.
 - Work package: API-016, this commit.
@@ -90,3 +91,25 @@ additional wheel smoke tests, locked base/server installations and the complete
 route/parity/example/docs and actual predecessor/current compatibility evidence.
 This completes the REST repository boundary; installed-host holds remain and MCP
 is still absent until this package commits.
+
+## 2026-10-18 optional MCP transport amendment (MCP-001)
+
+[Decision 124](decision-124.md) activates the separately optional standalone
+FastMCP transport after committed API-016 acceptance. Supported production token
+verification delegates only to the active protected MCP-reader slot; disabled
+mode imports/resolves neither its package nor credential. One composed lifespan
+retains REST startup/ownership and closes MCP before REST drain/release. Existing
+Host/Origin/TLS/proxy/corroborated native-prefix policy and class separation remain.
+This package adds transport only, with no OpenAPI conversion or tools/resources/
+prompts; curated reads and side-effect proof remain MCP-002. No archive/config/
+durable format, domain workflow, production deployment or host-proof change.
+See [MCP](../mcp.md) for exact supported protocol/path/session behavior and the
+[MCP-001 task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.
+
+The MCP-001 refinement uses one trusted path projection when a configured public
+prefix overlaps fixed REST/MCP spellings: configured prefix wins when its remainder
+identifies an interface; otherwise corroborated Unix native interface spelling
+may apply. Interface credential selection, early static writer/body policy,
+effective root and response links all consume that same projection. Prefixes
+such as `/m`, `/mcp` and `/api` cannot confuse REST with MCP authority. TCP still
+requires its configured prefix and no header supplies transport authority.

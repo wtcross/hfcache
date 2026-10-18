@@ -182,7 +182,10 @@ def load_credentials(
     for credential_class, source in (
         (CredentialClass.REST_WRITER, server.credentials.writer),
         (CredentialClass.REST_READER, server.credentials.reader),
-        (CredentialClass.MCP_READER, server.credentials.mcp_reader),
+        (
+            CredentialClass.MCP_READER,
+            server.credentials.mcp_reader if server.mcp_enabled else None,
+        ),
     ):
         if source is None:
             continue

@@ -100,6 +100,7 @@ EVENTS: Final = (
     "quarantine.cleaned",
     "repository.failed",
     "run.completed",
+    "mcp.diagnostic",
 )
 """Plan §24's stable vocabulary, including the decision 103 cleanup amendment."""
 
@@ -116,7 +117,7 @@ They are not part of the §24 contract and may change; the `EVENTS` names may no
 """
 
 _ERROR: Final = frozenset({"preflight.failed", "repository.failed"})
-_WARNING: Final = frozenset({"dependency.undeclared", "retention.deferred"})
+_WARNING: Final = frozenset({"dependency.undeclared", "retention.deferred", "mcp.diagnostic"})
 
 _PRIORITY: Final = {
     logging.ERROR: "<3>",

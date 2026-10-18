@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Install the locked base/server wheel into real isolated environments.
+"""Install locked base, server and server-plus-MCP wheels into isolated environments.
 
-Default gate runs offline from uv's cache populated by its server-extra sync.
+Default gate runs offline from uv's cache populated by its implemented-extra sync.
 This proves optional imports and packaging rather than hiding packages in mocks.
 """
 
@@ -34,8 +34,8 @@ def main():
         raise SystemExit(message)
     with tempfile.TemporaryDirectory(prefix="hfcache-install-") as directory:
         scratch = Path(directory)
-        for extra in (None, "server"):
-            label = extra or "base"
+        for extras in ((), ("server",), ("server", "mcp")):
+            label = "+".join(extras) or "base"
             environment = scratch / label
             requirements = scratch / f"{label}-requirements.txt"
             export = [
@@ -50,7 +50,7 @@ def main():
                 "--output-file",
                 str(requirements),
             ]
-            if extra:
+            for extra in extras:
                 export.extend(("--extra", extra))
             run(export, cwd=ROOT)
             run(["uv", "venv", "--python", sys.executable, str(environment)], cwd=scratch)
@@ -84,19 +84,22 @@ def main():
                 "importlib.util.find_spec('fastmcp') is not None,'cold':"
                 "not any(name in __import__('sys').modules for name in "
                 "('hfcache.services.commands','hfcache.archive','hfcache.hub',"
-                "'huggingface_hub','hfcache.verification_executor'))}))"
+                "'huggingface_hub','hfcache.verification_executor')),'frameworks_cold':"
+                "not any(name in __import__('sys').modules for name in "
+                "('fastapi','uvicorn','fastmcp','mcp'))}))"
             )
             result = json.loads(run([str(python), "-I", "-c", code], cwd=scratch))
-            assert result["server"] is bool(extra), result
-            assert result["uvicorn"] is bool(extra), result
-            assert result["mcp"] is False, result
+            assert result["server"] is ("server" in extras), result
+            assert result["uvicorn"] is ("server" in extras), result
+            assert result["mcp"] is ("mcp" in extras), result
             assert result["cold"] is True, result
+            assert result["frameworks_cold"] is True, result
             executable = environment / "bin" / "hfcache"
             assert "Usage:" in run([str(executable), "--help"], cwd=scratch)
-            version = json.loads(run([str(executable), "--json", "version"], cwd=scratch))
-            assert version["schema_version"] == 1, version
-            assert version["exit_code"] == 0, version
-            if extra:
+            reported = json.loads(run([str(executable), "--json", "version"], cwd=scratch))
+            assert reported["schema_version"] == 1, reported
+            assert reported["exit_code"] == 0, reported
+            if "server" in extras:
                 run(
                     [
                         str(python),
@@ -105,6 +108,59 @@ def main():
                         (
                             "import hfcache.api.security,uvicorn; "
                             "from fastapi.security import HTTPBearer"
+                        ),
+                    ],
+                    cwd=scratch,
+                )
+                run(
+                    [
+                        str(python),
+                        "-I",
+                        "-c",
+                        """import sys
+from pathlib import Path
+from hfcache.api.app import create_app
+from hfcache.errors import ConfigurationError
+from hfcache.server_config import validate_server_config_mapping
+
+root = Path(sys.argv[1]) / 'never-created'
+settings = validate_server_config_mapping({
+    'schema_version': 1,
+    'archive_config': str(root / 'archive.toml'),
+    'state_directory': str(root / 'state'),
+    'credentials': {
+        'writer': {'file': str(root / 'writer.token')},
+        'mcp_reader': {'file': str(root / 'mcp.token')},
+    },
+})
+disabled = create_app(settings)
+assert 'fastmcp' not in sys.modules and 'mcp' not in sys.modules
+assert all(getattr(route, 'path', None) != '/mcp' for route in disabled.routes)
+try:
+    enabled = create_app(settings.model_copy(update={'mcp_enabled': True}))
+except ConfigurationError as error:
+    assert sys.argv[2] == 'absent'
+    assert error.problems[0].code == 'HFCFG005'
+else:
+    assert sys.argv[2] == 'present'
+    assert any(getattr(route, 'path', None) == '/mcp' for route in enabled.routes)
+assert not root.exists()
+""",
+                        str(environment),
+                        "present" if "mcp" in extras else "absent",
+                    ],
+                    cwd=scratch,
+                )
+            if "mcp" in extras:
+                run(
+                    [
+                        str(python),
+                        "-I",
+                        "-c",
+                        (
+                            "from fastmcp import FastMCP; "
+                            "from fastmcp.server.auth import TokenVerifier,AccessToken; "
+                            "import hfcache.mcp"
                         ),
                     ],
                     cwd=scratch,

@@ -231,6 +231,40 @@ def test_installer_dry_run_needs_no_root_and_executes_no_tool_or_mutation(tmp_pa
     assert not prefix.exists()
 
 
+@pytest.mark.parametrize("stage", [False, True])
+def test_optional_mcp_profile_is_read_only_until_install(tmp_path, stage):
+    prefix = tmp_path / "unused"
+    environment = dict(os.environ) | {
+        "HFCACHE_PREFIX": str(prefix),
+        "HFCACHE_SOURCE": str(ROOT),
+        "HFCACHE_UV": str(tmp_path / "must-not-run"),
+        "HFCACHE_SYSTEMCTL": str(tmp_path / "must-not-run"),
+    }
+    arguments = ["bash", str(ROOT / "scripts/install-release.sh"), "--dry-run", "--with-mcp"]
+    if stage:
+        arguments.append("--no-switch")
+    result = subprocess.run(arguments, check=False, capture_output=True, text=True, env=environment)
+    assert result.returncode == 0, result.stderr
+    assert "locked server and mcp extras" in result.stdout
+    assert f"mode: {'stage' if stage else 'install'}" in result.stdout
+    assert not prefix.exists()
+
+
+@pytest.mark.parametrize("mode", [["--list"], ["--switch", "0.1.10"]])
+def test_optional_mcp_profile_cannot_change_an_existing_release(tmp_path, mode):
+    prefix = tmp_path / "unused"
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts/install-release.sh"), "--dry-run", "--with-mcp", *mode],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=dict(os.environ) | {"HFCACHE_PREFIX": str(prefix), "HFCACHE_SOURCE": str(ROOT)},
+    )
+    assert result.returncode == 1
+    assert "only when building or staging" in result.stderr
+    assert not prefix.exists()
+
+
 @pytest.mark.parametrize(
     "name", ["install-release.sh", "release-functions.sh", "check-hardening.sh"]
 )
@@ -317,8 +351,9 @@ def test_unrealized_cgroup_with_no_main_or_control_process_is_quiescent(release_
 
 
 @pytest.mark.parametrize("valid_policy", [True, False])
+@pytest.mark.parametrize("with_mcp", [True, False])
 def test_installed_smoke_parses_required_hub_policy_without_borrowing_credentials(
-    tmp_path, valid_policy
+    tmp_path, valid_policy, with_mcp
 ):
     source = (ROOT / "scripts/install-release.sh").read_text()
     start = source.index("smoke() (\n")
@@ -338,7 +373,11 @@ def test_installed_smoke_parses_required_hub_policy_without_borrowing_credential
         "CREDENTIALS_DIRECTORY",
     ):
         environment.pop(name, None)
-    script = "set -euo pipefail; step() { :; };\n" + function + '\nsmoke "$1"'
+    script = (
+        f"set -euo pipefail; step() {{ :; }}; WITH_MCP={str(with_mcp).lower()};\n"
+        + function
+        + '\nsmoke "$1"'
+    )
     result = subprocess.run(
         ["bash", "-c", script, "fixture", str(Path(sys.executable).parent / "hfcache")],
         check=False,

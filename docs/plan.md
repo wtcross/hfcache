@@ -1381,6 +1381,14 @@ Exact opaque credentials are registered before use and sanitized from nested
 diagnostics and exception output. `invocation_mode=systemd` describes the host
 process, not proof of timer/client origin; later receipts carry the submitter.
 
+**MCP-001 amendment (2026-10-18, [decision 124](adr/decision-124.md)).**
+The closed vocabulary adds only `mcp.diagnostic`, a stable warning event for
+fixed SDK warning/error diagnostics with sanitized bounded provenance. Lower
+SDK levels are suppressed; original severity remains a field. The bridge never
+formats SDK messages/arguments/exceptions and uses ordinary `emit()` with captured
+execution correlation, never a raw logger bypass or traceback. Original SDK handlers restore on composed-lifespan
+exit. This operational event grants no domain checkpoint, outcome or job authority.
+
 Recommended event families:
 
 ```text

@@ -139,6 +139,14 @@ independently inventories every route, and checks strict examples, complete page
 and disabled optional imports. No config/durable schema, dependency or production
 deployment change.
 
+Optional standalone FastMCP transport follows committed REST acceptance, with a
+production shared protected-token verifier restricted to a distinct MCP reader,
+composed one-app lifecycle and disabled package/credential isolation. Base and
+REST-only installs remain independent; MCP-001 registers no tools/resources/
+prompts or command paths. The installer gains explicit `--with-mcp` dependency
+selection without automatic enablement/provisioning. No durable/config schema or
+production deployment change.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

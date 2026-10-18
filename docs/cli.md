@@ -79,6 +79,12 @@ their configured URL prefix/security. [Decision 123](adr/decision-123.md) and th
 [complete parity matrix](api.md#operation-parity-matrix) govern REST acceptance;
 MCP remains absent until API-016 passes and commits. No deployment is asserted.
 
+**MCP-001 amendment (2026-10-18).** API-016 acceptance is committed; optional
+MCP transport now has its own distinct credential and no curated tools yet.
+The operational CLI remains the typed REST client, with no MCP command migration.
+See [MCP enablement/limits](mcp.md) and [decision 124](adr/decision-124.md).
+
+
 ## 1. Invocation shape
 
 ```text
@@ -932,7 +938,12 @@ manifest and the run report, is surfaced by `status`, and leaves the exit code a
   `run.completed`, and the rest of `docs/plan.md` §24), and record durable
   checkpoints rather than per-chunk progress. The vocabulary is closed:
   `hfcache.logging.EVENTS` is the whole of it, and emitting a name outside it
-  raises rather than writing a line no filter will match.
+  raises rather than writing a line no filter will match. MCP-001 adds the stable
+  warning `mcp.diagnostic` for bounded sanitized SDK warning/error diagnostics;
+  lower SDK levels are suppressed, `sdk_level` retains original severity and
+  `sdk_logger` is bounded/sanitized. Diagnostic text is fixed; SDK messages,
+  arguments and exceptions are never formatted into it. It is operational evidence, not a domain
+  checkpoint/outcome; [decision 124](adr/decision-124.md) amends decision 64.
 - The format is logfmt on **stderr** — `event=… level=… run_id=… key=value`,
   keys sorted after the first three, values quoted only when they would
   otherwise be ambiguous. Under systemd each line carries a `<N>` syslog prefix,

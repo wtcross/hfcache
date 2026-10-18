@@ -1265,6 +1265,54 @@ package in this family.
   PAM/SELinux/drain/rollback/verify-calendar proof remain deployment holds in
   Operator handoff 16/17; repository acceptance does not assert those passed.)
 
+
+- [x] MCP-001 Mount optional authenticated FastMCP after REST acceptance
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/mcp-001-mount-authenticated-fastmcp.md)).
+  Optional standalone FastMCP/fastmcp-slim 4.1.1, MCP/mcp-types 2.3.0 and
+  HTTPX2/HTTPCore2 2.13.1 add 53 packages to the 94-package lock without changing
+  existing versions. Actual base/server/server+MCP wheel profiles preserve cold
+  CLI/import/help/version isolation, disabled factory without MCP import/path
+  creation, missing enabled runtime HFCFG005 and enabled mounted factory.
+  Production supported verifier accepts only shared protected MCP-reader
+  authority; disabled mode resolves no MCP source. Canonical stateless `/mcp/`
+  finite JSON retains no legacy sessions/resumption; every method authenticates,
+  no session ID grants access and no tools/resources/prompts/commands are added.
+  One trusted public/native projection prevents prefix collisions from confusing
+  REST/MCP auth or static writer/body policy. Safe alias redirect, shared strict
+  JSON/empty-body/no-query policy, pre-body reserved bounded capacity, buffered
+  sanitized/capped responses and fixed JSON-RPC error projection contain SDK
+  behavior. Stable closed-vocabulary `mcp.diagnostic` emits fixed text, original
+  severity and bounded sanitized logger provenance, never raw SDK input/exception
+  formatting; handlers restore. REST-before-MCP startup and reverse teardown
+  preserve ownership/failure cleanup. Explicit installer --with-mcp is build/stage
+  only and default remains server-only; named source needs deliberate API-service
+  delivery, never worker credentials. Rollback deliberately disables MCP before
+  server-only/pre-MCP startup, with no migration/fallback or target package change.
+  Focused actual mounted 51 passed in 10.78 seconds, direct+mounted 63 in 10.25,
+  REST 113 in 17.97, CLI 154 in 60.20, installer 40 in 30.36, examples/docs 7
+  in 1.34 and final parsed matrix/anchors 63 in 1.02. First full gate exits 1:
+  9 failed, 3,385 passed, 40 deselected in 380.11 seconds, all remaining test-only
+  HTTPX/HTTPX2 private-transport borrowers. Shared public ApiCli exchange replaces
+  those wrappers; zero private borrowers remain and 79 focused cases pass in
+  6.80 seconds with interruption/retry/restart/no-second-POST proof preserved.
+  No runtime/semantic correction; first log is retained and build/install/Cockpit
+  were not reached. Definitive
+  `rtk proxy bash scripts/check.sh > .scratch/mcp-001-gate-rerun.log 2>&1`
+  exits 0: lock/both-extra sync, 373 formatted files, Ruff clean, Pyrefly 0 errors
+  (11 suppressed, 59 warnings not shown), 3,394 Python tests (40 deselected,
+  377.89 seconds), 0.1.10 sdist/wheel and actual locked isolated base/server/
+  server+MCP install/import/help/version checks. Cockpit lint/style/types,
+  127 tests in 2.152 seconds and production build in 1,203 ms pass. No source
+  change after definitive acceptance. Decision 124, 064/108/112/113/123/framework/
+  AD-21 amendments, FW-03/04 and INV-002/003/012–016, logging/original/active plan
+  and current MCP/server/API/config/security/CLI/release/README/Unreleased agree.
+  Final links/anchors/current/dependencies, all 29 REST modes, 124 unique indexed
+  decision/ADR records and whitespace pass. No config/durable/domain authority
+  change or production operation/deployment/push/merge/tag. MCP-002 is next pending
+  after this commit; curated tools/side-effect proof and operator holds 16–18
+  remain separate. Live Hub/NFS and extra build-marker suites were not run.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -1516,6 +1564,21 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     config locks and API/scheduled evidence. Actual executor hardening/drain and
     verify-calendar holds from item 16 remain. No production installation or
     operation is authorized by this work package.
+
+18. **Optional MCP deployment acceptance (2026-10-18, decision 124):**
+    select an actual server+MCP release profile and deliberately provision a
+    distinct protected MCP-reader source to the API service, with the named
+    credential drop-in or protected-file alternative in [MCP setup](mcp.md).
+    Default units do not import that optional credential. Verify actual public/
+    native URLs, TLS/proxy/Host/Origin and internal-client bearer delivery in an
+    authorized deployment window; no OAuth-only compatibility is promised.
+    The worker must remain credential-free/no-IP, including custom source masks.
+    Before rollback to server-only/pre-MCP, disable MCP configuration deliberately
+    and preserve normal drain, lock and retained-state guards. Staging --with-mcp
+    does not enable config, provision credentials or add packages to a switch
+    target. Curated tools remain MCP-002 and complete MCP acceptance remains its
+    later gate. Existing holds 16/17 still apply; no production operation is
+    authorized by this implementation package.
 
 ## Operator decisions needed
 
@@ -4053,3 +4116,25 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      sockets, audit all 29 REST modes/examples/contracts and run fresh build
      acceptance before MCP. No dependency/durable schema or production change;
      real installed-host enforcement remains operator-held.
+
+124. **Add an optional authenticated MCP transport after REST acceptance**
+     (2026-10-18, MCP-001). [ADR](adr/decision-124.md): API-016 committed
+     acceptance precedes the standalone FastMCP optional dependency. Supported
+     streaming/auth/lifespan implementation provides the material FW-04 benefit;
+     base/REST-only installs stay independent. Compose REST-before-MCP startup
+     and reverse teardown in one app, with failure cleanup. Production supported
+     verifier accepts only shared protected MCP-reader authority; no development
+     static verifier, cross-interface credential, ambient discovery or bearer in
+     configuration/logs. Disabled MCP imports/resolves neither package nor its
+     credential. Every transport request authenticates; session IDs grant no
+     authority. Preserve Host/Origin/TLS/proxy/corroborated native-prefix checks
+     and resource bounds. Pre-provisioned internal bearer is not OAuth discovery.
+     Finite replies are sanitized/bounded before headers; one trusted path
+     projection prevents interface confusion when public prefixes collide.
+     Closed vocabulary adds stable `mcp.diagnostic` with fixed text, original
+     severity and bounded sanitized logger provenance through existing emit/
+     correlation, never formatting raw SDK rejected-value messages/exceptions;
+     lower levels are suppressed and handlers restore. JSON-RPC errors project
+     code/fixed message without raw SDK details. No OpenAPI conversion or
+     tools/resources/prompts in this package; curated read-only tools remain MCP-002. No durable shape/workflow/domain authority
+     or production deployment change; actual acceptance remains task evidence.

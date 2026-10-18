@@ -1,6 +1,7 @@
 # Decision 064: The event log is emitted, not returned; and its vocabulary is closed
 
-Status: amended by [decision 111](decision-111.md) for execution correlation;
+Status: amended by [decision 111](decision-111.md) for execution correlation and
+[decision 124](decision-124.md) for bounded MCP diagnostics;
 accepted when recorded and retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
@@ -81,3 +82,16 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [tests/unit/test_logging.py](../../tests/unit/test_logging.py).
+
+## 2026-10-18 optional MCP diagnostic amendment (MCP-001)
+
+[Decision 124](decision-124.md) adds the stable warning event `mcp.diagnostic`
+to the closed `EVENTS` vocabulary. The lifespan-scoped bridge suppresses SDK
+messages below WARNING and emits fixed diagnostic text through ordinary `emit()`,
+preserving authoritative captured correlation, original lowercase `sdk_level`
+and sanitized `sdk_logger` bounded to 256 characters. It never formats SDK
+messages/arguments/exceptions, which can contain rejected values. It does
+not forward raw rejected values/tracebacks through arbitrary logger messages or
+reconfigure the daemon per request. Original SDK handlers/propagation are restored
+on exit. This is operational transport evidence, never an archive checkpoint,
+command outcome or job receipt. Existing event names remain stable.

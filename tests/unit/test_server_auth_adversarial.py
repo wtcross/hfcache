@@ -29,7 +29,9 @@ def _config(writer, reader=None, mcp=None):
         credentials["reader"] = {"file": str(reader)}
     if mcp is not None:
         credentials["mcp_reader"] = {"file": str(mcp)}
-    return validate_server_config_mapping({"schema_version": 1, "credentials": credentials})
+    return validate_server_config_mapping(
+        {"schema_version": 1, "credentials": credentials, "mcp_enabled": mcp is not None}
+    )
 
 
 @pytest.fixture

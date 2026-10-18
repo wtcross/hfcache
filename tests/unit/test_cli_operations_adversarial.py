@@ -33,7 +33,7 @@ class ObservedTransport(httpx.BaseTransport):
 
     def handle_request(self, request):
         self.requests.append((request.method, request.url.path, dict(request.url.params)))
-        response = self.delegate.handle_request(request)
+        response = self.delegate(request)
         if self.lose_ack and request.method == "POST" and request.url.path.endswith("/syncs"):
             mode = self.lose_ack
             self.lose_ack = False
@@ -66,7 +66,7 @@ class ObservedTransport(httpx.BaseTransport):
 
 
 def _transport(monkeypatch, remote, **options):
-    transport = ObservedTransport(remote.web._transport, **options)
+    transport = ObservedTransport(remote.exchange, **options)
     monkeypatch.setattr(
         "hfcache.cli_client.ApiClient", lambda settings: ApiClient(settings, transport=transport)
     )

@@ -332,7 +332,8 @@ transport/auth settings immutable until restart. Fresh archive-policy snapshots
 retain the startup root/UUID and fail a changed authority closed. Required REST
 writer and optional reader/MCP sources use only explicit protected files or named
 systemd credentials; an unconfigured optional class grants nobody access. Every
-configured source must load. Descriptor-pinned no-follow reads validate inode
+active source must load. MCP-001 ignores the MCP source while disabled; enabled
+MCP requires it and the optional package. Descriptor-pinned no-follow reads validate inode
 type, owner, mode, group access, single hardlink, bounded content and stable
 metadata. The API token grammar rejects Hub-style `hf_` values. Exact opaque
 values are registered for redaction; the registry keeps only fixed-size digests
@@ -341,7 +342,7 @@ cross-interface ambiguity. The principal contains a nonsecret credential class,
 never a token, digest or individual-user claim. Every reader shares AD-21's
 whole-archive authorization boundary.
 
-Authentication failures use sanitized `HFAPI001`/401 plus a Bearer challenge;
+REST authentication failures use sanitized `HFAPI001`/401 plus a Bearer challenge;
 capability denial is `HFAPI002`/403. Unsafe/malformed/racing credential sources
 and duplicate class values fail startup with `HFAPI003`/`HFAPI004`. The reusable
 FastAPI bearer adapter calls the application-owned verifier; extraction alone
@@ -604,3 +605,39 @@ not address.
 | Fail-closed preflight | Unmounted, read-only, wrong-sentinel, and below-reserve archives each exit `20` with no Hub request issued |
 | Consumer cannot write | Server-side create, modify, rename, and delete attempts from a consumer client all fail (operator-run; `NAS-004`/`NAS-005`) |
 | Hardening does not break operation | `systemd-analyze verify` clean, a full sync under enforcing SELinux with no unexplained AVC denial |
+
+## Optional MCP transport boundary (MCP-001)
+
+[Decision 124](adr/decision-124.md) adds only an explicitly enabled authenticated
+Streamable HTTP mount after committed REST acceptance. Production verification
+subclasses the supported FastMCP verifier and delegates to the same protected
+opaque-token registry with `interface="mcp"`; only the distinct fixed MCP reader
+matches. It is a whole-archive capability under AD-21. REST writer/reader and Hub
+credentials cannot cross that boundary, and MCP credentials never grant REST
+access. A session ID grants no authority; every supported transport request
+requires its bearer. No ambient auth provider or development static verifier is
+permitted. Disabled mode imports/resolves neither package nor MCP credential.
+
+Transport checks retain strict Host/Origin/TLS/proxy/public prefix, corroborated
+native Unix identity and finite resource limits. MCP startup composes with REST
+ownership and fails closed if its package/credential is unavailable. No tool,
+resource, prompt, arbitrary dispatcher, OAuth login/discovery or credential
+issuance is supplied in this package. Pre-provisioned bearer clients must protect
+and send their credential over the configured verified transport; compatibility
+with OAuth-only clients is not promised. Exact wire/session and streaming
+acceptance belongs to [the MCP contract](mcp.md) and implementing task evidence.
+No host hardening or production installation is inferred from those tests.
+
+MCP-001 selects stateless HTTP, without a retained legacy session/resumption
+store. Canonical `/mcp/` is separate from REST's strict slash behavior; only the
+specific authenticated `/mcp` spelling may redirect using a safe relative
+Location after transport/body/query validation, never caller input reflection.
+
+One path projection determines public/native interface spelling, authentication,
+early writer/body checks and effective prefix, including public-prefix collisions
+with `/mcp` or `/api`. A public REST route must not acquire MCP authentication by
+prefix resemblance. MCP rejects query parameters, requires bounded strict JSON
+POSTs/empty other bodies and limits separate in-flight work. Finite JSON replies
+are buffered/sanitized and capped before headers, with no truncated-success or
+retained SSE/session queue. Registered numeric RPC identities that cannot be
+safely reflected must refuse rather than leak or silently change identity.

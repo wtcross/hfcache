@@ -669,7 +669,8 @@ maintenance and initialization; API-012 adds candidate operations/read CLI and
 API-013 completes operational CLI/observation. API-014 packages named activation
 and actual-executor isolation policy with disposable runtime tests; API-015 integrates Cockpit's
 API-only clients and guarded configuration pipeline. API-016 validates complete
-REST acceptance. Installed-host enforcement remains operator-held; MCP is pending.
+REST acceptance. MCP-001 adds optional authenticated transport only; curated tools
+remain MCP-002 and installed-host enforcement remains operator-held.
 [API](api.md) and [server](server.md) track exact availability; implementing tasks
 own proof.
 
@@ -708,7 +709,8 @@ own proof.
   become execution authority. API-010 extends the same boundary to explicit
   maintenance routes and gates initialization before body reception. API-012
   candidate presence requires writer capability before DTO validation; only bounded
-  TOML content, not server paths/credentials, can be submitted. MCP remains pending. API-011's independent client uses explicit API
+  TOML content, not server paths/credentials, can be submitted. MCP-001 adds its
+separate protected verifier only after REST acceptance. API-011's independent client uses explicit API
   sources, verified TLS/Unix transport, no redirect/ambient proxy forwarding and
   finite response/page/read-retry/poll budgets with strict identity/version checks.
   It never falls back to archive filesystem access or starts a daemon.
@@ -842,14 +844,34 @@ own proof.
   [121](adr/decision-121.md). Real peer/cgroup/source-masking probes remain held.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
-  persistence, recovery, or operation admission. Enforcement: MCP-001–004,
-  which cannot begin until API-016 completes.
+  persistence, recovery, or operation admission. API-016 completed before MCP-001
+  adds optional transport. MCP-001 registers no tools/resources/prompts, converts
+  no REST OpenAPI and accepts only the distinct MCP-reader credential through a
+  production supported verifier. Disabled mode imports/resolves neither package
+  nor credential; one composed lifespan retains REST ownership and transport
+  security. Stateless HTTP retains no legacy session/resumption store; session IDs
+  grant no authority and every transport request authenticates. The narrow `/mcp`
+  to `/mcp/` redirect is authenticated, relative and cannot reflect caller input;
+  REST slash redirects remain disabled. One trusted public/native interface
+  projection governs authentication, static writer/body policy and links, including
+  configured-prefix collisions. Finite MCP replies are buffered/sanitized and
+  bounded before headers; separate in-flight capacity adds no retained queue.
+  Curated narrow read-service tools and their side-effect proof remain MCP-002–004.
+  Enforcement: [optional verifier/finite transport](../src/hfcache/mcp.py),
+  [application boundary/lifecycle](../src/hfcache/api/app.py),
+  [direct verifier/lifecycle tests](../tests/unit/test_mcp_mount.py) and
+  [mounted streaming/security tests](../tests/unit/test_mcp_transport.py).
+  See [MCP](mcp.md) and [decision 124](adr/decision-124.md).
 
 FW-01/FW-03 above retain their historical baseline with the explicit
 [108](adr/decision-108.md)/[109](adr/decision-109.md) amendment: scoped transport
 dependencies and the bounded non-resuming lane are permitted incrementally.
 [Decision 112](adr/decision-112.md) records the actual HTTPX and `server` extra
-addition and its material correctness rationale; FastMCP remains pending.
+addition and its material correctness rationale.
+[Decision 124](adr/decision-124.md) adds standalone FastMCP only in the optional
+`mcp` extra after committed REST acceptance, for maintained streaming protocol,
+production token verification and composed ASGI lifecycle; base/REST installs
+remain independent. No domain workflow framework is introduced.
 [Decision 119](adr/decision-119.md) adds an explicit HTTPCore declaration at the
 already-locked 1.0.9 version for resource-safe public Unix transport interfaces.
 Enforcement: [Unix transport](../src/hfcache/unix_http.py) and

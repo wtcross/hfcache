@@ -15,6 +15,7 @@
 # Usage:
 #   sudo scripts/install-release.sh                 # build and switch
 #   sudo scripts/install-release.sh --no-switch     # stage only, leave `current`
+#   sudo scripts/install-release.sh --with-mcp      # include optional MCP transport
 #   sudo scripts/install-release.sh --switch 0.1.0  # point `current` at a release
 #   scripts/install-release.sh --list               # what is installed, and what is live
 #   scripts/install-release.sh --dry-run            # review only; no writes or service calls
@@ -104,6 +105,10 @@ smoke() (
   "${binary}" --json version > /dev/null
   "$(dirname "${binary}")/python" -I -c \
     'import fastapi, uvicorn, hfcache.server, hfcache.verification_worker, hfcache.scheduled_client'
+  if ${WITH_MCP:-false}; then
+    "$(dirname "${binary}")/python" -I -c \
+      'import hfcache.mcp; from fastmcp.server.auth import TokenVerifier, AccessToken'
+  fi
   local scratch
   scratch=$(mktemp -d)
   trap 'rm -rf -- "${scratch}"' EXIT
@@ -135,11 +140,13 @@ PY
 MODE=install
 SWITCH_TARGET=
 DRY_RUN=false
+WITH_MCP=false
 for argument in "$@"; do
   case "${argument}" in
     --no-switch) MODE=stage ;;
     --list) MODE=list ;;
     --dry-run) DRY_RUN=true ;;
+    --with-mcp) WITH_MCP=true ;;
     --switch)
       MODE=switch
       SWITCH_TARGET=pending
@@ -157,10 +164,21 @@ done
 [[ ${SWITCH_TARGET} == pending ]] && die '--switch requires a version'
 canonical_absolute_path "${PREFIX}" || die 'unsafe install prefix'
 [[ -z ${SWITCH_TARGET} ]] || valid_release_version "${SWITCH_TARGET}"
+if ${WITH_MCP} && [[ ${MODE} == switch || ${MODE} == list ]]; then
+  die '--with-mcp applies only when building or staging a release'
+fi
+RELEASE_EXTRAS=(--extra server)
+if ${WITH_MCP}; then
+  RELEASE_EXTRAS+=(--extra mcp)
+fi
 
 if ${DRY_RUN}; then
   printf 'mode: %s\nprefix: %s\nsource: %s\n' "${MODE}" "${PREFIX}" "${SOURCE}"
-  printf 'dependency profile: locked server extra; no dev or editable install\n'
+  if ${WITH_MCP}; then
+    printf 'dependency profile: locked server and mcp extras; no dev or editable install\n'
+  else
+    printf 'dependency profile: locked server extra; no dev or editable install\n'
+  fi
   printf 'smoke: installed help/version/server imports, synthetic validate --local and policy parsing\n'
   printf 'switch/rebuild guard: timers, clients, API/verification sockets and executors inactive\n'
   printf 'orphan guard: noncreating exclusive shared-lock check retained through switch\n'
@@ -257,14 +275,14 @@ fi
 mv -T "${STAGING}" "${RELEASE}"
 STAGING=
 
-step 'uv sync --frozen --extra server --no-dev --no-editable'
+step "uv sync --frozen ${RELEASE_EXTRAS[*]} --no-dev --no-editable"
 # `--no-editable` so the installed package is a built wheel rather than a path
 # reference: nothing at runtime reads `src/`, and the venv keeps working if the
 # release tree's sources are later made unreadable.
 # `--no-python-downloads` so this step can only use the interpreter pinned above.
 (
   cd "${RELEASE}"
-  "${UV}" sync --frozen --extra server --no-dev --no-editable --no-python-downloads \
+  "${UV}" sync --frozen "${RELEASE_EXTRAS[@]}" --no-dev --no-editable --no-python-downloads \
     --python "${PYTHON_VERSION}"
 )
 

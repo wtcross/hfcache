@@ -1,5 +1,6 @@
 # Decision 108 — Typed services and maintained transport implementations
 
+- MCP transport amendment: [decision 124](decision-124.md).
 - Status: Accepted target contract; dependency/configuration/authentication enforcement advanced by [decision 112](decision-112.md), with reader/candidate integration and explicit HTTPCore use amended by [decision 119](decision-119.md).
 - Date: 2026-10-17.
 - Work package: API-001, this commit.
@@ -81,3 +82,17 @@ while HTTPCore retains HTTP parsing/pooling and TCP/TLS stays on HTTPX. No packa
 or version upgrade, private pool mutation, global patch, IP fallback or warning
 suppression is introduced. The exact server/domain authority and remaining
 framework/MCP exclusions stand.
+
+## 2026-10-18 optional MCP transport amendment (MCP-001)
+
+[Decision 124](decision-124.md) activates the separately optional standalone
+FastMCP transport after committed API-016 acceptance. Supported production token
+verification delegates only to the active protected MCP-reader slot; disabled
+mode imports/resolves neither its package nor credential. One composed lifespan
+retains REST startup/ownership and closes MCP before REST drain/release. Existing
+Host/Origin/TLS/proxy/corroborated native-prefix policy and class separation remain.
+This package adds transport only, with no OpenAPI conversion or tools/resources/
+prompts; curated reads and side-effect proof remain MCP-002. No archive/config/
+durable format, domain workflow, production deployment or host-proof change.
+See [MCP](../mcp.md) for exact supported protocol/path/session behavior and the
+[MCP-001 task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.

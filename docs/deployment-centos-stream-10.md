@@ -565,12 +565,19 @@ free flock, PID or missing history alone is not execution proof. Forced terminat
 requires supervised exact operation/run/transaction evidence and the existing
 recovery conditions; never reset a pending handle to replay.
 
-The writer installation includes the locked `server` extra. Its service-independent
+The writer installation includes the locked `server` extra. MCP-001 adds
+an explicit installer `--with-mcp` selection for both server/MCP dependencies;
+default staging remains server-only. The flag does not enable server config,
+provision a credential, change services or relax quiescence/rollback guards.
+See the [MCP contract](mcp.md). Its service-independent
 smoke parses actual archive TOML with the installed strict loader without
 credentials/archive/network, then exercises CLI `config validate --local` on an
 owned synthetic disabled-token policy. It never borrows daemon Hub credentials;
 real daemon-source validation remains operator/API preflight. The installer's dry
-run is read-only. Rehearse stage/drain/switch/rollback on disposable
+run is read-only. Rollback to server-only/pre-MCP requires deliberate disabled
+MCP config before startup: predecessor parsers understand the slot but refuse
+runtime enablement. No schema migration or automatic fallback occurs; staging
+`--with-mcp` does not add packages to an existing switch target. Rehearse stage/drain/switch/rollback on disposable
 fixtures and preserve both release trees; actual deployed systemd/cgroup/SELinux/
 NFS acceptance remains operator work. No such production procedure is executed
 or authorized by this implementation package.

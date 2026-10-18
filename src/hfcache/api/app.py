@@ -19,7 +19,7 @@ from urllib.parse import urlsplit
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.security import HTTPBearer
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException
@@ -232,7 +232,30 @@ class Boundary:
     def __init__(self, app: ASGIApp, *, owner: FastAPI, server: ServerConfig) -> None:
         self.app, self.owner, self.server = app, owner, server
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    def project_path(self, scope: Scope) -> tuple[str, str]:
+        """Resolve public/native spellings even when a prefix overlaps an interface."""
+        path, public_root = scope["path"], self.server.listener.root_path
+
+        def interface(value: str) -> bool:
+            return (
+                value == PREFIX
+                or value.startswith(PREFIX + "/")
+                or (value == "/mcp" or value.startswith("/mcp/"))
+            )
+
+        prefixed = bool(public_root and path.startswith(public_root + "/"))
+        public_path = path[len(public_root) :] if prefixed else path
+        if prefixed and interface(public_path):
+            return public_path, public_root
+        if _native_unix(scope) and interface(path):
+            return path, ""
+        return (public_path, public_root) if prefixed else (path, "")
+
+    def is_mcp(self, scope: Scope) -> bool:
+        path, _ = self.project_path(scope)
+        return self.server.mcp_enabled and (path == "/mcp" or path.startswith("/mcp/"))
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:  # noqa: PLR0912, PLR0915 - one authenticated request/lease lifetime
         if scope["type"] != "http":
             if scope["type"] == "websocket":
                 await send({"type": "websocket.close", "code": 1008})
@@ -243,6 +266,7 @@ class Boundary:
         state = scope.setdefault("state", {})
         state["execution_context"], state["metadata_leases"] = context, []
         started = False
+        mcp_lease = None
 
         async def safe_send(message: Message) -> None:
             nonlocal started
@@ -263,10 +287,21 @@ class Boundary:
         with context.activate():
             try:
                 principal = self.authenticate(scope)
-                require_capability(principal, Capability.READ)
+                mcp = self.is_mcp(scope)
+                require_capability(principal, Capability.MCP_READ if mcp else Capability.READ)
                 state["principal"] = principal
+                if mcp:
+                    transport = self.owner.state.mcp_transport
+                    transport.acquire()
+                    mcp_lease = state["mcp_transport_lease"] = transport
                 body = await self.request_body(scope, receive, principal)
                 if body is None:
+                    return
+                if mcp and self.project_path(scope)[0] == "/mcp":
+                    # A relative, trusted location preserves TLS and never reflects
+                    # a caller Host, query, forwarding header or bearer value.
+                    response = RedirectResponse(scope["root_path"] + "/mcp/", status_code=307)
+                    await response(scope, receive, safe_send)
                     return
 
                 delivered = False
@@ -292,11 +327,14 @@ class Boundary:
             finally:
                 for lease in state.pop("metadata_leases", ()):
                     lease.finish_request()
+                if mcp_lease is not None:
+                    state.pop("mcp_transport_lease", None)
+                    mcp_lease.release()
 
     async def request_body(
         self, scope: Scope, receive: Receive, principal: Principal
     ) -> bytes | None:
-        path = scope["path"].removeprefix(self.server.listener.root_path)
+        path, _ = self.project_path(scope)
         command = scope["method"] == "POST" and path in getattr(
             self.owner.state, "command_routes", ()
         )
@@ -311,6 +349,17 @@ class Boundary:
         ):
             raise AuthorizationError
         self.validate_transport(scope)
+        if self.is_mcp(scope):
+            if scope.get("query_string"):
+                raise RequestError
+            if scope["method"] == "POST":
+                body = await _json_body(
+                    receive, self.server.limits.max_request_bytes, scope["headers"]
+                )
+                if body is not None:
+                    _parse_object(body)
+                return body
+            return b"" if await _empty_body(receive, self.server.limits.max_request_bytes) else None
         if not command:
             return b"" if await _empty_body(receive, self.server.limits.max_request_bytes) else None
         body = await _json_body(receive, self.server.limits.max_request_bytes, scope["headers"])
@@ -334,16 +383,19 @@ class Boundary:
             for key, value in scope["headers"]
             if key.lower() == b"authorization"
         ]
-        return registry.authenticate(values[0] if len(values) == 1 else None)
+        return registry.authenticate(
+            values[0] if len(values) == 1 else None,
+            interface="mcp" if self.is_mcp(scope) else "rest",
+        )
 
     def validate_root_path(self, scope: Scope) -> None:
         public_root = self.server.listener.root_path
-        prefixed = bool(public_root and scope["path"].startswith(public_root + "/"))
-        if public_root and not prefixed and not _native_unix(scope):
+        _, effective_root = self.project_path(scope)
+        if public_root and not effective_root and not _native_unix(scope):
             raise RequestError(code="HFAPI007", status_code=404)
         # Decision 123: corroborated native clients need no public proxy prefix.
         # Never derive this trust or emitted links from forwarding headers.
-        scope["root_path"] = public_root if prefixed else ""
+        scope["root_path"] = effective_root
 
     def validate_transport(self, scope: Scope) -> None:  # noqa: PLR0912 - coupled pre-routing security checks
         headers = scope["headers"]
@@ -511,10 +563,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         )
 
     @asynccontextmanager
-    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        if server.mcp_enabled:
-            message = "MCP is unavailable until its acceptance gate"
-            raise RequestError(message=message)
+    async def rest_lifespan(application: FastAPI) -> AsyncIterator[None]:
         with instance_lock(instance_lock_path or Path("/run/hfcache/api.lock")):
             configure_daemon(level=getattr(logging, server.log_level.upper()))
             application.state.credentials = credentials or load_credentials(server)
@@ -588,6 +637,21 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
 
                     await _finish_owned(drain())
 
+    @asynccontextmanager
+    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        try:
+            async with rest_lifespan(application):
+                if server.mcp_enabled:
+                    from hfcache.mcp import mcp_diagnostics  # noqa: PLC0415 - optional startup only
+
+                    with mcp_diagnostics():
+                        async with application.state.mcp_app.lifespan(application.state.mcp_app):
+                            yield
+                else:
+                    yield
+        finally:
+            application.state.credentials = None
+
     app = FastAPI(
         lifespan=lifespan,
         docs_url=None,
@@ -602,6 +666,26 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         },
     )
     app.add_middleware(Boundary, owner=app, server=server)
+    if server.mcp_enabled:
+        # Optional import is deliberately below the enabled branch: base/server
+        # installations and disabled credentials have no MCP dependency.
+        try:
+            from hfcache.mcp import (  # noqa: PLC0415 - optional extra
+                BoundedMCPTransport,
+                create_mcp_app,
+            )
+        except ImportError:
+            message = "MCP is enabled but its optional runtime is unavailable"
+            raise ConfigurationError.single(message, code="HFCFG005") from None
+
+        app.state.mcp_app = create_mcp_app(lambda: getattr(app.state, "credentials", None))
+        app.state.mcp_server = app.state.mcp_app.state.fastmcp_server
+        app.state.mcp_transport = BoundedMCPTransport(
+            app.state.mcp_app,
+            capacity=server.limits.metadata_workers + server.limits.metadata_queue,
+            maximum=server.limits.max_response_bytes,
+        )
+        app.mount("/mcp", app.state.mcp_transport, name="mcp")
 
     def bounded_static(response: Response) -> Response:
         if len(response.body) > server.limits.max_response_bytes:
@@ -689,7 +773,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                     "reads": True,
                     "operations": True,
                     "operation_history": True,
-                    "mcp": False,
+                    "mcp": server.mcp_enabled,
                     "maintenance_enabled": server.maintenance_enabled,
                     "max_page_size": server.limits.max_page_size,
                 },

@@ -184,8 +184,10 @@ is API-012, operational CLI/observation API-013, and systemd packaging API-014.
 API-008 supplies one bounded execution lane and private verifier protocol/process
 primitives. API-014 packages activation/no-IP policy; installed OS enforcement
 remains operator acceptance. The library offline flag alone is insufficient.
-MCP stays behind the REST acceptance
-gate and adds no dependency yet. Disposable-socket TLS tests use the OpenSSL CLI
+REST acceptance is committed. MCP-001 adds standalone FastMCP only through the
+optional `mcp` extra, alongside `server`; disabled installs need no MCP package
+or credential. The authenticated transport registers no tools yet (MCP-002).
+See [MCP setup and limitations](docs/mcp.md). Disposable-socket TLS tests use the OpenSSL CLI
 as a development test tool; Python production dependencies remain locked.
 API-009 exposes keyed command admission with HTTP 202 and authenticated status,
 events and exact terminal results. Sync/actual verification require a writer;

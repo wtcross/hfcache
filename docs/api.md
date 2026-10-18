@@ -6,7 +6,8 @@ typed command routes, with guarded maintenance/initialization added by API-010,
 under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 API-012 adds candidate validation/planning/read CLI and API-013 completes
 operational CLI/observation. API-014 packages activated/scheduled services and
-API-015 integrates Cockpit; API-016 audits complete REST acceptance before MCP. No
+API-015 integrates Cockpit; API-016 completes REST acceptance. MCP-001 adds an
+optional authenticated transport with no tools yet; see [MCP](mcp.md). No
 production installation or listener start is asserted by implementation evidence.
 
 ## Service and transport boundary
@@ -133,7 +134,7 @@ run IDs retain domain grammars. No path parameter is an arbitrary filesystem pat
 | GET resource | Result in `envelope.data` | Pagination |
 | --- | --- | --- |
 | `/version` | Existing local version payload; no archive-policy read per request | none |
-| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; API-009/010 advertise `operations=true`, `operation_history=true` and the actual `maintenance_enabled` initialization gate; MCP remains false | none |
+| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; API-009/010 advertise `operations=true`, `operation_history=true` and the actual `maintenance_enabled` initialization gate; MCP-001 advertises `mcp` only when enabled, without claiming tools | none |
 | `/health` | Daemon readiness, policy-validation state and read-only archive inspection when available | none |
 | `/status` | Archive headline plus repository status rows | `repositories` |
 | `/repositories` | Published inventory, including unmanaged repositories | `repositories` |
@@ -777,23 +778,26 @@ records file ownership, transitions, event/result bounds and compatibility.
 API-005 supplies strict configuration, credential loading, fixed capability
 principals and a reusable FastAPI bearer adapter. API-006 authenticates all
 metadata HTTP routes/errors/schema/docs and applies transport bounds. API-009/010
-extend those controls to keyed command/maintenance jobs. API-012 adds candidate operations and reader integration; MCP and installed-host
-acceptance remain gated.
+extend those controls to keyed command/maintenance jobs. API-012 adds candidate
+operations and reader integration. MCP-001 supplies optional authenticated
+transport only; curated tools and installed-host acceptance retain their gates.
 
 | Credential class | Accepted interface | Core capability | REST read | REST write |
 | --- | --- | --- | --- | --- |
 | REST writer | REST | `read`, `write` | authorized | authorized, subject to maintenance/domain gates |
 | REST reader | REST | `read` | authorized | 403 `HFAPI002` |
-| MCP reader | Future MCP only | `mcp-read` | 401 `HFAPI001` | 401 `HFAPI001` |
+| MCP reader | Enabled MCP only | `mcp-read` | 401 `HFAPI001` | 401 `HFAPI001` |
 | Absent, invalid or malformed bearer | none | none | 401 `HFAPI001` | 401 `HFAPI001` |
 
-Capabilities do not grant an unimplemented MCP route or bypass the
-initialization gate, locked scope/evidence checks or domain refusal.
+Capabilities do not register MCP tools or bypass the initialization gate,
+locked scope/evidence checks or domain refusal. Only enabled MCP accepts its
+distinct credential; REST credentials cannot access that mount.
 Cross-interface credentials are rejected as unauthenticated. Missing,
 malformed and invalid authentication uses the same safe detail `Not authenticated`
 and `WWW-Authenticate: Bearer realm="hfcache"`; capability refusal is `Forbidden`.
-Configured missing/unsafe/racing/malformed API credentials are startup
-`HFAPI003`; duplicate values across classes are `HFAPI004`. All four codes retain
+Active configured missing/unsafe/racing/malformed API credentials are startup
+`HFAPI003`; duplicate active class values are `HFAPI004`. Disabled MCP never
+reads its inert optional source. All four codes retain
 the exit-10 authentication/configuration classification. No raw bearer or
 credential-derived principal identifier is returned.
 
@@ -916,3 +920,14 @@ custom paths), hardening, browser/PAM bridge, SELinux/NFS, executor drain and
 verify-calendar approval remain explicit [operator holds](progress.md#operator-handoff).
 Repository fixtures do not pass them. This plan authorizes no production operation
 or deployment.
+
+## Optional MCP interface (MCP-001)
+
+MCP is separate from the REST operation matrix and never converts its OpenAPI
+into tools. After committed REST acceptance the optional `/mcp` transport shares
+one app/lifespan, preserves transport checks and accepts only the distinct MCP
+reader credential. Disabled mode imports/resolves neither its package nor its
+credential. No tool/resources/prompts or job execution is added by MCP-001;
+MCP-002 owns curated read services and side-effect proof. Protocol messages are
+MCP wire objects, not fabricated REST domain Envelopes or admission receipts.
+See [the MCP contract](mcp.md) and [decision 124](adr/decision-124.md).

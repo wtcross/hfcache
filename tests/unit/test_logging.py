@@ -123,6 +123,7 @@ def test_every_plan_event_family_is_in_the_vocabulary():
         "quarantine.cleaned",
         "repository.failed",
         "run.completed",
+        "mcp.diagnostic",
     }
 
 

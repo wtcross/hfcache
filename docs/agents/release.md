@@ -46,7 +46,11 @@ switch. Missing task accounting requires explicitly empty control-group evidence
 The installer refuses unknown quiescence and never auto-stops/kills.
 Do not stop `hfcache.target`, unlink locks or treat client exit as termination.
 
-Writer installation provisions locked `server` dependencies. Smoke parses actual
+Writer installation provisions locked `server` dependencies. MCP-001 adds
+an explicit installer `--with-mcp` selection for both server/MCP dependencies;
+default staging remains server-only. The flag does not enable server config,
+provision a credential, change services or relax quiescence/rollback guards.
+See the [MCP contract](../mcp.md). Smoke parses actual
 archive TOML through the installed strict loader without credentials/archive/
 network, and exercises explicit CLI `config validate --local` against an owned
 synthetic disabled-token policy. Required Hub credentials are not imported into
@@ -60,6 +64,12 @@ requires actual old/current binary compatibility drill in addition to archive
 format drills. Real socket/cgroup/no-IP/no-credential/SELinux/NFS and executor-aware
 hardening proof remain deployment prerequisites; repository fixtures do not pass
 them. No deploy/tag/push is authorized by implementation of this task.
+
+Rollback to a server-only/pre-MCP target requires deliberate disabled MCP config
+before startup; older binaries can parse the existing slot but refuse enablement.
+There is no migration or automatic transport fallback, and `--with-mcp` cannot
+add packages to an existing switch target. Preserve normal executor drain and
+state/lock guards. See [MCP rollback](../mcp.md#rollback-and-deployment-limits).
 
 ```bash
 sudo systemctl stop hfcache-sync.timer          # quiesce — never hfcache.target

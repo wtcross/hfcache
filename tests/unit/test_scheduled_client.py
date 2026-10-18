@@ -530,7 +530,7 @@ def test_actual_api_work_survives_observer_restart_without_another_submission(
             class Transport(httpx.BaseTransport):
                 def handle_request(self, request):
                     requests.append(request)
-                    return remote.web._transport.handle_request(request)
+                    return remote.exchange(request)
 
             class DepartingClient(ApiClient):
                 def observe(self, *args, **kwargs):

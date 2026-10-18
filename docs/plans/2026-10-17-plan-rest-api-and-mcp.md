@@ -861,3 +861,23 @@ versions when implementing, especially FastMCP imports and test transports:
   changing fixture bytes. No config/durable/dependency change, MCP or production
   operation; installed-host holds remain separate. REST repository acceptance is
   complete and current selects MCP-001 pending after this package's commit.
+
+- 2026-10-18 MCP-001: Decision 124 implements the standalone FastMCP optional
+  transport only after API-016 committed acceptance (`07ff468`). The lock adds
+  FastMCP 4.1.1 and required protocol dependencies without changing existing
+  versions; base/server installs stay independent. Shared protected MCP-reader
+  verification and explicit one-app composed lifespan retain transport/class
+  boundaries. Disabled mode imports/resolves neither package nor its credential.
+  Installer `--with-mcp` is explicit build/stage-only dependency selection, with
+  separate protected-file or named-credential delivery and no automatic enablement.
+  No OpenAPI conversion/tools/resources/prompts until MCP-002, no durable/config
+  schema or domain workflow authority change; acceptance remains actual task
+  evidence and installed-host holds stay separate.
+
+  Repository acceptance completed 2026-10-18: definitive full rerun exits 0 with
+  3,394 Python tests (40 deselected, 377.89 seconds), 0.1.10 builds, three actual
+  locked base/server/server+MCP installation profiles and 127 Cockpit tests/build.
+  First full gate's nine HTTPX/HTTPX2 test-fixture failures and public exchange
+  correction are retained in the task; no runtime/semantic change was required.
+  Current selects MCP-002 pending after this commit. Tools and installed-host
+  acceptance remain separate; no production operation or later-task work occurred.

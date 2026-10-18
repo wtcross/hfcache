@@ -148,7 +148,7 @@ the certificate/key before accepting connections.
 | `verification` | table, defaults below | Private executor client policy; no worker process is launched |
 | `maintenance_enabled` | bool, `false` | Initialization only: requires this gate plus writer capability and explicit configured-target confirmation |
 | `interactive_docs` | bool, `false` | Enables authenticated `/api/v1/docs`; `/api/v1/openapi.json` is always authenticated |
-| `mcp_enabled` | bool, `false` | Requires an `mcp_reader` source in the model; runtime startup refuses enablement before the REST/MCP gate |
+| `mcp_enabled` | bool, `false` | MCP-001 optional transport; requires installed `mcp` extra plus usable distinct `mcp_reader` source, restart-only |
 | `log_level` | str, `"info"` | `debug`, `info`, `warning` or `error`; startup-only |
 
 ### Listener settings
@@ -260,9 +260,10 @@ diagnose failed updated policy without silently switching archive authority.
 one `file` absolute path or `systemd_name`; the latter resolves only through the
 absolute `CREDENTIALS_DIRECTORY` supplied by systemd. Names use
 `[A-Za-z0-9._-]{1,64}`, excluding `.` and `..`. An absent optional source disables
-that class. Every configured source must load successfully, including optional
-classes; missing, unsafe, racing or malformed sources fail startup with
-`HFAPI003`, and duplicate class values fail with `HFAPI004`. No ambient Hub/API
+that class. Every active configured source must load successfully; MCP-001 skips
+the MCP source entirely while disabled, even if configured. Missing, unsafe,
+racing or malformed active sources fail startup with `HFAPI003`, and duplicate
+active class values fail with `HFAPI004`. No ambient Hub/API
 token is discovered, no Hub credential is forwarded, and API tokens never appear
 in process arguments or configuration.
 
@@ -291,7 +292,7 @@ digests for disabled slots, through `hmac.compare_digest`.
 | --- | --- | --- |
 | REST writer | REST only | `read`, `write`; maintenance/domain gates still apply |
 | REST reader | REST only | `read` |
-| MCP reader | Future MCP only | `mcp-read`; rejected by the REST verifier |
+| MCP reader | MCP only when enabled | `mcp-read`; rejected by the REST verifier |
 
 The framework-independent verifier returns a frozen nonsecret `Principal` with
 the configured class. It identifies a credential class, not an individual user
@@ -316,19 +317,23 @@ comparison value and is never exposed by HTTP.
 Rotation means replace the protected credential, then restart the server to load
 it. Existing clients must use the new value on subsequent requests; stale tokens
 fail authentication after restart. No request mutates the registry or discovers
-replacement credentials automatically. MCP source/model slots reserve its later
-boundary; they do not enable MCP imports, tools or endpoints now.
+replacement credentials automatically. MCP-001 activates the existing MCP source
+only when `mcp_enabled` is true; disabled MCP never reads that source. Enabling
+requires a usable distinct credential and the optional package. It supplies the
+transport only, with no tools/resources/prompts until MCP-002. See [MCP](mcp.md).
 
 ## Package and client-transport primitives (API-005)
 
-HTTPX and HTTPCore are direct base dependencies; FastAPI/Uvicorn are available only through the
-`server` extra. The Python 3.14 locked versions and official sources are recorded
-in [decision 112](adr/decision-112.md). The default gate synchronizes that extra,
+HTTPX and HTTPCore are direct base dependencies; the `server` extra declares
+FastAPI/Uvicorn. The Python 3.14 locked versions and official sources are recorded
+in [decision 112](adr/decision-112.md). The default gate synchronizes implemented extras,
 runs its tests without optional-import skips, builds the wheel and installs the
 locked base and server variants into real isolated environments. Those smoke
 checks import the CLI/auth core, exercise help/schema-1 local version, confirm
 base has no FastAPI/Uvicorn, import the server adapter with the extra, and confirm
-FastMCP is absent in both. API-012's [decision 119](adr/decision-119.md) makes the
+FastMCP is absent in both. MCP-001 adds a third locked server+MCP installation
+variant and synchronizes both extras in the full development gate, retaining the
+base/server absence checks. See [decision 124](adr/decision-124.md). API-012's [decision 119](adr/decision-119.md) makes the
 already-locked HTTPCore 1.0.9 explicit for resource-safe Unix transport; no package
 or version upgrade is added.
 
@@ -350,7 +355,7 @@ optional credential registry, installed policy, query factory and instance-lock
 path for hermetic tests, plus the trusted startup-only `hub_token_file` source.
 Import/factory construction starts no listener and performs no archive
 initialization, repair or Hub call. The lifespan owns real
-startup effects: refuse early MCP enablement, acquire the local daemon lock,
+startup effects: acquire the local daemon lock,
 configure logging once, load explicit API credentials, pin installed archive
 policy, construct the bounded metadata pool and cache policy-independent version
 information. Failure does not create the archive or reconstruct a catalog.
@@ -764,3 +769,35 @@ Deployment requires locked server extras, protected API credentials, socket
 ownership, startup ordering, TLS/Host/Origin/proxy configuration, graceful drain,
 rollback barriers, NFS and hardening acceptance, and the disabled verify timer.
 No host policy changes or production listener starts are authorized here.
+
+## Optional MCP transport (MCP-001)
+
+After committed API-016 acceptance, [decision 124](adr/decision-124.md) permits
+standalone FastMCP through the separate optional `mcp` extra. The existing
+`mcp_enabled` switch is false by default; no new config version is introduced.
+Enablement is deliberate startup policy, not an API call. The custom supported
+production token verifier accepts only the active protected MCP-reader class;
+REST/Hub credentials and bare session IDs cannot authorize MCP.
+
+The fixed canonical `/mcp/` application shares the server's listener, transport checks and
+explicit composed lifespan. REST resources enter first; MCP closes before REST
+drains/releases its ownership. Disabled mode imports no package, loads no MCP
+credential and mounts no transport. No OpenAPI conversion, curated tool,
+resource/prompt or command path is added here. [MCP contract](mcp.md) owns exact
+mounted-path/session behavior and supported internal-client limitations.
+
+Development install selects both extras with
+`uv sync --locked --extra server --extra mcp`. The release installer gains an
+explicit `--with-mcp` selection while its default remains server-only; that flag
+selects dependencies/smoke for a release tree, not config enablement, credentials
+or service changes. Existing quiescence, pending-state and rollback guards remain.
+Actual deployment/hardening acceptance stays operator-held.
+
+MCP-001 uses one trusted route projection for public/native collisions: configured
+prefix plus recognized REST/MCP remainder takes precedence, otherwise only
+corroborated Unix native spelling is accepted. Authentication, early writer/body
+checks, effective root and links use that same result. Stateless finite JSON
+responses are bounded and sanitized before headers; the separate MCP in-flight
+ceiling is metadata workers plus metadata pending capacity, with no retained
+session queue. [MCP transport rules](mcp.md#transport-and-lifecycle) detail query,
+body, response and rollback behavior.

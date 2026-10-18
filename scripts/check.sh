@@ -43,26 +43,26 @@ step() {
 step 'uv lock --check'
 uv lock --check
 
-step 'uv sync --locked --extra server'
-uv sync --locked --extra server
+step 'uv sync --locked --extra server --extra mcp'
+uv sync --locked --extra server --extra mcp
 
 step 'ruff format --check'
-uv run --locked --extra server ruff format --check .
+uv run --locked --extra server --extra mcp ruff format --check .
 
 step 'ruff check'
-uv run --locked --extra server ruff check .
+uv run --locked --extra server --extra mcp ruff check .
 
 step 'pyrefly check'
-uv run --locked --extra server pyrefly check
+uv run --locked --extra server --extra mcp pyrefly check
 
 step 'pytest'
-uv run --locked --extra server pytest
+uv run --locked --extra server --extra mcp pytest
 
 step 'uv build'
 uv build
 
-step 'locked base and server wheel installations'
-uv run --locked --extra server python scripts/check-installations.py
+step 'locked base, server and server-plus-MCP wheel installations'
+uv run --locked --extra server --extra mcp python scripts/check-installations.py
 
 # Cockpit plugin gate (docs/cockpit.md §8): frozen install, lint, unit tests,
 # and a production build, when cockpit/ and the toolchain are both present.
@@ -82,7 +82,7 @@ fi
 
 if [[ $WITH_BUILD -eq 1 ]]; then
   step 'wheel install smoke test'
-  uv run --locked --extra server pytest -m build
+  uv run --locked --extra server --extra mcp pytest -m build
 fi
 
 printf '\n\033[1;32mall checks passed\033[0m\n'

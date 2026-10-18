@@ -1,5 +1,6 @@
 # Decision 113 — Serve bounded metadata through one authenticated lifespan
 
+- MCP transport amendment: [decision 124](decision-124.md).
 - Status: Accepted; implemented by API-006.
 - Date: 2026-10-17.
 - Work package: API-006, this commit.
@@ -133,3 +134,17 @@ prefix/TLS/proxy/Host/Origin checks. Native OpenAPI is a response copy and canno
 mutate deterministic public cache state. No forwarded header grants native
 transport identity. Locked-source/actual socket evidence and complete fresh REST
 acceptance are required before MCP; see [decision 123](decision-123.md).
+
+## 2026-10-18 optional MCP transport amendment (MCP-001)
+
+[Decision 124](decision-124.md) activates the separately optional standalone
+FastMCP transport after committed API-016 acceptance. Supported production token
+verification delegates only to the active protected MCP-reader slot; disabled
+mode imports/resolves neither its package nor credential. One composed lifespan
+retains REST startup/ownership and closes MCP before REST drain/release. Existing
+Host/Origin/TLS/proxy/corroborated native-prefix policy and class separation remain.
+This package adds transport only, with no OpenAPI conversion or tools/resources/
+prompts; curated reads and side-effect proof remain MCP-002. No archive/config/
+durable format, domain workflow, production deployment or host-proof change.
+See [MCP](../mcp.md) for exact supported protocol/path/session behavior and the
+[MCP-001 task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.

@@ -1383,6 +1383,17 @@ replay, checkpoint orchestration, or in-app scheduler is permitted. A receipt
 never supersedes archive evidence. [API](api.md) and [server](server.md) state
 the target contracts and their implementation status.
 
+### 2026-10-18 MCP-001 transport amendment
+
+[Decision 124](adr/decision-124.md) implements decision 108's standalone FastMCP
+exception only after API-016 committed REST acceptance. The optional `mcp` extra
+supplies maintained streaming protocol/auth/lifespan behavior; base and REST-only
+installations stay independent. One explicitly composed application retains REST
+startup/ownership and a production shared-registry MCP-reader verifier. Disabled
+MCP imports/resolves neither package nor credential. No automatic OpenAPI tool
+conversion, command/job path, workflow framework or durable authority is added;
+curated read-only tools remain MCP-002. Existing FS/TX and whole-archive rules stand.
+
 ### Execution context and process boundaries (API-004, 2026-10-17)
 
 [Decision 111](adr/decision-111.md) amends the process-per-CLI assumption in

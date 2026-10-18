@@ -1,5 +1,6 @@
 # Decision 112 — Separate server authority and verified bearer capabilities
 
+- MCP transport amendment: [decision 124](decision-124.md).
 - Status: Accepted; implemented incrementally by API-005, with metadata-route/lifespan enforcement advanced by [decision 113](decision-113.md)
   and command authority extended by [decision 116](decision-116.md). Direct
   HTTPCore use is amended by [decision 119](decision-119.md).
@@ -163,3 +164,17 @@ No redirect/ambient proxy forwarding, silent local fallback or automatic daemon
 startup exists. Client protocol/config codes are distinct from connectivity/
 uncertain-submission safety codes, and old receipts retain admitted fingerprints.
 Operational CLI migration and installed-host acceptance remain later tasks.
+
+## 2026-10-18 optional MCP transport amendment (MCP-001)
+
+[Decision 124](decision-124.md) activates the separately optional standalone
+FastMCP transport after committed API-016 acceptance. Supported production token
+verification delegates only to the active protected MCP-reader slot; disabled
+mode imports/resolves neither its package nor credential. One composed lifespan
+retains REST startup/ownership and closes MCP before REST drain/release. Existing
+Host/Origin/TLS/proxy/corroborated native-prefix policy and class separation remain.
+This package adds transport only, with no OpenAPI conversion or tools/resources/
+prompts; curated reads and side-effect proof remain MCP-002. No archive/config/
+durable format, domain workflow, production deployment or host-proof change.
+See [MCP](../mcp.md) for exact supported protocol/path/session behavior and the
+[MCP-001 task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.

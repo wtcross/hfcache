@@ -31,7 +31,10 @@ it.
   correctness argument and a recorded decision (`FW-04`).
   [Decision 108](../adr/decision-108.md) permits incremental transport
   dependencies; [decision 109](../adr/decision-109.md) permits only the
-  bounded non-resuming execution lane. Neither authorizes other frameworks.
+  bounded non-resuming execution lane. [Decision 124](../adr/decision-124.md)
+  adds the actual optional FastMCP protocol transport after committed REST
+  acceptance, with independent base/server installs and no workflow authority.
+  These scoped additions do not authorize other frameworks.
 
 ## Tests
 

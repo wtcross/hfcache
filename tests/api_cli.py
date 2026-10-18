@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import httpx
 import pytest
 from starlette.exceptions import StarletteDeprecationWarning
 from typer.testing import CliRunner
@@ -37,8 +38,9 @@ from hfcache.verification_protocol import VerificationClient
 
 
 class ApiCli:
-    def __init__(self, token, settings, application, web):
+    def __init__(self, token, settings, application, web, exchange):
         self.token, self.settings, self.application, self.web = token, settings, application, web
+        self.exchange = exchange
         self.runner = CliRunner()
 
     def invoke(self, arguments, *, json_output=True):
@@ -142,16 +144,38 @@ def api_cli(
                     ) as web,
                     pytest.MonkeyPatch.context() as patch,
                 ):
+
+                    def exchange(request: httpx.Request) -> httpx.Response:
+                        # Starlette selects HTTPX2 when MCP installs it. Keep the
+                        # base client's maintained HTTPX transport independent,
+                        # rather than borrowing a nominally different private pool.
+                        response = web.request(
+                            request.method,
+                            str(request.url),
+                            headers=request.headers.raw,
+                            content=request.read(),
+                            follow_redirects=False,
+                        )
+                        return httpx.Response(
+                            response.status_code,
+                            headers=response.headers.raw,
+                            content=response.content,
+                        )
+
                     patch.setattr(
                         "hfcache.cli_client.ApiClient",
-                        lambda settings: ApiClient(settings, transport=web._transport),
+                        lambda settings: ApiClient(
+                            settings, transport=httpx.MockTransport(exchange)
+                        ),
                     )
                     # These processes are distinct in deployment. Keep daemon logging
                     # installed and give only the in-process CLI its invocation context.
                     patch.setattr(
                         "hfcache.cli.configure_logging", lambda **_: bind_run(new_run_id())
                     )
-                    yield ApiCli(read_token if reader else writer, settings, application, web)
+                    yield ApiCli(
+                        read_token if reader else writer, settings, application, web, exchange
+                    )
         finally:
             # The app has drained and joined before restoring test process state.
             reset()
