@@ -1,4 +1,33 @@
-# Decision127: port8443 needs no executable capability or bounding capability.
-FROM docker.io/library/caddy@sha256:173b26306d711395accaeba8b67afcaad2a085ccb1e6bf26010bfe8c095a5229
-RUN setcap -r /usr/bin/caddy && test -z "$(getcap /usr/bin/caddy)"
+# Decision 129: every build stage is UBI micro; external images donate bytes only.
+FROM registry.access.redhat.com/ubi10/ubi-micro@sha256:87a27d7189dbae57f63db332a11de17f7ed6be91cdc956731c30141af2e8dc49 AS prepare
+COPY --from=docker.io/library/caddy@sha256:173b26306d711395accaeba8b67afcaad2a085ccb1e6bf26010bfe8c095a5229 /usr/bin/caddy /build/caddy
+COPY --from=registry.access.redhat.com/ubi10/ubi-minimal@sha256:4f48c7a351edbe9cc13fc3c0ef2402340a96bb44df07cfa7efbc4f9f7b4b57fc /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /build/ca.pem
+RUN printf '%s  %s\n' \
+       678ade3bfc088749c81a681adc603333ee0bb023b6a6cfe3c0f58bef8ff854e9 /build/caddy \
+       00411c197b16f659945fba3c2f970a26030f56eef5d445c913cb59a089c813b9 /build/ca.pem \
+       | sha256sum --check --strict - \
+    && install -D -m 0755 /build/caddy /prepared/usr/bin/caddy \
+    && install -D -m 0644 /build/ca.pem /prepared/etc/ssl/cert.pem \
+    && capabilities=$(/usr/sbin/getcap /prepared/usr/bin/caddy) \
+    && test -z "$capabilities" \
+    && mkdir -p /prepared/etc/caddy /prepared/config/caddy /prepared/data/caddy \
+       /prepared/srv /prepared/run/hfcache/api \
+    && touch /prepared/etc/caddy/Caddyfile \
+    && cp /etc/passwd /prepared/etc/passwd \
+    && cp /etc/group /prepared/etc/group \
+    && printf 'hfcache:x:981:981:hfcache:/nonexistent:/usr/sbin/nologin\n' >> /prepared/etc/passwd \
+    && printf 'hfcache:x:981:\n' >> /prepared/etc/group \
+    && chown -R 981:981 /prepared/config /prepared/data /prepared/run/hfcache \
+    && chmod 0700 /prepared/config /prepared/data /prepared/run/hfcache \
+       /prepared/run/hfcache/api
+
+FROM registry.access.redhat.com/ubi10/ubi-micro@sha256:87a27d7189dbae57f63db332a11de17f7ed6be91cdc956731c30141af2e8dc49
+COPY --from=prepare /prepared/ /
+ENV CADDY_VERSION=v2.11.7 XDG_CONFIG_HOME=/config XDG_DATA_HOME=/data \
+    SSL_CERT_FILE=/etc/ssl/cert.pem
+LABEL org.opencontainers.image.title="Caddy on Red Hat UBI 10 micro" \
+    org.opencontainers.image.version="v2.11.7" \
+    org.opencontainers.image.licenses="Apache-2.0"
+WORKDIR /srv
 USER 981:981
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

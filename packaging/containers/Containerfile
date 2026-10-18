@@ -1,24 +1,41 @@
-# Decision 127: immutable runtime, exact wheel and locked hashed dependencies.
-FROM ghcr.io/astral-sh/uv@sha256:0d127b3a7049b879a6e18a79c7f33fea59aa83c226464248f89cfb716a6b96f5 AS uv
-FROM docker.io/library/python@sha256:b921fe7e7522f828d45197a47656ec465a9b15689b27fa8e1fba2864fca5b967 AS build
-COPY --from=uv /uv /bin/uv
-ENV UV_PYTHON_DOWNLOADS=never UV_NO_CONFIG=1 UV_NO_ENV_FILE=1
+# Decisions 127/129: every stage uses UBI micro; donors supply binary/data only.
+FROM registry.access.redhat.com/ubi10/ubi-micro@sha256:87a27d7189dbae57f63db332a11de17f7ed6be91cdc956731c30141af2e8dc49 AS build
+COPY --from=ghcr.io/astral-sh/uv@sha256:0d127b3a7049b879a6e18a79c7f33fea59aa83c226464248f89cfb716a6b96f5 /uv /usr/local/bin/uv
+COPY --from=registry.access.redhat.com/ubi10/ubi-minimal@sha256:4f48c7a351edbe9cc13fc3c0ef2402340a96bb44df07cfa7efbc4f9f7b4b57fc /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/cert.pem
+COPY python/ /opt/hfcache/python/
+# Decision 129: omit only inspected optional installers from this runtime copy.
+# The authenticated archive and host build context remain intact.
+RUN test -d /opt/hfcache/python/lib/python3.14/site-packages/pip-26.1.2.dist-info \
+    && rm -f /opt/hfcache/python/bin/pip /opt/hfcache/python/bin/pip3 \
+       /opt/hfcache/python/bin/pip3.14 \
+    && rm -rf /opt/hfcache/python/lib/python3.14/site-packages/pip \
+       /opt/hfcache/python/lib/python3.14/site-packages/pip-26.1.2.dist-info \
+       /opt/hfcache/python/lib/python3.14/ensurepip
+ENV UV_PYTHON_DOWNLOADS=never UV_NO_CONFIG=1 UV_NO_ENV_FILE=1 UV_LINK_MODE=copy \
+    SSL_CERT_FILE=/etc/ssl/cert.pem
 COPY requirements.txt /build/requirements.txt
 COPY wheels/ /build/wheels/
-RUN uv venv --python /usr/local/bin/python /opt/hfcache/.venv \
+RUN printf '%s  %s\n' '00411c197b16f659945fba3c2f970a26030f56eef5d445c913cb59a089c813b9' /etc/ssl/cert.pem | sha256sum -c - \
+    && uv venv --python /opt/hfcache/python/bin/python3.14 /opt/hfcache/.venv \
     && uv pip install --python /opt/hfcache/.venv/bin/python --require-hashes \
        --no-deps --only-binary :all: -r /build/requirements.txt
+RUN mkdir -p /prepared/etc /prepared/run/hfcache /prepared/var/lib/hfcache \
+       /prepared/var/cache/hfcache /prepared/run/credentials /prepared/etc/credstore \
+       /prepared/etc/credstore.encrypted /prepared/etc/hfcache/credentials \
+    && install -m0644 /etc/passwd /prepared/etc/passwd \
+    && install -m0644 /etc/group /prepared/etc/group \
+    && printf 'hfcache:x:981:981:hfcache:/nonexistent:/usr/sbin/nologin\n' >> /prepared/etc/passwd \
+    && printf 'hfcache:x:981:\n' >> /prepared/etc/group \
+    && chown 981:981 /prepared/run/hfcache /prepared/var/lib/hfcache /prepared/var/cache/hfcache \
+    && chmod 0700 /prepared/run/hfcache /prepared/var/lib/hfcache /prepared/var/cache/hfcache
 
-FROM docker.io/library/python@sha256:b921fe7e7522f828d45197a47656ec465a9b15689b27fa8e1fba2864fca5b967
+FROM registry.access.redhat.com/ubi10/ubi-micro@sha256:87a27d7189dbae57f63db332a11de17f7ed6be91cdc956731c30141af2e8dc49
+COPY --from=build /opt/hfcache/python /opt/hfcache/python
 COPY --from=build /opt/hfcache/.venv /opt/hfcache/.venv
-RUN printf 'hfcache:x:981:981:hfcache:/nonexistent:/usr/sbin/nologin\n' >> /etc/passwd \
-    && printf 'hfcache:x:981:\n' >> /etc/group \
-    && mkdir -p /run/hfcache /var/lib/hfcache /var/cache/hfcache \
-       /run/credentials /etc/credstore /etc/credstore.encrypted /etc/hfcache/credentials \
-    && chown 981:981 /run/hfcache /var/lib/hfcache /var/cache/hfcache \
-    && chmod 0700 /run/hfcache /var/lib/hfcache /var/cache/hfcache
-ENV PATH=/opt/hfcache/.venv/bin:/usr/local/bin:/usr/bin:/bin \
+COPY --from=build /etc/ssl/cert.pem /etc/ssl/cert.pem
+COPY --from=build /prepared/ /
+ENV PATH=/opt/hfcache/.venv/bin:/opt/hfcache/python/bin:/usr/local/bin:/usr/bin:/bin \
     HOME=/nonexistent PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
-    HF_HUB_DISABLE_TELEMETRY=1
+    HF_HUB_DISABLE_TELEMETRY=1 SSL_CERT_FILE=/etc/ssl/cert.pem
 USER 981:981
 CMD ["/opt/hfcache/.venv/bin/hfcache", "--help"]

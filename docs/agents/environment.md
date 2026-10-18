@@ -132,3 +132,10 @@ guarded artifact selection/host acceptance. Installed 0.2.0 and its API-to-worke
 SELinux hold remain until actual OPS-018 container-peer PROBE; no host-origin
 probe or source test can clear it. No NAS file I/O/jobs, policy/label/seccomp
 weakening, other-host change, remote publication or automatic backlog activation.
+
+OPS-019 now precedes fresh REL-013 artifacts under Tyler's UBI 10 requirement.
+All built service FROM stages use pinned micro, with only reviewed binary/Red
+Hat CA-data donors; [decision 129](../adr/decision-129.md) governs implementation.
+Old Debian candidates/stopped gate are superseded evidence. Existing 0.2.0
+runtime, Enforcing policy, permanent guard, NAS-ro and writer masks remain.
+No source/base work permits NAS file I/O/jobs, other-host change or remote push.

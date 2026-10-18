@@ -64,7 +64,10 @@ consumers at all.
 
 ## Status
 
-**Preparing `0.2.1`; not deployed or tagged.** The
+**Preparing `0.2.1`; not deployed or tagged.** [OPS-019](docs/plans/tasks/ops-019-ubi10-runtime-images.md)
+implements pinned UBI 10 micro for every service-image build stage. Actual dirty
+preview foundation, worker and TLS proofs plus the full gate pass; fresh clean
+artifacts remain the next task. Earlier Debian candidates are superseded. The
 [worker-listener correction](docs/plans/2026-10-18-plan-container-worker-listener.md)
 creates the private socket inside the already confined worker and provides
 real container readiness. Native FD3 activation and existing hardening remain;

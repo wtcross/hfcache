@@ -260,3 +260,4 @@ status and current-contract links before applying a historical choice.
 | 126 | [Guard a local rollout without NAS writes or false acceptance](decision-126.md) |
 | 127 | [Run reviewed rootless containers without forced executor cleanup](decision-127.md) |
 | 128 | [Create the rootless verifier listener inside its confinement](decision-128.md) |
+| 129 | [Build all service image stages on pinned UBI 10 micro](decision-129.md) |

@@ -1238,3 +1238,14 @@ OPS-018 owns guarded installed selection and actual PROBE. Only that production
 proof can close hold 22. Existing 0.2.0 partial tag/history stays immutable; rollback
 to it deliberately restores the known connection hold. Fixed host guard, NAS-ro,
 writer masks/stores/handles/lock inodes and all forbidden NAS workloads remain.
+
+## 22. UBI 10 source prerequisite (OPS-019)
+
+[Decision 129](adr/decision-129.md) supersedes Debian/Alpine candidate foundations:
+all app/Caddy FROM stages use pinned UBI micro; minimal supplies only Red Hat CA
+PEM and external uv/Caddy donors only verified binaries. Explicit runtime defaults,
+exact portable Python 3.14.6/locked closure and actual confinement proofs remain.
+The initial REL-013 gate was stopped, not passed. Fresh clean UBI artifacts and
+all acceptance repeat after committed OPS-019; no stage/selector/runtime change
+or worker-hold closure is claimed here. Keep NAS-ro/guard/masks/Enforcing policy,
+all state and locks, and all forbidden NAS/other-host/calendar limits unchanged.

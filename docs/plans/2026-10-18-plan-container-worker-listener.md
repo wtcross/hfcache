@@ -8,7 +8,7 @@
 | Authorization | Tyler's continuing local review, release and rollout instruction covers this necessary verifier-connectivity correction; activated after committed REL-011 2d81df5, preserving the NAS-write ban. |
 | Baseline | Deployed 0.2.0 application source `481fcc4`; OPS-016 evidence `11ddd55`; REL-011 closure 2d81df5 is committed. |
 | Tracker | [current.md](current.md) |
-| Execution | Four sequential work packages; collaborating agents share each selected task boundary. |
+| Execution | Five sequential work packages after UBI steering; collaborating agents share each selected task boundary. |
 
 ## Outcome and scope
 
@@ -107,9 +107,10 @@ format change is intended; the format drill verifies that conclusion.
 | Order | Work package and task file | Depends on |
 | --- | --- | --- |
 | 1 | [OPS-017: Implement the confined worker-owned listener](tasks/ops-017-container-worker-listener.md) | [REL-011](tasks/rel-011-local-release-and-handoff.md), committed |
-| 2 | [REL-013: Build clean 0.2.1 artifacts and prove container peer access](tasks/rel-013-container-worker-artifacts.md) | OPS-017 |
-| 3 | [OPS-018: Deploy and accept the corrected listener locally](tasks/ops-018-container-worker-rollout.md) | REL-013 |
-| 4 | [REL-014: Record the corrected local release and handoff](tasks/rel-014-container-worker-release.md) | OPS-018 |
+| 2 | [OPS-019: Implement minimal viable UBI 10 service images](tasks/ops-019-ubi10-runtime-images.md) | OPS-017 |
+| 3 | [REL-013: Build clean 0.2.1 artifacts and prove container peer access](tasks/rel-013-container-worker-artifacts.md) | OPS-019 |
+| 4 | [OPS-018: Deploy and accept the corrected listener locally](tasks/ops-018-container-worker-rollout.md) | REL-013 |
+| 5 | [REL-014: Record the corrected local release and handoff](tasks/rel-014-container-worker-release.md) | OPS-018 |
 
 Task files own execution status; this table declares prerequisite order only.
 Finish and commit one work package before beginning the next. Collaborating
@@ -179,3 +180,35 @@ owner and coordinated source freeze before its gate.
   487.56 seconds, three locked installation profiles, 135 Cockpit tests/build
   and four wheel smokes. REL-013 is next pending until this source commit;
   deployed 0.2.0/hold 22 and all NAS/other-host restrictions remain unchanged.
+
+- 2026-10-18: REL-013 activated after source commit 03a986f. Root creates the
+  clean detached source at /var/tmp/hfcache-rel013-source; final artifacts,
+  contexts and proof outputs remain outside it, with evidence edits separate.
+  Normal ignored gate outputs may be inside while tracked state stays clean.
+  Only reviewed delegated clean-build/compatibility/disposable proof work starts;
+  OPS-018 remains pending and deployed 0.2.0/hold 22/NAS guards stay unchanged.
+
+- 2026-10-18 UBI steering: Tyler requires every built service image to use Red
+  Hat UBI 10, with the most minimal viable variant. New OPS-019 is sole
+  in_progress; decision 129/contracts follow technical review before source.
+  REL-013 returns pending and now depends on OPS-019. Its initial clean Debian
+  build/proof/compatibility evidence is superseded; root stops its gate with
+  TERM15 after 4m25.945s, not passing despite wrapper exit0. Domain execution is
+  held. Version remains pre-release 0.2.1; production 0.2.0/hold22/NAS barriers
+  remain unchanged. Fresh clean UBI artifacts/acceptance follow OPS-019's commit.
+
+- 2026-10-18: Technical review selects decision 129: every FROM stage uses pinned
+  UBI micro; actual tools suffice without package transactions. Minimal is only
+  a Red Hat CA-PEM data donor, and pinned uv/Caddy images only binary donors.
+  Portable verified CPython 3.14.6/locked app versions and all confinement remain.
+  The ADR/index/register/contracts are published before source authorization;
+  OPS-019 may implement. No stopped/superseded candidate is promoted or deployed.
+
+- 2026-10-18: OPS-019 completes all-micro app/Caddy source with unchanged locked
+  dependency versions and confinement/domain/schema boundaries. Exact installer
+  omission and supported caio fallback corrections retain failed foundation
+  evidence. Dirty UBI foundation/notify/container-peer/isolation/TLS proofs pass;
+  the fresh NAS-masked --with-build exits 0 with 4,057 Python/40 deselected,
+  three locked profiles, 135 Cockpit tests/build and four wheel smokes. REL-013
+  is next pending until this commit and must repeat clean UBI acceptance.
+  Production 0.2.0/hold22/NAS/guard/writer-mask/state/remote barriers remain.

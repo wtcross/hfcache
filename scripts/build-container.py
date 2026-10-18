@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build decision 127's local image from an exact wheel and the locked closure.
+"""Build decisions 127/129's UBI micro image from authenticated local inputs.
 
 Run as a login/service user, never root. Inputs and output must be on local
 storage. Base images must already exist locally; this script never pulls/pushes.
@@ -15,24 +15,28 @@ import re
 import shutil
 import stat
 import subprocess
+import tarfile
 import zipfile
 from email.parser import BytesParser
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import NoReturn
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-PYTHON_BASE = (
-    "docker.io/library/python@sha256:"
-    "b921fe7e7522f828d45197a47656ec465a9b15689b27fa8e1fba2864fca5b967"
-)
-UV_BUILDER = (
-    "ghcr.io/astral-sh/uv@sha256:0d127b3a7049b879a6e18a79c7f33fea59aa83c226464248f89cfb716a6b96f5"
-)
+PINS = json.loads((REPOSITORY / "packaging/containers/images.json").read_bytes())
+PYTHON_BASE = PINS["python"]
+BUILD_BASE = PINS["build"]
+UV_BUILDER = PINS["uv_binary_image"]  # Binary donor only; every FROM is UBI micro.
+CA_IMAGE = PINS["ca_bundle_image"]
+CA_SHA256 = PINS["ca_bundle_sha256"]
+PYTHON_DISTRIBUTION = PINS["python_distribution"]
 _HEX = re.compile(r"[0-9a-f]{64}\Z")
 _IMAGE = re.compile(r"localhost/hfcache:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}\Z")
 _MOUNT_MIN_FIELDS = 5
 _METADATA_LIMIT = 65536
 _LOCAL_FILESYSTEMS = frozenset({"btrfs", "ext2", "ext3", "ext4", "overlay", "tmpfs", "xfs"})
+_MAX_PYTHON_ARCHIVE = 128 * 1024 * 1024
+_MAX_PYTHON_EXPANDED = 512 * 1024 * 1024
+_MAX_PYTHON_MEMBERS = 16384
 
 
 def refuse(message: str) -> NoReturn:
@@ -106,6 +110,84 @@ def wheel_input(path: Path, expected: str) -> tuple[bytes, str]:
     return body, version
 
 
+def python_archive_input(path: Path) -> bytes:
+    """Authenticate the complete interpreter before parsing or extracting it."""
+    path = local_path(path)
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+    try:
+        before = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or before.st_nlink != 1
+            or not 0 < before.st_size <= _MAX_PYTHON_ARCHIVE
+        ):
+            refuse("Python input must be a bounded regular archive")
+        with os.fdopen(descriptor, "rb", closefd=False) as stream:
+            body = stream.read(_MAX_PYTHON_ARCHIVE + 1)
+        after = os.fstat(descriptor)
+        if len(body) != before.st_size or any(
+            getattr(before, field) != getattr(after, field)
+            for field in (
+                "st_dev",
+                "st_ino",
+                "st_mode",
+                "st_nlink",
+                "st_size",
+                "st_mtime_ns",
+                "st_ctime_ns",
+            )
+        ):
+            refuse("Python input changed during authentication")
+        if digest(body) != PYTHON_DISTRIBUTION["sha256"]:
+            refuse("Python archive SHA256 does not match the pinned distribution")
+        return body
+    finally:
+        os.close(descriptor)
+
+
+def extract_python(body: bytes, context: Path) -> None:
+    """Bound a fresh Python-only tree; never extract devices, hardlinks or escapes."""
+    destination = context / "python"
+    destination.mkdir(mode=0o755)
+    members: list[tarfile.TarInfo] = []
+    seen: set[str] = set()
+    expanded = 0
+    with tarfile.open(fileobj=io.BytesIO(body), mode="r:gz") as archive:
+        for item in archive:
+            name = PurePosixPath(item.name)
+            if (
+                not name.parts
+                or name.is_absolute()
+                or name.parts[0] != "python"
+                or ".." in name.parts
+                or "\\" in item.name
+                or any(not character.isprintable() for character in item.name)
+                or not (item.isfile() or item.isdir() or item.issym())
+                or item.sparse is not None
+                or item.size < 0
+            ):
+                refuse("unsafe Python archive member")
+            relative = PurePosixPath(*name.parts[1:]).as_posix()
+            expanded += item.size
+            if (
+                relative in seen
+                or len(members) >= _MAX_PYTHON_MEMBERS
+                or expanded > _MAX_PYTHON_EXPANDED
+            ):
+                refuse("Python archive exceeds its tree bounds")
+            seen.add(relative)
+            if relative == "." and not item.isdir():
+                refuse("Python archive root must be a directory")
+            members.append(item.replace(name=relative))
+        # The data filter resolves symlinks against the Python-only destination,
+        # not the larger context, so no link can gain authority over other inputs.
+        archive.extractall(destination, members=members, filter="data")
+    executable_path = destination / "bin/python3.14"
+    info = executable_path.lstat()
+    if not stat.S_ISREG(info.st_mode) or not info.st_mode & stat.S_IXUSR:
+        refuse("Python archive lacks the expected executable")
+
+
 def hashed_requirements(body: bytes) -> bytes:
     """Accept only the public pinned/hash-bearing closure, never editable paths."""
     if not body or len(body) > 8 * 1024 * 1024:
@@ -129,15 +211,39 @@ def hashed_requirements(body: bytes) -> bytes:
     return body.rstrip() + b"\n"
 
 
-def build(wheel: Path, expected: str, context: Path, image: str) -> dict[str, object]:
+def validate_containerfile(body: bytes) -> None:
+    """Pins describe actual UBI stages and binary/CA-only external copies."""
+    text = body.decode("utf-8")
+    stages = re.findall(r"^FROM (\S+)(?: AS \w+)?$", text, re.MULTILINE)
+    donors = re.findall(r"^COPY --from=(\S+) ", text, re.MULTILINE)
+    if stages != [BUILD_BASE, PYTHON_BASE] or donors != [UV_BUILDER, CA_IMAGE, *["build"] * 4]:
+        refuse("Containerfile differs from its pinned UBI stages or donors")
+    if (
+        f"COPY --from={UV_BUILDER} /uv /usr/local/bin/uv" not in text
+        or f"COPY --from={CA_IMAGE} "
+        "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/cert.pem"
+        not in text
+        or CA_SHA256 not in text
+    ):
+        refuse("Containerfile differs from its pinned binary or CA inputs")
+
+
+def build(
+    wheel: Path, expected: str, context: Path, image: str, *, python_archive: Path
+) -> dict[str, object]:
     if os.geteuid() == 0:
         refuse("build as the rootless login/service account, never root")
     if not _IMAGE.fullmatch(image):
         refuse("image tag must be local localhost/hfcache:<tag>")
     wheel_body, version = wheel_input(wheel, expected)
+    interpreter = python_archive_input(python_archive)
     context = local_path(context)
+    containerfile = local_path(REPOSITORY / "packaging/containers/Containerfile")
+    recipe = containerfile.read_bytes()
+    validate_containerfile(recipe)
     # Never merge into or delete an unexplained prior build directory.
     context.mkdir(mode=0o700)
+    extract_python(interpreter, context)
     closure = hashed_requirements(
         subprocess.run(  # noqa: S603 - fixed argv, validated local paths and no shell
             [
@@ -162,8 +268,7 @@ def build(wheel: Path, expected: str, context: Path, image: str) -> dict[str, ob
     (context / "wheels" / wheel.name).write_bytes(wheel_body)
     requirements = closure + f"/build/wheels/{wheel.name} --hash=sha256:{expected}\n".encode()
     (context / "requirements.txt").write_bytes(requirements)
-    containerfile = REPOSITORY / "packaging/containers/Containerfile"
-    shutil.copyfile(containerfile, context / "Containerfile")
+    (context / "Containerfile").write_bytes(recipe)
     commit = subprocess.run(  # noqa: S603 - fixed argv, validated local paths and no shell
         [executable("git"), "rev-parse", "HEAD"],
         cwd=REPOSITORY,
@@ -190,9 +295,14 @@ def build(wheel: Path, expected: str, context: Path, image: str) -> dict[str, ob
         "uv_lock_sha256": digest((REPOSITORY / "uv.lock").read_bytes()),
         "dependency_closure_sha256": digest(closure),
         "requirements_sha256": digest(requirements),
-        "containerfile_sha256": digest(containerfile.read_bytes()),
+        "containerfile_sha256": digest(recipe),
         "python_base": PYTHON_BASE,
-        "uv_builder": UV_BUILDER,
+        "build_base": BUILD_BASE,
+        "uv_binary_image": UV_BUILDER,
+        "ca_bundle_image": CA_IMAGE,
+        "ca_bundle_sha256": CA_SHA256,
+        "python_distribution": PYTHON_DISTRIBUTION,
+        "platform": PINS["platform"],
         "image_tag": image,
     }
     (context / "inputs.json").write_text(json.dumps(evidence, sort_keys=True, indent=2) + "\n")
@@ -224,12 +334,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--wheel", type=Path, required=True)
     parser.add_argument("--wheel-sha256", required=True)
+    parser.add_argument("--python-archive", type=Path, required=True)
     parser.add_argument("--context", type=Path, required=True, help="new local directory; retained")
     parser.add_argument("--tag", required=True, help="localhost/hfcache:<tag>")
     options = parser.parse_args()
     try:
-        evidence = build(options.wheel, options.wheel_sha256, options.context, options.tag)
-    except OSError, ValueError, zipfile.BadZipFile, subprocess.CalledProcessError:
+        evidence = build(
+            options.wheel,
+            options.wheel_sha256,
+            options.context,
+            options.tag,
+            python_archive=options.python_archive,
+        )
+    except OSError, ValueError, tarfile.TarError, zipfile.BadZipFile, subprocess.CalledProcessError:
         print("container build refused or failed; retained context contains available evidence")
         return 1
     print(json.dumps(evidence, sort_keys=True))

@@ -53,7 +53,8 @@ Build as a rootless login/service account, never root. The builder refuses
 NAS/nonlocal filesystems, symlinked input/output paths, an existing context, wrong
 wheel hash/name/metadata or unpinned/unhashed closure. It never pulls/pushes;
 immutable bases must already exist in that user's local engine. Failed contexts
-remain. Inputs are --wheel, --wheel-sha256, --context (new local directory) and
+remain. UBI inputs are --python-archive (required verified portable artifact),
+--wheel, --wheel-sha256, --context (new local directory) and
 --tag (localhost/hfcache:...). inputs.json/build.json record commit/dirty status,
 version, wheel/lock/closure/requirements/Containerfile hashes, base refs and final
 image ID. A dirty-fixture build proves that snapshot, not a clean release artifact.
@@ -282,3 +283,79 @@ original/derived hashes; reject unknown base shapes. Container execution errors
 or merely available activation are not successful isolation. The task preserves
 failed attempts and distinguishes fixture corrections, actual policy defects and
 final corrected proof.
+
+## UBI 10 foundation amendment (OPS-019)
+
+[Decision 129](adr/decision-129.md) supersedes Debian/Alpine candidate bases. Every
+FROM stage in app/Caddy builds uses pinned UBI 10 micro. Actual micro supplies
+required tools and is not shell-free; no package transaction or larger tooling
+stage is needed. Minimal is only a pinned Red Hat CA-PEM donor; external uv/Caddy
+images supply only verified executables, never foreign OS/CA/defaults or FROM
+stages. Portable pinned CPython 3.14.6 and locked app versions stay unchanged.
+Verify contained extraction, native linkage, fresh-inode Caddy/empty getcap and
+explicit ENV/user/entrypoint/mask mountpoints. Normal build/start never pulls;
+explicit host prefetch obtains only pinned public inputs without app secrets.
+Record every base/donor/interpreter/binary/CA/source/wheel/closure hash. Repeat
+fresh dirty then clean UBI proofs; old candidate results are superseded, not UBI
+or installed acceptance. Production 0.2.0/hold 22 and all confinement/NAS limits remain.
+
+### Protected portable-Python fetch
+
+Run the host build-tool environment's
+`scripts/fetch-container-python.py --images-json packaging/containers/images.json --output NEW_LOCAL_FILE`
+only for explicit public input preparation. The trusted pin is nested
+python_distribution(version, url, sha256); no CLI URL override or extraction.
+The fetch ignores ambient proxy/auth/SSL_CERT_* inputs, uses verified HTTPS and
+at most five manual HTTPS redirects without draining rejected redirect bodies.
+Bounds are 128 MiB, 300 seconds overall and 10-second socket waits. Publish the
+complete verified artifact exclusively; retain failed partials. Schema-1 output
+contains only python_version/url/sha256/bytes/artifact. The image builder requires
+--python-archive and independently verifies hash/safe extraction; a fetched file
+or successful fetch alone is not image/runtime acceptance.
+
+### Caddy UBI build
+
+Run `scripts/build-caddy-container.py --context NEW_LOCAL_DIR --tag localhost/hfcache:TAG`
+from the project build-tool environment. The fixed helper uses trusted images.json,
+all-micro stages, a CA-only minimal donor and the verified static Caddy binary.
+It records source/dirty/platform, caddy_base/build_base/ca_bundle_image/
+caddy_binary_image, binary/CA/Containerfile hashes and tag. A successful build.json
+also records image_id/caddy_version, empty file_capabilities and exact retained
+probe container identity/exit. The finite UID-981/no-network/caps-0/NNP/read-only
+probe checks hash/getcap/version without starting Caddy. Preserve its named
+container/CID file on success, failure or timeout; unknown identity/state never
+authorizes removal or a passing build. Actual served TLS is a separate proof.
+
+### UBI foundation proof
+
+`scripts/check-container-foundation.py --image EXACT_ID --workspace NEW_LOCAL_DIR --images-json packaging/containers/images.json [--build-record PATH]`
+verifies the selected micro manifest's config ID and ordered RootFS diff-ID prefix
+against the actual app image; os-release alone is insufficient. It then runs a
+bind-free/no-network/read-only/caps-0/NNP PID1 check for native imports, NSS, CA,
+SSL and glibc. Retain the stopped named container and proof.json, including safe
+source/build-record hash and pins. This foundation proof is separate from actual
+worker confinement/notification/peer or served Caddy TLS acceptance; never infer
+those results from successful imports or a base label.
+
+The runtime image's intended SSL_CERT_FILE=/etc/ssl/cert.pem names verified
+public Red Hat CA data. Foundation proof must accept that exact fixed value and
+verify the CA hash, while rejecting unexplained trust overrides. This does not
+relax the host fetcher's independent rule to ignore ambient SSL_CERT_* inputs.
+
+Use supported normal caio package/backend imports under unchanged seccomp.
+An unavailable optional linux_uring module is recorded, with the actual preferred
+linux_aio/thread fallback; it is not grounds to force CAIO_IMPL or allow io_uring.
+The proof process alone sets HF_XET_LOG_DEST=/dev/null to keep native diagnostics
+out of its single JSON result, without changing image/application defaults.
+All other foundation assertions remain required.
+
+### Exact runtime installer omission
+
+[Decision 129](adr/decision-129.md#exact-optional-installer-pruning) permits only
+the inspected PBS prefix's bin/pip, bin/pip3, bin/pip3.14,
+lib/python3.14/site-packages/pip, pip-26.1.2.dist-info in that same directory and
+lib/python3.14/ensurepip (including its bundled wheel) to be omitted inside the
+UBI build layer before final COPY. Keep original verified archive/context bytes.
+No wildcard/system cleanup or domain-required library/app change. Foundation
+must prove PATH and module absence of pip/ensurepip/uv; failed previews stay
+preserved and new contexts/images are built, never relabelled as passing.

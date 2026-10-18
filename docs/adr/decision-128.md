@@ -133,3 +133,11 @@ explicitly dirty preview container-origin PROBE/notify/isolation/drain and the
 full --with-build exit 0 (3,912 Python tests, 135 Cockpit tests and four wheel
 smokes). Clean release-artifact and installed acceptance belong to dependent
 tasks; the actual dirty preview is not a deployed release or closure of hold 22.
+
+## UBI source prerequisite (OPS-019, 2026-10-18)
+
+[Decision 129](decision-129.md) changes only the planned service foundation to
+UBI 10 micro, including all FROM stages, with pinned interpreter/binary/CA inputs.
+This decision's listener/readiness/confinement/native compatibility rules remain.
+The initial Debian REL-013 candidate proof is genuine but superseded; REL-013
+must rebuild/repeat acceptance after committed OPS-019 before any OPS-018 switch.

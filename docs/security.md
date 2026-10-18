@@ -781,3 +781,14 @@ Actual worker-proxied READY follows listener/store/runtime initialization, not
 process launch. No allow module, label override/disable, `+` execution, host worker
 or network-enabled fallback is authorized. Actual production API-container peer
 access must close hold 22 in OPS-018; source tests and host probes cannot do so.
+
+## UBI 10 image-input boundary (OPS-019)
+
+[Decision 129](adr/decision-129.md) pins every service FROM stage to UBI 10 micro.
+Minimal supplies only Red Hat CA PEM, uv only a build executable and Caddy only
+its verified static binary; no donor OS libraries/CA/defaults. Portable CPython
+is hash-verified and safely extracted. Fresh-inode Caddy install/empty getcap
+preserve NNP/cap-drop; TLS trust verification stays enabled. Micro contains shell
+and tools: isolation claims rely on actual fixed authority/confinement, not tool
+absence. No secret-bearing fetch, runtime package/pull, SELinux allow/label or
+executor/drain shortcut is added. Repeat actual UBI proof before clean rollout.

@@ -1666,6 +1666,25 @@ package in this family.
   deployed/tagged 0.2.0/hold 22, NAS-ro/guard/masks and all forbidden NAS I/O/jobs/
   other-host/remote actions remain unchanged.)
 
+- [x] OPS-019 Build service images on minimal viable UBI 10 bases
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-container-worker-listener.md),
+  [task](plans/tasks/ops-019-ubi10-runtime-images.md)). Decision 129 implements
+  pinned micro for every app/Caddy FROM stage; minimal contributes only Red Hat
+  CA data and external uv/Caddy images only authenticated executables. Portable
+  Python 3.14.6/locked dependencies/domain/schemas stay unchanged. Exact optional
+  installer omission and supported caio fallback retain confinement; actual
+  dirty preview foundation, notify/container-peer/isolation/cleanup and Caddy
+  TLS/REST/MCP/client proofs pass. Failed foundations, stopped gate, provenance
+  race correction and superseded Debian evidence remain explicit. Fresh masked
+  --with-build exits 0: 423 formatted/Ruff/whole types 0; 4,057 Python/40 deselected
+  in 469.08s; 0.2.1 wheel/sdist/three locked profiles; 135 Cockpit tests/build and
+  four wheel smokes. Reviewed INV-002/003/005–007/010–016, FW-03/04, AD-16/17/21,
+  FS/TX and decisions 126–129; contracts/register/ADR/source-test links, records
+  and whitespace reconcile. REL-013 stays pending until commit and repeats all
+  clean UBI acceptance. No preview deployment/tag or hold 22 closure: production
+  0.2.0, guard/NAS-ro/writer masks/stores/handles and forbidden NAS I/O/jobs/
+  other-host/remote actions remain unchanged.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -4625,3 +4644,17 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      0.2.0 partial evidence and worker hold remain until actual OPS-018 peer
      acceptance. Fixed host guard, NAS-ro/writer masks and no NAS I/O/jobs remain;
      no dependency/durable-format/domain change or remote action is introduced.
+
+129. **Build all service image stages on pinned UBI 10 micro**
+     (2026-10-18, OPS-019). [ADR](adr/decision-129.md): new user steering supersedes
+     Debian/Alpine candidates. Every app/Caddy FROM stage uses exact UBI 10 micro;
+     actual included tools make a larger tooling stage/package transaction
+     unnecessary. Minimal is only the pinned Red Hat CA-PEM donor; external uv/
+     Caddy images supply only verified executables via COPY, no foreign OS/CA/
+     environment defaults. Exact portable CPython3.14.6/20260718, wheel and locked
+     application versions remain; fresh-inode Caddy install strips unnecessary
+     file capabilities without weakening NNP. Provenance records all foundation/
+     interpreter/binary/CA inputs. Repeat dirty then clean UBI proofs, preserve
+     superseded candidate/stopped-gate evidence, and retain listener/SELinux/
+     secret/seccomp/lock/drain/NAS constraints. REL-013 waits committed OPS-019;
+     deployed0.2.0/hold22 and all forbidden NAS/remote actions remain unchanged.

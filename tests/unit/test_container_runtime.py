@@ -4,7 +4,9 @@ import errno
 import importlib.util
 import io
 import json
+import os
 import subprocess
+import tarfile
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -44,6 +46,22 @@ def wheel_file(tmp_path, *, name="hfcache", version="0.1.10"):
     wheel = tmp_path / f"hfcache-{version}-py3-none-any.whl"
     wheel.write_bytes(body.getvalue())
     return wheel
+
+
+def python_file(builder, tmp_path, monkeypatch, members=None):
+    body = io.BytesIO()
+    with tarfile.open(fileobj=body, mode="w:gz") as archive:
+        if members is None:
+            executable = tarfile.TarInfo("python/bin/python3.14")
+            executable.mode = 0o755
+            members = [(executable, b"synthetic executable fixture")]
+        for item, content in members:
+            item.size = len(content)
+            archive.addfile(item, io.BytesIO(content))
+    path = tmp_path / "python.tar.gz"
+    path.write_bytes(body.getvalue())
+    monkeypatch.setitem(builder.PYTHON_DISTRIBUTION, "sha256", builder.digest(body.getvalue()))
+    return path
 
 
 @pytest.mark.parametrize("expected", ["0" * 64, "SHA256:bad", "A" * 64, ""])
@@ -142,8 +160,11 @@ def test_exact_wheel_closure_and_final_identity_are_recorded_without_source_copy
     wheel = wheel_file(tmp_path)
     expected = builder.digest(wheel.read_bytes())
     context = tmp_path / "new-build"
+    interpreter = python_file(builder, tmp_path, monkeypatch)
     calls = fake_build_tools(builder, monkeypatch, context)
-    result = builder.build(wheel, expected, context, "localhost/hfcache:proof")
+    result = builder.build(
+        wheel, expected, context, "localhost/hfcache:proof", python_archive=interpreter
+    )
     assert result["image_id"] == IMAGE
     assert result["wheel_sha256"] == expected
     assert result["dependency_closure_sha256"] == builder.digest(CLOSURE)
@@ -158,6 +179,7 @@ def test_exact_wheel_closure_and_final_identity_are_recorded_without_source_copy
         "build.json",
         "image.id",
         "inputs.json",
+        "python",
         "requirements.txt",
         "wheels",
     ]
@@ -169,12 +191,53 @@ def test_failed_build_preserves_authenticated_inputs_and_no_success_manifest(
 ):
     wheel = wheel_file(tmp_path)
     context = tmp_path / "failed"
+    interpreter = python_file(builder, tmp_path, monkeypatch)
     fake_build_tools(builder, monkeypatch, context, fail_build=True)
     with pytest.raises(subprocess.CalledProcessError):
-        builder.build(wheel, builder.digest(wheel.read_bytes()), context, "localhost/hfcache:proof")
+        builder.build(
+            wheel,
+            builder.digest(wheel.read_bytes()),
+            context,
+            "localhost/hfcache:proof",
+            python_archive=interpreter,
+        )
     assert (context / "inputs.json").exists()
     assert (context / "wheels" / wheel.name).read_bytes() == wheel.read_bytes()
     assert not (context / "build.json").exists()
+
+
+def test_provenance_hashes_the_validated_context_recipe_even_if_source_changes(
+    builder, monkeypatch, tmp_path
+):
+    original = (ROOT / "packaging/containers/Containerfile").read_bytes()
+    repository = tmp_path / "source"
+    recipe = repository / "packaging/containers/Containerfile"
+    recipe.parent.mkdir(parents=True)
+    recipe.write_bytes(original)
+    (repository / "uv.lock").write_bytes(b"synthetic lock input")
+    monkeypatch.setattr(builder, "REPOSITORY", repository)
+    wheel = wheel_file(tmp_path)
+    interpreter = python_file(builder, tmp_path, monkeypatch)
+    context = tmp_path / "context"
+    fake_build_tools(builder, monkeypatch, context)
+    run = builder.subprocess.run
+
+    def source_changes(arguments, **kwargs):
+        if arguments[0].endswith("/uv"):
+            recipe.write_bytes(b"different source bytes after capture")
+        return run(arguments, **kwargs)
+
+    monkeypatch.setattr(builder.subprocess, "run", source_changes)
+    result = builder.build(
+        wheel,
+        builder.digest(wheel.read_bytes()),
+        context,
+        "localhost/hfcache:proof",
+        python_archive=interpreter,
+    )
+    assert (context / "Containerfile").read_bytes() == original
+    assert result["containerfile_sha256"] == builder.digest(original)
+    assert builder.digest(recipe.read_bytes()) != result["containerfile_sha256"]
 
 
 def test_existing_context_is_preserved_before_export(builder, monkeypatch, tmp_path):
@@ -182,9 +245,16 @@ def test_existing_context_is_preserved_before_export(builder, monkeypatch, tmp_p
     context = tmp_path / "existing"
     context.mkdir()
     (context / "unknown").write_bytes(b"evidence")
+    interpreter = python_file(builder, tmp_path, monkeypatch)
     calls = fake_build_tools(builder, monkeypatch, context)
     with pytest.raises(FileExistsError):
-        builder.build(wheel, builder.digest(wheel.read_bytes()), context, "localhost/hfcache:proof")
+        builder.build(
+            wheel,
+            builder.digest(wheel.read_bytes()),
+            context,
+            "localhost/hfcache:proof",
+            python_archive=interpreter,
+        )
     assert calls == []
     assert (context / "unknown").read_bytes() == b"evidence"
 
@@ -195,14 +265,192 @@ def test_existing_context_is_preserved_before_export(builder, monkeypatch, tmp_p
 def test_builder_cannot_select_remote_publication_tag(builder, monkeypatch, tmp_path, tag):
     monkeypatch.setattr(builder.os, "geteuid", lambda: 1000)
     with pytest.raises(ValueError, match="local"):
-        builder.build(tmp_path / "missing", "a" * 64, tmp_path / "new", tag)
+        builder.build(
+            tmp_path / "missing",
+            "a" * 64,
+            tmp_path / "new",
+            tag,
+            python_archive=tmp_path / "unused",
+        )
     assert not (tmp_path / "new").exists()
 
 
 def test_root_builder_refuses_before_artifact_or_engine_io(builder, monkeypatch, tmp_path):
     monkeypatch.setattr(builder.os, "geteuid", lambda: 0)
     with pytest.raises(ValueError, match="never root"):
-        builder.build(tmp_path / "missing", "a" * 64, tmp_path / "new", "localhost/hfcache:proof")
+        builder.build(
+            tmp_path / "missing",
+            "a" * 64,
+            tmp_path / "new",
+            "localhost/hfcache:proof",
+            python_archive=tmp_path / "unused",
+        )
+
+
+def test_python_hash_mismatch_refuses_before_parse_context_or_engine(
+    builder, monkeypatch, tmp_path
+):
+    interpreter = tmp_path / "python.tar.gz"
+    interpreter.write_bytes(b"untrusted archive bytes")
+    monkeypatch.setattr(builder.tarfile, "open", lambda **_: pytest.fail("unauthenticated parse"))
+    wheel = wheel_file(tmp_path)
+    context = tmp_path / "new"
+    calls = fake_build_tools(builder, monkeypatch, context)
+    with pytest.raises(ValueError, match="Python archive SHA256"):
+        builder.build(
+            wheel,
+            builder.digest(wheel.read_bytes()),
+            context,
+            "localhost/hfcache:proof",
+            python_archive=interpreter,
+        )
+    assert not context.exists()
+    assert calls == []
+    assert interpreter.read_bytes() == b"untrusted archive bytes"
+
+
+@pytest.mark.parametrize("kind", ["symlink", "hardlink", "fifo", "directory", "empty"])
+def test_python_archive_refuses_aliases_and_nonregular_inputs(builder, tmp_path, kind):
+    path = tmp_path / "python.tar.gz"
+    if kind in {"symlink", "hardlink"}:
+        original = tmp_path / "original"
+        original.write_bytes(b"preserved source")
+        path.symlink_to(original) if kind == "symlink" else path.hardlink_to(original)
+    elif kind == "fifo":
+        os.mkfifo(path)
+    elif kind == "directory":
+        path.mkdir()
+    else:
+        path.touch()
+    with pytest.raises((OSError, ValueError)):
+        builder.python_archive_input(path)
+    assert path.lstat()
+
+
+def test_safe_internal_python_links_remain_usable(builder, monkeypatch, tmp_path):
+    executable = tarfile.TarInfo("python/bin/python3.14")
+    executable.mode = 0o755
+    link = tarfile.TarInfo("python/bin/python3")
+    link.type = tarfile.SYMTYPE
+    link.linkname = "python3.14"
+    archive = python_file(builder, tmp_path, monkeypatch, [(executable, b"fixture"), (link, b"")])
+    context = tmp_path / "context"
+    context.mkdir()
+    builder.extract_python(builder.python_archive_input(archive), context)
+    assert (context / "python/bin/python3").is_symlink()
+    assert (context / "python/bin/python3").read_bytes() == b"fixture"
+
+
+@pytest.mark.parametrize("drift", ["base", "donor", "ca"])
+def test_recipe_drift_refuses_before_context_or_engine(builder, monkeypatch, tmp_path, drift):
+    recipe = (ROOT / "packaging/containers/Containerfile").read_text()
+    before, after = {
+        "base": ("FROM " + builder.PYTHON_BASE, "FROM docker.io/other:latest"),
+        "donor": ("COPY --from=" + builder.UV_BUILDER, "COPY --from=docker.io/other:latest"),
+        "ca": (builder.CA_SHA256, "0" * 64),
+    }[drift]
+    fake_root = tmp_path / "repository"
+    replacement = fake_root / "packaging/containers/Containerfile"
+    replacement.parent.mkdir(parents=True)
+    replacement.write_text(recipe.replace(before, after))
+    monkeypatch.setattr(builder, "REPOSITORY", fake_root)
+    wheel = wheel_file(tmp_path)
+    interpreter = python_file(builder, tmp_path, monkeypatch)
+    context = tmp_path / "context"
+    calls = fake_build_tools(builder, monkeypatch, context)
+    with pytest.raises(ValueError, match="Containerfile differs"):
+        builder.build(
+            wheel,
+            builder.digest(wheel.read_bytes()),
+            context,
+            "localhost/hfcache:proof",
+            python_archive=interpreter,
+        )
+    assert not context.exists()
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    "name", ["/python/escape", "python/../escape", "other/bin/python3.14", "python/evil\\name"]
+)
+def test_interpreter_tree_refuses_uncontained_names(builder, monkeypatch, tmp_path, name):
+    item = tarfile.TarInfo(name)
+    archive = python_file(builder, tmp_path, monkeypatch, [(item, b"unexplained")])
+    context = tmp_path / "context"
+    context.mkdir()
+    with pytest.raises(ValueError, match="unsafe Python"):
+        builder.extract_python(builder.python_archive_input(archive), context)
+    assert list((context / "python").iterdir()) == []
+    assert not (tmp_path / "escape").exists()
+
+
+@pytest.mark.parametrize("target", ["/etc/passwd", "../../escape", "../requirements.txt"])
+def test_interpreter_symlinks_cannot_escape_the_python_subtree(
+    builder, monkeypatch, tmp_path, target
+):
+    link = tarfile.TarInfo("python/alias")
+    link.type = tarfile.SYMTYPE
+    link.linkname = target
+    archive = python_file(builder, tmp_path, monkeypatch, [(link, b"")])
+    context = tmp_path / "context"
+    context.mkdir()
+    sentinel = context / "requirements.txt"
+    sentinel.write_bytes(b"preserve other context inputs")
+    with pytest.raises(tarfile.FilterError):
+        builder.extract_python(builder.python_archive_input(archive), context)
+    assert sentinel.read_bytes() == b"preserve other context inputs"
+    assert not (context / "python/alias").is_symlink()
+
+
+@pytest.mark.parametrize("kind", [tarfile.LNKTYPE, tarfile.FIFOTYPE, tarfile.CHRTYPE])
+def test_interpreter_hardlinks_and_special_files_never_gain_authority(
+    builder, monkeypatch, tmp_path, kind
+):
+    item = tarfile.TarInfo("python/unsafe")
+    item.type = kind
+    item.linkname = "python/other"
+    archive = python_file(builder, tmp_path, monkeypatch, [(item, b"")])
+    context = tmp_path / "context"
+    context.mkdir()
+    with pytest.raises(ValueError, match="unsafe Python"):
+        builder.extract_python(builder.python_archive_input(archive), context)
+    assert list((context / "python").iterdir()) == []
+
+
+@pytest.mark.parametrize("limit", ["members", "expanded", "duplicate"])
+def test_interpreter_extraction_has_count_size_and_duplicate_bounds(
+    builder, monkeypatch, tmp_path, limit
+):
+    first = tarfile.TarInfo("python/first")
+    second = tarfile.TarInfo("python/first" if limit == "duplicate" else "python/second")
+    archive = python_file(builder, tmp_path, monkeypatch, [(first, b"first"), (second, b"second")])
+    if limit == "members":
+        monkeypatch.setattr(builder, "_MAX_PYTHON_MEMBERS", 1)
+    if limit == "expanded":
+        monkeypatch.setattr(builder, "_MAX_PYTHON_EXPANDED", 1)
+    context = tmp_path / "context"
+    context.mkdir()
+    with pytest.raises(ValueError, match="tree bounds"):
+        builder.extract_python(builder.python_archive_input(archive), context)
+    assert list((context / "python").iterdir()) == []
+
+
+def test_every_app_build_stage_is_pinned_micro_and_foreign_inputs_are_only_binary_or_ca():
+    pins = json.loads((ROOT / "packaging/containers/images.json").read_text())
+    recipe = (ROOT / "packaging/containers/Containerfile").read_text()
+    stages = [line.split()[1] for line in recipe.splitlines() if line.startswith("FROM ")]
+    assert stages
+    assert set(stages) == {pins["python"], pins["build"]}
+    assert all(
+        stage.startswith("registry.access.redhat.com/ubi10/ubi-micro@sha256:") for stage in stages
+    )
+    assert f"COPY --from={pins['uv_binary_image']} /uv /usr/local/bin/uv" in recipe
+    assert (
+        f"COPY --from={pins['ca_bundle_image']} "
+        "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/cert.pem" in recipe
+    )
+    assert pins["ca_bundle_sha256"] in recipe
+    assert "COPY python/ /opt/hfcache/python/" in recipe
 
 
 def test_probe_uses_bounded_isolated_payload_without_replacement_or_auto_cleanup(probe, tmp_path):

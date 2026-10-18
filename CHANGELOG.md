@@ -9,6 +9,12 @@ were never releases.
 
 ## 0.2.1 — Preparing
 
+OPS-019 implements pinned UBI 10 micro for all service-image FROM stages, with
+only verified executable/Red Hat CA-data donors and authenticated portable Python.
+Dirty preview foundation/worker/TLS proofs and the full gate pass. Earlier
+Debian/Alpine candidates and their stopped gate are superseded; fresh clean
+artifacts and proof follow the source commit.
+
 Source implements the rootless worker-listener correction: explicit direct PID1 startup creates
 the private AF_UNIX socket under the worker's existing confinement, with strict
 early inheritance audit, instance/pinned-parent/exact-inode ownership through

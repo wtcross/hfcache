@@ -973,3 +973,25 @@ already-locked 1.0.9 version for resource-safe public Unix transport interfaces.
 Enforcement: [Unix transport](../src/hfcache/unix_http.py) and
 [descriptor/stream regressions](../tests/unit/test_unix_http.py).
 No other workflow framework or runtime dependency is authorized.
+
+## UBI 10 image-foundation qualification (OPS-019)
+
+[Decision 129](adr/decision-129.md) applies INV-003/005/010/015 to new service
+foundations: all app/Caddy FROM stages use pinned minimal-viable UBI 10 micro.
+Minimal contributes only Red Hat CA data; external uv/Caddy donors only verified
+executables, not foreign OS/CA/defaults. Portable interpreter and locked app
+versions stay fixed. Actual linkage, inherited/owned listener, notify/peer,
+secret/seccomp/SELinux/UID/drain/lock proofs remain mandatory; a base label alone
+establishes none. Superseded Debian success cannot stand in for UBI acceptance.
+Enforcement: [app recipe](../packaging/containers/Containerfile),
+[Caddy recipe](../packaging/containers/Containerfile.caddy),
+[immutable pins](../packaging/containers/images.json),
+[app builder](../scripts/build-container.py),
+[Caddy builder](../scripts/build-caddy-container.py),
+[public fetcher](../scripts/fetch-container-python.py) and
+[foundation proof](../scripts/check-container-foundation.py).
+Evidence: [app build tests](../tests/unit/test_container_runtime.py),
+[Caddy build tests](../tests/unit/test_caddy_container_build.py),
+[fetch tests](../tests/unit/test_fetch_container_python.py) and
+[foundation tests](../tests/unit/test_container_foundation.py), with actual
+image/worker/TLS fixture records in the OPS-019 task and clean repeats in REL-013.

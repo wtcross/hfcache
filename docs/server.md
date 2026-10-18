@@ -938,3 +938,13 @@ trusted bound_address and created (dev, ino); executor validate_listener accepts
 that paired trusted evidence only for owned mode. Native defaults are unchanged.
 The helper module is stdlib-only; local child-driver tests that simulate PID1
 preconditions are distinct from actual container/manager proof.
+
+## UBI 10 service-image foundation (OPS-019)
+
+[Decision 129](adr/decision-129.md) requires pinned UBI 10 micro for every FROM
+stage, verified portable CPython 3.14.6 and unchanged app dependencies. Only
+explicit executable/Red Hat CA-data donors are permitted; no foreign OS/CA/default
+inheritance or runtime resolution/pull. Recreate reviewed ENV/user/entrypoint/
+mask directories explicitly. Roles/routes/private wire/durable formats/native
+and owned startup/readiness/isolation/drain remain unchanged. Old Debian proof
+is superseded; new clean and installed acceptance still await dependent tasks.

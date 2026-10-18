@@ -305,3 +305,15 @@ service and the indexed .socket stays dormant RefuseManualStart=yes without any
 automatic reference. Nine bindings/native activation and all secret/network/
 seccomp/SELinux/drain/lock restrictions remain. Installed 0.2.0 evidence and hold
 stay unchanged until actual OPS-018 production container-peer acceptance.
+
+## UBI 10 image-foundation amendment (OPS-019, 2026-10-18)
+
+[Decision 129](decision-129.md) supersedes Debian app/Alpine-derived Caddy bases
+for all new 0.2.1 candidates under Tyler's UBI 10 requirement. Every FROM stage
+uses pinned UBI micro; minimal contributes only Red Hat CA PEM and pinned external
+uv/Caddy images contribute only executables, never foreign OS defaults/libraries.
+Portable pinned CPython preserves version 3.14.6 and locked application versions.
+Actual micro includes required tools; no shell-free claim or package transaction.
+All runtime/SELinux/secret/lock/drain boundaries stand. Preserve old artifact/
+proof/tag history as superseded or deployed evidence; repeat fresh clean REL-013
+acceptance after OPS-019 commits. No production/NAS change follows from this source.

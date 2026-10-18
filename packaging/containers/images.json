@@ -1,5 +1,16 @@
 {
   "platform": "linux/amd64",
-  "python": "docker.io/library/python@sha256:b921fe7e7522f828d45197a47656ec465a9b15689b27fa8e1fba2864fca5b967",
-  "caddy": "docker.io/library/caddy@sha256:173b26306d711395accaeba8b67afcaad2a085ccb1e6bf26010bfe8c095a5229"
+  "python": "registry.access.redhat.com/ubi10/ubi-micro@sha256:87a27d7189dbae57f63db332a11de17f7ed6be91cdc956731c30141af2e8dc49",
+  "caddy": "registry.access.redhat.com/ubi10/ubi-micro@sha256:87a27d7189dbae57f63db332a11de17f7ed6be91cdc956731c30141af2e8dc49",
+  "build": "registry.access.redhat.com/ubi10/ubi-micro@sha256:87a27d7189dbae57f63db332a11de17f7ed6be91cdc956731c30141af2e8dc49",
+  "ca_bundle_image": "registry.access.redhat.com/ubi10/ubi-minimal@sha256:4f48c7a351edbe9cc13fc3c0ef2402340a96bb44df07cfa7efbc4f9f7b4b57fc",
+  "ca_bundle_sha256": "00411c197b16f659945fba3c2f970a26030f56eef5d445c913cb59a089c813b9",
+  "uv_binary_image": "ghcr.io/astral-sh/uv@sha256:0d127b3a7049b879a6e18a79c7f33fea59aa83c226464248f89cfb716a6b96f5",
+  "caddy_binary_image": "docker.io/library/caddy@sha256:173b26306d711395accaeba8b67afcaad2a085ccb1e6bf26010bfe8c095a5229",
+  "caddy_binary_sha256": "678ade3bfc088749c81a681adc603333ee0bb023b6a6cfe3c0f58bef8ff854e9",
+  "python_distribution": {
+    "version": "3.14.6",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20260718/cpython-3.14.6%2B20260718-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+    "sha256": "86bf107f65fc30b56f2b263b26797fcbb1661f5315910cdbf27f733eb8738b74"
+  }
 }

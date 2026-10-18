@@ -201,3 +201,13 @@ or unknown executors must refuse rather than trigger unlink, force or replay.
 Rollback to 0.2.0 returns to its documented worker hold. Keep independent host
 guard, NAS-ro, writer masks, both stores/observer handles and lock inodes. No NAS
 file I/O/jobs or remote publication is authorized by this correction.
+
+## UBI 10 prerequisite for corrected artifacts (OPS-019)
+
+[Decision 129](../adr/decision-129.md) requires pinned UBI micro for every app/
+Caddy FROM stage and verified portable interpreter/binary/Red Hat CA inputs.
+Preserve initial REL-013 Debian build/proof/compatibility as superseded; its
+stopped gate is not passing and exported image is not promoted. REL-013 restarts
+from committed OPS-019, rebuilds both UBI service images and repeats clean runtime/
+domain/compatibility/stage/gate acceptance. Version stays pre-release 0.2.1.
+No production change or worker/NAS hold clearance follows from source packaging.
