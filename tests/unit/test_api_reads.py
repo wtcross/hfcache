@@ -47,6 +47,7 @@ def configured(tmp_path):
     data = {
         "schema_version": 1,
         "archive_config": str(policy),
+        "state_directory": str(tmp_path / "api-state"),
         "credentials": credentials,
         "listener": {"allowed_hosts": ["testserver"]},
     }

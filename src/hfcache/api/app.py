@@ -24,9 +24,11 @@ from starlette.exceptions import HTTPException
 
 from hfcache.api.auth import Capability, CredentialRegistry, load_credentials, require_capability
 from hfcache.api.lifecycle import MetadataPool, instance_lock
-from hfcache.api.models import ApiProblem, PageQuery, ReadResponse
+from hfcache.api.models import ApiProblem, OperationView, PageQuery, ReadResponse
+from hfcache.api.operations import OperationLimits, OperationReceipt, OperationStore
 from hfcache.errors import (
     CodedError,
+    ConfigurationError,
     HfcacheError,
     RequestError,
     SafetyError,
@@ -35,6 +37,7 @@ from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, RunId
 from hfcache.logging import configure_daemon
 from hfcache.metadata import QueryBounds
 from hfcache.redaction import sanitize
+from hfcache.reporting import Envelope
 from hfcache.server_config import InstalledPolicy, PolicySnapshot, ServerConfig
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.queries import LocalQueries, PublicationQuery, RepositoryQuery, query_version
@@ -104,7 +107,11 @@ def _problem(context: ExecutionContext, error: HfcacheError) -> JSONResponse:
     payload = ApiProblem(
         request_id=context.request_id or "",
         code=problem.code,
-        message=messages.get(status, "Invalid request"),
+        message={
+            "HFAPI013": "Operation history is missing or expired; execution is unknown",
+            "HFAPI014": "Operation history is unavailable or full",
+            "HFAPI015": "Operation state is incomplete or uncertain",
+        }.get(problem.code, messages.get(status, "Invalid request")),
         exit_code=int(error.exit_code),
     )
     return JSONResponse(
@@ -262,7 +269,7 @@ def _page_query(request: Request, server: ServerConfig, *, repositories: bool) -
     for key in allowed - {"selector"}:
         if len(request.query_params.getlist(key)) > 1:
             raise RequestError
-    limit = request.query_params.get("limit", "100")
+    limit = request.query_params.get("limit", str(min(100, server.limits.max_page_size)))
     if not limit.isascii() or not limit.isdecimal() or len(limit) > _MAX_LIMIT_DIGITS:
         raise RequestError
     selectors = tuple(request.query_params.getlist("selector"))
@@ -334,13 +341,14 @@ def _encoded(payload: dict[str, Any]) -> Iterator[bytes]:
         yield bytes(buffer)
 
 
-def create_app(  # noqa: PLR0915 - one factory registers the complete read route surface
+def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
     server: ServerConfig,
     *,
     credentials: CredentialRegistry | None = None,
     policy: InstalledPolicy | None = None,
     query_factory: Callable[[ApplicationConfig], MetadataQueries] | None = None,
     instance_lock_path: Path | None = None,
+    operation_store: OperationStore | None = None,
 ) -> FastAPI:
     """Create routes only; lifespan owns all filesystem/startup effects."""
 
@@ -365,16 +373,35 @@ def create_app(  # noqa: PLR0915 - one factory registers the complete read route
             configure_daemon(level=getattr(logging, server.log_level.upper()))
             application.state.credentials = credentials or load_credentials(server)
             application.state.policy = policy or InstalledPolicy.open(server)
-            application.state.pool = MetadataPool(
-                workers=server.limits.metadata_workers, pending=server.limits.metadata_queue
-            )
-            application.state.instance_id = ExecutionContext.create().run_id
-            application.state.version = query_version()
-            try:
-                yield
-            finally:
-                await application.state.pool.close()
-                application.state.credentials = None
+            state_root = operation_store.root if operation_store else server.state_directory
+            archive_root = application.state.policy.root
+            if state_root.is_relative_to(archive_root) or archive_root.is_relative_to(state_root):
+                message = "operation state and archive storage must not overlap"
+                raise ConfigurationError.single(message, code="HFCFG005")
+            limits = server.limits
+            with operation_store or OperationStore(
+                server.state_directory,
+                limits=OperationLimits(
+                    max_records=limits.retained_terminal_operations,
+                    max_receipt_bytes=limits.operation_max_receipt_bytes,
+                    max_result_bytes=limits.operation_max_result_bytes,
+                    max_events=limits.operation_max_events,
+                    max_event_bytes=limits.operation_max_event_bytes,
+                    max_store_bytes=limits.operation_max_store_bytes,
+                    retention_days=limits.operation_retention_days,
+                ),
+            ) as store:
+                application.state.operations = store
+                application.state.pool = MetadataPool(
+                    workers=limits.metadata_workers, pending=limits.metadata_queue
+                )
+                application.state.instance_id = ExecutionContext.create().run_id
+                application.state.version = query_version()
+                try:
+                    yield
+                finally:
+                    await application.state.pool.close()
+                    application.state.credentials = None
 
     app = FastAPI(
         lifespan=lifespan,
@@ -407,22 +434,27 @@ def create_app(  # noqa: PLR0915 - one factory registers the complete read route
             request.state.execution_context, RequestError(code=code, status_code=error.status_code)
         )
 
-    def render(
+    def render(  # noqa: PLR0913 - wire identity for metadata or an exact stored result
         request: Request,
-        result: ServiceResult,
+        result: ServiceResult | Envelope,
         *,
         snapshot: PolicySnapshot | None = None,
         cursor: str | None = None,
         large: bool = False,
+        receipt: OperationReceipt | None = None,
     ) -> Response:
         context = request.state.execution_context
         payload = ReadResponse(
             request_id=context.request_id or "",
-            archive_id=snapshot.config.storage.archive_id
-            if snapshot
-            else app.state.policy.archive_id,
-            config_fingerprint=snapshot.fingerprint if snapshot else None,
-            envelope=result.envelope(context).to_payload(),
+            archive_id=receipt.archive_id
+            if receipt
+            else (snapshot.config.storage.archive_id if snapshot else app.state.policy.archive_id),
+            config_fingerprint=receipt.config_fingerprint
+            if receipt
+            else (snapshot.fingerprint if snapshot else None),
+            envelope=result.to_payload()
+            if isinstance(result, Envelope)
+            else result.envelope(context).to_payload(),
             next_cursor=cursor,
         ).model_dump()
         payload = cast("dict[str, Any]", sanitize(payload))
@@ -471,6 +503,7 @@ def create_app(  # noqa: PLR0915 - one factory registers the complete read route
                     "instance_id": app.state.instance_id,
                     "reads": True,
                     "operations": False,
+                    "operation_history": True,
                     "mcp": False,
                     "maintenance_enabled": server.maintenance_enabled,
                     "max_page_size": server.limits.max_page_size,
@@ -658,6 +691,125 @@ def create_app(  # noqa: PLR0915 - one factory registers the complete read route
             ), None
 
         return await execute(request, read, large=True)
+
+    def public_operation(receipt: OperationReceipt) -> dict[str, Any]:
+        payload = receipt.model_dump(mode="json")
+        public = {key: value for key, value in payload.items() if key in OperationView.model_fields}
+        return OperationView.model_validate(
+            public | {"result_recorded": receipt.result is not None}
+        ).model_dump()
+
+    async def observe(request: Request, work: Callable[[], Response]) -> Response:
+        # History remains observable without loading a changed/invalid archive
+        # policy. This pool still bounds reads and slow result observers.
+        lease = app.state.pool.submit(work)
+        request.state.metadata_leases.append(lease)
+        return await lease.future
+
+    @app.get(PREFIX + "/operations", response_model=ReadResponse)
+    async def operations(request: Request) -> Response:
+        page = _page_query(request, server, repositories=False)
+
+        def read() -> Response:
+            held = app.state.operations.list()
+            by_id = {item.operation_id: item for item in held}
+            identifiers, cursor = _paginate(
+                list(by_id), page, key=f"operations:{app.state.instance_id}"
+            )
+            return render(
+                request,
+                ServiceResult(
+                    "operations list",
+                    {
+                        "operations": [
+                            public_operation(by_id[identifier]) for identifier in identifiers
+                        ]
+                    },
+                ),
+                cursor=cursor,
+            )
+
+        return await observe(request, read)
+
+    @app.get(PREFIX + "/operations/lookup", response_model=ReadResponse)
+    async def lookup_operation(request: Request) -> Response:
+        _no_query(request)
+        keys = request.headers.getlist("idempotency-key")
+        if len(keys) != 1:
+            raise RequestError
+
+        def read() -> Response:
+            receipt = app.state.operations.lookup(request.state.principal, keys[0])
+            return render(
+                request,
+                ServiceResult("operations lookup", {"operation": public_operation(receipt)}),
+                receipt=receipt,
+            )
+
+        return await observe(request, read)
+
+    @app.get(PREFIX + "/operations/{operation_id}", response_model=ReadResponse)
+    async def show_operation(request: Request, operation_id: str) -> Response:
+        _no_query(request)
+
+        def read() -> Response:
+            receipt = app.state.operations.get(operation_id)
+            return render(
+                request,
+                ServiceResult("operations show", {"operation": public_operation(receipt)}),
+                receipt=receipt,
+            )
+
+        return await observe(request, read)
+
+    @app.get(PREFIX + "/operations/{operation_id}/result", response_model=ReadResponse)
+    async def operation_result(request: Request, operation_id: str) -> Response:
+        _no_query(request)
+
+        def read() -> Response:
+            receipt = app.state.operations.get(operation_id)
+            result = app.state.operations.result(operation_id)
+            return render(request, result, receipt=receipt, large=True)
+
+        return await observe(request, read)
+
+    @app.get(PREFIX + "/operations/{operation_id}/events", response_model=ReadResponse)
+    async def operation_events(request: Request, operation_id: str) -> Response:
+        if set(request.query_params) - {"after", "limit"}:
+            raise RequestError
+        converted = {}
+        for field, default in (
+            ("after", 0),
+            ("limit", min(100, server.limits.max_page_size, server.limits.operation_max_events)),
+        ):
+            if len(request.query_params.getlist(field)) > 1:
+                raise RequestError
+            value = request.query_params.get(field, str(default))
+            if not value.isascii() or not value.isdecimal() or len(value) > _MAX_OFFSET_DIGITS:
+                raise RequestError
+            converted[field] = int(value)
+        if not 1 <= converted["limit"] <= server.limits.max_page_size:
+            raise RequestError
+
+        def read() -> Response:
+            receipt = app.state.operations.get(operation_id)
+            page = app.state.operations.events(operation_id, **converted)
+            return render(
+                request,
+                ServiceResult(
+                    "operations events",
+                    {
+                        "operation_id": operation_id,
+                        "events": [event.model_dump(mode="json") for event in page.events],
+                        "next_cursor": page.next_cursor,
+                        "oldest_sequence": page.oldest_sequence,
+                        "truncated": page.truncated,
+                    },
+                ),
+                receipt=receipt,
+            )
+
+        return await observe(request, read)
 
     @app.get(PREFIX + "/openapi.json", include_in_schema=False)
     async def schema(request: Request) -> Response:

@@ -1,6 +1,7 @@
 # Decision 109 — Bounded non-resuming operation receipts
 
-- Status: Accepted target contract; enforcement lands incrementally.
+- Status: Accepted target contract; registry enforcement amended by decision 114;
+  execution enforcement remains incremental.
 - Date: 2026-10-17.
 - Work package: API-001, this commit.
 - Source: [progress decision 109](../progress.md),
@@ -39,3 +40,15 @@ never the daemon lifetime. One waiting budget covers queue and lock residence;
 revalidate installed policy under lock before mutation. API-007/008 own enforcement
 and crash tests. [API contract](../api.md) specifies errors, retention, shutdown,
 idempotency and uncertainty; [server](../server.md) owns worker isolation.
+
+## 2026-10-17 implementation amendment (API-007)
+
+[Decision 114](decision-114.md) implements the independent receipt/key binding
+and observation boundary. Fixed credential-class principals survive token
+rotation; only key lookup is namespace-restricted, while authenticated REST
+readers may observe all operations/results under AD-21. Raw keys are never
+persisted. Retain interrupted/ambiguous/nonterminal state indefinitely and refuse
+admission at count/byte limits rather than evicting unexpired 30-day bindings.
+Malformed/unknown-version state is preserved and fails admission closed. No
+heavy worker or command submission route is added by API-007; API-008/009 retain
+those responsibilities and no automatic replay is introduced.

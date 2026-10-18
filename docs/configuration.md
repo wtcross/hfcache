@@ -446,3 +446,14 @@ not install a candidate or change `/etc/hfcache`, and candidate-selected paths o
 Hub endpoints cannot redirect the installed credential. API-005 supplies these
 configuration/authority primitives; API-006/008 wire them into HTTP and queued
 execution. [Decision 112](adr/decision-112.md) records the boundary.
+
+API-007 adds restart-only `state_directory` and operation-storage limits to the
+server domain, documented in [server resource settings](server.md#resource-settings).
+The default local directory is `/var/lib/hfcache/api`; it is independent of
+archive policy, publication/export trees and archive UUID changes. Never use it
+as a candidate-selected path. Its independently versioned receipts bind admitted
+archive UUID/fingerprint without storing an archive root, credential or candidate
+body. Retention defaults to 30 days for validated succeeded/failed history;
+unexpired bindings cannot be evicted for count caps, and interrupted/ambiguous/
+nonterminal state never ages out. Storage exhaustion refuses admission. See
+[decision 114](adr/decision-114.md) and [schema §13](schemas.md#13-service-private-operation-control-state-api-007).

@@ -175,7 +175,10 @@ in [`docs/server.md`](docs/server.md). API-006 implements authenticated metadata
 routes and the explicit foreground `hfcache serve --server-config PATH` bootstrap.
 Runtime directories and protected API credentials must already be provisioned;
 installing the extra starts no listener and changes no deployed writer.
-Job/write routes, API-backed CLI migration, systemd packaging and the isolated
+API-007 adds bounded local receipt/idempotency primitives and authenticated
+operation observation. Control-state history survives client loss and is never
+automatically replayed; interrupted history is retained. Job/write submission
+routes, heavy execution, API-backed CLI migration, systemd packaging and the isolated
 verification executor remain later tasks. MCP stays behind the REST acceptance
 gate and adds no dependency yet. Disposable-socket TLS tests use the OpenSSL CLI
 as a development test tool; Python production dependencies remain locked.

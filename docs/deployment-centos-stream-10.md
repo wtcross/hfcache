@@ -752,6 +752,26 @@ simply has no `quarantine` command. Removed redundant quarantine entries are
 not restored by rollback. The retention-policy barrier above still applies
 when going back before 0.1.7.
 
+**API-007 control-state compatibility (2026-10-17, decision 114; feature branch,
+not a production rollout).** An isolated offline wheel drill wrote synthetic
+schema-1 receipt, event and result-reference state plus its exact Envelope under
+repository scratch storage. The installed predecessor `a856397` (version
+`0.1.10`) and previous tagged release `v0.1.3` (version `0.1.3`) both answered
+`hfcache operations show <fixture-id>` with exit `2`/`No such command`; neither
+provided `hfcache.api.operations`. All three local state files remained
+byte-for-byte unchanged, no archive path was created, and locked dependencies
+needed no network. This is absent old-reader support, not a successful receipt
+read or an unsupported-version refusal. Archive JSON formats are unchanged.
+
+The rollback rule is to preserve the complete local API state directory and
+use a compatible server to resolve submission history before any deliberate
+retry. An older binary's missing command/history cannot establish nonexecution.
+Never delete local receipts, regenerate keys or reconstruct commands from archive
+journals to make a rollback proceed. Actual runner/drain and packaged deployment
+acceptance remain later tasks; this drill installs no production release and
+does not authorize host operations. See [schema §13](schemas.md#13-service-private-operation-control-state-api-007)
+and the [API-007 evidence](plans/tasks/api-007-operation-receipts-and-idempotency.md).
+
 Keep at least the previous release installed (plan §21.4 item 7). `--list` is how
 you see what you have:
 

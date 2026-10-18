@@ -194,11 +194,18 @@ class ServerLimits(_Strict):
     max_response_bytes: int = Field(default=8388608, ge=1024, le=67108864)
     max_artifact_bytes: int = Field(default=67108864, ge=1024, le=1073741824)
     max_scan_entries: int = Field(default=10000, ge=10, le=1000000)
+    operation_max_receipt_bytes: int = Field(default=1048576, ge=4096, le=16777216)
+    operation_max_result_bytes: int = Field(default=8388608, ge=1024, le=67108864)
+    operation_max_events: int = Field(default=256, ge=1, le=10000)
+    operation_max_event_bytes: int = Field(default=2048, ge=256, le=65536)
+    operation_max_store_bytes: int = Field(default=268435456, ge=1048576, le=17179869184)
+    operation_retention_days: int = Field(default=30, ge=1, le=36500)
 
 
 class ServerConfig(_Strict):
     schema_version: Annotated[Literal[1], BeforeValidator(_schema)]
     archive_config: AbsolutePath = Path("/etc/hfcache/config.toml")
+    state_directory: AbsolutePath = Path("/var/lib/hfcache/api")
     credentials: ServerCredentials
     listener: ListenerConfig = Field(default_factory=ListenerConfig)
     limits: ServerLimits = Field(default_factory=ServerLimits)

@@ -1,6 +1,7 @@
 # Writer REST API contract
 
-Status: API-006 implements the authenticated metadata resources below under
+Status: API-006 implements authenticated archive metadata and API-007 adds
+bounded receipt/admission primitives and operation observation under
 [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md). Job/write routes,
 candidate operations and API-backed public CLI migration remain planned. No
 production installation or listener start is asserted by implementation evidence.
@@ -60,7 +61,7 @@ uses its local service until API-011–013 migrate it.
 | quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | pending | pending | planned |
 | repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | pending | pending | planned |
 | reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py; tests/unit/test_query_boundary.py | implemented |
-| operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | pending | pending | planned |
+| operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | pending CLI migration | tests/unit/test_api_operations.py; tests/unit/test_operations.py; tests/unit/test_operation_store_adversarial.py | implemented |
 
 Local `version`, help, `serve`, and `config validate --local` are explicit
 bootstrap commands, outside remote operation parity. API-backed commands reject
@@ -119,7 +120,7 @@ run IDs retain domain grammars. No path parameter is an arbitrary filesystem pat
 | GET resource | Result in `envelope.data` | Pagination |
 | --- | --- | --- |
 | `/version` | Existing local version payload; no archive-policy read per request | none |
-| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; operations/MCP remain false | none |
+| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; API-007 advertises `operation_history=true`, while command `operations`/MCP remain false | none |
 | `/health` | Daemon readiness, policy-validation state and read-only archive inspection when available | none |
 | `/status` | Archive headline plus repository status rows | `repositories` |
 | `/repositories` | Published inventory, including unmanaged repositories | `repositories` |
@@ -216,13 +217,14 @@ metadata lease remains held through stream completion/disconnect.
 [Decision 111](adr/decision-111.md) separates four identities without changing
 schema-1 archive records. A trusted server boundary mints a fresh `request_id`
 for each received request; caller headers cannot select the authoritative ID.
-Admission later mints an independent `operation_id`, shared by its submission,
+API-007 admission mints an independent `operation_id`, shared by its submission,
 observation requests and execution. A domain `run_id` continues to identify the
 CLI Envelope and any durable run report. A `transaction_id` continues to identify
 one archive journal; a run may contain several transactions. These IDs use the
 existing 32-lowercase-hex grammar. A request is not a run or a transaction, and
 retrying or polling an operation does not mint a replacement domain identity.
-Receipt relationships and authenticated submitter metadata land in API-007/008.
+API-007 receipts preserve domain relationships and the authenticated coarse
+credential-class submitter; API-008 still owns actual execution propagation.
 
 `ExecutionContext` holds the run ID and optional request/operation IDs.
 Its `activate()` scope binds an immutable `ContextVar` correlation snapshot and
@@ -288,37 +290,151 @@ Existing large reports stream without unbounded duplicate buffers.
 
 ## Admission, idempotency, and lifecycle
 
-Decision [109](adr/decision-109.md) permits a bounded non-resuming submission
-registry, separate from archive journals. One heavyweight FIFO lane (16 pending
-by default), bounded metadata pool, and separate daemon-instance lock; never
-hold the archive flock for daemon lifetime. The process is single-worker,
-without auto-reload. Heavy work runs outside the ASGI event loop.
+Decisions [109](adr/decision-109.md) and [114](adr/decision-114.md) permit a
+bounded non-resuming submission registry, separate from archive journals.
+API-007 implements durable admission primitives and HTTP observation; it adds no
+command POST route or actual heavy worker. API-008 supplies one heavyweight FIFO
+lane (16 pending by default), policy/lock revalidation and isolated verification;
+API-009/010 add command submissions. The bounded metadata pool and daemon-instance
+lock already exist. Never hold the archive flock for daemon lifetime. The process
+is single-worker without auto-reload; heavy work stays outside the ASGI event loop.
 
 Side-effecting submissions require `Idempotency-Key`. Persist a restrictive
 atomic JSON receipt under service-private `/var/lib/hfcache/api/` before 202 or
-execution. Bind principal identity and key to canonical route/body digest and
-admitted policy fingerprint. Matching retries return the original operation
-even after policy changes; conflicting requests return 409. Every retry/lookup
-reauthenticates. Header-based lookup searches only the caller's namespace.
+execution. Bind fixed credential-class principal identity and the SHA-256 key
+digest to a canonical route/request digest and admitted policy fingerprint.
+Persist no raw key, candidate body, bearer or credential source/digest. The
+receipt itself is the authoritative binding; indexes are derived. Matching
+retries return the original operation before requesting a fresh policy snapshot,
+even after policy changes; conflicting requests/routes return 409. Every
+retry/lookup reauthenticates. Header-based lookup searches only the caller's
+credential-class namespace, which survives credential rotation. It does not
+submit work. All REST principals with read capability may observe any operation
+metadata, events and results, just as they can read archive reports under AD-21.
+An operation ID is never authentication.
+
+The core key grammar is `1`–`128` ASCII characters from letters, digits,
+`.`, `_`, `~`, `+` and `-`. Empty, whitespace, control or oversized keys fail
+validation without echoing their value. Canonical request hashing uses the shared
+deterministic JSON serializer over `{route, request}` with sorted keys and the
+validated request mapping; the serialized comparison input is bounded to 8 MiB.
+Object insertion order therefore does not change the digest; meaningful array
+order and route identity do. It is never a hash of raw HTTP bytes and never
+authorizes replaying the request. Public submission routes must validate strict
+domain DTOs and require a key before calling admission.
+
+For example, after losing an acknowledgement, an authenticated client sends
+`GET /api/v1/operations/lookup` with the original `Idempotency-Key` header. It
+does not resubmit or move the key into a URL. The core admission outcomes are:
+
+| Retry condition | Outcome |
+| --- | --- |
+| Same credential class, key, route and validated request; object keys reordered | Original operation, no new policy lookup or admission |
+| Same binding after installed policy changes or same-class credential rotation | Original admitted operation and fingerprint |
+| Same class/key with a changed route or request | `HFAPI012`/409 conflict; no new operation |
+| Same key under a different credential class | Separate namespace; lookup cannot find the first class's binding |
+| Missing/expired history | `HFAPI013`/404 with unknown execution outcome; never automatic replay |
+
+API-007 exposes the non-submitting lookup and core primitives; mutation POST
+examples become executable only when API-009/010 provide their strict routes.
 
 States: queued, waiting_lock, running, succeeded, failed, interrupted. Store the
-exact terminal Envelope or reference durable evidence. One waiting budget covers
-queue and lock time. Reload installed policy under lock and refuse stale scope
-before mutation. No duplicate/nested lock acquisition. Verification delegates to
-a private socket executor that owns its lock through report/catalog persistence.
+exact terminal Envelope in a validated bounded result reference. Interrupted
+means uncertain execution outcome and has no fabricated domain report. API-008
+must apply one waiting budget to queue and lock time, reload installed policy
+under lock and refuse stale scope before mutation, without duplicate/nested lock
+acquisition. Verification delegates to a private socket executor that owns its
+lock through report/catalog persistence. API-007 never invokes those commands.
 
-Disconnect and Ctrl-C stop observation. They do not cancel accepted work. Clients
-emit the nonsecret key before mutation submission and operation ID before wait,
-even in quiet mode; stdout carries exactly one terminal Envelope. Sequenced
-sanitized events are bounded, never arbitrary journald output.
+Disconnect and Ctrl-C stop observation. They do not cancel accepted work. Later
+API-backed clients emit the nonsecret key before mutation submission and operation
+ID before waiting, even in quiet mode; stdout carries exactly one terminal
+Envelope. Sequenced sanitized events are bounded application evidence, never
+arbitrary journald output.
 
 Shutdown stops admission, drains/joins workers, and preserves receipts. Restart
-never automatically reruns old queued/running work: reattach an exactly identified
-surviving verifier or classify interrupted without fabricating a report. PID,
-released lock, elapsed time, or disconnected client do not prove completion.
-Terminal key/result retention defaults to 30 days. Never age out nonterminal or
-ambiguous records; delete only validated owned terminal records. Expired/missing
-history is uncertainty, not proof of nonexecution or permission to replay.
+never automatically reruns old queued/running work. API-007 opens the store
+without classification; an explicit `interrupt_unfinished()` primitive is
+available. API-008 must reconcile exact surviving workers before marking
+unresolved nonterminal receipts interrupted. The future verifier integration must reattach
+an exactly identified surviving worker or classify uncertainty without fabricating
+a report. PID, released lock, elapsed time or disconnected client do not prove
+completion. Terminal key/result retention defaults to 30 days. Count/byte caps
+refuse new admission rather than evicting unexpired bindings. Nonterminal and
+interrupted records retain their receipt/result space reservation; they never
+expire. Ambiguous, malformed, unsafe and unknown-version records are preserved
+and fail admission closed. Healthy validated IDs remain observable. Delete only
+validated owned succeeded/failed history after expiry. Expired/missing history
+is uncertainty, not proof of nonexecution or permission to replay. See the
+independent [schema/compatibility contract](schemas.md#13-service-private-operation-control-state-api-007)
+and [recovery runbook](recovery.md#10-operation-history-and-uncertain-submissions).
+
+### Implemented operation observation (API-007)
+
+Every route below requires a REST principal with `read` capability. Observation
+uses the same bounded metadata pool, request/response safeguards and stream
+leases as archive reads. It does not load a fresh archive-policy snapshot, call
+any domain command, acquire the archive flock, admit work or change a receipt.
+Healthy exact-ID history therefore remains available after an invalid policy
+update or unrelated corrupt receipt. Collection/key-lookup scans refuse unsafe,
+unsupported or unexplained state instead of silently dropping it.
+Capabilities advertises `operation_history=true`; `operations=false` means
+command submission/execution is still unavailable.
+
+| Route under `/api/v1` | `envelope.data` / behavior |
+| --- | --- |
+| `GET /operations` | `operations`: newest-first public metadata; supports `limit`/`cursor` only |
+| `GET /operations/lookup` | `operation`: original receipt found by exactly one `Idempotency-Key` header in the caller's namespace; no query parameters |
+| `GET /operations/{operation_id}` | `operation`: public metadata by validated server ID; no query parameters |
+| `GET /operations/{operation_id}/result` | Exact stored terminal domain Envelope in the response's `envelope`; no query parameters |
+| `GET /operations/{operation_id}/events` | `operation_id`, `events`, integer `next_cursor`, `oldest_sequence`, `truncated`; accepts only `after`/`limit` |
+
+`OperationView` exposes `schema_version`, `operation_id`, coarse `principal`,
+`route`, admitted `archive_id`/`config_fingerprint`, `state`, `created_at`,
+`updated_at`, nullable `completed_at`/`domain_run_id`, `transaction_ids`,
+`next_event_sequence` and `result_recorded`. It excludes the key and request
+digests, result-file reference and inline events. The principal is `rest-writer`
+or `rest-reader`, not a person's identity. No raw key or original request is
+available for retrieval.
+
+All routes use `ReadResponse`. Exact show/lookup/events/result responses carry
+the receipt's admitted archive UUID/fingerprint, even if installed policy later
+changes. A collection uses the startup-pinned configured UUID and null wrapper
+fingerprint; each item retains its own admitted identity. Ordinary observation
+Envelopes identify the current request. The result endpoint preserves the stored
+domain Envelope/run ID/exit classification: HTTP 200 can contain a failed domain
+result. A known queued/waiting/running/interrupted receipt without a result returns
+`HFAPI015`/409, exit 20; absent/expired history returns `HFAPI013`/404, exit 20.
+It never invents an empty successful result. Invalid IDs/header/query input is
+`HFAPI006`/422 without echoing input. Unsafe/unavailable/unexplained storage is
+`HFAPI014`/503, exit 20.
+
+Collection ordering is descending `(created_at, operation_id)`. Its default
+limit is 100, bounded by `max_page_size`; its opaque cursor binds ordered IDs
+and the daemon instance. Changed membership/order or a restart invalidates
+continuation with `HFAPI007`/409. Receipt fields can change between pages without
+changing membership, so this is not a frozen history snapshot. Start a fresh walk
+after a stale cursor. Collection cursors are distinct from event sequences.
+
+For events, `after` is a nonnegative decimal sequence (default `0`); `limit`
+defaults to the minimum of `100`, `max_page_size` and `operation_max_events` and
+cannot exceed either configured ceiling. Both are single ASCII decimal values
+of at most ten digits. Events are returned in increasing sequence after `after`.
+`next_cursor` is the last returned sequence, or the supplied `after` if empty;
+pass it as the next `after`. `oldest_sequence` identifies the first retained
+sequence, or the next sequence if no event exists. `truncated=true` explicitly
+reports a gap when the caller's cursor predates the retained suffix. Event
+retention is bounded independently of the receipt/key window; clients must
+present a gap honestly rather than fabricate progress. No long-poll, SSE,
+WebSocket, raw journal stream or cancellation endpoint is added.
+
+Result reads validate the referenced file's bytes/hash/identity and schema-1
+Envelope before streaming with the existing bounded JSON encoder/lease. Source
+bytes are capped by `operation_max_result_bytes`; normal metadata uses
+`max_response_bytes`, and encoded result responses use the existing large-evidence
+ceiling of eight times `max_artifact_bytes`. No endpoint serves arbitrary control
+files. The independent [durable schema](schemas.md#13-service-private-operation-control-state-api-007)
+records file ownership, transitions, event/result bounds and compatibility.
 
 ## Credentials and configuration
 

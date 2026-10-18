@@ -42,7 +42,7 @@ does not activate itself.
 | Deployment, scheduling, and hardening | [Scheduling authority](systemd-scheduling.md) | [Mount units](decision-058.md), [hardening probe](decision-059.md), [offline egress](decision-060.md), [setgid exception](decision-061.md), [safe deploy](decision-065.md) |
 | Consumers and serving | [AD-10](ad-10.md) | [Independent copy helper](decision-067.md), [promotion ownership](decision-099.md), [serving mounts](decision-100.md) |
 | Cockpit administration | [Plugin boundary](decision-087.md) | [Operation surface](decision-089.md), [bundled TOML](decision-091.md), [credential import](decision-092.md), [repository links](decision-101.md) |
-| Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Transport boundary](decision-108.md), [submission receipts](decision-109.md), [scoped correlation/redaction](decision-111.md), [server dependency/configuration boundary](decision-112.md), [authenticated metadata lifespan](decision-113.md), [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
+| Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Transport boundary](decision-108.md), [submission receipts](decision-109.md), [scoped correlation/redaction](decision-111.md), [server dependency/configuration boundary](decision-112.md), [authenticated metadata lifespan](decision-113.md), [durable admission without replay](decision-114.md), [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
 | Documentation and work-package process | [Router](decision-081.md), [workflow](decision-082.md), [register upkeep](decision-106.md), [plan/task authority](decision-107.md) | [Portable runbooks](decision-085.md), [current invariant register](../invariants.md), [planning guide](../agents/planning.md) |
 
 ## Maintenance rules
@@ -236,3 +236,4 @@ status and current-contract links before applying a historical choice.
 | 111 | [Scope execution correlation and offline process initialization](decision-111.md) |
 | 112 | [Separate server authority and verified bearer capabilities](decision-112.md) |
 | 113 | [Serve bounded metadata through one authenticated lifespan](decision-113.md) |
+| 114 | [Persist non-resuming admission without discarding uncertainty](decision-114.md) |

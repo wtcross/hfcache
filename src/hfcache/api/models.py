@@ -35,3 +35,23 @@ class PageQuery(BaseModel):
     cursor: str | None = Field(default=None, max_length=256)
     selectors: tuple[str, ...] = ()
     repository_type: Literal["model", "dataset"] | None = None
+
+
+class OperationView(BaseModel):
+    """Public history metadata excludes key/request digests and inline events."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    schema_version: Literal[1] = 1
+    operation_id: str
+    principal: Literal["rest-writer", "rest-reader"]
+    route: str
+    archive_id: str
+    config_fingerprint: str
+    state: Literal["queued", "waiting_lock", "running", "succeeded", "failed", "interrupted"]
+    created_at: str
+    updated_at: str
+    completed_at: str | None
+    domain_run_id: str | None
+    transaction_ids: list[str]
+    next_event_sequence: int
+    result_recorded: bool

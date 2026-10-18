@@ -1,6 +1,7 @@
 # Separate restart-only server settings. No token values belong in this file.
 schema_version = 1
 archive_config = "/etc/hfcache/config.toml"
+state_directory = "/var/lib/hfcache/api"
 maintenance_enabled = false
 interactive_docs = false
 mcp_enabled = false
@@ -38,3 +39,9 @@ shutdown_timeout_seconds = 300
 max_response_bytes = 8388608
 max_artifact_bytes = 67108864
 max_scan_entries = 10000
+operation_max_receipt_bytes = 1048576
+operation_max_result_bytes = 8388608
+operation_max_events = 256
+operation_max_event_bytes = 2048
+operation_max_store_bytes = 268435456
+operation_retention_days = 30

@@ -14,6 +14,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
 from hfcache.errors import ExitCode, HfcacheError, IntegrityError, SafetyError
 from hfcache.manifests import FileProvenance, RevisionManifest
 from hfcache.models import (
@@ -46,6 +47,9 @@ from tests.fixtures.examples import EXAMPLES, at
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "schemas"
 
 MODEL_FOR = {
+    "operation-event": OperationEvent,
+    "operation-result-reference": ResultReference,
+    "operation-receipt": OperationReceipt,
     "journal": TransactionJournal,
     "manifest": RevisionManifest,
     "prune-plan": PrunePlan,

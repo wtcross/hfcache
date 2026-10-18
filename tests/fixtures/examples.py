@@ -12,6 +12,8 @@ value fails inside the test that asked for it.
 
 from datetime import UTC, datetime
 
+from hfcache.api.auth import CredentialClass
+from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
 from hfcache.manifests import (
     DependencyObservation,
     FileEntry,
@@ -507,7 +509,43 @@ def journal() -> TransactionJournal:
     )
 
 
+def operation_event() -> OperationEvent:
+
+    return OperationEvent(
+        sequence=1,
+        at=at("2026-10-17T12:00:00.000000Z"),
+        kind="operation.admitted",
+        message="Admission recorded",
+    )
+
+
+def operation_result_reference() -> ResultReference:
+
+    return ResultReference(operation_id="a" * 32, sha256="b" * 64, bytes=512)
+
+
+def operation_receipt() -> OperationReceipt:
+
+    return OperationReceipt(
+        operation_id="a" * 32,
+        principal=CredentialClass.REST_WRITER,
+        key_digest="c" * 64,
+        request_digest="d" * 64,
+        route="/api/v1/sync",
+        archive_id=ARCHIVE_ID,
+        config_fingerprint=FINGERPRINT,
+        state="queued",
+        created_at=at("2026-10-17T12:00:00.000000Z"),
+        updated_at=at("2026-10-17T12:00:00.000000Z"),
+        events=(operation_event(),),
+        next_event_sequence=2,
+    )
+
+
 EXAMPLES = {
+    "operation-event": operation_event,
+    "operation-result-reference": operation_result_reference,
+    "operation-receipt": operation_receipt,
     "journal": journal,
     "manifest": manifest,
     "prune-plan": prune_plan,

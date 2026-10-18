@@ -22,6 +22,7 @@ create an archive. Nothing here decides policy; each function reports what it
 observed as coded `Problem`s and lets its caller decide what that means.
 """
 
+import contextlib
 import os
 import re
 import secrets
@@ -355,26 +356,56 @@ def fsync_directory(path: Path) -> None:
         os.close(descriptor)
 
 
-def atomic_write_bytes(path: Path, payload: bytes, *, mode: int) -> None:
+def atomic_write_bytes(
+    path: Path,
+    payload: bytes,
+    *,
+    mode: int,
+    dir_fd: int | None = None,
+    checkpoint: Callable[[str], None] | None = None,
+) -> None:
     """Write a file so that a reader never observes a partial one.
 
     Temporary sibling, `fsync`, `chmod`, `rename(2)`, then `fsync` of the parent
     (`docs/schemas.md` §1). The mode is applied before the rename so the file is
     never reachable at its final name with a mode derived from the process umask.
     """
+    if dir_fd is not None and (path.is_absolute() or len(path.parts) != 1):
+        message = "descriptor-relative atomic writes require one filename"
+        raise ValueError(message)
     temporary = temporary_sibling(path)
+    notify = checkpoint or (lambda _: None)
+    created: tuple[int, int] | None = None
     try:
-        descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
+        notify("before_write")
+        descriptor = os.open(
+            temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode, dir_fd=dir_fd
+        )
         with os.fdopen(descriptor, "wb") as handle:
+            info = os.fstat(handle.fileno())
+            created = info.st_dev, info.st_ino
             handle.write(payload)
             handle.flush()
+            os.fchmod(handle.fileno(), mode)
+            notify("before_file_fsync")
             os.fsync(handle.fileno())
-        temporary.chmod(mode)
-        temporary.replace(path)
+        notify("after_file_fsync")
+        notify("before_rename")
+        os.replace(temporary, path, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
+        notify("after_rename")
     except OSError:
-        temporary.unlink(missing_ok=True)
+        if created is not None:
+            with contextlib.suppress(FileNotFoundError):
+                remaining = os.stat(temporary, dir_fd=dir_fd, follow_symlinks=False)
+                if (remaining.st_dev, remaining.st_ino) == created:
+                    os.unlink(temporary, dir_fd=dir_fd)
         raise
-    fsync_directory(path.parent)
+    notify("before_directory_fsync")
+    if dir_fd is None:
+        fsync_directory(path.parent)
+    else:
+        os.fsync(dir_fd)
+    notify("after_directory_fsync")
 
 
 def write_model(

@@ -330,7 +330,7 @@ History: `SYNC-007` (`54e4671`), decision 94.
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
   Never emit secrets in configuration errors, logs, manifests, journals,
-  reports, or fingerprints. Register exact resolved opaque credentials before
+  reports, operation state or fingerprints. Register exact resolved opaque credentials before
   use; sanitize nested diagnostic contexts and exception/public output as well
   as recognized token shapes (decision 111). See [configuration §7, §9](configuration.md#7-credentials)
   and [security T-07](security.md#t-07--a-token-leaks).
@@ -390,6 +390,10 @@ decision [112](adr/decision-112.md) identifies the remaining boundaries.
   reject unknown fields; the journal reader separately preserves unknown
   top-level fields across rewrites (decision 20). Preservation alone grants no
   recovery/deletion authority. See [schemas §1, §10–§11](schemas.md#1-conventions).
+  API-007's independent local receipt/event/reference version rejects missing,
+  noninteger, duplicate-key and unsupported state; it does not widen archive
+  formats. Receipt/result updates use the same durable serializer and fsync
+  boundary. See [schemas §13](schemas.md#13-service-private-operation-control-state-api-007).
 - **`INV-006` — CLI output and failure classification are stable contracts.**
   `--json` emits exactly one schema-1 envelope on stdout, including failures;
   stderr is display/event output. Error classes, stable taxonomy codes, and
@@ -402,7 +406,8 @@ decision [112](adr/decision-112.md) identifies the remaining boundaries.
   copied into workers; server request/operation IDs cannot replace domain
   run/journal identities. Daemon logger configuration is startup-only.
   Durable `invocation_mode` describes the execution host, not timer or submitter
-  origin; authenticated submitter metadata belongs to later receipts (decision 111).
+  origin; API-007 receipts record the authenticated credential-class submitter
+  separately (decisions 111/114), without claiming individual user attribution.
   The API-006 foreground `serve` bootstrap is a narrow exception: normal daemon
   execution has no terminal success Envelope/stdout, while classified startup
   failures preserve the schema-1 error Envelope under `--json` (decision 113).
@@ -442,6 +447,11 @@ Correlation/diagnostic enforcement: [execution context](../src/hfcache/services/
 Durable shape, enum, and field-combination changes require the
 [release compatibility drill](agents/release.md); schema version 1 is not a
 blanket claim that old binaries accept every later widening.
+API-007 control-state enforcement: [receipt models/store](../src/hfcache/api/operations.py),
+[golden operation fixtures](../tests/fixtures/schemas/operation-receipt.json),
+[lifecycle/idempotency/result tests](../tests/unit/test_operations.py), and
+[fault/concurrent admission/retention tests](../tests/unit/test_operation_store_adversarial.py).
+Its task records the separate previous-binary compatibility drill.
 
 ## Consumer boundary
 
@@ -552,7 +562,8 @@ and git; the application test suite does not enforce planning lifecycle.
 ## Remote management (incremental enforcement)
 
 API-001 introduces these constraints for the activated plan. API-006 implements
-authenticated metadata HTTP and its foreground bootstrap; jobs, client migration,
+authenticated metadata HTTP and its foreground bootstrap; API-007 adds durable
+admission primitives and operation observation. Heavy execution, client migration,
 verification isolation and MCP remain pending. [API](api.md) and [server](server.md)
 track exact availability; implementing tasks own proof.
 
@@ -588,7 +599,20 @@ track exact availability; implementing tasks own proof.
   before runnable/202, bind principal/key/request, fail stale policies closed,
   retain ambiguous history, and never infer success or replay from missing
   history. One bounded lane retains the cross-process archive flock.
-  Enforcement: API-007/008/013; [decision 109](adr/decision-109.md).
+  The receipt itself is the durable key binding; only derived indexes rebuild.
+  Key digests never expose raw keys, and fixed credential-class namespaces
+  survive rotation. All REST readers may observe operation metadata/results;
+  key lookup searches only the caller's namespace. Unexpired terminal bindings
+  retain the configured 30-day default window; count/byte limits refuse admission
+  rather than evicting them. Interrupted/ambiguous/nonterminal/unsupported state
+  never ages out. Enforcement: API-007 core/HTTP observation; heavy execution and
+  client safety remain API-008/013. Decisions [109](adr/decision-109.md) and
+  [114](adr/decision-114.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state-api-007).
+  Enforcement/evidence: [core store](../src/hfcache/api/operations.py),
+  [HTTP observation](../src/hfcache/api/app.py),
+  [core tests](../tests/unit/test_operations.py),
+  [adversarial store tests](../tests/unit/test_operation_store_adversarial.py), and
+  [HTTP history tests](../tests/unit/test_api_operations.py).
 - **`INV-015` — Verification isolation encloses persistence.** Non-estimate
   verification locks target resolution, hashing, report write and catalog merge
   in a credential-free no-IP executor. Estimates remain metadata reads.

@@ -42,6 +42,14 @@ unsafe paths and inconsistent evidence without repairing an archive. References
 retain published-relative locators; writes/jobs, the API-backed CLI and MCP
 remain planned. Tests use disposable sockets; no production server was started.
 
+Operation admission now has an independent local JSON receipt/key authority,
+bounded sanitized events/results and authenticated observation. Matching retries
+retain their original binding across policy changes and credential rotation.
+Startup never replays unfinished history; explicit interruption records uncertainty.
+Retention never
+evicts unexpired keys or uncertain work for capacity. Heavy execution and command
+submission routes remain later work. No production state was created or changed.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

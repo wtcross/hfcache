@@ -310,6 +310,13 @@ and a second source of truth that can disagree with the tree.
 rebuilt from immutable manifests and references. Recovery reads durable evidence
 rather than replaying a log of intentions.
 
+**API-007 amendment (2026-10-17, decision 114).** Service-private local operation
+receipts/results add an independent versioned JSON control-state family, outside
+archive/publication trees. The receipt is admission/key authority; only its
+indexes are derived. It never supersedes archive evidence or reconstructs a
+command from a journal. The no-database rule remains unchanged; see
+[schemas §13](schemas.md#13-service-private-operation-control-state-api-007).
+
 ### AD-13 — Repair replaces a damaged instance without changing what the revision *is*
 
 **Decision.** `repair` re-downloads the same immutable SHA into an isolated,
@@ -1329,6 +1336,33 @@ remain archive-relative. Archive inspection is diagnostic, not sentinel proof
 for every metadata request. No bulk file server, write/job route, new dependency,
 MCP or production deployment is added. The daemon bootstrap has no success
 stdout Envelope; its classified startup failures retain normal JSON errors.
+
+### Durable admission and observation amendment (API-007, 2026-10-17)
+
+[Decision 114](adr/decision-114.md) implements decision 109's bounded registry
+without adding an execution engine. Independently versioned local JSON receipts
+are the authoritative operation/key binding, durably written before acknowledgement
+or runnability; indexes are derived. Fixed credential-class principals survive
+rotation. Raw keys, bearers and candidate bodies are never stored; the canonical
+request digest is a comparison value, not an instruction to resume work.
+
+Authenticated REST readers may observe all operation metadata/results under
+AD-21; key lookup alone is restricted to the caller's namespace. Startup never
+replays or automatically queues old work. API-007 provides explicit interruption
+classification; API-008 must first reconcile exact surviving workers. Retain
+interrupted, ambiguous, malformed, unknown-version and nonterminal records;
+refuse count/space admission rather than evicting unexpired 30-day key bindings.
+Only validated terminal success/failure state may expire. Missing history is
+uncertainty, not nonexecution or a reason to replay archive journals.
+
+This scoped FW-01 exception retains FW-02, AD-12/14/16, ordinary domain functions,
+archive flock and every FS/TX boundary. The independent control-state schema does
+not widen archive JSON. API-007 exposes observation and core admission primitives;
+the actual heavy lane, stale-policy revalidation and verifier remain API-008,
+command POST routes API-009/010, and MCP remains behind REST acceptance.
+See [schemas §13](schemas.md#13-service-private-operation-control-state-api-007),
+[API lifecycle](api.md#admission-idempotency-and-lifecycle) and
+[uncertain-submission recovery](recovery.md#10-operation-history-and-uncertain-submissions).
 
 ## 9. Phase 0 acceptance
 

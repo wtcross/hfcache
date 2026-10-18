@@ -54,6 +54,7 @@ def policy(tmp_path):
         {
             "schema_version": 1,
             "archive_config": str(archive_config),
+            "state_directory": str(tmp_path / "api-state"),
             "credentials": {"writer": {"file": str(token)}},
             "listener": {"unix_socket": str(tmp_path / "api.sock"), "tcp_enabled": False},
         }
@@ -210,6 +211,7 @@ def test_foreground_bootstrap_preserves_typed_lifespan_startup_failures(
     path = tmp_path / "server.toml"
     path.write_text(
         f'schema_version=1\narchive_config="{policy.archive_config}"\n'
+        f'state_directory="{policy.state_directory}"\n'
         f'[credentials.writer]\nfile="{policy.credentials.writer.file}"\n'
         f'[listener]\nunix_socket="{policy.listener.unix_socket}"\ntcp_enabled=false\n',
         encoding="utf-8",

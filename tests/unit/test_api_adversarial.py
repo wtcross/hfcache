@@ -56,6 +56,7 @@ def _server_settings(tmp_path):
         {
             "schema_version": 1,
             "archive_config": str(policy),
+            "state_directory": str(tmp_path / "api-state"),
             "credentials": credentials,
             "interactive_docs": True,
             "listener": {"allowed_hosts": ["testserver"]},

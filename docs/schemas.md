@@ -7,8 +7,9 @@
 | Work package | `ARC-004` |
 | Schema version | All formats begin at `1` |
 
-Every durable artifact `hfcache` writes is versioned JSON on the archive
-filesystem. There is no database (`AD-12`). This document defines each format
+Every durable artifact `hfcache` writes is versioned JSON. Archive formats live
+on the archive filesystem; API-007's independent control-state format (§13)
+lives in service-private local storage. There is no database (`AD-12`). This document defines each format
 precisely enough that a reader with no access to the source can validate an
 archive, and that a future version can be recognised and refused rather than
 misread.
@@ -24,7 +25,7 @@ These apply to every file in this document.
 | Determinism | Identical logical content produces byte-identical files. Arrays are sorted by a documented key, never by iteration order |
 | Timestamps | RFC 3339 UTC with microsecond precision and a literal `Z`: `2026-07-24T20:57:31.123456Z`. Local time is never written |
 | Durability | Written to a temporary sibling in the same directory, `fsync`ed, then `rename(2)`d into place; the parent directory is `fsync`ed afterwards |
-| Paths | Every path field is relative POSIX, without a leading `/`, without `.` or `..` segments, and validated to stay under its root (`FS-09`). That root is the **archive root**, with one exception: the `tree` and `manifest` fields of a reference (§4) are relative to **`published/`**, because a consumer mounts that directory and no other base resolves for it |
+| Paths | Every path field is relative POSIX, without a leading `/`, without `.` or `..` segments, and validated to stay under its root (`FS-09`). Archive paths use the **archive root**, except the `tree` and `manifest` fields of a reference (§4), which are relative to **`published/`** because a consumer mounts that directory. API control-state names (§13) use their separate local state directory |
 | Digests | Lowercase hex |
 | Commit SHAs | Full 40-character lowercase hex; abbreviations are never written |
 | Absent values | `null` for a known-but-unset value; a key is never omitted from a written object |
@@ -840,3 +841,117 @@ so two runs that did the same work produce the same bytes.
 `blocked` is not a failure of recovery. It is recovery correctly refusing to
 resolve a state that two valid executions could both have produced
 (`docs/architecture.md` §7.9); the run exits `20` and changes nothing.
+
+## 13. Service-private operation control state (API-007)
+
+This is an independent schema-version-1 control-state family under the configured
+local API state directory, default `/var/lib/hfcache/api/`. It is never stored in
+`published/`, an archive journal or a derived archive catalog. Its version does
+not widen any archive JSON model. The §1 serialization/fsync conventions apply;
+the base for its local result references is the service-private state directory.
+
+A receipt is the authoritative admission and idempotency binding. Durable
+admission precedes both making work runnable and returning 202. Its principal
+is the fixed authenticated credential class, not a token-derived identifier or
+individual identity. Only a digest of the idempotency key and a canonical
+route/request digest are retained; a raw key, bearer, credential digest/path,
+candidate body or replayable command is never written. The admitted archive
+UUID/fingerprint and server-generated correlation identify the frozen admission
+without changing domain run/report/transaction identities.
+
+### 13.1 Receipt, event and result models
+
+The local files are `<operation_id>.json` for the receipt,
+`<operation_id>.result.json` for the terminal Envelope, and a retained `.lock`
+inode for control-state serialization. These are flat service-private names;
+callers never supply an arbitrary relative path. Every operation ID is a
+server-minted 32-character lowercase hexadecimal value independent of domain IDs.
+The root directory is owned by the effective service user, mode `0700`; files
+are regular single-link service-owned inodes, mode `0600`. Parent directories
+must already exist. Components are opened without following symlinks and reads
+stay on checked descriptors with bounded bytes and stable inode metadata.
+
+All three models below carry independent `schema_version: 1`, reject unknown
+fields and use §1's strict timestamp/digest conventions. The file decoder
+requires an explicit integer version, rejects duplicate JSON keys and refuses
+unsupported versions rather than guessing from model defaults.
+
+| `OperationReceipt` field | Meaning |
+| --- | --- |
+| `operation_id` | Server-generated receipt identity and file stem |
+| `principal` | Coarse credential class; independent of token value/rotation |
+| `key_digest` | Private SHA-256 of the validated idempotency key; never exposed by HTTP |
+| `request_digest` | SHA-256 of deterministic JSON containing canonical route and validated request mapping |
+| `route` | Canonical `/api/v1/` operation route; no query or arbitrary filesystem path |
+| `archive_id` | Admitted installed archive UUID |
+| `config_fingerprint` | Admitted archive-policy fingerprint; no credentials |
+| `state` | Lifecycle state below |
+| `created_at`, `updated_at` | Admission and latest durable update times |
+| `completed_at` | Null while nonterminal; completion/classification time for succeeded, failed or interrupted |
+| `domain_run_id` | Null or existing domain Envelope/run identity; once bound it cannot change, and never becomes the operation ID |
+| `transaction_ids` | Distinct domain transaction IDs in reported domain order, initially empty; later updates preserve the existing ordered prefix |
+| `result` | Null until succeeded/failed; then the exact `ResultReference` below |
+| `events` | Bounded retained suffix of sequenced sanitized events, initially empty |
+| `next_event_sequence` | Next monotonically increasing sequence, initially `1` |
+
+`OperationEvent` contains `sequence` (positive integer), `at` (UTC timestamp),
+`kind` (bounded lowercase application identifier) and sanitized `message`.
+Sequences are contiguous within the retained suffix; dropping its oldest entry
+never renumbers the remainder. The complete serialized event, including its
+metadata, must fit the configured byte ceiling. An oversized event is refused,
+not silently truncated into misleading evidence.
+
+`ResultReference` contains `operation_id`, lowercase `sha256` and positive
+`bytes`, binding one result file to the same receipt. Write/fsync the sanitized
+exact schema-1 Envelope before replacing the receipt with terminal state and its
+reference. The result's run ID must equal `domain_run_id`; zero exit belongs to
+`succeeded`, nonzero to `failed`. Fetch verifies identity, byte count, digest and
+Envelope coherence before returning it. A result without its corresponding valid
+receipt is unexplained state, never proof of completion or deletion authority.
+
+### 13.2 Lifecycle and retention
+
+States are `queued`, `waiting_lock`, `running`, `succeeded`, `failed` and
+`interrupted`. A terminal success/failure retains the exact schema-1 Envelope;
+an interrupted operation has uncertain execution outcome and must not fabricate
+one. Sequenced bounded events are sanitized application evidence, never raw
+journald output. Reading any of this state cannot execute a domain command.
+
+| Current state | Permitted next states |
+| --- | --- |
+| `queued` | `waiting_lock`, `running`, `failed`, `interrupted` |
+| `waiting_lock` | `running`, `failed`, `interrupted` |
+| `running` | `succeeded`, `failed`, `interrupted` |
+| `succeeded`, `failed`, `interrupted` | None |
+
+A failed pre-execution admission may therefore become `failed` with its exact
+failure Envelope without claiming domain work ran. Completion timestamps and
+result presence must agree with state; invalid transitions are refused. The
+receipt is observation authority, not an executable state-machine graph.
+
+Known-version models reject unknown fields. Unknown-version, malformed, unsafe
+and unexplained records are preserved and block new admission; healthy records
+can still be observed by validated ID. In-memory indexes are derived only from
+receipts, never from archive journals. Restart does not make an existing queued/running record runnable. API-007
+startup opens the store without classification or replay; `interrupt_unfinished()`
+is an explicit classification primitive. API-008 must first reconcile an exact
+surviving worker and durable outcome, then classify unresolved nonterminal
+records interrupted. A retained `running` label alone is not proof of liveness.
+
+Only validated application-owned terminal success/failure history may expire
+after the configured retention period (default 30 days). Unexpired bindings
+cannot be evicted to satisfy a count cap. Nonterminal, interrupted, malformed,
+unknown-version and ambiguous records never expire automatically. Full count or
+byte budgets refuse admission; history loss is uncertainty, not nonexecution.
+
+Compatibility is independent of archive format compatibility: a binary predating
+this family has no operation-history reader and must not be used to decide a
+lost submission's outcome. Preserve the state directory through rollback and
+consult it with a compatible server before retrying. The throwaway API-007 drill
+installed actual predecessor `a856397`/`0.1.10` and tagged `v0.1.3` wheels offline.
+Both lacked the operation module/CLI command (exit `2`) and preserved all three
+synthetic state files byte-for-byte without creating an archive. This is absent
+reader support, not proof of nonexecution or a successful old-format read.
+No production installation occurred. The [task](plans/tasks/api-007-operation-receipts-and-idempotency.md)
+records the command/evidence; [rollback §14](deployment-centos-stream-10.md#14-rollback-plan-30)
+records the observed rule. See [decision 114](adr/decision-114.md).

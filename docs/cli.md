@@ -595,9 +595,10 @@ condition; a retired condition retires its code.
 | `HFAPI006` | Invalid API request or exceeded request/response bound; HTTP 422 or 413 |
 | `HFAPI007` | API resource/method is absent (HTTP 404/405), or a page cursor is stale (HTTP 409) |
 | `HFAPI010` | API Host/Origin/TLS/proxy security policy refuses a request; HTTP 400 or 403 |
+| `HFAPI012` | An idempotency key conflicts with its previously admitted route/request; HTTP 409 |
 
 The `HFAPI` family defaults to exit `10`; the explicit safety codes below exit
-`20` ([decision 113](adr/decision-113.md)). HTTP status describes the transport
+`20` ([decisions 113](adr/decision-113.md) and [114](adr/decision-114.md)). HTTP status describes the transport
 result and does not override a domain Envelope's application exit classification.
 
 ### 5.2 Storage and transaction safety — exit `20`
@@ -627,6 +628,9 @@ result and does not override a domain Envelope's application exit classification
 | `HFAPI008` | Unexpected internal API failure, with sanitized diagnostics; HTTP 500 |
 | `HFAPI009` | Metadata service is full, draining or unavailable; HTTP 503 |
 | `HFAPI011` | Daemon instance lock is unsafe, unavailable or already held; HTTP 503 classification |
+| `HFAPI013` | Operation history/result is missing or expired; execution outcome remains unknown; HTTP 404 |
+| `HFAPI014` | Operation control storage is unsafe, full, unavailable or unexplained; HTTP 503 |
+| `HFAPI015` | Operation state/transition or result availability is invalid or uncertain; HTTP 409 |
 
 ### 5.3 Hub and synchronization — exit `30`
 

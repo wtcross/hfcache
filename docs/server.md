@@ -2,7 +2,8 @@
 
 Status: API-006 implements authenticated metadata HTTP resources and their
 controlled application lifespan over API-005 configuration/auth primitives.
-Jobs, isolated execution, CLI migration and service packaging remain later tasks.
+API-007 adds bounded receipt/admission primitives and operation observation.
+Heavy execution, command submissions, CLI migration and service packaging remain later tasks.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
@@ -18,7 +19,8 @@ nonprintable character.
 Validation exposes stable code/shape diagnostics without echoing input values,
 unknown caller-selected keys or raw TOML exception text. Existing HFCFG codes
 classify missing/unreadable files, malformed TOML, unknown fields, schema version
-and invalid constraints; no new durable JSON schema is added.
+and invalid constraints. The configuration model itself adds no durable JSON
+format; API-007's independent local receipt schema is described separately below.
 
 The server configuration default is `/etc/hfcache/server.toml`.
 [`packaging/server.toml`](../packaging/server.toml) is an example for this separate
@@ -32,6 +34,7 @@ the certificate/key before accepting connections.
 | --- | --- | --- |
 | `schema_version` | required integer | Exactly `1` |
 | `archive_config` | path, `/etc/hfcache/config.toml` | Installed archive policy, not caller-selected candidate authority |
+| `state_directory` | path, `/var/lib/hfcache/api` | Local service-private API-007 control state; outside publication trees |
 | `credentials` | required table | Required writer source and optional reader/MCP sources below |
 | `listener` | table, defaults below | Unix/TCP/TLS and browser/proxy policy |
 | `limits` | table, defaults below | Bounded resource policy for later routes/runner |
@@ -85,12 +88,25 @@ management contract. The later client always verifies off-host TLS.
 | `max_response_bytes` | `8388608` | `1024`–`67108864` |
 | `max_artifact_bytes` | `67108864` | `1024`–`1073741824` |
 | `max_scan_entries` | `10000` | `10`–`1000000` |
+| `operation_max_receipt_bytes` | `1048576` | `4096`–`16777216` |
+| `operation_max_result_bytes` | `8388608` | `1024`–`67108864` |
+| `operation_max_events` | `256` | `1`–`10000` |
+| `operation_max_event_bytes` | `2048` | `256`–`65536` |
+| `operation_max_store_bytes` | `268435456` | `1048576`–`17179869184` |
+| `operation_retention_days` | `30` | `1`–`36500` |
 
 API-006 enforces read-page/body/response/work and metadata-pool limits; shutdown
 joins its workers.
-Job admission and receipt retention remain API-007/008 work and cannot age out
-ambiguous/nonterminal work to satisfy a terminal-history count. Receipt policy remains subject to
-the admitted-operation contract in [API lifecycle](api.md#admission-idempotency-and-lifecycle).
+API-007 uses `retained_terminal_operations` as a conservative ceiling across
+all retained receipts, not permission to evict history. The operation-specific
+limits bound its independently versioned local store, events and terminal
+Envelopes. Retention never ages out interrupted/ambiguous/nonterminal work;
+unexpired terminal keys cannot be evicted for the count cap. Admission reserves
+the maximum receipt plus result allowance for each nonterminal/interrupted
+operation, while succeeded/failed history consumes actual bytes. Refuse new
+admission if that count/space reservation does not fit. Job execution/queue
+policy remains API-008; [API lifecycle](api.md#admission-idempotency-and-lifecycle)
+defines the safety boundary.
 
 API-006 applies finite metadata entry/artifact/total-byte budgets through shared
 `QueryBounds`. A page size limits its returned items, not the cost of the bounded
@@ -168,9 +184,10 @@ normalize input, delegates verification to the core and preserves those
 responses. The adapter itself creates no application. API-006's outer boundary
 uses the same core verifier before framework routing/validation on every HTTP
 surface, including health, capabilities, docs, OpenAPI, unknown paths and method
-errors, and sanitizes validation/exception output. Operation receipts do not exist
-yet; API-007 must store only the nonsecret principal and correlation metadata,
-never a token, digest or credential source path.
+errors, and sanitizes validation/exception output. API-007 receipts store only the
+nonsecret principal and operation/domain correlation, never a token, credential
+digest or source path. Their private idempotency-key digest is a separate
+comparison value and is never exposed by HTTP.
 
 Rotation means replace the protected credential, then restart the server to load
 it. Existing clients must use the new value on subsequent requests; stale tokens
@@ -270,10 +287,47 @@ The small `ListenerServer.startup` override is tied to the locked Uvicorn
 Uvicorn upgrade. Proven local Unix requests remain available when TCP uses a
 trusted TLS proxy; TCP peers must satisfy explicit numeric proxy/HTTPS checks.
 
+## Implemented operation control state (API-007)
+
+The application lifespan owns one `OperationStore` under `state_directory`,
+separate from the archive lock and publication/export tree. The configured state
+root and startup-pinned archive root must not overlap in either direction;
+refuse this before creating any state directory or `.lock` inode. The state
+parent must already exist; only the final private directory may be created,
+mode `0700`, with parent fsync. Checked regular files use service ownership,
+mode `0600` and one hardlink. Every component is opened no-follow, and bounded
+reads stay on stable pinned descriptors. The retained control-state `.lock`
+serializes store operations across handles/processes and is never unlinked.
+It is separate from both the daemon-instance lock and archive-operation flock.
+
+`OperationLimits` maps the server limits above, including the conservative
+`retained_terminal_operations` ceiling across all receipts. Each unresolved
+nonterminal/interrupted record reserves its maximum receipt plus result bytes;
+terminal succeeded/failed records consume actual retained bytes. Full count or
+reservation budgets refuse admission. A failed storage/fsync/write never makes
+work runnable. Receipts themselves bind keys; indexes/scans are derived and no
+command body is retained for replay.
+
+Startup opens the store and shutdown closes its pinned descriptors. API-007
+does not run a worker, expire history or automatically classify old receipts.
+`interrupt_unfinished()` and `expire()` are explicit core primitives, not HTTP
+mutation endpoints. API-008 must reconcile exact surviving executors before
+classifying unresolved work. Unsupported/malformed/unexplained state is preserved
+and blocks scan/admission, while healthy exact-ID reads and policy-independent
+diagnostics remain available. A retained `running` label never proves liveness.
+
+Operation observation uses authenticated bounded HTTP metadata work, never the
+archive flock or a domain command. All REST read-capable principals share this
+whole-archive metadata/result boundary; idempotency lookup alone uses the caller's
+credential-class namespace. The [API contract](api.md#admission-idempotency-and-lifecycle)
+defines wire/status/event semantics; [schemas §13](schemas.md#13-service-private-operation-control-state-api-007)
+defines the independent local family and retention compatibility. Heavy execution,
+submission routes and isolated verification remain later tasks.
+
 ## Execution and deployment target (not yet implemented)
 
-The later execution target adds one admission registry and one heavyweight worker
-to the same unprivileged application and bounded metadata pool. Both listeners
+The later execution target adds one heavyweight worker to API-007's admission
+registry in the same unprivileged application and bounded metadata pool. Both listeners
 share that application; the daemon-instance lock prevents competing registries. Actual
 archive work retains the existing local flock; metadata reads do not create
 archive layout or rebuild catalogs. Systemd remains scheduling authority.
@@ -284,8 +338,8 @@ IDs, activate an immutable execution context per request/operation, and copy it
 deliberately into worker submissions. Never change logger levels/handlers or
 offline environment flags per request. Domain run and journal identities retain
 their existing meanings. A report's `invocation_mode=systemd` describes the daemon
-host, not the timer/client that submitted work; API-007 receipts must carry the
-authenticated submitter separately. See [decision 111](adr/decision-111.md) and
+host, not the timer/client that submitted work; API-007 receipts carry the
+authenticated credential-class submitter separately. See [decision 111](adr/decision-111.md) and
 [API correlation](api.md#execution-correlation-api-004).
 
 Archive policy reloads per admission; server listener and credentials require

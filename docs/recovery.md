@@ -689,3 +689,55 @@ python3 copy-revision.py --mount /mnt/hfcache --type model \
 
 That exercises the path a downstream machine actually depends on, and it is the
 only check in this document that is performed from outside the writer.
+
+## 10. Operation history and uncertain submissions
+
+API-007's local operation receipts are control-plane history, separate from the
+archive's reports, manifests and transaction journals. The service-private state
+directory defaults to `/var/lib/hfcache/api/`; preserve it through backup,
+credential rotation, restart and rollback. It contains no credential or raw
+idempotency key. Do not copy it into the consumer export or treat a restored
+archive snapshot as a restoration of operation history.
+
+Operation observation requires a valid REST reader or writer credential, like
+run-report access. An operation ID selects metadata; it grants no authority.
+Idempotency lookup additionally searches only the authenticated credential-class
+namespace. Rotation retains that coarse identity; changing from writer to reader
+is a different lookup namespace. No individual-submitter attribution is promised.
+API-007 supplies observation/admission primitives only; public submission and
+CLI `operations` commands remain later tasks.
+
+When an acknowledgement is lost, look up the original key without submitting
+another command. A match identifies the original operation even if archive policy
+has changed. A key/request conflict is a refusal, not an invitation to change the
+key. A missing/expired receipt means the server cannot establish the outcome;
+it does not prove that work never ran. Never automatically replay an uncertain
+mutation after receipt expiry, state loss or rollback to a binary that cannot
+read this history.
+
+After a restart, existing nonterminal receipts are never automatically queued.
+API-007 opens the store without changing their state; a retained `running` label
+is not proof of liveness. The explicit interruption primitive records unresolved
+work as `interrupted`; API-008 must reconcile exact surviving workers first.
+`interrupted` describes uncertainty; it is neither a domain failure report nor
+permission to repeat the action. Use existing validated run,
+report and transaction evidence to diagnose archive state through this runbook.
+A PID, released flock, elapsed timeout, vanished client or disconnected socket is
+insufficient proof of completion or termination. The later verifier integration
+must identify an exact surviving operation and durable outcome before reattaching.
+
+Keep malformed, unknown-version, unsafe, interrupted, ambiguous and nonterminal
+records. Do not delete them to make admission succeed. Preserve an incident copy
+and diagnose the classified storage problem with a compatible binary; do not
+hand-edit a receipt into success or reconstruct missing submissions from journals.
+Such state can block new admission while healthy operation IDs remain observable.
+
+Only validated application-owned succeeded/failed receipts and their results may
+expire after the configured period, default 30 days. The service refuses new
+admission when count/space reservations do not fit, rather than shortening that
+window or deleting uncertain evidence. Restore capacity by addressing storage or
+retention policy under operator control, not by removing unexpired bindings.
+Changing retention is an explicit retry-history decision; communicate the new
+window to callers. There is no automatic exactly-once guarantee across crashes.
+See [the receipt schema](schemas.md#13-service-private-operation-control-state-api-007)
+and [decision 114](adr/decision-114.md).

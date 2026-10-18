@@ -20,6 +20,7 @@ __all__ = [
     "ExitCode",
     "HfcacheError",
     "IntegrityError",
+    "OperationError",
     "Problem",
     "RequestError",
     "RetentionError",
@@ -215,6 +216,20 @@ class SafetyError(HfcacheError):
     """
 
     exit_code = ExitCode.SAFETY
+
+
+class OperationError(SafetyError):
+    """Preserved control-plane uncertainty, never evidence of nonexecution."""
+
+    def __init__(
+        self,
+        *,
+        code: str = "HFAPI014",
+        status_code: int = 503,
+        message: str = "Operation history is unsafe, full or unavailable",
+    ) -> None:
+        self.status_code = status_code
+        super().__init__([Problem(code, message)])
 
 
 class SynchronizationError(HfcacheError):

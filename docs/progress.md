@@ -898,6 +898,38 @@ package in this family.
   suites did not run. No production listener/archive operation, deployment,
   push, merge or tag. Next selected task is API-007.)
 
+- [x] API-007 Persist non-resuming operation receipts and bounded observation
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-007-operation-receipts-and-idempotency.md).
+  Independent schema-1 local receipts are the durable principal/hashed-key/request
+  authority before admission returns; no raw key, credential or replayable body
+  is stored. Atomic fsync/rename, strict duplicate/version checks, protected
+  pinned files and shared store locks preserve evidence across faults and races.
+  Exact terminal Envelopes retain domain identity and exit; bounded sequenced
+  events report dropped prefixes. All REST readers may observe history/results,
+  while key lookup stays in the fixed credential-class namespace across rotation.
+  Five bounded authenticated GET surfaces work without fresh archive policy or
+  domain execution. State/archive overlap refuses before default state creation.
+  Count/space reservations refuse new admission rather than evicting unexpired
+  30-day bindings; uncertain/nonterminal/interrupted history never ages out.
+  Startup opens history without replay/classification; exact-worker reconciliation
+  and heavy execution remain API-008, command POST routes API-009/010.
+  Decision 114, amended 109/FW/AD-12/14/16, invariant enforcement links and all
+  API/server/schema/security/recovery/configuration/CLI/rollback contracts agree.
+  Actual isolated predecessor a856397/0.1.10 and tagged v0.1.3 wheel drills both
+  lacked the operation reader/command (exit 2), preserved three state files
+  byte-for-byte and created no archive; rollback must preserve history and cannot
+  infer nonexecution. Final focused store/storage: 161 tests; broader selection:
+  414; HTTP/config: 178; adversarial: 44. The first full gate passed 2,222 tests;
+  two added ENOSPC fsync acceptance cases then passed without source changes.
+  The definitive `rtk proxy bash scripts/check.sh` exits 0: lock/format/lint/types,
+  2,224 Python tests (40 deselected, 118.15 seconds), 0.1.10 sdist/wheel, isolated
+  locked base/server install/import/help/version, 45 Cockpit tests and production
+  build. No gate attempt failed. Final links/current/dependencies, 9 implemented /
+  20 planned matrix rows, 114 decision/ADR records and whitespace pass. Live/NFS,
+  installed-host and extra build-marker suites did not run. No production archive/
+  listener operation, deployment, push, merge or tag. Next selected task is API-008.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3488,3 +3520,18 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      startup failures. Disable raw framework logs/slash redirects; test the
      locked Uvicorn TLS/Unix lifecycle on disposable sockets. No job/write,
      verifier fallback, MCP, durable schema or production deployment is added.
+
+114. **Persist non-resuming admission without discarding uncertainty**
+     (2026-10-17, API-007). [ADR](adr/decision-114.md): independently versioned
+     local JSON receipts are the authoritative principal/key/request binding,
+     persisted before runnability or acknowledgement. Fixed credential-class
+     principals survive rotation; raw keys and request bodies are never stored.
+     REST readers share whole-archive operation observation, while key lookup
+     stays within the caller's namespace. Preserve unsupported, malformed,
+     interrupted, ambiguous and nonterminal evidence; refuse count/space
+     admission instead of evicting unexpired 30-day bindings. Startup never
+     replays old work or reconstructs submissions from journals; interruption
+     classification is explicit pending API-008 worker reconciliation. Reject separate
+     authoritative key indexes, FIFO history eviction and broker/database/resume
+     engines. This implements decision 109's narrow FW-01 exception and retains
+     FW-02/AD-12/14/16; heavy execution and command submission remain later tasks.

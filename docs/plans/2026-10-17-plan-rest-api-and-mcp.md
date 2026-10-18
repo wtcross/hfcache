@@ -728,3 +728,12 @@ versions when implementing, especially FastMCP imports and test transports:
   success stdout Envelope; its typed startup failures retain the normal JSON
   failure contract. Eight read matrix rows are implemented, while installed/
   candidate validation, jobs/writes, CLI-client migration and MCP remain pending.
+
+- 2026-10-17 API-007: Decision 114 implements independent local receipt schemas,
+  authoritative hashed-key binding, bounded events/results and authenticated
+  observation. Fixed credential-class namespaces survive rotation; all REST
+  readers share operation metadata/results, while key lookup is namespace-local.
+  Count/space caps refuse admission rather than evicting unexpired terminal keys;
+  interrupted/ambiguous/nonterminal history never expires. Startup never replays;
+  explicit interruption waits for later exact-worker reconciliation. No heavy lane, command POST route or MCP work is
+  added; API-008/009/010 retain execution/submission responsibilities.

@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-17T12:00:00.000000Z",
+  "kind": "operation.admitted",
+  "message": "Admission recorded",
+  "schema_version": 1,
+  "sequence": 1
+}

@@ -346,6 +346,24 @@ grant repair authority. API-008/014 still own job/executor hardening and install
 service acceptance. No production listener or rollout is asserted. See
 [decision 112](adr/decision-112.md) and [server policy](server.md).
 
+**Control-state boundary (API-007).** Local receipts bind admission to a fixed
+credential-class principal and hashed idempotency key before acknowledgement or
+execution. Store no raw key, bearer, token digest/path or candidate request body.
+The key digest is private comparison state and is omitted from HTTP metadata.
+All authenticated REST readers may observe operation metadata/events/results
+under the whole-archive boundary; key lookup searches only the caller's namespace.
+Rotation preserves that class identity, without creating individual-user audit
+claims. A status/result fetch never executes work.
+
+Protected no-follow local state, finite record/event/result/byte budgets and
+durable atomic receipts contain storage/resource risks. An unexpired terminal
+key cannot be evicted for capacity; interrupted/ambiguous/nonterminal history
+cannot expire. Unsupported or unexplained state is preserved and fails admission
+closed. Restart does not replay queued/running receipts or reconstruct submissions
+from archive journals. Missing/expired history remains uncertain. See
+[decision 114](adr/decision-114.md), [schema](schemas.md#13-service-private-operation-control-state-api-007)
+and [recovery guidance](recovery.md#10-operation-history-and-uncertain-submissions).
+
 ## 4. Controls summary
 
 | # | Control | Enforced by |
