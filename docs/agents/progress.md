@@ -135,11 +135,27 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   and 19 helpers with no leakage baseline. Bad fixtures exercise malformed links,
   alias/escape paths, missing/duplicate helpers, formatted IDs/stages and inert
   recipes. Import/help isolation, actual REST/MCP/role facts, numeric/default/
-  semantic configuration constraints and177 source/snapshot hash pairs are tested.
-  Focused 246 plus final95 passed. Full --with-build gate:4315 passed/40 deselected
-  in483.90s, three locked profiles, actual Cockpit lint/types/135 tests/build and
+  semantic configuration constraints and 177 source/snapshot hash pairs are tested.
+  Focused 246 plus final 95 passed. Full --with-build gate: 4315 passed/40 deselected
+  in 483.90s, three locked profiles, actual Cockpit lint/types/135 tests/build and
   four wheel smoke tests passed. INV-010/dependency/authority contracts reviewed;
   no runtime dependency/format/application authority change or live-host action.
+
+## Final alignment acceptance (2026-10-18)
+
+- [x] DOC-019 Complete documentation and script alignment audit
+  (2026-10-18, this commit — [task](plans/tasks/doc-019-alignment-acceptance-and-final-disposition.md)).
+  [Final ledger](reviews/2026-10-18-alignment-acceptance.md) resolves F01–F14,
+  all code/artifact candidates, 19 helpers, 47 relocations and 177 source/snapshot
+  records. Legacy native credential reset example renamed/described explicitly;
+  unit test, stale failure-hook comment, upgrade guidance and ADR links repaired.
+  Human checker: 180 docs/19 helpers, zero errors/baseline. Focused 59 passed.
+  Final --with-build gate: 4315 passed/40 deselected in 485.24s, build/three locked
+  profiles, actual Cockpit lint/types/135 tests/build and four wheel smoke passed.
+  All twelve packages complete; plan closed and selector cleared. No runtime,
+  archive format, dependency, version, pin, credential or production change.
+  Feature-only normal github/forgejo pushes follow per explicit user steering;
+  no tag/merge/deploy/production archive operations. Live/installed acceptance remains unrun.
 
 ## Phase 0 — Contract and Architecture
 

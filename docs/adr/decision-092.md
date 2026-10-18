@@ -74,7 +74,7 @@ Current governing documents: [docs/cockpit.md](../cockpit.md),
 
 Implementation or shipped-artifact evidence:
 [cockpit/src/lib/command.ts](../../cockpit/src/lib/command.ts),
-[packaging/systemd/hfcache-sync.service.d/credential.conf.example](../../packaging/systemd/hfcache-sync.service.d/credential.conf.example).
+[legacy native credential reset example](../../packaging/systemd/hfcache-sync.service.d/legacy-hub-credential-reset.conf.example).
 
 Relevant verification:
 [cockpit/test/command.test.ts](../../cockpit/test/command.test.ts).
@@ -89,3 +89,7 @@ there is no anonymous fallback for missing API credentials. Browser/argv/environ
 bearers remain forbidden. Closing/stopping a client loses observation, never
 cancels accepted execution or proves recovery safe. This supersedes the Hub-import
 and direct-execution implications above; see [decision 122](decision-122.md).
+
+The retained native example only resets obsolete scheduled-client Hub imports;
+it provisions no credentials. Current scheduled and Cockpit clients use API-only
+authority, with profile-specific delivery in the server and Cockpit contracts.

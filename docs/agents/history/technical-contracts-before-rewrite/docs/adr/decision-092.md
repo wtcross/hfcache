@@ -77,7 +77,7 @@ Current governing documents: [docs/cockpit.md](../../../../../cockpit.md),
 
 Implementation or shipped-artifact evidence:
 [cockpit/src/lib/command.ts](../../../../../../cockpit/src/lib/command.ts),
-[packaging/systemd/hfcache-sync.service.d/credential.conf.example](../../../../../../packaging/systemd/hfcache-sync.service.d/credential.conf.example).
+[packaging/systemd/hfcache-sync.service.d/credential.conf.example](../../../../../../packaging/systemd/hfcache-sync.service.d/legacy-hub-credential-reset.conf.example).
 
 Relevant verification:
 [cockpit/test/command.test.ts](../../../../../../cockpit/test/command.test.ts).

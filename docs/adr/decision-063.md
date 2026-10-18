@@ -31,8 +31,7 @@ The hook ships **uninstalled**, and the two halves of that are worth
 separating. The logging contract asks that a hook be *left* for future monitoring, and this
 deployment has nobody to notify: a handler that only reprints what systemd
 already logged is a seam, not a control, and installing one adds a unit that
-fires on every failure to no end. So it ships like
-`credential.conf.example` beside it — complete, with the matching
+fires on every failure to no end. So it ships complete but uninstalled, with the matching
 `OnFailure=` commented in both units, so activating it is two documented
 steps.
 

@@ -746,7 +746,7 @@
     "git": "b38d376",
     "sha256": "efe3c666f6ee920c5e98c7c462b14055abf6fff200095e431c2314fcc802208e",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-092.md",
-    "snapshot_sha256": "a826158a15e16a6c58603625430941fde3114b3821e31896bad0cd910c6c32a1"
+    "snapshot_sha256": "8986d5772d5a5d1e5fcd1938510594da586cfe417ac420e1144dba547ca17eac"
   },
   {
     "source": "docs/adr/decision-093.md",

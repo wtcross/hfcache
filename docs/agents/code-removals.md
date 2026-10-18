@@ -22,3 +22,17 @@ receipt schema, public command, job replay or MCP tool change.
 CLI interface chronology removed from the human introduction is preserved in
 [historical amendments](history/cli-interface-amendments.md). Current help explains
 dispatch and four effects: HTTP, local control state, archive mutation and Hub use.
+
+## DOC-019 — Final compatibility outcome
+
+Retain the legacy native credential reset example under the explicit name
+`packaging/systemd/hfcache-sync.service.d/legacy-hub-credential-reset.conf.example`.
+It is uninstalled migration material, not a token-provisioning recipe. Repaired
+its parser test, stale failure-example comment, human upgrade guidance and current/
+historical ADR links. No runtime/installer caller installs it; old release trees
+and installed drop-ins remain untouched.
+
+All 17 original scripts, native activation, the indexed dormant rootless socket,
+scheduled handles, receipt stores, consumer data path and Cockpit report exception
+are retained for supported behavior. The [final finding/script ledger](reviews/2026-10-18-alignment-acceptance.md)
+accounts for all candidates, preserved prose and new helpers.

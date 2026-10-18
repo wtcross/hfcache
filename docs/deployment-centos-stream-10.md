@@ -168,6 +168,13 @@ server and independent client settings are separate. Validate policy with the
 strict loader or `--config PATH config validate --local` without using operational
 commands as a local fallback. Deliver `hfcache.api` to API/scheduled observers;
 Hub `hf-token` is API-only. Optional MCP-reader is distinct and explicitly enabled.
+During a native upgrade, inspect legacy scheduled-client drop-ins for Hub
+`ImportCredential=hf-token`. The uninstalled
+[legacy reset example](../packaging/systemd/hfcache-sync.service.d/legacy-hub-credential-reset.conf.example)
+only clears inherited imports; it provisions no token and is not a normal
+installation step. Review/remove obsolete Hub delivery while preserving the
+separate API credential. Rootless Podman secret delivery is unaffected.
+
 The verifier imports no credentials and masks standard source/cache stores;
 custom source paths require explicit additional isolation proof.
 

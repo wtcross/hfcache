@@ -42,8 +42,9 @@
 # future monitoring, and this deployment has nobody to notify: a handler that
 # only reprints what systemd already logged is a seam, not a control, and
 # installing one would add a unit that fires on every failure to no end. The
-# same reasoning as `hfcache-sync.service.d/credential.conf.example`, which
-# ships complete and uninstalled against the day the archive needs a token.
+# Native credential migration is separate: the uninstalled
+# `hfcache-sync.service.d/legacy-hub-credential-reset.conf.example` only resets
+# obsolete Hub imports. It provisions no API or Hub credential.
 #
 # It has been exercised, which is what makes it an example worth having rather
 # than untested prose. Against a genuinely failed `hfcache-sync.service` it

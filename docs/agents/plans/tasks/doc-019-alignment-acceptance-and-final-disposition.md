@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [DOC-018](doc-018-automated-docs-and-interface-alignment-gate.md) |
 | Phase | 3 — Prevent recurrence and close |
@@ -23,11 +23,11 @@ Complete this task and plan only after their acceptance criteria pass. Clear `do
 
 ## Acceptance
 
-- [ ] Every finding is corrected or has a technically justified, explicit disposition within scope; no unexplained deletion/candidate remains.
-- [ ] Human docs and public help contain zero agent implementation references, and no required behavior was removed with historical prose.
-- [ ] All supported scripts/profiles and the exact REST/MCP/CLI contract are covered by passing offline checks.
-- [ ] Full required gate/build/Cockpit results are recorded honestly; live host/NAS validation remains not run unless separately authorized.
-- [ ] Final commit includes task/plan/selector/progress evidence, then leaves no active plan; feature branch history remains incremental and unpushed.
+- [x] Every finding is corrected or has a technically justified, explicit disposition within scope; no unexplained deletion/candidate remains.
+- [x] Human docs and public help contain zero agent implementation references, and no required behavior was removed with historical prose.
+- [x] All supported scripts/profiles and the exact REST/MCP/CLI contract are covered by passing offline checks.
+- [x] Full required gate/build/Cockpit results are recorded honestly; live host/NAS validation remains not run unless separately authorized.
+- [x] Final commit includes task/plan/selector/progress evidence, then leaves no active plan; feature branch history remains incremental and ready for the user-authorized github/forgejo pushes after final acceptance.
 
 ## Contracts, invariants and ADRs
 
@@ -57,15 +57,37 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after DOC-018 0d85daa. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+Completed 2026-10-18, this commit. The [final acceptance ledger](../../reviews/2026-10-18-alignment-acceptance.md)
+reconciles F01–F14, all deletion candidates, all 19 supported helpers, intentionally
+retained native/dormant/scheduled/consumer/Cockpit artifacts and historical prose.
+The last inactive credential example is explicitly named legacy-native reset-only;
+its parser test, stale failure-hook comment, human upgrade guidance and ADR/source
+links are repaired. Original-source provenance remains; the one reference-repaired
+snapshot hash was deliberately updated. No active service configuration changed.
+
+Reviewed reader, writer, MCP, consumer and developer routes; every human guide is
+independent of tracking. The checker reports 180 human docs/19 helpers with zero
+errors and no baseline. All 227 original docs, 47 relocations and 177 preserved
+reference snapshots are accounted for and tested. Generation conformance remains
+explicitly out of scope; no durable format, dependency, version, image pin,
+credential authority, live deployment or historical backlog change.
+
+Validation: focused 59 unit/migration/audience tests passed in 4.63s. Final
+`scripts/check.sh --with-build` exited 0: 4315 passed/40 opt-in deselected in 485.24s;
+distribution build, three independently locked base/server/server+MCP installations,
+actual Cockpit lint/typecheck/135 tests/build and four isolated wheel smoke tests
+passed in 5.74s. `git diff --check` clean. Task order/dependencies and sole active selector
+reviewed before closure. Current selector is now inactive; all 12 packages complete.
+Both remote feature heads were 65b6571, an ancestor of this branch; final normal
+feature-only pushes are authorized by later user steering. No force/tag/merge or
+release/deployment/production archive operation is authorized or performed. Live Hub/NFS,
+installed-image/PID1/cgroup/SELinux, other-host/browser/calendar acceptance not run.
+
+See [completed progress evidence](../../progress.md#final-alignment-acceptance-2026-10-18).

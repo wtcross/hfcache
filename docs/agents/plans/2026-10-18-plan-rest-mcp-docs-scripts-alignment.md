@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | active |
+| Status | completed |
 | Created | 2026-10-18 |
 | Reviewed repository | `wtcross/hfcache` |
 | Reviewed branch | `feat/rest-api-and-mcp` |
@@ -348,3 +348,14 @@ checks and record the decision.
   docs/agents/plans/current.md with 47 collision-checked records and original
   hashes. The coverage map rehomes normative requirements; transitional human
   tracking references are individually inventoried for the ordered rewrites.
+
+- 2026-10-18: Completed all twelve packages in dependency order, each with its
+  own passing gate, task/progress evidence and commit. Final acceptance ledger
+  reconciles F01–F14, 47 relocations, 177 preserved references and all 19 helpers.
+  Human checker covers 180 documents with no tracking baseline; current authority
+  retains historical normative requirements and known conformance limitations.
+  Final `scripts/check.sh --with-build` passes 4315 offline tests, three locked
+  installation profiles, actual Cockpit lint/types/135 tests/build and four wheel
+  smoke tests. Selector cleared. No version/tag/deployment/production action.
+  User-authorized normal github/forgejo feature-branch pushes follow this commit;
+  no tags or merges. See [final acceptance](../reviews/2026-10-18-alignment-acceptance.md).

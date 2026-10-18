@@ -230,7 +230,7 @@ def test_api_alone_imports_hub_token_and_uses_the_same_name_bound_writer_credent
     assert client.api_socket == Path("/run/hfcache/api.sock")
     assert client.expected_archive_id is not None
     assert client.api_token_file is None
-    legacy = fields("hfcache-sync.service.d/credential.conf.example", "Service")
+    legacy = fields("hfcache-sync.service.d/legacy-hub-credential-reset.conf.example", "Service")
     assert legacy["ImportCredential"] == [""]
 
 

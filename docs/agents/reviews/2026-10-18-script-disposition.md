@@ -98,3 +98,10 @@ be replaced by stronger public-contract checks, not simply dropped.
 No whole script was established as safely removable by this static review.
 That is a limit on deletion evidence, not a reason to retain confirmed dead symbols
 or obsolete human-facing prose.
+
+## Final implementation disposition
+
+The pinned review above is preserved. The [final acceptance ledger](2026-10-18-alignment-acceptance.md)
+records every candidate’s outcome, all 19 supported helpers and the migration-only
+credential example rename. Human instructions live in the current script catalog
+and deployment guides.
