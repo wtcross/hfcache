@@ -212,7 +212,7 @@ class RequestError(ConfigurationError):
 class SafetyError(HfcacheError):
     """Mount, sentinel, permission, capacity, lock, or transaction safety failure.
 
-    Exits `20`, always before a Hub download begins (`docs/plan.md` §19).
+    Exits `20`, always before a Hub download begins (docs/cli.md doctor contract).
     """
 
     exit_code = ExitCode.SAFETY

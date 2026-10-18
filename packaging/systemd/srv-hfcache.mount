@@ -1,4 +1,4 @@
-# The NFSv4 archive mount (docs/plan.md §21.3, §22).
+# The NFSv4 archive mount (docs/deployment-centos-stream-10.md native profile, §22).
 #
 # An explicit unit rather than an /etc/fstab entry. §21.3 permits either, and the
 # two must not both exist: a unit in /etc/systemd/system shadows the one
@@ -19,7 +19,7 @@
 
 [Unit]
 Description=Hugging Face archive (nas.lab.example.com:/mnt/tank/huggingface-archive)
-Documentation=file:///opt/hfcache/current/docs/plan.md
+Documentation=file:///opt/hfcache/current/docs/deployment-centos-stream-10.md
 After=network-online.target
 Wants=network-online.target
 PartOf=hfcache.target
@@ -31,5 +31,5 @@ Type=nfs4
 Options=rw,hard,nosuid,nodev,noexec,vers=4.2,proto=tcp,nconnect=4
 # Bounded, so a mount attempt against an unavailable NAS fails the service that
 # triggered it instead of hanging it (§21.3). nconnect=4 is the benchmarked
-# value recorded in §35.1, not an assumed one.
+# value recorded in the native deployment profile, not an assumed one.
 TimeoutSec=30s

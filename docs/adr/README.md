@@ -10,7 +10,7 @@ its original policy is still current: follow its status and amendment links.
 ## Coverage and provenance
 
 The initial backfill preserves the existing `AD-01`–`AD-21` identifiers and
-all 105 numbered decisions already in [the progress log](../progress.md#decisions),
+all 105 numbered decisions already in [the progress log](../agents/progress.md#decisions),
 including operational, release, and tooling choices whose consequences explain
 the architecture. Three additional records capture existing framework,
 verification, and scheduling decisions that had no individual `AD-nn` section.
@@ -24,7 +24,7 @@ when the decision was made, not the backfill date (2026-10-17). Source prose
 and its evidence remain available; no missing alternative is invented. The
 progress Decisions log remains append-only and the progress file retains
 completed work-package evidence and Operator handoff. Under
-[decision 107](decision-107.md), [current.md](../plans/current.md) selects the
+[decision 107](../agents/adr/decision-107.md), [current.md](../agents/plans/current.md) selects the
 active plan, and task files own active execution status; historical backlog
 does not activate itself.
 
@@ -43,13 +43,12 @@ does not activate itself.
 | Consumers and serving | [AD-10](ad-10.md) | [Independent copy helper](decision-067.md), [promotion ownership](decision-099.md), [serving mounts](decision-100.md), [public/native Unix API prefixes](decision-123.md), [optional authenticated MCP transport](decision-124.md), [nine narrow metadata tools](decision-125.md) |
 | Cockpit administration | [Plugin boundary](decision-087.md) | [Operation surface](decision-089.md), [bundled TOML](decision-091.md), [credential import](decision-092.md), [repository links](decision-101.md), [candidate validity/authority](decision-119.md), [API client and guarded candidate flow](decision-122.md) |
 | Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Transport boundary](decision-108.md), [submission receipts](decision-109.md), [scoped correlation/redaction](decision-111.md), [optional MCP protocol/diagnostics](decision-124.md), [server dependency/configuration boundary](decision-112.md), [authenticated metadata lifespan](decision-113.md), [durable admission without replay](decision-114.md), [bounded execution/private verifier](decision-115.md), [typed command admission](decision-116.md), [explicit maintenance authority](decision-117.md), [independent typed client](decision-118.md), [reader/candidate integration](decision-119.md), [operational CLI observation](decision-120.md), [scheduled observation continuity](decision-121.md), [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
-| Documentation and work-package process | [Router](decision-081.md), [workflow](decision-082.md), [register upkeep](decision-106.md), [plan/task authority](decision-107.md) | [Portable runbooks](decision-085.md), [current invariant register](../invariants.md), [planning guide](../agents/planning.md) |
 
 MCP mounted security proof under the existing 124/125 decisions is traced in the
 [MCP threat/control/test map](../mcp.md#threat-control-and-test-traceability-mcp-003)
-and its [MCP-003 task](../plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md).
+and its [MCP-003 task](../agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md).
 Proof-only work introduces no placeholder architectural decision.
-[MCP-004 client/package acceptance](../plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md)
+[MCP-004 client/package acceptance](../agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md)
 completes the existing 124/125 guidance through a
 [protected-file client](../mcp.md#protected-file-example-client-mcp-004), without a
 new decision or capability.
@@ -74,7 +73,7 @@ For every change or new plan being implemented:
    decision gets a new record; link both directions and identify whether it
    supersedes the whole record or just one policy. Never reuse an identifier.
 5. Keep contracts, invariants, ADRs, index, plan amendments where needed, and
-   the task/plan/current records and completed `docs/progress.md` evidence
+   the task/plan/current records and completed `docs/agents/progress.md` evidence
    together in the implementation commit. Run the repository
    gate and verify local documentation links and record coverage before
    committing, as required by [the workflow](../agents/workflow.md).
@@ -211,9 +210,6 @@ status and current-contract links before applying a historical choice.
 | 77 | [The docs move to the code, because the built mechanism already delivers §7.4's semantics and a failure-time checkpoint buys recovery nothing](decision-077.md) |
 | 78 | [`commit_sha` widens to nullable with no schema bump, and the entry the retained-key rule cannot see gets its own clearing rule](decision-078.md) |
 | 79 | [0.1.3 is tagged because it is deployed, and it is still not 1.0.0](decision-079.md) |
-| 80 | [A `DOC` package family, tracked outside §28's phase set](decision-080.md) |
-| 81 | [`AGENTS.md`, `CLAUDE.md`, and `docs/agents/` added beyond plan §7's layout](decision-081.md) |
-| 82 | [`docs/agents/workflow.md` supersedes plan §36 for sessions after the build-out; pushing joins the loop](decision-082.md) |
 | 83 | [`CHANGELOG.md` beside the annotated tags, and README `Status` stops accreting release notes](decision-083.md) |
 | 84 | [Placeholders replace environment specifics, records included](decision-084.md) |
 | 85 | [The storage contract becomes server-agnostic, and evaluation gets a first run](decision-085.md) |
@@ -237,8 +233,6 @@ status and current-contract links before applying a historical choice.
 | 103 | [Only resolved, proven redundant staging quarantine may be released](decision-103.md) |
 | 104 | [Confirmed operator cancellation may replace the empty-staging age heuristic](decision-104.md) |
 | 105 | [Only journals supplying deletion authority need current checkpoint order](decision-105.md) |
-| 106 | [Current invariants and individual ADRs accompany every implementation](decision-106.md) |
-| 107 | [Active plans and task records own execution; progress retains the audit](decision-107.md) |
 | 108 | [Typed services and maintained transport implementations](decision-108.md) |
 | 109 | [Bounded non-resuming operation receipts](decision-109.md) |
 | 110 | [Guard complete command execution and verification persistence](decision-110.md) |

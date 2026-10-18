@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
 - Original work package: `RET-009`.
-- Source: [decision 77 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 77 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -62,8 +62,8 @@ implementation`). The decision text above preserves the complete reasoning in
 the current historical log, including its recorded alternatives and
 consequences.
 
-Current governing documents: [docs/architecture.md](../../docs/architecture.md),
-[docs/recovery.md](../../docs/recovery.md).
+Current governing documents: [docs/architecture.md](../architecture.md),
+[docs/recovery.md](../recovery.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/transactions.py](../../src/hfcache/transactions.py),

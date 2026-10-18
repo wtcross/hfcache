@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-08-24.
 - Original work package: `OPS-010`.
-- Source: [decision 100 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 100 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -21,7 +21,7 @@ The source entry first appears in
 above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 
-Current governing documents: [docs/consumers.md](../../docs/consumers.md).
+Current governing documents: [docs/consumers.md](../consumers.md).
 
 Implementation or shipped-artifact evidence:
 [scripts/consumer-serve-hfcache-model.sh](../../scripts/consumer-serve-hfcache-model.sh).

@@ -5,7 +5,7 @@
   [121](decision-121.md).
 - Original record: 2026-07-24, `87323c2` (initial plan, §4 and §22).
 - ADR backfill: 2026-10-17.
-- Authority: [plan §22](../plan.md#22-systemd-design),
+- Authority: [plan §22](../agents/history/plan.md#22-systemd-design),
   [operations §9](../operations.md), and
   [Cockpit schedule contract](../cockpit.md#7-sync-schedule) remain
   normative. Maintain this record under [the ADR policy](README.md).

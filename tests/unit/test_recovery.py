@@ -2,7 +2,7 @@
 
 Every test that puts something in one of these areas also asserts it is still
 there afterwards. That is the point of the module: `FS-19` says the application
-reports and preserves, and plan §13.3 allows reclamation only once a journal
+reports and preserves, and docs/cli.md sync contract allows reclamation only once a journal
 exists to say what a staging directory holds — which is `STO-010` and `STO-011`,
 not this package.
 
@@ -171,7 +171,7 @@ def test_a_tombstone_is_deferred_cleanup_not_stale_staging(layout: ArchiveLayout
 
 def test_quarantine_is_reported_and_never_warned_about(layout: ArchiveLayout):
     # Quarantined evidence is retained until an operator confirms and explicitly
-    # approves cleanup (plan §16.5), so age says nothing about it.
+    # approves cleanup (docs/cli.md verification contract), so age says nothing about it.
     evidence = aged(layout.quarantine / TRANSACTION, hours=5000)
 
     result = reconcile(layout)

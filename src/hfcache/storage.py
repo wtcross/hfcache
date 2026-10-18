@@ -10,7 +10,7 @@ it, and every primitive that acts on it once established:
   reader never observes a partial file (`docs/schemas.md` §1),
 * effective writability is proven by performing it under `.store/health/` and
   never by comparing `st_uid` against a local uid — the Mapall writer export
-  presents NAS-side ids with no local account (`docs/plan.md` §35.3),
+  presents NAS-side ids with no local account (docs/storage-requirements.md effective writability),
 * staging and every publication destination are proven to share one filesystem,
   so publication is a rename and never a cross-device copy (`FS-04`), and
 * the sentinel is read and compared against configuration, which is the archive's
@@ -97,7 +97,7 @@ _APPROACHING_RESERVE_PERCENT: Final = 10
 """How close to the reserve free capacity gets before `HFWRN005` is raised.
 
 `docs/cli.md` §5.6 defines the warning but fixes no threshold, so this is the
-application's (`docs/progress.md` decision 38). Expressed against the reserve
+application's (`docs/adr/decision-038.md`). Expressed against the reserve
 rather than as an absolute figure, so it scales with the deployment.
 """
 
@@ -288,7 +288,7 @@ def describe_mount(path: Path, *, table: Sequence[MountEntry] | None = None) -> 
 
 
 def mount_problems(facts: MountFacts) -> list[Problem]:
-    """Report every way the observed root fails §19's first four requirements.
+    """Report every way the observed root fails the preflight contract's first four requirements.
 
     Ordered by how early the requirement fails, and short-circuited where a later
     check would be meaningless: nothing can be said about the filesystem type of
@@ -481,11 +481,12 @@ def is_initialized(layout: ArchiveLayout) -> bool:
 def probe_writability(layout: ArchiveLayout, *, probe_id: ProbeId | None = None) -> list[Problem]:
     """Prove create, fsync, rename, and delete succeed under `.store/health/`.
 
-    Plan §19 items 6 and 10, and `doctor` check 7. This is the *only* way
+    docs/cli.md doctor contract, and `doctor` check 7. This is the *only* way
     effective writability is ever established. The Mapall writer export presents
     NAS-side owner ids with no local account, so comparing `st_uid` against the
     service uid proves nothing about whether this process can write
-    (`docs/plan.md` §35.3) — and a server-side read-only export presents `rw`
+    (docs/storage-requirements.md effective writability) — and a server-side read-only export
+    presents `rw`
     client options, so the mount table does not answer it either.
     """
     return _run_probe(layout, _exercise_writability, probe_id=probe_id, code="HFMNT008")
@@ -494,13 +495,14 @@ def probe_writability(layout: ArchiveLayout, *, probe_id: ProbeId | None = None)
 def probe_hardlink(layout: ArchiveLayout, *, probe_id: ProbeId | None = None) -> list[Problem]:
     """Prove a regular file can be hardlinked, with the right link count and contents.
 
-    `doctor` check 9 and plan §14.2. Hardlink publication is what keeps a
+    `doctor` check 9 and docs/architecture.md publication contract. Hardlink publication is what
+    keeps a
     published revision from doubling the bytes its cache blob already occupies
     (`AD-11`), and a dataset that cannot do it must fail *before* a download
     rather than silently consume twice the planned space.
 
     The link is made between two directories inside the probe area rather than
-    between `.store` and `published/` (`docs/progress.md` decision 41): a
+    between `.store` and `published/` (`docs/adr/decision-041.md`): a
     publication hardlinks a cache blob into `.store/staging` and then renames the
     *tree*, so it never links into `published/` at all, and check 8 has already
     proven the whole layout is one filesystem.
@@ -514,7 +516,7 @@ def probe_directory_rename(
     """Prove a populated directory renames atomically within the dataset.
 
     `doctor` check 10. This is the single operation that makes a revision
-    visible (plan §13.2 step 15): the staged tree is complete, fsynced, and then
+    visible (docs/cli.md sync contract): the staged tree is complete, fsynced, and then
     renamed into place in one step, so a consumer never observes a partial
     publication (`FS-12`).
     """
@@ -563,7 +565,7 @@ def _run_probe(
 
 
 def _exercise_writability(directory: Path, where: str, code: str) -> list[Problem]:
-    """Perform the four operations plan §19 item 10 names, on the probe's own file."""
+    """Perform the four operations docs/cli.md doctor contract names, on the probe's own file."""
     target = directory / _PROBE_FILE
     try:
         # `atomic_write_bytes` is create, fsync, chmod, rename, fsync-parent —
@@ -585,7 +587,8 @@ def _exercise_writability(directory: Path, where: str, code: str) -> list[Proble
 
 
 def _exercise_hardlink(directory: Path, where: str, code: str) -> list[Problem]:
-    """Link a file from a cache-like directory into a staging-like one (§14.2)."""
+    """Link a file from a cache-like directory into a staging-like one (the doctor capability
+    contract)."""
     private = directory / "cache"
     staged = directory / "staging"
     source = private / "blob"
@@ -730,7 +733,7 @@ def device_problems(devices: Mapping[str, int], *, root_device: int) -> list[Pro
 def same_filesystem_problems(layout: ArchiveLayout) -> list[Problem]:
     """Prove staging and every publication destination share one filesystem.
 
-    `doctor` check 8 and plan §19 item 7. Reads only: `stat(2)` on directories
+    `doctor` check 8 and docs/cli.md doctor contract. Reads only: `stat(2)` on directories
     the layout already requires to exist, so this proves nothing about
     writability and is safe under `--read-only`.
     """
@@ -825,7 +828,7 @@ def capacity_problems(
 ) -> list[Problem]:
     """Report `HFMNT011` when free capacity does not cover the need plus the reserve.
 
-    Plan §19 item 9. `needed_bytes` is the estimated download plus, in copy mode,
+    docs/cli.md doctor contract. `needed_bytes` is the estimated download plus, in copy mode,
     the projected publication bytes; `doctor` passes `0`, because it is reporting
     on the archive rather than planning a run.
     """

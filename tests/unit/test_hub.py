@@ -1,7 +1,8 @@
 """The Hub adapter, exercised through the seam it exists to provide.
 
 `FakeApi` implements the `HubApi` protocol and nothing else. That is the point
-of plan §12's "deterministic fakes without mocking library internals": the seam
+of docs/security.md Hub adapter boundary's "deterministic fakes without mocking library
+internals": the seam
 is an interface this application defines, so these tests do not know or care how
 `HfApi` is built, and a library upgrade that changes its internals cannot make
 them pass for the wrong reason.
@@ -444,7 +445,7 @@ def test_an_empty_tree_is_an_empty_tuple():
 
 
 def test_upstream_identifiers_are_read_off_the_listing():
-    # Comparison values for the manifest (plan §10.1), never digests.
+    # Comparison values for the manifest (docs/schemas.md), never digests.
     @dataclass
     class Lfs:
         sha256: str
@@ -571,7 +572,7 @@ def test_the_estimate_is_a_dry_run_against_the_cache_the_download_would_write(tm
 
 
 def test_no_allow_or_ignore_filters_are_ever_passed(tmp_path):
-    # The product contract is repository-complete (plan §12 item 4), so an
+    # The product contract is repository-complete (docs/security.md Hub adapter boundary), so an
     # estimate over a subset would estimate the wrong thing.
     api = FakeApi(dry_run_result=[])
 
@@ -603,7 +604,7 @@ def test_an_estimate_failure_is_a_coded_problem(tmp_path):
 
 
 # --------------------------------------------------------------------------- #
-# Downloading a revision (plan §13.2 step 5)
+# Downloading a revision (docs/cli.md sync contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -730,7 +731,7 @@ def test_a_download_failure_is_a_coded_problem(tmp_path):
 
 
 # --------------------------------------------------------------------------- #
-# The local-only completeness check (plan §12 item 5, §13.2 step 6)
+# The local-only completeness check (docs/security.md Hub adapter boundary, the ingestion contract)
 # --------------------------------------------------------------------------- #
 
 

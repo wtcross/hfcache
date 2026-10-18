@@ -1,4 +1,4 @@
-"""Retention ordering and selection — plan §15, `AD-04`, `AD-05`.
+"""Retention ordering and selection — docs/architecture.md retention contract, `AD-04`, `AD-05`.
 
 The property under test throughout is that **order comes from the generation and
 from nothing else**. The tests therefore go out of their way to make every other
@@ -102,7 +102,7 @@ def test_ordering_is_the_generations_however_they_are_supplied(values):
 
 
 def test_a_gap_in_the_generations_changes_nothing():
-    # §15.1: a crash between assigning a generation and publishing it leaves the
+    # AD-05: a crash between assigning a generation and publishing it leaves the
     # number unused, and that is acceptable.
     revisions = [revision(1), revision(7), revision(9)]
 

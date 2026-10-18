@@ -1,6 +1,6 @@
 """The ordered safety checks, and the gate every mutating command passes.
 
-`docs/plan.md` §19 lists what a mutating command must verify; `docs/cli.md` §2
+docs/cli.md doctor contract lists what a mutating command must verify; `docs/cli.md` §2
 gives the same list as the named checks `doctor` reports. They are one table, so
 they are implemented once, here, and consumed twice:
 
@@ -26,7 +26,7 @@ mutating command proceed:
   that caused them is already in the same report.
 
 A check is **absent** until the package that performs it lands, rather than
-being reported as passed or skipped (`docs/progress.md` decision 24). The order
+being reported as passed or skipped (`docs/adr/decision-024.md`). The order
 of those that are present is the table's, taken from `CHECK_ORDER` rather than
 from the order this module happens to build them in.
 """
@@ -222,7 +222,8 @@ def storage_checks(
 
 
 def _mount_checks(facts: MountFacts) -> list[Check]:
-    """Split plan §19's first four requirements into the four checks that report them.
+    """Split docs/cli.md doctor contract's first four requirements into the four checks that
+    report them.
 
     `mount_problems` short-circuits — nothing can be said about the filesystem
     type of a path that is not a mount point — so the checks it could not reach
@@ -330,7 +331,8 @@ _CAPABILITY_PROBES: Final = (
 def _capability_checks(
     layout: ArchiveLayout, storage: StorageConfig, *, proven: bool, read_only: bool
 ) -> list[Check]:
-    """`doctor` checks 9-11 — the three capabilities plan §14.2 requires proving.
+    """`doctor` checks 9-11 — the three capabilities docs/architecture.md publication contract
+    requires proving.
 
     Each is demonstrated by performing it and by nothing else, which is why
     `--read-only` reports all three as unproven rather than passed.
@@ -358,7 +360,7 @@ def _capacity_check(layout: ArchiveLayout, storage: StorageConfig, *, needed_byt
     Unlike checks 6-11 this does not need an initialized archive: `statvfs` on a
     proven mount answers whether there is room, and an operator sizing a dataset
     before running `archive init` is exactly who wants the answer
-    (`docs/progress.md` decision 39).
+    (`docs/adr/decision-039.md`).
     """
     name = "free_space"
     try:
@@ -385,9 +387,9 @@ def _capacity_check(layout: ArchiveLayout, storage: StorageConfig, *, needed_byt
 def require_capacity(
     layout: ArchiveLayout, storage: StorageConfig, *, needed_bytes: int
 ) -> list[Problem]:
-    """Refuse a download the archive does not have room for (plan §13.2 step 4).
+    """Refuse a download the archive does not have room for (docs/cli.md sync contract).
 
-    The whole-run preflight at §13.1 step 3 cannot answer this: it runs before
+    The whole-run preflight at the sync run contract cannot answer this: it runs before
     any repository has been resolved, so the only need it knows about is zero.
     This is the same measurement against a need that is finally known, taken
     immediately before the download it guards — because the archive can fill up
@@ -415,7 +417,7 @@ def _gib(value: int) -> str:
 
 
 @contextmanager
-def guarded(  # noqa: PLR0913 - each argument is one thing plan §13.1 steps 2-3 need
+def guarded(  # noqa: PLR0913 - each argument is one thing docs/cli.md sync contract need
     layout: ArchiveLayout,
     *,
     storage: StorageConfig,
@@ -424,9 +426,9 @@ def guarded(  # noqa: PLR0913 - each argument is one thing plan §13.1 steps 2-3
     needed_bytes: int = 0,
     table: Sequence[MountEntry] | None = None,
 ) -> Iterator[tuple[Check, ...]]:
-    """Hold the exclusive lock and prove every §19 requirement, for one command.
+    """Hold the exclusive lock and prove every the preflight contract requirement, for one command.
 
-    The single entry point a mutating command uses, in the order plan §13.1 gives:
+    The single entry point a mutating command uses, in the order docs/cli.md sync contract gives:
     acquire the lock (step 2), then run the preflight checks (step 3), then do
     the work, then release. Taking the lock first is what makes the checks
     meaningful — proving the archive is sound and *then* discovering another
@@ -438,7 +440,8 @@ def guarded(  # noqa: PLR0913 - each argument is one thing plan §13.1 steps 2-3
                 layout, storage=storage, needed_bytes=needed_bytes, table=table
             )
         except SafetyError as error:
-            # Plan §24's `preflight.failed`, emitted here because this is the one
+            # docs/cli.md output discipline's `preflight.failed`, emitted here because this is the
+            # one
             # place that knows the gate refused rather than that some later step
             # did. A refusal leaves no run report — the run never reached one —
             # so without this line the only durable trace is an exit code.
@@ -461,7 +464,7 @@ def require_storage_safety(
     needed_bytes: int = 0,
     table: Sequence[MountEntry] | None = None,
 ) -> tuple[Check, ...]:
-    """Refuse to proceed unless every storage requirement is proven (plan §19).
+    """Refuse to proceed unless every storage requirement is proven (docs/cli.md doctor contract).
 
     The hard gate every mutating command runs before it takes a lock or contacts
     the Hub. It raises with every problem at once, and it treats a check that did

@@ -39,7 +39,7 @@ apply wherever the archive mount exists.
   properties around a real workload. Re-run it after any unit change and
   after `huggingface_hub`, `hf_xet`, or Python upgrades.
 - **Archive layout and permissions:** `docs/architecture.md` §5. What is
-  still open host-side: **Operator handoff** in `docs/progress.md`.
+  still open host-side: **Operator handoff** in `docs/agents/progress.md`.
 
 ## Hard limits
 
@@ -96,7 +96,7 @@ closure clears the actual no-IP/credential/NFS/SELinux/TLS/firewall holds.
 ## Current scoped local rollout authority (OPS-014, 2026-10-18)
 
 Tyler's newer authorization selects the
-[local rootless rollout](../plans/2026-10-18-plan-local-rootless-rollout.md),
+[local rootless rollout](plans/2026-10-18-plan-local-rootless-rollout.md),
 qualifying the earlier feature task's no-host-action boundary. Only root performs
 reviewed local host mutations. No NAS content or metadata writes, other-host
 changes, remote push/registry publication or ACME issuance is permitted. Reuse
@@ -123,9 +123,9 @@ continuous monitor and a private read-only sandbox view is not host proof.
 At OPS-016, application artifacts were clean 481fcc4; current 0.2.1 artifacts
 are clean 4088994. Unchanged independent host policy, its original activation
 and residual holds are separately recorded in
-[OPS-016](../plans/tasks/ops-016-local-rootless-deployment.md).
+[OPS-016](plans/tasks/ops-016-local-rootless-deployment.md).
 
-The selected [listener correction](../plans/2026-10-18-plan-container-worker-listener.md)
+The selected [listener correction](plans/2026-10-18-plan-container-worker-listener.md)
 follows the local 0.2.0 partial release. OPS-017 is source/owned-fixture work only:
 explicit PID1 worker-created listener and container READY under existing
 confinement, preserving strict native FD3 activation. Root alone performs
@@ -144,6 +144,6 @@ No source/base work permits NAS file I/O/jobs, other-host change or remote push.
 ### 0.2.1 local checkpoint (OPS-018, 2026-10-18)
 
 Actual installed API-container PROBE/notify/TLS/drain in
-[OPS-018](../plans/tasks/ops-018-container-worker-rollout.md) closes connection
+[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) closes connection
 hold 22 for clean 0.2.1 UBI artifacts. Every NAS-ro/guard/writer-mask/state/hardening
 boundary remains; no NAS I/O/job or other-host/remote action is authorized.

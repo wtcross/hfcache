@@ -1,6 +1,7 @@
 """Which revisions the archive keeps when the configured limit is exceeded.
 
-Plan §15. The whole policy rests on one property, `AD-05`: **retention order is
+docs/architecture.md retention contract. The whole policy rests on one property, `AD-05`:
+**retention order is
 the immutable per-repository `publication_generation`, and nothing else.**
 
 Every alternative ordering key was rejected for the same kind of reason.
@@ -124,12 +125,13 @@ def ordered_revisions(
 
     Ascending by `publication_generation`, so index 0 is the oldest and the last
     is the newest. Gaps are expected and mean nothing: a crash between assigning
-    a generation and publishing it leaves the number unused, and §15.1 says that
+    a generation and publishing it leaves the number unused, and AD-05 says that
     is acceptable — what matters is that two distinct SHAs never share one.
 
     Reads `refs/revisions/<sha>.json` rather than the revision directories,
     because a directory can hold a superseded repair instance inside its
-    seven-day grace period (plan §16.5) and that instance is not retained — it is
+    seven-day grace period (docs/cli.md verification contract) and that instance is not retained —
+    it is
     the one being replaced.
     """
     revisions = []
@@ -162,14 +164,14 @@ def prune_candidate(
 ) -> RetainedRevision | None:
     """The one revision a prune would remove, or `None` when nothing should go.
 
-    Plan §15.2 step 3: the oldest non-current revision. Three conditions, and
+    docs/architecture.md retention contract: the oldest non-current revision. Three conditions, and
     each refusal is a case where doing nothing is the correct behaviour rather
     than a limitation.
 
     * **Not over the limit** — including exactly the configured maximum. A
       prune is triggered by a *successful publication beyond* the maximum
       (`AD-04`), never by a count that happens to be high.
-    * **The oldest is current** — the current revision is never pruned (§15.1).
+    * **The oldest is current** — the current revision is never pruned (AD-05).
       This is reachable: a repository whose upstream moved back to its earliest
       retained SHA has the oldest generation as its current. Over-retention is
       the right answer, and it resolves itself at the next new revision.
@@ -203,7 +205,7 @@ def selection_problems(
     problems: list[Problem] = []
     where = f"{candidate.reference.repository_type}:{candidate.reference.repository_id}"
     if candidate.commit_sha == current:
-        message = "the current revision is never pruned (§15.1); a plan naming it is refused"
+        message = "the current revision is never pruned (AD-05); a plan naming it is refused"
         problems.append(Problem(code="HFRET001", message=message, repository=where))
     generations = [revision.publication_generation for revision in revisions]
     if generations and candidate.publication_generation != min(generations):
@@ -247,7 +249,7 @@ def selection_of(candidate: RetainedRevision, tree: str, manifest: str) -> Prune
 
 
 # --------------------------------------------------------------------------- #
-# Planning a prune (plan §15.2 steps 1-4)
+# Planning a prune (docs/architecture.md retention contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -260,7 +262,7 @@ def plan_prune(
 ) -> PrunePlan | None:
     """Describe the prune this repository needs, or `None` when it needs none.
 
-    Plan §15.2 steps 1-4, and the whole of what `prune --dry-run` reports. It is
+    docs/architecture.md retention contract, and the whole of what `prune --dry-run` reports. It is
     built from the same reads a prune performs — the per-SHA references, the
     current reference, and the immutable manifests — so a plan an operator
     reviewed is the plan that runs, not an approximation of it.
@@ -313,7 +315,8 @@ def plan_prune(
         # An estimate, and named one. The logical size of the tree is an upper
         # bound on what its removal releases: blobs shared with retained
         # revisions release nothing, and ZFS snapshots may hold the rest for
-        # weeks (§15.3). Reporting the bound is honest; reporting a computed
+        # weeks (the supported cache-retention contract). Reporting the bound is honest; reporting
+        # a computed
         # figure would imply a precision the storage layer does not offer.
         unique_bytes_released_estimate=candidate.manifest.total_bytes,
     )
@@ -328,7 +331,7 @@ def plan_all(
 ) -> tuple[PrunePlan, ...]:
     """Every prune the archive currently needs, in repository order.
 
-    One plan per repository at most: §15.2 removes *the* oldest eligible
+    One plan per repository at most: the prune contract removes *the* oldest eligible
     revision after the limit is exceeded, not every revision above the limit. A
     repository somehow holding eight would be brought down one revision per run,
     which is slower and is the behaviour that cannot delete four things by
@@ -343,7 +346,7 @@ def plan_all(
 
 
 # --------------------------------------------------------------------------- #
-# Performing a prune (plan §15.2, `docs/architecture.md` §7.4)
+# Performing a prune (docs/architecture.md retention contract, `docs/architecture.md` §7.4)
 # --------------------------------------------------------------------------- #
 
 
@@ -418,8 +421,8 @@ def apply_prune(
     manifest is still recoverable from trash, so re-adding the removed revision would
     contradict a decision the archive already recorded.
 
-    The order of steps 3 and 4 is deliberate and reversed from plan §15.2's
-    original text (decision 4). The per-SHA reference is removed *before* the
+    The order follows architecture §7.4 and decision 4. The per-SHA reference is removed *before*
+    the
     tree is tombstoned, because the reverse leaves a window in which a reference
     names a tree that has been renamed away — which breaks `FS-10` and would be
     visible to `verify` and `repair`, both of which resolve per-SHA references.

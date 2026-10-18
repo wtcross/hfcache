@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-28.
 - Original work package: `DOC-005`.
-- Source: [decision 84 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 84 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -49,11 +49,11 @@ decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
 Current governing documents:
-[docs/agents/conventions.md](../../docs/agents/conventions.md).
+[docs/agents/conventions.md](../agents/conventions.md).
 
 Implementation or shipped-artifact evidence:
 [examples/config.toml](../../examples/config.toml),
 [README.md](../../README.md).
 
 Verification or recorded operational evidence:
-[docs/progress.md](../../docs/progress.md).
+[docs/agents/progress.md](../agents/progress.md).

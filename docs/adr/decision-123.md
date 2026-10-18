@@ -4,9 +4,9 @@
 - Status: Accepted; implemented by API-016.
 - Date: 2026-10-18.
 - Work package: API-016, this commit.
-- Source: [progress decision 123](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-016-rest-acceptance-gate.md).
+- Source: [progress decision 123](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-016-rest-acceptance-gate.md).
 
 ## Context and decision
 
@@ -104,7 +104,7 @@ This package adds transport only, with no OpenAPI conversion or tools/resources/
 prompts; curated reads and side-effect proof remain MCP-002. No archive/config/
 durable format, domain workflow, production deployment or host-proof change.
 See [MCP](../mcp.md) for exact supported protocol/path/session behavior and the
-[MCP-001 task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.
+[MCP-001 task](../agents/plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.
 
 The MCP-001 refinement uses one trusted path projection when a configured public
 prefix overlaps fixed REST/MCP spellings: configured prefix wins when its remainder

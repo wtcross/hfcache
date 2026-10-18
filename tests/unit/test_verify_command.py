@@ -82,7 +82,7 @@ type = "{MODEL.type}"
 def archive(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ArchiveLayout:
     """An initialized archive the application sees as a read/write NFSv4 mount.
 
-    `--full` runs the §19 preflight, which reads the system mount table, so the
+    `--full` runs the the preflight contract preflight, which reads the system mount table, so the
     table is substituted here the same way `tests/unit/test_readonly_commands.py`
     substitutes it — a real directory described as the mount it would be in
     production. The lock directory moves for the same reason: `/run/hfcache`
@@ -349,7 +349,8 @@ def test_findings_are_grouped_by_kind_and_repository(config_path, archive):
 
 
 def test_a_finding_changes_nothing_on_the_archive(config_path, archive):
-    """Plan §16.1: a mismatch never rewrites a manifest, prunes, or re-downloads."""
+    """docs/cli.md verification contract: a mismatch never rewrites a manifest, prunes, or
+    re-downloads."""
     published = publish(archive)
     write_run_report(
         archive, commit_sha=published.commit_sha, publication_id=published.publication_id
@@ -416,7 +417,7 @@ def test_the_repository_identity_used_here_is_the_configured_one(config_path):
 
 
 # --------------------------------------------------------------------------- #
-# `--full` (plan §16.2)
+# `--full` (docs/cli.md verification contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -442,7 +443,7 @@ def test_full_covers_a_repository_that_is_no_longer_configured(config_path, arch
 
 
 def test_full_reads_a_shared_blob_once_across_revisions(config_path, archive):
-    """Plan §16.2 item 4: hardlinked content is one physical object, one read."""
+    """docs/cli.md verification contract: hardlinked content is one physical object, one read."""
     publish(archive, commit_sha=SHA_A)
     publish(archive, commit_sha=SHA_B)
     scope = envelope_of(invoke(config_path, "--full"))["data"]["scope"]
@@ -502,7 +503,7 @@ def test_full_builds_no_hub_client(config_path, archive, monkeypatch):
 
 
 def test_full_is_refused_while_another_command_holds_the_lock(config_path, archive):
-    """The verification lock is the global one (§22.3), which is what makes
+    """The verification lock is the global one (INV-015), which is what makes
     `--full` mutually exclusive with sync, prune, and repair."""
     publish(archive)
     with exclusive_lock(lock_path(), command="sync", wait_seconds=0):
@@ -512,7 +513,7 @@ def test_full_is_refused_while_another_command_holds_the_lock(config_path, archi
 
 
 def test_full_refuses_an_archive_that_is_not_a_proven_mount(tmp_path, archive):
-    """`--full` writes a report, so it passes the same §19 gate every other
+    """`--full` writes a report, so it passes the same the preflight contract gate every other
     writing command does."""
     elsewhere = tmp_path / "not-a-mount"
     elsewhere.mkdir()
@@ -623,7 +624,7 @@ def test_a_refusal_still_names_the_mode_it_refused(config_path):
 
 
 # --------------------------------------------------------------------------- #
-# `--estimate` (plan §16.4)
+# `--estimate` (docs/cli.md verification contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -763,7 +764,7 @@ def test_estimate_and_new_together_are_refused(config_path):
 
 
 # --------------------------------------------------------------------------- #
-# Persistence and health (plan §16.2 items 8 and 9)
+# Persistence and health (docs/cli.md verification contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -823,7 +824,8 @@ def fingerprint(layout: ArchiveLayout) -> dict[str, str]:
 def test_a_verification_interrupted_leaves_the_archive_exactly_as_it_was(
     config_path, archive, monkeypatch
 ):
-    """§26.6's last row: inject failure *during* the quarterly verification.
+    """the development failure-injection matrix's last row: inject failure *during* the quarterly
+    verification.
 
     Verification only reads. Its report and its catalog entry are each replaced
     by a single atomic rename, so an interruption can leave a partial neither,

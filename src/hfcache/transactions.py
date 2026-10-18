@@ -17,13 +17,13 @@ produces — `HFTXN002`, which stops the machine (§7.9).
 **Evidence is re-observable.** `TX-03` requires a checkpoint to carry facts that
 can be checked against the filesystem, so recovery confirms rather than trusts.
 The key naming convention that makes that mechanical is
-`docs/progress.md` decision 42: a key ending `_path` names an archive-relative
+`docs/adr/decision-042.md`: a key ending `_path` names an archive-relative
 path that must still exist, `_paths` a list of them, and `_absent` a path that
 must *not* exist. Evidence that contradicts the filesystem is `HFTXN003`.
 
 **Unknown keys survive a rewrite.** The journal is the only durable artifact
 that is ever read, modified, and written back, which is why `docs/schemas.md`
-§1.1's preservation rule applies to it alone (`docs/progress.md` decision 20).
+§1.1's preservation rule applies to it alone (`docs/adr/decision-020.md`).
 A key this release does not know about is carried through untouched and reported,
 never dropped.
 """

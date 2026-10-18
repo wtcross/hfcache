@@ -4,9 +4,9 @@
 - Status: Accepted; implemented by MCP-001.
 - Date: 2026-10-18.
 - Work package: MCP-001, this commit.
-- Source: [progress decision 124](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md).
+- Source: [progress decision 124](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/mcp-001-mount-authenticated-fastmcp.md).
 
 ## Context and decision
 
@@ -141,11 +141,11 @@ Archive-derived strings and dependency observations remain untrusted data, never
 instructions or executable content. Consumer copy/verification/promotion and
 whole-archive authorization remain unchanged. No dependency, config/durable
 schema, job path or production operation is added. See [MCP](../mcp.md) and the
-[MCP-002 task](../plans/tasks/mcp-002-curated-read-only-tools.md).
+[MCP-002 task](../agents/plans/tasks/mcp-002-curated-read-only-tools.md).
 
 ## 2026-10-18 mounted security traceability (MCP-003)
 
-[MCP-003](../plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md) maps this
+[MCP-003](../agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md) maps this
 existing decision to required [threat/control/test evidence](../mcp.md#threat-control-and-test-traceability-mcp-003).
 Parent-lifespan mounted authorization, closed registry/arguments, whole-state
 snapshots, malformed evidence and secret containment, finite mixed-interface
@@ -172,7 +172,7 @@ client expectations under this existing decision. No new tool/role/config schema
 or architectural choice is selected. REST off/on authentication/OpenAPI/command
 parity, restart-only source rotation and unchanged worker/timer policy are mapped
 by [acceptance tests](../../tests/unit/test_mcp_acceptance.py); the
-[MCP-004 task](../plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns actual
+[MCP-004 task](../agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns actual
 runs and required --with-build results. Real deployment holds remain separate.
 
 Repository client/package acceptance completed 2026-10-18: positive example

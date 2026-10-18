@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/plan.md` §11, §22.2, §24 |
+| Derived from | `docs/agents/history/plan.md` §11, §22.2, §24 |
 | Work package | `ARC-005` |
 | Entry point | `hfcache = "hfcache.cli:app"` |
 | JSON envelope version | `1` |
@@ -308,7 +308,7 @@ storage. `--read-only` takes no lock and runs no write probes (decision 110).
 `checks[]` is emitted in this order. The names are normative — automation keys on
 them and `status` quotes them — and a check is **absent** until the package that
 performs it lands, rather than being reported as skipped or passed
-(`docs/progress.md` decision 24).
+(`docs/agents/progress.md` decision 24).
 
 | # | `name` | Proves | Writes | Code on failure |
 | --- | --- | --- | --- | --- |
@@ -350,11 +350,11 @@ The same ordered checks are what a mutating command's preflight runs, and it
 reads a skip differently: `doctor` reports one and still exits `0`, while a
 command that is about to write refuses, because it may not assume a check it
 never ran would have passed. Every problem found is reported at once
-(`docs/plan.md` §19).
+(`docs/agents/history/plan.md` §19).
 
 Writability is proven only by the check-7 probe, never by comparing `st_uid`
 against the local service uid — under the Mapall writer export the owner has no
-local account (`docs/plan.md` §35.3).
+local account (`docs/agents/history/plan.md` §35.3).
 
 `--read-only` runs only the checks that mutate nothing — every row above whose
 `Writes` column is `no` — for use on a mount that must not be touched. It cannot
@@ -380,7 +380,7 @@ current, the repository's logical size, the estimated new bytes to download, and
 the publication bytes projected under the configured `publication_mode`. Mutates
 nothing and takes no lock.
 
-Three Hub reads per repository, in the order §13.2 of `docs/plan.md` puts them:
+Three Hub reads per repository, in the order §13.2 of `docs/agents/history/plan.md` puts them:
 resolve the reference, enumerate the revision's tree, then cost the download with
 a `snapshot_download` dry run against the same private cache a sync would write
 to. The dry run creates nothing — not even the cache directory — so this command
@@ -715,7 +715,7 @@ envelope's `errors` array regardless of which one becomes the exit code, so
 nothing is hidden by aggregation.
 
 A run that continues past an individual repository failure still exits non-zero,
-so systemd records the unit as failed (`docs/plan.md` §11.2).
+so systemd records the unit as failed (`docs/agents/history/plan.md` §11.2).
 
 ## 4. JSON output
 
@@ -940,7 +940,7 @@ manifest and the run report, is surfaced by `status`, and leaves the exit code a
 - Log events are structured, carry the `run_id`, use stable event names
   (`run.started`, `repository.resolved`, `download.completed`,
   `dependency.undeclared`, `publication.completed`, `retention.pruned`,
-  `run.completed`, and the rest of `docs/plan.md` §24), and record durable
+  `run.completed`, and the closed event vocabulary below), and record durable
   checkpoints rather than per-chunk progress. The vocabulary is closed:
   `hfcache.logging.EVENTS` is the whole of it, and emitting a name outside it
   raises rather than writing a line no filter will match. MCP-001 adds the stable
@@ -968,3 +968,22 @@ manifest and the run report, is surfaced by `status`, and leaves the exit code a
   affects rendering/event selection and cannot reconfigure the server logger.
 - Absolute filesystem paths are printed for operator commands, but every path
   written into a durable artifact is archive-relative (`docs/schemas.md` §1).
+
+### Closed operational event vocabulary
+
+Default INFO logging records durable progress without per-chunk noise. Events
+carry the domain run ID, with context-scoped request/operation correlation when
+available. Operational totals include downloaded, logical, reused and newly
+stored bytes, hash throughput and retention results; warnings are visible in
+status. The stable event names are:
+
+`run.started`, `preflight.failed`, `repository.resolved`, `repository.skipped`,
+`repository.queued`, `download.started`, `download.completed`, `hash.started`,
+`hash.completed`, `verification.completed`,
+`dependency.undeclared`, `publication.completed`, `retention.pruned`,
+`retention.deferred`, `quarantine.cleaned`, `repository.failed`, `run.completed`,
+`mcp.diagnostic`.
+
+The MCP diagnostic bridge emits only sanitized bounded warning/error provenance,
+never SDK message arguments, raw exceptions or tracebacks. Debug-only events are
+separate and may evolve. Never log secrets, bearer headers or signed URLs.

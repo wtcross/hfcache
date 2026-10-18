@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-28.
 - Original work package: `DOC-006`.
-- Source: [decision 85 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 85 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -45,9 +45,9 @@ requirements`). The decision text above preserves the complete reasoning in the
 current historical log, including its recorded alternatives and consequences.
 
 Current governing documents:
-[docs/storage-requirements.md](../../docs/storage-requirements.md),
-[docs/quickstart.md](../../docs/quickstart.md),
-[docs/recovery.md](../../docs/recovery.md).
+[docs/storage-requirements.md](../storage-requirements.md),
+[docs/quickstart.md](../quickstart.md),
+[docs/recovery.md](../recovery.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/storage.py](../../src/hfcache/storage.py),

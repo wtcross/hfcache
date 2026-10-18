@@ -6,7 +6,7 @@ client of the CLI's JSON envelope, the shipped systemd units, and
 `/etc/hfcache/config.toml`; the application itself is untouched.
 
 - Normative contract: [`../docs/cockpit.md`](../docs/cockpit.md)
-- Install and usage: [`../docs/cockpit-plugin/`](../docs/cockpit-plugin/)
+- Install and usage: [`../docs/cockpit-plugin/`](../docs/cockpit-plugin)
 
 Build and install (node, pnpm, and make — see the installation guide):
 

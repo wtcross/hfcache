@@ -170,7 +170,9 @@ def source_problems(source: Path, *, cache_root: Path) -> list[Problem]:
     every file through a symlink into `blobs/` by design, so refusing them would
     refuse every normal ingestion; what must be rejected is a link that leaves
     the approved root, dangles, or lands on something that is not a regular file
-    (plan §14.1 item 6, §14.3). Containment is checked on the *resolved* path,
+    (docs/architecture.md publication contract, the explicit copy contract). Containment is
+    checked on the *resolved*
+    path,
     since that is the one that will actually be read.
     """
     where = str(source)
@@ -213,7 +215,8 @@ def staged_path(staging: StagingPaths, relative: object) -> Path:
 
 
 def prepare_staged_parent(path: Path) -> None:
-    """Create the destination's parent directories in staging (plan §14.1 step 3)."""
+    """Create the destination's parent directories in staging (docs/architecture.md publication
+    contract)."""
     try:
         path.parent.mkdir(mode=PUBLISHED_DIRECTORY_MODE, parents=True, exist_ok=True)
     except OSError as exc:
@@ -232,7 +235,7 @@ def projected_publication_bytes(
     rather than an automatic fallback (`AD-11`): hardlink publication adds
     directory entries pointing at cache blobs that are already on the dataset, so
     it costs nothing beyond metadata, while copy publication writes a second
-    physical copy of every byte. Plan §19 item 9 requires the second number to be
+    physical copy of every byte. docs/cli.md doctor contract requires the second number to be
     in the free-space calculation before a download starts, and `plan` reports it
     because that is the figure the dataset quota is sized from.
 
@@ -296,7 +299,7 @@ def _link(
     expected: FileDigest,
     expected_identity: ObjectIdentity,
 ) -> FileDigest:
-    """Hardlink a cache blob into staging (plan §14.1 step 4).
+    """Hardlink a cache blob into staging (docs/architecture.md publication contract).
 
     The destination is never `chmod`ed: it is the same inode as the cache blob,
     so changing one mode changes both (`AD-11`). Read-only access for consumers
@@ -335,7 +338,8 @@ def _link(
 
 
 def _copy(source: Path, destination: Path, *, expected: FileDigest) -> FileDigest:
-    """Copy a resolved regular file into staging, then prove the copy (plan §14.3).
+    """Copy a resolved regular file into staging, then prove the copy (docs/architecture.md
+    publication contract).
 
     Temporary sibling and atomic rename per file, so a crash leaves either the
     complete file or nothing. The copy is hashed *and* compared against a fresh
@@ -348,7 +352,8 @@ def _copy(source: Path, destination: Path, *, expected: FileDigest) -> FileDiges
     temporary = temporary_sibling(destination)
     try:
         # `copyfile` follows the source and writes a plain regular file, so a
-        # cache symlink is resolved rather than reproduced (plan §14.3).
+        # cache symlink is resolved rather than reproduced (docs/architecture.md publication
+        # contract).
         shutil.copyfile(source, temporary)
         with temporary.open("rb") as handle:
             os.fsync(handle.fileno())
@@ -387,7 +392,7 @@ def _remove_unproven_link(destination: Path) -> str:
 def promote_staging(layout: ArchiveLayout, staging: StagingPaths, destination: Path) -> None:
     """Rename a finished staged tree into place — the moment a revision exists.
 
-    Plan §13.2 step 15, and the single operation that makes a publication
+    docs/cli.md sync contract, and the single operation that makes a publication
     visible. One `rename(2)` within one filesystem (`FS-04`), so a consumer
     either sees the complete revision or does not see it at all (`FS-12`); the
     tree is fsynced first, so what becomes visible is also durable.
@@ -526,7 +531,7 @@ def read_reference(layout: ArchiveLayout, path: Path) -> Reference:
 
 
 # --------------------------------------------------------------------------- #
-# The derived catalog (`FS-16`, plan §13.2 step 19)
+# The derived catalog (`FS-16`, docs/cli.md sync contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -589,12 +594,12 @@ def retained_references(
 
 
 def next_generation(layout: ArchiveLayout, identity: RepositoryIdentity) -> int:
-    """The generation a newly published unique SHA receives (plan §13.2 step 11).
+    """The generation a newly published unique SHA receives (docs/cli.md sync contract).
 
     `max(existing) + 1`, never `count + 1`. A prune removes the oldest revision
     and its reference, so counting would reissue a generation that a pruned
     revision already held and break the ordering that retention depends on.
-    Gaps after a crash are explicitly acceptable (§15.1); collisions are not.
+    Gaps after a crash are explicitly acceptable (AD-05); collisions are not.
     """
     references = retained_references(layout, identity)
     return max((reference.publication_generation for reference in references), default=0) + 1

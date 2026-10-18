@@ -198,7 +198,7 @@ def test_the_documented_order_is_the_implemented_one():
 
 
 def test_a_run_that_continued_past_a_failure_still_exits_non_zero():
-    # `docs/plan.md` §11.2: systemd must record the unit as failed.
+    # docs/cli.md: systemd must record the unit as failed.
     assert aggregate_exit_code(["HFHUB004"]) != ExitCode.SUCCESS
 
 

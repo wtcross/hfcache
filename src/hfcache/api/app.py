@@ -1,6 +1,6 @@
 """Authenticated bounded query and command adapters; importing creates no listener.
 
-Decisions 113-117 and plan §§3-6 keep archive authority behind typed services,
+Decisions 113-117 and docs/api.md and docs/server.md keep archive authority behind typed services,
 durable admission, and the shared guarded execution lane.
 """
 

@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
 - Original work package: `STO-000`.
-- Source: [decision 30 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 30 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -31,8 +31,8 @@ The source entry first appears in
 inspection`). The decision text above preserves the complete reasoning in the
 current historical log, including its recorded alternatives and consequences.
 
-Current governing documents: [docs/architecture.md](../../docs/architecture.md),
-[docs/cli.md](../../docs/cli.md).
+Current governing documents: [docs/architecture.md](../architecture.md),
+[docs/cli.md](../cli.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/archive.py](../../src/hfcache/archive.py).

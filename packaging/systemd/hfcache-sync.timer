@@ -1,4 +1,4 @@
-# Daily sync at 02:00 local time (docs/plan.md §22.4).
+# Daily sync at 02:00 local time (docs/security.md hardening posture).
 #
 # Local time, deliberately: the calendar was chosen against this site's NAS
 # maintenance windows, which are themselves local, and a UTC schedule would drift

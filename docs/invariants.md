@@ -30,7 +30,7 @@ and follow their links to the governing contracts. In the same work package:
 4. Keep source and verification links useful. New enforcement belongs in the
    appropriate code and meaningful tests; a documentation entry alone does not
    establish the guarantee. Run the work package's required gate and record the
-   evidence in [progress](progress.md), following the
+   evidence in [progress](agents/progress.md), following the
    [workflow](agents/workflow.md).
 
 Every implemented change and new plan requires this review. A change that
@@ -216,7 +216,7 @@ only. The regression test
 [the sync suite](../tests/unit/test_synchronize.py) explicitly expects a pruned
 SHA to return with a fresh generation of 7. Retained-SHA reobservation and repair
 preserve their generation; the pruned/reintroduced case needs an explicit future
-contract or code decision. The [progress tracker](progress.md) records this gap;
+contract or code decision. The [progress tracker](agents/progress.md) records this gap;
 this register must not silently treat the stronger contract as already enforced.
 
 Contract: [architecture retention, purge, and repair](architecture.md#74-prune-transaction),
@@ -564,7 +564,7 @@ Enforcement: [models/serialization](../src/hfcache/models.py),
 [reporting](../src/hfcache/reporting.py),
 [verification](../src/hfcache/verification.py), and
 [command ownership](../src/hfcache/services/commands.py).
-Evidence: [golden formats](../tests/fixtures/schemas/),
+Evidence: [golden formats](../tests/fixtures/schemas),
 [model tests](../tests/unit/test_models.py),
 [journal tests](../tests/unit/test_transactions.py),
 [CLI tests](../tests/unit/test_cli.py),
@@ -664,7 +664,7 @@ Candidate enforcement/evidence: [exact-content guard](../cockpit/src/lib/candida
 [guarded filesystem fixtures](../cockpit/test/candidate-guard.test.ts) and
 [pipeline cases](../cockpit/test/config-pipeline.test.ts). These preserve the
 privileged host-install boundary and do not prove deployed browser/SELinux behavior.
-Evidence: [plugin tests](../cockpit/test/) and the
+Evidence: [plugin tests](../cockpit/test) and the
 [operator install/acceptance runbooks](cockpit-plugin/README.md).
 
 ## Framework and engineering
@@ -688,17 +688,6 @@ Evidence: [plugin tests](../cockpit/test/) and the
   additional build-marker tests remain opt-in. Every work-package commit updates progress and passes
   `scripts/check.sh`; durable-format fixtures and checkpoint-contract tests
   remain synchronized with their contracts.
-- **`INV-011` — Active work has one plan and explicit task authority.**
-  `docs/plans/current.md` selects at most one active dated plan. Each
-  implementation work package has an individual task file before execution;
-  the task owns status, dependencies, acceptance criteria, and evidence. The
-  dated plan owns scope and task order; current is a short selector and next-
-  task pointer. User authorization to implement permits activation, while a
-  draft or an old backlog item alone does not. Preserve plan/task identities
-  and completed or superseded records. Keep active records and completed
-  progress evidence consistent in the implementation commit. The historical
-  progress log retains completed work packages, Decisions, Operator handoff,
-  and unmigrated backlog, without duplicating the active queue.
 
 Contract: [framework boundary](architecture.md#8-framework-boundary),
 [conventions](agents/conventions.md), [workflow](agents/workflow.md), and
@@ -708,11 +697,6 @@ Enforcement and evidence: [dependency/tool configuration](../pyproject.toml),
 [test isolation](../tests/conftest.py),
 [failure matrix](../tests/unit/test_failure_matrix.py), and
 [checkpoint tests](../tests/unit/test_transactions.py).
-Planning evidence: [current selector](plans/current.md),
-[retained setup plan](plans/2026-10-17-plan-planning-workflow.md), and
-[DOC-010 task](plans/tasks/doc-010-planning-workflow.md).
-`INV-011` is a repository workflow requirement reviewed through these records
-and git; the application test suite does not enforce planning lifecycle.
 
 ## Remote management (incremental enforcement)
 
@@ -912,7 +896,7 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   no credentials, exact private protocol/results and no replay remain. Rootless
   API Requires+After worker.service; dormant .socket/native activation remain
   separate. Source/fixture evidence cannot close installed SELinux hold 22.
-  Actual [OPS-018 installed acceptance](plans/tasks/ops-018-container-worker-rollout.md)
+  Actual [OPS-018 installed acceptance](agents/plans/tasks/ops-018-container-worker-rollout.md)
   now closes that connection hold for 0.2.1 under Enforcing, including after drain/
   restart. Live NAS verification/workload acceptance remains unrun; rollback to
   0.2.0 restores its recorded connection limitation.

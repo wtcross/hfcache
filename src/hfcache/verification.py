@@ -1,6 +1,7 @@
 """Reading the archive back, and saying whether it is what the manifests claim.
 
-Plan §16. Verification is the one operation that treats the archive as suspect:
+docs/cli.md verification contract. Verification is the one operation that treats the archive as
+suspect:
 every other module writes what it has just proved, and this one re-reads what
 something else wrote — possibly months ago, possibly across a snapshot restore,
 possibly after a ZFS checksum error. So the manifest is the expectation and the
@@ -8,14 +9,14 @@ filesystem is the observation, never the other way round.
 
 Three rules shape everything here.
 
-**A finding changes nothing.** Plan §16.1's last line is the whole stance: a
+**A finding changes nothing.** docs/cli.md verification contract's last line is the whole stance: a
 later verification mismatch never rewrites the expected digest, auto-prunes the
 revision, or silently re-downloads over the evidence (`AD-13`, `AD-18`). This
 module has no write path at all. It returns findings; what to do about them is
 `repair`'s question and an operator's decision.
 
-**Reading is expensive, so each physical object is read once.** Plan §16.2 item
-4 builds the read set from current `(device, inode)` identity confirmed by
+**Reading is expensive, so each physical object is read once.** docs/cli.md verification contract
+builds the read set from current `(device, inode)` identity confirmed by
 `samefile`, so a blob hardlinked into five retained revisions costs one read
 rather than five. In copy mode nothing is shared — two identical files in two
 trees are two physical objects — so every file is read even when the expected
@@ -135,7 +136,7 @@ which is what "content introduced by one run" means (`docs/cli.md` §2).
 
 
 # --------------------------------------------------------------------------- #
-# The read set (plan §16.2 item 4)
+# The read set (docs/cli.md verification contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -162,7 +163,7 @@ class ReadSet:
     Sharing is decided per file by the caller, because it is a property of how
     that file was *published* rather than of how this archive is configured now.
     A hardlink-mode tree and a copy-mode tree can both be retained — a
-    `publication_mode` change is one of plan §16.3's reasons to run a full
+    `publication_mode` change is one of docs/cli.md verification contract's reasons to run a full
     verification — and each has to be read the way its own bytes are laid out.
     """
 
@@ -243,7 +244,7 @@ class VerificationTarget:
         """Whether this instance's files may be read once and shared.
 
         Hardlink publication points several trees at one blob, so one read
-        answers for all of them. Copy publication does not, and plan §16.2 item 4
+        answers for all of them. Copy publication does not, and docs/cli.md verification contract
         is explicit that copy-mode files are each read.
         """
         return self.manifest.publication_mode == "hardlink"
@@ -445,7 +446,7 @@ def resolve_current_reference(
     Verification enumerates `refs/revisions/`, because that is what makes a SHA
     retained (`FS-11`). `current.json` is not in that set, and until now nothing
     read it — so the **one file a consumer must read** (§6.3) was the one artifact
-    a full verification never looked at, while plan §16.2 step 3 said it
+    a full verification never looked at, while docs/cli.md verification contract said it
     validated refs. A `current.json` naming an instance that does not exist is
     `FS-10`'s dangling reference, it strands every consumer that resolves it, and
     `verify --full` called the archive clean.
@@ -549,7 +550,8 @@ def _is_commit_sha(value: str) -> bool:
 
 
 def resolve_archive(layout: ArchiveLayout) -> tuple[Resolved, ...]:
-    """Every retained revision of every repository the archive holds (plan §16.2).
+    """Every retained revision of every repository the archive holds (docs/cli.md verification
+    contract).
 
     The repository set is read off `published/repos/` rather than off
     configuration, because those are different sets and the difference matters
@@ -608,7 +610,7 @@ def require_retained(
 
 
 # --------------------------------------------------------------------------- #
-# Checking one instance (plan §16.2 items 6 and 7)
+# Checking one instance (docs/cli.md verification contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -837,7 +839,8 @@ class VerificationOutcome:
         """Distinct repositories looked at.
 
         Counted separately from revisions because "two repositories, seven
-        revisions" is how plan §16.4 and `docs/schemas.md` §7 describe a scope,
+        revisions" is how docs/cli.md verification contract and `docs/schemas.md` §7 describe a
+        scope,
         and how an operator sizes the next run.
         """
         return len({revision.identity.sort_key for revision in self.revisions_covered})
@@ -931,7 +934,7 @@ def _revision_outcome(item: Resolved, reads: ReadSet) -> RevisionOutcome:
 
 
 # --------------------------------------------------------------------------- #
-# Estimation (plan §16.4)
+# Estimation (docs/cli.md verification contract)
 # --------------------------------------------------------------------------- #
 
 UNDETECTABLE: Final = "undetectable"
@@ -943,7 +946,7 @@ UNDETECTABLE: Final = "undetectable"
 class VerificationEstimate:
     """What a full verification would cost, measured without reading anything.
 
-    Plan §16.4's field set. `measured_throughput_bytes_per_second` is `None`
+    docs/cli.md verification contract's field set. `measured_throughput_bytes_per_second` is `None`
     until a full verification has actually run, and the estimated duration is
     `None` with it — a number derived from a rate nobody measured would be a
     guess wearing a decimal point, and the operator scheduling a quarterly job
@@ -981,7 +984,7 @@ class VerificationEstimate:
 
 
 def estimate_verification(layout: ArchiveLayout) -> VerificationEstimate:
-    """Cost a full verification with `stat` alone (plan §16.4).
+    """Cost a full verification with `stat` alone (docs/cli.md verification contract).
 
     Nothing is hashed and nothing is opened, so this is cheap enough to run
     before deciding whether tonight is the night. The unique set is built the
@@ -1097,7 +1100,7 @@ def build_report(
 
 
 # --------------------------------------------------------------------------- #
-# Persistence (plan §16.2 items 8 and 9)
+# Persistence (docs/cli.md verification contract)
 # --------------------------------------------------------------------------- #
 
 RUNS_MODE: Final = 0o700
@@ -1112,7 +1115,7 @@ def persist_verification(
     *,
     mode: Literal["new", "full", "revision"],
 ) -> Path:
-    """Write the report, then the catalog that names it (plan §16.2 items 8-9).
+    """Write the report, then the catalog that names it (docs/cli.md verification contract).
 
     In that order, because the catalog's `last_full_verification.report` is a
     path an operator follows. A catalog naming a report that had not been written

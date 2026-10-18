@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-24.
 - Original work package: `CFG-002`.
-- Source: [decision 12 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 12 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -28,7 +28,7 @@ text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 
 Current governing documents:
-[docs/configuration.md](../../docs/configuration.md).
+[docs/configuration.md](../configuration.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/config.py](../../src/hfcache/config.py).

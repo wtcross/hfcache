@@ -1,0 +1,335 @@
+{
+  "baseline": "65b65714b29e835498138ec3122b5669571850cf",
+  "hash_algorithm": "sha256",
+  "records": [
+    {
+      "old": "docs/plans/2026-10-17-plan-planning-workflow.md",
+      "new": "docs/agents/plans/2026-10-17-plan-planning-workflow.md",
+      "sha256": "3fe85126cdf713cfab37fd279e6f27ed39ec006b3a5fb400b2862b7b26159a75",
+      "before_move_sha256": "3fe85126cdf713cfab37fd279e6f27ed39ec006b3a5fb400b2862b7b26159a75",
+      "after_reference_repair_sha256": "60bdfddf7ca29a75c084efb7feab5010380ce605eedd09fc8a00f6c75e468381"
+    },
+    {
+      "old": "docs/plans/2026-10-17-plan-rest-api-and-mcp.md",
+      "new": "docs/agents/plans/2026-10-17-plan-rest-api-and-mcp.md",
+      "sha256": "26492b6d0fd8737131f8e573048e32b4f2b98d80d82fae774db774f32c3982be",
+      "before_move_sha256": "26492b6d0fd8737131f8e573048e32b4f2b98d80d82fae774db774f32c3982be",
+      "after_reference_repair_sha256": "9df59e553687613fcd180ffc07fafbad44cf7bcef9dd1a293a9084642ee89adf"
+    },
+    {
+      "old": "docs/plans/2026-10-18-plan-container-worker-listener.md",
+      "new": "docs/agents/plans/2026-10-18-plan-container-worker-listener.md",
+      "sha256": "a0d0ef3ab0de8cc5fdf238854ca749b87299ad922ea1f3c53a69370c8a2353a6",
+      "before_move_sha256": "a0d0ef3ab0de8cc5fdf238854ca749b87299ad922ea1f3c53a69370c8a2353a6",
+      "after_reference_repair_sha256": "dc88a824d019c10c52d8a031fc3a9af9946edced054f273a229b70a5ac973622"
+    },
+    {
+      "old": "docs/plans/2026-10-18-plan-local-rootless-rollout.md",
+      "new": "docs/agents/plans/2026-10-18-plan-local-rootless-rollout.md",
+      "sha256": "22dd95e6cff2f406d77b79b8183e791e83cc65aa5a6fe294837c9bd4fa88ca3e",
+      "before_move_sha256": "22dd95e6cff2f406d77b79b8183e791e83cc65aa5a6fe294837c9bd4fa88ca3e",
+      "after_reference_repair_sha256": "a7eccea7a827bde8cd00d7180cf8c372b437ab69f5c8cb17d64e92d953e42ef5"
+    },
+    {
+      "old": "docs/plans/README.md",
+      "new": "docs/agents/plans/README.md",
+      "sha256": "f2f9747dda817cccf42a98a5e8dbe0ab30a155f8e4fcea4876d145898976da82",
+      "before_move_sha256": "f2f9747dda817cccf42a98a5e8dbe0ab30a155f8e4fcea4876d145898976da82",
+      "after_reference_repair_sha256": "d0ccefb18c1577c91f9e607baecaf02207c55043c3b48dc9e0a6620c82b6d4ed"
+    },
+    {
+      "old": "docs/plans/current.md",
+      "new": "docs/agents/plans/current.md",
+      "sha256": "115cdd6dca2f04bc773fad70c4072582f1f9b26c93d754820ae134be81c66a95",
+      "before_move_sha256": "6ef51bdb542ee57c27f71826c562f4ac4eb65a4da6522352e70216ef9d6ab8d9",
+      "after_reference_repair_sha256": "3cd988a789ce041ccc23727fd1ecbd750a4c57281914405d7eff1b75e6b4d2ab"
+    },
+    {
+      "old": "docs/plans/tasks/README.md",
+      "new": "docs/agents/plans/tasks/README.md",
+      "sha256": "c180e1153fa24645f63805c44f73bf91b1c6307283f013a08942a9f91461045b",
+      "before_move_sha256": "c180e1153fa24645f63805c44f73bf91b1c6307283f013a08942a9f91461045b",
+      "after_reference_repair_sha256": "dcd86509c5d4447dd29fdb31564482192226eeef6ac22eda4cc185b58635e1d4"
+    },
+    {
+      "old": "docs/plans/tasks/api-001-contract-and-activation.md",
+      "new": "docs/agents/plans/tasks/api-001-contract-and-activation.md",
+      "sha256": "5614d76880049e6d07e05dd8763becb0c359cbc8dd533522a345e7209778e6d3",
+      "before_move_sha256": "5614d76880049e6d07e05dd8763becb0c359cbc8dd533522a345e7209778e6d3",
+      "after_reference_repair_sha256": "541c0b14bff9662d40b0daf3d67e64f26acbe50b7199fd4689c7e4542c3791ab"
+    },
+    {
+      "old": "docs/plans/tasks/api-002-extract-queries-and-results.md",
+      "new": "docs/agents/plans/tasks/api-002-extract-queries-and-results.md",
+      "sha256": "02355a6ae2848f6947741ec42c2be2a7aeaa03c46b0b088802e33e1bf6add4f8",
+      "before_move_sha256": "02355a6ae2848f6947741ec42c2be2a7aeaa03c46b0b088802e33e1bf6add4f8",
+      "after_reference_repair_sha256": "40b232db19048ce4f804039d4ada95beaed1999c3eb4d5d6b500680edc876e6f"
+    },
+    {
+      "old": "docs/plans/tasks/api-003-extract-guarded-commands.md",
+      "new": "docs/agents/plans/tasks/api-003-extract-guarded-commands.md",
+      "sha256": "0926cac8428e995c720820a12a75e790c08e174aea189848ee17dd070c333a15",
+      "before_move_sha256": "0926cac8428e995c720820a12a75e790c08e174aea189848ee17dd070c333a15",
+      "after_reference_repair_sha256": "855b9ef619106bd974a67d06c884f7371835c6a00f6fff9e42cd4aa33ae4d404"
+    },
+    {
+      "old": "docs/plans/tasks/api-004-isolate-execution-context.md",
+      "new": "docs/agents/plans/tasks/api-004-isolate-execution-context.md",
+      "sha256": "d39a01bc5549234415797ace6a209c3ab5ea86cb289c56cb268ffb9e10c30343",
+      "before_move_sha256": "d39a01bc5549234415797ace6a209c3ab5ea86cb289c56cb268ffb9e10c30343",
+      "after_reference_repair_sha256": "a045cce8eb6c8248e19238b35faad6df1964cb2c5f0a09e802ceb29f82d08b3f"
+    },
+    {
+      "old": "docs/plans/tasks/api-005-server-config-and-bearer-auth.md",
+      "new": "docs/agents/plans/tasks/api-005-server-config-and-bearer-auth.md",
+      "sha256": "8beb7561e45e3ab61ca10c37d75a6360002e58ab984d795019bf3b3a5c709848",
+      "before_move_sha256": "8beb7561e45e3ab61ca10c37d75a6360002e58ab984d795019bf3b3a5c709848",
+      "after_reference_repair_sha256": "2c6759c4be46dd6834ba58c8616e5c1c7eb94d43bc3c86a9a1aa72ae7c61ec5c"
+    },
+    {
+      "old": "docs/plans/tasks/api-006-fastapi-lifecycle-and-reads.md",
+      "new": "docs/agents/plans/tasks/api-006-fastapi-lifecycle-and-reads.md",
+      "sha256": "cb3ea71e4ff35b04c5650b169c2091a8de5a9a4844db8d0e7903986876a13105",
+      "before_move_sha256": "cb3ea71e4ff35b04c5650b169c2091a8de5a9a4844db8d0e7903986876a13105",
+      "after_reference_repair_sha256": "9494256c636110af0fb5bc220344e59e7be45ea83f6d5468be45170c15c194b0"
+    },
+    {
+      "old": "docs/plans/tasks/api-007-operation-receipts-and-idempotency.md",
+      "new": "docs/agents/plans/tasks/api-007-operation-receipts-and-idempotency.md",
+      "sha256": "77b51e869fe300dc2799f59c9d0bffb01517662b15a77aac16bb5f81c72b7840",
+      "before_move_sha256": "77b51e869fe300dc2799f59c9d0bffb01517662b15a77aac16bb5f81c72b7840",
+      "after_reference_repair_sha256": "17c1bd218fd503638d3a75bc8bc3e6c87fd0c6a3e574bf20e284f4ad5cc940d7"
+    },
+    {
+      "old": "docs/plans/tasks/api-008-bounded-runner-and-offline-executor.md",
+      "new": "docs/agents/plans/tasks/api-008-bounded-runner-and-offline-executor.md",
+      "sha256": "1943d31338dacaf2f47a29e08fb51e7c5996fe64bc135a1a4a506e190a9e35ec",
+      "before_move_sha256": "1943d31338dacaf2f47a29e08fb51e7c5996fe64bc135a1a4a506e190a9e35ec",
+      "after_reference_repair_sha256": "94a5846ab09f3555e78aae2490756461428e97e317e8c2f5d27d3e4d05022ffa"
+    },
+    {
+      "old": "docs/plans/tasks/api-009-sync-verification-and-diagnostics-api.md",
+      "new": "docs/agents/plans/tasks/api-009-sync-verification-and-diagnostics-api.md",
+      "sha256": "f1decf7cf9c4ef28c87d5d5d5e638e60f4c188103d01a3602823a7eb0ceb66ea",
+      "before_move_sha256": "f1decf7cf9c4ef28c87d5d5d5e638e60f4c188103d01a3602823a7eb0ceb66ea",
+      "after_reference_repair_sha256": "4fbda038b714f6807053e16592dd551705c9608a29dfcfc813fe89c0148d746b"
+    },
+    {
+      "old": "docs/plans/tasks/api-010-guarded-maintenance-api.md",
+      "new": "docs/agents/plans/tasks/api-010-guarded-maintenance-api.md",
+      "sha256": "ec1dc3fc6158d78342509a0a356c6c3988d3f1bf05f47d4b75e781ab1ced5451",
+      "before_move_sha256": "ec1dc3fc6158d78342509a0a356c6c3988d3f1bf05f47d4b75e781ab1ced5451",
+      "after_reference_repair_sha256": "68d2a8a0ef8bccb2e7df10ad5acb31de9908cad891a2edd3ef336ae28b47a715"
+    },
+    {
+      "old": "docs/plans/tasks/api-011-typed-client-and-client-config.md",
+      "new": "docs/agents/plans/tasks/api-011-typed-client-and-client-config.md",
+      "sha256": "3618e68ec44f52b8364031ad9f199f39209b1f41986191775f4ec0cf88738234",
+      "before_move_sha256": "3618e68ec44f52b8364031ad9f199f39209b1f41986191775f4ec0cf88738234",
+      "after_reference_repair_sha256": "69d0beaceddb19b8945b5a62b97e701f12168c77918b31669b6d6a79445c4ceb"
+    },
+    {
+      "old": "docs/plans/tasks/api-012-migrate-read-cli-and-candidates.md",
+      "new": "docs/agents/plans/tasks/api-012-migrate-read-cli-and-candidates.md",
+      "sha256": "ef159c96a30a318998c8ae90db8d247216346a8f8f9e4463ccf4af11877aa5c7",
+      "before_move_sha256": "ef159c96a30a318998c8ae90db8d247216346a8f8f9e4463ccf4af11877aa5c7",
+      "after_reference_repair_sha256": "da77499f83ed7633f1c0dc0ade47ead3bf670da6315385f623c4a5fa2cd3c2d9"
+    },
+    {
+      "old": "docs/plans/tasks/api-013-migrate-write-cli-and-operation-waiting.md",
+      "new": "docs/agents/plans/tasks/api-013-migrate-write-cli-and-operation-waiting.md",
+      "sha256": "470833ce9035518d66cf2f986a121c0eac8b78fde398f90c6bacb47202958be3",
+      "before_move_sha256": "470833ce9035518d66cf2f986a121c0eac8b78fde398f90c6bacb47202958be3",
+      "after_reference_repair_sha256": "45cd97c857897045cecdfda4923bd2dbe3b3f0a35a27ee01300c28f7ff0d7a11"
+    },
+    {
+      "old": "docs/plans/tasks/api-014-systemd-and-deployment-integration.md",
+      "new": "docs/agents/plans/tasks/api-014-systemd-and-deployment-integration.md",
+      "sha256": "fe8ba7e17366b5a6d9ef51409567aa11cd83ee1544036603e6ead75cd842c58b",
+      "before_move_sha256": "fe8ba7e17366b5a6d9ef51409567aa11cd83ee1544036603e6ead75cd842c58b",
+      "after_reference_repair_sha256": "134046627fd4c609f9fa17a2da88503d8903c47cfe70ab2e90cb661ff09f4d98"
+    },
+    {
+      "old": "docs/plans/tasks/api-015-cockpit-api-client-compatibility.md",
+      "new": "docs/agents/plans/tasks/api-015-cockpit-api-client-compatibility.md",
+      "sha256": "d459bd573972e16dce99798205e9d39a85b297c820d55966ddc9a6b4a8696d90",
+      "before_move_sha256": "d459bd573972e16dce99798205e9d39a85b297c820d55966ddc9a6b4a8696d90",
+      "after_reference_repair_sha256": "d4d15e04c8f8f752388f3eb6127024cfee924ade49cd55d6ca35c343aec30193"
+    },
+    {
+      "old": "docs/plans/tasks/api-016-rest-acceptance-gate.md",
+      "new": "docs/agents/plans/tasks/api-016-rest-acceptance-gate.md",
+      "sha256": "b2afa13aec12dfe5531a18d5d7ad5aa50be1017296dac09378bba7217a7e07a3",
+      "before_move_sha256": "b2afa13aec12dfe5531a18d5d7ad5aa50be1017296dac09378bba7217a7e07a3",
+      "after_reference_repair_sha256": "d6ea9f722e4044ad9cd9359255b92db31626b7fce08ce64649860c1b29323bad"
+    },
+    {
+      "old": "docs/plans/tasks/api-017-final-integration-and-handoff.md",
+      "new": "docs/agents/plans/tasks/api-017-final-integration-and-handoff.md",
+      "sha256": "a083a7eece8e819e28e7cb622f3bdecf167a4064ab33cba5bdb4c4343d47b5f1",
+      "before_move_sha256": "a083a7eece8e819e28e7cb622f3bdecf167a4064ab33cba5bdb4c4343d47b5f1",
+      "after_reference_repair_sha256": "29ba0817ebb2f12bf68e0cc71b978cbc5446560e807cbbf27c8bcc5b6b91c87c"
+    },
+    {
+      "old": "docs/plans/tasks/doc-010-planning-workflow.md",
+      "new": "docs/agents/plans/tasks/doc-010-planning-workflow.md",
+      "sha256": "73a641ee5fb7c6f82c5a219a290bc5b0d5353c27176ab70429d63653653e179f",
+      "before_move_sha256": "73a641ee5fb7c6f82c5a219a290bc5b0d5353c27176ab70429d63653653e179f",
+      "after_reference_repair_sha256": "b6c8e50e5ee7ad51c4bfce4f6ba72af4ffcb889c256d11d860218a3595876e23"
+    },
+    {
+      "old": "docs/plans/tasks/mcp-001-mount-authenticated-fastmcp.md",
+      "new": "docs/agents/plans/tasks/mcp-001-mount-authenticated-fastmcp.md",
+      "sha256": "82f38bbc0dd9c2aca8f37e36e18a214ded7662aafc7a7e175de88f59ac4ff607",
+      "before_move_sha256": "82f38bbc0dd9c2aca8f37e36e18a214ded7662aafc7a7e175de88f59ac4ff607",
+      "after_reference_repair_sha256": "d281f993ca8d7774c4347b82960ea0da5314af8953eb40c8c7a8534844ac8fb6"
+    },
+    {
+      "old": "docs/plans/tasks/mcp-002-curated-read-only-tools.md",
+      "new": "docs/agents/plans/tasks/mcp-002-curated-read-only-tools.md",
+      "sha256": "192be039d5c321ca3b51360e520f6967a9570f6f2e36e64fada6d712a21417aa",
+      "before_move_sha256": "192be039d5c321ca3b51360e520f6967a9570f6f2e36e64fada6d712a21417aa",
+      "after_reference_repair_sha256": "5eaf3e37be7dc59ebf65ba4b797c6c4f34af962599772e1b4c6da39bb8df4db1"
+    },
+    {
+      "old": "docs/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md",
+      "new": "docs/agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md",
+      "sha256": "d1cf190bd39d0a4a5ae48ebca6a072bce587fc1a14e80259c0a2481899a0a014",
+      "before_move_sha256": "d1cf190bd39d0a4a5ae48ebca6a072bce587fc1a14e80259c0a2481899a0a014",
+      "after_reference_repair_sha256": "8194c4423d41b5f23de650a208698c439beb70b771fde3a4b18788ab91f027dc"
+    },
+    {
+      "old": "docs/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md",
+      "new": "docs/agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md",
+      "sha256": "0089fcec15cb04ff326bb47a6c75db9ccbcd155d1b0937b2a2a253f11f3b4447",
+      "before_move_sha256": "0089fcec15cb04ff326bb47a6c75db9ccbcd155d1b0937b2a2a253f11f3b4447",
+      "after_reference_repair_sha256": "f2cd83a1ee9a27b68d205241826de9ec33c866e41116759b009f9a2222a19c1e"
+    },
+    {
+      "old": "docs/plans/tasks/ops-014-local-rollout-guardrails.md",
+      "new": "docs/agents/plans/tasks/ops-014-local-rollout-guardrails.md",
+      "sha256": "b9973f8d081c52d1848afc29a14ca6e8bf5e8fbd149a66ae934795e23521d840",
+      "before_move_sha256": "b9973f8d081c52d1848afc29a14ca6e8bf5e8fbd149a66ae934795e23521d840",
+      "after_reference_repair_sha256": "5b0b372e04a3b694761a10af5d736e373f8bb67a74d8c3f2a3e2e7bbb984c852"
+    },
+    {
+      "old": "docs/plans/tasks/ops-015-rootless-container-runtime.md",
+      "new": "docs/agents/plans/tasks/ops-015-rootless-container-runtime.md",
+      "sha256": "d5535fea632d80d8847c611698a4bde50eaefe5c4295731c962bdf6ec88c067f",
+      "before_move_sha256": "d5535fea632d80d8847c611698a4bde50eaefe5c4295731c962bdf6ec88c067f",
+      "after_reference_repair_sha256": "7c2d8677fe69b719adb6e1a949a7dc5a64665c4dc01f868909c73d8fa26dd8d7"
+    },
+    {
+      "old": "docs/plans/tasks/ops-016-local-rootless-deployment.md",
+      "new": "docs/agents/plans/tasks/ops-016-local-rootless-deployment.md",
+      "sha256": "7cb8c7ef3eaf9dc55f3ac2bfe5b8148d8c82bedd1686eafd6670158587ad07da",
+      "before_move_sha256": "7cb8c7ef3eaf9dc55f3ac2bfe5b8148d8c82bedd1686eafd6670158587ad07da",
+      "after_reference_repair_sha256": "ffa8d6279bfd0ff0b6eaab83f6d7cfd44097c30f6eeb75979b0a71dcd697dc0b"
+    },
+    {
+      "old": "docs/plans/tasks/ops-017-container-worker-listener.md",
+      "new": "docs/agents/plans/tasks/ops-017-container-worker-listener.md",
+      "sha256": "79111a59789028bc232bcc9da44184e95772f94b1746aed53c4b2b81446d07fe",
+      "before_move_sha256": "79111a59789028bc232bcc9da44184e95772f94b1746aed53c4b2b81446d07fe",
+      "after_reference_repair_sha256": "c1f94b18460d7687c6ebf4834b8a471cbfce5c7a58f6bf783abbe6fa8bd24544"
+    },
+    {
+      "old": "docs/plans/tasks/ops-018-container-worker-rollout.md",
+      "new": "docs/agents/plans/tasks/ops-018-container-worker-rollout.md",
+      "sha256": "d521d943a479cffbf0bd8895eed5c405f351ba893024c345cc2a4f2cf26d4889",
+      "before_move_sha256": "d521d943a479cffbf0bd8895eed5c405f351ba893024c345cc2a4f2cf26d4889",
+      "after_reference_repair_sha256": "01898f54d7d1b05bc4e61923ab8907db468845228f2179d1ed630f20b47b45ea"
+    },
+    {
+      "old": "docs/plans/tasks/ops-019-ubi10-runtime-images.md",
+      "new": "docs/agents/plans/tasks/ops-019-ubi10-runtime-images.md",
+      "sha256": "668a6cb4bd71b79a548db3c39cdcb3eedee6ad1faefbea39522eaf8f954c9f26",
+      "before_move_sha256": "668a6cb4bd71b79a548db3c39cdcb3eedee6ad1faefbea39522eaf8f954c9f26",
+      "after_reference_repair_sha256": "83f8656804b9bfe5917834a7c929fc63df034fb7fdd5bce76145e460ac1f781d"
+    },
+    {
+      "old": "docs/plans/tasks/rel-010-rootless-release-artifacts.md",
+      "new": "docs/agents/plans/tasks/rel-010-rootless-release-artifacts.md",
+      "sha256": "3d8e9c763289f0cf90a7860bacb024d1b58ba8f7f59ddd806392accf8a7952c0",
+      "before_move_sha256": "3d8e9c763289f0cf90a7860bacb024d1b58ba8f7f59ddd806392accf8a7952c0",
+      "after_reference_repair_sha256": "e973092d750baae442368cc38816efef75dc4da5305ff37b450b6a332740a0f0"
+    },
+    {
+      "old": "docs/plans/tasks/rel-011-local-release-and-handoff.md",
+      "new": "docs/agents/plans/tasks/rel-011-local-release-and-handoff.md",
+      "sha256": "f62d1179d8e8b4e8606e40f8689605a47d07d91c2755fdd3c304eecd34229e3a",
+      "before_move_sha256": "f62d1179d8e8b4e8606e40f8689605a47d07d91c2755fdd3c304eecd34229e3a",
+      "after_reference_repair_sha256": "630cbd8b5f66829b66bccae925805cfa0164dc988b1e9a258a7c59036b7d648e"
+    },
+    {
+      "old": "docs/plans/tasks/rel-012-clean-container-release-artifacts.md",
+      "new": "docs/agents/plans/tasks/rel-012-clean-container-release-artifacts.md",
+      "sha256": "d3d54d27cfa512a3e624673c8f426cd3de89a43e6deeabf1389c833b4f197cfd",
+      "before_move_sha256": "d3d54d27cfa512a3e624673c8f426cd3de89a43e6deeabf1389c833b4f197cfd",
+      "after_reference_repair_sha256": "b0190e6f9c29a0cc5635c8a5526eb94acc6964a6c1b83f5683af1143e9d5e2de"
+    },
+    {
+      "old": "docs/plans/tasks/rel-013-container-worker-artifacts.md",
+      "new": "docs/agents/plans/tasks/rel-013-container-worker-artifacts.md",
+      "sha256": "29b4ecd655d8bafe5768de2a9d66fe1d9f37afd7c40f82dfcc80b4a1ec9070c4",
+      "before_move_sha256": "29b4ecd655d8bafe5768de2a9d66fe1d9f37afd7c40f82dfcc80b4a1ec9070c4",
+      "after_reference_repair_sha256": "2de09180953204bcac1f7756de429be8be17be36efa4f7c93931ea1f3aa01fb6"
+    },
+    {
+      "old": "docs/plans/tasks/rel-014-container-worker-release.md",
+      "new": "docs/agents/plans/tasks/rel-014-container-worker-release.md",
+      "sha256": "aa3126d05350b863a4b270704ca74876f6fa2b2c64ed0be2670fe8c69c03cef3",
+      "before_move_sha256": "aa3126d05350b863a4b270704ca74876f6fa2b2c64ed0be2670fe8c69c03cef3",
+      "after_reference_repair_sha256": "eaf081cf2d62430b8036913bd2496d08db4bf43cc7cee0d4c91b4d758e3ca59c"
+    },
+    {
+      "old": "docs/progress.md",
+      "new": "docs/agents/progress.md",
+      "sha256": "357e1f1642ac5207ab8e0468cfe6659e0a5af929583c49cd26fdc87b1369e0f8",
+      "before_move_sha256": "357e1f1642ac5207ab8e0468cfe6659e0a5af929583c49cd26fdc87b1369e0f8",
+      "after_reference_repair_sha256": "99dd89851856288e07d7e2fa242df695d4001ad90b3874cea33b4c03a89a5768"
+    },
+    {
+      "old": "docs/plan.md",
+      "new": "docs/agents/history/plan.md",
+      "sha256": "568535bef36dbc19b836cd74b76863185eff2fbff6d36767c7f318f58a87cfa2",
+      "before_move_sha256": "568535bef36dbc19b836cd74b76863185eff2fbff6d36767c7f318f58a87cfa2",
+      "after_reference_repair_sha256": "f0f4623ebda5a8689b8f398576d0d7ece0825f849410abde426c7b21e00f7502"
+    },
+    {
+      "old": "docs/adr/decision-080.md",
+      "new": "docs/agents/adr/decision-080.md",
+      "sha256": "3e2628354f526fa600f73612effb4726d02015220f0b0971ab9e08e60fa964ca",
+      "before_move_sha256": "3e2628354f526fa600f73612effb4726d02015220f0b0971ab9e08e60fa964ca",
+      "after_reference_repair_sha256": "5e70036a059e29356ace4bcff2ada18b4e6de6a9da584ea975fd721bf1ddde19"
+    },
+    {
+      "old": "docs/adr/decision-081.md",
+      "new": "docs/agents/adr/decision-081.md",
+      "sha256": "accd0cf14bb786a5031a110180139c4fcf4c82d9f8ccdf51f9b07ddebeec5b14",
+      "before_move_sha256": "accd0cf14bb786a5031a110180139c4fcf4c82d9f8ccdf51f9b07ddebeec5b14",
+      "after_reference_repair_sha256": "65de9638cb14cb51d4276b17d63b8870d7d955d6f7390b1c93132220eebad506"
+    },
+    {
+      "old": "docs/adr/decision-082.md",
+      "new": "docs/agents/adr/decision-082.md",
+      "sha256": "843524e6616b3359444a3b38faaa4d22897456e3c6ab96ac0ac82f74fe7cc2f0",
+      "before_move_sha256": "843524e6616b3359444a3b38faaa4d22897456e3c6ab96ac0ac82f74fe7cc2f0",
+      "after_reference_repair_sha256": "9a556ab0f230326d448fb9faea51c6e8109a5b94834b14c21c39f8beb13c6a62"
+    },
+    {
+      "old": "docs/adr/decision-106.md",
+      "new": "docs/agents/adr/decision-106.md",
+      "sha256": "5469dd1b8be2dd15098c90a5b83446d3685f9e97ea63c0b23fe576ec97eb63a9",
+      "before_move_sha256": "5469dd1b8be2dd15098c90a5b83446d3685f9e97ea63c0b23fe576ec97eb63a9",
+      "after_reference_repair_sha256": "48ca0be8369baad8ede40b90960cb55c61d559b34510f01c9d240681612ad51a"
+    },
+    {
+      "old": "docs/adr/decision-107.md",
+      "new": "docs/agents/adr/decision-107.md",
+      "sha256": "b2d7a5ff23871bcc8178f133dd27d102ef91bedd57a6718aa8ff5bdb49f43e79",
+      "before_move_sha256": "b2d7a5ff23871bcc8178f133dd27d102ef91bedd57a6718aa8ff5bdb49f43e79",
+      "after_reference_repair_sha256": "27dbc702a6e3700c6eab5e7da295bf1813054d59d579b5f61d4c1ba0ca1880cd"
+    }
+  ]
+}

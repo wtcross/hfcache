@@ -1,7 +1,7 @@
 # API client contract
 
 Status: API-011 implements independent client/configuration primitives under the
-[active plan](plans/2026-10-17-plan-rest-api-and-mcp.md). Its task records validation;
+[active plan](agents/plans/2026-10-17-plan-rest-api-and-mcp.md). Its task records validation;
 API-012 migrates reader commands/candidates and API-013 migrates operational
 commands plus explicit operation observation. Global endpoint/source
 options select management settings. No production

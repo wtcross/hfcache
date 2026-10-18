@@ -3,9 +3,9 @@
 - Status: Accepted; implemented by API-004.
 - Date: 2026-10-17.
 - Work package: API-004, this commit.
-- Source: [progress decision 111](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-004-isolate-execution-context.md).
+- Source: [progress decision 111](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-004-isolate-execution-context.md).
 
 ## Context and decision
 

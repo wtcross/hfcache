@@ -17,11 +17,11 @@ file — edit this one.
 
 1. `git log --oneline -20` and `git status` — trust the repository over any
    summary of prior sessions, including compacted context.
-2. `docs/plans/current.md` — the sole active-plan selector. If active, read
+2. `docs/agents/plans/current.md` — the sole active-plan selector. If active, read
    that dated plan and its next task; load other tasks only for dependencies
    or relevant context. Task files own execution status. No active plan does
    not authorize starting an old backlog item.
-3. Relevant recent entries in `docs/progress.md`, **Operator handoff**, and
+3. Relevant recent entries in `docs/agents/progress.md`, **Operator handoff**, and
    the numbered **Decisions** log — historical evidence and outstanding
    operator/backlog context, not the active task queue.
 4. `docs/agents/workflow.md` — how work is committed and recorded.
@@ -48,8 +48,8 @@ run `hfcache archive init` — the archive exists.
 | REST server, authentication, operation receipts, or API-backed CLI | `docs/api.md`, `docs/server.md`, `docs/api-client.md`; then the affected contract rows below |
 | Read-only MCP transport, tools, or example client | `docs/mcp.md`, `docs/security.md`, `docs/consumers.md`; retain the nine-tool allowlist and whole-archive trust boundary |
 | Threat model and controls | `docs/security.md` |
-| Draft, activate, resume, or close a plan; add a task | `docs/agents/planning.md`, then `docs/plans/current.md` and the relevant dated plan/task; implementation authorization permits activation, while a draft alone does not |
-| A new feature or work package | The planning row above, affected `docs/invariants.md` sections, and relevant records from `docs/adr/README.md`; load `docs/plan.md` only where its original contract applies |
+| Draft, activate, resume, or close a plan; add a task | `docs/agents/planning.md` and `docs/agents/invariants.md`, then `docs/agents/plans/current.md` and the relevant dated plan/task; implementation authorization permits activation, while a draft alone does not |
+| A new feature or work package | The planning row above, affected `docs/invariants.md` sections, and relevant records from `docs/adr/README.md`; use `docs/agents/historical-contract-map.md` for former plan requirements |
 | Introduce or change an invariant or architectural decision | `docs/invariants.md` upkeep rules, `docs/adr/README.md` maintenance rules, and `docs/agents/workflow.md`; update the register, affected ADRs, contracts, and tracker in the same work package |
 | Cut or deploy a release | `docs/agents/release.md`, then `docs/deployment-centos-stream-10.md` §13–§14 |
 | Operate or debug the live archive | `docs/operations.md`, `docs/recovery.md` |
@@ -63,9 +63,9 @@ run `hfcache archive init` — the archive exists.
   changing the contract first, in the same commit, with the reasoning recorded
   (`docs/architecture.md` §9; `docs/agents/workflow.md`).
 - **Plan before implementation.** Keep one active plan selected by
-  `docs/plans/current.md`. Store plans as
-  `docs/plans/YYYY-MM-DD-plan-<slug>.md` and one task per work package in
-  `docs/plans/tasks/`, following `docs/agents/planning.md`. Create task records
+  `docs/agents/plans/current.md`. Store plans as
+  `docs/agents/plans/YYYY-MM-DD-plan-<slug>.md` and one task per work package in
+  `docs/agents/plans/tasks/`, following `docs/agents/planning.md`. Create task records
   before execution, maintain them in the implementation commit, and preserve
   completed plans/tasks. Keep small changes proportional with a brief plan
   and one task. Existing backlog is activated only within authorized scope.
@@ -82,7 +82,7 @@ run `hfcache archive init` — the archive exists.
   default test suite, and a build. Every commit passes it.
 - **Commits** are `<WORK-PACKAGE-ID>: <summary>`, one work package per commit,
   with task evidence, relevant plan/current updates, and the completed
-  `docs/progress.md` entry in the same commit.
+  `docs/agents/progress.md` entry in the same commit.
 - **No new runtime dependencies** without a recorded decision
   (`docs/architecture.md` `FW-03`/`FW-04`).
 - **Never delete what you cannot explain** (`FS-19`, `AD-16`) — a rule for the

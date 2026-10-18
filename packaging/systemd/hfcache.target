@@ -1,4 +1,4 @@
-# The scheduled lifecycle, as one thing an operator enables (docs/plan.md §22.1).
+# The scheduled lifecycle, as one thing an operator enables (docs/security.md hardening posture).
 #
 # Starting this target activates the archive automount and whichever timers are
 # enabled. It deliberately does *not* run a sync: enabling the lifecycle and
@@ -14,7 +14,7 @@
 
 [Unit]
 Description=hfcache archive lifecycle
-Documentation=file:///opt/hfcache/current/docs/plan.md
+Documentation=file:///opt/hfcache/current/docs/deployment-centos-stream-10.md
 Documentation=file:///opt/hfcache/current/docs/cli.md
 Wants=srv-hfcache.automount hfcache-containers.service
 After=remote-fs.target

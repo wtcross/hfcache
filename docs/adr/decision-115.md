@@ -5,9 +5,9 @@
 - Activated-service/observer packaging: [decision 121](decision-121.md), API-014.
 - Date: 2026-10-17.
 - Work package: API-008, this commit.
-- Source: [progress decision 115](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-008-bounded-runner-and-offline-executor.md).
+- Source: [progress decision 115](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-008-bounded-runner-and-offline-executor.md).
 
 ## Context and decision
 

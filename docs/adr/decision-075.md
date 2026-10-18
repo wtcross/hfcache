@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
 - Original work package: `REL-003`.
-- Source: [decision 75 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 75 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -54,14 +54,14 @@ above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 
 Current governing documents:
-[docs/agents/release.md](../../docs/agents/release.md),
+[docs/agents/release.md](../agents/release.md),
 [CHANGELOG.md](../../CHANGELOG.md).
 
 Implementation or shipped-artifact evidence:
 [pyproject.toml](../../pyproject.toml).
 
 Verification or recorded operational evidence:
-[docs/progress.md](../../docs/progress.md).
+[docs/agents/progress.md](../agents/progress.md).
 
 
 ## 2026-10-18 data-preserving local rollout amendment (OPS-014)

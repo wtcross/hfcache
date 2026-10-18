@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-30.
 - Original work package: `CPT-002`.
-- Source: [decision 90 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 90 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -35,7 +35,7 @@ The source entry first appears in
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
-Current governing documents: [docs/cockpit.md](../../docs/cockpit.md),
+Current governing documents: [docs/cockpit.md](../cockpit.md),
 [LICENSE](../../LICENSE).
 
 Implementation or shipped-artifact evidence:

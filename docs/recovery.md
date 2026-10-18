@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Runbook, exercised on a throwaway archive from `hfcachewriter.lab.example.com` |
 | Work packages | `OPS-003` (corruption and repair), `OPS-004` (snapshot and replica restore) |
-| Derived from | `docs/plan.md` §16.5, §31; `docs/architecture.md` §7.5, §7.9 |
+| Derived from | `docs/agents/history/plan.md` §16.5, §31; `docs/architecture.md` §7.5, §7.9 |
 | Companions | `docs/operations.md` for normal running, `docs/deployment-centos-stream-10.md` for building the host |
 
 This is what to do when something is **wrong** with the archive: a revision whose

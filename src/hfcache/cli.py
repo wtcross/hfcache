@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
 
 DEFAULT_CONFIG_PATH = Path("/etc/hfcache/config.toml")
-"""Matches the systemd invocation in `docs/plan.md` §22.2."""
+"""Matches the systemd invocation in docs/security.md hardening posture."""
 
 app = typer.Typer(
     name="hfcache",
@@ -813,7 +813,7 @@ def doctor(
     command stopped. The checks themselves are `hfcache.preflight`'s, which is
     the same runner a mutating command's hard gate uses — the report an operator
     reads and the preflight a scheduled run performs cannot describe different
-    things (plan §19).
+    things (docs/cli.md doctor contract).
     """
     started_at = utc_now()
     try:
@@ -963,11 +963,11 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
 
 @app.command()
 def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
-    """Synchronize configured repositories (plan §13.1).
+    """Synchronize configured repositories (docs/cli.md sync contract).
 
-    The scheduled command, and the only one that downloads. It runs the §13.1
+    The scheduled command, and the only one that downloads. It runs the the sync run contract
     sequence in order: load configuration, take the exclusive lock, prove the
-    §19 storage requirements, then process repositories in deterministic
+    the preflight contract storage requirements, then process repositories in deterministic
     configuration order, rebuild the derived catalog, and write a durable run
     report.
 
@@ -1090,7 +1090,8 @@ def verify(
         typer.Option("--run-id", metavar="ID", help="Which run --new checks. Default: the newest."),
     ] = None,
 ) -> None:
-    """Re-read published content and compare it with its manifest (plan §16).
+    """Re-read published content and compare it with its manifest (docs/cli.md verification
+    contract).
 
     Exits `0` on a clean result and `40` on any integrity finding. A finding
     never rewrites a manifest, prunes a revision, or re-downloads over the
@@ -1118,7 +1119,7 @@ def verify(
 
     `--estimate` hashes nothing and takes no lock. It reports what `--full`
     would read, so that scheduling it against a NAS maintenance window is a
-    decision made from a measurement rather than from a guess (plan §16.4).
+    decision made from a measurement rather than from a guess (docs/cli.md verification contract).
     """
     started_at = utc_now()
     request = VerificationRequest(
@@ -1244,7 +1245,7 @@ def prune(
         typer.Option("--apply", help="Execute a validated plan."),
     ] = False,
 ) -> None:
-    """Inspect or complete retention cleanup (plan §15.2).
+    """Inspect or complete retention cleanup (docs/architecture.md retention contract).
 
     Retention normally runs inside `sync`; this command exists to inspect the
     plan before it runs and to complete retention an earlier failure deferred
@@ -1254,7 +1255,7 @@ def prune(
     would execute, built from the same references and manifests the prune itself
     reads, so what an operator reviewed is what runs.
 
-    `--apply` mutates, so it takes the exclusive lock and passes the same §19
+    `--apply` mutates, so it takes the exclusive lock and passes the same the preflight contract
     preflight as any other mutating command, and plans *inside* them — a plan
     made before the lock could be stale by the time it ran.
     """
@@ -1371,7 +1372,7 @@ def recover(
         typer.Option("--apply", help="Execute a fully validated plan. Idempotent."),
     ] = False,
 ) -> None:
-    """Reconcile unfinished transaction journals (plan §18).
+    """Reconcile unfinished transaction journals (docs/architecture.md recovery contract).
 
     Roll-forward oriented: it never replaces an expected digest, chooses a
     revision by modification time, or removes unknown data (`AD-16`). A state it
@@ -1419,7 +1420,8 @@ def repair(
         typer.Option("--reason", metavar="TEXT", help="Why this repair is being performed."),
     ] = "operator_requested",
 ) -> None:
-    """Replace a damaged publication instance with a verified one (plan §16.5).
+    """Replace a damaged publication instance with a verified one (docs/cli.md verification
+    contract).
 
     The exact immutable SHA is downloaded into an isolated
     `.store/repair/<transaction-id>/hub` and checked against the **original**

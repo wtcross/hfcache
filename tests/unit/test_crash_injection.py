@@ -3,10 +3,10 @@
 Every interruption here is provoked rather than fabricated: a step is made to
 fail, the transaction stops where it stopped, and `recover` is asked what to do
 about the state that actually resulted. `tests/unit/test_failure_matrix.py`
-maps these injections onto plan §26.6's points.
+maps these injections onto docs/development.md test contract's points.
 
-The repair half additionally circles `AD-13` (`docs/architecture.md` §7.5, plan
-§16.5): repair must not be able to launder corrupt bytes into the expected
+The repair half additionally circles `AD-13` (`docs/architecture.md` §7.5, docs/cli.md
+verification contract): repair must not be able to launder corrupt bytes into the expected
 value. So the archive is built by publishing for real, damaged for real, and
 the repair is run through `repair_revision` — and what is asserted afterwards
 is that the *original* manifest is unchanged, that the retired instance is
@@ -861,7 +861,8 @@ def test_a_publication_interrupted_before_the_current_ref_rolls_forward(
 ):
     """§7.3, "After 7, before 8": retained and discoverable, but not yet current.
 
-    §26.6's `revision_ref_published` row. The condition function has its own test
+    the development failure-injection matrix's `revision_ref_published` row. The condition
+    function has its own test
     (`test_an_older_revision_rolled_forward_does_not_become_current`); this is the
     boundary reached by an actual crash, which is what the matrix asks for.
     """
@@ -1324,7 +1325,7 @@ def test_a_retirement_record_that_will_not_load_never_hides_the_others(client, l
 
 
 def test_a_repair_with_no_recorded_findings_still_runs(client, layout, config):
-    """Plan §16.3 lists a scrub error and a restore as reasons to repair, and
+    """docs/cli.md verification contract lists a scrub error and a restore as reasons to repair, and
     neither requires this archive to have verified the instance first."""
     sync(client, layout, config, only_model(config))
     assert not layout.verification_catalog.exists()
@@ -1631,7 +1632,7 @@ def test_a_repair_of_a_non_current_revision_completes_without_moving_current(
 
 
 def test_the_repair_records_the_findings_it_is_answering(client, layout, config, config_path):
-    """Plan §16.5 step 1: the mismatch report is preserved as evidence, read
+    """docs/cli.md verification contract: the mismatch report is preserved as evidence, read
     from the catalog rather than by re-reading bytes that are unstable."""
     sync(client, layout, config, only_model(config))
     damage(layout, SHA_A)

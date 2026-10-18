@@ -2,27 +2,27 @@
 
 This document defines planning for implementation. Read it when creating,
 activating, changing, closing, or resuming a plan; ordinary sessions start at
-[the current tracker](../plans/current.md) and load only the selected plan and
+[the current tracker](plans/current.md) and load only the selected plan and
 task. The [work-package workflow](workflow.md) still governs implementation,
 validation, commits, decisions, and handoff.
 
 ## Authority and scope
 
-- `docs/plans/current.md` selects the sole active plan and points to its next
+- `docs/agents/plans/current.md` selects the sole active plan and points to its next
   task and blockers. It is a short navigation surface, not another task log.
 - Each dated plan owns its scope, lifecycle, ordered task links, and plan
   acceptance criteria. Each task file owns its dependency declarations,
   current status, detailed requirements, implementation notes, and validation
   evidence. Plan tables may summarize prerequisite order; task files remain
   the authority when a dependency changes.
-- `docs/progress.md` retains completed work-package evidence, the chronological
+- `docs/agents/progress.md` retains completed work-package evidence, the chronological
   Decisions log, and Operator handoff. It is not the scheduler for active work.
   A completed package's entry links its plan and task.
 - Area contracts and `docs/invariants.md` define required behaviour; ADRs
   explain decisions. A plan cannot silently override them. Keep them current
   in the same work package when implementation changes their requirements.
-- `docs/plan.md` remains the historical implementation plan and a source of
-  detailed contracts. Its old package lists do not select today's work.
+- `docs/agents/history/plan.md` retains historical implementation evidence. Living human contracts own
+  all current technical requirements. Its old package lists do not select today's work.
 
 Every implementation work package has a dated plan and task file, including
 documentation changes. Keep the detail proportional: a small, authorized
@@ -33,13 +33,26 @@ handoff, does not authorize or activate a new implementation plan.
 
 ## Files and identifiers
 
-Plans use `docs/plans/YYYY-MM-DD-plan-<slug>.md`, with a lowercase descriptive
+**One-time authority migration (2026-10-18, DOC-011, decision 130).** The
+user authorized implementation of the REST/MCP documentation alignment plan.
+Before relocating records, this amendment permits moving the original
+`docs/plans/` records per file into `docs/agents/plans/`, the progress audit
+into `docs/agents/progress.md`, and the historical plan into
+`docs/agents/history/plan.md`. Destination collisions must refuse the move;
+the supplied alignment plan and task records must remain intact. A migration
+manifest records original paths and SHA-256 hashes. This is the sole exception
+to stable paths below; identities, dates, completed evidence and restrictions
+remain unchanged. After migration only `docs/agents/plans/current.md` selects
+work. The historical plan becomes evidence; living human contracts own all
+normative technical requirements. No historical host authorization is renewed.
+
+Plans use `docs/agents/plans/YYYY-MM-DD-plan-<slug>.md`, with a lowercase descriptive
 slug and the creation date. The date and path remain stable after activation,
 rescheduling, or completion; record later events inside the file. Dates use
 the session's stated local date. Do not rename an older plan to make it look
 new or reuse its path for different work.
 
-Activated plans link task files under `docs/plans/tasks/`. Use the existing
+Activated plans link task files under `docs/agents/plans/tasks/`. Use the existing
 work-package ID, lowercased, followed by a descriptive slug, for example
 `doc-010-planning-workflow.md`. The task's heading and metadata retain the
 canonical uppercase ID, such as `DOC-010`. Do not introduce a second task ID
@@ -156,7 +169,7 @@ Plan:
 | Status | draft |
 | Created | YYYY-MM-DD |
 | Authorization | <instruction and its date, or draft-only> |
-| Tracker | `docs/plans/current.md` |
+| Tracker | `docs/agents/plans/current.md` |
 
 ## Outcome and scope
 
@@ -170,7 +183,7 @@ Plan:
 
 | Order | Work package and task file | Depends on |
 | --- | --- | --- |
-| 1 | `<ID>` — `docs/plans/tasks/<id>-<slug>.md` | None |
+| 1 | `<ID>` — `docs/agents/plans/tasks/<id>-<slug>.md` | None |
 
 ## Acceptance and validation
 
@@ -189,7 +202,7 @@ Task:
 | Field | Value |
 | --- | --- |
 | Status | pending |
-| Plan | `docs/plans/YYYY-MM-DD-plan-<slug>.md` |
+| Plan | `docs/agents/plans/YYYY-MM-DD-plan-<slug>.md` |
 | Depends on | None |
 
 ## Scope and acceptance
@@ -222,8 +235,8 @@ Current tracker:
 
 | Field | Value |
 | --- | --- |
-| Active plan | None, or `docs/plans/YYYY-MM-DD-plan-<slug>.md` |
-| Next task | None, or `docs/plans/tasks/<id>-<slug>.md` |
+| Active plan | None, or `docs/agents/plans/YYYY-MM-DD-plan-<slug>.md` |
+| Next task | None, or `docs/agents/plans/tasks/<id>-<slug>.md` |
 | Blockers | None, or a brief description and task link |
 
 <When no plan is active, say so explicitly. Keep completed implementation

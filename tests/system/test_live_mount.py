@@ -17,8 +17,10 @@ asserts that by comparing the mount's contents before and after.
 
 The file runs against a deployment in either state. Before the checkpoint the
 archive is uninitialized and the checks that need a sentinel skip; after it they
-are the ones that matter most, because `docs/plan.md` §35.3 means effective
-writability and the three §14.2 publication capabilities cannot be established on
+are the ones that matter most, because docs/storage-requirements.md effective writability means
+effective
+writability and the three the doctor capability contract publication capabilities cannot be
+established on
 this export any other way than by performing them.
 """
 
@@ -49,9 +51,11 @@ def archive_id() -> str:
     `/etc/hfcache/config.toml` first, which is the deployment's own answer. It is
     mode `0640` root:hfcache and the suite runs as an ordinary developer account,
     so that usually fails — and it must keep failing rather than the account be
-    added to the group, because the mode is the contract (plan §21.2).
+    added to the group, because the mode is the contract (docs/deployment-centos-stream-10.md
+    native profile).
 
-    The sentinel is the fallback and is readable here for the reason plan §35.3
+    The sentinel is the fallback and is readable here for the reason docs/storage-requirements.md
+    effective writability
     gives: the export maps every client identity to the dataset owner. Taking the
     id from there does make the `sentinel` check's *comparison* trivially satisfy
     itself — what it still proves on the live mount is that the sentinel parses,
@@ -199,7 +203,7 @@ def test_the_sentinel_on_the_live_mount_names_the_configured_archive(
 def test_the_live_mount_is_effectively_writable(mutating_checks: dict[str, dict]):
     # Under the Mapall export this cannot be established any other way: the
     # owner has no local account, so only performing the write answers it
-    # (`docs/plan.md` §35.3).
+    # (docs/storage-requirements.md effective writability).
     assert mutating_checks["directory_writability"]["outcome"] == "pass"
 
 
@@ -207,7 +211,8 @@ def test_the_live_mount_is_effectively_writable(mutating_checks: dict[str, dict]
 def test_every_publication_capability_holds_on_the_real_dataset(
     mutating_checks: dict[str, dict],
 ):
-    # Plan §14.2. Hardlink, atomic directory rename, and atomic ref replacement
+    # docs/architecture.md publication contract. Hardlink, atomic directory rename, and atomic ref
+    # replacement
     # are the three things a publication is made of, and NFS is exactly where an
     # assumption about them would be wrong.
     for name in ("hardlink_capability", "atomic_directory_rename", "reference_replacement"):

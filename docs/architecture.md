@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/plan.md` §1–§6, §13–§19, §25 |
+| Derived from | `docs/agents/history/plan.md` §1–§6, §13–§19, §25 |
 | Work packages | `ARC-001`, `ARC-002`, `ARC-006`, `ARC-008` |
 | Schema baseline | All durable formats begin at `schema_version = 1` |
 
@@ -297,7 +297,7 @@ reissue a value.
 **DOC-009 conformance finding (2026-10-17).** These are the declared
 `AD-05` / `FS-20` requirements. The current allocator reads retained
 references only, and a regression test assigns a fresh generation when a
-pruned SHA returns. Pending `RET-011` in `docs/progress.md` records this
+pruned SHA returns. Pending `RET-011` in `docs/agents/progress.md` records this
 existing contract/implementation gap; `docs/adr/ad-05.md` preserves the
 decision and evidence. This finding does not weaken the requirement or
 change runtime behaviour.
@@ -728,7 +728,7 @@ change a mode. So the only moment its mode can be set is at creation, and
 `publication.create_staging` sets it with `mkdir` **followed by an explicit
 `chmod`**. The `chmod` is not redundant with `mkdir`'s mode argument: POSIX does
 not guarantee `mkdir` honours setgid there, and this NFSv4 server does not — `mkdir`
-alone yields `0750`, `mkdir`+`chmod` yields `2750` (`docs/progress.md` decision 66).
+alone yields `0750`, `mkdir`+`chmod` yields `2750` (`docs/agents/progress.md` decision 66).
 Removing it would drop the group the read identity depends on, silently, and the
 failure would appear on a consumer host rather than this one.
 
@@ -1370,7 +1370,7 @@ exists to prevent.
 ### 2026-10-17 API-001 amendment
 
 Decisions [108](adr/decision-108.md) and [109](adr/decision-109.md) amend
-FW-01/FW-03 for the activated [REST-first plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
+FW-01/FW-03 for the activated [REST-first plan](agents/plans/2026-10-17-plan-rest-api-and-mcp.md).
 The typed services retain ordinary domain functions and existing archive authority.
 The closed dependency list permits incremental `httpx` (base), FastAPI/Uvicorn
 (`server`), and standalone `fastmcp` (`mcp`, only after REST acceptance). None is
@@ -1557,3 +1557,13 @@ Contracts produced by Phase 0: this document, `docs/configuration.md`,
 `docs/schemas.md`, `docs/cli.md`, and `docs/security.md`. Implementation phases
 are written against these; a change to behaviour that contradicts one of them is a
 change to the contract first.
+
+## Copy publication mechanics
+
+Explicit copy publication copies resolved regular-file contents, never cache
+symlinks. Copy each file to a temporary path and atomically rename it into
+staging after verifying its size and SHA-256 against the ingestion digest.
+Validate the complete landed tree before promotion. Capacity admission includes
+the projected duplicate allocation; actual logical copied bytes follow the landed manifest and publication mode.
+These logical counts do not measure storage-layer physical allocation. Staging and its final publication still share a filesystem
+for atomic promotion (`FS-04`).

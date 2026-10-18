@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/plan.md` §12, §20.2, §21.2, §22.5, §23, §25 |
+| Derived from | `docs/agents/history/plan.md` §12, §20.2, §21.2, §22.5, §23, §25 |
 | Work package | `ARC-007` |
 
 This document states what `hfcache` protects, who it protects it from, what it
@@ -148,7 +148,7 @@ filesystem, or into an unrelated dataset.
 is a mount point distinct from its parent, is an NFS/NFSv4 filesystem, is
 read/write, and carries a sentinel whose UUID matches `storage.archive_id`
 (`FS-01`–`FS-03`). Writability is proven by a real create/fsync/rename/delete
-probe, because the Mapall export makes `st_uid` comparison meaningless (§`docs/plan.md` §35.3).
+probe, because the Mapall export makes `st_uid` comparison meaningless (§`docs/agents/history/plan.md` §35.3).
 The bare `/srv/hfcache` mount point is root-owned and not writable by the service
 identity, so an unmounted archive fails closed rather than filling the root
 filesystem. Failure is exit `20` before the first byte is fetched.
@@ -533,7 +533,7 @@ No-confirm init is inspection/refusal only, not a privileged submission. See
 Every setting below is applied and then **validated against a real run** — Hub
 requests, DNS, TLS, NFS I/O, hashing, and Xet reconstruction all exercised. A
 setting that breaks a legitimate operation is not silently dropped: the failing
-requirement and the narrower alternative are documented (`docs/plan.md` §22.5).
+requirement and the narrower alternative are documented (`docs/agents/history/plan.md` §22.5).
 
 ```text
 NoNewPrivileges=true          ProtectKernelTunables=true
@@ -576,7 +576,7 @@ SELinux remains enforcing throughout development and acceptance testing.
 Denials are resolved by fixing ownership, labels, or unit restrictions first, and
 only then by a narrowly scoped local policy module with documented source, build,
 installation, verification, and removal steps. `setenforce 0`, permissive domains,
-and blanket allow rules are not production solutions (`docs/plan.md` §23).
+and blanket allow rules are not production solutions (`docs/agents/history/plan.md` §23).
 
 ## 6. Explicitly out of scope
 
@@ -667,7 +667,7 @@ readers retain AD-21's whole-archive authorization, without per-repository ACLs.
 The [threat/control/test map](mcp.md#threat-control-and-test-traceability-mcp-003)
 connects each acceptance claim to concrete mounted tests. It applies existing
 T-01/02/07/08/12 and INV-002/003/007/010/016; it adds no tool, role or command
-capability. The [task record](plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
+capability. The [task record](agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
 owns actual runs and separates repository proof from deployment assumptions.
 
 | Security boundary | Required proof |
@@ -795,8 +795,29 @@ executor/drain shortcut is added. Repeat actual UBI proof before clean rollout.
 
 ### Installed peer-control acceptance (OPS-018, 2026-10-18)
 
-[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) closes hold 22 with actual
+[OPS-018](agents/plans/tasks/ops-018-container-worker-rollout.md) closes hold 22 with actual
 installed API-container framed PROBE under Enforcing before/after drain/restart.
 No allow/process-label/seccomp/executor bypass is used;0.2.0 failure stays history.
 This accepts listener connectivity and inspected confinement, not live NAS
 verification/workload or other-host security acceptance.
+
+## Hub adapter boundary
+
+Hub access uses an injectable narrow adapter over supported public
+`huggingface_hub` APIs. Resolve the requested reference to a full immutable
+SHA, retrieve tree metadata and logical size, and enforce configured public
+or explicitly authenticated scope before download. Optional identity validation
+uses `whoami`. Pass explicit repository ID/type, resolved SHA, private Hub
+cache path and configured worker count to `snapshot_download`; never use
+allow/ignore filters. Follow transfer with a local-only completeness check.
+Return typed metadata rather than library response objects to storage code.
+Cache inspection and revision deletion also use the adapter; never infer
+backing blobs from private cache-directory names.
+
+Anonymous calls pass `token=False`; authenticated calls pass the exact
+validated selected credential. Never pass `None` where implicit discovery
+could use a cached credential. The Xet transfer cache is disposable, not
+durable archive content. Never execute repository code, instantiate models,
+tokenizers, PEFT objects or dataset builders, enable `trust_remote_code`, or
+invoke Hub/Git/Git-LFS/Git-Xet subprocesses. Stream hashing in bounded chunks;
+never load an entire model file into memory.

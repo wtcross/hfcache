@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
 - Original work package: `VER-007`.
-- Source: [decision 62 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 62 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -52,8 +52,8 @@ The named work package's implementation commit is
 The source-entry introduction and implementation are recorded separately rather
 than inferred to be the same commit.
 
-Current governing documents: [docs/schemas.md](../../docs/schemas.md),
-[docs/architecture.md](../../docs/architecture.md).
+Current governing documents: [docs/schemas.md](../schemas.md),
+[docs/architecture.md](../architecture.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/publication.py](../../src/hfcache/publication.py),

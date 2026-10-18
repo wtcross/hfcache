@@ -349,7 +349,7 @@ def test_a_destination_parent_that_cannot_be_created_is_hfsyn005(layout, transac
 
 
 # --------------------------------------------------------------------------- #
-# What a publication costs (plan §19 item 9)
+# What a publication costs (docs/cli.md doctor contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -364,7 +364,7 @@ def test_copy_publication_costs_a_second_copy_of_every_byte():
 
 
 # --------------------------------------------------------------------------- #
-# Staging one file (plan §14.1, §14.3)
+# Staging one file (docs/architecture.md publication contract, the explicit copy contract)
 # --------------------------------------------------------------------------- #
 
 PAYLOAD = b"the bytes of one repository file\n"
@@ -606,7 +606,7 @@ def test_a_copy_that_cannot_be_written_leaves_no_partial_file(
 
 
 # --------------------------------------------------------------------------- #
-# Promotion (plan §13.2 step 15)
+# Promotion (docs/cli.md sync contract)
 # --------------------------------------------------------------------------- #
 
 

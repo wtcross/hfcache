@@ -1,6 +1,7 @@
-"""Plan §26.6's failure-injection matrix, and what covers each of its points.
+"""docs/development.md test contract's failure-injection matrix, and what covers each of its points.
 
-§26.6 lists eleven points at which failure must be injected, and one property
+the development failure-injection matrix lists eleven points at which failure must be injected,
+and one property
 that has to hold at every one of them: *the previous current revision remains
 usable and no retained verified revision is accidentally destroyed.*
 
@@ -10,7 +11,8 @@ exercise, the verification interruption next to the `verify` command. That is th
 right place for them to run and the wrong place to read the matrix from, because
 no single module holds the whole map.
 
-So the map lives here, and it is executable. `MATRIX` names, for each of §26.6's
+So the map lives here, and it is executable. `MATRIX` names, for each of the development
+failure-injection matrix's
 eleven points, the test functions that cover it; the test below resolves every
 one of those names and fails if it has been renamed, moved, or deleted. A
 coverage claim in a comment rots silently. This one cannot.
@@ -19,6 +21,7 @@ coverage claim in a comment rots silently. This one cannot.
 """
 
 import importlib
+from pathlib import Path
 from typing import Final
 
 import pytest
@@ -211,13 +214,22 @@ MATRIX: Final[dict[str, tuple[tuple[str, str], ...]]] = {
         ),
     ),
 }
-"""Each §26.6 injection point, and the tests that inject failure there."""
+"""Each the development failure-injection matrix injection point, and the tests that inject
+failure there."""
 
 POINTS: Final = 11
-"""§26.6 lists eleven. If the plan gains a twelfth, this fails until it is mapped."""
+"""the development failure-injection matrix lists eleven. If the plan gains a twelfth, this fails
+until it is mapped."""
 
 
 def test_every_documented_injection_point_is_mapped():
+    contract = Path("docs/development.md").read_text()
+    documented = {
+        line.removeprefix("| ").removesuffix(" |")
+        for line in contract.splitlines()
+        if line.startswith("| ") and line not in {"| Injection point |", "| --- |"}
+    }
+    assert set(MATRIX) == documented
     assert len(MATRIX) == POINTS
 
 
@@ -239,7 +251,7 @@ def test_every_injection_point_names_tests_that_exist(point, covering):
 
     Half of that claim — that the tests exist and are named what this says — is
     checkable, so it is checked. The other half is judgement, and lives in the
-    comments above and in `docs/progress.md`'s `OPS-005` entry.
+    comments above and in `docs/development.md`'s failure-injection contract.
     """
     assert covering, f"{point} is mapped to nothing"
     for module_name, test_name in covering:

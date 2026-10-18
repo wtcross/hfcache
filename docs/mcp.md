@@ -4,13 +4,13 @@ MCP-001 adds an optional authenticated Streamable HTTP transport after committed
 REST acceptance. MCP-002 adds the explicit nine-tool metadata read interface,
 with repository acceptance recorded in its task. No command/job interface is exposed.
 [Decision 124](adr/decision-124.md) records dependency/auth/lifecycle rationale;
-the [transport task](plans/tasks/mcp-001-mount-authenticated-fastmcp.md) owns its
+the [transport task](agents/plans/tasks/mcp-001-mount-authenticated-fastmcp.md) owns its
 acceptance evidence. [Decision 125](adr/decision-125.md) and the
-[tool task](plans/tasks/mcp-002-curated-read-only-tools.md) own curated exposure
+[tool task](agents/plans/tasks/mcp-002-curated-read-only-tools.md) own curated exposure
 and its registry/schema/side-effect proof.
 MCP-003 supplies mounted security/side-effect evidence; MCP-004 completes the
 protected-file client and required build acceptance. The
-[acceptance task](plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) records
+[acceptance task](agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) records
 actual runs. MCP repository acceptance is complete; final API-017 closure and
 installed-host operator holds remain separate.
 
@@ -350,7 +350,7 @@ prove this for successful and failed mounted calls; annotations alone do not.
 Archive/receipt/config schemas, domain algorithms and whole-archive authorization
 are unchanged. Local socket/streaming tests and locked wheel installs do not prove
 deployed systemd/cgroup credentials, no-IP masks, browser/PAM, SELinux/NFS or
-rollback/drain acceptance. Existing [operator holds](progress.md#operator-handoff)
+rollback/drain acceptance. Existing [operator holds](agents/progress.md#operator-handoff)
 remain deployment prerequisites; no production operation is authorized.
 
 ## Resource costs and troubleshooting
@@ -399,7 +399,7 @@ diagnostics rather than enabling raw rejected-value/debug output.
 ## Threat, control and test traceability (MCP-003)
 
 These are required acceptance claims under decisions 124/125 and INV-002/003/
-007/010/016. The [MCP-003 task](plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
+007/010/016. The [MCP-003 task](agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md)
 owns executed results; a listed control or test reference alone is not evidence
 that its latest run passed. Mounted tests must enter the parent FastAPI lifespan
 and use supported streaming HTTP or disposable sockets, not only direct SDK calls.
@@ -483,7 +483,7 @@ installed socket ownership, TLS/proxy deployment, credential delivery/rotation,
 worker no-IP/source masks, cgroups, custom source paths, SELinux/NFS, browser/PAM
 or real drain/rollback behavior. Dependency/parser/SDK compromise and privileged
 host/operator compromise remain outside the narrow tool capability proof. Keep
-[operator holds 16–18](progress.md#operator-handoff) open until separately
+[operator holds 16–18](agents/progress.md#operator-handoff) open until separately
 performed; no production operation or hardening change is part of these tests.
 
 ## Rollback and deployment limits
@@ -531,7 +531,7 @@ MCP-004 client/packaging acceptance uses [the runnable example](../examples/mcp-
 [actual example socket tests](../tests/unit/test_mcp_client.py),
 [negative client/trust/budget tests](../tests/unit/test_mcp_client_security.py) and
 [REST/rotation/packaging acceptance](../tests/unit/test_mcp_acceptance.py). The
-[MCP-004 task](plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns precise
+[MCP-004 task](agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns precise
 commands/counts and the required --with-build gate, including all implemented
 extras, three real locked wheel profiles and Cockpit. Cold base/REST-only imports,
 unchanged verifier no-IP/credential/timer policy and disabled/enabled REST parity

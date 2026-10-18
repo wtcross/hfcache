@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Historical writer evidence; local 0.2.1 listener checkpoint accepted; NAS/workload and remaining operator holds explicit |
 | Work package | `OPS-001` |
-| Derived from | `docs/plan.md` §21, §22, §29, §30, §35 |
+| Derived from | `docs/agents/history/plan.md` §21, §22, §29, §30, §35 |
 | Companion | `docs/operations.md` for running it once it is up |
 
 The original CentOS Stream 10 procedure and blocks marked **observed** retain
@@ -18,7 +18,7 @@ re-initializing the existing archive.
 **What this does not cover.** Everything on the TrueNAS side: the dataset, the
 service identities, the writer export, the consumer export, snapshots and
 replication. Those are plan §20 and the operator handoff in
-`docs/progress.md`. This document assumes the writer export already exists and
+`docs/agents/progress.md`. This document assumes the writer export already exists and
 that the archive dataset is reachable, because until it is there is nothing for
 the writer to mount.
 
@@ -32,7 +32,7 @@ the writer to mount.
 | Export path | `/mnt/tank/huggingface-archive` | plan §34 |
 | Writer static IP | `192.0.2.90`, in the export's allow list | plan §34 |
 | Archive UUID | `00000000-0000-0000-0000-000000000000` | provisioned once; see §8 |
-| Repository list | two small public test repositories | `docs/progress.md` |
+| Repository list | two small public test repositories | `docs/agents/progress.md` |
 
 The values above — and every concrete hostname, address, and UUID in this
 repository — are placeholders of the right shape: hostnames under
@@ -308,7 +308,7 @@ The root and the UUID are restated on the command line deliberately: this is the
 one act that cannot be undone, so it does not take its target from a file alone.
 `--archive-id` must agree with `storage.archive_id` or the command is `HFARG002`.
 
-**Recorded when it was run** (`docs/progress.md`, live rollout checkpoints):
+**Recorded when it was run** (`docs/agents/progress.md`, live rollout checkpoints):
 `--inspect` reported `initializable: true`, `adopted_published: true`, and no
 unknown entries; the run created the fifteen remaining directories and
 `.hfcache-root`, and adopted the pre-created empty `published/` per plan §6.2 —
@@ -862,7 +862,7 @@ Never delete local receipts, regenerate keys or reconstruct commands from archiv
 journals to make a rollback proceed. Actual runner/drain and packaged deployment
 acceptance remain later tasks; this drill installs no production release and
 does not authorize host operations. See [schema §13](schemas.md#13-service-private-operation-control-state-api-007)
-and the [API-007 evidence](plans/tasks/api-007-operation-receipts-and-idempotency.md).
+and the [API-007 evidence](agents/plans/tasks/api-007-operation-receipts-and-idempotency.md).
 
 **API-014 scheduled-handle rollback barrier (2026-10-18, decision 121).**
 Preserve `/var/lib/hfcache/scheduled/` and both operation stores, including unknown/
@@ -871,7 +871,7 @@ on CPython 3.14.6 lacks `hfcache.scheduled_client`: module invocation exits 1 fo
 both private schema 1 and future 2 and preserves their bytes. The current reader
 accepts schema 1 and refuses future 2 with HFAPI014/20, also preserving bytes.
 The locked offline drill performed no archive operation or production install;
-details are in the [task](plans/tasks/api-014-systemd-and-deployment-integration.md)
+details are in the [task](agents/plans/tasks/api-014-systemd-and-deployment-integration.md)
 and [schema§14](schemas.md#14-scheduled-client-observation-handle-api-014).
 
 An old binary's missing observer support cannot establish nonexecution. Keep a
@@ -939,7 +939,7 @@ measurement authorizes it.
 Two acceptance items cannot be checked from the writer and are operator work:
 reboot persistence, and everything that needs a second host — the consumer
 export, its read-only enforcement, and a downstream copy. Both are in the handoff
-list in `docs/progress.md`.
+list in `docs/agents/progress.md`.
 
 ## 16. The Cockpit plugin
 
@@ -1001,7 +1001,7 @@ Every item below is **pending operator acceptance**, not an action performed by
 the feature implementation. Repository gates, real disposable sockets, installed
 throwaway wheels and state snapshots do not deploy services or certify the host.
 Follow the [release policy](agents/release.md) only after separate authorization;
-retain [operator holds 16–18](progress.md#operator-handoff) and the existing NAS/
+retain [operator holds 16–18](agents/progress.md#operator-handoff) and the existing NAS/
 consumer/calendar holds. Never initialize the existing archive or weaken SELinux/
 systemd restrictions to make acceptance pass.
 
@@ -1104,7 +1104,7 @@ systemd restrictions to make acceptance pass.
 ## 18. Authorized local data-preserving rollout (OPS-014)
 
 Tyler authorized a local release/rollout on 2026-10-18 and required Caddy plus
-rootless Podman runtime. The [selected plan](plans/2026-10-18-plan-local-rootless-rollout.md)
+rootless Podman runtime. The [selected plan](agents/plans/2026-10-18-plan-local-rootless-rollout.md)
 and [decision 126](adr/decision-126.md) govern this scoped work; historical
 no-deploy feature authority remains history. No other host/NAS configuration,
 remote push/registry publication or ACME issuance is authorized. Existing
@@ -1209,7 +1209,7 @@ file I/O. See [decision 126](adr/decision-126.md#permanent-host-boot-guard-ops-0
 OPS-016's actual local rollout is partial: TLS/API/MCP/container-client and drain
 pass, but SELinux blocks API-container access to the user-manager-created private
 worker socket. Host-origin FD3/peer probes pass; they are not end-to-end verifier
-acceptance. Keep the [worker hold](containers.md#actual-partial-acceptance-and-worker-hold)
+acceptance. Keep the [worker hold](containers.md#020-partial-acceptance-and-historical-worker-hold)
 and review the label-at-creation/activation design in a later authorized task.
 Do not weaken Enforcing policy, alter container labels or execute verification
 on the host as a workaround. NAS write/full-domain/NFS workload checks remain
@@ -1252,7 +1252,7 @@ all state and locks, and all forbidden NAS/other-host/calendar limits unchanged.
 
 ## 23. Corrected UBI listener installed (OPS-018, 2026-10-18)
 
-[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) selects protected 0.2.1
+[OPS-018](agents/plans/tasks/ops-018-container-worker-rollout.md) selects protected 0.2.1
 source 4088994 UBI artifacts. Actual installed API-container PROBE under Enforcing
 passes before/after clean drain/restart, closing hold 22; TLS/auth/MCP/client and
 unchanged guard/locks/stores/secrets/effective confinement are recorded. The old

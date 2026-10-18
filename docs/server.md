@@ -9,7 +9,7 @@ API-010 adds explicit maintenance preview/apply, repair and guarded initializati
 API-012 adds candidate/read CLI, API-013 operational CLI/observation and API-014
 activated service/scheduled-client packaging; installed-host acceptance remains
 an explicit deployment hold.
-See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
+See [the API contract](api.md) and [active plan](agents/plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
 ## Public prefix and native Unix requests (API-016)
@@ -886,7 +886,7 @@ proof uses only owned local fixtures with no NAS bind or production switch;
 [decision 126](adr/decision-126.md) and the held host guard remain. Rootless
 installer/current selection is separate from the retained historical native
 profile. Settled image/profile/helper/unit APIs and actual gate evidence follow
-in the [task](plans/tasks/ops-015-rootless-container-runtime.md), not a release claim.
+in the [task](agents/plans/tasks/ops-015-rootless-container-runtime.md), not a release claim.
 
 Detailed [rootless runtime/build/profile contract](containers.md) owns the selected deployment boundaries and actual task evidence.
 
@@ -955,7 +955,7 @@ acceptance. No live NAS verification or workload acceptance follows.
 
 ### Installed-listener evidence (OPS-018, 2026-10-18)
 
-[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) records actual installed
+[OPS-018](agents/plans/tasks/ops-018-container-worker-rollout.md) records actual installed
 API-container private PROBE/worker READY and repeated TLS/drain acceptance under
 Enforcing on clean 0.2.1 UBI artifacts. This closes the old connection hold only;
 native activation, exact protocol/result authority and forbidden NAS workloads

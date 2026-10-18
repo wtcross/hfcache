@@ -4,9 +4,9 @@
   runner deadline/policy hooks extended by [decision 115](decision-115.md).
 - Date: 2026-10-17.
 - Work package: API-003, this commit.
-- Source: [progress decision 110](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-003-extract-guarded-commands.md).
+- Source: [progress decision 110](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-003-extract-guarded-commands.md).
 
 ## Context and decision
 

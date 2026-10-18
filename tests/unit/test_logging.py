@@ -1,8 +1,8 @@
-"""The structured event log (`docs/plan.md` §24, `src/hfcache/logging.py`).
+"""The structured event log (docs/cli.md output discipline, `src/hfcache/logging.py`).
 
 Three things are worth testing here and the rest is plumbing. That the
 vocabulary is closed, because that is what makes an operator's journald filter
-survive a release. That the run id reaches every line, because §24 asks for it
+survive a release. That the run id reaches every line, because the CLI event contract asks for it
 and a line without one cannot be joined to a run report. And that a secret never
 does, which is the only property here whose failure is not merely inconvenient.
 """
@@ -103,7 +103,8 @@ def _quoted(text: str) -> tuple[str, str]:
 
 
 def test_every_plan_event_family_is_in_the_vocabulary():
-    # Plan §24's list, verbatim. If the plan grows a family this fails, which is
+    # docs/cli.md output discipline's list, verbatim. If the plan grows a family this fails, which
+    # is
     # the point: the recommended set and the emitted set are one thing.
     assert set(EVENTS) == {
         "run.started",
@@ -243,14 +244,15 @@ def test_an_unbound_run_still_produces_a_parseable_line(stream: io.StringIO):
 
 
 # --------------------------------------------------------------------------- #
-# Secrets (`docs/security.md` T-07, plan §24)
+# Secrets (`docs/security.md` T-07, docs/cli.md output discipline)
 # --------------------------------------------------------------------------- #
 
 TOKEN = "hf_ABCdef0123456789ABCdef0123456789ABCd"
 
 
 def test_a_token_pushed_through_a_field_never_reaches_the_output(stream: io.StringIO):
-    # The test plan §24 asks for: push a real-shaped token through and search the
+    # The test docs/cli.md output discipline asks for: push a real-shaped token through and search
+    # the
     # output for it. Through a field named for what it is...
     emit("run.started", token=TOKEN)
     # ...and through one that hides it, which is the case the key list misses.
@@ -425,7 +427,7 @@ def test_no_prefix_when_an_operator_runs_it(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_the_envelope_and_the_log_name_the_same_run(config_file: Path):
-    # §24 wants the run id in every event; §4 wants it in the envelope. A command
+    # the CLI event contract wants the run id in every event; §4 wants it in the envelope. A command
     # that writes no durable report used to mint a second id for the envelope,
     # which gave an operator two identifiers and no way to join them.
     result = CliRunner().invoke(

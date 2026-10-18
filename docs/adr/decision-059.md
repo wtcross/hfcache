@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
 - Original work package: `SYS-002`.
-- Source: [decision 59 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 59 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -68,8 +68,8 @@ The source entry first appears in
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
-Current governing documents: [docs/security.md](../../docs/security.md),
-[docs/deployment-centos-stream-10.md](../../docs/deployment-centos-stream-10.md).
+Current governing documents: [docs/security.md](../security.md),
+[docs/deployment-centos-stream-10.md](../deployment-centos-stream-10.md).
 
 Implementation or shipped-artifact evidence:
 [scripts/check-hardening.sh](../../scripts/check-hardening.sh),

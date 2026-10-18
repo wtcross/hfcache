@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/plan.md` §9, §12, §22.6 |
+| Derived from | `docs/agents/history/plan.md` §9, §12, §22.6 |
 | Work package | `ARC-003` |
 | Schema version | `1` |
 | Default location | `/etc/hfcache/config.toml` |
@@ -286,7 +286,7 @@ Ambient discovery is disabled in every case: `HF_TOKEN`, `HUGGING_FACE_HUB_TOKEN
 `~/.cache/huggingface/token`, and any other implicit source is ignored. Hub calls
 pass an explicit `token=False` or an explicit token string, never `token=None`,
 so a developer's or service account's cached credential cannot silently change
-what a production run does (`docs/plan.md` §12).
+what a production run does (`docs/agents/history/plan.md` §12).
 
 A token is never written to the archive, a manifest, a run report, a log line, or
 a journal entry.

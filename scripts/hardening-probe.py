@@ -1,4 +1,4 @@
-"""Exercise everything plan §22.5 says the hardening must not break.
+"""Exercise everything docs/security.md hardening posture says the hardening must not break.
 
 Run by `scripts/check-hardening.sh` inside a transient unit carrying the *exact*
 `[Service]` properties of the installed API or private-verification executor, so what is tested
@@ -46,7 +46,7 @@ PUBLISHED_DIRECTORY_MODE = 0o2750
 The probe runs under a sandbox that may not be able to import the application at
 all, and what is being tested is the *syscall* the application makes, not the
 application. If the constant changes there, this line has to change too — which
-is why `docs/plan.md` §22.5 says to re-run this after an upgrade."""
+is why docs/security.md hardening posture says to re-run this after an upgrade."""
 HOST = "huggingface.co"
 REPOSITORY = "hf-internal-testing/tiny-random-gpt2"
 
@@ -236,7 +236,7 @@ def _writable_paths() -> str:
 # --------------------------------------------------------------------------- #
 
 OFFLINE = EXECUTOR == "verification"
-"""Whether this unit is one that must *not* reach the Hub (§22.3).
+"""Whether this unit is one that must *not* reach the Hub (INV-015).
 
 The verification unit sets `HF_HUB_OFFLINE=1` and `IPAddressDeny=any`, so for it
 the four network checks below invert: reaching the Hub would be the failure. A
@@ -399,7 +399,8 @@ def _setgid_directory() -> str:
 
 @check("hardlink on the archive")
 def _hardlink() -> str:
-    # The other publication primitive, and the one plan §14.2 says NFS is exactly
+    # The other publication primitive, and the one docs/architecture.md publication contract says
+    # NFS is exactly
     # where an assumption about it would be wrong.
     source = PROBE_AREA / f"link-source-{os.getpid()}"
     link = PROBE_AREA / f"link-{os.getpid()}"

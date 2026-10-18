@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
 - Original work package: `OBS-001`.
-- Source: [decision 63 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 63 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -81,12 +81,12 @@ The source entry was subsequently amended in
 it`); the backfill retains the amended text rather than restoring superseded
 wording or private environment values.
 
-Current governing documents: [docs/operations.md](../../docs/operations.md),
-[docs/deployment-centos-stream-10.md](../../docs/deployment-centos-stream-10.md).
+Current governing documents: [docs/operations.md](../operations.md),
+[docs/deployment-centos-stream-10.md](../deployment-centos-stream-10.md).
 
 Implementation or shipped-artifact evidence:
 [packaging/journald.conf.d/hfcache.conf](../../packaging/journald.conf.d/hfcache.conf),
 [packaging/systemd/hfcache-failure@.service.example](../../packaging/systemd/hfcache-failure@.service.example).
 
 Verification or recorded operational evidence:
-[docs/progress.md](../../docs/progress.md).
+[docs/agents/progress.md](../agents/progress.md).

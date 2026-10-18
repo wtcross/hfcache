@@ -6,9 +6,9 @@
   lifecycle acceptance. Live NAS workloads and other-host acceptance remain unrun.
 - Date: 2026-10-18.
 - Work package: OPS-019, this commit.
-- Source: [progress decision 129](../progress.md#decisions),
-  [UBI steering amendment](../plans/2026-10-18-plan-container-worker-listener.md),
-  [task](../plans/tasks/ops-019-ubi10-runtime-images.md).
+- Source: [progress decision 129](../agents/progress.md#decisions),
+  [UBI steering amendment](../agents/plans/2026-10-18-plan-container-worker-listener.md),
+  [task](../agents/plans/tasks/ops-019-ubi10-runtime-images.md).
 
 ## Context and choice
 

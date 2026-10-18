@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
 - Original work package: `OPS-007`.
-- Source: [decision 67 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 67 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -54,9 +54,9 @@ The source entry first appears in
 The decision text above preserves the complete reasoning in the current
 historical log, including its recorded alternatives and consequences.
 
-Current governing documents: [docs/consumers.md](../../docs/consumers.md).
+Current governing documents: [docs/consumers.md](../consumers.md).
 
 Implementation or shipped-artifact evidence:
 [examples/copy-revision.py](../../examples/copy-revision.py).
 
-Recorded operational verification: [OPS-007 and decision 67 in the tracker](../progress.md#decisions). The source decision records independent damage drills for changed, missing, and extra files; there is no claim here that the later model-store script tests verify this original helper.
+Recorded operational verification: [OPS-007 and decision 67 in the tracker](../agents/progress.md#decisions). The source decision records independent damage drills for changed, missing, and extra files; there is no claim here that the later model-store script tests verify this original helper.

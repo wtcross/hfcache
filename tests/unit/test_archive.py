@@ -120,7 +120,7 @@ def test_a_wrongly_moded_published_is_refused_rather_than_fixed():
 def test_ownership_is_compared_against_the_root_not_against_a_local_uid():
     # Under the Mapall writer export both carry NAS-side ids with no local
     # account, so "the same identity owns both" is the only checkable form of
-    # the ownership rule (`docs/plan.md` §35.3).
+    # the ownership rule (docs/storage-requirements.md effective writability).
     root = status(0o750, 3001, 3002)
 
     assert (

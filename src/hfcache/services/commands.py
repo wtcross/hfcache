@@ -694,7 +694,7 @@ def _planned(
     rather than that the run is broken — and every local revision of it is
     preserved regardless (`AD-06`).
 
-    Three Hub calls in the order plan §13.2 puts them: resolve the reference to
+    Three Hub calls in the order docs/cli.md sync contract puts them: resolve the reference to
     an immutable SHA, enumerate what that revision contains, then cost what
     downloading it would take. Each later call is against the resolved SHA, and a
     failure at any of them leaves the fields below it `null` rather than guessed

@@ -7,7 +7,7 @@ API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 - Original decision date: 2026-07-30.
 - Original work package: `CPT-013`.
-- Source: [decision 92 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 92 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -70,8 +70,8 @@ ImportCredential`). The decision text above preserves the complete reasoning in
 the current historical log, including its recorded alternatives and
 consequences.
 
-Current governing documents: [docs/cockpit.md](../../docs/cockpit.md),
-[docs/security.md](../../docs/security.md).
+Current governing documents: [docs/cockpit.md](../cockpit.md),
+[docs/security.md](../security.md).
 
 Implementation or shipped-artifact evidence:
 [cockpit/src/lib/command.ts](../../cockpit/src/lib/command.ts),

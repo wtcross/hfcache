@@ -560,7 +560,7 @@ def test_the_gate_refuses_a_filesystem_below_its_reserve(initialized, table):
 
 
 # --------------------------------------------------------------------------- #
-# Lock and checks together (plan §13.1 steps 2-3)
+# Lock and checks together (docs/cli.md sync contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -590,7 +590,7 @@ def test_a_guarded_command_holds_the_lock_while_it_runs(initialized, table, run_
 def test_a_guarded_command_refuses_when_another_holds_the_lock(
     initialized, table, run_directory: Path
 ):
-    # The lock comes first (plan §13.1 step 2), so this is reported without the
+    # The lock comes first (docs/cli.md sync contract), so this is reported without the
     # archive being probed at all.
     run_directory.mkdir(parents=True)
     descriptor = os.open(lock_path(), os.O_RDWR | os.O_CREAT, 0o600)
@@ -631,7 +631,7 @@ def test_a_guarded_command_releases_the_lock_when_the_checks_refuse(
 
 
 # --------------------------------------------------------------------------- #
-# Capabilities (rows 9-11, plan §14.2)
+# Capabilities (rows 9-11, docs/architecture.md publication contract)
 # --------------------------------------------------------------------------- #
 
 CAPABILITIES = ("hardlink_capability", "atomic_directory_rename", "reference_replacement")

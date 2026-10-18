@@ -2,7 +2,7 @@
 #
 # Provider-neutral quality gate.
 #
-# Runs exactly the checks docs/plan.md §8.4 requires, in order, and stops at the
+# Runs exactly the checks docs/development.md quality gate requires, in order, and stops at the
 # first failure. There is no CI-provider configuration anywhere in this
 # repository on purpose: whatever runs this — a shell, a hook, a pipeline —
 # invokes the same script an operator does, so a green pipeline and a green

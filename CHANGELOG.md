@@ -1,7 +1,7 @@
 # Changelog
 
 Releases are deployed first and tagged for what is deployed
-(`docs/progress.md` decisions 75 and 79). The annotated tags carry the
+(`docs/agents/progress.md` decisions 75 and 79). The annotated tags carry the
 complete release notes; this file is the browsable summary. Versions 0.1.0
 and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
@@ -59,7 +59,7 @@ their explicit selectors as documented. Read-only evidence services validate
 exact report/reference/manifest identity and contained locators. Durable archive
 formats and the consumer export remain unchanged. REST/CLI and optional MCP
 interfaces are implemented below; the
-[completed plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md) records final
+[completed plan](docs/agents/plans/2026-10-17-plan-rest-api-and-mcp.md) records final
 integration acceptance, without deployment or a release/version change.
 
 Final real CLI-to-socket acceptance also corrects event observation for servers
@@ -362,4 +362,4 @@ build suites.
 Deliberately not done, and why this is 0.1.x and not 1.0.0: the read-only
 consumer export, snapshots and replication, the disjointness proof from a
 second client, reboot persistence, and the quarterly verification timer — all
-operator items, tracked under **Operator handoff** in `docs/progress.md`.
+operator items, tracked under **Operator handoff** in `docs/agents/progress.md`.

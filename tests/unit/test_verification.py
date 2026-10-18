@@ -1,4 +1,4 @@
-"""Reading the archive back — plan §16, `docs/schemas.md` §7.
+"""Reading the archive back — docs/cli.md verification contract, `docs/schemas.md` §7.
 
 Every archive here is built by publishing through the real code path, never by
 writing files that look like a publication's output. That matters more for
@@ -245,7 +245,8 @@ def test_a_freshly_published_revision_verifies_clean(layout):
 
 
 def test_verification_reads_and_writes_nothing(layout):
-    """Plan §16.1: a verification never rewrites the evidence it is reading."""
+    """docs/cli.md verification contract: a verification never rewrites the evidence it is
+    reading."""
     publish(layout)
     before = {
         path: path.read_bytes()
@@ -262,7 +263,7 @@ def test_verification_reads_and_writes_nothing(layout):
 
 
 # --------------------------------------------------------------------------- #
-# The read set (plan §16.2 item 4)
+# The read set (docs/cli.md verification contract)
 # --------------------------------------------------------------------------- #
 
 

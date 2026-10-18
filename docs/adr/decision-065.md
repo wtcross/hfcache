@@ -7,7 +7,7 @@ API-backed quiescence is amended by [decision 121](decision-121.md).
 
 - Original decision date: 2026-07-27.
 - Original work package: `OPS-001`.
-- Source: [decision 65 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 65 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -63,8 +63,8 @@ above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 
 Current governing documents:
-[docs/deployment-centos-stream-10.md](../../docs/deployment-centos-stream-10.md),
-[docs/agents/release.md](../../docs/agents/release.md).
+[docs/deployment-centos-stream-10.md](../deployment-centos-stream-10.md),
+[docs/agents/release.md](../agents/release.md).
 
 Implementation or shipped-artifact evidence:
 [scripts/install-release.sh](../../scripts/install-release.sh),

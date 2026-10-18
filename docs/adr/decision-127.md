@@ -5,9 +5,9 @@
   target and NAS-workload acceptance remain separate holds.
 - Date: 2026-10-18.
 - Work package: OPS-015, this commit.
-- Source: [progress decision 127](../progress.md#decisions),
-  [local rollout plan](../plans/2026-10-18-plan-local-rootless-rollout.md),
-  [task](../plans/tasks/ops-015-rootless-container-runtime.md).
+- Source: [progress decision 127](../agents/progress.md#decisions),
+  [local rollout plan](../agents/plans/2026-10-18-plan-local-rootless-rollout.md),
+  [task](../agents/plans/tasks/ops-015-rootless-container-runtime.md).
 
 ## Context and decision
 
@@ -209,7 +209,7 @@ Enforcement: [image recipe](../../packaging/containers/Containerfile),
 [build/authenticated input evidence](../../scripts/build-container.py),
 [fixed runtime helper](../../scripts/container-service.py),
 [client launcher](../../scripts/hfcache-client),
-[rendered unit templates](../../packaging/containers/),
+[rendered unit templates](../../packaging/containers),
 [actual worker probe](../../scripts/check-container-worker.py),
 [boundary unit tests](../../tests/unit/test_container_service.py) and
 [build/probe tests](../../tests/unit/test_container_runtime.py). These links
@@ -320,7 +320,7 @@ acceptance after OPS-019 commits. No production/NAS change follows from this sou
 
 ## OPS-018 installed checkpoint (2026-10-18)
 
-[OPS-018](../plans/tasks/ops-018-container-worker-rollout.md) records actual installed
+[OPS-018](../agents/plans/tasks/ops-018-container-worker-rollout.md) records actual installed
 notify ordering/API-container peer/TLS and non-killing drain/restart on the clean
 UBI artifacts. Hold 22 closes for the owned listener; nine bindings, independent
 guard, masks/locks/stores/secrets and confinement stay intact. NAS workloads and

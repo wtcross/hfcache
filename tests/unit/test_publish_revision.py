@@ -1,4 +1,4 @@
-"""Publishing a revision, and the derived view it produces — plan §13.2, §7.3.
+"""Publishing a revision, and the derived view it produces — docs/cli.md sync contract, §7.3.
 
 This is the transaction the whole design is arranged around, so what is asserted
 here is mostly *ordering*: that each atomic act is followed by the checkpoint
@@ -293,7 +293,7 @@ def test_the_published_tree_contains_exactly_what_the_manifest_lists(layout, sna
 
 def test_a_second_revision_leaves_the_first_published(layout, snapshot):
     # Nothing about publishing a newer revision removes an older one; that is
-    # retention's job, and only after a successful publication (§15.1).
+    # retention's job, and only after a successful publication (AD-05).
     first, _ = publish(layout, snapshot)
 
     second, _ = publish(layout, snapshot, commit_sha=SHA_B)
@@ -337,7 +337,7 @@ def test_publishing_the_same_instance_twice_is_refused(layout, snapshot):
 
 
 # --------------------------------------------------------------------------- #
-# Generations (plan §13.2 step 11, §15.1)
+# Generations (docs/cli.md sync contract, AD-05)
 # --------------------------------------------------------------------------- #
 
 
@@ -373,7 +373,7 @@ def test_generations_are_per_repository(layout, snapshot):
 
 
 # --------------------------------------------------------------------------- #
-# The derived catalog (`FS-16`, plan §13.2 step 19)
+# The derived catalog (`FS-16`, docs/cli.md sync contract)
 # --------------------------------------------------------------------------- #
 
 

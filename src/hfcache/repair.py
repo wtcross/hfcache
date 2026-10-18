@@ -1,6 +1,6 @@
 """Replacing damaged bytes without ever letting them become the expectation.
 
-`docs/architecture.md` §7.5 and plan §16.5. Repair is the only operation that
+`docs/architecture.md` §7.5 and docs/cli.md verification contract. Repair is the only operation that
 writes over a revision that already exists, and `AD-13` names the property that
 makes it safe: **repair must not be able to launder corrupt bytes into the
 expected value.** Everything here follows from that.
@@ -23,7 +23,7 @@ and the superseded instance stays readable where it always was for the
 configured grace period so an in-flight consumer copy can finish (`AD-13`).
 After the grace, cleanup *quarantines* the old tree and archives its manifest;
 neither is removed, and quarantine is retained until an operator approves its
-removal (plan §16.5 item 12).
+removal (docs/cli.md verification contract).
 
 Two checkpoints are gates rather than records. Checkpoint 4 is the one above:
 the downloaded bytes must match the original manifest exactly. Checkpoint 8 is
@@ -158,14 +158,14 @@ def _evidence(
     """The verification findings this repair is answering, as recorded evidence.
 
     Read from `catalog/verification.json` rather than by verifying again: the
-    mismatch report is what plan §16.5 step 1 says to *preserve*, and re-reading
+    mismatch report is what docs/cli.md verification contract says to *preserve*, and re-reading
     the damaged object here would risk recording a second, different observation
     of bytes that are by definition unstable.
 
     An empty tuple is a legitimate answer. An operator may repair an instance
     after a ZFS scrub error or a restore without this archive having verified it
     first, and refusing to act because the archive had not noticed yet would
-    make repair useless in exactly the situation §16.3 lists it for.
+    make repair useless in exactly the situation the full-verification triggers lists it for.
     """
     catalog = read_verification_catalog(layout)
     if catalog is None:
@@ -748,8 +748,8 @@ def finish_cleanup(
 ) -> dict[str, Any]:
     """Perform §7.5 checkpoints 16-18 on one retired instance.
 
-    A rename into quarantine and a rename into `audit/`, never a removal. Plan
-    §16.5 item 12 retains quarantined evidence until an operator confirms storage
+    A rename into quarantine and a rename into `audit/`, never a removal. docs/cli.md verification
+    contract retains quarantined evidence until an operator confirms storage
     health and explicitly approves its cleanup, so this application has no code
     path that removes it on a schedule.
 
@@ -853,7 +853,7 @@ def cleanup_warnings(
 def preserved_bytes(layout: ArchiveLayout, *, reader: MetadataReader | None = None) -> int:
     """How much the quarantine area is holding, for `status` to report.
 
-    Reported rather than reclaimed. Plan §16.5 item 12 keeps quarantined
+    Reported rather than reclaimed. docs/cli.md verification contract keeps quarantined
     evidence until an operator approves its removal, so the useful thing this
     application can say about it is how much space it is costing.
     """

@@ -2,15 +2,9 @@
 #
 # Install a versioned hfcache release and switch to it atomically.
 #
-# This is plan §21.4 executed rather than described, and it is the mechanism plan
-# §30's upgrade step 3 (install into a separate release directory) and step 6
-# (atomically switch the current application symlink) refer to. Rollback is the
-# same tool with --switch, because a rollback that uses a different procedure
-# than the install is a procedure nobody has tested.
-#
-# Nothing here is invoked from systemd. `uv sync` runs at deployment time, so a
-# scheduled run never resolves dependencies, never writes to a release tree, and
-# never needs network access for anything but the Hub.
+# Implements the native installation and rollback contract in
+# docs/deployment-centos-stream-10.md. Both paths use the same atomic selector
+# and retain the preceding release.
 #
 # Usage:
 #   sudo scripts/install-release.sh                 # build and switch
@@ -36,12 +30,12 @@ SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "${SCRIPT_DIRECTORY}/release-functions.sh"
 
 # Pinned, because a deployment tool that silently accepts whatever resolver
-# happens to be installed is not a deployment tool (plan §21.4). Override
+# happens to be installed is not a deployment tool (docs/deployment-centos-stream-10.md native profile). Override
 # deliberately, in the environment, when the pin is being moved on purpose.
 REQUIRED_UV_VERSION=${HFCACHE_UV_VERSION:-0.11.32}
 
 # The interpreter the service runs. It must not come from a home directory: the
-# hardened unit sets ProtectHome=true (plan §22.5), so a venv whose `home` points
+# hardened unit sets ProtectHome=true (docs/security.md hardening posture), so a venv whose `home` points
 # under /home starts on a workstation and fails as a service. CentOS Stream 10
 # ships 3.12 and EPEL reaches 3.13, so 3.14 is a uv-managed build installed into
 # a root-owned system location and pinned there.
@@ -74,7 +68,7 @@ die() {
 
 uv_binary() {
   # Resolvable as the invoking user or as the operator who owns the toolchain;
-  # sudo strips PATH, and uv is a user install on this host (plan §35.1).
+  # sudo strips PATH, and uv may be a user install (docs/deployment-centos-stream-10.md).
   if [[ -n ${HFCACHE_UV:-} ]]; then
     printf '%s\n' "${HFCACHE_UV}"
     return
@@ -264,8 +258,8 @@ done
 
 if [[ -d ${RELEASE} ]]; then
   # Reinstalling a version that is already installed. `current` is a symlink to
-  # the release *name*, so it dangles while this runs — which is why plan §30's
-  # upgrade stops `hfcache.target` and waits for active jobs before step 3.
+  # the release *name*, so it dangles while this runs — which is why the deployment
+  # upgrade requires proven executor quiescence before rebuilding.
   if [[ $(readlink "${PREFIX}/current" 2> /dev/null) == "releases/${VERSION}" ]]; then
     printf 'rebuilding quiesced release %s; runtime lock retained\n' "${VERSION}" >&2
   fi
@@ -287,7 +281,7 @@ step "uv sync --frozen ${RELEASE_EXTRAS[*]} --no-dev --no-editable"
 )
 
 step 'ownership and modes'
-# Root-owned and read-only to the service identity (plan §21.4): the account that
+# Root-owned and read-only to the service identity (docs/deployment-centos-stream-10.md native profile): the account that
 # runs the archive cannot modify the code that runs it, so a compromise of the
 # service cannot become a persistent change to the application.
 chown -R root:root "${RELEASE}"
@@ -298,7 +292,7 @@ find "${RELEASE}" -type f ! -perm -u=x -exec chmod "${FILE_MODE}" {} +
 # The interpreter directory is outside ${RELEASE} and is not rebuilt per release,
 # so the sweep above never reaches it. `uv python install` leaves its own lock
 # file at 0666 (`REL-002`), which is a world-writable regular file inside a
-# prefix plan §21.4 requires be root-owned and read-only to everything else.
+# prefix docs/deployment-centos-stream-10.md native profile requires be root-owned and read-only to everything else.
 # Nothing is lost by narrowing it: every caller of `uv python install` here is
 # root, and root ignores the write bit.
 find "${UV_PYTHON_INSTALL_DIR}" -maxdepth 1 -type f -perm -o+w \

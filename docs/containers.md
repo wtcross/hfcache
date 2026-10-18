@@ -1,10 +1,10 @@
 # Rootless container runtime
 
 This is the selected local profile defined by [decision 127](adr/decision-127.md)
-under the [data-preserving rollout](plans/2026-10-18-plan-local-rootless-rollout.md).
+under the [data-preserving rollout](agents/plans/2026-10-18-plan-local-rootless-rollout.md).
 OPS-015 packages and proves it using owned local fixtures. Release/version
 selection and production switch remain REL-010 and OPS-016. The
-[OPS-014 guard](plans/tasks/ops-014-local-rollout-guardrails.md) keeps NAS read-only,
+[OPS-014 guard](agents/plans/tasks/ops-014-local-rollout-guardrails.md) keeps NAS read-only,
 legacy writers blocked and the original local lock held. No command here grants
 NAS writes, other-host changes, ACME issuance or remote publication.
 
@@ -185,7 +185,7 @@ was unselected operator backlog. **2026-10-18 update:** decisions 128/129 and
 committed source 4088994/REL-013 clean UBI artifacts support completed OPS-018.
 Actual installed API-container PROBE now closes connection hold 22 for 0.2.1;
 source/fixture evidence alone never supplied that proof. Preserve the
-[explicit hold](progress.md#operator-handoff) and all NAS-write/full-domain holds.
+[explicit hold](agents/progress.md#operator-handoff) and all NAS-write/full-domain holds.
 
 ### 0.2.1 listener correction (OPS-017)
 
@@ -368,7 +368,7 @@ preserved and new contexts/images are built, never relabelled as passing.
 
 ### Installed0.2.1 acceptance (OPS-018, 2026-10-18)
 
-[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) selects clean source 4088994
+[OPS-018](agents/plans/tasks/ops-018-container-worker-rollout.md) selects clean source 4088994
 UBI app/Caddy artifacts and proves actual installed API-container PROBE under
 Enforcing before/after clean drain/restart. Connection hold 22 closes for this
 listener; 0.2.0 failure remains a rollback limitation. Verified TLS/auth/MCP/client,

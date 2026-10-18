@@ -4,9 +4,9 @@
   execution enforcement remains incremental.
 - Date: 2026-10-17.
 - Work package: API-001, this commit.
-- Source: [progress decision 109](../progress.md),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-001-contract-and-activation.md).
+- Source: [progress decision 109](../agents/progress.md),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-001-contract-and-activation.md).
 
 ## Context and decision
 

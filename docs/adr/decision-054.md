@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-26.
 - Original work package: `VER-006`.
-- Source: [decision 54 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 54 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -24,7 +24,7 @@ irreversible, while a repair never deletes at all. `sync.py` was the other
 candidate and is already the largest module in the project. Repair has its
 own §7.5 checkpoint sequence, its own two gates, its own crash matrix, and
 the only isolated cache in the design (`FS-14`'s single exception), so it
-is its own module. `docs/plan.md` §7's listing is amended in this commit.
+is its own module. `docs/agents/history/plan.md` §7's listing is amended in this commit.
 
 The post-grace cleanup lives there too rather than in `recovery.py`, and
 recovery calls into it. Checkpoints 16-18 are steps of the *repair*
@@ -39,8 +39,8 @@ The source entry first appears in
 open`). The decision text above preserves the complete reasoning in the current
 historical log, including its recorded alternatives and consequences.
 
-Current governing documents: [docs/architecture.md](../../docs/architecture.md),
-[docs/recovery.md](../../docs/recovery.md).
+Current governing documents: [docs/architecture.md](../architecture.md),
+[docs/recovery.md](../recovery.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/repair.py](../../src/hfcache/repair.py),

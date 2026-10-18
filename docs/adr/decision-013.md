@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
 - Original work package: `CFG-003`.
-- Source: [decision 13 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 13 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -52,8 +52,8 @@ The source entry was subsequently amended in
 backfill retains the amended text rather than restoring superseded wording or
 private environment values.
 
-Current governing documents: [docs/schemas.md](../../docs/schemas.md),
-[docs/architecture.md](../../docs/architecture.md).
+Current governing documents: [docs/schemas.md](../schemas.md),
+[docs/architecture.md](../architecture.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/paths.py](../../src/hfcache/paths.py).

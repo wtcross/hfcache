@@ -1,9 +1,11 @@
-"""The sync run — plan §13.1 and §13.2, end to end against a fake Hub.
+"""The sync run — docs/cli.md sync contract and the ingestion contract, end to end against a fake
+Hub.
 
 Everything here goes through `synchronize`, the same entry point the `sync`
 command calls, against a `HubClient` whose `HubApi` is a directory of files this
 test wrote. That is what makes a whole publication assertable without a network:
-the seam plan §12 asks for is an interface this application defines, so a fake
+the seam docs/security.md Hub adapter boundary asks for is an interface this application defines,
+so a fake
 that satisfies it exercises every line between resolution and the current
 reference.
 
@@ -814,7 +816,7 @@ def test_returning_to_a_retained_sha_moves_the_reference_without_downloading(
 
 
 def test_re_observing_a_sha_does_not_reorder_retention(client, layout, config, hub):
-    # §15.1: re-observing an existing SHA makes no duplicate and does not
+    # AD-05: re-observing an existing SHA makes no duplicate and does not
     # change the generation it already holds.
     run(client, layout, config)
     hub.heads[MODEL.selector] = SHA_B
@@ -830,7 +832,7 @@ def test_re_observing_a_sha_does_not_reorder_retention(client, layout, config, h
 
 
 def test_the_second_run_reuses_the_digest_of_an_unchanged_object(client, layout, config, hub):
-    # §16.1's only permitted cross-run reuse: the same inode at the same size,
+    # AD-18's only permitted cross-run reuse: the same inode at the same size,
     # named against the retained publication the digest came from.
     run(client, layout, config)
     hub.heads[MODEL.selector] = SHA_B
@@ -1127,7 +1129,7 @@ def test_strict_mode_never_prefetches_after_a_late_repository_failure(
 def test_a_download_the_archive_has_no_room_for_is_refused_before_it_starts(
     client, layout, tmp_path
 ):
-    # Plan §13.2 step 4: the repository that would have overflowed is the one
+    # docs/cli.md sync contract: the repository that would have overflowed is the one
     # that reports it, before the transfer rather than after.
     path = tmp_path / "reserved.toml"
     path.write_text(
@@ -1277,7 +1279,7 @@ def test_the_sync_command_exits_thirty_when_a_repository_failed(config_file: Pat
 
 
 def test_the_sync_command_refuses_an_unmounted_archive(tmp_path: Path):
-    # Exit `20` before any Hub request (plan §19), which is what keeps a missing
+    # Exit `20` before any Hub request (docs/cli.md doctor contract), which is what keeps a missing
     # NAS from filling the writer's root filesystem.
     path = tmp_path / "absent.toml"
     path.write_text(
@@ -1396,7 +1398,7 @@ def test_a_run_leaves_the_plan_section_24_event_trail_on_writer_stderr(config_fi
 
 @pytest.mark.usefixtures("_wired")
 def test_every_event_in_a_run_carries_the_report_s_run_id(config_file: Path):
-    # The join §24 exists to make possible: one identifier across the envelope on
+    # The join the CLI event contract exists to make possible: one identifier across the envelope on
     # stdout, the writer's stderr, and `runs/<…>.json` on the archive.
     captured = io.StringIO()
     with redirect_stderr(captured):
@@ -1876,7 +1878,7 @@ def test_status_reports_no_last_run_when_the_archive_is_absent(tmp_path: Path):
 
 
 # --------------------------------------------------------------------------- #
-# Retention (plan §15, `docs/architecture.md` §7.4)
+# Retention (docs/architecture.md retention contract, `docs/architecture.md` §7.4)
 # --------------------------------------------------------------------------- #
 
 
@@ -2277,7 +2279,7 @@ def test_prune_reports_a_failure_rather_than_a_traceback(
 
     assert result.exit_code == ExitCode.RETENTION
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFRET002"]
-    # Nothing removed: six revisions remain, which §15.2 prefers to losing one.
+    # Nothing removed: six revisions remain, which the prune contract prefers to losing one.
     assert len(retained_references(layout, MODEL)) == 6
 
 
@@ -2391,7 +2393,7 @@ def test_a_disabled_repository_keeps_its_revisions(client, layout, config, hub, 
 
 
 # --------------------------------------------------------------------------- #
-# Dependency warnings (plan §17, `AD-07`)
+# Dependency warnings (docs/architecture.md AD-07, `AD-07`)
 # --------------------------------------------------------------------------- #
 
 

@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
 - Original work package: `REL-002`.
-- Source: [decision 74 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 74 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -52,11 +52,11 @@ above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 
 Current governing documents:
-[docs/deployment-centos-stream-10.md](../../docs/deployment-centos-stream-10.md),
-[docs/security.md](../../docs/security.md).
+[docs/deployment-centos-stream-10.md](../deployment-centos-stream-10.md),
+[docs/security.md](../security.md).
 
 Implementation or shipped-artifact evidence:
 [scripts/install-release.sh](../../scripts/install-release.sh).
 
 Verification or recorded operational evidence:
-[docs/progress.md](../../docs/progress.md).
+[docs/agents/progress.md](../agents/progress.md).

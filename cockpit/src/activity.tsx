@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  *
  * Live unit activity (docs/cockpit.md §5): a journal follower rendering the
- * closed §24 event vocabulary — latest event per repository plus the raw
+ * closed the CLI event contract event vocabulary — latest event per repository plus the raw
  * tail. Checkpoint-grained by design; no invented percentages.
  */
 

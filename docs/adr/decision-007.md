@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-24.
 - Original work package: `BOOT-002`.
-- Source: [decision 7 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 7 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -40,8 +40,8 @@ The source entry first appears in
 above preserves the complete reasoning in the current historical log, including
 its recorded alternatives and consequences.
 
-Current governing documents: [docs/architecture.md](../../docs/architecture.md),
-[docs/agents/conventions.md](../../docs/agents/conventions.md).
+Current governing documents: [docs/architecture.md](../architecture.md),
+[docs/agents/conventions.md](../agents/conventions.md).
 
 Implementation or shipped-artifact evidence:
 [pyproject.toml](../../pyproject.toml), [uv.lock](../../uv.lock),

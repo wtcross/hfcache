@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
 - Original work package: `CFG-004`.
-- Source: [decision 19 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 19 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -30,8 +30,8 @@ The source entry first appears in
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
-Current governing documents: [docs/schemas.md](../../docs/schemas.md),
-[docs/cli.md](../../docs/cli.md).
+Current governing documents: [docs/schemas.md](../schemas.md),
+[docs/cli.md](../cli.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/models.py](../../src/hfcache/models.py).

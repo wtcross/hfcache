@@ -1,6 +1,6 @@
 """Strict restart-only server policy and freshly loaded archive snapshots.
 
-`docs/server.md`, plan §3 and decision 112 separate transport/auth authority
+`docs/server.md`, server configuration authority and decision 112 separate transport/auth authority
 from archive policy. This module neither starts a listener nor resolves secrets.
 """
 

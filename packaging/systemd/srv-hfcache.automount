@@ -1,4 +1,4 @@
-# On-demand activation for the archive mount (docs/plan.md §21.3, §22.1).
+# On-demand activation for the archive mount (docs/deployment-centos-stream-10.md native profile, the native target contract).
 #
 # This is the unit that is *enabled*; srv-hfcache.mount is never enabled directly.
 # Boot therefore never waits for the NAS, and the first access — a sync, a
@@ -15,7 +15,7 @@
 
 [Unit]
 Description=Automount the Hugging Face archive
-Documentation=file:///opt/hfcache/current/docs/plan.md
+Documentation=file:///opt/hfcache/current/docs/deployment-centos-stream-10.md
 PartOf=hfcache.target
 
 # No network ordering here, and that is not an omission. An automount unit is a
@@ -36,5 +36,5 @@ TimeoutIdleSec=0
 # remote-fs.target so the archive is reachable at boot whether or not
 # hfcache.target is enabled — an operator inspecting the archive should not have
 # to start the scheduled lifecycle to do it. hfcache.target wants it as well
-# (§22.4), so starting the target makes the mount available.
+# (the timer defaults), so starting the target makes the mount available.
 WantedBy=remote-fs.target hfcache.target

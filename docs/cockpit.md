@@ -87,10 +87,10 @@ snapshot; the server refuses stale queued mutations.
 | `CP-10` | One mutating command at a time (`AD-17`). `HFMNT010` renders as a benign busy state naming the holder, never as a failure; the plugin never removes or bypasses the lock |
 | `CP-11` | Configuration changes use §6's root config flock and exact candidate/base guards, syntax-valid compatible server assessment, required successful preview, atomic install with `0640 root:hfcache` and predecessor retained, then exact expected installed fingerprint confirmation. Incompatible/unknown authority blocks plugin install |
 | `CP-12` | Timer schedule changes are drop-ins under `/etc/systemd/system/hfcache-sync.timer.d/` (§7); shipped unit files are never edited, and calendar expressions are validated with `systemd-analyze calendar` before anything is written |
-| `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is fixed per `docs/plan.md` §23 or reported |
+| `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is fixed per `docs/agents/history/plan.md` §23 or reported |
 | `CP-14` | The node toolchain is build-time only. The plugin ships as static files; the application's closed runtime dependency set (`FW-03`) is untouched, and `cockpit/node_modules/` and `cockpit/dist/` are never committed |
 
-Current [data-preserving rollout](plans/2026-10-18-plan-local-rootless-rollout.md)
+Current [data-preserving rollout](agents/plans/2026-10-18-plan-local-rootless-rollout.md)
 keeps legacy system-bus sync/verify/timer units masked. Normal CP-04–06 controls
 must refuse rather than redirect to user units or re-enable NAS writes. This is
 an explicit current restriction, not successful installed browser acceptance.

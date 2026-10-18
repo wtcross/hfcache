@@ -1,6 +1,6 @@
 """Detecting what a repository depends on, without ever running it.
 
-Plan §17 and `AD-07`. The archive is repository-complete at one commit, and
+docs/architecture.md AD-07 and `AD-07`. The archive is repository-complete at one commit, and
 nothing else: a LoRA adapter is archived exactly as published, which means the
 base model it is useless without is *not* in the archive unless someone
 configured it separately. Detection exists so that gap is visible before it is
@@ -50,7 +50,7 @@ MODEL_CARD: Final = "README.md"
 """The only model card the Hub recognises, and so the only one read."""
 
 MODEL_CARD_FIELDS: Final = ("base_model",)
-"""Model-card metadata keys that name another repository (plan §17).
+"""Model-card metadata keys that name another repository (docs/architecture.md AD-07).
 
 `base_model` is the Hub's own standardized field and carries either one string
 or a list of them — a merged model legitimately names several parents.
@@ -74,7 +74,7 @@ def detect_dependencies(
     declared: Sequence[str] = (),
     managed: Sequence[str] = (),
 ) -> tuple[DependencyObservation, ...]:
-    """Every dependency this revision's static metadata names (plan §17).
+    """Every dependency this revision's static metadata names (docs/architecture.md AD-07).
 
     `tree` is the published or staged tree, so detection reads the same bytes
     that were hashed and will be published — not the Hub's copy of them, and not

@@ -1,4 +1,4 @@
-"""The per-repository ingestion sequence of plan §13.2.
+"""The per-repository ingestion sequence of docs/cli.md sync contract.
 
 This module holds the steps between "the bytes are in the cache" and "the
 revision is published": proving what landed is what was promised, hashing it,
@@ -142,7 +142,7 @@ def completeness_problems(
     identity: RepositoryIdentity,
     cache_root: Path,
 ) -> list[Problem]:
-    """Prove the downloaded snapshot is exactly the revision (plan §13.2 steps 6-8).
+    """Prove the downloaded snapshot is exactly the revision (docs/cli.md sync contract).
 
     Four questions, three codes, and every one of them answered for the whole
     snapshot before returning — an operator fixing an incomplete download should
@@ -276,7 +276,7 @@ def _content_problems(
 
 
 # --------------------------------------------------------------------------- #
-# Hashing new content (plan §13.2 step 9, §16.1)
+# Hashing new content (docs/cli.md sync contract, AD-18)
 # --------------------------------------------------------------------------- #
 
 
@@ -339,7 +339,8 @@ class HashedSnapshot:
 def published_digests(tree: Path, manifest: RevisionManifest) -> dict[ObjectIdentity, KnownDigest]:
     """Index one retained publication's objects by the inode they occupy now.
 
-    This is what makes plan §16.1's reuse rule checkable rather than aspirational.
+    This is what makes docs/cli.md verification contract's reuse rule checkable rather than
+    aspirational.
     The manifest supplies the digest — a value this archive computed and has
     since verified — and the filesystem supplies the identity, read at the moment
     the index is built. Neither alone would do: a manifest cannot say which inode
@@ -373,7 +374,7 @@ def hash_snapshot(
     identity: RepositoryIdentity,
     known: Mapping[ObjectIdentity, KnownDigest] | None = None,
 ) -> HashedSnapshot:
-    """Read every newly introduced unique object once (plan §13.2 step 9).
+    """Read every newly introduced unique object once (docs/cli.md sync contract).
 
     Two kinds of reuse, and the difference between them is the whole of §16.1.
 
@@ -460,7 +461,7 @@ def hash_snapshot(
 
 
 # --------------------------------------------------------------------------- #
-# Describing the revision (plan §13.2 step 12, §10.1)
+# Describing the revision (docs/cli.md sync contract, the manifest schema)
 # --------------------------------------------------------------------------- #
 
 
@@ -487,7 +488,7 @@ class Timeline:
     published_at: datetime
 
 
-def build_manifest(  # noqa: PLR0913 - §10.1 fixes the field set; each argument is one of them
+def build_manifest(  # noqa: PLR0913 - the manifest schema fixes the field set; each argument is one of them
     *,
     identity: RepositoryIdentity,
     requested_revision: str,
@@ -509,7 +510,7 @@ def build_manifest(  # noqa: PLR0913 - §10.1 fixes the field set; each argument
     Every number in the result comes from what was read rather than from what
     was claimed: sizes and digests are `HashedSnapshot`'s, and the Hub's tree
     contributes only the three upstream identifiers, which are comparison values
-    and never a substitute (`AD-18`, plan §10.1).
+    and never a substitute (`AD-18`, docs/schemas.md).
 
     The model does the checking. `file_count` against `len(files)`, `total_bytes`
     against the sum, `reused_digests` against the entries marked unhashed,
@@ -519,8 +520,8 @@ def build_manifest(  # noqa: PLR0913 - §10.1 fixes the field set; each argument
     is deliberately thin over that: it arranges inputs, it does not decide
     whether they are consistent.
 
-    Nothing is written. Plan §13.2 step 12 writes to a temporary sibling and step
-    16 publishes it atomically, and both belong to the transaction that owns the
+    Nothing is written. Architecture §7.3 writes a temporary sibling and
+    publishes it atomically; both belong to the transaction that owns the
     filesystem — this returns the value they persist.
     """
     upstream = {entry.path: entry for entry in tree}
@@ -617,7 +618,7 @@ def _upstream(entry: TreeEntry | None) -> UpstreamIdentifiers:
 
 
 # --------------------------------------------------------------------------- #
-# Publishing the revision (plan §13.2 steps 11-19, §7.3)
+# Publishing the revision (docs/cli.md sync contract, §7.3)
 # --------------------------------------------------------------------------- #
 
 
@@ -810,7 +811,7 @@ def _current_pair(layout: ArchiveLayout, repository: RepositoryLayout) -> tuple[
 
 
 # --------------------------------------------------------------------------- #
-# Synchronizing one repository (plan §13.2)
+# Synchronizing one repository (docs/cli.md sync contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -854,7 +855,7 @@ class DownloadedRepository:
     warnings: tuple[Problem, ...] = ()
 
 
-def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to run
+def synchronize_repository(  # noqa: PLR0913 - docs/cli.md sync contract needs all of these to run
     client: HubClient,
     layout: ArchiveLayout,
     repository: RepositoryConfig,
@@ -863,9 +864,9 @@ def synchronize_repository(  # noqa: PLR0913 - plan §13.2 needs all of these to
     run_id: RunId,
     configured: Mapping[str, RepositoryConfig],
 ) -> RepositoryOutcome:
-    """Run plan §13.2 for one repository, from resolution to publication.
+    """Run docs/cli.md sync contract for one repository, from resolution to publication.
 
-    The order is the plan's and the reasons are its: resolve to an immutable SHA
+    The sync contract requires this order: resolve to an immutable SHA
     first so nothing below can be about a moving target; skip early if that SHA
     is already held, because re-downloading content the archive already proved is
     the most expensive way to learn nothing; estimate and check capacity before
@@ -1102,7 +1103,7 @@ def _tree_was_renamed(transaction: Transaction) -> bool:
     )
 
 
-def _finish_ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argument each
+def _finish_ingest(  # noqa: PLR0913 - the the ingestion contract sequence's inputs, one argument each
     client: HubClient,
     layout: ArchiveLayout,
     downloaded: DownloadedRepository,
@@ -1112,7 +1113,7 @@ def _finish_ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argumen
     run_id: RunId,
     defer_retention: bool,
 ) -> RepositoryOutcome:
-    """Plan §13.2 after download, inside its open publication journal."""
+    """docs/cli.md sync contract after download, inside its open publication journal."""
     plan = downloaded.plan
     repository = plan.repository
     identity = plan.identity
@@ -1159,13 +1160,13 @@ def _finish_ingest(  # noqa: PLR0913 - the §13.2 sequence's inputs, one argumen
         reused_digests=hashed.reused_digests,
     )
 
-    # Plan §13.2 step 10, from the snapshot rather than the Hub: detection reads
+    # docs/cli.md sync contract, from the snapshot rather than the Hub: detection reads
     # the same bytes that were hashed and will be published, so it cannot report
     # a dependency the archived revision does not actually declare.
     observations = detect_dependencies(
         snapshot,
         declared=repository.declared_dependencies,
-        # Bare repository ids, not selectors: plan §17 asks whether the detected
+        # Bare repository ids, not selectors: docs/architecture.md AD-07 asks whether the detected
         # repository "is independently configured for archive management", and a
         # `base_model` value names a repository without a type prefix. Matching
         # across types is deliberate — a dataset and a model sharing an id is
@@ -1307,7 +1308,7 @@ def _apply_retention(
     *,
     run_id: RunId,
 ) -> PrunedRevision | None:
-    """Rotate the oldest revision out if this publication exceeded the limit (§15.2).
+    """Rotate the oldest revision out if this publication exceeded the limit (the prune contract).
 
     Returns what went, for the run report, or `None` when nothing did — which is
     every run in steady state below the limit.
@@ -1356,7 +1357,7 @@ def _already_retained(
 ) -> Reference | None:
     """The active instance reference for a SHA the archive already holds.
 
-    Plan §13.2 step 2. `refs/revisions/<sha>.json` is what makes a SHA retained,
+    docs/cli.md sync contract. `refs/revisions/<sha>.json` is what makes a SHA retained,
     so this is the whole question — not whether a directory exists, which can be
     a superseded repair instance inside its grace period.
     """
@@ -1384,7 +1385,7 @@ def _retained_result(
     seeing in a run report.
 
     Retention order is untouched either way. Re-observing a SHA does not make a
-    duplicate or reorder the sequence (§15.1), so the generation stays as it was.
+    duplicate or reorder the sequence (AD-05), so the generation stays as it was.
     """
     layout_for = RepositoryLayout(archive=layout, identity=identity)
     current = layout_for.current_ref
@@ -1411,7 +1412,7 @@ def _known_digests(
 ) -> dict[ObjectIdentity, KnownDigest]:
     """Every digest this repository's retained publications already established.
 
-    Built per repository rather than archive-wide, because §16.1's reuse rule
+    Built per repository rather than archive-wide, because AD-18's reuse rule
     needs the digest to come from a *retained verified publication*, and the
     references that define that set are per repository. Sharing across
     repositories would be sound — an inode is an inode — but it would also mean
@@ -1437,7 +1438,7 @@ def _now() -> datetime:
 
 
 # --------------------------------------------------------------------------- #
-# Synchronizing a run (plan §13.1)
+# Synchronizing a run (docs/cli.md sync contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -1460,7 +1461,7 @@ class RunOutcome:
     exit_code: ExitCode
 
 
-def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
+def synchronize(  # noqa: PLR0913 - docs/cli.md sync contract's inputs, one argument each
     client: HubClient,
     layout: ArchiveLayout,
     config: ApplicationConfig,
@@ -1471,10 +1472,10 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
     run_id: RunId,
     started_at: datetime,
 ) -> RunOutcome:
-    """Process every selected repository and record the run (plan §13.1 steps 5-11).
+    """Process every selected repository and record the run (docs/cli.md sync contract).
 
     The lock, the storage preflight, and the §7.6 run journal are all the
-    caller's, composed at the command boundary in §13.1's order: lock (step 2),
+    caller's, composed at the command boundary in the CLI sync order: lock,
     preflight (step 3), then the journal whose first three checkpoints record
     that the run started, that the preflight passed, and that unfinished
     journals were reconciled before the Hub was contacted (`TX-07`). Holding
@@ -1539,7 +1540,7 @@ def synchronize(  # noqa: PLR0913 - plan §13.1's inputs, one argument each
         },
     )
 
-    # Plan §13.1 step 10, a *whole-run* step distinct from §7.3 checkpoint 9.
+    # docs/cli.md sync contract, a *whole-run* step distinct from §7.3 checkpoint 9.
     # The per-publication rebuild keeps the catalog current with each revision;
     # this keeps it current with each *configuration*, which changes without any
     # revision being published — a repository removed from the file is still

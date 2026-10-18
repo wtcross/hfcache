@@ -1,6 +1,7 @@
 """The only place `huggingface_hub` is called, and the only place it is caught.
 
-Plan §12 asks for a narrow adapter over the public API, injectable so tests can
+docs/security.md Hub adapter boundary asks for a narrow adapter over the public API, injectable so
+tests can
 use deterministic fakes rather than mock library internals. That narrowness is
 a safety property, not a style preference:
 
@@ -11,7 +12,7 @@ a safety property, not a style preference:
 
 * **Every call passes `token=` explicitly.** Never `None`, which re-enables
   implicit discovery inside the library and would let a developer's cached
-  credential silently change what a production run does (plan §12,
+  credential silently change what a production run does (docs/security.md Hub adapter boundary,
   `docs/security.md` T-07). Anonymous means `token=False`.
 
 * **Every exception becomes a coded problem.** The library raises a dozen
@@ -24,7 +25,8 @@ a safety property, not a style preference:
   authorizes restricted metadata and content.
 
 Nothing here executes repository code, instantiates a model or a builder, or
-shells out to `hf`, `git`, or `git-lfs` (plan §12, `NG-*`). The Hub is a source
+shells out to `hf`, `git`, or `git-lfs` (docs/security.md Hub adapter boundary, `NG-*`). The Hub
+is a source
 of *files and metadata* and is treated as nothing else.
 """
 
@@ -85,7 +87,7 @@ RATE_LIMITED: Final = 429
 @final
 @dataclass(frozen=True, slots=True)
 class HubIdentity:
-    """Who the Hub says this run is, from `whoami` (plan §12 item 1)."""
+    """Who the Hub says this run is, from `whoami` (docs/security.md Hub adapter boundary)."""
 
     name: str
     authenticated: bool
@@ -101,12 +103,12 @@ class TreeEntry:
     """One file the Hub says a revision contains.
 
     `size` is the Hub's claim about the file and is used only for estimation
-    (plan §13.2 step 3) and for the completeness comparison. It never becomes a
+    (docs/cli.md sync contract) and for the completeness comparison. It never becomes a
     manifest's expected size: that comes from hashing the bytes that actually
     landed (`AD-18`).
 
     The three identifiers are the same kind of thing and are recorded for the
-    same reason plan §10.1 gives — they help explain a discrepancy later. A Git
+    same reason docs/schemas.md gives — they help explain a discrepancy later. A Git
     object id is a hash of a *pointer* for an LFS file, an LFS digest is
     upstream's claim rather than this archive's reading, and a Xet hash
     identifies a chunk assembly rather than a byte sequence. None of them is ever
@@ -125,7 +127,7 @@ class TreeEntry:
 class DownloadEstimate:
     """What downloading one revision would cost, measured without downloading it.
 
-    Plan §13.2 step 3 asks for a download dry run before step 4 checks free-space
+    docs/cli.md sync contract asks for a download dry run before step 4 checks free-space
     headroom, so the two numbers it separates are the two an operator needs and
     they are not interchangeable. `logical_bytes` is how large the revision is;
     `new_bytes` is how much of it is not already in the private cache. A second
@@ -173,7 +175,8 @@ class HubApi(Protocol):
     """The slice of `HfApi` this adapter uses.
 
     A protocol rather than the class, so a test supplies an object with these
-    methods and no library machinery at all. That is what plan §12 means by
+    methods and no library machinery at all. That is what docs/security.md Hub adapter boundary
+    means by
     "deterministic fakes without mocking library internals": the seam is an
     interface this application defines, not a patched attribute on someone
     else's module.
@@ -213,7 +216,8 @@ class HubApi(Protocol):
     ) -> Iterable[Any]: ...
 
     # `PLR0913` counts arguments this application did not choose: every one of
-    # these is something plan §12 item 4 requires be passed *explicitly* rather
+    # these is something docs/security.md Hub adapter boundary requires be passed *explicitly*
+    # rather
     # than defaulted, and dropping one would mean relying on a library default.
     #
     # Overloaded on `dry_run` because the library is: a dry run returns file
@@ -346,7 +350,7 @@ class HubClient:
         )
 
     def whoami(self) -> HubIdentity:
-        """Ask the Hub who this run is (plan §12 item 1).
+        """Ask the Hub who this run is (docs/security.md Hub adapter boundary).
 
         Anonymous access is a valid answer, not a failure: `token_mode =
         "optional"` means a missing credential is normal, and an anonymous run
@@ -361,7 +365,7 @@ class HubClient:
         return HubIdentity(name=str(response.get("name", "")), authenticated=True)
 
     def require_identity(self, expected_account: str) -> None:
-        """Prove a configured Hub identity before repository access (plan §13.1)."""
+        """Prove a configured Hub identity before repository access (docs/cli.md sync contract)."""
         if not expected_account:
             return
         identity = self.whoami()
@@ -393,7 +397,7 @@ class HubClient:
         return facts
 
     def tree(self, identity: RepositoryIdentity, commit_sha: CommitSha) -> tuple[TreeEntry, ...]:
-        """Every file one immutable revision contains (plan §12 item 3).
+        """Every file one immutable revision contains (docs/security.md Hub adapter boundary).
 
         Always against a resolved commit SHA rather than a branch, so the listing
         describes the same immutable revision the download will fetch; a moving
@@ -427,7 +431,7 @@ class HubClient:
         cache_dir: Path,
         max_workers: int,
     ) -> DownloadEstimate:
-        """Cost one revision's download without performing it (plan §13.2 step 3).
+        """Cost one revision's download without performing it (docs/cli.md sync contract).
 
         A dry run reads the same cache a real download would write to, so it is
         given the same explicit cache path — an estimate against a different
@@ -436,7 +440,7 @@ class HubClient:
         whole revision as new, which is exactly right.
 
         No allow or ignore filters are passed, here or at the real download
-        (plan §12 item 4). The product contract is repository-complete, so an
+        (docs/security.md Hub adapter boundary). The product contract is repository-complete, so an
         estimate over a subset would be an estimate of the wrong thing.
         """
         try:
@@ -470,7 +474,8 @@ class HubClient:
     ) -> Path:
         """Fetch one complete immutable revision into the private cache.
 
-        Plan §13.2 step 5, with every argument plan §12 item 4 requires be
+        docs/cli.md sync contract, with every argument docs/security.md Hub adapter boundary
+        requires be
         explicit rather than defaulted: the repository id and type, the resolved
         full commit SHA rather than the reference that produced it, the cache
         path, the configured worker count, and the token. No allow or ignore
@@ -513,12 +518,15 @@ class HubClient:
     ) -> Path:
         """Ask the library to assemble the revision from the cache alone.
 
-        Plan §12 item 5 and §13.2 step 6. `local_files_only=True` makes the same
+        docs/security.md Hub adapter boundary and the ingestion contract. `local_files_only=True`
+        makes the
+        same
         call the download made, with the network taken away: the library walks
         the revision it knows it fetched and resolves each file out of the cache,
         and reports `IncompleteSnapshotError` when any of them is not really
         there. That is a check this application could not write for itself
-        without the thing plan §12 item 7 forbids — parsing the cache's private
+        without the thing docs/security.md Hub adapter boundary forbids — parsing the cache's
+        private
         layout to find out what a blob or a partial download is called.
 
         It is deliberately *not* the whole completeness story.
@@ -555,7 +563,7 @@ class HubClient:
 def delete_cache_revision(cache_dir: Path, commit_sha: CommitSha) -> int:
     """Remove one revision from the private cache through the supported API.
 
-    Plan §12 item 7 and `FS-14`: cache blobs are never removed by path. This
+    docs/security.md Hub adapter boundary and `FS-14`: cache blobs are never removed by path. This
     application does not know which blobs a revision uniquely owns — that is the
     library's bookkeeping, and a revision's blobs are routinely shared with
     revisions that are staying. `delete_revisions` computes the set and this
@@ -565,7 +573,7 @@ def delete_cache_revision(cache_dir: Path, commit_sha: CommitSha) -> int:
     Returns the bytes the library expected to free, which is what a run report
     records. It is the library's estimate rather than a measurement, and is
     reported as such: on ZFS the space may not return until the snapshots holding
-    it expire (§15.3).
+    it expire (the supported cache-retention contract).
 
     A cache that does not contain the revision is not an error. Prune step 2 is
     idempotent by design — a retried transaction finds it already gone — and
@@ -724,8 +732,8 @@ def tree_entries(
     listing is a container the path grammar reconstructs on its own.
 
     A file entry carrying no path is `HFHUB008` — "tree metadata missing or
-    incomplete" — rather than an empty string. The listing is what plan §13.2
-    step 7 calls the exact repository path set, and every later step joins those
+    incomplete" — rather than an empty string. The listing is what docs/cli.md sync contract calls
+    the exact repository path set, and every later step joins those
     names onto a filesystem path; an empty one would reach that join looking like
     a legitimate name for the tree's own root.
 
@@ -775,7 +783,7 @@ def download_estimate(raw: Sequence[object]) -> DownloadEstimate:
     are library records, and the three fields this application needs from them
     are named once, here. `will_download` is the library's own answer to "is
     this file already cached", which is a question about the cache's internal
-    layout that plan §12 item 7 forbids this application from answering for
+    layout that docs/security.md Hub adapter boundary forbids this application from answering for
     itself by parsing directory names.
     """
     sizes = [

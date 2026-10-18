@@ -5,9 +5,9 @@
 - Public CLI observation clarification: [decision 120](decision-120.md), API-013.
 - Date: 2026-10-17.
 - Work package: API-007, this commit.
-- Source: [progress decision 114](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-007-operation-receipts-and-idempotency.md).
+- Source: [progress decision 114](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-007-operation-receipts-and-idempotency.md).
 
 ## Context and decision
 

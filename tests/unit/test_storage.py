@@ -709,7 +709,7 @@ def test_capacity_below_the_reserve_is_hfmnt011():
 
 
 def test_the_need_is_counted_on_top_of_the_reserve():
-    # Plan §19 item 9: free capacity must exceed the estimated download, plus the
+    # docs/cli.md doctor contract: free capacity must exceed the estimated download, plus the
     # publication bytes in copy mode, plus the reserve — not the largest of them.
     room = facts(total=100 * GIB, available=15 * GIB)
 
@@ -757,7 +757,7 @@ def test_the_warning_accounts_for_the_run_as_well_as_the_reserve():
 
 
 # --------------------------------------------------------------------------- #
-# The capability probes (plan §14.2, `doctor` checks 9-11)
+# The capability probes (docs/architecture.md publication contract, `doctor` checks 9-11)
 # --------------------------------------------------------------------------- #
 
 

@@ -1,7 +1,8 @@
 """Explicit API bearer capabilities, without framework or Hub authentication.
 
 Descriptor-pinned credential loading and bounded fixed-size comparisons enforce
-INV-002/013, plan §3.4 and decision 112. No application or endpoint is created.
+INV-002/013, docs/server.md bearer configuration and decision 112. No application or endpoint is
+created.
 """
 
 import hashlib

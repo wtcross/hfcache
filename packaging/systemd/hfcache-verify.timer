@@ -1,11 +1,11 @@
-# Quarterly full verification (docs/plan.md §22.4, §34).
+# Quarterly full verification (docs/security.md hardening posture, §34).
 #
 # **Installed but left disabled.** Enabling it is an operator decision that
 # requires confirming this calendar does not overlap the TrueNAS scrub, SMART,
 # snapshot, or replication schedules — a full verification reads every unique
 # object in the archive, and running it against a pool that is already saturated
 # by a scrub would measure the scrub rather than the archive. The handoff list in
-# docs/progress.md carries the item.
+# docs/deployment-status.md records the restriction.
 #
 # `Wed *-01,04,07,10-01..07` is the first Wednesday of January, April, July, and
 # October: the day-of-week filter and the 1st-to-7th day range intersect in

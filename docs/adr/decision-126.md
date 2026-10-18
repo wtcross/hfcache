@@ -4,9 +4,9 @@
   passed by OPS-014 on 2026-10-18. Rootless rollout/release acceptance remains later work.
 - Date: 2026-10-18.
 - Work package: OPS-014, this commit.
-- Source: [progress decision 126](../progress.md#decisions),
-  [local rollout plan](../plans/2026-10-18-plan-local-rootless-rollout.md),
-  [task](../plans/tasks/ops-014-local-rollout-guardrails.md).
+- Source: [progress decision 126](../agents/progress.md#decisions),
+  [local rollout plan](../agents/plans/2026-10-18-plan-local-rootless-rollout.md),
+  [task](../agents/plans/tasks/ops-014-local-rollout-guardrails.md).
 
 ## Context and decision
 
@@ -93,7 +93,7 @@ own release artifacts, local rollout and final partial-acceptance handoff.
 
 ## OPS-014 implementation evidence
 
-The [task](../plans/tasks/ops-014-local-rollout-guardrails.md) records the actual
+The [task](../agents/plans/tasks/ops-014-local-rollout-guardrails.md) records the actual
 protected backup, original-inode flock, blocked legacy activation, persistent
 client read-only remount, active target/Enforcing SELinux and post-gate recheck.
 The corrected gate ran behind an empty read-only tmpfs covering NAS and exited 0
@@ -179,7 +179,7 @@ remain. No NAS file I/O/jobs, other-host action or remote publication is granted
 
 ## OPS-018 installed checkpoint (2026-10-18)
 
-[OPS-018](../plans/tasks/ops-018-container-worker-rollout.md) deploys clean 0.2.1 UBI
+[OPS-018](../agents/plans/tasks/ops-018-container-worker-rollout.md) deploys clean 0.2.1 UBI
 artifacts and closes the connection hold with actual installed API-container
 PROBE under Enforcing, repeated after non-killing drain/restart. Original host
 policy/guard/lock, NAS-ro, masks and stores remain; no live NAS workload is run.

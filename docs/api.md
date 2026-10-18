@@ -3,7 +3,7 @@
 Status: API-006 implements authenticated archive metadata and API-007 adds
 bounded receipt/admission primitives and operation observation; API-009 adds
 typed command routes, with guarded maintenance/initialization added by API-010,
-under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
+under [the active plan](agents/plans/2026-10-17-plan-rest-api-and-mcp.md).
 API-012 adds candidate validation/planning/read CLI and API-013 completes
 operational CLI/observation. API-014 packages activated/scheduled services and
 API-015 integrates Cockpit; API-016 completes REST acceptance. MCP-001 adds an
@@ -919,7 +919,7 @@ package counts do not stand in for fresh acceptance.
 
 Installed systemd activation, cgroup no-IP/credential-source masking (including
 custom paths), hardening, browser/PAM bridge, SELinux/NFS, executor drain and
-verify-calendar approval remain explicit [operator holds](progress.md#operator-handoff).
+verify-calendar approval remain explicit [operator holds](agents/progress.md#operator-handoff).
 Repository fixtures do not pass them. This plan authorizes no production operation
 or deployment.
 

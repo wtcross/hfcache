@@ -75,10 +75,10 @@ it.
   historical reasoning and link its replacement. The workflow and ADR index
   specify the record format and review obligations.
 - **Plans and tasks have one authority each.** Follow
-  `docs/agents/planning.md`: `docs/plans/current.md` selects the active plan,
+  `docs/agents/planning.md`: `docs/agents/plans/current.md` selects the active plan,
   the dated plan defines scope/order, and task files own execution status and
   acceptance evidence. Use existing work-package IDs and retain completed
-  records. `docs/progress.md` holds the completed audit, Decisions, and
+  records. `docs/agents/progress.md` holds the completed audit, Decisions, and
   Operator handoff rather than duplicate active-task checkboxes.
 - **Two tests read the docs at run time.**
   `tests/unit/test_transactions.py` parses the §7.3–§7.5 checkpoint tables of
@@ -87,7 +87,7 @@ it.
   `docs/cli.md`. Editing those regions is editing test input — run the gate.
 - **Amendments, not rewrites, for historical records.** Where later reality
   makes standing plan text wrong, add a dated, attributed amendment beside it
-  and record the decision; `docs/plan.md` §30 and §36 carry the pattern.
+  and record the decision; `docs/agents/history/plan.md` §30 and §36 carry the pattern.
   Living runbooks are edited directly.
 - **Voice.** Dense, declarative, reasons attached. Tables hold enumerable
   facts; prose holds reasoning. Requirements say **must** and **never** and

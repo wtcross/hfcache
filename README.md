@@ -72,10 +72,10 @@ drain/restart, closing the former worker-connectivity hold. Verified local TLS,
 REST/authentication, the exact nine MCP tools and the fixed container client pass.
 Native FD3 activation and existing hardening remain unchanged.
 
-[REL-013](docs/plans/tasks/rel-013-container-worker-artifacts.md) records exact clean
-artifacts from immutable source `4088994`; [OPS-018](docs/plans/tasks/ops-018-container-worker-rollout.md)
+[REL-013](docs/agents/plans/tasks/rel-013-container-worker-artifacts.md) records exact clean
+artifacts from immutable source `4088994`; [OPS-018](docs/agents/plans/tasks/ops-018-container-worker-rollout.md)
 records the guarded deployment and actual installed acceptance.
-[REL-014](docs/plans/tasks/rel-014-container-worker-release.md) records the passing
+[REL-014](docs/agents/plans/tasks/rel-014-container-worker-release.md) records the passing
 final gate/local tag at deployment commit `156506f`; application source remains
 `4088994`. Disposable complete
 verification-mode tests use simulated NFS and do not establish live NAS readiness.
@@ -83,12 +83,12 @@ The NAS stays read-only, legacy writers remain masked and verification schedulin
 stays disabled. No NAS file I/O/jobs or other-host/remote action is authorized.
 See the [container contract](docs/containers.md),
 [operator checklist](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
-and [current plan](docs/plans/2026-10-18-plan-container-worker-listener.md).
+and [current plan](docs/agents/plans/2026-10-18-plan-container-worker-listener.md).
 
 The local annotated `v0.2.0` tag and its partial-acceptance history remain intact.
 That deployment used application source `481fcc4` and evidence commit `11ddd55`;
 its API-to-worker SELinux failure returns on rollback unless deliberately corrected.
-The [completed feature plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md) records
+The [completed feature plan](docs/agents/plans/2026-10-17-plan-rest-api-and-mcp.md) records
 the breaking API-only operational CLI/optional read-only MCP boundary. No tag or
 branch has been published remotely.
 
@@ -104,13 +104,13 @@ What remains is operator work that this project cannot perform for itself — th
 read-only consumer export, snapshots and replication, the disjointness proof from
 a second client, reboot persistence, and enabling the quarterly verification
 timer. All of it is listed, with copy-pasteable instructions and acceptance
-checks, under **Operator handoff** in `docs/progress.md`.
+checks, under **Operator handoff** in `docs/agents/progress.md`.
 
-[The current tracker](docs/plans/current.md) records no active plan after the completed listener correction;
+[The current tracker](docs/agents/plans/current.md) records no active plan after the completed listener correction;
 dated
 plans and individual task files own scope and execution status.
-`docs/progress.md` retains completed work-package evidence, Decisions, Operator
-handoff, and the unmigrated backlog. `docs/plan.md` remains the historical
+`docs/agents/progress.md` retains completed work-package evidence, Decisions, Operator
+handoff, and the unmigrated backlog. `docs/agents/history/plan.md` remains the historical
 implementation plan and contract reference.
 
 ## Documentation
@@ -135,32 +135,32 @@ implementation plan and contract reference.
 | [`docs/recovery.md`](docs/recovery.md) | Corruption, repair, snapshot restore, lost writer, and the stopped-machine states |
 | [`docs/consumers.md`](docs/consumers.md) | Copying and verifying a revision from a downstream host |
 | [`docs/cockpit.md`](docs/cockpit.md) | The Cockpit plugin's contract: rules, privilege model, operation surface |
-| [`docs/cockpit-plugin/`](docs/cockpit-plugin/) | Installing and using the Cockpit plugin |
-| [`docs/plan.md`](docs/plan.md) | Original implementation plan and contract/history reference |
-| [`docs/plans/current.md`](docs/plans/current.md) | Active-plan selector and next task |
-| [`docs/plans/`](docs/plans/README.md) | Dated plans and individual work-package task records |
-| [`docs/progress.md`](docs/progress.md) | Completed work-package audit, Decisions, operator handoff, and historical backlog |
+| [`docs/cockpit-plugin/`](docs/cockpit-plugin) | Installing and using the Cockpit plugin |
+| [`docs/agents/history/plan.md`](docs/agents/history/plan.md) | Original implementation plan and contract/history reference |
+| [`docs/agents/plans/current.md`](docs/agents/plans/current.md) | Active-plan selector and next task |
+| [`docs/agents/plans/`](docs/agents/plans/README.md) | Dated plans and individual work-package task records |
+| [`docs/agents/progress.md`](docs/agents/progress.md) | Completed work-package audit, Decisions, operator handoff, and historical backlog |
 
 [`docs/storage-requirements.md`](docs/storage-requirements.md) states what any
 NFSv4.2 server must provide. `docs/truenas.md` — the reference deployment's
 NAS-side runbook against those requirements — remains unwritten by design: it
-belongs to whoever performs the NAS-side handoff items (`docs/progress.md`,
+belongs to whoever performs the NAS-side handoff items (`docs/agents/progress.md`,
 operator handoff item 11), because none of its content can be made or verified
 from the writer.
 
 Coding agents start at [`AGENTS.md`](AGENTS.md) — a context router into these
-documents and the agent-specific set under [`docs/agents/`](docs/agents/).
+documents and the agent-specific set under [`docs/agents/`](docs/agents).
 `CLAUDE.md` is a symlink to it.
 
 ## Browser administration
 
-An optional Cockpit plugin under [`cockpit/`](cockpit/) administers a
+An optional Cockpit plugin under [`cockpit/`](cockpit) administers a
 deployed writer from the browser: sync control with live activity, archive
 browsing, configuration editing, schedule management, verification, run
 reports, and maintenance. Every action is one of the runbook's own CLI
 commands or systemd units — never a side channel — and the CLI remains the
 plugin's current interface. The activated
-[REST-first implementation plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
+[REST-first implementation plan](docs/agents/plans/2026-10-17-plan-rest-api-and-mcp.md)
 introduces authenticated remote management incrementally;
 [the API contract](docs/api.md) marks metadata, operation observation and typed
 sync/verification/planning/diagnostic/installed-validation, maintenance and
@@ -168,7 +168,7 @@ candidate routes as implemented; API-012 migrates reader commands. Every route, 
 and error surface authenticates; discovery preserves exact publication identity and
 `published/`-relative reference locators. Bulk copies still use the read-only
 export and independent verification in [the consumer runbook](docs/consumers.md).
-[`docs/cockpit-plugin/`](docs/cockpit-plugin/) covers installation and
+[`docs/cockpit-plugin/`](docs/cockpit-plugin) covers installation and
 usage; [`docs/cockpit.md`](docs/cockpit.md) is the contract it is written
 against.
 
@@ -180,7 +180,7 @@ against.
 | `cockpit/` | The Cockpit administration plugin: a browser UI over the CLI and the systemd units |
 | `docs/` | The contracts and runbooks in the table above |
 | `docs/agents/` | Agent-facing planning, workflow, conventions, environment, and release docs |
-| `docs/plans/` | Current-plan selector, dated plans, and individual task records |
+| `docs/agents/plans/` | Current-plan selector, dated plans, and individual task records |
 | `packaging/` | systemd units and timers, journald and tmpfiles drop-ins |
 | `scripts/` | `check.sh` (the quality gate), `install-release.sh`, and the hardening probe pair |
 | `examples/` | A runnable `config.toml`, and `copy-revision.py` — the consumer-side helper |
@@ -309,7 +309,7 @@ and it is exactly what must pass from a
 clean checkout:
 
 ```bash
-scripts/check.sh                 # the docs/plan.md §8.4 gate
+scripts/check.sh                 # the docs/agents/history/plan.md §8.4 gate
 scripts/check.sh --with-build    # plus a wheel install smoke test
 ```
 
@@ -324,6 +324,6 @@ uv run --locked --extra server --extra mcp pytest -m build # throwaway wheel smo
 ## License
 
 MIT ([`LICENSE`](LICENSE)), with one subtree different:
-[`cockpit/`](cockpit/) is LGPL-2.1-or-later — it derives from the Cockpit
+[`cockpit/`](cockpit) is LGPL-2.1-or-later — it derives from the Cockpit
 starter kit — declared per file in SPDX headers (decision 90 in
-`docs/progress.md`).
+`docs/agents/progress.md`).

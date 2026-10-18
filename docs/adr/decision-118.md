@@ -4,9 +4,9 @@
   CLI/observation completed by [decision 120](decision-120.md).
 - Date: 2026-10-17.
 - Work package: API-011, this commit.
-- Source: [progress decision 118](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-011-typed-client-and-client-config.md).
+- Source: [progress decision 118](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-011-typed-client-and-client-config.md).
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
 ## Context and decision
@@ -88,7 +88,7 @@ Evidence: [core client tests](../../tests/unit/test_api_client.py),
 [real Unix/TCP/TLS tests](../../tests/unit/test_api_client_sockets.py),
 [adversarial client tests](../../tests/unit/test_api_client_adversarial.py),
 [locked base/server import smoke](../../scripts/check-installations.py) and
-[task compatibility/gate evidence](../plans/tasks/api-011-typed-client-and-client-config.md).
+[task compatibility/gate evidence](../agents/plans/tasks/api-011-typed-client-and-client-config.md).
 
 Official HTTPX documentation checked for the already locked 0.28.1 client API:
 [Unix/custom transports](https://www.python-httpx.org/advanced/transports/),
@@ -138,7 +138,7 @@ pages through an empty page, counting that response too against the same
 drain's max_pages and the absolute observation deadline. Retention gaps and
 admitted operation identity stay explicit; no extra capabilities request, new role/schema/dependency or replay/
 cancellation authority is introduced. This is an existing-contract correction,
-not a new architectural decision. [Final integration task](../plans/tasks/api-017-final-integration-and-handoff.md)
+not a new architectural decision. [Final integration task](../agents/plans/tasks/api-017-final-integration-and-handoff.md)
 owns exact subprocess/direct-client proof and required fresh gate evidence.
 
 

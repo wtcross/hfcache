@@ -1,4 +1,4 @@
-"""Structured event log for journald (`docs/plan.md` §24).
+"""Structured event log for journald (docs/cli.md output discipline).
 
 The durable run report under `runs/` is the record of what a run *did*. This is
 the record of what *happened* — and the two are not the same thing, because a
@@ -7,7 +7,7 @@ in preflight, on a lock timeout, or part way through a download leaves no report
 at all, so without this the only trace is systemd's exit code. Those are exactly
 the runs an operator needs to reconstruct.
 
-Four properties §24 asks for, and how each is obtained here:
+Four properties the CLI event contract asks for, and how each is obtained here:
 
 *Stable event names.* `EVENTS` is a closed vocabulary and `emit` refuses a name
 outside it. A typo is a test failure rather than a line nobody greps for, and an
@@ -38,7 +38,7 @@ so `journalctl -p err -u hfcache-sync.service` selects failures. Interactively
 there is no prefix, because it would just be noise on a terminal.
 
 `import logging` below is the standard library's, not this module: Python 3
-resolves it absolutely. Plan §7 fixes this module's name and `FW-03` requires
+resolves it absolutely. `FW-03` requires
 logging come from the standard library, so the collision is by design and costs
 nothing.
 """
@@ -102,18 +102,19 @@ EVENTS: Final = (
     "run.completed",
     "mcp.diagnostic",
 )
-"""Plan §24's stable vocabulary, including the decision 103 cleanup amendment."""
+"""docs/cli.md output discipline's stable vocabulary, including the decision 103 cleanup
+amendment."""
 
 DEBUG_EVENTS: Final = (
     "preflight.check",
     "capacity.evaluated",
 )
-"""Detail `--verbose` adds, deliberately outside §24's stable set.
+"""Detail `--verbose` adds, deliberately outside the CLI event contract's stable set.
 
-Both are bounded: one line per §19 check, and one per capacity evaluation. They
+Both are bounded: one line per the preflight contract check, and one per capacity evaluation. They
 exist so `-v` selects something real — a flag that lowers a threshold nothing
 emits below is the same kind of documented lie as one that is never read at all.
-They are not part of the §24 contract and may change; the `EVENTS` names may not.
+They are not part of the the CLI event contract contract and may change; the `EVENTS` names may not.
 """
 
 _ERROR: Final = frozenset({"preflight.failed", "repository.failed"})
@@ -157,7 +158,7 @@ def level_for(*, verbose: int, quiet: bool) -> int:
     """Map `docs/cli.md` §1's verbosity options onto a level.
 
     `--quiet` suppresses informational output and leaves warnings and errors,
-    which is exactly `WARNING`. Default is `INFO`, because the §24 families are
+    which is exactly `WARNING`. Default is `INFO`, because the the CLI event contract families are
     the record an unattended run leaves behind and requiring a flag to get them
     would mean the systemd units had to pass one. `-v` adds `DEBUG_EVENTS`.
 
@@ -307,7 +308,7 @@ def bind_run(run_id: str | None) -> None:
     """Set the current scope's run identity for isolated CLI compatibility.
 
     Request and worker execution use scoped_context/ExecutionContext.activate so
-    completion and exceptions restore the caller's previous identity (§24).
+    completion and exceptions restore the caller's previous identity (the CLI event contract).
     """
     _correlation.set(replace(current_correlation(), run_id=run_id))
 

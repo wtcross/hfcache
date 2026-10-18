@@ -4,9 +4,9 @@
 - Status: Accepted target contract; dependency/configuration/authentication enforcement advanced by [decision 112](decision-112.md), with reader/candidate integration and explicit HTTPCore use amended by [decision 119](decision-119.md).
 - Date: 2026-10-17.
 - Work package: API-001, this commit.
-- Source: [progress decision 108](../progress.md),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-001-contract-and-activation.md).
+- Source: [progress decision 108](../agents/progress.md),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-001-contract-and-activation.md).
 
 ## Context and decision
 
@@ -95,4 +95,4 @@ This package adds transport only, with no OpenAPI conversion or tools/resources/
 prompts; curated reads and side-effect proof remain MCP-002. No archive/config/
 durable format, domain workflow, production deployment or host-proof change.
 See [MCP](../mcp.md) for exact supported protocol/path/session behavior and the
-[MCP-001 task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.
+[MCP-001 task](../agents/plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.

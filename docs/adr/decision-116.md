@@ -4,9 +4,9 @@
   [decision 117](decision-117.md), candidates/readers by [119](decision-119.md).
 - Date: 2026-10-17.
 - Work package: API-009, this commit.
-- Source: [progress decision 116](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-009-sync-verification-and-diagnostics-api.md).
+- Source: [progress decision 116](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-009-sync-verification-and-diagnostics-api.md).
 
 ## Context and decision
 
@@ -84,7 +84,7 @@ Implementation: [strict DTOs](../../src/hfcache/api/command_models.py),
 Evidence: [model/authority tests](../../tests/unit/test_command_models.py),
 [real HTTP/domain tests](../../tests/unit/test_api_commands.py),
 [adversarial concurrency/disconnect tests](../../tests/unit/test_api_command_adversarial.py)
-and the completed [task](../plans/tasks/api-009-sync-verification-and-diagnostics-api.md).
+and the completed [task](../agents/plans/tasks/api-009-sync-verification-and-diagnostics-api.md).
 
 ## API-012 candidate implementation amendment
 

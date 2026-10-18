@@ -3,9 +3,9 @@
 - Status: Accepted; implemented by MCP-002.
 - Date: 2026-10-18.
 - Work package: MCP-002, this commit.
-- Source: [progress decision 125](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/mcp-002-curated-read-only-tools.md).
+- Source: [progress decision 125](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/mcp-002-curated-read-only-tools.md).
 
 ## Context and decision
 
@@ -125,7 +125,7 @@ pending after this package's commit.
 
 ## 2026-10-18 mounted security traceability (MCP-003)
 
-[MCP-003](../plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md) maps this
+[MCP-003](../agents/plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md) maps this
 existing decision to required [threat/control/test evidence](../mcp.md#threat-control-and-test-traceability-mcp-003).
 Parent-lifespan mounted authorization, closed registry/arguments, whole-state
 snapshots, malformed evidence and secret containment, finite mixed-interface
@@ -152,7 +152,7 @@ client expectations under this existing decision. No new tool/role/config schema
 or architectural choice is selected. REST off/on authentication/OpenAPI/command
 parity, restart-only source rotation and unchanged worker/timer policy are mapped
 by [acceptance tests](../../tests/unit/test_mcp_acceptance.py); the
-[MCP-004 task](../plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns actual
+[MCP-004 task](../agents/plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns actual
 runs and required --with-build results. Real deployment holds remain separate.
 
 Repository client/package acceptance completed 2026-10-18: positive example

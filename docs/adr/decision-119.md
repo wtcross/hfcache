@@ -4,9 +4,9 @@
   observation advanced by [decision 120](decision-120.md).
 - Date: 2026-10-18.
 - Work package: API-012, this commit.
-- Source: [progress decision 119](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-012-migrate-read-cli-and-candidates.md).
+- Source: [progress decision 119](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-012-migrate-read-cli-and-candidates.md).
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 ## Context and decision

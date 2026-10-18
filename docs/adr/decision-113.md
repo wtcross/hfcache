@@ -5,9 +5,9 @@
 - Status: Accepted; implemented by API-006.
 - Date: 2026-10-17.
 - Work package: API-006, this commit.
-- Source: [progress decision 113](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-006-fastapi-lifecycle-and-reads.md).
+- Source: [progress decision 113](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-006-fastapi-lifecycle-and-reads.md).
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
 ## Context and decision
@@ -67,7 +67,7 @@ invalid/absent/security-policy requests remain exit 10. Exact codes HFAPI005
 (metadata budget), HFAPI008 (unexpected failure), HFAPI009 (full/draining) and
 HFAPI011 (instance lock) override the family default to exit 20. An unavailable
 or unsafe service is not an invalid credential, and HTTP status does not replace
-domain error aggregation. The [CLI taxonomy](../cli.md#5-error-taxonomy) records
+domain error aggregation. The [CLI taxonomy](../cli.md#5-error-and-warning-taxonomy) records
 every code; no existing code is reused.
 
 ## Rationale and alternatives
@@ -112,7 +112,7 @@ can fall back to startup-pinned configuration, never a sentinel-proof claim.
 Exact resources, DTO fields, statuses, page order/bounds and streaming limits
 are specified in the [API contract](../api.md). Startup/listener/shutdown
 requirements and implemented/pending boundaries are in the [server contract](../server.md).
-Validation and source links accompany the [API-006 task](../plans/tasks/api-006-fastapi-lifecycle-and-reads.md).
+Validation and source links accompany the [API-006 task](../agents/plans/tasks/api-006-fastapi-lifecycle-and-reads.md).
 
 Implementation: [read app/boundary](../../src/hfcache/api/app.py),
 [wire models](../../src/hfcache/api/models.py),
@@ -148,7 +148,7 @@ This package adds transport only, with no OpenAPI conversion or tools/resources/
 prompts; curated reads and side-effect proof remain MCP-002. No archive/config/
 durable format, domain workflow, production deployment or host-proof change.
 See [MCP](../mcp.md) for exact supported protocol/path/session behavior and the
-[MCP-001 task](../plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.
+[MCP-001 task](../agents/plans/tasks/mcp-001-mount-authenticated-fastmcp.md) for evidence.
 
 ## 2026-10-18 curated metadata tool amendment (MCP-002)
 
@@ -167,4 +167,4 @@ Archive-derived strings and dependency observations remain untrusted data, never
 instructions or executable content. Consumer copy/verification/promotion and
 whole-archive authorization remain unchanged. No dependency, config/durable
 schema, job path or production operation is added. See [MCP](../mcp.md) and the
-[MCP-002 task](../plans/tasks/mcp-002-curated-read-only-tools.md).
+[MCP-002 task](../agents/plans/tasks/mcp-002-curated-read-only-tools.md).

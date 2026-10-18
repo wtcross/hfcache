@@ -10,7 +10,7 @@
 #
 # Two values must be replaced before this is a production configuration:
 # storage.archive_id (below) and the [[repositories]] list, which grows per
-# docs/plan.md §29 step 12 after `hfcache plan` reports dry-run sizes.
+# docs/storage-requirements.md capacity admission after `hfcache plan` reports dry-run sizes.
 
 schema_version = 1
 
@@ -25,7 +25,7 @@ archive_root = "/srv/hfcache"
 
 # Replace with the UUID provisioned for this archive. `archive init` writes this
 # exact value into .hfcache-root and never mints one of its own, so configuration
-# and sentinel cannot disagree (docs/progress.md decision 27).
+# and sentinel cannot disagree (docs/adr/decision-027.md).
 archive_id = "00000000-0000-0000-0000-000000000000"
 
 publication_mode = "hardlink"  # "copy" only after a capacity review
@@ -48,7 +48,7 @@ lock_wait_seconds = 86400      # 24 h, so a long sync can finish first
 [repair]
 retired_instance_grace_hours = 168   # seven days for an in-flight consumer copy
 
-# The two test repositories (docs/plan.md §36.5, chosen at HUB-004). Both are
+# The two test repositories (docs/development.md opt-in test fixtures, chosen at HUB-004). Both are
 # public, owned by `hf-internal-testing`, and deliberately tiny — roughly 12 MiB
 # and 200 KiB — so a full sync, prune, and verification cycle can be exercised
 # end to end without waiting on a large download.

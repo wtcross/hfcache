@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Runbook, exercised from `hfcachewriter.lab.example.com` against the live archive |
 | Work package | `OPS-007` |
-| Derived from | `docs/plan.md` §6.3, §33; `docs/schemas.md` §3, §4 |
+| Derived from | `docs/agents/history/plan.md` §6.3, §33; `docs/schemas.md` §3, §4 |
 | Helper | `examples/copy-revision.py`, shipped in the release at `/opt/hfcache/current/examples/` |
 | Host setup | `scripts/setup-hfcache-consumer-model-store.sh` (`OPS-009`) |
 | Serving | `scripts/consumer-serve-hfcache-model.sh` (`OPS-010`) |

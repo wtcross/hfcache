@@ -47,7 +47,7 @@ __all__ = [
 ]
 
 LOCK_DIRECTORY = Path("/run/hfcache")
-"""Transient run state, created by `RuntimeDirectory=hfcache` (plan §22.5).
+"""Transient run state, created by `RuntimeDirectory=hfcache` (docs/security.md hardening posture).
 
 `/run` is a tmpfs, so the lock file cannot survive a reboot — which is the
 correct lifetime for something whose whole meaning is "a process is running".
@@ -144,9 +144,9 @@ def exclusive_lock(
     wait_seconds: float,
     poll_seconds: float = _POLL_SECONDS,
 ) -> Iterator[Path]:
-    """Hold the exclusive lock for the body, or raise `HFMNT010` (plan §19 item 8).
+    """Hold the exclusive lock for the body, or raise `HFMNT010` (docs/cli.md doctor contract).
 
-    Acquired *before* the storage preflight, per plan §13.1 steps 2 and 3: two
+    Acquired *before* the storage preflight, per docs/cli.md sync contract: two
     commands running concurrently is the condition this exists to prevent, and
     finding out early costs one syscall.
 

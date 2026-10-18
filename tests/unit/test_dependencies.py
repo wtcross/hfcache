@@ -1,4 +1,4 @@
-"""Static dependency detection — plan §17, `AD-07`, `AD-15`.
+"""Static dependency detection — docs/architecture.md AD-07, `AD-07`, `AD-15`.
 
 Two properties get the most attention, and both are safety properties rather
 than feature ones.

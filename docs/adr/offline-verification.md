@@ -4,7 +4,7 @@
   amended by decisions 110/111/115 and [121](decision-121.md).
 - Original record: 2026-07-24, `87323c2` (initial plan, §4 and §16).
 - ADR backfill: 2026-10-17.
-- Authority: [plan §16](../plan.md#16-integrity-and-verification),
+- Authority: [plan §16](../agents/history/plan.md#16-integrity-and-verification),
   [CLI verification contract](../cli.md), and
   [security controls](../security.md) remain normative. Maintain this record
   under [the ADR policy](README.md).
@@ -72,7 +72,7 @@ control and the deferred private-network reconnect test.
 - [Object identity, completeness, and corruption tests](../../tests/unit/test_verification.py).
 - [Shipped verification service](../../packaging/systemd/hfcache-verify.service).
 - [Shipped quarterly timer and disabled-until-reviewed policy](../../packaging/systemd/hfcache-verify.timer).
-- [Operator calendar handoff and pending activation](../progress.md#operator-handoff).
+- [Operator calendar handoff and pending activation](../agents/progress.md#operator-handoff).
 - [Offline-unit hardening probe](../../scripts/check-hardening.sh).
 
 ## API-003 amendment (2026-10-17)

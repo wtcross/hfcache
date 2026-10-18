@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Runbook, exercised on `hfcachewriter.lab.example.com` |
 | Work package | `OPS-002` |
-| Derived from | `docs/plan.md` §11.2, §15, §16, §24, §29; `docs/cli.md` |
+| Derived from | `docs/agents/history/plan.md` §11.2, §15, §16, §24, §29; `docs/cli.md` |
 | Companion | `docs/deployment-centos-stream-10.md` for getting it up in the first place |
 
 Day-to-day operation: what each command reports, what every exit code means and
@@ -845,3 +845,19 @@ not historical direct-backend aliases or client-stop/free-lock evidence. Existin
 operation/scheduled handles and both server/worker stores survive observer loss,
 rotation, drain and rollback. Actual host acceptance and verification-calendar
 approval remain separate; no production action was executed by plan closure.
+
+## Verification triggers and calendar defaults
+
+Full verification is required after a manifest schema change, in addition to
+the corruption, restore and scheduled integrity checks described above.
+
+Native timer defaults use `America/New_York`:
+
+| Timer | Calendar | Persistent | Randomized delay | Accuracy |
+| --- | --- | --- | --- | --- |
+| Sync | Daily 02:00 | true | 30m | 1m |
+| Verification | First Wednesday of Jan/Apr/Jul/Oct, 04:00 | true | 2h | systemd default |
+
+Validate expressions with `systemd-analyze calendar` and coordinate the
+verification calendar with scrub, SMART, snapshot and replication schedules
+before enabling it. The recorded guarded deployment keeps scheduling blocked.

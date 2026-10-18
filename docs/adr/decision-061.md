@@ -7,7 +7,7 @@ Executor/client unit roles are amended by [decision 121](decision-121.md).
 
 - Original decision date: 2026-07-26.
 - Original work package: `SEL-001`.
-- Source: [decision 61 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 61 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -67,8 +67,8 @@ The source entry first appears in
 enforcing`). The decision text above preserves the complete reasoning in the
 current historical log, including its recorded alternatives and consequences.
 
-Current governing documents: [docs/security.md](../../docs/security.md),
-[docs/architecture.md](../../docs/architecture.md).
+Current governing documents: [docs/security.md](../security.md),
+[docs/architecture.md](../architecture.md).
 
 Implementation or shipped-artifact evidence:
 [packaging/systemd/hfcache-sync.service](../../packaging/systemd/hfcache-sync.service),

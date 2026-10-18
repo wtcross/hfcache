@@ -4,9 +4,9 @@
   credential/hardening acceptance remains an operator hold.
 - Date: 2026-10-18.
 - Work package: API-015, this commit.
-- Source: [progress decision 122](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-015-cockpit-api-client-compatibility.md).
+- Source: [progress decision 122](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-015-cockpit-api-client-compatibility.md).
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
 ## Context and decision

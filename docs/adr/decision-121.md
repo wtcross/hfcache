@@ -4,9 +4,9 @@
   acceptance remains an operator deployment hold.
 - Date: 2026-10-18.
 - Work package: API-014, this commit.
-- Source: [progress decision 121](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-014-systemd-and-deployment-integration.md).
+- Source: [progress decision 121](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-014-systemd-and-deployment-integration.md).
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
@@ -91,7 +91,7 @@ contracts; the task records actual acceptance and gate evidence.
 Enforcement: [named activation/bootstrap](../../src/hfcache/server.py),
 [worker startup](../../src/hfcache/verification_worker.py),
 [scheduled observer](../../src/hfcache/scheduled_client.py),
-[unit files](../../packaging/systemd/),
+[unit files](../../packaging/systemd),
 [installer](../../scripts/install-release.sh),
 [quiescence/switch guard](../../scripts/release-functions.sh) and
 [executor-aware probe](../../scripts/check-hardening.sh).

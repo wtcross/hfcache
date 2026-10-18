@@ -1,6 +1,7 @@
 """Non-network candidate policy assessment; installation belongs outside REST.
 
-Plan §7 and decision 116 require installed authority before candidate planning.
+The docs/api.md candidate contract and decision 116 require installed authority before candidate
+planning.
 These pure API-012 hooks cannot resolve credentials or load caller-selected paths.
 """
 

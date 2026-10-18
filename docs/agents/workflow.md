@@ -2,34 +2,34 @@
 
 How work is performed, recorded, and pushed. Plan selection and task lifecycle
 are defined by `docs/agents/planning.md`. This document carries
-`docs/plan.md` §36 — the Autonomous Implementation Protocol that governed the
+`docs/agents/history/plan.md` §36 — the Autonomous Implementation Protocol that governed the
 0.1.x build-out — forward for the sessions after it. §36 stays as that run's
-record; decision 82 in `docs/progress.md` records the supersession.
+record; decision 82 in `docs/agents/progress.md` records the supersession.
 
 ## Session startup
 
 1. `git log --oneline -20` and `git status`. The repository is the truth about
    what has happened; summaries of prior sessions are not.
-2. Read `docs/plans/current.md`. If it selects an active plan, read that plan
+2. Read `docs/agents/plans/current.md`. If it selects an active plan, read that plan
    and the next task, loading dependencies only as needed. Task files own
    execution status; reconcile them with git before resuming.
-3. Read relevant recent completed evidence in `docs/progress.md`, **Operator
+3. Read relevant recent completed evidence in `docs/agents/progress.md`, **Operator
    handoff**, and recent **Decisions**. Its pending historical backlog does
    not select the next task or authorize new work.
 4. If source has changed since the last green gate, run `scripts/check.sh`
    before starting new work, and fix regressions first.
 
-Do not begin by reading `docs/plan.md` in full — that was §36.1's rule, for a
+Do not begin by reading `docs/agents/history/plan.md` in full — that was §36.1's rule, for a
 session that had to build everything. Route from `AGENTS.md`'s context map
-instead. That original plan remains a historical contract, read only where
-the task needs it. New plans live in `docs/plans/`.
+instead. That original plan retains historical evidence. Use the human contracts mapped
+by `docs/agents/historical-contract-map.md` for current technical authority. New plans live in `docs/agents/plans/`.
 
 ## Work packages
 
-- `docs/plans/current.md` selects the sole active plan. Dated plan files own
-  scope and task order; individual files in `docs/plans/tasks/` own task
+- `docs/agents/plans/current.md` selects the sole active plan. Dated plan files own
+  scope and task order; individual files in `docs/agents/plans/tasks/` own task
   execution status, dependencies, acceptance criteria, and evidence.
-  `docs/progress.md` retains completed work-package evidence, chronological
+  `docs/agents/progress.md` retains completed work-package evidence, chronological
   Decisions, Operator handoff, and unmigrated historical backlog. It is not
   a second mutable task queue.
 - Work is done as packages
@@ -70,7 +70,7 @@ the task needs it. New plans live in `docs/plans/`.
 5. Complete the task's acceptance criteria and evidence; update its dated
    plan and current selector as needed. Close the plan only when its scoped
    acceptance criteria are met; retain completed files. Update
-   `docs/progress.md` — the completed checkbox entry, plus **Decisions** for
+   `docs/agents/progress.md` — the completed checkbox entry, plus **Decisions** for
    architectural choices and anything that deviates from a plan or contract,
    with links to the corresponding ADRs, plus **Operator handoff**
    for anything the session cannot perform itself.
@@ -92,10 +92,10 @@ work remain intact; nothing is migrated or activated just because it exists.
 
 ## Decisions
 
-The **Decisions** section of `docs/progress.md` is numbered, append-only, one
+The **Decisions** section of `docs/agents/progress.md` is numbered, append-only, one
 topic per decision. A decision states what was decided, the alternative that
 lost, and why — future readers get the reasoning, not just the outcome. When a
-decision makes standing text in `docs/plan.md` or another contract wrong, the
+decision makes standing text in `docs/agents/history/plan.md` or another contract wrong, the
 same commit adds a dated, attributed amendment beside that text; the original
 is never silently rewritten (plan §30's `OPS-001` note and §36's supersession
 note are the pattern).

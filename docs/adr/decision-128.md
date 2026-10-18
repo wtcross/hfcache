@@ -6,9 +6,9 @@
   Live NAS verification/storage acceptance remains unrun.
 - Date: 2026-10-18.
 - Work package: OPS-017, this commit.
-- Source: [progress decision 128](../progress.md#decisions),
-  [listener plan](../plans/2026-10-18-plan-container-worker-listener.md),
-  [task](../plans/tasks/ops-017-container-worker-listener.md).
+- Source: [progress decision 128](../agents/progress.md#decisions),
+  [listener plan](../agents/plans/2026-10-18-plan-container-worker-listener.md),
+  [task](../agents/plans/tasks/ops-017-container-worker-listener.md).
 
 ## Context and decision
 

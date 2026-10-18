@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: LGPL-2.1-or-later
  *
- * The journal's structured event lines (docs/plan.md §24;
+ * The journal's structured event lines (docs/cli.md output discipline;
  * hfcache.logging.EVENTS). The vocabulary is closed: the UI keys only on
  * these names and ignores lines it does not know rather than failing on
  * them (docs/cockpit.md §5). Pure logic: no cockpit import.

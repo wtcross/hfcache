@@ -112,7 +112,7 @@ def test_an_empty_snapshot_reports_nothing(snapshot):
 
 
 # --------------------------------------------------------------------------- #
-# Completeness (plan §13.2 steps 6-8)
+# Completeness (docs/cli.md sync contract)
 # --------------------------------------------------------------------------- #
 
 
@@ -273,7 +273,7 @@ def test_every_problem_carries_the_repository_it_belongs_to(cache, snapshot):
 
 
 # --------------------------------------------------------------------------- #
-# Hashing new content (plan §13.2 step 9, §16.1)
+# Hashing new content (docs/cli.md sync contract, AD-18)
 # --------------------------------------------------------------------------- #
 
 PAYLOAD = b"the bytes of one repository file"
@@ -323,7 +323,7 @@ def test_an_upstream_digest_is_never_substituted_for_reading(cache, snapshot):
 
 
 def test_two_paths_sharing_one_inode_are_read_once(cache, snapshot):
-    # A unique *physical object*, which is what §16.1 counts. Both paths still
+    # A unique *physical object*, which is what AD-18 counts. Both paths still
     # become manifest entries; what was avoided is the second read.
     target = blob(cache, "shared", PAYLOAD)
     for name in ("first.bin", "second.bin"):
@@ -342,7 +342,7 @@ def test_two_paths_sharing_one_inode_are_read_once(cache, snapshot):
 
 
 def test_a_digest_is_reused_for_a_proven_identical_inode(cache, snapshot):
-    # The only reuse §16.1 permits: same physical inode, same size, and a digest
+    # The only reuse AD-18 permits: same physical inode, same size, and a digest
     # from a retained publication.
     source = landed(cache, snapshot, "model.bin", PAYLOAD)
     known = {
@@ -444,7 +444,7 @@ def test_an_unreadable_object_is_hfsyn009_not_an_integrity_failure(cache, snapsh
 
 def test_a_published_tree_is_indexed_by_the_inode_each_object_occupies_now(tmp_path):
     # The manifest supplies the digest and the filesystem supplies the identity;
-    # neither alone would let §16.1's reuse rule be checked.
+    # neither alone would let AD-18's reuse rule be checked.
     manifest = examples.manifest()
     tree = tmp_path / "tree"
     tree.mkdir()
@@ -475,7 +475,7 @@ def test_a_manifest_path_the_tree_no_longer_holds_is_skipped(tmp_path):
 
 
 # --------------------------------------------------------------------------- #
-# Describing the revision (plan §13.2 step 12, §10.1)
+# Describing the revision (docs/cli.md sync contract, the manifest schema)
 # --------------------------------------------------------------------------- #
 
 TIMELINE = Timeline(

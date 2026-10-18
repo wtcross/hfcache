@@ -1,6 +1,6 @@
-# The documented OnFailure= hook (docs/plan.md §24, last item).
+# The documented OnFailure= hook (docs/cli.md output discipline, last item).
 #
-# §24 asks for "a documented `OnFailure=` hook for future monitoring without
+# the CLI event contract asks for "a documented `OnFailure=` hook for future monitoring without
 # embedding a notification provider in the application". This is that hook, and
 # it is a working unit rather than a commented-out line, for the reason decision
 # 59 gives about hardening checklists and SEC-001 gives about the credential
@@ -35,10 +35,10 @@
 #
 # The empty ExecStart= is required; without it systemd appends rather than
 # replaces. Keep the provider here rather than in the application: hfcache has no
-# opinion about how this site pages someone, and §24 is explicit that it should
+# opinion about how this site pages someone, and the CLI event contract is explicit that it should
 # not acquire one.
 #
-# **Shipped as an example, not installed.** §24 asks that a hook be *left* for
+# **Shipped as an example, not installed.** the CLI event contract asks that a hook be *left* for
 # future monitoring, and this deployment has nobody to notify: a handler that
 # only reprints what systemd already logged is a seam, not a control, and
 # installing one would add a unit that fires on every failure to no end. The
@@ -69,7 +69,7 @@
 
 [Unit]
 Description=Report the failure of %i
-Documentation=file:///opt/hfcache/current/docs/plan.md
+Documentation=file:///opt/hfcache/current/docs/deployment-centos-stream-10.md
 Documentation=file:///opt/hfcache/current/docs/operations.md
 
 [Service]
@@ -90,7 +90,7 @@ SyslogIdentifier=hfcache-failure
 SyslogLevel=err
 
 # Modest hardening for a unit that runs one read-only systemctl. Proven rather
-# than assumed, the same way §22.5's settings are: the hook is fired for real
+# than assumed, the same way the hardening policy's settings are: the hook is fired for real
 # against a genuinely failed unit and its output read back out of the journal.
 NoNewPrivileges=true
 PrivateTmp=true

@@ -15,7 +15,7 @@ compatibility evidence must not be relabelled as a deployed previous release.
 
 ## Current data-preserving local release scope (OPS-014)
 
-The new [local rollout plan](../plans/2026-10-18-plan-local-rootless-rollout.md)
+The new [local rollout plan](plans/2026-10-18-plan-local-rootless-rollout.md)
 authorizes reviewed local release/deployment/tagging while forbidding all NAS
 content/metadata writes and changes to other hosts. [Decision 126](../adr/decision-126.md)
 narrowly adapts acceptance: do not execute the historical supervised sync, live
@@ -35,7 +35,7 @@ continue unless this stricter no-write scope forbids a specific acceptance step.
 ## Preconditions
 
 - Working tree clean; every package in the release committed and tracked in
-  `docs/progress.md`.
+  `docs/agents/progress.md`.
 - For an evidence-only local closure, a separate clean detached worktree of the
   reviewed deployed tag target may establish this source precondition. Task/
   release evidence outside that worktree is gated and committed after the actual
@@ -214,7 +214,7 @@ No production change or worker/NAS hold clearance follows from source packaging.
 
 ### 0.2.1 deployment evidence (OPS-018, 2026-10-18)
 
-[OPS-018](../plans/tasks/ops-018-container-worker-rollout.md) proves actual installed
+[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) proves actual installed
 API-origin peer/TLS/drain acceptance from clean 4088994 UBI artifacts, closing
 hold 22 only. Completed REL-014 records actual annotated local v0.2.1 at reviewed
 deployment 156506f, distinct from artifact source 4088994. No remote push occurs.

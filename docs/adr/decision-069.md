@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
 - Original work package: `OPS-005`.
-- Source: [decision 69 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 69 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -64,8 +64,8 @@ text above preserves the complete reasoning in the current historical log,
 including its recorded alternatives and consequences.
 
 Current governing documents:
-[docs/agents/conventions.md](../../docs/agents/conventions.md),
-[docs/plan.md](../../docs/plan.md).
+[docs/agents/conventions.md](../agents/conventions.md),
+[docs/agents/history/plan.md](../agents/history/plan.md).
 
 Implementation or shipped-artifact evidence:
 [tests/unit/test_crash_injection.py](../../tests/unit/test_crash_injection.py).

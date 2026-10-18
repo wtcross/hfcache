@@ -132,7 +132,7 @@ class ResolvedToken:
     def hub_argument(self) -> str | Literal[False]:
         """The exact value to pass as `token=` to every `huggingface_hub` call.
 
-        Never `None`. `docs/plan.md` §12 and `docs/security.md` T-07 both require
+        Never `None`. docs/security.md Hub adapter boundary and `docs/security.md` T-07 both require
         an explicit `False` in anonymous mode, because `None` is the value that
         activates implicit discovery.
         """

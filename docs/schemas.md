@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Normative contract for implementation |
-| Derived from | `docs/plan.md` §6.3, §10, §15.2, §16, §18 |
+| Derived from | `docs/agents/history/plan.md` §6.3, §10, §15.2, §16, §18 |
 | Work package | `ARC-004` |
 | Schema version | All formats begin at `1` |
 
@@ -644,7 +644,7 @@ revisions were present. `retained` and `retained_after` record the actual counts
 `unique_bytes_released_estimate` is **logical** and excludes bytes still
 hardlinked by another retained revision. It is explicitly an estimate of logical
 release: ZFS snapshots may continue to reference the blocks, so physical pool
-space may not change at all (`docs/plan.md` §15.3).
+space may not change at all (`docs/agents/history/plan.md` §15.3).
 
 ### 8.1 Repository purge plan
 
@@ -978,7 +978,7 @@ installed actual predecessor `a856397`/`0.1.10` and tagged `v0.1.3` wheels offli
 Both lacked the operation module/CLI command (exit `2`) and preserved all three
 synthetic state files byte-for-byte without creating an archive. This is absent
 reader support, not proof of nonexecution or a successful old-format read.
-No production installation occurred. The [task](plans/tasks/api-007-operation-receipts-and-idempotency.md)
+No production installation occurred. The [task](agents/plans/tasks/api-007-operation-receipts-and-idempotency.md)
 records the command/evidence; [rollback §14](deployment-centos-stream-10.md#14-rollback-plan-30)
 records the observed rule. See [decision 114](adr/decision-114.md).
 
@@ -1040,7 +1040,7 @@ both pending files stayed byte-identical. Current `ObservationFile` read schema 
 and current module invocation refused future 2 at HFAPI014 / exit 20 without
 changing bytes. This proves absence of old reader support and current refusal,
 not old-format acceptance or nonexecution. No archive operation or production
-installation occurred; the [task](plans/tasks/api-014-systemd-and-deployment-integration.md)
+installation occurred; the [task](agents/plans/tasks/api-014-systemd-and-deployment-integration.md)
 records commands/results and rollback rules.
 
 

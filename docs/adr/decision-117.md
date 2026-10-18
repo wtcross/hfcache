@@ -4,9 +4,9 @@
   clarified by [decision 120](decision-120.md).
 - Date: 2026-10-17.
 - Work package: API-010, this commit.
-- Source: [progress decision 117](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-010-guarded-maintenance-api.md).
+- Source: [progress decision 117](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-010-guarded-maintenance-api.md).
 
 ## Context and decision
 

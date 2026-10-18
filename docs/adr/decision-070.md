@@ -6,7 +6,7 @@ Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-27.
 - Original work package: `REP-001`.
-- Source: [decision 70 in the append-only Decisions log](../progress.md#decisions).
+- Source: [decision 70 in the append-only Decisions log](../agents/progress.md#decisions).
 - Backfilled: 2026-10-17 (`DOC-009`).
 
 ## Decision, context, and consequences
@@ -54,8 +54,8 @@ The source entry first appears in
 journal`). The decision text above preserves the complete reasoning in the
 current historical log, including its recorded alternatives and consequences.
 
-Current governing documents: [docs/architecture.md](../../docs/architecture.md),
-[docs/recovery.md](../../docs/recovery.md).
+Current governing documents: [docs/architecture.md](../architecture.md),
+[docs/recovery.md](../recovery.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/repair.py](../../src/hfcache/repair.py),

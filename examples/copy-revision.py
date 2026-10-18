@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Copy the current revision of one archived repository, and verify it locally.
 
-This is the consumer side of `docs/plan.md` §6.3, and the reference implementation
+This is the consumer side of docs/consumers.md publication identity, and the reference
+implementation
 `docs/consumers.md` describes. It runs on a *downstream* host that mounts only the
 archive's `published/` directory, read-only, and it deliberately depends on
 **nothing but the Python standard library** — a consumer should not have to install

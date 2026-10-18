@@ -7,8 +7,8 @@ work and some are rubbish, and telling them apart is the whole job here.
 
 Three rules shape it.
 
-**Nothing is deleted.** This module only ever *reports* (`FS-19`, `AD-16`). Plan
-§13.3 allows a stale staging directory to be reclaimed, but only when it matches
+**Nothing is deleted.** This module only ever *reports* (`FS-19`, `AD-16`). docs/cli.md sync
+contract allows a stale staging directory to be reclaimed, but only when it matches
 the naming contract, **has a journal**, and exceeds the configured age — and the
 journal is what says whether the work it holds was finished. Journals arrive at
 `STO-010` and the reclamation that reads them at `STO-011`, so what exists today
@@ -21,9 +21,9 @@ reported under `HFWRN003` and preserved, whatever it is.
 **Age is measured, never assumed.** The delay is not the safety mechanism on its
 own — reclamation also requires a journal — but it is what stops a concurrent
 operator command from having its working directory pulled out from under it
-(`docs/progress.md` decision 5).
+(`docs/adr/decision-005.md`).
 
-The second half of this module plans and applies recovery (plan §18,
+The second half of this module plans and applies recovery (docs/architecture.md recovery contract,
 `docs/architecture.md` §7.7). Planning reads journals and the filesystem and
 proposes a remedy for each unfinished transaction; applying performs only
 remedies a plan validated, records one checkpoint per remediation, and writes a
@@ -297,7 +297,7 @@ def _deferred_warnings(findings: list[AreaFinding]) -> list[Problem]:
     """`HFWRN002` for each tombstone a prune committed but did not remove."""
     deferred = [finding for finding in findings if finding.area == ".store/trash"]
     for finding in deferred:
-        # Plan §24's `retention.deferred`. The tombstone observation is the
+        # docs/cli.md output discipline's `retention.deferred`. The tombstone observation is the
         # signal for this state (§7.4): the post-commit steps run inline, a
         # failure there leaves the journal open and the tombstone in place, and
         # this reconciliation is where the state is seen. So the event is
@@ -371,7 +371,7 @@ def measure_health(
 
 
 # --------------------------------------------------------------------------- #
-# Planning (plan §18, `docs/architecture.md` §7.7)
+# Planning (docs/architecture.md recovery contract, `docs/architecture.md` §7.7)
 # --------------------------------------------------------------------------- #
 
 Remedy = Literal[
@@ -586,7 +586,7 @@ def _sync_remediation(journal: TransactionJournal, last: str | None) -> PlannedR
     the run journal exists to correlate them and to prove reconciliation
     happened before Hub contact. There is nothing here to roll forward.
 
-    The one whole-run step that does touch the archive is plan §13.1 step 10's
+    The one whole-run step that does touch the archive is docs/cli.md sync contract's
     catalog rebuild, and recovery deliberately does not perform it: that rebuild
     reads *configuration* to decide which repositories are managed (`AD-06`),
     and recovery takes no configuration. Rebuilding without it would mark every
@@ -1039,7 +1039,7 @@ def _quarantine_tree(layout: ArchiveLayout, transaction_id: TransactionId) -> di
     The tree is renamed into quarantine, never removed: it may hold the only copy
     of a revision, and the reason it cannot be published is that nothing can
     vouch for it — which is a reason to keep it for an operator, not to destroy
-    it (`AD-16`, plan §16.5 item 12).
+    it (`AD-16`, docs/cli.md verification contract).
     """
     journal = read_journal(layout, layout.journal(transaction_id)).journal
     tree = _published_tree(layout, journal)

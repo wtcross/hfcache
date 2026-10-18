@@ -13,7 +13,7 @@ dry run, DNS, TLS — and downloads nothing. The dry run in particular is assert
 to leave no cache directory behind, because `plan` is run by operators sizing a
 dataset before the archive exists at all.
 
-The two repositories are the ones the archive itself syncs (`docs/progress.md`,
+The two repositories are the ones the archive itself syncs (`examples/config.toml`,
 "Test repositories"), so these tests and the first real sync exercise the same
 upstream content; a test that fails because one was renamed is reporting
 something true.
@@ -58,8 +58,9 @@ pytestmark = pytest.mark.live
 
 ENDPOINT = "https://huggingface.co"
 
-# The two test repositories, chosen at `HUB-004` under plan §36.5 and recorded
-# in `docs/progress.md` and `examples/config.toml`. Small, public, long-standing,
+# The two test repositories, chosen at `HUB-004` under docs/development.md opt-in test fixtures
+# and recorded
+# in `examples/config.toml` and `examples/config.toml`. Small, public, long-standing,
 # and owned by `hf-internal-testing`, which exists to be depended on by tests.
 MODEL = RepositoryIdentity.of("model", "hf-internal-testing/tiny-random-gpt2")
 DATASET = RepositoryIdentity.of("dataset", "hf-internal-testing/fixtures_ade20k")
@@ -162,7 +163,7 @@ def test_a_dry_run_costs_a_revision_without_downloading_it(client: HubClient, id
 
 @pytest.mark.parametrize("identity", [MODEL, DATASET], ids=["model", "dataset"])
 def test_a_real_download_fetches_every_file_of_the_revision(client: HubClient, identity, tmp_path):
-    # Plan §26.3: download every file, into a cache this test owns and throws
+    # docs/development.md test contract: download every file, into a cache this test owns and throws
     # away. Both repositories are exercised because a model's weight files go
     # through the Xet transfer path and a dataset's payload largely does not.
     cache = tmp_path / "hub"
@@ -180,7 +181,7 @@ def test_a_real_download_fetches_every_file_of_the_revision(client: HubClient, i
 
 @pytest.mark.parametrize("identity", [MODEL, DATASET], ids=["model", "dataset"])
 def test_a_real_download_passes_both_completeness_checks(client: HubClient, identity, tmp_path):
-    # Plan §13.2 steps 6-8 against real content: the library's own local-only
+    # docs/cli.md sync contract against real content: the library's own local-only
     # assembly, and this application's independent comparison of what landed
     # with what the Hub listed. Both have to hold — the first says the library
     # is satisfied, the second says what satisfied it is the promised path set.
@@ -196,7 +197,7 @@ def test_a_real_download_passes_both_completeness_checks(client: HubClient, iden
 
 def test_the_local_check_needs_no_network(client: HubClient, tmp_path, monkeypatch):
     # It is the check a `verify` run performs with `HF_HUB_OFFLINE=1` set
-    # (plan §22.3), so it must not reach the Hub at all.
+    # (docs/security.md hardening posture), so it must not reach the Hub at all.
     cache = tmp_path / "hub"
     facts = client.repository(DATASET, "main")
     client.download(DATASET, facts.commit_sha, cache_dir=cache, max_workers=2)
@@ -222,7 +223,7 @@ def test_a_cache_missing_a_blob_fails_the_local_check(client: HubClient, tmp_pat
 
 
 def test_a_second_download_of_the_same_sha_fetches_nothing(client: HubClient, tmp_path):
-    # Plan §26.3's "run a second sync and confirm no unnecessary download",
+    # docs/development.md test contract's "run a second sync and confirm no unnecessary download",
     # proven at the adapter: after one download the dry run reports the whole
     # revision as cached, which is the number a sync's capacity gate reads.
     cache = tmp_path / "hub"

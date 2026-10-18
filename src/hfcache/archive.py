@@ -13,7 +13,8 @@ guess:
   (`FS-23`).
 
 The one adoption exception is a single pre-existing `published/` directory, which
-TrueNAS requires to exist before the consumer export can be defined (§35.2). It
+TrueNAS requires to exist before the consumer export can be defined (the storage-preparation
+contract). It
 is adopted only when it is empty and its ownership and mode already match §5.2.
 
 Nothing in this module deletes or rewrites anything outside the application's own
@@ -23,7 +24,8 @@ command owns — and it is reported before it happens.
 
 Ownership is never proven by comparing a local uid against `st_uid`. The writer
 export maps every client identity to `hfcache-sync:hfcache-archive`, so files on
-the mount carry NAS-side ids with no local account (`docs/plan.md` §35.3);
+the mount carry NAS-side ids with no local account (docs/storage-requirements.md effective
+writability);
 `published/` is checked against the *archive root's* owner instead, which is the
 same comparison in a form that holds under Mapall.
 """
@@ -237,7 +239,7 @@ def published_adoption_problems(
     Ownership is compared against the *archive root*, never against a local uid.
     Under the Mapall writer export both carry NAS-side ids with no local account,
     so "the same identity owns both" is the only form of §5.2's ownership rule
-    that can be evaluated from the writer (`docs/plan.md` §35.3).
+    that can be evaluated from the writer (docs/storage-requirements.md effective writability).
 
     Taken as `os.stat_result` values rather than paths so the policy is separable
     from the syscall and can be exercised for identities this host cannot create.

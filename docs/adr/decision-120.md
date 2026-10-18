@@ -4,9 +4,9 @@
   lifecycle refined by [decision 121](decision-121.md).
 - Date: 2026-10-18.
 - Work package: API-013, this commit.
-- Source: [progress decision 120](../progress.md#decisions),
-  [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../plans/tasks/api-013-migrate-write-cli-and-operation-waiting.md).
+- Source: [progress decision 120](../agents/progress.md#decisions),
+  [active plan](../agents/plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](../agents/plans/tasks/api-013-migrate-write-cli-and-operation-waiting.md).
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 ## Context and decision
@@ -129,7 +129,7 @@ pages through an empty page, counting that response too against the same
 drain's max_pages and the absolute observation deadline. Retention gaps and
 admitted operation identity stay explicit; no extra capabilities request, new role/schema/dependency or replay/
 cancellation authority is introduced. This is an existing-contract correction,
-not a new architectural decision. [Final integration task](../plans/tasks/api-017-final-integration-and-handoff.md)
+not a new architectural decision. [Final integration task](../agents/plans/tasks/api-017-final-integration-and-handoff.md)
 owns exact subprocess/direct-client proof and required fresh gate evidence.
 
 
