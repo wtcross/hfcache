@@ -1587,6 +1587,29 @@ package in this family.
   other-host change or remote publication; held guard/read-only NAS/masked writers
   and installed/full-storage acceptance holds remain.)
 
+- [x] REL-012 Build immutable artifacts from clean committed source
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-local-rootless-rollout.md),
+  [task](plans/tasks/rel-012-clean-container-release-artifacts.md)).
+  Clean detached 481fcc4 source produces 0.2.0 wheel/sdist and locked app/Caddy
+  images with source_dirty=false; exact identities/protected OCI hashes are in
+  task. Corrected source lives outside ignored parents; the first type-scope
+  stopped gate is retained, not passed. Actual new-image worker isolation/drain,
+  90 compatibility observations and host-tool/image boundary pass with evidence
+  preserved. Root stages exact indexed artifacts, preserves an initial umask-077
+  unreadable stage, then restages under 022 and proves actual UID-981 schema/
+  readability controls. Native selector stays 0.1.10. Corrected NAS-masked
+  --with-build confirms exit 0: 405 formatted/Ruff/whole types 0, 3,792 Python
+  passed/40 deselected in 507.85 seconds, three locked installation profiles,
+  135 Cockpit tests in 2.276 seconds/build 1,200 ms and four wheel smokes in
+  5.31 seconds. Local exports are protected/hash-verified, not loaded into the
+  service engine. Runtime/package inputs match 481fcc4 and its worktree stays
+  Git-clean; this evidence commit is distinct from source. Reviewed
+  INV-005/010/011/014/015 and 65/75/79/121/126/127; no source/dependency/format/
+  architecture change or new decision. Final links/records/current/dependencies/
+  whitespace pass; OPS-016 next pending until this commit. No production switch,
+  account/secret/service activation, NAS file I/O/writes, other-host change,
+  remote publication, ACME or tag; existing guards and acceptance holds remain.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

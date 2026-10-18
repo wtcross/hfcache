@@ -172,3 +172,22 @@ does not certify forbidden tests. Never push the tag or branch remotely.
   README/CHANGELOG remain preparing/not deployed/tagged. Preview hashes are task
   evidence, not deployable artifacts; current selects REL-012 pending until this
   source/version commit exists. All host/NAS guards and acceptance holds remain.
+
+- 2026-10-18: REL-012 activated after REL-010 committed as 481fcc4. The clean
+  detached source checkout now lives outside ignored repository parents at
+  /var/tmp/hfcache-rel-012-source. The first .scratch checkout caused Pyrefly
+  test skipping; its 19.907-second/SIGTERM-stopped gate is preserved, not passed
+  despite wrapper exit 0. Final artifacts/contexts/provenance/logs stay outside
+  the clean source; normal ignored gate outputs may be inside. No runtime source
+  change or production activation follows from this execution-path correction.
+
+- 2026-10-18: REL-012 completed clean 481fcc4 source builds/provenance, actual
+  new-image worker proof, 90 compatibility observations, protected indexed stage/
+  UID-981 controls and local OCI exports. The ignored-parent stopped gate and
+  preserved umask-077 stage/readability failure are separate from corrected
+  acceptance. Final --with-build exits 0: 3,792 Python tests/40 deselected in
+  507.85 seconds, three locked installation profiles, 135 Cockpit tests/build and
+  four extra wheel smokes. Package inputs/source stay unchanged and Git-clean;
+  source/evidence commits remain distinct. Current selects OPS-016 pending until
+  this evidence commit exists. No production switch, service-engine image load,
+  runtime activation or NAS file I/O; native 0.1.10 and host guards remain.

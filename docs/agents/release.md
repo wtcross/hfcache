@@ -156,8 +156,20 @@ in actual local containers, with no NAS bind during OPS-015. REL-010 commits
 reviewed 0.2.0 source; its dirty working-tree builds are previews. REL-012 builds
 final identified wheel/sdist/images from that clean committed source and records
 evidence without changing package inputs. Use a clean detached source worktree
-and outside build outputs so task/evidence edits in the main workspace cannot
-contaminate source provenance; source and evidence commits remain distinct.
+outside ignored repository parents (REL-012 uses /var/tmp/hfcache-rel-012-source)
+so type/test discovery is not silently excluded. Keep final production artifacts,
+contexts, provenance and logs outside that source checkout. Normal ignored gate
+outputs such as .venv, cockpit/node_modules and dist may be inside while tracked
+Git state stays clean.
+Main-workspace task/evidence edits cannot contaminate source provenance; source
+and evidence commits remain distinct. A stopped or incompletely scoped gate is
+not passing evidence even if its wrapper returns 0.
+
+Stage non-secret immutable runtime artifacts with umask 022 and verify directory/
+file readability as the actual service UID/GID before selection. A root-only
+successful validation does not prove runtime readability. Keep private manifest/
+backup permissions separate; retain and verify a known unusable stage before any
+explained relocation/restage, never clean it automatically.
 Production enablement stays OPS-016; no tag or
 NAS/full-domain acceptance follows from packaging. Decision 126 restrictions remain.
 
