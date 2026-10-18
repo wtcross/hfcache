@@ -435,6 +435,14 @@ History: `SYNC-007` (`54e4671`), decision 94.
   [protected installer](../scripts/install-container-release.py),
   [runtime tests](../tests/unit/test_container_service.py) and
   [selection/rollback tests](../tests/unit/test_container_release_installer.py).
+  OPS-016 pins the readonly boot guard/helper outside current, with host
+  /proc/1/mountinfo proof before READY and lifetime original-flock ownership.
+  A private sandbox's read-only view cannot prove the host mount; the guard is
+  not continuous monitoring. Bridge readiness dependency/no user-default app
+  autostart and nontruncating boot files preserve the controlled holder transfer.
+  Enforcement: [fixed host guard](../scripts/hold-readonly-guard.py) and
+  [guard/unit/tmpfiles tests](../tests/unit/test_readonly_guard.py); actual host
+  readiness/lock transfer is separately recorded in OPS-016.
 - **`INV-004` — Capacity admission includes publication cost and reserve.**
   Require free capacity beyond estimated download bytes, explicit copy-mode
   publication bytes, and the greater of the GiB and percentage reserves.

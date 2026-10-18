@@ -749,3 +749,12 @@ OPS-015 fixtures bind no NAS at all. Source masks, read-only roots and local sta
 are actual proof obligations, not claims that containers alone establish isolation.
 The fixed Cockpit client launcher retains admin/candidate/observation boundaries
 without a browser bearer, generic executable input or bare-host fallback.
+
+OPS-016 adds fixed root-protected host boot policy independently of current.
+Its standard-library notify guard runs UID/GID 981, proves original local-lock
+ownership and host NFS-ro from /proc/1/mountinfo before READY, then retains its
+flock. This is not continuous monitoring. Strict sandbox self mountinfo cannot
+stand in for the host view; retain hardening and host PID/proc visibility for this
+control only. Application containers still get no host PID/proc authority.
+The bridge requires guard readiness and the user default target cannot start the
+app target. No generic paths/commands or app imports are added to the guard.

@@ -113,3 +113,13 @@ barrier; preserve SELinux/hardening, lock inodes, both operation stores and pend
 observation handles. Unknown activity/state refuses further work. Host-local
 throwaway tests are distinct from forbidden real storage acceptance; see
 [decision 126](../adr/decision-126.md) and the selected task for actual evidence.
+
+OPS-016 makes the guard permanent host policy outside the app's current selector:
+UID/GID 981 holds the original noncreating flock and proves host NFS-ro via
+/proc/1/mountinfo before READY. A protected bridge dependency and no user-default
+app-target enablement preserve normal boot order; root alone performs the
+quiescent holder handoff with NAS-ro/masks continuous. The guard is not a
+continuous monitor and a private read-only sandbox view is not host proof.
+Application/immutable artifacts remain clean 481fcc4; host policy, actual
+activation and residual holds are separately recorded in
+[OPS-016](../plans/tasks/ops-016-local-rootless-deployment.md).

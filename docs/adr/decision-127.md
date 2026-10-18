@@ -254,3 +254,41 @@ PID1 control); valid denial may be EPERM/EACCES/ENOSYS. Proof must reject succes
 IP socket creation rather than assume a single refusal errno. The task retains
 all failed/partial attempts and fresh actual acceptance separately from hermetic
 policy/build/installer passes.
+
+## Host boot policy refinement (OPS-016, 2026-10-18)
+
+The application images/helper artifacts stay at clean source 481fcc4. A fixed
+root-owned host readonly guard and local bridge Requires/After drop-in implement
+[decision 126's permanent guard](decision-126.md#permanent-host-boot-guard-ops-016-2026-10-18)
+outside current so an application rollback cannot remove the NAS-write barrier.
+This standard-library host control imports no app code. Its Type=notify system
+service runs UID/GID 981, proves the original noncreating flock and host NFS-ro
+mount view before READY, then holds the descriptor until reviewed stop. The
+fixed /proc/1/mountinfo source avoids a strict sandbox's fabricated private-ro
+view; it is not continuous mount/inode monitoring.
+
+Do not enable the app target from the user default target: only the system
+bridge starts it after guard readiness. Nontruncating boot tmpfiles preserves
+domain/API lock inodes and creates protected runtime directories. Root alone
+performs the quiescent old-guard→installer→permanent-guard handoff with NAS-ro and
+writer masks maintained; bridge/application activation follows READY. Both-
+manager reload/effective-fragment/drop-in checks remain mandatory. These host
+policy files are distinct from unchanged selected release artifacts and need
+their own actual source/hash/unit/handoff evidence, without a new application
+schema, dependency or architectural authority.
+
+ProtectHome=yes also hides the user manager's /run/user socket. Keep that
+hardening and bind only its fixed private socket to the protected
+/run/hfcache/user-manager/systemd/private alias, with bridge-only XDG_RUNTIME_DIR
+pointing to /run/hfcache/user-manager. This host drop-in is separate from the
+selected immutable bridge unit. Require actual effective-drop-in and connection
+proof; run syntax checks with a disposable XDG runtime, not the live socket.
+
+Actual OPS-016 acceptance is partial: Caddy/API/CLI, local isolation and drain
+pass, but SELinux refuses the API container_t connection to the user-manager's
+unconfined_t worker socket. A successful host UID-981 peer probe and earlier
+host-origin VerificationClient fixtures do not prove that container connection.
+Keep this release hold and review a label-at-creation/container-activation design
+under a future authorized task; do not add an allow, change container labels or
+bypass the isolated executor to force a pass. The existing data-preserving plan
+permits honest partial rollout, not end-to-end verification acceptance.

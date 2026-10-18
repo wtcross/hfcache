@@ -1,0 +1,7 @@
+[Unit]
+Requires=hfcache-readonly-guard.service
+After=hfcache-readonly-guard.service
+
+[Service]
+Environment=XDG_RUNTIME_DIR=/run/hfcache/user-manager
+BindReadOnlyPaths=/run/user/@SERVICE_UID@/systemd/private:/run/hfcache/user-manager/systemd/private

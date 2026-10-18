@@ -64,18 +64,22 @@ consumers at all.
 
 ## Status
 
-**Preparing `0.2.0`; not deployed or tagged.** Operational CLI commands now use
-the authenticated API, and the selected deployment uses rootless Podman for
-Caddy/API/private-worker/runtime clients. The [completed feature plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
+**`0.2.0` is running locally with partial acceptance; not tagged.** Caddy and the
+API run rootless, and verified local TLS, version/authentication, the exact nine
+MCP tools and the container CLI pass. The private worker's local isolation checks
+pass, but API-to-worker access is still blocked by SELinux; end-to-end verifier
+readiness is not accepted. Operational CLI commands use the authenticated API.
+The [completed feature plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
 records REST/CLI and optional read-only MCP acceptance; [OPS-015](docs/plans/tasks/ops-015-rootless-container-runtime.md)
 records actual local container proof. These changes establish the breaking 0.2.0
 CLI/deployment boundary.
 
 The [local rollout](docs/plans/2026-10-18-plan-local-rootless-rollout.md) keeps NAS
-read-only and legacy writers blocked. REL-010 prepares reviewed source; REL-012
-will build final immutable artifacts from that clean commit before OPS-016's
-guarded deployment. Current working-tree builds are previews. Actual installed-
-host and full-storage holds remain explicit; no NAS or other-host changes are
+read-only and legacy writers blocked. [REL-012](docs/plans/tasks/rel-012-clean-container-release-artifacts.md)
+identifies immutable artifacts from clean committed source `481fcc4`;
+[OPS-016](docs/plans/tasks/ops-016-local-rootless-deployment.md) records actual
+host changes and the remaining worker-access hold. Live NAS jobs and full storage
+acceptance remain unrun; no NAS content/metadata writes or other-host changes are
 authorized. See the [container contract](docs/containers.md) and
 [operator checklist](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).
 

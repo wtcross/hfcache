@@ -1,0 +1,26 @@
+[Unit]
+Description=hfcache persistent no-NAS-write archive lock guard
+Requires=srv-hfcache.mount systemd-tmpfiles-setup.service
+After=srv-hfcache.mount systemd-tmpfiles-setup.service
+
+[Service]
+Type=notify
+NotifyAccess=main
+User=hfcache
+Group=hfcache
+ExecStart=/usr/bin/python3 /usr/local/libexec/hfcache-readonly-guard
+TimeoutStartSec=15
+TimeoutStopSec=infinity
+SendSIGKILL=no
+Restart=no
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateNetwork=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadOnlyPaths=/run/hfcache
+UnsetEnvironment=HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN CREDENTIALS_DIRECTORY HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN

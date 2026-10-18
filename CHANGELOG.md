@@ -7,15 +7,20 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
-## 0.2.0 — Preparing
+## 0.2.0 — Locally deployed with partial acceptance; tag pending
 
-Version preparation only: **not deployed or tagged**. Operational CLI commands
+The local rootless Caddy/API deployment is running; **not tagged**. Operational CLI commands
 require the authenticated API, and the selected rootless Podman deployment uses
 Caddy, a separate private verifier and container clients. This is a breaking
-CLI/deployment boundary. Actual local packaging/proof is complete; final artifacts
-must come from clean committed source before guarded deployment. NAS stays
+CLI/deployment boundary. Final immutable artifacts come from clean source
+481fcc4; actual TLS/auth/registry/container-client/isolation and drain pass.
+SELinux still blocks API-container access to the private worker: host-origin
+peer probes do not establish end-to-end verification, which remains a release
+hold pending a reviewed activation/label design. NAS stays
 read-only, legacy writers stay blocked and forbidden live storage acceptance is
 not claimed. The local rollout plan retains these partial-acceptance holds.
+The implementation history below records its earlier scope and evidence, rather
+than claiming those earlier packages performed this deployment.
 
 Local metadata orchestration now uses transport-neutral query services.
 `status` includes unmanaged published repositories, and `status`/`list` accept

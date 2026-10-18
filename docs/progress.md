@@ -1610,6 +1610,26 @@ package in this family.
   account/secret/service activation, NAS file I/O/writes, other-host change,
   remote publication, ACME or tag; existing guards and acceptance holds remain.)
 
+- [x] OPS-016 Deploy the local runtime with explicit partial acceptance
+  (2026-10-18, this commit — [task](plans/tasks/ops-016-local-rootless-deployment.md)).
+  Root selects indexed clean-481fcc4 0.2.0 artifacts, loads exact images as UID 981,
+  reuses Hub/TLS material, separates six Podman secrets and preserves the original
+  dev 27/inode 2273 under the permanent notify guard. Protected host socket alias
+  retains bridge hardening; actual local TLS/auth/version/nine-tool registry,
+  container CLI, UID/capability/resource/isolation and nonforce drain/restart pass.
+  All probe failures/corrections and protected host ledgers are task evidence.
+  API-container→worker SELinux connectto remains refused: host peer/FD3 proof is
+  not end-to-end verification acceptance. No allow/label/execution bypass; new
+  operator hold 22 requires a separately authorized design review. Final masked
+  --with-build exits 0: 407 formatted/Ruff/whole types 0, 3,827 Python/40 deselected
+  in 471.22s, 0.2.0 builds/three locked profiles, 135 Cockpit tests/build and four
+  extra wheel smokes. Reviewed INV-002/003/005–007/010–016 and decisions 65/75/79/
+  121/126/127; host policy is separate from unchanged app artifacts. Records/
+  links/whitespace pass; REL-011 next pending until commit. NAS remains ro,
+  all four legacy writer units masked/inactive and SELinux Enforcing. No NAS
+  I/O/job/write, other-host change, remote publication, ACME or tag; full-storage
+  and worker-connectivity holds remain explicit.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -1919,6 +1939,20 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     Never convert these local proofs into live NAS-write/full-domain acceptance
     or restore sync/verification scheduling automatically. No remote publication,
     other-host change or ACME is authorized.
+
+22. **Private-worker SELinux connection hold (OPS-016, 2026-10-18):** the local
+    0.2.0 Caddy/API metadata/proxy runtime and nonforce drain pass, but SELinux
+    denies API container_t connectto to the user-manager-created unconfined_t
+    private verification socket. Actual host UID 981 framed FD3 peer probes pass;
+    earlier NAS-free VerificationClient fixtures also ran on the host. Neither
+    proves API-container-to-worker readiness. Review socket label-at-creation/
+    container activation under a new authorized task; this is backlog only.
+    Do not add an allow, change container labels, disable SELinux or bypass the
+    isolated executor to force a pass. Keep the permanent guard/original inode,
+    read-only NAS, legacy writer masks, both stores/handles and rollback evidence.
+    End-to-end verification and all forbidden NAS-write/full-domain/NFS workload
+    checks remain unaccepted. A local partial-acceptance release must state this
+    hold explicitly; it cannot claim general writer readiness.
 
 ## Operator decisions needed
 

@@ -4,12 +4,15 @@
 | --- | --- |
 | State | Active |
 | Active plan | [Local rootless rollout](2026-10-18-plan-local-rootless-rollout.md) |
-| Next task | [OPS-016](tasks/ops-016-local-rootless-deployment.md) |
+| Next task | [REL-011](tasks/rel-011-local-release-and-handoff.md) |
 | Blockers | None; later tasks wait for committed predecessors |
 | Updated | 2026-10-18 |
 
-REL-012 is completed; OPS-016 remains pending until its evidence commit exists.
-Clean artifacts identify committed REL-010 (`481fcc4`); production is not switched.
+OPS-016 completed partial local deployment/acceptance; REL-011 remains pending
+until that package is committed. Clean artifacts identify REL-010 (`481fcc4`);
+current selects 0.2.0 and the permanent guard holds the original inode. Caddy/API
+run with TLS/metadata/isolation/drain acceptance. API-to-worker SELinux access
+remains an explicit release hold, not end-to-end verification acceptance.
 The NAS read-only mount, blocked legacy writers and held original lock remain
 protected. Only reviewed local host/container work is authorized; no NAS content/
 metadata writes, other-host changes or remote publication. Later tasks wait for

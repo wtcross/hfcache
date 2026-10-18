@@ -130,6 +130,52 @@ archive mount; the target Wants the bridge, so a bounded mount failure refuses
 runtime startup without requiring that bridge for successful target activation.
 These links and actual manager activation are later guarded rollout work.
 
+## Protected host boot guard
+
+The selected data-preserving deployment also needs the fixed root-owned
+/usr/local/libexec/hfcache-readonly-guard and system
+hfcache-readonly-guard.service, independent of current. They are host control
+policy, not application code in the image. Type=notify runs as UID/GID 981;
+READY follows strict original-lock ownership/inode checks and a host NFS-ro
+observation from /proc/1/mountinfo. The guard retains its noncreating flock until
+reviewed stop; it does not continuously monitor mount/inode changes. Keep strict
+sandboxing while exposing the actual host PID/proc view, since the guard's own
+private mount namespace may be read-only regardless of host state.
+
+Enable the static host guard independently of application selection with
+`systemctl add-wants multi-user.target hfcache-readonly-guard.service`; verify its
+root-owned link resolves to the fixed /etc/systemd/system unit outside current.
+Require it from the bridge's protected local drop-in. Never enable the app target from the user
+default target: only the bridge starts it after READY. Boot tmpfiles f rules
+create missing domain/API locks without truncation and d 0700 protects runtime
+socket directories; no unit cleanup removes live locks. Root alone performs the
+old transient guard→installer-held original lock→permanent guard handoff with
+NAS-ro/masked writers/quiescence maintained. Application activation waits the new
+READY signal; failures/unknown holders refuse progression. See
+[decision 126](adr/decision-126.md#permanent-host-boot-guard-ops-016-2026-10-18).
+
+The system bridge keeps ProtectHome=yes. Its protected host drop-in binds only
+/run/user/981/systemd/private to /run/hfcache/user-manager/systemd/private and
+uses /run/hfcache/user-manager as bridge-only XDG_RUNTIME_DIR. Protected boot
+directories support this narrow connection without exposing the service home.
+Verify syntax with a disposable user runtime directory; never aim verification
+at the live manager socket. Inspect the actual bridge drop-in and prove its
+hardened connection before claiming target readiness.
+
+### Actual partial acceptance and worker hold
+
+OPS-016 starts the local 0.2.0 Caddy/API runtime and proves verified TLS, API/MCP
+authentication/registry, container client, isolation and non-killing drain.
+However, SELinux refuses API container_t connectto to the user-manager-created
+unconfined_t verification socket. The actual host UID-981 FD3 peer probe succeeds;
+earlier NAS-free VerificationClient fixtures also used a host process. Neither
+proves API-container-to-worker connectivity. End-to-end verification is not
+accepted. Keep Enforcing policy, container labels and execution boundaries; no
+allow rule, label-disable or host execution bypass is an approved quick fix.
+A reviewed label-at-creation/container-activation design is operator backlog,
+not an activated implementation task. Preserve the
+[explicit hold](progress.md#operator-handoff) and all NAS-write/full-domain holds.
+
 ## Filesystem, secrets and resource limits
 
 All writable graphroot/image/Caddy/state/cache/temporary paths are local. Actual

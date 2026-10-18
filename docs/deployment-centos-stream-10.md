@@ -1169,3 +1169,48 @@ fixture infrastructure. OPS-015 proof binds no NAS and switches no production
 runtime; all OPS-014 barriers remain. REL-010 selects release/image identities
 and OPS-016 owns later guarded production enablement. This is a current contract,
 not a statement those tests or deployment already passed.
+
+## 20. Permanent readonly boot guard (OPS-016)
+
+The fixed host hfcache-readonly-guard.service/helper is root-protected and
+independent of current, so app rollback cannot remove the NAS-write barrier.
+Its UID/GID-981 notify process imports no app code. READY requires the original
+noncreating strict-mode local flock and host NFS-ro metadata from
+/proc/1/mountinfo; it then holds the descriptor, without continuous mount/inode
+monitoring. The host source is essential: a strict sandbox can make self mountinfo
+look read-only even when the host is writable. Keep strict hardening and the
+actual host PID/proc view, as proved by the scoped host-view probe.
+
+Enable the guard from independent host boot policy. A protected bridge drop-in
+Requires/After it; never enable the app target from the user default target.
+Only the system bridge starts the application target after READY. Nontruncating
+boot tmpfiles preserves domain/API lock inodes and creates 0700 runtime socket
+directories. Under quiescence and continuous NAS-ro/masked writers, root transfers
+old transient ownership through the guarded installer to the new notify guard,
+then reloads/reviews actual managers before app activation. Unknown activity or
+holder refuses progression. Retain both stores/handles and all old artifacts.
+
+Keep the bridge's ProtectHome=yes and expose only the fixed user-manager private
+socket through a protected /run/hfcache/user-manager/systemd/private bind alias.
+Set XDG_RUNTIME_DIR=/run/hfcache/user-manager for that bridge alone. Boot tmpfiles
+creates the protected alias directories. This narrow host drop-in preserves the
+selected immutable bridge artifact and all hardening. Use disposable XDG runtime
+directories for unit syntax review: actual verification against the live user
+runtime replaced its socket. Require effective-drop-in and hardened connection
+proof after the quiescent manager reload/recovery.
+
+Host policy source/unit/hash/actual handoff evidence belongs to OPS-016;
+application images and selected immutable helper/config stay at clean 481fcc4.
+No deployed README/health/full-storage claim precedes actual listener readiness.
+Live archive reads/writes and write-bearing acceptance remain unrun/forbidden
+under the current restriction; version/capabilities/registry checks need no NAS
+file I/O. See [decision 126](adr/decision-126.md#permanent-host-boot-guard-ops-016-2026-10-18).
+
+OPS-016's actual local rollout is partial: TLS/API/MCP/container-client and drain
+pass, but SELinux blocks API-container access to the user-manager-created private
+worker socket. Host-origin FD3/peer probes pass; they are not end-to-end verifier
+acceptance. Keep the [worker hold](containers.md#actual-partial-acceptance-and-worker-hold)
+and review the label-at-creation/activation design in a later authorized task.
+Do not weaken Enforcing policy, alter container labels or execute verification
+on the host as a workaround. NAS write/full-domain/NFS workload checks remain
+forbidden/unrun; metadata readiness and the local release cannot certify them.

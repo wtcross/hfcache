@@ -114,3 +114,55 @@ Selected-profile Cockpit retains outer privilege/candidate guards but API secret
 delivery moves to the fixed Podman client launcher, without host ImportCredential.
 NAS/other-host restrictions, exact operation truth and previous evidence remain;
 OPS-015 fixtures bind no NAS and perform no production switch or release.
+
+## Permanent host boot guard (OPS-016, 2026-10-18)
+
+Preserve the no-NAS-write restriction across application rollback with a fixed
+root-protected host helper, /usr/local/libexec/hfcache-readonly-guard, and system
+hfcache-readonly-guard.service. They are intentionally independent of current and
+the immutable application image, not an alternate application runtime. The
+standard-library helper imports no application code, accepts no arbitrary NAS
+path/options and runs as hfcache UID/GID 981. It opens the existing original
+local lock without creation, truncation or symlink following, verifies UID/GID
+981, mode 0600, single link and descriptor/path inode agreement, and holds an
+exclusive flock for its lifetime. READY is sent only after that ownership and
+actual host NFS-read-only metadata are proved.
+
+Use fixed /proc/1/mountinfo with the host PID/proc view, not a private guard
+namespace's self mountinfo. ProtectSystem=strict may make a private view read-only
+even while the host is writable; that must never manufacture host-guard proof.
+Root's actual UID/GID-981 strict-sandbox probe distinguishes host rw root from
+private ro root and proves the host source readable without NAS file I/O. Retain
+strict hardening, private networking, AF_UNIX-only/empty capabilities and no
+private PID/proc configuration that hides the host source. This is one mount/
+inode check before READY plus lifetime lock ownership, not continuous monitoring.
+
+Host boot policy enables this guard independently of the selected application.
+A protected local bridge drop-in Requires/After the guard; the user default
+target must not enable the application target. Only the system bridge starts it
+after READY. Boot tmpfiles uses nontruncating f rules for original domain/API
+locks and d 0700 for public/private runtime directories. Never unlink or replace
+a live lock through RuntimeDirectory cleanup.
+
+The bridge retains ProtectHome=yes, which also hides /run/user. A fixed protected
+host drop-in exposes only /run/user/981/systemd/private at
+/run/hfcache/user-manager/systemd/private and sets that bridge's XDG_RUNTIME_DIR
+to /run/hfcache/user-manager. Root's actual hardened probe proves this narrow
+manager connection; do not expose the service home or weaken hardening. Boot
+tmpfiles protects both alias directories. Syntax review uses a disposable user
+runtime directory, never the live manager socket: an actual verify invocation
+with live XDG replaced that socket and required a quiescent manager restart.
+
+Root transfers ownership from the old transient guard through the installer and
+then this guard under continuous read-only NAS, writer masks and proven executor
+quiescence. Selection holds the same original inode; an unknown holder/refusal
+stops the transition. Start bridge/application only after the new guard is READY.
+Preserve all stores/handles and record the exact handoff; no write-bearing NAS
+acceptance or release claim follows from the permanent guard.
+
+Enforcement: [fixed host helper](../../scripts/hold-readonly-guard.py),
+[system unit](../../packaging/containers/hfcache-readonly-guard.service),
+[nontruncating boot files](../../packaging/containers/hfcache-rootless.conf) and
+[notify/flock/host-view/tmpfiles fixtures](../../tests/unit/test_readonly_guard.py).
+Actual installed hashes, readiness/handoff and post-activation restrictions remain
+OPS-016 task evidence; fixture passes alone are not deployment acceptance.

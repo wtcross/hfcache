@@ -191,3 +191,21 @@ does not certify forbidden tests. Never push the tag or branch remotely.
   source/evidence commits remain distinct. Current selects OPS-016 pending until
   this evidence commit exists. No production switch, service-engine image load,
   runtime activation or NAS file I/O; native 0.1.10 and host guards remain.
+
+- 2026-10-18: OPS-016 activated after REL-012 committed as 7d27e86. Before host
+  enablement, decisions 126/127 refine the persistent guard into fixed host-only
+  notify policy independent of app current, with host /proc/1 mount proof,
+  original lock, bridge readiness ordering and no user-default app autostart.
+  Root's actual strict-sandbox source/view proof passes without NAS file I/O;
+  no application readiness/deployed README claim is made before actual startup.
+
+- 2026-10-18: OPS-016 completed guarded local selection and partial rootless
+  deployment: TLS/auth/metadata/MCP registry, container client, isolation and
+  non-killing drain/restart pass, with original lock/stores preserved. Actual
+  API-to-worker SELinux connectto is refused and remains a release hold; host
+  FD3 peer proof is not end-to-end verification. No hardening bypass is used.
+  Final NAS-masked --with-build exits 0: 3,827 Python tests/40 deselected in
+  471.22 seconds, three locked installation profiles, 135 Cockpit tests/build
+  and four extra wheel smokes. NFS-ro, four legacy writer masks, Enforcing policy
+  and forbidden NAS/other-host/calendar acceptance holds remain. REL-011 is next
+  pending until this package commits; no tag or remote publication occurs here.

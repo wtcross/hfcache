@@ -170,6 +170,14 @@ file readability as the actual service UID/GID before selection. A root-only
 successful validation does not prove runtime readability. Keep private manifest/
 backup permissions separate; retain and verify a known unusable stage before any
 explained relocation/restage, never clean it automatically.
+
+During this readonly rollout, the permanent host notify guard is independent of
+current. Drain/quiesce actual executors before root transfers its original lock
+through the installer and back to READY guard ownership, with NAS-ro and writer
+masks maintained. The system bridge requires that READY state; user-default app
+autostart is forbidden. Keep the fixed host policy/effective drop-ins in rollback
+evidence separately from the selected app artifacts; no rollback may remove the
+write barrier or fabricate host-ro proof from a private mount namespace.
 Production enablement stays OPS-016; no tag or
 NAS/full-domain acceptance follows from packaging. Decision 126 restrictions remain.
 
