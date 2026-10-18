@@ -64,7 +64,7 @@ consumers at all.
 
 ## Status
 
-**`0.2.1` is deployed locally; its local release tag is pending.** All service
+**`0.2.1` is deployed locally with annotated tag `v0.2.1`.** All service
 images now use pinned UBI 10 micro. The confined worker creates its own private
 listener and sends actual readiness before API startup. The installed API
 container's private probe passes under SELinux Enforcing, including after clean
@@ -74,7 +74,10 @@ Native FD3 activation and existing hardening remain unchanged.
 
 [REL-013](docs/plans/tasks/rel-013-container-worker-artifacts.md) records exact clean
 artifacts from immutable source `4088994`; [OPS-018](docs/plans/tasks/ops-018-container-worker-rollout.md)
-records the guarded deployment and actual installed acceptance. Disposable complete
+records the guarded deployment and actual installed acceptance.
+[REL-014](docs/plans/tasks/rel-014-container-worker-release.md) records the passing
+final gate/local tag at deployment commit `156506f`; application source remains
+`4088994`. Disposable complete
 verification-mode tests use simulated NFS and do not establish live NAS readiness.
 The NAS stays read-only, legacy writers remain masked and verification scheduling
 stays disabled. No NAS file I/O/jobs or other-host/remote action is authorized.
@@ -103,7 +106,7 @@ a second client, reboot persistence, and enabling the quarterly verification
 timer. All of it is listed, with copy-pasteable instructions and acceptance
 checks, under **Operator handoff** in `docs/progress.md`.
 
-[The current tracker](docs/plans/current.md) selects the active listener correction;
+[The current tracker](docs/plans/current.md) records no active plan after the completed listener correction;
 dated
 plans and individual task files own scope and execution status.
 `docs/progress.md` retains completed work-package evidence, Decisions, Operator

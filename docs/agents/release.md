@@ -216,6 +216,7 @@ No production change or worker/NAS hold clearance follows from source packaging.
 
 [OPS-018](../plans/tasks/ops-018-container-worker-rollout.md) proves actual installed
 API-origin peer/TLS/drain acceptance from clean 4088994 UBI artifacts, closing
-hold 22 only. REL-014 still owns the pending local tag; no tag/push is implied.
+hold 22 only. Completed REL-014 records actual annotated local v0.2.1 at reviewed
+deployment 156506f, distinct from artifact source 4088994. No remote push occurs.
 Retain0.2.0 rollback's connection limitation and all NAS/storage/calendar/other-host
 holds; clean artifact and connectivity evidence is not live workload acceptance.

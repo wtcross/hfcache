@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Plan ID | `2026-10-18-plan-container-worker-listener` |
-| Status | active |
+| Status | completed |
 | Created | 2026-10-18 |
 | Authorization | Tyler's continuing local review, release and rollout instruction covers this necessary verifier-connectivity correction; activated after committed REL-011 2d81df5, preserving the NAS-write ban. |
 | Baseline | Deployed 0.2.0 application source `481fcc4`; OPS-016 evidence `11ddd55`; REL-011 closure 2d81df5 is committed. |
@@ -193,7 +193,7 @@ owner and coordinated source freeze before its gate.
   in_progress; decision 129/contracts follow technical review before source.
   REL-013 returns pending and now depends on OPS-019. Its initial clean Debian
   build/proof/compatibility evidence is superseded; root stops its gate with
-  TERM15 after 4m25.945s, not passing despite wrapper exit0. Domain execution is
+  TERM15 after 4m25.945s, not passing despite wrapper exit 0. Domain execution is
   held. Version remains pre-release 0.2.1; production 0.2.0/hold 22/NAS barriers
   remain unchanged. Fresh clean UBI artifacts/acceptance follow OPS-019's commit.
 
@@ -246,3 +246,21 @@ owner and coordinated source freeze before its gate.
   135 Cockpit tests/build, four wheel smokes). REL-014 stays pending until this
   rollout commits. No 0.2.1 tag or NAS workload/storage/other-host/remote acceptance
   is claimed; rollback to 0.2.0 restores its known connection limitation.
+
+- 2026-10-18: REL-014 activated after deployed/evidence commit
+  156506f5f409296ec3288b414d9a99542e38e8e1. It owns only release records/local tag
+  and selector closure; deployed immutable application source remains 4088994.
+  A clean reviewed target checkout and fresh NAS-masked gate precede any tag.
+  No 0.2.1 tag exists at activation. Runtime/application/image inputs, installed configuration and host policy
+  remain unchanged; local release evidence is written. Every NAS/calendar/
+  other-host/remote restriction remains unchanged.
+
+- 2026-10-18: REL-014 completes final independent release/history/artifact/host
+  reconciliation and fresh NAS-masked --with-build exit 0 (4,057 Python/40
+  deselected, three locked profiles, 135 Cockpit tests/build, four wheel smokes).
+  Actual annotated local v0.2.1 targets reviewed deployment/evidence 156506f,
+  while immutable app source remains 4088994. All five task dispositions are
+  complete; this plan closes and only its current selector clears. Original
+  v0.2.0/failed/superseded/retired-socket evidence remains. No NAS workload,
+  calendar, other-host or remote publication acceptance is invented; independent
+  guard/NAS-ro/masks/state/hardening remain. Unrelated backlog is not activated.

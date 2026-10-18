@@ -7,7 +7,7 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
-## 0.2.1 — Deployed locally; tag pending
+## 0.2.1 — 2026-10-18, local release with workload holds
 
 All service-image FROM stages use pinned UBI 10 micro, with authenticated portable
 Python and only verified executable/Red Hat CA-data donors. Clean artifacts from
@@ -23,7 +23,8 @@ closing the 0.2.0 connection hold for this deployment. Native named FD3 stays st
 no SELinux policy/process-label, seccomp, credential, domain, dependency or durable
 schema authority is widened. Full --with-build gates pass.
 
-**Local annotated 0.2.1 tag is not yet created.** NAS remains read-only, legacy
+**Local annotated `v0.2.1` targets reviewed deployment commit `156506f`; deployed
+application source remains `4088994`.** No remote publication. NAS remains read-only, legacy
 writers masked and verification scheduling disabled. Live NAS verification/jobs,
 full storage/NFS workload, other-host and remote acceptance are not claimed.
 Disposable complete-domain evidence uses explicitly simulated NFS only.

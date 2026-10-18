@@ -1723,6 +1723,25 @@ package in this family.
   Old 0.2.0 failure/rollback and all NAS I/O/jobs/storage/calendar/other-host/
   remote holds remain; no NAS workload or hardening bypass occurred.)
 
+- [x] REL-014 Record corrected local release and handoff
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-container-worker-listener.md),
+  [task](plans/tasks/rel-014-container-worker-release.md)). Fresh masked
+  --with-build exits 0:423 formatted/Ruff/whole types pass; 4,057 Python/40 deselected
+  in 472.40s; three locked profiles; 135 Cockpit tests/build and four wheel smokes.
+  Actual annotated local v0.2.1 object 9c8fc386… targets clean reviewed deployment/
+  evidence 156506f; deployed immutable artifact source remains 4088994, not this
+  records commit or gate artifacts. Exact note/cat-file hashes and existing
+  unchanged v0.2.0 are recorded. Actual release-state ledger is byte-identical
+  to OPS-018 final, and independent history/artifact/seven-record/current-status
+  reviews release without blocker. Reviewed INV-010/011/014/015 and
+  decisions 65/75/79/115/121/126–129; no runtime/application/image input/installed
+  configuration/host-policy change. Protected evidence JSON/tag are new local
+  records. All five tasks complete; plan closes/current=None with no new backlog
+  activation. Hold 22 closes narrowly for 0.2.1 peer connectivity; NAS I/O/jobs/live
+  verification/storage/NFS/calendar/other-host and remote actions remain unrun.
+  Guard/original locks/NAS-ro/masks/stores/handles/secrets/Enforcing, old failures
+  and 0.2.0 rollback limitation remain. Links/records/whitespace reconcile.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

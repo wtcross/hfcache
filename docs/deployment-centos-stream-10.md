@@ -1258,4 +1258,6 @@ passes before/after clean drain/restart, closing hold 22; TLS/auth/MCP/client an
 unchanged guard/locks/stores/secrets/effective confinement are recorded. The old
 socket is retained by exact same-/run rename, with persistent ledger. No NAS I/O/
 job/storage or other-host acceptance is claimed; verification scheduling stays
-disabled and writer masks remain. Local 0.2.1 tag is pending REL-014.
+disabled and writer masks remain. Completed REL-014 records actual local
+annotated v0.2.1 at reviewed deployment 156506f; artifact source stays 4088994.
+No remote publication occurs.
