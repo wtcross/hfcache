@@ -837,3 +837,11 @@ Not covered here: corruption and repair (`OPS-003`), snapshot and replica restor
 The Cockpit plugin (`docs/cockpit.md`) is a browser front-end for exactly this
 runbook — the same commands, the same units, and this document's guidance
 carried inline. Nothing it can do is anything this runbook does not describe.
+
+
+Current authenticated setup starts with the [API-client quickstart](quickstart.md).
+For source-to-host rollout use the [API-017 operator checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017),
+not historical direct-backend aliases or client-stop/free-lock evidence. Existing
+operation/scheduled handles and both server/worker stores survive observer loss,
+rotation, drain and rollback. Actual host acceptance and verification-calendar
+approval remain separate; no production action was executed by plan closure.

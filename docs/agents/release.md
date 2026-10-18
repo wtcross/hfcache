@@ -6,6 +6,13 @@ tagged that is not running, and nothing stays deployed that is not tagged.
 `docs/deployment-centos-stream-10.md` §13–§14 is the operator authority this
 checklist compresses.
 
+The [API-017 rollout checklist](../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+is the current API/private-worker/state acceptance companion. Feature completion
+keeps application metadata 0.1.10 unchanged; it does not cut or deploy a release,
+create a tag or authorize any step below. Commit and wheel/sdist hashes identify
+an artifact; equal displayed versions do not. Actual previous-feature/baseline
+compatibility evidence must not be relabelled as a deployed previous release.
+
 ## Preconditions
 
 - Working tree clean; every package in the release committed and tracked in

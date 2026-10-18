@@ -55,12 +55,20 @@ consumers at all.
 - **Consumers** — any authorized host that can mount the read-only export; the
   copy helper needs only Python 3. The export has no per-repository ACLs, so all
   consumers must be permitted to read every configured restricted repository.
-- **No NAS yet?** [`docs/quickstart.md`](docs/quickstart.md) runs everything
-  on one machine with a loopback NFS export.
+- **Reader first?** The [quickstart](docs/quickstart.md) connects to a provisioned
+  authenticated API without a local archive mount. Disposable writer setup and
+  real storage requirements remain separate operator work.
 
 ## Status
 
-**`v0.1.10` — explicit quarantine cleanup release candidate.** The writer is complete
+The REST/CLI and optional read-only MCP feature is implemented on the local
+`feat/rest-api-and-mcp` branch. The [completed plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
+records all 21 work packages and final integration acceptance. Source version
+`0.1.10` is unchanged metadata, not a new release or tag. The deployment record below predates this API/MCP rollout;
+[operator acceptance](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+is still required. No production installation is claimed.
+
+**Recorded deployment baseline: `0.1.10` — explicit quarantine cleanup release candidate.** The writer is complete
 and running against a live NFS-backed ZFS archive: it syncs public, private, and
 gated repositories, publishes, retains a bounded revision history, prunes,
 verifies, repairs, recovers, and cleans proven redundant quarantine entries,
@@ -94,7 +102,7 @@ implementation plan and contract reference.
 | [`docs/schemas.md`](docs/schemas.md) | Durable JSON formats: manifests, references, catalog, reports, journals |
 | [`docs/cli.md`](docs/cli.md) | Command surface, JSON output, exit codes, error taxonomy |
 | [`docs/security.md`](docs/security.md) | Assets, trust boundaries, threats, and the control enforcing each |
-| [`docs/quickstart.md`](docs/quickstart.md) | Run everything on one machine with a loopback NFS export |
+| [`docs/quickstart.md`](docs/quickstart.md) | Use the authenticated API client, with separate writer setup and MCP guidance |
 | [`docs/storage-requirements.md`](docs/storage-requirements.md) | What any NFSv4.2 server must provide: filesystem semantics, the two exports, identities |
 | [`docs/deployment-centos-stream-10.md`](docs/deployment-centos-stream-10.md) | Building the writer host, installing, upgrading, and rolling back |
 | [`docs/operations.md`](docs/operations.md) | Running it: sync, verify, prune, purge, status, timers, exit codes, measured performance |

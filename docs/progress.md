@@ -1438,6 +1438,61 @@ package in this family.
   socket/credential/worker hardening/custom masks/cgroup/SELinux/NFS/browser/PAM/
   drain/rollback/verify-calendar acceptance remains in operator holds 16–18.)
 
+- [x] API-017 Complete integrated REST/MCP acceptance and operator handoff
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-017-final-integration-and-handoff.md)).
+  All 21 work packages are completed in dependency order with same-package
+  implementation/tests/docs/task/progress/current evidence; the committed REST
+  gate precedes all MCP work. Final branch/history/artifact/security/invariant
+  review found no direct operational CLI backend, arbitrary file service,
+  generic MCP dispatch, secret artifact or unrelated RET-011/domain change.
+  Lock grows 37 to 94 packages with no prior version changed; source metadata
+  stays 0.1.10, without a release/tag. Final inspected archives contain no
+  private credential/certificate/environment/scratch/venv artifacts. The 68
+  runtime Python modules byte-match the tested final compatibility wheel.
+  Real CLI Unix/TCP subprocess integration exposed a pre-gate fixed event-limit
+  observer bug after durable sync success. Correct it to omitted adaptive limits
+  and contiguous event draining through empty under the same absolute deadline
+  and per-drain max_pages; explicit limits, domain Envelope identity, retention
+  gaps and original handles remain. No new capability/role/schema/dependency.
+  Final focused observer/socket/client/helpers: 176 passed in 24.54 seconds;
+  prior broad integration: 375 in 78.05. Four socket cases exercise Unix/TCP ×
+  page/retained-event caps of 1 with actual private full verification, reader
+  metadata/history/writer refusal and no extra operation/leak. Standalone
+  Cockpit check exits 0. Current quickstart replaces retired direct-backend
+  commands with authenticated API setup and distinguishes reader diagnostic
+  jobs. Anchor/parity selection: 63 passed in 1.07 seconds. Client/CLI/invariant
+  contracts and ADR 118/120 record the existing-contract correction; no new
+  decision. All 125 indexed decisions and affected invariant/FS/TX/framework/
+  retention boundaries are reviewed; core archive algorithms remain unchanged.
+  Fresh final-source installed-reader drill exits 0 across 42 cases with input
+  bytes preserved: feature predecessor 9ba89cf/current each seven schema-1
+  reads and seven future-2 schema-aware refusals (28), pre-feature 86f6e8b
+  archive-1 read/archive-2 refusal (2), plus 12 unavailable service-reader cases
+  (not schema-aware success/refusal). Exact command, final wheel/probe hashes
+  and preliminary-versus-final artifacts are retained in the task; equal
+  displayed version is not artifact identity or a deployed previous release.
+  First required
+  `rtk proxy bash scripts/check.sh --with-build > .scratch/api-017-gate.log 2>&1`
+  confirms actual exit 0: lock/both-extra sync, 388 formatted files, Ruff clean,
+  whole Pyrefly 0 errors (11 suppressed, 59 warnings not shown); 3,624 Python
+  tests passed, 40 deselected in 442.05 seconds; 0.1.10 sdist/wheel and all
+  three actual locked isolated base/server/server+MCP import/help/version
+  installation profiles, including exact-nine enabled tools and zero resources/
+  templates/prompts. Cockpit lint/style/types, 127 tests in 2.110 seconds and
+  production build in 1,291 ms pass; extra wheel subset: 4 passed, 3,660
+  deselected in 5.33 seconds. No full-gate failure/correction/restart or
+  post-freeze source/semantic change. Final records/links/dependencies, all
+  completed tasks, cleared current selection, unchanged 29 REST modes, unique
+  decisions and whitespace pass. Plan completed; only its selection is cleared.
+  Operator handoff 16–19 and deployment §17 retain credential/whole-archive,
+  artifact/version, transport/firewall/socket, worker no-IP/source masks/custom
+  paths/cgroup, NFS/SELinux/hardening, client monitoring and guarded state-
+  retaining drain/rollback checks. Verification timer stays disabled pending
+  calendar approval. Live Hub/NFS and installed host/browser/PAM probes were
+  not run; the required build-marked subset was. No production archive/service
+  operation, installation, deployment, release/version bump, push, merge or tag.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -1701,9 +1756,24 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     Before rollback to server-only/pre-MCP, disable MCP configuration deliberately
     and preserve normal drain, lock and retained-state guards. Staging --with-mcp
     does not enable config, provision credentials or add packages to a switch
-    target. Curated tools remain MCP-002 and complete MCP acceptance remains its
-    later gate. Existing holds 16/17 still apply; no production operation is
-    authorized by this implementation package.
+    target. MCP-002's nine tools and MCP-004 repository acceptance are complete;
+    actual host enablement remains held. Existing holds 16/17 still apply; no
+    production operation is authorized by this implementation package. The
+    [consolidated API-017 rollout checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+    retains every host prerequisite and deliberate artifact/rollback identity.
+
+19. **Final REST/MCP rollout handoff (API-017, 2026-10-18):** all items in the
+    [operator checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+    remain pending outside repository implementation: distinct whole-archive
+    credentials, actual TLS/proxy/firewall/Unix ownership, deliberate locked
+    artifact/version, API/private-worker activation/no-IP/source masks, NFS/
+    SELinux/executor hardening, state-retaining drain/rollback and client monitoring.
+    Preserve both operation stores, scheduled pending handles, locks and prior
+    artifacts; a stopped client/free lock/missing reader or receipt proves no
+    execution outcome. Keep verify timer disabled pending item 8. Source metadata
+    0.1.10 is unchanged, not a release/tag; choose commit and artifact hashes
+    deliberately before an authorized rollout. Implementation completion never
+    performs or approves these host/release actions.
 
 ## Operator decisions needed
 

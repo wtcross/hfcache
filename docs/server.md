@@ -846,3 +846,15 @@ receives no credential and retains its no-IP policy; scheduled timer clients
 remain API-only. [Acceptance tests](../tests/unit/test_mcp_acceptance.py) map these
 repository claims, without proving installed socket/firewall/cgroup/credential/
 SELinux/NFS/drain behavior or enabling the verify timer.
+
+
+## Final rollout boundary (API-017)
+
+The [consolidated operator checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+retains credential/whole-archive, actual TLS/proxy/firewall/socket, artifact/profile,
+activation/egress/source masks, NFS/SELinux/hardening, client and state-retaining
+drain/rollback requirements. Repository acceptance does not perform them. Preserve
+API and verifier stores plus scheduled pending handles; missing old readers or
+history never proves nonexecution. The verification timer remains disabled until
+its separate calendar approval. Version 0.1.10 is unchanged source metadata,
+not an artifact identity or new deployed release.

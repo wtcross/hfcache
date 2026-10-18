@@ -14,8 +14,15 @@ Local metadata orchestration now uses transport-neutral query services.
 their explicit selectors as documented. Read-only evidence services validate
 exact report/reference/manifest identity and contained locators. Durable archive
 formats and the consumer export remain unchanged. REST/CLI and optional MCP
-interfaces are implemented below; final acceptance/closure follows the
-[active plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md), without deployment.
+interfaces are implemented below; the
+[completed plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md) records final
+integration acceptance, without deployment or a release/version change.
+
+Final real CLI-to-socket acceptance also corrects event observation for servers
+with small page/retained-event limits. Omitted limits use the server's adaptive
+default; retained event pages drain through empty within the existing deadline
+and page budgets, preserving exact outcomes and recovery handles. The current
+quickstart uses authenticated client setup; operator rollout checks remain pending.
 
 All operational commands now delegate to typed services. Non-estimate
 verification holds the common archive lock and storage preflight through scope

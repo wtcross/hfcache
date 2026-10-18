@@ -158,7 +158,7 @@ request; explicit `capabilities()` / `require_capabilities()` negotiate compatib
 Trusted transport/clock injection supports hermetic tests, not a remote option.
 
 The interface provides `read(path, params=...)`, `iter_pages(path, field, ...)`,
-`submit(path, body, key=None, on_key=...)`, `lookup(key)`, `operation(id)`, `events(id, after, limit)`,
+`submit(path, body, key=None, on_key=...)`, `lookup(key)`, `operation(id)`, `events(id, after=0, limit=None)`,
 `result(id)` and `poll(id, ...)`, plus `version()`, `health()` and
 `validate_installed()`, `validate_candidate(content)` and
 `plan_candidate(content, selectors=(), key=None, on_key=None)`. Submission returns its retained key alongside
@@ -196,8 +196,17 @@ Standalone `result(id)` and `events(id)` fetch exact operation metadata if it is
 not already known. Result UUID/fingerprint/domain run ID and success/failure must
 agree with that receipt; cached immutable identities cannot be replaced by current
 policy. Event pages likewise retain admitted identity and require contiguous
-sequences or the explicit `oldest_sequence`/`truncated` gap. Polling checks its
-absolute deadline between retries and on each transport chunk; arriving bytes
+sequences or the explicit `oldest_sequence`/`truncated` gap.
+An omitted event limit is adaptive: no `limit` query parameter is sent, so the
+existing route selects min(100, configured max_page_size, operation_max_events).
+Explicit integer limits retain their existing validation/meaning. Progress
+observation drains contiguous retained event pages through a final empty page
+before treating that batch as exhausted; the empty response also counts against
+that drain's max_pages. All observation reads, including empty drain/status/
+result requests, share the existing absolute deadline and finite retry/body budgets. No extra
+capability request is needed, and a terminal result never justifies silently
+skipping retained progress. Existing poll without events remains compatible.
+Polling checks its absolute deadline between retries and on each transport chunk; arriving bytes
 never reset that deadline. Read retries cover transport failures
 only; malformed responses or validated remote problems do not trigger replay.
 

@@ -38,7 +38,7 @@ def settings(tmp_path):
     )
 
 
-def _events(numbers, *, oldest=1, truncated=False):
+def _events(numbers, *, oldest=1, truncated=False, after=0):
     return _read(
         data={
             "operation_id": OPERATION,
@@ -52,7 +52,7 @@ def _events(numbers, *, oldest=1, truncated=False):
                 }
                 for number in numbers
             ],
-            "next_cursor": numbers[-1] if numbers else 0,
+            "next_cursor": numbers[-1] if numbers else after,
             "oldest_sequence": oldest,
             "truncated": truncated,
         }
@@ -188,7 +188,10 @@ def test_default_submit_returns_exact_failed_domain_envelope_after_progress(sett
             )
         if request.url.path.endswith("/events"):
             order.append("events")
-            return _response(_events([1]))
+            assert "limit" not in request.url.params
+            after = int(request.url.params["after"])
+            page = _events([1] if after == 0 else [], after=after)
+            return _response(page)
         if request.url.path.endswith("/result"):
             order.append("result")
             return _response(failed)
@@ -208,7 +211,7 @@ def test_default_submit_returns_exact_failed_domain_envelope_after_progress(sett
     assert result.to_payload() == failed["envelope"]
     assert result.run_id == RUN
     assert result.run_id != OPERATION
-    assert order == ["key", "POST", "accepted", "status", "events", "progress", "result"]
+    assert order == ["key", "POST", "accepted", "status", "events", "progress", "events", "result"]
 
 
 def test_terminal_resume_fetches_retained_events_after_cursor_and_redacts_messages(settings):
@@ -219,8 +222,13 @@ def test_terminal_resume_fetches_retained_events_after_cursor_and_redacts_messag
     def respond(request):
         seen.append(request)
         if request.url.path.endswith("/events"):
-            assert request.url.params["after"] == "2"
-            return _response(event_payload)
+            assert "limit" not in request.url.params
+            after = int(request.url.params["after"])
+            if after == 2:
+                return _response(event_payload)
+            assert after == 6
+            page = _events([], oldest=5, after=after)
+            return _response(page)
         if request.url.path.endswith("/result"):
             return _response(_read(data={"done": True}))
         return _response(_read(data={"operation": _operation(state="succeeded")}))
@@ -267,6 +275,54 @@ def test_one_deadline_includes_native_event_chunks_and_retains_operation(setting
     assert caught.value.route == "/api/v1/syncs"
     assert [request.method for request in seen] == ["GET", "GET"]
     assert seen[-1].url.path.endswith("/events")
+
+
+@pytest.mark.parametrize("budget", ["pages", "deadline"])
+def test_final_adaptive_empty_drain_uses_existing_page_and_deadline_budgets(settings, budget):
+    clock, seen = [0.0], []
+    settings = settings.model_copy(update={"max_pages": 1 if budget == "pages" else 10000})
+
+    def respond(request):
+        seen.append(request)
+        if request.url.path.endswith("/events"):
+            assert "limit" not in request.url.params
+            after = int(request.url.params["after"])
+            page = _events([1] if after == 0 else [], after=after)
+            if after:
+                clock[0] = 1.1
+            return _response(page)
+        assert not request.url.path.endswith(("/result", "/capabilities"))
+        return _response(_read(data={"operation": _operation(state="succeeded")}))
+
+    expected = ClientProtocolError if budget == "pages" else ClientConnectionError
+    with (
+        ApiClient(
+            settings, transport=httpx.MockTransport(respond), monotonic=lambda: clock[0]
+        ) as client,
+        pytest.raises(expected) as caught,
+    ):
+        cli_client.observe_operation(client, OPERATION, timeout=1, on_event=lambda _page: None)
+    assert caught.value.operation_id == OPERATION
+    assert caught.value.route == "/api/v1/syncs"
+    assert len(seen) == (2 if budget == "pages" else 3)
+
+
+@pytest.mark.parametrize("limit", [None, 101])
+def test_default_event_page_remains_bounded_while_explicit_limit_retains_its_contract(
+    settings, limit
+):
+    def respond(request):
+        if request.url.path.endswith("/events"):
+            assert request.url.params.get("limit") == (None if limit is None else "101")
+            return _response(_events(list(range(1, 102))))
+        return _response(_read(data={"operation": _operation(state="succeeded")}))
+
+    with ApiClient(settings, transport=httpx.MockTransport(respond)) as client:
+        if limit is None:
+            with pytest.raises(ClientProtocolError):
+                client.events(OPERATION)
+        else:
+            assert len(client.events(OPERATION, limit=limit).events) == limit
 
 
 @pytest.mark.parametrize("interrupted", [False, True])

@@ -2,15 +2,18 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Runbook, exercised on `hfcachewriter.lab.example.com` |
+| Status | Historical writer deployment evidence; current API/MCP rollout checklist is pending operator acceptance |
 | Work package | `OPS-001` |
 | Derived from | `docs/plan.md` §21, §22, §29, §30, §35 |
 | Companion | `docs/operations.md` for running it once it is up |
 
-Takes a bare CentOS Stream 10 VM to a running `hfcache.target`. Every command
-here was run on the writer; every block marked **observed** is real output, not
-an illustration. Where a step cannot be re-run — there is exactly one of those,
-`archive init` — this document says so and gives the evidence from when it was.
+The original CentOS Stream 10 procedure and blocks marked **observed** retain
+historical writer evidence. Later dated API/MCP amendments and the
+[current rollout checklist](#17-rest-and-mcp-rollout-checklist-api-017) are operator
+procedures, not commands executed by this implementation. Earlier direct-backend/
+stop-client recipes do not establish current API/private-worker quiescence.
+Initialization was performed once; its historical evidence never authorizes
+re-initializing the existing archive.
 
 **What this does not cover.** Everything on the TrueNAS side: the dataset, the
 service identities, the writer export, the consumer export, snapshots and
@@ -904,6 +907,12 @@ releases:
 
 ## 15. Acceptance checklist
 
+This original deployment matrix retains historical context. Current REST/MCP
+rollout uses [§17](#17-rest-and-mcp-rollout-checklist-api-017), actual API/private-
+worker executor probes and the current dated quiescence rule in §13; passing the
+old two-client-unit checks does not establish those new host boundaries.
+
+
 The table retains the earlier direct-execution deployment acceptance. API-014
 additionally requires real named Unix/TCP activation with one application,
 private-worker peer restrictions, executor cgroup no-IP/credential-source masking,
@@ -984,3 +993,109 @@ plugin escalates through the superuser bridge and drops to the service
 identity for CLI work (`CP-03`); a session without that access gets
 read-only state. SELinux stays enforcing; nothing here relaxes §22.5
 (`CP-13`).
+
+
+## 17. REST and MCP rollout checklist (API-017)
+
+Every item below is **pending operator acceptance**, not an action performed by
+the feature implementation. Repository gates, real disposable sockets, installed
+throwaway wheels and state snapshots do not deploy services or certify the host.
+Follow the [release policy](agents/release.md) only after separate authorization;
+retain [operator holds 16–18](progress.md#operator-handoff) and the existing NAS/
+consumer/calendar holds. Never initialize the existing archive or weaken SELinux/
+systemd restrictions to make acceptance pass.
+
+- [ ] **Select an identifiable artifact and rollback target.** Choose an explicit
+  release version/commit and locked dependency profile, record source commit and
+  wheel/sdist SHA-256, and retain predecessor trees. This branch keeps application
+  metadata `0.1.10`; equal version strings on compatibility wheels do not identify
+  equal artifacts or create a release/tag. Select server-only or explicit
+  server+MCP staging; `--with-mcp` neither enables config nor adds packages to an
+  existing switch target. Review read-only installer dry-run first. Actual release,
+  switch, deploy, tagging and publishing remain separate authorized operations.
+- [ ] **Approve one whole-archive credential boundary.** REST reader/writer and
+  optional MCP reader must be distinct protected sources with their intended
+  fixed classes; exposed metadata includes restricted repositories within the
+  whole-archive boundary, not repository ACLs or individual user identities. Bulk
+  content access remains the separate read-only consumer export/copy workflow.
+  Validate source ownership/modes/no-follow/group rules without printing values.
+  Provision `hfcache.api` to the API and API-backed clients, Hub `hf-token` only
+  to the online API executor, and optional `hfcache.mcp-reader` only to the API
+  through an explicit drop-in/protected source. No credential goes to the verifier.
+  Confirm missing/wrong-class sources refuse and ordinary help/local version
+  needs none. Plan restart-only rotation and fresh clients; no bearer in URLs,
+  argv, TOML values, browser code, logs or artifact hashes.
+- [ ] **Review protected configuration and state.** Install archive/server/client/
+  scheduled settings under explicit root/service ownership; the examples are
+  separate strict domains, not interchangeable. Verify the existing archive root
+  and UUID without initialization; scheduled clients pin the expected UUID.
+  Preserve separate `/var/lib/hfcache/api` and `/var/lib/hfcache/verification`
+  stores plus `/var/lib/hfcache/scheduled/{sync,verify}` handles and persistent
+  lock inodes. State must remain service-private and outside publication trees;
+  retain unknown/interrupted/future-version evidence. Cockpit's root config lock,
+  candidate/base/backup and exact fingerprint confirmation retain their ownership.
+- [ ] **Prove actual transport exposure.** Verify `/run/hfcache/api.sock` and
+  `/run/hfcache/verification.sock` owner/group/mode and protected parents; Unix
+  access still authenticates. Match activated enabled Unix/optional TCP addresses
+  to server config; both API listeners share one app/lifespan. Off-host traffic
+  needs verified TLS or the explicit trusted loopback TLS proxy, deliberate
+  firewall reachability, Host/Origin allowlists and public prefix. Test the actual
+  client/proxy path and wrong-credential refusals; no wildcard/forwarded-header
+  shortcut. Enable MCP only with its profile/source and canonical prefixed
+  `/mcp/`; validate exact nine tools/zero resources/templates/prompts and REST
+  auth parity using the tested protected-file client, never a browser token store.
+- [ ] **Prove the actual private executor sandbox.** Review/install
+  `hfcache-api.socket/.service` and `hfcache-verification.socket/.service` as one
+  coordinated arrangement, with unprivileged `hfcache` peer account resolution.
+  Inspect actual activation descriptors, peer UID and surviving worker status.
+  In the real `hfcache-verification.service` cgroup, prove IP connections are
+  denied and Hub/REST/MCP sources, `/run/credentials`, common credential stores
+  and daemon HF_HOME are inaccessible. Custom development source paths require
+  additional explicit masks/probes. Offline environment flags alone are not
+  egress controls; probing only the verify client wrapper proves the wrong unit.
+  No online/in-process fallback is acceptable.
+- [ ] **Prove real storage and hardening.** Keep SELinux enforcing and collect
+  actual executor-aware hardening results, unit verification and AVC evidence.
+  Confirm expected NFS/NFSv4 mount, identity mapping, reserve behavior and
+  ordinary-file publication permissions without substituting a local directory.
+  Reconnection/interruption, consumer export write denial/disjointness and
+  independent copy verification need their authorized environment/window.
+  Repository loopback fixtures do not certify Mapall, real no-IP/NFS interaction,
+  NAS settings, custom paths or consumer-side enforcement. Never relax controls
+  or manually repair/delete archive evidence.
+- [ ] **Rehearse guarded drain before switch/rollback.** Record timer state and
+  all keys/operation/run/transaction handles. Follow [§13](#13-upgrade-plan-30):
+  pause scheduling without stopping `hfcache.target`; retain observer handles,
+  prevent API socket reactivation, drain the API while exact private worker
+  status/result handoff remains available, then stop/drain private activation.
+  Establish zero executor PIDs/tasks or explicitly empty cgroup evidence and a
+  noncreating archive flock held through switch. Unknown quiescence refuses;
+  no automatic stop/kill/unlink bypass. Client exit, a free lock/PID or missing
+  history alone is not proof execution ended. Preserve both stores, scheduled
+  handles and previous trees; never reset pending evidence to replay.
+- [ ] **Verify target compatibility with retained state.** Use actual installed
+  target readers, not matching `0.1.10` metadata or an assumed schema-1 promise.
+  Pre-feature binaries lack the six service/config readers; absence is not a
+  schema-aware refusal or proof a job did not execute. An unsupported scheduled
+  observer target with retained handles must refuse rollback. Keep compatible
+  observation/reconciliation available; do not delete, merge or hand-edit stores.
+  Disable MCP deliberately before server-only/pre-MCP startup. Existing archive
+  restricted-scope and journal rollback constraints in [§14](#14-rollback-plan-30)
+  still apply; no archive data rollback makes a binary compatible.
+- [ ] **Exercise clients and monitoring under operator control.** Validate REST
+  writer/reader, exact terminal Envelopes, mandatory key/accepted-ID notices,
+  bounded events and same-class lookup after connection loss. Scheduled sync/
+  verify units use only the API credential and repeated finite observations;
+  retained pending handles permit lookup/observe only, never a second POST.
+  Confirm existing OnFailure/journal/target/mount wiring, API/private-worker and
+  client monitoring, and actual Cockpit PAM/admin/service/credential separation.
+  Closing a page or stopping a client must leave accepted work observable, not
+  trigger cancellation, recovery or a false success. Candidate installs require
+  root lock/exact base/content, compatible authority, preview and confirmation.
+- [ ] **Restore only approved scheduling and sign off evidence.** Preserve
+  `hfcache-sync.service`/`.timer` and `hfcache-verify.service`/`.timer` names and
+  calendars. Resume sync scheduling only after supervised acceptance and retain
+  `hfcache-verify.timer` **disabled** until its separate NAS/scrub/replication
+  calendar approval. Record actual tests, failures and residual restrictions;
+  missing host evidence remains an open hold. Repository plan completion does
+  not authorize production start, destructive work, release/tag or push.

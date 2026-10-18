@@ -20,6 +20,7 @@ INTERFACE_DOCS = (
     "docs/server.md",
     "docs/api-client.md",
     "docs/mcp.md",
+    "docs/quickstart.md",
     "docs/cli.md",
     "docs/consumers.md",
     "docs/configuration.md",

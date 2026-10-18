@@ -3,7 +3,8 @@
 | Field | Value |
 | --- | --- |
 | Plan ID | `2026-10-17-plan-rest-api-and-mcp` |
-| Status | active |
+| Status | completed |
+| Completed | 2026-10-18 |
 | Created | 2026-10-17 |
 | Authorization | Tyler instructed implementation on 2026-10-17, on the feature branch with incremental commits and no push, merge, tag, deploy, or production operations. |
 | Reviewed baseline | `wtcross/hfcache`, `main`, `86f6e8bbf78503497cb4c913c10b6612ee6b5aeb`; project version `0.1.10`; Python `>=3.14` |
@@ -941,3 +942,49 @@ versions when implementing, especially FastMCP imports and test transports:
   complete; current selects API-017 pending after this commit. Final closure and
   real operator deployment holds remain separate; no release/tag or production
   operation is performed.
+
+
+- 2026-10-18 API-017: Activated after committed MCP-004 (`f9a96dd`) for final
+  history/artifact/contract review, fresh installed-reader compatibility and
+  integrated --with-build acceptance. Replace obsolete direct-backend quickstart
+  commands with supported authenticated client setup and consolidate the pending
+  operator rollout checklist without executing it. Real CLI socket integration
+  exposed an existing fixed event-limit observer defect; correct it to the
+  existing adaptive server default and drain contiguous pages through empty under
+  the same deadline/per-drain max_pages, preserving explicit limits and handles.
+  Decisions 118/120 receive corrective evidence, no new choice/schema/role or
+  unrelated allocation/domain work. Preliminary compatibility artifacts remain;
+  final-source fresh 42-case drill distinguishes supported schema reads/refusals
+  from absent pre-feature readers. Closure evidence follows the actual full gate.
+
+
+## Completion — 2026-10-18
+
+All 21 scoped task records are completed in dependency order, with incremental
+local work-package commits and task/progress/current evidence. REST acceptance
+committed before MCP began. API-017's first required
+`scripts/check.sh --with-build` confirmed actual exit 0: 3,624 Python tests
+(40 deselected, 442.05 seconds), lock/format/lint/whole types, 0.1.10 source/wheel
+builds, all three actual locked base/server/server+MCP installation profiles,
+127 Cockpit tests/production build and four additional wheel smokes. No final
+full-gate correction/restart or post-freeze source/semantic change. The real
+CLI socket proof found an observer event-limit defect before the gate; its
+bounded adaptive correction and 176-case focused proof are recorded in
+[API-017](tasks/api-017-final-integration-and-handoff.md).
+
+The fresh final-source compatibility drill passed 42 installed-reader cases with
+input bytes preserved, distinguishing supported schema refusal from unavailable
+pre-feature service readers. Tested wheel hashes identify actual artifacts;
+unchanged application metadata 0.1.10 does not create a release/tag. History,
+artifacts, full interface parity, current quickstart and invariant/ADR/contract
+reviews found no unscoped backend/file-serving/dispatch/secret/domain change.
+No new decision or unrelated RET-011 work is introduced. Detailed evidence and
+the [completed progress audit](../progress.md) are retained with the final task.
+
+Only this plan's selection in current.md is cleared; historical plans/tasks and
+unrelated backlog remain intact. Local implementation acceptance does not clear
+[operator rollout checks](../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+or Operator handoff 16–19. Production credential/transport/worker hardening,
+NFS/SELinux, monitoring, guarded drain/rollback and verification calendar approval
+remain separate. No production operation, install, release/version bump, push,
+merge, tag or deployment was performed.

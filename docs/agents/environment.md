@@ -82,3 +82,12 @@ Carried from plan §36.4–§36.5 and not relaxed by §36's supersession
 - Build and test as the login user; `sudo` is for installation and system
   configuration steps. Rehearsals that need a mutable archive use the
   throwaway loopback archive of `docs/recovery.md` §6, never `/srv/hfcache`.
+
+
+API-017 consolidates these unchanged limits in the
+[operator rollout checklist](../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).
+The API/MCP feature branch and throwaway installed wheels are repository evidence,
+not a production release or permission to manipulate host services/state. Keep
+both operation stores and scheduled observation handles through approved drain/
+rollback, and preserve the disabled verification calendar. No repository plan
+closure clears the actual no-IP/credential/NFS/SELinux/TLS/firewall holds.

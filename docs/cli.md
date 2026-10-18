@@ -633,7 +633,12 @@ does not prove nonexecution.
 
 `wait` observes bounded sanitized sequenced events, status and result under one
 absolute finite deadline. `--after N` resumes event observation after that sequence;
-retention gaps are explicit, never invented events. On a terminal result, emit
+retention gaps are explicit, never invented events. Event observation omits a
+fixed requested page limit so the server chooses its adaptive default, including
+small configured page/event caps. Drain consecutive retained pages through the
+final empty page under the same observation deadline; that empty page counts
+toward the drain's max_pages. Explicit library event limits retain their
+validation. No new capability request, replay or cancellation is introduced. On a terminal result, emit
 the exact stored command Envelope and its application exit, including partial
 failure. On known unfinished/interrupted work with no terminal Envelope, preserve
 HFAPI015 rather than fabricate an execution result.

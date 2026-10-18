@@ -488,7 +488,13 @@ route enforcement from installed host acceptance.
   separately identified schema-1 `operation_admission`, without a fabricated
   command outcome/exit. Show/lookup keep exact server metadata Envelopes.
   Mandatory validated key/accepted-ID safety messages stay on stderr even quiet;
-  bounded sanitized event progress never fragments stdout. Client-only no-confirm
+  bounded sanitized event progress never fragments stdout. API-017 corrects
+  observation under small server page/retention caps: omitted adaptive event
+  limits and complete retained-page draining share the same absolute deadline;
+  each drain's final empty page counts toward max_pages. Explicit integer limits
+  retain their meaning. [Real CLI socket/private-worker integration](../tests/unit/test_interface_integration.py)
+  proves exact terminal results and roles without changing admitted identity.
+  Client-only no-confirm
   init refusal uses local metadata plus successful inspection evidence; failed
   inspection remains exact server evidence. See [decision 120](adr/decision-120.md).
 - **`INV-007` — Verification reports evidence without rewriting it.** Verify

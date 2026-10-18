@@ -48,7 +48,7 @@ _MAX_DEPTH = 32
 _MAX_HEADER_BYTES = 32768
 _MAX_LENGTH_DIGITS = 20
 _MAX_EVENT_PAGE = 10000
-_OBSERVATION_EVENT_PAGE = 100
+_DEFAULT_EVENT_PAGE_BOUND = 100
 _MAX_CACHED_OPERATIONS = 128
 _MAX_CANDIDATE_BYTES = 1048576
 _PAGE_ROUTES = frozenset(
@@ -572,7 +572,7 @@ class ApiClient:
         self,
         operation_id: str,
         after: int = 0,
-        limit: int = 100,
+        limit: int | None = None,
         *,
         _deadline: float | None = None,
     ) -> ClientEvents:
@@ -580,8 +580,7 @@ class ApiClient:
         if (
             type(after) is not int
             or after < 0
-            or type(limit) is not int
-            or not 1 <= limit <= _MAX_EVENT_PAGE
+            or (limit is not None and (type(limit) is not int or not 1 <= limit <= _MAX_EVENT_PAGE))
         ):
             raise ClientProtocolError
         known = self._operations.get(identifier)
@@ -589,7 +588,7 @@ class ApiClient:
             known = self.operation(identifier, _deadline=_deadline)
         result = self.read(
             "/api/v1/operations/" + identifier + "/events",
-            {"after": after, "limit": limit},
+            {"after": after} | ({"limit": limit} if limit is not None else {}),
             _deadline=_deadline,
         )
         try:
@@ -600,7 +599,7 @@ class ApiClient:
         if (
             result.envelope.exit_code != 0
             or page.operation_id != identifier
-            or len(sequences) > limit
+            or len(sequences) > (limit if limit is not None else _DEFAULT_EVENT_PAGE_BOUND)
             or sequences != sorted(set(sequences))
             or any(number <= after for number in sequences)
             or page.next_cursor != (sequences[-1] if sequences else after)
@@ -679,13 +678,16 @@ class ApiClient:
                     page = self.events(
                         operation_id,
                         after=after,
-                        limit=_OBSERVATION_EVENT_PAGE,
+                        limit=None,
                         _deadline=deadline,
                     )
                     if page.events or page.truncated:
                         on_event(page)
                     after = page.next_cursor
-                    if len(page.events) < _OBSERVATION_EVENT_PAGE:
+                    # The route defaults also account for unadvertised event
+                    # retention limits. An empty page proves this drain ended;
+                    # its request consumes the same finite page/deadline budget.
+                    if not page.events:
                         break
                 else:
                     raise ClientProtocolError

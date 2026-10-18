@@ -866,3 +866,13 @@ delete history or release mounts because the observer ended. Follow §10 and the
 server drain/reconciliation procedure. See [decision 120](adr/decision-120.md),
 [CLI operations](cli.md#operations) and
 [client resume](api-client.md#submit-detach-and-resume-api-013).
+
+
+Final feature rollout follows the [API-017 operator checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).
+Keep the API and private-verifier stores distinct and preserve scheduled pending
+handles/locks across rollback. A target without their readers cannot prove a
+request unexecuted; do not delete/merge/rewrite evidence to make it start. Disable
+MCP deliberately before server-only/pre-MCP startup, retain current compatible
+observation/reconciliation and all existing archive-format rollback constraints.
+Historical rehearsal output above is not proof of current installed-host drain,
+no-IP/source masks, SELinux/NFS or restored operator approval.

@@ -116,3 +116,25 @@ bounded CLI progress/recovery notices. Unknown/lost/unfinished history and obser
 stop remain uncertainty, never cancellation/replay/recovery proof. API-only
 transient credential delivery leaves execution on the server. See
 [decision 122](decision-122.md).
+
+## 2026-10-18 bounded small-page observation correction (API-017)
+
+A final real CLI-to-socket integration with max_page_size=1 exposed a fixed
+internal events limit of 100: a sync could durably succeed while observation
+failed HFAPI006. This violated the existing bounded-client/faithful-observation
+contract. `events(limit=None)` now omits the field so the server chooses its
+existing min(100, max_page_size, operation_max_events) default; explicit integer
+limits keep their semantics. Progress observation drains retained contiguous
+pages through an empty page, counting that response too against the same
+drain's max_pages and the absolute observation deadline. Retention gaps and
+admitted operation identity stay explicit; no extra capabilities request, new role/schema/dependency or replay/
+cancellation authority is introduced. This is an existing-contract correction,
+not a new architectural decision. [Final integration task](../plans/tasks/api-017-final-integration-and-handoff.md)
+owns exact subprocess/direct-client proof and required fresh gate evidence.
+
+
+Correction accepted 2026-10-18: [actual CLI socket integration](../../tests/unit/test_interface_integration.py)
+and [observer budget tests](../../tests/unit/test_cli_operation_helpers.py) pass;
+the final task records the first required --with-build gate exit 0 (3,624 Python
+tests), final installed-reader drill and completed plan. This adds evidence to
+the existing decision; installed-host acceptance remains separate.
