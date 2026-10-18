@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 
 import typer
+from click.core import ParameterSource
 
 from hfcache.config import load_config
 from hfcache.credentials import resolve_token
@@ -69,6 +70,11 @@ class GlobalOptions:
     quiet: bool
     color: bool
     token_file: Path | None
+    client_config_path: Path | None = None
+    api_url: str | None = None
+    api_socket: Path | None = None
+    api_token_file: Path | None = None
+    config_explicit: bool = False
 
 
 def utc_now() -> str:
@@ -254,6 +260,26 @@ def main(
             help="Read a Hub token from this file. Never logged.",
         ),
     ] = None,
+    client_config: Annotated[
+        Path | None,
+        typer.Option(
+            "--client-config", metavar="PATH", readable=False, help="API client settings."
+        ),
+    ] = None,
+    api_url: Annotated[
+        str | None,
+        typer.Option("--api-url", metavar="URL", help="API HTTPS origin and optional path prefix."),
+    ] = None,
+    api_socket: Annotated[
+        Path | None,
+        typer.Option("--api-socket", metavar="PATH", readable=False, help="Local API Unix socket."),
+    ] = None,
+    api_token_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--api-token-file", metavar="PATH", readable=False, help="Protected API bearer file."
+        ),
+    ] = None,
 ) -> None:
     """Options accepted before the command."""
     # Before any command runs, so a failure inside argument handling is still
@@ -270,6 +296,11 @@ def main(
         # never receives escape sequences.
         color=not no_color and sys.stdout.isatty(),
         token_file=token_file,
+        client_config_path=client_config,
+        api_url=api_url,
+        api_socket=api_socket,
+        api_token_file=api_token_file,
+        config_explicit=ctx.get_parameter_source("config") == ParameterSource.COMMANDLINE,
     )
 
 

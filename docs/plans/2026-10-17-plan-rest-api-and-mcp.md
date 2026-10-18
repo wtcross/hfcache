@@ -769,3 +769,13 @@ versions when implementing, especially FastMCP imports and test transports:
   explicit initialization operation through either adapter. All 27 existing rows
   are implemented, with the two candidate rows pending API-012. No dependency,
   durable shape, MCP or production operation is introduced.
+
+- 2026-10-18 API-011: Decision 118 implements the independent synchronous base
+  client and strict schema-1 client settings, optional installed client TOML and
+  atomic CLI endpoint-group overrides. Protected API-only sources, verified TLS,
+  safe exact links, finite byte/page/retry/poll budgets and strict wire/identity
+  checks retain exact old-operation fingerprints/results. Keys exist before POST;
+  lost acknowledgement retains uncertainty without automatic replay. HFAPI017/018
+  are client config/protocol exit 10; HFAPI019/020 connectivity/uncertainty exit 20.
+  Global CLI options are stored only; runtime migration remains API-012/013. No
+  parity availability, archive shape, dependency, MCP or production operation changes.

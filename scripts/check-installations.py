@@ -76,6 +76,7 @@ def main():
                 "import importlib.util,json; "
                 "from hfcache import __version__; "
                 "import hfcache.cli,hfcache.http_transport,hfcache.api.auth; "
+                "import hfcache.client,hfcache.client_config; "
                 "print(json.dumps({'version':__version__,'server':"
                 "importlib.util.find_spec('fastapi') is not None,'uvicorn':"
                 "importlib.util.find_spec('uvicorn') is not None,'mcp':"

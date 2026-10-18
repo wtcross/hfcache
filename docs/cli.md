@@ -42,6 +42,15 @@ configured root/UUID; ordinary maintenance does not use that switch. The public
 CLI remains local until its migration packages; these routes are not a deployed
 writer or authorization for production initialization.
 
+**2026-10-17 API-011 amendment:** the independent synchronous typed client and
+separate client configuration are implemented ([decision 118](adr/decision-118.md)).
+The four API selection options below are parsed/stored without switching existing
+operational commands to HTTP; API-012/013 own that migration. Local help/version
+remain independent of configuration/credentials/server. The
+[client contract](api-client.md) defines exact source/endpoint precedence, finite
+observation, safe errors and retained-key uncertainty. No direct archive fallback
+or automatic daemon startup is introduced.
+
 ## 1. Invocation shape
 
 ```text
@@ -63,6 +72,10 @@ invocation:
 | `--quiet` / `-q` | off | Suppress progress and informational output; warnings and errors still print |
 | `--no-color` | auto | Force plain output; also implied when stdout is not a terminal |
 | `--token-file PATH` | none | Read a token from this file for an operator-run command (§`docs/configuration.md` §7) |
+| `--client-config PATH` | none | Select separate strict client TOML; API-011 stores the option, runtime migration follows in API-012/013 |
+| `--api-url URL` | none | Explicit API URL, mutually exclusive with `--api-socket`; overrides the configured endpoint group |
+| `--api-socket PATH` | none | Explicit API Unix socket; overrides the configured endpoint group |
+| `--api-token-file PATH` | none | Explicit API credential source, distinct from the Hub `--token-file` |
 
 `--json` and `--quiet` are compatible. `--json` and `--verbose` are compatible;
 verbosity affects stderr logging, never the stdout envelope.
@@ -621,9 +634,12 @@ condition; a retired condition retires its code.
 | `HFAPI007` | API resource/method is absent (HTTP 404/405), a page cursor is stale (HTTP 409), or admitted policy changed before execution |
 | `HFAPI010` | API Host/Origin/TLS/proxy security policy refuses a request; HTTP 400 or 403 |
 | `HFAPI012` | An idempotency key conflicts with its previously admitted route/request; HTTP 409 |
+| `HFAPI017` | Client configuration or endpoint/source selection is invalid |
+| `HFAPI018` | API response/protocol, identity, capability or version is unsupported/inconsistent |
 
 The `HFAPI` family defaults to exit `10`; the explicit safety codes below exit
-`20` ([decisions 113](adr/decision-113.md) and [114](adr/decision-114.md)). HTTP status describes the transport
+`20` ([decisions 113](adr/decision-113.md), [114](adr/decision-114.md) and
+[118](adr/decision-118.md)). HTTP status describes the transport
 result and does not override a domain Envelope's application exit classification.
 
 ### 5.2 Storage and transaction safety — exit `20`
@@ -657,6 +673,8 @@ result and does not override a domain Envelope's application exit classification
 | `HFAPI014` | Operation control storage is unsafe, full, unavailable or unexplained; HTTP 503 |
 | `HFAPI015` | Operation state/transition or result availability is invalid or uncertain; HTTP 409 |
 | `HFAPI016` | Isolated verification executor is unavailable, unsafe or fails protocol/peer validation; HTTP 503 |
+| `HFAPI019` | API connectivity or bounded observation cannot complete |
+| `HFAPI020` | Submission outcome is uncertain; retain the original key and do not replay under a new key |
 
 ### 5.3 Hub and synchronization — exit `30`
 

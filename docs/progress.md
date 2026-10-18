@@ -1028,6 +1028,41 @@ package in this family.
   production operation; live/NFS/installed-host and extra build-marker suites did
   not run. Clients/candidates/installed hardening retain later gates. Next is API-011.)
 
+- [x] API-011 Add independent typed client and reader configuration
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-011-typed-client-and-client-config.md)).
+  Separate strict schema-1 client settings select one endpoint group and protected
+  API-only source, optional CA/expected UUID and finite observation budgets without
+  archive TOML/mount/Hub credentials or optional server/MCP frameworks. CLI selection
+  options are stored; runtime migration remains API-012/013. Verified TLS/Unix,
+  no redirects/ambient proxy/netrc, strict bounded streamed wire/Envelope versions,
+  safe exact operation links and explicit capabilities preserve one authority.
+  Page walks refuse cycles/duplicate identities while retaining failed domain
+  Envelopes; digest tracking is bounded without aggregating rows. Receipt/result/
+  events retain admitted fingerprint, distinct request/operation/domain identities
+  and exact event gaps. Keys exist before POST; unusable acknowledgement preserves
+  key/route and HFAPI020 without automatic replay. Validated remote problems retain
+  server taxonomy and key/route too; a valid 500 cannot prove nonexecution.
+  HFAPI017/018 exit 10 and HFAPI019/020 exit 20 distinguish config/protocol from
+  connectivity/uncertainty. Decision 118 and 108/112/114 amendments, reviewed
+  INV-001–003/006/008/012–014 / FS-12 / AD-21 and affected contracts agree.
+  Client setup/TOML example, API/CLI/config/security/invariants/architecture/recovery,
+  README/router/plan/Unreleased and actual base imports are documented.
+  Core/adversarial: 127 passed in 0.78 seconds; adversarial alone: 113 in 0.73;
+  config/real Unix/TCP/TLS: 40 in 2.55. Actual predecessor 66d85a3/Python 3.14.6
+  wheel rejects the new option (exit 2), current local version accepts it (0),
+  settings stay byte-identical and no API/Hub/archive operation occurs. The first
+  scratch Python 3.12/cache mismatch was resolved in a separate locked Python 3.14
+  environment without code/dependency/network changes. First full
+  `rtk proxy bash scripts/check.sh` exits 0: lock/sync, 337 formatted files,
+  lint/types, 2,852 Python tests (40 deselected, 163.45 seconds), 0.1.10 sdist/wheel,
+  actual locked base/server install/import/help/version including client imports,
+  45 Cockpit tests and production build. No gate failure/correction or post-freeze
+  source change. Final links/current/dependencies, 27 implemented / 2 planned rows,
+  118 decision/ADR records, example and whitespace pass. No new dependency/durable
+  archive shape/MCP or production operation; live/NFS/installed-host and extra
+  build-marker suites did not run. Next selected task is API-012 pending.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3677,3 +3712,22 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      never initialize from startup, health, recovery or a missing sentinel.
      Reject generic execution, posted plans, mode defaults, unknown-data cleanup
      and silent replay. No durable schema/dependency/MCP or production change.
+
+118. **Observe one API authority without replaying uncertain submissions**
+     (2026-10-17, API-011). [ADR](adr/decision-118.md): a separate strict schema-1
+     client config selects one URL/socket authority and only an explicit API
+     credential. CLI endpoint options override the configured endpoint as a group;
+     no ambient proxy/Hub-token discovery, redirect credential forwarding, local
+     archive fallback or automatic daemon startup. A synchronous base client
+     validates versions, identities, Envelopes, pages and exact operation results
+     under finite body/page/timeout/retry/poll budgets. Preserve an operation's
+     admitted fingerprint and distinct request/operation/domain identities.
+     Generate/retain one key before submission; lost acknowledgement or observation
+     preserves uncertainty and never generates a new-key replay. HFAPI017/018
+     classify config/protocol at exit 10; HFAPI019/020 classify connectivity/
+     uncertain submission at exit 20. Unusable post-transmission acknowledgements,
+     including malformed/wrong-identity 202 or untrusted error bodies, preserve the
+     original key/route as uncertainty; validated problems retain their taxonomy
+     and key/route too, because even a valid 500 can follow durable admission.
+     CLI runtime migration remains API-012/013;
+     no durable archive shape, runtime dependency, MCP or production change.

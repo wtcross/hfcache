@@ -61,3 +61,13 @@ Semantic read jobs retain explicit Hub/resource effects; writer probes and
 private verification retain their existing ownership. Candidate hooks cannot
 select server files or redirect credential authority. No CLI subprocess, duplicate
 domain algorithm, dependency, archive format or MCP implementation is added.
+
+## API-011 client implementation (2026-10-17)
+
+[Decision 118](decision-118.md) implements the independent synchronous base client
+and separate strict reader configuration using the already locked HTTPX transport.
+Typed safe response/identity/version validation and finite observation retain
+original keys on submission uncertainty. No archive policy, optional server/MCP
+framework, ambient credential/proxy, local fallback or daemon-start authority is
+introduced. Global endpoint/source options are stored; operational CLI migration
+remains API-012/013. No additional dependency is required.

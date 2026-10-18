@@ -152,6 +152,22 @@ checks and writes the sentinel last; startup, health, recovery and missing senti
 never initialize. This exposes existing service authority without adding a new
 archive algorithm, durable format, dependency or production action.
 
+### 2.5 Independent synchronous API client (API-011)
+
+[Decision 118](adr/decision-118.md) adds a base client with separate strict reader
+configuration, without archive TOML/mounts, Hub credentials or optional server/MCP
+frameworks. Explicit URL/socket overrides replace the configured endpoint group;
+only the selected protected API file/named systemd source resolves credentials.
+Verified transport rejects redirect/ambient proxy authority and validates strict
+wire versions/identity under finite per-response/page/read-retry/poll budgets.
+
+Old operation observations retain admitted UUID/fingerprint and exact domain
+Envelope/run identity. Keys exist before POST; uncertainty preserves the original
+key/route without automatic replay or cancellation of accepted work. No local
+archive fallback or automatic daemon startup exists. Global CLI options are stored
+now; public runtime migration remains API-012/013. This client changes no FS/TX,
+durable shape, dependency, publication copy rule or writer authority.
+
 ## 3. Architecture decisions
 
 Each decision is locked for schema version 1. Changing one is a deliberate

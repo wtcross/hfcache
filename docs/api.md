@@ -758,6 +758,28 @@ Host/Origin, disallow wildcard CORS, URL userinfo and token queries, and explici
 configure trusted proxies. Every reader is authorized for the entire archive
 (AD-21); no per-repository ACL claim.
 
+## Independent typed client (API-011)
+
+[The client contract](api-client.md) defines separate strict reader settings,
+explicit endpoint/API credential precedence, verified TLS/Unix transport and
+finite response/page/retry/poll observation. It uses the base HTTPX dependency
+without archive TOML/mount/Hub credentials or optional server/MCP frameworks.
+Constructor setup makes no request; explicit capabilities negotiation refuses
+unsupported versions/needed capabilities rather than guessing.
+
+Strict client wire models preserve wrapper/request identity, admitted operation
+UUID/fingerprint and exact domain Envelope/run classification. Page iteration pins
+archive/policy/command while allowing per-page request identities; exact same-
+operation status/result/event links cannot redirect bearer authority. No automatic
+POST replay or new-key retry follows lost acknowledgement. HFAPI017/018 classify
+client configuration/protocol at exit 10; HFAPI019/020 classify connectivity/
+uncertain submission at exit 20, retaining existing server/domain codes.
+
+Global selection options are parsed/stored now; public read/candidate migration
+remains API-012 and command/operation UX remains API-013. This package changes no
+parity row availability, durable shape, dependency, writer authority or MCP gate.
+See [decision 118](adr/decision-118.md).
+
 ## Acceptance boundaries
 
 [Server contract](server.md) owns deployment/lifecycle detail. API-016 must prove

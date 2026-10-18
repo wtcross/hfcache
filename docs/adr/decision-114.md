@@ -89,3 +89,13 @@ Evidence: [core lifecycle/idempotency tests](../../tests/unit/test_operations.py
 [fault/concurrent/retention tests](../../tests/unit/test_operation_store_adversarial.py),
 [HTTP observation tests](../../tests/unit/test_api_operations.py), and
 [durable golden model fixtures](../../tests/unit/test_models.py).
+
+## API-011 retained-key client observation (2026-10-17)
+
+[Decision 118](decision-118.md) adds a finite synchronous observer without changing
+the durable binding. Keys are available before POST transmission; uncertain POST
+outcomes preserve their original key/route and never trigger automatic replay.
+Lookup observes the caller's class namespace without resubmitting. Exact old
+operation results retain admitted UUID/fingerprint and domain IDs rather than
+being rewritten from current capabilities/policy. The client does not cancel
+accepted work or turn missing/expired history into proof of nonexecution.

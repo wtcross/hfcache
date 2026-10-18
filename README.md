@@ -90,6 +90,7 @@ implementation plan and contract reference.
 | [`docs/configuration.md`](docs/configuration.md) | Every configuration key, its constraints, and credential handling |
 | [`docs/server.md`](docs/server.md) | Server configuration, bearer credentials and the incremental HTTP deployment boundary |
 | [`docs/api.md`](docs/api.md) | REST capability/operation matrix and implementation status |
+| [`docs/api-client.md`](docs/api-client.md) | Independent reader/writer API setup, endpoint/credential precedence, TLS, finite observation and uncertainty |
 | [`docs/schemas.md`](docs/schemas.md) | Durable JSON formats: manifests, references, catalog, reports, journals |
 | [`docs/cli.md`](docs/cli.md) | Command surface, JSON output, exit codes, error taxonomy |
 | [`docs/security.md`](docs/security.md) | Assets, trust boundaries, threats, and the control enforcing each |
@@ -196,6 +197,16 @@ apply authority. Initialization alone requires the disabled-by-default maintenan
 switch, writer confirmation and restated root/UUID, never automatic startup/recovery.
 The existing production archive must not be initialized again. Pure candidate
 authority hooks prepare API-012 without enabling candidate routes.
+
+API-011 adds the independent synchronous base client and separate strict reader
+settings, with verified TLS/Unix transport, explicit API credentials, bounded
+pages/polling and retained-key uncertainty. Reader hosts need no archive TOML,
+mount, service UID, Hub credential or server extra. See
+[`docs/api-client.md`](docs/api-client.md) and
+[`packaging/client.example.toml`](packaging/client.example.toml). The four new
+CLI endpoint/source options are stored now; ordinary command execution remains
+local until API-012/013 migrate it. No automatic daemon start, archive fallback or
+POST replay is added.
 
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —

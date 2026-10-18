@@ -76,6 +76,16 @@ initialize. All 27 existing-operation rows are implemented; the two candidate
 rows and client/host/MCP acceptance remain later work. No production operation,
 new durable format or runtime dependency is introduced.
 
+An independent synchronous typed API client and strict schema-1 reader settings
+now support explicit endpoint/API credential selection, verified TLS/Unix sockets,
+finite response/page/read-retry/poll budgets and strict response/identity checks.
+Old operation fingerprints and exact domain results are preserved. Lost POST
+acknowledgement retains its original key and uncertainty without automatic replay.
+Reader hosts need no archive policy/mount/Hub credential or server extra. New CLI
+selection options are stored; operational migration remains API-012/013. Client
+config/protocol failures exit 10 and connectivity/uncertainty exit 20. No new durable
+archive shape, dependency, MCP or production operation is introduced.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

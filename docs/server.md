@@ -228,12 +228,14 @@ base has no FastAPI/Uvicorn, import the server adapter with the extra, and confi
 FastMCP is absent in both.
 
 [`create_http_client`](../src/hfcache/http_transport.py) supplies a directly used
-HTTPX construction boundary for API-011: verified default/custom-CA TLS, optional
+HTTPX construction boundary used by API-011: verified default/custom-CA TLS, optional
 Unix-socket transport, no ambient proxy/credential discovery, redirects disabled
 and no transport retries. It bounds connections to 8 (4 keepalive) and timeouts
 to 5 seconds for connect/pool and 30 seconds for read/write. Callers own closing
-the client. The primitive sends no request and defines no API endpoint, bearer
-forwarding or response policy; API-011 still owns the actual client.
+the client. The primitive itself sends no request; API-011's independent typed
+[client](api-client.md) supplies endpoint, bearer, strict response and finite
+observation policy without importing the optional server framework. Public CLI
+runtime migration remains API-012/013.
 
 ## Implemented metadata lifespan (API-006)
 

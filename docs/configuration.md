@@ -504,3 +504,27 @@ The reserved `CandidatePayload(candidate: str)` is a schema hook. Current
 candidate presence is reader 403 / writer unknown-field 422. API-012 owns the
 full client/Cockpit candidate content pipeline. See [decision 116](adr/decision-116.md)
 and [command resource contract](api.md#implemented-command-resources-api-009).
+
+## 13. Independent reader/client configuration (API-011)
+
+[Client configuration](api-client.md) is a separate strict schema-1 TOML domain,
+implemented by `ClientConfig` / `resolve_client_config`. It contains API endpoint,
+explicit API credential source, optional CA/expected archive UUID and finite
+transport/observation budgets. It contains no archive storage policy, Hub token,
+server listener or literal bearer. Reader setup needs no archive TOML/mount or
+writer service identity. The API client does not load `ApplicationConfig`.
+
+Explicit URL/socket selection replaces the configured endpoint as one mutually
+exclusive group. Explicit API token file overrides configured token file, then
+only the named systemd API credential is considered. The optional installed
+`/etc/hfcache/client.toml` is read when no explicit client path is supplied; a
+missing default permits local-socket defaults, while installed unusable or explicit
+missing settings refuse. A selected unusable credential never falls back anonymously.
+No Hub/ambient bearer/proxy discovery or local archive fallback is permitted.
+
+The [client contract](api-client.md#client-configuration-and-setup) records exact
+fields/defaults/ranges and safe file/URL rules. Settings/selection failures use
+HFAPI017; protected credential failures retain HFAPI003. Separate client settings
+never enter archive-policy fingerprints or receipts. CLI global options are stored
+in API-011; operational HTTP migration remains API-012/013. See
+[decision 118](adr/decision-118.md).

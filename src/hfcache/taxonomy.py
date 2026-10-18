@@ -58,7 +58,18 @@ begins, so they never co-occur with these three and are not part of the ordering
 
 _CODE_LENGTH = 8
 _API_SAFETY_CODES: Final = frozenset(
-    {"HFAPI005", "HFAPI008", "HFAPI009", "HFAPI011", "HFAPI013", "HFAPI014", "HFAPI015", "HFAPI016"}
+    {
+        "HFAPI005",
+        "HFAPI008",
+        "HFAPI009",
+        "HFAPI011",
+        "HFAPI013",
+        "HFAPI014",
+        "HFAPI015",
+        "HFAPI016",
+        "HFAPI019",
+        "HFAPI020",
+    }
 )
 """Five letters of prefix and three digits, e.g. `HFVER001`."""
 

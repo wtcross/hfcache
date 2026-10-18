@@ -1,0 +1,24 @@
+# Independent API reader settings. Replace endpoint/source paths for your host.
+# This is not archive policy or server listener configuration.
+schema_version = 1
+
+api_url = "https://archive.example.com/management"
+# Local alternative: remove api_url and set api_socket instead.
+# api_socket = "/run/hfcache/api.sock"
+
+# Protected opaque API reader credential; never a Hub token or literal bearer.
+api_token_file = "/path/to/api-reader.token"
+# Without a token file, only this named systemd API credential is resolved.
+# credential_name = "hfcache.api"
+
+# Optional explicit CA trust and expected configured archive UUID.
+# ca_file = "/path/to/archive-ca.pem"
+# expected_archive_id = "01234567-89ab-4cde-8fab-0123456789ab"
+
+connect_timeout = 5.0
+read_timeout = 30.0
+read_retries = 2
+poll_interval = 0.2
+wait_timeout = 300.0
+max_response_bytes = 16777216
+max_pages = 10000

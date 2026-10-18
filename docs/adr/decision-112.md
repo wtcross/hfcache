@@ -146,3 +146,14 @@ perform pure bounded syntax/authority assessment and compare endpoint, credentia
 identity and archive authority before any future credential-bearing planning.
 Current HTTP candidate fields remain rejected until API-012. No additional
 runtime dependency, server configuration field or credential fingerprint is added.
+
+## API-011 client authority amendment
+
+[Decision 118](decision-118.md) uses the existing verified HTTPX/protected API
+credential primitives in a separate strict client configuration domain. Explicit
+URL/socket selection overrides the whole configured endpoint group; optional
+installed client settings never discover archive policy or Hub credentials.
+No redirect/ambient proxy forwarding, silent local fallback or automatic daemon
+startup exists. Client protocol/config codes are distinct from connectivity/
+uncertain-submission safety codes, and old receipts retain admitted fingerprints.
+Operational CLI migration and installed-host acceptance remain later tasks.

@@ -345,9 +345,11 @@ History: `SYNC-007` (`54e4671`), decision 94.
   filesystem paths, and reject invalid or duplicate repository identities
   before locks, network, or mutation. `config validate` uses the same
   validation and changes nothing. Keep archive policy, restart-only server
-  transport/auth and later client settings in separate schemas. A server freezes
+  transport/auth and independent client settings in separate schemas. A server freezes
   freshly validated archive snapshots per request/admission and pins root/UUID
-  to startup authority; it never hot-switches archives (decision 112). Pure
+  to startup authority; it never hot-switches archives (decision 112).
+  Client configuration has independent required integer schema 1 and explicit
+  endpoint-group/source precedence; it loads no archive policy (decision 118). Pure
   candidate syntax assessment is separate from authority compatibility; no request
   can redirect installed credentials through candidate endpoint/source changes
   (decision 116). See
@@ -360,6 +362,8 @@ History: `SYNC-007` (`54e4671`), decision 94.
   fail. That anonymous fallback applies to Hub policy; API writer authentication
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
+  A reader resolves only its selected protected API file/named systemd source;
+  no Hub/netrc/ambient token or anonymous fallback after source failure.
   The server's explicit Hub file is a trusted startup option, never request input;
   candidate assessment resolves no proposed credential. Repair audit reasons
   redact registered credential values after credential resolution and before
@@ -623,7 +627,8 @@ own proof.
   API-006. API-009 [command adapters](../src/hfcache/api/commands.py) retain shared
   sync ordering, reconciliation, capacity, continuation, producer joins and exact
   verification delegation, covered by [HTTP/domain tests](../tests/unit/test_api_commands.py).
-  Public CLI client migration remains API-011–013 and MCP-002 later.
+  API-011 supplies the independent typed client/configuration; public CLI runtime
+  migration remains API-012/013 and MCP-002 later.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
@@ -642,7 +647,10 @@ own proof.
   byte limits cover chunked inputs; unknown paths/credential overrides cannot
   become execution authority. API-010 extends the same boundary to explicit
   maintenance routes and gates initialization before body reception. Candidate
-  and MCP paths remain pending.
+  and MCP paths remain pending. API-011's independent client uses explicit API
+  sources, verified TLS/Unix transport, no redirect/ambient proxy forwarding and
+  finite response/page/read-retry/poll budgets with strict identity/version checks.
+  It never falls back to archive filesystem access or starts a daemon.
   Enforcement/evidence: [boundary/resources](../src/hfcache/api/app.py),
   [pool/instance lock](../src/hfcache/api/lifecycle.py),
   [single Unix/TCP bootstrap](../src/hfcache/server.py),
@@ -671,7 +679,10 @@ own proof.
   its four keyed job routes with normalized typed bodies and 202 observation links;
   matching retries preserve the original binding. API-010 extends keyed admission
   to separate maintenance preview/apply, repair and guarded initialization URLs;
-  previews grant no future apply authority. Public client safety remains API-013.
+  previews grant no future apply authority. API-011 generates/exposes a retained
+  key before POST and reports uncertainty without automatic replay; lookup and
+  finite observation never cancel accepted work. Public CLI safety messages and
+  command migration remain API-013.
   Decisions [109](adr/decision-109.md),
   [114](adr/decision-114.md) and [115](adr/decision-115.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state-api-007).
   Enforcement/evidence: [core store](../src/hfcache/api/operations.py),
@@ -684,6 +695,17 @@ own proof.
   [runner/deadline/reconciliation tests](../tests/unit/test_runner.py).
   Trusted private running/domain-run progress updates the parent receipt; a stale
   private label without a live owned thread cannot establish executor liveness.
+  API-011 client enforcement: [strict settings/sources](../src/hfcache/client_config.py),
+  [typed wire models](../src/hfcache/client_models.py) and
+  [synchronous transport/observation](../src/hfcache/client.py);
+  [decision 118](adr/decision-118.md), [client contract](api-client.md).
+  Evidence: [core client tests](../tests/unit/test_api_client.py),
+  [config/source tests](../tests/unit/test_client_config.py),
+  [real socket/TLS tests](../tests/unit/test_api_client_sockets.py),
+  [adversarial wire/retry tests](../tests/unit/test_api_client_adversarial.py) and
+  [actual locked base/server import smoke](../scripts/check-installations.py).
+  Reader metadata does not change FS-12/INV-008's exact publication copy/verification
+  authority; bulk transfer remains the independent consumer workflow.
 - **`INV-015` — Verification isolation encloses persistence.** Non-estimate
   verification locks target resolution, hashing, report write and catalog merge
   in a credential-free no-IP executor. Estimates remain metadata reads.

@@ -45,6 +45,7 @@ run `hfcache archive init` — the archive exists.
 | Configuration keys or validation | `docs/configuration.md` |
 | Durable JSON formats | `docs/schemas.md`, and `docs/agents/release.md` on the drill a format change requires |
 | CLI surface, exit codes, error taxonomy | `docs/cli.md` |
+| REST transport or reader/client setup | `docs/api.md`, `docs/server.md`, `docs/api-client.md` |
 | Threat model and controls | `docs/security.md` |
 | Draft, activate, resume, or close a plan; add a task | `docs/agents/planning.md`, then `docs/plans/current.md` and the relevant dated plan/task; implementation authorization permits activation, while a draft alone does not |
 | A new feature or work package | The planning row above, affected `docs/invariants.md` sections, and relevant records from `docs/adr/README.md`; load `docs/plan.md` only where its original contract applies |

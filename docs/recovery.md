@@ -810,3 +810,22 @@ The maintenance switch gates initialization only. Disabled initialization POST
 retries remain refused while authenticated original history/lookup stays available.
 Neither recovery, health nor missing sentinel triggers initialization; this
 archive already exists and must not be initialized again.
+
+## 12. Client uncertainty and finite observation (API-011)
+
+The [typed client](api-client.md) generates or accepts one nonsecret key before
+POST and exposes it before transmission. HFAPI020 retains that original key/route
+when acknowledgement cannot be established, including malformed/truncated or
+wrong-identity 202 and untrusted error bodies after transmission; it never
+retries with a new key or
+falls back to local archive mutation. Authenticated lookup with the same key is
+observation only. Missing/expired history remains uncertainty, as §10 explains.
+
+HFAPI019 connectivity or a finite polling deadline stops observation without
+cancelling accepted server work. Continue diagnosis using the known operation ID
+and original binding; old receipts/results retain their admitted archive UUID /
+fingerprint and exact domain run/result rather than current policy metadata.
+Protocol/version/identity failures (HFAPI018) are not evidence of command failure
+or nonexecution. Do not change endpoint/expected archive identity merely to make
+an unrelated operation response appear valid. Public CLI observation/safety
+messages remain API-013; API-011 does not yet migrate existing commands.

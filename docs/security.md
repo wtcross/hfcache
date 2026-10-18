@@ -425,6 +425,24 @@ the sentinel last. Startup, health, recovery and missing sentinel never initiali
 See [decision 117](adr/decision-117.md), [maintenance resources](api.md#implemented-maintenance-resources-api-010)
 and [server gate](server.md#maintenance-and-initialization-authority-api-010).
 
+**Reader/client authority (API-011).** Separate strict client settings select one
+URL/socket endpoint and explicit protected API source; no archive configuration,
+Hub token, service UID or mount is required. Explicit endpoint overrides replace
+the configured group. Verified TLS/default or explicit CA trust, safe prefix URLs,
+no redirects/ambient proxies/netrc and exact same-operation link checks keep the
+bearer bound to the intended authority. Local Unix sockets still authenticate.
+Malformed/oversized/truncated/unversioned or identity-inconsistent responses refuse
+under finite byte/page/retry/poll budgets without echoing raw bodies/transport errors.
+
+Client keys exist before POST transmission. Lost acknowledgement preserves its
+original key/route and an uncertain outcome; no automatic POST/new-key replay,
+local archive fallback, daemon startup or cancellation of accepted work follows.
+Old operation results retain admitted UUID/fingerprint and exact domain IDs/exit.
+The optional installed client file is a declared source, not permission to discover
+Hub/API tokens elsewhere. Global CLI options are stored now; operational migration
+remains API-012/013. See [decision 118](adr/decision-118.md) and
+[client setup/troubleshooting](api-client.md).
+
 ## 4. Controls summary
 
 | # | Control | Enforced by |
