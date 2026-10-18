@@ -2,18 +2,17 @@
 
 | Field | Value |
 | --- | --- |
-| State | Active |
-| Active plan | [Local rootless rollout](2026-10-18-plan-local-rootless-rollout.md) |
-| Next task | [REL-011](tasks/rel-011-local-release-and-handoff.md) |
-| Blockers | None; later tasks wait for committed predecessors |
+| State | None |
+| Active plan | None |
+| Next task | None |
+| Blockers | No plan selected; operator holds are not an active task queue |
 | Updated | 2026-10-18 |
 
-OPS-016 completed partial local deployment/acceptance; REL-011 remains pending
-until that package is committed. Clean artifacts identify REL-010 (`481fcc4`);
-current selects 0.2.0 and the permanent guard holds the original inode. Caddy/API
-run with TLS/metadata/isolation/drain acceptance. API-to-worker SELinux access
-remains an explicit release hold, not end-to-end verification acceptance.
-The NAS read-only mount, blocked legacy writers and held original lock remain
-protected. Only reviewed local host/container work is authorized; no NAS content/
-metadata writes, other-host changes or remote publication. Later tasks wait for
-committed predecessors; completed REST/MCP evidence remains history.
+The [local rootless rollout](2026-10-18-plan-local-rootless-rollout.md) completed
+all six tasks under explicit partial acceptance. [REL-011](tasks/rel-011-local-release-and-handoff.md)
+records the final gate and local annotated v0.2.0 tag at reviewed deployment
+11ddd55; application artifacts remain clean-source 481fcc4. NAS stays read-only,
+legacy writers blocked and the permanent guard holds the original lock. The
+API-to-worker SELinux release hold and forbidden full-storage/other-host/calendar
+acceptance remain explicit. No follow-up plan/backlog is activated by closure;
+later authorized work needs its own selected plan. No remote publication occurs.

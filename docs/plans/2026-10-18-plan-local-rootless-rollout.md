@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Plan ID | `2026-10-18-plan-local-rootless-rollout` |
-| Status | active |
+| Status | completed |
 | Created | 2026-10-18 |
 | Authorization | Tyler authorized review, local release and production rollout on this host, then required Caddy and rootless Podman runtime; NAS content/metadata writes and changes to other hosts remain forbidden. |
 | Reviewed baseline | `c73822d`, completed REST/MCP implementation on `feat/rest-api-and-mcp`; source metadata `0.1.10` |
@@ -110,6 +110,13 @@ does not certify forbidden tests. Never push the tag or branch remotely.
 
 ## Lifecycle
 
+- 2026-10-18: REL-011 activated after OPS-016 committed as 11ddd55. Exact
+  deployed images/application source remain unchanged; the local annotated tag
+  will identify that reviewed deployment/host-policy commit and its explicit
+  partial acceptance. The API-to-worker SELinux failure and all forbidden storage
+  tests remain holds. A separate clean tag-target worktree anchors source
+  review while task/release evidence is finalized in the feature workspace.
+
 - 2026-10-18: Activated under the new user authorization after completed feature
   commit `c73822d`; OPS-014 is the sole task in progress. Five unused task IDs
   were checked against actual repository records. Previous no-deploy scope stays
@@ -209,3 +216,14 @@ does not certify forbidden tests. Never push the tag or branch remotely.
   and four extra wheel smokes. NFS-ro, four legacy writer masks, Enforcing policy
   and forbidden NAS/other-host/calendar acceptance holds remain. REL-011 is next
   pending until this package commits; no tag or remote publication occurs here.
+
+- 2026-10-18: REL-011 completed the evidence-only local release. The final
+  NAS-masked --with-build pipeline exits 0: 3,827 Python tests/40 deselected in
+  455.86 seconds, three locked installation profiles, 135 Cockpit tests/build
+  and four extra wheel smokes. Root creates local annotated v0.2.0 from the clean
+  reviewed 11ddd55 deployment tree; app artifacts remain clean-source 481fcc4.
+  All six tasks are complete with explicit partial acceptance, and only this
+  plan's active selection is cleared. API-to-worker SELinux hold 22, NAS-write/
+  full-domain/NFS workload and other-host/calendar holds remain unaccepted.
+  No source/runtime/host change, remote publication or follow-up activation
+  occurs in closure; final local main fast-forward is planned after its commit.

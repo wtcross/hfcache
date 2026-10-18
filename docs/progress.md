@@ -1630,6 +1630,21 @@ package in this family.
   I/O/job/write, other-host change, remote publication, ACME or tag; full-storage
   and worker-connectivity holds remain explicit.)
 
+- [x] REL-011 Record the local partial-acceptance release and handoff
+  (2026-10-18, this commit — [task](plans/tasks/rel-011-local-release-and-handoff.md)).
+  Final NAS-masked --with-build exits 0: 407 formatted/Ruff/whole types 0,
+  3,827 Python passed/40 deselected in 455.86 seconds, 0.2.0 builds/three locked
+  profiles, 135 Cockpit tests/build and four wheel smokes. Root creates verified
+  local annotated v0.2.0 from clean reviewed 11ddd55; task records tag object,
+  peel, full-note hash and exact deployed clean-481fcc4 artifact identities.
+  Evidence-only closure changes no app/image/profile/host; tag target, build
+  source and closure commit remain distinct. Reviewed INV-010/011/014/015 and
+  65/75/79/121/126/127; records/links/whitespace pass. All six rollout tasks are
+  complete and only this plan's selection clears. Local main fast-forward is
+  planned after commit, not claimed executed. Worker SELinux hold 22, NAS-ro/
+  original lock/writer masks/stores/handles and all forbidden storage/other-host/
+  calendar checks remain. No remote publication or follow-up activation.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

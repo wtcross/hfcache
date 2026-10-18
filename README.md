@@ -64,7 +64,7 @@ consumers at all.
 
 ## Status
 
-**`0.2.0` is running locally with partial acceptance; not tagged.** Caddy and the
+**`0.2.0` is running locally with partial acceptance and a local annotated tag.** Caddy and the
 API run rootless, and verified local TLS, version/authentication, the exact nine
 MCP tools and the container CLI pass. The private worker's local isolation checks
 pass, but API-to-worker access is still blocked by SELinux; end-to-end verifier
@@ -83,6 +83,12 @@ acceptance remain unrun; no NAS content/metadata writes or other-host changes ar
 authorized. See the [container contract](docs/containers.md) and
 [operator checklist](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).
 
+[Local release closure](docs/plans/tasks/rel-011-local-release-and-handoff.md)
+records the passing final gate and local annotated `v0.2.0` tag. Its reviewed
+deployment commit is `11ddd55`; the application artifact source remains `481fcc4`.
+No tag or branch is published remotely, and release closure clears no worker or
+storage acceptance hold.
+
 **Recorded deployment baseline: `0.1.10` — explicit quarantine cleanup release candidate.** This historical deployment demonstrated
 operation against a live NFS-backed ZFS archive: syncing public, private, and
 gated repositories, publishing, bounded revision retention, pruning,
@@ -97,7 +103,8 @@ a second client, reboot persistence, and enabling the quarterly verification
 timer. All of it is listed, with copy-pasteable instructions and acceptance
 checks, under **Operator handoff** in `docs/progress.md`.
 
-[The current tracker](docs/plans/current.md) selects the active plan; dated
+[The current tracker](docs/plans/current.md) has no active selection after this
+rollout's partial-acceptance closure; dated
 plans and individual task files own scope and execution status.
 `docs/progress.md` retains completed work-package evidence, Decisions, Operator
 handoff, and the unmigrated backlog. `docs/plan.md` remains the historical

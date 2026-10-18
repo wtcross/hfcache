@@ -36,6 +36,10 @@ continue unless this stricter no-write scope forbids a specific acceptance step.
 
 - Working tree clean; every package in the release committed and tracked in
   `docs/progress.md`.
+- For an evidence-only local closure, a separate clean detached worktree of the
+  reviewed deployed tag target may establish this source precondition. Task/
+  release evidence outside that worktree is gated and committed after the actual
+  tag; it cannot change an application/image/profile or silently move the tag.
 - `scripts/check.sh --with-build` exits `0`.
 - Opt-in suites as the changes warrant: `-m live` if the Hub adapter changed,
   `-m nfs` on the writer if storage changed.

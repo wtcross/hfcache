@@ -7,9 +7,10 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
-## 0.2.0 — Locally deployed with partial acceptance; tag pending
+## 0.2.0 — 2026-10-18, local partial-acceptance release
 
-The local rootless Caddy/API deployment is running; **not tagged**. Operational CLI commands
+The local rootless Caddy/API deployment is running and has local annotated
+tag `v0.2.0`; no remote publication. Operational CLI commands
 require the authenticated API, and the selected rootless Podman deployment uses
 Caddy, a separate private verifier and container clients. This is a breaking
 CLI/deployment boundary. Final immutable artifacts come from clean source
@@ -21,6 +22,14 @@ read-only, legacy writers stay blocked and forbidden live storage acceptance is
 not claimed. The local rollout plan retains these partial-acceptance holds.
 The implementation history below records its earlier scope and evidence, rather
 than claiming those earlier packages performed this deployment.
+
+Local release closure passes its required --with-build gate and creates the
+annotated tag. Reviewed deployment commit 11ddd55 includes independent host guard/bridge
+policy; deployed application artifacts remain built from clean 481fcc4. Rollback
+must retain that guard, original locks, both stores/observer handles and reviewed
+manager bindings. The retained native 0.1.10 tree is not an automatic rootless
+rollback target. No remote publication or clearance of the worker/storage holds
+is part of this release.
 
 Local metadata orchestration now uses transport-neutral query services.
 `status` includes unmanaged published repositories, and `status`/`list` accept
