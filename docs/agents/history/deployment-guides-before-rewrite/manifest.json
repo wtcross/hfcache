@@ -1,0 +1,50 @@
+[
+  {
+    "source": "docs/containers.md",
+    "git": "bffdce0",
+    "sha256": "199187a4cccf373831e477236ded4b96154c3ad24d7c365307432d5e4b354d2f",
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/containers.md"
+  },
+  {
+    "source": "docs/deployment-centos-stream-10.md",
+    "git": "bffdce0",
+    "sha256": "d5393d2afac5cce499add8a55e2a3f7fde0205386884ae311073b5777b65eb5d",
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/deployment-centos-stream-10.md"
+  },
+  {
+    "source": "docs/cockpit.md",
+    "git": "bffdce0",
+    "sha256": "80404611a6750eb2301b1ed8c58b5c9a419dc5d4a1e1fd8be438bccaa2cec840",
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit.md"
+  },
+  {
+    "source": "docs/cockpit-plugin/README.md",
+    "git": "bffdce0",
+    "sha256": "dd1a035ad89325d5c59fb327f91d147cd1a61013d09dd5582de3fbc1ccd6b622",
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/README.md"
+  },
+  {
+    "source": "docs/cockpit-plugin/installation.md",
+    "git": "bffdce0",
+    "sha256": "0f2f47220ad3af3907f4906ab3638d7ed8f35133121f23ea7a393726ae3b0c17",
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/installation.md"
+  },
+  {
+    "source": "docs/cockpit-plugin/troubleshooting.md",
+    "git": "bffdce0",
+    "sha256": "7b67ed89ede4cbd05b02c3479232f15215abbea5725534818c843d7f28c591ce",
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/troubleshooting.md"
+  },
+  {
+    "source": "docs/cockpit-plugin/usage.md",
+    "git": "bffdce0",
+    "sha256": "30f6b4e486a7edbee47a3f2e6e259c413c89f96e2a70d975a4d26fabc84293ed",
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/usage.md"
+  },
+  {
+    "source": "cockpit/README.md",
+    "git": "bffdce0",
+    "sha256": "9011d6e4f1d90d53b61de66f66b0167c77630e5ae63a279fa03da823e26dcfd3",
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/cockpit/README.md"
+  }
+]

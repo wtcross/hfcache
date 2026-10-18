@@ -21,3 +21,16 @@ snapshot restore, hypervisor memory reclamation, and calendar approval remain
 separate acceptance work. Cockpit PAM/browser and other-host checks are also
 unperformed by this documentation work. Documentation changes do not authorize
 restoring write access or scheduling.
+
+The fixed Cockpit launcher targets the rootless client and file-mounted API-only
+secret. Its legacy system-bus sync/verify/timer controls remain masked; it has no
+native/user-manager selector. The report and journal browsers require privileged
+host-local access, including the archive runs directory for reports. Repository
+plugin fixtures do not establish deployed browser/PAM or candidate-install acceptance.
+
+Before a future operational window, record the exact selected artifacts, effective
+system/user units and drop-ins, original lock identities, API/verifier stores,
+scheduled handles, archive UUID, secret delivery and read-only guard state. A
+release switch or rollback must preserve them and prove actual executor drain;
+a client/wrapper exit alone is insufficient. No remote tag/publication state is
+inferred by this page.

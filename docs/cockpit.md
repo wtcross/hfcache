@@ -1,50 +1,18 @@
-# hfcache Cockpit Plugin Contract
+# Cockpit administration contract
 
-| Field | Value |
-| --- | --- |
-| Status | Normative contract for implementation |
-| Derived from | `docs/cli.md`, `docs/configuration.md`, `docs/operations.md`, `docs/security.md`, `docs/agents/environment.md`, `packaging/systemd/` |
-| Work package | `CPT-001` |
-| Source tree | `cockpit/` in this repository |
-| Installed package | `/usr/share/cockpit/hfcache`; `~/.local/share/cockpit/hfcache` for development |
-| Requirement IDs | `CP-01`–`CP-14` (citable, same convention as `AD-nn`/`FS-nn`) |
+The plugin is a static Cockpit package for a writer host. Its fixed launcher uses
+`/usr/local/libexec/hfcache-client`, `/etc/hfcache/client.toml` and the rootless
+API socket `/run/hfcache/api/api.sock`. It is a browser client of strict CLI
+Envelopes and host systemd/configuration interfaces, with one explicit host-local
+archive report-reading exception. It adds no daemon or application dependency.
+See [installation and usage](cockpit-plugin/README.md).
 
-The plugin is a Cockpit package — `manifest.json` plus static HTML, JS, and
-CSS — that gives the operator a browser UI over one deployed writer. It is a
-*client* of the contracts this repository already has: the CLI's JSON
-envelope, the configuration schema, and the shipped systemd units are its
-entire API. The plugin keeps the CLI/systemd boundary while the CLI uses the writer API;
-nothing the plugin does is anything an operator could not reproduce by hand
-with the commands in `docs/operations.md`, and the UI displays the underlying
-command wherever practical so the plugin teaches the runbook rather than
-hiding it.
-
-Operator-facing installation and usage documentation is
-`docs/cockpit-plugin/` (`CPT-012`), written against this contract; where
-they disagree, this document wins and the operator pages are corrected.
-
-**API-014 deployment amendment (2026-10-18, [decision 121](adr/decision-121.md)).**
-The shipped sync/verify service names now observe API operations through private
-AF_UNIX clients. Their names, calendars, disabled verification timer, OnFailure
-hooks and target/mount boundary stay intact (CP-05/06/13). Stopping an observer
-does not stop accepted execution or prove a free archive; preserve its pending
-handle and use the [executor drain procedure](deployment-centos-stream-10.md#13-upgrade-plan-30).
-The actual API/private worker owns archive/Hub authority. A browser/transient
-client must not receive a Hub credential; API credentials remain systemd-managed
-and never enter the page (CP-08). Decision 122 below governs the plugin's API
-integration; this API-014 amendment records its earlier scope, without claiming
-deployment. Installed hardening/SELinux/NFS acceptance remains pending.
-
-**Historical native-profile API-015 amendment (2026-10-18, [decision 122](adr/decision-122.md)).**
-The selected rootless profile below and [decision 127](adr/decision-127.md)
-supersede its inner executable, socket and host credential-import mechanism.
-Transient commands use fixed `--client-config /etc/hfcache/client.toml
---api-socket /run/hfcache/api.sock --json`, service UID/GID, `UMask=0027`,
-`MemoryHigh=4G` and `ImportCredential=hfcache.api`. Omit ordinary archive
-`--config` and Hub environment/credential imports; only explicit candidate
-validate/plan adds `/etc/hfcache/.candidate.toml`. The browser never handles a
-bearer. This supersedes the historical direct Hub execution and stop/recover
-mechanisms retained in decisions 087/089/092.
+The selected installation remains [guarded/read-only](deployment-status.md).
+Legacy sync/verify/timer controls use the system bus and remain masked; they must
+refuse, never redirect to same-named user units. CLI-based jobs remain subject to
+the retained guard and NAS restrictions. No installed browser/PAM acceptance is
+implied by repository tests. Native services are separately supported, but this
+shipped plugin has no native launcher selector or host ImportCredential path.
 
 Require bounded strict schema-1 terminal Envelopes. Separately validated bounded
 CLI progress and safety handles may render and support reconnection, never
@@ -79,21 +47,21 @@ snapshot; the server refuses stale queued mutations.
 | `CP-02` | Every CLI invocation passes `--json`; command outcomes require a bounded strict schema-1 Envelope. Refuse unknown versions. Separately validated bounded progress and recovery handles may render/reconnect; stderr never grants domain authority or fabricates outcome/checkpoints/percentages |
 | `CP-03` | Mutating actions require Cockpit administrative access. The CLI runs as the service identity inside a transient systemd unit (§2), never as root |
 | `CP-04` | A full sync and a full verification run only through `hfcache-sync.service` and `hfcache-verify.service` — never as page-spawned processes |
-| `CP-05` | Pausing or resuming the schedule operates on `hfcache-sync.timer` only. The plugin never stops, starts, enables, or disables `hfcache.target` — stopping it unmounts `/srv/hfcache` (`docs/operations.md` §9) |
-| `CP-06` | The plugin never enables `hfcache-verify.timer`. It displays the timer's state and the reason it is disabled (operator handoff item 8). Enabling and disabling `hfcache-sync.timer` is permitted |
-| `CP-07` | `archive init`, in any form including `--inspect`, is outside the plugin's surface (`FS-21`; `docs/agents/environment.md`) |
+| `CP-05` | Pausing or resuming the schedule operates on `hfcache-sync.timer` only. The plugin never stops, starts, enables, or disables `hfcache.target` — stopping it unmounts `/srv/hfcache` ([scheduling](operations.md#scheduling-and-capacity)) |
+| `CP-06` | The plugin never enables `hfcache-verify.timer`. It displays the timer's state and the reason it is disabled (deployment calendar approval). Sync timer controls use only the fixed system manager; the selected profile blocks them |
+| `CP-07` | `archive init`, including inspection, is outside the plugin surface (`FS-21`); an existing archive must never be initialized again |
 | `CP-08` | No credential surface: the page never reads credentials or accepts tokens. Transient clients receive only named API `hfcache.api` inside the fixed rootless client, never Hub authority or browser/environment/argument bearers. Only safe source descriptions render (`docs/security.md` T-07) |
 | `CP-09` | The plugin never writes under `/srv/hfcache`. Its only direct read there is `runs/*.json`, performed as the service identity; every other statement about the archive comes from a CLI envelope |
 | `CP-10` | One mutating command at a time (`AD-17`). `HFMNT010` renders as a benign busy state naming the holder, never as a failure; the plugin never removes or bypasses the lock |
 | `CP-11` | Configuration changes use §6's root config flock and exact candidate/base guards, syntax-valid compatible server assessment, required successful preview, atomic install with `0640 root:hfcache` and predecessor retained, then exact expected installed fingerprint confirmation. Incompatible/unknown authority blocks plugin install |
 | `CP-12` | Timer schedule changes are drop-ins under `/etc/systemd/system/hfcache-sync.timer.d/` (§7); shipped unit files are never edited, and calendar expressions are validated with `systemd-analyze calendar` before anything is written |
-| `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is fixed per `docs/agents/history/plan.md` §23 or reported |
+| `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is diagnosed under the security contract or reported; safeguards remain enforced |
 | `CP-14` | The node toolchain is build-time only. The plugin ships as static files; the application's closed runtime dependency set (`FW-03`) is untouched, and `cockpit/node_modules/` and `cockpit/dist/` are never committed |
 
-Current [data-preserving rollout](agents/plans/2026-10-18-plan-local-rootless-rollout.md)
-keeps legacy system-bus sync/verify/timer units masked. Normal CP-04–06 controls
-must refuse rather than redirect to user units or re-enable NAS writes. This is
-an explicit current restriction, not successful installed browser acceptance.
+The controls in CP-04–06 and CP-12 remain fixed system-manager operations. On the
+selected rootless installation, masks/guards intentionally prevent them from
+authorizing workload or schedule changes. Administrative access does not lift that
+restriction; use the recorded acceptance scope above.
 
 ## 2. Privilege and identity
 
@@ -132,7 +100,10 @@ failure Envelopes; `--collect` avoids accumulating completed transient units.
 
 Root bridge work is limited to installed unit/timer/drop-in control, journal
 reads and the guarded configuration pipeline. The run-report browsing exception
-uses direct reads as the service identity (`CP-09`), without Hub/config access.
+uses `runuser -u hfcache -- ls` / `cat` through the privileged bridge for
+`/srv/hfcache/runs/*.json` (`CP-09`). It requires this writer host and its archive
+mount; it is not REST report browsing or a remote-reader path. Journal browsing
+is also host-local. No Hub credential is involved.
 Without administrative access the page presents permitted read-only systemd state
 and explains why privileged actions are locked. It invents no archive side channel.
 
@@ -140,10 +111,10 @@ and explains why privileged actions are locked. It invents no archive side chann
 
 | UI operation | Mechanism | Contract |
 | --- | --- | --- |
-| Health dashboard | `status --json` — the six archive-health fields, free space against reserve, per-repository state | `docs/operations.md` §1 |
-| Archived repositories and revisions | `list --revisions --json`, including `managed: false` entries; repository names link to their type-aware Hugging Face pages | `docs/cli.md` §2 |
-| Sizing preview | `plan --json`, optionally against a candidate configuration (§6) | `docs/operations.md` §3 |
-| Sync now (all repositories) | `systemctl start hfcache-sync.service` | `CP-04`; `docs/operations.md` §4 |
+| Health dashboard | `--json status` — the six archive-health fields, free space against reserve, per-repository state | [status](operations.md#read-status-and-inventory) |
+| Archived repositories and revisions | `--json list --revisions`, including `managed: false` entries; repository names link to their type-aware Hugging Face pages | `docs/cli.md` §2 |
+| Sizing preview | `--json plan`, optionally against a candidate configuration (§6) | [planning](operations.md#plan-diagnose-and-synchronize) |
+| Sync now (all repositories) | `systemctl start hfcache-sync.service` | `CP-04`; [sync](operations.md#plan-diagnose-and-synchronize) |
 | Sync selected repositories | Page-spawned CLI `sync TYPE:ID …` (§5) | decision 89 |
 | Stop sync observation | `systemctl stop hfcache-sync.service`; accepted server work may continue | §5 |
 | Pause / resume schedule | `systemctl stop` / `systemctl start` on `hfcache-sync.timer` | `CP-05` |
@@ -154,13 +125,13 @@ and explains why privileged actions are locked. It invents no archive side chann
 | Verification timer | Display state and reason only | `CP-06` |
 | Doctor | CLI `doctor` / `doctor --read-only`, 17 named checks rendered in order | `docs/cli.md` §2 |
 | Retention | CLI `prune --dry-run`, then `--apply` behind confirmation | `docs/cli.md` §2 |
-| Recovery | CLI `recover --dry-run`, then `--apply`; blocked states shown with their `HFTXN` codes | `docs/operations.md` §6 |
+| Recovery | CLI `recover --dry-run`, then `--apply`; blocked states shown with their `HFTXN` codes | [maintenance](operations.md#preview-and-apply-maintenance) |
 | Repair | CLI `repair TYPE:ID@SHA --reason TEXT`, launched from a verification finding | `docs/cli.md` §2 |
 | Version | CLI `version` | `docs/cli.md` §2 |
 | Configuration | §6 pipeline | `docs/configuration.md` |
 | Sync schedule | §7 drop-in | `packaging/systemd/hfcache-sync.timer` |
 | Run reports | List and read `runs/*.json` as the service identity | `CP-09`; `docs/schemas.md` §6 |
-| Warnings | `status` findings, each `HFWRN` code paired with its §8 runbook response as inline guidance | `docs/operations.md` §8 |
+| Warnings | `status` findings, each `HFWRN` code paired with its §8 runbook response as inline guidance | [warnings](operations.md#warnings) |
 
 There is no publish operation, because the application has none: publication
 is an atomic stage inside `sync`, and `repair` is the only command that
@@ -185,7 +156,7 @@ Exit codes map to UI states, not to a generic error toast:
 | `10` | Invocation or configuration problem; map `HFCFG`/`HFARG` codes onto the offending form fields where the UI owns the input |
 | `20` | Safety/storage/observation refusal; inspect classified evidence. `HFMNT010` is benign busy; uncertainty never proves nothing changed |
 | `30` | Partial failure; per-repository outcomes from the `RunReport` payload |
-| `40` | Integrity finding: prominent, persistent, linking the repair flow; the UI never offers to sync or prune from this state (`docs/operations.md` §7) |
+| `40` | Integrity finding: prominent, persistent, linking the repair flow; the UI never offers to sync or prune from this state ([failure handling](operations.md#diagnose-failures)) |
 | `50` | Retention/repair failure; use retained evidence and the supervised recovery runbook |
 
 The envelope is emitted even on failure, so the plugin never diagnoses by
@@ -346,7 +317,7 @@ calendar elapsed while it was stopped will fire on start.
 
 The shipped timer's semantics are surfaced beside the editor, because they
 are the contract the schedule lives in (`packaging/systemd/hfcache-sync.timer`;
-`docs/operations.md` §9): the calendar is site-local time deliberately;
+[scheduling](operations.md#scheduling-and-capacity)): the calendar is site-local time deliberately;
 `Persistent=true` replays an elapse missed while the host was down; an elapse
 that arrives mid-run merges into the running sync and the day is skipped —
 designed observation semantics (`AD-02`/`AD-03`), not a fault. Removing the
@@ -355,83 +326,43 @@ default".
 
 ## 8. Toolchain, layout, and gate
 
-`cockpit/` is derived from the Cockpit starter kit: esbuild via `build.js`,
-PatternFly, `src/` compiled to `cockpit/dist/`, a `Makefile` for install and
-development targets, and the starter kit's lint set. Deviations from the
-starter kit as shipped:
+`cockpit/` uses the Cockpit starter kit, esbuild `build.js`, PatternFly and a
+Makefile. Node and pnpm are build-time only. `package.json` pins the supported
+Node/pnpm versions; the committed pnpm lock is installed frozen. The Makefile
+finds pnpm on PATH or `$PNPM_HOME/bin` and places its Node beside it on PATH.
+Source compiles into `cockpit/dist`; generated bundles and node_modules are not
+committed. Static installation is root-owned `/usr/share/cockpit/hfcache`,
+independent of the Python release. A development symlink under
+`~/.local/share/cockpit/hfcache` shadows the installed copy for that user.
 
-- **pnpm, not npm** (decision 88). `cockpit/pnpm-lock.yaml` is committed;
-  installs are `pnpm install --frozen-lockfile`; no `package-lock.json`
-  exists. The node version is pinned in-repo at scaffold time so builds are
-  reproducible; node and pnpm live in the operator's `PNPM_HOME`
-  (`~/.local/share/pnpm` by default) and are build-time only (`CP-14`).
-- **Development loop** targets this deployment: `cockpit/dist` symlinked as
-  `~/.local/share/cockpit/hfcache`, verified with
-  `cockpit-bridge --packages`, browser refresh after rebuild.
-- **Install** is `make -C cockpit install` to `/usr/share/cockpit/hfcache`,
-  root-owned, as a deployment step beside — not inside — the application's
-  release procedure. The deployment runbook gains its section at `CPT-011`.
-
-The package registers one entry named `hfcache`; menu placement is decided
-at scaffold time (`CPT-002`).
-
-**Gate.** `scripts/check.sh` runs the plugin gate — frozen install, ESLint,
-Stylelint, production build — when `cockpit/` exists and `pnpm` resolves
-(via `PATH`, falling back to `$PNPM_HOME/bin`). When the toolchain is
-absent the gate skips the plugin steps with a loud printed notice and stays
-green: the Python gate must keep meaning what it means on hosts without
-node. The discipline that closes the hole: a `CPT` package lands only from a
-host where the plugin gate actually ran, and its tracker entry says so. The
-wiring lands at `CPT-002`.
+`scripts/check.sh` runs frozen install, ESLint, Stylelint, TypeScript, unit tests
+and production build when the plugin toolchain is available. A loud skip on a
+host without that toolchain is not plugin validation. Changes to this surface
+require an actually executed plugin gate. See [development](development.md).
 
 ## 9. Testing
 
-Logic that does not need a browser — envelope parsing and the
-`schema_version` gate, exit-code and taxonomy mapping, selector grammar,
-calendar-expression handling, configuration form ↔ TOML mapping — lives in
-plain modules and is unit-tested under pnpm; the runner is chosen at
-`CPT-002` and runs inside the plugin gate. Cockpit's Chrome-DevTools-based
-integration tests are **deferred**: they require disposable test VMs, and
-the writer is not a test-VM host (`docs/agents/environment.md`). The
-deferral is a stated limit of version 1, revisited if the plugin grows
-beyond an operator tool.
-
-The Python suite is unaffected by plugin packages, but the gate is the gate:
-every `CPT` commit runs `scripts/check.sh` like every other commit.
+Plain modules test strict Envelopes, taxonomy/exit mapping, selectors, bounded
+streams/recovery handles, fixed command/manager allowlists, calendar expressions,
+TOML mapping and exact candidate/base/flock/confirmation behavior. Injected
+process/filesystem adapters use disposable state, not installed units or NAS.
+Browser/PAM, privileged bridge, actual secret delivery, deployed candidate install,
+SELinux/NFS and real drain/rollback require a separately authorized environment.
+Repository tests do not assert that acceptance. The writer/archive is not a
+corruption or browser-test fixture.
 
 ## 10. Version 1 non-goals
 
-- Consumer-side views, and anything on the NAS: exports, snapshots, quotas,
-  scrubs are operator work outside this host (`docs/agents/environment.md`).
-- `archive init` (`CP-07`), enabling `hfcache-verify.timer` (`CP-06`), any
-  credential handling (`CP-08`).
-- Multi-writer or multi-host management (`NG-10`): the plugin administers
-  the one deployed writer it is installed on.
-- Translations: the starter kit's gettext scaffolding may remain in place,
-  but no translated catalog ships.
-- Browser integration tests (§9).
+- Consumer/NAS administration, exports, snapshots, quotas or scrubs.
+- Archive initialization, verification-calendar enablement or credential entry.
+- Multiple writers/hosts or arbitrary executable/unit/tool dispatch.
+- A translated catalog or bundled browser integration-test environment.
 
-`docs/security.md` gains its reconciliation — a threat-model row for the
-management surface — at `CPT-011`, when what ships is fixed rather than
-planned.
+## Deployment boundary
 
-
-## Rootless client profile amendment (OPS-015)
-
-[Decision 127](adr/decision-127.md) governs the selected local rootless profile.
-Preserve outer systemd-run User/Group=hfcache, UMask=0027, MemoryHigh=4G and
-root candidate/base flock/atomic install guards. Replace only the inner host
-Python CLI with fixed /usr/local/libexec/hfcache-client and the explicit client
-settings/API socket /run/hfcache/api/api.sock. Remove host ImportCredential: the
-fixed Podman launcher delivers API-only mounted authority to its rootless client.
-The browser and host transient unit never need credential bytes or Hub authority.
-No generic image/executable/Podman argv and no bare-host fallback is added.
-
-Strict bounded terminal/progress/handles, exact server Envelope identity, no
-cancellation/replay and candidate syntax/authority/preview/confirmation remain.
-System-bus legacy sync/verify/timer controls remain masked/blocked by decision 126;
-do not silently redirect them to identically spelled user-manager units. Rootless
-service lifecycle belongs to the reviewed target bridge, not a new browser API.
-This supersedes selected-profile argv in the API-015 amendment above while keeping
-historical native packaging explicit. OPS-015 actual fixtures bind no NAS and
-perform no production switch; installed browser/runtime acceptance remains later.
+The fixed rootless launcher, file-mounted API-only secret and independent host
+guard are the supported local integration. The server owns Hub and archive
+execution; the private verifier owns actual offline verification. Host-local
+reports/journal and system-bus controls retain their explicit limits above.
+[Recorded acceptance](deployment-status.md) separates repository behavior from
+unperformed browser/PAM, live NAS, other-host and workload checks.

@@ -1,5 +1,12 @@
 # Using the Cockpit plugin
 
+The selected rootless deployment remains [guarded/read-only](../deployment-status.md).
+System-bus writer/timer controls are masked and must refuse, even with administrative
+access; no user-manager redirect exists. API-based workload controls remain subject
+to the host guard and live-storage acceptance. The fixed rootless client receives
+its API-only Podman secret as a file; the browser and host transient unit receive
+no bearer or Hub source.
+
 ## Opening it, and what access means
 
 Log in to Cockpit and open **Tools → hfcache**. Mutating anything requires
@@ -30,9 +37,9 @@ script — from a shell ([`operations.md`](../operations.md)).
 
 **"Busy" is not a failure.** One mutating command runs at a time across the
 whole archive — sync, verify, prune, purge, repair, and recover share a single
-lock. `HFMNT010` renders as a plain busy notice naming the holder. Wait it
-out (a first sync of a large repository legitimately takes hours); never
-remove the lock.
+lock. `HFMNT010` renders as a plain busy notice naming the holder. A legitimate active sync can take hours. The permanent read-only guard may
+also intentionally hold the lock; waiting does not grant authority to release it.
+Never remove the lock.
 
 **Service runs and observers.** Full sync/full verification start their existing
 installed services; selected jobs use a service-identity transient API client.
@@ -50,7 +57,7 @@ not a fabricated successful result.
 
 ## Overview
 
-The archive's health from `status --json`, with a Refresh button:
+The archive's health from `--json status`, with a Refresh button:
 
 - **Warnings** — any coded warnings on the envelope, each with its runbook
   response inline.
@@ -65,11 +72,16 @@ The archive's health from `status --json`, with a Refresh button:
   enabled/disabled and unmanaged markers, current commit (full SHA on
   hover), retained revision count, last run status, verification state.
 - **Doctor** — on demand, read-only or full (the full run includes write
-  probes); the named checks render in order with pass/fail/skipped
+  probes); both modes can contact the Hub and persist control receipts. Full
+  probing needs writer/storage approval; the named checks render in order with pass/fail/skipped
   outcomes.
 - **Version** — application, Python, `huggingface_hub`, transfer backend.
 
 ## Sync
+
+These service/schedule controls use the fixed system manager. They remain blocked
+on the selected rootless installation; the following describes their mechanism,
+not permission to unmask/enable them or redirect to the user manager.
 
 **Synchronization** shows live state for `hfcache-sync.service` (with its
 last result and exit status) and `hfcache-sync.timer` (scheduled or paused,
@@ -114,7 +126,7 @@ active state and log lines are observation hints, not terminal results.
 
 ## Repositories
 
-`list --revisions --json`: every archived repository — including
+`--json list --revisions`: every archived repository — including
 **unmanaged** ones no longer in the configuration — with its current
 commit, retained count, and current-revision size. The repository name opens
 its type-aware Hugging Face page in a new tab; this browser link carries no
@@ -133,7 +145,8 @@ opt-in. Candidate syntax validation resolves no credential and separately report
 installed-authority compatibility. Compatible planning/installed validation use
 the daemon's authorized Hub source; the transient client receives only the named
 API credential `hfcache.api`. Install/rotate Hub credentials through the operator
-runbook, never through this page. API credentials are separate and never enter
+runbook, never through this page. Candidate planning can contact the Hub and
+creates receipt history; validation itself resolves no credential or receipt. API credentials are separate and never enter
 browser state or command arguments.
 
 - **Form mode** renders the schema: repository rows (id, type, revision —
@@ -188,7 +201,8 @@ Ordered by escalation, and the estimate comes first deliberately:
 - **Estimate** — `verify --estimate`: repositories, revisions, unique
   objects and bytes, estimated duration at the measured throughput, and
   whether the window would overlap storage maintenance. Takes no lock,
-  reads no object bytes, always safe.
+  reads no payload bytes and persists no report/receipt. It is a bounded metadata
+  read under the installation's access restrictions, not an integrity check.
 - **Full verification** — only through `hfcache-verify.service` (`CP-04`),
   behind a dialog noting that it shares the single application lock and
   will wait behind a legitimately long sync. Live journal activity renders
@@ -204,12 +218,16 @@ Ordered by escalation, and the estimate comes first deliberately:
   `hfcache-verify.timer`'s state and why it ships disabled (its calendar
   must not overlap storage-side maintenance windows — an operator
   decision). There is no enable control; evaluate a calendar and enable it
-  deliberately from a shell.
+  only after separate calendar/workload approval; the selected deployment keeps it
+  disabled.
 
 ## Runs
 
 The durable run reports under the archive's `runs/` directory, newest 50,
-read as the service identity. Selecting one renders the report: command,
+read through privileged `runuser -u hfcache -- ls`/`cat` on
+`/srv/hfcache/runs`. This host-local exception requires the writer archive mount;
+it is not a remote API report reader. Journal browsing is also local. Selecting
+one renders the report: command,
 outcome, exit code, invocation mode, per-repository outcomes (status,
 resolved commit, downloaded/reused/hashed bytes, publication generation),
 and totals, with the raw JSON behind an expander. **Show journal trail**
@@ -219,7 +237,9 @@ authority for what a run did; the journal says what happened along the way.
 ## Maintenance
 
 **Retention (prune)** and **Recovery (recover)** share one shape: **Dry
-run** first, always safe; **Apply** stays disabled until a dry run in this
+run** first: previews read archive metadata and persist API receipt/event/result
+history. They remain subject to access/acceptance restrictions and grant no later
+apply authority. **Apply** stays disabled until a dry run in this
 session came back clean; it still resolves fresh locked domain proof, and its confirmation states the operation's own
 guarantee — a failed prune leaves more data rather than less; recovery is
 idempotent, never guesses, and never deletes data it cannot explain.

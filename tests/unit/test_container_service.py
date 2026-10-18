@@ -4,6 +4,7 @@ import importlib.machinery
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -65,6 +66,39 @@ def test_privilege_and_secret_boundaries_apply_to_every_actual_payload():
             "client": {"hfcache.api"},
         }
         assert set(secrets) == expected[role]
+
+
+def test_human_role_matrix_matches_actual_runtime_network_secrets_and_executable():
+    guide = (SCRIPT.parents[1] / "docs/containers.md").read_text()
+    section = guide.split("### Role profile matrix", 1)[1].split("System hfcache.target", 1)[0]
+    rows = {}
+    for line in section.splitlines():
+        if re.match(r"\| `(api|worker|caddy|client)` \|", line):
+            cells = [cell.strip() for cell in line.split("|")[1:-1]]
+            rows[cells[0].strip("`")] = cells
+    assert set(rows) == {"api", "worker", "caddy", "client"}
+    for role, cells in rows.items():
+        argv = runtime.command(PROFILE, role)
+        assert len(cells) == 5
+        assert f"--network={cells[1].strip('`')}" in argv
+        secret_names = {
+            argv[index + 1].split(",", 1)[0]
+            for index, item in enumerate(argv)
+            if item == "--secret"
+        }
+        assert set(re.findall(r"`([^`]+)`", cells[2])) == secret_names
+        executable = re.findall(r"`([^`]+)`", cells[3])
+        assert len(executable) == 1
+        assert any(
+            item == executable[0] or item == f"--entrypoint={executable[0]}" for item in argv
+        )
+        archive = [item for item in argv if item.startswith("/srv/hfcache:")]
+        if role in {"api", "worker"}:
+            assert archive == ["/srv/hfcache:/srv/hfcache:ro"]
+            assert "archive read-only" in cells[4]
+        else:
+            assert archive == []
+            assert "no archive" in cells[4] or "no server stores/archive" in cells[4]
 
 
 def test_nas_and_private_peer_paths_are_exposed_only_to_executors():

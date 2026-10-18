@@ -437,7 +437,7 @@ malformed/future/mismatched history stays at HFAPI014/20; missing remote history
 HFAPI013 or interrupted HFAPI015 grants no replay. Same-class credential rotation
 can recover without a stored bearer/digest. Only exact terminal evidence permits
 pending-file unlink/fsync; retained lock inode is never removed. Preserve state
-on rollback and follow [actual executor drain](../../../deployment-centos-stream-10.md#13-upgrade-plan-30),
+on rollback and follow [actual executor drain](../../../deployment-centos-stream-10.md#upgrade-and-drain),
 not client-service termination. [Decision 121](../../../adr/decision-121.md) records the
 required refinement and repository-versus-host acceptance boundary.
 

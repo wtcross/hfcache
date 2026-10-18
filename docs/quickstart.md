@@ -110,7 +110,7 @@ repository ACL or OAuth provisioning flow. Copy and promotion still follow the
 A disposable development writer still requires a real NFS/NFSv4 mount, its own
 archive UUID/paths, protected REST sources, separate server/client settings and
 the private verification executor. Use [server/bootstrap configuration](server.md)
-and the [deployment checklist](deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+and the [deployment checklist](deployment-centos-stream-10.md#acceptance-checklist)
 for the actual API/private-worker boundary; reader setup does not create it.
 The [recovery rehearsal](recovery.md#rehearse-with-disposable-services)
 retains the historical disposable-storage context, not permission to touch a

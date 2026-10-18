@@ -82,7 +82,7 @@ verification-mode tests use simulated NFS and do not establish live NAS readines
 The NAS stays read-only, legacy writers remain masked and verification scheduling
 stays disabled. No NAS file I/O/jobs or other-host/remote action is authorized.
 See the [container contract](docs/containers.md),
-[operator checklist](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+[operator checklist](docs/deployment-centos-stream-10.md#acceptance-checklist)
 and [current plan](docs/agents/plans/2026-10-18-plan-container-worker-listener.md).
 
 The local annotated `v0.2.0` tag and its partial-acceptance history remain intact.

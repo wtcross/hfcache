@@ -983,7 +983,7 @@ the [completed progress audit](../progress.md) are retained with the final task.
 
 Only this plan's selection in current.md is cleared; historical plans/tasks and
 unrelated backlog remain intact. Local implementation acceptance does not clear
-[operator rollout checks](../../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+[operator rollout checks](../../deployment-centos-stream-10.md#acceptance-checklist)
 or Operator handoff 16–19. Production credential/transport/worker hardening,
 NFS/SELinux, monitoring, guarded drain/rollback and verification calendar approval
 remain separate. No production operation, install, release/version bump, push,

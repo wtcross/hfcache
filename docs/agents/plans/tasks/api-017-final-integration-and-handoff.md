@@ -199,7 +199,7 @@ freeze; final local links, task dependencies, all 21 completed records, cleared
 current selector, 29 REST modes, decision uniqueness and whitespace pass. See the
 completed [progress audit](../../progress.md).
 
-[Rollout checklist](../../../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+[Rollout checklist](../../../deployment-centos-stream-10.md#acceptance-checklist)
 and Operator handoff 16–19 retain actual credential delivery/rotation, TLS/proxy/
 firewall/Unix activation, worker no-IP/source masks/custom paths/cgroup, NFS/
 SELinux/hardening, client monitoring and state-retaining drain/rollback acceptance.

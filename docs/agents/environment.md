@@ -61,7 +61,7 @@ or seeing a free lock does not prove execution ended; follow actual server/worke
 drain and exact operation evidence before release/mount work. Real activation,
 cgroup no-IP/no-credential, SELinux/NFS and installed hardening remain operator
 deployment holds. See [decision 121](../adr/decision-121.md) and
-[deployment quiescence](../deployment-centos-stream-10.md#13-upgrade-plan-30).
+[deployment quiescence](../deployment-centos-stream-10.md#upgrade-and-drain).
 This task authorizes no host operations or production archive work.
 
 Carried from plan §36.4–§36.5 and not relaxed by §36's supersession
@@ -93,7 +93,7 @@ Carried from plan §36.4–§36.5 and not relaxed by §36's supersession
 
 
 API-017 consolidates these unchanged limits in the
-[operator rollout checklist](../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).
+[operator rollout checklist](../deployment-centos-stream-10.md#acceptance-checklist).
 The API/MCP feature branch and throwaway installed wheels are repository evidence,
 not a production release or permission to manipulate host services/state. Keep
 both operation stores and scheduled observation handles through approved drain/

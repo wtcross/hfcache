@@ -855,7 +855,7 @@ SELinux/NFS/drain behavior or enabling the verify timer.
 
 ## Final rollout boundary (API-017)
 
-The [consolidated operator checklist](../../../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+The [consolidated operator checklist](../../../deployment-centos-stream-10.md#acceptance-checklist)
 retains credential/whole-archive, actual TLS/proxy/firewall/socket, artifact/profile,
 activation/egress/source masks, NFS/SELinux/hardening, client and state-retaining
 drain/rollback requirements. Repository acceptance does not perform them. Preserve

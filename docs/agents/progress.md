@@ -85,6 +85,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   FS-19, TX-06/07 reviewed; editorial/test alignment, no runtime/schema/ADR change.
   Existing guards and live acceptance restrictions remain; no host operation ran.
 
+## Deployment and Cockpit profiles (2026-10-18)
+
+- [x] DOC-015 Align deployment and Cockpit guides with runtime profiles
+  (2026-10-18, this commit — [task](plans/tasks/doc-015-deployment-runtime-and-cockpit-guide-alignment.md)).
+  Rewrote selected rootless/native/reader/consumer deployment, preserved rollback/
+  drain/guard rules and eight historical guide bodies/hashes. Role matrix matches
+  actual helper argv; Cockpit fixed launcher/rendered client, blocked system-bus
+  controls and host-local report exception are explicit. Descriptive anchors and
+  dated acceptance scope repaired; 55 transitional entries retired. Focused 417
+  plus final 14 passed. Full `scripts/check.sh`: 4210 passed/40 deselected,
+  build/three locked profiles and actual Cockpit lint/135 tests/build passed.
+  CP-01–14 and ADR121/126–129/131/132 reviewed; no runtime/schema/dependency change.
+  No host action; guard/NAS-ro/locks/stores/handles/calendar restrictions unchanged.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)
@@ -2034,7 +2048,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     verify timer disabled until item 8, shared runtime locks, and unresolved API/
     verifier/scheduled state. Rehearse actual server/worker drain before switch,
     and prove a stopped observer never authorizes duplicate execution. Use
-    [deployment](../deployment-centos-stream-10.md#13-upgrade-plan-30),
+    [deployment](../deployment-centos-stream-10.md#upgrade-and-drain),
     [server](../server.md#scheduled-observation-and-lifecycle-controls) and
     [scheduled schema](../schemas.md#14-scheduled-client-observation-handle-api-014).
     No production deployment, service/timer/mount manipulation or archive operation
@@ -2066,11 +2080,11 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     target. MCP-002's nine tools and MCP-004 repository acceptance are complete;
     actual host enablement remains held. Existing holds 16/17 still apply; no
     production operation is authorized by this implementation package. The
-    [consolidated API-017 rollout checklist](../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+    [consolidated API-017 rollout checklist](../deployment-centos-stream-10.md#acceptance-checklist)
     retains every host prerequisite and deliberate artifact/rollback identity.
 
 19. **Final REST/MCP rollout handoff (API-017, 2026-10-18):** all items in the
-    [operator checklist](../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
+    [operator checklist](../deployment-centos-stream-10.md#acceptance-checklist)
     remain pending outside repository implementation: distinct whole-archive
     credentials, actual TLS/proxy/firewall/Unix ownership, deliberate locked
     artifact/version, API/private-worker activation/no-IP/source masks, NFS/

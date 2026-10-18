@@ -1,0 +1,39 @@
+{
+  "docs/deployment-centos-stream-10.md": {
+    "0-what-you-need-before-starting": "prerequisites-and-identities",
+    "1-base-operating-system": "shared-host-integration",
+    "2-service-identity-and-local-paths": "prerequisites-and-identities",
+    "3-uv-and-the-pinned-interpreter": "native-installation",
+    "4-get-the-source": "prerequisites-and-identities",
+    "5-the-nfs-mount": "shared-host-integration",
+    "6-configuration": "native-installation",
+    "7-install-the-release": "native-installation",
+    "8-initialize-the-archive--once-ever": "native-installation",
+    "9-host-integration-tmpfiles-journald-sysctl-and-the-failure-hook": "shared-host-integration",
+    "10-install-the-units": "native-installation",
+    "11-prove-the-deployment-before-enabling-anything": "acceptance-checklist",
+    "12-enable-the-schedule": "acceptance-checklist",
+    "13-upgrade-plan-30": "upgrade-and-drain",
+    "14-rollback-plan-30": "rollback-compatibility",
+    "15-acceptance-checklist": "acceptance-checklist",
+    "16-the-cockpit-plugin": "acceptance-checklist",
+    "17-rest-and-mcp-rollout-checklist-api-017": "acceptance-checklist",
+    "18-authorized-local-data-preserving-rollout-ops-014": "rootless-preparation-and-staging",
+    "19-rootless-runtime-architecture-ops-015": "rootless-preparation-and-staging",
+    "20-permanent-readonly-boot-guard-ops-016": "rootless-preparation-and-staging",
+    "21-planned-confined-worker-listener-correction-ops-017": "rootless-preparation-and-staging",
+    "22-ubi-10-source-prerequisite-ops-019": "rootless-preparation-and-staging",
+    "23-corrected-ubi-listener-installed-ops-018-2026-10-18": "acceptance-checklist"
+  },
+  "docs/containers.md": {
+    "02-0-partial-acceptance-and-historical-worker-hold": "recorded-installed-scope",
+    "020-partial-acceptance-and-historical-worker-hold": "recorded-installed-scope",
+    "021-listener-correction-ops-017": "worker-created-private-listener",
+    "ubi-10-foundation-amendment-ops-019": "ubi-10-image-inputs",
+    "installed021-acceptance-ops-018-2026-10-18": "recorded-installed-scope"
+  },
+  "docs/cockpit.md": {
+    "hfcache-cockpit-plugin-contract": "cockpit-administration-contract",
+    "rootless-client-profile-amendment-ops-015": "deployment-boundary"
+  }
+}

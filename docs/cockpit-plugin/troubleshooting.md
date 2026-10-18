@@ -26,14 +26,17 @@ system copy for that user. `make -C cockpit devel-uninstall` removes it.
 Administrative access is off. Turn it on in Cockpit's top bar; the account
 must be an administrator (`wheel`). This is the designed degraded state:
 without the superuser bridge the configuration is unreadable
-(`0640 root:hfcache`) and every mutating control fails closed.
+(`0640 root:hfcache`) and every mutating control fails closed. Even with administrative access,
+the selected guard/read-only mount and masked system units remain restrictions,
+not permission failures to bypass.
 
 ## A busy notice names the archive lock (`HFMNT010`)
 
 Normal single-writer serialization, not a failure: sync, verify, prune, purge,
 repair, and recover share one lock, and the notice names the holder. A
 first sync of a large repository legitimately runs for hours — check the
-Sync tab's live activity. Never delete the lock file.
+Sync tab's live activity. Never delete the lock file. The permanent read-only guard can intentionally
+hold it; waiting does not authorize releasing that guard.
 
 ## The plugin refuses the CLI's output over `schema_version`
 
@@ -44,29 +47,28 @@ deployed release.
 
 ## Spawn errors, or an error about missing output instead of a result
 
-The plugin invokes the installed API-backed CLI with fixed local client TOML/
-socket in a service-identity transient unit. Ordinary commands omit archive
-`--config`. Confirm the deployed CLI/plugin match and the API authority is ready:
+The shipped plugin uses the fixed rootless launcher in a service-identity
+transient unit. Ordinary commands omit archive `--config`. In an accepted local
+connection window, reproduce the same bounded client/server version request:
 
 ```bash
 sudo systemd-run --quiet --wait --pipe --collect \
-    -p User=hfcache -p Group=hfcache -p ImportCredential=hfcache.api \
-    -p UMask=0027 -p MemoryHigh=4G \
-    -- /opt/hfcache/current/.venv/bin/hfcache \
+    -p User=hfcache -p Group=hfcache -p UMask=0027 -p MemoryHigh=4G \
+    -- /usr/local/libexec/hfcache-client \
     --client-config /etc/hfcache/client.toml \
-    --api-socket /run/hfcache/api.sock --json version --server
+    --api-socket /run/hfcache/api/api.sock --json version --server
 ```
 
-Do not add a bearer or Hub token to the command/environment. Missing API source
-is HFAPI003; invalid bearer is HFAPI001 and insufficient class is HFAPI002. Check
-systemd's named API credential provisioning and the fixed client TOML, not Hub
-credentials or browser state. The daemon alone owns Hub `hf-token`; daemon
-HFARG008/HFHUB003 diagnostics require the existing operator credential/account
-runbook, never importing a Hub token into the plugin's client.
+Check the protected release/profile binding and its effective rendered client
+settings (not just the host placeholder), then the named
+Podman `hfcache.api` source. No host `ImportCredential` applies. Missing API source
+is HFAPI003; invalid/wrong-interface bearer is HFAPI001 and insufficient class is
+HFAPI002. Never put a bearer/Hub token in argv/environment or weaken SELinux.
+Hub authority remains on the API executor. Use the container installer for this
+profile; the native installer deliberately refuses it. An unsuitable output-file
+label can cause a pipe redirection denial; diagnose the label under the deployment
+contract, preserving enforcement.
 
-Check `install-release.sh --list` for the current tree. Reproduce onto pipes:
-redirecting `systemd-run --pipe` stdout to an unsuitable labelled file can cause
-an SELinux denial. Fix the deployment/label per the runbook; never weaken SELinux.
 The plugin refuses malformed, unknown-version or oversized terminal output and
 retains bounded diagnostics/validated handles instead of inventing success.
 
@@ -129,9 +131,15 @@ systemctl is-active hfcache-sync.service
 journalctl -u hfcache-sync.service -n 20
 ```
 
+These system-manager commands inspect the legacy observer; they do not inspect
+the rootless API/worker payload. Use the selected user-manager lifecycle for those
+services. Report/journal browsing in the UI is host-local, not a remote REST feature.
+
 ## A schedule override or candidate file was left behind
 
-Both are harmless and both are removable from the UI. The override:
+Candidate files are inert until installed. Schedule controls remain fixed
+system-manager operations and must stay blocked on the guarded deployment.
+On a separately accepted system-manager integration, the override is removed by:
 **Reset to shipped schedule** on the Sync tab (or remove
 `/etc/systemd/system/hfcache-sync.timer.d/50-cockpit.conf` and
 `systemctl daemon-reload`). A leftover `/etc/hfcache/.candidate.toml` is

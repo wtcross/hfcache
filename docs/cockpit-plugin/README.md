@@ -8,7 +8,12 @@ the shipped systemd units, and `/etc/hfcache/config.toml`. Every button is a
 documented runbook command, and the UI names the underlying command wherever
 practical, so the plugin teaches the runbook rather than hiding it.
 
-From the browser you can:
+The UI exposes the following controls. On the selected guarded rootless
+installation, system-bus sync/verify/timer actions remain masked and must refuse;
+CLI-based writes remain subject to the independent guard/read-only NAS. No control
+redirects to identically named user units. See [deployment scope](../deployment-status.md).
+
+From the browser you can inspect:
 
 - watch archive health, findings, and per-repository state, and run `doctor`;
 - start and observe syncs — full runs through installed services, selected
@@ -38,7 +43,7 @@ credential entry, and any host other than the one it is installed on
 (`CP-01`–`CP-14`) — what it must and must never do; these pages are the
 operator guide written against it. The writer host itself is built by
 [`docs/deployment-centos-stream-10.md`](../deployment-centos-stream-10.md)
-(§16 is the deployment-step summary of the installation guide here), and
+and
 [`docs/operations.md`](../operations.md) is the runbook every plugin action
 traces back to.
 
@@ -52,9 +57,13 @@ in [installation](installation.md); the page adds no execution queue or archive
 state store.
 
 
-API-backed clients receive only the named encrypted API credential `hfcache.api`
-through systemd and use fixed local client TOML/socket. No Hub/browser bearer
-backend is added. Terminal outcomes require strict bounded schema-1 Envelopes;
-bounded progress/handles support display/reconnection without invented success.
-See [decision 122](../adr/decision-122.md). Repository test/build acceptance does
-not establish installed systemd/credential/hardening/SELinux/NFS acceptance.
+The fixed rootless launcher uses `/etc/hfcache/client.toml` and
+`/run/hfcache/api/api.sock`. Named Podman `hfcache.api` is mounted as a protected
+file inside the finite client, without host ImportCredential or a browser bearer.
+Hub authority stays on the API executor. Terminal outcomes require strict bounded
+schema-1 Envelopes; bounded progress/handles support display/reconnection.
+The Runs tab reads local `/srv/hfcache/runs` through privileged
+`runuser -u hfcache -- ls`/`cat`; it needs this host's archive mount and is not a
+remote REST report client. Journal browsing is likewise host-local.
+Repository checks do not establish browser/PAM, secret, SELinux/NFS or workload
+acceptance. Native service support is separate; this plugin has no native launcher.

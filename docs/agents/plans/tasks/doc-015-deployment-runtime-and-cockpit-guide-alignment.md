@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [DOC-014](doc-014-current-operations-and-recovery-runbooks.md) |
 | Phase | 2 — Human-facing guides |
@@ -25,11 +25,11 @@ Coordinate native installer/hardening guidance with the script safeguards alread
 
 ## Acceptance
 
-- [ ] No current runtime/build paragraph contradicts selected templates, image pins or worker listener lifecycle.
-- [ ] Every install/upgrade/rollback/probe command identifies the applicable profile, process/manager and expected artifact.
-- [ ] Human deployment status separates recorded local verification from unperformed NAS/other-host work and does not rely on task links.
-- [ ] Cockpit claims match active code and rootless restrictions; direct report reads are accurately identified as a host-local exception.
-- [ ] Detailed historical rollout transcripts and provisional stage status are absent from primary guides, with technical compatibility caveats preserved.
+- [x] No current runtime/build paragraph contradicts selected templates, image pins or worker listener lifecycle.
+- [x] Every install/upgrade/rollback/probe command identifies the applicable profile, process/manager and expected artifact.
+- [x] Human deployment status separates recorded local verification from unperformed NAS/other-host work and does not rely on task links.
+- [x] Cockpit claims match active code and rootless restrictions; direct report reads are accurately identified as a host-local exception.
+- [x] Detailed historical rollout transcripts and provisional stage status are absent from primary guides, with technical compatibility caveats preserved.
 
 ## Contracts, invariants and ADRs
 
@@ -59,15 +59,42 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after DOC-014 bffdce0. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+2026-10-18, this commit: deployment now starts with explicit rootless/native/
+reader/consumer profiles, separate manager/socket/credential authority, safe
+staging/drain/rollback and actual acceptance scope. Container guidance retains
+UBI micro/binary/CA/portable-Python/locked-closure identities, complete lifecycle
+and no-killing/unknown-state refusal, independent guard, worker-created listener/
+notify and dormant indexed socket. Added a role matrix checked against actual
+helper argv for networks, secret sets, executables and archive mounts.
+
+Cockpit contract/operator/README guidance now identifies the fixed rootless
+launcher, mounted API-only secret, authenticated rendered client settings,
+blocked legacy system-bus controls and privileged host-local report/journal
+exception. Exact candidate/base/flock/backup/confirmation and bounded stream/
+handle rules survive. Native source pin (3.14) is distinguished from container
+artifact (3.14.6), static list from native switch, and no-prune-in-flight rollback
+is explicit. Dated status retains narrower recorded 0.2.1 scope/0.2.0 limitation,
+with no inferred remote publication or host acceptance.
+
+Eight prior guide bodies/source hashes preserved under agent history; descriptive
+anchors/inbound references repaired. Transitional entries reduced 954 to 899.
+Focused source/template/helper/installer/guard/probe/link suites: 417 passed in
+42.04s; final matrix/link checks 14 passed in 3.62s. Ruff/format/Pyrefly passed.
+`scripts/check.sh` exited 0: 4210 passed/40 opt-in deselected in 473.44s, build,
+all three locked profiles and actual Cockpit lint/135 tests (0 skipped)/production
+build. Log `/tmp/hfcache-doc015-gate.log`. Independent review corrections above
+were incorporated before the full gate.
+
+Reviewed CP-01–14, credential/single-lock/worker/MCP invariants and decisions
+121/126–129/131/132: current-contract alignment only, no runtime, format,
+dependency, architectural decision or new invariant. No production manager,
+engine, NAS, archive, credential or host operation ran. See
+[completed progress entry](../../progress.md#deployment-and-cockpit-profiles-2026-10-18).
+Next ready task DOC-016; final authorized branch pushes follow plan acceptance.

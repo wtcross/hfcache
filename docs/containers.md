@@ -1,12 +1,10 @@
 # Rootless container runtime
 
-This is the selected local profile defined by [decision 127](adr/decision-127.md)
-under the [data-preserving rollout](agents/plans/2026-10-18-plan-local-rootless-rollout.md).
-OPS-015 packages and proves it using owned local fixtures. Release/version
-selection and production switch remain REL-010 and OPS-016. The
-[OPS-014 guard](agents/plans/tasks/ops-014-local-rollout-guardrails.md) keeps NAS read-only,
-legacy writers blocked and the original local lock held. No command here grants
-NAS writes, other-host changes, ACME issuance or remote publication.
+The selected local profile uses rootless Caddy, an API server and a separately
+confined private verifier. It remains guarded/read-only. See the dated
+[deployment status](deployment-status.md) before any operational change; source
+and fixture checks do not authorize NAS workloads or lifting the host guard.
+[Runtime rationale](adr/decision-127.md) explains the isolation/lifecycle choices.
 
 ## Roles and lifecycle
 
@@ -16,6 +14,28 @@ NAS writes, other-host changes, ACME issuance or remote publication.
 | API | One application/registry/pool/lifespan, intended Hub/REST/MCP sources, local stores/cache; NAS read-only |
 | Private worker | Separate Network=none, baseline-preserving Unix-only socket creation, Python PID1, worker-created listener and peer proof; no secrets or host credential stores |
 | Runtime client | Finite API-only rootless observer; exact CLI results/handles, no host operation/scheduled-state mounts or cancellation |
+
+### Role profile matrix
+
+Host service UID/GID come from protected runtime metadata and the helper caller.
+`keep-id` maps them to container `981:981`; 981 is not a universal host UID.
+Persistent roles run under the service account's user manager, reached through
+the protected system bridge. The finite client is launched by the fixed host
+wrapper (including Cockpit's service-identity transient unit).
+
+| Role | Network | Secrets | Executable | Persistent/writable state |
+| --- | --- | --- | --- | --- |
+| `api` | `pasta` | `hfcache.api`, `hfcache.api-reader`, `hfcache.mcp-reader`, `hf-token` | `/opt/hfcache/.venv/bin/hfcache` inside image | API store, HF home/cache, runtime socket; archive read-only |
+| `worker` | `none` | none | `/opt/hfcache/.venv/bin/python` inside image | Distinct verifier store/instance lock and private listener; archive read-only |
+| `caddy` | `pasta` | `hfcache.tls-cert`, `hfcache.tls-key` | `/usr/bin/caddy` inside image | Local `/data`, `/config`, runtime paths; no archive |
+| `client` | `none` | `hfcache.api` | `/opt/hfcache/.venv/bin/hfcache` inside image | Finite local temporary state; no server stores/archive/worker socket |
+
+The selected template sets `mcp_enabled=true` and the helper always supplies
+the four API-role sources above; this is not a per-invocation enablement option.
+Secret files are container UID/GID 981 and mode 0400, under `/run/secrets`.
+The API socket is `/run/hfcache/api/api.sock`; the private listener is
+`/run/hfcache/verification/verification.sock`. Persistent server/worker evidence
+outlives finite clients. See [native differences](server.md#deployment-profiles).
 
 System hfcache.target starts a reviewed bridge to user hfcache.target, which starts
 Caddy/API/private-worker service. API Requires/After the worker service's
@@ -68,11 +88,12 @@ The [actual worker probe](../scripts/check-container-worker.py) takes --image
 (exact local image ID), --workspace (new short local path) and --seccomp-profile
 (derived baseline-preserving file). It retains known containers, logs and
 proof.json or safe failure.json. Failed/partial activation is not isolation proof;
-exact peer/FD/rootless/secret/network/cleanup evidence remains task-owned.
-In the 0.2.1 proof design, a separate ordinary container_t API-role peer fixture
+require complete peer/FD/rootless/secret/network/cleanup evidence; a partial
+probe cannot establish acceptance.
+The disposable proof uses a separate ordinary container_t API-role peer fixture
 uses the same app image/UID mapping and a read-only private-directory view for a
 fixed VerificationClient PROBE. It is not an HTTP API server or verification
-admission. Actual installed API-container PROBE remains OPS-018. A separate
+admission. Installed API-container connectivity is a separate acceptance check. A separate
 direct-PID1 companion tests seccomp; podman exec is not evidence of PID1 filter
 inheritance. Actual worker PID1 metadata and manager notify attribution are
 recorded separately from that companion.
@@ -119,7 +140,7 @@ The two libexec entrypoints, system hfcache.target/bridge and five user unit
 files under /etc/systemd/user are exact root-owned symlinks through
 /opt/hfcache/current to indexed release files. The installer verifies every
 binding before switch and refuses missing paths, static copies or drift without
-overwriting them. OPS-016 provisions links under quiescence and daemon-reloads
+overwriting them. Provision links under quiescence and daemon-reload
 both managers after every selection before activation. A selector that leaves
 old helpers/profiles/images running is not a valid switch or rollback.
 
@@ -136,19 +157,22 @@ prove the manager's effective unit choice.
 Each helper invocation pins one physical release. After binding the base
 /etc/hfcache policy directory read-only, overlay that release's rendered directory
 at /etc/hfcache/containers and its client.toml at /etc/hfcache/client.toml,
-read-only over root-owned real placeholders. Caddy/worker host inputs pin the same
+read-only over root-owned real placeholders. The effective client settings and
+any archive UUID pin belong in authenticated template/rendering; changing a host
+placeholder alone does not change them. Caddy/worker host inputs pin the same
 tree; there is no disconnected /etc runtime-profile copy. Mutable archive policy
 still supports atomic directory-based reload. The system bridge Requires the
 archive mount; the target Wants the bridge, so a bounded mount failure refuses
 runtime startup without requiring that bridge for successful target activation.
-These links and actual manager activation are later guarded rollout work.
+Verify these bindings and the effective manager state before activation.
 
 ## Protected host boot guard
 
 The selected data-preserving deployment also needs the fixed root-owned
 /usr/local/libexec/hfcache-readonly-guard and system
 hfcache-readonly-guard.service, independent of current. They are host control
-policy, not application code in the image. Type=notify runs as UID/GID 981;
+policy, not application code in the image. The recorded host guard uses UID/GID 981; this host-specific identity must
+match the protected service identity. Type=notify
 READY follows strict original-lock ownership/inode checks and a host NFS-ro
 observation from /proc/1/mountinfo. The guard retains its noncreating flock until
 reviewed stop; it does not continuously monitor mount/inode changes. Keep strict
@@ -165,34 +189,17 @@ socket directories; no unit cleanup removes live locks. Root alone performs the
 old transient guard→installer-held original lock→permanent guard handoff with
 NAS-ro/masked writers/quiescence maintained. Application activation waits the new
 READY signal; failures/unknown holders refuse progression. See
-[decision 126](adr/decision-126.md#permanent-host-boot-guard-ops-016-2026-10-18).
+[decision 126](adr/decision-126.md).
 
 The system bridge keeps ProtectHome=yes. Its protected host drop-in binds only
-/run/user/981/systemd/private to /run/hfcache/user-manager/systemd/private and
+/run/user/<service_uid>/systemd/private to /run/hfcache/user-manager/systemd/private and
 uses /run/hfcache/user-manager as bridge-only XDG_RUNTIME_DIR. Protected boot
 directories support this narrow connection without exposing the service home.
 Verify syntax with a disposable user runtime directory; never aim verification
 at the live manager socket. Inspect the actual bridge drop-in and prove its
 hardened connection before claiming target readiness.
 
-### 0.2.0 partial acceptance and historical worker hold
-
-OPS-016 starts the local 0.2.0 Caddy/API runtime and proves verified TLS, API/MCP
-authentication/registry, container client, isolation and non-killing drain.
-However, SELinux refuses API container_t connectto to the user-manager-created
-unconfined_t verification socket. The actual host UID-981 FD3 peer probe succeeds;
-earlier NAS-free VerificationClient fixtures also used a host process. Neither
-proves API-container-to-worker connectivity. End-to-end verification is not
-accepted. Keep Enforcing policy, container labels and execution boundaries; no
-allow rule, label-disable or host execution bypass is an approved quick fix.
-At OPS-016 conclusion, a reviewed label-at-creation/container-activation design
-was unselected operator backlog. **2026-10-18 update:** decisions 128/129 and
-committed source 4088994/REL-013 clean UBI artifacts support completed OPS-018.
-Actual installed API-container PROBE now closes connection hold 22 for 0.2.1;
-source/fixture evidence alone never supplied that proof. Preserve the
-[explicit hold](agents/progress.md#operator-handoff) and all NAS-write/full-domain holds.
-
-### 0.2.1 listener correction (OPS-017)
+### Worker-created private listener
 
 [Decision 128](adr/decision-128.md) selects explicit --container-listener in the
 direct PID1 worker. Before own resources/NSS/shared imports, reject inherited FDs
@@ -220,9 +227,9 @@ artifact/binding dormant RefuseManualStart=yes, preserving nine bindings; native
 socket activation stays unchanged. Infinite non-killing drain and stop ordering
 remain. Actual container-proxied notification and separate API-container PROBE
 under Enforcing SELinux are proof obligations, not supplied by host probes or
-podman exec isolation alone. At the source-package boundary 0.2.0 remained
-selected; completed REL-013/OPS-018 now record clean UBI 0.2.1 and actual installed
-acceptance. No NAS job is authorized; 0.2.0 rollback retains its old hold.
+podman exec isolation alone. See the recorded deployment scope below. No NAS job is authorized; rollback
+to 0.2.0 retains its connection limitation.
+
 
 ## Filesystem, secrets and resource limits
 
@@ -240,14 +247,11 @@ inaccessible read-only mounts; custom sources need explicit review/masking.
 Read-only config access alone is not secret isolation. No NAS chown, relabel,
 copyup or attempted write-denial probe is allowed.
 
-Actual rootless/UID/peer/FD3/TLS/secret/seccomp/SELinux/drain proof uses owned local
-fixtures with no NAS bind in OPS-015. Root may prepare necessary local proof
-infrastructure; changes/failures remain task evidence. Earlier bare-host tests or
-configuration alone do not prove containers. Live NAS publication/report/catalog/
-hardening/full verification acceptance remains forbidden and NOT RUN; see
-[deployment](deployment-centos-stream-10.md#19-rootless-runtime-architecture-ops-015)
-and [release](agents/release.md).
-
+Rootless/UID/peer/listener/TLS/secret/seccomp/SELinux/drain acceptance requires
+owned local fixtures without a NAS bind and checks of actual installed executors.
+Bare-host success and configuration alone do not prove containers. Live NAS
+publication/report/catalog/hardening/full-verification workloads remain unaccepted;
+see [deployment acceptance](deployment-status.md).
 
 ## Staging and selection
 
@@ -270,7 +274,7 @@ recomputed rendering under the original noncreating local flock, then atomically
 updates /opt/hfcache/current and fsyncs its parent. No running/unknown executor,
 libpod cgroup or activation state may be ignored. Previous native/container
 releases and all retained state remain; no force cleanup or implicit migration.
-Production staging/version selection/switch remains later tasks, not OPS-015 proof.
+Staging and selection require explicit operator authorization and quiescence.
 
 A refusal after current-link replacement but failed parent-directory fsync is an
 uncertain acknowledgement: exit 20 may leave the new selector in place. Both trees
@@ -289,11 +293,10 @@ requires actual NFS read-only; it never opens the archive to test this boundary.
 The worker's recognized architecture map is native-only, matching prior
 SystemCallArchitectures=native. Preserve all other baseline restrictions and
 original/derived hashes; reject unknown base shapes. Container execution errors
-or merely available activation are not successful isolation. The task preserves
-failed attempts and distinguishes fixture corrections, actual policy defects and
-final corrected proof.
+or merely available activation are not successful isolation. Preserve failed attempts and distinguish prerequisite failures from actual
+policy enforcement; unrelated errors never constitute passing isolation.
 
-## UBI 10 foundation amendment (OPS-019)
+## UBI 10 image inputs
 
 [Decision 129](adr/decision-129.md) supersedes Debian/Alpine candidate bases. Every
 FROM stage in app/Caddy builds uses pinned UBI 10 micro. Actual micro supplies
@@ -304,11 +307,9 @@ stages. Portable pinned CPython 3.14.6 and locked app versions stay unchanged.
 Verify contained extraction, native linkage, fresh-inode Caddy/empty getcap and
 explicit ENV/user/entrypoint/mask mountpoints. Normal build/start never pulls;
 explicit host prefetch obtains only pinned public inputs without app secrets.
-Record every base/donor/interpreter/binary/CA/source/wheel/closure hash. Repeat
-fresh dirty then clean UBI proofs; old candidate results are superseded, not UBI
-or installed acceptance. At OPS-019 completion production 0.2.0/hold 22 remained;
-completed OPS-018 now records installed 0.2.1/connection-hold closure below. All
-confinement/NAS limits remain.
+Record every base/donor/interpreter/binary/CA/source/wheel/closure hash. Use fresh proof contexts for each reviewed image; a dirty snapshot proves only
+that snapshot. Base/import checks do not establish installed or NAS acceptance.
+All confinement and NAS limits remain.
 
 ### Protected portable-Python fetch
 
@@ -371,12 +372,12 @@ No wildcard/system cleanup or domain-required library/app change. Foundation
 must prove PATH and module absence of pip/ensurepip/uv; failed previews stay
 preserved and new contexts/images are built, never relabelled as passing.
 
-### Installed0.2.1 acceptance (OPS-018, 2026-10-18)
+### Recorded installed scope
 
-[OPS-018](agents/plans/tasks/ops-018-container-worker-rollout.md) selects clean source 4088994
-UBI app/Caddy artifacts and proves actual installed API-container PROBE under
-Enforcing before/after clean drain/restart. Connection hold 22 closes for this
-listener; 0.2.0 failure remains a rollback limitation. Verified TLS/auth/MCP/client,
-worker READY/effective confinement and unchanged locks/stores/secrets pass.
-The independent host guard/NAS-ro/writer masks remain. No live NAS job, storage
-verification or general NFS/other-host acceptance follows from these checks.
+Recorded 0.2.1 checks include the installed API-container private PROBE under
+Enforcing SELinux before and after drain/restart, verified TLS/authentication,
+MCP/client connectivity, worker readiness and confinement observations. This
+closes the listener connection limitation for 0.2.1; rollback to 0.2.0 retains it.
+The independent guard, NAS read-only mount and writer masks remain. No general
+NAS workload, NFS interruption or other-host acceptance follows from these checks.
+See [deployment status](deployment-status.md) for outstanding acceptance.

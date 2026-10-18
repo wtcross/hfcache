@@ -305,7 +305,7 @@ unknown/malformed/future history is preserved, never reset to replay. The superv
 requires every original identity/emptiness/lock check and grants no general
 cancel/replay authority. See [decision 115](../../../adr/decision-115.md),
 [121](../../../adr/decision-121.md) and
-[deployment quiescence](../../../deployment-centos-stream-10.md#13-upgrade-plan-30).
+[deployment quiescence](../../../deployment-centos-stream-10.md#upgrade-and-drain).
 
 ---
 
@@ -870,7 +870,7 @@ server drain/reconciliation procedure. See [decision 120](../../../adr/decision-
 [client resume](../../../api-client.md#submit-detach-and-resume).
 
 
-Final feature rollout follows the [API-017 operator checklist](../../../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).
+Final feature rollout follows the [API-017 operator checklist](../../../deployment-centos-stream-10.md#acceptance-checklist).
 Keep the API and private-verifier stores distinct and preserve scheduled pending
 handles/locks across rollback. A target without their readers cannot prove a
 request unexecuted; do not delete/merge/rewrite evidence to make it start. Disable

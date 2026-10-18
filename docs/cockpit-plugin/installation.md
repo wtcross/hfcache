@@ -18,24 +18,29 @@ The plugin manages these fixed host paths after their features are used:
 
 ## Requirements
 
-On the host that will serve the plugin:
+On the writer host serving the plugin:
 
-- an hfcache deployment in the runbook's shape —
-  `/opt/hfcache/current/.venv/bin/hfcache`, `/etc/hfcache/config.toml`, and
-  the API/private-verifier and scheduled-client units
-  ([`deployment-centos-stream-10.md`](../deployment-centos-stream-10.md));
-  the plugin invokes exactly those paths;
-- `/etc/hfcache/client.toml` with the fixed local socket and API-only named
-  credential `hfcache.api`, readable as `0640 root:hfcache`; no API token file or
-  Hub settings. Use the shipped [Cockpit client example](../../packaging/cockpit-client.toml) and pin
-  the expected archive UUID for the deployment;
-- an encrypted API credential provisioned under the name `hfcache.api` for the
-  REST writer class. PID 1 imports it into transient clients; the page never
-  reads it. Hub `hf-token` stays on the daemon. Missing/unusable API credentials
-  fail closed, without anonymous fallback;
-- `cockpit` ≥ 137 with its socket enabled
-  (`systemctl enable --now cockpit.socket`); the reference deployment runs
-  cockpit 364.
+- the selected rootless deployment's fixed `/usr/local/libexec/hfcache-client`
+  wrapper and protected runtime profile, plus `/etc/hfcache/config.toml`;
+- `/etc/hfcache/client.toml`, `0640 root:hfcache`, selecting
+  `/run/hfcache/api/api.sock` and the mounted API-only file source. The effective
+  content is the physical release's `rendered/client.toml`, overlaid at that path
+  inside the client. Review the [client template](../../packaging/containers/client.toml)
+  and any expected-archive UUID pin before authenticating/rendering the release;
+  editing the host placeholder does not change the effective settings. Retain the
+  protected release binding;
+- a separately provisioned named Podman `hfcache.api` secret for REST writer
+  authority. The wrapper mounts it only inside the finite client; no host
+  `ImportCredential`, browser bearer or Hub secret is involved;
+- Cockpit at least 137 with separately approved socket/authentication setup.
+
+The shipped launcher has no native profile selector. Native systemd credential/
+socket examples in the server guide are separate integration requirements, not
+instructions for this rootless plugin. The selected system-bus writer/timer units
+stay masked; administrative access cannot make those controls accepted workloads.
+The report browser additionally uses privileged `runuser`/`ls`/`cat` on the local
+archive's runs directory; remote API-only machines cannot provide it. See the
+[contract](../cockpit.md) and [recorded restrictions](../deployment-status.md).
 
 On the machine that builds it (the same host, or any other):
 
@@ -125,10 +130,9 @@ operations or authorizes deleting scheduled/operation history.
 ## Acceptance boundary
 
 Repository acceptance runs Cockpit lint/style/type/tests and production build
-through `make -C cockpit check` and `scripts/check.sh`; skipped plugin stages do
-not complete API-015. Injected process/config fixtures test API auth/busy/stale/
+through `make -C cockpit check` and `scripts/check.sh`; skipped plugin stages are not passing plugin evidence. Injected process/config fixtures test API auth/busy/stale/
 uncertain results, bounded streams, page detachment and exact candidate/base
 guards without changing this host's units or archive. Actual browser/PAM bridge,
-named credential delivery, executor hardening, SELinux/NFS and deployed candidate
+profile-specific secret delivery, executor hardening, SELinux/NFS and deployed candidate
 install behavior remain operator acceptance in an authorized disposable or rollout
-environment. No installation is performed by implementing this package.
+environment. Repository checks do not perform a host installation.

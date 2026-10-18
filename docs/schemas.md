@@ -979,7 +979,7 @@ Both lacked the operation module/CLI command (exit `2`) and preserved all three
 synthetic state files byte-for-byte without creating an archive. This is absent
 reader support, not proof of nonexecution or a successful old-format read.
 No production installation occurred. The [task](agents/plans/tasks/api-007-operation-receipts-and-idempotency.md)
-records the command/evidence; [rollback §14](deployment-centos-stream-10.md#14-rollback-plan-30)
+records the command/evidence; [rollback §14](deployment-centos-stream-10.md#rollback-compatibility)
 records the observed rule. See [decision 114](adr/decision-114.md).
 
 ## 14. Scheduled client observation handle (API-014)

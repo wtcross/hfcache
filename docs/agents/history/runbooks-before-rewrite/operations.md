@@ -607,7 +607,7 @@ enforcement remains operator proof.
 Scheduled clients preserve private pending handles and repeat finite observation
 windows while the same oneshot remains active. Stopping one retains lookup-only
 recovery; it never grants POST replay or archive-lock recovery authority. Follow
-the [current executor drain procedure](../../../deployment-centos-stream-10.md#13-upgrade-plan-30)
+the [current executor drain procedure](../../../deployment-centos-stream-10.md#upgrade-and-drain)
 before switching releases or applying the existing supervised-recovery conditions.
 See [server lifecycle](../../../server.md), [uncertain submissions](../../../recovery.md#preserve-four-kinds-of-authority)
 and [decision 115](../../../adr/decision-115.md).
@@ -842,7 +842,7 @@ carried inline. Nothing it can do is anything this runbook does not describe.
 
 
 Current authenticated setup starts with the [API-client quickstart](../../../quickstart.md).
-For source-to-host rollout use the [API-017 operator checklist](../../../deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017),
+For source-to-host rollout use the [API-017 operator checklist](../../../deployment-centos-stream-10.md#acceptance-checklist),
 not historical direct-backend aliases or client-stop/free-lock evidence. Existing
 operation/scheduled handles and both server/worker stores survive observer loss,
 rotation, drain and rollback. Actual host acceptance and verification-calendar
