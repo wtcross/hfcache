@@ -8,6 +8,7 @@
   [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
   [task](../plans/tasks/api-014-systemd-and-deployment-integration.md).
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
+Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
 ## Context and decision
 
@@ -109,3 +110,13 @@ API-only credential name and explicit client socket/configuration. Stopping the
 sync observer preserves its pending handle and accepted work, so the plugin offers
 observation/reconnection rather than automatic recovery. The actual executor drain
 and installed-host holds remain unchanged. See [decision 122](decision-122.md).
+
+
+## 2026-10-18 native Unix prefix and REST acceptance amendment (API-016)
+
+The one application keeps both listeners while local scheduled/Cockpit clients
+use native unprefixed Unix REST even with a public TCP prefix. Per-request links/
+docs and a copied native OpenAPI view cannot mutate shared public routing/schema
+state; no unit, client config or private handle schema changes. Actual source/
+socket acceptance does not replace installed cgroup/hardening proof. See
+[decision 123](decision-123.md).

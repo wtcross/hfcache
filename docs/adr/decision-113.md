@@ -6,6 +6,7 @@
 - Source: [progress decision 113](../progress.md#decisions),
   [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
   [task](../plans/tasks/api-006-fastapi-lifecycle-and-reads.md).
+Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
 ## Context and decision
 
@@ -121,3 +122,14 @@ Evidence: [wire/read/lifespan tests](../../tests/unit/test_api_reads.py),
 [adversarial HTTP cases](../../tests/unit/test_api_adversarial.py),
 [shared query containment](../../tests/unit/test_query_boundary.py), and
 [ephemeral Unix/TCP/TLS tests](../../tests/unit/test_server_bootstrap.py).
+
+
+## 2026-10-18 native Unix prefix and REST acceptance amendment (API-016)
+
+The authenticated single application now distinguishes trusted supported Unix
+transport scope from public TCP prefix routing. Native Unix may use unprefixed or
+configured-prefixed REST paths with matching links/docs; TCP retains configured
+prefix/TLS/proxy/Host/Origin checks. Native OpenAPI is a response copy and cannot
+mutate deterministic public cache state. No forwarded header grants native
+transport identity. Locked-source/actual socket evidence and complete fresh REST
+acceptance are required before MCP; see [decision 123](decision-123.md).

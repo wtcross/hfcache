@@ -12,6 +12,31 @@ an explicit deployment hold.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
+## Public prefix and native Unix requests (API-016)
+
+[Decision 123](adr/decision-123.md) keeps the configured public `root_path` and
+TLS/proxy/Host/Origin boundary for TCP. Actual supported Uvicorn AF_UNIX requests,
+identified only by trusted transport scope `client=None` corroborated by
+`server=(absolute Unix socket pathname, None)`, may use native
+unprefixed `/api/v1` paths. They still require REST bearer authentication,
+Host/Origin checks and all bounds. Headers/forwarded metadata never select this
+authority; arbitrary ASGI integrations are not a substitute for the supported
+transport's peer information.
+Missing peer alone can also mean a socket error; it never grants native prefix
+or proxy-TLS exemption. TCP has an IP/numeric-port local address, and absent or
+malformed local evidence cannot bypass either boundary.
+
+Operation links and docs/schema URLs use a trusted effective prefix for that
+request, without shared mutable prefix state. Public OpenAPI remains deterministic
+with the configured public prefix. The local scheduled/Cockpit client needs no
+new prefix setting or schema; TCP must still use its public path and established
+TLS/proxy policy. Locked-source and real disposable Unix/TCP tests are required;
+installed-host acceptance remains separately held.
+Unix also accepts the configured-prefixed spelling, with response links matching
+the trusted spelling used. Unprefixed Unix OpenAPI uses a response copy with
+`servers=[{"url":"/"}]`; prefixed/TCP responses keep the configured public prefix.
+The cached public schema is never mutated by a native request.
+
 ## Activated services and scheduled observation (API-014)
 
 [Decision 121](adr/decision-121.md) packages one server application/lifespan for
@@ -155,7 +180,7 @@ TLS. An off-host TLS proxy connects only to loopback TCP and requires
 never trusted from everyone. The config model validates those combinations;
 API-006 applies Host/Origin/proxy-prefix policy at the HTTP boundary.
 No wildcard CORS, token query parameters or URL userinfo is permitted by the
-management contract. The later client always verifies off-host TLS.
+management contract. The client always verifies off-host TLS.
 
 ### Resource settings
 

@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-016](tasks/api-016-rest-acceptance-gate.md) |
+| Next task | [MCP-001](tasks/mcp-001-mount-authenticated-fastmcp.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

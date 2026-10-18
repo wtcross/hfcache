@@ -846,3 +846,18 @@ versions when implementing, especially FastMCP imports and test transports:
   base+server installs and 127 Cockpit tests/production build. No gate restart or
   post-gate source change. API-016 is next pending after this package's commit;
   no MCP implementation has begun and installed-host holds remain explicit.
+
+- 2026-10-18 API-016: Decision 123 keeps configured public-prefix/TLS/proxy
+  enforcement on TCP and permits native unprefixed REST only with corroborated
+  supported Unix peer/local scope. Links/schema views follow a trusted per-request
+  prefix without mutating public OpenAPI or operation/key identities. All 29
+  parity modes now cite concrete tests; independent route/role, complete page,
+  five-example, docs/anchor, disabled-import and actual old/current parser drills
+  support the fresh REST acceptance gate. First full
+  `scripts/check.sh --with-build` exits 0: 3,324 Python tests passed (40 deselected,
+  358.69 seconds), locked 0.1.10 builds/base+server installations, 127 Cockpit
+  tests/production build and four additional wheel smoke tests. Fresh actual
+  predecessor/current schema-1/future-2 parser drill passes all 28 cases without
+  changing fixture bytes. No config/durable/dependency change, MCP or production
+  operation; installed-host holds remain separate. REST repository acceptance is
+  complete and current selects MCP-001 pending after this package's commit.

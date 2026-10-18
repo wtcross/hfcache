@@ -6,7 +6,7 @@
 #
 # Validate without touching anything:
 #
-#     hfcache --config examples/config.toml config validate
+#     hfcache --config examples/config.toml config validate --local
 #
 # Two values must be replaced before this is a production configuration:
 # storage.archive_id (below) and the [[repositories]] list, which grows per

@@ -1221,6 +1221,50 @@ package in this family.
   operator holds; live/NFS and extra build-marker suites did not run. Next is
   API-016 pending after this commit; REST acceptance still gates all MCP work.)
 
+
+- [x] API-016 Prove complete REST and CLI parity before MCP
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-016-rest-acceptance-gate.md)).
+  All 29 semantic modes now cite concrete CLI/API functions and selected parameter
+  cases in an independent manifest/AST gate. An independent inventory checks all
+  34 method/path pairs (33 without interactive docs), bearers before body receive,
+  and mixed read/write roles without admission. Native Unix/public TCP prefixes
+  share one app/lifespan/registry: corroborated trusted peer and absolute Unix
+  local scope jointly select native prefix/proxy-TLS exceptions, while missing/
+  malformed/numeric local evidence refuses. Request-local links and copied native
+  schema views retain deterministic public OpenAPI and original operation/key/
+  admitted policy/result identities. Actual locked Uvicorn source and disposable
+  Unix/TCP fixtures prove the predicate; no forwarded-header authority or new
+  client setting. Complete size-one page walks retain empty/unmanaged inventory
+  and exact publication/run/operation IDs. Five packaged examples use strict
+  independent loaders; current docs/anchors and a cold disabled app prove no MCP
+  import or state creation. Historical runbook aliases/logs remain explicitly
+  historical; current reconnect keys are quoted after `--`.
+  Focused final transport/read/command/client/bootstrap sweep: 130 passed in
+  47.31 seconds; final new cases: 14 in 9.44; parity/positive CLI: 68 in 6.68;
+  broader CLI: 154 in 61.20; security/examples: 19 in 3.23; final parsed matrix/
+  anchors: 63 in 1.89. Fresh actual installed predecessor `9ba89cf` and working-tree
+  base wheels (both application 0.1.10, distinct hashes) read schema 1/refuse
+  future 2 across seven families, all 28 cases preserving bytes without network,
+  listeners or archive operations. Decision 123 and 113/118/121/122 amendments,
+  INV-003/006/010/011/012–014, API/server/client/config/security/CLI contracts,
+  README/Unreleased and operator runbook boundaries agree.
+  First full `rtk proxy bash scripts/check.sh --with-build > .scratch/api-016-gate.log 2>&1`
+  exits 0: lock/sync, 368 formatted files, Ruff clean, Pyrefly 0 errors
+  (11 suppressed, 57 warnings not shown), 3,324 Python tests
+  (40 deselected, 358.69 seconds), 0.1.10 sdist/wheel and actual locked isolated
+  base/server install/import/help/version. Complete Cockpit lint/style/types,
+  127 tests in 2.134 seconds and production build in 1,224 ms pass; required extra
+  wheel smoke passes 4 tests (3,360 deselected, 4.48 seconds). No gate correction,
+  restart or post-gate source change. Final links/anchors/current/dependencies,
+  29 implemented rows, 123 unique indexed decision/ADR records and whitespace pass.
+  REST repository acceptance is complete; MCP-001 is next pending after this
+  commit, with no MCP dependency/import/route/tool or research implementation yet.
+  No dependency/config/durable shape or production operation/deployment/push/merge/
+  tag. Live Hub/NFS and actual systemd/cgroup/no-IP/credential/custom-path/browser/
+  PAM/SELinux/drain/rollback/verify-calendar proof remain deployment holds in
+  Operator handoff 16/17; repository acceptance does not assert those passed.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3993,3 +4037,19 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      root/admin/service separation, installed full-sync/verify units, sync-timer
      only controls and no init UI. No durable JSON/dependency/MCP or production
      change; real host acceptance remains operator work.
+
+123. **Keep public prefixes separate from native Unix REST paths**
+     (2026-10-18, API-016). [ADR](adr/decision-123.md): configured public prefix/
+     TLS/proxy/Host/Origin policy remains for TCP; actual supported Uvicorn Unix
+     scope alone may use native unprefixed REST. Authenticate and bound both;
+     require both missing peer and an absolute Unix-path/None-port local address,
+     since peer absence alone can mean a socket error. Apply that predicate to
+     prefix/proxy-TLS exceptions; missing/malformed local evidence fails closed.
+     headers never manufacture local authority. Derive links/docs prefix per
+     request and spelling, without shared mutable prefix or cached-schema changes.
+     Public OpenAPI stays deterministic; native `/` view is a response copy.
+     Fixed local scheduled/Cockpit clients need no new prefix field or config
+     version. Prove the distinction with locked source and actual disposable
+     sockets, audit all 29 REST modes/examples/contracts and run fresh build
+     acceptance before MCP. No dependency/durable schema or production change;
+     real installed-host enforcement remains operator-held.

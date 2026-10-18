@@ -8,9 +8,13 @@ import pytest
 from typer.testing import CliRunner
 
 from hfcache import cli
+from hfcache.errors import IntegrityError
+from hfcache.hub import HubClient
+from hfcache.paths import RepositoryLayout
+from hfcache.publication import read_reference
 from tests.api_cli import api_cli
 from tests.unit.test_api_commands import configured as command_archive  # noqa: F401 - fixture
-from tests.unit.test_synchronize import MODEL, SHA_A
+from tests.unit.test_synchronize import CONTENT, DATASET, MODEL, SHA_A
 
 
 @pytest.fixture
@@ -50,6 +54,101 @@ def test_writer_cli_emits_exact_real_terminal_result(configured, arguments, rout
         assert "Idempotency key: writer-route" in result.stderr
         assert f"Operation: {receipt.operation_id}" in result.stderr
         assert "event=" not in result.stderr
+
+
+@pytest.mark.parametrize("mode", ["--dry-run", "--apply"])
+def test_explicit_unmanaged_purge_cli_scope_keeps_configured_repository(
+    configured, monkeypatch, mode
+):
+    policy, layout, _, _ = configured
+    monkeypatch.setattr("hfcache.purge.delete_cache_revisions", lambda *_args: 0)
+    with api_cli(policy.archive_config) as remote:
+        assert remote.invoke(["sync"]).exit_code == 0
+        policy.archive_config.write_text(
+            policy.archive_config.read_text().replace(
+                '[[repositories]]\nid = "organization/model-name"\ntype = "model"\n', ""
+            )
+        )
+        result = remote.invoke(["purge", mode, MODEL.selector])
+        assert result.exit_code == 0, result.output
+        envelope = json.loads(result.stdout)
+        if mode == "--dry-run":
+            assert [row["repository_id"] for row in envelope["data"]["plans"]] == [MODEL.id]
+            assert RepositoryLayout(layout, MODEL).current_ref.is_file()
+        else:
+            assert not RepositoryLayout(layout, MODEL).directory.exists()
+        assert RepositoryLayout(layout, DATASET).current_ref.is_file()
+        receipt = next(
+            row
+            for row in remote.application.state.operations.list()
+            if row.domain_run_id == envelope["run_id"]
+        )
+        assert receipt.route == ("/api/v1/purge-plans" if mode == "--dry-run" else "/api/v1/purges")
+        assert (
+            remote.application.state.operations.result(receipt.operation_id).to_payload()
+            == envelope
+        )
+
+
+def test_repair_reason_cli_is_persisted_with_exact_terminal_identity(configured):
+    policy, layout, _, _ = configured
+    reason = "REST parity reviewed replacement"
+    with api_cli(policy.archive_config) as remote:
+        assert remote.invoke(["sync", MODEL.selector]).exit_code == 0
+        repository = RepositoryLayout(layout, MODEL)
+        original = read_reference(layout, repository.current_ref)
+        (layout.published / original.tree / "weights.bin").write_bytes(b"damaged parity fixture")
+        result = remote.invoke(["repair", f"{MODEL.selector}@{SHA_A}", "--reason", reason])
+        assert result.exit_code == 0, result.output
+        envelope = json.loads(result.stdout)
+        retirement = json.loads((layout.root / envelope["data"]["retirement_record"]).read_text())
+        assert retirement["reason"] == reason
+        replacement = read_reference(layout, repository.current_ref)
+        assert replacement.publication_id != original.publication_id
+        assert (layout.published / replacement.tree / "weights.bin").read_bytes() == CONTENT[
+            "weights.bin"
+        ]
+        assert (
+            layout.published / original.tree / "weights.bin"
+        ).read_bytes() == b"damaged parity fixture"
+        receipt = next(
+            row
+            for row in remote.application.state.operations.list()
+            if row.domain_run_id == envelope["run_id"]
+        )
+        assert receipt.route == "/api/v1/repairs"
+        assert (
+            remote.application.state.operations.result(receipt.operation_id).to_payload()
+            == envelope
+        )
+
+
+def test_sync_cli_keeps_failure_aggregation_priority_and_report_identity(configured, monkeypatch):
+    policy, layout, hub, _ = configured
+    del hub.heads[MODEL.selector]
+
+    def integrity_failure(*_args, **_kwargs):
+        message = "synthetic unusable manifest"
+        raise IntegrityError.single(message, code="HFVER007")
+
+    monkeypatch.setattr(HubClient, "verify_local", integrity_failure)
+    with api_cli(policy.archive_config) as remote:
+        result = remote.invoke(["sync"])
+        assert result.exit_code == 40, result.output
+        envelope = json.loads(result.stdout)
+        assert {row["status"] for row in envelope["data"]["repositories"]} == {"failed"}
+        codes = {problem["code"] for problem in envelope["errors"]}
+        assert any(code.startswith("HFHUB") for code in codes)
+        assert "HFVER007" in codes
+        report = json.loads((layout.root / envelope["data"]["report"]).read_text())
+        assert report["run_id"] == envelope["run_id"]
+        assert report["exit_code"] == 40
+        assert set(report["errors"]) == codes
+        (receipt,) = remote.application.state.operations.list()
+        assert (
+            remote.application.state.operations.result(receipt.operation_id).to_payload()
+            == envelope
+        )
 
 
 def test_cli_module_and_operational_help_do_not_import_mutation_backends():

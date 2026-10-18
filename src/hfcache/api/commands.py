@@ -83,7 +83,12 @@ def _accepted(request: Request, admission: Admission, server: ServerConfig) -> R
         {key: value for key, value in metadata.items() if key in OperationView.model_fields}
         | {"result_recorded": receipt.result is not None}
     )
-    location = server.listener.root_path + PREFIX + "/operations/" + receipt.operation_id
+    location = (
+        request.scope.get("root_path", server.listener.root_path)
+        + PREFIX
+        + "/operations/"
+        + receipt.operation_id
+    )
     result = AcceptanceResponse(
         schema_version=1,
         request_id=request.state.execution_context.request_id or "",

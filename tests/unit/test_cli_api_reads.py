@@ -264,6 +264,36 @@ def test_candidate_cli_sends_content_and_preserves_validation_compatibility(conf
         assert str(candidate) not in result.stdout
 
 
+def test_compatible_candidate_plan_cli_preserves_selection_and_never_downloads(
+    configured, tmp_path, monkeypatch
+):
+    policy, _, hub, _ = configured
+    candidate = tmp_path / "candidate.toml"
+    content = policy.archive_config.read_text() + (
+        '\n[[repositories]]\ntype="dataset"\nid="candidate/disabled"\nenabled=false\n'
+    )
+    candidate.write_text(content)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("candidate client loaded local archive policy")
+
+    monkeypatch.setattr(cli, "load_config", forbidden)
+    with api_cli(policy.archive_config) as remote:
+        result = remote.invoke(["--config", str(candidate), "plan", MODEL.selector])
+        assert result.exit_code == 0, result.output
+        envelope = json.loads(result.stdout)
+        assert envelope["command"] == "plan"
+        assert [row["repository_id"] for row in envelope["data"]["repositories"]] == [MODEL.id]
+        (receipt,) = remote.application.state.operations.list()
+        assert receipt.route == "/api/v1/plans"
+        assert (
+            remote.application.state.operations.result(receipt.operation_id).to_payload()
+            == envelope
+        )
+        assert hub.downloads == []
+        assert candidate.read_text() == content
+
+
 def test_inventory_aggregate_budget_is_enforced_without_revision_expansion(tmp_path):
     token = tmp_path / "token"
     token.write_text("reader-" + "A" * 40)

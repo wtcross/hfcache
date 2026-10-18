@@ -11,18 +11,27 @@ This is what to do when something is **wrong** with the archive: a revision whos
 bytes no longer match its manifest, a reference that will not resolve, a
 transaction that stopped and will not resume, or a host that is gone.
 
-**Every command block below was run.** Not on `/srv/hfcache` — plan §36.5 forbids
+**The numbered historical recovery command blocks were run.** Not on `/srv/hfcache` — plan §36.5 forbids
 damaging published content — but on a **throwaway archive**: a second NFSv4 export
 served from the writer itself, initialized with its own UUID, synced from the real
 Hub, and then deliberately broken. §6 explains how to build one, because being
-able to rehearse this is the point.
+able to rehearse this is the point. Dated REST/client additions describe current
+repository behavior and interface examples, not commands exercised on a deployed
+API installation.
 
-Throughout, `$D` is the throwaway; on a real archive it is the invocation
-`docs/operations.md` calls `$H`:
+In those historical blocks, `$D` is the throwaway; the original real-archive
+alias was the invocation `docs/operations.md` called `$H`:
 
 ```bash
 H="sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml"
 ```
+
+Keep that alias as provenance for the captured direct-writer results. Current
+operational CLI commands use [API-only client settings and credentials](api-client.md),
+with [separate service/client lifetimes](server.md#restart-and-drain). They do not
+load local archive TOML or fall back to local execution. Follow the dated
+observation/reconciliation sections before any recovery; installed-host rollout
+and hardening checks remain explicit deployment holds.
 
 ---
 
@@ -844,8 +853,10 @@ the observer times out, receives Ctrl-C or loses connectivity. HFAPI019/20 stops
 waiting only; HFAPI020/20 retains uncertain acknowledgement. Other classified
 errors keep their taxonomy and known handles. Accepted work may continue.
 
-Use authenticated `operations lookup KEY` without submitting, then `operations
-show ID` / `operations wait ID [--after N]` under the same intended authority.
+Use authenticated `operations lookup -- '<original-key>'` without submitting,
+then `operations show ID` / `operations wait [--after N] -- '<operation-id>'`
+under the same intended authority. Quote the key and use `--` so option-like or
+tilde-prefixed keys remain literal arguments.
 Show/lookup preserve exact metadata Envelopes; wait returns the stored terminal
 domain Envelope, including failure/partial results. All event/status/result reads
 share one finite observation deadline, and explicit retention gaps accompany

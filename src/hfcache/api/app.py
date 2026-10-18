@@ -210,6 +210,22 @@ def _problem(context: ExecutionContext, error: HfcacheError) -> JSONResponse:
     )
 
 
+def _native_unix(scope: Scope) -> bool:
+    """Corroborate the supported Uvicorn Unix scope without caller headers."""
+    local = scope.get("server")
+    if scope.get("client") is not None or not isinstance(local, tuple):
+        return False
+    match local:
+        case (str() as pathname, None):
+            return (
+                pathname.startswith("/")
+                and pathname != "/"
+                and all(character.isprintable() for character in pathname)
+            )
+        case _:
+            return False
+
+
 class Boundary:
     """Authenticate before routing/validation and contain every HTTP error surface."""
 
@@ -320,6 +336,15 @@ class Boundary:
         ]
         return registry.authenticate(values[0] if len(values) == 1 else None)
 
+    def validate_root_path(self, scope: Scope) -> None:
+        public_root = self.server.listener.root_path
+        prefixed = bool(public_root and scope["path"].startswith(public_root + "/"))
+        if public_root and not prefixed and not _native_unix(scope):
+            raise RequestError(code="HFAPI007", status_code=404)
+        # Decision 123: corroborated native clients need no public proxy prefix.
+        # Never derive this trust or emitted links from forwarding headers.
+        scope["root_path"] = public_root if prefixed else ""
+
     def validate_transport(self, scope: Scope) -> None:  # noqa: PLR0912 - coupled pre-routing security checks
         headers = scope["headers"]
         if sum(len(key) + len(value) for key, value in headers) > _MAX_HEADER_BYTES:
@@ -357,11 +382,8 @@ class Boundary:
         query = scope.get("query_string", b"")
         if len(query) > _MAX_QUERY_BYTES:
             raise RequestError(status_code=413)
-        if self.server.listener.root_path and not scope["path"].startswith(
-            self.server.listener.root_path + "/"
-        ):
-            raise RequestError(code="HFAPI007", status_code=404)
-        if self.server.listener.proxy_tls and scope.get("client") is not None:
+        self.validate_root_path(scope)
+        if self.server.listener.proxy_tls and not _native_unix(scope):
             client = scope.get("client")
             try:
                 peer = ipaddress.ip_address(client[0]) if client else None
@@ -977,7 +999,10 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
     @app.get(PREFIX + "/openapi.json", include_in_schema=False)
     async def schema(request: Request) -> Response:
         _no_query(request)
-        return bounded_static(JSONResponse(app.openapi()))
+        # The cached public schema is deterministic across requests/apps. A
+        # native Unix response gets an independent local server-base view.
+        view = app.openapi() | {"servers": [{"url": request.scope.get("root_path") or "/"}]}
+        return bounded_static(JSONResponse(view))
 
     if server.interactive_docs:
 
@@ -986,7 +1011,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
             _no_query(request)
             return bounded_static(
                 get_swagger_ui_html(
-                    openapi_url=server.listener.root_path + PREFIX + "/openapi.json",
+                    openapi_url=request.scope.get("root_path", "") + PREFIX + "/openapi.json",
                     title="hfcache API",
                     swagger_ui_parameters={"persistAuthorization": False},
                 )

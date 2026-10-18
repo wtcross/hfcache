@@ -253,6 +253,12 @@ fingerprint confirmation; incompatible/unknown authority needs manual operator
 installation. Full sync/verify units, sync-timer-only controls and no init UI
 remain. Browser credentials, direct REST installs and MCP are not added.
 
+API-016 reconciles all 29 REST modes with concrete CLI/API evidence and fresh
+security, example, transport and build acceptance before MCP. Native Unix clients
+can use fixed unprefixed paths alongside a public TCP prefix; both interfaces keep
+authentication/security, and request-specific links/schema views cannot mutate
+shared routing state. Installed-host checks remain separate deployment holds.
+
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —
 and it is exactly what must pass from a

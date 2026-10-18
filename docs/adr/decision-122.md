@@ -7,6 +7,7 @@
 - Source: [progress decision 122](../progress.md#decisions),
   [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
   [task](../plans/tasks/api-015-cockpit-api-client-compatibility.md).
+Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
 ## Context and decision
 
@@ -101,3 +102,12 @@ Evidence: [command tests](../../cockpit/test/command.test.ts),
 prove deployed browser/credential/hardening acceptance.
 Candidate-specific evidence: [guarded file fixtures](../../cockpit/test/candidate-guard.test.ts)
 and [pipeline tests](../../cockpit/test/config-pipeline.test.ts).
+
+
+## 2026-10-18 native Unix prefix and REST acceptance amendment (API-016)
+
+Cockpit's fixed local socket/client settings remain valid with a public TCP
+prefix through the server's trusted native Unix path distinction. Browser code
+gets no prefix/credential authority, and candidate/terminal/progress/uncertainty
+controls are unchanged. Fresh complete REST acceptance, not installed-host proof,
+gates MCP; see [decision 123](decision-123.md).

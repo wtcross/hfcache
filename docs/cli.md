@@ -70,6 +70,15 @@ to stderr even in quiet mode; interruption/timeout stops observation, never
 accepted execution. [Decision 120](adr/decision-120.md) and
 [operation observation](#operations) define the exception and resume behavior.
 
+**2026-10-18 API-016 acceptance amendment:** the earlier amendments retain each
+migration stage's history. All operational modes now use typed HTTP, with explicit
+local help/version, `serve` and `config validate --local` bootstrap exceptions.
+API-014 packages scheduled observers and API-015 integrates Cockpit. Native Unix
+uses fixed unprefixed paths even with a public TCP prefix; public clients retain
+their configured URL prefix/security. [Decision 123](adr/decision-123.md) and the
+[complete parity matrix](api.md#operation-parity-matrix) govern REST acceptance;
+MCP remains absent until API-016 passes and commits. No deployment is asserted.
+
 ## 1. Invocation shape
 
 ```text
@@ -603,8 +612,8 @@ Envelope, including its invocation identity and timestamps.
 
 ```text
 hfcache [CLIENT OPTIONS] operations show OPERATION_ID
-hfcache [CLIENT OPTIONS] operations lookup IDEMPOTENCY_KEY
-hfcache [CLIENT OPTIONS] [--wait-timeout SECONDS] operations wait OPERATION_ID [--after N]
+hfcache [CLIENT OPTIONS] operations lookup -- 'IDEMPOTENCY_KEY'
+hfcache [CLIENT OPTIONS] [--wait-timeout SECONDS] operations wait [--after N] -- 'OPERATION_ID'
 ```
 
 These commands authenticate and observe existing work; they never POST, cancel

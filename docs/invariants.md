@@ -391,6 +391,13 @@ History: `SYNC-007` (`54e4671`), decision 94.
   and systemd hardening must not be weakened to make a test or operation pass.
   Management off-host access requires verified TLS or an explicitly trusted
   local TLS proxy, and Unix-socket access still authenticates.
+  Only supported actual Uvicorn Unix transport scope may use native unprefixed
+  REST paths when TCP has a public prefix. Per-request links/schema views cannot
+  mutate global prefix/cache state or trust forwarded-prefix authority; TCP keeps
+  configured prefix/TLS/proxy/Host/Origin checks (decision 123).
+  Native scope requires both `client=None` and corroborating absolute Unix-path/
+  None-port `server` evidence; peer absence on socket error cannot bypass prefix
+  or proxy-TLS checks. Missing/malformed local evidence fails closed.
   See [security §2–§5](security.md#2-trust-boundaries),
   [deployment](deployment-centos-stream-10.md), and
   [agent environment](agents/environment.md).
@@ -612,7 +619,7 @@ Evidence: [plugin tests](../cockpit/test/) and the
   engine. No workflow/DAG/actor/task/agent framework or mutable archive database.
 - **`FW-03`, `FW-04`** — Runtime dependencies are `huggingface-hub`, `pydantic`,
   `typer`, the resolved Hub client's required transfer backend, and the direct
-  base HTTPX client; FastAPI/Uvicorn are optional `server` dependencies
+  base HTTPX/HTTPCore client; FastAPI/Uvicorn are optional `server` dependencies
   (decision 112, implementing the decision 108 exception). Use the
   standard library for TOML, JSON, hashing, filesystem work, locking, and
   logging. An addition needs a recorded material correctness argument, not
@@ -620,7 +627,8 @@ Evidence: [plugin tests](../cockpit/test/) and the
 - **`INV-010` — Safety checks and evidence survive routine execution.** Source
   safety checks raise exceptions and never depend on removable assertions.
   Default tests stay offline/hermetic and strip ambient credentials; Hub tests
-  use injectable deterministic fakes. Network and real NFS tests are opt-in.
+  use injectable deterministic fakes. Live Hub/off-host network and real NFS tests
+  are opt-in; actual disposable Unix/loopback TCP/TLS tests run in the default gate.
   The default gate builds and smoke-installs locked base/server wheels;
   additional build-marker tests remain opt-in. Every work-package commit updates progress and passes
   `scripts/check.sh`; durable-format fixtures and checkpoint-contract tests
@@ -658,13 +666,17 @@ authenticated metadata HTTP and its foreground bootstrap; API-007 adds durable
 admission primitives and operation observation. API-008 adds execution/private
 verification and API-009 adds the typed command subset. API-010 adds guarded
 maintenance and initialization; API-012 adds candidate operations/read CLI and
-API-013 completes operational CLI/observation. Installed isolation hardening and
-MCP remain pending.
+API-013 completes operational CLI/observation. API-014 packages named activation
+and actual-executor isolation policy with disposable runtime tests; API-015 integrates Cockpit's
+API-only clients and guarded configuration pipeline. API-016 validates complete
+REST acceptance. Installed-host enforcement remains operator-held; MCP is pending.
 [API](api.md) and [server](server.md) track exact availability; implementing tasks
 own proof.
 
-- **`INV-012` — Adapters share one domain implementation.** Transports call
-  typed services, never one another or public CLI callbacks. Remote access
+- **`INV-012` — Adapters share one domain implementation.** HTTP/future MCP
+  adapters call typed services, never Typer/public CLI callbacks or each other's
+  adapter callbacks. Operational CLI uses the independent typed HTTP client.
+  Remote access
   changes no FS/TX, whole-archive authorization, or publication locator rule.
   Query enforcement: [shared services](../src/hfcache/services/queries.py),
   introduced by API-002; command enforcement:
@@ -709,6 +721,15 @@ own proof.
   [typed command/adversarial tests](../tests/unit/test_api_command_adversarial.py);
   decisions [113](adr/decision-113.md)/[116](adr/decision-116.md).
   This is no production deployment proof.
+  API-016 corroborates trusted native Unix scope using both peer/local address
+  evidence; prefix and proxy-TLS exceptions share that predicate, without header
+  authority or global prefix/cache mutation. Enforcement/evidence:
+  [HTTP boundary](../src/hfcache/api/app.py),
+  [real transports/OpenAPI/negative scopes](../tests/unit/test_rest_transport_gate.py),
+  [route-complete auth/roles](../tests/unit/test_rest_security_gate.py),
+  [paged completeness](../tests/unit/test_rest_pagination_gate.py) and
+  [examples/docs/disabled imports](../tests/unit/test_rest_examples_gate.py),
+  decision [123](adr/decision-123.md).
 - **`INV-014` — Admission receipts do not resume domain execution.** Persist
   before runnable/202, bind principal/key/request, fail stale policies closed,
   retain ambiguous history, and never infer success or replay from missing

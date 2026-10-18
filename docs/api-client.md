@@ -305,9 +305,9 @@ terminal `outcome` or `exit_code`. Successful detach means accepted, not execute
 or completed; human output says so too. Default commands never replace their
 terminal Envelope with this object.
 
-`operations show ID` and `operations lookup KEY` preserve exact server metadata
+`operations show ID` and `operations lookup -- '<original-key>'` preserve exact server metadata
 Envelopes (`operations show` / `operations lookup`) with `data.operation`.
-`operations wait ID [--after N]` observes without submitting. The cursor resumes
+`operations wait [--after N] -- '<operation-id>'` observes without submitting. The cursor resumes
 sanitized bounded event pages; explicit oldest-sequence/truncated metadata reports
 retention gaps. Quiet suppresses event progress, never mandatory safety handles.
 No raw logs or event fields can become executable input or stdout JSON fragments.
@@ -346,9 +346,9 @@ interface; they are not production operations executed by this work package:
 
 ```text
 hfcache --client-config /etc/hfcache/client.toml --json --detach sync
-hfcache --client-config /etc/hfcache/client.toml --json operations lookup <original-key>
+hfcache --client-config /etc/hfcache/client.toml --json operations lookup -- '<original-key>'
 hfcache --client-config /etc/hfcache/client.toml --json operations show <operation-id>
-hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 operations wait <operation-id> --after 12
+hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 operations wait --after 12 -- '<operation-id>'
 ```
 
 Use the same configured authority and credential class for key lookup. A stopped
@@ -358,6 +358,18 @@ use [server drain](server.md#restart-and-drain) and
 ownership. [Decision 120](adr/decision-120.md) records this boundary. Shipped
 systemd integration is packaged by API-014 with deployment holds; Cockpit uses
 the API-only client integration described below.
+
+## Native Unix and public prefixes (API-016)
+
+API-016's native Unix refinement keeps fixed unprefixed local API paths usable
+even when the same server has a public TCP `root_path`. Only trusted supported
+Unix transport scope (`client=None` plus absolute Unix-path/None-port `server`)
+selects that behavior; a missing peer alone is insufficient. Authentication/Host/Origin/bounds
+remain. Returned links use the request's effective prefix, while TCP clients keep
+their configured URL prefix and strict link checks. No new client setting or
+schema is added; see [decision 123](adr/decision-123.md). Native Unix also accepts
+the configured-prefixed spelling and emits matching operation/docs links; its
+unprefixed OpenAPI view uses `/` without mutating the public cached schema.
 
 ## Cockpit client integration (API-015)
 

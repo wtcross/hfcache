@@ -448,6 +448,13 @@ Hub token, service UID or mount is required. Explicit endpoint overrides replace
 the configured group. Verified TLS/default or explicit CA trust, safe prefix URLs,
 no redirects/ambient proxies/netrc and exact same-operation link checks keep the
 bearer bound to the intended authority. Local Unix sockets still authenticate.
+API-016 distinguishes only trusted supported native Unix scope for unprefixed
+REST: `client=None` plus `server=(absolute Unix socket pathname, None)`.
+Peer absence alone may be a socket error and cannot bypass prefix/proxy-TLS;
+missing/malformed local evidence fails closed. TCP keeps configured public
+prefix/TLS/proxy/Host/Origin checks. No forwarded
+header grants native authority. Request-scoped links/schema copies do not mutate
+global public prefix or OpenAPI cache state ([decision 123](adr/decision-123.md)).
 Malformed/oversized/truncated/unversioned or identity-inconsistent responses refuse
 under finite byte/page/retry/poll budgets without echoing raw bodies/transport errors.
 

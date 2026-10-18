@@ -398,7 +398,7 @@ def test_unix_transport_remains_usable_alongside_a_trusted_tls_proxy(tmp_path):
 
     async def unix_scope(scope, receive, send):
         if scope["type"] == "http":
-            scope = scope | {"client": None, "server": None}
+            scope = scope | {"client": None, "server": (str(server.listener.unix_socket), None)}
         await app(scope, receive, send)
 
     with TestClient(unix_scope, raise_server_exceptions=False) as client:

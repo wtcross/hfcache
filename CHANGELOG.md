@@ -130,6 +130,15 @@ expected installed fingerprint. Incompatible/unknown authority blocks plugin
 installation with manual guidance. No archive schema, dependency, browser bearer
 backend, MCP or production deployment change.
 
+Native Unix REST now works alongside a configured public TCP prefix, with matching
+operation/docs links and an independent native OpenAPI view. Only corroborated
+trusted Unix scope selects the exception; missing peers or malformed local
+evidence cannot bypass TCP prefix/proxy-TLS checks. Public schema remains
+deterministic. REST acceptance now traces all 29 semantic modes to concrete tests,
+independently inventories every route, and checks strict examples, complete pages
+and disabled optional imports. No config/durable schema, dependency or production
+deployment change.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

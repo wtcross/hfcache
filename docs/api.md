@@ -5,14 +5,16 @@ bounded receipt/admission primitives and operation observation; API-009 adds
 typed command routes, with guarded maintenance/initialization added by API-010,
 under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 API-012 adds candidate validation/planning/read CLI and API-013 completes
-operational CLI/observation. No
+operational CLI/observation. API-014 packages activated/scheduled services and
+API-015 integrates Cockpit; API-016 audits complete REST acceptance before MCP. No
 production installation or listener start is asserted by implementation evidence.
 
 ## Service and transport boundary
 
 Decision [108](adr/decision-108.md) introduces ordinary typed query/command
-services. Typer, FastAPI, and later FastMCP are adapters; they never call each
-other, run the public CLI, or parse its stdout. Archive algorithms, FS/TX
+services. HTTP and future MCP adapters never invoke Typer/public CLI callbacks or
+parse CLI stdout; the operational CLI uses an independent typed HTTP client.
+Adapter implementations do not call one another's callbacks. Archive algorithms, FS/TX
 requirements, sentinel identity, local flock, and publication authority remain
 unchanged. HTTP metadata is not artifact transfer: locators are relative to
 `published/` and identify exact immutable publication instances (FS-12).
@@ -25,45 +27,54 @@ including health, docs, and OpenAPI. Interactive docs default disabled.
 
 ## Operation parity matrix
 
-This table is the machine-readable parity source. Test columns are explicit
-pending evidence rather than claims that a proposed route works. Preserve
+This table is the machine-readable parity source. Test columns cite concrete
+CLI/API enforcement evidence; API-016 checks every row and reference. Preserve
 one row for each mode when filling them. `archive` means the cross-process
 local flock through all domain persistence; `worker archive` means that same
 lock is owned by the offline executor. A preview cannot grant apply authority.
 An implemented row means its HTTP resource exists; API-012/013 now use those
 resources for operational CLI modes and explicit resumable observation.
+Native Unix requests may use unprefixed `/api/v1` despite a public TCP prefix;
+links/docs follow the trusted effective request prefix, without changing TCP
+security or client schemas ([decision 123](adr/decision-123.md)).
+Evidence cells use stable `path::test_function` references. The independent
+[`tests/rest_parity.py`](../tests/rest_parity.py) manifest records the same rows,
+fields and citation sets, including selected parameter cases; the
+[gate tests](../tests/unit/test_rest_parity_gate.py) resolve them statically without
+importing test modules. Capability/evidence-only rows cite typed client tests and
+do not add new public CLI command families.
 
 | CLI mode | Service | Route | Role | Lock | Hub | Execution | Effects | CLI test | API test | State |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| version --server | version | GET /version | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| capabilities | capabilities | GET /capabilities | R | none | no | Q | none | client negotiation: tests/unit/test_cli_api_reads.py; tests/unit/test_cli_api_writes.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_candidates.py; tests/unit/test_api_candidates_adversarial.py | implemented |
-| archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_candidates.py; tests/unit/test_api_candidates_adversarial.py | implemented |
-| sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| status [selectors] | archive_status | GET /status | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| prune --dry-run | preview_prune | POST /prune-plans | R | none | no | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| prune --apply | apply_prune | POST /prunes | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| purge --dry-run [selectors XOR --all-unmanaged] | preview_purge | POST /purge-plans | R | none | no | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| purge --apply [selectors XOR --all-unmanaged] | apply_purge | POST /purges | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| recover --dry-run | preview_recovery | POST /recovery-plans | R | none | no | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| recover --apply | apply_recovery | POST /recoveries | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| quarantine --dry-run IDs | preview_quarantine | POST /quarantine-plans | R | none | no | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | typed reader only: tests/unit/test_api_client.py; tests/unit/test_query_evidence.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py; tests/unit/test_query_boundary.py | implemented |
-| operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operation_helpers.py; tests/unit/test_cli_operations_adversarial.py | tests/unit/test_api_operations.py; tests/unit/test_operations.py; tests/unit/test_operation_store_adversarial.py | implemented |
+| version --server | version | GET /version | R | none | no | Q | none | `tests/unit/test_cli_api_reads.py::test_reader_modes_need_no_client_archive_config_or_hub_credentials` | `tests/unit/test_api_reads.py::test_version_health_diagnose_later_invalid_policy_and_capabilities_show_role` | implemented |
+| capabilities | capabilities | GET /capabilities | R | none | no | Q | none | `tests/unit/test_api_client_sockets.py::test_reader_client_uses_real_unix_tcp_and_verified_tls`; `tests/unit/test_api_client_adversarial.py::test_failed_capability_envelope_cannot_authorize_from_partial_data` | `tests/unit/test_api_reads.py::test_version_health_diagnose_later_invalid_policy_and_capabilities_show_role` | implemented |
+| config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | `tests/unit/test_cli_api_reads.py::test_reader_modes_need_no_client_archive_config_or_hub_credentials` | `tests/unit/test_api_commands.py::test_installed_validation_reports_domain_failure_without_hub_or_probes`; `tests/unit/test_api_candidates.py::test_candidate_validation_keeps_useful_legacy_fields_separate_from_authority` | implemented |
+| config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | `tests/unit/test_cli_api_reads.py::test_candidate_cli_sends_content_and_preserves_validation_compatibility` | `tests/unit/test_api_candidates_adversarial.py::test_valid_incompatible_candidate_is_assessed_without_credentials`; `tests/unit/test_api_candidates_adversarial.py::test_malformed_candidate_preserves_configuration_problems`; `tests/unit/test_api_candidates_adversarial.py::test_candidate_validation_survives_invalid_installed_policy_without_claiming_compatibility` | implemented |
+| archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | `tests/unit/test_cli_api_reads.py::test_reader_modes_need_no_client_archive_config_or_hub_credentials`; `tests/unit/test_archive_init.py::test_inspect_mutates_nothing`; `tests/unit/test_archive_init.py::test_inspect_reports_an_adoptable_published` | `tests/unit/test_api_adversarial.py::test_inspection_diagnoses_corrupt_or_vanished_sentinel_without_repair` | implemented |
+| archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | `tests/unit/test_archive_init.py::test_confirm_creates_the_archive`; `tests/unit/test_archive_init.py::test_confirm_adopts_a_pre_existing_published` | `tests/unit/test_api_maintenance.py::test_initialization_is_only_explicit_confirmed_and_configured`; `tests/unit/test_api_maintenance_adversarial.py::test_initialization_is_disabled_before_body_or_receipt` | implemented |
+| doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | `tests/unit/test_cli_api_reads.py::test_reader_modes_need_no_client_archive_config_or_hub_credentials`; `tests/unit/test_readonly_commands.py::test_read_only_never_reports_a_capability_as_passing` | `tests/unit/test_api_commands.py::test_reader_plan_and_explicit_diagnostics_keep_effects_and_lock_boundaries`; `tests/unit/test_api_command_adversarial.py::test_only_literal_true_diagnostics_is_reader_authorized` | implemented |
+| doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_readonly_commands.py::test_doctor_reports_checks_in_the_normative_order`; `tests/unit/test_readonly_commands.py::test_the_writability_probe_leaves_nothing_behind` | `tests/unit/test_api_commands.py::test_reader_plan_and_explicit_diagnostics_keep_effects_and_lock_boundaries` | implemented |
+| plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | `tests/unit/test_cli_api_reads.py::test_reader_modes_need_no_client_archive_config_or_hub_credentials`; `tests/unit/test_readonly_commands.py::test_plan_keeps_configuration_order_not_selector_order`; `tests/unit/test_readonly_commands.py::test_one_repository_failing_does_not_hide_the_others` | `tests/unit/test_api_commands.py::test_reader_plan_and_explicit_diagnostics_keep_effects_and_lock_boundaries`; `tests/unit/test_api_command_adversarial.py::test_plan_selector_normalization_and_caller_class_namespace` | implemented |
+| plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | `tests/unit/test_cli_api_reads.py::test_compatible_candidate_plan_cli_preserves_selection_and_never_downloads` | `tests/unit/test_api_candidates_adversarial.py::test_candidate_plan_uses_installed_credential_and_candidate_repository_policy`; `tests/unit/test_api_candidates_adversarial.py::test_candidate_plan_refuses_authority_before_credentials_or_hub`; `tests/unit/test_api_candidates_adversarial.py::test_queued_candidate_rechecks_fresh_installed_authority` | implemented |
+| sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_synchronize.py::test_the_sync_command_restricts_a_run_to_its_selectors`; `tests/unit/test_cli_api_writes.py::test_sync_cli_keeps_failure_aggregation_priority_and_report_identity` | `tests/unit/test_api_commands.py::test_sync_rest_runs_real_publication_and_reobserves_without_download`; `tests/unit/test_api_commands.py::test_sync_http_preserves_partial_failure_priority`; `tests/unit/test_api_commands.py::test_sync_refuses_unknown_journal_before_first_hub_contact` | implemented |
+| status [selectors] | archive_status | GET /status | R | none | no | Q | none | `tests/unit/test_cli_api_reads.py::test_reader_modes_need_no_client_archive_config_or_hub_credentials`; `tests/unit/test_readonly_commands.py::test_a_selector_restricts_the_command`; `tests/unit/test_cli_api_reads.py::test_status_walks_every_page_and_preserves_first_server_envelope` | `tests/unit/test_api_reads.py::test_status_pages_reconstruct_configuration_order_and_refuse_stale_cursor`; `tests/unit/test_query_boundary.py::test_latest_run_status_checks_archive_and_filename_identity`; `tests/unit/test_rest_pagination_gate.py::test_all_size_one_pages_match_local_truth_and_preserve_empty_unmanaged_and_exact_ids` | implemented |
+| list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | `tests/unit/test_synchronize.py::test_list_restricts_to_one_repository_type`; `tests/unit/test_synchronize.py::test_list_restricts_to_its_selectors`; `tests/unit/test_cli_api_reads.py::test_real_inventory_includes_unmanaged_revisions_and_known_empty_selection` | `tests/unit/test_query_boundary.py::test_metadata_queries_refuse_symlink_components`; `tests/unit/test_api_client_adversarial.py::test_inventory_uses_actual_repeated_selector_and_type_wire_parameters`; `tests/unit/test_rest_pagination_gate.py::test_all_size_one_pages_match_local_truth_and_preserve_empty_unmanaged_and_exact_ids` | implemented |
+| list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | `tests/unit/test_cli_api_reads.py::test_reader_modes_need_no_client_archive_config_or_hub_credentials`; `tests/unit/test_synchronize.py::test_list_revisions_describes_each_retained_revision`; `tests/unit/test_cli_api_reads.py::test_revision_join_preserves_empty_rows_and_pins_current_publication` | `tests/unit/test_api_reads.py::test_exact_namespace_name_refs_manifests_and_report_run_identity`; `tests/unit/test_api_client_adversarial.py::test_inventory_uses_actual_repeated_selector_and_type_wire_parameters`; `tests/unit/test_rest_pagination_gate.py::test_all_size_one_pages_match_local_truth_and_preserve_empty_unmanaged_and_exact_ids` | implemented |
+| verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | `tests/unit/test_cli_api_reads.py::test_reader_modes_need_no_client_archive_config_or_hub_credentials`; `tests/unit/test_verify_command.py::test_estimate_hashes_nothing_and_takes_no_lock`; `tests/unit/test_verify_command.py::test_estimate_exits_zero_on_a_damaged_archive` | `tests/unit/test_query_boundary.py::test_estimate_stats_artifacts_without_opening_them_for_content`; `tests/unit/test_query_boundary.py::test_estimate_counts_a_damaged_retained_reference_once_unless_current_is_also_damaged` | implemented |
+| verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_verify_command.py::test_named_run_cli_crosses_http_and_private_worker_without_selecting_latest`; `tests/unit/test_verify_command.py::test_a_named_report_that_will_not_load_is_reported` | `tests/unit/test_api_commands.py::test_every_public_verification_mode_delegates_and_preserves_exact_integrity_result`; `tests/unit/test_verification_executor.py::test_real_worker_delegates_all_modes_through_guarded_service` | implemented |
+| verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_verify_command.py::test_full_covers_a_repository_that_is_no_longer_configured`; `tests/unit/test_verify_command.py::test_full_exits_forty_on_corrupted_content` | `tests/unit/test_api_commands.py::test_every_public_verification_mode_delegates_and_preserves_exact_integrity_result`; `tests/unit/test_verification_executor.py::test_real_worker_delegates_all_modes_through_guarded_service` | implemented |
+| verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_verify_command.py::test_revision_verifies_a_repository_that_is_not_configured`; `tests/unit/test_verify_command.py::test_revision_with_an_abbreviated_sha_is_refused` | `tests/unit/test_api_commands.py::test_every_public_verification_mode_delegates_and_preserves_exact_integrity_result`; `tests/unit/test_verification_executor.py::test_real_worker_delegates_all_modes_through_guarded_service` | implemented |
+| prune --dry-run | preview_prune | POST /prune-plans | R | none | no | J | receipt only | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_synchronize.py::test_prune_dry_run_reports_the_plan_and_mutates_nothing` | `tests/unit/test_api_maintenance.py::test_prune_previews_and_applies_one_round_without_replaying_key` | implemented |
+| prune --apply | apply_prune | POST /prunes | W | archive | no | J | receipt; guarded domain mutation/audit | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_synchronize.py::test_prune_apply_takes_the_lock_and_completes_a_plan` | `tests/unit/test_api_maintenance.py::test_prune_previews_and_applies_one_round_without_replaying_key`; `tests/unit/test_api_maintenance_adversarial.py::test_preview_key_does_not_authorize_apply_and_maintenance_gate_only_controls_init` | implemented |
+| purge --dry-run [selectors XOR --all-unmanaged] | preview_purge | POST /purge-plans | R | none | no | J | receipt only | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_cli_api_writes.py::test_explicit_unmanaged_purge_cli_scope_keeps_configured_repository`; `tests/unit/test_synchronize.py::test_purge_all_unmanaged_removes_only_repositories_absent_from_configuration` | `tests/unit/test_api_maintenance.py::test_unmanaged_purge_preserves_unknown_entries_then_audits_explicit_apply`; `tests/unit/test_api_maintenance_adversarial.py::test_purge_requires_one_explicit_unmanaged_repository_scope` | implemented |
+| purge --apply [selectors XOR --all-unmanaged] | apply_purge | POST /purges | W | archive | no | J | receipt; guarded domain mutation/audit | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_cli_api_writes.py::test_explicit_unmanaged_purge_cli_scope_keeps_configured_repository`; `tests/unit/test_synchronize.py::test_purge_all_unmanaged_removes_only_repositories_absent_from_configuration` | `tests/unit/test_api_maintenance.py::test_unmanaged_purge_preserves_unknown_entries_then_audits_explicit_apply`; `tests/unit/test_api_maintenance_adversarial.py::test_queued_purge_becoming_managed_refuses_under_lock_before_hub_or_deletion` | implemented |
+| recover --dry-run | preview_recovery | POST /recovery-plans | R | none | no | J | receipt only | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_readonly_commands.py::test_recover_dry_run_mutates_nothing` | `tests/unit/test_api_maintenance.py::test_recovery_preview_and_apply_preserve_exact_durable_report_identity` | implemented |
+| recover --apply | apply_recovery | POST /recoveries | W | archive | no | J | receipt; guarded domain mutation/audit | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_readonly_commands.py::test_recover_apply_takes_the_lock_and_runs_the_preflight`; `tests/unit/test_readonly_commands.py::test_recover_apply_performs_nothing_when_the_plan_is_blocked` | `tests/unit/test_api_maintenance.py::test_recovery_preview_and_apply_preserve_exact_durable_report_identity` | implemented |
+| quarantine --dry-run IDs | preview_quarantine | POST /quarantine-plans | R | none | no | J | receipt only | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_quarantine.py::test_cli_dry_run_and_apply_select_only_named_findings` | `tests/unit/test_api_maintenance.py::test_quarantine_cleanup_uses_full_batch_proof_and_preserves_other_evidence`; `tests/unit/test_api_maintenance_adversarial.py::test_quarantine_requires_a_bounded_explicit_transaction_id_array` | implemented |
+| quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_quarantine.py::test_cli_validates_entire_batch_before_deleting`; `tests/unit/test_quarantine.py::test_cli_cleans_hardlinks_shared_between_selected_targets` | `tests/unit/test_api_maintenance.py::test_quarantine_cleanup_uses_full_batch_proof_and_preserves_other_evidence`; `tests/unit/test_api_maintenance_adversarial.py::test_quarantine_apply_reproves_entire_batch_after_preview_and_preserves_unknown_evidence` | implemented |
+| repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | `tests/unit/test_cli_api_writes.py::test_writer_cli_emits_exact_real_terminal_result`; `tests/unit/test_cli_api_writes.py::test_repair_reason_cli_is_persisted_with_exact_terminal_identity`; `tests/unit/test_crash_injection.py::test_the_repair_command_reports_a_refused_download` | `tests/unit/test_api_maintenance.py::test_repair_keeps_original_manifest_generation_locator_and_grace`; `tests/unit/test_api_maintenance_adversarial.py::test_repair_requires_exact_revision_and_never_accepts_credential_override` | implemented |
+| reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | `tests/unit/test_query_evidence.py::test_report_reads_preserve_every_existing_report_variant`; `tests/unit/test_query_evidence.py::test_exact_reference_and_manifest_preserve_their_distinct_locator_bases` | `tests/unit/test_api_reads.py::test_exact_namespace_name_refs_manifests_and_report_run_identity`; `tests/unit/test_api_reads.py::test_large_reports_stream_in_bounded_chunks_and_sanitize_registered_secrets`; `tests/unit/test_rest_pagination_gate.py::test_all_size_one_pages_match_local_truth_and_preserve_empty_unmanaged_and_exact_ids` | implemented |
+| operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | `tests/unit/test_cli_operation_helpers.py::test_show_and_lookup_preserve_server_envelope_metadata`; `tests/unit/test_cli_operations_adversarial.py::test_operations_wait_resumes_event_cursor_and_returns_exact_terminal_envelope`; `tests/unit/test_cli_operations_adversarial.py::test_lost_post_ack_recovers_by_printed_key_and_retry_never_resubmits` | `tests/unit/test_api_operations.py::test_reader_can_observe_writer_history_but_lookup_is_class_scoped`; `tests/unit/test_api_operations.py::test_exact_stored_result_preserves_domain_envelope_and_failed_exit`; `tests/unit/test_api_operations.py::test_event_pages_have_explicit_dropped_prefix_and_sequence_cursor`; `tests/unit/test_rest_pagination_gate.py::test_all_size_one_pages_match_local_truth_and_preserve_empty_unmanaged_and_exact_ids` | implemented |
 
 Local `version`, help, `serve`, and `config validate --local` are explicit
 bootstrap commands, outside remote operation parity. API-backed commands reject
@@ -91,8 +102,9 @@ pagination/projections remain separate from these domain results.
 API-006 strengthens the shared local read boundary with descriptor-relative
 no-follow traversal and optional `QueryBounds`. HTTP supplies finite entry,
 artifact and total-byte budgets; a refusal is `HFAPI005`, never an empty or
-silently truncated success. Default local CLI queries retain complete results
-without artificial transport ceilings. Status/list/latest-run/catalog reads and
+silently truncated success. Direct `LocalQueries` callers retain complete default
+results without transport ceilings; API-backed CLI aggregation is finite and
+refuses overflow rather than silently truncating. Status/list/latest-run/catalog reads and
 the health/estimate paths use the same safe reader. Missing/corrupt derived
 catalogs retain unknown verification confidence and grant no rebuild authority.
 Latest-run summaries ignore unreadable or identity-mismatched informational
@@ -860,7 +872,47 @@ local refusal metadata with successful inspection evidence. See
 
 ## Acceptance boundaries
 
-[Server contract](server.md) owns deployment/lifecycle detail. API-016 must prove
-complete REST, CLI, Cockpit, packaging, and offline tests before MCP code,
-dependencies, imports or endpoints are added. Operator-only production checks
-remain deployment prerequisites. This plan authorizes no production operations.
+[Server contract](server.md) owns deployment/lifecycle detail. API-016 requires
+complete REST, CLI, Cockpit, packaging and offline build acceptance before MCP
+code, dependencies, imports or endpoints are added. A 29-mode matrix is separate
+from the independent 34 method/path security inventory (33 with interactive docs
+disabled); both must remain complete. Invalid bearers authenticate before body
+reception on every route, including docs/schema/error surfaces. Mixed candidate/
+probing roles cannot admit work before their capability check.
+
+Concrete gate evidence lives in the [parity manifest](../tests/rest_parity.py),
+[route-complete security tests](../tests/unit/test_rest_security_gate.py),
+[actual Unix/TCP/OpenAPI tests](../tests/unit/test_rest_transport_gate.py),
+[complete paged-reader tests](../tests/unit/test_rest_pagination_gate.py) and
+[example/docs/disabled-import tests](../tests/unit/test_rest_examples_gate.py).
+Pagination includes size-one pages, empty/unmanaged inventory and exact identity;
+it never claims an archive-wide snapshot. Prefix spelling does not change the
+canonical operation route/key binding: native/public retries return the original
+operation and admitted fingerprint, while links use the current trusted request
+prefix. Public/native OpenAPI views are deterministic without mutating shared
+schema state.
+
+All five current examples use their strict independent loaders, without resolving
+credentials, contacting the Hub/API, opening the archive or starting listeners:
+
+| Example | Domain/loader |
+| --- | --- |
+| [Archive policy](../examples/config.toml) | `ApplicationConfig` through `load_config` |
+| [Server](../packaging/server.toml) | `ServerConfig` through `load_server_config` |
+| [Reader](../packaging/client.example.toml) | `ClientConfig` through `resolve_client_config` |
+| [Scheduled client](../packaging/scheduled-client.example.toml) | Same client schema, explicit expected UUID required at execution |
+| [Cockpit client](../packaging/cockpit-client.toml) | Same client schema, API-only named credential |
+
+Example parse success does not provision credentials, prove UUID/sentinel identity
+or authorize installation. Placeholder endpoint/source/UUID values require
+operator selection. API-016 runs fresh `scripts/check.sh --with-build`, complete
+Cockpit and isolated locked base/server wheel checks, actual local sockets and
+old/current parser compatibility. A cold disabled app imports no MCP and creates
+no archive/control state. The task records actual counts and results; prior
+package counts do not stand in for fresh acceptance.
+
+Installed systemd activation, cgroup no-IP/credential-source masking (including
+custom paths), hardening, browser/PAM bridge, SELinux/NFS, executor drain and
+verify-calendar approval remain explicit [operator holds](progress.md#operator-handoff).
+Repository fixtures do not pass them. This plan authorizes no production operation
+or deployment.

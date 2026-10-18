@@ -427,7 +427,7 @@ is a separate strict, frozen, schema-1 `ServerConfig`, defaulting to
 `/etc/hfcache/server.toml`; its keys, example and credential rules are in the
 [server contract](server.md). Do not put listeners, API credentials, admission
 limits or maintenance gates into the archive TOML. API credentials and Hub
-credentials have separate sources and authority. A later client configuration
+credentials have separate sources and authority. Independent client configuration
 contains only connection/authentication settings and never grants archive access
 on the client host.
 
@@ -437,7 +437,7 @@ for each query or operation admission, yielding one immutable snapshot and its
 existing nonsecret fingerprint. Already-running work keeps its snapshot. A
 changed archive root or UUID requires a server restart and cannot hot-switch the
 server to another archive. Invalid updated policy fails new archive work closed;
-version/health must remain able to diagnose it when their routes land.
+version/health remain able to diagnose invalid updated policy without repair.
 
 API-008's operation runner reloads policy under the service-owned archive lock
 and compares it with the admitted fingerprint before mutation. A changed policy refuses stale

@@ -199,6 +199,43 @@ def test_a_named_report_that_will_not_load_is_reported(config_path, archive):
     assert [problem["code"] for problem in envelope_of(result)["errors"]] == ["HFVER007"]
 
 
+def test_named_run_cli_crosses_http_and_private_worker_without_selecting_latest(
+    config_path, archive
+):
+    published = publish(archive)
+    _, selected_run = write_run_report(
+        archive, commit_sha=published.commit_sha, publication_id=published.publication_id
+    )
+    write_run_report(
+        archive,
+        commit_sha=published.commit_sha,
+        publication_id=published.publication_id,
+        started_at=datetime(2026, 7, 27, 12, 0, 0, tzinfo=UTC),
+        status="skipped",
+    )
+    with api_cli(config_path) as remote:
+        selected = remote.invoke(["verify", "--new", "--run-id", selected_run])
+        assert selected.exit_code == ExitCode.SUCCESS, selected.output
+        envelope = envelope_of(selected)
+        assert envelope["command"] == "verify --new"
+        assert envelope["data"]["scope"]["revisions"] == 1
+        assert envelope["data"]["scope"]["unique_objects_read"] == len(FILES)
+        (receipt,) = remote.application.state.operations.list()
+        assert receipt.route == "/api/v1/verifications"
+        assert receipt.domain_run_id == envelope["run_id"]
+        assert (
+            remote.application.state.operations.result(receipt.operation_id).to_payload()
+            == envelope
+        )
+        report = json.loads((archive.root / envelope["data"]["report"]).read_text())
+        assert report["run_id"] == envelope["run_id"]
+        assert report["scope"]["revisions"] == 1
+        # The default would select the newer sync, which published nothing.
+        newest = remote.invoke(["verify", "--new"])
+        assert newest.exit_code == ExitCode.SUCCESS, newest.output
+        assert envelope_of(newest)["data"]["scope"]["revisions"] == 0
+
+
 def test_a_damaged_newest_report_does_not_stop_the_default_search(config_path, archive):
     """An older readable run is a better answer than a refusal, and `--new` was
     not asked for a particular one."""

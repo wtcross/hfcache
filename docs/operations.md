@@ -15,17 +15,21 @@ The numbered historical runbook blocks were run on this deployment. Where output
 is abbreviated it is marked with `…`; nothing is invented. The explicitly dated
 REST/client sections describe source/test behavior and examples, not a rollout.
 
-Throughout, `$H` stands for the invocation an operator uses. Scheduled runs use
-exactly the same commands, which is what makes a behaviour reproducible by hand:
+In the numbered historical blocks, `$H` is the original direct-writer invocation.
+The scheduled runs at that time used the same command backend:
 
 ```bash
 H="sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml"
 ```
 
-The service account has a `nologin` shell; invoking the binary directly works
-anyway, and that is the supported way to exercise the CLI as the identity the
-timers use. Running as yourself will fail — `/etc/hfcache/config.toml` is
-`0640 root:hfcache`.
+That historical alias and its captured output do not describe the feature
+branch's API-only client setup. Current operational commands use separate
+[client settings and API credentials](api-client.md), and packaged scheduled
+clients use their [retained observation handles](server.md#activated-services-and-scheduled-observation-api-014).
+Provision the named API credential through the documented service boundary;
+the ordinary CLI does not read archive TOML or inherit the Hub credential.
+The service account still has a `nologin` shell. Actual installed-host migration
+and hardening acceptance remain deployment holds; these examples are not a rollout.
 
 ---
 
@@ -88,9 +92,9 @@ Explicit `--detach` returns admission only. Its JSON object has schema 1,
 a command `outcome`/`exit_code`. Resume with the original handles:
 
 ```text
-hfcache --client-config /etc/hfcache/client.toml --json operations lookup <original-key>
+hfcache --client-config /etc/hfcache/client.toml --json operations lookup -- '<original-key>'
 hfcache --client-config /etc/hfcache/client.toml --json operations show <operation-id>
-hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 operations wait <operation-id> --after 12
+hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 operations wait --after 12 -- '<operation-id>'
 ```
 
 These are interface examples, not production commands exercised here. Show/lookup

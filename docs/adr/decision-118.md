@@ -7,6 +7,7 @@
 - Source: [progress decision 118](../progress.md#decisions),
   [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
   [task](../plans/tasks/api-011-typed-client-and-client-config.md).
+Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
 ## Context and decision
 
@@ -114,3 +115,13 @@ metadata Envelopes. Validated key/accepted-ID messages remain on stderr even
 quiet, and bounded sanitized event/status/result reads share one deadline.
 Timeout/Ctrl-C retains handles and uncertainty, without cancellation or replay.
 No direct local mutation backend, new dependency or durable shape is introduced.
+
+
+## 2026-10-18 native Unix prefix and REST acceptance amendment (API-016)
+
+Existing local Unix clients retain fixed unprefixed paths without another
+client field/version. Actual supported Unix transport gets native effective-prefix
+links; public TCP continues its configured safe URL prefix, verified TLS and strict
+link checks. The client still cannot select another interface through request
+headers, follow arbitrary links or replay uncertain work. See
+[decision 123](decision-123.md).
