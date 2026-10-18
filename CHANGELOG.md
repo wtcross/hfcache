@@ -13,8 +13,9 @@ Local metadata orchestration now uses transport-neutral query services.
 `status` includes unmanaged published repositories, and `status`/`list` accept
 their explicit selectors as documented. Read-only evidence services validate
 exact report/reference/manifest identity and contained locators. Durable archive
-formats and the consumer export remain unchanged. REST/CLI migration and MCP
-remain in progress under the [active plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md).
+formats and the consumer export remain unchanged. REST/CLI and optional MCP
+interfaces are implemented below; final acceptance/closure follows the
+[active plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md), without deployment.
 
 All operational commands now delegate to typed services. Non-estimate
 verification holds the common archive lock and storage preflight through scope
@@ -31,7 +32,7 @@ support the HTTP server and isolated executor described below.
 
 Server configuration now has its own strict schema and explicit protected bearer
 sources. Fixed reader/writer capabilities, safe credential loading and fresh
-archive-policy snapshots provide the authentication boundary for later routes.
+archive-policy snapshots provide the authentication boundary for the routes below.
 HTTPX is a direct base dependency; FastAPI/Uvicorn are an optional `server`
 extra. Installing dependencies alone starts no listener or production installation.
 
@@ -39,7 +40,8 @@ Authenticated REST metadata is now available through an injectable application
 and explicit `serve` bootstrap, with one lifespan for Unix/TCP, bounded queries,
 safe errors/pages/streams and fresh policy snapshots. Shared readers reject
 unsafe paths and inconsistent evidence without repairing an archive. References
-retain published-relative locators; the API-backed CLI and MCP remain planned. Tests use disposable sockets; no production server was started.
+retain published-relative locators. The API-backed CLI and MCP are described
+below. Tests use disposable sockets; no production server was started.
 
 Operation admission now has an independent local JSON receipt/key authority,
 bounded sanitized events/results and authenticated observation. Matching retries
@@ -52,7 +54,8 @@ The daemon now has one bounded execution lane with one queue/lock waiting
 deadline and an under-lock admitted-policy check. Private verification delegates
 through a peer-checked bounded Unix protocol with exact durable outcomes and
 restart reconciliation; accepted work is never automatically replayed. Installed
-systemd/no-IP enforcement remains later work. No in-process production verification fallback or MCP dependency is added.
+systemd/no-IP policy is packaged below, with actual installed enforcement held
+for operators. No in-process production verification fallback is provided.
 
 Typed REST commands now admit sync, all actual verification modes, installed
 planning and explicit read-only/probing diagnostics with durable keyed 202
@@ -155,6 +158,14 @@ credential/file-fetch authority or catalog repair is exposed. Fixed classified
 errors contain no rejected inputs; registry/schema and side-effect tests govern
 read-only claims rather than annotations. No dependency/durable/config or
 production deployment change.
+
+A protected-file MCP example now performs bounded repository and exact-publication
+manifest discovery using the locked SDK, verified transport and summary-only
+output. Client guidance covers whole-archive restricted metadata, independent
+versions, stateless sessions, restart-only rotation, resource costs and safe
+failure/reconnect. Mounted proofs preserve archive/control state and REST
+identity with MCP disabled/enabled. Installed TLS/firewall/credential/worker
+hardening acceptance remains separate; no production rollout is performed.
 
 ## v0.1.10 — 2026-09-14
 

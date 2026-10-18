@@ -159,8 +159,8 @@ Requires [uv](https://docs.astral.sh/uv/) and CPython 3.14.
 ```bash
 git clone https://github.com/wtcross/hfcache.git
 cd hfcache
-uv sync                      # create the locked development environment
-uv run hfcache --help
+uv sync --locked --extra server --extra mcp  # all implemented development extras
+uv run --locked --extra server --extra mcp hfcache --help
 ```
 
 The base installation includes the HTTP client and keeps CLI imports independent
@@ -188,8 +188,15 @@ REST acceptance is committed. MCP-001 adds standalone FastMCP only through the
 optional `mcp` extra, alongside `server`; disabled installs need no MCP package
 or credential. MCP-002 exposes nine curated metadata tools through a narrow read
 protocol, with typed bounded pages and no jobs/Hub/probes or arbitrary file reads.
-See [MCP setup and limitations](docs/mcp.md). Disposable-socket TLS tests use the OpenSSL CLI
-as a development test tool; Python production dependencies remain locked.
+The [protected-file example client](examples/mcp-client.py),
+[setup/session/rotation guide](docs/mcp.md#protected-file-example-client-mcp-004)
+and [cost/error limits](docs/mcp.md#resource-costs-and-troubleshooting) describe
+controlled internal metadata access. The MCP reader can see the whole archive,
+including restricted metadata; it cannot use REST or create jobs. No OAuth
+provisioning, browser bearer, file transfer or local archive fallback is supplied.
+Disposable-socket TLS tests use the OpenSSL CLI as a development test tool; Python
+production dependencies remain locked. All-extra development commands do not
+change production profile selection or close installed-host acceptance holds.
 API-009 exposes keyed command admission with HTTP 202 and authenticated status,
 events and exact terminal results. Sync/actual verification require a writer;
 installed planning and explicitly read-only diagnostics permit readers but may
@@ -275,9 +282,9 @@ scripts/check.sh --with-build    # plus a wheel install smoke test
 Three opt-in suites are deselected by default:
 
 ```bash
-uv run pytest -m live     # contacts the Hugging Face Hub
-uv run pytest -m nfs      # requires the live NFS archive mount on the writer
-uv run pytest -m build    # builds artifacts and installs into a throwaway venv
+uv run --locked --extra server --extra mcp pytest -m live  # explicitly opted-in Hub tests
+uv run --locked --extra server --extra mcp pytest -m nfs   # explicitly authorized real-NFS tests
+uv run --locked --extra server --extra mcp pytest -m build # throwaway wheel smoke
 ```
 
 ## License

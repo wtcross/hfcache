@@ -1,4 +1,4 @@
-# Optional MCP transport
+# Optional MCP metadata interface
 
 MCP-001 adds an optional authenticated Streamable HTTP transport after committed
 REST acceptance. MCP-002 adds the explicit nine-tool metadata read interface,
@@ -8,6 +8,11 @@ the [transport task](plans/tasks/mcp-001-mount-authenticated-fastmcp.md) owns it
 acceptance evidence. [Decision 125](adr/decision-125.md) and the
 [tool task](plans/tasks/mcp-002-curated-read-only-tools.md) own curated exposure
 and its registry/schema/side-effect proof.
+MCP-003 supplies mounted security/side-effect evidence; MCP-004 completes the
+protected-file client and required build acceptance. The
+[acceptance task](plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) records
+actual runs. MCP repository acceptance is complete; final API-017 closure and
+installed-host operator holds remain separate.
 
 ## Enablement and authority
 
@@ -59,6 +64,112 @@ permits a literal value in configuration or request input. This is an installati
 example, not an executed host change. The private verification worker must receive
 neither MCP nor REST/Hub credentials; standard stores are masked, while custom
 source paths require explicit masks/probes under existing operator holds.
+
+## Protected-file example client (MCP-004)
+
+[`examples/mcp-client.py`](../examples/mcp-client.py) is a deterministic metadata
+client for the locked FastMCP 4.1.1 interface. It does not run an agent, accept a
+command/tool name, discover credentials or install anything. An operator must
+first provision a distinct MCP-reader secret through the protected file rules in
+[server authentication](server.md#implemented-credential-and-capability-boundary-api-005).
+Token acquisition is operator provisioning, not OAuth discovery. Supply only the
+absolute protected file pathname; never put its contents in argv, URLs, JSON,
+shell history or browser storage.
+
+From a locked checkout with both test/server extras selected:
+
+```bash
+uv sync --locked --extra server --extra mcp
+uv run --locked --extra server --extra mcp python examples/mcp-client.py \
+    --url https://archive.example.com/management/mcp/ \
+    --token-file /etc/hfcache/mcp-reader.token \
+    --expected-archive-id 01234567-89ab-4cde-8fab-0123456789ab
+```
+
+This is an operator-adapted setup example, not a command run on the production
+archive. Choose the real authority, public prefix, protected source and archive
+UUID. Use `--ca-file /etc/hfcache/archive-ca.pem` for a private CA rather than
+disabling verification. The source is validated/registered before network I/O;
+it is the MCP credential, never `hfcache.api` or the Hub secret. The example
+selects an explicit HTTP transport rather than SDK inference from an arbitrary
+string that could identify a local executable.
+
+| Argument | Default / meaning |
+| --- | --- |
+| `--url` | Required canonical HTTPS URL ending `/mcp/`, including any public prefix; explicit loopback HTTP is the development exception |
+| `--token-file` | Required absolute protected opaque MCP-reader credential file; no token-value/environment option |
+| `--ca-file` | Optional explicit CA file; ordinary verified system trust otherwise |
+| `--expected-archive-id` | Optional canonical UUID pin; recommended to detect a wrong archive before using metadata |
+| `--page-size` | `100`; integer 1–10,000 within the server's configured maximum, never a promise that a row fits its byte limit |
+| `--max-pages` | `1000`; integer 1–10,000 across all metadata tool reads, including current and both manifest collections, not silent truncation |
+| `--timeout` | `30` seconds; finite `(0, 300]` overall deadline including negotiation and page reads |
+| `--mode` | `auto` or `legacy`; normal supported negotiation or explicit initialize-handshake compatibility |
+| `--type`, `--repository` | Both together select one repository for exact current/manifest discovery; omitted means inventory only |
+
+The example walks repository inventory and prints one JSON object with
+`kind="discovery_summary"`, `repository_count` and `metadata_pages`. Success exits
+0; failure/interrupt exits 1 with a fixed safe diagnostic and no partial summary.
+This is example output, not a domain Envelope or receipt.
+Optional repository discovery reads current once, then walks both manifest
+collections at its exact full SHA/publication ID, adding `manifest_files` and
+`manifest_dependencies` counts. It pins archive UUID and fresh
+policy identity across the walk, checks typed schema-1 responses, exact artifact
+headers and cursor continuity, and rejects repeated cursors/inconsistent or
+unfinished walks. `metadata_pages` counts all metadata calls, including the unpaged
+current reference. It returns counts, not file content or an authoritative durable
+manifest. Reconstructing and independently verifying a complete consumer copy
+remains the [consumer workflow](consumers.md#mcp-metadata-discovery-mcp-002).
+No archive mount/config, Hub credential, REST writer token or local mutation
+fallback is required or used.
+
+Each received response is capped at 16 MiB by the example, under one deadline;
+the server's smaller configured cap still applies. It disables redirects,
+ambient proxies and implicit credential discovery, retains certificate
+verification and caches no credential or result to disk. Errors use fixed safe
+diagnostics rather than rejected input or SDK tracebacks. These client bounds do
+not expand server budgets or authorize execution. Actual positive/negative
+example execution belongs to the MCP-004 task evidence.
+
+### Wire, sessions and reconnect
+
+MCP protocol negotiation, the independent `MetadataRead.schema_version=1` and
+its nested domain Envelope schema are different compatibility boundaries. Check
+the typed metadata version and identity rather than inferring them from a server
+package/version string. Unknown/malformed metadata or durable evidence refuses;
+do not coerce it, rewrite its version or continue a partial collection.
+
+The locked SDK's `mode="auto"` negotiates modern `server/discover`; `legacy`
+uses `initialize`. Both are tested against this stateless mount. Use a fresh
+client context for each connection and let the supported SDK negotiate; a legacy
+session identifier is never authentication or retained hfcache work. There is no
+hfcache SSE event feed, task/job receipt, background execution, resource/prompt
+interface or server-side resumption history. Closing a connection stops
+observation; an already running bounded read may finish before its lease releases.
+
+[Official client lifecycle/negotiation](https://gofastmcp.com/clients/client),
+[explicit HTTP transport/trust](https://gofastmcp.com/clients/transports) and
+[bearer authentication](https://gofastmcp.com/clients/auth/bearer) references were
+checked against locked 4.1.1. Upstream OAuth/STDIO/in-memory/task examples do not
+add those interfaces or authority to this server. A desktop/browser client that
+requires OAuth discovery cannot use this pre-provisioned endpoint automatically.
+
+### Rotation and disabled operation
+
+Authentication sources are loaded at startup, not watched. Replacing the source
+file alone does not revoke an in-memory old credential. An operator provisions a
+new distinct MCP secret, follows the existing API drain/restart procedure with
+that source, then recreates clients so they reread it. No session ID bridges the
+rotation. Verify old credentials refuse, the new credential sees the exact nine
+tools and separate REST credentials retain their own authority. Do not give the
+private verification worker the MCP source or use the REST token as a workaround.
+These are operator acceptance instructions, not service changes performed here.
+
+When disabled, no MCP package/source/endpoint is required and REST auth/lifecycle
+stays independent. Enabling needs both installed extras and a usable distinct
+source before startup. The default packaged unit does not import an optional MCP
+credential; named-source delivery is the explicit drop-in above. Reverting to a
+server-only/pre-MCP target requires deliberately disabling MCP before restart;
+there is no automatic fallback, source copying or archive/config schema migration.
 
 ## Transport and lifecycle
 
@@ -242,6 +353,49 @@ deployed systemd/cgroup credentials, no-IP masks, browser/PAM, SELinux/NFS or
 rollback/drain acceptance. Existing [operator holds](progress.md#operator-handoff)
 remain deployment prerequisites; no production operation is authorized.
 
+## Resource costs and troubleshooting
+
+A small page limits output entries, not the work required to validate underlying
+metadata. Each page uses fresh policy and bounded authoritative readers; a large
+inventory scan or a fully parsed immutable manifest/report can cost substantial
+filesystem I/O even for `limit=1`. None of this verifies archived payload hashes
+or increases confidence. Prefer sequential bounded walks; do not increase
+concurrency merely because tools have read-only hints.
+
+| Server limit | Default and consequence |
+| --- | --- |
+| Request bytes | 1 MiB strict JSON; unknown argument fields still refuse |
+| Page entries | Omitted limit resolves to 100; configured maximum is 1000, within the allowed 1–10,000 range |
+| Metadata scan | 10,000 aggregate entries and 64 MiB per-artifact/aggregate bytes; smaller pages cannot bypass a full-source validation budget |
+| Encoded response | 8 MiB before headers, checked again after sanitization; even one large header/entry may refuse |
+| Shared metadata work | Four workers plus 32 pending slots, shared with REST metadata |
+| MCP in-flight transport | Separate 36-request default ceiling, reserved after auth before body collection; active canceled observers may retain ownership until real completion |
+
+Values are restart-only [server resource settings](server.md#resource-settings),
+not tool parameters or permission to exceed limits. Counts are not an integrity
+percentage, reservation or archive-wide snapshot. Classified failure may be a
+parent HTTP Problem or MCP `isError` tool result; HTTP 200 alone is insufficient.
+Never replace a failed page with an empty successful page. The example prints
+only fixed safe failure text; codes below describe classified server responses,
+not a promise that arbitrary SDK errors are shown. Use bounded safe server
+diagnostics rather than enabling raw rejected-value/debug output.
+
+| Symptom | Safe interpretation / next check |
+| --- | --- |
+| No MCP endpoint or disabled-client refusal | Check deliberate enablement, canonical `/mcp/` and the public prefix; disabled MCP sources are inert, and authentication can refuse before any 404 |
+| Enabled startup HFCFG005 or credential failure | Install the selected optional release profile and provision the distinct source before normal restart; do not expect fallback or copy a REST/Hub token |
+| 401 / HFAPI001 | Missing, stale or wrong-class bearer; load the protected MCP source and recreate the client after rotation; a session ID is insufficient |
+| Host/Origin/TLS/proxy refusal / HFAPI010 | Check the actual authority, configured allowlists, public prefix and verified proxy path; forwarded headers cannot manufacture native Unix access |
+| TLS trust failure | Use the correct hostname and trusted CA file; never disable verification |
+| 307, noncanonical slash or query rejection | Supply the exact `/mcp/` URL with no query/userinfo/fragment; the example does not follow redirects |
+| HFAPI006 or fixed invalid-arguments ToolError | Use the exact tool schema and bounded typed fields; no arbitrary path/URL/credential/job field is permitted |
+| HFAPI007 or continuation refusal | A tool/scope/policy/visible source changed, or the name is unsupported; discard partial aggregation and restart a fresh metadata walk |
+| HFARG004 or missing/stale immutable evidence | Check the exact run/report kind or pinned SHA/publication; never substitute a newer current instance inside the old attempt |
+| HFAPI005, response-size refusal or page limit | A bounded scan/artifact/wire/client budget was exhausted; fewer entries may help output size, but only an operator can review server budgets and a huge header/full-source scan may still refuse |
+| HFAPI009 / temporary saturation | Wait and retry a read under finite bounds; do not create jobs, parallel unbounded retries or change credentials |
+| Unknown schema, timeout or disconnect | Refuse incomplete output, close/recreate the client and repeat discovery if needed; no MCP execution receipt, replay/cancel or automatic recovery is involved |
+| Unverified/unknown catalog state | Honest missing/stale evidence, not a failed request or authorization to rebuild; only separately authorized actual verification can establish confidence |
+
 ## Threat, control and test traceability (MCP-003)
 
 These are required acceptance claims under decisions 124/125 and INV-002/003/
@@ -371,3 +525,14 @@ request context. The SDK request is not a tool argument or backend capability.
 [mounted registry/tool tests](../tests/unit/test_mcp_tools.py) provide task evidence.
 [Shared metadata-pool tests](../tests/unit/test_mcp_pool.py) prove off-loop work
 and refusal at the shared capacity limit.
+
+
+MCP-004 client/packaging acceptance uses [the runnable example](../examples/mcp-client.py),
+[actual example socket tests](../tests/unit/test_mcp_client.py),
+[negative client/trust/budget tests](../tests/unit/test_mcp_client_security.py) and
+[REST/rotation/packaging acceptance](../tests/unit/test_mcp_acceptance.py). The
+[MCP-004 task](plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns precise
+commands/counts and the required --with-build gate, including all implemented
+extras, three real locked wheel profiles and Cockpit. Cold base/REST-only imports,
+unchanged verifier no-IP/credential/timer policy and disabled/enabled REST parity
+are repository claims; operator-only deployment holds are not inferred passes.

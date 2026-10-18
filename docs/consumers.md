@@ -475,3 +475,13 @@ path/size/hash verification permits promotion as above. Archive-sourced strings
 and dependency observations are untrusted data, not instructions to execute or
 fetch external content. Existing copy/serving ownership, read-only export and
 operator acceptance requirements remain unchanged.
+
+
+The [protected-file example](../examples/mcp-client.py) and
+[setup/rotation guide](mcp.md#protected-file-example-client-mcp-004) demonstrate
+inventory and one-current/exact-manifest discovery without a local archive mount
+or writer credential. Output is a bounded count summary, not a reconstructed
+manifest or permission to promote. Keep the exact publication fixed during a
+copy; a failed/changed walk is restarted as a new attempt rather than combined
+with old pages. The same whole-archive authorization covers restricted metadata;
+MCP remains independent of bulk copy and serving ownership.

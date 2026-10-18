@@ -783,9 +783,11 @@ REST/Hub credentials and bare session IDs cannot authorize MCP.
 The fixed canonical `/mcp/` application shares the server's listener, transport checks and
 explicit composed lifespan. REST resources enter first; MCP closes before REST
 drains/releases its ownership. Disabled mode imports no package, loads no MCP
-credential and mounts no transport. No OpenAPI conversion, curated tool,
-resource/prompt or command path is added here. [MCP contract](mcp.md) owns exact
-mounted-path/session behavior and supported internal-client limitations.
+credential and mounts no transport. The nine curated metadata tools are defined
+below; no OpenAPI conversion, resource/prompt or command path is exposed.
+[MCP contract](mcp.md) owns exact mounted-path/session behavior,
+[protected-file client setup](mcp.md#protected-file-example-client-mcp-004) and
+supported internal-client limitations.
 
 Development install selects both extras with
 `uv sync --locked --extra server --extra mcp`. The release installer gains an
@@ -824,3 +826,23 @@ failures contain codes/fixed text rather than rejected values or fabricated
 success wrappers. [MCP tool contract](mcp.md#curated-metadata-tools-mcp-002) owns
 exact inputs, output fields, costs, ordering and refusal behavior. Existing
 transport/auth/lifecycle, configured resource limits and operator holds remain.
+
+
+## MCP client and packaging acceptance (MCP-004)
+
+The [example client](../examples/mcp-client.py) selects a provisioned protected
+MCP-reader file and explicit verified HTTP endpoint, never the REST CLI source
+or a Hub token. Named server source delivery remains an explicit API-service
+drop-in, not a default unit import. Client URLs include the configured public
+prefix and canonical /mcp/; ordinary local REST clients retain their separate
+native Unix interface. See [costs/troubleshooting](mcp.md#resource-costs-and-troubleshooting).
+
+Auth sources are restart-only: changing a file does not mutate the running
+registry. Normal drain/restart and a new client context are required for rotation;
+separate REST writer authority remains unchanged. The default unit/profile keeps
+MCP off. REST-only and REST+MCP must retain identical REST routes, OpenAPI/security
+scheme, class checks, service ownership and command behavior. The verifier still
+receives no credential and retains its no-IP policy; scheduled timer clients
+remain API-only. [Acceptance tests](../tests/unit/test_mcp_acceptance.py) map these
+repository claims, without proving installed socket/firewall/cgroup/credential/
+SELinux/NFS/drain behavior or enabling the verify timer.

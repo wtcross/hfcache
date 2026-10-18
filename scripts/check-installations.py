@@ -117,7 +117,8 @@ def main():
                         str(python),
                         "-I",
                         "-c",
-                        """import sys
+                        """import asyncio
+import sys
 from pathlib import Path
 from hfcache.api.app import create_app
 from hfcache.errors import ConfigurationError
@@ -144,6 +145,13 @@ except ConfigurationError as error:
 else:
     assert sys.argv[2] == 'present'
     assert any(getattr(route, 'path', None) == '/mcp' for route in enabled.routes)
+    from hfcache.mcp_tools import TOOL_NAMES
+    tools = asyncio.run(enabled.state.mcp_server.list_tools())
+    assert len(tools) == 9
+    assert {tool.name for tool in tools} == TOOL_NAMES
+    assert asyncio.run(enabled.state.mcp_server.list_resources()) == []
+    assert asyncio.run(enabled.state.mcp_server.list_resource_templates()) == []
+    assert asyncio.run(enabled.state.mcp_server.list_prompts()) == []
 assert not root.exists()
 """,
                         str(environment),

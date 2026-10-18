@@ -1397,6 +1397,47 @@ package in this family.
   next pending after this commit; final API-017 and operator holds 16–18 remain
   separate. Live Hub/NFS and extra build-marker suites were not run.)
 
+- [x] MCP-004 Complete protected MCP client guidance and repository acceptance
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md)).
+  Runnable protected-file example uses explicit HTTP transport, verified trust/
+  optional CA, no redirect/proxy/executable inference, one overall deadline and
+  finite byte/tool-read budgets. Exact wire/archive/policy/current/publication/
+  projection/count/cursor checks retain summary-only discovery; valid duplicate
+  dependency keys remain. No domain Envelope/receipt, payload transfer, complete
+  manifest or local archive/Hub/REST fallback is invented. Guidance completes
+  whole-archive restricted metadata, independent versions, stateless auto/legacy
+  sessions, restart-only rotation, disabled profiles, costs and safe troubleshooting.
+  Positive actual HTTP/custom-CA TLS/CLI example: 6 passed in 9.06 seconds.
+  Negative client plus REST/auth/OpenAPI/34-route/real command/rotation/packaging:
+  88 in 4.46. Credential replacement stays inert until restart; old/new MCP
+  capability changes without REST drift. Default units/credential-free no-IP
+  verifier/API-only scheduled timers remain. Source/logger/redirect/trust/size/
+  deadline/wire/identity/cursor/locator/count failures remain fixed/safe with no
+  credential/private-input echo. Anchors/REST parity: 63 in 1.03. Root AGENTS.md
+  context/locked-extra development commands and README match; production profiles
+  remain deliberately separate. Current client/server/API/config/security/
+  consumers/MCP/invariants/ADR/index/README/Unreleased guidance agrees, correcting
+  stale living availability prose while preserving historical evidence. First
+  `rtk proxy bash scripts/check.sh --with-build > .scratch/mcp-004-gate.log 2>&1`
+  exits 0: lock/both-extra sync, 387 formatted files, Ruff clean, whole Pyrefly
+  0 errors (11 suppressed, 59 warnings not shown), 3,616 Python tests
+  (40 deselected, 425.94 seconds), 0.1.10 sdist/wheel, all three actual locked
+  isolated base/server/server+MCP installation/import/help/version profiles,
+  including exact-nine enabled registry and zero resources/templates/prompts.
+  Cockpit lint/style/types, 127 tests in 2.141 seconds and production build in
+  1,268 ms pass; extra build-marker wheel subset: 4 passed, 3,652 deselected in
+  5.66 seconds. No gate failure/correction/restart or post-freeze source/semantic
+  change. AD-21, 124/125 and INV-002/003/008/010/011/012/013/016 are reviewed;
+  no new decision/tool/role/backend/dependency/config/durable shape. Final links/
+  current/dependencies, unchanged 29 REST modes, 125 unique indexed decisions and
+  whitespace pass. MCP repository acceptance is complete; next API-017 remains
+  pending after this commit. Application version 0.1.10 is unchanged source
+  metadata, not a release/tag. No live Hub/NFS, production archive/service action,
+  installation/deployment/push/merge/tag or version bump. Actual TLS/firewall/
+  socket/credential/worker hardening/custom masks/cgroup/SELinux/NFS/browser/PAM/
+  drain/rollback/verify-calendar acceptance remains in operator holds 16–18.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

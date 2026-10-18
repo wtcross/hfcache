@@ -567,3 +567,11 @@ scheduled oneshot repeats windows through exact terminal output. The private
 binds endpoint/UUID/REST-writer class across restarts and token rotation; it never
 contains a bearer, credential digest or archive policy. It is not another client
 configuration or execution queue. See [decision 121](adr/decision-121.md).
+
+
+MCP client guidance uses an explicit protected MCP-reader file and canonical
+HTTP endpoint, not archive TOML, the REST client's credential or a new config
+schema. See [the runnable setup example](mcp.md#protected-file-example-client-mcp-004)
+and [resource limits](mcp.md#resource-costs-and-troubleshooting). Credential/source
+settings remain startup-only; rotation requires the normal API drain/restart and
+new clients. Disabled mode requires neither optional package nor MCP source.

@@ -675,12 +675,14 @@ API-013 completes operational CLI/observation. API-014 packages named activation
 and actual-executor isolation policy with disposable runtime tests; API-015 integrates Cockpit's
 API-only clients and guarded configuration pipeline. API-016 validates complete
 REST acceptance. MCP-001 adds optional authenticated transport; MCP-002 adds nine
-explicit metadata tools through a narrow read protocol. Complete MCP acceptance
-and installed-host enforcement retain their later gates.
+explicit metadata tools through a narrow read protocol. MCP-003 proves mounted
+security and side-effect boundaries; MCP-004 records completed client/package
+acceptance.
+Final plan closure and installed-host enforcement retain their separate gates.
 [API](api.md) and [server](server.md) track exact availability; implementing tasks
 own proof.
 
-- **`INV-012` — Adapters share one domain implementation.** HTTP/future MCP
+- **`INV-012` — Adapters share one domain implementation.** HTTP/MCP
   adapters call typed services, never Typer/public CLI callbacks or each other's
   adapter callbacks. Operational CLI uses the independent typed HTTP client.
   Remote access
@@ -695,7 +697,8 @@ own proof.
   API-011 supplies the independent typed client/configuration and API-012 migrates
   read CLI/candidates. API-013's operational CLI uses pure request types and typed
   HTTP only, with no direct mutation backend imports or local fallback. MCP-002
-  remains later work.
+  uses the same validated metadata readers through explicit narrow adapters;
+  no REST writer route is converted into an MCP tool.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
@@ -873,7 +876,8 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   increase confidence or trigger persistence/rebuild. Registry/schema equality
   and success/failure archive/control-state snapshots prove the boundary;
   annotations alone do not. Dedicated mounted security proof is MCP-003; final
-  MCP acceptance remains MCP-004.
+  MCP client/package acceptance is recorded by completed MCP-004; installed-host checks remain
+  explicit deployment holds.
   Enforcement: [optional verifier/finite transport](../src/hfcache/mcp.py),
   [application boundary/lifecycle](../src/hfcache/api/app.py),
   [direct verifier/lifecycle tests](../tests/unit/test_mcp_mount.py) and
@@ -890,6 +894,11 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   installed-host assumptions, with [malformed evidence/secret proof](../tests/unit/test_mcp_security_evidence.py),
   [closed authority/state snapshots](../tests/unit/test_mcp_security.py) and
   [mixed-interface/cancellation/drain tests](../tests/unit/test_mcp_concurrency.py).
+  MCP-004 client/packaging guidance: [protected-file example](../examples/mcp-client.py),
+  [setup/version/rotation/cost contract](mcp.md#protected-file-example-client-mcp-004)
+  and [REST/auth/rotation/unit acceptance](../tests/unit/test_mcp_acceptance.py).
+  The independent REST base client retains no MCP runtime requirement; example
+  discovery grants no complete-artifact/copy or command authority.
 
 FW-01/FW-03 above retain their historical baseline with the explicit
 [108](adr/decision-108.md)/[109](adr/decision-109.md) amendment: scoped transport

@@ -45,7 +45,8 @@ run `hfcache archive init` — the archive exists.
 | Configuration keys or validation | `docs/configuration.md` |
 | Durable JSON formats | `docs/schemas.md`, and `docs/agents/release.md` on the drill a format change requires |
 | CLI surface, exit codes, error taxonomy | `docs/cli.md` |
-| REST transport or reader/client setup | `docs/api.md`, `docs/server.md`, `docs/api-client.md` |
+| REST server, authentication, operation receipts, or API-backed CLI | `docs/api.md`, `docs/server.md`, `docs/api-client.md`; then the affected contract rows below |
+| Read-only MCP transport, tools, or example client | `docs/mcp.md`, `docs/security.md`, `docs/consumers.md`; retain the nine-tool allowlist and whole-archive trust boundary |
 | Threat model and controls | `docs/security.md` |
 | Draft, activate, resume, or close a plan; add a task | `docs/agents/planning.md`, then `docs/plans/current.md` and the relevant dated plan/task; implementation authorization permits activation, while a draft alone does not |
 | A new feature or work package | The planning row above, affected `docs/invariants.md` sections, and relevant records from `docs/adr/README.md`; load `docs/plan.md` only where its original contract applies |
@@ -90,13 +91,18 @@ run `hfcache archive init` — the archive exists.
 ## Commands
 
 ```bash
-uv sync                          # locked dev environment (uv, CPython 3.14)
+uv sync --locked --extra server --extra mcp # full locked development environment
 scripts/check.sh                 # the quality gate
 scripts/check.sh --with-build    # plus a wheel install smoke test
-uv run pytest -m live            # opt-in: contacts the Hugging Face Hub
-uv run pytest -m nfs             # opt-in: needs the live NFS mount (writer only)
-uv run pytest -m build           # opt-in: builds artifacts in a throwaway venv
+uv run --locked --extra server --extra mcp pytest -m live  # opt-in: contacts Hub
+uv run --locked --extra server --extra mcp pytest -m nfs   # opt-in: live NFS
+uv run --locked --extra server --extra mcp pytest -m build # isolated wheel smoke
 ```
+
+Both extras are required to collect the complete offline test suite. The base
+reader CLI and REST-only production installations remain separate supported
+profiles; see `docs/server.md` and `docs/mcp.md`. Live/NFS markers retain the
+host and archive restrictions above.
 
 ## Agent docs
 

@@ -922,3 +922,22 @@ versions when implementing, especially FastMCP imports and test transports:
   Cockpit tests/production build. No full-gate correction/restart or runtime source
   change; no new decision or format/dependency. Current selects MCP-004 pending
   after this commit, with final MCP/API-017 acceptance and operator holds separate.
+
+
+- 2026-10-18 MCP-004: Activated after committed MCP-003 (`91ca214`) under the
+  authorized sequential plan. Existing decisions 124/125 govern the tested
+  protected-file explicit-HTTP client, whole-archive metadata/cost/version/session/
+  rotation/disabled/troubleshooting guidance and independent REST off/on packaging.
+  Example output is bounded discovery counts, never a complete artifact or job.
+  Update living availability prose and all-extra development routing while keeping
+  production profile choice and installed-host holds explicit. No new role/tool/
+  dependency/config/durable shape or decision is selected. Actual mounted/example
+  and required --with-build gate completed 2026-10-18: positive client selection
+  passes 6 tests, negative client/REST/rotation/packaging 88 and anchors/parity 63.
+  First full gate exits 0 with 3,616 Python tests (40 deselected, 425.94 seconds),
+  unchanged-version 0.1.10 builds/all three locked wheel profiles, 127 Cockpit
+  tests/production build and four extra wheel smokes. No full-gate correction/
+  restart or post-freeze source/semantic change. MCP repository acceptance is
+  complete; current selects API-017 pending after this commit. Final closure and
+  real operator deployment holds remain separate; no release/tag or production
+  operation is performed.

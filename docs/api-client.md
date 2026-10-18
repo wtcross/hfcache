@@ -13,6 +13,12 @@ synchronous library; readers need no archive TOML/mount, service UID, Hub creden
 or optional server/MCP package. The client never silently falls back to local
 archive access or starts a daemon.
 
+This is the REST CLI/library client. The optional
+[MCP example client](mcp.md#protected-file-example-client-mcp-004) uses a different
+protected MCP-reader source, SDK protocol and `/mcp/` endpoint; these REST global
+options and API-only `hfcache.api` do not authorize it. Neither interface forwards
+credentials across classes or falls back to local archive access.
+
 ## Endpoint and credential selection
 
 Client TOML is a separate strict schema-1 domain, with no archive storage, Hub

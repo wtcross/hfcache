@@ -14,7 +14,7 @@ production installation or listener start is asserted by implementation evidence
 ## Service and transport boundary
 
 Decision [108](adr/decision-108.md) introduces ordinary typed query/command
-services. HTTP and future MCP adapters never invoke Typer/public CLI callbacks or
+services. HTTP and MCP adapters never invoke Typer/public CLI callbacks or
 parse CLI stdout; the operational CLI uses an independent typed HTTP client.
 Adapter implementations do not call one another's callbacks. Archive algorithms, FS/TX
 requirements, sentinel identity, local flock, and publication authority remain
@@ -945,3 +945,13 @@ rows while status headline/warnings remain fresh per page. Limits count entries 
 or single entry fits the wire byte cap. No projection is a bulk transfer or a
 complete manifest until all required collections are reconstructed. See
 [MCP output/pages](mcp.md#metadata-output-and-pages) and [consumer identity](consumers.md).
+
+
+MCP-004's [protected-file client/setup](mcp.md#protected-file-example-client-mcp-004)
+walks metadata and exact publication projections under independent finite bounds;
+its summary is not a REST Envelope, operation receipt or file transfer. Client
+rotation recreates the connection after normal server restart; session IDs never
+replace the bearer. [REST/MCP acceptance](../tests/unit/test_mcp_acceptance.py)
+checks unchanged REST OpenAPI, route/role/command behavior and separate source
+rotation with optional MCP off/on. [Resource/troubleshooting guidance](mcp.md#resource-costs-and-troubleshooting)
+distinguishes HTTP problems, MCP tool failures and honest unknown confidence.

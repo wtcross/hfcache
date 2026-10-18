@@ -702,3 +702,22 @@ do not eliminate parser/SDK or host compromise risk. Actual TLS/proxy/socket/
 credential delivery and rotation, worker egress/source masking, cgroup/SELinux/
 NFS/drain/rollback and browser acceptance remain operator holds 16–18. No local
 integration result silently closes those holds or authorizes production changes.
+
+
+## Protected MCP client acceptance (MCP-004)
+
+The [example/setup](mcp.md#protected-file-example-client-mcp-004) uses a protected
+operator-provisioned MCP-reader file, explicit validated HTTP transport, verified
+TLS/optional CA and finite response/page/deadline bounds. Token values never
+belong in config/argv/URLs/browser storage; no ambient provider, redirect/proxy
+fallback, OAuth login or arbitrary executable/string transport is selected.
+Summary output grants no complete-manifest or copy-verification authority.
+Version/identity/cursor errors fail safely without rejected-input diagnostics.
+
+Rotation takes effect only on normal server restart; clients must reread the
+source in a new context. Separate REST sources and whole-archive authorization
+remain unchanged. [Disabled/enabled/rotation/packaging tests](../tests/unit/test_mcp_acceptance.py)
+cover application behavior and unchanged credential-free/no-IP worker/timer
+policy, not actual installed enforcement. Client/socket tests use owned disposable
+fixtures; operator holds 16–18 still gate TLS/firewall/socket/source delivery,
+worker egress/custom masks, cgroup/SELinux/NFS and real drain/rollback acceptance.

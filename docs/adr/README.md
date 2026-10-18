@@ -49,6 +49,10 @@ MCP mounted security proof under the existing 124/125 decisions is traced in the
 [MCP threat/control/test map](../mcp.md#threat-control-and-test-traceability-mcp-003)
 and its [MCP-003 task](../plans/tasks/mcp-003-mcp-security-and-side-effect-tests.md).
 Proof-only work introduces no placeholder architectural decision.
+[MCP-004 client/package acceptance](../plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md)
+completes the existing 124/125 guidance through a
+[protected-file client](../mcp.md#protected-file-example-client-mcp-004), without a
+new decision or capability.
 
 ## Maintenance rules
 

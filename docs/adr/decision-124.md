@@ -159,3 +159,26 @@ Python tests (40 deselected, 417.54 seconds), all three locked wheel profiles an
 127 Cockpit tests/production build. No runtime source or architectural choice
 changed. The task owns exact evidence; MCP-004/API-017 and real host acceptance
 remain separate. No new numbered decision is introduced for these proofs.
+
+## 2026-10-18 client and packaging acceptance (MCP-004)
+
+The [protected-file example](../../examples/mcp-client.py) uses the locked SDK's
+explicit HTTP transport, finite response/page/overall budgets, verified trust and
+no redirect/ambient proxy or executable-string inference. It returns discovery
+counts, never a durable artifact or command receipt. The
+[MCP setup/session/rotation guide](../mcp.md#protected-file-example-client-mcp-004)
+and [cost/refusal guidance](../mcp.md#resource-costs-and-troubleshooting) complete
+client expectations under this existing decision. No new tool/role/config schema
+or architectural choice is selected. REST off/on authentication/OpenAPI/command
+parity, restart-only source rotation and unchanged worker/timer policy are mapped
+by [acceptance tests](../../tests/unit/test_mcp_acceptance.py); the
+[MCP-004 task](../plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns actual
+runs and required --with-build results. Real deployment holds remain separate.
+
+Repository client/package acceptance completed 2026-10-18: positive example
+selection passes 6 cases, negative client/REST/rotation/packaging 88, and the
+first full --with-build gate exits 0 with 3,616 Python tests (40 deselected,
+425.94 seconds), all three locked wheel profiles, 127 Cockpit tests/build and
+four extra wheel smokes. No new decision, role/backend/dependency/config format
+or post-freeze source change. MCP repository acceptance is complete; API-017
+closure and actual installed-host holds remain separate.
