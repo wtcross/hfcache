@@ -387,6 +387,14 @@ part of introducing the workflow.
 
 **Confirmed at lock time (2026-07-24, `BOOT-002`):** `huggingface-hub` 1.24.0 declares `hf-xet` as a *required* dependency, not an extra, so no `huggingface_hub[hf_xet]` marker is needed. `hf-xet` 1.5.2 is pinned in `uv.lock` and ships `cp38-abi3` manylinux wheels that install on CPython 3.14, so production downloads use the same transfer path as tests with no source build.
 
+**API-005 amendment (2026-10-17, [decision 112](adr/decision-112.md)).**
+The scoped decision-108 transport exception now adds direct base HTTPX and
+optional FastAPI/Uvicorn `server` dependencies, including their required
+transitives. The gate provisions that extra, while base CLI imports remain
+independent. Verified transport, HTTP parsing, security and ASGI lifecycle
+correctness justify the addition; standard-library storage/serialization and
+domain orchestration remain. No FastMCP, listener or production install is added.
+
 Use `tomllib` to parse TOML and validate its decoded structure with strict Pydantic models. Prefer the standard library for JSON, hashing, filesystem operations, locking, and logging unless a dependency provides a material correctness benefit.
 
 The first release uses ordinary deterministic functions plus append-only typed checkpoint records; it does not introduce a general workflow or state-machine engine. Journals record filesystem facts after atomic operations and are not an orchestration engine. If later requirements add branching workflow graphs, human approval states, or durable distributed orchestration, use Pydantic AI rather than adding a different workflow framework.

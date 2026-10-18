@@ -199,6 +199,26 @@ history is uncertainty, not proof of nonexecution or permission to replay.
 
 ## Credentials and configuration
 
+API-005 now supplies strict configuration, credential loading, fixed capability
+principals and a reusable FastAPI bearer adapter. Runtime routes remain planned;
+API-006 must attach authentication to every endpoint and apply transport bounds.
+
+| Credential class | Accepted interface | Core capability | REST read | REST write |
+| --- | --- | --- | --- | --- |
+| REST writer | REST | `read`, `write` | authorized | authorized, subject to maintenance/domain gates |
+| REST reader | REST | `read` | authorized | 403 `HFAPI002` |
+| MCP reader | Future MCP only | `mcp-read` | 401 `HFAPI001` | 401 `HFAPI001` |
+| Absent, invalid or malformed bearer | none | none | 401 `HFAPI001` | 401 `HFAPI001` |
+
+These are verified principal/capability results, not assertions that a route
+exists. Cross-interface credentials are rejected as unauthenticated. Missing,
+malformed and invalid authentication uses the same safe detail `Not authenticated`
+and `WWW-Authenticate: Bearer realm="hfcache"`; capability refusal is `Forbidden`.
+Configured missing/unsafe/racing/malformed API credentials are startup
+`HFAPI003`; duplicate values across classes are `HFAPI004`. All four codes retain
+the exit-10 authentication/configuration classification. No raw bearer or
+credential-derived principal identifier is returned.
+
 Separate strict versioned archive, server, and client config domains. Server
 transport/auth changes require restart. Each request/admission freezes a freshly
 loaded archive policy and nonsecret fingerprint; root/UUID changes fail closed
@@ -210,6 +230,12 @@ credential is resolved. Validation does not install a candidate.
 Distinct protected bearer files/systemd credentials for REST writer, optional
 REST reader, and later MCP reader. Reject duplicates, bound lengths, validate
 ownership/type/mode, compare in constant time, redact opaque tokens everywhere.
+API-005 opens credential files through pinned no-follow descriptors, validates
+root/effective-user ownership, one hardlink and explicit protected modes, then
+compares fixed-size digests over all three slots. Unconfigured optional classes
+authorize nobody; every configured source must load. The
+[server contract](server.md#implemented-credential-and-capability-boundary-api-005)
+states token grammar/limits, file policy, rotation and exact configuration keys.
 No ambient discovery or credential forwarding. Unix sockets still authenticate.
 Local default socket is `/run/hfcache/api.sock`; TCP defaults loopback. Off-host
 access requires verified TLS or an explicitly trusted local TLS proxy. Validate

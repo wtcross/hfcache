@@ -1287,6 +1287,30 @@ is no network-enabled ASGI fallback. Durable `invocation_mode` remains
 or timer provenance. Later API receipts carry authenticated submitter metadata.
 API-004 adds no listener, dependency, executor or MCP implementation.
 
+### Server configuration and authentication primitives (API-005, 2026-10-17)
+
+[Decision 112](adr/decision-112.md) implements the scoped dependency addition:
+HTTPX is a direct base dependency; FastAPI/Uvicorn and required transitives are
+in the optional `server` extra. The standard library retains TOML, JSON, hashing,
+files, locking and logging. Maintained verified transports, HTTP parsing and ASGI
+security/lifecycle interfaces justify the FW-04 exception; domain orchestration
+and archive authority remain unchanged. The gate installs the extra, while base
+CLI imports need no optional server package. No FastMCP dependency is added.
+
+`ServerConfig` is strict, frozen and independent of archive policy. Transport/auth
+changes require restart. `InstalledPolicy.snapshot()` reloads archive policy
+without mutating earlier snapshots and refuses changed root/UUID authority.
+Explicit protected files or named systemd credentials supply fixed REST
+reader/writer capability principals; required writer failure stops startup and
+an unprovisioned optional reader grants no access. Opaque values are registered
+for redaction, duplicate credentials refuse startup, and comparisons are
+constant-time. A small optional FastAPI bearer adapter reuses the verifier.
+This package adds no runtime route or listener: API-006 owns HTTP protection and
+API-008 owns execution. Later receipts store nonsecret principal identity, never
+credential values. Whole-archive authorization, AD-21 and immutable archive
+schemas retain their existing meaning. [Server](server.md) records every key
+and the precise implemented/pending boundary.
+
 ## 9. Phase 0 acceptance
 
 Phase 0's stated acceptance criteria, and where each is satisfied:

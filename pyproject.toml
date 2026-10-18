@@ -18,9 +18,16 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
+    "httpx>=0.28,<0.29",
     "huggingface-hub>=0.36",
     "pydantic>=2.11",
     "typer>=0.16",
+]
+
+[project.optional-dependencies]
+server = [
+    "fastapi>=0.118.3,<1",
+    "uvicorn>=0.38,<1",
 ]
 
 [project.urls]

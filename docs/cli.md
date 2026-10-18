@@ -560,6 +560,14 @@ condition; a retired condition retires its code.
 | `HFARG006` | The systemd credential named by `hub.credential_name` is present but unusable, or `$CREDENTIALS_DIRECTORY` is not an absolute path |
 | `HFARG007` | A `purge` target remains in configuration; remove it from configuration before archive deletion |
 | `HFARG008` | `hub.token_mode = "required"` resolved neither an explicit token file nor the named systemd credential |
+| `HFAPI001` | API bearer is missing, malformed, invalid or belongs to the wrong interface; HTTP 401 with a Bearer challenge |
+| `HFAPI002` | An authenticated API principal lacks the required capability; HTTP 403 |
+| `HFAPI003` | A configured API credential source is missing, unsafe, changes while read or contains a malformed token |
+| `HFAPI004` | The same API credential value is assigned to more than one capability class |
+
+`HFAPI001`–`HFAPI004` currently describe shared authentication/startup primitives
+and the reusable FastAPI bearer adapter. Runtime route/client translation lands
+in later API tasks; this taxonomy does not imply a shipped HTTP endpoint.
 
 ### 5.2 Storage and transaction safety — exit `20`
 

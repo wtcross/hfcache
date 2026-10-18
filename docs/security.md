@@ -159,10 +159,11 @@ filesystem. Failure is exit `20` before the first byte is fetched.
 run report, or a file written to shared NFS storage is readable by anyone with
 access to that surface.
 
-**Controls.** No configuration key accepts a token; a literal secret in TOML is
-`HFCFG010`, reported by key path and never echoed. Tokens arrive only through a
-systemd credential or an explicit `--token-file`, are never written to the
-archive, and never appear in a manifest, run report, journal, or log at any
+**Controls.** No configuration key accepts a token; a literal Hub secret in
+archive TOML is `HFCFG010`, reported by key path and never echoed. Hub tokens arrive
+only through a systemd credential or an explicit `--token-file`; API tokens use
+separate explicit protected files or named systemd credentials. Tokens are never
+written to the archive, and never appear in a manifest, run report, journal, or log at any
 verbosity. Ambient discovery is disabled: `HF_TOKEN`, `HUGGING_FACE_HUB_TOKEN`,
 and cached home-directory tokens are ignored, and Hub calls pass an explicit
 `token=False` or an explicit token — never `token=None`, which would re-enable
@@ -176,8 +177,8 @@ lifetime, never clear it between requests. Logs capture sanitized fields at
 emission and sanitize formatting; `Problem` snapshots and its public rendering,
 and application exception string/repr paths, sanitize diagnostics too. Preserve
 safe code/shape evidence without exposing raw exceptions, request input or
-tracebacks to a caller. API-005/006 must register their resolved API credentials
-and apply this boundary to transport errors. These interfaces remain planned.
+tracebacks to a caller. API-005 registers resolved API credentials before use;
+API-006 must apply the same boundary to route validation/exception output.
 See [decision 111](adr/decision-111.md).
 
 **Consequence beyond leakage.** Disabling ambient discovery also removes a
@@ -310,6 +311,35 @@ and `hfcache-verify.timer` are refused structurally in its API layer
 `sshd`. An administrative browser session is as powerful as an administrative
 shell, which is this deployment's existing posture, not a new one.
 
+### T-14 — A management caller gains unintended authority
+
+**Capability.** A caller presents a malformed, leaked or wrong-interface bearer,
+or a changed configuration redirects a long-lived server's authority.
+
+**Implemented controls (API-005).** Strict separate server configuration keeps
+transport/auth settings immutable until restart. Fresh archive-policy snapshots
+retain the startup root/UUID and fail a changed authority closed. Required REST
+writer and optional reader/MCP sources use only explicit protected files or named
+systemd credentials; an unconfigured optional class grants nobody access. Every
+configured source must load. Descriptor-pinned no-follow reads validate inode
+type, owner, mode, group access, single hardlink, bounded content and stable
+metadata. The API token grammar rejects Hub-style `hf_` values. Exact opaque
+values are registered for redaction; the registry keeps only fixed-size digests
+and constant-time comparisons over three slots. Distinct class values prevent
+cross-interface ambiguity. The principal contains a nonsecret credential class,
+never a token, digest or individual-user claim. Every reader shares AD-21's
+whole-archive authorization boundary.
+
+Authentication failures use sanitized `HFAPI001`/401 plus a Bearer challenge;
+capability denial is `HFAPI002`/403. Unsafe/malformed/racing credential sources
+and duplicate class values fail startup with `HFAPI003`/`HFAPI004`. The reusable
+FastAPI bearer adapter calls the application-owned verifier; extraction alone
+does not authenticate. API-006 must protect every real route, including docs,
+health and OpenAPI, and enforce Host/Origin/body/proxy policy. API-008/014 still
+own listener installation, TLS activation and executor hardening. No listener or
+production rollout is asserted by these primitives. See
+[decision 112](adr/decision-112.md) and [server policy](server.md).
+
 ## 4. Controls summary
 
 | # | Control | Enforced by |
@@ -325,13 +355,14 @@ shell, which is this deployment's existing posture, not a new one.
 | 9 | TLS verification always on for Hub requests | `https://`-only endpoint, `HFCFG014` |
 | 10 | Immutable commit SHA for every download | `AD-01` |
 | 11 | SHA-256 manifest before publication | `AD-18` |
-| 12 | Secrets only via systemd credentials or `--token-file` | `docs/configuration.md` §7 |
+| 12 | Hub secrets via systemd credentials or `--token-file`; API secrets via distinct protected sources | `docs/configuration.md` §7, `docs/server.md` |
 | 13 | Locked dependencies, frozen deployment install | `uv.lock`, `uv sync --frozen` |
 | 14 | Restricted scope requires explicit required-token mode and one authorized consumer boundary | `AD-21`, `HFARG008`, `HFHUB006` |
 | 15 | Explicit configuration required for any dependency archiving | `AD-07` |
 | 16 | Unknown state reported, never deleted or guessed | `AD-16`, `TX-06` |
 | 17 | Fail-closed preflight before any download | Exit `20` |
 | 18 | Management UI confined to operator surfaces, with the limits structural | `docs/cockpit.md` `CP-01`–`CP-14` |
+| 19 | Fixed management capabilities and restart-only transport/auth; route enforcement remains pending | `T-14`, `docs/server.md`, API-005/006 |
 
 ## 5. systemd hardening posture
 

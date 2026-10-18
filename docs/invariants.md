@@ -313,14 +313,20 @@ History: `SYNC-007` (`54e4671`), decision 94.
   schema version 1, reject unknown keys and coercions, normalize absolute
   filesystem paths, and reject invalid or duplicate repository identities
   before locks, network, or mutation. `config validate` uses the same
-  validation and changes nothing. See
+  validation and changes nothing. Keep archive policy, restart-only server
+  transport/auth and later client settings in separate schemas. A server freezes
+  freshly validated archive snapshots per request/admission and pins root/UUID
+  to startup authority; it never hot-switches archives (decision 112). See
   [configuration §1–§2, §6](configuration.md#1-validation-rules-that-apply-to-every-field).
 - **`INV-002` — Credentials have only explicit sources and never become
   evidence.** Accept only an explicit token file or systemd credential, with
   the documented precedence and file validation. Disable ambient discovery;
   every Hub call passes an explicit token or `False`, never `None`. Missing
   optional credentials permit anonymous access; installed unusable credentials
-  fail. Never emit secrets in configuration errors, logs, manifests, journals,
+  fail. That anonymous fallback applies to Hub policy; API writer authentication
+  is required and an unprovisioned optional API reader grants no capability.
+  API and Hub credentials are distinct explicit sources, never ambient reuse.
+  Never emit secrets in configuration errors, logs, manifests, journals,
   reports, or fingerprints. Register exact resolved opaque credentials before
   use; sanitize nested diagnostic contexts and exception/public output as well
   as recognized token shapes (decision 111). See [configuration §7, §9](configuration.md#7-credentials)
@@ -336,6 +342,8 @@ History: `SYNC-007` (`54e4671`), decision 94.
   unprivileged service identity with locked release dependencies; consumer
   writes are denied by a server-side read-only export. SELinux stays enforcing
   and systemd hardening must not be weakened to make a test or operation pass.
+  Management off-host access requires verified TLS or an explicitly trusted
+  local TLS proxy, and Unix-socket access still authenticates.
   See [security §2–§5](security.md#2-trust-boundaries),
   [deployment](deployment-centos-stream-10.md), and
   [agent environment](agents/environment.md).
@@ -360,6 +368,13 @@ Evidence: [configuration tests](../tests/unit/test_config.py),
 Off-host export enforcement and installed host hardening require the documented
 operator acceptance checks; unit tests cannot prove those deployment facts.
 History: `HUB-010` (`c082f87`), decision 98, supersedes public-only scope.
+API-005 enforcement: [server configuration and policy snapshots](../src/hfcache/server_config.py),
+[protected API credentials and fixed capabilities](../src/hfcache/api/auth.py),
+[optional FastAPI adapter](../src/hfcache/api/security.py),
+[configuration/reload tests](../tests/unit/test_server_config.py), and
+[adversarial credential/capability tests](../tests/unit/test_server_auth_adversarial.py).
+These primitives do not assert runtime route or deployed listener enforcement;
+decision [112](adr/decision-112.md) identifies the remaining boundaries.
 
 ## Durable formats and reporting
 
@@ -488,15 +503,18 @@ Evidence: [plugin tests](../cockpit/test/) and the
   append-only records. Journals are recovery evidence, never an orchestration
   engine. No workflow/DAG/actor/task/agent framework or mutable archive database.
 - **`FW-03`, `FW-04`** — Runtime dependencies are `huggingface-hub`, `pydantic`,
-  `typer`, and the resolved Hub client's required transfer backend. Use the
+  `typer`, the resolved Hub client's required transfer backend, and the direct
+  base HTTPX client; FastAPI/Uvicorn are optional `server` dependencies
+  (decision 112, implementing the decision 108 exception). Use the
   standard library for TOML, JSON, hashing, filesystem work, locking, and
   logging. An addition needs a recorded material correctness argument, not
   convenience or fewer lines.
 - **`INV-010` — Safety checks and evidence survive routine execution.** Source
   safety checks raise exceptions and never depend on removable assertions.
   Default tests stay offline/hermetic and strip ambient credentials; Hub tests
-  use injectable deterministic fakes. Network, real NFS, and build tests are
-  opt-in. Every work-package commit updates progress and passes
+  use injectable deterministic fakes. Network and real NFS tests are opt-in.
+  The default gate builds and smoke-installs locked base/server wheels;
+  additional build-marker tests remain opt-in. Every work-package commit updates progress and passes
   `scripts/check.sh`; durable-format fixtures and checkpoint-contract tests
   remain synchronized with their contracts.
 - **`INV-011` — Active work has one plan and explicit task authority.**
@@ -542,6 +560,10 @@ track the target; implementing tasks own proof.
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
   Off-host access verifies TLS. Enforcement: API-005/006/011 and MCP-001/003.
+  API-005 supplies strict server configuration, explicit credential validation,
+  fixed REST principals/capabilities and the optional FastAPI bearer adapter.
+  Protecting all real routes and applying Host/Origin/body bounds remains
+  API-006; no endpoint enforcement is claimed by the auth primitives alone.
 - **`INV-014` — Admission receipts do not resume domain execution.** Persist
   before runnable/202, bind principal/key/request, fail stale policies closed,
   retain ambiguous history, and never infer success or replay from missing
@@ -565,4 +587,6 @@ track the target; implementing tasks own proof.
 FW-01/FW-03 above retain their historical baseline with the explicit
 [108](adr/decision-108.md)/[109](adr/decision-109.md) amendment: scoped transport
 dependencies and the bounded non-resuming lane are permitted incrementally.
+[Decision 112](adr/decision-112.md) records the actual HTTPX and `server` extra
+addition and its material correctness rationale; FastMCP remains pending.
 No other workflow framework or runtime dependency is authorized.

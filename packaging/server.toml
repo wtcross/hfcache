@@ -1,0 +1,37 @@
+# Separate restart-only server settings. No token values belong in this file.
+schema_version = 1
+archive_config = "/etc/hfcache/config.toml"
+maintenance_enabled = false
+interactive_docs = false
+mcp_enabled = false
+log_level = "info"
+
+[credentials.writer]
+systemd_name = "rest-writer"
+
+# Optional reader classes are disabled when their source is not configured.
+# [credentials.reader]
+# systemd_name = "rest-reader"
+
+[listener]
+unix_enabled = true
+unix_socket = "/run/hfcache/api.sock"
+socket_mode = 0o660
+allowed_hosts = ["localhost", "127.0.0.1", "[::1]"]
+allowed_origins = []
+trusted_proxies = []
+root_path = ""
+tcp_host = "127.0.0.1"
+tcp_enabled = true
+tcp_port = 8787
+# Direct off-host TCP requires [listener.tls] certificate/private_key paths.
+# A local TLS proxy instead requires proxy_tls=true and explicit trusted_proxies.
+
+[limits]
+max_request_bytes = 1048576
+max_page_size = 1000
+metadata_workers = 4
+metadata_queue = 32
+max_queued_operations = 16
+retained_terminal_operations = 1000
+shutdown_timeout_seconds = 300

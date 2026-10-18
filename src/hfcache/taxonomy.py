@@ -36,6 +36,7 @@ __all__ = [
 PREFIX_EXIT_CODES: Final = {
     "HFCFG": ExitCode.CONFIGURATION,
     "HFARG": ExitCode.CONFIGURATION,
+    "HFAPI": ExitCode.CONFIGURATION,
     "HFMNT": ExitCode.SAFETY,
     "HFTXN": ExitCode.SAFETY,
     "HFHUB": ExitCode.SYNC,

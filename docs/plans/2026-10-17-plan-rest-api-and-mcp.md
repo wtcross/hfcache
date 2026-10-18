@@ -711,3 +711,11 @@ versions when implementing, especially FastMCP imports and test transports:
   distinguishes execution-host invocation mode from future receipt submitter
   metadata. API-008/014 still own the credential-free no-IP executor; no ASGI
   fallback, durable archive schema change, dependency or MCP work is introduced.
+
+- 2026-10-17 API-005: Decision 112 records the actual Python 3.14 transport
+  dependency lock, separate strict server configuration, fresh pinned archive
+  snapshots and reusable fixed bearer capabilities. Existing HFCFG codes cover
+  server validation; HFAPI001–004 classify authentication/capability/credential
+  failures at exit 10. Framework-independent primitives and an optional FastAPI
+  security adapter add no runtime endpoint/listener. API-006 owns route-level
+  enforcement, API-007/008 own receipts/execution, and MCP remains gated.

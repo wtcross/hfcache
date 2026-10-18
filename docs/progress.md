@@ -837,6 +837,36 @@ package in this family.
   pass. No durable schema/dependency, ASGI/MCP code or production operation;
   opt-in live/NFS/host checks did not run. Next selected task is API-005.)
 
+- [x] API-005 Add strict server policy and verified bearer capabilities
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-005-server-config-and-bearer-auth.md).
+  Added direct HTTPX and the optional FastAPI/Uvicorn server extra, preserving
+  existing locked versions; Python 3.14 resolves four new runtime packages.
+  Strict frozen ServerConfig and a separate example define default private Unix
+  plus loopback TCP, explicit enable flags, TLS/proxy policy, bounds and restart
+  semantics. Fresh archive snapshots pin startup root/UUID and retain existing
+  secret-free policy fingerprints. Descriptor-pinned no-follow credential reads
+  enforce owner/group/mode/single-inode/size/stability rules; fixed nonsecret
+  principals and three-slot digest comparisons separate REST writer/reader and
+  future MCP classes. Configured unusable/duplicate sources fail startup;
+  optional unconfigured classes grant no access. Reusable FastAPI dependencies
+  retain strict original-header checks and safe 401 challenge/403 behavior.
+  HFAPI001–004 join the central exit-10 taxonomy. Exact opaque values register
+  for redaction; no receipt or token-derived identity is introduced.
+  Decision 112 records material transport/security/lifecycle correctness and
+  official sources; decision 108/FW, INV-001–003/010/013, API/server,
+  configuration/security, CLI taxonomy, README, historical plan and Unreleased
+  agree. Strict socket-mode float coercion found in review was fixed before
+  the gate. Focused configuration/property/auth/adversarial/transport sweep:
+  360 passed. `rtk proxy bash scripts/check.sh` exits 0 on its first full
+  attempt: locked server-extra sync, format/lint/types, 2,009 Python tests
+  (40 deselected), wheel/sdist, real isolated offline locked base/server wheel
+  install/import/help/version checks, 45 Cockpit tests and production build.
+  Links, task/current/dependencies, parity matrix, 112 decision/ADR records and
+  whitespace pass. No durable archive schema, runtime REST route/listener,
+  MCP dependency/import, production operation or deployment; live/NFS/host and
+  additional build-marker checks did not run. Next selected task is API-006.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3393,3 +3423,20 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      authenticated submitter. Amend decision 64, offline verification,
      decision 110's deferred guard, AD-19 and scheduling provenance; no durable
      schema/dependency, listener, ASGI or MCP implementation is introduced.
+
+112. **Separate server authority and verified bearer capabilities**
+     (2026-10-17, API-005). [ADR](adr/decision-112.md): strict restart-only
+     server configuration is independent of freshly frozen archive snapshots;
+     startup root/UUID cannot hot-switch. Explicit protected API credentials
+     grant fixed whole-archive REST reader/writer or future MCP capability
+     principals. Descriptor-pinned bounded reads, distinct values, exact-secret
+     registration and fixed-size constant-time comparisons prevent ambiguous
+     authority; reject ambient/Hub reuse, anonymous socket exemptions and
+     input-echoing diagnostics. Central HFAPI001–004 classify authentication,
+     capability, credential and duplicate failures at exit 10. HTTPX is direct
+     base; FastAPI/Uvicorn are optional server dependencies, with Python 3.14
+     lock, official-source rationale and real isolated base/server wheel smoke
+     checks. Reject handwritten protocol/lifecycle implementations and optional
+     test skips. Existing versions, FS/TX, durable schemas and AD-21 remain.
+     API-006 owns runtime route protection; receipts/execution and MCP remain
+     later tasks. No listener or production installation is introduced.

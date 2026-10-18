@@ -20,8 +20,10 @@ an invalid configuration can never partially apply.
 - **Types are strict.** Pydantic strict mode is enabled; `"4"` is not an integer
   and `1` is not a boolean. TOML already distinguishes these, so a type error
   always means the operator wrote the wrong thing.
-- **Models are frozen.** Once loaded, configuration is immutable for the life of
-  the process. No code path mutates it.
+- **Models are frozen.** Each loaded configuration snapshot is immutable; no
+  code path mutates it. The isolated CLI keeps one snapshot for its invocation.
+  A long-lived server freezes archive policy afresh for each request/admission,
+  while server transport/auth settings require restart (§11).
 - **All filesystem paths are absolute** and are normalized before use.
 - **No secret is ever a literal value.** There is no field anywhere in this schema
   that accepts a token. A token reaches the process only through a systemd
@@ -417,3 +419,30 @@ declared_dependencies = []
 
 A runnable version of this file, with the two small public test repositories
 chosen at implementation time, ships as `examples/config.toml`.
+
+## 11. Separate server and client configuration
+
+The archive-policy schema above remains `ApplicationConfig`. Server configuration
+is a separate strict, frozen, schema-1 `ServerConfig`, defaulting to
+`/etc/hfcache/server.toml`; its keys, example and credential rules are in the
+[server contract](server.md). Do not put listeners, API credentials, admission
+limits or maintenance gates into the archive TOML. API credentials and Hub
+credentials have separate sources and authority. A later client configuration
+contains only connection/authentication settings and never grants archive access
+on the client host.
+
+Server transport and authentication are loaded at startup and change only after
+operator replacement and restart. Archive policy is loaded and validated afresh
+for each query or operation admission, yielding one immutable snapshot and its
+existing nonsecret fingerprint. Already-running work keeps its snapshot. A
+changed archive root or UUID requires a server restart and cannot hot-switch the
+server to another archive. Invalid updated policy fails new archive work closed;
+version/health must remain able to diagnose it when their routes land.
+
+The later operation runner must reload policy under the archive lock and compare
+it with the admitted fingerprint before mutation. A changed policy refuses stale
+queued work; it does not quietly execute against new scope. Policy loading does
+not install a candidate or change `/etc/hfcache`, and candidate-selected paths or
+Hub endpoints cannot redirect the installed credential. API-005 supplies these
+configuration/authority primitives; API-006/008 wire them into HTTP and queued
+execution. [Decision 112](adr/decision-112.md) records the boundary.

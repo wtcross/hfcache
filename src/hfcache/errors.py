@@ -7,11 +7,14 @@ different condition, and a retired condition retires its code.
 
 from dataclasses import dataclass, field
 from enum import IntEnum
+from types import MappingProxyType
 from typing import Any, Self, cast
 
 from hfcache.redaction import redact_text, sanitize
 
 __all__ = [
+    "AuthenticationError",
+    "AuthorizationError",
     "CodedError",
     "ConfigurationError",
     "ExitCode",
@@ -166,6 +169,28 @@ class ConfigurationError(HfcacheError):
     """
 
     exit_code = ExitCode.CONFIGURATION
+
+
+class AuthenticationError(ConfigurationError):
+    """Missing, malformed or wrong-interface bearer; stable HTTP 401 (HFAPI001)."""
+
+    status_code = 401
+    detail = "Not authenticated"
+    headers = MappingProxyType({"WWW-Authenticate": 'Bearer realm="hfcache"'})
+
+    def __init__(self) -> None:
+        super().__init__([Problem("HFAPI001", self.detail)])
+
+
+class AuthorizationError(ConfigurationError):
+    """A valid principal lacks the required capability; stable HTTP 403 (HFAPI002)."""
+
+    status_code = 403
+    detail = "Forbidden"
+    headers = MappingProxyType({})
+
+    def __init__(self) -> None:
+        super().__init__([Problem("HFAPI002", self.detail)])
 
 
 class SafetyError(HfcacheError):

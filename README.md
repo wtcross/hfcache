@@ -88,6 +88,8 @@ implementation plan and contract reference.
 | [`docs/invariants.md`](docs/invariants.md) | Current invariant register, governing contracts, and implementation evidence |
 | [`docs/adr/`](docs/adr/README.md) | Individual architectural decision records, provenance, amendments, and maintenance rules |
 | [`docs/configuration.md`](docs/configuration.md) | Every configuration key, its constraints, and credential handling |
+| [`docs/server.md`](docs/server.md) | Server configuration, bearer credentials and the incremental HTTP deployment boundary |
+| [`docs/api.md`](docs/api.md) | REST capability/operation matrix and implementation status |
 | [`docs/schemas.md`](docs/schemas.md) | Durable JSON formats: manifests, references, catalog, reports, journals |
 | [`docs/cli.md`](docs/cli.md) | Command surface, JSON output, exit codes, error taxonomy |
 | [`docs/security.md`](docs/security.md) | Assets, trust boundaries, threats, and the control enforcing each |
@@ -134,7 +136,7 @@ against.
 
 | Path | Contents |
 | --- | --- |
-| `src/hfcache/` | The application: one package on `huggingface-hub`, `pydantic`, `typer`, and the standard library |
+| `src/hfcache/` | Domain services and CLI; base HTTP client with optional FastAPI/Uvicorn server dependencies |
 | `cockpit/` | The Cockpit administration plugin: a browser UI over the CLI and the systemd units |
 | `docs/` | The contracts and runbooks in the table above |
 | `docs/agents/` | Agent-facing planning, workflow, conventions, environment, and release docs |
@@ -155,8 +157,24 @@ uv sync                      # create the locked development environment
 uv run hfcache --help
 ```
 
+The base installation includes the HTTP client and keeps CLI imports independent
+of optional server packages. A writer's server environment requires the `server`
+extra; provision it from this checkout's lock for development:
+
+```bash
+uv sync --locked --extra server
+```
+
+API-005 adds strict server configuration and bearer-capability primitives;
+`packaging/server.toml` is the separate server configuration example, documented
+in [`docs/server.md`](docs/server.md). HTTP endpoints, `serve`, systemd packaging
+and the isolated verification executor land in later tasks. Installing the extra
+does not start a listener or change the deployed writer. MCP remains behind the
+REST acceptance gate and adds no dependency yet.
+
 The quality gate is one script — lock check, formatting, lint, types, the
-default test suite, and a build — and it is exactly what must pass from a
+default test suite, a build and locked base/server wheel-install smoke checks —
+and it is exactly what must pass from a
 clean checkout:
 
 ```bash

@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-005](tasks/api-005-server-config-and-bearer-auth.md) |
+| Next task | [API-006](tasks/api-006-fastapi-lifecycle-and-reads.md) |
 | Blockers | None |
 | Updated | 2026-10-17 |
 

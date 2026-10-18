@@ -29,6 +29,12 @@ toggles process-wide Hub networking flags. Registered opaque credentials are
 redacted from nested diagnostics and exception output. Daemon startup primitives
 are ready; the HTTP server and isolated verification executor remain planned.
 
+Server configuration now has its own strict schema and explicit protected bearer
+sources. Fixed reader/writer capabilities, safe credential loading and fresh
+archive-policy snapshots provide the authentication boundary for later routes.
+HTTPX is a direct base dependency; FastAPI/Uvicorn are an optional `server`
+extra. No runtime endpoint, listener or production installation is introduced.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block
