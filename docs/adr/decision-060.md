@@ -63,3 +63,10 @@ Implementation or shipped-artifact evidence:
 Relevant verification:
 [scripts/hardening-probe.py](../../scripts/hardening-probe.py),
 [tests/unit/test_verify_command.py](../../tests/unit/test_verify_command.py).
+
+## Explicit diagnostic and evidence amendment
+
+[Decision 131](decision-131.md) replaces implicit live workloads and generic
+exception-as-denial classification. Static entrypoints, explicit disposable
+authority, identity/lock proof and qualified results govern current probes.
+Original dated results remain historical evidence, not current acceptance.

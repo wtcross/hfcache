@@ -410,26 +410,21 @@ the sync/verify client wrappers. Real systemd socket activation, cgroup no-IP/
 no-credential behavior, SELinux/NFS and installed hardening remain deployment
 holds, not replaced by repository fixtures or unit-file parsing.
 
-Current installed executor probes, for an authorized operator acceptance window:
+Hardening diagnostics require explicit modes and profile selection. Start with
+[the diagnostic contract](security.md#hardening-diagnostics). Default/help/dry-run
+are static; inventory reads only selected property names. For native services:
 
-```text
-sudo /opt/hfcache/current/scripts/check-hardening.sh hfcache-api.service
-sudo /opt/hfcache/current/scripts/check-hardening.sh hfcache-verification.service --credential-probe /etc/credstore.encrypted/hfcache.api
+```bash
+/opt/hfcache/current/scripts/check-hardening.sh --mode inventory --profile native hfcache-api.service
+/opt/hfcache/current/scripts/check-hardening.sh --mode inventory --profile native hfcache-verification.service
 ```
 
-The verification probe requires a known protected file that exists outside its
-sandbox; use a provisioned safe path, never a token value. The script reads
-installed unit/drop-in properties, excludes work/activation/lifecycle commands,
-and starts a separate probe under the executor policy. It refuses client-wrapper
-unit names; property diagnostics show names without secret values.
-Writable-path checks derive from the actual executor's `STATE_DIRECTORY`,
-`CACHE_DIRECTORY` and `RUNTIME_DIRECTORY`, including the verifier's separate cache.
-The Python probe refuses bare invocation outside its selected executor context.
-Its fixture
-`--dry-run --unit-directory PATH` performs no transient-unit/network/credential/
-archive probes and is not installed-hardening evidence. Require every actual
-probe and SELinux/NFS acceptance check to pass; historical 23-check scores below
-do not certify the new executors.
+For the selected guarded rootless profile, use `--profile guarded-readonly`
+as the service identity to inspect its user manager. Archive-write probes refuse
+that profile. Native disposable workloads require separately authorized owned
+target/UUID/lock and acknowledgement; they exclude production credentials and
+shared state. Neither inventory nor a transient probe proves installed container
+PID1, cgroup, peer, SELinux or NFS workload acceptance.
 
 ```bash
 sudo install -m 0644 -o root -g root \
@@ -448,18 +443,11 @@ sudo systemd-analyze verify hfcache.target hfcache-sync.service hfcache-sync.tim
 `systemd-analyze verify` must produce **no output**. It exits `0` while reporting
 ordering cycles, so the exit status is not the gate.
 
-Prove the hardening actually applies, rather than assuming the unit file means
-what it says:
-
-```bash
-sudo /opt/hfcache/current/scripts/check-hardening.sh
-sudo /opt/hfcache/current/scripts/check-hardening.sh hfcache-verify.service
-```
-
-Run it from the **installed release**, not from a source checkout: the probe runs
-under the unit's own `ProtectHome=true`, so a copy under `/home` is unreadable to
-it. All 23 checks must pass on both units. Re-run after any change to a unit's
-hardening and after any `huggingface_hub`, `hf_xet`, or Python upgrade.
+Validate actual executor hardening in a separately authorized acceptance window,
+using safe disposable targets and the explicit diagnostic modes. Reassess after
+unit, Python, Hub-client or transfer-backend changes. Require current evidence
+for every applicable control; import/network failures and incomplete checks
+remain not proven. Historical scores do not certify the current installation.
 
 ---
 
@@ -928,7 +916,7 @@ measurement authorizes it.
 | `getenforce` | `Enforcing` |
 | `findmnt -T /srv/hfcache` | `nfs4` from the NAS, `rw,nosuid,nodev,noexec,vers=4.2` |
 | `systemd-analyze verify` on all units | **no output** |
-| `check-hardening.sh` on both service units | 23 of 23 pass |
+| Explicit executor diagnostics | Qualified results plus actual installed control/workload evidence |
 | `hfcache doctor` | exit `0`; `hub_identity` may be `skipped` only for public scope, and must name the expected account for `token_mode = "required"` |
 | `hfcache status` | exit `0`, `degraded: false`, `unfinished_transactions: 0` |
 | `systemctl list-unit-files 'hfcache*'` | target and sync timer `enabled`, verify timer `disabled` |

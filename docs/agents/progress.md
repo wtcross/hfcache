@@ -4747,3 +4747,29 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      redirect pages into tracking. The per-file transitional match inventory
      must shrink to zero by final acceptance. No technical invariant, runtime
      dependency, durable format or host-operation authorization changes.
+
+131. **Make diagnostic authority explicit and isolation evidence qualified**
+     (2026-10-18, OPS-020). [Technical ADR](../adr/decision-131.md) amends
+     decisions 59/60: static entrypoints, explicit profile/disposable target/UUID/
+     retained local lock, strict no-follow preflight and under-lock revalidation
+     precede archive writes. Keep artifacts in an exclusive health child and
+     preserve substituted/unknown evidence. Reject production/read-only targets
+     and NFS workloads on hosts carrying the production mount, avoiding alias
+     assumptions. Remove real kernel-setting and system-directory write probes.
+     Permission errno evidence names only the denied action; imports/DNS/timeouts/
+     unrelated I/O are not proven. Copy selected policy/read masks without
+     production credentials/lifecycle/shared state and report overrides. Require
+     complete role/network diagnostic results, reject duplicates/noninteger
+     versions, suppress dependency output and project manager output safely.
+     INV-017 records these tooling constraints; daemon/archive formats and
+     hardening are unchanged. No host/live workload is authorized or performed.
+
+## Documentation and script alignment
+
+- [x] OPS-020 Make hardening probes explicit and fail closed (2026-10-18,
+  this commit). Static entrypoints, strict disposable target/lock/sentinel proof,
+  owned health artifacts and qualified evidence replace implicit production
+  workloads and exception-as-denial. INV-017/decision 131 record the diagnostic
+  boundary. Focused probe suite: 74 passed. Full `scripts/check.sh`: 4,107 passed,
+  40 deselected; wheel and all three locked installation profiles; actual Cockpit
+  lint/types, 135 tests and build. No live Hub/NFS/manager/production workload.

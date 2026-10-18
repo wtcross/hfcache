@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [REST/MCP documentation alignment](2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
-| Next task | [OPS-020](tasks/ops-020-safe-explicit-hardening-probes.md) |
+| Next task | [OPS-021](tasks/ops-021-profile-aware-install-and-diagnostic-scripts.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

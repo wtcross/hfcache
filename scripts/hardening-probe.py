@@ -1,436 +1,864 @@
-"""Exercise everything docs/security.md hardening posture says the hardening must not break.
+"""Explicit hardening inventory and owned disposable workloads (docs/security.md).
 
-Run by `scripts/check-hardening.sh` inside a transient unit carrying the *exact*
-`[Service]` properties of the installed API or private-verification executor, so what is tested
-is what is deployed rather than a copy of it that can drift.
-
-Two halves, and both matter.
-
-**The workload.** DNS, TLS, a real `huggingface_hub` API call, a real download
-through `hf_xet`, native extension imports, and a create/fsync/rename/unlink on
-the NFS archive. A hardening setting that quietly breaks one of these does not
-announce itself: `snapshot_download` failing under `ProcSubset=pid` looks like a
-network problem at 02:00 on a Tuesday.
-
-**The sandbox.** Every setting is then confirmed to be *in effect*, because a
-property systemd parsed and silently could not apply is worse than one that was
-never set — it reads as protection in the unit file and is not there. `CapBnd`
-and `NoNewPrivs` come from `/proc/self/status`; the rest are probed by trying the
-thing the setting forbids.
-
-Exit `0` only when every check passes. Output is one line per check so a failure
-names itself.
+Import, default invocation, help and dry-run perform no probes. A transient
+native process cannot certify installed container PID1/cgroup/peer controls.
+No check changes kernel settings or writes a system-directory scratch file.
 """
 
 from __future__ import annotations
 
+import argparse
+import errno
+import fcntl
+import hashlib
 import json
+import logging
 import os
+import pwd
+import secrets
 import socket
 import ssl
 import stat
+import subprocess
 import sys
-import tempfile
-from pathlib import Path
+from contextlib import ExitStack, contextmanager, redirect_stderr, redirect_stdout
+from dataclasses import dataclass
+from pathlib import Path, PurePosixPath
+from uuid import UUID
 
-EXECUTOR = os.environ.get("HFCACHE_PROBE_EXECUTOR")
-if EXECUTOR not in {"api", "verification"}:
-    sys.stderr.write("hardening-probe: use the executor-aware check-hardening.sh wrapper\n")
-    raise SystemExit(2)
-
-ARCHIVE = Path(os.environ.get("HFCACHE_PROBE_ARCHIVE", "/srv/hfcache"))
-PROBE_AREA = ARCHIVE / ".store" / "health"
+NATIVE_PYTHON = "/opt/hfcache/current/.venv/bin/python"
+MAX_RESULTS = 32
+MAX_SENTINEL_BYTES = 65536
+PRIVATE_DIRECTORY_MODE = 0o700
 PUBLISHED_DIRECTORY_MODE = 0o2750
-"""Mirrors `publication.PUBLISHED_DIRECTORY_MODE`, restated rather than imported.
 
-The probe runs under a sandbox that may not be able to import the application at
-all, and what is being tested is the *syscall* the application makes, not the
-application. If the constant changes there, this line has to change too — which
-is why docs/security.md hardening posture says to re-run this after an upgrade."""
-HOST = "huggingface.co"
-REPOSITORY = "hf-internal-testing/tiny-random-gpt2"
-
-results: list[tuple[str, bool, str]] = []
-
-
-def record(name: str, *, ok: bool, detail: str) -> None:
-    results.append((name, ok, detail))
-
-
-def check(name: str, _unused: str = ""):
-    """Run a check, turning any exception into a failure rather than a traceback.
-
-    The unused second parameter makes this interchangeable with `denied`, so the
-    network checks can be registered as one or the other from a single name.
-    """
-
-    def decorate(function):
-        try:
-            record(name, ok=True, detail=function())
-        except Exception as error:  # noqa: BLE001 - a probe reports, it does not raise
-            record(name, ok=False, detail=f"{type(error).__name__}: {error}")
-        return function
-
-    return decorate
-
-
-def status_field(field: str) -> str:
-    for line in Path("/proc/self/status").read_text(encoding="utf-8").splitlines():
-        if line.startswith(f"{field}:"):
-            return line.split(":", 1)[1].strip()
-    message = f"{field} is not in /proc/self/status"
-    raise AssertionError(message)
-
-
-def denied(name: str, detail: str):
-    """A check that passes when an operation is *refused*."""
-
-    def decorate(function):
-        try:
-            function()
-        except Exception as error:  # noqa: BLE001 - the refusal is the result
-            record(name, ok=True, detail=f"refused: {type(error).__name__}")
-            return function
-        record(name, ok=False, detail=f"permitted, and {detail}")
-        return function
-
-    return decorate
+PERMISSION_DENIALS = frozenset({errno.EACCES, errno.EPERM})
+LOCAL_FILESYSTEMS = frozenset({"tmpfs", "ext4", "xfs", "btrfs", "overlay", "zfs"})
+PROFILES = ("native", "rootless", "guarded-readonly")
+UNITS = ("hfcache-api.service", "hfcache-verification.service")
+FORBIDDEN_CREDENTIAL_ENV = (
+    "CREDENTIALS_DIRECTORY",
+    "HF_TOKEN",
+    "HUGGING_FACE_HUB_TOKEN",
+    "HUGGINGFACE_HUB_TOKEN",
+    "HUGGINGFACEHUB_API_TOKEN",
+    "HF_TOKEN_PATH",
+    "HFCACHE_API_TOKEN",
+    "HFCACHE_MCP_TOKEN",
+)
+# Copy only sandbox policy, never lifecycle hooks, credentials, environment,
+# production writable paths or managed directories.
+SANDBOX_PROPERTIES = frozenset(
+    {
+        "User",
+        "Group",
+        "UMask",
+        "NoNewPrivileges",
+        "ProtectSystem",
+        "ProtectHome",
+        "PrivateTmp",
+        "PrivateDevices",
+        "ProtectKernelTunables",
+        "ProtectKernelModules",
+        "ProtectKernelLogs",
+        "ProtectControlGroups",
+        "ProtectClock",
+        "ProtectHostname",
+        "ProtectProc",
+        "ProcSubset",
+        "RestrictAddressFamilies",
+        "RestrictNamespaces",
+        "RestrictSUIDSGID",
+        "CapabilityBoundingSet",
+        "AmbientCapabilities",
+        "SystemCallArchitectures",
+        "SystemCallFilter",
+        "LockPersonality",
+        "MemoryDenyWriteExecute",
+        "IPAddressDeny",
+        "IPAddressAllow",
+        "InaccessiblePaths",
+        "ReadOnlyPaths",
+    }
+)
 
 
-# --------------------------------------------------------------------------- #
-# The sandbox is actually in effect
-# --------------------------------------------------------------------------- #
+class RefusedError(Exception):
+    """Fixed, secret-free refusal. Dependency exception text is never rendered."""
 
 
-@check("NoNewPrivileges")
-def _no_new_privileges() -> str:
-    value = status_field("NoNewPrivs")
-    assert value == "1", f"NoNewPrivs is {value}"
-    return "NoNewPrivs=1"
+def reject(message):
+    raise RefusedError(message)
 
 
-@check("CapabilityBoundingSet")
-def _capabilities() -> str:
-    bounding = status_field("CapBnd")
-    effective = status_field("CapEff")
-    assert int(bounding, 16) == 0, f"CapBnd={bounding}"
-    assert int(effective, 16) == 0, f"CapEff={effective}"
-    return f"CapBnd={bounding} CapEff={effective}"
+class SafeParser(argparse.ArgumentParser):
+    def error(self, _message):
+        self.exit(2, "hardening-probe: invalid arguments; use --help\n")
 
 
-@check("SystemCallArchitectures")
-def _seccomp() -> str:
-    value = status_field("Seccomp")
-    assert value != "0", "no seccomp filter is loaded"
-    return f"Seccomp={value} (filter loaded)"
+@dataclass(frozen=True)
+class Result:
+    name: str
+    state: str
+    detail: str
 
 
-@check("ProtectSystem=strict")
-def _read_only_system() -> str:
-    for path in (Path("/usr"), Path("/etc"), Path("/opt")):
-        try:
-            (path / ".hfcache-hardening-probe").touch()
-        except OSError:
-            continue
-        message = f"{path} is writable"
-        raise AssertionError(message)
-    return "/usr, /etc, and /opt are read-only"
+class DiscardOutput:
+    encoding = "utf-8"
+
+    @property
+    def buffer(self):
+        return self
+
+    def isatty(self):
+        return False
+
+    def fileno(self):
+        return 2  # Both descriptors point at /dev/null during the capture scope.
+
+    def write(self, text):
+        return len(text)
+
+    def flush(self):
+        pass
 
 
-@check("ProtectHome")
-def _protect_home() -> str:
-    # `true` replaces /home with an empty *inaccessible* directory, so listing it
-    # raises rather than returning nothing. Both answers mean the same thing and
-    # the first draft of this probe accepted only one of them — which failed the
-    # check while the setting was working, exactly the confusion the sandbox half
-    # of this file exists to prevent.
+@contextmanager
+def quiet_output():
+    previous = logging.root.manager.disable
+    with ExitStack() as stack:
+        saved_stdout = os.dup(1)
+        stack.callback(os.close, saved_stdout)
+        saved_stderr = os.dup(2)
+        stack.callback(os.close, saved_stderr)
+        null = os.open("/dev/null", os.O_WRONLY)
+        stack.callback(os.close, null)
+        os.dup2(null, 1)
+        stack.callback(os.dup2, saved_stdout, 1)
+        os.dup2(null, 2)
+        stack.callback(os.dup2, saved_stderr, 2)
+        logging.disable(logging.CRITICAL)
+        stack.callback(logging.disable, previous)
+        with redirect_stdout(DiscardOutput()), redirect_stderr(DiscardOutput()):
+            yield
+
+
+def check(name, action, *, denied=False):
     try:
-        entries = sorted(path.name for path in Path("/home").iterdir())
-    except PermissionError:
-        return "/home is not traversable"
-    assert entries == [], f"/home shows {entries}"
-    return "/home is empty"
+        with quiet_output():
+            return action_result(name, action, denied=denied)
+    except Exception:  # noqa: BLE001 - capture setup is a prerequisite, never action-denial proof
+        return Result(name, "not_proven", "diagnostic capture prerequisite failed")
 
 
-@check("ProcSubset=pid")
-def _proc_subset() -> str:
-    visible = [
-        name for name in ("meminfo", "cpuinfo", "stat", "kallsyms") if Path("/proc", name).exists()
-    ]
-    assert visible == [], f"/proc still shows {visible}"
-    return "/proc holds only pid entries"
-
-
-@check("ProtectProc=invisible")
-def _protect_proc() -> str:
-    mine = str(os.getpid())
-    others = [
-        entry.name
-        for entry in Path("/proc").iterdir()
-        if entry.name.isdigit() and entry.name != mine
-    ]
-    assert others == [], f"other processes are visible: {others[:5]}"
-    return "no other process is visible"
-
-
-@check("PrivateTmp")
-def _private_tmp() -> str:
-    entries = sorted(path.name for path in Path("/tmp").iterdir())
-    assert entries == [], f"/tmp shows {entries}"
-    return "/tmp is private and empty"
-
-
-@check("PrivateDevices")
-def _private_devices() -> str:
-    assert Path("/dev/urandom").exists(), "/dev/urandom is missing"
-    assert not Path("/dev/sda").exists(), "a block device is present"
-    assert not Path("/dev/kmsg").exists(), "/dev/kmsg is present"
-    return "/dev holds the api pseudo-devices only"
-
-
-# The next two are denied by more than one setting at once — `ProcSubset=pid`
-# hides all of /proc/sys and `PrivateDevices=true` removes /dev/kmsg — so the
-# refusal does not prove which one did it. That is defence in depth rather than a
-# weakness, and the check is still worth having: what it asserts is that the
-# operation is refused, not which line of the unit refused it. Removing any one of
-# the contributing settings would not be caught here, which is why the unit file
-# is also the input to this probe rather than a copy of it.
-@denied("ProtectKernelTunables", "a kernel tunable could be written")
-def _kernel_tunables() -> None:
-    Path("/proc/sys/vm/swappiness").write_text("60", encoding="utf-8")
-
-
-@denied("ProtectKernelLogs", "the kernel ring buffer is readable")
-def _kernel_logs() -> None:
-    Path("/dev/kmsg").read_bytes()
-
-
-@denied("RestrictNamespaces", "a new namespace could be created")
-def _namespaces() -> None:
-    os.unshare(os.CLONE_NEWUSER)
-
-
-@denied("RestrictAddressFamilies", "AF_PACKET is reachable")
-def _address_families() -> None:
-    socket.socket(socket.AF_PACKET, socket.SOCK_RAW).close()
-
-
-@check("writable paths")
-def _writable_paths() -> str:
-    allowed = []
-    paths = [ARCHIVE]
-    for name in ("STATE_DIRECTORY", "CACHE_DIRECTORY", "RUNTIME_DIRECTORY"):
-        value = os.environ.get(name)
-        assert value, f"systemd did not supply {name}"
-        paths.extend(Path(item) for item in value.split(":"))
-    for path in dict.fromkeys(paths):
-        probe = path / ".hfcache-hardening-probe"
-        probe.touch()
-        probe.unlink()
-        allowed.append(str(path))
-    return ", ".join(allowed)
-
-
-# --------------------------------------------------------------------------- #
-# The workload still runs
-# --------------------------------------------------------------------------- #
-
-OFFLINE = EXECUTOR == "verification"
-"""Whether this unit is one that must *not* reach the Hub (INV-015).
-
-The verification unit sets `HF_HUB_OFFLINE=1` and `IPAddressDeny=any`, so for it
-the four network checks below invert: reaching the Hub would be the failure. A
-probe that asserted "DNS works" against every unit would have to be run only
-against the sync unit, and then nothing would ever check that the offline unit is
-actually offline — which is the more valuable of the two assertions, because it
-is the one a dependency upgrade can quietly undo.
-"""
-
-network = denied if OFFLINE else check
-_expected = "refused" if OFFLINE else "permitted"
-
-
-@check("executor credential isolation")
-def _executor_credentials() -> str:
-    if not OFFLINE:
-        return "API executor has its separately provisioned API/Hub credential scope"
-    assert os.environ.get("HF_HUB_OFFLINE") == "1", "executor library offline flag is absent"
-    forbidden = (
-        "CREDENTIALS_DIRECTORY",
-        "HF_TOKEN",
-        "HUGGING_FACE_HUB_TOKEN",
-        "HUGGINGFACE_HUB_TOKEN",
-        "HUGGINGFACEHUB_API_TOKEN",
-        "HF_TOKEN_PATH",
-        "HFCACHE_API_TOKEN",
-        "HFCACHE_MCP_TOKEN",
-    )
-    assert not any(name in os.environ for name in forbidden), "credential environment is present"
-    # The root wrapper checked that this file exists outside the sandbox. An
-    # absent masked path therefore proves isolation rather than an empty store.
-    path = os.environ.get("HFCACHE_PROBE_CREDENTIAL")
-    assert path is not None, "no known protected credential-source probe supplied"
+def action_result(name, action, *, denied=False):
     try:
-        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
-    except FileNotFoundError, PermissionError:
-        return "no credential environment; known protected source is inaccessible"
-    else:
-        os.close(descriptor)  # Never read or print any credential bytes.
-        message = "known protected credential source is accessible to the verifier"
-        raise AssertionError(message)
-
-
-@network(f"DNS ({_expected})", "the Hub is resolvable from an offline unit")
-def _dns() -> str:
-    addresses = sorted({item[4][0] for item in socket.getaddrinfo(HOST, 443)})
-    assert addresses, "no address returned"
-    return f"{HOST} -> {len(addresses)} addresses"
-
-
-@network(f"TLS ({_expected})", "the Hub is reachable from an offline unit")
-def _tls() -> str:
-    context = ssl.create_default_context()
-    with socket.create_connection((HOST, 443), timeout=30) as raw:
-        with context.wrap_socket(raw, server_hostname=HOST) as wrapped:
-            return f"{wrapped.version()} to {HOST}"
-
-
-@check("native extensions")
-def _native() -> str:
-    import hf_xet
-    import pydantic_core
-    import yaml
-
-    loader = "C" if getattr(yaml, "__with_libyaml__", False) else "python"
-    return (
-        f"pydantic_core {pydantic_core.__version__}, "
-        f"hf_xet {getattr(hf_xet, '__version__', 'present')}, yaml {loader} loader"
+        detail = action()
+    except OSError as error:
+        if denied and error.errno in PERMISSION_DENIALS:
+            return Result(name, "pass", "action denied; enforcing control not attributed")
+        return Result(name, "not_proven", "I/O or network prerequisite failed")
+    except ImportError:
+        return Result(name, "not_proven", "dependency prerequisite failed")
+    except RefusedError:
+        return Result(name, "fail", "required condition was not satisfied")
+    except Exception:  # noqa: BLE001 - fixed diagnostics, never raw dependency errors
+        return Result(name, "not_proven", "unexpected prerequisite or diagnostic failure")
+    return Result(
+        name, "fail" if denied else "pass", "attempted action permitted" if denied else detail
     )
 
 
-@network(f"huggingface_hub API ({_expected})", "an API call succeeded from an offline unit")
-def _hub_api() -> str:
-    from huggingface_hub import HfApi
+def canonical_path(value):
+    path = PurePosixPath(value)
+    if (
+        not value.startswith("/")
+        or value.startswith("//")
+        or value == "/"
+        or str(path) != value
+        or ".." in path.parts
+        or "\\" in value
+        or any(not c.isprintable() or c.isspace() or c in "\"'%" for c in value)
+    ):
+        reject("absolute canonical non-root path required")
+    return path
 
-    info = HfApi().repo_info(REPOSITORY, repo_type="model", revision="main", token=False)
-    assert info.sha, "no commit sha returned"
-    return f"{REPOSITORY}@{info.sha[:12]}"
 
-
-@network(f"hf_xet download ({_expected})", "a download succeeded from an offline unit")
-def _download() -> str:
-    from huggingface_hub import hf_hub_download
-
-    with tempfile.TemporaryDirectory(dir=os.environ.get("CACHE_DIRECTORY", "/tmp")) as scratch:
-        path = Path(
-            hf_hub_download(
-                REPOSITORY,
-                filename="config.json",
-                repo_type="model",
-                revision="main",
-                cache_dir=scratch,
-                token=False,
+def mount_rows(text):
+    rows = []
+    for line in text.splitlines():
+        fields = line.split()
+        separator = fields.index("-")
+        point = fields[4]
+        for encoded, decoded in (("\\040", " "), ("\\011", "\t"), ("\\134", "\\")):
+            point = point.replace(encoded, decoded)
+        rows.append(
+            (
+                PurePosixPath(point),
+                fields[separator + 1],
+                fields[separator + 2],
+                fields[5] + "," + fields[separator + 3],
+                fields[2],
+                fields[3],
             )
         )
-        payload = path.read_bytes()
-    assert payload, "the downloaded file is empty"
-    return f"config.json, {len(payload)} bytes"
+    return rows
 
 
-@check("NFS create, fsync, rename, unlink")
-def _nfs() -> str:
-    source = PROBE_AREA / f"hardening-{os.getpid()}"
-    destination = PROBE_AREA / f"hardening-{os.getpid()}.renamed"
+def covering_mount(path, rows):
+    matches = [row for row in rows if path == row[0] or row[0] in path.parents]
+    if not matches:
+        reject("filesystem locality unproven")
+    return max(enumerate(matches), key=lambda item: (len(item[1][0].parts), item[0]))[1]
+
+
+def prove_locality(target, lock, kind, rows):
+    production_path = PurePosixPath("/srv/hfcache")
+    if target == production_path or production_path in target.parents:
+        reject("production archive forbidden")
+    selected = covering_mount(target, rows)
+    production = [row for row in rows if row[0] == production_path]
+    if selected[1] in {"nfs", "nfs4"} and production:
+        # Mount source spellings and addresses can alias. No NFS workload is
+        # permitted on a host carrying the production mount, even if a different
+        # superblock or source spelling makes exact alias comparison inconclusive.
+        reject("NFS workload forbidden while production mount exists")
+    # Refuse hidden submounts and remote traversal prefixes before opening the
+    # archive/health paths; a local mount can otherwise hide a remote ancestor.
+    if any(target in row[0].parents for row in rows):
+        reject("archive contains unexplained submounts")
+    for ancestor in (*target.parents, *lock.parents):
+        if covering_mount(ancestor, rows)[1] not in LOCAL_FILESYSTEMS:
+            reject("path traversal crosses an unproven local filesystem")
+    if kind == "local":
+        if selected[1] not in LOCAL_FILESYSTEMS:
+            reject("fixture filesystem not proven local")
+    elif selected[0] != target or selected[1] not in {"nfs", "nfs4"}:
+        reject("target not an exact disposable NFS mount")
+    if "ro" in selected[3].split(","):
+        reject("read-only target refuses workloads")
+    if target == lock or target in lock.parents:
+        reject("lock must be outside archive")
+    if covering_mount(lock, rows)[1] not in LOCAL_FILESYSTEMS:
+        reject("lock locality unproven")
+
+
+def open_directory(path, stack):
+    descriptor = os.open("/", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    stack.callback(os.close, descriptor)
+    for part in path.parts[1:]:
+        descriptor = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+        stack.callback(os.close, descriptor)
+    return descriptor
+
+
+def identity(descriptor):
+    status = os.fstat(descriptor)
+    return status.st_dev, status.st_ino
+
+
+def unique_pairs(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            reject("duplicate sentinel field")
+        result[key] = value
+    return result
+
+
+def read_identity(root, expected):
+    sys.dont_write_bytecode = True
+    from hfcache.errors import SafetyError
+    from hfcache.models import ArchiveSentinel, load
+
+    descriptor = os.open(".hfcache-root", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=root)
     try:
-        with source.open("wb") as handle:
-            handle.write(b"hardening probe")
-            handle.flush()
-            os.fsync(handle.fileno())
-        source.replace(destination)
-        directory = os.open(PROBE_AREA, os.O_RDONLY)
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
-        return f"{destination.name} written, renamed, removed"
+        status = os.fstat(descriptor)
+        if not stat.S_ISREG(status.st_mode) or status.st_size > MAX_SENTINEL_BYTES:
+            reject("sentinel not a bounded ordinary file")
+        if status.st_uid != os.fstat(root).st_uid or status.st_mode & 0o022 or status.st_nlink != 1:
+            reject("sentinel ownership or mode is unsafe")
+        raw = os.read(descriptor, MAX_SENTINEL_BYTES + 1)
+        document = json.loads(raw, object_pairs_hook=unique_pairs)
+        if set(document) != {
+            "schema_version",
+            "layout_version",
+            "archive_id",
+            "created_at",
+            "created_by",
+        }:
+            reject("sentinel fields are incomplete or unsupported")
+        sentinel = load(ArchiveSentinel, raw, error=SafetyError, code="HFMNT006")
+        if sentinel.archive_id != expected:
+            reject("archive identity mismatch")
+        return identity(descriptor), hashlib.sha256(raw).digest()
     finally:
-        for path in (source, destination):
-            path.unlink(missing_ok=True)
+        os.close(descriptor)
 
 
-@check("setgid directory on the archive")
-def _setgid_directory() -> str:
-    # `publication.create_staging` makes the staging tree at
-    # PUBLISHED_DIRECTORY_MODE = 0o2750, because publication is a rename and a
-    # rename does not change a mode. `RestrictSUIDSGID=true` makes that exact call
-    # EPERM, and the first version of this probe missed it: it wrote *files* to the
-    # archive and never created a directory with the setgid bit. The failure
-    # therefore surfaced as a failed sync rather than as a failed check, which is
-    # the whole thing this file exists to prevent (decision 61).
-    #
-    # The second version missed it a second way, and that is `HARD-001`: two
-    # defects in one check.
-    #
-    # *The syscall.* `create_staging` calls `mkdir` **and then `chmod`**
-    # (`publication.py:139-140`); this called only `mkdir`. On this NFS mount that
-    # difference decides the outcome — the server does not honour a setgid bit in
-    # `mkdir`'s mode argument, and `PROBE_AREA` is `0o700`, so nothing is
-    # inherited either. Measured as the service identity: `mkdir` alone yields
-    # `0o750`, `mkdir`+`chmod` yields `0o2750`.
-    #
-    # *The assertion.* It formatted the resulting mode into its pass message
-    # rather than asserting it, so it reported `mkdir(mode=0o2750) -> 0o750` and
-    # passed. `S_ISGID` is what carries the group the consumer export's read
-    # identity depends on (§5.2), so it is the bit this check exists to guard, and
-    # a guard that cannot fail is the family of defect decisions 51 and 62 close.
-    target = PROBE_AREA / f"setgid-{os.getpid()}"
-    target.mkdir(mode=PUBLISHED_DIRECTORY_MODE)
-    try:
-        target.chmod(PUBLISHED_DIRECTORY_MODE)
-        mode = target.stat().st_mode & 0o7777
-        assert mode & stat.S_ISGID, f"the setgid bit did not land: {oct(mode)}"
-        assert mode == PUBLISHED_DIRECTORY_MODE, (
-            f"mode is {oct(mode)}, not {oct(PUBLISHED_DIRECTORY_MODE)}"
+def validate_health(root, store, health, uid, kind):
+    root_status = os.fstat(root)
+    if kind == "local" and uid >= 0 and root_status.st_uid != uid:
+        reject("fixture not owned by executor")
+    for descriptor in (root, store, health):
+        status = os.fstat(descriptor)
+        if status.st_dev != root_status.st_dev or status.st_uid != root_status.st_uid:
+            reject("health ownership or filesystem differs")
+        if status.st_mode & 0o022:
+            reject("archive directories allow unrelated writes")
+    if stat.S_IMODE(os.fstat(health).st_mode) != PRIVATE_DIRECTORY_MODE:
+        reject("health must be private")
+
+
+def prove_mount_device(root, target, rows):
+    mount = covering_mount(target, rows)
+    device = os.fstat(root).st_dev
+    if mount[4] != f"{os.major(device)}:{os.minor(device)}":
+        reject("mount identity changed before opening target")
+
+
+def validate_lock(lock, parent, uid, lock_path, rows):
+    parent_status = os.fstat(parent)
+    status = os.fstat(lock)
+    if parent_status.st_mode & 0o022 or (uid >= 0 and parent_status.st_uid != uid):
+        reject("lock parent ownership or mode unsafe")
+    if (
+        not stat.S_ISREG(status.st_mode)
+        or status.st_nlink != 1
+        or (uid >= 0 and status.st_uid != uid)
+        or status.st_mode & 0o027
+    ):
+        reject("existing lock not safely owned")
+    prove_mount_device(parent, lock_path.parent, rows)
+    prove_mount_device(lock, lock_path, rows)
+    if status.st_dev != parent_status.st_dev:
+        reject("lock is not on the proven parent filesystem")
+
+
+@contextmanager
+def target_scope(options, *, mount_text=None, owner_uid=None):
+    """Prove target and acquire an existing local lock before the first write."""
+    if options.profile != "native" or not options.acknowledge_disposable:
+        reject("explicit native disposable authorization required")
+    target = canonical_path(options.archive_root or "")
+    lock_path = canonical_path(options.lock_file or "")
+    if str(UUID(options.archive_id)) != options.archive_id:
+        reject("expected archive UUID required")
+    production = PurePosixPath("/srv/hfcache")
+    if target == production or production in target.parents:
+        reject("production archive forbidden")
+    rows = mount_rows(
+        Path("/proc/self/mountinfo").read_text() if mount_text is None else mount_text
+    )
+    prove_locality(target, lock_path, options.target_kind, rows)
+    uid = os.getuid() if owner_uid is None else owner_uid
+    with ExitStack() as stack:
+        root = open_directory(target, stack)
+        store = os.open(".store", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root)
+        stack.callback(os.close, store)
+        health = os.open("health", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=store)
+        stack.callback(os.close, health)
+        validate_health(root, store, health, uid, options.target_kind)
+        prove_mount_device(root, target, rows)
+        sentinel_identity = read_identity(root, options.archive_id)
+        lock_parent = open_directory(lock_path.parent, stack)
+        lock = os.open(
+            lock_path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=lock_parent
         )
-        return f"mkdir+chmod({oct(PUBLISHED_DIRECTORY_MODE)}) -> {oct(mode)}, S_ISGID set"
-    finally:
-        target.rmdir()
+        stack.callback(os.close, lock)
+        validate_lock(lock, lock_parent, uid, lock_path, rows)
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        current = os.stat(lock_path.name, dir_fd=lock_parent, follow_symlinks=False)
+        if identity(lock) != (current.st_dev, current.st_ino):
+            reject("lock identity changed")
+        if read_identity(root, options.archive_id) != sentinel_identity:
+            reject("sentinel changed under lock")
+        if identity(open_directory(target, stack)) != identity(root):
+            reject("target changed under lock")
+        checked_store = os.open(".store", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root)
+        stack.callback(os.close, checked_store)
+        checked_health = os.open(
+            "health", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=checked_store
+        )
+        stack.callback(os.close, checked_health)
+        if identity(checked_store) != identity(store) or identity(checked_health) != identity(
+            health
+        ):
+            reject("health path changed under lock")
+        validate_health(root, checked_store, checked_health, uid, options.target_kind)
+        validate_lock(lock, lock_parent, uid, lock_path, rows)
+        if identity(open_directory(lock_path.parent, stack)) != identity(lock_parent):
+            reject("lock parent changed under lock")
+        yield health
 
 
-@check("hardlink on the archive")
-def _hardlink() -> str:
-    # The other publication primitive, and the one docs/architecture.md publication contract says
-    # NFS is exactly
-    # where an assumption about it would be wrong.
-    source = PROBE_AREA / f"link-source-{os.getpid()}"
-    link = PROBE_AREA / f"link-{os.getpid()}"
+def same_entry(parent, name, expected):
     try:
-        source.write_bytes(b"hardening probe")
-        os.link(source, link)
-        assert source.samefile(link), "the link is not the same inode"
-        return f"link count {source.stat().st_nlink}"
+        current = os.stat(name, dir_fd=parent, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    return (current.st_dev, current.st_ino) == expected
+
+
+@contextmanager
+def owned_health_directory(health):
+    name = "hardening-" + secrets.token_hex(16)
+    os.mkdir(name, 0o700, dir_fd=health)
+    descriptor = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=health)
+    expected = identity(descriptor)
+    try:
+        yield descriptor
     finally:
-        for path in (link, source):
-            path.unlink(missing_ok=True)
+        empty = not os.listdir(descriptor)  # noqa: PTH208 - descriptor-pinned enumeration
+        os.close(descriptor)
+        if not empty or not same_entry(health, name, expected):
+            reject("probe directory changed; evidence preserved")
+        os.rmdir(name, dir_fd=health)
 
 
-@check("archive is the live NFS mount")
-def _nfs_identity() -> str:
-    # `ProtectSystem=strict` bind-mounts the world read-only and `ReadWritePaths=`
-    # re-mounts the archive. On an autofs path that could capture the *trigger*
-    # rather than the NFS mount, leaving the service writing to an empty
-    # directory inside its own namespace. The sentinel proves otherwise.
-    sentinel = json.loads((ARCHIVE / ".hfcache-root").read_bytes())
-    entries = sorted(path.name for path in ARCHIVE.iterdir())
-    assert "published" in entries, f"the archive root shows {entries}"
-    return f"archive {sentinel['archive_id']}, {len(entries)} entries"
+def file_workload(directory):
+    """Exercise publication syscalls and clean only exact owned inodes."""
+    owned = {}
+    try:
+        descriptor = os.open(
+            "source", os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_WRONLY, 0o600, dir_fd=directory
+        )
+        owned["source"] = identity(descriptor)
+        try:
+            os.write(descriptor, b"hfcache disposable hardening probe")
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        os.link(
+            "source", "linked", src_dir_fd=directory, dst_dir_fd=directory, follow_symlinks=False
+        )
+        owned["linked"] = owned["source"]
+        if not same_entry(directory, "linked", owned["source"]):
+            reject("hardlink identity differs")
+        reservation = os.open(
+            "renamed", os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_WRONLY, 0o600, dir_fd=directory
+        )
+        owned["renamed"] = identity(reservation)
+        os.close(reservation)
+        if not same_entry(directory, "renamed", owned["renamed"]) or not same_entry(
+            directory, "source", owned["source"]
+        ):
+            reject("rename destination changed")
+        os.rename("source", "renamed", src_dir_fd=directory, dst_dir_fd=directory)
+        owned["renamed"] = owned.pop("source")
+        reader = os.open("renamed", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        try:
+            if identity(reader) != owned["renamed"]:
+                reject("read target changed")
+            payload = os.read(reader, 128)
+            expected = b"hfcache disposable hardening probe"
+            if hashlib.sha256(payload).digest() != hashlib.sha256(expected).digest():
+                reject("owned content digest mismatch")
+        finally:
+            os.close(reader)
+        os.mkdir("setgid", 0o750, dir_fd=directory)
+        child = os.open("setgid", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+        owned["setgid"] = identity(child)
+        try:
+            os.fchmod(child, 0o2750)
+            if stat.S_IMODE(os.fstat(child).st_mode) != PUBLISHED_DIRECTORY_MODE:
+                reject("setgid mode did not land")
+        finally:
+            os.close(child)
+        os.fsync(directory)
+        return "owned create/fsync/hardlink/rename/mkdir/chmod completed"
+    finally:
+        cleanup_owned(directory, owned)
 
 
-for name, ok, detail in results:
-    print(f"{'pass' if ok else 'FAIL':4}  {name:34}  {detail}")
+def cleanup_owned(directory, owned):
+    changed = False
+    for name, expected in reversed(tuple(owned.items())):
+        if not same_entry(directory, name, expected):
+            changed = True
+            continue
+        if name == "setgid":
+            os.rmdir(name, dir_fd=directory)
+        else:
+            os.unlink(name, dir_fd=directory)
+    if changed:
+        reject("probe entry changed; unexplained evidence preserved")
 
-failed = [name for name, ok, _ in results if not ok]
-if failed:
-    print(f"\n{len(failed)} of {len(results)} checks failed: {', '.join(failed)}")
-    sys.exit(1)
-print(f"\nall {len(results)} hardening checks passed")
+
+def status_observations():
+    fields = dict(
+        line.split(":", 1)
+        for line in Path("/proc/self/status").read_text().splitlines()
+        if ":" in line
+    )
+    results = []
+    for name, field, expected in (
+        ("NoNewPrivs observed", "NoNewPrivs", 1),
+        ("effective capabilities empty", "CapEff", 0),
+        ("bounding capabilities empty", "CapBnd", 0),
+    ):
+        value = int(fields[field].strip(), 16 if field.startswith("Cap") else 10)
+        results.append(
+            Result(name, "pass" if value == expected else "fail", "process status observed")
+        )
+    loaded = fields.get("Seccomp", "0").strip() == "2"
+    results.append(
+        Result(
+            "seccomp filter loaded",
+            "pass" if loaded else "fail",
+            "filter presence only; individual syscall rules not established",
+        )
+    )
+    rows = mount_rows(Path("/proc/self/mountinfo").read_text())
+    for location in ("/usr", "/etc", "/opt"):
+        readonly = "ro" in covering_mount(PurePosixPath(location), rows)[3].split(",")
+        results.append(
+            Result(
+                f"system mount {location} read-only",
+                "pass" if readonly else "not_proven",
+                "mount observation only; no system file created",
+            )
+        )
+    hidden = not Path("/proc/sys/vm/swappiness").exists()
+    results.append(
+        Result(
+            "kernel tunable visibility",
+            "pass" if hidden else "not_proven",
+            "visibility only; no kernel setting opened for writing",
+        )
+    )
+    return results
+
+
+def credential_observation(path):
+    if os.environ.get("HF_HUB_OFFLINE") != "1" or any(
+        name in os.environ for name in FORBIDDEN_CREDENTIAL_ENV
+    ):
+        return Result(
+            "verifier credential scope", "fail", "offline flag or credential scope invalid"
+        )
+    if not path:
+        return Result(
+            "verifier credential scope", "not_proven", "no known source baseline supplied"
+        )
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except OSError as error:
+        if error.errno in PERMISSION_DENIALS | {errno.ENOENT}:
+            return Result(
+                "verifier credential scope",
+                "not_proven",
+                "source inaccessible; ordinary DAC or absence may explain denial",
+            )
+        return Result("verifier credential scope", "not_proven", "source I/O prerequisite failed")
+    else:
+        os.close(descriptor)
+        return Result("verifier credential scope", "fail", "source open succeeded; bytes not read")
+
+
+def ip_action(family):
+    with socket.socket(family, socket.SOCK_STREAM) as connection:
+        connection.settimeout(2)
+        connection.connect(("127.0.0.1" if family == socket.AF_INET else "::1", 9))
+    return "IP connect completed"
+
+
+def native_extensions():
+    import hf_xet  # noqa: F401 - import success is the diagnostic
+    import pydantic_core  # noqa: F401
+    import yaml  # noqa: F401
+
+    return "required native-extension imports succeeded"
+
+
+def api_network_checks(cache):
+    def dns():
+        if not socket.getaddrinfo("huggingface.co", 443):
+            reject("DNS returned no addresses")
+        return "Hub DNS lookup completed"
+
+    def tls():
+        with socket.create_connection(("huggingface.co", 443), timeout=10) as raw:
+            with ssl.create_default_context().wrap_socket(raw, server_hostname="huggingface.co"):
+                return "verified Hub TLS connection completed"
+
+    def hub():
+        from huggingface_hub import HfApi
+
+        if not HfApi().repo_info("hf-internal-testing/tiny-random-gpt2", token=False).sha:
+            reject("Hub response omitted immutable identity")
+        return "anonymous Hub metadata request completed"
+
+    def download():
+        from huggingface_hub import hf_hub_download
+
+        hf_hub_download(
+            "hf-internal-testing/tiny-random-gpt2",
+            filename="config.json",
+            cache_dir=cache,
+            token=False,
+        )
+        return "small anonymous Hub download completed; Xet transfer not established"
+
+    return [
+        check("API DNS", dns),
+        check("API TLS", tls),
+        check("API Hub metadata", hub),
+        check("API download", download),
+    ]
+
+
+def service_properties(content):
+    properties = []
+    inside = False
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if line.startswith("["):
+            inside = line == "[Service]"
+        elif inside and "=" in line and not line.startswith(("#", ";")):
+            key, value = line.split("=", 1)
+            if key in SANDBOX_PROPERTIES:
+                properties.append((key, value))
+    return properties
+
+
+def parser():
+    result = SafeParser(description=__doc__)
+    result.add_argument("unit", nargs="?", choices=UNITS, default=UNITS[0])
+    result.add_argument("--mode", choices=("plan", "inventory", "workload"), default="plan")
+    result.add_argument("--profile", choices=PROFILES)
+    result.add_argument("--dry-run", action="store_true")
+    result.add_argument("--archive-root")
+    result.add_argument("--archive-id")
+    result.add_argument("--lock-file")
+    result.add_argument("--target-kind", choices=("local", "nfs"), default="local")
+    result.add_argument("--acknowledge-disposable", action="store_true")
+    result.add_argument("--allow-network", action="store_true")
+    result.add_argument("--credential-probe")
+    result.add_argument("--unit-directory")
+    result.add_argument("--wrapper", action="store_true", help=argparse.SUPPRESS)
+    result.add_argument("--native-runtime", action="store_true", help=argparse.SUPPRESS)
+    return result
+
+
+def workload(options):
+    with target_scope(options) as health:
+        with owned_health_directory(health) as directory:
+            results = [check("disposable publication syscalls", lambda: file_workload(directory))]
+            results.extend(status_observations())
+            results.append(check("native extensions", native_extensions))
+            if options.unit == UNITS[1]:
+                results.append(credential_observation(options.credential_probe))
+                results.extend(
+                    check(name, lambda f=family: ip_action(f), denied=True)
+                    for name, family in (
+                        ("verifier IPv4 action", socket.AF_INET),
+                        ("verifier IPv6 action", socket.AF_INET6),
+                    )
+                )
+            elif options.allow_network:
+                import tempfile
+
+                with tempfile.TemporaryDirectory(prefix="hfcache-probe-") as cache:
+                    results.extend(api_network_checks(cache))
+    return results
+
+
+def wrapper_workload(options, properties):
+    if os.geteuid() != 0 or options.unit_directory:
+        reject("native transient workload requires root and installed properties")
+    users = [value for key, value in properties if key == "User"]
+    if not users or not users[-1]:
+        reject("executor identity missing")
+    uid = pwd.getpwnam(users[-1]).pw_uid
+    if uid == 0:
+        reject("executor must be unprivileged")
+    # Before systemd can create even disposable state; child rechecks under lock.
+    with target_scope(options, owner_uid=uid):
+        pass
+    command = ["systemd-run", "--pipe", "--wait", "--collect", "--quiet", "--property=Type=oneshot"]
+    command.extend(f"--property={key}={value}" for key, value in properties)
+    command.extend(
+        [
+            f"--property=ReadWritePaths={options.archive_root}/.store/health",
+            "--property=PrivateTmp=true",
+            "--setenv=HF_HUB_DISABLE_IMPLICIT_TOKEN=1",
+            "--setenv=PYTHONDONTWRITEBYTECODE=1",
+        ]
+    )
+    if options.unit == UNITS[1]:
+        command.append("--setenv=HF_HUB_OFFLINE=1")
+    command.extend(
+        [
+            "/opt/hfcache/current/.venv/bin/python",
+            str(Path(__file__).resolve()),
+            options.unit,
+            "--mode=workload",
+            "--profile=native",
+            "--acknowledge-disposable",
+            "--archive-root",
+            options.archive_root,
+            "--archive-id",
+            options.archive_id,
+            "--lock-file",
+            options.lock_file,
+            "--target-kind",
+            options.target_kind,
+        ]
+    )
+    if options.allow_network:
+        command.append("--allow-network")
+    if options.credential_probe:
+        command.extend(["--credential-probe", options.credential_probe])
+    print(
+        "native transient diagnostic; credentials/lifecycle/shared state excluded; "
+        "health/PrivateTmp overrides applied; not installed container acceptance"
+    )
+    completed = subprocess.run(command, check=False, capture_output=True, text=True)  # noqa: S603 - fixed manager argv and validated target
+    return render_transient_result(
+        completed, unit=options.unit, allow_network=options.allow_network
+    )
+
+
+def expected_result_names(unit, *, allow_network=False):
+    names = {
+        "disposable publication syscalls",
+        "NoNewPrivs observed",
+        "effective capabilities empty",
+        "bounding capabilities empty",
+        "seccomp filter loaded",
+        "system mount /usr read-only",
+        "system mount /etc read-only",
+        "system mount /opt read-only",
+        "kernel tunable visibility",
+        "native extensions",
+    }
+    if unit == UNITS[1]:
+        names.update({"verifier credential scope", "verifier IPv4 action", "verifier IPv6 action"})
+    elif allow_network:
+        names.update({"API DNS", "API TLS", "API Hub metadata", "API download"})
+    return names
+
+
+def render_transient_result(completed, *, unit=UNITS[0], allow_network=False):
+    # Manager errors may echo a misconfigured property value. Never relay them.
+    try:
+        if len(completed.stdout.encode()) > MAX_SENTINEL_BYTES:
+            reject("oversized diagnostic output")
+        document = json.loads(completed.stdout, object_pairs_hook=unique_pairs)
+        expected = expected_result_names(unit, allow_network=allow_network)
+        if (
+            set(document) != {"schema_version", "scope", "results"}
+            or type(document["schema_version"]) is not int
+            or document["schema_version"] != 1
+        ):
+            reject("invalid diagnostic response")
+        if (
+            document["scope"] != "current probe process only"
+            or not document["results"]
+            or len(document["results"]) > MAX_RESULTS
+        ):
+            reject("oversized diagnostic response")
+        for row in document["results"]:
+            if set(row) != {"name", "state", "detail"}:
+                reject("invalid diagnostic row")
+            if row["name"] not in expected or row["state"] not in {"pass", "fail", "not_proven"}:
+                reject("unrecognized diagnostic response")
+        names = [row["name"] for row in document["results"]]
+        if len(names) != len(expected) or set(names) != expected:
+            reject("incomplete or duplicate diagnostic results")
+        for row in document["results"]:
+            print(f"{row['state']}: {row['name']}")
+    except Exception:  # noqa: BLE001 - hostile/manager output is never echoed
+        print("not_proven: native transient result unavailable or invalid")
+        return 2
+    states = {row["state"] for row in document["results"]}
+    if "fail" in states:
+        return 1
+    return 2 if "not_proven" in states or completed.returncode else 0
+
+
+def validate_options(options):
+    if options.profile is None:
+        reject("explicit deployment profile required")
+    if options.mode == "workload":
+        if (
+            options.profile != "native"
+            or not options.acknowledge_disposable
+            or not all((options.archive_root, options.archive_id, options.lock_file))
+        ):
+            reject("explicit native disposable target, UUID and lock required")
+        target = canonical_path(options.archive_root)
+        production = PurePosixPath("/srv/hfcache")
+        if target == production or production in target.parents:
+            reject("production archive forbidden")
+
+
+def main(argv=None):
+    options = parser().parse_args(argv)
+    if options.mode == "plan" or options.dry_run:
+        print(
+            "plan only: select --profile and --mode inventory or workload explicitly; "
+            "no manager, credential, archive or network access performed"
+        )
+        return 0
+    try:
+        validate_options(options)
+        if options.wrapper and options.mode == "workload" and not options.native_runtime:
+            arguments = sys.argv[1:] if argv is None else argv
+            os.execv(  # noqa: S606 - fixed native interpreter after explicit mode/profile validation
+                NATIVE_PYTHON,
+                [
+                    NATIVE_PYTHON,
+                    "-B",
+                    str(Path(__file__).resolve()),
+                    "--native-runtime",
+                    *arguments,
+                ],
+            )
+        if options.wrapper and options.mode == "workload":
+            with target_scope(options, owner_uid=-1):
+                pass
+        if options.mode == "inventory" or options.wrapper:
+            if options.unit_directory:
+                content = (Path(options.unit_directory) / options.unit).read_text()
+            else:
+                command = ["systemctl"]
+                if options.profile != "native":
+                    command.append("--user")
+                content = subprocess.run(  # noqa: S603 - fixed manager, unit allowlist
+                    [*command, "cat", "--no-pager", options.unit],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout
+            properties = service_properties(content)
+            print("sandbox property inventory; values suppressed; no enforcement claim")
+            for key, _ in properties:
+                print(key)
+            if options.mode == "inventory":
+                return 0
+            return wrapper_workload(options, properties)
+        results = workload(options)
+        print(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "scope": "current probe process only",
+                    "results": [vars(result) for result in results],
+                }
+            )
+        )
+        if any(result.state == "fail" for result in results):
+            return 1
+        return 2 if any(result.state == "not_proven" for result in results) else 0
+    except Exception:  # noqa: BLE001 - never render raw input/dependency/secret exceptions
+        print(
+            "hardening-probe: refused or not proven; prerequisites/identity/ownership failed",
+            file=sys.stderr,
+        )
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

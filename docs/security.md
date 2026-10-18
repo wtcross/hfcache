@@ -530,10 +530,11 @@ No-confirm init is inspection/refusal only, not a privileged submission. See
 
 ## 5. systemd hardening posture
 
-Every setting below is applied and then **validated against a real run** — Hub
-requests, DNS, TLS, NFS I/O, hashing, and Xet reconstruction all exercised. A
-setting that breaks a legitimate operation is not silently dropped: the failing
-requirement and the narrower alternative are documented (`docs/agents/history/plan.md` §22.5).
+Hardening must be validated against the actual executors and their workloads.
+Repository fixtures and property inventories do not prove installed enforcement.
+Use the [explicit diagnostic modes](#hardening-diagnostics); they never weaken
+settings to make a check pass. A transient native process supplies evidence only
+about that process, and cannot certify rootless PID1, cgroup or peer boundaries.
 
 ```text
 NoNewPrivileges=true          ProtectKernelTunables=true
@@ -821,3 +822,70 @@ durable archive content. Never execute repository code, instantiate models,
 tokenizers, PEFT objects or dataset builders, enable `trust_remote_code`, or
 invoke Hub/Git/Git-LFS/Git-Xet subprocesses. Stream hashing in bounded chunks;
 never load an entire model file into memory.
+
+## Hardening diagnostics
+
+`scripts/check-hardening.sh` and its Python payload are static by default.
+Import, no arguments, `--help` and `--dry-run` make no manager, archive,
+credential or network request. Dry-run prints intent only; it does not inspect
+installed properties or prove target validity.
+
+Explicit inventory prints selected sandbox property names without values:
+
+```bash
+scripts/check-hardening.sh --mode inventory --profile native hfcache-api.service
+scripts/check-hardening.sh --mode inventory --profile guarded-readonly hfcache-verification.service
+```
+
+Native inventory reads the system manager; rootless and guarded-readonly
+inventory read the caller's user manager. Run user-manager inventory as the
+service identity. `--unit-directory PATH` is an explicit fixture inventory
+alternative; it is not deployment evidence. Only API/private-verifier executor
+unit names are accepted, never scheduled client wrappers.
+
+A native disposable workload requires `--mode workload --profile native`,
+`--acknowledge-disposable`, `--archive-root`, `--archive-id` and `--lock-file`.
+The target and health area, sentinel and local lock must already exist; the
+probe never initializes an archive or recreates a lock. Paths must be absolute,
+canonical and free of whitespace, quotes, backslashes and systemd specifiers.
+`--target-kind local` selects an owned local fixture; `--target-kind nfs`
+requires an exact disposable NFS mount. Production `/srv/hfcache`, symlink
+aliases, read-only profiles/targets and all NFS workloads on a host carrying
+the production mount refuse. The recorded guarded deployment cannot run archive
+write probes. No documentation change authorizes provisioning or running one.
+
+Before any write, prove filesystem locality, strict sentinel schema/expected
+UUID, directory ownership/modes and a pre-existing regular local lock. Refuse
+symlinks and special files without blocking, acquire the lock nonblocking and
+revalidate identity, paths and modes. Write only inside an exclusive random
+`.store/health` child. Create files with exclusive no-follow opens; read/hash,
+fsync, hardlink, rename and mkdir/chmod setgid there. Cleanup checks exact inode
+ownership and preserves unknown or replaced evidence.
+
+The native wrapper copies selected sandbox/read-mask properties and excludes
+credentials, environment, lifecycle hooks and shared production writable state.
+It explicitly overrides the health write path and private temporary storage;
+it does not claim to reproduce every installed property. Native extension and
+API DNS/TLS/anonymous Hub/download checks remain available. Network checks run
+only with `--allow-network`; a small download alone does not prove Xet transfer.
+The verifier checks its offline/credential environment and attempts separate
+IPv4/IPv6 actions. A `--credential-probe PATH` is a protected file path, never
+a token; the probe opens/closes without reading bytes. Absence or DAC denial is
+not proof of namespace masking.
+
+Results are `pass`, `fail` or `not_proven`: exit 0 means selected checks passed,
+1 means a demonstrated failure, and 2 means refusal or incomplete evidence.
+Missing imports, DNS failure, timeout and unrelated I/O never certify isolation.
+Permission errno evidence establishes only that the attempted action was denied.
+Seccomp status proves a filter is loaded, not specific syscall rules. Mount and
+kernel-tunable visibility checks are observations; they never create files in
+`/usr`, `/etc`, `/opt` or write a real kernel setting. The former broad
+ProtectHome/ProcSubset/ProtectProc/PrivateDevices/PrivateTmp/namespace/AF_PACKET
+claims are not inferred from this reduced safe-observation set.
+
+Direct workload output is a schema-1 diagnostic document scoped to the current
+probe process. The wrapper requires the complete role/network check set, rejects duplicate
+results and noninteger versions, projects known names/states and suppresses raw
+manager errors. Dependency stdout/stderr/logging and exception text are discarded;
+values and secrets are never relayed. No numeric score substitutes for installed
+cgroup, credential mask, SELinux, peer, NFS or container-readiness acceptance.

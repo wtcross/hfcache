@@ -117,7 +117,8 @@ The unit run must end `Result=success`; an idempotent skip is success.
 
 As the service identity, on the live archive: `verify --full` clean; `status`
 exit `0` and not degraded; `recover --dry-run` actionable `0`, blocked `0`.
-Then `sudo scripts/check-hardening.sh` on both service units (all checks
+Then explicitly scoped actual-executor acceptance using the diagnostic contract
+in `docs/security.md` (all applicable checks
 passing), `systemd-analyze verify` over the installed units (silent), and no
 new SELinux AVC records. `REL-004`'s tracker entry shows a complete worked
 run.

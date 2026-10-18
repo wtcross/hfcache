@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [DOC-011](doc-011-human-docs-authority-and-record-migration.md) |
 | Phase | 1 — Correctness before editorial cleanup |
@@ -25,11 +25,11 @@ Keep actual container PID1/peer/cgroup checks distinct from native transient-uni
 
 ## Acceptance
 
-- [ ] Import, help and dry-run have zero effects; fixtures fail if they attempt host/credential/archive access.
-- [ ] Read-only profile and missing/ambiguous authority refuse invasive checks before any filesystem write or service call.
-- [ ] Injected ImportError, DNS failure, timeout and unrelated OSError cannot produce an isolation pass.
-- [ ] No real kernel setting is written, no archive-root scratch file is created, and every created fixture artifact has provable cleanup ownership.
-- [ ] Native and container evidence identify the actual tested process/control and cannot be mislabeled as production acceptance.
+- [x] Import, help and dry-run have zero effects; fixtures fail if they attempt host/credential/archive access.
+- [x] Read-only profile and missing/ambiguous authority refuse invasive checks before any filesystem write or service call.
+- [x] Injected ImportError, DNS failure, timeout and unrelated OSError cannot produce an isolation pass.
+- [x] No real kernel setting is written, no archive-root scratch file is created, and every created fixture artifact has provable cleanup ownership.
+- [x] Native and container evidence identify the actual tested process/control and cannot be mislabeled as production acceptance.
 
 ## Contracts, invariants and ADRs
 
@@ -59,15 +59,35 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after committed DOC-011 c3f5b5c. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+Completed 2026-10-18 in this commit. Static default/help/dry-run precede
+all effects. Explicit native disposable workloads prove mount locality (including
+ancestors/submounts), strict sentinel identity, ownership and original lock before
+exclusive health-child writes; under-lock rechecks and exact-inode cleanup preserve
+unknown artifacts. Production/read-only/ambiguous targets refuse. Kernel settings
+are never written. Dependency/prerequisite failures remain not proven; output
+suppression and complete bounded result projection prevent false success/leaks.
+
+Validation: `uv run --locked --extra server --extra mcp pytest
+tests/unit/test_hardening_probe.py --no-cov` exited 0, 74 passed. Shell syntax,
+Ruff, types and migration-link checks passed. `scripts/check.sh` exited 0:
+4,107 passed, 40 deselected in 473.88s; wheel build; all three isolated locked
+installation profiles; actual Cockpit lint/types, 135 tests and production build.
+The earlier fixture type-inference failure was corrected before this final gate;
+interrupted review runs are not acceptance evidence. Log:
+`/tmp/hfcache-ops020-gate.log`.
+
+Reviewed FS-02/03/19, AD-17, INV-010 and native/container boundaries;
+added INV-017 and decision 131, amended decisions 59/60 and current recipes.
+No application format, dependency or sandbox weakening. Actual installed/container/
+SELinux/NFS acceptance remains separate operator work; none was run here.
+Positive installed-native profile classification follows in OPS-021.
+See [completed progress evidence](../../progress.md#documentation-and-script-alignment).
+The user's later feature-branch push authorization applies only after final plan
+acceptance; all host/deploy/tag/merge restrictions remain.

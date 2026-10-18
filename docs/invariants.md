@@ -669,6 +669,17 @@ Evidence: [plugin tests](../cockpit/test) and the
 
 ## Framework and engineering
 
+- **`INV-017` — Diagnostics require explicit authority and honest evidence.**
+  Import/help/default/dry-run never contact managers, credentials, archive or
+  network. A disposable workload proves target, UUID, filesystem, ownership and
+  existing local lock before writes, revalidates under lock, and confines archive writes
+  to its owned health child. Preserve unexplained or substituted entries.
+  Production and guarded/read-only targets refuse archive-write probes.
+  Never mutate real host settings as a denial test. Expected action refusals,
+  missing prerequisites and installed control attribution are distinct results.
+  Enforcement: [probe](../scripts/hardening-probe.py) and
+  [fixture tests](../tests/unit/test_hardening_probe.py);
+  rationale: [decision 131](adr/decision-131.md).
 - **`FW-01`, `FW-02`** — Use ordinary deterministic Python functions and typed
   append-only records. Journals are recovery evidence, never an orchestration
   engine. No workflow/DAG/actor/task/agent framework or mutable archive database.

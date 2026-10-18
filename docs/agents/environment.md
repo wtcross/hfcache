@@ -35,9 +35,10 @@ apply wherever the archive mount exists.
   `srv-hfcache.mount`/`.automount`; a journald drop-in (persistent storage);
   tmpfiles for `/run/hfcache`, where the exclusive lock lives (`AD-17`).
 - **SELinux is enforcing.** Hardening is validated, not assumed:
-  `sudo scripts/check-hardening.sh` runs the deployed unit's own `[Service]`
-  properties around a real workload. Re-run it after any unit change and
-  after `huggingface_hub`, `hf_xet`, or Python upgrades.
+  The hardening wrapper is static by default; explicit inventory reads property
+  names only. Disposable workloads require separate profile/target/UUID/lock
+  authority and refuse the guarded deployment. See the human security diagnostic
+  contract. No source task authorizes actual host/NFS probes.
 - **Archive layout and permissions:** `docs/architecture.md` §5. What is
   still open host-side: **Operator handoff** in `docs/agents/progress.md`.
 

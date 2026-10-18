@@ -255,3 +255,4 @@ status and current-contract links before applying a historical choice.
 | 127 | [Run reviewed rootless containers without forced executor cleanup](decision-127.md) |
 | 128 | [Create the rootless verifier listener inside its confinement](decision-128.md) |
 | 129 | [Build all service image stages on pinned UBI 10 micro](decision-129.md) |
+| 131 | [Explicit disposable probes and qualified isolation evidence](decision-131.md) |

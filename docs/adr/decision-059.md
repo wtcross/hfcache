@@ -78,3 +78,10 @@ Implementation or shipped-artifact evidence:
 Verification or recorded operational evidence:
 [packaging/systemd/hfcache-sync.service](../../packaging/systemd/hfcache-sync.service),
 [packaging/systemd/hfcache-verify.service](../../packaging/systemd/hfcache-verify.service).
+
+## Explicit diagnostic and evidence amendment
+
+[Decision 131](decision-131.md) replaces implicit live workloads and generic
+exception-as-denial classification. Static entrypoints, explicit disposable
+authority, identity/lock proof and qualified results govern current probes.
+Original dated results remain historical evidence, not current acceptance.
