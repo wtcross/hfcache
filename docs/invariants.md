@@ -418,6 +418,23 @@ History: `SYNC-007` (`54e4671`), decision 94.
   quiescence proof. NAS content/metadata writes, relabel/chown/copyup and other-
   host changes are forbidden; sync remains stopped and verify scheduling disabled.
   Local disposable/container proofs do not pass forbidden real storage checks.
+  **OPS-015 profile (2026-10-18, [decision 127](adr/decision-127.md)).**
+  Explicit rootless user services and a system target bridge use Caddy/one API/
+  isolated FD3 worker and container clients. Immutable never-pull/no-replace/
+  no-init/no-auto-remove persistent-role commands, infinite non-killing drain and actual libpod
+  cgroup/peer/secret proof preserve unknown execution. No rootful/privileged/
+  label-disable/control-socket fallback; shared original local lock and read-only
+  NAS/policy-directory boundaries remain. Actual disposable container proof binds
+  no NAS; packaging cannot clear installed or full storage acceptance holds.
+  Finite stateless observer containers alone may auto-remove without canceling
+  server execution or discarding receipts/handles. Exact protected execution
+  bindings through current select one physical helper/profile/image/config tree;
+  missing/copied/drifted bindings refuse, never a disconnected runtime copy.
+  Effective manager fragments/drop-ins must be inspected after both-manager reload
+  before activation. Enforcement: [fixed helper](../scripts/container-service.py),
+  [protected installer](../scripts/install-container-release.py),
+  [runtime tests](../tests/unit/test_container_service.py) and
+  [selection/rollback tests](../tests/unit/test_container_release_installer.py).
 - **`INV-004` — Capacity admission includes publication cost and reserve.**
   Require free capacity beyond estimated download bytes, explicit copy-mode
   publication bytes, and the greater of the GiB and percentage reserves.

@@ -1,0 +1,15 @@
+[Unit]
+Description=hfcache rootless Caddy TLS proxy
+Wants=hfcache-api.service
+After=hfcache-api.service
+PartOf=hfcache.target
+
+[Service]
+Type=exec
+ExecStart=/usr/local/libexec/hfcache-container-service caddy
+ExecStop=/usr/local/libexec/hfcache-container-service stop caddy
+TimeoutStartSec=300
+TimeoutStopSec=infinity
+SendSIGKILL=no
+MemoryHigh=512M
+UMask=0077

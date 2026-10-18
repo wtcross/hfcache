@@ -8,7 +8,7 @@
 | Authorization | Tyler authorized review, local release and production rollout on this host, then required Caddy and rootless Podman runtime; NAS content/metadata writes and changes to other hosts remain forbidden. |
 | Reviewed baseline | `c73822d`, completed REST/MCP implementation on `feat/rest-api-and-mcp`; source metadata `0.1.10` |
 | Tracker | [current.md](current.md) |
-| Execution | Five sequential work packages; one active task and one implementation/evidence commit per package |
+| Execution | Six sequential work packages; one active task and one implementation/evidence commit per package |
 
 ## Outcome and boundaries
 
@@ -17,7 +17,7 @@ for Caddy, API, private verification and runtime clients. A local `hfcache.targe
 entrypoint must start Caddy and API through a reviewed system-to-user manager
 bridge. Preserve one application, bounded execution/metadata pools, exact durable
 observation, peer-checked private verification and whole-archive credentials.
-The container details are OPS-015 work, not an assumption that existing host
+The explicit user-service/container details are OPS-015 work, not an assumption that existing host
 services or tests already prove a container deployment.
 
 This authorization is local to `hfcachewriter.lab.cross.solutions`. It permits
@@ -65,8 +65,11 @@ Review [invariants](../invariants.md) INV-002/003/005–007/010–016 and AD-16/
 [security](../security.md), [scheduling](../adr/systemd-scheduling.md) and
 [decision 121](../adr/decision-121.md). [Decision 126](../adr/decision-126.md)
 defines this data-preserving authorization/host guard and partial acceptance.
-OPS-015 will record the actual rootless architecture and affected predecessors
-before implementation; no release version is selected by this plan.
+[Decision 127](../adr/decision-127.md) records the selected explicit rootless
+user-service architecture and predecessor amendments before implementation;
+actual container proof remains OPS-015 evidence. REL-010 will introduce version
+0.2.0 for the breaking API-only operational CLI and explicit container deployment
+contract; OPS-015 itself changes no version.
 
 ## Tasks and dependency order
 
@@ -74,9 +77,10 @@ before implementation; no release version is selected by this plan.
 | --- | --- | --- |
 | 1 | [OPS-014 — establish local rollout guardrails](tasks/ops-014-local-rollout-guardrails.md) | None |
 | 2 | [OPS-015 — package the rootless runtime](tasks/ops-015-rootless-container-runtime.md) | OPS-014 |
-| 3 | [REL-010 — prepare identified release artifacts](tasks/rel-010-rootless-release-artifacts.md) | OPS-015 |
-| 4 | [OPS-016 — roll out and prove the local runtime](tasks/ops-016-local-rootless-deployment.md) | REL-010 |
-| 5 | [REL-011 — record the local release and handoff](tasks/rel-011-local-release-and-handoff.md) | OPS-016 |
+| 3 | [REL-010 — review and commit 0.2.0 source](tasks/rel-010-rootless-release-artifacts.md) | OPS-015 |
+| 4 | [REL-012 — build clean committed release artifacts](tasks/rel-012-clean-container-release-artifacts.md) | REL-010 |
+| 5 | [OPS-016 — roll out and prove the local runtime](tasks/ops-016-local-rootless-deployment.md) | REL-012 |
+| 6 | [REL-011 — record the local release and handoff](tasks/rel-011-local-release-and-handoff.md) | OPS-016 |
 
 Task records own mutable status. Do not start a dependent package until its
 predecessor is completed and committed. Collaborators share the selected task;
@@ -86,7 +90,7 @@ unchanged, and unrelated backlog is not activated.
 ## Acceptance and validation
 
 Every package passes `scripts/check.sh`; release/container boundaries require
-`--with-build` and meaningful image/Quadlet/Caddy/peer/activation/drain/secret/
+`--with-build` and meaningful image/rendered-unit/Caddy/peer/activation/drain/secret/
 read-only fixtures. Record actual installed tool versions, source commit and
 wheel/sdist/image digests with locked dependency profiles; do not equate displayed
 version with artifact identity. No auto-update or runtime unreviewed image pull.
@@ -126,3 +130,31 @@ does not certify forbidden tests. Never push the tag or branch remotely.
   remain recorded in the task; no production/test source changed. Root rechecked
   read-only NAS, four masked inactive units and retained guard after acceptance.
   Current selects OPS-015 pending; its activation waits this package's commit.
+
+- 2026-10-18: OPS-015 activated after guard commit 28f9934. Amend the initial
+  Quadlet proposal to explicit rootless user systemd services: reviewed argv and
+  non-killing stop/removal avoid generated replacement/forced-cleanup/short-timeout
+  hazards for unknown surviving executors. Decision 127 governs the required
+  Caddy/API/private-worker/client boundaries. Necessary root-owned local account/
+  rootless test infrastructure and actual disposable proof are authorized here,
+  without a NAS bind or production switch; release/version remains REL-010.
+
+- 2026-10-18, OPS-015 handoff amendment: split pending source/version and final
+  artifact work to avoid building a deployable artifact from uncommitted source
+  or adding a second commit to one work package. REL-010 commits reviewed 0.2.0
+  source and required gate evidence; its working-tree builds are previews only.
+  New unused REL-012 builds and proves immutable artifacts from that clean
+  committed source, then records evidence without changing package inputs.
+  OPS-016 now depends on REL-012. All three remain pending; no release execution,
+  production selection or tag is authorized before their committed dependencies.
+
+- 2026-10-18: OPS-015 completed with actual NAS-free rootless worker, Caddy/TLS/
+  API/MCP/client and selected-overlay proofs, rendered-unit syntax, exact
+  protected selection/rollback tests and corrected NAS-masked --with-build
+  pipeline exit 0: 3,792 Python tests (40 deselected, 453.62 seconds), three
+  locked installation profiles, 135 Cockpit tests/build and four extra wheel
+  smokes. Failed real policy/fixture findings, the manually stopped metadata-
+  review gate and passing pre-selector gate remain separate task evidence.
+  Runtime source version remains 0.1.10; no production switch/release/tag or NAS
+  file I/O. Current selects REL-010 pending until this package is committed.
+  The live guard and installed-manager/full-storage acceptance holds remain.

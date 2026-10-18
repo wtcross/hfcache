@@ -102,3 +102,15 @@ refusal and inherited-systemd-prefix failed run separately; no production/test
 source or security policy was changed to make assertions pass. NAS/full-domain
 write acceptance remains forbidden, not achieved. OPS-015 is next pending until
 the guard package commits; no container architecture or release is claimed here.
+
+
+## 2026-10-18 explicit rootless runtime amendment (OPS-015)
+
+[Decision 127](decision-127.md) selects explicit rootless USER services and a
+system-to-user target bridge, fixed immutable runtime/container-client commands,
+non-killing drain and actual container peer/FD/secret/isolation proof. It replaces
+the initial Quadlet proposal to avoid generated replacement/forced cleanup/timeouts.
+Selected-profile Cockpit retains outer privilege/candidate guards but API secret
+delivery moves to the fixed Podman client launcher, without host ImportCredential.
+NAS/other-host restrictions, exact operation truth and previous evidence remain;
+OPS-015 fixtures bind no NAS and perform no production switch or release.

@@ -9,6 +9,13 @@ were never releases.
 
 ## Unreleased
 
+The selected local deployment is being packaged as explicit rootless Podman user
+services behind Caddy, with a reviewed system-target bridge, immutable images,
+protected staged artifact verification, non-killing executor drain and API-only
+container clients. NAS stays read-only and legacy writers remain blocked; actual
+container proof and later release/production enablement are separate task evidence.
+No release version or tag is selected by this packaging work.
+
 Local metadata orchestration now uses transport-neutral query services.
 `status` includes unmanaged published repositories, and `status`/`list` accept
 their explicit selectors as documented. Read-only evidence services validate

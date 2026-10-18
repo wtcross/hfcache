@@ -1,0 +1,5 @@
+{
+  "platform": "linux/amd64",
+  "python": "docker.io/library/python@sha256:b921fe7e7522f828d45197a47656ec465a9b15689b27fa8e1fba2864fca5b967",
+  "caddy": "docker.io/library/caddy@sha256:173b26306d711395accaeba8b67afcaad2a085ccb1e6bf26010bfe8c095a5229"
+}

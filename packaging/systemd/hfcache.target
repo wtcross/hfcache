@@ -16,7 +16,7 @@
 Description=hfcache archive lifecycle
 Documentation=file:///opt/hfcache/current/docs/plan.md
 Documentation=file:///opt/hfcache/current/docs/cli.md
-Wants=srv-hfcache.automount
+Wants=srv-hfcache.automount hfcache-containers.service
 After=remote-fs.target
 
 [Install]

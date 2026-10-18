@@ -1,0 +1,15 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+	log default {
+		output discard
+	}
+}
+
+https://@HOSTNAME@:8443 {
+	tls /run/secrets/hfcache.tls-cert /run/secrets/hfcache.tls-key
+	reverse_proxy unix//run/hfcache/api/api.sock {
+		flush_interval -1
+	}
+}

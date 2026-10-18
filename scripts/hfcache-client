@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+# Decision127: fixed rootless API client; arguments follow the image boundary.
+set -euo pipefail
+exec /usr/local/libexec/hfcache-container-service client "$@"

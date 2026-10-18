@@ -5,21 +5,20 @@
  * (docs/cli.md §1.1). Pure logic: no cockpit import.
  */
 
-export const HFCACHE_CLI = '/opt/hfcache/current/.venv/bin/hfcache';
+export const HFCACHE_CLI = '/usr/local/libexec/hfcache-client';
 export const HFCACHE_CLIENT_CONFIG = '/etc/hfcache/client.toml';
-export const HFCACHE_API_SOCKET = '/run/hfcache/api.sock';
+export const HFCACHE_API_SOCKET = '/run/hfcache/api/api.sock';
 export const SERVICE_IDENTITY = 'hfcache';
-export const CREDENTIAL_NAME = 'hfcache.api';
 
-/* CP-03/08, decision 122: this process is an API client, with only a named
- * API credential imported by PID 1. Ordinary calls have no archive policy or
- * Hub environment. A candidate is explicit local content for CLI upload. */
+/* CP-03/08, decision 127: the fixed installed launcher selects the immutable
+ * rootless client and its API-only mounted secret. The transient unit retains
+ * the service identity; image, engine arguments and credentials stay outside
+ * the page. A candidate is explicit local content for CLI upload. */
 export function hfcacheArgv(command: string[], options?: { config?: string }): string[] {
     return [
         'systemd-run', '--quiet', '--wait', '--pipe', '--collect',
         `--property=User=${SERVICE_IDENTITY}`,
         `--property=Group=${SERVICE_IDENTITY}`,
-        `--property=ImportCredential=${CREDENTIAL_NAME}`,
         '--property=UMask=0027',
         '--property=MemoryHigh=4G',
         '--',

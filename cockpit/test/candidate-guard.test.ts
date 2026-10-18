@@ -16,6 +16,7 @@ import {
     MAX_CANDIDATE_BYTES, readInstalledInvocation, validateCandidateText,
 } from '../src/lib/candidate-guard.ts';
 import type { CandidateGuard, ConfigurationFixture, GuardedInvocation } from '../src/lib/candidate-guard.ts';
+import { HFCACHE_CLI, hfcacheArgv } from '../src/lib/command.ts';
 
 const BASE = 'schema_version=1\n# original π\n\n';
 const CONTENT = 'schema_version=1\n# proposed λ\n\n\n';
@@ -39,10 +40,12 @@ function fixture() {
     const bin = join(root, 'bin');
     mkdirSync(bin, { mode: 0o700 });
     const called = join(root, 'called');
+    const argumentsPath = join(root, 'arguments');
     const response = join(root, 'response');
     writeFileSync(response, '{"fixture":"API response"}\n');
     writeFileSync(join(bin, 'systemd-run'), '#!/usr/bin/env bash\n' +
         'printf called > "$HFCACHE_TEST_CALLED"\n' +
+        'printf \'%s\\0\' "$@" > "$HFCACHE_TEST_ARGUMENTS"\n' +
         'if [[ -n "$HFCACHE_TEST_ENTERED" ]]; then\n' +
         '  : > "$HFCACHE_TEST_ENTERED"\n' +
         '  for ((i=0; i<250; i++)); do [[ -f "$HFCACHE_TEST_RELEASE" ]] && break; sleep .02; done\n' +
@@ -53,6 +56,7 @@ function fixture() {
         ...process.env,
         PATH: bin + delimiter + process.env.PATH,
         HFCACHE_TEST_CALLED: called,
+        HFCACHE_TEST_ARGUMENTS: argumentsPath,
         HFCACHE_TEST_RESPONSE: response,
     };
     const run = (invocation: GuardedInvocation) => spawnSync(invocation.argv[0], invocation.argv.slice(1), {
@@ -60,8 +64,7 @@ function fixture() {
     });
     const write = (guard: CandidateGuard = GUARD) => run(candidateMutationInvocation('write', guard, identity));
     const cli = (guard: CandidateGuard = GUARD) => guardCandidateInvocation(
-        ['systemd-run', '--', '/opt/hfcache/current/.venv/bin/hfcache', '--config', paths.candidate,
-            '--json', 'config', 'validate'], guard, identity,
+        hfcacheArgv(['config', 'validate'], { config: paths.candidate }), guard, identity,
     );
     return {
         root,
@@ -70,6 +73,7 @@ function fixture() {
         bin,
         env,
         called,
+        argumentsPath,
         run,
         write,
         cli,
@@ -157,6 +161,14 @@ test('real guarded shell preserves exact Unicode/trailing-newline bytes, predece
         assert.equal(checked.status, 0, checked.stderr);
         assert.equal(checked.stdout, '{"fixture":"API response"}\n');
         assert.equal(readFileSync(files.called, 'utf8'), 'called');
+        const argv = readFileSync(files.argumentsPath, 'utf8').split('\0')
+                .slice(0, -1);
+        assert.deepEqual(argv.slice(argv.indexOf('--') + 1), [
+            HFCACHE_CLI, '--client-config', '/etc/hfcache/client.toml',
+            '--api-socket', '/run/hfcache/api/api.sock', '--json',
+            '--config', files.paths.candidate, 'config', 'validate',
+        ]);
+        assert.ok(!argv.some(argument => argument.includes('ImportCredential')));
         writeFileSync(files.paths.backup, 'previous predecessor', { mode: 0o640 });
         const installed = files.run(candidateMutationInvocation('install', GUARD, files.identity));
         assert.equal(installed.status, 0, installed.stderr);

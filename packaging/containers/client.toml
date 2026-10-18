@@ -1,0 +1,4 @@
+schema_version = 1
+api_socket = "/run/hfcache/api/api.sock"
+
+api_token_file = "/run/secrets/hfcache.api"

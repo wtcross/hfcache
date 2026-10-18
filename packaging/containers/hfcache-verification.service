@@ -1,0 +1,17 @@
+[Unit]
+Description=hfcache rootless credential-free offline verifier
+Requires=hfcache-verification.socket
+After=hfcache-verification.socket
+PartOf=hfcache.target
+
+[Service]
+Type=exec
+ExecStart=/usr/local/libexec/hfcache-container-service worker
+ExecStop=/usr/local/libexec/hfcache-container-service stop worker
+Sockets=hfcache-verification.socket
+TimeoutStartSec=300
+TimeoutStopSec=infinity
+SendSIGKILL=no
+MemoryHigh=4G
+UMask=0077
+UnsetEnvironment=LISTEN_PIDFDID HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN CREDENTIALS_DIRECTORY HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN

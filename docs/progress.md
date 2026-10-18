@@ -1533,6 +1533,40 @@ package in this family.
   forbidden and NOT RUN. No production switch, container startup, merge/tag/push,
   registry publication or ACME issuance. Operator handoff 20 retains live guards.)
 
+- [x] OPS-015 Package and prove the rootless container runtime
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-local-rootless-rollout.md),
+  [task](plans/tasks/ops-015-rootless-container-runtime.md)).
+  Decision 127 packages explicit rootless user services/system bridge, Caddy TLS/
+  Unix upstream, one API, credential-free FD3/PID1 verifier and API-only observers.
+  Preserve the shared lock, separate stores/secrets, infinite non-killing drain
+  and stopped-only cleanup. Actual NAS-free worker-6/selected-overlay stack-7
+  proofs pass isolation, peer/lock, verified TLS, roles/registry and client checks;
+  host UID 1000 maps container UID 981, not production-manager acceptance.
+  Actual review corrected ineffective appended seccomp denies, unnecessary Caddy
+  file capability and disconnected release selection without weakening hardening.
+  Nine exact protected current bindings pin helper/profile/images/config together;
+  indexed fsynced staging and real temporary switch/rollback refuse drift/unknown
+  evidence. Task retains exact artifacts, failed attempts and uncertain-fsync rules.
+  Focused installer 106/helper 28/build-probe 34 and Cockpit 135 pass. A manually
+  stopped metadata-review gate and passing pre-selector gate remain separate;
+  neither is substituted for final corrected acceptance. Final NAS-shadowed
+  `rtk proxy bash scripts/check.sh --with-build` confirms pipeline exit 0:
+  lock/both-extra sync, 404 formatted, Ruff/whole Pyrefly 0, 3,792 Python passed/
+  40 deselected in 453.62 seconds, 0.1.10 sdist/wheel and three actual locked
+  base/server/server+MCP installation profiles. Cockpit lint/style/types,
+  135 tests in 2.213 seconds/build 1,178 ms; extra wheel subset 4 passed/
+  3,828 deselected in 5.15 seconds. Exact log hash and unit duration are in task.
+  INV-002/003/006/010–016, AD-16/17/21, CP-01–14 and 111/121/122/126 are reviewed;
+  127/contracts/schemas 15/16/enforcement/README/Unreleased/router agree. Final
+  records/links/current/dependencies/REST matrix/unique decision/whitespace pass.
+  Pending REL-010 commits reviewed 0.2.0 source; new REL-012 builds clean-source
+  artifacts before OPS-016. No later task activates before committed dependencies.
+  Guard PID 653008, masked inactive writers, read-only NAS and Enforcing SELinux
+  remain; no running fixture containers. No dependency/archive/service/domain/
+  version change, production switch, NAS file I/O/live sync/full verification/
+  NFS-hardening, other-host change, remote publication, ACME, merge or tag.
+  Handoff 20/21 preserves installed-manager/full-storage acceptance holds.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -1827,6 +1861,21 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     remain forbidden or separately held, not passed by local fixture/gate proof.
     OPS-015 architecture, later deployment and local release/tagging require their
     committed dependencies; no remote push/registry publication/ACME is authorized.
+
+21. **Rootless packaging is not production acceptance (OPS-015, 2026-10-18):**
+    actual NAS-free rootless login fixtures prove worker isolation/FD3/peer/lock,
+    Caddy verified TLS/API/MCP/container-client behavior and selected physical
+    overlays; they do not prove the production service account, effective manager
+    fragments/drop-ins, installed target/bridge, real credential delivery, overlay
+    placeholders, firewall/browser/PAM or NFS/SELinux workload behavior. Keep the
+    [container contract](containers.md) and both-manager reload/precedence checks
+    in OPS-016. REL-010 prepares reviewed 0.2.0 source; REL-012 must build final
+    immutable artifacts from its clean committed worktree and prove compatibility
+    before deployment. Fixture images/0.1.10 metadata are not a release. Preserve
+    item 20's masks/read-only NAS/held lock, both stores/handles and old artifacts.
+    Never convert these local proofs into live NAS-write/full-domain acceptance
+    or restore sync/verification scheduling automatically. No remote publication,
+    other-host change or ACME is authorized.
 
 ## Operator decisions needed
 
@@ -4422,3 +4471,28 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      with forbidden checks NOT RUN. Local tag↔deployed artifact identity remains,
      with honest remaining holds; it never certifies skipped storage acceptance.
      OPS-015 owns the actual rootless architecture and proof, not this policy.
+
+127. **Run reviewed rootless containers without forced executor cleanup**
+     (2026-10-18, OPS-015). [ADR](adr/decision-127.md): explicit rootless user
+     systemd services and a reviewed system-to-user target bridge replace the
+     initial Quadlet proposal. Fixed never-pull/no-replace/no-init/no-auto-remove
+     persistent-role argv, infinite non-killing drain and stopped-only nonforce
+     cleanup preserve unknown executor truth. Finite API-only observers alone may
+     auto-remove their own stateless container; this cannot cancel server work or
+     discard durable receipts/caller handles. One API, separate Network=none/seccomp IP-denied
+     credential-free worker with real FD3/PID1/peer proof, Caddy existing verified
+     TLS8443/Unix upstream and container clients keep shared local lock/state,
+     read-only hot-reloaded policy directories and secret-class separation.
+     No ACME/admin/raw-header logging, rootful/privileged/label-disable/Podman-
+     socket shortcut, NAS relabel/chown/copyup or production switch. Exact hashed
+     wheel/closure and platform image digests identify the runtime; separate
+     protected immutable-manifest installer retains old artifacts/drain guards.
+     Cockpit keeps outer privilege/candidate/observation contracts with only a
+     fixed inner container-client launcher; no bare-host fallback. Necessary
+     root-owned local account/rootless fixture infrastructure is authorized,
+     but OPS-015 proofs bind only owned local fixtures, never NAS. Actual source,
+     lifecycle/secret/SELinux/container and full gate evidence remain task-owned.
+     Exact protected current bindings pin helper/profile/images/config together;
+     missing/copied/drifted links refuse and effective managers still need review.
+     REL-010 owns reviewed 0.2.0 source, REL-012 clean-source artifacts, and
+     OPS-016 production profile enablement under the unchanged NAS-write ban.

@@ -14,27 +14,28 @@ test('the invocation drops to the service identity and speaks JSON (CP-03)', () 
         'systemd-run', '--quiet', '--wait', '--pipe', '--collect',
         '--property=User=hfcache',
         '--property=Group=hfcache',
-        '--property=ImportCredential=hfcache.api',
         '--property=UMask=0027',
         '--property=MemoryHigh=4G',
         '--',
-        '/opt/hfcache/current/.venv/bin/hfcache',
+        '/usr/local/libexec/hfcache-client',
         '--client-config', '/etc/hfcache/client.toml',
-        '--api-socket', '/run/hfcache/api.sock', '--json',
+        '--api-socket', '/run/hfcache/api/api.sock', '--json',
         'status',
     ]);
 });
 
-test('the credential is imported by systemd, never read by the page (CP-08)', () => {
+test('the fixed container launcher owns API credential delivery outside the page (CP-08)', () => {
     const argv = hfcacheArgv(['doctor', '--read-only']);
-    assert.ok(argv.includes('--property=ImportCredential=hfcache.api'));
-    // The command line names the credential, not a token file or path the
-    // page could read; decryption happens in PID 1 (docs/cockpit.md §2).
+    assert.ok(argv.includes('/usr/local/libexec/hfcache-client'));
+    assert.ok(!argv.some(part => part.includes('Credential')));
+    // The protected runtime profile chooses the Podman secret. Neither its
+    // source nor container engine arguments enter this browser-facing adapter.
     assert.ok(!argv.some(part => part.includes('token-file')));
     assert.ok(!argv.some(part => part.includes('CREDENTIALS_DIRECTORY')));
     assert.ok(!argv.includes('--config'));
     assert.ok(!argv.some(part => part.includes('HF_HOME') || part.includes('HF_XET_CACHE')));
     assert.ok(!argv.some(part => part.includes('hf-token')));
+    assert.ok(!argv.some(part => part.includes('podman') || part.includes('image')));
 });
 
 test('a candidate configuration replaces the installed path (contract §6)', () => {

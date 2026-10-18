@@ -858,3 +858,34 @@ API and verifier stores plus scheduled pending handles; missing old readers or
 history never proves nonexecution. The verification timer remains disabled until
 its separate calendar approval. Version 0.1.10 is unchanged source metadata,
 not an artifact identity or new deployed release.
+
+
+## Rootless container profile (OPS-015)
+
+[Decision 127](adr/decision-127.md) selects explicit rootless USER systemd services
+for the local rollout, with a system hfcache.target bridge starting the user
+hfcache.target's Caddy, API and private worker socket. It supersedes the initial
+Quadlet proposal; generated replace/forced-cleanup/short-stop defaults are not
+accepted. Fixed never-pull/no-replace/no-init/no-auto-remove persistent-role argv and non-killing
+infinite drain preserve exact surviving executor authority. Unknown containers,
+failed stop or unexplained libpod cgroups refuse progress; no forced removal.
+Only finite stateless observer clients may auto-remove their own containers;
+accepted work and durable evidence remain independently server-owned.
+
+Caddy uses existing verified TLS on 8443 and a protected API Unix upstream, no
+ACME/admin/raw-header logging or artifact file service. The single API keeps its
+registry/pools/lifespan. Private verification has distinct socket/state, actual
+FD3/PID1/peer mapping, Network=none plus baseline-preserving Unix-only socket creation and no secrets/host credential paths. Only actual container proofs establish
+these properties; earlier bare-host activation evidence is not substituted.
+
+Mount the same existing local flock inode across API/worker, policy directories
+read-only for atomic reload visibility and separate private stores. Credentials
+are protected Podman secrets only in intended containers, never image/env/argv
+or worker. Every NAS bind stays read-only without chown/relabel/copyup. OPS-015
+proof uses only owned local fixtures with no NAS bind or production switch;
+[decision 126](adr/decision-126.md) and the held host guard remain. Rootless
+installer/current selection is separate from the retained historical native
+profile. Settled image/profile/helper/unit APIs and actual gate evidence follow
+in the [task](plans/tasks/ops-015-rootless-container-runtime.md), not a release claim.
+
+Detailed [rootless runtime/build/profile contract](containers.md) owns the selected deployment boundaries and actual task evidence.

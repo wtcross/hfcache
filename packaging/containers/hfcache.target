@@ -1,0 +1,4 @@
+[Unit]
+Description=hfcache rootless Caddy and API lifecycle
+Wants=hfcache-caddy.service hfcache-api.service hfcache-verification.socket
+After=hfcache-verification.socket

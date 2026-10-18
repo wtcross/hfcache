@@ -35,7 +35,9 @@ and never enter the page (CP-08). Decision 122 below governs the plugin's API
 integration; this API-014 amendment records its earlier scope, without claiming
 deployment. Installed hardening/SELinux/NFS acceptance remains pending.
 
-**API-015 governing amendment (2026-10-18, [decision 122](adr/decision-122.md)).**
+**Historical native-profile API-015 amendment (2026-10-18, [decision 122](adr/decision-122.md)).**
+The selected rootless profile below and [decision 127](adr/decision-127.md)
+supersede its inner executable, socket and host credential-import mechanism.
 Transient commands use fixed `--client-config /etc/hfcache/client.toml
 --api-socket /run/hfcache/api.sock --json`, service UID/GID, `UMask=0027`,
 `MemoryHigh=4G` and `ImportCredential=hfcache.api`. Omit ordinary archive
@@ -80,13 +82,18 @@ snapshot; the server refuses stale queued mutations.
 | `CP-05` | Pausing or resuming the schedule operates on `hfcache-sync.timer` only. The plugin never stops, starts, enables, or disables `hfcache.target` — stopping it unmounts `/srv/hfcache` (`docs/operations.md` §9) |
 | `CP-06` | The plugin never enables `hfcache-verify.timer`. It displays the timer's state and the reason it is disabled (operator handoff item 8). Enabling and disabling `hfcache-sync.timer` is permitted |
 | `CP-07` | `archive init`, in any form including `--inspect`, is outside the plugin's surface (`FS-21`; `docs/agents/environment.md`) |
-| `CP-08` | No credential surface: the page never reads credentials or accepts tokens. Transient clients receive only named API `hfcache.api` through systemd, never Hub authority or browser/environment/argument bearers. Only safe source descriptions render (`docs/security.md` T-07) |
+| `CP-08` | No credential surface: the page never reads credentials or accepts tokens. Transient clients receive only named API `hfcache.api` inside the fixed rootless client, never Hub authority or browser/environment/argument bearers. Only safe source descriptions render (`docs/security.md` T-07) |
 | `CP-09` | The plugin never writes under `/srv/hfcache`. Its only direct read there is `runs/*.json`, performed as the service identity; every other statement about the archive comes from a CLI envelope |
 | `CP-10` | One mutating command at a time (`AD-17`). `HFMNT010` renders as a benign busy state naming the holder, never as a failure; the plugin never removes or bypasses the lock |
 | `CP-11` | Configuration changes use §6's root config flock and exact candidate/base guards, syntax-valid compatible server assessment, required successful preview, atomic install with `0640 root:hfcache` and predecessor retained, then exact expected installed fingerprint confirmation. Incompatible/unknown authority blocks plugin install |
 | `CP-12` | Timer schedule changes are drop-ins under `/etc/systemd/system/hfcache-sync.timer.d/` (§7); shipped unit files are never edited, and calendar expressions are validated with `systemd-analyze calendar` before anything is written |
 | `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is fixed per `docs/plan.md` §23 or reported |
 | `CP-14` | The node toolchain is build-time only. The plugin ships as static files; the application's closed runtime dependency set (`FW-03`) is untouched, and `cockpit/node_modules/` and `cockpit/dist/` are never committed |
+
+Current [data-preserving rollout](plans/2026-10-18-plan-local-rootless-rollout.md)
+keeps legacy system-bus sync/verify/timer units masked. Normal CP-04–06 controls
+must refuse rather than redirect to user units or re-enable NAS writes. This is
+an explicit current restriction, not successful installed browser acceptance.
 
 ## 2. Privilege and identity
 
@@ -96,24 +103,25 @@ unprivileged `hfcache` service identity. The plugin adds no listener or credenti
 backend. API execution stays in the daemon/private worker, with the existing
 archive, policy, lock and credential authority.
 
-The fixed transient invocation is:
+The selected rootless profile's fixed transient invocation is:
 
 ```text
 systemd-run --quiet --wait --pipe --collect \
     --property=User=hfcache --property=Group=hfcache \
-    --property=ImportCredential=hfcache.api \
     --property=UMask=0027 --property=MemoryHigh=4G \
-    -- /opt/hfcache/current/.venv/bin/hfcache \
+    -- /usr/local/libexec/hfcache-client \
     --client-config /etc/hfcache/client.toml \
-    --api-socket /run/hfcache/api.sock --json <command>
+    --api-socket /run/hfcache/api/api.sock --json <command>
 ```
 
-PID 1 supplies the API-only encrypted credential under its bound name
-`hfcache.api`; the page never receives its bytes. Provision that credential for the
-REST writer class, distinct from daemon Hub `hf-token`, and install the separate
-client TOML with `credential_name="hfcache.api"`. An absent/unusable API source
-fails closed; there is no anonymous Hub fallback. Never pass a literal bearer,
-ambient token environment or token-file override through the browser/argv.
+The fixed launcher selects the protected immutable rootless client image and
+mounts API-only named Podman authority; the page and host transient unit never
+receive its bytes. Provision `hfcache.api` for the REST writer class, distinct
+from daemon Hub `hf-token`, and install the separate client TOML pointing to its
+mounted protected file. No host ImportCredential prerequisite remains. An absent/
+unusable source fails closed; there is no anonymous Hub fallback. Never pass a
+literal bearer, ambient token environment or token-file override through browser/
+argv. The helper owns image/engine/secret policy, not the page.
 Ordinary commands omit archive `--config`; candidate validate/plan alone adds the
 fixed `/etc/hfcache/.candidate.toml` path for bounded local content upload (§6).
 
@@ -406,3 +414,24 @@ every `CPT` commit runs `scripts/check.sh` like every other commit.
 `docs/security.md` gains its reconciliation — a threat-model row for the
 management surface — at `CPT-011`, when what ships is fixed rather than
 planned.
+
+
+## Rootless client profile amendment (OPS-015)
+
+[Decision 127](adr/decision-127.md) governs the selected local rootless profile.
+Preserve outer systemd-run User/Group=hfcache, UMask=0027, MemoryHigh=4G and
+root candidate/base flock/atomic install guards. Replace only the inner host
+Python CLI with fixed /usr/local/libexec/hfcache-client and the explicit client
+settings/API socket /run/hfcache/api/api.sock. Remove host ImportCredential: the
+fixed Podman launcher delivers API-only mounted authority to its rootless client.
+The browser and host transient unit never need credential bytes or Hub authority.
+No generic image/executable/Podman argv and no bare-host fallback is added.
+
+Strict bounded terminal/progress/handles, exact server Envelope identity, no
+cancellation/replay and candidate syntax/authority/preview/confirmation remain.
+System-bus legacy sync/verify/timer controls remain masked/blocked by decision 126;
+do not silently redirect them to identically spelled user-manager units. Rootless
+service lifecycle belongs to the reviewed target bridge, not a new browser API.
+This supersedes selected-profile argv in the API-015 amendment above while keeping
+historical native packaging explicit. OPS-015 actual fixtures bind no NAS and
+perform no production switch; installed browser/runtime acceptance remains later.

@@ -130,3 +130,15 @@ artifact identity, actual-executor quiescence and state/lock preservation; live
 sync/full verification/archive-write acceptance is forbidden and remains NOT RUN.
 Any local deployed tag records this partial acceptance explicitly. No remote push
 or ACME issuance is authorized. Rootless runtime design/proof belongs to OPS-015.
+
+
+## 2026-10-18 explicit rootless runtime amendment (OPS-015)
+
+[Decision 127](decision-127.md) selects explicit rootless USER services and a
+system-to-user target bridge, fixed immutable runtime/container-client commands,
+non-killing drain and actual container peer/FD/secret/isolation proof. It replaces
+the initial Quadlet proposal to avoid generated replacement/forced cleanup/timeouts.
+Selected-profile Cockpit retains outer privilege/candidate guards but API secret
+delivery moves to the fixed Podman client launcher, without host ImportCredential.
+NAS/other-host restrictions, exact operation truth and previous evidence remain;
+OPS-015 fixtures bind no NAS and perform no production switch or release.

@@ -1,0 +1,20 @@
+[Unit]
+Description=hfcache system to rootless user lifecycle bridge
+Requires=user@@SERVICE_UID@.service srv-hfcache.mount
+After=user@@SERVICE_UID@.service srv-hfcache.mount
+PartOf=hfcache.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=hfcache
+Group=hfcache
+Environment=XDG_RUNTIME_DIR=/run/user/@SERVICE_UID@
+ExecStart=/usr/bin/systemctl --user start hfcache.target
+ExecStop=/usr/bin/systemctl --user stop hfcache.target
+TimeoutStartSec=300
+TimeoutStopSec=infinity
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes

@@ -1042,3 +1042,71 @@ changing bytes. This proves absence of old reader support and current refusal,
 not old-format acceptance or nonexecution. No archive operation or production
 installation occurred; the [task](plans/tasks/api-014-systemd-and-deployment-integration.md)
 records commands/results and rollback rules.
+
+
+## 15. Rootless runtime deployment profile (OPS-015)
+
+The selected release's rendered/runtime.json is independent schema 1, separate
+from archive JSON, API receipts and scheduled observation state. The helper pins
+its physical release root; inside containers the same selected rendered tree is
+read-only at /etc/hfcache/containers. No static /etc profile overrides selection.
+[Rootless profile](containers.md#protected-runtime-profile) and
+[decision 127](adr/decision-127.md) require exactly schema_version,
+service_uid, service_gid, app_image and caddy_image: explicit integer version 1,
+positive matching host IDs and exact immutable sha256 image IDs. Fixed helper
+role paths/options/secret references are not manifest-supplied execution authority.
+The non-secret profile is staged root-owned 0644; the loader requires root
+ownership, no group/other writes, a bounded single-link regular no-follow
+descriptor, duplicate-free JSON and stable metadata. Caller/runtime-directory
+checks fail closed. Release artifact identity has a separate protected manifest;
+its settled format/compatibility evidence is recorded with the implementation.
+No archive durable format or operation replay rule changes. OPS-015 acceptance
+remains actual task evidence, not a deployed profile assertion.
+
+
+## 16. Rootless release manifest and artifact index (OPS-015)
+
+These independent schema-1 deployment records are separate from runtime.json,
+archive JSON and service receipts. [Installer](../scripts/install-container-release.py)
+uses duplicate-free/nonfinite-refusing bounded JSON and descriptor-pinned local
+no-follow reads with stable metadata excluding access time. Root-protected input
+must be a single-link regular file, at most 1 MiB; copied artifacts are bounded
+to 16 MiB each. Invalid/future/unknown data refuses without cleanup or activation.
+
+container-release.json has exactly these fields:
+
+| Field | Requirement |
+| --- | --- |
+| schema_version | Explicit integer 1 |
+| version | Three decimal components separated by dots |
+| hostname | Bounded ASCII letters/digits/dots/hyphens, first/last alphanumeric |
+| service_uid, service_gid | Positive integer host IDs |
+| app_image, caddy_image | Exact sha256: plus 64 lowercase hex image IDs |
+| source_commit | 40 lowercase hex source commit |
+| wheel_sha256 | 64 lowercase hex exact wheel hash |
+| files | Required source path→SHA-256 map, at most 1,000 entries |
+
+Source paths are canonical relative POSIX paths, without escape/control/backslash/
+symlink or reserved rendered/index/release destinations. The required helper/unit/
+template set and fixed renderer remain installer policy; no executable/engine
+options or secret values come from arbitrary manifest fields.
+
+artifact-index.json has exactly schema_version (integer 1) and files (relative
+path→64-lowercase-hex SHA-256). Its exhaustive map covers copied sources,
+container-release.json and rendered units/config/runtime/default+derived seccomp/
+provenance, excluding only the index itself. Unknown files, links or directories
+are retained and refuse selection. Stage fsyncs files/directories before atomic
+rename and parent fsync. Switch revalidates original source hashes, the entire
+index and recomputed rendering under the held original local flock, then atomically
+changes current and fsyncs its parent. If rename succeeded but directory fsync
+fails, exit 20 preserves the new selector and both trees; inspect before retry,
+without automatic rollback/cleanup or a false unchanged-state claim. A hash is
+artifact identity, not credentials or proof of domain outcome. Actual tests and compatibility evidence remain task-
+owned; no automatic cleanup, runtime activation, NAS write or archive schema
+migration follows from these formats.
+
+Fixed root-owned libexec/system/user-unit links must point through current to
+indexed files; missing, copied or drifted bindings refuse selection. Provisioning
+and both-manager reload remain separate guarded operations. The selected physical
+rendered profile/config/worker policy and helper must govern actual execution
+together; changing a symlink while retaining an unrelated runtime copy is invalid.

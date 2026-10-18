@@ -45,8 +45,11 @@ consumers at all.
 - **Writer host** — Linux with systemd. The runbook
   ([`docs/deployment-centos-stream-10.md`](docs/deployment-centos-stream-10.md))
   targets CentOS Stream 10 with SELinux enforcing; the SELinux steps are
-  skippable on other distributions. Python 3.14 arrives via
-  [uv](https://docs.astral.sh/uv/) — no system Python is used.
+  skippable on other distributions. The historical native application uses
+  Python 3.14 managed by [uv](https://docs.astral.sh/uv/). In the selected
+  [rootless profile](docs/containers.md), application Python 3.14.6 lives in the
+  pinned image; reviewed host Python standard-library orchestrators manage
+  containers without importing the application (also checked on host Python 3.12).
 - **Storage** — any NFSv4.2 server that can provide the two exports and the
   identity mapping in
   [`docs/storage-requirements.md`](docs/storage-requirements.md) (the
@@ -67,6 +70,13 @@ records all 21 work packages and final integration acceptance. Source version
 `0.1.10` is unchanged metadata, not a new release or tag. The deployment record below predates this API/MCP rollout;
 [operator acceptance](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
 is still required. No production installation is claimed.
+
+A separate [local rootless rollout](docs/plans/2026-10-18-plan-local-rootless-rollout.md)
+is active: Caddy/API/private-worker/runtime clients are packaged and locally
+tested in rootless Podman. Its guard keeps NAS read-only and legacy writers blocked; this
+is partial, data-preserving work with no NAS or other-host changes. See the
+[container contract](docs/containers.md); a runtime switch/version cut is not yet
+claimed.
 
 **Recorded deployment baseline: `0.1.10` — explicit quarantine cleanup release candidate.** The writer is complete
 and running against a live NFS-backed ZFS archive: it syncs public, private, and
@@ -97,6 +107,7 @@ implementation plan and contract reference.
 | [`docs/adr/`](docs/adr/README.md) | Individual architectural decision records, provenance, amendments, and maintenance rules |
 | [`docs/configuration.md`](docs/configuration.md) | Every configuration key, its constraints, and credential handling |
 | [`docs/server.md`](docs/server.md) | Server configuration, bearer credentials and the incremental HTTP deployment boundary |
+| [`docs/containers.md`](docs/containers.md) | Selected rootless Caddy/API/worker/client lifecycle, protected runtime profile and no-NAS-write limits |
 | [`docs/api.md`](docs/api.md) | REST capability/operation matrix and implementation status |
 | [`docs/api-client.md`](docs/api-client.md) | Independent reader/writer API setup, endpoint/credential precedence, TLS, finite observation and uncertainty |
 | [`docs/schemas.md`](docs/schemas.md) | Durable JSON formats: manifests, references, catalog, reports, journals |

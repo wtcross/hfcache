@@ -1,0 +1,10 @@
+[Unit]
+Description=hfcache rootless private verification activation
+PartOf=hfcache.target
+
+[Socket]
+ListenStream=/run/hfcache/verification/verification.sock
+SocketMode=0600
+DirectoryMode=0700
+FileDescriptorName=hfcache-verification
+RemoveOnStop=false

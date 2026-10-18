@@ -55,7 +55,7 @@ run `hfcache archive init` — the archive exists.
 | Operate or debug the live archive | `docs/operations.md`, `docs/recovery.md` |
 | Consumer-side behaviour | `docs/consumers.md` and `examples/copy-revision.py` |
 | The Cockpit plugin (`cockpit/`) | `docs/cockpit.md`; operator install/usage docs in `docs/cockpit-plugin/`; then the contract rows above for whatever it drives |
-| Host, systemd, SELinux | `docs/deployment-centos-stream-10.md`, `packaging/`, `docs/agents/environment.md` |
+| Host, systemd, SELinux, rootless containers | `docs/containers.md`, `docs/deployment-centos-stream-10.md`, `packaging/`, `docs/agents/environment.md` |
 
 ## Non-negotiables
 

@@ -1131,3 +1131,41 @@ Production metadata reads also require review against the no-metadata-change
 constraint; client read-only access does not itself certify server access-time
 policy. Local release tagging never closes the remaining NAS/other-host/calendar
 holds. No guard action or deployment is claimed before its task records evidence.
+
+
+## 19. Rootless runtime architecture (OPS-015)
+
+[Decision 127](adr/decision-127.md) selects explicit rootless user systemd units
+instead of the initial Quadlet proposal. The existing system hfcache.target
+starts a reviewed bridge to user hfcache.target, which starts Caddy/API/private
+worker socket. Do not conflate managers or stop the archive target. Runtime
+services use immutable IDs, never-pull/no-replace/no-init/no-auto-remove argv,
+non-killing infinite drain and confirmed-stopped-only nonforce cleanup. Unknown
+containers/libpod cgroups or failed stop block release; inactive client/bridge
+PIDs alone are insufficient proof.
+
+Provision exact root-owned links for both libexec entrypoints, system target/
+bridge and five user units in /etc/systemd/user through /opt/hfcache/current to
+indexed release files. The protected switch refuses missing/copied/drifted links
+and never overwrites unknown paths. Under quiescence, reload both managers after
+each selection before activation, then inspect actual FragmentPath/effective
+drop-ins and refuse home/runtime overrides or drift. Static links alone cannot
+prove manager precedence. The helper pins its physical selected tree for runtime
+profile, rendered config and worker policy; read-only selected overlays follow the
+base policy-directory bind. A marker-only switch leaving static runtime copies
+is invalid. The system bridge Requires srv-hfcache.mount while the target only
+Wants the bridge; bounded mount failure must refuse runtime without making the
+bridge a target/boot requirement. OPS-016 owns actual installed provisioning/
+activation, not the OPS-015 syntax/fixture proof.
+
+Caddy uses appropriate existing TLS on 8443 and a protected Unix API upstream,
+without ACME/admin/raw-header logging. Private worker is separate Network=none
+with baseline-preserving Unix-only socket creation and actual FD3/PID1/peer identity
+proof; credentials remain absent there. Keep shared original local flock, distinct
+public/private socket mounts/stores, read-only policy-directory reload visibility,
+protected intended-container secrets and no NAS chown/relabel/copyup. Root alone
+prepares necessary local service home/subordinate IDs/linger and owned local
+fixture infrastructure. OPS-015 proof binds no NAS and switches no production
+runtime; all OPS-014 barriers remain. REL-010 selects release/image identities
+and OPS-016 owns later guarded production enablement. This is a current contract,
+not a statement those tests or deployment already passed.

@@ -575,3 +575,21 @@ schema. See [the runnable setup example](mcp.md#protected-file-example-client-mc
 and [resource limits](mcp.md#resource-costs-and-troubleshooting). Credential/source
 settings remain startup-only; rotation requires the normal API drain/restart and
 new clients. Disabled mode requires neither optional package nor MCP source.
+
+
+## Rootless deployment selector (OPS-015)
+
+The selected container release adds independent protected rendered/runtime.json,
+not archive/server/client TOML fields. The helper pins its physical release tree;
+the selected rendered directory is mounted read-only at /etc/hfcache/containers
+and selected client.toml at /etc/hfcache/client.toml inside containers. No static
+/etc runtime-profile copy bypasses the atomic current selector.
+[Runtime profile contract](containers.md#protected-runtime-profile) and
+[schema 15](schemas.md#15-rootless-runtime-deployment-profile-ops-015) define the
+strict five-field integer schema 1, matching host service identity and immutable
+image IDs. Fixed role paths and named secrets remain trusted helper policy,
+not request-supplied configuration. Read-only directory binds expose atomic
+installed policy replacements to fresh admissions while preserving admitted
+fingerprints. Source-store masks, secret separation and the no-NAS-write guard
+remain; see [decision 127](adr/decision-127.md). Production profile selection and
+versioned release artifacts remain later tasks, not a live rollout claim here.

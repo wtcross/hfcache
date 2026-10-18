@@ -210,5 +210,7 @@ def test_timer_calendars_target_and_disabled_verify_contract_are_preserved():
     assert verify["OnCalendar"] == ["Wed *-01,04,07,10-01..07 04:00:00"]
     assert verify["RandomizedDelaySec"] == ["2h"]
     assert sync["Persistent"] == verify["Persistent"] == ["true"]
-    assert fields("hfcache.target", "Unit")["Wants"] == ["srv-hfcache.automount"]
+    assert fields("hfcache.target", "Unit")["Wants"] == [
+        "srv-hfcache.automount hfcache-containers.service"
+    ]
     assert "left disabled" in (UNITS / "hfcache-verify.timer").read_text()

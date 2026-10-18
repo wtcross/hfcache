@@ -134,3 +134,31 @@ motion (`install-release.sh --switch <previous>`) plus the release-specific
 constraints that section records (the prune-in-flight rule; 0.1.3's null-SHA
 finding rule). A rollback that uses a different procedure than the install is
 a procedure nobody has tested.
+
+
+## Rootless artifact and drain requirements (OPS-015)
+
+The selected [rootless profile](../adr/decision-127.md) uses explicit user systemd
+units and a reviewed system bridge. Stage exact platform base/Caddy digests, built
+wheel and hashed locked closure into an immutable runtime image; no runtime
+resolution, auto-update, pull, replacement, init or persistent-role automatic
+container removal. Only finite stateless observer clients may auto-remove their
+own containers; accepted execution/state remains independently server-owned.
+The separate protected rootless installer validates its immutable manifest/current
+selector, read-only guards and actual container/libpod-cgroup drain; it does not
+silently reinterpret the historical native installer. Retain old artifacts/state.
+
+Unknown running containers or failed stop remain blocked, never a force cleanup
+or default timeout kill. Explicit infinite Podman/application drain and systemd
+stop timeout require real tests with running work. Account/peer mapping, FD3/PID1,
+secret separation, Caddy verified TLS/Unix proxy and worker no-IP must be proved
+in actual local containers, with no NAS bind during OPS-015. REL-010 commits
+reviewed 0.2.0 source; its dirty working-tree builds are previews. REL-012 builds
+final identified wheel/sdist/images from that clean committed source and records
+evidence without changing package inputs. Use a clean detached source worktree
+and outside build outputs so task/evidence edits in the main workspace cannot
+contaminate source provenance; source and evidence commits remain distinct.
+Production enablement stays OPS-016; no tag or
+NAS/full-domain acceptance follows from packaging. Decision 126 restrictions remain.
+
+Detailed [rootless runtime/build/profile contract](../containers.md) owns the selected deployment boundaries and actual task evidence.

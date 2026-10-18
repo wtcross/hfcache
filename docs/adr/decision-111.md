@@ -90,3 +90,13 @@ Implementation: [execution context](../../src/hfcache/services/context.py),
 [redaction](../../src/hfcache/redaction.py),
 [shared commands](../../src/hfcache/services/commands.py), and
 [offline initialization](../../src/hfcache/offline.py).
+
+## Rootless execution amendment (OPS-015, 2026-10-18)
+
+[Decision 127](decision-127.md) preserves this provenance through rootless Podman:
+the fixed launcher forwards only a canonical non-secret 32-lowercase-hex systemd
+INVOCATION_ID to API/worker. Podman does not pass it implicitly, and no arbitrary
+ambient environment is forwarded. The value still describes the executing
+service invocation, not timer/client origin or authenticated authority. Actual
+container review exposed the missing propagation; the task records its correction
+and gate history without changing durable invocation fields.

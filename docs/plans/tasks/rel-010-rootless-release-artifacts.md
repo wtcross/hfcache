@@ -1,4 +1,4 @@
-# REL-010: Prepare identified locked release artifacts
+# REL-010: Review and commit 0.2.0 source
 
 | Field | Value |
 | --- | --- |
@@ -11,9 +11,9 @@
 ## Scope and acceptance
 
 1. Review/land the local implementation according to the authorized local review workflow, with no remote push or other-host action.
-2. Deliberately select a release version, update source metadata/lock/changelog/README and build locked Python and container artifacts; record source commit and hashes/digests, tool versions and dependency profiles.
-3. Run the full --with-build gate and relevant real disposable container/TLS/secret/peer/drain/read-only tests. Re-run actual installed/image compatibility against the real retained target; record unavailable readers distinctly from schema-aware refusal.
-4. Stage immutable local artifacts and retain the previous runtime/units/state for guarded rollback. No NAS file or metadata writes and no premature deployed-release/tag claim.
+2. Introduce version 0.2.0 in source metadata/lock/CHANGELOG/README for the breaking API-only operational CLI and explicit container deployment contract. Preserve existing dependency versions. Record review and tool/profile evidence; working-tree wheel/image builds are previews, never deployable artifacts.
+3. Run the full --with-build gate and meaningful affected tests, then commit source/version and same-package evidence once. No NAS file/metadata writes, production stage/switch or premature deployed-release/tag claim.
+4. Hand the clean committed source to [REL-012](rel-012-clean-container-release-artifacts.md) for final wheel/sdist/images, compatibility and immutable staging. This split avoids a dirty source/evidence circularity without a second commit for this work package.
 
 ## Contracts, invariants, and ADRs
 
@@ -36,6 +36,11 @@ Only root performs privileged host mutations and never prints secret values.
 ## Execution notes and handoff
 
 Not started. Dependency completion and commit are required before activation.
+
+OPS-015's handoff separates this source/version commit from REL-012's clean
+artifact execution/evidence commit. No 0.2.0 metadata change or release build is
+performed by creating this pending record. Retain all previous artifacts and the
+OPS-014 barriers; no remote publication is authorized.
 
 ## Completion evidence
 

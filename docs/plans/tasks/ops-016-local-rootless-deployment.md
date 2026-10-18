@@ -5,13 +5,13 @@
 | Work package | `OPS-016` |
 | Status | pending |
 | Plan | [2026-10-18-plan-local-rootless-rollout.md](../2026-10-18-plan-local-rootless-rollout.md) |
-| Depends on | [REL-010](rel-010-rootless-release-artifacts.md) |
+| Depends on | [REL-012](rel-012-clean-container-release-artifacts.md) |
 | Scope | Local host only; no NAS content/metadata writes or other-host changes |
 
 ## Scope and acceptance
 
 1. Recheck the committed guardrails, NAS read-only mount, paused/blocked writers and actual executor quiescence before host-local deployment. Preserve local backups and retain the noncreating shared lock across any runtime switch.
-2. Root installs reviewed local account/user-manager/container/proxy/config/credential/unit changes and switches only to the identified staged artifacts. Start the reviewed target so Caddy and API run rootless; verify the private worker and runtime client container boundaries.
+2. Root installs reviewed local account/user-manager/container/proxy/config/credential/unit changes and switches only to REL-012's clean-source identified staged artifacts. Provision the nine exact root-owned through-current bindings and real protected overlay placeholders under quiescence; reload both managers after selection and inspect actual FragmentPath/effective drop-ins for overrides before activation. Start the reviewed target so Caddy and API run rootless; verify the private worker and runtime client container boundaries.
 3. Prove actual local TLS/Unix/proxy/auth/registry, no-IP/no-credential worker, rootless UID/cgroup/activation/drain and non-NAS writable paths using bounded local checks and disposable local fixtures. Do not test NAS write denial by attempting a NAS mutation.
 4. Keep all sync work stopped and verify scheduling disabled; no archive init, sync, non-estimate verification, mutation/probing jobs, write-bearing NFS tests or real archive hardening workload. No ACME issuance, remote push, other-host trust/config changes or NAS administration.
 5. Record actual deployed identity, every successful/failed/not-run check and guarded rollback constraints. Deployment is partial data-preserving acceptance, never a falsely green full storage rollout.

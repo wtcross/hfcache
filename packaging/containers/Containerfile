@@ -1,0 +1,24 @@
+# Decision 127: immutable runtime, exact wheel and locked hashed dependencies.
+FROM ghcr.io/astral-sh/uv@sha256:0d127b3a7049b879a6e18a79c7f33fea59aa83c226464248f89cfb716a6b96f5 AS uv
+FROM docker.io/library/python@sha256:b921fe7e7522f828d45197a47656ec465a9b15689b27fa8e1fba2864fca5b967 AS build
+COPY --from=uv /uv /bin/uv
+ENV UV_PYTHON_DOWNLOADS=never UV_NO_CONFIG=1 UV_NO_ENV_FILE=1
+COPY requirements.txt /build/requirements.txt
+COPY wheels/ /build/wheels/
+RUN uv venv --python /usr/local/bin/python /opt/hfcache/.venv \
+    && uv pip install --python /opt/hfcache/.venv/bin/python --require-hashes \
+       --no-deps --only-binary :all: -r /build/requirements.txt
+
+FROM docker.io/library/python@sha256:b921fe7e7522f828d45197a47656ec465a9b15689b27fa8e1fba2864fca5b967
+COPY --from=build /opt/hfcache/.venv /opt/hfcache/.venv
+RUN printf 'hfcache:x:981:981:hfcache:/nonexistent:/usr/sbin/nologin\n' >> /etc/passwd \
+    && printf 'hfcache:x:981:\n' >> /etc/group \
+    && mkdir -p /run/hfcache /var/lib/hfcache /var/cache/hfcache \
+       /run/credentials /etc/credstore /etc/credstore.encrypted /etc/hfcache/credentials \
+    && chown 981:981 /run/hfcache /var/lib/hfcache /var/cache/hfcache \
+    && chmod 0700 /run/hfcache /var/lib/hfcache /var/cache/hfcache
+ENV PATH=/opt/hfcache/.venv/bin:/usr/local/bin:/usr/bin:/bin \
+    HOME=/nonexistent PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
+    HF_HUB_DISABLE_TELEMETRY=1
+USER 981:981
+CMD ["/opt/hfcache/.venv/bin/hfcache", "--help"]

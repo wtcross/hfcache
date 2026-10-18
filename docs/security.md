@@ -721,3 +721,31 @@ cover application behavior and unchanged credential-free/no-IP worker/timer
 policy, not actual installed enforcement. Client/socket tests use owned disposable
 fixtures; operator holds 16–18 still gate TLS/firewall/socket/source delivery,
 worker egress/custom masks, cgroup/SELinux/NFS and real drain/rollback acceptance.
+
+
+## Rootless runtime scope (OPS-015)
+
+[Decision 127](adr/decision-127.md) changes the selected local deployment, not
+whole-archive roles or FS/TX/domain authority. Explicit user-manager rootless
+Podman services and a reviewed system target bridge use fixed immutable images
+and safe lifecycle argv. No rootful/privileged/host-PID/host-network/label-disable
+or Podman control socket shortcut is allowed. Unknown surviving container/cgroup
+state blocks replacement, cleanup and release; infinite application drain replaces
+default timed killing. Preserve original local lock and both operation stores.
+
+Caddy receives only appropriate protected TLS material; API receives its distinct
+Hub/REST/optional MCP sources; clients receive API authority only. Private worker
+receives none, with separate socket mounts, Network=none and a Unix-only native
+socket allowlist retaining other baseline seccomp restrictions. Its real PID1/FD3/
+SO_PEERCRED/secret/SELinux proof must run in actual disposable containers. Secrets
+are mounted with UID 981/mode 0400, never literals in images/env/argv/browser/logs
+or hash inputs. Root alone prepares necessary local service account/rootless
+fixture infrastructure; Caddy never obtains ACME certificates or installs trust
+on another host in this scope.
+
+[Decision 126](adr/decision-126.md) continues to forbid NAS content/metadata writes
+and other-host changes. Every NAS bind is read-only without chown/relabel/copyup;
+OPS-015 fixtures bind no NAS at all. Source masks, read-only roots and local state
+are actual proof obligations, not claims that containers alone establish isolation.
+The fixed Cockpit client launcher retains admin/candidate/observation boundaries
+without a browser bearer, generic executable input or bare-host fallback.

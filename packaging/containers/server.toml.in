@@ -1,0 +1,25 @@
+schema_version = 1
+archive_config = "/etc/hfcache/config.toml"
+state_directory = "/var/lib/hfcache/api"
+maintenance_enabled = false
+interactive_docs = false
+mcp_enabled = true
+
+[credentials.writer]
+file = "/run/secrets/hfcache.api"
+[credentials.reader]
+file = "/run/secrets/hfcache.api-reader"
+[credentials.mcp_reader]
+file = "/run/secrets/hfcache.mcp-reader"
+
+[listener]
+unix_enabled = true
+unix_socket = "/run/hfcache/api/api.sock"
+socket_mode = 0o600
+tcp_enabled = false
+allowed_hosts = @ALLOWED_HOSTS@
+allowed_origins = ["https://@HOSTNAME@:8443"]
+
+[verification]
+unix_socket = "/run/hfcache/verification/verification.sock"
+expected_peer_uid = 981
