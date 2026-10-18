@@ -1,6 +1,7 @@
 # Decision 117 — Revalidate explicit maintenance authority at execution
 
-- Status: Accepted; implemented by API-010.
+- Status: Accepted; implemented by API-010, with public CLI compatibility
+  clarified by [decision 120](decision-120.md).
 - Date: 2026-10-17.
 - Work package: API-010, this commit.
 - Source: [progress decision 117](../progress.md#decisions),
@@ -84,3 +85,14 @@ Evidence: [model tests](../../tests/unit/test_maintenance_models.py),
 [real HTTP/domain tests](../../tests/unit/test_api_maintenance.py),
 [queued-scope/proof/idempotency tests](../../tests/unit/test_api_maintenance_adversarial.py)
 and [shared-service tests](../../tests/unit/test_command_services.py).
+
+## API-013 CLI compatibility amendment (2026-10-18)
+
+[Decision 120](decision-120.md) routes maintenance CLI modes to these fixed
+resources, preserving preview/apply scope and terminal domain results. The legacy
+optional initialization UUID is obtained from authenticated inspection when
+omitted; a supplied UUID must match, with root/confirmation still explicit.
+No-confirm invocation performs inspection/refusal without POST or local archive
+configuration. The server's strict DTO, initialization-only maintenance switch
+and locked proof remain unchanged. Client departure grants no replay, cancel or
+cleanup authority.

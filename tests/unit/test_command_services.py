@@ -20,6 +20,7 @@ from hfcache.reporting import RecoveryReport
 from hfcache.services import commands
 from hfcache.services.context import ExecutionContext
 from hfcache.storage import parse_mount_table, read_model
+from tests.api_cli import api_cli
 from tests.unit.test_command_locking import _assert_lock_owned
 from tests.unit.test_verification import ARCHIVE_ID, MODEL, SHA_A, nfs_line, publish
 
@@ -178,12 +179,11 @@ def test_verification_persistence_failure_preserves_partial_payload_and_quiet_er
         raise IntegrityError.single(message, code="HFVER007")
 
     monkeypatch.setattr(commands, "persist_verification", refuse)
-    arguments = ["--quiet", "--config", str(config_path)]
-    if json_output:
-        arguments.append("--json")
-    result = CliRunner().invoke(
-        app, [*arguments, "verify", "--revision", f"{MODEL.selector}@{SHA_A}"]
-    )
+    with api_cli(config_path) as remote:
+        result = remote.invoke(
+            ["--quiet", "verify", "--revision", f"{MODEL.selector}@{SHA_A}"],
+            json_output=json_output,
+        )
 
     assert result.exit_code == ExitCode.INTEGRITY
     if json_output:

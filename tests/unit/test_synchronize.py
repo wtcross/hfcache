@@ -20,6 +20,7 @@ import json
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import redirect_stderr
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,7 +28,6 @@ from threading import Event, Lock, Thread
 from typing import TYPE_CHECKING, Any, override
 
 import pytest
-from typer.testing import CliRunner
 
 import hfcache.purge as purge_module
 from hfcache import sync as sync_module
@@ -35,7 +35,6 @@ from hfcache.api.auth import CredentialClass, Principal
 from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.archive import initialize_archive
-from hfcache.cli import app
 from hfcache.config import ApplicationConfig, load_config, validate_config_mapping
 from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import (
@@ -61,6 +60,13 @@ from hfcache.storage import parse_mount_table
 from hfcache.sync import synchronize
 from hfcache.transactions import open_transaction, read_journal
 from tests.api_cli import api_cli
+
+
+def invoke_api(config_path, arguments, *, json_output=True, hub_token_file=None):
+    """Exercise actual writer commands through authenticated HTTP, never local argv shims."""
+    with api_cli(config_path, hub_token_file=hub_token_file) as remote:
+        return remote.invoke(arguments, json_output=json_output)
+
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -1184,7 +1190,7 @@ def _wired(hub: FakeHub, monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.usefixtures("_wired")
 def test_the_sync_command_publishes_and_exits_zero(config_file: Path):
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"])
 
     assert result.exit_code == ExitCode.SUCCESS
     payload = json.loads(result.stdout)["data"]
@@ -1204,10 +1210,7 @@ def test_required_token_syncs_private_repositories(config_file: Path, tmp_path: 
     token.write_text("hf_privateRepositoryCredential\n", encoding="utf-8")
     hub.private = True
 
-    result = CliRunner().invoke(
-        app,
-        ["--json", "--config", str(config_file), "--token-file", str(token), "sync"],
-    )
+    result = invoke_api(config_file, ["sync"], hub_token_file=token)
 
     assert result.exit_code == ExitCode.SUCCESS
     payload = json.loads(result.stdout)["data"]
@@ -1223,7 +1226,7 @@ def test_sync_refuses_a_mismatched_expected_account(config_file: Path, hub: Fake
         encoding="utf-8",
     )
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"])
 
     assert result.exit_code == ExitCode.SYNC
     assert json.loads(result.stdout)["errors"][0]["code"] == "HFHUB003"
@@ -1237,7 +1240,7 @@ def test_the_sync_command_takes_the_exclusive_lock(config_file: Path, layout: Ar
     held = os.open(lock_path(), os.O_RDWR | os.O_CREAT, 0o600)
     try:
         fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+        result = invoke_api(config_file, ["sync"])
     finally:
         os.close(held)
 
@@ -1247,9 +1250,7 @@ def test_the_sync_command_takes_the_exclusive_lock(config_file: Path, layout: Ar
 
 @pytest.mark.usefixtures("_wired")
 def test_the_sync_command_restricts_a_run_to_its_selectors(config_file: Path):
-    result = CliRunner().invoke(
-        app, ["--json", "--config", str(config_file), "sync", "model:organization/model-name"]
-    )
+    result = invoke_api(config_file, ["sync", "model:organization/model-name"])
 
     payload = json.loads(result.stdout)["data"]
     assert [entry["repository_id"] for entry in payload["repositories"]] == [
@@ -1259,7 +1260,7 @@ def test_the_sync_command_restricts_a_run_to_its_selectors(config_file: Path):
 
 @pytest.mark.usefixtures("_wired")
 def test_the_sync_command_prints_one_line_per_repository(config_file: Path):
-    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"], json_output=False)
 
     assert "model:organization/model-name  published" in result.output
     assert "dataset:organization/dataset-name  published" in result.output
@@ -1269,7 +1270,7 @@ def test_the_sync_command_prints_one_line_per_repository(config_file: Path):
 def test_the_sync_command_exits_thirty_when_a_repository_failed(config_file: Path, hub: FakeHub):
     del hub.heads[MODEL.selector]
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"])
 
     assert result.exit_code == ExitCode.SYNC
     assert json.loads(result.stdout)["outcome"] == "failed"
@@ -1284,7 +1285,7 @@ def test_the_sync_command_refuses_an_unmounted_archive(tmp_path: Path):
         encoding="utf-8",
     )
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(path), "sync"])
+    result = invoke_api(path, ["sync"])
 
     assert result.exit_code == ExitCode.SAFETY
 
@@ -1317,8 +1318,10 @@ def test_a_run_that_clears_the_reserve_only_narrowly_warns_and_still_publishes(
     assert outcome.exit_code == ExitCode.SUCCESS
 
 
-def test_the_sync_command_reports_a_configuration_problem_as_exit_ten(tmp_path: Path):
-    result = CliRunner().invoke(app, ["--json", "--config", str(tmp_path / "absent.toml"), "sync"])
+def test_the_sync_command_reports_a_configuration_problem_as_exit_ten(config_file: Path):
+    with api_cli(config_file) as remote:
+        config_file.unlink()
+        result = remote.invoke(["sync"])
 
     assert result.exit_code == ExitCode.CONFIGURATION
 
@@ -1327,7 +1330,7 @@ def test_the_sync_command_reports_a_configuration_problem_as_exit_ten(tmp_path: 
 def test_the_sync_command_prints_each_failure_on_stderr(config_file: Path, hub: FakeHub):
     del hub.heads[MODEL.selector]
 
-    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"], json_output=False)
 
     assert "model:organization/model-name  failed" in result.output
     assert "HFHUB001" in result.output or "HFSYN" in result.output
@@ -1336,17 +1339,18 @@ def test_the_sync_command_prints_each_failure_on_stderr(config_file: Path, hub: 
 @pytest.mark.usefixtures("_wired")
 def test_quiet_suppresses_the_per_repository_lines(config_file: Path):
     # `--quiet` suppresses informational output; the durable run report is still
-    # written, which is where an unattended run's evidence belongs. Asserted
-    # against `output` rather than `stdout`, so it also covers the §24 event log:
-    # quiet raises that to WARNING, and a clean run has nothing at that level.
-    result = CliRunner().invoke(app, ["--quiet", "--config", str(config_file), "sync"])
+    # written. Nonsecret submission/operation handles remain on stderr for safety.
+    result = invoke_api(config_file, ["--quiet", "sync"], json_output=False)
 
     assert result.exit_code == ExitCode.SUCCESS
-    assert result.output.strip() == ""
+    assert result.stdout == ""
+    assert "key" in result.stderr.lower()
+    assert "operation" in result.stderr.lower()
+    assert "published" not in result.stderr
 
 
 @pytest.mark.usefixtures("_wired")
-def test_a_run_leaves_the_plan_section_24_event_trail_on_stderr(config_file: Path):
+def test_a_run_leaves_the_plan_section_24_event_trail_on_writer_stderr(config_file: Path):
     """The whole point of `OBS-002`: a scheduled run is legible from the journal.
 
     Asserted as a *sequence* rather than a set, because the order is what makes
@@ -1354,10 +1358,13 @@ def test_a_run_leaves_the_plan_section_24_event_trail_on_stderr(config_file: Pat
     downloaded, and published in that order, and can tell a run that stopped
     part way from one that never started.
     """
-    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    captured = io.StringIO()
+    with redirect_stderr(captured):
+        result = invoke_api(config_file, ["sync"], json_output=False)
 
     assert result.exit_code == ExitCode.SUCCESS
-    lines = [line for line in result.stderr.splitlines() if line.startswith("event=")]
+    assert "event=run.started" not in result.stderr
+    lines = [line for line in captured.getvalue().splitlines() if line.startswith("event=")]
     events = [line.split(" ", 1)[0].removeprefix("event=") for line in lines]
     assert events[0] == "run.started"
     assert events[-1] == "run.completed"
@@ -1390,11 +1397,13 @@ def test_a_run_leaves_the_plan_section_24_event_trail_on_stderr(config_file: Pat
 @pytest.mark.usefixtures("_wired")
 def test_every_event_in_a_run_carries_the_report_s_run_id(config_file: Path):
     # The join §24 exists to make possible: one identifier across the envelope on
-    # stdout, the lines on stderr, and `runs/<…>.json` on the archive.
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+    # stdout, the writer's stderr, and `runs/<…>.json` on the archive.
+    captured = io.StringIO()
+    with redirect_stderr(captured):
+        result = invoke_api(config_file, ["sync"])
 
     run_id = json.loads(result.stdout)["run_id"]
-    emitted = [line for line in result.stderr.splitlines() if line.startswith("event=")]
+    emitted = [line for line in captured.getvalue().splitlines() if line.startswith("event=")]
     assert emitted
     # `run.started` onwards; the preflight lines above it predate the run id and
     # deliberately carry the startup one instead.
@@ -1405,10 +1414,14 @@ def test_every_event_in_a_run_carries_the_report_s_run_id(config_file: Path):
 def test_a_failing_repository_says_so_in_the_event_trail(config_file: Path, hub: FakeHub):
     del hub.heads[MODEL.selector]
 
-    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    captured = io.StringIO()
+    with redirect_stderr(captured):
+        result = invoke_api(config_file, ["sync"], json_output=False)
 
+    assert result.exit_code == ExitCode.SYNC
+    assert "event=repository.failed" not in result.stderr
     failed = [
-        line for line in result.stderr.splitlines() if line.startswith("event=repository.fai")
+        line for line in captured.getvalue().splitlines() if line.startswith("event=repository.fai")
     ]
     assert len(failed) == 1
     assert "repository=model:organization/model-name" in failed[0]
@@ -1434,7 +1447,7 @@ def sync_journals(layout: ArchiveLayout):
 
 @pytest.mark.usefixtures("_wired")
 def test_the_run_records_every_documented_checkpoint_in_order(config_file: Path, layout):
-    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"], json_output=False)
 
     assert result.exit_code == ExitCode.SUCCESS
     (journal,) = sync_journals(layout)
@@ -1499,7 +1512,7 @@ def test_a_completed_run_leaves_nothing_reading_as_unfinished(config_file: Path,
     `.store/staging` to count unfinished transactions, so a successful run that
     left staging behind would report finished work as outstanding — and after
     `stale_staging_age_hours` would warn `HFWRN004` about it."""
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"])
 
     assert result.exit_code == ExitCode.SUCCESS
     assert list(layout.staging.iterdir()) == []
@@ -1512,7 +1525,7 @@ def test_a_completed_run_leaves_nothing_reading_as_unfinished(config_file: Path,
 
 @pytest.mark.usefixtures("_wired")
 def test_the_run_journal_carries_the_evidence_each_checkpoint_names(config_file: Path, layout):
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
 
     (journal,) = sync_journals(layout)
     evidence = {checkpoint.name: checkpoint.evidence for checkpoint in journal.checkpoints}
@@ -1538,7 +1551,7 @@ def test_the_run_journal_never_reconciles_itself(config_file: Path, layout):
     Without the exclusion the run would find its own journal, propose
     `close_journal` for work still executing, and close it under itself.
     """
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
 
     (journal,) = sync_journals(layout)
     reconciled = journal.checkpoints[2].evidence
@@ -1563,7 +1576,7 @@ def test_a_run_finishes_what_the_previous_run_left_unfinished(config_file: Path,
     (layout.staging / abandoned).mkdir(parents=True)
     os.utime(layout.staging / abandoned, (0, 0))
 
-    result = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"], json_output=False)
 
     assert result.exit_code == ExitCode.SUCCESS
     (journal,) = sync_journals(layout)
@@ -1595,7 +1608,7 @@ def test_a_journal_that_asked_for_an_operator_stops_the_run_before_the_hub(
     )
     transaction.needs_operator("HFTXN004", "two equally valid resolutions")
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"])
 
     assert result.exit_code == ExitCode.SAFETY
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFTXN004"]
@@ -1621,7 +1634,7 @@ def test_a_run_that_cannot_write_its_report_closes_its_journal_as_failed(
 
     monkeypatch.setattr("hfcache.sync.write_model", refuse)
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "sync"])
+    result = invoke_api(config_file, ["sync"])
 
     assert result.exit_code == ExitCode.SYNC
     (journal,) = sync_journals(layout)
@@ -1685,7 +1698,7 @@ def test_a_clean_run_reports_no_errors_and_exits_zero(client, layout, config):
 
 @pytest.mark.usefixtures("_wired")
 def test_status_reports_retained_and_current_state(config_file: Path):
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
 
     with api_cli(config_file) as remote:
         result = remote.invoke(["status"])
@@ -1729,7 +1742,7 @@ def test_status_never_contacts_the_hub(config_file: Path, hub: FakeHub):
 
 @pytest.mark.usefixtures("_wired")
 def test_list_reads_manifests_and_references_not_the_catalog(config_file: Path, layout):
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
     # The catalog is derived and can be missing (`FS-16`); `list` answers anyway.
     layout.repositories_catalog.unlink()
 
@@ -1745,9 +1758,9 @@ def test_list_reads_manifests_and_references_not_the_catalog(config_file: Path, 
 
 @pytest.mark.usefixtures("_wired")
 def test_list_revisions_describes_each_retained_revision(config_file: Path, hub: FakeHub):
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
     hub.heads[MODEL.selector] = SHA_B
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
 
     with api_cli(config_file) as remote:
         result = remote.invoke(["list", "--revisions"])
@@ -1761,7 +1774,7 @@ def test_list_revisions_describes_each_retained_revision(config_file: Path, hub:
 
 @pytest.mark.usefixtures("_wired")
 def test_list_restricts_to_one_repository_type(config_file: Path):
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
 
     with api_cli(config_file) as remote:
         result = remote.invoke(["list", "--type", "dataset"])
@@ -1772,7 +1785,7 @@ def test_list_restricts_to_one_repository_type(config_file: Path):
 
 @pytest.mark.usefixtures("_wired")
 def test_list_restricts_to_its_selectors(config_file: Path):
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
 
     with api_cli(config_file) as remote:
         result = remote.invoke(["list", "model:organization/model-name"])
@@ -1791,7 +1804,7 @@ def test_list_refuses_a_type_that_is_not_a_repository_type(config_file: Path):
 
 @pytest.mark.usefixtures("_wired")
 def test_list_prints_one_line_per_repository(config_file: Path):
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
 
     with api_cli(config_file) as remote:
         result = remote.invoke(["list"], json_output=False)
@@ -1812,7 +1825,7 @@ def test_list_answers_for_an_archive_with_nothing_published(config_file: Path):
 def test_status_answers_over_a_damaged_reference(config_file: Path, layout):
     # `status` is the command an operator runs first, so it answers even when
     # part of the archive is unreadable rather than failing with it.
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
     repository = RepositoryLayout(archive=layout, identity=MODEL)
     repository.current_ref.write_text("{ not json", encoding="utf-8")
 
@@ -1833,7 +1846,7 @@ def test_status_answers_over_a_damaged_reference(config_file: Path, layout):
 def test_status_skips_a_run_report_it_cannot_read(config_file: Path, layout):
     # Informational rather than authoritative: the references above it are the
     # archive's truth, so a damaged report costs one field and not the command.
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
     for report in layout.runs.glob("*.json"):
         report.write_text("{ not json", encoding="utf-8")
 
@@ -2095,12 +2108,12 @@ def test_prune_dry_run_reports_the_plan_and_mutates_nothing(config_file: Path, l
         hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
         hub.heads[MODEL.selector] = commit
         hub.heads[DATASET.selector] = commit
-        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+        invoke_api(config_file, ["sync"], json_output=False)
     # `sync` already pruned to five; a further plan needs a lower maximum, so
     # this asserts the *shape* of a dry run rather than forcing a second prune.
     before = {reference.commit_sha for reference in retained_references(layout, MODEL)}
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--dry-run"])
+    result = invoke_api(config_file, ["prune", "--dry-run"])
 
     assert result.exit_code == ExitCode.SUCCESS
     assert json.loads(result.stdout)["data"]["plans"] == []
@@ -2113,7 +2126,7 @@ def test_prune_dry_run_describes_the_revision_it_would_remove(config_file: Path,
         commit = f"{index + 1:040d}"
         hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
         hub.heads[MODEL.selector] = commit
-        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+        invoke_api(config_file, ["sync"], json_output=False)
     # Lower the limit so a plan exists to describe.
     lowered = config_file.parent / "lowered.toml"
     lowered.write_text(
@@ -2123,7 +2136,7 @@ def test_prune_dry_run_describes_the_revision_it_would_remove(config_file: Path,
         encoding="utf-8",
     )
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(lowered), "prune", "--dry-run"])
+    result = invoke_api(lowered, ["prune", "--dry-run"])
 
     assert result.exit_code == ExitCode.SUCCESS
     plans = json.loads(result.stdout)["data"]["plans"]
@@ -2133,9 +2146,7 @@ def test_prune_dry_run_describes_the_revision_it_would_remove(config_file: Path,
 
     # One reviewed invocation removes one revision per repository (§7.4).
     for generation, remaining in [(2, 4), (3, 3)]:
-        result = CliRunner().invoke(
-            app, ["--json", "--config", str(lowered), "prune", "--apply", MODEL.selector]
-        )
+        result = invoke_api(lowered, ["prune", "--apply", MODEL.selector])
         assert result.exit_code == ExitCode.SUCCESS
         applied = json.loads(result.stdout)["data"]["applied"]
         assert len(applied) == 1
@@ -2146,16 +2157,14 @@ def test_prune_dry_run_describes_the_revision_it_would_remove(config_file: Path,
     assert [r.publication_generation for r in retained] == [4, 5, 6]
     repository = RepositoryLayout(archive=layout, identity=MODEL)
     assert read_reference(layout, repository.current_ref).publication_generation == 6
-    result = CliRunner().invoke(app, ["--json", "--config", str(lowered), "prune", "--dry-run"])
+    result = invoke_api(lowered, ["prune", "--dry-run"])
     assert json.loads(result.stdout)["data"]["plans"] == []
 
 
 @pytest.mark.usefixtures("_wired")
 def test_prune_requires_exactly_one_mode(config_file: Path):
-    both = CliRunner().invoke(
-        app, ["--json", "--config", str(config_file), "prune", "--dry-run", "--apply"]
-    )
-    neither = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune"])
+    both = invoke_api(config_file, ["prune", "--dry-run", "--apply"])
+    neither = invoke_api(config_file, ["prune"])
 
     for result in (both, neither):
         assert result.exit_code == ExitCode.CONFIGURATION
@@ -2168,9 +2177,9 @@ def test_prune_apply_takes_the_lock_and_completes_a_plan(config_file: Path, layo
         commit = f"{index + 1:040d}"
         hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
         hub.heads[MODEL.selector] = commit
-        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+        invoke_api(config_file, ["sync"], json_output=False)
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
+    result = invoke_api(config_file, ["prune", "--apply"])
 
     assert result.exit_code == ExitCode.SUCCESS
     payload = json.loads(result.stdout)["data"]
@@ -2187,7 +2196,7 @@ def test_prune_apply_stops_on_a_journal_that_asked_for_an_operator(config_file: 
         commit = f"{index + 1:040d}"
         hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
         hub.heads[MODEL.selector] = commit
-        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+        invoke_api(config_file, ["sync"], json_output=False)
     open_transaction(
         layout,
         transaction_id=new_transaction_id(),
@@ -2198,7 +2207,7 @@ def test_prune_apply_stops_on_a_journal_that_asked_for_an_operator(config_file: 
     ).needs_operator("HFTXN004", "two equally valid resolutions")
     before = {reference.commit_sha for reference in retained_references(layout, MODEL)}
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
+    result = invoke_api(config_file, ["prune", "--apply"])
 
     assert result.exit_code == ExitCode.SAFETY
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFTXN004"]
@@ -2207,7 +2216,7 @@ def test_prune_apply_stops_on_a_journal_that_asked_for_an_operator(config_file: 
 
 @pytest.mark.usefixtures("_wired")
 def test_prune_prints_that_there_is_nothing_to_do(config_file: Path):
-    result = CliRunner().invoke(app, ["--config", str(config_file), "prune", "--dry-run"])
+    result = invoke_api(config_file, ["prune", "--dry-run"], json_output=False)
 
     assert "nothing to prune" in result.output
 
@@ -2223,7 +2232,7 @@ def test_prune_apply_completes_retention_an_earlier_failure_deferred(
         commit = f"{index + 1:040d}"
         hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
         hub.heads[MODEL.selector] = commit
-        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+        invoke_api(config_file, ["sync"], json_output=False)
 
     def refuse(cache_dir, commit_sha=None):
         message = "the cache is unreadable"
@@ -2234,10 +2243,10 @@ def test_prune_apply_completes_retention_an_earlier_failure_deferred(
     # Scoped, so undoing it leaves the lock directory and the Hub wiring alone.
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr("huggingface_hub.scan_cache_dir", refuse)
-        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+        invoke_api(config_file, ["sync"], json_output=False)
     assert len(retained_references(layout, MODEL)) == 6
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
+    result = invoke_api(config_file, ["prune", "--apply"])
 
     assert result.exit_code == ExitCode.SUCCESS
     applied = json.loads(result.stdout)["data"]["applied"]
@@ -2253,7 +2262,7 @@ def test_prune_reports_a_failure_rather_than_a_traceback(
         commit = f"{index + 1:040d}"
         hub.revisions[commit] = {**CONTENT, "generation.txt": str(index).encode()}
         hub.heads[MODEL.selector] = commit
-        CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+        invoke_api(config_file, ["sync"], json_output=False)
 
     def refuse(cache_dir, commit_sha=None):
         message = "the cache is unreadable"
@@ -2262,9 +2271,9 @@ def test_prune_reports_a_failure_rather_than_a_traceback(
     hub.revisions["6" * 40] = {**CONTENT, "generation.txt": b"5"}
     hub.heads[MODEL.selector] = "6" * 40
     monkeypatch.setattr("huggingface_hub.scan_cache_dir", refuse)
-    CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    invoke_api(config_file, ["sync"], json_output=False)
 
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "prune", "--apply"])
+    result = invoke_api(config_file, ["prune", "--apply"])
 
     assert result.exit_code == ExitCode.RETENTION
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFRET002"]
@@ -2499,7 +2508,7 @@ def test_a_dependency_that_is_also_configured_is_recorded_as_managed(
 
 @pytest.mark.usefixtures("_wired")
 def test_purge_requires_an_explicit_scope(config_file: Path):
-    result = CliRunner().invoke(app, ["--json", "--config", str(config_file), "purge", "--dry-run"])
+    result = invoke_api(config_file, ["purge", "--dry-run"])
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG003"]
@@ -2507,18 +2516,7 @@ def test_purge_requires_an_explicit_scope(config_file: Path):
 
 @pytest.mark.usefixtures("_wired")
 def test_purge_refuses_all_unmanaged_with_a_selector(config_file: Path):
-    result = CliRunner().invoke(
-        app,
-        [
-            "--json",
-            "--config",
-            str(config_file),
-            "purge",
-            "--dry-run",
-            "--all-unmanaged",
-            MODEL.selector,
-        ],
-    )
+    result = invoke_api(config_file, ["purge", "--dry-run", "--all-unmanaged", MODEL.selector])
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG002"]
@@ -2526,17 +2524,7 @@ def test_purge_refuses_all_unmanaged_with_a_selector(config_file: Path):
 
 @pytest.mark.usefixtures("_wired")
 def test_purge_refuses_a_revision_selector(config_file: Path):
-    result = CliRunner().invoke(
-        app,
-        [
-            "--json",
-            "--config",
-            str(config_file),
-            "purge",
-            "--dry-run",
-            f"{MODEL.selector}@{SHA_A}",
-        ],
-    )
+    result = invoke_api(config_file, ["purge", "--dry-run", f"{MODEL.selector}@{SHA_A}"])
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG001"]
@@ -2544,17 +2532,7 @@ def test_purge_refuses_a_revision_selector(config_file: Path):
 
 @pytest.mark.usefixtures("_wired")
 def test_purge_refuses_a_repository_still_in_configuration(config_file: Path):
-    result = CliRunner().invoke(
-        app,
-        [
-            "--json",
-            "--config",
-            str(config_file),
-            "purge",
-            "--dry-run",
-            MODEL.selector,
-        ],
-    )
+    result = invoke_api(config_file, ["purge", "--dry-run", MODEL.selector])
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert [error["code"] for error in json.loads(result.stdout)["errors"]] == ["HFARG007"]
@@ -2570,7 +2548,7 @@ def test_purge_all_unmanaged_removes_only_repositories_absent_from_configuration
 ):
     hub.heads[MODEL.selector] = SHA_A
     hub.heads[DATASET.selector] = SHA_A
-    synced = CliRunner().invoke(app, ["--config", str(config_file), "sync"])
+    synced = invoke_api(config_file, ["sync"], json_output=False)
     assert synced.exit_code == ExitCode.SUCCESS
     reduced = tmp_path / "reduced.toml"
     reduced.write_text(
@@ -2581,20 +2559,14 @@ def test_purge_all_unmanaged_removes_only_repositories_absent_from_configuration
     )
     monkeypatch.setattr(purge_module, "delete_cache_revisions", lambda *_args: 0)
 
-    dry_run = CliRunner().invoke(
-        app,
-        ["--json", "--config", str(reduced), "purge", "--dry-run", "--all-unmanaged"],
-    )
+    dry_run = invoke_api(reduced, ["purge", "--dry-run", "--all-unmanaged"])
     assert dry_run.exit_code == ExitCode.SUCCESS
     assert [plan["repository_id"] for plan in json.loads(dry_run.stdout)["data"]["plans"]] == [
         MODEL.id
     ]
     assert RepositoryLayout(archive=layout, identity=MODEL).directory.is_dir()
 
-    applied = CliRunner().invoke(
-        app,
-        ["--json", "--config", str(reduced), "purge", "--apply", "--all-unmanaged"],
-    )
+    applied = invoke_api(reduced, ["purge", "--apply", "--all-unmanaged"])
     assert applied.exit_code == ExitCode.SUCCESS
     assert not RepositoryLayout(archive=layout, identity=MODEL).directory.exists()
     assert RepositoryLayout(archive=layout, identity=DATASET).directory.is_dir()

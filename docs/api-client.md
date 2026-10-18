@@ -2,9 +2,9 @@
 
 Status: API-011 implements independent client/configuration primitives under the
 [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md). Its task records validation;
-API-012 now migrates reader commands and candidate validation/planning; side-
-effecting command/operation UX migration remains API-013. Global endpoint/source
-options select management settings for migrated modes. No production
+API-012 migrates reader commands/candidates and API-013 migrates operational
+commands plus explicit operation observation. Global endpoint/source
+options select management settings. No production
 client/server rollout is asserted.
 
 [Decision 118](adr/decision-118.md) defines one explicit API authority, finite safe
@@ -23,7 +23,7 @@ the local Unix-socket default `/run/hfcache/api.sock`.
 `resolve_client_config(path=None, ...)` uses optional installed
 `/etc/hfcache/client.toml`: a missing default permits defaults, while an explicit
 missing file or an installed unusable/malformed file fails HFAPI017. It reads no
-archive TOML. API-012's migrated commands resolve these settings only when invoked;
+archive TOML. Operational commands resolve these settings only when invoked;
 local help/version and explicit local validation do not construct an API client.
 
 API credential precedence is explicit `--api-token-file`, then configured token
@@ -158,8 +158,8 @@ The interface provides `read(path, params=...)`, `iter_pages(path, field, ...)`,
 `plan_candidate(content, selectors=(), key=None, on_key=None)`. Submission returns its retained key alongside
 the typed acceptance; an unusable post-transmission acknowledgement raises
 HFAPI020 with original key/route instead of replaying. `on_key` exposes the generated/explicit key before the HTTP send so callers
-can preserve a lookup handle even if acknowledgement is lost. Public CLI key/
-operation observation controls remain API-013. The
+can preserve a lookup handle even if acknowledgement is lost. API-013's CLI prints
+that validated handle before sending, even in quiet mode. The
 selected credential is loaded once per client object; construct a new client
 after deliberately changing its source/value rather than discovering replacements
 or borrowing another credential during a request.
@@ -176,6 +176,15 @@ complete data and keeps the first Envelope's invocation metadata. A valid failed
 domain Envelope is yielded intact and terminates the walk, even when its failure
 data lacks the requested array; its exit must not become a generic protocol error.
 Exact nonpage responses reject a nonnull wrapper `next_cursor`.
+
+API-013 adds `operation_response(id)` / `lookup_response(key)` returning validated
+`ClientRead` with the exact server metadata Envelope; the existing operation/
+lookup conveniences still return its typed receipt. `observe(id, timeout=...,
+on_event=..., after=0)` observes exact result and optional sanitized bounded event
+pages under one absolute deadline. Existing `poll` remains compatible without
+mandatory event fetching. CLI helpers `submit_job`, `observe_operation` and
+`admission_payload` separate typed terminal output from explicit detach and retain
+already validated handles on classified errors.
 
 Standalone `result(id)` and `events(id)` fetch exact operation metadata if it is
 not already known. Result UUID/fingerprint/domain run ID and success/failure must
@@ -202,8 +211,8 @@ Construction loads settings/credentials but sends no request; the explicit
 negotiation and version calls above contact only the configured management API.
 The client has no artifact-byte transfer or local archive reader.
 
-API-012 uses these primitives for migrated reads/candidates; side-effecting
-commands/operation UX remain API-013. The independent [consumer helper](consumers.md) still owns bulk
+API-012/013 use these primitives for operational CLI modes and explicit resumable
+observation. The independent [consumer helper](consumers.md) still owns bulk
 copy and complete local verification against exact publication identity.
 
 ## CLI migration (API-012)
@@ -227,8 +236,10 @@ there is no local archive fallback or automatic daemon start.
 | `plan [selectors]`; `--config PATH plan [selectors]` | Keyed installed reader / candidate writer job, then exact terminal Envelope |
 | `doctor --read-only` | Keyed reader diagnostic job; installed Hub checks, no write probes |
 | `serve` | Writer-local foreground bootstrap |
-| sync, actual verification, probing doctor, maintenance/confirmed init | Existing local service boundary until API-013 migrates them |
-| Public operation show/wait/lookup/detach options | API-013; library observation already exists |
+| sync, actual verification, probing doctor, maintenance/confirmed init | Typed keyed API jobs with exact terminal results by default; explicit writer capability/guards for effects |
+| `operations show`, `operations lookup` | Exact authenticated server metadata Envelopes; no submission |
+| `operations wait` | Bounded sequenced progress then exact terminal command Envelope, or retained-handle observer refusal |
+| Explicit `--detach` | Identified admission object after validated 202, separate from terminal Envelope |
 
 Remote JSON rendering preserves the complete server Envelope command/run ID,
 started/finished timestamps, status/warnings/errors, exit and payload; client
@@ -269,6 +280,82 @@ the CLI host, never a server file to open. Installation/backups remain privilege
 host work. Shipped Cockpit/systemd caller and credential integration remain the
 later API-014/015 work; browser code never receives the API bearer. See
 [decision 119](adr/decision-119.md) and [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012).
+
+## Submit, detach and resume (API-013)
+
+All operational modes use the API without a direct local mutation backend.
+Archive root/UUID, Hub credentials, preflight, common flock, scope/recovery proof
+and private verification stay server-owned. Explicit local validation, help/local
+version and foreground serve remain named bootstrap boundaries; unavailable API
+never activates local execution. Pure request objects do not import executors.
+
+Job commands wait by default and render the exact terminal server Envelope once,
+including nonzero domain exits and partial results. This also applies to semantic
+read jobs such as planning, read-only diagnostics and maintenance previews.
+Global `--idempotency-key KEY` deliberately reuses an existing valid key for an
+identical route/body. Otherwise generate one before POST. Print the validated
+key to stderr before transmission and accepted operation ID before waiting,
+including quiet mode; these nonsecret handles survive an acknowledgement loss.
+
+Explicit global `--detach` renders admission separately. JSON output is exactly
+`schema_version=1`, `kind="operation_admission"`, `idempotency_key` and
+`acceptance` containing the validated server acceptance. There is no fabricated
+terminal `outcome` or `exit_code`. Successful detach means accepted, not executed
+or completed; human output says so too. Default commands never replace their
+terminal Envelope with this object.
+
+`operations show ID` and `operations lookup KEY` preserve exact server metadata
+Envelopes (`operations show` / `operations lookup`) with `data.operation`.
+`operations wait ID [--after N]` observes without submitting. The cursor resumes
+sanitized bounded event pages; explicit oldest-sequence/truncated metadata reports
+retention gaps. Quiet suppresses event progress, never mandatory safety handles.
+No raw logs or event fields can become executable input or stdout JSON fragments.
+The CLI escapes nonprintable Unicode/control characters in event text, keeping
+each event one plain stderr line.
+
+`--wait-timeout SECONDS` overrides client `wait_timeout` for job observation or
+operation waiting, with finite `(0, 86400]` seconds. One absolute observation
+deadline covers status/event/result reads and retries; trickling bytes/progress
+cannot renew it. HTTP connect/read budgets and server queue/lock budgets remain
+distinct. Job-only flags on non-submitting reads/bootstrap are refused;
+operation wait accepts timeout/cursor, while show/lookup do not submit.
+
+Timeout or Ctrl-C during observation yields HFAPI019 / exit 20 with original known key/operation ID/
+route and a statement that accepted work may continue. Lost/unusable POST
+acknowledgement, including interruption before it can be established, remains
+HFAPI020. Other valid server/transport/protocol errors keep
+their taxonomy plus known handles. A local observer error is not a terminal
+execution Envelope. Never cancel accepted work or automatically replay with a
+new key; missing/expired HFAPI013 or interrupted HFAPI015 history remains uncertain.
+Validated retained-key 5xx refusals explicitly warn that work may continue while
+preserving their server taxonomy; they are not proof of nonexecution.
+
+Initialization requires the user-restated root. Its legacy optional UUID is
+obtained from authenticated configured-target inspection when omitted, and must
+match if supplied. No-confirm initialization performs no POST: preserve a failed
+inspection Envelope, or return local HFARG003/HFMNT014 refusal with successful
+unchanged inspection data plus `configured_archive_id` / `config_fingerprint`
+and local invocation metadata. Disabled writer initialization explicitly refuses
+HFAPI002 before POST; generic missing negotiated capabilities remain HFAPI018.
+Confirmed submission still requires strict server DTO/maintenance guards. Existing production
+archives must not be initialized again.
+
+For a separately provisioned writer API source, these examples illustrate the
+interface; they are not production operations executed by this work package:
+
+```text
+hfcache --client-config /etc/hfcache/client.toml --json --detach sync
+hfcache --client-config /etc/hfcache/client.toml --json operations lookup <original-key>
+hfcache --client-config /etc/hfcache/client.toml --json operations show <operation-id>
+hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 operations wait <operation-id> --after 12
+```
+
+Use the same configured authority and credential class for key lookup. A stopped
+client or sync/verify client service stops observation, not the server executor;
+use [server drain](server.md#restart-and-drain) and
+[recovery](recovery.md#10-operation-history-and-uncertain-submissions) for execution
+ownership. [Decision 120](adr/decision-120.md) records this boundary. Shipped
+systemd/Cockpit caller and credential integration remain API-014/015.
 
 ## Troubleshooting and rollback
 

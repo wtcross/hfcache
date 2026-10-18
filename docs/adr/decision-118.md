@@ -1,6 +1,7 @@
 # Decision 118 — Observe one API authority without replaying uncertain submissions
 
-- Status: Accepted; implemented by API-011 on 2026-10-18.
+- Status: Accepted; implemented by API-011 on 2026-10-18; public operational
+  CLI/observation completed by [decision 120](decision-120.md).
 - Date: 2026-10-17.
 - Work package: API-011, this commit.
 - Source: [progress decision 118](../progress.md#decisions),
@@ -103,3 +104,13 @@ inventory. Explicit local validation stays bootstrap, never a fallback. Candidat
 content is read on the CLI host, validated separately from authority compatibility
 and planned only with installed credentials. Side-effecting CLI/operation UX
 remains API-013; the client adds no archive filesystem authority.
+
+## API-013 operational CLI amendment (2026-10-18)
+
+[Decision 120](decision-120.md) uses the finite observer for every operational
+CLI mode. Default output remains the exact terminal server Envelope; only
+explicit detach emits identified admission. Show/lookup preserve exact server
+metadata Envelopes. Validated key/accepted-ID messages remain on stderr even
+quiet, and bounded sanitized event/status/result reads share one deadline.
+Timeout/Ctrl-C retains handles and uncertainty, without cancellation or replay.
+No direct local mutation backend, new dependency or durable shape is introduced.

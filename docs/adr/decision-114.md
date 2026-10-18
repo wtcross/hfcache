@@ -2,6 +2,7 @@
 
 - Status: Accepted; implemented by API-007.
 - Execution/reconciliation extension: [decision 115](decision-115.md), API-008.
+- Public CLI observation clarification: [decision 120](decision-120.md), API-013.
 - Date: 2026-10-17.
 - Work package: API-007, this commit.
 - Source: [progress decision 114](../progress.md#decisions),
@@ -99,3 +100,12 @@ Lookup observes the caller's class namespace without resubmitting. Exact old
 operation results retain admitted UUID/fingerprint and domain IDs rather than
 being rewritten from current capabilities/policy. The client does not cancel
 accepted work or turn missing/expired history into proof of nonexecution.
+
+## API-013 CLI admission and observation (2026-10-18)
+
+[Decision 120](decision-120.md) prints the validated key before POST and accepted
+operation ID before waiting, including quiet mode. Explicit detach identifies
+admission separately from terminal domain output; show/lookup and finite wait
+observe existing receipts/results without submission. Timeout/Ctrl-C retains
+handles and says accepted work may continue. No durable receipt/result change,
+automatic replay or cancellation authority is introduced.

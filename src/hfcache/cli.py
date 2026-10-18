@@ -7,6 +7,7 @@ in `docs/cli.md`. Scheduled runs use exactly the same commands an operator types
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 
@@ -16,9 +17,11 @@ from hfcache import cli_client
 from hfcache.config import load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import (
+    CodedError,
     ConfigurationError,
     HfcacheError,
     Problem,
+    SafetyError,
 )
 from hfcache.identity import (
     RunId,
@@ -27,25 +30,22 @@ from hfcache.identity import (
 from hfcache.logging import configure as configure_logging
 from hfcache.logging import current_run_id
 from hfcache.models import parse_timestamp
-from hfcache.preflight import (
-    UNPROVABLE_READ_ONLY,
-)
 from hfcache.reporting import Envelope
-from hfcache.services.commands import (
-    CommandServices,
-    DoctorRequest,
-    InitializationRequest,
+from hfcache.services.bootstrap import query_version, validate_config
+from hfcache.services.context import ExecutionContext, ServiceResult
+from hfcache.services.requests import (
+    UNPROVABLE_READ_ONLY,
     MaintenanceRequest,
     QuarantineRequest,
     RepairRequest,
-    SelectionRequest,
     VerificationRequest,
 )
-from hfcache.services.context import ExecutionContext, ServiceResult
-from hfcache.services.queries import query_version, validate_config
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from hfcache.client import ApiClient
+    from hfcache.client_models import ClientEvents
 
 
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
@@ -76,6 +76,9 @@ class GlobalOptions:
     api_socket: Path | None = None
     api_token_file: Path | None = None
     config_explicit: bool = False
+    detach: bool = False
+    idempotency_key: str | None = None
+    wait_timeout: float | None = None
 
 
 def utc_now() -> str:
@@ -149,8 +152,25 @@ def _report_failure(
     """
     evidence = dict(data or {})
     key = getattr(error, "key", None)
+    operation_id = getattr(error, "operation_id", None)
+    route = getattr(error, "route", None)
+    uncertain = (
+        operation_id is not None
+        or any(problem.code == "HFAPI020" for problem in error.problems)
+        or (
+            key is not None and getattr(error, "status_code", 0) >= HTTPStatus.INTERNAL_SERVER_ERROR
+        )
+    )
     if key is not None:
-        evidence |= {"idempotency_key": key, "route": getattr(error, "route", None)}
+        evidence["idempotency_key"] = key
+    if route is not None:
+        evidence["route"] = route
+    if operation_id is not None:
+        evidence |= {"operation_id": operation_id, "work_may_continue": True}
+    elif uncertain:
+        evidence["work_may_continue"] = True
+    if uncertain:
+        typer.echo("Accepted work may continue; reconnect using the retained handles", err=True)
     if _options(ctx).json_output:
         emit_envelope(
             command,
@@ -164,6 +184,8 @@ def _report_failure(
             typer.echo(problem.as_line(), err=True)
         if key is not None:
             typer.echo(f"Original idempotency key: {key}", err=True)
+        if operation_id is not None:
+            typer.echo(f"Operation: {operation_id}; accepted work may continue", err=True)
     raise typer.Exit(int(error.exit_code))
 
 
@@ -174,13 +196,125 @@ def _echo_pairs(payload: dict[str, Any]) -> None:
         typer.echo(f"{key.replace('_', ' '):<{width}}  {payload[key]}")
 
 
-def _commands(ctx: typer.Context, started_at: str) -> CommandServices:
-    """Resolve local adapter configuration into a frozen service invocation."""
+def _progress(ctx: typer.Context, page: ClientEvents) -> None:
+    """Only bounded, validated server events reach the progress stream."""
+    if _options(ctx).quiet:
+        return
+    if page.truncated:
+        typer.echo(f"Event history gap; retained events start at {page.oldest_sequence}", err=True)
+    for event in page.events:
+        message = "".join(
+            character if character.isprintable() else f"\\u{ord(character):04x}"
+            for character in event.message
+        )
+        typer.echo(f"[{event.sequence}] {event.kind}: {message}", err=True)
+
+
+def _submit(ctx: typer.Context, client: ApiClient, route: str, body: dict[str, Any]) -> Envelope:
+    """Keep safety handles visible while the shared client owns observation."""
     options = _options(ctx)
-    config = load_config(options.config_path)
-    context = ExecutionContext(RunId(current_run_id() or new_run_id()), parse_timestamp(started_at))
-    return CommandServices(
-        config, context, token_file=options.token_file, config_label=str(options.config_path)
+    cli_client.check_job_options(options, submitting=True)
+    result = cli_client.submit_job(
+        client,
+        route,
+        body,
+        key=options.idempotency_key,
+        detach=options.detach,
+        timeout=options.wait_timeout,
+        on_key=lambda key: typer.echo(f"Idempotency key: {key}", err=True),
+        on_accepted=lambda submission: typer.echo(
+            f"Operation: {submission.acceptance.operation.operation_id}", err=True
+        ),
+        on_event=lambda page: _progress(ctx, page),
+    )
+    if isinstance(result, Envelope):
+        return result
+    if options.json_output:
+        from hfcache.models import serialize  # noqa: PLC0415 - admission-only renderer
+
+        sys.stdout.write(serialize(cli_client.admission_payload(result), indent=None))
+    elif not options.quiet:
+        typer.echo(f"Accepted operation {result.acceptance.operation.operation_id}")
+    raise typer.Exit(0)
+
+
+operations_app = typer.Typer(
+    name="operations", help="Inspect and resume observation of accepted work.", no_args_is_help=True
+)
+app.add_typer(operations_app)
+
+
+def _operation_metadata(ctx: typer.Context, identity: str, *, lookup: bool) -> None:
+    started_at = utc_now()
+    command = "operations lookup" if lookup else "operations show"
+    try:
+        cli_client.check_job_options(_options(ctx))
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("read", "operations", "operation_history")
+            response = (
+                client.lookup_response(identity) if lookup else client.operation_response(identity)
+            )
+        result = response.envelope
+    except HfcacheError as error:
+        _report_failure(ctx, command, started_at, error)
+    operation = result.data.get("operation", {})
+    _show_result(
+        ctx,
+        result,
+        started_at=started_at,
+        lines={
+            key: str(operation[key])
+            for key in ("operation_id", "state", "route")
+            if key in operation
+        },
+    )
+
+
+@operations_app.command("lookup")
+def operations_lookup(
+    ctx: typer.Context, key: Annotated[str, typer.Argument(help="Original key.")]
+) -> None:
+    """Find the receipt using its nonsecret idempotency key."""
+    _operation_metadata(ctx, key, lookup=True)
+
+
+@operations_app.command("show")
+def operations_show(ctx: typer.Context, operation_id: str) -> None:
+    """Inspect an operation without submitting or waiting."""
+    _operation_metadata(ctx, operation_id, lookup=False)
+
+
+@operations_app.command("wait")
+def operations_wait(
+    ctx: typer.Context,
+    operation_id: str,
+    after: Annotated[int, typer.Option("--after", min=0, help="Last observed event sequence.")] = 0,
+) -> None:
+    """Resume event observation and return the original terminal result."""
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        cli_client.check_job_options(options, observing=True)
+        with cli_client.connect(options) as client:
+            client.require_capabilities("read", "operations", "operation_history")
+            result = cli_client.observe_operation(
+                client,
+                operation_id,
+                timeout=options.wait_timeout,
+                on_event=lambda page: _progress(ctx, page),
+                after=after,
+            )
+    except HfcacheError as error:
+        _report_failure(ctx, "operations wait", started_at, error)
+    _show_result(
+        ctx,
+        result,
+        started_at=started_at,
+        lines={
+            "command": result.command,
+            "outcome": result.outcome,
+            "run id": result.run_id,
+        },
     )
 
 
@@ -301,6 +435,16 @@ def main(
             "--api-token-file", metavar="PATH", readable=False, help="Protected API bearer file."
         ),
     ] = None,
+    detach: Annotated[
+        bool, typer.Option("--detach", help="Return the admission receipt without waiting.")
+    ] = False,
+    idempotency_key: Annotated[
+        str | None, typer.Option("--idempotency-key", metavar="KEY", help="Deliberate retry key.")
+    ] = None,
+    wait_timeout: Annotated[
+        float | None,
+        typer.Option("--wait-timeout", metavar="SECONDS", help="Observation deadline."),
+    ] = None,
 ) -> None:
     """Options accepted before the command."""
     # Before any command runs, so a failure inside argument handling is still
@@ -323,6 +467,9 @@ def main(
         api_socket=api_socket,
         api_token_file=api_token_file,
         config_explicit=config_source is not None and config_source.name == "COMMANDLINE",
+        detach=detach,
+        idempotency_key=idempotency_key,
+        wait_timeout=wait_timeout,
     )
 
 
@@ -349,6 +496,7 @@ def serve(
     started_at = utc_now()
     try:
         options = _options(ctx)
+        cli_client.check_job_options(options)
         if options.token_file is not None or options.config_path != DEFAULT_CONFIG_PATH:
             message = (
                 "serve uses --server-config; archive policy and Hub credentials "
@@ -378,6 +526,10 @@ def version(
     that is otherwise broken.
     """
     started_at = utc_now()
+    try:
+        cli_client.check_job_options(_options(ctx))
+    except HfcacheError as error:
+        _report_failure(ctx, "version", started_at, error)
     if server:
         try:
             with cli_client.connect(_options(ctx)) as client:
@@ -425,6 +577,10 @@ def config_validate(
     """
     started_at = utc_now()
     options = _options(ctx)
+    try:
+        cli_client.check_job_options(options)
+    except HfcacheError as error:
+        _report_failure(ctx, "config validate", started_at, error)
     if not local:
         try:
             cli_client.check_options(options, candidate=True)
@@ -475,6 +631,63 @@ archive_app = typer.Typer(
 app.add_typer(archive_app)
 
 
+def _initialize_remote(
+    ctx: typer.Context,
+    archive_root: Path,
+    archive_id: str | None,
+    *,
+    confirm: bool,
+    started_at: str,
+) -> Envelope:
+    """Adapt explicit confirmation using authenticated writer inspection only."""
+    options = _options(ctx)
+    if not confirm:
+        cli_client.check_job_options(options)
+    with cli_client.connect(options) as client:
+        client.require_capabilities("read", "reads")
+        inspection = client.read("/api/v1/archive/inspection")
+        result = inspection.envelope
+        if not confirm and result.exit_code:
+            return result
+        if str(archive_root) != result.data.get("archive_root"):
+            message = "Restated archive root does not match the API writer"
+            raise ConfigurationError.single(message, code="HFARG002")
+        if archive_id is not None and archive_id != inspection.archive_id:
+            message = "Restated archive UUID does not match the API writer"
+            raise ConfigurationError.single(message, code="HFARG002")
+        if confirm:
+            capabilities = client.require_capabilities("write", "operations")
+            if not capabilities.maintenance_enabled:
+                message = "API writer maintenance is disabled; initialization was not submitted"
+                raise ConfigurationError.single(message, code="HFAPI002")
+            result = _submit(
+                ctx,
+                client,
+                "/api/v1/archive/initializations",
+                {
+                    "archive_root": str(archive_root),
+                    "archive_id": inspection.archive_id,
+                    "confirm": True,
+                },
+            )
+        elif not result.exit_code:
+            if result.data.get("initializable"):
+                refusal = ConfigurationError.single(
+                    "--confirm is required; nothing was changed", code="HFARG003"
+                )
+            else:
+                refusal = SafetyError.single(
+                    "Archive is already initialized; initialization happens once",
+                    code="HFMNT014",
+                )
+            evidence = result.data | {
+                "configured_archive_id": inspection.archive_id,
+                "config_fingerprint": inspection.config_fingerprint,
+            }
+            _report_failure(ctx, "archive init", started_at, refusal, evidence)
+    return result
+
+
 @archive_app.command("init")
 def archive_init(
     ctx: typer.Context,
@@ -504,11 +717,13 @@ def archive_init(
     """
     started_at = utc_now()
     try:
+        options = _options(ctx)
         if inspect:
+            cli_client.check_job_options(options)
             if confirm or archive_id is not None:
                 message = "--inspect does not accept --confirm or --archive-id"
                 raise ConfigurationError.single(message, code="HFARG002")
-            with cli_client.connect(_options(ctx)) as client:
+            with cli_client.connect(options) as client:
                 client.require_capabilities("read", "reads")
                 result = client.read("/api/v1/archive/inspection").envelope
             if archive_root is not None and str(archive_root) != result.data.get("archive_root"):
@@ -518,14 +733,8 @@ def archive_init(
             if archive_root is None:
                 message = "Required unless --inspect is selected"
                 raise typer.BadParameter(message, param_hint="--archive-root")
-            services = _commands(ctx, started_at)
-            result = services.initialize_archive(
-                InitializationRequest(
-                    archive_root=archive_root,
-                    archive_id=archive_id,
-                    confirm=confirm,
-                    inspect=False,
-                )
+            result = _initialize_remote(
+                ctx, archive_root, archive_id, confirm=confirm, started_at=started_at
             )
     except HfcacheError as error:
         _report_failure(ctx, "archive init", started_at, error)
@@ -608,12 +817,9 @@ def doctor(
     """
     started_at = utc_now()
     try:
-        if read_only:
-            with cli_client.connect(_options(ctx)) as client:
-                client.require_capabilities("read", "operations")
-                result = cli_client.run_job(client, "/api/v1/diagnostics", {"read_only": True})
-        else:
-            result = _commands(ctx, started_at).diagnose(DoctorRequest(read_only=False))
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("read" if read_only else "write", "operations")
+            result = _submit(ctx, client, "/api/v1/diagnostics", {"read_only": read_only})
     except HfcacheError as error:
         _report_failure(ctx, "doctor", started_at, error)
     checks = result.data.get("checks", [])
@@ -658,7 +864,7 @@ def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             client.require_capabilities(
                 "write" if options.config_explicit else "read", "operations"
             )
-            result = cli_client.run_job(client, "/api/v1/plans", body)
+            result = _submit(ctx, client, "/api/v1/plans", body)
     except HfcacheError as error:
         _report_failure(ctx, "plan", started_at, error)
     _show_result(
@@ -716,6 +922,7 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     started_at = utc_now()
     options = _options(ctx)
     try:
+        cli_client.check_job_options(options)
         query = {"selector": cli_client.selection(selectors or ())}
         with cli_client.connect(options) as client:
             client.require_capabilities("read", "reads")
@@ -777,7 +984,10 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     """
     started_at = utc_now()
     try:
-        result = _commands(ctx, started_at).synchronize(SelectionRequest(tuple(selectors or ())))
+        body = {"selectors": cli_client.selection(selectors or ())}
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("write", "operations")
+            result = _submit(ctx, client, "/api/v1/syncs", body)
     except HfcacheError as error:
         _report_failure(ctx, "sync", started_at, error)
     rows = [
@@ -819,6 +1029,7 @@ def list_repositories(
     started_at = utc_now()
     options = _options(ctx)
     try:
+        cli_client.check_job_options(options)
         query: dict[str, Any] = {"selector": cli_client.selection(selectors or ())}
         if repository_type is not None:
             if repository_type not in {"model", "dataset"}:
@@ -916,11 +1127,24 @@ def verify(
     try:
         mode = request.mode
         if mode == "estimate":
+            cli_client.check_job_options(_options(ctx))
             with cli_client.connect(_options(ctx)) as client:
                 client.require_capabilities("read", "reads")
                 result = client.read("/api/v1/verification/estimate").envelope
         else:
-            result = _commands(ctx, started_at).verify(request)
+            request.validate_scope()
+            with cli_client.connect(_options(ctx)) as client:
+                client.require_capabilities("write", "operations")
+                result = _submit(
+                    ctx,
+                    client,
+                    "/api/v1/verifications",
+                    {
+                        "mode": mode,
+                        "revision": revision,
+                        "run_id": run_id,
+                    },
+                )
     except HfcacheError as error:
         _report_failure(ctx, request.command, started_at, error)
     payload = result.data
@@ -976,14 +1200,21 @@ def quarantine(
     started_at = utc_now()
     command = f"quarantine {'--apply' if apply else '--dry-run'}"
     try:
-        request = QuarantineRequest(tuple(transaction_ids or ()), dry_run=dry_run, apply=apply)
         if dry_run == apply:
             message = "exactly one of --dry-run and --apply is required"
             raise ConfigurationError.single(message, code="HFARG002")
         if not transaction_ids:
             message = "quarantine cleanup requires explicit transaction ids"
             raise ConfigurationError.single(message, code="HFARG003")
-        result = _commands(ctx, started_at).quarantine(request)
+        QuarantineRequest(tuple(transaction_ids), dry_run=dry_run, apply=apply).validate_scope()
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("write" if apply else "read", "operations")
+            result = _submit(
+                ctx,
+                client,
+                "/api/v1/quarantine-cleanups" if apply else "/api/v1/quarantine-plans",
+                {"transaction_ids": transaction_ids},
+            )
     except HfcacheError as error:
         _report_failure(ctx, command, started_at, error)
     lines = {
@@ -1032,7 +1263,16 @@ def prune(
     try:
         request = MaintenanceRequest(selectors=tuple(selectors or ()), dry_run=dry_run, apply=apply)
         request.require_mode()
-        result = _commands(ctx, started_at).prune(request)
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("write" if apply else "read", "operations")
+            result = _submit(
+                ctx,
+                client,
+                "/api/v1/prunes" if apply else "/api/v1/prune-plans",
+                {
+                    "selectors": cli_client.selection(request.selectors),
+                },
+            )
     except HfcacheError as error:
         _report_failure(ctx, command, started_at, error)
     lines = {
@@ -1081,7 +1321,27 @@ def purge(
             all_unmanaged=all_unmanaged,
         )
         request.require_mode()
-        result = _commands(ctx, started_at).purge(request)
+        if all_unmanaged and request.selectors:
+            message = "--all-unmanaged and repository selectors are mutually exclusive"
+            raise ConfigurationError.single(message, code="HFARG002")
+        if not all_unmanaged and not request.selectors:
+            message = "purge requires repository selectors or --all-unmanaged"
+            raise ConfigurationError.single(message, code="HFARG003")
+        selected = cli_client.selection(request.selectors)
+        if any("@" in selector for selector in request.selectors):
+            message = "purge removes whole repositories; revision-qualified selectors are refused"
+            raise ConfigurationError.single(message, code="HFARG001")
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("write" if apply else "read", "operations")
+            result = _submit(
+                ctx,
+                client,
+                "/api/v1/purges" if apply else "/api/v1/purge-plans",
+                {
+                    "selectors": selected,
+                    "all_unmanaged": all_unmanaged,
+                },
+            )
     except HfcacheError as error:
         _report_failure(ctx, command, started_at, error)
     lines = {
@@ -1127,7 +1387,11 @@ def recover(
     try:
         request = MaintenanceRequest(dry_run=dry_run, apply=apply)
         request.require_mode()
-        result = _commands(ctx, started_at).recover(request)
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("write" if apply else "read", "operations")
+            result = _submit(
+                ctx, client, "/api/v1/recoveries" if apply else "/api/v1/recovery-plans", {}
+            )
     except HfcacheError as error:
         _report_failure(ctx, command, started_at, error)
     payload = result.data
@@ -1173,7 +1437,21 @@ def repair(
     started_at = utc_now()
     try:
         request = RepairRequest(selector, reason=reason)
-        result = _commands(ctx, started_at).repair(request)
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("write", "operations")
+            result = _submit(
+                ctx,
+                client,
+                "/api/v1/repairs",
+                {
+                    "revision": request.selector,
+                    "reason": request.reason,
+                },
+            )
+    except CodedError as error:
+        _report_failure(
+            ctx, "repair", started_at, ConfigurationError.single(str(error), code=error.code)
+        )
     except HfcacheError as error:
         _report_failure(ctx, "repair", started_at, error)
     payload = result.data

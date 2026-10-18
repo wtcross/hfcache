@@ -21,14 +21,12 @@ from pathlib import Path  # noqa: TC003 - fixtures take and return one at run ti
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from typer.testing import CliRunner
 
 from hfcache import recovery as recovery_module
 from hfcache import repair as repair_module
 from hfcache import retention as retention_module
 from hfcache import sync as sync_module
 from hfcache.archive import initialize_archive
-from hfcache.cli import app
 from hfcache.config import ApplicationConfig, load_config
 from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import ExitCode, RetentionError, SafetyError
@@ -70,7 +68,11 @@ from tests.unit.test_synchronize import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-runner = CliRunner()
+
+def invoke_api(config_path, arguments, *, json_output=True):
+    with api_cli(config_path) as remote:
+        return remote.invoke(arguments, json_output=json_output)
+
 
 NOW = datetime(2026, 7, 26, 12, 0, tzinfo=UTC)
 GRACE_HOURS = 168
@@ -306,7 +308,7 @@ def test_the_repaired_revision_verifies_clean(client, layout, config, config_pat
 
     repair(client, layout, config)
 
-    result = runner.invoke(app, ["--config", str(config_path), "--json", "verify", "--full"])
+    result = invoke_api(config_path, ["verify", "--full"])
     assert result.exit_code == ExitCode.SUCCESS
 
 
@@ -682,9 +684,7 @@ def test_the_repair_command_replaces_the_instance(client, layout, config, config
     damage(layout, SHA_A)
     monkeypatch.setattr("hfcache.services.commands.HubClient", _client_factory(client))
 
-    result = runner.invoke(
-        app, ["--config", str(config_path), "--json", "repair", f"{MODEL.selector}@{SHA_A}"]
-    )
+    result = invoke_api(config_path, ["repair", f"{MODEL.selector}@{SHA_A}"])
 
     assert result.exit_code == ExitCode.SUCCESS
     data = json.loads(result.stdout)["data"]
@@ -702,16 +702,14 @@ def test_the_repair_command_reports_a_refused_download(  # noqa: PLR0913, PLR091
     shutil.rmtree(layout.hub_cache / f"models--{MODEL.id.replace('/', '--')}")
     monkeypatch.setattr("hfcache.services.commands.HubClient", _client_factory(client))
 
-    result = runner.invoke(
-        app, ["--config", str(config_path), "--json", "repair", f"{MODEL.selector}@{SHA_A}"]
-    )
+    result = invoke_api(config_path, ["repair", f"{MODEL.selector}@{SHA_A}"])
 
     assert result.exit_code == ExitCode.RETENTION
     assert [p["code"] for p in json.loads(result.stdout)["errors"]] == ["HFRET006"]
 
 
 def test_the_repair_command_requires_a_full_sha(config_path):
-    result = runner.invoke(app, ["--config", str(config_path), "--json", "repair", MODEL.selector])
+    result = invoke_api(config_path, ["repair", MODEL.selector])
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert [p["code"] for p in json.loads(result.stdout)["errors"]] == ["HFARG001"]
@@ -755,9 +753,7 @@ def test_the_repair_command_stops_on_a_journal_that_asked_for_an_operator(
         repository_type=MODEL.type,
     ).needs_operator("HFTXN004", "two equally valid resolutions")
 
-    result = runner.invoke(
-        app, ["--config", str(config_path), "--json", "repair", f"{MODEL.selector}@{SHA_A}"]
-    )
+    result = invoke_api(config_path, ["repair", f"{MODEL.selector}@{SHA_A}"])
 
     assert result.exit_code == ExitCode.SAFETY
     assert [p["code"] for p in json.loads(result.stdout)["errors"]] == ["HFTXN004"]
@@ -767,9 +763,7 @@ def test_the_repair_command_stops_on_a_journal_that_asked_for_an_operator(
 def test_the_repair_command_takes_the_exclusive_lock(client, layout, config, config_path):
     sync(client, layout, config, only_model(config))
     with exclusive_lock(lock_path(), command="sync", wait_seconds=0):
-        result = runner.invoke(
-            app, ["--config", str(config_path), "--json", "repair", f"{MODEL.selector}@{SHA_A}"]
-        )
+        result = invoke_api(config_path, ["repair", f"{MODEL.selector}@{SHA_A}"])
 
     assert result.exit_code == ExitCode.SAFETY
     assert [p["code"] for p in json.loads(result.stdout)["errors"]] == ["HFMNT010"]
@@ -1641,10 +1635,7 @@ def test_the_repair_records_the_findings_it_is_answering(client, layout, config,
     from the catalog rather than by re-reading bytes that are unstable."""
     sync(client, layout, config, only_model(config))
     damage(layout, SHA_A)
-    assert (
-        runner.invoke(app, ["--config", str(config_path), "--json", "verify", "--full"]).exit_code
-        == ExitCode.INTEGRITY
-    )
+    assert invoke_api(config_path, ["verify", "--full"]).exit_code == ExitCode.INTEGRITY
 
     repair(client, layout, config)
 

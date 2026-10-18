@@ -165,7 +165,8 @@ Old operation observations retain admitted UUID/fingerprint and exact domain
 Envelope/run identity. Keys exist before POST; uncertainty preserves the original
 key/route without automatic replay or cancellation of accepted work. No local
 archive fallback or automatic daemon startup exists. API-012 uses the global CLI
-choices for reader/candidate modes; mutation/operation UX remains API-013. This client changes no FS/TX,
+choices for reader/candidate modes and API-013 completes operational CLI/observation.
+This client changes no FS/TX,
 durable shape, dependency, publication copy rule or writer authority.
 
 ### 2.6 Reader CLI and candidate policy (API-012)
@@ -189,6 +190,23 @@ explicit base dependency for resource-safe Unix client transport; its locked
 package/version is unchanged. No API configuration install,
 new durable shape, writer authority or MCP is introduced. CP-11's
 privileged host installation/backups and later shipped caller integration remain.
+
+### 2.7 Operational CLI and observation (API-013)
+
+[Decision 120](adr/decision-120.md) removes the operational CLI's direct mutation
+backend. Pure request objects can be shared without importing executors; typed
+HTTP leaves credentials, preflight, recovery, flock and private verification with
+the writer. Default stdout is the exact terminal server Envelope; explicit detach
+is schema-1 `operation_admission`, not a domain-success Envelope. Show/lookup
+preserve server metadata Envelopes and wait preserves the stored command result.
+
+Validated nonsecret key and accepted operation ID appear on stderr even quiet.
+One finite observation deadline covers sanitized sequenced events/status/result
+reads and retries. Timeout/Ctrl-C/connection loss retain handles and uncertainty;
+client departure never cancels or replays accepted work. The optional legacy init
+UUID comes only from authenticated inspection while root/confirmation remain
+explicit; no-confirm refusal submits nothing. Installed units/callers and OS
+isolation proof remain later work, with no durable/dependency/MCP change here.
 
 ## 3. Architecture decisions
 

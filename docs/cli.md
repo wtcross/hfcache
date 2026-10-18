@@ -62,22 +62,29 @@ modes while side-effecting CLI migration remains API-013. Candidate files are re
 on the CLI host and uploaded as bounded TOML content, never interpreted as server
 paths. Validity and installed-authority compatibility are reported separately.
 
+**2026-10-18 API-013 amendment:** all operational CLI modes now submit typed API
+requests; no operational command imports or invokes a local mutation backend.
+Default job output is the exact terminal server Envelope. Explicit detach emits
+identified admission data instead. Keys and accepted operation IDs are printed
+to stderr even in quiet mode; interruption/timeout stops observation, never
+accepted execution. [Decision 120](adr/decision-120.md) and
+[operation observation](#operations) define the exception and resume behavior.
+
 ## 1. Invocation shape
 
 ```text
 hfcache [GLOBAL OPTIONS] COMMAND [SUBCOMMAND] [ARGUMENTS] [OPTIONS]
 ```
 
-Global options are placed **before** the command, matching the systemd
-invocation:
+Global options are placed **before** the command:
 
 ```text
-/opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml sync
+hfcache --client-config /etc/hfcache/client.toml --json status
 ```
 
 | Global option | Default | Meaning |
 | --- | --- | --- |
-| `--config PATH` | `/etc/hfcache/config.toml` | Local archive policy for bootstrap/unmigrated commands; an explicit flag means candidate content only for API validate/plan and is rejected by other migrated reads |
+| `--config PATH` | `/etc/hfcache/config.toml` | Local policy only for explicit bootstrap validation; an explicit flag means candidate content only for API validate/plan and is rejected by other operational modes |
 | `--json` | off | Emit the machine-readable envelope (§4) on stdout and nothing else |
 | `--verbose` / `-v` | off | Adds the `hfcache.logging.DEBUG_EVENTS` detail to the §24 event log. Repeatable, and repeats beyond the first are currently equivalent to one, because the vocabulary bottoms out at `DEBUG`. Never enables secret logging |
 | `--quiet` / `-q` | off | Suppress progress and informational output; warnings and errors still print |
@@ -87,13 +94,20 @@ invocation:
 | `--api-url URL` | none | Explicit API URL, mutually exclusive with `--api-socket`; overrides the configured endpoint group |
 | `--api-socket PATH` | none | Explicit API Unix socket; overrides the configured endpoint group |
 | `--api-token-file PATH` | none | Explicit API credential source, distinct from the Hub `--token-file` |
+| `--detach` | off | Return separately identified admission after a keyed job's 202 rather than waiting for its terminal result |
+| `--idempotency-key KEY` | generated before POST | Deliberate same-route/body retry using an existing nonsecret key; no automatic new-key replay |
+| `--wait-timeout SECONDS` | client `wait_timeout` | Finite total observation budget for a submitted job or `operations wait`, not server cancellation or its queue/lock deadline |
+
+Job-only flags are refused on non-submitting reads/bootstrap; `operations wait`
+accepts the wait budget and its own `--after` cursor, while show/lookup submit
+nothing. Explicit wait timeout must be finite and in `(0, 86400]` seconds.
 
 `--json` and `--quiet` are compatible. `--json` and `--verbose` are compatible;
 verbosity affects stderr logging, never the stdout envelope.
 
-For migrated API reads, the default archive configuration path is never loaded.
+For operational API modes, the default archive configuration path is never loaded.
 An explicit `--config` is accepted only for candidate validate/plan, including
-when its value happens to equal the legacy default path. Other migrated reads
+when its value happens to equal the legacy default path. Other operational modes
 refuse it with an actionable migration error. Legacy Hub `--token-file` is refused
 for every API operation; select `--api-token-file` or client settings instead.
 Explicit `config validate --local` remains the Hub-token/bootstrap exception.
@@ -138,7 +152,8 @@ goes further and refuses a repository that remains configured (`AD-20`).
 | `recover` | yes with `--apply` | Reconcile unfinished transactions |
 | `quarantine` | yes with `--apply` | Remove explicitly selected, proven redundant recovered staging |
 | `repair` | yes | Reconstruct and republish a damaged known revision |
-| `version` | no | Application and dependency versions |
+| `version` | no | Local or explicit server application/dependency versions |
+| `operations show`, `operations lookup`, `operations wait` | no | Authenticated observation of existing receipts/results; never submission |
 
 ### `serve`
 
@@ -199,15 +214,15 @@ policy without an API, but ordinary reader commands never need that file.
 ### `archive init`
 
 ```text
-hfcache [--config PATH] archive init --archive-root PATH --confirm [--archive-id UUID]
+hfcache [CLIENT OPTIONS] archive init --archive-root PATH --confirm [--archive-id UUID]
 hfcache [CLIENT OPTIONS] archive init --inspect [--archive-root PATH]
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `--archive-root PATH` | Required unless `--inspect` and must equal `storage.archive_root` for initialization; optional inspection restatement only checks the returned writer root |
-| `--confirm` | Required for mutation. Without it, the command explains what it would do and exits `10` |
-| `--archive-id UUID` | Restates the provisioned `storage.archive_id`, for the same reason `--archive-root` restates the root. It must agree with configuration (`HFARG002`) |
+| `--confirm` | Required for mutation. Without it, authenticated inspection is returned with refusal and no submission |
+| `--archive-id UUID` | Optional restatement of the configured writer UUID; must match authenticated inspection (`HFARG002`). When omitted, use only that inspected UUID |
 | `--inspect` | API read of the configured writer target; no client archive path is required. Optional `--archive-root` checks the returned root. Mutually exclusive with `--confirm` (`HFARG002`) |
 
 Inspection uses `GET /archive/inspection` and retains the legacy Envelope command
@@ -218,8 +233,20 @@ root restatement is accepted. Explicit archive `--config` and Hub `--token-file`
 are refused.
 Without `--inspect`, omitting `--archive-root` retains the usage-error exit `2`;
 the missing required option does not become a domain exit `10`.
-The confirmed local initialization path remains until API-013; none of this
-constitutes authorization to initialize an existing production archive.
+Confirmed initialization uses the fixed API resource with strict root/UUID/
+confirmation and the server's disabled-by-default maintenance gate. The CLI obtains
+an omitted optional UUID from authenticated inspection; it never invents one or
+loads local archive configuration. Without `--confirm`, inspection data is retained
+with HFARG003 refusal (or HFMNT014 for an already initialized target), without a
+POST. None of this authorizes initializing an existing production archive.
+If authenticated inspection itself fails, preserve its exact server Envelope.
+Otherwise the no-confirm refusal is a local argument Envelope with local invocation
+metadata plus unchanged inspection data, `configured_archive_id` and
+`config_fingerprint`; it is not
+represented as a server execution result.
+Confirmed initialization explicitly refuses a disabled writer maintenance setting
+with HFAPI002 before submission. This client precheck does not replace the
+server's repeated gate; other missing negotiated capabilities remain HFAPI018.
 
 The confirmed initialization command proves the target is the expected read/write NFS mount, refuses a
 pre-existing sentinel or unknown content (`FS-22`), creates the directory
@@ -255,7 +282,7 @@ neither.
 ### `doctor`
 
 ```text
-hfcache [--config PATH] doctor [--read-only]
+hfcache [CLIENT OPTIONS] doctor [--read-only]
 ```
 
 Probe-enabled diagnostics hold the common archive lock for their checks, using
@@ -329,7 +356,7 @@ check runs.
 ### `plan`
 
 ```text
-hfcache [--config PATH] plan [TYPE:ID ...]
+hfcache [CLIENT OPTIONS] [--config CANDIDATE_PATH] plan [TYPE:ID ...]
 ```
 
 Resolves each enabled repository's configured reference to a full commit SHA and
@@ -359,7 +386,7 @@ the dataset quota is sized from.
 ### `sync`
 
 ```text
-hfcache [--config PATH] sync [TYPE:ID ...]
+hfcache [CLIENT OPTIONS] sync [TYPE:ID ...]
 ```
 
 The scheduled command. With no selectors it processes every enabled repository in
@@ -394,7 +421,7 @@ Exits `0`, `10`, `20`, `30`, `40`, or `50` per §3.
 ### `status`
 
 ```text
-hfcache [--config PATH] status [TYPE:ID ...]
+hfcache [CLIENT OPTIONS] status [TYPE:ID ...]
 ```
 
 Per repository: configured or unmanaged, enabled state, current SHA and
@@ -417,7 +444,7 @@ handling to this contract; no new durable schema is introduced.
 ### `list`
 
 ```text
-hfcache [--config PATH] list [--type model|dataset] [--revisions] [TYPE:ID ...]
+hfcache [CLIENT OPTIONS] list [--type model|dataset] [--revisions] [TYPE:ID ...]
 ```
 
 Archived repositories, and with `--revisions` every retained revision with its
@@ -428,10 +455,10 @@ missing or corrupt.
 ### `verify`
 
 ```text
-hfcache [--config PATH] verify --new [--run-id ID]
-hfcache [--config PATH] verify --full
-hfcache [--config PATH] verify --revision TYPE:ID@SHA
-hfcache [--config PATH] verify --estimate
+hfcache [CLIENT OPTIONS] verify --new [--run-id ID]
+hfcache [CLIENT OPTIONS] verify --full
+hfcache [CLIENT OPTIONS] verify --revision TYPE:ID@SHA
+hfcache [CLIENT OPTIONS] verify --estimate
 ```
 
 Exactly one mode option is required; two is `HFARG002`.
@@ -464,8 +491,8 @@ rewrites a manifest, prunes a revision, or re-downloads over the evidence.
 ### `prune`
 
 ```text
-hfcache [--config PATH] prune --dry-run [TYPE:ID ...]
-hfcache [--config PATH] prune --apply [TYPE:ID ...]
+hfcache [CLIENT OPTIONS] prune --dry-run [TYPE:ID ...]
+hfcache [CLIENT OPTIONS] prune --apply [TYPE:ID ...]
 ```
 
 Exactly one of `--dry-run` / `--apply` is required. `--dry-run` prints the exact
@@ -480,10 +507,10 @@ until no eligible excess remains.
 ### `purge`
 
 ```text
-hfcache [--config PATH] purge --dry-run TYPE:ID [TYPE:ID ...]
-hfcache [--config PATH] purge --apply TYPE:ID [TYPE:ID ...]
-hfcache [--config PATH] purge --dry-run --all-unmanaged
-hfcache [--config PATH] purge --apply --all-unmanaged
+hfcache [CLIENT OPTIONS] purge --dry-run TYPE:ID [TYPE:ID ...]
+hfcache [CLIENT OPTIONS] purge --apply TYPE:ID [TYPE:ID ...]
+hfcache [CLIENT OPTIONS] purge --dry-run --all-unmanaged
+hfcache [CLIENT OPTIONS] purge --apply --all-unmanaged
 ```
 
 Exactly one of `--dry-run` / `--apply` is required, and scope must be either one
@@ -506,8 +533,8 @@ command succeeds.
 ### `recover`
 
 ```text
-hfcache [--config PATH] recover --dry-run
-hfcache [--config PATH] recover --apply
+hfcache [CLIENT OPTIONS] recover --dry-run
+hfcache [CLIENT OPTIONS] recover --apply
 ```
 
 Reconciles unfinished transaction journals: abandoned staging, a renamed tree not
@@ -525,8 +552,8 @@ revision by modification time, or deletes unknown data (`AD-16`).
 ### `quarantine`
 
 ```text
-hfcache [--config PATH] quarantine --dry-run TRANSACTION_ID ...
-hfcache [--config PATH] quarantine --apply TRANSACTION_ID ...
+hfcache [CLIENT OPTIONS] quarantine --dry-run TRANSACTION_ID ...
+hfcache [CLIENT OPTIONS] quarantine --apply TRANSACTION_ID ...
 ```
 
 Exactly one mode and at least one explicit 32-character lowercase hexadecimal
@@ -546,7 +573,7 @@ content are preserved. No Hub request is made.
 ### `repair`
 
 ```text
-hfcache [--config PATH] repair TYPE:ID@SHA [--reason TEXT]
+hfcache [CLIENT OPTIONS] repair TYPE:ID@SHA [--reason TEXT]
 ```
 
 Downloads the exact SHA into an isolated `.store/repair/<transaction-id>/hub`,
@@ -570,6 +597,70 @@ resolved transfer-backend versions without reading configuration or accessing th
 archive/API. This remains usable on a broken deployment. `--server` instead
 authenticates to the selected API and preserves the writer's exact version
 Envelope, including its invocation identity and timestamps.
+
+### `operations`
+
+```text
+hfcache [CLIENT OPTIONS] operations show OPERATION_ID
+hfcache [CLIENT OPTIONS] operations lookup IDEMPOTENCY_KEY
+hfcache [CLIENT OPTIONS] [--wait-timeout SECONDS] operations wait OPERATION_ID [--after N]
+```
+
+These commands authenticate and observe existing work; they never POST, cancel
+or replay it. `show` and `lookup` render the exact server schema-1 metadata
+Envelopes, with canonical commands `operations show` / `operations lookup` and
+typed `data.operation`. A receipt's state is metadata, not a new domain result.
+All REST readers/writers may inspect operation IDs, while key lookup searches
+only the caller's credential-class namespace. Credential rotation preserves that
+coarse namespace; switching classes does not. Missing/expired HFAPI013 history
+does not prove nonexecution.
+
+`wait` observes bounded sanitized sequenced events, status and result under one
+absolute finite deadline. `--after N` resumes event observation after that sequence;
+retention gaps are explicit, never invented events. On a terminal result, emit
+the exact stored command Envelope and its application exit, including partial
+failure. On known unfinished/interrupted work with no terminal Envelope, preserve
+HFAPI015 rather than fabricate an execution result.
+
+Keyed jobs wait by default, including planning, diagnostics and maintenance
+previews. Before their first POST, validate/generate the nonsecret key and print
+it to stderr; after a validated 202 print operation ID before waiting. Both
+messages are mandatory even in quiet mode. Sanitized event progress stays on
+stderr and is suppressed by quiet; no raw journald output is forwarded. Distinct
+request/operation/domain IDs retain their separate meanings.
+Event rendering escapes nonprintable characters, including newline/ESC, so each
+event stays one plain stderr line. Quiet suppresses that progress rendering.
+
+Explicit global `--detach` stops after admission. In JSON mode it emits exactly
+one object with these fields, separately from the terminal Envelope family:
+
+| Field | Detached submission value |
+| --- | --- |
+| `schema_version` | Integer `1` |
+| `kind` | `operation_admission` |
+| `idempotency_key` | Validated original nonsecret key |
+| `acceptance` | Exact validated server `AcceptanceResponse`, including operation and same-operation observation links |
+
+It has no fabricated `outcome` or `exit_code`; successful detachment means only
+durable admission. Human detach output likewise identifies admission and its
+handles. `--idempotency-key` supports a deliberate identical request retry; it
+does not bypass current authentication or the initialization maintenance gate.
+Keys use 1–128 ASCII letters/digits or `._~+-`; values recognized as secrets or
+containing a registered credential are refused before they can become handles.
+
+Observation timeout or Ctrl-C while waiting is HFAPI019 / exit 20 and retains original key,
+operation ID and route when known. Lost/unusable POST acknowledgement remains
+HFAPI020 / exit 20 with the original key/route, including interruption before
+acknowledgement is established. Other validated transport/protocol/
+remote refusals retain their taxonomy and known handles. State that accepted work
+may continue and reconnect through lookup/show/wait; never automatically replay,
+cancel, change keys or render observer failure as a terminal server result.
+Validated 5xx refusals with a retained key also say work may continue; a usable
+error acknowledgement can still follow durable admission.
+The observation deadline differs from HTTP connect/read limits and the server's
+queue/lock budget. Stopping a client process/service stops observation only.
+See [recovery](recovery.md#10-operation-history-and-uncertain-submissions) and
+[decision 120](adr/decision-120.md).
 
 ## 3. Exit codes
 
@@ -601,6 +692,9 @@ so systemd records the unit as failed (`docs/plan.md` §11.2).
 `--json` writes exactly one envelope to stdout. Human-readable text goes to
 stdout only without `--json`; logs and progress always go to stderr. This means
 `hfcache --json sync | jq` is always safe.
+Explicit `--detach` is a separate output contract: one identified admission object
+as specified above, with no terminal command-success claim. It must be selected
+deliberately; default command and operation-wait output remain exact Envelopes.
 The long-lived `serve` bootstrap writes no terminal success envelope; only its
 classified startup failure is rendered under `--json`, as specified above.
 
@@ -652,6 +746,7 @@ Serialization follows the same deterministic rules as durable files
 | `quarantine` | Explicit transaction cleanup plans and applied results; published content and original journals remain unchanged |
 | `repair` | Transaction ID, old and new publication IDs, verification result, grace expiry |
 | `version` | `application`, `python`, `huggingface_hub`, `transfer_backend` |
+| `operations show`, `operations lookup` | `operation`: validated metadata receipt, without internal digests or raw key; command remains the server metadata command |
 
 ## 5. Error and warning taxonomy
 

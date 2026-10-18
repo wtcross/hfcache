@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-013](tasks/api-013-migrate-write-cli-and-operation-waiting.md) |
+| Next task | [API-014](tasks/api-014-systemd-and-deployment-integration.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

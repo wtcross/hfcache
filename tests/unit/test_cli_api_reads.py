@@ -44,7 +44,6 @@ def test_reader_modes_need_no_client_archive_config_or_hub_credentials(
         pytest.fail("API reader attempted local writer configuration/service execution")
 
     monkeypatch.setattr(cli, "load_config", forbidden)
-    monkeypatch.setattr(cli, "_commands", forbidden)
     with api_cli(policy.archive_config, reader=True) as remote:
         result = remote.invoke(arguments)
         assert result.exit_code == 0, result.output
@@ -113,7 +112,6 @@ def test_absent_api_is_transport_failure_without_local_fallback(tmp_path, monkey
         pytest.fail("unavailable API fell back to local writer state")
 
     monkeypatch.setattr(cli, "load_config", forbidden)
-    monkeypatch.setattr(cli, "_commands", forbidden)
     outcome = CliRunner().invoke(
         cli.app,
         [

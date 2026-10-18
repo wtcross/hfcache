@@ -6,9 +6,9 @@ and render. No transport framework is imported here (INV-012).
 
 import socket
 from contextlib import nullcontext
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Final, Literal
+from typing import TYPE_CHECKING, Any, Final
 
 from hfcache.archive import initialize_archive
 from hfcache.credentials import resolve_token
@@ -22,9 +22,7 @@ from hfcache.errors import (
 )
 from hfcache.hub import HubClient
 from hfcache.identity import (
-    CommitSha,
     RepositoryIdentity,
-    RepositorySelector,
     RunId,
     TransactionId,
     new_transaction_id,
@@ -52,6 +50,19 @@ from hfcache.reporting import RecoveryReport, RunReport, RuntimeVersions
 from hfcache.retention import apply_prune, plan_all
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.queries import LocalQueries
+from hfcache.services.requests import (
+    ALL_CONFIGURED,
+    DoctorRequest,
+    InitializationRequest,
+    MaintenanceRequest,
+    QuarantineRequest,
+    RepairRequest,
+    SelectionRequest,
+    VerificationRequest,
+    _chosen_modes,
+    _mode_option,
+    _verification_mode,
+)
 from hfcache.storage import read_model
 from hfcache.sync import synchronize
 from hfcache.transactions import open_transaction
@@ -76,112 +87,21 @@ if TYPE_CHECKING:
     from hfcache.verification import Resolved
 
 
-@dataclass(frozen=True, slots=True)
-class SelectionRequest:
-    """Configured repository selection, preserved in configuration order."""
-
-    selectors: tuple[str, ...] = ()
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "selectors", tuple(self.selectors))
-
-
-ALL_CONFIGURED = SelectionRequest()
-
-
-@dataclass(frozen=True, slots=True)
-class DoctorRequest:
-    """Whether diagnostic storage writes are authorized."""
-
-    read_only: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class InitializationRequest:
-    """Explicit initialization intent; configured target must be restated."""
-
-    archive_root: Path
-    archive_id: str | None = None
-    confirm: bool = False
-    inspect: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class MaintenanceRequest(SelectionRequest):
-    """Explicit preview/apply mode and optional unmanaged purge scope."""
-
-    dry_run: bool = False
-    apply: bool = False
-    all_unmanaged: bool = False
-
-    def require_mode(self) -> None:
-        """A preview never grants apply authority; neither mode is implicit."""
-        if self.dry_run == self.apply:
-            message = "exactly one of --dry-run and --apply is required"
-            raise ConfigurationError.single(message, code="HFARG002")
-
-
-@dataclass(frozen=True, slots=True)
-class QuarantineRequest:
-    """Only explicitly named completed redundant staging can be cleaned."""
-
-    transaction_ids: tuple[str, ...] = ()
-    dry_run: bool = False
-    apply: bool = False
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "transaction_ids", tuple(self.transaction_ids))
-
-
-@dataclass(frozen=True, slots=True)
-class RepairRequest:
-    """One retained SHA and the operator's audit reason."""
-
-    selector: str
-    reason: str = "operator_requested"
-    target: RepositorySelector = field(init=False, repr=False)
-    commit_sha: CommitSha = field(init=False, repr=False)
-
-    def __post_init__(self) -> None:
-        parsed = parse_selector(self.selector)
-        if parsed.commit_sha is None:
-            message = (
-                f"repair {self.selector!r} names no revision; it takes TYPE:ID@SHA with the "
-                "full 40-character commit SHA, because a repair replaces one instance of one SHA"
-            )
-            raise ConfigurationError.single(message, code="HFARG001", location="TYPE:ID@SHA")
-        object.__setattr__(self, "target", parsed)
-        object.__setattr__(self, "commit_sha", parsed.commit_sha)
-
-
-@dataclass(frozen=True, slots=True)
-class VerificationRequest:
-    """Verification scope, with exactly one selected mode."""
-
-    new: bool = False
-    full: bool = False
-    revision: str | None = None
-    estimate: bool = False
-    run_id: str | None = None
-
-    @property
-    def command(self) -> str:
-        """Name even an invalid invocation without accepting its options."""
-        mode = _mode_option(
-            new=self.new, full=self.full, revision=self.revision, estimate=self.estimate
-        )
-        return f"verify --{mode}"
-
-    @property
-    def mode(self) -> Literal["new", "full", "revision", "estimate"]:
-        """Validate the existing CLI mode combinations with stable taxonomy."""
-        return _verification_mode(
-            new=self.new,
-            full=self.full,
-            revision=self.revision,
-            estimate=self.estimate,
-            run_id=self.run_id,
-        )
+# Existing server adapters retain these compatibility exports (decision 120).
+__all__ = [
+    "ALL_CONFIGURED",
+    "CommandServices",
+    "DoctorRequest",
+    "InitializationRequest",
+    "MaintenanceRequest",
+    "QuarantineRequest",
+    "RepairRequest",
+    "SelectionRequest",
+    "VerificationRequest",
+    "_chosen_modes",
+    "_mode_option",
+    "_verification_mode",
+]
 
 
 def _failure(
@@ -882,68 +802,6 @@ def _run(  # noqa: PLR0913 - extracted run orchestration preserves domain inputs
     except HfcacheError as error:
         transaction.fail(error.problems[0].code, error.problems[0].message)
         raise
-
-
-def _chosen_modes(*, new: bool, full: bool, revision: str | None, estimate: bool) -> list[str]:
-    """Which mode options this invocation named, in `docs/cli.md` §2's order."""
-    return [
-        name
-        for name, given in (
-            ("--new", new),
-            ("--full", full),
-            ("--revision", revision is not None),
-            ("--estimate", estimate),
-        )
-        if given
-    ]
-
-
-def _mode_option(*, new: bool, full: bool, revision: str | None, estimate: bool) -> str:
-    """The mode name for the `command` field, before the invocation is validated.
-
-    A refusal still has to say which command was refused, and an invocation that
-    named two modes or none is reported under the first mode it named or under
-    `--new`; naming the command is not the same as accepting it.
-    """
-    chosen = _chosen_modes(new=new, full=full, revision=revision, estimate=estimate)
-    return chosen[0].removeprefix("--") if chosen else "new"
-
-
-def _verification_mode(
-    *, new: bool, full: bool, revision: str | None, estimate: bool, run_id: str | None
-) -> Literal["new", "full", "revision", "estimate"]:
-    """Decide which mode was asked for, refusing none and refusing two.
-
-    `docs/cli.md` §2: exactly one mode option is required. There is no default —
-    the modes differ by orders of magnitude in what they read, and guessing which
-    an operator meant would either skip most of the archive or saturate the NAS
-    for an hour.
-    """
-    chosen = _chosen_modes(new=new, full=full, revision=revision, estimate=estimate)
-    if len(chosen) > 1:
-        message = (
-            f"{' and '.join(chosen)} were given together; verify takes exactly one mode option, "
-            f"because each names a different scope rather than a different amount of effort"
-        )
-        raise ConfigurationError.single(message, code="HFARG002", location="verify")
-    if not chosen:
-        message = (
-            "verify requires exactly one mode option; --new checks the content one run "
-            "introduced, --full every retained revision, --revision one of them, and "
-            "--estimate none of them"
-        )
-        raise ConfigurationError.single(message, code="HFARG003", location="verify")
-    if run_id is not None and not new:
-        message = (
-            f"--run-id names which run {chosen[0]} would check, and {chosen[0]} is not scoped to "
-            f"a run; it is accepted only with --new"
-        )
-        raise ConfigurationError.single(message, code="HFARG002", location="--run-id")
-    if full:
-        return "full"
-    if estimate:
-        return "estimate"
-    return "revision" if revision is not None else "new"
 
 
 def _named_revision(layout: ArchiveLayout, selector: str) -> Resolved:

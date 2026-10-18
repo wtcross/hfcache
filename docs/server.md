@@ -6,8 +6,8 @@ API-007 adds bounded receipt/admission primitives and operation observation;
 API-008 adds the heavyweight lane and private verifier process/protocol; API-009
 adds typed sync, verification, planning, diagnostics and installed validation.
 API-010 adds explicit maintenance preview/apply, repair and guarded initialization.
-API-012 adds candidate operations and reader CLI integration; mutating CLI and
-installed service hardening remain later tasks.
+API-012 adds candidate operations/read CLI and API-013 operational CLI/observation;
+installed service hardening remains later work.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
@@ -238,7 +238,7 @@ to 5 seconds for connect/pool and 30 seconds for read/write. Callers own closing
 the client. The primitive itself sends no request; API-011's independent typed
 [client](api-client.md) supplies endpoint, bearer, strict response and finite
 observation policy without importing the optional server framework. Public CLI
-reader migration is API-012; side-effecting runtime migration remains API-013.
+reader migration is API-012 and operational command/observation migration API-013.
 
 ## Implemented metadata lifespan (API-006)
 
@@ -610,9 +610,19 @@ API-008's lane and API-007's registry already share the unprivileged application
 and separate bounded metadata pool across both listeners. The daemon-instance
 lock prevents competing registries; actual archive work retains the operation-
 scoped flock. API-009/010 add typed command routes and API-012 adds candidate/
-reader integration; later tasks add mutating CLI/unit integration without another
+reader integration; API-013 adds operational CLI/observation and later tasks unit integration without another
 execution authority. Metadata reads create no archive layout or catalog.
 Systemd remains scheduling authority.
+
+API-013's CLI uses pure request types and typed HTTP without importing the direct
+operational backend. It prints validated key/accepted operation handles even quiet,
+waits for exact terminal results by default and identifies explicit detach as
+admission only. One finite observer deadline includes sanitized events/status/
+result reads; observer departure never cancels or replays accepted work. Optional
+CLI initialization UUID comes from authenticated inspection, preserving the
+server's strict DTO and disabled initialization gate. Client-only no-confirm
+refusal submits nothing. See [decision 120](adr/decision-120.md) and
+[client operation handling](api-client.md#submit-detach-and-resume-api-013).
 
 API-004 establishes shared correlation primitives ahead of this server:
 configure logging once at startup, generate authoritative request and admission

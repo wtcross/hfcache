@@ -19,18 +19,15 @@ import os
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
 
 from hfcache.archive import initialize_archive
-from hfcache.cli import UNPROVABLE_READ_ONLY, _bytes, app
+from hfcache.cli import UNPROVABLE_READ_ONLY, _bytes
 from hfcache.errors import ExitCode, SynchronizationError
 from hfcache.hub import DownloadEstimate, HubClient, RepositoryFacts, TreeEntry
 from hfcache.identity import CommitSha, new_run_id, new_transaction_id
 from hfcache.paths import ArchiveLayout
 from hfcache.transactions import open_transaction
 from tests.api_cli import api_cli
-
-runner = CliRunner()
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 
@@ -211,14 +208,19 @@ def initialized_config(mounted_config: Path, mounted_root: Path) -> Path:
 
 
 def invoke(config_file: Path, *arguments: str):
-    return runner.invoke(app, ["--json", "--config", str(config_file), *arguments])
+    with api_cli(config_file) as remote:
+        return remote.invoke(list(arguments))
 
 
 def invoke_api(
-    config_file: Path, *arguments: str, json_output=True, hub_token_file: Path | None = None
+    config_file: Path,
+    *arguments: str,
+    json_output=True,
+    hub_token_file: Path | None = None,
+    reader=True,
 ):
     """Keep legacy output assertions behind the installed writer's real HTTP boundary."""
-    with api_cli(config_file, hub_token_file=hub_token_file, reader=True) as remote:
+    with api_cli(config_file, hub_token_file=hub_token_file, reader=reader) as remote:
         return remote.invoke(list(arguments), json_output=json_output)
 
 
@@ -395,10 +397,7 @@ def test_doctor_reports_the_credential_source_never_the_value(config_file: Path,
     token = tmp_path / "token"
     token.write_text("hf_doctorMustNotEchoThis\n", encoding="utf-8")
 
-    result = runner.invoke(
-        app,
-        ["--json", "--config", str(config_file), "--token-file", str(token), "doctor"],
-    )
+    result = invoke_api(config_file, "doctor", hub_token_file=token, reader=False)
 
     assert "hf_doctorMustNotEchoThis" not in result.output
     credential = next(check for check in data_of(result)["checks"] if check["name"] == "credential")
@@ -407,18 +406,23 @@ def test_doctor_reports_the_credential_source_never_the_value(config_file: Path,
 
 def test_doctor_fails_on_bad_configuration_before_probing(tmp_path: Path):
     path = tmp_path / "config.toml"
-    path.write_text(CONFIG.replace("schema_version = 1", "schema_version = 99"), encoding="utf-8")
-
-    result = invoke(path, "doctor")
+    path.write_text(CONFIG, encoding="utf-8")
+    with api_cli(path) as remote:
+        path.write_text(
+            CONFIG.replace("schema_version = 1", "schema_version = 99"), encoding="utf-8"
+        )
+        result = remote.invoke(["doctor"])
 
     envelope = json.loads(result.stdout)
     assert result.exit_code == ExitCode.CONFIGURATION
-    assert envelope["data"] == {}, "no check ran, so none is reported"
+    assert "checks" not in envelope["data"], "no check ran, so none is reported"
+    assert envelope["data"]["route"] == "/api/v1/diagnostics"
+    assert envelope["data"]["idempotency_key"]
     assert envelope["errors"][0]["code"] == "HFCFG004"
 
 
 def test_doctor_prints_a_readable_table_without_json(config_file: Path):
-    result = runner.invoke(app, ["--config", str(config_file), "doctor"])
+    result = invoke_api(config_file, "doctor", json_output=False, reader=False)
 
     assert "pass" in result.output
     assert "configuration" in result.output
@@ -936,14 +940,21 @@ def test_quiet_suppresses_the_human_summary(config_file: Path, command):
     result = invoke_api(config_file, "--quiet", command, json_output=False)
 
     assert result.exit_code == ExitCode.SUCCESS
-    assert result.output == ""
+    assert result.stdout == ""
+    if command == "plan":
+        assert "key" in result.stderr.lower()
+        assert "operation" in result.stderr.lower()
+    else:
+        assert result.stderr == ""
 
 
 def test_quiet_suppresses_the_doctor_table(initialized_config: Path):
-    result = runner.invoke(app, ["--quiet", "--config", str(initialized_config), "doctor"])
+    result = invoke_api(initialized_config, "--quiet", "doctor", json_output=False, reader=False)
 
     assert result.exit_code == ExitCode.SUCCESS
-    assert result.output == ""
+    assert result.stdout == ""
+    assert "key" in result.stderr.lower()
+    assert "operation" in result.stderr.lower()
 
 
 # --------------------------------------------------------------------------- #
@@ -1051,7 +1062,7 @@ def test_recover_apply_performs_nothing_when_the_plan_is_blocked(
 
 
 def test_recover_prints_a_readable_summary_without_json(initialized_config: Path):
-    result = runner.invoke(app, ["--config", str(initialized_config), "recover", "--dry-run"])
+    result = invoke_api(initialized_config, "recover", "--dry-run", json_output=False, reader=False)
 
     assert result.exit_code == ExitCode.SUCCESS
     assert "actionable" in result.output

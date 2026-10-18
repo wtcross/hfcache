@@ -464,6 +464,13 @@ route enforcement from installed host acceptance.
   API-012 renders the exact server Envelope identity/timestamps for remote reads
   and completed jobs. Page joins keep the first server invocation metadata,
   include all rows under finite bounds and refuse inconsistent publication evidence.
+  API-013 defaults all jobs to exact terminal Envelopes. Explicit detach is a
+  separately identified schema-1 `operation_admission`, without a fabricated
+  command outcome/exit. Show/lookup keep exact server metadata Envelopes.
+  Mandatory validated key/accepted-ID safety messages stay on stderr even quiet;
+  bounded sanitized event progress never fragments stdout. Client-only no-confirm
+  init refusal uses local metadata plus successful inspection evidence; failed
+  inspection remains exact server evidence. See [decision 120](adr/decision-120.md).
 - **`INV-007` — Verification reports evidence without rewriting it.** Verify
   the complete path set, sizes, and local SHA-256 bytes; an integrity finding
   exits `40`, preserves content/expectations, and never performs repair or
@@ -618,8 +625,9 @@ API-001 introduces these constraints for the activated plan. API-006 implements
 authenticated metadata HTTP and its foreground bootstrap; API-007 adds durable
 admission primitives and operation observation. API-008 adds execution/private
 verification and API-009 adds the typed command subset. API-010 adds guarded
-maintenance and initialization; API-012 adds candidate operations and read CLI
-integration. Mutating client UX, installed isolation hardening and MCP remain pending.
+maintenance and initialization; API-012 adds candidate operations/read CLI and
+API-013 completes operational CLI/observation. Installed isolation hardening and
+MCP remain pending.
 [API](api.md) and [server](server.md) track exact availability; implementing tasks
 own proof.
 
@@ -634,7 +642,9 @@ own proof.
   sync ordering, reconciliation, capacity, continuation, producer joins and exact
   verification delegation, covered by [HTTP/domain tests](../tests/unit/test_api_commands.py).
   API-011 supplies the independent typed client/configuration and API-012 migrates
-  read CLI/candidates; mutating CLI migration remains API-013 and MCP-002 later.
+  read CLI/candidates. API-013's operational CLI uses pure request types and typed
+  HTTP only, with no direct mutation backend imports or local fallback. MCP-002
+  remains later work.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
@@ -690,8 +700,11 @@ own proof.
   historical installed-plan canonical key mappings; exact candidate text binds a
   new request and the receipt retains installed admitted fingerprint. API-011 generates/exposes a retained
   key before POST and reports uncertainty without automatic replay; lookup and
-  finite observation never cancel accepted work. Public CLI safety messages and
-  command migration remain API-013.
+  finite observation never cancel accepted work. API-013 prints validated key
+  before POST and operation ID after acceptance even quiet. One deadline covers
+  event/status/result reads and retries; timeout/Ctrl-C retains handles and says
+  accepted work may continue. Show/wait/lookup observe without submitting,
+  cancellation or new-key replay. Detached admission never claims domain completion.
   Decisions [109](adr/decision-109.md),
   [114](adr/decision-114.md) and [115](adr/decision-115.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state-api-007).
   Enforcement/evidence: [core store](../src/hfcache/api/operations.py),
@@ -725,6 +738,16 @@ own proof.
   [reader/candidate adversarial tests](../tests/unit/test_api_candidates_adversarial.py);
   [decision 119](adr/decision-119.md). Server installation/host acceptance remains
   separate from these hermetic tests.
+  API-013 enforcement/evidence: [pure request types](../src/hfcache/services/requests.py),
+  [bootstrap descriptions](../src/hfcache/services/bootstrap.py),
+  [operational CLI](../src/hfcache/cli.py),
+  [submission/observation helpers](../src/hfcache/cli_client.py),
+  [typed deadline/event client](../src/hfcache/client.py),
+  [write CLI integration](../tests/unit/test_cli_api_writes.py),
+  [helper tests](../tests/unit/test_cli_operation_helpers.py) and
+  [writer observation/adversarial tests](../tests/unit/test_cli_operations_adversarial.py);
+  [decision 120](adr/decision-120.md). No client/service-stop proof replaces exact
+  executor ownership or installed OS isolation acceptance.
 - **`INV-015` — Verification isolation encloses persistence.** Non-estimate
   verification locks target resolution, hashing, report write and catalog merge
   in a credential-free no-IP executor. Estimates remain metadata reads.

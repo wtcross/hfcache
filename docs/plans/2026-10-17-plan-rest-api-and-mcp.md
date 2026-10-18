@@ -793,3 +793,13 @@ versions when implementing, especially FastMCP imports and test transports:
   declared directly for a public Unix-only transport adapter that closes failed
   sockets; FW-04 rationale is in decision 119. No new package/version, durable
   shape or production operation is introduced.
+
+- 2026-10-18 API-013: Decision 120 completes operational CLI and explicit
+  show/wait/lookup observation through typed HTTP without direct mutation imports.
+  Default exact terminal Envelopes remain distinct from explicit identified
+  admission. Validated key and accepted-ID stderr handles survive quiet; one finite
+  event/status/result deadline retains uncertainty on timeout/Ctrl-C, without
+  cancel/replay. Initialization obtains omitted optional UUID from authenticated
+  inspection while preserving restated root/confirmation and server guards;
+  no-confirm refusal submits nothing. No durable schema/dependency/MCP or production
+  change. Installed unit/Cockpit and REST/host acceptance retain their task gates.

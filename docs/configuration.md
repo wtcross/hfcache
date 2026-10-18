@@ -538,6 +538,6 @@ The [client contract](api-client.md#client-configuration-and-setup) records exac
 fields/defaults/ranges and safe file/URL rules. Settings/selection failures use
 HFAPI017; protected credential failures retain HFAPI003. Separate client settings
 never enter archive-policy fingerprints or receipts. API-012 uses the stored
-global choices for reader/candidate modes; side-effecting CLI migration remains
-API-013. See
+global choices for reader/candidate modes; API-013 completes operational CLI and
+explicit observation through the same authority. See
 [decision 118](adr/decision-118.md).

@@ -11,8 +11,9 @@ Day-to-day operation: what each command reports, what every exit code means and
 what to do about it, how to read a run report and the journal, what each warning
 code is telling you, and how to administer the timers.
 
-**Every command block below was run on this deployment.** Where output is
-abbreviated it is marked with `…`; nothing is invented.
+The numbered historical runbook blocks were run on this deployment. Where output
+is abbreviated it is marked with `…`; nothing is invented. The explicitly dated
+REST/client sections describe source/test behavior and examples, not a rollout.
 
 Throughout, `$H` stands for the invocation an operator uses. Scheduled runs use
 exactly the same commands, which is what makes a behaviour reproducible by hand:
@@ -31,8 +32,10 @@ timers use. Running as yourself will fail — `/etc/hfcache/config.toml` is
 ## REST command observation (API-009/API-010)
 
 This section describes implemented development/test behavior, not a production
-rollout or commands exercised on the installed writer. The existing local CLI and
-scheduled units below retain their current interface until API-011–013 migrate it.
+rollout or commands exercised on the installed writer. API-012/013 now route the
+source CLI through authenticated HTTP; shipped scheduling/credential integration
+remains API-014. Historical installed command/unit blocks below are evidence,
+not assertions that this feature branch was deployed.
 The [API contract](api.md#implemented-command-resources-api-009) gives authenticated
 POST examples and exact body/role rules. Sync and all actual verification need a
 writer; installed planning and `read_only=true` diagnostics permit readers but can
@@ -69,6 +72,49 @@ additionally requires confirmation and the configured root/UUID restated, never
 an alternate path. Startup, health, recovery and a missing sentinel never init.
 The existing production archive is already initialized; this implementation's
 initialization evidence uses fake-root fixtures and authorizes no production action.
+
+### CLI submit and reconnect (API-013)
+
+Use separate client configuration/API credentials; the operational CLI no longer
+loads local archive TOML or executes a local mutation backend. It waits for the
+exact terminal server Envelope by default, preserving domain exit and partial
+results. Before POST it prints a validated nonsecret key to stderr, and after
+acceptance it prints operation ID before waiting. These safety handles remain in
+quiet mode, while sanitized bounded event progress is suppressed. Progress and
+retention gaps stay on stderr; stdout remains one terminal Envelope.
+
+Explicit `--detach` returns admission only. Its JSON object has schema 1,
+`kind="operation_admission"`, original key and validated server acceptance, without
+a command `outcome`/`exit_code`. Resume with the original handles:
+
+```text
+hfcache --client-config /etc/hfcache/client.toml --json operations lookup <original-key>
+hfcache --client-config /etc/hfcache/client.toml --json operations show <operation-id>
+hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 operations wait <operation-id> --after 12
+```
+
+These are interface examples, not production commands exercised here. Show/lookup
+preserve server metadata Envelopes; wait retrieves the exact stored terminal
+command Envelope. `--after` resumes a sequenced event cursor, with explicit gaps
+when retention removed older entries. One finite deadline includes event/status/
+result reads and retries. Timeout/Ctrl-C while observing is a client HFAPI019/20 refusal, not a
+domain execution outcome. Lost/unusable POST acknowledgement is HFAPI020/20 with
+the original key. Both retain known handles and say accepted work may continue.
+
+Never change keys to repeat uncertain work. `--idempotency-key` is a deliberate
+identical-route/body retry, and authenticated lookup never submits. Missing/
+expired or interrupted history cannot prove nonexecution. Stopping a sync/verify
+client service or closing its terminal does not stop the server executor. Use
+server drain and exact operation/verifier evidence before any recovery or mount
+change; do not infer termination from a client PID, elapsed timeout or free lock.
+See [decision 120](adr/decision-120.md), [CLI operations](cli.md#operations) and
+[client setup](api-client.md#submit-detach-and-resume-api-013).
+
+Initialization still requires the restated root and confirmation, plus the
+server's initialization-only disabled maintenance gate. Omitted optional UUID
+comes only from authenticated inspection; no-confirm refusal submits nothing.
+Health/recovery never initialize, and the existing production archive must not be
+initialized again.
 
 ## 1. Is the archive healthy?
 
@@ -549,8 +595,9 @@ exact private verifier status/outcome through the server; never start a duplicat
 operation because a client disappeared. Drain first stops admission, then joins
 accepted work and sync producers before safety ownership is released. Forced
 termination preserves receipts/journals for diagnosis. Never unlink a lock inode
-or infer execution outcome solely from its being free. Public submission/client
-and systemd migration remain later tasks; this is no installed-host proof.
+or infer execution outcome solely from its being free. API-013 implements these
+public CLI observation rules; shipped systemd/host integration remains later work
+and is no installed-host proof.
 See [server lifecycle](server.md), [uncertain submissions](recovery.md#10-operation-history-and-uncertain-submissions)
 and [decision 115](adr/decision-115.md).
 

@@ -17,16 +17,18 @@ import stat
 from typing import TYPE_CHECKING
 
 import pytest
-from typer.testing import CliRunner
 
-from hfcache.cli import app
 from hfcache.errors import ExitCode
 from tests.api_cli import api_cli
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-runner = CliRunner()
+
+def invoke_api(config_path, arguments, *, json_output=True):
+    with api_cli(config_path, maintenance_enabled=True) as remote:
+        return remote.invoke(arguments, json_output=json_output)
+
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 OTHER_ARCHIVE_ID = "11111111-2222-3333-4444-555555555555"
@@ -75,7 +77,7 @@ archive_id = "{ARCHIVE_ID}"
 
 
 def invoke(config_file: Path, *arguments: str):
-    return runner.invoke(app, ["--json", "--config", str(config_file), *arguments])
+    return invoke_api(config_file, [*arguments])
 
 
 def init(config_file: Path, root: Path, *arguments: str):
@@ -145,9 +147,9 @@ def test_a_matching_archive_id_is_accepted(config_file: Path, mounted: Path):
 def test_bad_configuration_stops_before_the_archive_is_read(
     tmp_path: Path, mounted: Path, config_file: Path
 ):
-    config_file.write_text("schema_version = 99\n", encoding="utf-8")
-
-    result = init(config_file, mounted, "--confirm")
+    with api_cli(config_file, maintenance_enabled=True) as remote:
+        config_file.write_text("schema_version = 99\n", encoding="utf-8")
+        result = remote.invoke(["archive", "init", "--archive-root", str(mounted), "--confirm"])
 
     assert result.exit_code == ExitCode.CONFIGURATION
     assert envelope(result)["data"] == {}
@@ -383,17 +385,10 @@ def test_a_failed_initialization_can_be_retried_after_the_obstacle_is_removed(
 
 
 def test_the_human_summary_names_the_archive_it_created(config_file: Path, mounted: Path):
-    result = runner.invoke(
-        app,
-        [
-            "--config",
-            str(config_file),
-            "archive",
-            "init",
-            "--archive-root",
-            str(mounted),
-            "--confirm",
-        ],
+    result = invoke_api(
+        config_file,
+        ["archive", "init", "--archive-root", str(mounted), "--confirm"],
+        json_output=False,
     )
 
     assert result.exit_code == ExitCode.SUCCESS
@@ -412,39 +407,26 @@ def test_the_human_summary_of_an_inspection_names_the_state(config_file: Path, m
 
 
 def test_quiet_suppresses_the_summary_but_not_the_work(config_file: Path, mounted: Path):
-    result = runner.invoke(
-        app,
-        [
-            "--quiet",
-            "--config",
-            str(config_file),
-            "archive",
-            "init",
-            "--archive-root",
-            str(mounted),
-            "--confirm",
-        ],
+    result = invoke_api(
+        config_file,
+        ["--quiet", "archive", "init", "--archive-root", str(mounted), "--confirm"],
+        json_output=False,
     )
 
     assert result.exit_code == ExitCode.SUCCESS
-    assert result.output == ""
+    assert result.stdout == ""
+    assert "key" in result.stderr.lower()
+    assert "operation" in result.stderr.lower()
     assert (mounted / ".hfcache-root").is_file()
 
 
 def test_a_refusal_is_readable_without_json(config_file: Path, mounted: Path):
     (mounted / "somebody-elses-file").write_text("x", encoding="utf-8")
 
-    result = runner.invoke(
-        app,
-        [
-            "--config",
-            str(config_file),
-            "archive",
-            "init",
-            "--archive-root",
-            str(mounted),
-            "--confirm",
-        ],
+    result = invoke_api(
+        config_file,
+        ["archive", "init", "--archive-root", str(mounted), "--confirm"],
+        json_output=False,
     )
 
     assert result.exit_code == ExitCode.SAFETY

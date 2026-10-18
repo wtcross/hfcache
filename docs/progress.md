@@ -1100,6 +1100,43 @@ package in this family.
   installed-host and additional build-marker suites did not run. Next selected
   task is API-013 pending, after this package's commit.)
 
+- [x] API-013 Migrate operational CLI and preserve resumable observation
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-013-migrate-write-cli-and-operation-waiting.md)).
+  Operational modes use typed HTTP without local mutation backends or archive
+  fallback. Pure request/bootstrap extraction retains shared service exports and
+  cold CLI imports load no archive/Hub/storage executors. Default command/wait
+  output is the exact terminal server Envelope; show/lookup preserve metadata
+  Envelopes. Explicit detach identifies admission separately without fabricated
+  command outcome/exit. Validated key before POST and accepted-ID stderr handles
+  survive quiet; bounded sequenced events/gaps render one escaped plain stderr
+  line. One absolute status/event/result observation deadline retains original
+  handles and HFAPI019/20 on timeout/SIGINT, HFAPI020 before usable acknowledgement,
+  and original taxonomy on other errors. Retained-key 5xx warns work may continue;
+  client departure never cancels/replays. Initialization obtains optional UUID
+  from authenticated inspection while retaining explicit root/confirmation and
+  server maintenance/DTO guards. No-confirm submits nothing; failed inspection
+  stays exact, otherwise local refusal retains inspection/UUID/fingerprint.
+  Pre-gate compatibility fixes preserve verification/quarantine HFARG001 grammar
+  and remote private-worker crash HFAPI015/20 with every preservation assertion.
+  Decision 120 and AD-16/17, 114/117/118/119 amendments plus affected invariants,
+  original plan/CLI/client/API/server/security/configuration/architecture/runbooks,
+  README/Unreleased agree. Focused helpers: 26 passed in 1.13 seconds; shared
+  extraction: 87 in 8.38; writer CLI: 44 in 11.60; verification/crash/services:
+  159 in 71.56; readonly/init/quarantine: 173 in 64.68; new adversarial: 8 in 5.70.
+  Threaded real private-socket fixtures prove framed peer/guarded service behavior,
+  not installed OS isolation. First full
+  `rtk proxy bash -c 'bash scripts/check.sh > .scratch/api-013-gate.log 2>&1'`
+  exits 0: lock/sync, 351 formatted files, lint/types, 3,031 Python tests
+  (40 deselected, 303.11 seconds), 0.1.10 sdist/wheel, actual locked base/server
+  installation/import/help/version, 45 Cockpit tests and production build.
+  No gate failure/correction/retry or post-freeze source change. Final links/
+  current/dependencies, 29 implemented parity rows, 120 unique indexed decision/
+  ADR records and whitespace pass. No durable schema/dependency/MCP or production
+  operation; live/NFS/installed-host and extra build-marker suites did not run.
+  Next is API-014 pending after this commit; installed unit/no-IP/caller and REST
+  acceptance remain gated.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3789,3 +3826,18 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      mutation, global patch, IP fallback or warning suppression; the observed
      missing-socket leak provides material FW-04 correctness rationale. No new
      package/version, durable shape, MCP or production change.
+
+120. **Separate command execution from resumable CLI observation**
+     (2026-10-18, API-013). [ADR](adr/decision-120.md): operational CLI modes use
+     typed API requests without a local mutation backend. Default output is the
+     exact terminal server Envelope; explicit detach is separately identified
+     admission, never fabricated command success. Print validated key before POST
+     and operation ID before waiting even in quiet mode. One finite observation
+     deadline covers sanitized events/status/result reads and retries. Timeout,
+     Ctrl-C or connection loss retains handles and states accepted work may
+     continue, without cancel/replay. Authenticated show/wait/lookup observe only;
+     missing history remains uncertainty. Initialization obtains omitted optional
+     UUID from authenticated inspection while retaining user-restated root and
+     explicit confirmation; no-confirm inspection/refusal never submits. Server
+     maintenance/DTO/lock/recovery/private-verifier authority stays unchanged.
+     No durable shape, dependency, MCP or production change.

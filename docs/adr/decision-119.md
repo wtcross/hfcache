@@ -1,6 +1,7 @@
 # Decision 119 — Preserve server read identity and separate candidate validity from authority
 
-- Status: Accepted; implemented by API-012 on 2026-10-18, this commit.
+- Status: Accepted; implemented by API-012 on 2026-10-18, with operational
+  observation advanced by [decision 120](decision-120.md).
 - Date: 2026-10-18.
 - Work package: API-012, this commit.
 - Source: [progress decision 119](../progress.md#decisions),
@@ -118,3 +119,12 @@ Evidence: [authenticated CLI fixture](../../tests/api_cli.py),
 [legacy read shapes](../../tests/unit/test_readonly_commands.py),
 [candidate HTTP tests](../../tests/unit/test_api_candidates.py) and
 [candidate/reader adversarial cases](../../tests/unit/test_api_candidates_adversarial.py).
+
+## API-013 operational observation amendment (2026-10-18)
+
+[Decision 120](decision-120.md) extends the shared submission/wait helper to all
+jobs, including planning/read-only diagnostics. Default exact terminal output is
+unchanged; explicit detach is identified admission, while mandatory key/operation
+handles survive quiet and interrupted observation. Candidate authority and
+historical canonical key mappings are unchanged. Pure request extraction grants
+no local mutation authority or configuration-install path.

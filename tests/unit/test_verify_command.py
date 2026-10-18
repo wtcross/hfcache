@@ -14,11 +14,9 @@ from datetime import UTC, datetime
 from pathlib import Path  # noqa: TC003 - fixtures take and return one at run time
 
 import pytest
-from typer.testing import CliRunner
 
 from hfcache import verification as verification_module
 from hfcache.archive import initialize_archive
-from hfcache.cli import app
 from hfcache.errors import ExitCode
 from hfcache.hub import OFFLINE_VARIABLE
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, new_run_id
@@ -46,7 +44,11 @@ from tests.unit.test_verification import (
     publish,
 )
 
-runner = CliRunner()
+
+def invoke_api(config_path, arguments, *, json_output=True):
+    with api_cli(config_path) as remote:
+        return remote.invoke(arguments, json_output=json_output)
+
 
 REPORT_MODE = 0o600
 
@@ -146,10 +148,7 @@ def write_run_report(
 
 
 def invoke(config_path: Path, *arguments: str):
-    if "--estimate" in arguments:
-        with api_cli(config_path) as remote:
-            return remote.invoke(["verify", *arguments])
-    return runner.invoke(app, ["--config", str(config_path), "--json", "verify", *arguments])
+    return invoke_api(config_path, ["verify", *arguments])
 
 
 def envelope_of(result) -> dict:
@@ -345,7 +344,7 @@ def test_the_human_summary_reports_what_was_read(config_path, archive):
     write_run_report(
         archive, commit_sha=published.commit_sha, publication_id=published.publication_id
     )
-    result = runner.invoke(app, ["--config", str(config_path), "verify", "--new"])
+    result = invoke_api(config_path, ["verify", "--new"], json_output=False)
     assert result.exit_code == ExitCode.SUCCESS
     assert "outcome" in result.stdout
     assert "clean" in result.stdout
@@ -357,9 +356,7 @@ def test_the_human_summary_prints_findings_on_stderr(config_path, archive):
         archive, commit_sha=published.commit_sha, publication_id=published.publication_id
     )
     (tree_of(archive, published.commit_sha, published.publication_id) / "config.json").unlink()
-    result = runner.invoke(
-        app, ["--config", str(config_path), "verify", "--new"], catch_exceptions=False
-    )
+    result = invoke_api(config_path, ["verify", "--new"], json_output=False)
     assert result.exit_code == ExitCode.INTEGRITY
     assert "HFVER003" in result.output
 
@@ -369,7 +366,7 @@ def test_quiet_suppresses_the_summary_but_not_the_exit_code(config_path, archive
     write_run_report(
         archive, commit_sha=published.commit_sha, publication_id=published.publication_id
     )
-    result = runner.invoke(app, ["--config", str(config_path), "--quiet", "verify", "--new"])
+    result = invoke_api(config_path, ["--quiet", "verify", "--new"], json_output=False)
     assert result.exit_code == ExitCode.SUCCESS
     assert result.stdout == ""
 
@@ -823,7 +820,11 @@ def test_a_verification_interrupted_leaves_the_archive_exactly_as_it_was(
     # the next invocation at the real `/run/hfcache`.
     monkeypatch.setattr(verification_module, "verify_target", real)
 
-    assert isinstance(result.exception, InterruptedRunError)
+    assert result.exit_code == ExitCode.SAFETY
+    failed = envelope_of(result)
+    assert [problem["code"] for problem in failed["errors"]] == ["HFAPI015"]
+    assert failed["data"]["operation_id"]
+    assert failed["data"]["work_may_continue"] is True
     assert fingerprint(archive) == before_content, "verification changed published bytes"
     assert reports_in(archive) == before_reports, "a partial report was left behind"
     after_catalog = read_verification_catalog(archive)

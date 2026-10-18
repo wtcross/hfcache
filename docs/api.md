@@ -4,8 +4,8 @@ Status: API-006 implements authenticated archive metadata and API-007 adds
 bounded receipt/admission primitives and operation observation; API-009 adds
 typed command routes, with guarded maintenance/initialization added by API-010,
 under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
-API-012 adds candidate validation/planning and reader CLI integration; side-
-effecting public CLI migration remains API-013. No
+API-012 adds candidate validation/planning/read CLI and API-013 completes
+operational CLI/observation. No
 production installation or listener start is asserted by implementation evidence.
 
 ## Service and transport boundary
@@ -30,40 +30,40 @@ pending evidence rather than claims that a proposed route works. Preserve
 one row for each mode when filling them. `archive` means the cross-process
 local flock through all domain persistence; `worker archive` means that same
 lock is owned by the offline executor. A preview cannot grant apply authority.
-An implemented row means its HTTP resource exists; API-012 migrates reader/
-candidate CLI modes while API-013 still owns side-effecting CLI migration.
+An implemented row means its HTTP resource exists; API-012/013 now use those
+resources for operational CLI modes and explicit resumable observation.
 
 | CLI mode | Service | Route | Role | Lock | Hub | Execution | Effects | CLI test | API test | State |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | version --server | version | GET /version | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| capabilities | capabilities | GET /capabilities | R | none | no | Q | none | pending CLI migration | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| capabilities | capabilities | GET /capabilities | R | none | no | Q | none | client negotiation: tests/unit/test_cli_api_reads.py; tests/unit/test_cli_api_writes.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_candidates.py; tests/unit/test_api_candidates_adversarial.py | implemented |
 | archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_candidates.py; tests/unit/test_api_candidates_adversarial.py | implemented |
-| sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_candidates.py; tests/unit/test_api_candidates_adversarial.py | implemented |
+| sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | status [selectors] | archive_status | GET /status | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | tests/unit/test_cli.py; tests/unit/test_readonly_commands.py; tests/api_cli.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
-| prune --dry-run | preview_prune | POST /prune-plans | R | none | no | J | receipt only | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| prune --apply | apply_prune | POST /prunes | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| purge --dry-run [selectors XOR --all-unmanaged] | preview_purge | POST /purge-plans | R | none | no | J | receipt only | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| purge --apply [selectors XOR --all-unmanaged] | apply_purge | POST /purges | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| recover --dry-run | preview_recovery | POST /recovery-plans | R | none | no | J | receipt only | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| recover --apply | apply_recovery | POST /recoveries | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| quarantine --dry-run IDs | preview_quarantine | POST /quarantine-plans | R | none | no | J | receipt only | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | tests/unit/test_command_services.py; existing CLI/domain suites | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
-| reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py; tests/unit/test_query_boundary.py | implemented |
-| operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | pending CLI migration | tests/unit/test_api_operations.py; tests/unit/test_operations.py; tests/unit/test_operation_store_adversarial.py | implemented |
+| verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| prune --dry-run | preview_prune | POST /prune-plans | R | none | no | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| prune --apply | apply_prune | POST /prunes | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| purge --dry-run [selectors XOR --all-unmanaged] | preview_purge | POST /purge-plans | R | none | no | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| purge --apply [selectors XOR --all-unmanaged] | apply_purge | POST /purges | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| recover --dry-run | preview_recovery | POST /recovery-plans | R | none | no | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| recover --apply | apply_recovery | POST /recoveries | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| quarantine --dry-run IDs | preview_quarantine | POST /quarantine-plans | R | none | no | J | receipt only | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operations_adversarial.py; tests/api_cli.py | tests/unit/test_api_maintenance.py; tests/unit/test_api_maintenance_adversarial.py | implemented |
+| reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | typed reader only: tests/unit/test_api_client.py; tests/unit/test_query_evidence.py | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py; tests/unit/test_query_boundary.py | implemented |
+| operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | tests/unit/test_cli_api_writes.py; tests/unit/test_cli_operation_helpers.py; tests/unit/test_cli_operations_adversarial.py | tests/unit/test_api_operations.py; tests/unit/test_operations.py; tests/unit/test_operation_store_adversarial.py | implemented |
 
 Local `version`, help, `serve`, and `config validate --local` are explicit
 bootstrap commands, outside remote operation parity. API-backed commands reject
@@ -109,7 +109,7 @@ These services preserve domain ordering and classified partial results; public
 commands own the common archive lock once. Adapters and later operation runners
 must call them without an outer archive lock. Verification persistence now stays
 inside its lock/preflight boundary (decision 110). API-009/010 expose the command resources below through those services;
-API-012 adds candidate routes/reader CLI modes; API-013 retains mutating CLI modes.
+API-012 adds candidate routes/reader CLI modes and API-013 operational CLI/observation.
 
 ## Implemented metadata resources (API-006)
 
@@ -618,10 +618,10 @@ reloads installed policy under the service-owned lock and refuses stale scope
 before mutation without duplicate/nested lock acquisition. Verification delegates
 to the private socket executor, which owns its lock through report/catalog
 persistence. API-009/010 implement the command/maintenance resources above;
-API-012 adds candidate HTTP; public mutating CLI integration remains API-013.
+API-012 adds candidate HTTP and API-013 operational CLI integration.
 
-Disconnect and Ctrl-C stop observation. They do not cancel accepted work. Later
-API-backed clients emit the nonsecret key before mutation submission and operation
+Disconnect and Ctrl-C stop observation. They do not cancel accepted work. API-013
+CLI clients emit the validated nonsecret key before mutation submission and operation
 ID before waiting, even in quiet mode; stdout carries exactly one terminal
 Envelope. Sequenced sanitized events are bounded application evidence, never
 arbitrary journald output.
@@ -823,9 +823,36 @@ client configuration/protocol at exit 10; HFAPI019/020 classify connectivity/
 uncertain submission at exit 20, retaining existing server/domain codes.
 
 API-012 uses the global choices for public reader/candidate modes, completing all
-29 HTTP parity rows. Command/operation UX remains API-013. These integrations
+29 HTTP parity rows; API-013 completes command/operation UX. These integrations
 change no durable shape, writer authority or MCP gate. See
 [decision 118](adr/decision-118.md) and [decision 119](adr/decision-119.md).
+
+## CLI admission and observation (API-013)
+
+The CLI has no direct operational mutation backend. Pure shared request types
+select fixed typed resources and preserve server-owned archive/credential/lock/
+recovery/private-verifier authority. Default command output waits for the exact
+terminal Envelope. Show/lookup preserve existing metadata Envelopes, while wait
+returns the original stored command result. Distinct domain run, operation and
+request identities are never substituted.
+
+Explicit detach is client presentation, not a new server or durable format:
+schema 1, `kind="operation_admission"`, original `idempotency_key` and exact
+validated `acceptance`. It has no fabricated terminal outcome/exit. Safety handles
+appear on stderr even quiet, before POST and before waiting respectively. Bounded
+sanitized event/status/result observations share an absolute finite deadline;
+timeout/Ctrl-C retains handles and may leave accepted work running. No automatic
+replay/cancel/new-key retry follows client loss. Existing HFAPI013/015/018–020 and
+exact terminal domain classifications retain their meaning.
+
+Initialization's optional CLI UUID comes from authenticated configured-target
+inspection, never local archive config. A supplied UUID must match; root and
+confirmation remain explicit. The server DTO still requires strict restated
+root/UUID/confirmation and its initialization-only maintenance gate. No-confirm
+CLI refusal submits nothing, preserving failed server inspection exactly or using
+local refusal metadata with successful inspection evidence. See
+[decision 120](adr/decision-120.md), [CLI operations](cli.md#operations) and
+[client resume](api-client.md#submit-detach-and-resume-api-013).
 
 ## Acceptance boundaries
 

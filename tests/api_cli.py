@@ -1,6 +1,9 @@
 """Explicit installed-writer HTTP harness; no argv reinterpretation or local fallback."""
 
+import os
 import re
+import socket
+import threading
 import warnings
 from contextlib import contextmanager
 from pathlib import Path
@@ -23,11 +26,14 @@ with warnings.catch_warnings():
     from fastapi.testclient import TestClient
 
 from hfcache.api.app import create_app
+from hfcache.api.operations import OperationStore
 from hfcache.cli import app
 from hfcache.client import ApiClient
 from hfcache.identity import new_run_id
 from hfcache.logging import bind_run, reset
-from hfcache.server_config import validate_server_config_mapping
+from hfcache.server_config import InstalledPolicy, validate_server_config_mapping
+from hfcache.verification_executor import VerificationWorker, serve_worker, validate_listener
+from hfcache.verification_protocol import VerificationClient
 
 
 class ApiCli:
@@ -53,7 +59,51 @@ class ApiCli:
 
 
 @contextmanager
-def api_cli(config_path: Path, *, hub_token_file=None, reader=False, page_size=100):
+def private_verifier(config):
+    """Exercise framed authenticated IPC and the real guarded verification service."""
+    with TemporaryDirectory(prefix="hfv-") as directory:
+        root = Path(directory)
+        root.chmod(0o700)
+        path = root / "verify.sock"
+        stop = threading.Event()
+        policy = InstalledPolicy.open(config)
+        with (
+            OperationStore(root / "state") as store,
+            socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener,
+        ):
+            worker = VerificationWorker(policy, store)
+            listener.bind(str(path))
+            path.chmod(0o600)
+            listener.listen(8)
+            validate_listener(listener, path)
+            thread = threading.Thread(
+                target=serve_worker,
+                args=(listener, worker),
+                kwargs={"expected_uid": os.geteuid(), "stop": stop, "timeout_seconds": 1},
+            )
+            thread.start()
+            try:
+                yield VerificationClient(
+                    path,
+                    timeout_seconds=1,
+                    poll_seconds=0.01,
+                    expected_archive_id=policy.archive_id,
+                )
+            finally:
+                stop.set()
+                thread.join(10)
+                assert not thread.is_alive()
+
+
+@contextmanager
+def api_cli(
+    config_path: Path,
+    *,
+    hub_token_file=None,
+    reader=False,
+    page_size=100,
+    maintenance_enabled=False,
+):
     """Provision only fixture state; the real CLI/client/app/services execute."""
     with TemporaryDirectory(prefix="api-cli-", dir=config_path.parent) as directory:
         root = Path(directory)
@@ -69,6 +119,7 @@ def api_cli(config_path: Path, *, hub_token_file=None, reader=False, page_size=1
                 "schema_version": 1,
                 "archive_config": str(config_path),
                 "state_directory": str(root / "state"),
+                "maintenance_enabled": maintenance_enabled,
                 "credentials": {
                     "writer": {"file": str(writer)},
                     "reader": {"file": str(read_token)},
@@ -77,24 +128,30 @@ def api_cli(config_path: Path, *, hub_token_file=None, reader=False, page_size=1
                 "limits": {"max_page_size": page_size},
             }
         )
-        application = create_app(
-            config, instance_lock_path=root / "daemon.lock", hub_token_file=hub_token_file
-        )
         try:
-            with (
-                TestClient(
-                    application, base_url="http://localhost", client=("127.0.0.1", 19000)
-                ) as web,
-                pytest.MonkeyPatch.context() as patch,
-            ):
-                patch.setattr(
-                    "hfcache.cli_client.ApiClient",
-                    lambda settings: ApiClient(settings, transport=web._transport),
+            with private_verifier(config) as verifier:
+                application = create_app(
+                    config,
+                    instance_lock_path=root / "daemon.lock",
+                    hub_token_file=hub_token_file,
+                    verification_executor=verifier,
                 )
-                # These processes are distinct in deployment. Keep daemon logging
-                # installed and give only the in-process CLI its invocation context.
-                patch.setattr("hfcache.cli.configure_logging", lambda **_: bind_run(new_run_id()))
-                yield ApiCli(read_token if reader else writer, settings, application, web)
+                with (
+                    TestClient(
+                        application, base_url="http://localhost", client=("127.0.0.1", 19000)
+                    ) as web,
+                    pytest.MonkeyPatch.context() as patch,
+                ):
+                    patch.setattr(
+                        "hfcache.cli_client.ApiClient",
+                        lambda settings: ApiClient(settings, transport=web._transport),
+                    )
+                    # These processes are distinct in deployment. Keep daemon logging
+                    # installed and give only the in-process CLI its invocation context.
+                    patch.setattr(
+                        "hfcache.cli.configure_logging", lambda **_: bind_run(new_run_id())
+                    )
+                    yield ApiCli(read_token if reader else writer, settings, application, web)
         finally:
             # The app has drained and joined before restoring test process state.
             reset()

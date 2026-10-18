@@ -39,6 +39,7 @@ from hfcache.errors import Problem, SafetyError, SynchronizationError
 from hfcache.hub import endpoint_host, identity_problems, resolve_host, verify_tls
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.logging import emit
+from hfcache.services.requests import READ_ONLY, UNPROVABLE_READ_ONLY
 from hfcache.storage import (
     BYTES_PER_GIB,
     capacity_problems,
@@ -108,20 +109,6 @@ out of the document and asserts this tuple against it, in both directions, so
 the two cannot drift.
 """
 
-UNPROVABLE_READ_ONLY: Final = (
-    "directory_writability",
-    "hardlink_capability",
-    "atomic_directory_rename",
-    "reference_replacement",
-)
-"""What `--read-only` cannot establish — every row the table marks as writing.
-
-`docs/cli.md` §2 requires these to be reported as unproven rather than passed:
-each one is a capability that can only be demonstrated by performing it, and a
-mount that must not be touched is a mount on which they are unknown.
-"""
-
-READ_ONLY: Final = "--read-only: this capability can only be proven by exercising it"
 NOT_INITIALIZED: Final = (
     "the archive is not initialized, so the layout this check needs does not exist; "
     "`archive init` is what changes that"

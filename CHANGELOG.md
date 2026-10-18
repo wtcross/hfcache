@@ -72,7 +72,7 @@ checks preserve unknown data, audits, commit recovery and grace periods. Repair
 audit reasons redact registered API/Hub secrets after credential resolution.
 Initialization alone needs the disabled-by-default server maintenance gate,
 confirmation and the configured root/UUID restated; startup/health/recovery never
-initialize. All 29 HTTP mode rows now have resources; mutating CLI/host/MCP
+initialize. All 29 HTTP mode rows now have resources; installed-host/MCP
 acceptance remains later work. No production operation,
 new durable format or runtime dependency is introduced.
 
@@ -82,7 +82,7 @@ finite response/page/read-retry/poll budgets and strict response/identity checks
 Old operation fingerprints and exact domain results are preserved. Lost POST
 acknowledgement retains its original key and uncertainty without automatic replay.
 Reader hosts need no archive policy/mount/Hub credential or server extra. New CLI
-selection options drive reader modes; mutating CLI migration remains API-013. Client
+selection options drive operational modes through API-012/013. Client
 config/protocol failures exit 10 and connectivity/uncertainty exit 20. No new durable
 archive shape, dependency, MCP or production operation is introduced.
 
@@ -94,10 +94,20 @@ validated separately from authority compatibility, including unknown compatibili
 when installed policy is broken. Candidate planning rechecks installed authority
 before installed credential use, retains installed admitted fingerprints and old
 installed-plan key digests, and never installs configuration. All 29 HTTP parity
-rows are implemented; side-effecting CLI and installed-host/MCP gates remain.
+rows are implemented; installed-host/MCP gates remain.
 Unix client connections now close failed sockets through public HTTPX/HTTPCore
 interfaces; HTTPCore is direct at its already-locked 1.0.9 version. No new package,
 version, durable shape or production operation is introduced.
+
+Operational CLI commands now use typed HTTP without a direct mutation backend.
+Default output preserves the exact terminal server Envelope, while explicit
+detach identifies admission separately. Validated keys before POST and accepted
+operation IDs remain visible even quiet. Show/lookup/wait observe existing work,
+with bounded sanitized sequenced events and one finite deadline across reads.
+Timeout/Ctrl-C retains handles and uncertainty without cancel/replay. Initialization
+obtains an omitted optional UUID from authenticated inspection, keeps explicit
+root/confirmation and server gates, and never submits without confirmation.
+No durable schema, runtime dependency, MCP or production operation changes.
 
 ## v0.1.10 — 2026-09-14
 

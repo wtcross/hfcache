@@ -19,6 +19,7 @@ from hfcache.client_errors import (
     ClientProtocolError,
     RemoteApiError,
     UncertainSubmission,
+    retain_operation,
 )
 from hfcache.client_models import (
     JOB_ROUTES,
@@ -47,6 +48,7 @@ _MAX_DEPTH = 32
 _MAX_HEADER_BYTES = 32768
 _MAX_LENGTH_DIGITS = 20
 _MAX_EVENT_PAGE = 10000
+_OBSERVATION_EVENT_PAGE = 100
 _MAX_CACHED_OPERATIONS = 128
 _MAX_CANDIDATE_BYTES = 1048576
 _PAGE_ROUTES = frozenset(
@@ -502,22 +504,47 @@ class ApiClient:
         self._operation_requests[operation.operation_id] = result.request_id
         return remembered
 
-    def lookup(self, key: str) -> ClientOperation:
-        payload, _ = self._exchange("GET", "/api/v1/operations/lookup", key=_key(key))
+    def lookup_response(self, key: str, *, _deadline: float | None = None) -> ClientRead:
+        """Keep the exact server Envelope while proving its caller-bound receipt."""
+        retained = _key(key)
         try:
-            result = ClientRead.model_validate(payload)
-        except ValueError, HfcacheError:
-            raise ClientProtocolError from None
-        self._identity(result.archive_id)
-        if result.next_cursor is not None:
-            raise ClientProtocolError
-        return self._operation(result)
+            payload, _ = self._exchange(
+                "GET", "/api/v1/operations/lookup", key=retained, deadline=_deadline
+            )
+            try:
+                result = ClientRead.model_validate(payload)
+            except ValueError, HfcacheError:
+                raise ClientProtocolError from None
+            self._identity(result.archive_id)
+            if result.next_cursor is not None:
+                raise ClientProtocolError
+            self._operation(result)
+        except KeyboardInterrupt:
+            raise retain_operation(ClientConnectionError(), key=retained) from None
+        except HfcacheError as error:
+            raise retain_operation(error, key=retained) from None
+        return result
+
+    def lookup(self, key: str, *, _deadline: float | None = None) -> ClientOperation:
+        return self._operation(self.lookup_response(key, _deadline=_deadline))
+
+    def operation_response(
+        self, operation_id: str, *, _deadline: float | None = None
+    ) -> ClientRead:
+        """Validate exact operation identity without rewrapping server metadata."""
+        identifier = self._identifier(operation_id)
+        try:
+            result = self.read("/api/v1/operations/" + identifier, _deadline=_deadline)
+            self._operation(result, identifier)
+        except KeyboardInterrupt:
+            raise retain_operation(ClientConnectionError(), operation_id=identifier) from None
+        except HfcacheError as error:
+            raise retain_operation(error, operation_id=identifier) from None
+        return result
 
     def operation(self, operation_id: str, *, _deadline: float | None = None) -> ClientOperation:
         identifier = self._identifier(operation_id)
-        return self._operation(
-            self.read("/api/v1/operations/" + identifier, _deadline=_deadline), identifier
-        )
+        return self._operation(self.operation_response(identifier, _deadline=_deadline), identifier)
 
     @staticmethod
     def _identifier(value: str) -> str:
@@ -541,7 +568,14 @@ class ApiClient:
             raise ClientProtocolError
         return result
 
-    def events(self, operation_id: str, after: int = 0, limit: int = 100) -> ClientEvents:
+    def events(
+        self,
+        operation_id: str,
+        after: int = 0,
+        limit: int = 100,
+        *,
+        _deadline: float | None = None,
+    ) -> ClientEvents:
         identifier = self._identifier(operation_id)
         if (
             type(after) is not int
@@ -552,9 +586,11 @@ class ApiClient:
             raise ClientProtocolError
         known = self._operations.get(identifier)
         if known is None:
-            known = self.operation(identifier)
+            known = self.operation(identifier, _deadline=_deadline)
         result = self.read(
-            "/api/v1/operations/" + identifier + "/events", {"after": after, "limit": limit}
+            "/api/v1/operations/" + identifier + "/events",
+            {"after": after, "limit": limit},
+            _deadline=_deadline,
         )
         try:
             page = ClientEvents.model_validate(result.envelope.data)
@@ -562,7 +598,8 @@ class ApiClient:
             raise ClientProtocolError from None
         sequences = [event.sequence for event in page.events]
         if (
-            page.operation_id != identifier
+            result.envelope.exit_code != 0
+            or page.operation_id != identifier
             or len(sequences) > limit
             or sequences != sorted(set(sequences))
             or any(number <= after for number in sequences)
@@ -576,9 +613,19 @@ class ApiClient:
             )
         ):
             raise ClientProtocolError
-        return page
+        if any(redact_text(event.kind) != event.kind for event in page.events):
+            raise ClientProtocolError
+        return page.model_copy(
+            update={
+                "events": tuple(
+                    event.model_copy(update={"message": redact_text(event.message)})
+                    for event in page.events
+                )
+            }
+        )
 
-    def poll(self, operation_id: str, *, timeout: float | None = None) -> ClientRead:
+    def observation_deadline(self, timeout: float | None = None) -> float:
+        """Validate one finite total budget before any observation request."""
         duration = self.config.wait_timeout if timeout is None else timeout
         if (
             isinstance(duration, bool)
@@ -587,9 +634,61 @@ class ApiClient:
             or duration <= 0
         ):
             raise ClientProtocolError
-        deadline = self.monotonic() + duration
+        return self.monotonic() + duration
+
+    def observe(
+        self,
+        operation_id: str,
+        *,
+        timeout: float | None = None,
+        on_event: Callable[[ClientEvents], None] | None = None,
+        after: int = 0,
+    ) -> ClientRead:
+        """Poll exact evidence and bounded events under one absolute deadline."""
+        if type(after) is not int or after < 0:
+            raise ClientProtocolError
+        identifier = self._identifier(operation_id)
+        deadline = self.observation_deadline(timeout)
+        try:
+            return self._observe(identifier, deadline=deadline, on_event=on_event, after=after)
+        except KeyboardInterrupt:
+            known = self._operations.get(identifier)
+            raise retain_operation(
+                ClientConnectionError(),
+                operation_id=identifier,
+                route=known.route if known else None,
+            ) from None
+        except HfcacheError as error:
+            known = self._operations.get(identifier)
+            raise retain_operation(
+                error, operation_id=identifier, route=known.route if known else None
+            ) from None
+
+    def _observe(
+        self,
+        operation_id: str,
+        *,
+        deadline: float,
+        on_event: Callable[[ClientEvents], None] | None,
+        after: int,
+    ) -> ClientRead:
         while True:
             operation = self.operation(operation_id, _deadline=deadline)
+            if on_event is not None:
+                for _ in range(self.config.max_pages):
+                    page = self.events(
+                        operation_id,
+                        after=after,
+                        limit=_OBSERVATION_EVENT_PAGE,
+                        _deadline=deadline,
+                    )
+                    if page.events or page.truncated:
+                        on_event(page)
+                    after = page.next_cursor
+                    if len(page.events) < _OBSERVATION_EVENT_PAGE:
+                        break
+                else:
+                    raise ClientProtocolError
             if operation.state in {"succeeded", "failed"}:
                 return self.result(operation_id, _deadline=deadline)
             if operation.state == "interrupted":
@@ -603,6 +702,10 @@ class ApiClient:
             if remaining <= 0:
                 raise ClientConnectionError
             self.sleep(min(self.config.poll_interval, remaining))
+
+    def poll(self, operation_id: str, *, timeout: float | None = None) -> ClientRead:
+        """Compatibility observation without event requests (decision 118)."""
+        return self.observe(operation_id, timeout=timeout)
 
     def version(self) -> ClientRead:
         return self.read("/api/v1/version")

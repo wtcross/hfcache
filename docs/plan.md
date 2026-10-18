@@ -610,6 +610,20 @@ Checkpoint records are append-only and idempotent. Unknown journal versions or i
 
 Every command accepts a global `--config PATH` option placed before the subcommand, defaulting to `/etc/hfcache/config.toml`; this matches the systemd invocation in §22.2. `hfcache sync` additionally accepts repeated `TYPE:ID` selectors to restrict a run to specific configured repositories.
 
+**API-013 amendment (2026-10-18, [decision 120](adr/decision-120.md)).**
+The paragraph above records the original local interface. Operational CLI modes
+now use separate API client settings and typed HTTP without direct mutation
+imports. Explicit archive `--config` is candidate content only for API validate/
+plan; other operational modes refuse it and Hub-token overrides. Help/local
+version and explicit local validation remain bootstrap. Default jobs preserve the
+exact terminal server Envelope; explicit detach is identified schema-1 admission,
+never fabricated command success. Validated key and accepted-ID safety handles
+appear on stderr even quiet, and bounded sanitized events/status/result reads
+share a finite observer deadline. Timeout/Ctrl-C stops observation without cancel/
+replay. See [CLI](cli.md#operations) and [client resume](api-client.md#submit-detach-and-resume-api-013).
+Installed unit/caller migration and host acceptance remain later tasks; no
+production operation or rollout is asserted.
+
 ### 11.1 Output modes
 
 - Human-readable output is the default.

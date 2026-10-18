@@ -180,7 +180,7 @@ installing the extra starts no listener and changes no deployed writer.
 API-007 adds bounded local receipt/idempotency primitives and authenticated
 operation observation. Control-state history survives client loss and is never
 automatically replayed; interrupted history is retained. Reader CLI integration
-is API-012; mutation CLI and systemd packaging remain later tasks.
+is API-012 and operational CLI/observation API-013; systemd packaging remains later work.
 API-008 supplies one bounded execution lane and private verifier protocol/process
 primitives. Installed socket activation and OS no-IP enforcement still require
 API-014; the library offline flag alone is insufficient. MCP stays behind the REST acceptance
@@ -204,8 +204,7 @@ pages/polling and retained-key uncertainty. Reader hosts need no archive TOML,
 mount, service UID, Hub credential or server extra. See
 [`docs/api-client.md`](docs/api-client.md) and
 [`packaging/client.example.toml`](packaging/client.example.toml). The four new
-CLI endpoint/source options now drive API-012 reader modes; side-effecting command
-migration remains API-013. No automatic daemon start, archive fallback or
+CLI endpoint/source options drive API-012/013 operational modes. No automatic daemon start, archive fallback or
 POST replay is added.
 
 API-012 routes status/list/inspection/estimate, installed/candidate validation,
@@ -220,6 +219,17 @@ remain privileged host work; no reader fallback accesses a local archive.
 The Unix client adapter closes failed connections through public HTTPX/HTTPCore
 interfaces. HTTPCore becomes direct at its already-locked 1.0.9 version; no package
 or version upgrade is added.
+
+API-013 removes the CLI's direct operational backend. Jobs wait for exact server
+results by default; explicit `--detach` identifies admission separately. Validated
+submission keys and accepted operation IDs are printed even in quiet mode, with
+bounded sanitized progress on stderr. `operations show`, `lookup` and `wait`
+resume observation without submission; Ctrl-C/timeouts preserve handles and do
+not cancel accepted work. Use [the client runbook](docs/api-client.md#submit-detach-and-resume-api-013)
+for finite wait, same-key retry and uncertainty. Initialization keeps explicit
+root/confirmation and the server's disabled gate; no-confirm inspection never
+submits. Installed systemd/Cockpit integration and OS isolation proof remain later
+tasks; this branch has not been deployed.
 
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —

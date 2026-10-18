@@ -714,7 +714,8 @@ Idempotency lookup additionally searches only the authenticated credential-class
 namespace. Rotation retains that coarse identity; changing from writer to reader
 is a different lookup namespace. No individual-submitter attribution is promised.
 API-007 supplies observation/admission primitives; API-009/010 now expose typed
-command submissions, while public CLI `operations` commands remain later tasks.
+command submissions. API-013 now supplies public CLI show/wait/lookup and explicit
+detach, retaining exact terminal domain Envelopes.
 
 When an acknowledgement is lost, look up the original key without submitting
 another command. A match identifies the original operation even if archive policy
@@ -780,7 +781,7 @@ terminal result is execution evidence; a lost observer, free lock, PID or old
 ## 11. REST maintenance without stale authority (API-010)
 
 This section describes hermetic HTTP/domain acceptance, not an installed service
-rollout. The existing local CLI remains until its client migration. Separate
+rollout. API-013's CLI uses these resources without a direct local backend. Separate
 preview/apply [maintenance resources](api.md#implemented-maintenance-resources-api-010)
 call the same services and retain all refusal/recovery rules above. Previews are
 keyed read-capable jobs, not executable capabilities. Writer apply submits only
@@ -827,5 +828,24 @@ and original binding; old receipts/results retain their admitted archive UUID /
 fingerprint and exact domain run/result rather than current policy metadata.
 Protocol/version/identity failures (HFAPI018) are not evidence of command failure
 or nonexecution. Do not change endpoint/expected archive identity merely to make
-an unrelated operation response appear valid. Public CLI observation/safety
-messages remain API-013; API-011 does not yet migrate existing commands.
+an unrelated operation response appear valid.
+
+**API-013 CLI observation.** A keyed command prints its validated original key
+before POST and its operation ID after acceptance, even in quiet mode. Default
+output waits for the exact terminal server Envelope; explicit detach identifies
+admission separately and grants no completion claim. Preserve both handles when
+the observer times out, receives Ctrl-C or loses connectivity. HFAPI019/20 stops
+waiting only; HFAPI020/20 retains uncertain acknowledgement. Other classified
+errors keep their taxonomy and known handles. Accepted work may continue.
+
+Use authenticated `operations lookup KEY` without submitting, then `operations
+show ID` / `operations wait ID [--after N]` under the same intended authority.
+Show/lookup preserve exact metadata Envelopes; wait returns the stored terminal
+domain Envelope, including failure/partial results. All event/status/result reads
+share one finite observation deadline, and explicit retention gaps accompany
+resumed event cursors. A stopped observer service, process or browser is not proof
+that the writer/verifier stopped. Do not start a new-key duplicate, cancel work,
+delete history or release mounts because the observer ended. Follow §10 and the
+server drain/reconciliation procedure. See [decision 120](adr/decision-120.md),
+[CLI operations](cli.md#operations) and
+[client resume](api-client.md#submit-detach-and-resume-api-013).

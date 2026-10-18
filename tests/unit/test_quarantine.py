@@ -12,11 +12,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
 
 import hfcache.quarantine as quarantine_module
 from hfcache.archive import initialize_archive
-from hfcache.cli import app
 from hfcache.errors import ExitCode, RetentionError
 from hfcache.identity import (
     CommitSha,
@@ -35,11 +33,11 @@ from hfcache.publication import (
 from hfcache.quarantine import apply_quarantine_cleanup, plan_quarantine_cleanup
 from hfcache.recovery import apply_recovery, plan_recovery, reconcile_storage
 from hfcache.transactions import CHECKPOINTS, open_transaction, read_journal
+from tests.api_cli import api_cli
 from tests.fixtures import examples
 
 NOW = datetime.now(UTC)
 MODEL = RepositoryIdentity.of("model", examples.REPOSITORY_ID)
-runner = CliRunner()
 
 
 @pytest.fixture
@@ -76,7 +74,8 @@ lock_wait_seconds = 0
 
 
 def invoke(config: Path, *arguments: str):
-    return runner.invoke(app, ["--json", "--config", str(config), "quarantine", *arguments])
+    with api_cli(config) as remote:
+        return remote.invoke(["quarantine", *arguments])
 
 
 def begin(layout: ArchiveLayout, *, publication_id: str | None = examples.REPLACEMENT):

@@ -441,7 +441,8 @@ local archive fallback, daemon startup or cancellation of accepted work follows.
 Old operation results retain admitted UUID/fingerprint and exact domain IDs/exit.
 The optional installed client file is a declared source, not permission to discover
 Hub/API tokens elsewhere. Global CLI options are stored now; operational migration
-is completed for reads/candidates by API-012; mutating CLI UX remains API-013.
+is completed for reads/candidates by API-012 and operational CLI/observation by
+API-013.
 See [decision 118](adr/decision-118.md) and
 [client setup/troubleshooting](api-client.md).
 
@@ -465,6 +466,19 @@ Exact candidate text binds a key; absent fields preserve old installed-plan dige
 and explicit null refuses. REST cannot install policy/backups or give browsers
 bearers. See [decision 119](adr/decision-119.md), [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012)
 and [CLI migration](api-client.md#cli-migration-api-012).
+
+**Operational CLI observation (API-013).** No operational command imports or
+invokes a direct local mutation backend. Pure requests and typed HTTP retain
+server-owned credential/preflight/flock/recovery/private-verification authority.
+Validated nonsecret keys and accepted operation IDs are safety handles, emitted
+even quiet; credentials/raw logs are never progress. Sequenced bounded sanitized
+events/status/result reads share one finite deadline. Observer interruption retains
+handles and says accepted work may continue, never cancellation/new-key replay.
+Retained-key validated 5xx failures carry the same uncertainty warning, and event
+rendering escapes nonprintable/control text to preserve one plain stderr line.
+Default exact terminal Envelopes and explicit identified detach cannot be confused.
+No-confirm init is inspection/refusal only, not a privileged submission. See
+[decision 120](adr/decision-120.md) and [CLI operations](cli.md#operations).
 
 ## 4. Controls summary
 

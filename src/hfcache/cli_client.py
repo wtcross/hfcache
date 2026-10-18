@@ -1,13 +1,20 @@
 """CLI transport helpers preserve server evidence without writer access (decision 119)."""
 
+import math
 import os
 import stat
 from typing import TYPE_CHECKING, Any
 
 from hfcache.client import ApiClient
 from hfcache.client_config import resolve_client_config
-from hfcache.client_errors import ClientProtocolError
-from hfcache.errors import CodedError, ConfigurationError, Problem
+from hfcache.client_errors import (
+    ClientConnectionError,
+    ClientProtocolError,
+    UncertainSubmission,
+    retain_operation,
+)
+from hfcache.client_models import JOB_ROUTES
+from hfcache.errors import CodedError, ConfigurationError, HfcacheError, Problem
 from hfcache.identity import parse_selector
 from hfcache.models import serialize
 from hfcache.redaction import sanitize
@@ -17,14 +24,37 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from hfcache.cli import GlobalOptions
-    from hfcache.client_models import ClientRead
+    from hfcache.client_models import ClientEvents, ClientRead, Submission
     from hfcache.reporting import Envelope, EnvelopeProblem
 
 _MAX_CANDIDATE_BYTES = 1048576
+_MAX_WAIT_SECONDS = 86400
+
+
+def check_job_options(
+    options: GlobalOptions, *, submitting: bool = False, observing: bool = False
+) -> None:
+    """Reject job flags on reads/local commands before opening settings or credentials."""
+    timeout = options.wait_timeout
+    if timeout is not None and (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, int | float)
+        or not math.isfinite(timeout)
+        or not 0 < timeout <= _MAX_WAIT_SECONDS
+    ):
+        message = "--wait-timeout must be finite and greater than zero, at most 86400 seconds"
+        raise ConfigurationError.single(message, code="HFARG002")
+    if not submitting and (options.detach or options.idempotency_key is not None):
+        message = "--detach and --idempotency-key are accepted only for operation submissions"
+        raise ConfigurationError.single(message, code="HFARG002")
+    if not submitting and not observing and timeout is not None:
+        message = "--wait-timeout requires an operation submission or operations wait"
+        raise ConfigurationError.single(message, code="HFARG002")
 
 
 def check_options(options: GlobalOptions, *, candidate: bool = False) -> None:
     """Refuse migrated options before candidate-file or credential access."""
+    check_job_options(options, submitting=True)
     if options.token_file is not None:
         message = "API commands use --api-token-file; --token-file is only for local Hub validation"
         raise ConfigurationError.single(message, code="HFARG002")
@@ -181,8 +211,90 @@ def run_job(
     *,
     on_key: Callable[[str], None] | None = None,
 ) -> Envelope:
-    submitted = client.submit(path, body, on_key=on_key)
-    return client.poll(submitted.acceptance.operation.operation_id).envelope
+    return observe_operation(
+        client, client.submit(path, body, on_key=on_key).acceptance.operation.operation_id
+    )
+
+
+def admission_payload(submitted: Submission) -> dict[str, Any]:
+    """An explicit admission is a receipt, never a fabricated command Envelope."""
+    return {
+        "schema_version": 1,
+        "kind": "operation_admission",
+        "idempotency_key": submitted.key,
+        "acceptance": submitted.acceptance.model_dump(mode="json"),
+    }
+
+
+def observe_operation(
+    client: ApiClient,
+    operation_id: str,
+    *,
+    timeout: float | None = None,
+    on_event: Callable[[ClientEvents], None] | None = None,
+    after: int = 0,
+) -> Envelope:
+    """Observe one existing operation; client departure never cancels or submits."""
+    return client.observe(operation_id, timeout=timeout, on_event=on_event, after=after).envelope
+
+
+def submit_job(  # noqa: PLR0913 - explicit submit/observe callbacks preserve safety correlation
+    client: ApiClient,
+    path: str,
+    body: Mapping[str, Any],
+    *,
+    key: str | None = None,
+    detach: bool = False,
+    timeout: float | None = None,
+    on_key: Callable[[str], None] | None = None,
+    on_accepted: Callable[[Submission], None] | None = None,
+    on_event: Callable[[ClientEvents], None] | None = None,
+) -> Envelope | Submission:
+    """Submit exactly once, then detach or observe with the original safety handles."""
+    if path not in JOB_ROUTES:
+        raise ClientProtocolError
+    # Validate before POST; observation itself starts after the accepted receipt.
+    client.observation_deadline(timeout)
+    retained_key: str | None = None
+    submitted: Submission | None = None
+
+    def remember(value: str) -> None:
+        nonlocal retained_key
+        retained_key = value
+        if on_key is not None:
+            on_key(value)
+
+    try:
+        submitted = client.submit(path, body, key=key, on_key=remember)
+        if on_accepted is not None:
+            on_accepted(submitted)
+        if detach:
+            return submitted
+        return observe_operation(
+            client,
+            submitted.acceptance.operation.operation_id,
+            timeout=timeout,
+            on_event=on_event,
+        )
+    except KeyboardInterrupt:
+        error = (
+            UncertainSubmission(retained_key, path)
+            if submitted is None and retained_key is not None
+            else ClientConnectionError()
+        )
+        raise retain_operation(
+            error,
+            key=retained_key,
+            operation_id=submitted.acceptance.operation.operation_id if submitted else None,
+            route=path,
+        ) from None
+    except HfcacheError as error:
+        raise retain_operation(
+            error,
+            key=retained_key,
+            operation_id=submitted.acceptance.operation.operation_id if submitted else None,
+            route=path,
+        ) from None
 
 
 def problem(value: EnvelopeProblem) -> Problem:
