@@ -35,3 +35,6 @@ metadata_queue = 32
 max_queued_operations = 16
 retained_terminal_operations = 1000
 shutdown_timeout_seconds = 300
+max_response_bytes = 8388608
+max_artifact_bytes = 67108864
+max_scan_entries = 10000

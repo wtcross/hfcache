@@ -21,27 +21,31 @@ from hfcache.identity import (
     CommitSha,
     PublicationId,
     RepositoryIdentity,
+    RunId,
     parse_commit_sha,
     parse_publication_id,
     parse_run_id,
     parse_selector,
 )
 from hfcache.manifests import RevisionManifest
+from hfcache.metadata import UNBOUNDED, MetadataEntry, MetadataReader, QueryBounds, QueryLimitError
 from hfcache.models import Reference, VersionedModel, load
-from hfcache.paths import ArchiveLayout, RepositoryLayout
+from hfcache.paths import ArchiveLayout
 from hfcache.publication import (
     VerificationStates,
-    published_repositories,
-    read_reference,
-    read_verification_catalog,
-    retained_references,
 )
 from hfcache.recovery import measure_health
 from hfcache.repair import cleanup_warnings, preserved_bytes
-from hfcache.reporting import RecoveryReport, RunReport, RuntimeVersions, VerificationReport
+from hfcache.reporting import (
+    Finding,
+    RecoveryReport,
+    RunReport,
+    RuntimeVersions,
+    VerificationCatalog,
+    VerificationReport,
+)
 from hfcache.services.context import ServiceResult
-from hfcache.storage import read_model
-from hfcache.verification import estimate_verification
+from hfcache.verification import Resolved, VerificationTarget, estimate_resolved
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -155,6 +159,7 @@ class LocalQueries:
     """Metadata orchestration over a frozen installed archive policy."""
 
     config: ApplicationConfig
+    bounds: QueryBounds = UNBOUNDED
 
     @property
     def layout(self) -> ArchiveLayout:
@@ -167,7 +172,11 @@ class LocalQueries:
 
     def inspect_archive(self) -> ArchiveInspection:
         """Inspect initialization state without mount probes or mutation."""
-        return inspect_archive(self.layout, archive_id=self.config.storage.archive_id)
+        return inspect_archive(
+            self.layout,
+            archive_id=self.config.storage.archive_id,
+            reader=MetadataReader(self.layout.root, self.bounds),
+        )
 
     def archive_status(self, request: RepositoryQuery = ALL_REPOSITORIES) -> ServiceResult:
         """Report configured and archived unmanaged repositories using local truth."""
@@ -176,13 +185,15 @@ class LocalQueries:
             RepositoryIdentity.from_config(repository): repository
             for repository in self.config.repositories
         }
-        published = published_repositories(layout)
+        reader = MetadataReader(layout.root, self.bounds)
+        published = _published_repositories(layout, reader)
         identities = tuple(configured) + tuple(item for item in published if item not in configured)
         selected = _scope(identities, request)
-        last_run = _last_run_statuses(layout)
-        states = VerificationStates.of(layout)
+        last_run = _last_run_statuses(self, reader)
+        catalog = _verification_catalog(layout, reader)
+        states = _verification_states(catalog)
         entries = [
-            _status_entry(layout, identity, configured.get(identity), last_run, states)
+            _status_entry(self, identity, configured.get(identity), last_run, states, reader)
             for identity in selected
         ]
         archive: dict[str, Any] = {
@@ -195,16 +206,21 @@ class LocalQueries:
                 layout,
                 self.config.storage,
                 stale_staging_age_hours=self.config.sync.stale_staging_age_hours,
+                reader=reader,
             )
-        except HfcacheError:
+            pending_warnings = cleanup_warnings(layout, reader=reader)
+            quarantined_bytes = preserved_bytes(layout, reader=reader)
+        except QueryLimitError:
+            raise
+        except HfcacheError, OSError, ValueError:
             archive["reachable"] = False
         else:
             archive["reachable"] = True
             archive |= health.as_payload()
             warnings.extend(health.reconciliation.warnings)
-            warnings.extend(cleanup_warnings(layout))
-            archive["quarantined_bytes"] = preserved_bytes(layout)
-        archive["verification"] = _verification_health(layout)
+            warnings.extend(pending_warnings)
+            archive["quarantined_bytes"] = quarantined_bytes
+        archive["verification"] = _verification_health(catalog)
         return ServiceResult(
             "status", {"archive": archive, "repositories": entries}, tuple(warnings)
         )
@@ -216,22 +232,24 @@ class LocalQueries:
             RepositoryIdentity.from_config(repository): repository
             for repository in self.config.repositories
         }
-        published = published_repositories(layout)
+        reader = MetadataReader(layout.root, self.bounds)
+        published = _published_repositories(layout, reader)
         # Validate against both sets even though list only returns archived rows.
         _scope(
             tuple(configured) + tuple(item for item in published if item not in configured), request
         )
         selected = _scope(published, request, require_present=False)
-        states = VerificationStates.of(layout)
+        states = _verification_states(_verification_catalog(layout, reader))
         return ServiceResult(
             "list",
             {
                 "repositories": [
                     _listed(
-                        layout,
+                        self,
                         identity,
                         configured.get(identity),
                         states,
+                        reader=reader,
                         revisions=request.revisions,
                     )
                     for identity in selected
@@ -241,11 +259,96 @@ class LocalQueries:
 
     def estimate_verification(self) -> ServiceResult:
         """Estimate with stat only: no hashing, writes, lock, or confidence increase."""
-        return ServiceResult("verify --estimate", estimate_verification(self.layout).as_payload())
+        reader = MetadataReader(self.layout.root, self.bounds)
+        resolved = []
+        for identity in _published_repositories(self.layout, reader):
+            repository = self.layout.repository(identity)
+            damaged_revisions = set()
+            for entry in _entries(reader, repository.refs / "revisions"):
+                if not re.fullmatch(r"[0-9a-f]{40}[.]json", entry.path.name):
+                    continue
+                reference = None
+                try:
+                    reference = _raw_reference(self, identity, entry.path, reader, entry.path.stem)
+                    request = PublicationQuery(
+                        identity,
+                        CommitSha(reference.commit_sha),
+                        PublicationId(reference.publication_id),
+                    )
+                    manifest = self._manifest(request, reader)
+                    if manifest.publication_generation != reference.publication_generation:
+                        message = "reference and manifest generations disagree"
+                        raise IntegrityError.single(message, code="HFVER008")
+                    target = VerificationTarget(
+                        identity,
+                        reference,
+                        manifest,
+                        repository.instance(request.commit_sha, request.publication_id),
+                    )
+                except IntegrityError:
+                    if reference is None:
+                        damaged_revisions.add(entry.path.stem)
+                    resolved.append(
+                        Resolved(
+                            findings=(
+                                Finding.model_validate(
+                                    {
+                                        "repository_type": identity.type,
+                                        "repository_id": identity.id,
+                                        "commit_sha": entry.path.stem,
+                                        "publication_id": None,
+                                        "kind": "ref_invalid",
+                                        "observed": "revision metadata is unreadable",
+                                    }
+                                ),
+                            )
+                        )
+                    )
+                else:
+                    resolved.append(Resolved(target=target))
+            try:
+                _current(self, identity, reader)
+            except IntegrityError:
+                # A broken per-SHA reference already contributes one revision.
+                # A readable current ref pointing to that same damaged artifact
+                # must not count it again (the verifier's VER-008 convention).
+                try:
+                    current = _raw_reference(self, identity, repository.current_ref, reader)
+                except IntegrityError:
+                    pass
+                else:
+                    if current.commit_sha in damaged_revisions:
+                        continue
+                resolved.append(
+                    Resolved(
+                        findings=(
+                            Finding.model_validate(
+                                {
+                                    "repository_type": identity.type,
+                                    "repository_id": identity.id,
+                                    "commit_sha": None,
+                                    "publication_id": None,
+                                    "kind": "ref_invalid",
+                                    "observed": "current reference is unreadable or inconsistent",
+                                }
+                            ),
+                        )
+                    )
+                )
+        catalog = _verification_catalog(self.layout, reader)
+        return ServiceResult(
+            "verify --estimate",
+            estimate_resolved(tuple(resolved), catalog=catalog, stat_file=reader.stat).as_payload(),
+        )
 
     def list_reports(self) -> tuple[str, ...]:
         """List validated report IDs in reverse chronological filename order."""
-        return tuple(run_id for _, run_id in _report_paths(self.layout))
+        paths = _report_paths(self.layout, MetadataReader(self.layout.root, self.bounds))
+        identifiers = tuple(run_id for _, run_id in paths)
+        if len(set(identifiers)) != len(identifiers):
+            msg = "duplicate report identities"
+            raise IntegrityError.single(msg, code="HFVER007")
+        return identifiers
 
     def read_report(self, run_id: str) -> RunReport | RecoveryReport | VerificationReport:
         """Read one uniquely named report and check filename, body, and archive identity."""
@@ -253,7 +356,8 @@ class LocalQueries:
             checked = parse_run_id(run_id, code="HFARG001")
         except CodedError as exc:
             raise ConfigurationError.single(str(exc), code=exc.code) from exc
-        paths = [path for path, found in _report_paths(self.layout) if found == checked]
+        reader = MetadataReader(self.layout.root, self.bounds)
+        paths = [path for path, found in _report_paths(self.layout, reader) if found == checked]
         if not paths:
             msg = "no run report has this id"
             raise ConfigurationError.single(msg, code="HFARG004", location=run_id)
@@ -261,7 +365,7 @@ class LocalQueries:
             msg = "multiple reports claim the same run id"
             raise IntegrityError.single(msg, code="HFVER007", location=run_id)
         path = paths[0]
-        raw = _read_bytes(self.layout, path, code="HFVER007")
+        raw = _read_bytes(self.layout, path, code="HFVER007", reader=reader)
         try:
             payload = json.loads(raw)
         except (ValueError, UnicodeError) as exc:
@@ -293,13 +397,18 @@ class LocalQueries:
         self, identity: RepositoryIdentity, commit_sha: str | None = None
     ) -> Reference:
         """Read one current/per-SHA ref, pinning its canonical publication locators."""
+        return self._reference(identity, commit_sha, MetadataReader(self.layout.root, self.bounds))
+
+    def _reference(
+        self, identity: RepositoryIdentity, commit_sha: str | None, reader: MetadataReader
+    ) -> Reference:
         repository = self.layout.repository(identity)
         try:
             sha = parse_commit_sha(commit_sha, code="HFARG001") if commit_sha is not None else None
         except CodedError as exc:
             raise ConfigurationError.single(str(exc), code=exc.code) from exc
         path = repository.revision_ref(sha) if sha is not None else repository.current_ref
-        reference = _read_evidence(self.layout, path, Reference, code="HFVER008")
+        reference = _read_evidence(self.layout, path, Reference, code="HFVER008", reader=reader)
         if reference.identity != identity or (sha is not None and reference.commit_sha != sha):
             msg = "reference identity disagrees with requested repository/revision"
             raise IntegrityError.single(msg, code="HFVER008")
@@ -313,12 +422,12 @@ class LocalQueries:
         ):
             msg = "reference locators disagree with publication identity"
             raise IntegrityError.single(msg, code="HFVER008")
-        manifest = self.read_manifest(request)
+        manifest = self._manifest(request, reader)
         if manifest.publication_generation != reference.publication_generation:
             msg = "reference and manifest generations disagree"
             raise IntegrityError.single(msg, code="HFVER008")
         if sha is None:
-            retained = self.read_reference(identity, reference.commit_sha)
+            retained = self._reference(identity, reference.commit_sha, reader)
             if retained.model_dump(exclude={"updated_at"}) != reference.model_dump(
                 exclude={"updated_at"}
             ):
@@ -328,12 +437,16 @@ class LocalQueries:
 
     def read_manifest(self, request: PublicationQuery) -> RevisionManifest:
         """Read the exact instance requested, including a retained repair predecessor."""
+        return self._manifest(request, MetadataReader(self.layout.root, self.bounds))
+
+    def _manifest(self, request: PublicationQuery, reader: MetadataReader) -> RevisionManifest:
         repository = self.layout.repository(request.identity)
         manifest = _read_evidence(
             self.layout,
             repository.manifest(request.commit_sha, request.publication_id),
             RevisionManifest,
             code="HFVER007",
+            reader=reader,
         )
         if (
             manifest.repository_type != request.identity.type
@@ -349,6 +462,7 @@ class LocalQueries:
             self.layout,
             repository.instance(request.commit_sha, request.publication_id),
             code="HFVER008",
+            reader=reader,
         )
         return manifest
 
@@ -384,81 +498,87 @@ def _scope(
 _REPORT_NAME = re.compile(r"[0-9]{8}T[0-9]{6}Z-([0-9a-f]{32})[.]json")
 
 
-def _report_paths(layout: ArchiveLayout) -> tuple[tuple[Path, str], ...]:
-    return tuple(
-        (path, match[1])
-        for path in sorted(layout.runs.glob("*.json"), reverse=True)
-        if (match := _REPORT_NAME.fullmatch(path.name)) is not None
-    )
-
-
-def _open_contained(layout: ArchiveLayout, path: Path, *, directory: bool, code: str) -> int:
-    """Open beneath the archive by dirfd, rejecting every symlink, including races.
-
-    Opening each component with O_NOFOLLOW prevents path swaps from turning a
-    metadata query into an arbitrary host read (FS-09/FS-15, decision 108).
-    """
-    descriptor: int | None = None
+def _entries(reader: MetadataReader, path: Path) -> tuple[MetadataEntry, ...]:
     try:
-        relative = path.relative_to(layout.root)
-        descriptor = os.open(layout.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
-        for index, part in enumerate(relative.parts):
-            is_directory = index < len(relative.parts) - 1 or directory
-            flags = (
-                os.O_RDONLY | os.O_NOFOLLOW | (os.O_DIRECTORY if is_directory else os.O_NONBLOCK)
-            )
-            following = os.open(part, flags, dir_fd=descriptor)
-            os.close(descriptor)
-            descriptor = following
-        expected = stat.S_ISDIR if directory else stat.S_ISREG
-        if not expected(os.fstat(descriptor).st_mode):
-            msg = "metadata path has an unexpected file type"
-            raise IntegrityError.single(msg, code=code)
+        return reader.entries(path)
     except (OSError, ValueError) as exc:
-        msg = "metadata path is absent, unsafe, or unreadable"
-        raise IntegrityError.single(
-            msg,
-            code=code,
-            location=str(layout.archive_relative(path)),
-        ) from exc
-    else:
-        result = descriptor
-        descriptor = None
-        return result
-    finally:
-        if descriptor is not None:
-            os.close(descriptor)
+        msg = "metadata directory is unsafe or unreadable"
+        raise IntegrityError.single(msg, code="HFVER007") from exc
 
 
-def _read_bytes(layout: ArchiveLayout, path: Path, *, code: str) -> bytes:
-    descriptor = _open_contained(layout, path, directory=False, code=code)
+def _report_paths(layout: ArchiveLayout, reader: MetadataReader) -> tuple[tuple[Path, str], ...]:
+    found = []
+    for entry in _entries(reader, layout.runs):
+        if (match := _REPORT_NAME.fullmatch(entry.path.name)) is not None:
+            if not stat.S_ISREG(entry.info.st_mode):
+                msg = "report is not an ordinary file"
+                raise IntegrityError.single(msg, code="HFVER007")
+            found.append((entry.path, match[1]))
+    return tuple(reversed(found))
+
+
+def _read_bytes(
+    layout: ArchiveLayout, path: Path, *, code: str, reader: MetadataReader | None = None
+) -> bytes:
     try:
-        with os.fdopen(descriptor, "rb") as stream:
-            return stream.read()
-    except OSError as exc:
-        message = "metadata artifact could not be read"
-        raise IntegrityError.single(
-            message, code=code, location=str(layout.archive_relative(path))
-        ) from exc
+        return (reader or MetadataReader(layout.root)).read(path)
+    except (OSError, ValueError) as exc:
+        msg = "metadata artifact is absent, unsafe, or unreadable"
+        raise IntegrityError.single(msg, code=code) from exc
 
 
-def _require_directory(layout: ArchiveLayout, path: Path, *, code: str) -> None:
-    os.close(_open_contained(layout, path, directory=True, code=code))
+def _require_directory(
+    layout: ArchiveLayout, path: Path, *, code: str, reader: MetadataReader | None = None
+) -> None:
+    try:
+        os.close((reader or MetadataReader(layout.root)).open(path, directory=True))
+    except (OSError, ValueError) as exc:
+        msg = "publication directory is absent or unsafe"
+        raise IntegrityError.single(msg, code=code) from exc
 
 
 def _read_evidence[ModelT: VersionedModel](
-    layout: ArchiveLayout, path: Path, model: type[ModelT], *, code: str
+    layout: ArchiveLayout,
+    path: Path,
+    model: type[ModelT],
+    *,
+    code: str,
+    reader: MetadataReader | None = None,
 ) -> ModelT:
     return load(
-        model,
-        _read_bytes(layout, path, code=code),
-        error=IntegrityError,
-        code=code,
-        location=str(layout.archive_relative(path)),
+        model, _read_bytes(layout, path, code=code, reader=reader), error=IntegrityError, code=code
     )
 
 
-def _verification_health(layout: ArchiveLayout) -> dict[str, Any]:
+def _verification_catalog(
+    layout: ArchiveLayout, reader: MetadataReader
+) -> VerificationCatalog | None:
+    try:
+        catalog = _read_evidence(
+            layout, layout.verification_catalog, VerificationCatalog, code="HFVER007", reader=reader
+        )
+    except IntegrityError:
+        return None
+    return catalog
+
+
+def _verification_states(catalog: VerificationCatalog | None) -> VerificationStates:
+    return VerificationStates(
+        outcomes={
+            (
+                repository.repository_type,
+                repository.repository_id,
+                revision.commit_sha,
+                revision.publication_id,
+            ): revision.outcome
+            for repository in (catalog.repositories if catalog else ())
+            for revision in repository.revisions
+            if revision.publication_id is not None
+        }
+    )
+
+
+def _verification_health(catalog: VerificationCatalog | None) -> dict[str, Any]:
     """The archive's verification headline, as `docs/cli.md` §2 requires of `status`.
 
     `degraded` is the one an operator acts on, and it stays true until a
@@ -470,7 +590,6 @@ def _verification_health(layout: ArchiveLayout) -> dict[str, Any]:
     last full verification, which is the truth about an archive nothing has
     verified yet rather than a claim that it is sound.
     """
-    catalog = read_verification_catalog(layout)
     if catalog is None:
         return {"degraded": False, "last_full_verification": None, "outstanding_failures": 0}
     return {
@@ -484,12 +603,13 @@ def _verification_health(layout: ArchiveLayout) -> dict[str, Any]:
     }
 
 
-def _status_entry(
-    layout: ArchiveLayout,
+def _status_entry(  # noqa: PLR0913, PLR0917 - one status projection capability
+    queries: LocalQueries,
     identity: RepositoryIdentity,
     repository: RepositoryConfig | None,
     last_run: Mapping[str, str],
     states: VerificationStates,
+    reader: MetadataReader,
 ) -> dict[str, Any]:
     """One repository's local truth, from its references and the last run report.
 
@@ -517,9 +637,10 @@ def _status_entry(
         "verification_state": "unverified",
     }
     try:
-        held = retained_references(layout, identity)
-        current = RepositoryLayout(archive=layout, identity=identity).current_ref
-        reference = read_reference(layout, current) if current.exists() else None
+        held = _retained(queries, identity, reader)
+        reference = _current(queries, identity, reader)
+    except QueryLimitError:
+        raise
     except HfcacheError:
         return entry
     entry["retained_revisions"] = len(held)
@@ -530,53 +651,157 @@ def _status_entry(
         # The current revision's state, from the one place any of it is recorded
         # (decision 51). A revision nothing has verified offline reads
         # `unverified`, which is what makes `verified` mean something.
-        entry["verification_state"] = states.state_of(
-            identity, reference.commit_sha, reference.publication_id
-        )
+        try:
+            manifest = queries._manifest(  # noqa: SLF001 - shared module implementation
+                PublicationQuery(
+                    identity,
+                    CommitSha(reference.commit_sha),
+                    PublicationId(reference.publication_id),
+                ),
+                reader,
+            )
+        except IntegrityError:
+            pass
+        else:
+            if manifest.publication_generation == reference.publication_generation:
+                entry["verification_state"] = states.state_of(
+                    identity, reference.commit_sha, reference.publication_id
+                )
     return entry
 
 
-def _last_run_statuses(layout: ArchiveLayout) -> dict[str, str]:
-    """What the most recent run report said about each repository.
-
-    The newest report by name, which is chronological: `run_report` stamps the
-    UTC start time first, so lexical order is time order and no file has to be
-    opened to find the latest one.
-
-    A run report that will not load is skipped rather than reported. It is
-    informational here — the references above are the archive's truth — and
-    `status` exists to answer even when parts of the archive are damaged.
-
-    `glob` on a directory that is absent or unreadable yields nothing rather
-    than raising, so an archive that is not mounted answers "no last run",
-    which is the truthful answer and not an error.
-    """
-    for path in sorted(layout.runs.glob("*.json"), reverse=True):
+def _last_run_statuses(queries: LocalQueries, reader: MetadataReader) -> dict[str, str]:
+    try:
+        paths = _report_paths(queries.layout, reader)
+    except IntegrityError:
+        return {}
+    for path, run_id in paths:
         try:
-            report = read_model(path, RunReport, error=IntegrityError, code="HFVER007")
-        except HfcacheError:
+            report = _read_evidence(queries.layout, path, RunReport, code="HFVER007", reader=reader)
+            if (
+                report.archive_id != queries.config.storage.archive_id
+                or report.run_id != run_id
+                or path != queries.layout.run_report(report.started_at, RunId(report.run_id))
+            ):
+                continue
+        except IntegrityError:
             continue
         return {
-            f"{result.repository_type}:{result.repository_id}": result.status
-            for result in report.repositories
+            f"{item.repository_type}:{item.repository_id}": item.status
+            for item in report.repositories
         }
     return {}
 
 
-def _listed(
-    layout: ArchiveLayout,
+def _published_repositories(
+    layout: ArchiveLayout, reader: MetadataReader
+) -> tuple[RepositoryIdentity, ...]:
+    found = []
+    for repository_type, directory in (("model", "models"), ("dataset", "datasets")):
+        for namespace in _entries(reader, layout.repos / directory):
+            if not stat.S_ISDIR(namespace.info.st_mode):
+                if stat.S_ISLNK(namespace.info.st_mode):
+                    msg = "repository namespace is a symlink"
+                    raise IntegrityError.single(msg, code="HFVER008")
+                continue
+            for name in _entries(reader, namespace.path):
+                if not stat.S_ISDIR(name.info.st_mode):
+                    if stat.S_ISLNK(name.info.st_mode):
+                        msg = "repository directory is a symlink"
+                        raise IntegrityError.single(msg, code="HFVER008")
+                    continue
+                try:
+                    found.append(
+                        RepositoryIdentity.of(
+                            repository_type, f"{namespace.path.name}/{name.path.name}"
+                        )
+                    )
+                except ValueError:
+                    continue
+    return tuple(sorted(found, key=lambda item: item.sort_key))
+
+
+def _raw_reference(
+    queries: LocalQueries,
+    identity: RepositoryIdentity,
+    path: Path,
+    reader: MetadataReader,
+    sha: str | None = None,
+) -> Reference:
+    reference = _read_evidence(queries.layout, path, Reference, code="HFVER008", reader=reader)
+    repository = queries.layout.repository(identity)
+    if (
+        reference.identity != identity
+        or (sha is not None and reference.commit_sha != sha)
+        or str(reference.tree)
+        != str(
+            repository.tree_reference(
+                CommitSha(reference.commit_sha), PublicationId(reference.publication_id)
+            )
+        )
+        or str(reference.manifest)
+        != str(
+            repository.manifest_reference(
+                CommitSha(reference.commit_sha), PublicationId(reference.publication_id)
+            )
+        )
+    ):
+        msg = "reference identity or locators disagree"
+        raise IntegrityError.single(msg, code="HFVER008")
+    return reference
+
+
+def _retained(
+    queries: LocalQueries, identity: RepositoryIdentity, reader: MetadataReader
+) -> tuple[Reference, ...]:
+    found = []
+    for entry in _entries(reader, queries.layout.repository(identity).refs / "revisions"):
+        if entry.path.suffix != ".json":
+            continue
+        if not re.fullmatch(r"[0-9a-f]{40}", entry.path.stem):
+            msg = "retained reference has an invalid identity"
+            raise IntegrityError.single(msg, code="HFVER008")
+        found.append(_raw_reference(queries, identity, entry.path, reader, entry.path.stem))
+    return tuple(sorted(found, key=lambda item: item.publication_generation))
+
+
+def _current(
+    queries: LocalQueries, identity: RepositoryIdentity, reader: MetadataReader
+) -> Reference | None:
+    repository = queries.layout.repository(identity)
+    try:
+        reader.stat(repository.current_ref)
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError) as exc:
+        msg = "current reference is unsafe"
+        raise IntegrityError.single(msg, code="HFVER008") from exc
+    current = _raw_reference(queries, identity, repository.current_ref, reader)
+    retained = _raw_reference(
+        queries,
+        identity,
+        repository.revision_ref(CommitSha(current.commit_sha)),
+        reader,
+        current.commit_sha,
+    )
+    if current.model_dump(exclude={"updated_at"}) != retained.model_dump(exclude={"updated_at"}):
+        msg = "current and retained references disagree"
+        raise IntegrityError.single(msg, code="HFVER008")
+    return current
+
+
+def _listed(  # noqa: PLR0913 - one inventory projection capability
+    queries: LocalQueries,
     identity: RepositoryIdentity,
     configured: RepositoryConfig | None,
     states: VerificationStates,
     *,
+    reader: MetadataReader,
     revisions: bool,
 ) -> dict[str, Any]:
     """One repository's inventory, read from its references and manifests."""
-    repository = RepositoryLayout(archive=layout, identity=identity)
-    held = retained_references(layout, identity)
-    current = (
-        read_reference(layout, repository.current_ref) if repository.current_ref.exists() else None
-    )
+    held = _retained(queries, identity, reader)
+    current = _current(queries, identity, reader)
     entry: dict[str, Any] = {
         "current_commit_sha": current.commit_sha if current else None,
         "current_publication_id": current.publication_id if current else None,
@@ -588,26 +813,28 @@ def _listed(
     }
     if revisions:
         entry["revisions"] = [
-            _listed_revision(repository, reference, identity, states) for reference in held
+            _listed_revision(queries, reference, identity, states, reader) for reference in held
         ]
     return entry
 
 
 def _listed_revision(
-    repository: RepositoryLayout,
+    queries: LocalQueries,
     reference: Reference,
     identity: RepositoryIdentity,
     states: VerificationStates,
+    reader: MetadataReader,
 ) -> dict[str, Any]:
     """One retained revision, from the immutable manifest that describes it."""
-    manifest = read_model(
-        repository.manifest(
-            CommitSha(reference.commit_sha), PublicationId(reference.publication_id)
+    manifest = queries._manifest(  # noqa: SLF001 - shared module implementation
+        PublicationQuery(
+            identity, CommitSha(reference.commit_sha), PublicationId(reference.publication_id)
         ),
-        RevisionManifest,
-        error=IntegrityError,
-        code="HFVER007",
+        reader,
     )
+    if manifest.publication_generation != reference.publication_generation:
+        msg = "reference and manifest generations disagree"
+        raise IntegrityError.single(msg, code="HFVER008")
     return {
         "commit_sha": manifest.commit_sha,
         "file_count": manifest.file_count,

@@ -39,6 +39,7 @@ which is what stops a deferred cleanup from being forgotten.
 """
 
 import shutil
+import stat
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any, Final, final
@@ -84,6 +85,7 @@ if TYPE_CHECKING:
     from hfcache.config import ApplicationConfig
     from hfcache.hub import HubClient
     from hfcache.identity import RunId
+    from hfcache.metadata import MetadataReader
     from hfcache.paths import ArchiveLayout
 
 __all__ = [
@@ -661,7 +663,9 @@ class PendingCleanup:
         return now >= self.record.grace_expires_at
 
 
-def pending_cleanups(layout: ArchiveLayout) -> tuple[PendingCleanup, ...]:
+def pending_cleanups(
+    layout: ArchiveLayout, *, reader: MetadataReader | None = None
+) -> tuple[PendingCleanup, ...]:
     """Every retirement record whose cleanup has not completed.
 
     Read off `audit/repairs/`, which is where the records live and outlives
@@ -678,11 +682,32 @@ def pending_cleanups(layout: ArchiveLayout) -> tuple[PendingCleanup, ...]:
     happens when they are conflated.
     """
     found: list[PendingCleanup] = []
-    for path in sorted(layout.repair_audit.rglob("*.retirement.json")):
+    paths = (
+        sorted(
+            entry.path
+            for entry in reader.walk(layout.repair_audit)
+            if stat.S_ISREG(entry.info.st_mode) and entry.path.name.endswith(".retirement.json")
+        )
+        if reader
+        else sorted(layout.repair_audit.rglob("*.retirement.json"))
+    )
+    for path in paths:
         try:
-            record = read_model(path, RepairRetirementRecord, error=IntegrityError, code="HFVER007")
+            record = (
+                reader.model(path, RepairRetirementRecord)
+                if reader
+                else read_model(path, RepairRetirementRecord, error=IntegrityError, code="HFVER007")
+            )
         except IntegrityError:
             continue
+        if reader is not None:
+            repository = layout.repository(
+                RepositoryIdentity.of(record.repository_type, record.repository_id)
+            )
+            if path != repository.retirement_record(
+                CommitSha(record.commit_sha), PublicationId(record.retired_publication_id)
+            ):
+                continue
         if record.cleanup.state == "pending":
             found.append(PendingCleanup(record=record, path=path))
     return tuple(found)
@@ -707,11 +732,11 @@ def unreadable_retirements(layout: ArchiveLayout) -> tuple[Path, ...]:
 
 
 def due_cleanups(
-    layout: ArchiveLayout, *, now: datetime | None = None
+    layout: ArchiveLayout, *, now: datetime | None = None, reader: MetadataReader | None = None
 ) -> tuple[PendingCleanup, ...]:
     """The pending cleanups whose grace has expired (`HFWRN008`)."""
     moment = now or _now()
-    return tuple(item for item in pending_cleanups(layout) if item.is_due(moment))
+    return tuple(item for item in pending_cleanups(layout, reader=reader) if item.is_due(moment))
 
 
 def finish_cleanup(
@@ -804,7 +829,9 @@ def _rename_once(source: Path, destination: Path, *, mode: int) -> None:
         raise RetentionError.single(message, code="HFRET009", location=str(source)) from exc
 
 
-def cleanup_warnings(layout: ArchiveLayout, *, now: datetime | None = None) -> list[Problem]:
+def cleanup_warnings(
+    layout: ArchiveLayout, *, now: datetime | None = None, reader: MetadataReader | None = None
+) -> list[Problem]:
     """`HFWRN008` for each retired instance past its grace and awaiting cleanup."""
     return [
         Problem(
@@ -819,17 +846,23 @@ def cleanup_warnings(layout: ArchiveLayout, *, now: datetime | None = None) -> l
             location=item.record.retired_tree,
             repository=f"{item.record.repository_type}:{item.record.repository_id}",
         )
-        for item in due_cleanups(layout, now=now)
+        for item in due_cleanups(layout, now=now, reader=reader)
     ]
 
 
-def preserved_bytes(layout: ArchiveLayout) -> int:
+def preserved_bytes(layout: ArchiveLayout, *, reader: MetadataReader | None = None) -> int:
     """How much the quarantine area is holding, for `status` to report.
 
     Reported rather than reclaimed. Plan §16.5 item 12 keeps quarantined
     evidence until an operator approves its removal, so the useful thing this
     application can say about it is how much space it is costing.
     """
+    if reader:
+        return sum(
+            entry.info.st_size
+            for entry in reader.walk(layout.quarantine)
+            if stat.S_ISREG(entry.info.st_mode)
+        )
     total = 0
     for path in layout.quarantine.rglob("*"):
         if path.is_file() and not path.is_symlink():

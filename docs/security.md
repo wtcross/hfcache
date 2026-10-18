@@ -334,10 +334,16 @@ Authentication failures use sanitized `HFAPI001`/401 plus a Bearer challenge;
 capability denial is `HFAPI002`/403. Unsafe/malformed/racing credential sources
 and duplicate class values fail startup with `HFAPI003`/`HFAPI004`. The reusable
 FastAPI bearer adapter calls the application-owned verifier; extraction alone
-does not authenticate. API-006 must protect every real route, including docs,
-health and OpenAPI, and enforce Host/Origin/body/proxy policy. API-008/014 still
-own listener installation, TLS activation and executor hardening. No listener or
-production rollout is asserted by these primitives. See
+does not authenticate. API-006's outer boundary now authenticates metadata routes,
+unknown paths/methods, health, schema and optional docs before routing/body
+validation. It rejects malformed Host/duplicate Origin, bounds headers/query/
+body/normal and streamed responses, disables slash redirects and raw framework
+request logging, and returns sanitized typed problems with no-store/nosniff/frame
+headers. Explicit trusted TLS proxy rules and one Unix/TCP lifespan are tested
+on disposable sockets. Shared no-follow reader/work budgets cover legacy local
+query paths too; unsafe derived catalogs retain unknown confidence and never
+grant repair authority. API-008/014 still own job/executor hardening and installed
+service acceptance. No production listener or rollout is asserted. See
 [decision 112](adr/decision-112.md) and [server policy](server.md).
 
 ## 4. Controls summary

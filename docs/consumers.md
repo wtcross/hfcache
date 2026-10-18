@@ -85,7 +85,41 @@ they are not relative to an HTTP endpoint or the private archive root. Validatio
 checks identity and containment and never substitutes a newer current instance
 when a requested instance has vanished. These services add no artifact transfer
 channel; the read-only export and independent copy verification remain the
-consumer data path. Remote transports are still planned under [the API contract](api.md).
+consumer data path. API-006 now adds authenticated REST metadata discovery;
+API-backed CLI migration and MCP remain later tasks. No production listener
+installation is asserted by the implementation tests.
+
+### Optional authenticated discovery
+
+An authorized REST reader or writer can discover repositories through
+`GET /api/v1/repositories`, walking `next_cursor` until null. Revision pages are
+`GET /api/v1/repositories/revisions`; their flat rows carry repository type/ID
+plus the exact retained revision fields. Stale continuation returns 409 and
+requires restarting the walk. Pages do not create an archive-wide snapshot.
+
+For `model:organization/model-name`, read
+`GET /api/v1/repositories/model/organization/model-name/references/current`
+once, then read the exact manifest at
+`GET /api/v1/repositories/model/organization/model-name/manifests/{commit_sha}/{publication_id}`
+using that reference's IDs. A full-SHA reference route is also available. Every
+request authenticates, including Unix sockets; off-host access verifies TLS.
+The client loads its distinct protected API credential into the Authorization
+header without placing secrets in URLs, process arguments or browser storage.
+Every reader must be authorized for all archived repositories under AD-21.
+
+HTTP results wrap the schema-1 Envelope in `ReadResponse`; reference data is at
+`envelope.data.reference`, with `locator_base="published/"`. Join reference
+`tree`/`manifest` onto the read-only mount. Manifest data is at
+`envelope.data.manifest`, and `tree_base="archive-root/"` describes its original
+durable tree field: it is not relative to the manifest's parent or HTTP URL and
+must not replace the reference's published-relative copy locator. Exact missing,
+inconsistent or vanished evidence fails visibly, with no newer-instance fallback.
+
+The existing copy helper still reads its own NFS reference once per copy attempt;
+it does not consume a REST discovery response. API discovery neither transfers
+artifact bytes nor replaces independent complete-path/size/SHA-256 verification.
+The [API contract](api.md#implemented-metadata-resources-api-006) defines wire
+fields, pagination, limits and authenticated report streams.
 
 ## 3. Copying a revision
 

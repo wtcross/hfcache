@@ -1,9 +1,9 @@
 # Writer REST API contract
 
-Status: accepted target contract; implementation is incremental under
-[the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md). API-001 adds
-contracts only. Rows remain **planned** until their implementing task records
-and tests establish them. No listener or remote CLI is shipped by API-001.
+Status: API-006 implements the authenticated metadata resources below under
+[the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md). Job/write routes,
+candidate operations and API-backed public CLI migration remain planned. No
+production installation or listener start is asserted by implementation evidence.
 
 ## Service and transport boundary
 
@@ -27,24 +27,26 @@ pending evidence rather than claims that a proposed route works. Preserve
 one row for each mode when filling them. `archive` means the cross-process
 local flock through all domain persistence; `worker archive` means that same
 lock is owned by the offline executor. A preview cannot grant apply authority.
+An implemented read row means its HTTP resource exists; the public CLI still
+uses its local service until API-011–013 migrate it.
 
 | CLI mode | Service | Route | Role | Lock | Hub | Execution | Effects | CLI test | API test | State |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| version --server | version | GET /version | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
-| capabilities | capabilities | GET /capabilities | R | none | no | Q | none | pending | pending | planned |
+| version --server | version | GET /version | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| capabilities | capabilities | GET /capabilities | R | none | no | Q | none | pending CLI migration | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
 | config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
-| archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | pending | pending | planned |
 | doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | pending | pending | planned |
 | doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | pending | pending | planned |
 | plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | pending | pending | planned |
 | plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | pending | pending | planned |
 | sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | pending | pending | planned |
-| status [selectors] | archive_status | GET /status | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
-| list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
-| list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
-| verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| status [selectors] | archive_status | GET /status | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
+| verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
 | verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
 | verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
@@ -57,7 +59,7 @@ lock is owned by the offline executor. A preview cannot grant apply authority.
 | quarantine --dry-run IDs | preview_quarantine | POST /quarantine-plans | R | none | no | J | receipt only | pending | pending | planned |
 | quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | pending | pending | planned |
 | repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | pending | pending | planned |
-| reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py; tests/unit/test_query_boundary.py | implemented |
 | operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | pending | pending | planned |
 
 Local `version`, help, `serve`, and `config validate --local` are explicit
@@ -67,8 +69,8 @@ exceptions. Sync is explicitly included here (the draft's §4 table omitted it).
 
 ## Shared query results (API-002)
 
-Transport-neutral local queries now share orchestration with the CLI; the HTTP
-rows above remain planned. `LocalQueries` receives one frozen policy snapshot and
+Transport-neutral local queries share orchestration with the CLI and implemented
+HTTP metadata routes. `LocalQueries` receives one frozen policy snapshot and
 `ExecutionContext` captures execution identity; `ServiceResult` carries payload, problems, classification
 and run correlation without rendering. `MetadataQueries` is the narrow read
 interface implemented by `LocalQueries`; it offers no command or credential
@@ -80,8 +82,24 @@ verification confidence. Status covers configured plus unmanaged published
 repositories; selectors unknown to both fail HFARG004. Missing/corrupt derived
 repository catalogs never authorize a rebuild. ID-based report, reference and
 manifest reads reject identity mismatch and unsafe paths and retain exact
-publication identity and `published/`-relative locators. API-006 will define
-wire pagination/projections separately from these domain results.
+publication identity and `published/`-relative locators. API-006 wire
+pagination/projections remain separate from these domain results.
+
+API-006 strengthens the shared local read boundary with descriptor-relative
+no-follow traversal and optional `QueryBounds`. HTTP supplies finite entry,
+artifact and total-byte budgets; a refusal is `HFAPI005`, never an empty or
+silently truncated success. Default local CLI queries retain complete results
+without artificial transport ceilings. Status/list/latest-run/catalog reads and
+the health/estimate paths use the same safe reader. Missing/corrupt derived
+catalogs retain unknown verification confidence and grant no rebuild authority.
+Latest-run summaries ignore unreadable or identity-mismatched informational
+reports; exact report reads refuse them. Reports check the configured archive
+UUID, filename/time and run ID. The verification catalog has no archive-ID field;
+safe parse/containment and exact publication-instance keys govern its derived
+confidence. References/manifests check repository, SHA, publication identity,
+generation and canonical locators. These metadata checks do not assert that
+every read revalidates the archive sentinel. Policy pins configured root/UUID;
+archive inspection remains a separate diagnostic and performs no repair.
 
 API-003 adds `CommandServices` and immutable requests for the command rows above.
 These services preserve domain ordering and classified partial results; public
@@ -90,6 +108,108 @@ must call them without an outer archive lock. Verification persistence now stays
 inside its lock/preflight boundary (decision 110). This establishes local service
 behavior only: HTTP routes and remote CLI modes remain planned until their
 implementing acceptance tasks complete.
+
+## Implemented metadata resources (API-006)
+
+All paths below use `/api/v1` and require a REST reader or writer bearer.
+Repository IDs have two separately validated path components, `{namespace}` and
+`{name}`; `{repository_type}` is `model` or `dataset`. Full SHAs and publication/
+run IDs retain domain grammars. No path parameter is an arbitrary filesystem path.
+
+| GET resource | Result in `envelope.data` | Pagination |
+| --- | --- | --- |
+| `/version` | Existing local version payload; no archive-policy read per request | none |
+| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; operations/MCP remain false | none |
+| `/health` | Daemon readiness, policy-validation state and read-only archive inspection when available | none |
+| `/status` | Archive headline plus repository status rows | `repositories` |
+| `/repositories` | Published inventory, including unmanaged repositories | `repositories` |
+| `/repositories/revisions` | Flat rows containing `repository_type`, `repository_id` and each retained revision's existing fields | `revisions` |
+| `/verification/estimate` | Existing estimate payload; no hashing, lock, persistence or Hub | none |
+| `/archive/inspection` | Read-only initialization inspection and classified domain problems | none |
+| `/runs` | Report IDs in reverse chronological filename order | `runs` |
+| `/runs/{run_id}` | Validated existing `report`; preserves that report's domain run ID | bounded JSON stream |
+| `/repositories/{repository_type}/{namespace}/{name}/references/{revision}` | `reference` plus `locator_base="published/"`; revision is `current` or a full SHA | none |
+| `/repositories/{repository_type}/{namespace}/{name}/manifests/{commit_sha}/{publication_id}` | Exact `manifest` plus `tree_base="archive-root/"` | bounded JSON stream |
+
+`health.ready` describes the daemon, not archive integrity, mount proof or
+initialization. `policy_valid` is true after a valid fresh snapshot, false on a
+classified failed policy/inspection, or null when query capacity prevents that
+diagnosis; `archive` may be null. Health returns diagnostics without repairing,
+probing writability or reconstructing a catalog. Version/capabilities remain
+available if installed archive policy later becomes invalid. Startup still
+requires valid server configuration/credentials and an initial installed policy.
+
+### Read and problem wire models
+
+[`ReadResponse`](../src/hfcache/api/models.py) is separate from durable schemas:
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | Wire wrapper version `1` |
+| `request_id` | Authoritative server-generated ID for this HTTP request |
+| `archive_id` | Fresh snapshot UUID, or startup-pinned configured UUID for policy-independent/fallback diagnostics; never a sentinel-proof claim |
+| `config_fingerprint` | Existing archive-policy fingerprint, or null when no fresh snapshot was used |
+| `envelope` | Complete schema-1 Envelope, or an explicitly paged piece of its data |
+| `next_cursor` | Opaque next-page token, or null |
+
+The Envelope retains domain warnings/errors, exit classification, command and
+run identity. Archive inspection can return HTTP 200 with a failed domain
+Envelope; a transport success does not make the archive healthy. Report reads
+use the existing report's run ID while request correlation remains independent.
+Future CLI clients reconstruct paged arrays and retain the first Envelope's
+invocation metadata. For `list --revisions`, combine inventory rows with revision
+pages grouped by repository; the transport does not silently discard inventory
+metadata or claim the current CLI is already remote.
+
+`ApiProblem` has exactly `request_id`, `code`, safe `message` and `exit_code`.
+It contains no framework input echo, raw artifact context, exception or traceback.
+Every HTTP response carries `X-Request-ID`, `Cache-Control: no-store`,
+`X-Content-Type-Options: nosniff` and a frame-ancestor CSP. Incoming request IDs do
+not choose authoritative correlation. Authentication precedes known/unknown
+routes, method errors, docs/schema and request-body validation.
+Noncanonical trailing-slash paths return an error without automatic redirects,
+so a rejected query is never reflected into a Location header. OpenAPI and the
+optional docs HTML obey the same normal response byte ceiling.
+
+### Query parameters and page ordering
+
+Status, repository inventory and revision pages accept repeated `selector`
+values using domain `TYPE:ID`, optional `type=model|dataset`, `limit` and `cursor`.
+Report inventory accepts only `limit` and `cursor`. Other read routes reject all
+query parameters. Unknown keys, repeated scalar parameters, coercive numeric
+forms and malformed domain values fail safely. `limit` is a positive ASCII
+decimal integer, default `100`, capped by `limits.max_page_size`; at most `100`
+selectors of at most `256` characters are accepted. Cursors are at most `256`
+characters. The raw query is capped at `8192` bytes and total header name/value
+bytes at `32768`. Read routes accept no nonempty body; the byte limit is enforced
+even without Content-Length.
+
+Status preserves configured order followed by unmanaged publication order;
+inventory uses canonical repository order, revisions use that order followed by
+retained publication generation, and report IDs use reverse timestamped filename
+order. Offset cursors bind route/filter scope, policy fingerprint and a digest
+of the sanitized paged array. Changed scope/policy/array or an offset beyond the
+current result returns 409; malformed encoding returns 422. Restart the walk
+after a stale-cursor refusal. Cursor contents are not an authorization grant.
+Walk until `next_cursor=null`; page sequences are not an archive-wide snapshot
+and ancillary fields can change independently of the paged array. No page silently substitutes a newer exact
+publication or truncates a legacy result.
+
+### Response and evidence budgets
+
+Normal JSON responses are capped at `limits.max_response_bytes` (default 8 MiB).
+Shared metadata work is bounded by `max_scan_entries` and per-artifact plus
+aggregate bytes, each byte ceiling defaulting to `max_artifact_bytes` (64 MiB).
+Exhaustion is `HFAPI005`/503, never an empty page or an unverified-to-verified
+upgrade. A small returned page does not bypass the bounded underlying scan.
+
+Reports/manifests are parsed and identity-validated within that source budget,
+then stream a `ReadResponse` using incremental JSON encoding with chunks at most
+8192 bytes. The encoded stream is pre-counted and capped at eight times the
+configured artifact ceiling to allow JSON escaping/wrapper overhead. It retains
+a bounded parsed representation in memory; it is not bulk file transfer or an
+unbounded raw-file relay. Response-size refusal happens before headers, and the
+metadata lease remains held through stream completion/disconnect.
 
 ## Execution correlation (API-004)
 
@@ -142,7 +262,9 @@ page sizes, report projections, and event buffers.
 classification, never raw framework exception input or tracebacks. HTTP errors:
 401 missing/invalid bearer with challenge; 403 wrong capability; 404 absent;
 409 stale policy, conflicting key, or unfinished result; 422 invalid request;
-503 full/draining/unavailable executor; 500 sanitized unexpected error.
+503 full/draining/unavailable executor; 500 sanitized unexpected error. Unsupported
+methods receive authenticated 405 with `HFAPI007`. Current read integrity
+refusals use 409 and retain their domain HFVER code/exit classification.
 A terminal failed domain Envelope is retrieved with HTTP 200 and retains its
 application exit code (priority 40, 50, 30); HTTP success never means domain
 success. New HFAPI client config/auth failures exit 10; unavailable or uncertain
@@ -153,8 +275,9 @@ and exact registered credential values from diagnostic trees. Opaque tokens must
 be registered when loaded, before use; arbitrary unknown strings cannot be
 recognized as secrets. `Problem` snapshots sanitized diagnostics, and public
 rendering plus exception string/repr paths sanitize again to cover late
-registration or mutable legacy contexts. API-005/006 must apply the same rule to
-inbound API credentials and transport validation/exception output.
+registration or mutable legacy contexts. API-005 registers inbound API
+credentials and API-006 applies the same boundary to response diagnostics and
+validation/exception output.
 
 Inventory, revisions, reports, operations, and events use bounded cursor pages
 with deterministic ordering documented as each route lands. Clients walk all
@@ -199,9 +322,10 @@ history is uncertainty, not proof of nonexecution or permission to replay.
 
 ## Credentials and configuration
 
-API-005 now supplies strict configuration, credential loading, fixed capability
-principals and a reusable FastAPI bearer adapter. Runtime routes remain planned;
-API-006 must attach authentication to every endpoint and apply transport bounds.
+API-005 supplies strict configuration, credential loading, fixed capability
+principals and a reusable FastAPI bearer adapter. API-006 authenticates all
+metadata HTTP routes/errors/schema/docs and applies transport bounds. Jobs,
+candidate operations and write endpoints remain planned.
 
 | Credential class | Accepted interface | Core capability | REST read | REST write |
 | --- | --- | --- | --- | --- |
@@ -210,8 +334,8 @@ API-006 must attach authentication to every endpoint and apply transport bounds.
 | MCP reader | Future MCP only | `mcp-read` | 401 `HFAPI001` | 401 `HFAPI001` |
 | Absent, invalid or malformed bearer | none | none | 401 `HFAPI001` | 401 `HFAPI001` |
 
-These are verified principal/capability results, not assertions that a route
-exists. Cross-interface credentials are rejected as unauthenticated. Missing,
+These capability results do not imply that a planned job/write route exists.
+Cross-interface credentials are rejected as unauthenticated. Missing,
 malformed and invalid authentication uses the same safe detail `Not authenticated`
 and `WWW-Authenticate: Bearer realm="hfcache"`; capability refusal is `Forbidden`.
 Configured missing/unsafe/racing/malformed API credentials are startup

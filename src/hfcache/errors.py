@@ -21,6 +21,7 @@ __all__ = [
     "HfcacheError",
     "IntegrityError",
     "Problem",
+    "RequestError",
     "RetentionError",
     "SafetyError",
     "SynchronizationError",
@@ -191,6 +192,20 @@ class AuthorizationError(ConfigurationError):
 
     def __init__(self) -> None:
         super().__init__([Problem("HFAPI002", self.detail)])
+
+
+class RequestError(ConfigurationError):
+    """Sanitized transport validation/security refusal, with a stable HTTP status."""
+
+    def __init__(
+        self,
+        *,
+        code: str = "HFAPI006",
+        status_code: int = 422,
+        message: str = "Invalid request",
+    ) -> None:
+        self.status_code = status_code
+        super().__init__([Problem(code, message)])
 
 
 class SafetyError(HfcacheError):

@@ -28,6 +28,7 @@ the mount carry NAS-side ids with no local account (`docs/plan.md` §35.3);
 same comparison in a form that holds under Mapall.
 """
 
+import os
 import socket
 import stat
 from dataclasses import dataclass
@@ -36,24 +37,27 @@ from typing import TYPE_CHECKING, Any, Final, Literal, final
 
 from hfcache import __version__
 from hfcache.errors import Problem, SafetyError
-from hfcache.models import ArchiveSentinel, Provenance, dump
+from hfcache.metadata import QueryLimitError
+from hfcache.models import ArchiveSentinel, Provenance, dump, load
 from hfcache.storage import (
     SENTINEL_MODE,
+    MountFacts,
     atomic_write_bytes,
     describe_mount,
     fsync_directory,
     is_temporary_sibling,
     mount_problems,
+    read_mount_table,
     read_sentinel,
 )
 
 if TYPE_CHECKING:
-    import os
     from collections.abc import Iterable, Sequence
     from pathlib import Path
 
+    from hfcache.metadata import MetadataReader
     from hfcache.paths import ArchiveLayout
-    from hfcache.storage import MountEntry, MountFacts
+    from hfcache.storage import MountEntry
 
 __all__ = [
     "REPORTED_ENTRY_LIMIT",
@@ -106,7 +110,9 @@ def _bounded(values: list[str]) -> tuple[str, ...]:
     return tuple(sorted(values)[:REPORTED_ENTRY_LIMIT])
 
 
-def _walk(layout: ArchiveLayout, known: Iterable[Path]) -> _Contents:
+def _walk(
+    layout: ArchiveLayout, known: Iterable[Path], *, reader: MetadataReader | None = None
+) -> _Contents:
     """Enumerate the archive root, descending only into directories of the layout.
 
     Descent is bounded on purpose. An unknown directory is reported and not
@@ -125,19 +131,30 @@ def _walk(layout: ArchiveLayout, known: Iterable[Path]) -> _Contents:
     while queue:
         directory = queue.pop(0)
         try:
-            children = sorted(directory.iterdir())
-        except OSError as exc:
-            unreadable.append(f"{layout.archive_relative(directory)}: {exc.strerror}")
+            metadata = (
+                {entry.path: entry.info for entry in reader.entries(directory, missing_ok=False)}
+                if reader is not None
+                else {}
+            )
+            children = sorted(metadata) if reader is not None else sorted(directory.iterdir())
+        except (OSError, ValueError) as exc:
+            reason = (
+                "unsafe or unreadable" if reader is not None else getattr(exc, "strerror", str(exc))
+            )
+            unreadable.append(f"{layout.archive_relative(directory)}: {reason}")
             continue
         for child in children:
             where = str(layout.archive_relative(child))
-            if child.is_symlink():
+            mode = metadata[child].st_mode if reader is not None else None
+            if stat.S_ISLNK(mode) if mode is not None else child.is_symlink():
                 symlinks.append(where)
             elif child == layout.sentinel:
                 sentinel_present = True
-            elif is_temporary_sibling(child.name) and child.is_file():
+            elif is_temporary_sibling(child.name) and (
+                stat.S_ISREG(mode) if mode is not None else child.is_file()
+            ):
                 temporaries.append(child)
-            elif child in expected and child.is_dir():
+            elif child in expected and (stat.S_ISDIR(mode) if mode is not None else child.is_dir()):
                 existing.append(child)
                 queue.append(child)
             else:
@@ -151,6 +168,65 @@ def _walk(layout: ArchiveLayout, known: Iterable[Path]) -> _Contents:
         unreadable=_bounded(unreadable),
         sentinel_present=sentinel_present,
     )
+
+
+def _directory_status(reader: MetadataReader, path: Path) -> os.stat_result:
+    descriptor = reader.open(path, directory=True)
+    try:
+        return os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _metadata_mount(
+    layout: ArchiveLayout, reader: MetadataReader, table: Sequence[MountEntry] | None
+) -> MountFacts:
+    """Observe the root without resolving a symlinked absolute ancestor (FS-02)."""
+    try:
+        _directory_status(reader, layout.root)
+    except FileNotFoundError:
+        return MountFacts(
+            path=layout.root, exists=False, is_directory=False, is_symlink=False, entry=None
+        )
+    except OSError, ValueError:
+        return MountFacts(
+            path=layout.root, exists=True, is_directory=False, is_symlink=False, entry=None
+        )
+    entries = read_mount_table() if table is None else table
+    match = next(
+        (entry for entry in reversed(entries) if str(entry.mount_point) == str(layout.root)), None
+    )
+    return MountFacts(
+        path=layout.root, exists=True, is_directory=True, is_symlink=False, entry=match
+    )
+
+
+def _metadata_sentinel(
+    layout: ArchiveLayout, reader: MetadataReader, archive_id: str
+) -> tuple[ArchiveSentinel | None, list[Problem]]:
+    """Apply the existing sentinel contract to one bounded, no-follow read."""
+    where = str(layout.archive_relative(layout.sentinel))
+    try:
+        raw = reader.read(layout.sentinel)
+        sentinel = load(ArchiveSentinel, raw, error=SafetyError, code="HFMNT006", location=where)
+    except QueryLimitError:
+        raise
+    except SafetyError as exc:
+        return None, list(exc.problems)
+    except OSError, ValueError:
+        return None, [
+            Problem("HFMNT006", "sentinel is absent, unsafe or unreadable", location=where)
+        ]
+    problems = []
+    if sentinel.archive_id != archive_id:
+        problems.append(
+            Problem(
+                code="HFMNT007",
+                message="sentinel archive identity disagrees with configuration",
+                location=where,
+            )
+        )
+    return sentinel, problems
 
 
 def published_adoption_problems(
@@ -246,6 +322,7 @@ def inspect_archive(
     *,
     archive_id: str,
     table: Sequence[MountEntry] | None = None,
+    reader: MetadataReader | None = None,
 ) -> ArchiveInspection:
     """Describe the target without touching it (`archive init --inspect`).
 
@@ -254,7 +331,11 @@ def inspect_archive(
     means: `--inspect` reports it, and `--confirm` refuses anything but
     `uninitialized` or `partially_initialized`.
     """
-    mount = describe_mount(layout.root, table=table)
+    mount = (
+        _metadata_mount(layout, reader, table)
+        if reader is not None
+        else describe_mount(layout.root, table=table)
+    )
     problems = mount_problems(mount)
     if problems:
         return ArchiveInspection(
@@ -272,7 +353,7 @@ def inspect_archive(
         )
 
     specs = layout.required_directories()
-    contents = _walk(layout, (spec.path for spec in specs))
+    contents = _walk(layout, (spec.path for spec in specs), reader=reader)
     existing = set(contents.existing)
     # Sorted, not in creation order: `docs/architecture.md` §5.3 requires every
     # generated array to be byte-wise ascending on the relative path. For these
@@ -286,7 +367,11 @@ def inspect_archive(
 
     sentinel: ArchiveSentinel | None = None
     if contents.sentinel_present:
-        sentinel, sentinel_problems = read_sentinel(layout, archive_id=archive_id)
+        sentinel, sentinel_problems = (
+            _metadata_sentinel(layout, reader, archive_id)
+            if reader is not None
+            else read_sentinel(layout, archive_id=archive_id)
+        )
         problems.extend(sentinel_problems)
         if missing:
             message = (
@@ -304,14 +389,29 @@ def inspect_archive(
 
     adopted = layout.published in existing and not contents.sentinel_present
     if layout.published in existing:
-        problems.extend(
-            published_adoption_problems(
-                layout.root.stat(),
-                layout.published.stat(),
-                mode=next(spec.mode for spec in specs if spec.path == layout.published),
-                location=str(layout.archive_relative(layout.published)),
+        try:
+            root_status = (
+                _directory_status(reader, layout.root) if reader is not None else layout.root.stat()
             )
-        )
+            published_status = (
+                _directory_status(reader, layout.published)
+                if reader is not None
+                else layout.published.stat()
+            )
+        except OSError, ValueError:
+            if reader is None:
+                raise
+            problems.append(Problem("HFMNT015", "archive directories changed or became unsafe"))
+            adopted = False
+        else:
+            problems.extend(
+                published_adoption_problems(
+                    root_status,
+                    published_status,
+                    mode=next(spec.mode for spec in specs if spec.path == layout.published),
+                    location=str(layout.archive_relative(layout.published)),
+                )
+            )
     problems.extend(_content_problems(layout, contents))
 
     existing_names = tuple(sorted(str(layout.archive_relative(path)) for path in existing))

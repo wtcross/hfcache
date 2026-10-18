@@ -124,10 +124,14 @@ deployed writer from the browser: sync control with live activity, archive
 browsing, configuration editing, schedule management, verification, run
 reports, and maintenance. Every action is one of the runbook's own CLI
 commands or systemd units — never a side channel — and the CLI remains the
-application's current interface. The activated
+plugin's current interface. The activated
 [REST-first implementation plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
 introduces authenticated remote management incrementally;
-[the API contract](docs/api.md) marks future routes as planned.
+[the API contract](docs/api.md) now marks metadata reads as implemented and
+job/write routes as planned. Every metadata route, health/schema/docs and error
+surface authenticates; discovery preserves exact publication identity and
+`published/`-relative reference locators. Bulk copies still use the read-only
+export and independent verification in [the consumer runbook](docs/consumers.md).
 [`docs/cockpit-plugin/`](docs/cockpit-plugin/) covers installation and
 usage; [`docs/cockpit.md`](docs/cockpit.md) is the contract it is written
 against.
@@ -167,10 +171,14 @@ uv sync --locked --extra server
 
 API-005 adds strict server configuration and bearer-capability primitives;
 `packaging/server.toml` is the separate server configuration example, documented
-in [`docs/server.md`](docs/server.md). HTTP endpoints, `serve`, systemd packaging
-and the isolated verification executor land in later tasks. Installing the extra
-does not start a listener or change the deployed writer. MCP remains behind the
-REST acceptance gate and adds no dependency yet.
+in [`docs/server.md`](docs/server.md). API-006 implements authenticated metadata
+routes and the explicit foreground `hfcache serve --server-config PATH` bootstrap.
+Runtime directories and protected API credentials must already be provisioned;
+installing the extra starts no listener and changes no deployed writer.
+Job/write routes, API-backed CLI migration, systemd packaging and the isolated
+verification executor remain later tasks. MCP stays behind the REST acceptance
+gate and adds no dependency yet. Disposable-socket TLS tests use the OpenSSL CLI
+as a development test tool; Python production dependencies remain locked.
 
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —

@@ -18,6 +18,11 @@ historical interface. [Decision 108](adr/decision-108.md) and the activated
 Existing CLI behavior remains until its migration packages; remote routes and
 MCP are planned, not deployed. Local help/version remain independent.
 
+**2026-10-17 API-006 amendment:** authenticated metadata REST and the foreground
+`serve` bootstrap are implemented ([decision 113](adr/decision-113.md)). Existing
+operational CLI commands still use local services; the API-backed client and all
+job/write routes remain later tasks. No deployment is asserted.
+
 ## 1. Invocation shape
 
 ```text
@@ -66,6 +71,7 @@ goes further and refuses a repository that remains configured (`AD-20`).
 
 | Command | Mutates | Purpose |
 | --- | --- | --- |
+| `serve` | private runtime sockets/lock only | Foreground authenticated metadata server bootstrap |
 | `config validate` | no | Parse and fully validate configuration |
 | `archive init` | yes | One-time guarded archive creation |
 | `archive init --inspect` | no | Describe a partial or existing initialization |
@@ -81,6 +87,26 @@ goes further and refuses a repository that remains configured (`AD-20`).
 | `quarantine` | yes with `--apply` | Remove explicitly selected, proven redundant recovered staging |
 | `repair` | yes | Reconstruct and republish a damaged known revision |
 | `version` | no | Application and dependency versions |
+
+### `serve`
+
+```text
+hfcache serve [--server-config PATH]
+```
+
+Foreground server bootstrap, requiring the `server` installation extra.
+`--server-config` defaults to `/etc/hfcache/server.toml`; that separate policy
+selects archive configuration, credentials and listeners. A nondefault global
+`--config` or any `--token-file` is `HFARG002` before import/bind. Missing server
+packages are `HFCFG005`; missing/unreadable server TOML is `HFCFG001`.
+The [server contract](server.md) defines startup checks, one application across
+Unix/TCP, TLS, locking and shutdown. No Hub access or archive initialization is
+performed by startup. Daemon logging uses server policy, not request verbosity.
+
+Normal daemon execution writes no success Envelope or other stdout. With
+`--json`, classified startup failures retain the schema-1 failure Envelope.
+This foreground bootstrap is the narrow exception to operational commands'
+one-terminal-envelope discipline; it is outside remote operation parity.
 
 ### `config validate`
 
@@ -467,7 +493,7 @@ a broken deployment.
 | --- | --- |
 | `0` | Success, including non-fatal dependency warnings |
 | `10` | Invalid configuration or invocation precondition |
-| `20` | Mount, sentinel, permission, capacity, lock, or unresolvable-transaction safety failure |
+| `20` | Mount, sentinel, permission, capacity, lock, unresolvable transaction, or unavailable/internal management-service safety failure |
 | `30` | One or more repository sync failures |
 | `40` | Integrity verification failure |
 | `50` | Prune, repair, or recovery-apply failure |
@@ -491,6 +517,8 @@ so systemd records the unit as failed (`docs/plan.md` §11.2).
 `--json` writes exactly one envelope to stdout. Human-readable text goes to
 stdout only without `--json`; logs and progress always go to stderr. This means
 `hfcache --json sync | jq` is always safe.
+The long-lived `serve` bootstrap writes no terminal success envelope; only its
+classified startup failure is rendered under `--json`, as specified above.
 
 ```json
 {
@@ -564,10 +592,13 @@ condition; a retired condition retires its code.
 | `HFAPI002` | An authenticated API principal lacks the required capability; HTTP 403 |
 | `HFAPI003` | A configured API credential source is missing, unsafe, changes while read or contains a malformed token |
 | `HFAPI004` | The same API credential value is assigned to more than one capability class |
+| `HFAPI006` | Invalid API request or exceeded request/response bound; HTTP 422 or 413 |
+| `HFAPI007` | API resource/method is absent (HTTP 404/405), or a page cursor is stale (HTTP 409) |
+| `HFAPI010` | API Host/Origin/TLS/proxy security policy refuses a request; HTTP 400 or 403 |
 
-`HFAPI001`–`HFAPI004` currently describe shared authentication/startup primitives
-and the reusable FastAPI bearer adapter. Runtime route/client translation lands
-in later API tasks; this taxonomy does not imply a shipped HTTP endpoint.
+The `HFAPI` family defaults to exit `10`; the explicit safety codes below exit
+`20` ([decision 113](adr/decision-113.md)). HTTP status describes the transport
+result and does not override a domain Envelope's application exit classification.
 
 ### 5.2 Storage and transaction safety — exit `20`
 
@@ -592,6 +623,10 @@ in later API tasks; this taxonomy does not imply a shipped HTTP endpoint.
 | `HFTXN002` | Checkpoint combination that no valid execution can produce |
 | `HFTXN003` | Journal evidence contradicts the filesystem |
 | `HFTXN004` | Recovery state is ambiguous; an operator must decide |
+| `HFAPI005` | Metadata query cannot complete within its configured work/byte budget; HTTP 503 |
+| `HFAPI008` | Unexpected internal API failure, with sanitized diagnostics; HTTP 500 |
+| `HFAPI009` | Metadata service is full, draining or unavailable; HTTP 503 |
+| `HFAPI011` | Daemon instance lock is unsafe, unavailable or already held; HTTP 503 classification |
 
 ### 5.3 Hub and synchronization — exit `30`
 

@@ -57,6 +57,7 @@ begins, so they never co-occur with these three and are not part of the ordering
 """
 
 _CODE_LENGTH = 8
+_API_SAFETY_CODES: Final = frozenset({"HFAPI005", "HFAPI008", "HFAPI009", "HFAPI011"})
 """Five letters of prefix and three digits, e.g. `HFVER001`."""
 
 
@@ -80,6 +81,8 @@ def classify(code: str) -> ExitCode:
     leaves the exit code at `0` when nothing else failed (`AD-07`).
     """
     prefix = _prefix(code)
+    if code in _API_SAFETY_CODES:
+        return ExitCode.SAFETY
     if prefix in WARNING_PREFIXES:
         return ExitCode.SUCCESS
     classification = PREFIX_EXIT_CODES.get(prefix)

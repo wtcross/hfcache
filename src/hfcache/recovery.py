@@ -38,6 +38,7 @@ correct resolution, and guessing at one is how an archive loses data.
 """
 
 import shutil
+import stat
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import partial
@@ -103,6 +104,7 @@ if TYPE_CHECKING:
 
     from hfcache.config import StorageConfig
     from hfcache.identity import RunId
+    from hfcache.metadata import MetadataReader
     from hfcache.models import TransactionJournal
     from hfcache.paths import ArchiveLayout
     from hfcache.transactions import JournalFile
@@ -210,6 +212,7 @@ def reconcile_storage(
     *,
     stale_staging_age_hours: int,
     now: datetime | None = None,
+    reader: MetadataReader | None = None,
 ) -> Reconciliation:
     """Report what the transaction areas hold, without touching any of it.
 
@@ -226,18 +229,25 @@ def reconcile_storage(
     for area in (layout.staging, layout.trash, layout.quarantine, layout.repair_caches):
         name = str(layout.archive_relative(area))
         try:
-            children = sorted(area.iterdir())
+            metadata = {entry.path: entry.info for entry in reader.entries(area)} if reader else {}
+            children = sorted(metadata) if reader else sorted(area.iterdir())
         except OSError:
+            if reader is not None:
+                raise
             # An area that is not there is an archive that has not reached this
             # state yet, which is not a finding. An unreadable one is reported by
             # `doctor`'s writability check, not here.
             continue
         for child in children:
             where = str(layout.archive_relative(child))
-            if not _is_transaction_name(child.name):
+            if not _is_transaction_name(child.name) or (
+                reader is not None and not stat.S_ISDIR(metadata[child].st_mode)
+            ):
                 unknown.append(where)
                 continue
-            age = (moment.timestamp() - child.stat().st_mtime) / SECONDS_PER_HOUR
+            age = (
+                moment.timestamp() - (metadata[child] if reader else child.stat()).st_mtime
+            ) / SECONDS_PER_HOUR
             stale = name == ".store/staging" and age >= stale_staging_age_hours
             findings.append(
                 AreaFinding(
@@ -338,13 +348,14 @@ def measure_health(
     *,
     stale_staging_age_hours: int,
     now: datetime | None = None,
+    reader: MetadataReader | None = None,
 ) -> ArchiveHealth:
     """Free space against the reserve, plus whatever the transaction areas hold.
 
     `status` is the command an operator runs first, so this reads and never
     writes: no probe, no lock, no Hub request (`docs/cli.md` §2).
     """
-    capacity = describe_capacity(layout.root)
+    capacity = reader.capacity() if reader else describe_capacity(layout.root)
     return ArchiveHealth(
         available_bytes=capacity.available_bytes,
         total_bytes=capacity.total_bytes,
@@ -354,7 +365,7 @@ def measure_health(
             minimum_percent=storage.minimum_free_space_percent,
         ),
         reconciliation=reconcile_storage(
-            layout, stale_staging_age_hours=stale_staging_age_hours, now=now
+            layout, stale_staging_age_hours=stale_staging_age_hours, now=now, reader=reader
         ),
     )
 

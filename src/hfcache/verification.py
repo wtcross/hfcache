@@ -72,7 +72,7 @@ from hfcache.reporting import (
 from hfcache.storage import read_model, write_model
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
     from pathlib import Path
 
     from hfcache.hashing import FileDigest
@@ -999,7 +999,16 @@ def estimate_verification(layout: ArchiveLayout) -> VerificationEstimate:
     only a completed `--full` writes. Before the first one there is no rate and
     therefore no duration.
     """
-    resolved = resolve_archive(layout)
+    return estimate_resolved(resolve_archive(layout), catalog=read_verification_catalog(layout))
+
+
+def estimate_resolved(
+    resolved: Sequence[Resolved],
+    *,
+    catalog: VerificationCatalog | None,
+    stat_file: Callable[[Path], os.stat_result] = lambda path: path.lstat(),
+) -> VerificationEstimate:
+    """Shared estimator arithmetic with an optional anchored stat-only capability."""
     repositories: set[tuple[str, str]] = set()
     seen: set[object] = set()
     unique_bytes = 0
@@ -1017,8 +1026,8 @@ def estimate_verification(layout: ArchiveLayout) -> VerificationEstimate:
         for entry in item.target.manifest.files:
             path = resolve_within(item.target.tree, entry.path, code="HFVER007")
             try:
-                info = path.lstat()
-            except OSError:
+                info = stat_file(path)
+            except OSError, ValueError:
                 unreadable += 1
                 continue
             key = (
@@ -1034,7 +1043,6 @@ def estimate_verification(layout: ArchiveLayout) -> VerificationEstimate:
             seen.add(key)
             unique_bytes += info.st_size
 
-    catalog = read_verification_catalog(layout)
     last = catalog.last_full_verification if catalog else None
     return VerificationEstimate(
         repositories=len(repositories),

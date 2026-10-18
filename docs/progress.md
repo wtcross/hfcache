@@ -867,6 +867,37 @@ package in this family.
   MCP dependency/import, production operation or deployment; live/NFS/host and
   additional build-marker checks did not run. Next selected task is API-006.)
 
+- [x] API-006 Serve bounded authenticated metadata with one lifespan
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-006-fastapi-lifecycle-and-reads.md).
+  Implemented eight metadata parity rows, health/schema/optional docs and lazy
+  foreground serve; 21 rows and public CLI-client migration remain planned.
+  Every HTTP surface authenticates before routing/body/error handling, with
+  strict transport/bounds, safe typed problems and authoritative correlation.
+  Shared no-follow metadata readers harden status/list/latest-report/catalog/
+  inspection/health/estimate paths without archive repair or false confidence.
+  Exact publication locators retain their declared bases; bounded parsed-evidence
+  streams and content-bound cursor continuation preserve identity and refusal.
+  One private Unix/TCP application/lifespan/registry/pool is exercised with
+  disposable TLS sockets and CA rejection. Typed startup errors retain their
+  classification; serve's no-success-Envelope exception is explicit. Existing
+  socket names are preserved, cleanup proves its created inode and lock inodes
+  remain. Decision 113/112 amendment, invariant/architecture/API/server/CLI/
+  security/consumer, README, plan and Unreleased contracts agree; no dependency
+  or durable archive schema change. Focused selections: 227 app/config/auth,
+  181 metadata, 76 adversarial HTTP, 9 bootstrap, 22 estimates and final 96
+  HTTP/bootstrap tests pass. First gate stopped on formatting; second found a
+  damaged-reference estimate count regression; third found a worker-callback
+  capacity race. Estimator and deterministic delayed/cancelled-worker ownership
+  regressions fix both. Fourth `rtk proxy bash scripts/check.sh` exits 0:
+  locked sync, format/lint/types, 2,133 Python tests (40 deselected), wheel/sdist,
+  isolated locked base/server install/import/help/version, 45 Cockpit tests and
+  production build. Links/current/dependencies, 8 implemented/21 planned parity
+  rows, 113 decision/ADR records and whitespace pass. Real socket/TLS tests use
+  test-only OpenSSL certificates; live/NFS/installed-host and extra build-marker
+  suites did not run. No production listener/archive operation, deployment,
+  push, merge or tag. Next selected task is API-007.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3440,3 +3471,20 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      test skips. Existing versions, FS/TX, durable schemas and AD-21 remain.
      API-006 owns runtime route protection; receipts/execution and MCP remain
      later tasks. No listener or production installation is introduced.
+
+113. **Serve bounded metadata through one authenticated lifespan**
+     (2026-10-17, API-006). [ADR](adr/decision-113.md): one injectable metadata
+     app and explicit foreground bootstrap share Unix/TCP, a daemon lock and a
+     bounded context-propagating pool. Authenticate all HTTP surfaces before
+     routing/body/error processing, and bound typed wire resources/streams.
+     Shared no-follow readers cover legacy local paths too; invalid derived
+     evidence stays unknown without repair. Content-bound cursors refuse stale
+     continuation; exact publication locators retain their declared bases.
+     Configuration UUID metadata is not proof of a sentinel check on every
+     read. Reject unbounded event-loop scans, per-socket apps, path-only evidence
+     trust and raw error/input echoes. HFAPI005/008/009/011 override the family
+     default to safety exit 20; auth/config/request cases retain 10. `serve` is
+     the narrow no-success-Envelope bootstrap exception, preserving typed JSON
+     startup failures. Disable raw framework logs/slash redirects; test the
+     locked Uvicorn TLS/Unix lifecycle on disposable sockets. No job/write,
+     verifier fallback, MCP, durable schema or production deployment is added.

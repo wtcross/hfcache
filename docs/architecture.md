@@ -1311,6 +1311,25 @@ credential values. Whole-archive authorization, AD-21 and immutable archive
 schemas retain their existing meaning. [Server](server.md) records every key
 and the precise implemented/pending boundary.
 
+### Authenticated metadata transport amendment (API-006, 2026-10-17)
+
+[Decision 113](adr/decision-113.md) adds an injectable read application and
+explicit foreground `serve` bootstrap. One authenticated lifespan, private daemon
+lock and bounded metadata pool serve Unix/TCP, with direct TLS only on TCP.
+Every HTTP surface, including errors/docs/schema, authenticates before routing
+and validation. Requests carry server-generated correlation; work/response limits
+and typed safe errors preserve domain classifications. Shared no-follow metadata
+readers cover legacy status/list/catalog/latest-report/health/estimate paths and
+preserve tolerant unknown confidence without repair or archive creation.
+
+Wire pages and bounded parsed-evidence JSON streams remain separate from durable
+archive models. Cursors bind scope/policy and paged-row content; stale walks fail
+409. Exact reference locators remain published-relative and manifest tree fields
+remain archive-relative. Archive inspection is diagnostic, not sentinel proof
+for every metadata request. No bulk file server, write/job route, new dependency,
+MCP or production deployment is added. The daemon bootstrap has no success
+stdout Envelope; its classified startup failures retain normal JSON errors.
+
 ## 9. Phase 0 acceptance
 
 Phase 0's stated acceptance criteria, and where each is satisfied:

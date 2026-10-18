@@ -274,6 +274,36 @@ def main(
 
 
 @app.command()
+def serve(
+    ctx: typer.Context,
+    server_config: Annotated[
+        Path,
+        typer.Option(
+            "--server-config", metavar="PATH", readable=False, help="Daemon server configuration."
+        ),
+    ] = Path("/etc/hfcache/server.toml"),
+) -> None:
+    """Run the authenticated REST server (requires the server installation extra)."""
+    started_at = utc_now()
+    try:
+        options = _options(ctx)
+        if options.token_file is not None or options.config_path != DEFAULT_CONFIG_PATH:
+            message = (
+                "serve uses --server-config; archive policy and Hub credentials "
+                "belong to that server policy"
+            )
+            raise ConfigurationError.single(message, code="HFARG002")
+        try:
+            from hfcache.server import run  # noqa: PLC0415 - optional server dependency
+        except ImportError:
+            message = "serve requires the server installation extra"
+            raise ConfigurationError.single(message, code="HFCFG005") from None
+        run(server_config)
+    except HfcacheError as error:
+        _report_failure(ctx, "serve", started_at, error)
+
+
+@app.command()
 def version(ctx: typer.Context) -> None:
     """Show application and dependency versions.
 

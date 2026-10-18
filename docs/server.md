@@ -1,8 +1,8 @@
 # Writer server contract
 
-Status: API-005 implements configuration and bearer-capability primitives.
-Runtime HTTP endpoints, lifecycle, executor and service packaging remain
-API-006/008/014. API-001 establishes the target boundary.
+Status: API-006 implements authenticated metadata HTTP resources and their
+controlled application lifespan over API-005 configuration/auth primitives.
+Jobs, isolated execution, CLI migration and service packaging remain later tasks.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
@@ -25,8 +25,8 @@ The server configuration default is `/etc/hfcache/server.toml`.
 domain, not an addition to `examples/config.toml` and not an installed listener.
 Install/update ownership remains operator-controlled `root:hfcache`; the server
 has no configuration-install API. Listener/auth settings are immutable until
-restart. Configured TLS paths are declarations; the later listener must load and
-validate the certificate/key before binding.
+restart. Configured TLS paths are declarations; the listener loads and validates
+the certificate/key before accepting connections.
 
 | Top-level key | Type/default | Constraint or meaning |
 | --- | --- | --- |
@@ -36,8 +36,8 @@ validate the certificate/key before binding.
 | `listener` | table, defaults below | Unix/TCP/TLS and browser/proxy policy |
 | `limits` | table, defaults below | Bounded resource policy for later routes/runner |
 | `maintenance_enabled` | bool, `false` | Later archive initialization requires this gate plus writer capability and domain confirmation |
-| `interactive_docs` | bool, `false` | Later docs/OpenAPI routes remain authenticated when enabled |
-| `mcp_enabled` | bool, `false` | Requires an `mcp_reader` source; no mount/import is implemented before REST acceptance |
+| `interactive_docs` | bool, `false` | Enables authenticated `/api/v1/docs`; `/api/v1/openapi.json` is always authenticated |
+| `mcp_enabled` | bool, `false` | Requires an `mcp_reader` source in the model; runtime startup refuses enablement before the REST/MCP gate |
 | `log_level` | str, `"info"` | `debug`, `info`, `warning` or `error`; startup-only |
 
 ### Listener settings
@@ -61,13 +61,13 @@ Listener strings reject nonprintable characters before URL parsing. Both local
 listeners default enabled; use explicit `unix_enabled`/`tcp_enabled` booleans to
 select one in TOML, which has no null literal. At least one must remain enabled.
 `ListenerConfig.unix_address` and `.tcp_address` expose only enabled addresses
-to the later server wiring; unused configured addresses retain strict validation.
+to server wiring; unused configured addresses retain strict validation.
 
 Unix sockets authenticate exactly as TCP does. Non-loopback TCP requires direct
 TLS. An off-host TLS proxy connects only to loopback TCP and requires
 `proxy_tls=true` plus explicit trusted proxy addresses; forwarded headers are
 never trusted from everyone. The config model validates those combinations;
-actual Host/Origin, proxy-prefix and listener enforcement lands in API-006/008.
+API-006 applies Host/Origin/proxy-prefix policy at the HTTP boundary.
 No wildcard CORS, token query parameters or URL userinfo is permitted by the
 management contract. The later client always verifies off-host TLS.
 
@@ -82,12 +82,22 @@ management contract. The later client always verifies off-host TLS.
 | `max_queued_operations` | `16` | `0`–`64` |
 | `retained_terminal_operations` | `1000` | `1`–`100000` |
 | `shutdown_timeout_seconds` | `300` | `1`–`86400` |
+| `max_response_bytes` | `8388608` | `1024`–`67108864` |
+| `max_artifact_bytes` | `67108864` | `1024`–`1073741824` |
+| `max_scan_entries` | `10000` | `10`–`1000000` |
 
-These are configuration constraints, not evidence that admission, pagination,
-body limits, shutdown or receipt retention already run. API-006/007/008 must
-enforce the corresponding limits and cannot age out ambiguous/nonterminal work
-to satisfy a terminal-history count. Receipt retention policy remains subject to
+API-006 enforces read-page/body/response/work and metadata-pool limits; shutdown
+joins its workers.
+Job admission and receipt retention remain API-007/008 work and cannot age out
+ambiguous/nonterminal work to satisfy a terminal-history count. Receipt policy remains subject to
 the admitted-operation contract in [API lifecycle](api.md#admission-idempotency-and-lifecycle).
+
+API-006 applies finite metadata entry/artifact/total-byte budgets through shared
+`QueryBounds`. A page size limits its returned items, not the cost of the bounded
+underlying scan; budget exhaustion returns visible `HFAPI005`/503. It never
+becomes an empty page or raises verification confidence. The local CLI's default
+queries retain complete results without HTTP ceilings. No metadata scan hashes
+artifact content or creates/repairs an archive.
 
 ### Archive-policy reload
 
@@ -97,10 +107,11 @@ a frozen `PolicySnapshot(config, fingerprint)` using the existing archive
 fingerprint. Earlier snapshots remain unchanged. Invalid updates fail new
 archive work; changed root/UUID fails closed with `HFCFG005` until restart.
 API credentials never enter the archive snapshot or fingerprint; no new server
-fingerprint format exists. API-006 will take a snapshot for each query/admission;
+fingerprint format exists. API-006 takes a snapshot for each archive query;
 API-008 must additionally reload/compare policy under the archive lock before a
 queued mutation. These primitives do not install policy or switch archive
-authority, and route wiring is not implemented in API-005.
+authority. Version/capabilities do not need a fresh archive snapshot; health can
+diagnose failed updated policy without silently switching archive authority.
 
 ## Implemented credential and capability boundary (API-005)
 
@@ -154,9 +165,10 @@ The optional [`api.security`](../src/hfcache/api/security.py) adapter supplies
 `BearerAuthentication(registry)` and `RequireCapability(authentication, capability)`.
 It validates the original single bounded Authorization field before FastAPI can
 normalize input, delegates verification to the core and preserves those
-responses. It creates no application or runtime route. API-006 must attach the
-boundary to every endpoint, including health, capabilities, docs and OpenAPI,
-and sanitize HTTP validation/exception output. Operation receipts do not exist
+responses. The adapter itself creates no application. API-006's outer boundary
+uses the same core verifier before framework routing/validation on every HTTP
+surface, including health, capabilities, docs, OpenAPI, unknown paths and method
+errors, and sanitizes validation/exception output. Operation receipts do not exist
 yet; API-007 must store only the nonsecret principal and correlation metadata,
 never a token, digest or credential source path.
 
@@ -185,11 +197,84 @@ to 5 seconds for connect/pool and 30 seconds for read/write. Callers own closing
 the client. The primitive sends no request and defines no API endpoint, bearer
 forwarding or response policy; API-011 still owns the actual client.
 
-## Runtime target (not yet implemented)
+## Implemented metadata lifespan (API-006)
 
-Run one unprivileged process, one admission registry, one heavyweight worker,
-a bounded metadata pool, and both local Unix and optional TCP listeners sharing
-that application. A daemon-instance lock prevents competing registries. Actual
+[`create_app`](../src/hfcache/api/app.py) accepts a frozen server config and
+optional credential registry, installed policy, query factory and instance-lock
+path for hermetic tests. Import/factory construction starts no listener and
+performs no archive initialization, repair or Hub call. The lifespan owns real
+startup effects: refuse early MCP enablement, acquire the local daemon lock,
+configure logging once, load explicit API credentials, pin installed archive
+policy, construct the bounded metadata pool and cache policy-independent version
+information. Failure does not create the archive or reconstruct a catalog.
+
+The default daemon lock is `/run/hfcache/api.lock`, separate from the archive
+flock. Its parent must already exist and every component is opened no-follow.
+The retained lock inode must be a regular single-link file, owned by the effective
+server user and mode `0600`; a held/unsafe/unavailable lock refuses with
+`HFAPI011`. It is never unlinked. The lock covers the application lifespan,
+not archive mutation; operation-scoped archive flock ownership remains unchanged.
+
+Blocking queries run in `metadata_workers` threads, with total capacity bounded
+by workers plus `metadata_queue`. Each submission gets an independent copied
+execution context. Capacity remains reserved for worker completion and request/
+stream completion, including a disconnected observer whose worker is still
+running. Full/draining admission returns `HFAPI009`/503. Version/capabilities
+remain independent of archive scans. Shutdown closes pool admission and joins
+its workers before releasing the instance lock; it never cancels an archive
+operation or infers a durable result from a lost observer.
+
+The API contract records exact [resources/wire models](api.md#implemented-metadata-resources-api-006),
+page ordering and source/response bounds. Read-only inspection uses the bounded
+no-follow metadata hook; unsafe/corrupt/missing sentinel state produces unusable
+diagnostics without changing it. `health.ready` reports the daemon rather than
+archive integrity, mount safety or initialization. No health path probes writes,
+rebuilds a catalog or constructs a Hub credential. Ref/manifest checks do not
+claim per-request sentinel proof; report identity and catalog confidence retain
+their own documented validation rules.
+
+## Foreground listener bootstrap (API-006)
+
+`hfcache serve --server-config /etc/hfcache/server.toml` explicitly starts the
+configured server; it requires the `server` extra. This implementation was tested
+on disposable local sockets, not started against the production archive.
+One Uvicorn instance/worker, one ASGI lifespan, credential registry and metadata
+pool serve both configured listeners. Direct TLS applies to TCP only; the Unix
+socket stays ordinary local HTTP for deny-all-IP clients. TLS certificates and
+keys must load successfully before accepting work. Auto-reload is not enabled,
+and proxy headers are disabled in Uvicorn so the application owns explicit trust.
+Bootstrap reserves addresses before Uvicorn validates TLS and starts the
+lifespan/listeners. Reserved sockets accept no plaintext connections during that
+interval. Invalid TLS closes them and removes only the owned unchanged Unix inode.
+
+Runtime directories must already exist. The Unix socket binds through a pinned
+no-follow parent descriptor, initially mode `0600`, then the configured
+`0600`/`0660`. Startup never adopts or unlinks an existing path. Cleanup removes
+only the exact socket inode this process created; a replaced name is preserved.
+A socket left after a crash requires an operator to prove it unused before
+cleanup. The daemon lock inode is always retained. No directory or archive
+initialization is hidden in listener setup.
+
+Uvicorn raw access/error/ASGI tracing is disabled to avoid logging request URLs
+or headers; the application retains sanitized problems and structured event
+correlation. The foreground wrapper preserves typed lifespan startup failures
+instead of reducing unsafe credentials or invalid archive policy to a generic
+unavailable error. `serve --json` writes a classified startup failure Envelope;
+normal daemon execution writes no success Envelope/stdout. Uvicorn's graceful
+HTTP shutdown timeout uses `shutdown_timeout_seconds`, followed by joined
+metadata-worker shutdown. Tests use ephemeral TCP/Unix sockets and disposable
+OpenSSL-generated certificates to prove TLS verification and CA rejection;
+OpenSSL is a test tool, not a runtime dependency or production certificate change.
+The small `ListenerServer.startup` override is tied to the locked Uvicorn
+0.54 lifecycle and is covered by those real-socket tests; revisit it during a
+Uvicorn upgrade. Proven local Unix requests remain available when TCP uses a
+trusted TLS proxy; TCP peers must satisfy explicit numeric proxy/HTTPS checks.
+
+## Execution and deployment target (not yet implemented)
+
+The later execution target adds one admission registry and one heavyweight worker
+to the same unprivileged application and bounded metadata pool. Both listeners
+share that application; the daemon-instance lock prevents competing registries. Actual
 archive work retains the existing local flock; metadata reads do not create
 archive layout or rebuild catalogs. Systemd remains scheduling authority.
 

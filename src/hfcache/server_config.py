@@ -191,6 +191,9 @@ class ServerLimits(_Strict):
     max_queued_operations: int = Field(default=16, ge=0, le=64)
     retained_terminal_operations: int = Field(default=1000, ge=1, le=100000)
     shutdown_timeout_seconds: int = Field(default=300, ge=1, le=86400)
+    max_response_bytes: int = Field(default=8388608, ge=1024, le=67108864)
+    max_artifact_bytes: int = Field(default=67108864, ge=1024, le=1073741824)
+    max_scan_entries: int = Field(default=10000, ge=10, le=1000000)
 
 
 class ServerConfig(_Strict):

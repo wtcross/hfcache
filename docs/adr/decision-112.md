@@ -1,6 +1,6 @@
 # Decision 112 — Separate server authority and verified bearer capabilities
 
-- Status: Accepted; implemented incrementally by API-005.
+- Status: Accepted; implemented incrementally by API-005, with metadata-route/lifespan enforcement advanced by [decision 113](decision-113.md).
 - Date: 2026-10-17.
 - Work package: API-005, this commit.
 - Source: [progress decision 112](../progress.md#decisions),
@@ -101,6 +101,13 @@ Official sources checked during API-005:
 - [RFC 6750 bearer token alphabet and header use](https://www.rfc-editor.org/rfc/rfc6750#section-2.1).
 
 ## Consequences and relationships
+
+**API-006 amendment (2026-10-17, [decision 113](decision-113.md)).**
+The deferred authenticated metadata application, transport bounds and controlled
+lifespan now use the primitives above. Job/receipt execution, CLI migration,
+isolated verification and deployment remain later tasks. API-005's no-listener
+statement records its original scope; API-006 adds an explicit `serve` bootstrap
+without claiming a production installation.
 
 Implements part of [decision 108](decision-108.md)'s dependency boundary and
 amends [FW-01–FW-04](fw-01.md)'s actual dependency set. Preserves

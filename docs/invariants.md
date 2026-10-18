@@ -151,6 +151,9 @@ Evidence: [Hub tests](../tests/unit/test_hub.py),
 [path tests](../tests/unit/test_paths.py),
 [publication identity/race tests](../tests/unit/test_publication.py), and
 [complete-sync tests](../tests/unit/test_synchronize.py).
+Metadata enforcement: [shared no-follow reader/budgets](../src/hfcache/metadata.py),
+[query identity/confidence checks](../src/hfcache/services/queries.py), and
+[read-boundary regressions](../tests/unit/test_query_boundary.py), API-006.
 History: `HUB-007` (`45f1ccf`) established physical-object hashing;
 `SYNC-006` (`92ebdba`) added same-operation hardlink identity proof.
 
@@ -400,6 +403,9 @@ decision [112](adr/decision-112.md) identifies the remaining boundaries.
   run/journal identities. Daemon logger configuration is startup-only.
   Durable `invocation_mode` describes the execution host, not timer or submitter
   origin; authenticated submitter metadata belongs to later receipts (decision 111).
+  The API-006 foreground `serve` bootstrap is a narrow exception: normal daemon
+  execution has no terminal success Envelope/stdout, while classified startup
+  failures preserve the schema-1 error Envelope under `--json` (decision 113).
 - **`INV-007` — Verification reports evidence without rewriting it.** Verify
   the complete path set, sizes, and local SHA-256 bytes; an integrity finding
   exits `40`, preserves content/expectations, and never performs repair or
@@ -543,11 +549,12 @@ Planning evidence: [current selector](plans/current.md),
 `INV-011` is a repository workflow requirement reviewed through these records
 and git; the application test suite does not enforce planning lifecycle.
 
-## Remote management (accepted target; enforcement pending)
+## Remote management (incremental enforcement)
 
-API-001 introduces these constraints for the activated plan. They do not assert
-that remote management is implemented. [API](api.md) and [server](server.md)
-track the target; implementing tasks own proof.
+API-001 introduces these constraints for the activated plan. API-006 implements
+authenticated metadata HTTP and its foreground bootstrap; jobs, client migration,
+verification isolation and MCP remain pending. [API](api.md) and [server](server.md)
+track exact availability; implementing tasks own proof.
 
 - **`INV-012` — Adapters share one domain implementation.** Transports call
   typed services, never one another or public CLI callbacks. Remote access
@@ -555,15 +562,28 @@ track the target; implementing tasks own proof.
   Query enforcement: [shared services](../src/hfcache/services/queries.py),
   introduced by API-002; command enforcement:
   [guarded services](../src/hfcache/services/commands.py), introduced by API-003.
-  Transport enforcement remains API-006/012/013 and later MCP-002.
+  Metadata transport enforcement: [read application](../src/hfcache/api/app.py),
+  API-006. Public CLI client migration remains API-011–013 and MCP-002 later.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
   Off-host access verifies TLS. Enforcement: API-005/006/011 and MCP-001/003.
   API-005 supplies strict server configuration, explicit credential validation,
   fixed REST principals/capabilities and the optional FastAPI bearer adapter.
-  Protecting all real routes and applying Host/Origin/body bounds remains
-  API-006; no endpoint enforcement is claimed by the auth primitives alone.
+  API-006 now authenticates metadata routes, unknown paths/methods, docs and
+  schema before routing/body validation, with strict Host/Origin/proxy/prefix,
+  request/response/work limits and sanitized typed errors. Cursor pages bind
+  filters/policy and row contents; changed rows fail continuation rather than
+  silently skipping them. Shared read budgets and a pool lease cover active
+  streams until completion/disconnect. Exact published-relative reference
+  locators do not become HTTP artifact paths. Job/write/MCP paths remain pending.
+  Enforcement/evidence: [boundary/resources](../src/hfcache/api/app.py),
+  [pool/instance lock](../src/hfcache/api/lifecycle.py),
+  [single Unix/TCP bootstrap](../src/hfcache/server.py),
+  [wire/read tests](../tests/unit/test_api_reads.py),
+  [adversarial HTTP tests](../tests/unit/test_api_adversarial.py), and
+  [ephemeral TLS/socket tests](../tests/unit/test_server_bootstrap.py);
+  decision [113](adr/decision-113.md). This is no production deployment proof.
 - **`INV-014` — Admission receipts do not resume domain execution.** Persist
   before runnable/202, bind principal/key/request, fail stale policies closed,
   retain ambiguous history, and never infer success or replay from missing

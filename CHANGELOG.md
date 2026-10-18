@@ -35,6 +35,13 @@ archive-policy snapshots provide the authentication boundary for later routes.
 HTTPX is a direct base dependency; FastAPI/Uvicorn are an optional `server`
 extra. No runtime endpoint, listener or production installation is introduced.
 
+Authenticated REST metadata is now available through an injectable application
+and explicit `serve` bootstrap, with one lifespan for Unix/TCP, bounded queries,
+safe errors/pages/streams and fresh policy snapshots. Shared readers reject
+unsafe paths and inconsistent evidence without repairing an archive. References
+retain published-relative locators; writes/jobs, the API-backed CLI and MCP
+remain planned. Tests use disposable sockets; no production server was started.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

@@ -719,3 +719,12 @@ versions when implementing, especially FastMCP imports and test transports:
   failures at exit 10. Framework-independent primitives and an optional FastAPI
   security adapter add no runtime endpoint/listener. API-006 owns route-level
   enforcement, API-007/008 own receipts/execution, and MCP remains gated.
+
+- 2026-10-17 API-006: Decision 113 implements authenticated metadata HTTP and
+  one foreground Unix/TCP bootstrap, with finite query/wire budgets, shared
+  no-follow readers, content-bound cursor continuation and bounded evidence
+  streams. HFAPI005/008/009/011 explicitly classify service safety failures at
+  exit 20; other HFAPI request/auth/config failures remain 10. `serve` has no
+  success stdout Envelope; its typed startup failures retain the normal JSON
+  failure contract. Eight read matrix rows are implemented, while installed/
+  candidate validation, jobs/writes, CLI-client migration and MCP remain pending.
