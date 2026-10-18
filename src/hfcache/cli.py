@@ -8,15 +8,12 @@ import socket
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from importlib.metadata import PackageNotFoundError
-from importlib.metadata import version as package_version
-from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, NoReturn
 
 import typer
 
-from hfcache.archive import initialize_archive, inspect_archive
+from hfcache.archive import initialize_archive
 from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import (
@@ -29,10 +26,8 @@ from hfcache.errors import (
 )
 from hfcache.hub import HubClient, networking_disabled
 from hfcache.identity import (
-    REPOSITORY_TYPES,
-    CommitSha,
-    PublicationId,
     RepositoryIdentity,
+    RunId,
     TransactionId,
     new_run_id,
     new_transaction_id,
@@ -40,8 +35,8 @@ from hfcache.identity import (
 )
 from hfcache.logging import bind_run, current_run_id, emit, under_systemd
 from hfcache.logging import configure as configure_logging
-from hfcache.manifests import RevisionManifest
-from hfcache.paths import ArchiveLayout, RepositoryLayout
+from hfcache.models import parse_timestamp
+from hfcache.paths import ArchiveLayout
 from hfcache.preflight import (
     READ_ONLY,
     UNPROVABLE_READ_ONLY,
@@ -52,19 +47,17 @@ from hfcache.preflight import (
     storage_checks,
 )
 from hfcache.publication import (
-    VerificationStates,
     projected_publication_bytes,
     published_repositories,
-    read_reference,
-    read_verification_catalog,
-    retained_references,
 )
 from hfcache.purge import apply_purge, plan_all_purges
 from hfcache.quarantine import apply_quarantine_cleanup, plan_quarantine_cleanups
-from hfcache.recovery import apply_recovery, measure_health, plan_recovery, reconcile
-from hfcache.repair import cleanup_warnings, preserved_bytes, repair_revision
-from hfcache.reporting import Envelope, EnvelopeProblem, RunReport, RuntimeVersions
+from hfcache.recovery import apply_recovery, plan_recovery, reconcile
+from hfcache.repair import repair_revision
+from hfcache.reporting import RunReport, RuntimeVersions
 from hfcache.retention import apply_prune, plan_all
+from hfcache.services.context import ExecutionContext, ServiceResult
+from hfcache.services.queries import LocalQueries, RepositoryQuery, query_version, validate_config
 from hfcache.storage import read_model
 from hfcache.sync import synchronize
 from hfcache.transactions import open_transaction
@@ -72,7 +65,6 @@ from hfcache.verification import (
     FINDING_CODES,
     UNDETECTABLE,
     build_report,
-    estimate_verification,
     persist_verification,
     require_retained,
     resolve_archive,
@@ -84,8 +76,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
     from hfcache.archive import ArchiveInspection
-    from hfcache.identity import RunId
-    from hfcache.models import PrunePlan, Reference
+    from hfcache.models import PrunePlan
     from hfcache.reporting import VerificationReport
     from hfcache.sync import RunOutcome
     from hfcache.verification import Resolved
@@ -157,18 +148,12 @@ def emit_envelope(
     envelope to that invocation's log lines, rather than minting a second id that
     appears nowhere else.
     """
-    outcome = "failed" if exit_code else ("success_with_warnings" if warnings else "success")
-    envelope = Envelope(
-        command=command,
-        completed_at=utc_now(),
-        data=data,
-        errors=tuple(EnvelopeProblem.of(problem) for problem in errors),
-        exit_code=exit_code,
-        outcome=outcome,
-        run_id=run_id if run_id is not None else (current_run_id() or new_run_id()),
-        started_at=started_at,
-        warnings=tuple(EnvelopeProblem.of(problem) for problem in warnings),
+    result = ServiceResult(command, data, tuple(warnings), tuple(errors), exit_code)
+    context = ExecutionContext(
+        run_id=RunId(run_id if run_id is not None else (current_run_id() or new_run_id())),
+        started_at=parse_timestamp(started_at),
     )
+    envelope = result.envelope(context)
     sys.stdout.write(envelope.to_json(indent=None))
 
 
@@ -209,25 +194,6 @@ def _echo_pairs(payload: dict[str, Any]) -> None:
     width = max(len(key) for key in payload)
     for key in sorted(payload):
         typer.echo(f"{key.replace('_', ' '):<{width}}  {payload[key]}")
-
-
-def _dependency_version(distribution: str) -> str:
-    try:
-        return package_version(distribution)
-    except PackageNotFoundError:  # pragma: no cover - a broken installation
-        return "unknown"
-
-
-def _transfer_backend() -> str:
-    """Report which Hub transfer path this installation will use.
-
-    Reported by `version` because a deployment that silently lost the Xet
-    backend would still work, only far more slowly, and the difference should be
-    visible without running a download.
-    """
-    if find_spec("hf_xet") is None:
-        return "http"
-    return f"xet {_dependency_version('hf-xet')}"
 
 
 @app.callback()
@@ -301,13 +267,7 @@ def version(ctx: typer.Context) -> None:
     that is otherwise broken.
     """
     started_at = utc_now()
-    versions = RuntimeVersions.measured()
-    payload: dict[str, Any] = {
-        "application": versions.application,
-        "huggingface_hub": versions.huggingface_hub,
-        "python": versions.python,
-        "transfer_backend": _transfer_backend(),
-    }
+    payload = query_version().data
     if _options(ctx).json_output:
         emit_envelope("version", payload, started_at=started_at)
         return
@@ -341,15 +301,7 @@ def config_validate(ctx: typer.Context) -> None:
     except HfcacheError as error:
         _report_failure(ctx, "config validate", started_at, error)
 
-    payload: dict[str, Any] = {
-        "config_fingerprint": config.fingerprint(),
-        "enabled_repositories": len(config.enabled_repositories),
-        "repositories": len(config.repositories),
-        # The source, never the value (`docs/security.md` T-07). An operator
-        # checking a deployment needs to know whether the credential resolved
-        # and from where; learning that only from a sync hours later is worse.
-        "token_source": token.source.value,
-    }
+    payload = validate_config(config, token_source=token.source.value).data
     if options.json_output:
         emit_envelope("config validate", payload, started_at=started_at)
         return
@@ -445,7 +397,7 @@ def archive_init(
             inspect=inspect,
         )
         layout = ArchiveLayout(root=config.storage.archive_root)
-        inspection = inspect_archive(layout, archive_id=config.storage.archive_id)
+        inspection = LocalQueries(config).inspect_archive()
     except HfcacheError as error:
         _report_failure(ctx, command, started_at, error)
 
@@ -823,49 +775,24 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     options = _options(ctx)
     try:
         config = load_config(options.config_path)
-        selected = _select(config, selectors)
+        result = LocalQueries(config).archive_status(
+            RepositoryQuery(selectors=tuple(selectors or ()))
+        )
     except HfcacheError as error:
         _report_failure(ctx, "status", started_at, error)
 
-    layout = ArchiveLayout(root=config.storage.archive_root)
-    last_run = _last_run_statuses(layout)
-    states = VerificationStates.of(layout)
-    entries = [_status_entry(layout, repository, last_run, states) for repository in selected]
-    archive: dict[str, Any] = {
-        "archive_id": config.storage.archive_id,
-        "root": str(config.storage.archive_root),
-    }
-    # Health is reported when it can be measured and omitted when it cannot.
-    # `status` answers even against an archive that is absent or unmounted
-    # (`docs/cli.md` §2), so an unreachable root reports local configuration
-    # truth rather than failing.
-    warnings: list[Problem] = []
-    try:
-        health = measure_health(
-            layout,
-            config.storage,
-            stale_staging_age_hours=config.sync.stale_staging_age_hours,
-        )
-    except HfcacheError:
-        archive["reachable"] = False
-    else:
-        archive["reachable"] = True
-        archive |= health.as_payload()
-        warnings.extend(health.reconciliation.warnings)
-        # `HFWRN008`: a retired repair instance past its grace is outstanding
-        # work an operator can complete, and it is invisible from the transaction
-        # areas alone because the retirement record is what tracks it.
-        warnings.extend(cleanup_warnings(layout))
-        archive["quarantined_bytes"] = preserved_bytes(layout)
-    archive["verification"] = _verification_health(layout)
-
-    payload: dict[str, Any] = {"archive": archive, "repositories": entries}
+    payload = result.data
+    archive = payload["archive"]
+    entries = payload["repositories"]
+    warnings = result.warnings
     if options.json_output:
         emit_envelope("status", payload, started_at=started_at, warnings=warnings)
         return
     if not options.quiet:
         for entry in entries:
-            state = "enabled" if entry["enabled"] else "disabled"
+            state = (
+                ("enabled" if entry["enabled"] else "disabled") if entry["managed"] else "unmanaged"
+            )
             typer.echo(
                 f"{entry['repository_type']}:{entry['repository_id']}  {state}"
                 f"  {entry['verification_state']}"
@@ -878,32 +805,6 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
             )
         for warning in warnings:
             typer.echo(warning.as_line(), err=True)
-
-
-def _verification_health(layout: ArchiveLayout) -> dict[str, Any]:
-    """The archive's verification headline, as `docs/cli.md` §2 requires of `status`.
-
-    `degraded` is the one an operator acts on, and it stays true until a
-    verification re-reads the objects that failed or a repair replaces them
-    (`docs/schemas.md` §5.2) — never merely because a later narrow run did not
-    look. `status` still exits `0`: it reports, and `verify` is what classifies.
-
-    An archive with no verification catalog reports `degraded = false` with no
-    last full verification, which is the truth about an archive nothing has
-    verified yet rather than a claim that it is sound.
-    """
-    catalog = read_verification_catalog(layout)
-    if catalog is None:
-        return {"degraded": False, "last_full_verification": None, "outstanding_failures": 0}
-    return {
-        "degraded": catalog.is_degraded,
-        "last_full_verification": (
-            catalog.last_full_verification.model_dump(mode="json")
-            if catalog.last_full_verification
-            else None
-        ),
-        "outstanding_failures": len(catalog.outstanding_failures),
-    }
 
 
 # --------------------------------------------------------------------------- #
@@ -1087,85 +988,6 @@ def _run(
         raise
 
 
-def _status_entry(
-    layout: ArchiveLayout,
-    repository: RepositoryConfig,
-    last_run: Mapping[str, str],
-    states: VerificationStates,
-) -> dict[str, Any]:
-    """One repository's local truth, from its references and the last run report.
-
-    Read from the references rather than from the catalog, for the same reason
-    `list` does: the catalog is derived and can be missing (`FS-16`), and this is
-    the command an operator runs when something is already wrong. An archive that
-    holds nothing for this repository answers with zeros rather than failing —
-    a repository configured but never synced is a normal state, not an error.
-
-    `upstream_state` stays `unknown`. `status` never contacts the Hub, because it
-    must answer when the Hub is unreachable; `plan` is the command that resolves.
-    """
-    identity = RepositoryIdentity.from_config(repository)
-    entry: dict[str, Any] = {
-        "current_commit_sha": None,
-        "current_publication_generation": None,
-        "enabled": repository.enabled,
-        "last_run_status": last_run.get(identity.selector),
-        "managed": True,
-        "repository_id": repository.id,
-        "repository_type": repository.type,
-        "requested_revision": repository.revision,
-        "retained_generations": [],
-        "retained_revisions": 0,
-        "upstream_state": "unknown",
-        "verification_state": "unverified",
-    }
-    try:
-        held = retained_references(layout, identity)
-        current = RepositoryLayout(archive=layout, identity=identity).current_ref
-        reference = read_reference(layout, current) if current.exists() else None
-    except HfcacheError:
-        return entry
-    entry["retained_revisions"] = len(held)
-    entry["retained_generations"] = [item.publication_generation for item in held]
-    if reference is not None:
-        entry["current_commit_sha"] = reference.commit_sha
-        entry["current_publication_generation"] = reference.publication_generation
-        # The current revision's state, from the one place any of it is recorded
-        # (decision 51). A revision nothing has verified offline reads
-        # `unverified`, which is what makes `verified` mean something.
-        entry["verification_state"] = states.state_of(
-            identity, reference.commit_sha, reference.publication_id
-        )
-    return entry
-
-
-def _last_run_statuses(layout: ArchiveLayout) -> dict[str, str]:
-    """What the most recent run report said about each repository.
-
-    The newest report by name, which is chronological: `run_report` stamps the
-    UTC start time first, so lexical order is time order and no file has to be
-    opened to find the latest one.
-
-    A run report that will not load is skipped rather than reported. It is
-    informational here — the references above are the archive's truth — and
-    `status` exists to answer even when parts of the archive are damaged.
-
-    `glob` on a directory that is absent or unreadable yields nothing rather
-    than raising, so an archive that is not mounted answers "no last run",
-    which is the truthful answer and not an error.
-    """
-    for path in sorted(layout.runs.glob("*.json"), reverse=True):
-        try:
-            report = read_model(path, RunReport, error=IntegrityError, code="HFVER007")
-        except HfcacheError:
-            continue
-        return {
-            f"{result.repository_type}:{result.repository_id}": result.status
-            for result in report.repositories
-        }
-    return {}
-
-
 # --------------------------------------------------------------------------- #
 # list (`docs/cli.md` §2)
 # --------------------------------------------------------------------------- #
@@ -1198,37 +1020,17 @@ def list_repositories(
     options = _options(ctx)
     try:
         config = load_config(options.config_path)
-        wanted = {
-            RepositoryIdentity.from_config(repository).selector
-            for repository in _select(config, selectors)
-        }
-        if repository_type is not None and repository_type not in REPOSITORY_TYPES:
-            message = (
-                f"--type must be one of {', '.join(sorted(REPOSITORY_TYPES))}; "
-                f"{repository_type!r} is neither"
+        result = LocalQueries(config).list_repositories(
+            RepositoryQuery(
+                selectors=tuple(selectors or ()),
+                repository_type=repository_type,
+                revisions=revisions,
             )
-            raise ConfigurationError.single(message, code="HFARG002", location="--type")
+        )
     except HfcacheError as error:
         _report_failure(ctx, "list", started_at, error)
 
-    layout = ArchiveLayout(root=config.storage.archive_root)
-    configured = {
-        RepositoryIdentity.from_config(repository).selector: repository
-        for repository in config.repositories
-    }
-    states = VerificationStates.of(layout)
-    entries: list[dict[str, Any]] = []
-    for identity in published_repositories(layout):
-        if repository_type is not None and identity.type != repository_type:
-            continue
-        # Selectors restrict the *configured* set, so a selector never hides an
-        # unmanaged repository the operator did not ask about by name.
-        if selectors and identity.selector not in wanted:
-            continue
-        entries.append(
-            _listed(layout, identity, configured.get(identity.selector), revisions, states)
-        )
-
+    entries = result.data["repositories"]
     _emit(
         ctx,
         "list",
@@ -1246,63 +1048,6 @@ def list_repositories(
             for entry in entries
         },
     )
-
-
-def _listed(
-    layout: ArchiveLayout,
-    identity: RepositoryIdentity,
-    configured: RepositoryConfig | None,
-    revisions: bool,
-    states: VerificationStates,
-) -> dict[str, Any]:
-    """One repository's inventory, read from its references and manifests."""
-    repository = RepositoryLayout(archive=layout, identity=identity)
-    held = retained_references(layout, identity)
-    current = (
-        read_reference(layout, repository.current_ref) if repository.current_ref.exists() else None
-    )
-    entry: dict[str, Any] = {
-        "current_commit_sha": current.commit_sha if current else None,
-        "current_publication_id": current.publication_id if current else None,
-        "enabled": configured.enabled if configured else None,
-        "managed": configured is not None,
-        "repository_id": identity.id,
-        "repository_type": identity.type,
-        "retained_revisions": len(held),
-    }
-    if revisions:
-        entry["revisions"] = [
-            _listed_revision(repository, reference, identity, states) for reference in held
-        ]
-    return entry
-
-
-def _listed_revision(
-    repository: RepositoryLayout,
-    reference: Reference,
-    identity: RepositoryIdentity,
-    states: VerificationStates,
-) -> dict[str, Any]:
-    """One retained revision, from the immutable manifest that describes it."""
-    manifest = read_model(
-        repository.manifest(
-            CommitSha(reference.commit_sha), PublicationId(reference.publication_id)
-        ),
-        RevisionManifest,
-        error=IntegrityError,
-        code="HFVER007",
-    )
-    return {
-        "commit_sha": manifest.commit_sha,
-        "file_count": manifest.file_count,
-        "publication_generation": manifest.publication_generation,
-        "publication_id": manifest.publication_id,
-        "published_at": manifest.published_at.isoformat().replace("+00:00", "Z"),
-        "total_bytes": manifest.total_bytes,
-        "verification_state": states.state_of(
-            identity, manifest.commit_sha, manifest.publication_id
-        ),
-    }
 
 
 # --------------------------------------------------------------------------- #
@@ -1378,7 +1123,7 @@ def verify(
 
     layout = ArchiveLayout(root=config.storage.archive_root)
     if mode == "estimate":
-        _emit_estimate(ctx, command, layout, started_at=stamp)
+        _emit_estimate(ctx, command, config, started_at=stamp)
         return
 
     try:
@@ -1490,7 +1235,7 @@ def _verification_mode(
 
 
 def _emit_estimate(
-    ctx: typer.Context, command: str, layout: ArchiveLayout, *, started_at: str
+    ctx: typer.Context, command: str, config: ApplicationConfig, *, started_at: str
 ) -> None:
     """Report what `--full` would cost, having hashed nothing (plan §16.4).
 
@@ -1498,19 +1243,18 @@ def _emit_estimate(
     an estimator that could report `40` would make an operator's scheduling
     question indistinguishable from an integrity answer.
     """
-    estimate = estimate_verification(layout)
-    payload = estimate.as_payload()
-    duration = estimate.estimated_duration_seconds
+    payload = LocalQueries(config).estimate_verification().data
+    duration = payload["estimated_duration_seconds"]
     _emit(
         ctx,
         command,
         payload,
         started_at=started_at,
         lines={
-            "repositories": str(estimate.repositories),
-            "revisions": str(estimate.revisions),
-            "unique objects": str(estimate.unique_objects),
-            "unique bytes": _bytes(estimate.unique_bytes),
+            "repositories": str(payload["repositories"]),
+            "revisions": str(payload["revisions"]),
+            "unique objects": str(payload["unique_objects"]),
+            "unique bytes": _bytes(payload["unique_bytes"]),
             "estimated duration": (
                 f"{duration:.0f}s" if duration is not None else "unknown — never measured"
             ),

@@ -30,21 +30,21 @@ lock is owned by the offline executor. A preview cannot grant apply authority.
 
 | CLI mode | Service | Route | Role | Lock | Hub | Execution | Effects | CLI test | API test | State |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| version --server | version | GET /version | R | none | no | Q | none | pending | pending | planned |
+| version --server | version | GET /version | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
 | capabilities | capabilities | GET /capabilities | R | none | no | Q | none | pending | pending | planned |
-| config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | pending | pending | planned |
-| config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | pending | pending | planned |
-| archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | pending | pending | planned |
+| config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
 | archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | pending | pending | planned |
 | doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | pending | pending | planned |
 | doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | pending | pending | planned |
 | plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | pending | pending | planned |
 | plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | pending | pending | planned |
 | sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | pending | pending | planned |
-| status [selectors] | archive_status | GET /status | R | none | no | Q | none | pending | pending | planned |
-| list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | pending | pending | planned |
-| list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | pending | pending | planned |
-| verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | pending | pending | planned |
+| status [selectors] | archive_status | GET /status | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
 | verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
 | verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
 | verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
@@ -57,13 +57,31 @@ lock is owned by the offline executor. A preview cannot grant apply authority.
 | quarantine --dry-run IDs | preview_quarantine | POST /quarantine-plans | R | none | no | J | receipt only | pending | pending | planned |
 | quarantine --apply IDs | apply_quarantine | POST /quarantine-cleanups | W | archive | no | J | receipt; guarded domain mutation/audit | pending | pending | planned |
 | repair TYPE:ID@SHA [--reason] | repair_revision | POST /repairs | W | archive | yes | J | receipt; guarded domain mutation/audit | pending | pending | planned |
-| reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | pending | pending | planned |
+| reports/references/manifests | read_evidence | GET /runs; GET /runs/{run_id}; repository subresources | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
 | operations show/wait/lookup | observe_operation | GET /operations; GET /operations/lookup; GET /operations/{id}[/result or /events] | R | none | no | Q | none | pending | pending | planned |
 
 Local `version`, help, `serve`, and `config validate --local` are explicit
 bootstrap commands, outside remote operation parity. API-backed commands reject
 Hub token overrides. Selectors retain existing grammars and unmanaged-repository
 exceptions. Sync is explicitly included here (the draft's §4 table omitted it).
+
+## Shared query results (API-002)
+
+Transport-neutral local queries now share orchestration with the CLI; the HTTP
+rows above remain planned. `LocalQueries` receives one frozen policy snapshot and
+`ExecutionContext` captures execution identity; `ServiceResult` carries payload, problems, classification
+and run correlation without rendering. `MetadataQueries` is the narrow read
+interface implemented by `LocalQueries`; it offers no command or credential
+resolver. Config-validation payload construction takes an already resolved
+credential source, never a token value.
+
+Status/list retain schema-1 payload keys, deterministic ordering and unknown
+verification confidence. Status covers configured plus unmanaged published
+repositories; selectors unknown to both fail HFARG004. Missing/corrupt derived
+repository catalogs never authorize a rebuild. ID-based report, reference and
+manifest reads reject identity mismatch and unsafe paths and retain exact
+publication identity and `published/`-relative locators. API-006 will define
+wire pagination/projections separately from these domain results.
 
 ## Wire validation and errors
 

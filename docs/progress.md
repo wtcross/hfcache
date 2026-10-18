@@ -764,6 +764,25 @@ package in this family.
   tests, 45 Cockpit tests, package builds and production plugin build.
   No dependencies, runtime implementation, deployment or archive operations.)
 
+- [x] API-002 Extract transport-neutral query services and command results
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-002-extract-queries-and-results.md).
+  Extracted immutable execution/request/result records and local query services;
+  CLI delegation preserves schema-1 envelopes/rendering. Fixed documented
+  unmanaged status/list selectors and configured-plus-unmanaged status ordering.
+  ID-based existing report/reference/manifest reads validate canonical identity,
+  locators/generation and no-follow containment; exact vanished instances fail.
+  Reviewed FS-08–12/16, AD-06/10/17, INV-005–008/012 and decisions 51/62/108:
+  existing contracts preserved; no new ADR or durable format required. Updated
+  architecture, CLI, API, consumer, invariant and Unreleased documentation.
+  336 existing targeted tests and 47 new query/evidence tests pass. Initial gate
+  stopped on two deliberate immutable-mutation test type errors; targeted test
+  annotations corrected. Final `scripts/check.sh` exits 0: lock, format, lint,
+  types, 1,797 Python tests, 45 Cockpit tests, wheel/sdist and plugin builds.
+  Changed documentation links, parity-table structure and git whitespace pass.
+  No host/live checks or production operations. HTTP traversal review/pagination
+  and bounds remain API-006 scope; runtime HTTP routes remain planned.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

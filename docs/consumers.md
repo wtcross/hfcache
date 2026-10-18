@@ -79,6 +79,14 @@ verify against neither.
 
 ---
 
+Identity-based metadata services (API-002) return the exact reference and
+manifest instance requested. Reference locators keep their `published/` base;
+they are not relative to an HTTP endpoint or the private archive root. Validation
+checks identity and containment and never substitutes a newer current instance
+when a requested instance has vanished. These services add no artifact transfer
+channel; the read-only export and independent copy verification remain the
+consumer data path. Remote transports are still planned under [the API contract](api.md).
+
 ## 3. Copying a revision
 
 ### Preparing a revisioned model store

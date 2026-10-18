@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Work package | `API-002` |
-| Status | pending |
+| Status | completed |
 | Plan | [2026-10-17-plan-rest-api-and-mcp.md](../2026-10-17-plan-rest-api-and-mcp.md) |
 | Depends on | [API-001](api-001-contract-and-activation.md) |
 | Phase | 1 — Shared services |
@@ -57,13 +57,39 @@ call `_select`, rejecting unmanaged selectors although the CLI contract permits
 them; unfiltered status only enumerates configured repositories. Resolve during
 extraction against the documented contract with regression evidence.
 
-Not started. Record actual changes,
-resolved design issues, scope amendments, and any blocker/unblock condition here.
+Shared `ExecutionContext`, `ServiceResult`, `RepositoryQuery` and
+`PublicationQuery` records are immutable. `MetadataQueries`/`LocalQueries`
+provide local reads; CLI delegates and retains rendering. Credential resolution
+remains at the trusted adapter boundary, outside the read protocol. New
+identity-based report readers support sync, recovery and verification reports;
+no-follow anchored opens reject symlink artifacts/parents. Reference/manifest
+identity, generation and canonical locators are checked, including current
+versus retained-reference agreement. Exact vanished instances never substitute.
+
+Corrected the characterized unmanaged selector/status omission to the existing
+contract. Configuration order is preserved; unmanaged entries append in canonical
+order. Existing catalog tolerance, envelope shapes and offline local version
+are retained. No durable format or storage algorithm change.
 Operator-only deployment checks remain explicit handoff items, not asserted passes.
 
 ## Completion evidence
 
-Not executed. On completion record the date; acceptance results; exact commands
-and outcomes; invariant/ADR review and amendments; documentation changes; a link
-to this package's completed [progress audit](../../progress.md); and any operator
-handoff. Then set Status to `completed` in the same commit as the work.
+2026-10-17, API-002, this commit.
+
+Extracted immutable execution/request/result records and local query services;
+CLI delegation preserves schema-1 envelopes/rendering. Fixed documented
+unmanaged status/list selectors and configured-plus-unmanaged status ordering.
+ID-based existing report/reference/manifest reads validate canonical identity,
+locators/generation and no-follow containment; exact vanished instances fail.
+Reviewed FS-08–12/16, AD-06/10/17, INV-005–008/012 and decisions 51/62/108:
+existing contracts preserved; no new ADR or durable format required. Updated
+architecture, CLI, API, consumer, invariant and Unreleased documentation.
+336 existing targeted tests and 47 new query/evidence tests pass. Initial gate
+stopped on two deliberate immutable-mutation test type errors; targeted test
+annotations corrected. Final `scripts/check.sh` exits 0: lock, format, lint,
+types, 1,797 Python tests, 45 Cockpit tests, wheel/sdist and plugin builds.
+Changed documentation links, parity-table structure and git whitespace pass.
+No host/live checks or production operations. HTTP traversal review/pagination
+and bounds remain API-006 scope; runtime HTTP routes remain planned.
+
+[Progress audit](../../progress.md#rest-api-and-read-only-mcp-api-2026-10-17).

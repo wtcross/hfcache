@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-002](tasks/api-002-extract-queries-and-results.md) |
+| Next task | [API-003](tasks/api-003-extract-guarded-commands.md) |
 | Blockers | None |
 | Updated | 2026-10-17 |
 

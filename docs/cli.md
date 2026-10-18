@@ -291,6 +291,13 @@ transactions, over-retention, and deferred cleanup.
 the Hub is unreachable — it reports local truth and marks upstream state
 `unknown`.
 
+Status emits configured repositories in configuration order, then unmanaged
+published repositories in canonical `(type, id)` order. An explicit selector
+restricts the configured/published union; one absent from both is `HFARG004`.
+For an unmanaged status row, `managed` is false and configuration-only values
+are null. API-002 corrects the old implementation's configured-only selector
+handling to this contract; no new durable schema is introduced.
+
 ### `list`
 
 ```text

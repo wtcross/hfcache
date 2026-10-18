@@ -515,7 +515,9 @@ track the target; implementing tasks own proof.
 - **`INV-012` — Adapters share one domain implementation.** Transports call
   typed services, never one another or public CLI callbacks. Remote access
   changes no FS/TX, whole-archive authorization, or publication locator rule.
-  Enforcement: API-002/003/006/012/013 and later MCP-002.
+  Query enforcement: [shared services](../src/hfcache/services/queries.py),
+  introduced by API-002; remaining command/transport enforcement:
+  API-003/006/012/013 and later MCP-002.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.

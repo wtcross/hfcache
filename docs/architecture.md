@@ -77,6 +77,25 @@ repository-content authorization boundary: the archive has one publication tree,
 not per-repository ACLs, so a consumer allowed to read it must be authorized to
 receive every configured public, private, and gated repository.
 
+### 2.2 Transport-neutral services (API-002)
+
+`services/context.py` carries immutable execution/result records, independent
+of transport frameworks. `services/queries.py` owns local metadata orchestration
+for version, configuration-validation payloads, initialization inspection,
+status, inventory, verification estimates, and identity-based existing evidence
+reads. The CLI keeps parsing, credential resolution and rendering during this
+staged extraction. The narrow metadata interface exposes no commands, Hub
+client, credential resolver, or writable helper. Future transports must reuse
+these services rather than invoke CLI callbacks (decision 108, INV-012).
+
+Status includes configured repositories in configuration order, followed by
+unmanaged published repositories in canonical identity order. Explicit selectors
+restrict that union; a repository absent from both is HFARG004. Inventory comes
+from references/manifests, independently of the derived repository catalog.
+Verification confidence is keyed by exact publication instance (decision 62).
+Metadata queries take no archive lock and do not rebuild state. Consumers must
+handle a publication disappearing between separate reads, as required by FS-12.
+
 ## 3. Architecture decisions
 
 Each decision is locked for schema version 1. Changing one is a deliberate

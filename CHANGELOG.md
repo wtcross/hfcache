@@ -7,6 +7,15 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## Unreleased
+
+Local metadata orchestration now uses transport-neutral query services.
+`status` includes unmanaged published repositories, and `status`/`list` accept
+their explicit selectors as documented. Read-only evidence services validate
+exact report/reference/manifest identity and contained locators. Durable archive
+formats and the consumer export remain unchanged. REST/CLI migration and MCP
+remain in progress under the [active plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md).
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block
