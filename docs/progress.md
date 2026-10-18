@@ -1567,6 +1567,26 @@ package in this family.
   NFS-hardening, other-host change, remote publication, ACME, merge or tag.
   Handoff 20/21 preserves installed-manager/full-storage acceptance holds.)
 
+- [x] REL-010 Review and commit 0.2.0 source
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-local-rootless-rollout.md),
+  [task](plans/tasks/rel-010-rootless-release-artifacts.md)).
+  Root reviews/fast-forwards local main 86f6e8b→edef480 and returns to the clean
+  feature branch without remote action. Only hfcache metadata changes 0.1.10→0.2.0;
+  all 93 nonproject lock records are identical. README/CHANGELOG explicitly say
+  preparing, not deployed/tagged, preserving historical feature/deployment proof.
+  Required NAS-masked --with-build gate confirms exit 0: 405 formatted, Ruff/whole
+  types 0, 3,792 Python passed/40 deselected in 461.15 seconds, 0.2.0 wheel/sdist
+  and three locked isolated installation profiles. Cockpit lint/style/types,
+  135 tests in 2.273 seconds/build 1,221 ms and four extra wheel smokes in
+  7.15 seconds pass. Task retains exact log/preview hashes and successful unit
+  duration. Preview artifacts are not deployable; REL-012 must build from this
+  clean committed source and remains next pending until this commit. Reviewed
+  INV-005/010/011/014/015 and 65/75/79/126/127; no runtime code, dependency,
+  durable-format or architecture change/new decision. Records/links/current/
+  dependencies and whitespace pass. No production switch/tag, NAS file I/O,
+  other-host change or remote publication; held guard/read-only NAS/masked writers
+  and installed/full-storage acceptance holds remain.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in

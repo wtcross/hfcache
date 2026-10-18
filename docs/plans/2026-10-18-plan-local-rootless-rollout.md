@@ -158,3 +158,17 @@ does not certify forbidden tests. Never push the tag or branch remotely.
   Runtime source version remains 0.1.10; no production switch/release/tag or NAS
   file I/O. Current selects REL-010 pending until this package is committed.
   The live guard and installed-manager/full-storage acceptance holds remain.
+
+- 2026-10-18: REL-010 activated after OPS-015 committed as edef480. Root's local
+  main fast-forward review lands 86f6e8b→edef480 and returns to the clean feature
+  branch without another worktree or remote action. This package prepares and
+  gates 0.2.0 source metadata; clean final artifacts wait REL-012, deployment
+  waits OPS-016 and local tagging waits REL-011.
+
+- 2026-10-18: REL-010 completed local review and project-only 0.2.0 preparation;
+  all 93 nonproject lock records are unchanged. The actual NAS-masked --with-build
+  gate exits 0: 3,792 Python tests/40 deselected in 461.15 seconds, three locked
+  installation profiles, 135 Cockpit tests/build and four extra wheel smokes.
+  README/CHANGELOG remain preparing/not deployed/tagged. Preview hashes are task
+  evidence, not deployable artifacts; current selects REL-012 pending until this
+  source/version commit exists. All host/NAS guards and acceptance holds remain.

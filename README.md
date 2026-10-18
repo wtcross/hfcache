@@ -64,24 +64,25 @@ consumers at all.
 
 ## Status
 
-The REST/CLI and optional read-only MCP feature is implemented on the local
-`feat/rest-api-and-mcp` branch. The [completed plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
-records all 21 work packages and final integration acceptance. Source version
-`0.1.10` is unchanged metadata, not a new release or tag. The deployment record below predates this API/MCP rollout;
-[operator acceptance](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017)
-is still required. No production installation is claimed.
+**Preparing `0.2.0`; not deployed or tagged.** Operational CLI commands now use
+the authenticated API, and the selected deployment uses rootless Podman for
+Caddy/API/private-worker/runtime clients. The [completed feature plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
+records REST/CLI and optional read-only MCP acceptance; [OPS-015](docs/plans/tasks/ops-015-rootless-container-runtime.md)
+records actual local container proof. These changes establish the breaking 0.2.0
+CLI/deployment boundary.
 
-A separate [local rootless rollout](docs/plans/2026-10-18-plan-local-rootless-rollout.md)
-is active: Caddy/API/private-worker/runtime clients are packaged and locally
-tested in rootless Podman. Its guard keeps NAS read-only and legacy writers blocked; this
-is partial, data-preserving work with no NAS or other-host changes. See the
-[container contract](docs/containers.md); a runtime switch/version cut is not yet
-claimed.
+The [local rollout](docs/plans/2026-10-18-plan-local-rootless-rollout.md) keeps NAS
+read-only and legacy writers blocked. REL-010 prepares reviewed source; REL-012
+will build final immutable artifacts from that clean commit before OPS-016's
+guarded deployment. Current working-tree builds are previews. Actual installed-
+host and full-storage holds remain explicit; no NAS or other-host changes are
+authorized. See the [container contract](docs/containers.md) and
+[operator checklist](docs/deployment-centos-stream-10.md#17-rest-and-mcp-rollout-checklist-api-017).
 
-**Recorded deployment baseline: `0.1.10` — explicit quarantine cleanup release candidate.** The writer is complete
-and running against a live NFS-backed ZFS archive: it syncs public, private, and
-gated repositories, publishes, retains a bounded revision history, prunes,
-verifies, repairs, recovers, and cleans proven redundant quarantine entries,
+**Recorded deployment baseline: `0.1.10` — explicit quarantine cleanup release candidate.** This historical deployment demonstrated
+operation against a live NFS-backed ZFS archive: syncing public, private, and
+gated repositories, publishing, bounded revision retention, pruning,
+verification, repair, recovery, and proven redundant quarantine cleanup,
 under systemd with SELinux
 enforcing and validated hardening. Release history is in
 [`CHANGELOG.md`](CHANGELOG.md); the annotated tags carry the complete notes.

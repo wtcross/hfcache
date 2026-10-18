@@ -7,14 +7,15 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
-## Unreleased
+## 0.2.0 — Preparing
 
-The selected local deployment is being packaged as explicit rootless Podman user
-services behind Caddy, with a reviewed system-target bridge, immutable images,
-protected staged artifact verification, non-killing executor drain and API-only
-container clients. NAS stays read-only and legacy writers remain blocked; actual
-container proof and later release/production enablement are separate task evidence.
-No release version or tag is selected by this packaging work.
+Version preparation only: **not deployed or tagged**. Operational CLI commands
+require the authenticated API, and the selected rootless Podman deployment uses
+Caddy, a separate private verifier and container clients. This is a breaking
+CLI/deployment boundary. Actual local packaging/proof is complete; final artifacts
+must come from clean committed source before guarded deployment. NAS stays
+read-only, legacy writers stay blocked and forbidden live storage acceptance is
+not claimed. The local rollout plan retains these partial-acceptance holds.
 
 Local metadata orchestration now uses transport-neutral query services.
 `status` includes unmanaged published repositories, and `status`/`list` accept
