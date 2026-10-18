@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Decision 127: immutable local staging and guarded rootless release selection.
+"""Immutable local staging and guarded rootless release selection.
 
 No pulls, secrets, service activation or NAS file I/O. Unknown artifacts/process
 state are preserved and refuse selection. Only a noncreating domain flock guards
@@ -717,11 +717,19 @@ def switch(version):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("render", "stage", "switch"))
-    parser.add_argument("--manifest", type=Path)
-    parser.add_argument("--source", type=Path, default=REPOSITORY)
-    parser.add_argument("--output", type=Path)
-    parser.add_argument("--version")
+    parser.add_argument(
+        "mode",
+        choices=("render", "stage", "switch"),
+        help="render: new local artifact tree; stage: protected immutable release; "
+        "switch: inspect system/user managers and local Podman, retain original lock, "
+        "then atomically select; no activation or credential delivery",
+    )
+    parser.add_argument("--manifest", type=Path, help="explicit immutable image/source manifest")
+    parser.add_argument(
+        "--source", type=Path, default=REPOSITORY, help="reviewed local source artifacts"
+    )
+    parser.add_argument("--output", type=Path, help="new local render directory (render only)")
+    parser.add_argument("--version", help="staged version to select (switch only)")
     parser.add_argument(
         "--default-seccomp", type=Path, default=Path("/usr/share/containers/seccomp.json")
     )

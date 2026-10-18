@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Decision 127: fixed rootless container roles and non-killing executor drain.
+"""Fixed rootless container roles and non-killing executor drain.
 
 This host orchestrator imports no application code. Secret values never enter
 argv, environment or the protected profile; Podman supplies explicit file mounts.
@@ -325,7 +325,25 @@ def drain(profile, role):
 
 
 def main():
+    if any(argument in {"--help", "-h"} for argument in sys.argv[1:]):
+        print(
+            "Usage: /usr/local/libexec/hfcache-container-service "
+            "api|worker|caddy|client CLI_ARGS...|stop api|worker|caddy\n"
+            "Rootless user-manager launcher; fixed local /usr/bin/podman. "
+            "Reads protected rendered/runtime.json from its physical release. "
+            "Podman mounts role-specific secrets; worker receives none. "
+            "Starts role containers or drains an owned executor without killing. "
+            "No engine/executable override; no dry-run. Help reads no profile."
+        )
+        return 0
     stopping = len(sys.argv) == 3 and sys.argv[1] == "stop" and sys.argv[2] in NAMES  # noqa: PLR2004 - fixed stop grammar
+    if not stopping and (
+        len(sys.argv) < 2  # noqa: PLR2004 - fixed role grammar
+        or sys.argv[1] not in {*NAMES, "client"}
+        or (sys.argv[1] != "client" and len(sys.argv) != 2)  # noqa: PLR2004 - fixed role grammar
+    ):
+        sys.stderr.write("container launcher requires a fixed role; use --help\n")
+        return 20
     try:
         profile = load_profile()
         if stopping:

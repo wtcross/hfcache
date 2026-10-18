@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Decisions 126/127: retain the original local flock without NAS file I/O.
+"""Retain the original local flock without NAS file I/O.
 
 The host mount table is checked once before READY. The descriptor remains held
 until this process stops; no lock is created, rewritten, truncated or removed.
@@ -117,6 +117,15 @@ def stop(_signum, _frame):
 
 
 def main():
+    if sys.argv[1:] in (["--help"], ["-h"]):
+        print(
+            "Usage: /usr/local/libexec/hfcache-readonly-guard\n"
+            "System-service host guard, independent of the application selector. "
+            "Requires the existing original /run/hfcache/hfcache.lock and host "
+            "read-only NFS mount evidence; holds its descriptor until stopped. "
+            "No lock creation or NAS content I/O. Help takes no lock or signals."
+        )
+        return 0
     if len(sys.argv) != 1:
         sys.stderr.write("hfcache read-only guard accepts no arguments\n")
         return 20

@@ -5,6 +5,7 @@ Default gate runs offline from uv's cache populated by its implemented-extra syn
 This proves optional imports and packaging rather than hiding packages in mocks.
 """
 
+import argparse
 import json
 import subprocess
 import sys
@@ -27,6 +28,7 @@ def run(arguments, *, cwd):
 
 
 def main():
+    argparse.ArgumentParser(description=__doc__).parse_args()
     version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
     wheels = sorted((ROOT / "dist").glob(f"hfcache-{version}-*.whl"))
     if len(wheels) != 1:

@@ -1,5 +1,6 @@
 """Disposable release switching refuses live observers/executors (decision 121)."""
 
+import ast
 import fcntl
 import json
 import os
@@ -35,6 +36,11 @@ def release_fixture(tmp_path):
         binary.parent.mkdir(parents=True)
         binary.write_text(f"#!/bin/sh\nprintf '%s\\n' '{version}'\n")
         binary.chmod(0o755)
+        python = binary.with_name("python")
+        python.write_text("#!/bin/sh\nexit 1\n")
+        python.chmod(0o755)
+        (binary.parents[1] / "pyvenv.cfg").write_text("home = /fixture/python\n")
+        native_source(binary.parents[2], version)
     (prefix / "current").symlink_to("releases/0.1.9")
     manager = tmp_path / "systemctl"
     manager.write_text(
@@ -57,6 +63,20 @@ def release_fixture(tmp_path):
         "HFCACHE_CLIENT_STATE_DIRECTORY": str(tmp_path / "clients"),
     }
     return prefix, runtime, states, environment
+
+
+def native_source(directory, version="0.2.1"):
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / ".python-version").write_text("3.14\n")
+    (directory / "pyproject.toml").write_text(f'[project]\nname="hfcache"\nversion="{version}"\n')
+    (directory / "uv.lock").write_text(
+        f'version=1\n[[package]]\nname="hfcache"\nversion="{version}"\n'
+    )
+    package = directory / "src/hfcache"
+    package.mkdir(parents=True)
+    for name in ("__init__.py", "cli.py"):
+        (package / name).write_text('"""Disposable native source evidence."""\n')
+    return directory
 
 
 def run_library(fixture, command="require_quiescent; switch_to 0.1.10"):
@@ -213,7 +233,7 @@ def test_installer_dry_run_needs_no_root_and_executes_no_tool_or_mutation(tmp_pa
     prefix = tmp_path / "unused"
     environment = dict(os.environ) | {
         "HFCACHE_PREFIX": str(prefix),
-        "HFCACHE_SOURCE": str(ROOT),
+        "HFCACHE_SOURCE": str(tmp_path / "nonexistent-source"),
         "HFCACHE_UV": str(tmp_path / "must-not-run"),
         "HFCACHE_SYSTEMCTL": str(tmp_path / "must-not-run"),
     }
@@ -229,6 +249,200 @@ def test_installer_dry_run_needs_no_root_and_executes_no_tool_or_mutation(tmp_pa
     assert "validate --local" in result.stdout
     assert "switch target: 0.1.10" in result.stdout
     assert not prefix.exists()
+
+
+@pytest.mark.parametrize("mode", [["--help"], ["--list"], ["--dry-run"]])
+def test_native_inspection_does_not_require_source_or_runtime(tmp_path, mode):
+    prefix = tmp_path / "absent"
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts/install-release.sh"), *mode],
+        env=dict(os.environ)
+        | {
+            "HFCACHE_SOURCE": str(tmp_path / "absent-source"),
+            "HFCACHE_PREFIX": str(prefix),
+            "HFCACHE_UV": str(tmp_path / "forbidden"),
+            "HFCACHE_SYSTEMCTL": str(tmp_path / "forbidden"),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert not prefix.exists()
+
+
+@pytest.mark.parametrize("location", ["current", "target", "source"])
+@pytest.mark.parametrize("marker", ["container-release.json", "artifact-index.json", "rendered"])
+def test_native_installer_refuses_cross_profile_before_any_tool(
+    release_fixture, tmp_path, location, marker
+):
+    prefix, runtime, _, environment = release_fixture
+    source = native_source(tmp_path / "source", "0.1.10")
+    selected = {
+        "current": prefix / "releases/0.1.9",
+        "target": prefix / "releases/0.1.10",
+        "source": source,
+    }[location]
+    (selected / marker).write_text("malformed or mixed metadata must still refuse\n")
+    invoked = tmp_path / "tool-called"
+    tool = tmp_path / "forbidden-tool"
+    tool.write_text(f"#!/bin/sh\ntouch '{invoked}'\nexit 99\n")
+    tool.chmod(0o755)
+    environment |= {
+        "HFCACHE_SOURCE": str(source),
+        "HFCACHE_PREFIX": str(prefix),
+        "HFCACHE_UV": str(tool),
+        "HFCACHE_SYSTEMCTL": str(tool),
+    }
+    before = (runtime / "hfcache.lock").stat().st_ino
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts/install-release.sh"), "--no-switch"],
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 20
+    assert "native profile refused" in result.stderr
+    assert not invoked.exists()
+    assert (prefix / "current").readlink() == Path("releases/0.1.9")
+    assert (runtime / "hfcache.lock").stat().st_ino == before
+    assert not list((prefix / "releases").glob(".*"))
+    assert (selected / marker).read_text().startswith("malformed")
+
+
+@pytest.mark.parametrize("location", ["current", "target"])
+def test_direct_switch_refuses_container_release_without_candidate_execution(
+    release_fixture, location
+):
+    prefix, _, _, _ = release_fixture
+    path = prefix / "releases" / ("0.1.9" if location == "current" else "0.1.10")
+    (path / "container-release.json").write_text("{}")
+    result = run_library(release_fixture, "switch_to 0.1.10")
+    assert result.returncode == 1
+    assert "native profile refused" in result.stderr
+    assert (prefix / "current").readlink() == Path("releases/0.1.9")
+
+
+@pytest.mark.parametrize(
+    "shape", ["directory", "dangling", "external", "unknown", "partial", "double-slash", "dot"]
+)
+def test_unknown_current_layout_is_never_inferred_native(release_fixture, tmp_path, shape):
+    prefix, _, _, _ = release_fixture
+    current = prefix / "current"
+    current.unlink()
+    if shape == "directory":
+        current.mkdir()
+    elif shape == "dangling":
+        current.symlink_to("releases/0.9.9")
+    elif shape == "external":
+        current.symlink_to(tmp_path)
+    elif shape in {"double-slash", "dot"}:
+        current.symlink_to("releases//0.1.9" if shape == "double-slash" else "releases/./0.1.9")
+    else:
+        current.symlink_to("releases/0.1.9")
+        path = prefix / "releases/0.1.9"
+        if shape == "unknown":
+            (path / "other-profile.json").write_text("{}")
+        else:
+            (path / "uv.lock").unlink()
+    result = run_library(release_fixture, "switch_to 0.1.10")
+    assert result.returncode == 1
+    assert "native profile refused" in result.stderr
+    assert current.is_symlink() or current.is_dir()
+
+
+def test_positive_native_source_allows_fresh_prefix_without_any_creation(tmp_path):
+    prefix = tmp_path / "new-prefix"
+    source = native_source(tmp_path / "source")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts/release-profile.py"),
+            "--prefix",
+            str(prefix),
+            "--source",
+            str(source),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert not prefix.exists()
+
+
+def test_classifier_parses_on_the_native_bootstrap_host_python():
+    # Bootstrap precedes installation of application Python 3.14.
+    source = (ROOT / "scripts/release-profile.py").read_text()
+    ast.parse(source, feature_version=(3, 12))
+
+
+def test_staging_version_comes_from_the_classified_project(release_fixture, tmp_path):
+    prefix, _, _, environment = release_fixture
+    source = native_source(tmp_path / "source", "0.1.10")
+    project = source / "pyproject.toml"
+    project.write_text('[tool.fixture]\nversion = "9.9.9"\n' + project.read_text())
+    alternate = prefix / "releases/9.9.9"
+    alternate.mkdir()
+    marker = alternate / "container-release.json"
+    marker.write_bytes(b"preserve alternate container release\n")
+    environment["NATIVE_SOURCE"] = str(source)
+    result = run_library(
+        release_fixture,
+        'version=$(native_profiles --source "$NATIVE_SOURCE" --print-source-version); '
+        'test "$version" = 0.1.10',
+    )
+    assert result.returncode == 0, result.stderr
+    assert marker.read_bytes() == b"preserve alternate container release\n"
+    assert (prefix / "current").readlink() == Path("releases/0.1.9")
+
+
+def test_fresh_prefix_with_symlinked_ancestor_refuses_before_tools(tmp_path):
+    other = tmp_path / "other-deployment"
+    other.mkdir()
+    marker = other / "container-release.json"
+    marker.write_bytes(b"preserve\n")
+    alias = tmp_path / "alias"
+    alias.symlink_to(other, target_is_directory=True)
+    prefix = alias / "new-native"
+    source = native_source(tmp_path / "source")
+    invoked = tmp_path / "tool-called"
+    tool = tmp_path / "forbidden-tool"
+    tool.write_text(f"#!/bin/sh\ntouch '{invoked}'\nexit 99\n")
+    tool.chmod(0o755)
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts/install-release.sh"), "--no-switch"],
+        env=dict(os.environ)
+        | {
+            "HFCACHE_SOURCE": str(source),
+            "HFCACHE_PREFIX": str(prefix),
+            "HFCACHE_UV": str(tool),
+            "HFCACHE_SYSTEMCTL": str(tool),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 20
+    assert "native profile refused" in result.stderr
+    assert not invoked.exists()
+    assert not prefix.exists()
+    assert list(other.iterdir()) == [marker]
+    assert marker.read_bytes() == b"preserve\n"
+
+
+def test_native_classification_allows_managed_python_link_but_not_source_as_release(
+    release_fixture, tmp_path
+):
+    prefix, _, _, _ = release_fixture
+    python = prefix / "releases/0.1.10/.venv/bin/python"
+    python.unlink()
+    python.symlink_to(sys.executable)
+    assert run_library(release_fixture).returncode == 0
+    source = native_source(prefix / "releases/0.2.1")
+    assert source.is_dir()
+    assert run_library(release_fixture, "switch_to 0.2.1").returncode == 1
 
 
 @pytest.mark.parametrize("stage", [False, True])

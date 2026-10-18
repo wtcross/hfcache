@@ -256,3 +256,4 @@ status and current-contract links before applying a historical choice.
 | 128 | [Create the rootless verifier listener inside its confinement](decision-128.md) |
 | 129 | [Build all service image stages on pinned UBI 10 micro](decision-129.md) |
 | 131 | [Explicit disposable probes and qualified isolation evidence](decision-131.md) |
+| 132 | [Positively classify native releases before effects](decision-132.md) |

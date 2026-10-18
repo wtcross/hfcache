@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Install a versioned hfcache release and switch to it atomically.
+# Native system-service profile: install a versioned release and switch atomically.
 #
 # Implements the native installation and rollback contract in
 # docs/deployment-centos-stream-10.md. Both paths use the same atomic selector
@@ -14,6 +14,9 @@
 #   scripts/install-release.sh --list               # what is installed, and what is live
 #   scripts/install-release.sh --dry-run            # review only; no writes or service calls
 #
+# Requires positive native source/current/target layouts; rootless releases refuse.
+# Help/list/dry-run are read-only; dry-run describes intent without validating layouts.
+# Mutation uses host Python, pinned uv, system manager and original local flock.
 # Environment overrides, for deployments that move a default deliberately:
 #   HFCACHE_PREFIX       install prefix                (default /opt/hfcache)
 #   HFCACHE_SOURCE       source tree to stage          (default: this checkout)
@@ -39,7 +42,6 @@ REQUIRED_UV_VERSION=${HFCACHE_UV_VERSION:-0.11.32}
 # under /home starts on a workstation and fails as a service. CentOS Stream 10
 # ships 3.12 and EPEL reaches 3.13, so 3.14 is a uv-managed build installed into
 # a root-owned system location and pinned there.
-PYTHON_VERSION=$(cat "${SOURCE}/.python-version")
 export UV_PYTHON_INSTALL_DIR="${PREFIX}/python"
 
 # What a release tree contains. Enough to build the venv, deploy the units, and
@@ -82,12 +84,6 @@ uv_binary() {
     }
   done
   die 'uv is not on PATH; set HFCACHE_UV to its absolute path'
-}
-
-release_version() {
-  # From the source tree's own metadata, so the directory name and the version
-  # the CLI reports cannot disagree.
-  sed -n 's/^version = "\(.*\)"$/\1/p' "${SOURCE}/pyproject.toml" | head -1
 }
 
 smoke() (
@@ -146,7 +142,7 @@ for argument in "$@"; do
       SWITCH_TARGET=pending
       ;;
     -h | --help)
-      sed -n '3,26p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      sed -n '3,/^set -euo pipefail/{ /^set -euo pipefail/!p; }' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -177,6 +173,7 @@ if ${DRY_RUN}; then
   printf 'switch/rebuild guard: timers, clients, API/verification sockets and executors inactive\n'
   printf 'orphan guard: noncreating exclusive shared-lock check retained through switch\n'
   printf 'archive operations: none; no service stop/start or timer activation\n'
+  printf 'profile: native system services; intent only, no current/source/target validation\n'
   [[ -z ${SWITCH_TARGET} ]] || printf 'switch target: %s\n' "${SWITCH_TARGET}"
   exit 0
 fi
@@ -189,15 +186,17 @@ if [[ ${MODE} == list ]]; then
   exit 0
 fi
 
-[[ ${EUID} -eq 0 ]] || die "must run as root to write ${PREFIX}"
-
 if [[ ${MODE} == switch ]]; then
+  native_profiles --target "${SWITCH_TARGET}"
+  [[ ${EUID} -eq 0 ]] || die "must run as root to write ${PREFIX}"
   require_quiescent
   switch_to "${SWITCH_TARGET}"
   exit 0
 fi
 
-VERSION=$(release_version)
+VERSION=$(native_profiles --source "${SOURCE}" --print-source-version)
+[[ ${EUID} -eq 0 ]] || die "must run as root to write ${PREFIX}"
+PYTHON_VERSION=$(cat "${SOURCE}/.python-version")
 [[ -n ${VERSION} ]] || die "could not read the version from ${SOURCE}/pyproject.toml"
 valid_release_version "${VERSION}"
 if [[ ${MODE} == install ]] || \

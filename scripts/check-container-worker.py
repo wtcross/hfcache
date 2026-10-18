@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Opt-in decisions 127/128 proof using local fixtures and an exact image.
+"""Opt-in worker boundary proof using local fixtures and an exact image.
 
 This never binds or opens the NAS, submits verification, removes containers, or
 kills a surviving executor. Run as the rootless account. Retain the workspace

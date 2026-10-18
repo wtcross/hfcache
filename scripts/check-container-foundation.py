@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Decision 129: opt-in, NAS-free proof of one exact local UBI Python image.
+"""Opt-in, NAS-free proof of one exact local UBI Python image.
 
 The one-shot receives no host binds, secrets, engine socket or network. Retain
 its named container and all local evidence. This is foundation acceptance, not

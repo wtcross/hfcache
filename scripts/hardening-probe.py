@@ -794,6 +794,14 @@ def validate_options(options):
             reject("production archive forbidden")
 
 
+def prove_native_profile():
+    # Load only our standard-library classifier, never candidate application code.
+    import runpy
+
+    classifier = runpy.run_path(str(Path(__file__).with_name("release-profile.py")))
+    classifier["native_selection"](Path(NATIVE_PYTHON).parents[3])
+
+
 def main(argv=None):
     options = parser().parse_args(argv)
     if options.mode == "plan" or options.dry_run:
@@ -804,6 +812,10 @@ def main(argv=None):
         return 0
     try:
         validate_options(options)
+        if options.profile == "native" and not (
+            options.mode == "inventory" and options.unit_directory
+        ):
+            prove_native_profile()
         if options.wrapper and options.mode == "workload" and not options.native_runtime:
             arguments = sys.argv[1:] if argv is None else argv
             os.execv(  # noqa: S606 - fixed native interpreter after explicit mode/profile validation

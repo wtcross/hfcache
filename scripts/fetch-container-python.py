@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Decision 129: explicitly fetch one pinned public interpreter, never extract it.
+"""Explicitly fetch one pinned public interpreter, never extract it.
 
 Only a verified archive receives the requested new filename. Failed/interrupted
 partials remain local evidence. The builder independently authenticates and

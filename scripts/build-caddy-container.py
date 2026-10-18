@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build decision 129's UBI-only Caddy stages from fixed public byte donors.
+"""Build UBI-only Caddy stages from fixed public byte donors.
 
 Run rootless with explicitly prefetched images. No server, network, host mount,
 credential, publication or cleanup of an earlier context is authorized here.

@@ -13,6 +13,13 @@ valid_release_version() {
   [[ $1 =~ ^[0-9][A-Za-z0-9.+-]*$ ]] || release_die 'invalid release version'
 }
 
+native_profiles() {
+  # Trusted host Python reads metadata; candidate interpreters never classify it.
+  local library_directory
+  library_directory=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+  PYTHONDONTWRITEBYTECODE=1 python3 "${library_directory}/release-profile.py" --prefix "${PREFIX}" "$@"
+}
+
 require_quiescent() {
   local unit properties key value load active main control tasks cgroup
   local manager=${HFCACHE_SYSTEMCTL:-systemctl}
@@ -83,6 +90,7 @@ require_quiescent() {
 
 switch_to() {
   valid_release_version "$1" || return 1
+  native_profiles --target "$1" || return 1
   local version=$1 target=${PREFIX}/releases/$1
   [[ -d ${target} && ! -L ${target} ]] || {
     release_die "release ${version} is not an ordinary installed directory"

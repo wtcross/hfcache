@@ -195,6 +195,7 @@ def test_inventory_uses_installed_dropins_and_never_exposes_values(probe, monkey
         )
 
     monkeypatch.setattr(probe.subprocess, "run", manager)
+    monkeypatch.setattr(probe, "prove_native_profile", lambda: None)
     assert probe.main(["--mode=inventory", "--profile=native"]) == 0
     output = capsys.readouterr().out
     assert observed == [["systemctl", "cat", "--no-pager", "hfcache-api.service"]]
@@ -502,6 +503,7 @@ def test_target_proof_precedes_manager_and_safe_transient_properties(probe, targ
         return subprocess.CompletedProcess(arguments, 0, json.dumps(document), "")
 
     monkeypatch.setattr(probe, "target_scope", scope)
+    monkeypatch.setattr(probe, "prove_native_profile", lambda: None)
     monkeypatch.setattr(probe.os, "geteuid", lambda: 0)
     monkeypatch.setattr(probe.pwd, "getpwnam", lambda _: types.SimpleNamespace(pw_uid=os.getuid()))
     monkeypatch.setattr(probe.subprocess, "run", manager)
@@ -535,6 +537,7 @@ def test_invalid_target_never_reaches_manager(probe, target, monkeypatch):
         lambda options, **kwargs: original_scope(options, mount_text=mount, **kwargs),
     )
     calls = []
+    monkeypatch.setattr(probe, "prove_native_profile", lambda: None)
     monkeypatch.setattr(probe.subprocess, "run", lambda *args, **_kwargs: calls.append(args))
     assert (
         probe.main(
@@ -554,6 +557,40 @@ def test_invalid_target_never_reaches_manager(probe, target, monkeypatch):
         )
         == 2
     )
+    assert not calls
+
+
+@pytest.mark.parametrize("marker", ["container-release.json", "artifact-index.json", "rendered"])
+@pytest.mark.parametrize("fixture_units", [False, True])
+def test_native_acknowledgement_cannot_probe_container_release(
+    probe, target, monkeypatch, marker, fixture_units
+):
+    options, archive, _, lock, _ = target
+    prefix = archive.parent / "installed"
+    release = prefix / "releases/0.2.1"
+    release.mkdir(parents=True)
+    (release / marker).write_text("malformed")
+    (prefix / "current").symlink_to("releases/0.2.1")
+    monkeypatch.setattr(probe, "NATIVE_PYTHON", str(prefix / "current/.venv/bin/python"))
+    calls = []
+    monkeypatch.setattr(probe.subprocess, "run", lambda *args, **_kwargs: calls.append(args))
+    monkeypatch.setattr(probe.os, "execv", lambda *args: calls.append(args))
+    monkeypatch.setattr(probe, "target_scope", lambda *args, **_kwargs: calls.append(args))
+    arguments = [
+        "--wrapper",
+        "--mode=workload",
+        "--profile=native",
+        "--acknowledge-disposable",
+        "--archive-root",
+        str(archive),
+        "--archive-id",
+        options.archive_id,
+        "--lock-file",
+        str(lock),
+    ]
+    if fixture_units:
+        arguments.extend(["--unit-directory", str(archive.parent)])
+    assert probe.main(arguments) == 2
     assert not calls
 
 

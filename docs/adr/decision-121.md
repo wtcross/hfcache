@@ -153,3 +153,9 @@ READY state. The rootless .socket artifact remains dormant RefuseManualStart=yes
 with no automatic references, preserving existing indexed bindings. Native named
 FD3/socket activation stays strict and unchanged. Credentials, offline/no-IP,
 actual-executor drain and scheduled observation/no-replay contracts stand.
+
+## Native release classification
+
+[Decision 132](decision-132.md) requires positive source/current/target layout
+proof before native installation, switching or diagnostic effects. Existing
+executor quiescence, retained handles and original lock lifetime still apply.

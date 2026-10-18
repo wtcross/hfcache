@@ -1,4 +1,17 @@
 #!/usr/bin/bash
 # Decision127: fixed rootless API client; arguments follow the image boundary.
 set -euo pipefail
+for argument in "$@"; do
+  if [[ ${argument} == --help || ${argument} == -h ]]; then
+  cat <<'HELP'
+Usage: /usr/local/libexec/hfcache-client CLI_ARGS...
+Rootless API client: forwards commands through the fixed local Podman launcher.
+Uses the protected client profile and hfcache.api file-mounted Podman secret.
+Normal commands make HTTP requests; jobs may write control state and archive data.
+See docs/cli.md for the full command reference and options.
+This wrapper help starts no container and reads no credentials or archive.
+HELP
+    exit 0
+  fi
+done
 exec /usr/local/libexec/hfcache-container-service client "$@"

@@ -825,6 +825,13 @@ never load an entire model file into memory.
 
 ## Hardening diagnostics
 
+Native installed inventory and workload entrypoints first require positive
+[release layout proof](scripts.md): ordinary source/lock/version metadata and
+built environment under an exact internal selector. Container markers, mixed,
+unknown or incomplete releases refuse before manager/archive/interpreter effects.
+A native acknowledgement alone is insufficient. Fixture unit inventory is static;
+default/help/dry-run do not inspect an installation.
+
 `scripts/check-hardening.sh` and its Python payload are static by default.
 Import, no arguments, `--help` and `--dry-run` make no manager, archive,
 credential or network request. Dry-run prints intent only; it does not inspect

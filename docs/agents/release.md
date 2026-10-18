@@ -13,6 +13,20 @@ create a tag or authorize any step below. Commit and wheel/sdist hashes identify
 an artifact; equal displayed versions do not. Actual previous-feature/baseline
 compatibility evidence must not be relabelled as a deployed previous release.
 
+## Selected-profile boundary
+
+The recorded selected deployment is guarded rootless 0.2.1. Use the rootless
+installer, fixed host client, user-manager services and protected Podman file
+secrets documented in [scripts](../scripts.md) and [containers](../containers.md).
+API follows the notify-ready worker-created listener; keep the dormant socket
+binding. Preserve original locks, independent host guard, NAS read-only, writer
+masks, disabled schedules, stores and handles. The native commands below apply
+only to a separately selected supported native profile. Native tools positively
+validate source/current/target layout and refuse container/mixed/unknown releases.
+Their dry-run is static intent, not acceptance. No implementation task grants
+release/deployment authority; current user instructions permit only final feature-
+branch pushes after this documentation plan's acceptance.
+
 ## Current data-preserving local release scope (OPS-014)
 
 The new [local rollout plan](plans/2026-10-18-plan-local-rootless-rollout.md)

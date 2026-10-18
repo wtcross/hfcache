@@ -4764,7 +4764,26 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      INV-017 records these tooling constraints; daemon/archive formats and
      hardening are unchanged. No host/live workload is authorized or performed.
 
+132. **Positively classify native release layouts before effects.** A shared
+     standard-library reader validates source/current/target without candidate
+     execution; container/mixed/unknown/partial layouts refuse before staging,
+     managers, switch or native diagnostics. Static help/list/dry-run and fresh
+     native install remain supported. Retain rootless fixed roles, all scripts,
+     dormant socket/native FD3, handles/stores and original lock authority.
+     [Decision 132](../adr/decision-132.md) records rationale and evidence.
+
 ## Documentation and script alignment
+
+- [x] OPS-021 Make deployment helpers profile aware (2026-10-18, this commit).
+  Positive source/current/target proof, one parsed staging version and fresh-prefix
+  ancestry checks refuse cross-profile/unknown native effects. Static help and
+  fixed-role validation precede runtime access. All 18 scripts inventoried;
+  rootless readiness/UBI guidance corrected; dormant/native/consumer artifacts
+  retained. Decision 132 preserves lifecycle/state/lock authority. Expanded focused
+  selection: 342 passed; final help: 9 passed; 3 masked-unit refusal fixtures passed.
+  Full `scripts/check.sh`: 4,148 passed, 40 deselected; all three locked wheel
+  installation profiles; actual Cockpit lint/types, 135 tests and build. No host,
+  production archive or live network workload performed.
 
 - [x] OPS-020 Make hardening probes explicit and fail closed (2026-10-18,
   this commit). Static entrypoints, strict disposable target/lock/sentinel proof,

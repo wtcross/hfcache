@@ -14,11 +14,12 @@ NAS writes, other-host changes, ACME issuance or remote publication.
 | --- | --- |
 | Caddy | Rootless TLS on 8443, existing protected certificate/key, Unix API upstream; no ACME/admin/file server/raw-header logging |
 | API | One application/registry/pool/lifespan, intended Hub/REST/MCP sources, local stores/cache; NAS read-only |
-| Private worker | Separate Network=none, baseline-preserving Unix-only socket creation, Python PID1 and named FD3/peer proof; no secrets or host credential stores |
+| Private worker | Separate Network=none, baseline-preserving Unix-only socket creation, Python PID1, worker-created listener and peer proof; no secrets or host credential stores |
 | Runtime client | Finite API-only rootless observer; exact CLI results/handles, no host operation/scheduled-state mounts or cancellation |
 
 System hfcache.target starts a reviewed bridge to user hfcache.target, which starts
-Caddy/API/private-worker socket. These are distinct managers. Legacy system-bus
+Caddy/API/private-worker service. API Requires/After the worker service's
+notify-ready state; the indexed rootless socket artifact stays dormant. These are distinct managers. Legacy system-bus
 controls stay blocked; never redirect them to identically named user services or
 stop the archive target.
 
@@ -40,14 +41,18 @@ config replacement visibility; admitted snapshots remain immutable.
 [platform pins](../packaging/containers/images.json),
 [Caddy derivative](../packaging/containers/Containerfile.caddy) and
 [builder](../scripts/build-container.py) are authoritative. Python is pinned to
-3.14.6 slim-trixie/linux-amd64; pinned uv 0.11.32 is build-only. Runtime contains
+3.14.6 via the authenticated portable-Python input on linux-amd64. All service
+FROM stages use pinned UBI 10 micro; UBI minimal contributes only Red Hat CA
+data, and pinned uv/Caddy donors contribute only their executables. uv 0.11.32
+is build-only. Runtime contains
 the exact wheel and locked hashed server+MCP closure without uv or dependency
 resolution. Caddy uses its pinned upstream platform manifest plus a reviewed
 derivative that removes the unused cap_net_bind_service file capability and
 asserts no file capability remains. Runtime keeps cap-drop ALL/NoNewPrivileges;
 8443 needs no privileged-port capability. Record source,
 wheel/closure/base/final image identities; version strings/tags alone are not
-artifact identity. The historical native profile is not an implicit fallback.
+artifact identity. The supported native profile uses its own installer and system services.
+See the [script inventory](scripts.md) for profile-specific entrypoints.
 
 Build as a rootless login/service account, never root. The builder refuses
 NAS/nonlocal filesystems, symlinked input/output paths, an existing context, wrong

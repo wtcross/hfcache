@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build decisions 127/129's UBI micro image from authenticated local inputs.
+"""Build the UBI micro image from authenticated local inputs.
 
 Run as a login/service user, never root. Inputs and output must be on local
 storage. Base images must already exist locally; this script never pulls/pushes.

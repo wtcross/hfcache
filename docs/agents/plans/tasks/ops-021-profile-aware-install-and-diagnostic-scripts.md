@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [OPS-020](ops-020-safe-explicit-hardening-probes.md) |
 | Phase | 1 — Correctness before editorial cleanup |
@@ -25,11 +25,11 @@ Create or update human `docs/scripts.md` with a maintained inventory. Delete a w
 
 ## Acceptance
 
-- [ ] Native tools give a specific, early cross-profile refusal for container or ambiguous selections, with tests proving no staging/switch/probe side effect.
-- [ ] All 17 existing scripts and every new script have a purpose, supported profile, invocation, side-effect class, dependencies and test owner in the human inventory.
-- [ ] Container/native executable paths, socket paths, service managers, readiness and credentials agree across helpers/templates/docs.
-- [ ] Dormant socket and native activation tests still pass; no lifecycle/control/lock bypass is added.
-- [ ] No script is removed solely because the current installation does not use it.
+- [x] Native tools give a specific, early cross-profile refusal for container or ambiguous selections, with tests proving no staging/switch/probe side effect.
+- [x] All 17 existing scripts and every new script have a purpose, supported profile, invocation, side-effect class, dependencies and test owner in the human inventory.
+- [x] Container/native executable paths, socket paths, service managers, readiness and credentials agree across helpers/templates/docs.
+- [x] Dormant socket and native activation tests still pass; no lifecycle/control/lock bypass is added.
+- [x] No script is removed solely because the current installation does not use it.
 
 ## Contracts, invariants and ADRs
 
@@ -59,15 +59,48 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after completed OPS-020 2b51f2b. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+Completed 2026-10-18 in this commit. Shared standard-library positive native
+classification validates source/current/existing target before tools, manager,
+staging, candidate interpreter or diagnostic effects. Native staging uses the
+same parsed TOML version it classified. Fresh prefixes validate existing ancestors;
+raw selector grammar refuses aliases/dangling/external paths. Container/mixed/
+unknown/partial layouts refuse; fresh native use and managed Python links remain.
+
+Safe help now precedes profile, lock and installation workloads, including nested
+fixed-client help. Unsupported fixed-launcher grammar refuses before profile reads.
+All 17 existing helpers are retained; `docs/scripts.md` inventories them and the
+new classifier with profile, invocation, inputs/dependencies, effects and tests.
+Current UBI foundation and worker-service readiness lead the corrected recipes.
+Dormant rootless socket binding, native FD3, fixed roles/secrets, actual-executor
+drain, handles/stores and original lock behavior are retained.
+
+Validation: the expanded `uv run --locked --extra server --extra mcp pytest`
+selection of native installer, hardening, script help, container service/installer,
+systemd units, readonly guard and migration tests passed 342 in 38.87s; the final
+help suite passed 9 in 0.89s after nested-help cases. Host Python executed the
+read-only classifier against the checkout and absent temporary prefix, returning
+0.2.1 without creation. The suite enforces Python 3.12 bootstrap grammar. Three
+additional disposable masked-unit fixtures (`uv run --locked --extra server
+--extra mcp python`, `release_fixture.__wrapped__` + `run_library` with masked
+sync timer/API/verification service) passed: refusal, unchanged selector and
+original lock inode/content. No real manager was invoked.
+
+`scripts/check.sh` exited 0: 4,148 passed, 40 deselected in 475.21s; wheel/sdist
+build; all three locked isolated installation profiles; actual Cockpit lint,
+types, 135 tests and production build. Ruff/types, shell syntax and link checks
+passed. Log: `/tmp/hfcache-ops021-gate.log`. Review caught and corrected bootstrap
+syntax, split version parsing and fresh-ancestor checks before the final gate.
+
+Reviewed AD-17, FS-19, INV-006/010/017 and decisions 121/126/127/128/131;
+decision 132 records the new tooling boundary and amends 121/131. Archive formats,
+domain behavior, dependencies, deployment and host guards are unaffected. Actual
+installed/container/SELinux/NFS acceptance is separate operator work, not claimed.
+See [completed progress evidence](../../progress.md#documentation-and-script-alignment).
+User-authorized feature-branch pushes follow final plan acceptance only.

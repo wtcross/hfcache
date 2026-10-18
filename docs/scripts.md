@@ -1,0 +1,63 @@
+# Script reference
+
+Choose the deployment profile before choosing a helper. The selected recorded
+installation is [guarded rootless](deployment-status.md); native system services
+remain supported separately. Build/test tooling and independent consumers do not
+select a deployment. Run repository commands from its root. All helpers are
+retained because each has a supported installation, build, test or consumer use.
+
+Help is inspection: it needs no root, manager, archive or credentials. Python
+helpers require host Python with standard-library TOML support; build helpers
+also read repository-local pins. `release-functions.sh` is a sourced library.
+Only tools explicitly listing `--dry-run` support it. Native dry-run describes
+intent without validating source, current or target; it certifies no installation.
+Explicit probe modes are governed by [hardening diagnostics](security.md#hardening-diagnostics).
+
+## Deployment and diagnostic helpers
+
+| Script | Profile and invocation | Inputs and dependencies | Effects and outputs | Test owner |
+| --- | --- | --- | --- | --- |
+| [install-container-release.py](../scripts/install-container-release.py) | Rootless: `render --manifest FILE --source DIR --output NEWDIR`; `stage --manifest FILE --source DIR`; `switch --version VERSION` | Reviewed local source, immutable image/source manifest, default seccomp policy; host Python. Stage/switch require root; switch inspects system and user managers, fixed local Podman and original local lock. | Render writes a new artifact tree; stage writes a protected immutable release; switch validates bindings/quiescence and atomically selects `current`. No pulls, secrets, activation or NAS file I/O. Failed/unknown artifacts remain. | [installer fixtures](../tests/unit/test_container_release_installer.py) |
+| [container-service.py](../scripts/container-service.py) | Rootless host `/usr/local/libexec/hfcache-container-service api\|worker\|caddy`; `client CLI_ARGS...`; `stop api\|worker\|caddy` | Protected physical release `rendered/runtime.json`, configured service UID/GID, user manager, fixed `/usr/bin/podman --remote=false`, preloaded exact images and role secrets. | Starts fixed-role containers; stop waits indefinitely for owned executor drain and removes only a confirmed stopped identity. No generic engine/executable override. API/worker inspect read-only mount evidence before archive access. | [role/lifecycle tests](../tests/unit/test_container_service.py) |
+| [hfcache-client](../scripts/hfcache-client) | Rootless host `/usr/local/libexec/hfcache-client CLI_ARGS...` | Fixed container-service launcher, client config, API-only `hfcache.api` Podman file secret. | A finite temporary client container makes HTTP requests. Reads, keyed control-state writes, Hub use and archive writes depend on the CLI command; no local operational fallback. Help, including nested command help requests, prints static wrapper guidance. | [client boundary](../tests/unit/test_container_service.py), [safe help](../tests/unit/test_script_help.py) |
+| [hold-readonly-guard.py](../scripts/hold-readonly-guard.py) | Guarded rootless host system service: installed `/usr/local/libexec/hfcache-readonly-guard`, no arguments | Existing original `/run/hfcache/hfcache.lock`, fixed UID/GID, `/proc/1/mountinfo`, notify socket. Independent of application `current`. | Opens without creation/replacement, proves host NFS read-only before READY, retains flock for process lifetime. No NAS content I/O; not continuous mount monitoring. | [guard tests](../tests/unit/test_readonly_guard.py) |
+| [install-release.sh](../scripts/install-release.sh) | Native: `[--no-switch] [--with-mcp]`, `--switch VERSION`, `--list`, `--dry-run` | Positive native source/current/existing target layouts, host Python, pinned uv, system manager, original local lock. Supports deliberate `HFCACHE_PREFIX`, `HFCACHE_SOURCE` and documented tool/state relocation variables. | Mutation requires root; may download Python/dependencies, build protected release, smoke-test and atomically switch. Never auto-stops services or enables timers. Fresh native source is supported. Container/mixed/unknown layout refuses before staging, tool/manager calls or target execution. Help/list/dry-run do not require source/runtime. | [native installer tests](../tests/unit/test_release_installer.py) |
+| [release-functions.sh](../scripts/release-functions.sh) | Native sourced library for installer | System-manager state, original noncreating lock, retained scheduled handles, positive native classifier. | Loading performs no work. Guards actual executors; holds original flock through atomic switch, retains handles, checks target observer compatibility. No killing, lock replacement or state reset. | [switch/rollback tests](../tests/unit/test_release_installer.py) |
+| [release-profile.py](../scripts/release-profile.py) | Native read-only classifier: `--prefix DIR [--source DIR] [--target VERSION] [--print-source-version]` | Standard-library host Python; ordinary metadata, pinned Python/locked hfcache sources and built environment for installed releases. | Reads layout only; never executes candidate code, stages or queries managers. Requires exact internal selector; malformed/container/mixed/unknown metadata refuses. Missing current is allowed for positive fresh source or built target. The installer uses its parsed source version for staging. Does not prove artifact authenticity or executor quiescence. | [profile refusal tests](../tests/unit/test_release_installer.py) |
+| [check-hardening.sh](../scripts/check-hardening.sh) | Static default; `--mode inventory --profile native\|rootless\|guarded-readonly`; native `--mode workload` with explicit disposable authority | Host Python; inventory reads selected manager or explicit fixture unit files. Native installed paths require positive release proof. Workload uses fixed native interpreter and transient system service. | Inventory prints property names only. Workload may write only owned disposable health artifacts and private cache; network requires separate opt-in. Refuses production/guarded targets. No copied secrets, lifecycle hooks or real kernel-setting writes. | [probe tests](../tests/unit/test_hardening_probe.py) |
+| [hardening-probe.py](../scripts/hardening-probe.py) | Normally through wrapper; `--help`, `--dry-run`; workload requires `--profile native --acknowledge-disposable --archive-root DIR --archive-id UUID --lock-file FILE` | Positive native selection; pre-existing disposable sentinel/health/lock, proven local paths or explicitly selected disposable NFS. `--allow-network` and verifier `--credential-probe PATH` are separate inputs. | Default/import/help/dry-run have no workload effects. Reports pass/fail/not_proven for the actual tested process; exact inode cleanup preserves unknown files. Does not certify installed rootless confinement. | [identity/evidence fixtures](../tests/unit/test_hardening_probe.py) |
+
+Rootless API uses `/run/hfcache/api/api.sock`, and the notify-ready worker creates
+`/run/hfcache/verification/verification.sock`. API requires that worker **service**.
+The indexed rootless `.socket` artifact stays dormant with `RefuseManualStart=yes`.
+Native system services retain `/run/hfcache/api.sock`,
+`/run/hfcache/verification.sock` and strict named-FD3 activation.
+
+Rootless application binaries live at `/opt/hfcache/.venv/bin` inside images;
+native binaries live in the host release `.venv/bin`. Podman mounts explicit
+0400 secrets under `/run/secrets`: API gets distinct REST writer/reader,
+MCP-reader and optional Hub sources; client gets REST only; worker gets none;
+Caddy gets certificate/key. Native uses separately provisioned systemd named
+credentials. Do not route identical unit names between managers implicitly.
+
+## Build and test helpers
+
+| Script | Invocation | Inputs and dependencies | Effects and outputs | Test owner |
+| --- | --- | --- | --- | --- |
+| [fetch-container-python.py](../scripts/fetch-container-python.py) | `--images-json FILE --output NEWFILE` | Public pinned portable-Python URL/hash, host Python/CA store. | Explicit bounded verified HTTPS download to new local output; no extraction, secrets, manager or Podman. Interrupted partials remain. | [fetch tests](../tests/unit/test_fetch_container_python.py) |
+| [build-container.py](../scripts/build-container.py) | `--wheel FILE --wheel-sha256 HEX --python-archive FILE --context NEWDIR --tag localhost/hfcache:TAG` | Authenticated wheel/interpreter, repository pins, Git, uv and fixed local Podman with preloaded immutable bases. | Exports locked dependencies, writes new context/evidence and builds local UBI micro image/proof container. No pull/push, runtime credentials, manager or NAS. | [image builder tests](../tests/unit/test_container_runtime.py) |
+| [build-caddy-container.py](../scripts/build-caddy-container.py) | `--context NEWDIR --tag localhost/hfcache:TAG` | Repository pins, Git, rootless local Podman and preloaded UBI/CA/Caddy donors. | Local UBI image/context and retained identity proof. No pull/push, runtime secrets, manager or NAS. | [Caddy build tests](../tests/unit/test_caddy_container_build.py) |
+| [check-container-foundation.py](../scripts/check-container-foundation.py) | `--image sha256:HEX --workspace NEWDIR --images-json FILE [--build-record FILE]` | Explicit exact local image, rootless fixed Podman and pins/evidence. | Starts retained disposable proof container, records interpreter/library/foundation observations and logs. No production binds, secrets, engine network or NAS. | [foundation tests](../tests/unit/test_container_foundation.py) |
+| [check-container-worker.py](../scripts/check-container-worker.py) | `--image sha256:HEX --workspace SHORT_NEWDIR --seccomp-profile FILE` | Derived baseline-preserving policy, exact local image, user `systemctl`/`systemd-run`, fixed rootless Podman. | Explicit owned synthetic archive/state/socket/credential fixtures, transient user units and retained proof/logs. Non-killing drain; never binds NAS or real credentials. Actual peer/PID1/control evidence is scoped separately. | [worker proof tests](../tests/unit/test_container_runtime.py) |
+| [check.sh](../scripts/check.sh) | `[--with-build]` | uv, locked development environment; pnpm/make for Cockpit. | Development sync, format/lint/types/tests, wheel/sdist and isolated installation checks; Cockpit gate when toolchain exists. Explicit loud skip is not Cockpit acceptance. `--with-build` adds installed-wheel smoke. Writes build/cache/test artifacts, no production operations. | [development gate](development.md) |
+| [check-installations.py](../scripts/check-installations.py) | No arguments; `--help` | Fresh matching `dist/` wheel, locked base/server/server+MCP closure cached by uv, host Python. | Creates temporary isolated environments and offline installs/import/help/version checks. No manager, archive or credentials. Default gate invokes it after build. | [installation contract](../tests/system/test_wheel_smoke.py), [safe help](../tests/unit/test_script_help.py) |
+
+## Independent consumer helpers
+
+| Script | Invocation | Inputs and dependencies | Effects and outputs | Test owner |
+| --- | --- | --- | --- | --- |
+| [setup-hfcache-consumer-model-store.sh](../scripts/setup-hfcache-consumer-model-store.sh) | `[COPY_REVISION_PY]` | Independent consumer host root, Python/account/filesystem tools and reviewed copy helper. | Creates/locks service account and group, installs `/usr/local/libexec/hfcache/copy-revision.py`, prepares `/var/lib/hfcache-models/unsloth/Qwen3.8-27B-NVFP4/revisions` ownership/capacity. No Hub/API/archive operation or service-manager call. | [model-store tests](../tests/unit/test_consumer_model_store_script.py) |
+| [consumer-serve-hfcache-model.sh](../scripts/consumer-serve-hfcache-model.sh) | `[--runtime podman\|docker] VLLM_IMAGE MODEL_DIRECTORY VLLM_CONFIG_YAML` | Independent consumer engine/GPU, verified local model and reviewed YAML/image. | Starts vLLM on port 8000 with GPU/host IPC and read-only model/YAML binds using private SELinux relabel. Engine may fetch a missing image under its ordinary policy. No archive credentials or writer-manager control. | [serving tests](../tests/unit/test_consumer_serve_script.py) |
+
+Consumer payload copying and exact publication verification are described in
+[consumers](consumers.md). These tools do not replace the NFS data path with HTTP.

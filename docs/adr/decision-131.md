@@ -53,3 +53,9 @@ See [diagnostic modes](../security.md#hardening-diagnostics),
 [wrapper](../../scripts/check-hardening.sh), and
 [owned-fixture tests](../../tests/unit/test_hardening_probe.py).
 No archive format, dependency or daemon sandbox policy changes.
+
+## Native layout qualification
+
+[Decision 132](decision-132.md) additionally requires positive installed-native
+layout proof before native inventory, interpreter execution or workload effects.
+An explicit profile acknowledgement cannot authorize a container or unknown release.

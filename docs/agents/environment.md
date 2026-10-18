@@ -17,30 +17,37 @@ apply wherever the archive mount exists.
 
 ## The deployment, in facts
 
-- **Releases:** `/opt/hfcache/releases/<version>`, with `/opt/hfcache/current`
-  switched by atomic rename and `/opt/hfcache/python` holding the pinned
-  uv-managed CPython 3.14. All root-owned; the service identity cannot modify
-  the code it runs. Install and switch only via `scripts/install-release.sh`.
-- **Configuration:** `/etc/hfcache/config.toml`, `0640 root:hfcache`, and the
-  default `--config` path, so installed-CLI invocations need no flag.
-- **Service identity:** `hfcache`, nologin. Exercise the installed CLI as it:
+The selected recorded deployment is guarded rootless 0.2.1, not the older native
+installation described in historical evidence. See [deployment status](../deployment-status.md)
+and [script inventory](../scripts.md). This documentation task authorizes no host
+operations; the user's final feature-branch push permission does not authorize
+installation, service control or production archive access.
 
-  ```bash
-  sudo -u hfcache /opt/hfcache/current/.venv/bin/hfcache status
-  ```
+- Rootless releases use `/opt/hfcache/releases/<version>` and atomic `current`,
+  `container-release.json`, an artifact index and protected rendered runtime metadata.
+  Use `install-container-release.py` for that profile. The native installer and
+  native hardening refuse container/mixed/unknown layouts before effects.
+- Host client: `/usr/local/libexec/hfcache-client`; image executable:
+  `/opt/hfcache/.venv/bin/hfcache`. API/worker/Caddy use the hfcache **user** manager;
+  the system target/bridge and independent read-only guard are separate host controls.
+- API socket: `/run/hfcache/api/api.sock`; worker-created private listener:
+  `/run/hfcache/verification/verification.sock`. API follows notify-ready worker
+  service. The indexed user socket artifact remains dormant; native FD3 support stands.
+- Protected Podman secrets are explicit file mounts. API receives separate REST,
+  MCP and Hub sources, client REST only, worker none. No command copies token values.
+- Preserve NAS read-only, independent original-inode host guard, writer masks,
+  disabled calendars, both operation stores and all scheduled handles. Neither
+  wrapper exit nor free lock proves executor termination. No schedule is enabled here.
+- Native remains supported separately: system services, host release `.venv`,
+  uv-managed pinned Python and systemd credential delivery. Positive native
+  source/current/target proof precedes staging, manager access and switching.
+  Help/list/dry-run need no source, archive, root or manager; dry-run is intent only.
+- SELinux remains enforcing. Default hardening entrypoints are static; explicit
+  inventory/workload modes have the security contract's scope and restrictions.
+  Owned repository tests are not actual installed/container/NFS acceptance.
 
-- **Units:** `hfcache.target`; `hfcache-sync.service` + `.timer` (enabled,
-  daily); `hfcache-verify.service` + `.timer` (installed, **disabled** until
-  the operator confirms the quarterly calendar);
-  `srv-hfcache.mount`/`.automount`; a journald drop-in (persistent storage);
-  tmpfiles for `/run/hfcache`, where the exclusive lock lives (`AD-17`).
-- **SELinux is enforcing.** Hardening is validated, not assumed:
-  The hardening wrapper is static by default; explicit inventory reads property
-  names only. Disposable workloads require separate profile/target/UUID/lock
-  authority and refuse the guarded deployment. See the human security diagnostic
-  contract. No source task authorizes actual host/NFS probes.
-- **Archive layout and permissions:** `docs/architecture.md` §5. What is
-  still open host-side: **Operator handoff** in `docs/agents/progress.md`.
+Historical rollout evidence and outstanding operator work remain in
+**Operator handoff** in `docs/agents/progress.md`; history is not current authority.
 
 ## Hard limits
 
