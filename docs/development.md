@@ -18,7 +18,8 @@ See the [script reference](scripts.md) for each helper’s dependencies and effe
 ## Quality gate
 
 The provider-neutral gate checks the lock, synchronizes the locked environment,
-checks Ruff formatting and lint, checks Pyrefly types, runs offline pytest,
+checks Ruff formatting and lint, checks Pyrefly types, validates documentation,
+runs offline pytest,
 builds the distribution and smoke-installs locked base, server and
 server-plus-MCP wheels. With pnpm and make it also runs the Cockpit frozen
 install, lint, tests and production build. A skipped Cockpit stage does not
@@ -111,3 +112,24 @@ against owned temporary publication trees, including corrupt and mismatched
 evidence. Never execute every example or code fence: installation, image builds,
 probes, mounts, service changes and serving workloads have real effects. Safe help
 checks use an explicit inventory and must precede runtime/credential access.
+
+Run documentation validation directly with:
+
+```bash
+uv run --locked --extra server --extra mcp python scripts/check-docs.py
+```
+
+It discovers human Markdown throughout the repository, validates rendered local
+links and anchors, checks audience boundaries and requires each helper exactly
+once in the catalog with an explicit inspection classification. Generated build,
+cache, vendor and ignored session-scratch trees are excluded; architectural
+records and newly added human guides are included. It uses the existing locked
+Markdown parser, reads repository files only and executes no snippets. The test
+suite additionally compares published defaults/ranges to strict models, actual
+routes to the REST matrix, mounted tools to their names/argument fields, and role
+settings to real launcher arguments. Bad-fixture tests prove failures, including
+missing helpers, malformed references and changed numeric defaults/bounds.
+
+Edit human reference tables and their governing source together. Keep independent
+route/tool expectations: regenerating a table must not weaken the tests that
+check its completeness, authorization or side effects.

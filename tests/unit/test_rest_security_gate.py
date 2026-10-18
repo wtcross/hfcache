@@ -9,6 +9,7 @@ from starlette.routing import Route
 from hfcache.api.app import create_app
 from hfcache.logging import reset
 from hfcache.server_config import validate_server_config_mapping
+from tests.docs_contract import CHECKER
 from tests.fixtures.examples import ARCHIVE_ID
 from tests.unit.test_rest_parity_gate import matrix_rows
 
@@ -179,6 +180,7 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
 def test_documented_post_routes_use_the_strict_named_request_models(configured):
     server, archive, lock = configured
     schema = create_app(server, instance_lock_path=lock).openapi()
+    assert CHECKER["audience_errors"](json.dumps(schema)) == []
     models = {
         "/config/validate": "ValidationSubmission",
         "/plans": "PlanSubmission",

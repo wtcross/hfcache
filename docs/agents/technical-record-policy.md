@@ -43,3 +43,15 @@ Each new record must identify:
 The human ADR index retains the legacy AD/decision namespaces and named records.
 Do not create a third sequence for new decisions; use the progress number.
 
+
+## Audience and migration evidence
+
+Human documents and generated public help contain no work-package IDs, agent
+tracking paths or execution-stage introductions. `scripts/check-docs.py` owns the
+explicit audience and helper-inspection classification; it has no transitional
+leakage baseline. Technical identifiers and domain plans remain valid. Pure agent
+records stay below `docs/agents/`, with AGENTS/CLAUDE as entrypoint exceptions.
+Preserved reference manifests record both original Git source hashes and the
+current reference-repaired snapshot hashes. Repairing a historical link requires
+updating its snapshot hash deliberately; never replace preserved rationale with
+a new mutable execution queue.

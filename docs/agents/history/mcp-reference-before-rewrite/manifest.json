@@ -3,12 +3,14 @@
     "source": "docs/mcp.md",
     "git": "75cbea1",
     "sha256": "4910fbe5600b3f7207b8468d8cf022f19cece2b06d445a87752bd226583d759a",
-    "snapshot": "docs/agents/history/mcp-reference-before-rewrite/mcp.md"
+    "snapshot": "docs/agents/history/mcp-reference-before-rewrite/mcp.md",
+    "snapshot_sha256": "0e1316ea0eab9bc992f020e102442dd022f4d1d3f4ebdd52bf0315408963737e"
   },
   {
     "source": "docs/consumers.md",
     "git": "75cbea1",
     "sha256": "d4a4c2925984ae5b74b22ea22aa253614a41d34c7d3545f13e9e59ffe78bd9a2",
-    "snapshot": "docs/agents/history/mcp-reference-before-rewrite/consumers.md"
+    "snapshot": "docs/agents/history/mcp-reference-before-rewrite/consumers.md",
+    "snapshot_sha256": "a8d1c2656795cbc908d631df04239d3b96ba6f79ff0bbd40ba9732c2b25c1ef3"
   }
 ]

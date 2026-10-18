@@ -74,3 +74,26 @@ def test_original_documentation_inventory_accounts_for_each_tracked_document():
     expected = {p for p in paths if p.endswith(".md") and p != "CLAUDE.md"}
     assert {row["original"] for row in inventory["documents"]} == expected
     assert all((ROOT / row["current"]).exists() for row in inventory["documents"])
+
+
+def test_every_preserved_reference_snapshot_has_an_original_git_hash_and_current_home():
+    manifests = sorted((ROOT / "docs/agents/history").rglob("manifest.json"))
+    assert manifests
+    snapshots = set()
+    for manifest in manifests:
+        for row in json.loads(manifest.read_text()):
+            original = subprocess.run(
+                ["git", "show", f"{row['git']}:{row['source']}"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+            ).stdout
+            assert hashlib.sha256(original).hexdigest() == row["sha256"]
+            assert row["snapshot"] not in snapshots
+            snapshots.add(row["snapshot"])
+            assert (ROOT / row["snapshot"]).is_file()
+            assert (
+                hashlib.sha256((ROOT / row["snapshot"]).read_bytes()).hexdigest()
+                == row["snapshot_sha256"]
+            )
+            assert (ROOT / row["source"]).is_file()

@@ -5,7 +5,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
 
 import httpx
 import pytest
@@ -16,6 +15,7 @@ from hfcache.client import ApiClient
 from hfcache.client_config import resolve_client_config
 from hfcache.config import load_config
 from hfcache.server_config import load_server_config
+from tests.docs_contract import CHECKER
 from tests.unit.test_api_client_adversarial import BASE, TOKEN, _capabilities, _read, _response
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -101,44 +101,11 @@ def without_fences(text):
 
 
 def anchors(path):
-    text = without_fences(path.read_text())
-    result = set(re.findall(r'<a\s+(?:id|name)="([^"]+)"', text))
-    counts = {}
-    for heading in re.findall(r"(?m)^#{1,6}\s+(.+?)(?:\s+#+)?$", text):
-        label = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", heading)
-        slug = "".join(
-            character for character in label.lower() if character.isalnum() or character in " _-"
-        )
-        slug = slug.replace(" ", "-")
-        number = counts.get(slug, 0)
-        counts[slug] = number + 1
-        result.add(slug if number == 0 else f"{slug}-{number}")
-    return result
+    return CHECKER["markdown_references"](path.read_text())[1]
 
 
 def test_current_interface_documentation_has_resolvable_local_files_and_anchors():
-    failures = []
-    known_anchors = {}
-    for relative in INTERFACE_DOCS:
-        path = ROOT / relative
-        text = without_fences(path.read_text())
-        links = re.findall(r"\[[^\]\n]+\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)", text)
-        links += re.findall(r"(?m)^\s*\[[^\]]+\]:\s*(\S+)", text)
-        for link in links:
-            parsed = urlsplit(link.strip("<>"))
-            if parsed.scheme or parsed.netloc:
-                continue
-            target = path if not parsed.path else (path.parent / unquote(parsed.path)).resolve()
-            if parsed.path.startswith("/"):
-                target = ROOT / unquote(parsed.path).lstrip("/")
-            if not target.exists():
-                failures.append(f"{relative}: missing {link}")
-            elif parsed.fragment and target.suffix == ".md":
-                if target not in known_anchors:
-                    known_anchors[target] = anchors(target)
-                if unquote(parsed.fragment) not in known_anchors[target]:
-                    failures.append(f"{relative}: missing anchor {link}")
-    assert not failures, "\n".join(failures)
+    assert CHECKER["check_links"](ROOT, [ROOT / relative for relative in INTERFACE_DOCS]) == []
 
 
 def test_disabled_server_factory_imports_no_mcp_and_creates_no_archive_or_control_state(tmp_path):

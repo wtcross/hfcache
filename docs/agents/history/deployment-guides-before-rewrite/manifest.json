@@ -3,48 +3,56 @@
     "source": "docs/containers.md",
     "git": "bffdce0",
     "sha256": "199187a4cccf373831e477236ded4b96154c3ad24d7c365307432d5e4b354d2f",
-    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/containers.md"
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/containers.md",
+    "snapshot_sha256": "f10a8e8c30064d31b47ee8046f8bc8ea172afa89d92d32bbc99756290bdd2036"
   },
   {
     "source": "docs/deployment-centos-stream-10.md",
     "git": "bffdce0",
     "sha256": "d5393d2afac5cce499add8a55e2a3f7fde0205386884ae311073b5777b65eb5d",
-    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/deployment-centos-stream-10.md"
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/deployment-centos-stream-10.md",
+    "snapshot_sha256": "30fa9e118c52f278e6bec0f4ab6a0b9ffb7421dda0152fbed85e0691d825685f"
   },
   {
     "source": "docs/cockpit.md",
     "git": "bffdce0",
     "sha256": "80404611a6750eb2301b1ed8c58b5c9a419dc5d4a1e1fd8be438bccaa2cec840",
-    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit.md"
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit.md",
+    "snapshot_sha256": "2c25aa860710e3dc2c44c5eb97a04004bd6e2275636c6ff279486f20e1cdeec1"
   },
   {
     "source": "docs/cockpit-plugin/README.md",
     "git": "bffdce0",
     "sha256": "dd1a035ad89325d5c59fb327f91d147cd1a61013d09dd5582de3fbc1ccd6b622",
-    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/README.md"
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/README.md",
+    "snapshot_sha256": "e0f0a12b9e755dfb31e8cb73d76a9c0c74b9ecd15e21088c3dc2d84d0f12ef23"
   },
   {
     "source": "docs/cockpit-plugin/installation.md",
     "git": "bffdce0",
     "sha256": "0f2f47220ad3af3907f4906ab3638d7ed8f35133121f23ea7a393726ae3b0c17",
-    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/installation.md"
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/installation.md",
+    "snapshot_sha256": "096bfed04e5197aaa895cadb0e09a190039cc44fdfb50ce8026c4d4578de2e7f"
   },
   {
     "source": "docs/cockpit-plugin/troubleshooting.md",
     "git": "bffdce0",
     "sha256": "7b67ed89ede4cbd05b02c3479232f15215abbea5725534818c843d7f28c591ce",
-    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/troubleshooting.md"
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/troubleshooting.md",
+    "snapshot_sha256": "1a9d06c90a80109d1b4501a84592f14684169e9a83c9c1ed16c59dc11317138d"
   },
   {
     "source": "docs/cockpit-plugin/usage.md",
     "git": "bffdce0",
     "sha256": "30f6b4e486a7edbee47a3f2e6e259c413c89f96e2a70d975a4d26fabc84293ed",
-    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/usage.md"
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/docs/cockpit-plugin/usage.md",
+    "snapshot_sha256": "e13f883d10008ed3ad7a1c6007456f6b5fd519bfe5746b00c18866a6b7aab4ca"
   },
   {
     "source": "cockpit/README.md",
     "git": "bffdce0",
     "sha256": "9011d6e4f1d90d53b61de66f66b0167c77630e5ae63a279fa03da823e26dcfd3",
-    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/cockpit/README.md"
+    "snapshot": "docs/agents/history/deployment-guides-before-rewrite/cockpit/README.md",
+    "snapshot_sha256": "c3c669f3aff7f917644a87649eb985e16e63c1c66a117da4803973d8c292ce36"
   }
 ]

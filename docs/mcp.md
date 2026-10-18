@@ -409,3 +409,20 @@ Cancellation closes observation but an active bounded read can retain its transp
 slot and worker lease until actual completion. Shutdown joins that work before
 releasing instance ownership. Concurrent authorized REST mutations belong to those
 commands; MCP adds no admission, Hub request, credential resolution or artifact.
+
+## Tool argument reference
+
+These are exact schema field names. Required arguments must be supplied; optional
+arguments use the defaults and bounds above. Names absent here are rejected.
+
+| Tool | Required fields | Optional fields |
+| --- | --- | --- |
+| `get_archive_status` | `[]` | `["selectors", "repository_type", "limit", "cursor"]` |
+| `list_repositories` | `[]` | `["selectors", "repository_type", "limit", "cursor"]` |
+| `list_revisions` | `[]` | `["selectors", "repository_type", "limit", "cursor"]` |
+| `get_current_reference` | `["repository_type", "repository_id"]` | `[]` |
+| `get_revision_manifest` | `["repository_type", "repository_id", "commit_sha", "publication_id"]` | `["collection", "limit", "cursor"]` |
+| `list_run_reports` | `[]` | `["limit", "cursor"]` |
+| `get_run_report` | `["run_id"]` | `["limit", "cursor"]` |
+| `get_verification_report` | `["run_id"]` | `["limit", "cursor"]` |
+| `estimate_verification` | `[]` | `[]` |

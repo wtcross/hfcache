@@ -100,7 +100,7 @@ metadata marked private or gated remains `HFHUB006`. This prevents installing a
 rate-limit or identity credential from silently changing what the archive may
 retain. Under `required`, readable private and gated repositories proceed through
 the same complete-revision pipeline as public repositories. Every consumer of
-The publication export must be authorized to receive that content (`AD-21`).
+the publication export must be authorized to receive that content (`AD-21`).
 
 Losing upstream access does not remove a local revision. Future Hub calls fail,
 while existing publications remain until the operator removes the repository

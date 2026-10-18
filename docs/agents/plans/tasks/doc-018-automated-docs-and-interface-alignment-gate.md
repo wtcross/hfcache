@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [DOC-017](doc-017-reader-first-onboarding-and-human-navigation.md) |
 | Phase | 3 — Prevent recurrence and close |
@@ -25,11 +25,11 @@ Add targeted regression tests for the review's actual problems: wrong base/liste
 
 ## Acceptance
 
-- [ ] A representative leaked task ID, plan link, literal old selector path, stage introduction or missing documentation/script entry fails the gate.
-- [ ] Legitimate runtime errors/invariants, `hfcache plan` and domain recovery plans are not false positives.
-- [ ] Actual API/MCP/config/script facts are checked with executable fixtures rather than only searching for words.
-- [ ] Human references to agent tracking are zero, with no broad or leftover baseline exemptions.
-- [ ] The documentation gate cannot touch the real host/archive/network or execute an arbitrary snippet; its own failure tests are included.
+- [x] A representative leaked task ID, plan link, literal old selector path, stage introduction or missing documentation/script entry fails the gate.
+- [x] Legitimate runtime errors/invariants, `hfcache plan` and domain recovery plans are not false positives.
+- [x] Actual API/MCP/config/script facts are checked with executable fixtures rather than only searching for words.
+- [x] Human references to agent tracking are zero, with no broad or leftover baseline exemptions.
+- [x] The documentation gate cannot touch the real host/archive/network or execute an arbitrary snippet; its own failure tests are included.
 
 ## Contracts, invariants and ADRs
 
@@ -59,15 +59,43 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after DOC-017 23d7c6c. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+Completed 2026-10-18, this commit. Added import-safe `scripts/check-docs.py` to
+the provider-neutral gate using the existing locked Markdown parser. It discovers
+180 human Markdown documents, validates CommonMark/reference/image/HTML links and
+real heading/explicit anchors, refuses repository/symlink escapes and agent-target
+aliases, and requires all 19 helpers once with explicit inspection modes. Raw and
+rendered audience checks reject encoded/literal paths, mixed-case/formatted IDs
+and stage introductions while permitting runtime/technical identifiers and domain
+plans. The transitional baseline field is removed entirely.
+
+Bad fixtures cover links, duplicate headings, escapes, aliases, stale/missing/
+duplicate/unclassified helper rows, inert recipes and caught import-time access.
+All approved Python/shell helper and example help paths are checked with file,
+manager/engine/process/network guards; ordinary interpreter metadata and reviewed
+pins remain permitted. CLI help and generated OpenAPI/MCP descriptions are clean.
+Model comparisons cover server/client/archive defaults, required fields, numeric
+bounds/inclusivity, retention choices, mandatory hashing and repair floor.
+Selected base/listener/readiness facts match artifacts; actual mounted MCP
+argument fields match the new reference. Independent REST route/mode/security
+and role fixtures remain intact. All 177 preserved snapshots now have tested
+original Git hashes and current snapshot hashes.
+
+Validation: integrated focused 246 passed in 27.57s; final reviewed boundary,
+configuration and help 95 passed in 6.02s; Ruff and Pyrefly passed. One running gate
+was deliberately interrupted to include the final boundary fixes. Full final
+`scripts/check.sh --with-build` exited 0: 4315 passed/40 deselected in 483.90s;
+distributions, three locked profiles, actual Cockpit lint/types/135 tests/build
+and four opt-in wheel smoke tests (5.94s) passed. Checker reports 180 human docs,
+19 helpers and zero errors. No external host/NAS/manager/image operation ran.
+Reviewed INV-010, existing dependency exceptions, all affected source-of-truth
+contracts and migrated authority policy. No runtime dependency, archive format,
+application behavior or architectural authority changed.
+
+See [completed progress evidence](../../progress.md#documentation-and-interface-gate-2026-10-18).

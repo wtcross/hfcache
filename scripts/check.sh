@@ -55,6 +55,9 @@ uv run --locked --extra server --extra mcp ruff check .
 step 'pyrefly check'
 uv run --locked --extra server --extra mcp pyrefly check
 
+step 'documentation alignment'
+uv run --locked --extra server --extra mcp python scripts/check-docs.py
+
 step 'pytest'
 uv run --locked --extra server --extra mcp pytest
 

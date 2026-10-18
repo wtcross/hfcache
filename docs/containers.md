@@ -57,6 +57,22 @@ config replacement visibility; admitted snapshots remain immutable.
 
 ## Build and image identity
 
+### Selected runtime facts
+
+These values are checked against image pins, rendered configuration templates and
+unit artifacts. Native activation uses its separate profile.
+
+| Runtime fact | Selected value |
+| --- | --- |
+| Application/build base | `registry.access.redhat.com/ubi10/ubi-micro` |
+| Caddy base | `registry.access.redhat.com/ubi10/ubi-micro` |
+| CA donor | `registry.access.redhat.com/ubi10/ubi-minimal` |
+| Application Python | `3.14.6` |
+| API socket | `/run/hfcache/api/api.sock` |
+| Private worker socket | `/run/hfcache/verification/verification.sock` |
+| Worker service type | `notify` |
+| Rootless socket manual start | `RefuseManualStart=yes` |
+
 [Containerfile](../packaging/containers/Containerfile),
 [platform pins](../packaging/containers/images.json),
 [Caddy derivative](../packaging/containers/Containerfile.caddy) and

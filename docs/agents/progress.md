@@ -127,6 +127,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   FS-12/INV-008–010/AD-05/13/21 reviewed; editorial/help/test changes only.
   No host/NAS/manager action; retained restrictions and consumer ownership unchanged.
 
+## Documentation and interface gate (2026-10-18)
+
+- [x] DOC-018 Enforce documentation and interface alignment
+  (2026-10-18, this commit — [task](plans/tasks/doc-018-automated-docs-and-interface-alignment-gate.md)).
+  Offline parser-backed audience/link/anchor/catalog gate covers 180 human docs
+  and 19 helpers with no leakage baseline. Bad fixtures exercise malformed links,
+  alias/escape paths, missing/duplicate helpers, formatted IDs/stages and inert
+  recipes. Import/help isolation, actual REST/MCP/role facts, numeric/default/
+  semantic configuration constraints and177 source/snapshot hash pairs are tested.
+  Focused 246 plus final95 passed. Full --with-build gate:4315 passed/40 deselected
+  in483.90s, three locked profiles, actual Cockpit lint/types/135 tests/build and
+  four wheel smoke tests passed. INV-010/dependency/authority contracts reviewed;
+  no runtime dependency/format/application authority change or live-host action.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)

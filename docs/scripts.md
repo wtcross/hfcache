@@ -6,9 +6,10 @@ remain supported separately. Build/test tooling and independent consumers do not
 select a deployment. Run repository commands from its root. All helpers are
 retained because each has a supported installation, build, test or consumer use.
 
-Help is inspection: it needs no root, manager, archive or credentials. Python
-helpers require host Python with standard-library TOML support; build helpers
-also read repository-local pins. `release-functions.sh` is a sourced library.
+Help is inspection: it needs no root, manager, archive or credentials. Host Python
+helpers require standard-library TOML support; build helpers
+also read repository-local pins. The documentation checker uses the locked
+development environment and its existing Markdown parser. `release-functions.sh` is a sourced library.
 Only tools explicitly listing `--dry-run` support it. Native dry-run describes
 intent without validating source, current or target; it certifies no installation.
 Explicit probe modes are governed by [hardening diagnostics](security.md#hardening-diagnostics).
@@ -49,6 +50,7 @@ credentials. Do not route identical unit names between managers implicitly.
 | [build-caddy-container.py](../scripts/build-caddy-container.py) | `--context NEWDIR --tag localhost/hfcache:TAG` | Repository pins, Git, rootless local Podman and preloaded UBI/CA/Caddy donors. | Local UBI image/context and retained identity proof. No pull/push, runtime secrets, manager or NAS. | [Caddy build tests](../tests/unit/test_caddy_container_build.py) |
 | [check-container-foundation.py](../scripts/check-container-foundation.py) | `--image sha256:HEX --workspace NEWDIR --images-json FILE [--build-record FILE]` | Explicit exact local image, rootless fixed Podman and pins/evidence. | Starts retained disposable proof container, records interpreter/library/foundation observations and logs. No production binds, secrets, engine network or NAS. | [foundation tests](../tests/unit/test_container_foundation.py) |
 | [check-container-worker.py](../scripts/check-container-worker.py) | `--image sha256:HEX --workspace SHORT_NEWDIR --seccomp-profile FILE` | Derived baseline-preserving policy, exact local image, user `systemctl`/`systemd-run`, fixed rootless Podman. | Explicit owned synthetic archive/state/socket/credential fixtures, transient user units and retained proof/logs. Non-killing drain; never binds NAS or real credentials. Actual peer/PID1/control evidence is scoped separately. | [worker proof tests](../tests/unit/test_container_runtime.py) |
+| [check-docs.py](../scripts/check-docs.py) | `uv run --locked --extra server --extra mcp python scripts/check-docs.py` | Locked development Markdown parser, repository documentation and helper catalog. | Read-only offline audience/link/anchor/catalog validation. Does not execute recipes, contact services, resolve credentials or access the archive. | [checker fixtures](../tests/unit/test_docs_alignment.py), [configuration contracts](../tests/unit/test_docs_config_contract.py) |
 | [check.sh](../scripts/check.sh) | `[--with-build]` | uv, locked development environment; pnpm/make for Cockpit. | Development sync, format/lint/types/tests, wheel/sdist and isolated installation checks; Cockpit gate when toolchain exists. Explicit loud skip is not Cockpit acceptance. `--with-build` adds installed-wheel smoke. Writes build/cache/test artifacts, no production operations. | [development gate](development.md) |
 | [check-installations.py](../scripts/check-installations.py) | No arguments; `--help` | Fresh matching `dist/` wheel, locked base/server/server+MCP closure cached by uv, host Python. | Creates temporary isolated environments and offline installs/import/help/version checks. No manager, archive or credentials. Default gate invokes it after build. | [installation contract](../tests/system/test_wheel_smoke.py), [safe help](../tests/unit/test_script_help.py) |
 

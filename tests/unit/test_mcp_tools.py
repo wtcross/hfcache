@@ -31,6 +31,7 @@ from hfcache.reporting import (
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services import commands
 from hfcache.services.queries import LocalQueries, PublicationQuery, RepositoryQuery
+from tests.docs_contract import CHECKER
 from tests.fixtures import examples
 from tests.unit.test_server_bootstrap import (
     isolate_logging,  # noqa: F401 - autouse fixture
@@ -372,6 +373,16 @@ def test_actual_mounted_registry_has_exact_typed_allowlist_and_read_only_hints(a
             guide = (Path(__file__).parents[2] / "docs/mcp.md").read_text()
             table = guide.split("| Tool | Inputs |", 1)[1].split("### Metadata output", 1)[0]
             assert re.findall(r"^\| `([a-z_]+)` \|", table, re.MULTILINE) == list(TOOLS)
+            argument_section = guide.split("## Tool argument reference", 1)[1]
+            documented_arguments = {
+                name: (set(json.loads(required)), set(json.loads(optional)))
+                for name, required, optional in re.findall(
+                    r"^\| `([a-z_]+)` \| `([^`]+)` \| `([^`]+)` \|$",
+                    argument_section,
+                    re.MULTILINE,
+                )
+            }
+            assert set(documented_arguments) == set(TOOLS)
             assert await client.list_resources() == []
             assert await client.list_prompts() == []
             for tool in tools:
@@ -389,6 +400,11 @@ def test_actual_mounted_registry_has_exact_typed_allowlist_and_read_only_hints(a
                 assert tool.annotations.destructive_hint is False
                 assert tool.annotations.idempotent_hint is True
                 assert tool.annotations.open_world_hint is False
+                required_fields, optional_fields = documented_arguments[tool.name]
+                assert required_fields == set(schema.get("required", ()))
+                assert required_fields | optional_fields == set(schema["properties"])
+                assert required_fields.isdisjoint(optional_fields)
+                assert CHECKER["audience_errors"](tool.description or "") == []
                 assert tool.description
                 properties = schema["properties"]
                 if "limit" in properties:
