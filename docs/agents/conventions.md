@@ -29,6 +29,9 @@ it.
 - **The runtime dependency set is closed** (`FW-03`): `huggingface-hub`,
   `pydantic`, `typer`, and the standard library. An addition needs a material
   correctness argument and a recorded decision (`FW-04`).
+  [Decision 108](../adr/decision-108.md) permits incremental transport
+  dependencies; [decision 109](../adr/decision-109.md) permits only the
+  bounded non-resuming execution lane. Neither authorizes other frameworks.
 
 ## Tests
 

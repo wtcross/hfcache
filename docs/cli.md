@@ -12,6 +12,12 @@ The CLI is the only interface to the application. Scheduled runs use exactly the
 same commands an operator types, so a behaviour that cannot be reproduced by hand
 does not exist.
 
+**2026-10-17 API-001 amendment:** the CLI-only statement above records the
+historical interface. [Decision 108](adr/decision-108.md) and the activated
+[API contract](api.md) introduce REST-backed CLI migration incrementally.
+Existing CLI behavior remains until its migration packages; remote routes and
+MCP are planned, not deployed. Local help/version remain independent.
+
 ## 1. Invocation shape
 
 ```text

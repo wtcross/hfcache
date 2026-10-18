@@ -42,7 +42,7 @@ does not activate itself.
 | Deployment, scheduling, and hardening | [Scheduling authority](systemd-scheduling.md) | [Mount units](decision-058.md), [hardening probe](decision-059.md), [offline egress](decision-060.md), [setgid exception](decision-061.md), [safe deploy](decision-065.md) |
 | Consumers and serving | [AD-10](ad-10.md) | [Independent copy helper](decision-067.md), [promotion ownership](decision-099.md), [serving mounts](decision-100.md) |
 | Cockpit administration | [Plugin boundary](decision-087.md) | [Operation surface](decision-089.md), [bundled TOML](decision-091.md), [credential import](decision-092.md), [repository links](decision-101.md) |
-| Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
+| Framework, dependencies, and development | [FW-01–FW-04](fw-01.md) | [Transport boundary](decision-108.md), [submission receipts](decision-109.md), [Runtime baseline](decision-007.md), [provider-neutral gate](decision-008.md), [plugin toolchain](decision-088.md) |
 | Documentation and work-package process | [Router](decision-081.md), [workflow](decision-082.md), [register upkeep](decision-106.md), [plan/task authority](decision-107.md) | [Portable runbooks](decision-085.md), [current invariant register](../invariants.md), [planning guide](../agents/planning.md) |
 
 ## Maintenance rules
@@ -230,3 +230,5 @@ status and current-contract links before applying a historical choice.
 | 105 | [Only journals supplying deletion authority need current checkpoint order](decision-105.md) |
 | 106 | [Current invariants and individual ADRs accompany every implementation](decision-106.md) |
 | 107 | [Active plans and task records own execution; progress retains the audit](decision-107.md) |
+| 108 | [Typed services and maintained transport implementations](decision-108.md) |
+| 109 | [Bounded non-resuming operation receipts](decision-109.md) |

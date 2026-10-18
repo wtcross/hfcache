@@ -122,7 +122,10 @@ deployed writer from the browser: sync control with live activity, archive
 browsing, configuration editing, schedule management, verification, run
 reports, and maintenance. Every action is one of the runbook's own CLI
 commands or systemd units — never a side channel — and the CLI remains the
-application's only interface.
+application's current interface. The activated
+[REST-first implementation plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
+introduces authenticated remote management incrementally;
+[the API contract](docs/api.md) marks future routes as planned.
 [`docs/cockpit-plugin/`](docs/cockpit-plugin/) covers installation and
 usage; [`docs/cockpit.md`](docs/cockpit.md) is the contract it is written
 against.

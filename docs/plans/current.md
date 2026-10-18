@@ -2,17 +2,11 @@
 
 | Field | Value |
 | --- | --- |
-| State | No active plan |
-| Active plan | None |
-| Next task | None |
+| State | Active |
+| Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
+| Next task | [API-002](tasks/api-002-extract-queries-and-results.md) |
 | Blockers | None |
-| Last completed plan | [Planning workflow](2026-10-17-plan-planning-workflow.md) |
 | Updated | 2026-10-17 |
 
-No implementation plan is currently active. Existing backlog remains in
-`docs/progress.md`; its presence does not select or authorize new work.
-
-For an authorized implementation, follow [the planning guide](../agents/planning.md)
-to create or resume a dated plan and its task files. This tracker selects the
-plan and next task; task files own execution status and evidence. Load only
-the selected plan and relevant tasks.
+Task records own execution status and evidence. Only this plan is selected;
+unrelated historical backlog and production operations remain outside scope.

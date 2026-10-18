@@ -2091,3 +2091,12 @@ The autonomous run is complete when all of the following hold. This is deliberat
 - [systemd timer documentation](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html)
 - [systemd execution environment and hardening](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html)
 - [systemd credentials](https://www.freedesktop.org/software/systemd/man/latest/systemd-creds.html)
+
+## 2026-10-17 API-001 interface amendment
+
+The activated [REST-first plan](plans/2026-10-17-plan-rest-api-and-mcp.md)
+and decisions [108](adr/decision-108.md)/[109](adr/decision-109.md) amend
+historical CLI-only and closed transport/runtime assumptions. Ordinary domain
+functions and archive evidence remain authoritative; incremental adapters and
+a bounded non-resuming submission lane add remote management. See [API](api.md)
+for target coverage and implementation status. No production rollout is claimed.

@@ -505,3 +505,36 @@ Planning evidence: [current selector](plans/current.md),
 [DOC-010 task](plans/tasks/doc-010-planning-workflow.md).
 `INV-011` is a repository workflow requirement reviewed through these records
 and git; the application test suite does not enforce planning lifecycle.
+
+## Remote management (accepted target; enforcement pending)
+
+API-001 introduces these constraints for the activated plan. They do not assert
+that remote management is implemented. [API](api.md) and [server](server.md)
+track the target; implementing tasks own proof.
+
+- **`INV-012` — Adapters share one domain implementation.** Transports call
+  typed services, never one another or public CLI callbacks. Remote access
+  changes no FS/TX, whole-archive authorization, or publication locator rule.
+  Enforcement: API-002/003/006/012/013 and later MCP-002.
+- **`INV-013` — Authenticate and bound every management boundary.** Distinct
+  REST writer/reader and MCP reader credentials; no cross-interface credential
+  acceptance, ambient discovery, token disclosure, or unbounded requests.
+  Off-host access verifies TLS. Enforcement: API-005/006/011 and MCP-001/003.
+- **`INV-014` — Admission receipts do not resume domain execution.** Persist
+  before runnable/202, bind principal/key/request, fail stale policies closed,
+  retain ambiguous history, and never infer success or replay from missing
+  history. One bounded lane retains the cross-process archive flock.
+  Enforcement: API-007/008/013; [decision 109](adr/decision-109.md).
+- **`INV-015` — Verification isolation encloses persistence.** Non-estimate
+  verification locks target resolution, hashing, report write and catalog merge
+  in a credential-free no-IP executor. Estimates remain metadata reads.
+  Enforcement: API-003/008/014. No unsafe ASGI-process fallback.
+- **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
+  metadata reads through a narrow read-service interface; no Hub, probes,
+  persistence, recovery, or operation admission. Enforcement: MCP-001–004,
+  which cannot begin until API-016 completes.
+
+FW-01/FW-03 above retain their historical baseline with the explicit
+[108](adr/decision-108.md)/[109](adr/decision-109.md) amendment: scoped transport
+dependencies and the bounded non-resuming lane are permitted incrementally.
+No other workflow framework or runtime dependency is authorized.

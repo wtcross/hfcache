@@ -1201,6 +1201,22 @@ home-grown engine accreted inside `hfcache`. Reaching for a general abstraction
 before one of those three conditions holds is the failure mode this boundary
 exists to prevent.
 
+### 2026-10-17 API-001 amendment
+
+Decisions [108](adr/decision-108.md) and [109](adr/decision-109.md) amend
+FW-01/FW-03 for the activated [REST-first plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
+The typed services retain ordinary domain functions and existing archive authority.
+The closed dependency list permits incremental `httpx` (base), FastAPI/Uvicorn
+(`server`), and standalone `fastmcp` (`mcp`, only after REST acceptance). None is
+installed by API-001. Protocol correctness, verified transports and maintained
+lifespan/auth implementations justify these explicit FW-04 exceptions.
+
+The sole task-queue exception is one bounded FIFO execution lane with
+non-resuming service-private receipts. No DAG, broker, archive database, automatic
+replay, checkpoint orchestration, or in-app scheduler is permitted. A receipt
+never supersedes archive evidence. [API](api.md) and [server](server.md) state
+the target contracts and their implementation status.
+
 ## 9. Phase 0 acceptance
 
 Phase 0's stated acceptance criteria, and where each is satisfied:

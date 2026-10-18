@@ -748,6 +748,22 @@ package in this family.
   `scripts/check.sh` exits `0`: lock, format, lint, types, 1,750 Python tests,
   45 Cockpit tests, package builds, and production plugin build.)
 
+## REST API and read-only MCP (API, 2026-10-17)
+
+- [x] API-001 Activate the feature branch and define transport contracts
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-001-contract-and-activation.md); base/main/github
+  `86f6e8b`, branch `feat/rest-api-and-mcp`. Imported drafts preserved and
+  activated by implementation authorization; all later tasks remain pending.
+  API/server contracts define 29 parity rows across 14 CLI families, roles,
+  effects and execution. Decisions 108/109 explicitly amend FW transport and
+  bounded non-resuming receipt boundaries. Reviewed FS/TX, credentials, output,
+  consumer, Cockpit and planning invariants; INV-012–016 identify pending
+  enforcement owners. Local links and parity table checks pass. Baseline and
+  post-change `scripts/check.sh` exit 0: lock, format, lint, types, 1,750 Python
+  tests, 45 Cockpit tests, package builds and production plugin build.
+  No dependencies, runtime implementation, deployment or archive operations.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3258,3 +3274,16 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
     [the individual record](adr/decision-107.md),
     [setup plan](plans/2026-10-17-plan-planning-workflow.md), and
     [DOC-010 task](plans/tasks/doc-010-planning-workflow.md).
+
+108. **Typed services and maintained transports** (2026-10-17, API-001).
+     [ADR](adr/decision-108.md): ordinary query/guarded-command services retain
+     domain authority; maintained httpx, FastAPI/Uvicorn, and later standalone
+     FastMCP supply protocol correctness through scoped incremental extras.
+     Reject CLI subprocess/callback adapters and duplicate domain engines.
+     FW-03 is explicitly amended; dependencies land in later packages.
+109. **Bounded non-resuming submissions** (2026-10-17, API-001).
+     [ADR](adr/decision-109.md): a bounded FIFO and atomic service-private
+     receipts preserve observation across HTTP timeouts without a workflow
+     engine. Reject broker/database/resume graphs and journal-driven normal
+     execution. No replay or exactly-once claim; archive journals and flock
+     remain authoritative. API-007/008 own implementation and crash proof.
