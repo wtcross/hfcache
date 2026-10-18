@@ -1,6 +1,7 @@
 # Decision 115 — Execute one bounded lane and reconcile the exact verifier
 
 - Status: Accepted; implemented by API-008.
+- Command-route integration: [decision 116](decision-116.md), API-009.
 - Date: 2026-10-17.
 - Work package: API-008, this commit.
 - Source: [progress decision 115](../progress.md#decisions),

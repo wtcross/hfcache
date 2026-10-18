@@ -146,19 +146,25 @@ class OperationRunner:
         *,
         command: str,
         execute: Execute,
-        wait_seconds: float,
+        wait_seconds: float | Callable[[PolicySnapshot], float],
         delegated: bool = False,
         requires_lock: bool = True,
         context: ExecutionContext | None = None,
     ) -> Admission:
-        if (
-            isinstance(wait_seconds, bool)
-            or not isinstance(wait_seconds, (int, float))
-            or not math.isfinite(wait_seconds)
-            or wait_seconds < 0
-        ):
-            raise RequestError
+        def validate_budget(value: float) -> float:
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                or value < 0
+            ):
+                raise RequestError
+            return value
+
+        if not callable(wait_seconds):
+            validate_budget(wait_seconds)
         snapshots = []
+        budgets = []
         admitted_at = self.monotonic()
 
         def capacity() -> None:
@@ -179,7 +185,13 @@ class OperationRunner:
 
         def snapshot() -> PolicySnapshot:
             frozen = self.policy.snapshot()
+            budget = validate_budget(
+                wait_seconds(frozen) if callable(wait_seconds) else wait_seconds
+            )
+            if budget == 0 and (self._queue or self._executing):
+                raise unavailable()
             snapshots.append(frozen)
+            budgets.append(budget)
             return frozen
 
         with self._condition:
@@ -198,8 +210,8 @@ class OperationRunner:
                 execution,
                 command,
                 execute,
-                admitted_at + wait_seconds,
-                nonblocking=wait_seconds == 0,
+                admitted_at + budgets[0],
+                nonblocking=budgets[0] == 0,
                 delegated=delegated,
                 requires_lock=requires_lock,
             )

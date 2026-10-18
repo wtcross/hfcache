@@ -28,6 +28,30 @@ timers use. Running as yourself will fail — `/etc/hfcache/config.toml` is
 
 ---
 
+## REST command observation (API-009)
+
+This section describes implemented development/test behavior, not a production
+rollout or commands exercised on the installed writer. The existing local CLI and
+scheduled units below retain their current interface until API-011–013 migrate it.
+The [API contract](api.md#implemented-command-resources-api-009) gives authenticated
+POST examples and exact body/role rules. Sync and all actual verification need a
+writer; installed planning and `read_only=true` diagnostics permit readers but can
+contact the Hub and use installed credentials. Read-only diagnostics suppresses
+write probes; it is not an offline metadata query. Actual verification always
+uses the private executor; missing isolation refuses rather than falling back.
+
+Keep one nonsecret idempotency key for each deliberate job. HTTP 202 and Location
+acknowledge durable admission only. Poll its authenticated status/events links,
+then retrieve the exact result Envelope and inspect its application exit code,
+errors and partial results. A failed sync can still publish successful repositories;
+HTTP 200 on its result does not mean the run succeeded. An interrupted or missing
+result is uncertainty, not permission to rerun. If an acknowledgement or observer
+is lost, use the original key's authenticated lookup before any deliberate retry;
+do not generate another key to repeat uncertain work. All REST readers share the
+whole-archive history boundary; lookup searches only the caller's credential class.
+Installed validation uses `{}` and returns its classified validation Envelope
+immediately, without a key, Hub request or archive mutation.
+
 ## 1. Is the archive healthy?
 
 `status` is the first command and answers in one screen.

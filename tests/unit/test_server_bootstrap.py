@@ -185,6 +185,7 @@ def test_serve_bootstrap_help_and_config_errors_do_not_read_archive(policy, tmp_
     result = CliRunner().invoke(cli, ["serve", "--help"])
     assert result.exit_code == 0
     assert "--server-config" in result.output
+    assert "--hub-token-file" in result.output
     result = CliRunner().invoke(
         cli, ["--json", "serve", "--server-config", str(tmp_path / "absent")]
     )
@@ -197,6 +198,23 @@ def test_serve_rejects_ambiguous_archive_and_hub_flags_before_import_or_bind(tmp
     result = CliRunner().invoke(cli, ["--token-file", str(tmp_path / "unknown"), "serve"])
     assert result.exit_code == 10
     assert "HFARG002" in result.output
+
+
+def test_serve_uses_only_explicit_startup_hub_file(tmp_path, monkeypatch):
+    observed = []
+
+    def run(path, *, hub_token_file):
+        observed.append((path, hub_token_file))
+
+    monkeypatch.setattr(bootstrap, "run", run)
+    policy_path, token_path = tmp_path / "server.toml", tmp_path / "hub-credential"
+    result = CliRunner().invoke(
+        cli, ["serve", "--server-config", str(policy_path), "--hub-token-file", str(token_path)]
+    )
+    assert result.exit_code == 0
+    assert observed == [(policy_path, token_path)]
+    assert not token_path.exists()
+    assert result.stdout == ""
 
 
 @pytest.mark.parametrize("failure", ["credentials", "policy"])
@@ -220,7 +238,9 @@ def test_foreground_bootstrap_preserves_typed_lifespan_startup_failures(
     monkeypatch.setattr(
         bootstrap,
         "create_app",
-        lambda config: original(config, instance_lock_path=tmp_path / "daemon.lock"),
+        lambda config, **options: original(
+            config, instance_lock_path=tmp_path / "daemon.lock", **options
+        ),
     )
     with pytest.raises(HfcacheError) as result:
         bootstrap.run(path)

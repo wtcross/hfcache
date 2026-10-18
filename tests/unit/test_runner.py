@@ -402,3 +402,60 @@ def test_active_delegate_status_loss_preserves_barrier_and_never_replays(configu
         assert store.get(receipt.operation_id).state == "waiting_lock"
     finally:
         restarted.close()
+
+
+def test_snapshot_budget_preserves_original_admission_deadline(configured):
+    policy, store = configured
+    clock = [1000.0]
+    calls = []
+
+    def budget(snapshot):
+        calls.append(snapshot.fingerprint)
+        clock[0] += 2
+        return 5.0
+
+    def execute(_snapshot, _context):
+        return ServiceResult("plan", {"remaining": locking.remaining_wait_seconds()})
+
+    runner = OperationRunner(store, policy, monotonic=lambda: clock[0])
+    runner.start()
+    try:
+        receipt = submit(runner, "configured-budget", execute, wait=budget, requires_lock=False)
+        assert runner.wait(receipt.operation_id, timeout=5).data == {"remaining": 3.0}
+        assert len(calls) == 1
+    finally:
+        runner.close()
+
+
+def test_configured_zero_budget_refuses_pending_before_save_but_retry_bypasses_policy(configured):
+    policy, store = configured
+    entered, release = threading.Event(), threading.Event()
+
+    def execute(_snapshot, _context):
+        entered.set()
+        assert release.wait(5)
+        return ServiceResult("plan", {})
+
+    def zero_budget(_snapshot):
+        return 0.0
+
+    runner = OperationRunner(store, policy, max_pending=1)
+    runner.start()
+    try:
+        first = submit(runner, "first", execute, wait=zero_budget, requires_lock=False)
+        assert entered.wait(5)
+        with pytest.raises(SafetyError):
+            submit(runner, "pending", execute, wait=zero_budget, requires_lock=False)
+        assert len(store.list()) == 1
+        runner.stop_admission()
+        policy.path.write_text("invalid = [")
+
+        def forbidden_budget(_snapshot):
+            pytest.fail("matching retry reloaded policy or evaluated waiting budget")
+
+        retry = submit(runner, "first", execute, wait=forbidden_budget, requires_lock=False)
+        assert retry.operation_id == first.operation_id
+        assert len(store.list()) == 1
+    finally:
+        release.set()
+        runner.close()

@@ -3,8 +3,10 @@
 Status: API-006 implements authenticated metadata HTTP resources and their
 controlled application lifespan over API-005 configuration/auth primitives.
 API-007 adds bounded receipt/admission primitives and operation observation;
-API-008 adds the heavyweight lane and private verifier process/protocol. Command
-submissions, CLI migration and installed service hardening remain later tasks.
+API-008 adds the heavyweight lane and private verifier process/protocol; API-009
+adds typed sync, verification, planning, diagnostics and installed validation.
+Maintenance, candidate operations, CLI migration and installed service hardening
+remain later tasks.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
 
@@ -38,7 +40,7 @@ the certificate/key before accepting connections.
 | `state_directory` | path, `/var/lib/hfcache/api` | Local service-private API-007 control state; outside publication trees |
 | `credentials` | required table | Required writer source and optional reader/MCP sources below |
 | `listener` | table, defaults below | Unix/TCP/TLS and browser/proxy policy |
-| `limits` | table, defaults below | Bounded resource policy for later routes/runner |
+| `limits` | table, defaults below | Bounded resource policy for metadata, command routes and runner |
 | `verification` | table, defaults below | Private executor client policy; no worker process is launched |
 | `maintenance_enabled` | bool, `false` | Later archive initialization requires this gate plus writer capability and domain confirmation |
 | `interactive_docs` | bool, `false` | Enables authenticated `/api/v1/docs`; `/api/v1/openapi.json` is always authenticated |
@@ -236,8 +238,9 @@ forwarding or response policy; API-011 still owns the actual client.
 
 [`create_app`](../src/hfcache/api/app.py) accepts a frozen server config and
 optional credential registry, installed policy, query factory and instance-lock
-path for hermetic tests. Import/factory construction starts no listener and
-performs no archive initialization, repair or Hub call. The lifespan owns real
+path for hermetic tests, plus the trusted startup-only `hub_token_file` source.
+Import/factory construction starts no listener and performs no archive
+initialization, repair or Hub call. The lifespan owns real
 startup effects: refuse early MCP enablement, acquire the local daemon lock,
 configure logging once, load explicit API credentials, pin installed archive
 policy, construct the bounded metadata pool and cache policy-independent version
@@ -267,6 +270,39 @@ archive integrity, mount safety or initialization. No health path probes writes,
 rebuilds a catalog or constructs a Hub credential. Ref/manifest checks do not
 claim per-request sentinel proof; report identity and catalog confidence retain
 their own documented validation rules.
+
+## Command admission and Hub authority (API-009)
+
+[`install_command_routes`](../src/hfcache/api/commands.py) binds explicit strict
+[command DTOs](../src/hfcache/api/command_models.py) to the shared services and
+bounded runner. The [API contract](api.md#implemented-command-resources-api-009)
+records exact body/capability rules, 202 models, key lookup and terminal results.
+Sync and every actual verification require writer capability; installed planning
+and explicitly read-only diagnostics permit REST readers while retaining Hub,
+resource and control-state effects. Probing diagnostics require a writer and the
+service-owned lock. Installed validation is an immediate query, not a job.
+
+The outer boundary authenticates before receiving a body, authorizes known writer
+routes before reading it, and enforces mixed-route capabilities before typed
+validation. It accepts one bounded strict JSON object with explicit media/encoding
+rules and sanitized errors. Metadata/observation remain responsive while accepted
+heavy work runs. A 202 proves durable admission only; the exact result Envelope
+retains domain failure/partial-result classifications. A lost/oversized admission
+response cannot prove nonexecution; the original key identifies its binding.
+
+`serve --hub-token-file PATH` is a trusted development/startup option forwarded
+to `create_app(..., hub_token_file=...)`, separate from API bearer credentials.
+Only that explicit server-local file or the installed systemd Hub credential
+source can supply Hub authority, under the existing token-mode/account rules.
+Adapters resolve it when the shared command or installed validation requires it;
+startup performs no Hub call. No HTTP body can select a token, source file,
+endpoint, archive root or arbitrary command. Verification receives none of those
+credentials and always delegates through the configured private executor.
+
+The pure [candidate hooks](configuration.md#12-candidate-authority-preparation-api-009)
+compare installed authority without resolving proposed credentials or contacting
+the Hub. Current routes reject candidate fields; the complete candidate/client
+pipeline belongs to API-012. No configuration-install endpoint is provided.
 
 ## Foreground listener bootstrap (API-006)
 
@@ -382,6 +418,10 @@ Fresh verification admission probes the configured executor before writing a
 new receipt; a missing/untrusted adapter refuses with `HFAPI016`. Matching
 idempotent retries bypass this fresh-only probe and retain their original binding.
 The probe never submits or starts verification.
+API-009 permits a trusted `wait_seconds(snapshot)` selector as well as a numeric
+budget, so fresh admission uses the installed sync/verification waiting policy
+without loading changed policy on an idempotent retry. No request field supplies
+that callable or changes the server's waiting policy.
 
 The separate verifier uses the same complete target/hash/report/catalog lock
 boundary. The HTTP process imports its protocol/client without executing archive

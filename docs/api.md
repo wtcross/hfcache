@@ -1,10 +1,11 @@
 # Writer REST API contract
 
 Status: API-006 implements authenticated archive metadata and API-007 adds
-bounded receipt/admission primitives and operation observation under
-[the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md). Job/write routes,
-candidate operations and API-backed public CLI migration remain planned. No
-production installation or listener start is asserted by implementation evidence.
+bounded receipt/admission primitives and operation observation; API-009 adds
+typed command routes under [the active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
+Maintenance/initialization routes, candidate operations and API-backed public CLI
+migration remain planned. No production installation or listener start is asserted
+by implementation evidence.
 
 ## Service and transport boundary
 
@@ -35,22 +36,22 @@ uses its local service until API-011–013 migrate it.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | version --server | version | GET /version | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | capabilities | capabilities | GET /capabilities | R | none | no | Q | none | pending CLI migration | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
+| config validate (installed) | validate_config | POST /config/validate | R | none | no | Q | none | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | config validate --config (candidate) | validate_candidate | POST /config/validate | W | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | pending | planned |
 | archive init --inspect | inspect_archive | GET /archive/inspection | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | archive init --confirm | initialize_archive | POST /archive/initializations | W | archive | no | J | receipt; initial layout/sentinel | pending | pending | planned |
-| doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | pending | pending | planned |
-| doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | pending | pending | planned |
-| plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | pending | pending | planned |
+| doctor --read-only | diagnose | POST /diagnostics | R | none | explicit | J | receipt only | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| doctor (probes) | diagnose | POST /diagnostics | W | archive | explicit | J | receipt; temporary health probes | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| plan (installed) | plan_sync | POST /plans | R | none | yes | J | receipt only | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | plan --config (candidate) | plan_candidate | POST /plans | W | none | yes | J | receipt only | pending | pending | planned |
-| sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | pending | pending | planned |
+| sync | synchronize | POST /syncs | W | archive | yes | J | receipt; journals/cache/publication/catalog/report | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | status [selectors] | archive_status | GET /status | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | list [selectors] [--type] | list_repositories | GET /repositories | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | list --revisions [selectors] [--type] | list_revisions | GET /repositories/revisions | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
 | verify --estimate | estimate_verification | GET /verification/estimate | R | none | no | Q | none | tests/unit/test_queries.py; tests/unit/test_query_evidence.py; existing CLI suites | tests/unit/test_api_reads.py; tests/unit/test_api_adversarial.py | implemented |
-| verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
-| verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
-| verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | pending | pending | planned |
+| verify --new [--run-id] | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| verify --full | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
+| verify --revision | verify_archive | POST /verifications | W | worker archive | no | J | receipt; report/catalog | tests/unit/test_command_services.py; existing CLI suites | tests/unit/test_api_commands.py; tests/unit/test_api_command_adversarial.py | implemented |
 | prune --dry-run | preview_prune | POST /prune-plans | R | none | no | J | receipt only | pending | pending | planned |
 | prune --apply | apply_prune | POST /prunes | W | archive | no | J | receipt; guarded domain mutation/audit | pending | pending | planned |
 | purge --dry-run [selectors XOR --all-unmanaged] | preview_purge | POST /purge-plans | R | none | no | J | receipt only | pending | pending | planned |
@@ -106,9 +107,8 @@ API-003 adds `CommandServices` and immutable requests for the command rows above
 These services preserve domain ordering and classified partial results; public
 commands own the common archive lock once. Adapters and later operation runners
 must call them without an outer archive lock. Verification persistence now stays
-inside its lock/preflight boundary (decision 110). This establishes local service
-behavior only: HTTP routes and remote CLI modes remain planned until their
-implementing acceptance tasks complete.
+inside its lock/preflight boundary (decision 110). API-009 exposes the command subset below through those services; maintenance,
+candidate routes and remote CLI modes remain with their implementing tasks.
 
 ## Implemented metadata resources (API-006)
 
@@ -120,7 +120,7 @@ run IDs retain domain grammars. No path parameter is an arbitrary filesystem pat
 | GET resource | Result in `envelope.data` | Pagination |
 | --- | --- | --- |
 | `/version` | Existing local version payload; no archive-policy read per request | none |
-| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; API-007 advertises `operation_history=true`, while command `operations`/MCP remain false | none |
+| `/capabilities` | API/instance identity, credential class/capabilities, enabled read features and maximum page size; API-009 advertises `operations=true` for its implemented command subset and `operation_history=true`; MCP remains false | none |
 | `/health` | Daemon readiness, policy-validation state and read-only archive inspection when available | none |
 | `/status` | Archive headline plus repository status rows | `repositories` |
 | `/repositories` | Published inventory, including unmanaged repositories | `repositories` |
@@ -211,6 +211,128 @@ configured artifact ceiling to allow JSON escaping/wrapper overhead. It retains
 a bounded parsed representation in memory; it is not bulk file transfer or an
 unbounded raw-file relay. Response-size refusal happens before headers, and the
 metadata lease remains held through stream completion/disconnect.
+
+## Implemented command resources (API-009)
+
+Five explicit POST resources use shared services. They are management commands,
+not arbitrary command/path dispatch. All reject query parameters and unknown
+body fields. Every request authenticates before body reception; sync and
+verification require writer capability before any body is read. Body-dependent
+checks require writer capability before DTO validation when `candidate` is
+present, or when diagnostics does not contain literal `read_only=true`.
+
+| Route under `/api/v1` | Strict JSON object | Role/effect | Response |
+| --- | --- | --- | --- |
+| `POST /syncs` | `selectors` array, default `[]` | W; ordinary whole-run sync, archive mutation/automatic retention under the shared lock | Keyed job, 202 |
+| `POST /verifications` | Required `mode`: `new`, `full` or `revision`; nullable `revision`/`run_id` as below | W; private offline verification, report/catalog persistence under worker-owned lock | Keyed job, 202 |
+| `POST /plans` | `selectors` array, default `[]` | R; installed-policy Hub planning, no archive mutation/lock | Keyed job, 202 |
+| `POST /diagnostics` | Required strict `read_only` boolean | R for `true`, W for `false`; Hub checks in both, write probes/lock only for `false` | Keyed job, 202 |
+| `POST /config/validate` | Exactly `{}` | R; current installed-policy/credential-source validation, no Hub request, receipt or archive mutation | Immediate `ReadResponse`, 200 |
+
+Sync/plan accept at most 100 selectors, each at most 256 characters, parsed by
+existing repository validators and canonicalized as a sorted distinct repository
+set before request hashing. Execution still follows installed configuration
+order and enabled/continuation/capacity policy, never caller array order. Empty
+selectors use all configured repositories. A missing configured repository is
+reported by the existing service rather than silently substituted.
+For sync/plan, a valid full-SHA suffix is validated then discarded when selecting
+the repository, matching the existing service: it does not override that
+repository's configured revision. The canonical digest uses distinct `TYPE:ID`
+values, so duplicates, ordering and a valid unused suffix do not change scope.
+
+Verification requires exactly one mode. A nonnull `revision` is required exactly
+in revision mode and must identify `TYPE:ID@` a full lowercase 40-character SHA;
+it is null or omitted otherwise. Nonnull `run_id` is optional only for new mode
+and uses the existing 32-lowercase-hex
+run grammar. These are selectors of existing domain evidence, not arbitrary
+files. `estimate` is not an accepted job mode; use `GET /verification/estimate`.
+New/full/revision all delegate to the private executor, which owns target
+resolution, hashing, report persistence and catalog merge. The API bearer/Hub
+credential is never forwarded there.
+
+Diagnostics always requires an explicit boolean. A reader sending false,
+missing mode or a non-boolean value receives 403 before DTO validation; a writer
+with missing/invalid mode receives 422 and starts no probe. `read_only=true`
+suppresses write probes but can resolve the installed Hub credential and contact
+the Hub. Planning likewise resolves/tree-inspects through installed authority.
+Both use the heavy lane and control-state receipts, so neither is an MCP metadata
+read. Probing diagnostics retains the existing ability to diagnose uninitialized
+storage without treating a missing sentinel as permission to initialize it.
+
+### POST body boundary
+
+Recognized command POSTs require exactly one `Content-Type: application/json`,
+optionally `charset=utf-8` (quoted UTF-8 is accepted), and no `Content-Encoding`.
+The body must contain a JSON object; `{}` is valid where the DTO permits it.
+Empty bodies, arrays/scalars, invalid UTF-8 or escaped invalid Unicode, duplicate
+keys, nonfinite constants, excessive nesting (maximum depth 32), unknown fields
+and coercions fail safely. Shape/type failures use `HFAPI006`/422; shared selector
+grammar refusals retain `HFARG001` with HTTP 422. Actual body bytes
+over `max_request_bytes` are 413, including chunked bodies. Errors never echo
+raw body, unknown keys, credentials or framework validation input. Unknown/read
+routes retain their empty-body contract. Missing/invalid authentication takes
+precedence over body reading, and a reader cannot send a malformed writer POST
+to bypass the capability boundary.
+
+### Admission model and exact results
+
+The four job resources require exactly one valid `Idempotency-Key`. They use the
+installed snapshot's `sync.lock_wait_seconds` for sync/planning/diagnostics and
+`verification.lock_wait_seconds` for verification; one absolute budget spans
+admission/queue and lock/delegation waiting. Matching retries consult the durable
+binding before fresh policy, capacity or verifier probes. These routes never
+turn a client-supplied timeout, configuration file or command name into execution
+policy.
+
+`AcceptanceResponse` is independent of `ReadResponse` and the durable schema.
+It contains `schema_version=1`, current server-generated `request_id`, admitted
+`archive_id`/`config_fingerprint`, public `operation: OperationView`, `created`
+and `links: {status, result, events}`. HTTP 202 carries `Location` equal to the
+status link; links include the configured URL prefix. A new operation has
+`created=true`; a matching retry has `created=false` and the original operation,
+including its admitted fingerprint after policy changes. Both return 202 even
+if the operation has already finished. No terminal success Envelope is fabricated
+inside an admission response, and no key/request digest or original body is exposed.
+
+Poll the authenticated status link to inspect state and the events link with its
+sequence cursor for bounded progress. Retrieve the result link for the exact
+schema-1 Envelope/domain run ID/partial results and exit classification. A result
+GET may return HTTP 200 with a failed domain Envelope; known unfinished/interrupted
+results are `HFAPI015`/409 and missing/expired history is `HFAPI013`/404, both
+exit 20. HTTP 202 is admission only. Losing the acknowledgement, response or
+observer never proves nonexecution: use the original key's non-submitting lookup
+before any deliberate retry. Do not generate another key to repeat uncertain work.
+
+For an authenticated request, representative bodies are:
+
+```http
+POST /api/v1/plans
+Content-Type: application/json
+Idempotency-Key: example-plan-request
+
+{"selectors":["model:organization/model-name"]}
+```
+
+```http
+POST /api/v1/diagnostics
+Content-Type: application/json
+Idempotency-Key: example-read-only-diagnostics
+
+{"read_only":true}
+```
+
+Writer-only sync uses the same selector body; verification uses, for example,
+`{"mode":"full"}` or `{"mode":"new","run_id":"0123456789abcdef0123456789abcdef"}`.
+Examples omit bearer values; authentication is required on submission and every
+poll. Installed validation sends `{}` without a key and returns its ordinary
+schema-1 validation result in `ReadResponse.envelope`; classified policy/credential
+failures remain failed Envelopes at HTTP 200. It reports nonsecret token-source
+classification and never returns a credential.
+
+Candidate content is not accepted on these routes yet: raw `candidate` presence
+is 403 for a reader, then an unknown-field 422 for a writer. The reserved bounded
+`CandidatePayload` and pure authority-assessment hooks are API-012 preparation,
+not candidate HTTP availability, arbitrary server-file loading or installation.
 
 ## Execution correlation (API-004)
 
@@ -336,8 +458,8 @@ does not resubmit or move the key into a URL. The core admission outcomes are:
 | Same key under a different credential class | Separate namespace; lookup cannot find the first class's binding |
 | Missing/expired history | `HFAPI013`/404 with unknown execution outcome; never automatic replay |
 
-API-007 exposes the non-submitting lookup and core primitives; mutation POST
-examples become executable only when API-009/010 provide their strict routes.
+API-007 exposes non-submitting lookup; API-009 now provides the strict command
+POST examples above, while maintenance/initialization routes remain API-010.
 
 States: queued, waiting_lock, running, succeeded, failed, interrupted. Store the
 exact terminal Envelope in a validated bounded result reference. Interrupted
@@ -346,7 +468,8 @@ applies one absolute waiting deadline across queue, delegation and lock time,
 reloads installed policy under the service-owned lock and refuses stale scope
 before mutation without duplicate/nested lock acquisition. Verification delegates
 to the private socket executor, which owns its lock through report/catalog
-persistence. Public command POST routes remain unavailable until API-009/010.
+persistence. API-009 implements the command subset above; maintenance and
+initialization POST resources remain API-010.
 
 Disconnect and Ctrl-C stop observation. They do not cancel accepted work. Later
 API-backed clients emit the nonsecret key before mutation submission and operation
@@ -424,8 +547,9 @@ any domain command, acquire the archive flock, admit work or change a receipt.
 Healthy exact-ID history therefore remains available after an invalid policy
 update or unrelated corrupt receipt. Collection/key-lookup scans refuse unsafe,
 unsupported or unexplained state instead of silently dropping it.
-Capabilities advertises `operation_history=true`; `operations=false` means
-command submission/execution is still unavailable.
+Capabilities advertises `operation_history=true` and, since API-009,
+`operations=true` for its implemented command routes. Roles still apply; this
+flag does not imply maintenance/candidate routes or full REST acceptance.
 
 | Route under `/api/v1` | `envelope.data` / behavior |
 | --- | --- |

@@ -342,8 +342,8 @@ request logging, and returns sanitized typed problems with no-store/nosniff/fram
 headers. Explicit trusted TLS proxy rules and one Unix/TCP lifespan are tested
 on disposable sockets. Shared no-follow reader/work budgets cover legacy local
 query paths too; unsafe derived catalogs retain unknown confidence and never
-grant repair authority. API-008/014 still own job/executor hardening and installed
-service acceptance. No production listener or rollout is asserted. See
+grant repair authority. API-008 supplies the execution/protocol boundary; API-014
+still owns installed service hardening and acceptance. No production listener or rollout is asserted. See
 [decision 112](adr/decision-112.md) and [server policy](server.md).
 
 **Control-state boundary (API-007).** Local receipts bind admission to a fixed
@@ -384,6 +384,27 @@ sandbox. No request starts a generic subprocess or invokes systemctl/sudo.
 See [decision 115](adr/decision-115.md) and
 [private verification trust](server.md#verification-wire-and-local-trust).
 
+**Typed command boundary (API-009).** Sync and every actual verification require
+writers before body reception. Mixed-route capability checks happen after bounded
+strict JSON parsing but before DTO validation: candidate presence requires a writer,
+and diagnostics permits a reader only for literal `read_only=true`. Missing mode
+never silently becomes a probe. All recognized POST bodies have explicit media,
+encoding, duplicate-key, Unicode, depth and actual-byte limits; errors do not echo
+unknown fields or framework input. Typed services preserve domain refusals and
+partial results. Four job routes require a key, including plans/read-only diagnostics;
+202 means admission, and disconnect never cancels accepted work.
+
+The only Hub token override is the trusted startup `serve --hub-token-file` source,
+under existing installed policy. API bearers are never reused as Hub tokens and
+HTTP requests cannot supply credentials, server paths or endpoint overrides.
+Installed validation resolves only that source or the installed systemd source,
+without a Hub request. Pure bounded candidate assessment compares root/UUID,
+endpoint, token mode, credential name and expected account; it never resolves a
+candidate credential, reads a candidate-selected path, contacts the Hub or installs
+policy. Current HTTP candidate fields remain refused until API-012. See
+[decision 116](adr/decision-116.md), [body/role rules](api.md#implemented-command-resources-api-009)
+and [candidate authority](configuration.md#12-candidate-authority-preparation-api-009).
+
 ## 4. Controls summary
 
 | # | Control | Enforced by |
@@ -406,7 +427,7 @@ See [decision 115](adr/decision-115.md) and
 | 16 | Unknown state reported, never deleted or guessed | `AD-16`, `TX-06` |
 | 17 | Fail-closed preflight before any download | Exit `20` |
 | 18 | Management UI confined to operator surfaces, with the limits structural | `docs/cockpit.md` `CP-01`–`CP-14` |
-| 19 | Fixed management capabilities and restart-only transport/auth; route enforcement remains pending | `T-14`, `docs/server.md`, API-005/006 |
+| 19 | Fixed capabilities, restart-only auth and bounded typed command/metadata routes | `T-14`, `docs/server.md`, API-005/006/009 |
 
 ## 5. systemd hardening posture
 

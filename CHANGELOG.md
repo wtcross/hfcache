@@ -27,35 +27,42 @@ Execution correlation now stays within each task and worker thread, with stable
 run identities and optional request/operation IDs. Shared verification no longer
 toggles process-wide Hub networking flags. Registered opaque credentials are
 redacted from nested diagnostics and exception output. Daemon startup primitives
-are ready; the HTTP server and isolated verification executor remain planned.
+support the HTTP server and isolated executor described below.
 
 Server configuration now has its own strict schema and explicit protected bearer
 sources. Fixed reader/writer capabilities, safe credential loading and fresh
 archive-policy snapshots provide the authentication boundary for later routes.
 HTTPX is a direct base dependency; FastAPI/Uvicorn are an optional `server`
-extra. No runtime endpoint, listener or production installation is introduced.
+extra. Installing dependencies alone starts no listener or production installation.
 
 Authenticated REST metadata is now available through an injectable application
 and explicit `serve` bootstrap, with one lifespan for Unix/TCP, bounded queries,
 safe errors/pages/streams and fresh policy snapshots. Shared readers reject
 unsafe paths and inconsistent evidence without repairing an archive. References
-retain published-relative locators; writes/jobs, the API-backed CLI and MCP
-remain planned. Tests use disposable sockets; no production server was started.
+retain published-relative locators; the API-backed CLI and MCP remain planned. Tests use disposable sockets; no production server was started.
 
 Operation admission now has an independent local JSON receipt/key authority,
 bounded sanitized events/results and authenticated observation. Matching retries
 retain their original binding across policy changes and credential rotation.
 Startup never replays unfinished history; explicit interruption records uncertainty.
-Retention never
-evicts unexpired keys or uncertain work for capacity. Command submission routes
-remain later work. No production state was created or changed.
+Retention never evicts unexpired keys or uncertain work for capacity. No
+production state was created or changed.
 
 The daemon now has one bounded execution lane with one queue/lock waiting
 deadline and an under-lock admitted-policy check. Private verification delegates
 through a peer-checked bounded Unix protocol with exact durable outcomes and
-restart reconciliation; accepted work is never automatically replayed. Public
-command submission routes and installed systemd/no-IP enforcement remain later
+restart reconciliation; accepted work is never automatically replayed. Maintenance/candidate routes and installed systemd/no-IP enforcement remain later
 tasks. No in-process production verification fallback or MCP dependency is added.
+
+Typed REST commands now admit sync, all actual verification modes, installed
+planning and explicit read-only/probing diagnostics with durable keyed 202
+receipts. Status/events and exact terminal Envelopes preserve domain outcomes;
+losing an observer does not cancel execution. Installed configuration validation
+is an immediate query. Strict authenticated JSON/role boundaries forbid request
+paths, credential overrides and implicit probes. A trusted startup Hub token-file
+option supports development; pure candidate authority assessment prepares later
+client work without accepting candidates yet. No new durable format/dependency,
+MCP capability or production operation is introduced.
 
 ## v0.1.10 — 2026-09-14
 

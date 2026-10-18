@@ -23,6 +23,15 @@ MCP are planned, not deployed. Local help/version remain independent.
 operational CLI commands still use local services; the API-backed client and all
 job/write routes remain later tasks. No deployment is asserted.
 
+**2026-10-17 API-009 amendment:** sync, every non-estimate verification mode,
+installed planning, explicit read-only/probing diagnostics and installed
+validation now have authenticated REST routes ([decision 116](adr/decision-116.md)).
+The public operational CLI still uses local services until API-011–013; its
+schema-1 output/exit behavior is unchanged. REST jobs return admission receipts
+and expose their exact terminal Envelope through operation polling. Maintenance
+routes and candidate HTTP/CLI integration remain later tasks; no deployment is
+asserted.
+
 ## 1. Invocation shape
 
 ```text
@@ -71,7 +80,7 @@ goes further and refuses a repository that remains configured (`AD-20`).
 
 | Command | Mutates | Purpose |
 | --- | --- | --- |
-| `serve` | private runtime sockets/lock only | Foreground authenticated metadata server bootstrap |
+| `serve` | private runtime/control state only | Foreground authenticated management server bootstrap |
 | `config validate` | no | Parse and fully validate configuration |
 | `archive init` | yes | One-time guarded archive creation |
 | `archive init --inspect` | no | Describe a partial or existing initialization |
@@ -91,7 +100,7 @@ goes further and refuses a repository that remains configured (`AD-20`).
 ### `serve`
 
 ```text
-hfcache serve [--server-config PATH]
+hfcache serve [--server-config PATH] [--hub-token-file PATH]
 ```
 
 Foreground server bootstrap, requiring the `server` installation extra.
@@ -102,6 +111,12 @@ packages are `HFCFG005`; missing/unreadable server TOML is `HFCFG001`.
 The [server contract](server.md) defines startup checks, one application across
 Unix/TCP, TLS, locking and shutdown. No Hub access or archive initialization is
 performed by startup. Daemon logging uses server policy, not request verbosity.
+`--hub-token-file` supplies an explicit server-local Hub credential for development
+or a deliberate startup choice, under the installed token-mode/account rules.
+It is separate from the rejected global `--token-file` and API bearer sources;
+requests cannot select or override it. Without this option, shared commands use
+only the installed systemd Hub source or the existing anonymous policy. The
+private verification worker receives neither source nor token.
 
 Normal daemon execution writes no success Envelope or other stdout. With
 `--json`, classified startup failures retain the schema-1 failure Envelope.

@@ -178,11 +178,11 @@ def build_server(application: FastAPI, policy: ServerConfig) -> ListenerServer:
     )
 
 
-def run(path: Path) -> None:
+def run(path: Path, *, hub_token_file: Path | None = None) -> None:
     """Serve an explicitly configured daemon; no archive mutation at startup."""
     policy = load_server_config(path)
     try:
-        server = build_server(create_app(policy), policy)
+        server = build_server(create_app(policy, hub_token_file=hub_token_file), policy)
         with listeners(policy.listener) as channels:
             server.run(sockets=channels)
         if not server.started:

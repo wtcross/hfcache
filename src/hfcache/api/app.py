@@ -10,6 +10,7 @@ import hashlib
 import ipaddress
 import json
 import logging
+import math
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -24,6 +25,7 @@ from pydantic import ValidationError
 from starlette.exceptions import HTTPException
 
 from hfcache.api.auth import Capability, CredentialRegistry, load_credentials, require_capability
+from hfcache.api.commands import install_command_routes
 from hfcache.api.lifecycle import MetadataPool, instance_lock
 from hfcache.api.models import ApiProblem, OperationView, PageQuery, ReadResponse
 from hfcache.api.operations import OperationLimits, OperationReceipt, OperationStore
@@ -51,6 +53,7 @@ if TYPE_CHECKING:
 
     from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+    from hfcache.api.auth import Principal
     from hfcache.config import ApplicationConfig
     from hfcache.services.queries import MetadataQueries
     from hfcache.verification_protocol import VerificationDelegate
@@ -63,6 +66,73 @@ _MAX_LIMIT_DIGITS = 5
 _MAX_SELECTORS = 100
 _MAX_SELECTOR_BYTES = 256
 _MAX_OFFSET_DIGITS = 10
+_MAX_JSON_DEPTH = 32
+
+
+def _unique_pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
+    result = {}
+    for key, value in items:
+        if key in result:
+            raise RequestError
+        result[key] = value
+    return result
+
+
+def _invalid_constant(_: str) -> None:
+    raise RequestError
+
+
+def _check_json_strings(value: object, depth: int = 0) -> None:
+    if depth > _MAX_JSON_DEPTH:
+        raise RequestError
+    if isinstance(value, str):
+        value.encode("utf-8")
+    elif isinstance(value, float) and not math.isfinite(value):
+        raise RequestError
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            _check_json_strings(key, depth + 1)
+            _check_json_strings(item, depth + 1)
+    elif isinstance(value, list):
+        for item in value:
+            _check_json_strings(item, depth + 1)
+
+
+async def _json_body(
+    receive: Receive, maximum: int, headers: list[tuple[bytes, bytes]]
+) -> bytes | None:
+    types = [value for key, value in headers if key.lower() == b"content-type"]
+    if len(types) != 1 or any(key.lower() == b"content-encoding" for key, _ in headers):
+        raise RequestError
+    parts = [part.strip().lower() for part in types[0].decode("latin1").split(";")]
+    if parts[0] != "application/json" or (
+        len(parts) > 1 and parts[1:] not in (["charset=utf-8"], ['charset="utf-8"'])
+    ):
+        raise RequestError
+    body = bytearray()
+    while True:
+        message = await receive()
+        if message["type"] == "http.disconnect":
+            return None
+        part = message.get("body", b"")
+        if len(body) + len(part) > maximum:
+            raise RequestError(status_code=413)
+        body.extend(part)
+        if not message.get("more_body", False):
+            return bytes(body)
+
+
+def _parse_object(body: bytes) -> dict[str, Any]:
+    try:
+        value = json.loads(
+            body.decode("utf-8"), object_pairs_hook=_unique_pairs, parse_constant=_invalid_constant
+        )
+        _check_json_strings(value)
+    except ValueError, UnicodeError, RecursionError:
+        raise RequestError from None
+    if not isinstance(value, dict):
+        raise RequestError
+    return value
 
 
 async def _empty_body(receive: Receive, maximum: int) -> bool:
@@ -177,8 +247,8 @@ class Boundary:
                 principal = self.authenticate(scope)
                 require_capability(principal, Capability.READ)
                 state["principal"] = principal
-                self.validate_transport(scope)
-                if not await _empty_body(receive, self.server.limits.max_request_bytes):
+                body = await self.request_body(scope, receive, principal)
+                if body is None:
                     return
 
                 delivered = False
@@ -187,7 +257,7 @@ class Boundary:
                     nonlocal delivered
                     if not delivered:
                         delivered = True
-                        return {"type": "http.request", "body": b"", "more_body": False}
+                        return {"type": "http.request", "body": body, "more_body": False}
                     return await receive()
 
                 await self.app(scope, replay, safe_send)
@@ -204,6 +274,29 @@ class Boundary:
             finally:
                 for lease in state.pop("metadata_leases", ()):
                     lease.finish_request()
+
+    async def request_body(
+        self, scope: Scope, receive: Receive, principal: Principal
+    ) -> bytes | None:
+        path = scope["path"].removeprefix(self.server.listener.root_path)
+        command = scope["method"] == "POST" and path in getattr(
+            self.owner.state, "command_routes", ()
+        )
+        if command and path in {PREFIX + "/syncs", PREFIX + "/verifications"}:
+            require_capability(principal, Capability.WRITE)
+        self.validate_transport(scope)
+        if not command:
+            return b"" if await _empty_body(receive, self.server.limits.max_request_bytes) else None
+        body = await _json_body(receive, self.server.limits.max_request_bytes, scope["headers"])
+        if body is None:
+            return None
+        submitted = _parse_object(body)
+        scope["state"]["json_body"] = submitted
+        if "candidate" in submitted or (
+            path == PREFIX + "/diagnostics" and submitted.get("read_only") is not True
+        ):
+            require_capability(principal, Capability.WRITE)
+        return body
 
     def authenticate(self, scope: Scope) -> Any:  # noqa: ANN401 - Starlette application state
         registry = getattr(self.owner.state, "credentials", None)
@@ -369,6 +462,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
     instance_lock_path: Path | None = None,
     operation_store: OperationStore | None = None,
     verification_executor: VerificationDelegate | None = None,
+    hub_token_file: Path | None = None,
 ) -> FastAPI:
     """Create routes only; lifespan owns all filesystem/startup effects."""
 
@@ -393,6 +487,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
             configure_daemon(level=getattr(logging, server.log_level.upper()))
             application.state.credentials = credentials or load_credentials(server)
             application.state.policy = policy or InstalledPolicy.open(server)
+            application.state.hub_token_file = hub_token_file
             state_root = operation_store.root if operation_store else server.state_directory
             archive_root = application.state.policy.root
             if state_root.is_relative_to(archive_root) or archive_root.is_relative_to(state_root):
@@ -560,7 +655,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                     ),
                     "instance_id": app.state.instance_id,
                     "reads": True,
-                    "operations": False,
+                    "operations": True,
                     "operation_history": True,
                     "mcp": False,
                     "maintenance_enabled": server.maintenance_enabled,
@@ -887,4 +982,5 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                 )
             )
 
+    install_command_routes(app, server, render)
     return app

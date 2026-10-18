@@ -194,7 +194,7 @@ def test_every_operation_surface_authenticates_and_never_executes(configured, su
         if suffix == "/result":
             assert response.json()["code"] == "HFAPI015"
             assert response.json()["exit_code"] == 20
-        assert (await client.post("/api/v1/syncs", headers=WRITER_HEADERS)).status_code == 404
+        assert (await client.post("/api/v1/syncs", headers=WRITER_HEADERS)).status_code == 422
         assert {
             path.name: path.read_bytes()
             for path in server.state_directory.iterdir()

@@ -322,7 +322,10 @@ History: `SYNC-007` (`54e4671`), decision 94.
   validation and changes nothing. Keep archive policy, restart-only server
   transport/auth and later client settings in separate schemas. A server freezes
   freshly validated archive snapshots per request/admission and pins root/UUID
-  to startup authority; it never hot-switches archives (decision 112). See
+  to startup authority; it never hot-switches archives (decision 112). Pure
+  candidate syntax assessment is separate from authority compatibility; no request
+  can redirect installed credentials through candidate endpoint/source changes
+  (decision 116). See
   [configuration §1–§2, §6](configuration.md#1-validation-rules-that-apply-to-every-field).
 - **`INV-002` — Credentials have only explicit sources and never become
   evidence.** Accept only an explicit token file or systemd credential, with
@@ -332,6 +335,8 @@ History: `SYNC-007` (`54e4671`), decision 94.
   fail. That anonymous fallback applies to Hub policy; API writer authentication
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
+  The server's explicit Hub file is a trusted startup option, never request input;
+  candidate assessment resolves no proposed credential.
   Never emit secrets in configuration errors, logs, manifests, journals,
   reports, operation state or fingerprints. Register exact resolved opaque credentials before
   use; sanitize nested diagnostic contexts and exception/public output as well
@@ -379,8 +384,14 @@ API-005 enforcement: [server configuration and policy snapshots](../src/hfcache/
 [optional FastAPI adapter](../src/hfcache/api/security.py),
 [configuration/reload tests](../tests/unit/test_server_config.py), and
 [adversarial credential/capability tests](../tests/unit/test_server_auth_adversarial.py).
-These primitives do not assert runtime route or deployed listener enforcement;
-decision [112](adr/decision-112.md) identifies the remaining boundaries.
+API-009 command/authority enforcement: [typed DTOs](../src/hfcache/api/command_models.py),
+[shared-service route adapters](../src/hfcache/api/commands.py),
+[pure candidate assessment](../src/hfcache/services/candidates.py),
+[model/authority tests](../tests/unit/test_command_models.py),
+[HTTP/domain tests](../tests/unit/test_api_commands.py), and
+[adversarial command tests](../tests/unit/test_api_command_adversarial.py).
+Decisions [112](adr/decision-112.md)/[116](adr/decision-116.md) distinguish runtime
+route enforcement from installed host acceptance.
 
 ## Durable formats and reporting
 
@@ -414,6 +425,8 @@ decision [112](adr/decision-112.md) identifies the remaining boundaries.
   The API-006 foreground `serve` bootstrap is a narrow exception: normal daemon
   execution has no terminal success Envelope/stdout, while classified startup
   failures preserve the schema-1 error Envelope under `--json` (decision 113).
+  API-009's 202 is admission only; exact result retrieval preserves the shared
+  terminal Envelope, including partial failure and domain exit priority.
 - **`INV-007` — Verification reports evidence without rewriting it.** Verify
   the complete path set, sizes, and local SHA-256 bytes; an integrity finding
   exits `40`, preserves content/expectations, and never performs repair or
@@ -566,9 +579,11 @@ and git; the application test suite does not enforce planning lifecycle.
 
 API-001 introduces these constraints for the activated plan. API-006 implements
 authenticated metadata HTTP and its foreground bootstrap; API-007 adds durable
-admission primitives and operation observation. Heavy execution, client migration,
-verification isolation and MCP remain pending. [API](api.md) and [server](server.md)
-track exact availability; implementing tasks own proof.
+admission primitives and operation observation. API-008 adds execution/private
+verification and API-009 adds the typed command subset. Maintenance, candidate
+operations, client migration, installed isolation hardening and MCP remain pending.
+[API](api.md) and [server](server.md) track exact availability; implementing tasks
+own proof.
 
 - **`INV-012` — Adapters share one domain implementation.** Transports call
   typed services, never one another or public CLI callbacks. Remote access
@@ -577,7 +592,10 @@ track exact availability; implementing tasks own proof.
   introduced by API-002; command enforcement:
   [guarded services](../src/hfcache/services/commands.py), introduced by API-003.
   Metadata transport enforcement: [read application](../src/hfcache/api/app.py),
-  API-006. Public CLI client migration remains API-011–013 and MCP-002 later.
+  API-006. API-009 [command adapters](../src/hfcache/api/commands.py) retain shared
+  sync ordering, reconciliation, capacity, continuation, producer joins and exact
+  verification delegation, covered by [HTTP/domain tests](../tests/unit/test_api_commands.py).
+  Public CLI client migration remains API-011–013 and MCP-002 later.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
@@ -590,14 +608,20 @@ track exact availability; implementing tasks own proof.
   filters/policy and row contents; changed rows fail continuation rather than
   silently skipping them. Shared read budgets and a pool lease cover active
   streams until completion/disconnect. Exact published-relative reference
-  locators do not become HTTP artifact paths. Job/write/MCP paths remain pending.
+  locators do not become HTTP artifact paths. API-009 command POSTs authenticate
+  before receiving a body, authorize static writer routes before reading it and
+  mixed capability before DTO validation. Explicit JSON/media/encoding/depth and
+  byte limits cover chunked inputs; unknown paths/credential overrides cannot
+  become execution authority. Maintenance/candidate/MCP paths remain pending.
   Enforcement/evidence: [boundary/resources](../src/hfcache/api/app.py),
   [pool/instance lock](../src/hfcache/api/lifecycle.py),
   [single Unix/TCP bootstrap](../src/hfcache/server.py),
   [wire/read tests](../tests/unit/test_api_reads.py),
   [adversarial HTTP tests](../tests/unit/test_api_adversarial.py), and
   [ephemeral TLS/socket tests](../tests/unit/test_server_bootstrap.py);
-  decision [113](adr/decision-113.md). This is no production deployment proof.
+  [typed command/adversarial tests](../tests/unit/test_api_command_adversarial.py);
+  decisions [113](adr/decision-113.md)/[116](adr/decision-116.md).
+  This is no production deployment proof.
 - **`INV-014` — Admission receipts do not resume domain execution.** Persist
   before runnable/202, bind principal/key/request, fail stale policies closed,
   retain ambiguous history, and never infer success or replay from missing
@@ -613,8 +637,10 @@ track exact availability; implementing tasks own proof.
   fresh fingerprint guard inside the service-owned archive lock. A runner never
   pre-locks or nests that service. Exact surviving verifier evidence is reconciled
   before interruption; unavailable/unsafe status preserves active receipts and
-  closes execution across restarts. Metadata stays diagnosable. Public submission/
-  client safety remains API-009/013. Decisions [109](adr/decision-109.md),
+  closes execution across restarts. Metadata stays diagnosable. API-009 submits
+  four keyed job routes with normalized typed bodies and 202 observation links;
+  matching retries preserve the original binding. Maintenance submissions and
+  public client safety remain API-010/013. Decisions [109](adr/decision-109.md),
   [114](adr/decision-114.md) and [115](adr/decision-115.md); [schema and compatibility](schemas.md#13-service-private-operation-control-state-api-007).
   Enforcement/evidence: [core store](../src/hfcache/api/operations.py),
   [HTTP observation](../src/hfcache/api/app.py),
@@ -642,7 +668,10 @@ track exact availability; implementing tasks own proof.
   [worker runtime](../src/hfcache/verification_executor.py),
   [inherited-socket startup](../src/hfcache/verification_worker.py), and
   [executor/protocol tests](../tests/unit/test_verification_executor.py);
-  decision [115](adr/decision-115.md). These tests do not prove installed OS egress.
+  decision [115](adr/decision-115.md). API-009's writer-only verification route
+  has no HTTP-process execution path; [route tests](../tests/unit/test_api_commands.py)
+  prove all three modes delegate and refuse unavailable private execution.
+  These tests do not prove installed OS egress.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. Enforcement: MCP-001–004,

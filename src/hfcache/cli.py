@@ -282,6 +282,15 @@ def serve(
             "--server-config", metavar="PATH", readable=False, help="Daemon server configuration."
         ),
     ] = Path("/etc/hfcache/server.toml"),
+    hub_token_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--hub-token-file",
+            metavar="PATH",
+            readable=False,
+            help="Explicit server-local Hub credential file for development.",
+        ),
+    ] = None,
 ) -> None:
     """Run the authenticated REST server (requires the server installation extra)."""
     started_at = utc_now()
@@ -298,7 +307,7 @@ def serve(
         except ImportError:
             message = "serve requires the server installation extra"
             raise ConfigurationError.single(message, code="HFCFG005") from None
-        run(server_config)
+        run(server_config, hub_token_file=hub_token_file)
     except HfcacheError as error:
         _report_failure(ctx, "serve", started_at, error)
 

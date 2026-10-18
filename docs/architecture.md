@@ -112,6 +112,28 @@ valid sentinel before inspecting or creating one would contradict their purpose.
 Read-only doctor, initialization inspection/no-confirm, plans and previews take
 no archive lock. Verification does not reconcile or contact the Hub.
 
+### 2.3 Typed HTTP command admission (API-009)
+
+[Decision 116](adr/decision-116.md) exposes explicit strict command routes through
+`api/commands.py`; `api/command_models.py` owns transport DTOs independently of
+archive/receipt schemas. Sync, installed planning and diagnostics use the same
+`CommandServices`; actual verification always delegates to the private executor.
+No adapter dispatches the CLI or reconstructs domain algorithms. Selector sets
+normalize before idempotency hashing, while execution keeps installed ordering.
+
+Durable keyed 202 admission is distinct from an exact terminal domain Envelope.
+Plans/read-only diagnostics still use the bounded lane because they can resolve
+installed Hub credentials, contact the Hub and write control-state evidence.
+Only installed validation is an immediate query. Candidate hooks remain pure
+syntax/authority assessment for API-012; a request cannot redirect an installed
+credential to a proposed endpoint or select a server-local configuration path.
+
+AD-01–03/17–19, TX-07 and capacity/verification/failure invariants are unchanged:
+complete observed immutable snapshots, pre-Hub reconciliation, whole-run capacity
+and continuation policy, joined producer lifetime, exact report identity and
+retention authority remain in their existing shared implementations. No durable
+shape, runtime dependency, MCP capability or deployed host boundary changes.
+
 ## 3. Architecture decisions
 
 Each decision is locked for schema version 1. Changing one is a deliberate

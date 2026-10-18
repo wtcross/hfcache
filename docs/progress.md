@@ -966,6 +966,38 @@ package in this family.
   API-014; a library offline flag alone is insufficient. No production archive /
   listener operation, deployment, push, merge or tag. Next selected task is API-009.)
 
+- [x] API-009 Admit typed sync, verification, planning and diagnostics
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-009-sync-verification-and-diagnostics-api.md)).
+  Eight more parity rows implement strict authenticated command DTOs, four keyed
+  admission-only 202 jobs and immediate installed validation. Explicit role/body
+  boundaries prevent implicit probes, arbitrary paths and credential overrides;
+  shared grammar codes remain distinct from wire-shape failures. Selector sets
+  normalize before hashing while installed revision/execution order is retained.
+  Matching concurrent retries admit/probe/execute once and precede fresh policy/
+  verifier checks. Exact terminal Envelopes preserve partial/domain exits.
+  Real fake-Hub sync publishes, reobserves without download and refuses unknown
+  journals before Hub contact; lost HTTP acknowledgement keeps producer/flock
+  ownership and yields one exact result. Every actual verify mode delegates
+  privately, with unavailable isolation refusing rather than falling back.
+  Trusted startup Hub-file authority is separate from API bearers. Pure bounded
+  candidate hooks compare six installed authority fields; current HTTP candidates
+  remain refused until API-012. Decision 116, amendments 108/112/115, invariant
+  enforcement and API/server/configuration/security/architecture/CLI/operator,
+  README/plan/Unreleased records agree. Reviewed AD-01–03/17–19, TX-07 and
+  INV-001/002/004/006/007/012–015 without changing domain safety or durable shapes.
+  Focused model/runner: 55 passed in 2.04 seconds; adversarial HTTP: 109 in 9.40;
+  real HTTP/domain/bootstrap: 19 in 3.42. Focused primitive validation and fixture/
+  expectation corrections preceded the gate. First full
+  `rtk proxy bash scripts/check.sh` exits 0: lock/sync, 321 formatted files,
+  lint/types, 2,473 Python tests (40 deselected, 137.10 seconds), 0.1.10 sdist/wheel,
+  locked isolated base/server install/import/help/version, 45 Cockpit tests and
+  production build. No gate attempt failed or required a fix. Final links/current/
+  dependencies, 17 implemented / 12 planned rows, 116 decision/ADR records and
+  whitespace pass. No new durable format/dependency/MCP or production operation;
+  live/NFS/installed-host and extra build-marker suites did not run. Maintenance,
+  clients/candidates and installed hardening remain later tasks. Next is API-010.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3588,3 +3620,17 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      execution across restarts; only trusted missing/interrupted evidence allows
      parent interruption. Reject immediate interruption on transport loss because
      a later restart would otherwise reopen the lane while a worker may survive.
+
+116. **Admit typed command routes without widening server authority**
+     (2026-10-17, API-009). [ADR](adr/decision-116.md): explicit bounded strict
+     JSON routes call shared services through durable keyed admission; 202 is
+     admission only and exact terminal Envelopes retain domain exits. Authorize
+     writer sync/verification/probes, reader installed planning and explicit
+     read-only diagnostics; semantic reads still have Hub/resource/control-state
+     effects. Normalize selector sets without changing configured sync order.
+     Trust only startup/installed Hub credential sources; candidate hooks compare
+     the complete installed authority without resolving secrets, network or
+     paths. Reject generic commands, arbitrary server files/endpoints, request
+     token overrides and implicit probe modes. Candidate HTTP/CLI pipeline stays
+     API-012; maintenance, client and installed-worker hardening remain later.
+     No archive/receipt format, dependency, MCP or production change is added.

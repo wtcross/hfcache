@@ -51,3 +51,13 @@ now a direct base dependency and FastAPI/Uvicorn are in the `server` extra;
 the gate installs that extra and base imports remain independent. No REST route,
 listener or MCP implementation is claimed by these primitives. The original
 domain-service and framework exclusions remain authoritative.
+
+## API-009 command transport (2026-10-17)
+
+[Decision 116](decision-116.md) exposes typed sync/verification/planning/
+diagnostic/installed-validation routes through the shared services and bounded
+lane. Durable 202 admission is separate from exact terminal domain Envelopes.
+Semantic read jobs retain explicit Hub/resource effects; writer probes and
+private verification retain their existing ownership. Candidate hooks cannot
+select server files or redirect credential authority. No CLI subprocess, duplicate
+domain algorithm, dependency, archive format or MCP implementation is added.

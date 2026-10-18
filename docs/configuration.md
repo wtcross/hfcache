@@ -468,3 +468,39 @@ trusted service startup supplies its fixed archive config and separate private
 state root; API-014 owns installed socket/identity/no-IP provisioning. See
 [server verifier settings](server.md#private-verifier-client-settings-api-008)
 and [decision 115](adr/decision-115.md).
+
+## 12. Candidate authority preparation (API-009)
+
+[`services.candidates`](../src/hfcache/services/candidates.py) supplies pure
+API-012 hooks, not a configuration-install or arbitrary-file API.
+`assess_candidate(content, installed)` accepts only nonempty TOML text bounded
+to 1 MiB of UTF-8, validates the existing archive-policy schema and returns a
+`CandidateAssessment(config, mismatches)`. Syntax/policy validity and authority
+compatibility are separate: a syntactically valid candidate may require an
+operator authority/restart procedure before any planning.
+
+`authority_mismatches` compares these fields in fixed order and returns only
+field names, never proposed/installed values:
+
+| Authority field | Why it must match installed policy for candidate planning |
+| --- | --- |
+| `storage.archive_root` | Prevent switching filesystem authority |
+| `storage.archive_id` | Preserve archive identity |
+| `hub.endpoint` | Prevent redirecting the installed credential |
+| `hub.token_mode` | Preserve public/restricted authorization policy |
+| `hub.credential_name` | Prevent selecting another protected source |
+| `hub.expected_account` | Preserve the expected Hub account |
+
+`require_compatible_authority` refuses a mismatch with `HFAPI007`/409. These hooks
+never load a caller-selected file, resolve any credential, contact the Hub,
+install policy or mutate/archive-probe a path. Future candidate planning must
+still use only the installed authorized Hub credential after compatibility checks.
+The startup-only `serve --hub-token-file` remains fixed server authority and is
+never a candidate/request field. Repository/retention/worker-policy previews do
+not grant authority to change the six fields above.
+
+The reserved `CandidatePayload(candidate: str)` is a schema hook. Current
+`POST /plans` and `POST /config/validate` accept installed-policy DTOs only;
+candidate presence is reader 403 / writer unknown-field 422. API-012 owns the
+full client/Cockpit candidate content pipeline. See [decision 116](adr/decision-116.md)
+and [command resource contract](api.md#implemented-command-resources-api-009).

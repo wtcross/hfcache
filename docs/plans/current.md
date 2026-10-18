@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-009](tasks/api-009-sync-verification-and-diagnostics-api.md) |
+| Next task | [API-010](tasks/api-010-guarded-maintenance-api.md) |
 | Blockers | None |
 | Updated | 2026-10-17 |
 

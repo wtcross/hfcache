@@ -127,8 +127,9 @@ commands or systemd units — never a side channel — and the CLI remains the
 plugin's current interface. The activated
 [REST-first implementation plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md)
 introduces authenticated remote management incrementally;
-[the API contract](docs/api.md) now marks metadata reads as implemented and
-job/write routes as planned. Every metadata route, health/schema/docs and error
+[the API contract](docs/api.md) marks metadata, operation observation and typed
+sync/verification/planning/diagnostic/installed-validation routes as implemented;
+maintenance and candidate routes remain planned. Every metadata route, health/schema/docs and error
 surface authenticates; discovery preserves exact publication identity and
 `published/`-relative reference locators. Bulk copies still use the read-only
 export and independent verification in [the consumer runbook](docs/consumers.md).
@@ -177,13 +178,19 @@ Runtime directories and protected API credentials must already be provisioned;
 installing the extra starts no listener and changes no deployed writer.
 API-007 adds bounded local receipt/idempotency primitives and authenticated
 operation observation. Control-state history survives client loss and is never
-automatically replayed; interrupted history is retained. Job/write submission
-routes, API-backed CLI migration and systemd packaging remain later tasks.
+automatically replayed; interrupted history is retained. API-backed CLI migration
+and systemd packaging remain later tasks.
 API-008 supplies one bounded execution lane and private verifier protocol/process
 primitives. Installed socket activation and OS no-IP enforcement still require
 API-014; the library offline flag alone is insufficient. MCP stays behind the REST acceptance
 gate and adds no dependency yet. Disposable-socket TLS tests use the OpenSSL CLI
 as a development test tool; Python production dependencies remain locked.
+API-009 exposes keyed command admission with HTTP 202 and authenticated status,
+events and exact terminal results. Sync/actual verification require a writer;
+installed planning and explicitly read-only diagnostics permit readers but may
+contact the Hub. `serve --hub-token-file PATH` is a trusted startup development
+source, separate from API bearers; requests cannot choose credentials or paths.
+Pure candidate authority hooks prepare API-012 without enabling candidate routes.
 
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —

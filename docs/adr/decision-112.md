@@ -1,6 +1,7 @@
 # Decision 112 — Separate server authority and verified bearer capabilities
 
-- Status: Accepted; implemented incrementally by API-005, with metadata-route/lifespan enforcement advanced by [decision 113](decision-113.md).
+- Status: Accepted; implemented incrementally by API-005, with metadata-route/lifespan enforcement advanced by [decision 113](decision-113.md)
+  and command authority extended by [decision 116](decision-116.md).
 - Date: 2026-10-17.
 - Work package: API-005, this commit.
 - Source: [progress decision 112](../progress.md#decisions),
@@ -134,3 +135,14 @@ Evidence: [strict configuration/reload/property tests](../../tests/unit/test_ser
 [FastAPI adapter tests](../../tests/unit/test_api_security.py),
 [transport defaults](../../tests/unit/test_http_transport.py), and the green
 gate recorded in the [API-005 task](../plans/tasks/api-005-server-config-and-bearer-auth.md).
+
+## API-009 authority amendment
+
+[Decision 116](decision-116.md) adds the trusted startup-only
+`serve --hub-token-file` development option, distinct from API bearer sources and
+request input. Shared services resolve only that explicit file or installed
+systemd Hub authority under existing token-mode/account rules. Candidate hooks
+perform pure bounded syntax/authority assessment and compare endpoint, credential
+identity and archive authority before any future credential-bearing planning.
+Current HTTP candidate fields remain rejected until API-012. No additional
+runtime dependency, server configuration field or credential fingerprint is added.

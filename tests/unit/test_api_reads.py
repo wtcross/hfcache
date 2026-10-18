@@ -228,7 +228,7 @@ def test_version_health_diagnose_later_invalid_policy_and_capabilities_show_role
             await client.get("/api/v1/capabilities", headers={"authorization": f"Bearer {WRITER}"})
         ).json()["envelope"]["data"]
         assert writer["capabilities"] == ["read", "write"]
-        assert writer["operations"] is False
+        assert writer["operations"] is True
 
     asyncio.run(client_context(app, read))
 

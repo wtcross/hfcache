@@ -747,3 +747,13 @@ versions when implementing, especially FastMCP imports and test transports:
   Public POST routes remain API-009/010; socket activation, credential-free/no-IP
   systemd enforcement and installed-host acceptance remain API-014. No new
   dependency, durable archive family or MCP work is introduced.
+
+- 2026-10-17 API-009: Decision 116 implements typed sync/verification/planning/
+  diagnostic admission and immediate installed validation, preserving shared
+  domain ordering/results and private verification. Four job routes require
+  canonical idempotency keys and return admission-only 202; eight more matrix
+  rows are implemented (17 total, 12 planned). Strict JSON/body-dependent
+  capabilities and a trusted startup-only Hub file prevent request authority
+  escape. Pure bounded candidate hooks compare six installed authority fields;
+  current candidate routes remain refused until API-012. No new durable shape,
+  runtime dependency, MCP or installed-host rollout is introduced.
