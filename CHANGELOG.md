@@ -16,6 +16,13 @@ exact report/reference/manifest identity and contained locators. Durable archive
 formats and the consumer export remain unchanged. REST/CLI migration and MCP
 remain in progress under the [active plan](docs/plans/2026-10-17-plan-rest-api-and-mcp.md).
 
+All operational commands now delegate to typed services. Non-estimate
+verification holds the common archive lock and storage preflight through scope
+resolution, hashing, report write and catalog merge, preventing competing
+verification updates from losing unrelated state. Probing diagnostics and
+confirmed initialization also serialize on that lock. Dry runs and metadata
+reads remain lock-free; durable formats are unchanged.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

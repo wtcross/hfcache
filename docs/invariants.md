@@ -380,7 +380,10 @@ History: `HUB-010` (`c082f87`), decision 98, supersedes public-only scope.
 - **`INV-007` — Verification reports evidence without rewriting it.** Verify
   the complete path set, sizes, and local SHA-256 bytes; an integrity finding
   exits `40`, preserves content/expectations, and never performs repair or
-  prune. Verification uses no Hub download. Estimates do no hashing and confer
+  prune. All non-estimate modes acquire the common lock, prove storage safety,
+  then resolve targets, hash, persist the report and read/merge/write the catalog
+  before releasing it (decision 110). Atomic replacement does not serialize
+  merges. Verification uses no Hub download. Estimates do no hashing and confer
   no verification confidence. Confidence belongs to the exact
   `(type, repository, SHA, publication ID)` instance; absent/unreadable derived
   state or a null publication ID must never raise confidence. Outstanding
@@ -392,13 +395,15 @@ History: `HUB-010` (`c082f87`), decision 98, supersedes public-only scope.
 Enforcement: [models/serialization](../src/hfcache/models.py),
 [atomic storage](../src/hfcache/storage.py),
 [journal preservation](../src/hfcache/transactions.py),
-[reporting](../src/hfcache/reporting.py), and
-[verification](../src/hfcache/verification.py).
+[reporting](../src/hfcache/reporting.py),
+[verification](../src/hfcache/verification.py), and
+[command ownership](../src/hfcache/services/commands.py).
 Evidence: [golden formats](../tests/fixtures/schemas/),
 [model tests](../tests/unit/test_models.py),
 [journal tests](../tests/unit/test_transactions.py),
-[CLI tests](../tests/unit/test_cli.py), and
-[verification tests](../tests/unit/test_verification.py).
+[CLI tests](../tests/unit/test_cli.py),
+[verification tests](../tests/unit/test_verification.py), and
+[verification lock/interleaving tests](../tests/unit/test_command_locking.py).
 Durable shape, enum, and field-combination changes require the
 [release compatibility drill](agents/release.md); schema version 1 is not a
 blanket claim that old binaries accept every later widening.
@@ -516,8 +521,9 @@ track the target; implementing tasks own proof.
   typed services, never one another or public CLI callbacks. Remote access
   changes no FS/TX, whole-archive authorization, or publication locator rule.
   Query enforcement: [shared services](../src/hfcache/services/queries.py),
-  introduced by API-002; remaining command/transport enforcement:
-  API-003/006/012/013 and later MCP-002.
+  introduced by API-002; command enforcement:
+  [guarded services](../src/hfcache/services/commands.py), introduced by API-003.
+  Transport enforcement remains API-006/012/013 and later MCP-002.
 - **`INV-013` — Authenticate and bound every management boundary.** Distinct
   REST writer/reader and MCP reader credentials; no cross-interface credential
   acceptance, ambient discovery, token disclosure, or unbounded requests.
@@ -530,7 +536,10 @@ track the target; implementing tasks own proof.
 - **`INV-015` — Verification isolation encloses persistence.** Non-estimate
   verification locks target resolution, hashing, report write and catalog merge
   in a credential-free no-IP executor. Estimates remain metadata reads.
-  Enforcement: API-003/008/014. No unsafe ASGI-process fallback.
+  Lock/persistence enforcement: [command services](../src/hfcache/services/commands.py)
+  and [multiprocess tests](../tests/unit/test_command_locking.py), API-003.
+  Credential-free no-IP executor enforcement remains API-008/014. No unsafe
+  ASGI-process fallback.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. Enforcement: MCP-001–004,

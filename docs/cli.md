@@ -74,7 +74,7 @@ goes further and refuses a repository that remains configured (`AD-20`).
 | `sync` | yes | Synchronize all or selected repositories |
 | `status` | no | Configured, retained, current, warning, and verification state |
 | `list` | no | Archived repositories and revisions |
-| `verify` | no | Integrity verification in one of four modes |
+| `verify` | report/catalog except `--estimate` | Integrity verification in one of four modes |
 | `prune` | yes with `--apply` | Retention cleanup |
 | `purge` | yes with `--apply` | Permanently remove unmanaged repositories |
 | `recover` | yes with `--apply` | Reconcile unfinished transactions |
@@ -117,7 +117,10 @@ The command proves the target is the expected read/write NFS mount, refuses a
 pre-existing sentinel or unknown content (`FS-22`), creates the directory
 structure with the documented ownership and modes, fsyncs it, writes
 `.hfcache-root` last (`FS-23`), and prints the UUID it wrote so the operator can
-confirm that configuration and sentinel agree.
+confirm that configuration and sentinel agree. With `--confirm`, it holds the
+common archive lock before a fresh inspection and through creation. It uses its
+own initialization checks, without requiring a pre-existing sentinel. Inspection
+and no-confirm invocations take no lock (decision 110).
 
 The UUID comes from `storage.archive_id`, which configuration already has to
 carry for any command to load. Initialization does not mint a second one:
@@ -146,6 +149,11 @@ neither.
 ```text
 hfcache [--config PATH] doctor [--read-only]
 ```
+
+Probe-enabled diagnostics hold the common archive lock for their checks, using
+`sync.lock_wait_seconds`; they do not require a valid sentinel as an entry
+precondition. Every diagnostic row remains reportable against uninitialized
+storage. `--read-only` takes no lock and runs no write probes (decision 110).
 
 `checks[]` is emitted in this order. The names are normative — automation keys on
 them and `status` quotes them — and a check is **absent** until the package that
@@ -327,8 +335,16 @@ Exactly one mode option is required; two is `HFARG002`.
 | `--revision` | One retained revision |
 | `--estimate` | No hashing. Reports unique bytes to read, measured throughput when known, estimated duration, repository and revision counts, and any detectable overlap with storage maintenance. Takes no lock and always exits `0`: nothing was read, so nothing can have been found wrong |
 
-`--full` acquires the verification lock, which is mutually exclusive with sync,
-prune, purge, and repair. It runs with Hub networking disabled.
+Every non-estimate mode acquires the common archive lock, using
+`verification.lock_wait_seconds`, then passes storage mount/sentinel/capability
+preflight before resolving its target scope. It holds ownership through hashing,
+report write and the catalog read/merge/write. It is mutually exclusive with all
+archive writers; a storage-preflight refusal exits `20` before report creation.
+Target reference/manifest damage still produces verification findings. Estimates
+take no lock, hash nothing and persist nothing. `--full` additionally retains its
+scoped Hub offline guard; verification constructs no Hub client or credential.
+See [decision 110](adr/decision-110.md). The later isolated REST executor remains
+planned; this package does not add a listener or process-wide networking change.
 
 Exits `0` on a clean result and `40` on any integrity finding. A finding never
 rewrites a manifest, prunes a revision, or re-downloads over the evidence.

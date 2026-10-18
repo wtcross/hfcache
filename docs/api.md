@@ -83,6 +83,14 @@ manifest reads reject identity mismatch and unsafe paths and retain exact
 publication identity and `published/`-relative locators. API-006 will define
 wire pagination/projections separately from these domain results.
 
+API-003 adds `CommandServices` and immutable requests for the command rows above.
+These services preserve domain ordering and classified partial results; public
+commands own the common archive lock once. Adapters and later operation runners
+must call them without an outer archive lock. Verification persistence now stays
+inside its lock/preflight boundary (decision 110). This establishes local service
+behavior only: HTTP routes and remote CLI modes remain planned until their
+implementing acceptance tasks complete.
+
 ## Wire validation and errors
 
 Wire models are separate from durable archive models. Forbid unknown keys,

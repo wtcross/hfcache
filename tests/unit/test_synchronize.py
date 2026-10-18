@@ -43,12 +43,14 @@ from hfcache.errors import (
 )
 from hfcache.hub import HubClient
 from hfcache.identity import CommitSha, RepositoryIdentity, new_run_id, new_transaction_id
-from hfcache.locking import lock_path
+from hfcache.locking import exclusive_lock, lock_path
 from hfcache.manifests import RevisionManifest
 from hfcache.paths import ArchiveLayout, RepositoryLayout
 from hfcache.publication import published_repositories, read_reference, retained_references
 from hfcache.reporting import RepositoriesCatalog, RunReport
 from hfcache.retention import plan_prune
+from hfcache.services.commands import CommandServices
+from hfcache.services.context import ExecutionContext
 from hfcache.storage import parse_mount_table
 from hfcache.sync import synchronize
 from hfcache.transactions import open_transaction, read_journal
@@ -914,9 +916,11 @@ def test_a_prefetch_download_failure_does_not_abandon_the_remaining_queue(
     assert list(layout.staging.iterdir()) == []
 
 
+@pytest.mark.parametrize("through_service", [False, True])
 def test_an_interrupt_finishes_the_active_download_and_cancels_the_pending_queue(
-    client, layout, tmp_path, hub, monkeypatch: pytest.MonkeyPatch
+    layout, tmp_path, hub, monkeypatch: pytest.MonkeyPatch, through_service
 ):
+    client = HubClient(api=hub, token=ResolvedToken(source=TokenSource.NONE))
     third = RepositoryIdentity.of("model", "organization/third-model")
     path = tmp_path / "three-repositories.toml"
     path.write_text(
@@ -937,6 +941,14 @@ def test_an_interrupt_finishes_the_active_download_and_cancels_the_pending_queue
         if identity == DATASET:
             second_started.set()
             assert release_second.wait(timeout=5), "interrupt shutdown did not release the writer"
+            if through_service:
+                # The active transfer is completing while service shutdown joins
+                # it; another writer must still be excluded (AD-19).
+                with (
+                    pytest.raises(SafetyError),
+                    exclusive_lock(lock_path(), command="competing writer", wait_seconds=0),
+                ):
+                    pytest.fail("service released the lock before its transfer stopped")
         return original_download(
             self,
             identity,
@@ -968,8 +980,19 @@ def test_an_interrupt_finishes_the_active_download_and_cancels_the_pending_queue
     monkeypatch.setattr(sync_module, "ThreadPoolExecutor", ObservedExecutor)
     monkeypatch.setattr(sync_module, "hash_snapshot", interrupt_hash)
 
+    if through_service:
+        monkeypatch.setattr(HubClient, "of", classmethod(lambda _cls, *_args, **_kwargs: client))
+        operation = CommandServices(three_repositories, ExecutionContext.create()).synchronize
+    else:
+
+        def operation():
+            return run(client, layout, three_repositories)
+
     with pytest.raises(KeyboardInterrupt):
-        run(client, layout, three_repositories)
+        operation()
+    if through_service:
+        with exclusive_lock(lock_path(), command="after joined transfer", wait_seconds=0):
+            pass
 
     assert shutdown_calls == [(True, True)]
     assert seen == [MODEL, DATASET]

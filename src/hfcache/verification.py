@@ -1111,10 +1111,11 @@ def persist_verification(
     yet would be a dangling reference in the one artifact an operator reaches for
     when they already suspect the archive.
 
-    Both writes are atomic renames of derived or append-only files, which is why
-    `--new` and `--revision` can do this without the lock `--full` holds: a
-    concurrent reader sees one whole catalog or the other, and a run report's
-    name carries a run id nothing else will reuse.
+    The caller must hold the common archive lock from scope resolution through
+    this complete report/catalog read-merge-write (decision 110, INV-007).
+    Atomic replacement protects readers from partial JSON; it cannot serialize
+    competing merges or prevent one run from losing another run's findings.
+    This function does not acquire a nested lock.
     """
     path = layout.run_report(report.started_at, RunId(report.run_id))
     path.parent.mkdir(mode=RUNS_MODE, parents=True, exist_ok=True)

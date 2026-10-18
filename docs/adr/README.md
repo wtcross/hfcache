@@ -38,7 +38,7 @@ does not activate itself.
 | Recovery and quarantine | [AD-12](ad-12.md), [AD-14](ad-14.md), [AD-16](ad-16.md), [AD-17](ad-17.md) | [Journal unknown fields](decision-020.md), [cleanup authority](decision-103.md), [supervised cancellation](decision-104.md), [legacy history](decision-105.md) |
 | Hub access, credentials, and dependencies | [AD-07](ad-07.md), [AD-08](ad-08.md), [AD-15](ad-15.md), [AD-21](ad-21.md) | [Credential validation](decision-011.md), [explicit restricted scope](decision-098.md) |
 | Sync throughput and capacity | [AD-19](ad-19.md) | [Bounded memory](decision-086.md), [one producer](decision-094.md), [failed reports with warnings](decision-095.md) |
-| Verification and durable reporting | [Offline verification](offline-verification.md) | [Verification state](decision-051.md), [publication identity](decision-062.md), [retained set](decision-073.md), [nullable corrupt identity](decision-078.md) |
+| Verification and durable reporting | [Offline verification](offline-verification.md) | [Verification state](decision-051.md), [publication identity](decision-062.md), [retained set](decision-073.md), [nullable corrupt identity](decision-078.md), [complete verification lock](decision-110.md) |
 | Deployment, scheduling, and hardening | [Scheduling authority](systemd-scheduling.md) | [Mount units](decision-058.md), [hardening probe](decision-059.md), [offline egress](decision-060.md), [setgid exception](decision-061.md), [safe deploy](decision-065.md) |
 | Consumers and serving | [AD-10](ad-10.md) | [Independent copy helper](decision-067.md), [promotion ownership](decision-099.md), [serving mounts](decision-100.md) |
 | Cockpit administration | [Plugin boundary](decision-087.md) | [Operation surface](decision-089.md), [bundled TOML](decision-091.md), [credential import](decision-092.md), [repository links](decision-101.md) |
@@ -232,3 +232,4 @@ status and current-contract links before applying a historical choice.
 | 107 | [Active plans and task records own execution; progress retains the audit](decision-107.md) |
 | 108 | [Typed services and maintained transport implementations](decision-108.md) |
 | 109 | [Bounded non-resuming operation receipts](decision-109.md) |
+| 110 | [Guard complete command execution and verification persistence](decision-110.md) |

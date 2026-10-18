@@ -677,7 +677,7 @@ def test_status_reports_what_quarantine_is_holding(client, layout, config, confi
 def test_the_repair_command_replaces_the_instance(client, layout, config, config_path, monkeypatch):
     sync(client, layout, config, only_model(config))
     damage(layout, SHA_A)
-    monkeypatch.setattr("hfcache.cli.HubClient", _client_factory(client))
+    monkeypatch.setattr("hfcache.services.commands.HubClient", _client_factory(client))
 
     result = runner.invoke(
         app, ["--config", str(config_path), "--json", "repair", f"{MODEL.selector}@{SHA_A}"]
@@ -697,7 +697,7 @@ def test_the_repair_command_reports_a_refused_download(  # noqa: PLR0913, PLR091
     sync(client, layout, config, only_model(config))
     hub.revisions[SHA_A] = {**CONTENT, "config.json": b"tampered"}
     shutil.rmtree(layout.hub_cache / f"models--{MODEL.id.replace('/', '--')}")
-    monkeypatch.setattr("hfcache.cli.HubClient", _client_factory(client))
+    monkeypatch.setattr("hfcache.services.commands.HubClient", _client_factory(client))
 
     result = runner.invoke(
         app, ["--config", str(config_path), "--json", "repair", f"{MODEL.selector}@{SHA_A}"]

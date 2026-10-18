@@ -439,7 +439,7 @@ def test_full_runs_with_hub_networking_disabled(config_path, archive, monkeypatc
             observed.append(os.environ.get(OFFLINE_VARIABLE))
             yield
 
-    monkeypatch.setattr("hfcache.cli.networking_disabled", recording)
+    monkeypatch.setattr("hfcache.services.commands.networking_disabled", recording)
     assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
     assert observed == ["1"]
 
@@ -455,7 +455,7 @@ def test_full_builds_no_hub_client(config_path, archive, monkeypatch):
             message = "verify must never construct a Hub client"
             raise AssertionError(message)
 
-    monkeypatch.setattr("hfcache.cli.HubClient", Refuses)
+    monkeypatch.setattr("hfcache.services.commands.HubClient", Refuses)
     assert invoke(config_path, "--full").exit_code == ExitCode.SUCCESS
 
 

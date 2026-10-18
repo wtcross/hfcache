@@ -847,6 +847,13 @@ Document that deleting the oldest application revision may not immediately retur
 
 ## 16. Integrity and Verification
 
+**API-003 amendment (2026-10-17, decision 110).** Every non-estimate verification
+mode now takes the common archive lock and storage preflight before resolving
+scope, retaining ownership through hashing, report write and complete catalog
+read/merge/write. Atomic replacement alone does not serialize merges. The
+original sections below remain historical reasoning; current behavior is
+contracted by `docs/cli.md`, `docs/schemas.md` and `docs/adr/decision-110.md`.
+
 ### 16.1 Ingestion verification
 
 - Use SHA-256.

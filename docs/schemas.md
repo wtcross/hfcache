@@ -401,6 +401,14 @@ unreadable — and it leaves with its repository if the repository leaves
 most one entry per revision — it records the *most recent* outcome, not a
 history. The run reports under `runs/` are the history.
 
+Verification writes its durable report before publishing the catalog that names
+it. Every non-estimate verification holds the common archive lock from target
+resolution through hashing, report write and the entire catalog read/merge/write
+(decision 110). Atomic replacement alone cannot preserve unrelated updates when
+two writers merge the same old catalog. Persistence helpers require existing
+caller ownership and never take a nested lock. This changes no schema-1 field,
+format, confidence key or finding-clearing rule.
+
 Both catalogs are derived (`FS-16`). A `verification.json` that is absent or
 unreadable means every revision reads `unverified`: derived state may lower the
 confidence this application reports and may never raise it.

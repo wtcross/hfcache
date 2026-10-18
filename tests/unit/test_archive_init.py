@@ -31,6 +31,12 @@ ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 OTHER_ARCHIVE_ID = "11111111-2222-3333-4444-555555555555"
 
 
+@pytest.fixture(autouse=True)
+def _local_command_lock(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """API-003 probe/initialization locks never touch the host runtime directory."""
+    monkeypatch.setattr("hfcache.locking.LOCK_DIRECTORY", tmp_path / "run")
+
+
 @pytest.fixture
 def archive_root(tmp_path: Path) -> Path:
     root = tmp_path / "archive"

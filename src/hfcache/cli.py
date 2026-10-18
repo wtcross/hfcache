@@ -4,82 +4,47 @@ The command surface, global options, JSON envelope, and exit codes are specified
 in `docs/cli.md`. Scheduled runs use exactly the same commands an operator types.
 """
 
-import socket
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, NoReturn
+from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 
 import typer
 
-from hfcache.archive import initialize_archive
-from hfcache.config import ApplicationConfig, RepositoryConfig, load_config
+from hfcache.config import load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import (
     ConfigurationError,
-    ExitCode,
     HfcacheError,
-    IntegrityError,
     Problem,
-    SafetyError,
 )
-from hfcache.hub import HubClient, networking_disabled
 from hfcache.identity import (
-    RepositoryIdentity,
     RunId,
-    TransactionId,
     new_run_id,
-    new_transaction_id,
-    parse_selector,
 )
-from hfcache.logging import bind_run, current_run_id, emit, under_systemd
 from hfcache.logging import configure as configure_logging
+from hfcache.logging import current_run_id
 from hfcache.models import parse_timestamp
-from hfcache.paths import ArchiveLayout
 from hfcache.preflight import (
-    READ_ONLY,
     UNPROVABLE_READ_ONLY,
-    Check,
-    guarded,
-    hub_checks,
-    order_checks,
-    storage_checks,
 )
-from hfcache.publication import (
-    projected_publication_bytes,
-    published_repositories,
+from hfcache.services.commands import (
+    CommandServices,
+    DoctorRequest,
+    InitializationRequest,
+    MaintenanceRequest,
+    QuarantineRequest,
+    RepairRequest,
+    SelectionRequest,
+    VerificationRequest,
 )
-from hfcache.purge import apply_purge, plan_all_purges
-from hfcache.quarantine import apply_quarantine_cleanup, plan_quarantine_cleanups
-from hfcache.recovery import apply_recovery, plan_recovery, reconcile
-from hfcache.repair import repair_revision
-from hfcache.reporting import RunReport, RuntimeVersions
-from hfcache.retention import apply_prune, plan_all
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.queries import LocalQueries, RepositoryQuery, query_version, validate_config
-from hfcache.storage import read_model
-from hfcache.sync import synchronize
-from hfcache.transactions import open_transaction
-from hfcache.verification import (
-    FINDING_CODES,
-    UNDETECTABLE,
-    build_report,
-    persist_verification,
-    require_retained,
-    resolve_archive,
-    resolve_run,
-    verify_targets,
-)
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Sequence
 
-    from hfcache.archive import ArchiveInspection
-    from hfcache.models import PrunePlan
-    from hfcache.reporting import VerificationReport
-    from hfcache.sync import RunOutcome
-    from hfcache.verification import Resolved
 
 __all__ = ["UNPROVABLE_READ_ONLY", "app"]
 
@@ -194,6 +159,55 @@ def _echo_pairs(payload: dict[str, Any]) -> None:
     width = max(len(key) for key in payload)
     for key in sorted(payload):
         typer.echo(f"{key.replace('_', ' '):<{width}}  {payload[key]}")
+
+
+def _commands(ctx: typer.Context, started_at: str) -> CommandServices:
+    """Resolve local adapter configuration into a frozen service invocation."""
+    options = _options(ctx)
+    config = load_config(options.config_path)
+    context = ExecutionContext(RunId(current_run_id() or new_run_id()), parse_timestamp(started_at))
+    return CommandServices(
+        config, context, token_file=options.token_file, config_label=str(options.config_path)
+    )
+
+
+def _show_result(
+    ctx: typer.Context,
+    result: ServiceResult,
+    *,
+    started_at: str,
+    lines: dict[str, str] | None = None,
+    rows: Sequence[str] = (),
+    human_errors: bool = True,
+) -> None:
+    """Render a classified service result; domain orchestration stays in services."""
+    options = _options(ctx)
+    if options.json_output:
+        emit_envelope(
+            result.command,
+            result.data,
+            started_at=started_at,
+            warnings=result.warnings,
+            errors=result.errors,
+            exit_code=result.exit_code,
+            run_id=result.run_id,
+        )
+    else:
+        refusal = bool(
+            result.errors
+            and not rows
+            and not ("report" in result.data and "exit_code" in result.data)
+        )
+        if not options.quiet and not refusal:
+            if lines:
+                _echo_pairs(lines)
+            for row in rows:
+                typer.echo(row)
+        if (human_errors and (not options.quiet or refusal)) or not result.data:
+            for problem in result.errors:
+                typer.echo(problem.as_line(), err=True)
+    if result.exit_code:
+        raise typer.Exit(result.exit_code)
 
 
 @app.callback()
@@ -321,42 +335,6 @@ archive_app = typer.Typer(
 app.add_typer(archive_app)
 
 
-def _check_init_options(
-    config: ApplicationConfig,
-    *,
-    archive_root: Path,
-    archive_id: str | None,
-    confirm: bool,
-    inspect: bool,
-) -> None:
-    """Refuse an invocation whose options disagree with each other or with configuration.
-
-    `--archive-root` and `--archive-id` restate what configuration already says.
-    The redundancy is the point: initialization is the one irreversible act, so
-    it does not take its target or its identity from a file alone
-    (`docs/cli.md` §2).
-    """
-    if confirm and inspect:
-        message = (
-            "--confirm and --inspect are mutually exclusive: one performs the initialization "
-            "and the other exists to prove, without touching anything, that it would be safe"
-        )
-        raise ConfigurationError.single(message, code="HFARG002")
-    if archive_root != config.storage.archive_root:
-        message = (
-            f"--archive-root {archive_root} does not match storage.archive_root "
-            f"{config.storage.archive_root}; the two must name the same directory"
-        )
-        raise ConfigurationError.single(message, code="HFARG002", location="storage.archive_root")
-    if archive_id is not None and archive_id != config.storage.archive_id:
-        message = (
-            f"--archive-id {archive_id} does not match storage.archive_id "
-            f"{config.storage.archive_id}; the sentinel is written with the configured value, "
-            f"and a sentinel that disagrees with configuration is fatal and never repaired"
-        )
-        raise ConfigurationError.single(message, code="HFARG002", location="storage.archive_id")
-
-
 @archive_app.command("init")
 def archive_init(
     ctx: typer.Context,
@@ -385,75 +363,44 @@ def archive_init(
     what it would do and exits `10`.
     """
     started_at = utc_now()
-    options = _options(ctx)
-    command = "archive init"
     try:
-        config = load_config(options.config_path)
-        _check_init_options(
-            config,
-            archive_root=archive_root,
-            archive_id=archive_id,
-            confirm=confirm,
-            inspect=inspect,
+        services = _commands(ctx, started_at)
+        result = services.initialize_archive(
+            InitializationRequest(
+                archive_root=archive_root,
+                archive_id=archive_id,
+                confirm=confirm,
+                inspect=inspect,
+            )
         )
-        layout = ArchiveLayout(root=config.storage.archive_root)
-        inspection = LocalQueries(config).inspect_archive()
     except HfcacheError as error:
-        _report_failure(ctx, command, started_at, error)
-
-    found = inspection.as_payload()
-    if inspection.problems:
-        _report_failure(ctx, command, started_at, SafetyError(inspection.problems), found)
-    if inspect:
-        _emit(ctx, command, found, started_at=started_at, lines=_inspection_lines(inspection))
-        return
-    if not inspection.initializable:
-        message = (
-            f"archive {layout.root} is already initialized; initialization happens once, "
-            f"because a second sentinel would give an existing archive a new identity"
-        )
-        error = SafetyError.single(message, code="HFMNT014", location=str(layout.root))
-        _report_failure(ctx, command, started_at, error, found)
-    if not confirm:
-        message = (
-            f"--confirm is required to initialize {layout.root}; nothing was changed. The "
-            f"reported state is what initialization would act on"
-        )
-        error = ConfigurationError.single(message, code="HFARG003", location=str(layout.root))
-        _report_failure(ctx, command, started_at, error, found)
-
-    try:
-        result = initialize_archive(layout, archive_id=config.storage.archive_id)
-    except HfcacheError as error:
-        _report_failure(ctx, command, started_at, error, found)
-    _emit(
-        ctx,
-        command,
-        result.as_payload(),
-        started_at=started_at,
-        lines={
-            "archive root": str(result.layout.root),
-            "archive id": result.sentinel.archive_id,
-            "created": f"{len(result.created_directories)} directories",
-            "adopted published": "yes" if result.adopted_published else "no",
-            "sentinel": str(result.layout.sentinel),
-        },
-    )
-
-
-def _inspection_lines(inspection: ArchiveInspection) -> dict[str, str]:
-    """Summarize an inspection for an operator reading a terminal."""
-    entry = inspection.mount.entry
-    return {
-        "archive root": str(inspection.layout.root),
-        "state": inspection.state,
-        "filesystem": f"{entry.filesystem_type} from {entry.source}" if entry else "not a mount",
-        "initializable": "yes" if inspection.initializable else "no",
-        "existing directories": str(len(inspection.existing_directories)),
-        "missing directories": str(len(inspection.missing_directories)),
-        "unknown entries": str(inspection.unknown_entry_count),
-        "adopted published": "yes" if inspection.adopted_published else "no",
-    }
+        _report_failure(ctx, "archive init", started_at, error)
+    payload = result.data
+    if "state" in payload:
+        mount = payload["mount"]
+        lines = {
+            "archive root": payload["archive_root"],
+            "state": payload["state"],
+            "filesystem": f"{mount['filesystem_type']} from {mount['source']}"
+            if mount.get("filesystem_type")
+            else "not a mount",
+            "initializable": "yes" if payload["initializable"] else "no",
+            "existing directories": str(len(payload["existing_directories"])),
+            "missing directories": str(len(payload["missing_directories"])),
+            "unknown entries": str(payload["unknown_entry_count"]),
+            "adopted published": "yes" if payload["adopted_published"] else "no",
+        }
+    elif payload:
+        lines = {
+            "archive root": payload["archive_root"],
+            "archive id": payload["archive_id"],
+            "created": f"{len(payload['created_directories'])} directories",
+            "adopted published": "yes" if payload["adopted_published"] else "no",
+            "sentinel": str(Path(payload["archive_root"]) / payload["sentinel"]),
+        }
+    else:
+        lines = {}
+    _show_result(ctx, result, started_at=started_at, lines=lines)
 
 
 def _emit(
@@ -483,42 +430,6 @@ SelectorArgument = Annotated[
 ]
 
 
-def _select(config: ApplicationConfig, selectors: list[str] | None) -> tuple[RepositoryConfig, ...]:
-    """Resolve selectors against configuration, in configuration order.
-
-    With no selectors the answer is every configured repository. With selectors
-    the answer keeps *configuration* order rather than the order they were
-    typed, so two invocations naming the same set behave identically — the same
-    determinism `docs/architecture.md` §5.3 requires of generated output.
-
-    A selector naming a repository that is not configured is `HFARG004`. All of
-    them are reported at once, because an operator who mistyped two names should
-    learn both now.
-    """
-    if not selectors:
-        return config.repositories
-
-    # Both sides are `(type, id)`: `RepositoryConfig.key` and
-    # `RepositoryIdentity.sort_key` agree by construction.
-    wanted = {parse_selector(text).identity.sort_key for text in selectors}
-    matched = tuple(repository for repository in config.repositories if repository.key in wanted)
-    if missing := wanted - {repository.key for repository in matched}:
-        raise ConfigurationError(
-            [
-                Problem(
-                    code="HFARG004",
-                    message=(
-                        f"selector {repository_type}:{repository_id} names a repository that is "
-                        f"not in configuration"
-                    ),
-                    location=f"{repository_type}:{repository_id}",
-                )
-                for repository_type, repository_id in sorted(missing)
-            ]
-        )
-    return matched
-
-
 # --------------------------------------------------------------------------- #
 # doctor
 # --------------------------------------------------------------------------- #
@@ -542,58 +453,19 @@ def doctor(
     things (plan §19).
     """
     started_at = utc_now()
-    options = _options(ctx)
     try:
-        config = load_config(options.config_path)
-        token = resolve_token(config.hub, token_file=options.token_file)
+        result = _commands(ctx, started_at).diagnose(DoctorRequest(read_only=read_only))
     except HfcacheError as error:
         _report_failure(ctx, "doctor", started_at, error)
-
-    layout = ArchiveLayout(root=config.storage.archive_root)
-    checks = [
-        Check.passed(
-            "configuration",
-            f"{options.config_path} is valid; fingerprint {config.fingerprint()[:12]}",
-        ),
-        *storage_checks(layout, storage=config.storage, read_only=read_only),
-        Check.passed("credential", token.describe()),
-        Check.passed("hub_endpoint", f"{config.hub.endpoint} is a well-formed https endpoint"),
-        *hub_checks(config.hub, HubClient.of(token, endpoint=config.hub.endpoint)),
-    ]
-    if read_only:
-        # Whatever the runner did not already report as unprovable. As the
-        # packages behind those capabilities land they leave this list, rather
-        # than being stated in two places that could disagree.
-        probed = {check.name for check in checks}
-        checks.extend(
-            Check.skipped(name, READ_ONLY) for name in UNPROVABLE_READ_ONLY if name not in probed
-        )
-
-    ordered = order_checks(checks)
-    problems = [problem for check in ordered for problem in check.problems]
-    warnings = [warning for check in ordered for warning in check.warnings]
-    failed = any(check.outcome == "fail" for check in ordered)
-    exit_code = int(ExitCode.SAFETY) if failed else int(ExitCode.SUCCESS)
-
-    payload: dict[str, Any] = {"checks": [check.as_entry() for check in ordered]}
-    if options.json_output:
-        emit_envelope(
-            "doctor",
-            payload,
-            started_at=started_at,
-            warnings=warnings,
-            errors=problems,
-            exit_code=exit_code,
-        )
-    elif not options.quiet:
-        # The table is the report: a failing row already carries its problem's
-        # message as its detail, so repeating the problems on stderr would say
-        # the same thing twice.
-        width = max(len(check.name) for check in ordered)
-        for check in ordered:
-            typer.echo(f"{check.outcome:<7}  {check.name:<{width}}  {check.detail}")
-    if failed:
-        raise typer.Exit(exit_code)
+    checks = result.data.get("checks", [])
+    rows: list[str] = []
+    if checks:
+        width = max(len(check["name"]) for check in checks)
+        rows = [
+            f"{check['outcome']:<7}  {check['name']:<{width}}  {check['detail']}"
+            for check in checks
+        ]
+    _show_result(ctx, result, started_at=started_at, rows=rows, human_errors=False)
 
 
 # --------------------------------------------------------------------------- #
@@ -617,100 +489,17 @@ def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     still see the other nine.
     """
     started_at = utc_now()
-    options = _options(ctx)
     try:
-        config = load_config(options.config_path)
-        token = resolve_token(config.hub, token_file=options.token_file)
-        selected = _select(config, selectors)
+        result = _commands(ctx, started_at).plan_sync(SelectionRequest(tuple(selectors or ())))
     except HfcacheError as error:
         _report_failure(ctx, "plan", started_at, error)
-
-    client = HubClient.of(token, endpoint=config.hub.endpoint)
-    try:
-        client.require_identity(config.hub.expected_account)
-    except HfcacheError as error:
-        _report_failure(ctx, "plan", started_at, error)
-    cache_dir = ArchiveLayout(root=config.storage.archive_root).hub_cache
-    entries: list[dict[str, Any]] = []
-    problems: list[Problem] = []
-    for repository in selected:
-        if not repository.enabled:
-            continue
-        entry, failure = _planned(client, repository, config, cache_dir=cache_dir)
-        entries.append(entry)
-        if failure is not None:
-            problems.append(failure)
-
-    exit_code = int(ExitCode.SYNC) if problems else int(ExitCode.SUCCESS)
-    payload: dict[str, Any] = {"repositories": entries}
-    if options.json_output:
-        emit_envelope("plan", payload, started_at=started_at, errors=problems, exit_code=exit_code)
-    elif not options.quiet:
-        for entry in entries:
-            typer.echo(_plan_line(entry))
-    if problems:
-        raise typer.Exit(exit_code)
-
-
-def _planned(
-    client: HubClient,
-    repository: RepositoryConfig,
-    config: ApplicationConfig,
-    *,
-    cache_dir: Path,
-) -> tuple[dict[str, Any], Problem | None]:
-    """Resolve and cost one repository, reporting rather than raising on failure.
-
-    The upstream state is reported in the entry as well as the problem, because
-    `HFHUB004`, `HFHUB005`, and `HFHUB001` mean the *repository* is unavailable
-    rather than that the run is broken — and every local revision of it is
-    preserved regardless (`AD-06`).
-
-    Three Hub calls in the order plan §13.2 puts them: resolve the reference to
-    an immutable SHA, enumerate what that revision contains, then cost what
-    downloading it would take. Each later call is against the resolved SHA, and a
-    failure at any of them leaves the fields below it `null` rather than guessed
-    — a partial answer that says which part is missing is more useful than one
-    that does not.
-    """
-    entry: dict[str, Any] = {
-        "enabled": repository.enabled,
-        "estimated_new_bytes": None,
-        "file_count": None,
-        "logical_bytes": None,
-        "projected_publication_bytes": None,
-        "publication_mode": config.storage.publication_mode,
-        "repository_id": repository.id,
-        "repository_type": repository.type,
-        "requested_revision": repository.revision,
-        "resolved_commit_sha": None,
-        "upstream_state": "unknown",
-    }
-    identity = RepositoryIdentity.from_config(repository)
-    try:
-        facts = client.repository(identity, repository.revision)
-        entry["resolved_commit_sha"] = facts.commit_sha
-        entry["upstream_state"] = "available"
-
-        tree = client.tree(identity, facts.commit_sha)
-        entry["file_count"] = len(tree)
-        entry["logical_bytes"] = sum(item.size for item in tree)
-        entry["projected_publication_bytes"] = projected_publication_bytes(
-            entry["logical_bytes"], publication_mode=config.storage.publication_mode
-        )
-
-        estimate = client.estimate(
-            identity,
-            facts.commit_sha,
-            cache_dir=cache_dir,
-            max_workers=config.sync.max_workers,
-        )
-        entry["estimated_new_bytes"] = estimate.new_bytes
-    except HfcacheError as error:
-        problem = error.problems[0]
-        entry["upstream_state"] = _UPSTREAM_STATES.get(problem.code, "unreachable")
-        return entry, problem
-    return entry, None
+    _show_result(
+        ctx,
+        result,
+        started_at=started_at,
+        rows=[_plan_line(entry) for entry in result.data.get("repositories", [])],
+        human_errors=False,
+    )
 
 
 def _plan_line(entry: dict[str, Any]) -> str:
@@ -745,21 +534,6 @@ def _bytes(value: int) -> str:
         if value >= threshold:
             return f"{value / threshold:.1f} {unit}"
     return f"{value} B"
-
-
-_UPSTREAM_STATES: Final = {
-    "HFHUB004": "missing",
-    "HFHUB005": "forbidden",
-    "HFHUB006": "refused",
-    "HFHUB007": "unresolvable",
-}
-"""How an upstream failure is described in a per-repository entry.
-
-Distinct from the code because an operator reading `status` or `plan` wants to
-know what is true of the repository, not which call reported it. Anything else
-is `unreachable`, which is the honest answer when the endpoint itself is the
-problem.
-"""
 
 
 @app.command()
@@ -833,159 +607,17 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     downloaded and nothing changed — which is the whole reason an unattended
     scheduled sync is safe to leave running.
     """
-    started_at = datetime.now(UTC)
-    stamp = utc_now()
-    options = _options(ctx)
+    started_at = utc_now()
     try:
-        config = load_config(options.config_path)
-        token = resolve_token(config.hub, token_file=options.token_file)
-        selected = _select(config, selectors)
+        result = _commands(ctx, started_at).synchronize(SelectionRequest(tuple(selectors or ())))
     except HfcacheError as error:
-        _report_failure(ctx, "sync", stamp, error)
-
-    client = HubClient.of(token, endpoint=config.hub.endpoint)
-    layout = ArchiveLayout(root=config.storage.archive_root)
-    envelope = _run_envelope(config)
-    try:
-        with guarded(
-            layout,
-            storage=config.storage,
-            command="sync",
-            lock_wait_seconds=config.sync.lock_wait_seconds,
-        ) as checks:
-            run_id = new_run_id()
-            # From here the log, the envelope, and `runs/<…>.json` name the same
-            # run. The preflight above has already logged under the startup id,
-            # which is correct: it happened before this run existed.
-            bind_run(run_id)
-            emit(
-                "run.started",
-                command="sync",
-                archive_id=str(envelope["archive_id"]),
-                config_fingerprint=str(envelope["config_fingerprint"]),
-                repositories=len(selected),
-                invocation=str(envelope["invocation_mode"]),
-            )
-            outcome = _run(
-                client,
-                layout,
-                config,
-                selected=selected,
-                envelope=envelope,
-                checks=checks,
-                run_id=run_id,
-                started_at=started_at,
-            )
-    except HfcacheError as error:
-        _report_failure(ctx, "sync", stamp, error)
-
-    payload = outcome.report.model_dump(mode="json")
-    payload["report"] = str(layout.archive_relative(outcome.report_path))
-    # The envelope's arrays are rebuilt from the durable report rather than
-    # collected separately, so the two cannot describe different runs. Each entry
-    # names the repository it belongs to, which is what an operator with ten
-    # configured repositories and one failure needs first.
-    problems = [
-        Problem(
-            code=code,
-            message=f"{result.repository_type}:{result.repository_id} failed",
-            repository=f"{result.repository_type}:{result.repository_id}",
-        )
-        for result in outcome.report.repositories
-        for code in result.errors
+        _report_failure(ctx, "sync", started_at, error)
+    rows = [
+        f"{item['repository_type']}:{item['repository_id']}  {item['status']}"
+        f"{'  ' + item['resolved_commit_sha'] if item['resolved_commit_sha'] else ''}"
+        for item in result.data.get("repositories", [])
     ]
-    warnings = [
-        Problem(
-            code=code,
-            message=f"{result.repository_type}:{result.repository_id} warned",
-            repository=f"{result.repository_type}:{result.repository_id}",
-        )
-        for result in outcome.report.repositories
-        for code in result.warnings
-    ]
-    if options.json_output:
-        emit_envelope(
-            "sync",
-            payload,
-            started_at=stamp,
-            warnings=warnings,
-            errors=problems,
-            exit_code=int(outcome.exit_code),
-            run_id=run_id,
-        )
-    elif not options.quiet:
-        for result in outcome.report.repositories:
-            typer.echo(
-                f"{result.repository_type}:{result.repository_id}  {result.status}"
-                f"{'  ' + result.resolved_commit_sha if result.resolved_commit_sha else ''}"
-            )
-        for problem in problems:
-            typer.echo(problem.as_line(), err=True)
-    if outcome.exit_code != ExitCode.SUCCESS:
-        raise typer.Exit(int(outcome.exit_code))
-
-
-def _run(
-    client: HubClient,
-    layout: ArchiveLayout,
-    config: ApplicationConfig,
-    *,
-    selected: Sequence[RepositoryConfig],
-    envelope: Mapping[str, Any],
-    checks: Sequence[Check],
-    run_id: RunId,
-    started_at: datetime,
-) -> RunOutcome:
-    """The §7.6 run transaction: open it, reconcile, then do the work.
-
-    Checkpoints 1-3 live here for the same reason the lock and the preflight do:
-    `TX-07` requires reconciliation happen under the lock the run already holds
-    and **before** the Hub is contacted, and this journal is what proves it did.
-    `sync.synchronize` records checkpoints 4-7 and closes the journal.
-
-    The run excludes *itself* from what it reconciles. `TX-01` opened this
-    journal before the run was allowed to touch anything, so it is unfinished by
-    construction for as long as the run is executing; without the exclusion a
-    run would find itself and propose a remedy for work still in progress.
-    """
-    transaction = open_transaction(
-        layout,
-        transaction_id=new_transaction_id(),
-        operation="sync",
-        run_id=run_id,
-        archive_id=str(envelope["archive_id"]),
-        config_fingerprint=str(envelope["config_fingerprint"]),
-    )
-    try:
-        transaction.checkpoint(
-            "run_started",
-            archive_id=str(envelope["archive_id"]),
-            config_fingerprint=str(envelope["config_fingerprint"]),
-            run_id=run_id,
-        )
-        transaction.checkpoint("preflight_passed", checks=[check.as_entry() for check in checks])
-        reconciled = reconcile(
-            layout,
-            stale_staging_age_hours=config.sync.stale_staging_age_hours,
-            envelope=envelope,
-            started_at=started_at,
-            exclude=(transaction.journal.transaction_id,),
-        )
-        transaction.checkpoint("journals_reconciled", **reconciled.as_evidence())
-        client.require_identity(config.hub.expected_account)
-        return synchronize(
-            client,
-            layout,
-            config,
-            transaction,
-            selected=selected,
-            envelope=envelope,
-            run_id=run_id,
-            started_at=started_at,
-        )
-    except HfcacheError as error:
-        transaction.fail(error.problems[0].code, error.problems[0].message)
-        raise
+    _show_result(ctx, result, started_at=started_at, rows=rows)
 
 
 # --------------------------------------------------------------------------- #
@@ -1109,293 +741,41 @@ def verify(
     would read, so that scheduling it against a NAS maintenance window is a
     decision made from a measurement rather than from a guess (plan §16.4).
     """
-    started_at = datetime.now(UTC)
-    stamp = utc_now()
-    options = _options(ctx)
-    command = f"verify --{_mode_option(new=new, full=full, revision=revision, estimate=estimate)}"
-    try:
-        mode = _verification_mode(
-            new=new, full=full, revision=revision, estimate=estimate, run_id=run_id
-        )
-        config = load_config(options.config_path)
-    except HfcacheError as error:
-        _report_failure(ctx, command, stamp, error)
-
-    layout = ArchiveLayout(root=config.storage.archive_root)
-    if mode == "estimate":
-        _emit_estimate(ctx, command, config, started_at=stamp)
-        return
-
-    try:
-        if mode == "full":
-            # The lock first, then the §19 gate, then the work — the same order
-            # every mutating command uses, because a verification that wrote its
-            # report while a sync republished underneath it would be describing
-            # an archive that no longer exists. Networking is off for the whole
-            # of it (`docs/cli.md` §2).
-            with (
-                guarded(
-                    layout,
-                    storage=config.storage,
-                    command=command,
-                    lock_wait_seconds=config.verification.lock_wait_seconds,
-                ),
-                networking_disabled(),
-            ):
-                outcome = verify_targets(resolve_archive(layout), started_at=started_at)
-        elif mode == "revision":
-            outcome = verify_targets(
-                (_named_revision(layout, str(revision)),), started_at=started_at
-            )
-        else:
-            outcome = verify_targets(
-                resolve_run(layout, _run_to_verify(layout, run_id)), started_at=started_at
-            )
-    except HfcacheError as error:
-        _report_failure(ctx, command, stamp, error)
-
-    report = build_report(
-        outcome,
-        envelope=_run_envelope(config),
-        command=command,
-        mode=mode,
-        run_id=new_run_id(),
+    started_at = utc_now()
+    request = VerificationRequest(
+        new=new, full=full, revision=revision, estimate=estimate, run_id=run_id
     )
     try:
-        # Persisted before the envelope is rendered, so an operator reading a
-        # `40` on stderr can already open the report it names. A findings run
-        # writes its report exactly as a clean one does: the evidence is the
-        # point (plan §16.2 items 8-9).
-        report_path = persist_verification(layout, report, outcome, mode=mode)
+        mode = request.mode
+        result = _commands(ctx, started_at).verify(request)
     except HfcacheError as error:
-        _report_failure(ctx, command, stamp, error, report.model_dump(mode="json"))
-    _emit_verification(ctx, command, report, report_path, started_at=stamp, layout=layout)
-
-
-def _chosen_modes(*, new: bool, full: bool, revision: str | None, estimate: bool) -> list[str]:
-    """Which mode options this invocation named, in `docs/cli.md` §2's order."""
-    return [
-        name
-        for name, given in (
-            ("--new", new),
-            ("--full", full),
-            ("--revision", revision is not None),
-            ("--estimate", estimate),
-        )
-        if given
-    ]
-
-
-def _mode_option(*, new: bool, full: bool, revision: str | None, estimate: bool) -> str:
-    """The mode name for the `command` field, before the invocation is validated.
-
-    A refusal still has to say which command was refused, and an invocation that
-    named two modes or none is reported under the first mode it named or under
-    `--new`; naming the command is not the same as accepting it.
-    """
-    chosen = _chosen_modes(new=new, full=full, revision=revision, estimate=estimate)
-    return chosen[0].removeprefix("--") if chosen else "new"
-
-
-def _verification_mode(
-    *, new: bool, full: bool, revision: str | None, estimate: bool, run_id: str | None
-) -> Literal["new", "full", "revision", "estimate"]:
-    """Decide which mode was asked for, refusing none and refusing two.
-
-    `docs/cli.md` §2: exactly one mode option is required. There is no default —
-    the modes differ by orders of magnitude in what they read, and guessing which
-    an operator meant would either skip most of the archive or saturate the NAS
-    for an hour.
-    """
-    chosen = _chosen_modes(new=new, full=full, revision=revision, estimate=estimate)
-    if len(chosen) > 1:
-        message = (
-            f"{' and '.join(chosen)} were given together; verify takes exactly one mode option, "
-            f"because each names a different scope rather than a different amount of effort"
-        )
-        raise ConfigurationError.single(message, code="HFARG002", location="verify")
-    if not chosen:
-        message = (
-            "verify requires exactly one mode option; --new checks the content one run "
-            "introduced, --full every retained revision, --revision one of them, and "
-            "--estimate none of them"
-        )
-        raise ConfigurationError.single(message, code="HFARG003", location="verify")
-    if run_id is not None and not new:
-        message = (
-            f"--run-id names which run {chosen[0]} would check, and {chosen[0]} is not scoped to "
-            f"a run; it is accepted only with --new"
-        )
-        raise ConfigurationError.single(message, code="HFARG002", location="--run-id")
-    if full:
-        return "full"
-    if estimate:
-        return "estimate"
-    return "revision" if revision is not None else "new"
-
-
-def _emit_estimate(
-    ctx: typer.Context, command: str, config: ApplicationConfig, *, started_at: str
-) -> None:
-    """Report what `--full` would cost, having hashed nothing (plan §16.4).
-
-    Always exit `0`. Nothing was read, so nothing can have been found wrong, and
-    an estimator that could report `40` would make an operator's scheduling
-    question indistinguishable from an integrity answer.
-    """
-    payload = LocalQueries(config).estimate_verification().data
-    duration = payload["estimated_duration_seconds"]
-    _emit(
-        ctx,
-        command,
-        payload,
-        started_at=started_at,
-        lines={
+        _report_failure(ctx, request.command, started_at, error)
+    payload = result.data
+    lines: dict[str, str] = {}
+    if mode == "estimate" and payload:
+        duration = payload["estimated_duration_seconds"]
+        lines = {
             "repositories": str(payload["repositories"]),
             "revisions": str(payload["revisions"]),
             "unique objects": str(payload["unique_objects"]),
             "unique bytes": _bytes(payload["unique_bytes"]),
-            "estimated duration": (
-                f"{duration:.0f}s" if duration is not None else "unknown — never measured"
-            ),
-            "storage maintenance": UNDETECTABLE,
-        },
-    )
-
-
-def _named_revision(layout: ArchiveLayout, selector: str) -> Resolved:
-    """Resolve `--revision TYPE:ID@SHA` against what the archive retains.
-
-    The SHA is required rather than defaulted to the current revision. `verify
-    --revision` is run when a particular revision is under suspicion, and
-    silently checking whichever one happens to be current would answer a question
-    nobody asked — and would report clean while the damaged revision sat
-    unexamined.
-
-    The repository is *not* required to be in configuration. An unmanaged
-    repository's data is still the archive's (`AD-06`), and a revision an
-    operator is investigating is often one whose repository was removed.
-    """
-    parsed = parse_selector(selector)
-    if parsed.commit_sha is None:
-        message = (
-            f"--revision {selector!r} names no revision; it takes TYPE:ID@SHA with the full "
-            f"40-character commit SHA, because a repository has more than one retained revision"
-        )
-        raise ConfigurationError.single(message, code="HFARG001", location="--revision")
-    return require_retained(layout, parsed.identity, parsed.commit_sha)
-
-
-def _run_to_verify(layout: ArchiveLayout, run_id: str | None) -> RunReport:
-    """The run report `--new` covers: the one named, or the most recent.
-
-    Reports are named `<timestamp>-<run-id>.json`, so lexical order is
-    chronological and the newest is found without opening anything. A named run
-    still has to be searched for, because the timestamp half of its filename is
-    not knowable from the id.
-
-    A report that will not load is skipped while searching for the newest — an
-    older readable run is a better answer than a refusal — but a *named* one that
-    will not load is reported, because the operator asked for that run and
-    silently checking a different one would be the wrong kind of helpful.
-    """
-    paths = sorted(layout.runs.glob("*.json"), reverse=True)
-    for path in paths:
-        if run_id is not None and not path.stem.endswith(f"-{run_id}"):
-            continue
-        try:
-            return read_model(path, RunReport, error=IntegrityError, code="HFVER007")
-        except HfcacheError:
-            if run_id is not None:
-                raise
-            continue
-    message = (
-        f"no run report {'named ' + run_id + ' ' if run_id else ''}was found under "
-        f"{layout.runs}; `verify --new` checks what a run introduced, so there has to be a run"
-    )
-    raise ConfigurationError.single(message, code="HFARG004", location=run_id or str(layout.runs))
-
-
-def _emit_verification(
-    ctx: typer.Context,
-    command: str,
-    report: VerificationReport,
-    report_path: Path,
-    *,
-    started_at: str,
-    layout: ArchiveLayout,
-) -> None:
-    """Render a verification report and exit with its classification.
-
-    The envelope's `errors` array is grouped by `(kind, repository)` rather than
-    listing one entry per finding. A damaged archive can produce thousands, and
-    an array that long is not something an operator or a log pipeline reads —
-    the complete finding set is in `data`, which is the report body itself.
-    """
-    options = _options(ctx)
-    problems = _finding_problems(report)
-    payload = report.model_dump(mode="json")
-    payload["report"] = str(layout.archive_relative(report_path))
-    # The report carries its own run id, so bind it before the event: a
-    # verification writes a durable artifact and the log must name the same run.
-    bind_run(report.run_id)
-    emit(
-        "verification.completed",
-        command=command,
-        outcome=report.verification_outcome,
-        exit_code=report.exit_code,
-        repositories=report.scope.repositories,
-        revisions=report.scope.revisions,
-        objects_read=report.scope.unique_objects_read,
-        bytes_read=report.scope.unique_bytes_read,
-        findings=len(report.findings),
-        report=str(layout.archive_relative(report_path)),
-    )
-    if options.json_output:
-        emit_envelope(
-            command,
-            payload,
-            started_at=started_at,
-            errors=problems,
-            exit_code=report.exit_code,
-            run_id=report.run_id,
-        )
-    elif not options.quiet:
-        _echo_pairs(
-            {
-                "outcome": report.verification_outcome,
-                "repositories": str(report.scope.repositories),
-                "revisions": str(report.scope.revisions),
-                "objects read": str(report.scope.unique_objects_read),
-                "bytes read": _bytes(report.scope.unique_bytes_read),
-                "findings": str(len(report.findings)),
-                "report": str(layout.archive_relative(report_path)),
-            }
-        )
-        for problem in problems:
-            typer.echo(problem.as_line(), err=True)
-    if report.exit_code != ExitCode.SUCCESS:
-        raise typer.Exit(report.exit_code)
-
-
-def _finding_problems(report: VerificationReport) -> list[Problem]:
-    """One envelope entry per `(kind, repository)`, carrying how many there were."""
-    counted: dict[tuple[str, str, str], int] = {}
-    for finding in report.findings:
-        key = (finding.kind, finding.repository_type, finding.repository_id)
-        counted[key] = counted.get(key, 0) + 1
-    return [
-        Problem(
-            code=FINDING_CODES[kind],
-            message=(
-                f"{count} {kind} finding{'s' if count > 1 else ''} "
-                f"in {repository_type}:{repository_id}"
-            ),
-            repository=f"{repository_type}:{repository_id}",
-            context={"findings": count, "kind": kind},
-        )
-        for (kind, repository_type, repository_id), count in sorted(counted.items())
-    ]
+            "estimated duration": f"{duration:.0f}s"
+            if duration is not None
+            else "unknown — never measured",
+            "storage maintenance": payload["storage_maintenance"],
+        }
+    elif "report" in payload:
+        scope = payload["scope"]
+        lines = {
+            "outcome": payload["verification_outcome"],
+            "repositories": str(scope["repositories"]),
+            "revisions": str(scope["revisions"]),
+            "objects read": str(scope["unique_objects_read"]),
+            "bytes read": _bytes(scope["unique_bytes_read"]),
+            "findings": str(len(payload["findings"])),
+            "report": payload["report"],
+        }
+    _show_result(ctx, result, started_at=started_at, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -1421,55 +801,25 @@ def quarantine(
 ) -> None:
     """Clean explicitly selected abandoned staging after proving its content redundant."""
     started_at = utc_now()
-    options = _options(ctx)
     command = f"quarantine {'--apply' if apply else '--dry-run'}"
     try:
+        request = QuarantineRequest(tuple(transaction_ids or ()), dry_run=dry_run, apply=apply)
         if dry_run == apply:
             message = "exactly one of --dry-run and --apply is required"
             raise ConfigurationError.single(message, code="HFARG002")
         if not transaction_ids:
             message = "quarantine cleanup requires explicit transaction ids"
             raise ConfigurationError.single(message, code="HFARG003")
-        config = load_config(options.config_path)
-        layout = ArchiveLayout(root=config.storage.archive_root)
-        identifiers = tuple(TransactionId(value) for value in sorted(set(transaction_ids)))
-        for identifier in identifiers:
-            try:
-                layout.quarantine_for(identifier)
-            except ValueError as exc:
-                raise ConfigurationError.single(
-                    str(exc), code="HFARG001", location=str(identifier)
-                ) from exc
-        if apply:
-            with guarded(
-                layout,
-                storage=config.storage,
-                command=command,
-                lock_wait_seconds=config.sync.lock_wait_seconds,
-            ):
-                # Decision 103: reject unfinished work, then prevalidate the
-                # entire selection. Cleanup never recovers unrelated work.
-                plans = plan_quarantine_cleanups(layout, identifiers)
-                applied = [apply_quarantine_cleanup(layout, plan) for plan in plans]
-        else:
-            plans = plan_quarantine_cleanups(layout, identifiers)
-            applied = []
+        result = _commands(ctx, started_at).quarantine(request)
     except HfcacheError as error:
         _report_failure(ctx, command, started_at, error)
-    _emit(
-        ctx,
-        command,
-        {"plans": [plan.to_dict() for plan in plans], "applied": applied},
-        started_at=started_at,
-        lines={
-            str(plan.transaction_id): (
-                "already absent"
-                if plan.already_absent
-                else f"{len(plan.files)} redundant files, {plan.logical_bytes} logical bytes"
-            )
-            for plan in plans
-        },
-    )
+    lines = {
+        item["transaction_id"]: "already absent"
+        if item["already_absent"]
+        else f"{len(item['files'])} redundant files, {item['logical_bytes']} logical bytes"
+        for item in result.data.get("plans", [])
+    }
+    _show_result(ctx, result, started_at=started_at, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -1505,141 +855,26 @@ def prune(
     made before the lock could be stale by the time it ran.
     """
     started_at = utc_now()
-    options = _options(ctx)
     command = f"prune {'--apply' if apply else '--dry-run'}"
     try:
-        if dry_run == apply:
-            message = (
-                "exactly one of --dry-run and --apply is required: one describes what would "
-                "happen and the other performs it, and neither is a safe default"
-            )
-            raise ConfigurationError.single(message, code="HFARG002")
-        config = load_config(options.config_path)
-        wanted = {
-            RepositoryIdentity.from_config(repository).selector
-            for repository in _select(config, selectors)
-        }
+        request = MaintenanceRequest(selectors=tuple(selectors or ()), dry_run=dry_run, apply=apply)
+        request.require_mode()
+        result = _commands(ctx, started_at).prune(request)
     except HfcacheError as error:
         _report_failure(ctx, command, started_at, error)
-
-    layout = ArchiveLayout(root=config.storage.archive_root)
-    maximum = config.storage.maximum_revisions
-    try:
-        if apply:
-            with guarded(
-                layout,
-                storage=config.storage,
-                command=command,
-                lock_wait_seconds=config.sync.lock_wait_seconds,
-            ):
-                # One run id for the whole invocation, so every prune journal
-                # this command opens correlates with the same envelope and with
-                # each other.
-                envelope = _run_envelope(config) | {"run_id": new_run_id()}
-                # `TX-07`, under the lock and before anything is planned: a
-                # plan built over an archive with an unfinished publication in
-                # it would be counting revisions nobody has finished deciding
-                # about. This command opens no journal of its own until
-                # `apply_prune` does, so it excludes nothing.
-                reconcile(
-                    layout,
-                    stale_staging_age_hours=config.sync.stale_staging_age_hours,
-                    envelope=envelope,
-                    started_at=datetime.now(UTC),
-                )
-                plans = _plans(layout, wanted, maximum=maximum)
-                applied = [apply_prune(layout, plan, envelope=envelope) for plan in plans]
-        else:
-            plans = _plans(layout, wanted, maximum=maximum)
-            applied = []
-    except HfcacheError as error:
-        _report_failure(ctx, command, started_at, error)
-
-    payload: dict[str, Any] = {
-        "plans": [plan.model_dump(mode="json") for plan in plans],
-        "applied": [record.model_dump(mode="json") for record in applied],
-    }
-    _emit(
-        ctx,
-        command,
-        payload,
-        started_at=started_at,
-        lines={
-            f"{plan.repository_type}:{plan.repository_id}": (
-                f"prune generation {plan.selected.publication_generation} "
-                f"({plan.selected.commit_sha})"
-            )
-            for plan in plans
-        }
-        or {"retention": "nothing to prune"},
-    )
-
-
-def _plans(layout: ArchiveLayout, wanted: set[str], *, maximum: int) -> tuple[PrunePlan, ...]:
-    """Every prune the selected repositories need, in repository order."""
-    identities = [
-        identity for identity in published_repositories(layout) if identity.selector in wanted
-    ]
-    return plan_all(layout, identities, maximum=maximum, generated_at=datetime.now(UTC))
+    lines = {
+        f"{item['repository_type']}:{item['repository_id']}": (
+            f"prune generation {item['selected']['publication_generation']} "
+            f"({item['selected']['commit_sha']})"
+        )
+        for item in result.data.get("plans", [])
+    } or {"retention": "nothing to prune"}
+    _show_result(ctx, result, started_at=started_at, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
 # purge (`docs/cli.md` §2, `AD-20`)
 # --------------------------------------------------------------------------- #
-
-
-def _purge_identities(
-    config: ApplicationConfig,
-    layout: ArchiveLayout,
-    selectors: list[str] | None,
-    *,
-    all_unmanaged: bool,
-) -> tuple[RepositoryIdentity, ...]:
-    """Resolve an explicit purge scope and refuse every managed repository."""
-    if all_unmanaged and selectors:
-        message = "--all-unmanaged and repository selectors are mutually exclusive"
-        raise ConfigurationError.single(message, code="HFARG002")
-    if not all_unmanaged and not selectors:
-        message = "purge requires repository selectors or --all-unmanaged"
-        raise ConfigurationError.single(message, code="HFARG003")
-
-    archived = {identity.selector: identity for identity in published_repositories(layout)}
-    managed = {
-        RepositoryIdentity.from_config(repository).selector for repository in config.repositories
-    }
-    if all_unmanaged:
-        return tuple(
-            identity for selector, identity in sorted(archived.items()) if selector not in managed
-        )
-
-    parsed = [parse_selector(selector) for selector in selectors or []]
-    revision_scoped = [str(selector) for selector in parsed if selector.commit_sha is not None]
-    if revision_scoped:
-        message = "purge removes whole repositories; revision-qualified selectors are refused"
-        raise ConfigurationError.single(message, code="HFARG001", location=revision_scoped[0])
-    wanted = {selector.identity.selector for selector in parsed}
-    problems = [
-        Problem(
-            code="HFARG004",
-            message=f"selector {selector} names no archived repository",
-            location=selector,
-        )
-        for selector in sorted((wanted - archived.keys()) - managed)
-    ]
-    problems.extend(
-        Problem(
-            code="HFARG007",
-            message=(
-                f"selector {selector} remains in configuration; remove it from configuration "
-                "before purging its archive"
-            ),
-            location=selector,
-        )
-        for selector in sorted(wanted & managed)
-    )
-    if problems:
-        raise ConfigurationError(problems)
-    return tuple(archived[selector] for selector in sorted(wanted))
 
 
 @app.command()
@@ -1664,72 +899,26 @@ def purge(
 ) -> None:
     """Permanently remove explicitly selected unmanaged repositories (`AD-20`)."""
     started_at = utc_now()
-    options = _options(ctx)
     command = f"purge {'--apply' if apply else '--dry-run'}"
     try:
-        if dry_run == apply:
-            message = (
-                "exactly one of --dry-run and --apply is required: one describes permanent "
-                "removal and the other performs it"
-            )
-            raise ConfigurationError.single(message, code="HFARG002")
-        config = load_config(options.config_path)
-        layout = ArchiveLayout(root=config.storage.archive_root)
-        identities = _purge_identities(config, layout, selectors, all_unmanaged=all_unmanaged)
+        request = MaintenanceRequest(
+            selectors=tuple(selectors or ()),
+            dry_run=dry_run,
+            apply=apply,
+            all_unmanaged=all_unmanaged,
+        )
+        request.require_mode()
+        result = _commands(ctx, started_at).purge(request)
     except HfcacheError as error:
         _report_failure(ctx, command, started_at, error)
-
-    try:
-        if apply:
-            with guarded(
-                layout,
-                storage=config.storage,
-                command=command,
-                lock_wait_seconds=config.sync.lock_wait_seconds,
-            ):
-                envelope = _run_envelope(config) | {"run_id": new_run_id()}
-                reconcile(
-                    layout,
-                    stale_staging_age_hours=config.sync.stale_staging_age_hours,
-                    envelope=envelope,
-                    started_at=datetime.now(UTC),
-                )
-                # Re-resolve inside the lock: `--all-unmanaged` is a state-based
-                # scope, and the plan persisted by each transaction must describe
-                # the exact state being removed, not the pre-lock observation.
-                identities = _purge_identities(
-                    config, layout, selectors, all_unmanaged=all_unmanaged
-                )
-                plans = plan_all_purges(layout, identities, generated_at=datetime.now(UTC))
-                applied = [
-                    record.model_dump(mode="json")
-                    for plan in plans
-                    for record in apply_purge(layout, plan, envelope=envelope)
-                ]
-        else:
-            plans = plan_all_purges(layout, identities, generated_at=datetime.now(UTC))
-            applied = []
-    except HfcacheError as error:
-        _report_failure(ctx, command, started_at, error)
-
-    payload: dict[str, Any] = {
-        "plans": [plan.model_dump(mode="json") for plan in plans],
-        "applied": applied,
-    }
-    _emit(
-        ctx,
-        command,
-        payload,
-        started_at=started_at,
-        lines={
-            f"{plan.repository_type}:{plan.repository_id}": (
-                f"purge {len(plan.revisions)} revisions, "
-                f"{_bytes(plan.unique_bytes_released_estimate)} logical"
-            )
-            for plan in plans
-        }
-        or {"purge": "nothing to purge"},
-    )
+    lines = {
+        f"{item['repository_type']}:{item['repository_id']}": (
+            f"purge {len(item['revisions'])} revisions, "
+            f"{_bytes(item['unique_bytes_released_estimate'])} logical"
+        )
+        for item in result.data.get("plans", [])
+    } or {"purge": "nothing to purge"}
+    _show_result(ctx, result, started_at=started_at, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -1760,65 +949,25 @@ def recover(
     `--dry-run` reads only. `--apply` takes the same exclusive lock and runs the
     same storage preflight every mutating command does, because it is one.
     """
-    started_at = datetime.now(UTC)
-    stamp = utc_now()
-    options = _options(ctx)
+    started_at = utc_now()
     command = f"recover {'--apply' if apply else '--dry-run'}"
     try:
-        if dry_run == apply:
-            message = (
-                "exactly one of --dry-run and --apply is required: one describes what would "
-                "happen and the other performs it, and neither is a safe default"
-            )
-            raise ConfigurationError.single(message, code="HFARG002")
-        config = load_config(options.config_path)
+        request = MaintenanceRequest(dry_run=dry_run, apply=apply)
+        request.require_mode()
+        result = _commands(ctx, started_at).recover(request)
     except HfcacheError as error:
-        _report_failure(ctx, command, stamp, error)
-
-    layout = ArchiveLayout(root=config.storage.archive_root)
-    stale_hours = config.sync.stale_staging_age_hours
-    payload: dict[str, Any] = {}
-    try:
-        if apply:
-            # `--apply` mutates, so it takes the same lock and passes the same
-            # §19 preflight as any other mutating command, and plans *inside*
-            # them — a plan made before the lock could be stale by the time it
-            # ran.
-            with guarded(
-                layout,
-                storage=config.storage,
-                command=command,
-                lock_wait_seconds=config.sync.lock_wait_seconds,
-            ):
-                plan = plan_recovery(layout, stale_staging_age_hours=stale_hours)
-                payload = plan.as_payload()
-                if not plan.blocked:
-                    report, applied = apply_recovery(
-                        layout, plan, envelope=_run_envelope(config), started_at=started_at
-                    )
-                    payload |= {
-                        "applied": len(applied),
-                        "report": str(layout.archive_relative(report)),
-                    }
-        else:
-            plan = plan_recovery(layout, stale_staging_age_hours=stale_hours)
-            payload = plan.as_payload()
-    except HfcacheError as error:
-        _report_failure(ctx, command, stamp, error, payload)
-
-    if plan.blocked:
-        _report_failure(ctx, command, stamp, SafetyError(list(plan.problems)), payload)
-    _emit(
-        ctx,
-        command,
-        payload,
-        started_at=stamp,
-        lines={
+        _report_failure(ctx, command, started_at, error)
+    payload = result.data
+    lines = (
+        {
             "actionable": str(payload["actionable"]),
             "blocked": str(payload["blocked"]),
             "applied": str(payload.get("applied", "-")),
-        },
+        }
+        if "actionable" in payload
+        else {}
     )
+    _show_result(ctx, result, started_at=started_at, lines=lines)
 
 
 @app.command()
@@ -1848,85 +997,22 @@ def repair(
     after that a checkpointed cleanup *quarantines* it rather than deleting it,
     and `recover --apply` is what performs that.
     """
-    stamp = utc_now()
-    options = _options(ctx)
-    command = "repair"
+    started_at = utc_now()
     try:
-        parsed = parse_selector(selector)
-        if parsed.commit_sha is None:
-            message = (
-                f"repair {selector!r} names no revision; it takes TYPE:ID@SHA with the full "
-                f"40-character commit SHA, because a repair replaces one instance of one SHA"
-            )
-            raise ConfigurationError.single(message, code="HFARG001", location="TYPE:ID@SHA")
-        config = load_config(options.config_path)
-        token = resolve_token(config.hub, token_file=options.token_file)
+        request = RepairRequest(selector, reason=reason)
+        result = _commands(ctx, started_at).repair(request)
     except HfcacheError as error:
-        _report_failure(ctx, command, stamp, error)
-
-    layout = ArchiveLayout(root=config.storage.archive_root)
-    client = HubClient.of(token, endpoint=config.hub.endpoint)
-    envelope = _run_envelope(config)
-    try:
-        with guarded(
-            layout,
-            storage=config.storage,
-            command=command,
-            lock_wait_seconds=config.sync.lock_wait_seconds,
-        ):
-            # `TX-07`, before the isolated download: a repair re-reads the
-            # original manifest and the published instance to decide what the
-            # replacement must be, and both are exactly what an unfinished
-            # publication or prune is still in the middle of changing.
-            reconcile(
-                layout,
-                stale_staging_age_hours=config.sync.stale_staging_age_hours,
-                envelope=envelope,
-                started_at=datetime.now(UTC),
-            )
-            client.require_identity(config.hub.expected_account)
-            outcome = repair_revision(
-                client,
-                layout,
-                config,
-                identity=parsed.identity,
-                commit_sha=parsed.commit_sha,
-                reason=reason,
-                envelope=envelope,
-                run_id=new_run_id(),
-            )
-    except HfcacheError as error:
-        _report_failure(ctx, command, stamp, error)
-
-    _emit(
-        ctx,
-        command,
-        outcome.as_payload(),
-        started_at=stamp,
-        lines={
-            "commit sha": outcome.commit_sha,
-            "retired": outcome.retired_publication_id,
-            "replacement": outcome.replacement_publication_id,
-            "grace expires": outcome.grace_expires_at.isoformat(),
-            "transaction": outcome.transaction_id,
-        },
+        _report_failure(ctx, "repair", started_at, error)
+    payload = result.data
+    lines = (
+        {
+            "commit sha": payload["commit_sha"],
+            "retired": payload["retired_publication_id"],
+            "replacement": payload["replacement_publication_id"],
+            "grace expires": datetime.fromisoformat(payload["grace_expires_at"]).isoformat(),
+            "transaction": payload["transaction_id"],
+        }
+        if payload
+        else {}
     )
-
-
-def _run_envelope(config: ApplicationConfig) -> dict[str, Any]:
-    """The provenance fields every durable report carries (`docs/schemas.md` §6)."""
-    versions = RuntimeVersions.measured()
-    return {
-        "application_version": versions.application,
-        "archive_id": config.storage.archive_id,
-        "config_fingerprint": config.fingerprint(),
-        "hostname": socket.gethostname(),
-        "huggingface_hub_version": versions.huggingface_hub,
-        # `under_systemd` reads INVOCATION_ID, which systemd sets for every unit
-        # it starts and nothing else sets — the one signal that distinguishes a
-        # timer run from an operator at a terminal. Shared with the event log so
-        # the run report and the journal cannot disagree about where a run came
-        # from, and so the log knows whether to emit syslog priority prefixes.
-        "invocation_mode": "systemd" if under_systemd() else "interactive",
-        "python_version": versions.python,
-    }
+    _show_result(ctx, result, started_at=started_at, lines=lines)

@@ -69,11 +69,14 @@ class ServiceResult:
     warnings: tuple[Problem, ...] = ()
     errors: tuple[Problem, ...] = ()
     exit_code: int = ExitCode.SUCCESS
+    run_id: RunId | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "payload", _freeze(self.payload))
         object.__setattr__(self, "warnings", tuple(_freeze_problem(item) for item in self.warnings))
         object.__setattr__(self, "errors", tuple(_freeze_problem(item) for item in self.errors))
+        if self.run_id is not None:
+            parse_run_id(self.run_id)
 
     @property
     def data(self) -> dict[str, Any]:
@@ -99,7 +102,7 @@ class ServiceResult:
             ),
             exit_code=self.exit_code,
             outcome=outcome,
-            run_id=context.run_id,
+            run_id=self.run_id or context.run_id,
             started_at=format_timestamp(context.started_at),
             warnings=tuple(
                 EnvelopeProblem.model_validate(_thaw(problem.as_envelope_entry()))

@@ -137,6 +137,12 @@ def _raises(problem_code: str):
 
 
 @pytest.fixture(autouse=True)
+def _local_command_lock(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """API-003 probe/initialization locks never touch the host runtime directory."""
+    monkeypatch.setattr("hfcache.locking.LOCK_DIRECTORY", tmp_path / "run")
+
+
+@pytest.fixture(autouse=True)
 def _offline(monkeypatch: pytest.MonkeyPatch) -> None:
     """Answer `doctor`'s and `plan`'s Hub calls without a network.
 

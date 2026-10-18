@@ -77,15 +77,18 @@ repository-content authorization boundary: the archive has one publication tree,
 not per-repository ACLs, so a consumer allowed to read it must be authorized to
 receive every configured public, private, and gated repository.
 
-### 2.2 Transport-neutral services (API-002)
+### 2.2 Transport-neutral services (API-002/API-003)
 
 `services/context.py` carries immutable execution/result records, independent
 of transport frameworks. `services/queries.py` owns local metadata orchestration
 for version, configuration-validation payloads, initialization inspection,
 status, inventory, verification estimates, and identity-based existing evidence
-reads. The CLI keeps parsing, credential resolution and rendering during this
-staged extraction. The narrow metadata interface exposes no commands, Hub
-client, credential resolver, or writable helper. Future transports must reuse
+reads. `services/commands.py` owns typed command orchestration: credential
+resolution for Hub commands, selection, guards, reconciliation, invocation of
+existing domain algorithms, classified results and exact durable run identity.
+The CLI keeps argument parsing, bootstrap configuration loading and rendering.
+The narrow metadata interface exposes no commands, Hub client, credential
+resolver, or writable helper. Future transports must reuse
 these services rather than invoke CLI callbacks (decision 108, INV-012).
 
 Status includes configured repositories in configuration order, followed by
@@ -95,6 +98,19 @@ from references/manifests, independently of the derived repository catalog.
 Verification confidence is keyed by exact publication instance (decision 62).
 Metadata queries take no archive lock and do not rebuild state. Consumers must
 handle a publication disappearing between separate reads, as required by FS-12.
+
+Public command services acquire the common archive lock once; adapters and
+future operation runners must not wrap them in a second acquisition. Domain
+helpers invoked inside that ownership do not acquire service locks. Sync keeps
+its download producer joined before the service releases the lock (AD-19).
+All non-estimate verification modes hold lock-before-storage-preflight through
+target resolution, hashing, report persistence and catalog read/merge/write.
+Atomic JSON replacement protects readers, not competing merges (decision 110).
+Probe-enabled doctor and confirmed initialization also hold the common lock;
+they run their own diagnostic/initialization checks because requiring an existing
+valid sentinel before inspecting or creating one would contradict their purpose.
+Read-only doctor, initialization inspection/no-confirm, plans and previews take
+no archive lock. Verification does not reconcile or contact the Hub.
 
 ## 3. Architecture decisions
 
@@ -358,7 +374,10 @@ deletion.
 
 **Decision.** Exactly one host has read/write access, enforced by the export's
 exact-host restriction. Mutual exclusion between `sync`, `verify`, `prune`,
-`purge`, `repair`, and `recover` is a local exclusive lock under `/run/hfcache`.
+`purge`, `repair`, `recover`, quarantine apply, probing `doctor`, and confirmed
+initialization is a local exclusive lock under `/run/hfcache`. All non-estimate
+verification modes hold it from target resolution through report/catalog
+persistence; the storage preflight runs after acquisition (decision 110).
 
 **Rationale.** With a single writer, local locking is sufficient and correct.
 Distributed locking over NFS is a well-known source of subtle failure and buys

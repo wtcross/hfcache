@@ -1,7 +1,7 @@
 # Decision 040: `locking.py` added to the plan §7 module list
 
-Status: accepted when recorded; retained as historical evidence. Dated
-implementation and deployment details are not independent current requirements.
+Status: accepted when recorded; amended by [decision 110](decision-110.md).
+Retained as historical evidence. Dated implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
 - Original decision date: 2026-07-25.
@@ -43,3 +43,14 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [tests/unit/test_locking.py](../../tests/unit/test_locking.py).
+
+## API-003 amendment (2026-10-17)
+
+[Decision 110](decision-110.md) tightens the common-lock boundary: every
+non-estimate verification proves storage safety and retains ownership through
+scope resolution, hashing, report persistence and complete catalog merge.
+Probing doctor and explicitly confirmed initialization also own the common
+lock, while using their own checks so uninitialized storage remains diagnosable
+and initializable. Read-only doctor and initialization inspection take no lock.
+Public command services acquire once; adapters/runners must not pre-lock them.
+This amendment changes no durable schema or systemd scheduling authority.

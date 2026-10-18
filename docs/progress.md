@@ -783,6 +783,32 @@ package in this family.
   No host/live checks or production operations. HTTP traversal review/pagination
   and bounds remain API-006 scope; runtime HTTP routes remain planned.)
 
+- [x] API-003 Extract guarded command services and close verification lock gaps
+  (2026-10-17, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-003-extract-guarded-commands.md).
+  Extracted all operational command orchestration into immutable typed services;
+  CLI remains parsing/rendering plus bootstrap config loading. Preserved domain
+  engines, refusal ordering, partial errors and exact report/journal provenance.
+  Decision 110 closes the baseline verification lock gap: every non-estimate
+  mode holds common lock and storage preflight through scope/hash/report/catalog
+  merge. Spawned-process interleaving preserves unrelated failures/instance state;
+  phase tests prove lock ownership and all-mode unproven-storage refusals.
+  Doctor probes and confirmed initialization serialize without invalid sentinel
+  preflight or nested locks. Sync interruption joins its transfer before release;
+  quarantine still refuses unfinished work without implicit reconciliation.
+  Reviewed AD-13–20, FS-02/03/19, TX-01–07, INV-006/007/012/015 and related
+  ADRs; amended AD-17, offline verification and decision 40, plus architecture,
+  CLI, schemas persistence prose, invariant links and Unreleased notes.
+  Targeted sweeps: 113, 177 and 320 passing tests; final guard/provenance/
+  interleaving/interrupt selection: 20 passed, 113 deselected. Initial test
+  fixtures and two characterized rendering/refusal regressions corrected.
+  `rtk proxy bash scripts/check.sh` exits 0: lock, format, lint, types,
+  1,816 Python tests, 45 Cockpit tests, wheel/sdist and production plugin builds.
+  Changed-document links, task dependencies/current pointer, parity matrix and
+  git whitespace pass. No durable schema/dependency change or production/host
+  operation. Full-only offline env handling remains API-004; HTTP/isolated
+  executor and MCP remain planned. Next selected task is API-004.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -3306,3 +3332,18 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      engine. Reject broker/database/resume graphs and journal-driven normal
      execution. No replay or exactly-once claim; archive journals and flock
      remain authoritative. API-007/008 own implementation and crash proof.
+
+110. **Guard complete command execution and verification persistence**
+     (2026-10-17, API-003). [ADR](adr/decision-110.md): all non-estimate
+     verification owns the common flock and storage preflight from scope
+     resolution through hashing, report write and complete catalog merge.
+     Baseline full verification released before persistence; narrow modes had
+     no common lock. Atomic replacement cannot serialize those merges; a
+     spawned-process regression proves the protected interleaving, without
+     asserting production corruption. Reject per-mode/process-only locks and
+     persistence-only ownership. Typed command services own one acquisition;
+     adapters and future runners do not nest locks. Doctor probes and confirmed
+     initialization serialize with their own checks; read-only diagnostics,
+     inspection, estimates and previews remain unlocked. AD-17, offline
+     verification, INV-007/015 and historical doctor decision 40 are amended;
+     existing FS/TX, quarantine and joined-transfer semantics stay authoritative.
