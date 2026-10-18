@@ -1,0 +1,32 @@
+[
+  {
+    "source": "README.md",
+    "git": "ba6a6e1",
+    "sha256": "b89938bb4b29e1abb936fb108a14c3ea8f6d6b93b051ace06cac30664630b350",
+    "snapshot": "docs/agents/history/onboarding-before-rewrite/README.md"
+  },
+  {
+    "source": "CHANGELOG.md",
+    "git": "ba6a6e1",
+    "sha256": "e0c81c16eec712d71a1cbe7dd95f57cfd24896d5e7403e09c3363af0c74aa079",
+    "snapshot": "docs/agents/history/onboarding-before-rewrite/CHANGELOG.md"
+  },
+  {
+    "source": "docs/quickstart.md",
+    "git": "ba6a6e1",
+    "sha256": "8333235358abf571e731b90a283448cd611990f58e56cdf9de9cf3f9e47d2df5",
+    "snapshot": "docs/agents/history/onboarding-before-rewrite/docs/quickstart.md"
+  },
+  {
+    "source": "docs/consumers.md",
+    "git": "ba6a6e1",
+    "sha256": "e2376822ea012ae23c92271c25a00af443c314e8ebef25e82e427ba3e0c052ce",
+    "snapshot": "docs/agents/history/onboarding-before-rewrite/docs/consumers.md"
+  },
+  {
+    "source": "examples/copy-revision.py",
+    "git": "ba6a6e1",
+    "sha256": "dd5ba3ae7137bcbfa34d243da705387137eaf05063df70b7fac914222f0166d5",
+    "snapshot": "docs/agents/history/onboarding-before-rewrite/examples/copy-revision.py.txt"
+  }
+]

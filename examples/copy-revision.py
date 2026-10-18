@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """Copy the current revision of one archived repository, and verify it locally.
 
-This is the consumer side of docs/consumers.md publication identity, and the reference
-implementation
-`docs/consumers.md` describes. It runs on a *downstream* host that mounts only the
+This is the reference implementation of the publication identity and copying
+contract in `docs/consumers.md`. It runs on a *downstream* host that mounts only the
 archive's `published/` directory, read-only, and it deliberately depends on
 **nothing but the Python standard library** — a consumer should not have to install
 this project, or any project, to take a copy.
 
-What it does, in the order §6.3 fixes:
+Each copy attempt:
 
 1. Read `refs/current.json` **once**. The ref is not re-read during the copy: it
    can change under a running consumer, and a copy that followed it would mix two
@@ -24,7 +23,7 @@ What it does, in the order §6.3 fixes:
 Failure is retryable by design. A repair can retire the instance the ref named
 while this is running; the retired tree stays readable for a grace period, but if
 this consumer is slow enough, or the grace has expired, the tree can disappear
-underneath it. §6.3's answer is to discard the partial copy, re-read
+underneath it. The consumer contract's answer is to discard the partial copy, re-read
 `current.json`, and restart from whatever it now names — which is what
 `--attempts` does.
 
@@ -38,7 +37,7 @@ Usage:
         --repository hf-internal-testing/fixtures_ade20k \\
         --destination ./ade20k --json
 
-Exit codes are this script's own and are not the application's §11.2 set:
+Exit codes are this script's own and are not the application's CLI exit codes:
 
     0  the copy is complete and every file matched the manifest
     1  the copy failed after exhausting --attempts
@@ -136,7 +135,7 @@ def read_json(path: Path, *, what: str) -> dict[str, Any]:
 def reference_path(mount: Path, repository_type: str, repository_id: str) -> Path:
     """`repos/<type>/<org>/<repo>/refs/current.json`, relative to the mount.
 
-    The mount *is* `published/`, so this is the one file §6.3 says a consumer
+    The mount *is* `published/`, so this is the one file the consumer contract says a consumer
     must read to find out what to take.
     """
     directory = TYPES.get(repository_type)
@@ -296,7 +295,7 @@ def attempt(
         problems = verify(working, files)
         if problems:
             # A verification failure against a *complete* manifest is retryable
-            # for the reason §6.3 gives: the likeliest cause is that a repair
+            # because the instance may disappear during a copy: the likeliest cause is that a repair
             # replaced the instance mid-copy, so the bytes here are a mix. The
             # next attempt re-reads the reference and takes the new instance.
             listed = "; ".join(problems[:PREVIEW])
@@ -339,12 +338,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--type", required=True, help="model or dataset")
     parser.add_argument("--repository", required=True, help="<org>/<name>")
-    parser.add_argument("--destination", required=True, type=Path, help="where to put the copy")
+    parser.add_argument(
+        "--destination",
+        required=True,
+        type=Path,
+        help="new revision directory; an existing destination is removed after verification",
+    )
     parser.add_argument(
         "--attempts",
         type=int,
         default=3,
-        help="how many times to restart from a re-read reference (§6.3); default 3",
+        help="how many times to restart from a re-read reference; default 3",
     )
     parser.add_argument("--json", action="store_true", help="emit one JSON object on stdout")
     arguments = parser.parse_args(argv)

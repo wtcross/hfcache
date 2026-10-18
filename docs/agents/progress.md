@@ -113,6 +113,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   4210 passed/40 deselected in 477.78s, build/three locked profiles and actual
   Cockpit lint/types/135 tests/build passed. No host/NAS/manager action.
 
+## Reader onboarding and navigation (2026-10-18)
+
+- [x] DOC-017 Make onboarding, examples and navigation reader-first
+  (2026-10-18, this commit — [task](plans/tasks/doc-017-reader-first-onboarding-and-human-navigation.md)).
+  Human README/index, base-reader quickstart, concise release notes and independent
+  consumer guidance replace tracking/transcripts; five originals retain Git hashes.
+  No transitional human tracking matches remain. Seven copy-helper fixture tests
+  cover exact identity/hash/path sets, rejected corruption/mismatch, destination
+  preservation and fresh-instance retry; quickstart grammar parses without effects.
+  Focused 82 and final 15 passed. Full gate 4228 passed/40 deselected in 476.18s,
+  build/three locked profiles and actual Cockpit lint/types/135 tests/build passed.
+  FS-12/INV-008–010/AD-05/13/21 reviewed; editorial/help/test changes only.
+  No host/NAS/manager action; retained restrictions and consumer ownership unchanged.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)

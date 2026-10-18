@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [REST/MCP documentation alignment](2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
-| Next task | [DOC-017](tasks/doc-017-reader-first-onboarding-and-human-navigation.md) |
+| Next task | [DOC-018](tasks/doc-018-automated-docs-and-interface-alignment-gate.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

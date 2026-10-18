@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [DOC-016](doc-016-human-architecture-config-schemas-and-adrs.md) |
 | Phase | 2 — Human-facing guides |
@@ -23,11 +23,11 @@ Update development setup and examples to match all-extra test collection, option
 
 ## Acceptance
 
-- [ ] Human navigation contains no link to task/plan/progress/agent-process records; each audience has a clear starting point.
-- [ ] Reader quickstart requires only a provisioned API endpoint and protected API credentials, with verified TLS and explicit uncertainty handling.
-- [ ] README, changelog and directory descriptions match current implemented profiles and helpers rather than stage chronology.
-- [ ] Consumer tools remain documented as an independent data path; no false API-file-serving promise appears.
-- [ ] Development commands collect the right optional dependencies and distinguish safe offline tests from opt-in network/NFS/build work.
+- [x] Human navigation contains no link to task/plan/progress/agent-process records; each audience has a clear starting point.
+- [x] Reader quickstart requires only a provisioned API endpoint and protected API credentials, with verified TLS and explicit uncertainty handling.
+- [x] README, changelog and directory descriptions match current implemented profiles and helpers rather than stage chronology.
+- [x] Consumer tools remain documented as an independent data path; no false API-file-serving promise appears.
+- [x] Development commands collect the right optional dependencies and distinguish safe offline tests from opt-in network/NFS/build work.
 
 ## Contracts, invariants and ADRs
 
@@ -57,15 +57,36 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after DOC-016 ba6a6e1. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+Completed 2026-10-18, this commit. README and the new human documentation index
+route readers, writers, MCP users, consumers, browser operators and developers.
+Quickstart uses a base reader environment and explicitly distinguishes native
+Unix from the fixed rootless writer client. Release notes retain all versions,
+dates, breaking API-only behavior, source/tag identities and rollback safeguards.
+Consumer discovery/copy/verification and fresh revision destinations remain
+independent; five original sources are Git-hashed in onboarding history, including
+the copy helper’s original text. All transitional tracking matches are now zero.
+
+Added seven direct copy-helper tests for exact identity/full hashing, digest/size/
+missing/extra rejection, existing-destination preservation on failed verification,
+fatal identity mismatch and retry with a fresh exact publication at the same SHA
+and generation. Quickstart shell and CLI grammar are parsed without callbacks.
+Only documentation/help changed in the example; no copy behavior changed.
+
+Validation: focused 82 tests passed in 13.05s; final copy/SDK/reference 15 passed
+in 2.07s. Human link/anchor scan zero broken; Ruff and Pyrefly passed. The first
+gate stopped at lint because the preserved source snapshot used a Python suffix;
+it is now a byte-preserved `.py.txt` historical artifact, not duplicate code.
+Full rerun `scripts/check.sh` exited 0: 4228 passed/40 opt-in deselected in
+476.18s, distributions and all three locked profiles passed, actual Cockpit
+lint/typecheck/135 tests/build passed. FS-12, INV-008/009/010, AD-05/13/21 and
+consumer/dependency decisions reviewed; no invariant, runtime, format, dependency
+or architectural change. No live/NFS/host operation ran.
+
+See [completed progress evidence](../../progress.md#reader-onboarding-and-navigation-2026-10-18).

@@ -13,7 +13,8 @@ from typer.main import get_command
 from hfcache import cli
 
 ROOT = Path(__file__).parents[2]
-GUIDES = (ROOT / "docs/operations.md", ROOT / "docs/recovery.md")
+RUNBOOKS = (ROOT / "docs/operations.md", ROOT / "docs/recovery.md")
+GUIDES = (*RUNBOOKS, ROOT / "docs/quickstart.md")
 
 
 def blocks(path: Path) -> list[str]:
@@ -26,7 +27,7 @@ def commands() -> list[list[str]]:
         for block in blocks(path):
             for line in block.replace("\\\n", " ").splitlines():
                 words = shlex.split(line, comments=True)
-                if words and words[0] == "${HF[@]}":
+                if words and words[0] in {"${HF[@]}", "H", "/usr/local/libexec/hfcache-client"}:
                     assert "--config" not in words
                     result.append(["--client-config", "/fixture/client.toml", "--json", *words[1:]])
     return result
@@ -56,7 +57,7 @@ def test_every_runbook_operational_example_parses_without_invoking_callbacks(arg
 
 
 def test_runbooks_preserve_uncertainty_and_do_not_offer_direct_writer_aliases():
-    for path in GUIDES:
+    for path in RUNBOOKS:
         text = path.read_text()
         assert not re.search(r"\$[HD]\b|/opt/hfcache/current/\.venv", text)
         assert "never" in text.lower()

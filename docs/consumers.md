@@ -1,30 +1,16 @@
 # Consuming the hfcache archive
 
-| Field | Value |
-| --- | --- |
-| Status | Runbook, exercised from `hfcachewriter.lab.example.com` against the live archive |
-| Work package | `OPS-007` |
-| Derived from | `docs/agents/history/plan.md` §6.3, §33; `docs/schemas.md` §3, §4 |
-| Helper | `examples/copy-revision.py`, shipped in the release at `/opt/hfcache/current/examples/` |
-| Host setup | `scripts/setup-hfcache-consumer-model-store.sh` (`OPS-009`) |
-| Serving | `scripts/consumer-serve-hfcache-model.sh` (`OPS-010`) |
+Copy a model or dataset revision from the server-enforced read-only published
+export and prove its bytes match the archive's manifest. Copying needs Python's
+standard library and access to the mounted NFS export; it needs no Hub/API access
+or hfcache installation. Optional REST/MCP metadata discovery is separate.
 
-This is the **downstream** side of the archive: how a machine that is not the
-writer takes a copy of a model or dataset revision and proves the bytes are the
-ones the archive published.
-
-Copying needs only a read-only NFS mount and Python 3. It does not need
-`hfcache` installed, does not need the Hub, and does not need network access at
-all. The optional host-setup script in §3 additionally assumes a Linux host's
-standard account-management tools and runs as root. A consumer still does not
-install the Python project merely to read what the archive produced.
-
-Archive-copy command blocks below were run. Output is real; where it is
-abbreviated it is marked `…`, and nothing is invented. The §3 host-provisioning
-command is an operator action and is marked separately; §7 describes the other
-deliberately unexecuted alternative.
-
----
+Obtain [copy-revision.py](../examples/copy-revision.py) from a trusted checkout or
+transfer that reviewed file. Native releases also provide it under
+`/opt/hfcache/current/examples/`; rootless artifacts do not promise that host path.
+[Store setup](../scripts/setup-hfcache-consumer-model-store.sh) and
+[serving](../scripts/consumer-serve-hfcache-model.sh) are optional consumer-host
+helpers with separate privileges and dependencies.
 
 ## 1. What you mount
 
@@ -40,7 +26,7 @@ sudo mount -t nfs4 -o ro,hard,nosuid,nodev,noexec \
 Read-only is enforced **by the server**, not by this mount option and not by file
 modes (`docs/architecture.md` §5.2). Mounting read-write will not give you write
 access; it will give you errors from the server. That is the intended behaviour
-and is what handoff item 1's acceptance check proves.
+and must be demonstrated by the export acceptance checks.
 
 What you will find under it:
 
@@ -79,25 +65,17 @@ verify against neither.
 
 ---
 
-Identity-based metadata services (API-002) return the exact reference and
-manifest instance requested. Reference locators keep their `published/` base;
-they are not relative to an HTTP endpoint or the private archive root. Validation
-checks identity and containment and never substitutes a newer current instance
-when a requested instance has vanished. These services add no artifact transfer
-channel; the read-only export and independent copy verification remain the
-consumer data path. API-006 now adds authenticated REST metadata discovery;
-API-012 now supplies API-backed CLI metadata discovery and independent reader
-settings. MCP-002 adds exactly named metadata discovery tools under separate
-MCP-reader authentication; full MCP/host acceptance remains gated. No production
-listener installation is asserted by
-the implementation tests.
+Metadata services return the exact reference and manifest instance requested.
+Reference locators keep their `published/` base; they are not relative to an HTTP
+endpoint or private archive root. Missing or inconsistent evidence fails instead
+of substituting a newer current instance. Discovery adds no artifact-transfer
+channel and does not prove integrity.
 
 ### Optional authenticated discovery
 
 A reader may install the base package and provision only the independent
 [client settings/API reader credential](api-client.md); no archive TOML, service
-UID, Hub credential or archive mount is needed for metadata commands. API-012's
-`status`, `list --revisions`, server version, inspection and estimate report the
+UID, Hub credential or archive mount is needed for metadata commands. `status`, `list --revisions`, server version, inspection and estimate report the
 writer, never silently read a local archive after connection failure. Complete
 pagination/joined inventory is bounded and inconsistent evidence fails visibly.
 The independent copy helper below still needs its read-only mount and Python,
@@ -155,7 +133,7 @@ existing-model-plus-available capacity. A plain directory cannot reserve blocks;
 use a dedicated filesystem or quota when that capacity must be isolated from
 other workloads.
 
-From a checkout or installed release, run:
+From a trusted checkout on the intended consumer host:
 
 ```bash
 sudo scripts/setup-hfcache-consumer-model-store.sh
@@ -188,28 +166,13 @@ python3 /path/to/copy-revision.py \
   --destination ./tiny-random-gpt2
 ```
 
-Observed, against the live archive:
+Success reports the exact commit SHA/publication ID, generation, file count,
+byte count and destination. `--json` emits that result as one JSON object for a
+scheduler:
 
-```text
-copied model hf-internal-testing/tiny-random-gpt2 @ 71034c5d8bde858ff824298bdedc65515b97d2b9
-  instance    e0b802874ceb4b1dbb48e0376923c766 (generation 1)
-  files       10, 12512611 bytes
-  verified    every path, size, and SHA-256 against the manifest
-  destination /var/tmp/hfcache-consumer-test/tiny-random-gpt2
-exit=0
-```
-
-`--json` gives one object on stdout instead, for a scheduler:
-
-```text
-$ python3 copy-revision.py --mount /srv/hfcache/published --type dataset \
-    --repository hf-internal-testing/fixtures_ade20k --destination ./ade20k --json
-{"attempts":1,"commit_sha":"850d349e5038f291284e7999fcacbedc0922534b",
- "destination":"./ade20k","file_count":7,"publication_generation":7,
- "publication_id":"ad1b9ba230954439b5d5ad9aeb4a66ab",
- "repository_id":"hf-internal-testing/fixtures_ade20k",
- "repository_type":"dataset","total_bytes":206179,"verified":true}
-exit=0
+```bash
+python3 /path/to/copy-revision.py --mount /mnt/hfcache --type dataset \
+  --repository hf-internal-testing/fixtures_ade20k --destination ./new-ade20k --json
 ```
 
 The copy is assembled in a temporary directory beside `--destination` and renamed
@@ -253,9 +216,8 @@ reported `verified: true`.
 
 ## 4. What verification actually catches
 
-These were demonstrated on a **throwaway** copy of the published tree, never on
-the live archive: §36.5 forbids damaging published content, so the tree was
-copied to `/var/tmp`, damaged there, and the helper pointed at the copy.
+A complete copy must reject changed bytes, missing files and extra files. Test
+these cases only on owned disposable trees; never damage published content.
 
 A file's bytes changed:
 
@@ -339,8 +301,8 @@ error: the manifest at …/71034c5d…/ffffffffffffffffffffffffffffffff.json des
 different instance than the reference names; the archive is inconsistent and this is not a retry
 ```
 
-Both were provoked on the throwaway tree with `--attempts 3`, and both exited
-before the first attempt was spent. Report either to whoever operates the archive;
+These are fatal layout/identity errors rather than retryable disappearance.
+Report either to whoever operates the archive;
 they are not consumer-side problems.
 
 ---
@@ -367,8 +329,8 @@ yourself, these are the parts that are load-bearing:
 7. **Assemble somewhere temporary and rename into place**, so a partial copy is
    never mistaken for a complete one.
 
-A minimal resolution, for orientation — this fragment is illustrative rather than
-observed output, which is why it is the one unmarked block in this document:
+A minimal resolution for orientation; this is not a complete copy or validation
+implementation:
 
 ```python
 import json
@@ -399,7 +361,7 @@ What is useful to include:
 - The exact failing lines (which paths, which digests).
 - Whether `catalog/verification.json` shows the archive as degraded.
 
-The operator's side of this is `docs/recovery.md`: a revision that fails
+The operator’s side of this is [recovery](recovery.md): a revision that fails
 verification on the archive itself is repaired from upstream or restored from a
 snapshot, and neither is something a consumer can or should attempt.
 
@@ -434,7 +396,7 @@ snapshot, and neither is something a consumer can or should attempt.
 | Which revision is current | `cat /mnt/hfcache/repos/<type>/<org>/<repo>/refs/current.json` |
 | What the archive holds | `cat /mnt/hfcache/catalog/repositories.json` |
 
-Helper exit codes — these are the helper's own, not the application's §11.2 set:
+Helper exit codes — these are the helper's own, not the application’s CLI exit codes:
 
 | Code | Meaning |
 | --- | --- |

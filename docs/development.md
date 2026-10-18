@@ -9,6 +9,12 @@ scripts/check.sh
 scripts/check.sh --with-build
 ```
 
+The base reader uses `uv sync --locked --no-dev`; a REST-only writer selects
+`--extra server`, and an MCP-enabled writer selects both extras. These installation
+profiles do not change the complete test-collection requirement above. Host
+bootstrap helpers support Python 3.12; the application uses the pinned 3.14 line.
+See the [script reference](scripts.md) for each helper’s dependencies and effects.
+
 ## Quality gate
 
 The provider-neutral gate checks the lock, synchronizes the locked environment,
@@ -91,3 +97,17 @@ unexplained AVCs, DNS/TLS/NFS/hash/Xet under hardening, and rollback. Inspect th
 actual verifier's no-IP and credential masks, actual API-container peer access,
 TLS/firewall and state-retaining drain. Repository tests cannot supply those
 observations. See [recorded deployment restrictions](deployment-status.md).
+
+## Examples and documentation
+
+Keep human navigation in the [documentation index](README.md). Verify links and
+anchors, strict configuration examples, actual REST routes/CLI modes, mounted MCP
+tools, role boundaries and script catalog coverage with the offline suite.
+
+Examples are reviewed individually. Shell recipes are syntax-checked; operational
+CLI examples are parsed without invoking callbacks. The protected-file REST/MCP
+clients run only against synthetic transports. The independent copy helper runs
+against owned temporary publication trees, including corrupt and mismatched
+evidence. Never execute every example or code fence: installation, image builds,
+probes, mounts, service changes and serving workloads have real effects. Safe help
+checks use an explicit inventory and must precede runtime/credential access.

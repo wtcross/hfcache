@@ -1,27 +1,26 @@
 # Quickstart: connect to the authenticated API
 
 Use the current CLI against an already provisioned writer API. Reader hosts need
-no archive mount, archive TOML, service UID or Hub credential. This page replaces
-the old direct-backend/loopback-NFS command sequence: operational `--config`
-overrides are now refused, and the CLI never falls back to local execution or
-starts a daemon. The examples below are setup instructions, not commands run on
-the production writer.
+no archive mount, archive TOML, service UID or Hub credential. The CLI never
+falls back to local execution or starts a daemon. Use a provisioned endpoint;
+reader setup does not initialize or change an archive.
 
 ## 1. Install the client environment
 
-From a trusted checkout, the development environment includes every implemented
-extra so the documented examples and offline tests share one locked environment:
+From a trusted checkout, the locked base reader environment needs no server or
+MCP framework:
 
 ```bash
-uv sync --locked --extra server --extra mcp
-uv run --locked --extra server --extra mcp hfcache --help
-uv run --locked --extra server --extra mcp hfcache version
+uv sync --locked --no-dev
+uv run --locked --no-dev hfcache --help
+uv run --locked --no-dev hfcache version
 ```
 
-Help and local version need no server or credential. A deployed reader can use
-the base wheel without either optional framework; a production writer selects
-its deliberate locked `server` or `server`+`mcp` artifact profile separately.
-Development selection alone starts no listener and deploys nothing.
+Help and local version need no server or credential. A packaged reader may use
+an operator-supplied base wheel. A production writer selects its locked `server`
+or `server`+`mcp` artifact profile separately. For the complete test environment,
+use the [development setup](development.md); installing dependencies starts no
+listener.
 
 ## 2. Select one endpoint and protected API credential
 
@@ -40,7 +39,7 @@ expected_archive_id = "01234567-89ab-4cde-8fab-0123456789ab"
 # ca_file = "/etc/hfcache/archive-ca.pem"
 ```
 
-For the local authenticated Unix interface, replace `api_url` with
+For a provisioned **native** authenticated Unix interface, replace `api_url` with
 `api_socket = "/run/hfcache/api.sock"`; do not configure both. Use a trusted CA
 file for a private certificate, never disable TLS verification. A missing/unsafe
 selected credential or unavailable API is an error, not anonymous/local fallback.
@@ -50,7 +49,7 @@ A shell function keeps the explicit client configuration and arguments separate:
 
 ```bash
 H() {
-    uv run --locked --extra server --extra mcp hfcache \
+    uv run --locked --no-dev hfcache \
         --client-config "$PWD/quickstart-client.toml" --json "$@"
 }
 H version --server
@@ -67,6 +66,21 @@ and performs no write probes. Its key/operation notices appear before the exact
 terminal result. Domain output is the exact server schema-1 Envelope, including
 failures, IDs and times. Do not infer integrity merely from HTTP success. No
 client setting selects a different server archive or grants write authority.
+
+### Fixed rootless host client
+
+The selected rootless installation uses a different host entrypoint:
+
+```bash
+/usr/local/libexec/hfcache-client --json version --server
+/usr/local/libexec/hfcache-client --json status
+```
+
+This fixed launcher supplies a protected rendered client configuration and the
+REST-writer Podman secret. It is a local operator client, not reader credential
+provisioning. Its nested API socket is `/run/hfcache/api/api.sock`; host native
+socket instructions above do not configure it. Use the provisioned HTTPS endpoint
+and distinct reader source for independent readers. See [container profiles](containers.md).
 
 ## 3. Writer work and reconnect
 
@@ -113,11 +127,10 @@ the private verification executor. Use [server/bootstrap configuration](server.m
 and the [deployment checklist](deployment-centos-stream-10.md#acceptance-checklist)
 for the actual API/private-worker boundary; reader setup does not create it.
 The [recovery rehearsal](recovery.md#rehearse-with-disposable-services)
-retains the historical disposable-storage context, not permission to touch a
-production mount. Do not create/delete shared `/run/hfcache`, mount/export paths,
+describes isolated disposable storage with its own identity. Do not create/delete shared `/run/hfcache`, mount/export paths,
 state or locks on an existing writer to follow a quickstart.
 
 Production rollout, credentials/TLS/firewall, actual worker no-IP/source masks,
 SELinux/NFS/hardening and drain/rollback require separate operator acceptance.
-The verification timer remains disabled pending calendar approval. This guide
-performs no host setup, archive operation, release, deployment or cleanup.
+The verification timer remains disabled pending calendar approval. Setup examples require the applicable operator authority; they are not run by
+the documentation checks.
