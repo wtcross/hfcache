@@ -803,3 +803,26 @@ versions when implementing, especially FastMCP imports and test transports:
   inspection while preserving restated root/confirmation and server guards;
   no-confirm refusal submits nothing. No durable schema/dependency/MCP or production
   change. Installed unit/Cockpit and REST/host acceptance retain their task gates.
+
+- 2026-10-18 API-014: Decision 121 packages named one-app Unix/optional TCP
+  activation and a separate unprivileged offline/no-IP credential-free verifier,
+  preserving service names/calendars, disabled verify timer, OnFailure/target/mount
+  and runtime locks. Account/euid peers never use manager `%U`; standard credential
+  stores/cache are hidden, with explicit custom-path restrictions. API-only
+  AF_UNIX scheduled observers retain strict private schema-1 fixed-intent handles,
+  fsync key before sole POST and permit only lookup/observe from existing state.
+  Finite windows preserve unlimited oneshot lifetime; unknown/future/mismatched
+  history stays at exit 20, same-class rotation can recover, exact terminal
+  evidence permits removal. No body/digest/bearer/queue. Installer dry-run and
+  noncreating retained quiescence guard support disposable two-release rehearsal;
+  real systemd/cgroup/no-IP/no-credential/SELinux/NFS proof remains deployment holds.
+  Archive/receipt formats, dependencies, MCP gate and production authorization
+  remain unchanged; actual handle compatibility evidence belongs to this task.
+  Completed repository acceptance on 2026-10-18: definitive full gate exit 0,
+  3,223 Python tests passed (40 deselected, 349.85 seconds), locked build/isolated
+  base+server installation checks and 45 Cockpit tests/production build passed.
+  The first gate was interrupted after a stale shipped-example assertion; its
+  assertion-only correction and full rerun are preserved in the task. Actual
+  old/current handle drill preserves unsupported/future evidence. Real installed
+  activation/cgroup/SELinux/NFS and verify-calendar acceptance remain holds.
+  API-015 is next pending after this package's commit; no MCP work has begun.

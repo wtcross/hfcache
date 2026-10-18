@@ -33,8 +33,8 @@ timers use. Running as yourself will fail — `/etc/hfcache/config.toml` is
 
 This section describes implemented development/test behavior, not a production
 rollout or commands exercised on the installed writer. API-012/013 now route the
-source CLI through authenticated HTTP; shipped scheduling/credential integration
-remains API-014. Historical installed command/unit blocks below are evidence,
+source CLI through authenticated HTTP; API-014 packages scheduling/credentials,
+with actual host acceptance still a deployment hold. Historical installed command/unit blocks below are evidence,
 not assertions that this feature branch was deployed.
 The [API contract](api.md#implemented-command-resources-api-009) gives authenticated
 POST examples and exact body/role rules. Sync and all actual verification need a
@@ -596,8 +596,13 @@ operation because a client disappeared. Drain first stops admission, then joins
 accepted work and sync producers before safety ownership is released. Forced
 termination preserves receipts/journals for diagnosis. Never unlink a lock inode
 or infer execution outcome solely from its being free. API-013 implements these
-public CLI observation rules; shipped systemd/host integration remains later work
-and is no installed-host proof.
+public CLI observation rules; API-014 packages systemd policy while real host
+enforcement remains operator proof.
+Scheduled clients preserve private pending handles and repeat finite observation
+windows while the same oneshot remains active. Stopping one retains lookup-only
+recovery; it never grants POST replay or archive-lock recovery authority. Follow
+the [current executor drain procedure](deployment-centos-stream-10.md#13-upgrade-plan-30)
+before switching releases or applying the existing supervised-recovery conditions.
 See [server lifecycle](server.md), [uncertain submissions](recovery.md#10-operation-history-and-uncertain-submissions)
 and [decision 115](adr/decision-115.md).
 

@@ -392,6 +392,17 @@ History: `SYNC-007` (`54e4671`), decision 94.
   See [security §2–§5](security.md#2-trust-boundaries),
   [deployment](deployment-centos-stream-10.md), and
   [agent environment](agents/environment.md).
+  API-014 packages no-IP/offline and credential-source masking around the actual
+  private verifier; the AF_UNIX scheduled client uses API credentials separately.
+  Custom source locations require explicit masks/probes, and repository unit/
+  activation tests do not establish installed cgroup/SELinux/NFS enforcement.
+  Packaged enforcement: [actual API service](../packaging/systemd/hfcache-api.service),
+  [private worker service](../packaging/systemd/hfcache-verification.service),
+  [executor-aware probe](../scripts/check-hardening.sh) and
+  [probe implementation](../scripts/hardening-probe.py).
+  Evidence: [unit contracts](../tests/unit/test_systemd_units.py) and
+  [probe fixtures](../tests/unit/test_hardening_probe.py), decision
+  [121](adr/decision-121.md); installed acceptance remains separate.
 - **`INV-004` — Capacity admission includes publication cost and reserve.**
   Require free capacity beyond estimated download bytes, explicit copy-mode
   publication bytes, and the greater of the GiB and percentage reserves.
@@ -748,14 +759,28 @@ own proof.
   [writer observation/adversarial tests](../tests/unit/test_cli_operations_adversarial.py);
   [decision 120](adr/decision-120.md). No client/service-stop proof replaces exact
   executor ownership or installed OS isolation acceptance.
+  API-014 uses one application for named Unix/optional TCP activation and retains
+  shared runtime lock inodes. Scheduled strict private schema-1 handles bind fixed
+  sync/verify-full, endpoint/expected UUID/class and key/op, never bearer/digest/
+  body/queue. Fsync key before sole POST; existing history permits lookup/observe
+  only, repeated finite windows preserve oneshot lifetime, and exact terminal
+  evidence alone permits removal. Unknown/malformed/future/mismatched state is
+  preserved at exit 20. [Decision 121](adr/decision-121.md) and
+  [schema§14](schemas.md#14-scheduled-client-observation-handle-api-014).
+  Enforcement/evidence: [activation](../src/hfcache/server.py),
+  [scheduled observer](../src/hfcache/scheduled_client.py),
+  [release guard](../scripts/release-functions.sh),
+  [activation fixtures](../tests/unit/test_server_activation.py),
+  [observer recovery tests](../tests/unit/test_scheduled_client.py) and
+  [release switch/drain fixtures](../tests/unit/test_release_installer.py).
 - **`INV-015` — Verification isolation encloses persistence.** Non-estimate
   verification locks target resolution, hashing, report write and catalog merge
   in a credential-free no-IP executor. Estimates remain metadata reads.
   Lock/persistence enforcement: [command services](../src/hfcache/services/commands.py)
   and [multiprocess tests](../tests/unit/test_command_locking.py), API-003.
   API-008 implements the strict peer-checked private protocol, dedicated startup
-  and exact durable outcome/reconciliation primitives; API-014 retains installed
-  credential-free/no-IP unit enforcement and host acceptance. No unsafe
+  and exact durable outcome/reconciliation primitives; API-014 packages
+  credential-free/no-IP units while installed enforcement remains host acceptance. No unsafe
   ASGI-process fallback. API-004 removes the shared-service offline environment
   toggle and provides [startup-only offline initialization](../src/hfcache/offline.py)
   for the dedicated process, verified in [child-process tests](../tests/unit/test_offline_process.py).
@@ -768,6 +793,11 @@ own proof.
   has no HTTP-process execution path; [route tests](../tests/unit/test_api_commands.py)
   prove all three modes delegate and refuse unavailable private execution.
   These tests do not prove installed OS egress.
+  API-014 packaging/evidence: [worker service](../packaging/systemd/hfcache-verification.service),
+  [private socket](../packaging/systemd/hfcache-verification.socket),
+  [activation/bootstrap tests](../tests/unit/test_verification_worker_bootstrap.py)
+  and [unit contracts](../tests/unit/test_systemd_units.py); decision
+  [121](adr/decision-121.md). Real peer/cgroup/source-masking probes remain held.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. Enforcement: MCP-001–004,

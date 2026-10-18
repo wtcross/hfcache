@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-014](tasks/api-014-systemd-and-deployment-integration.md) |
+| Next task | [API-015](tasks/api-015-cockpit-api-client-compatibility.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

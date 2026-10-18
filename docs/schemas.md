@@ -8,8 +8,9 @@
 | Schema version | All formats begin at `1` |
 
 Every durable artifact `hfcache` writes is versioned JSON. Archive formats live
-on the archive filesystem; API-007's independent control-state format (§13)
-lives in service-private local storage. There is no database (`AD-12`). This document defines each format
+on the archive filesystem; API-007's independent control-state format (§13) and
+API-014's scheduled observation handle (§14) live in private local storage.
+There is no database (`AD-12`). This document defines each format
 precisely enough that a reader with no access to the source can validate an
 archive, and that a future version can be recognised and refused rather than
 misread.
@@ -25,7 +26,7 @@ These apply to every file in this document.
 | Determinism | Identical logical content produces byte-identical files. Arrays are sorted by a documented key, never by iteration order |
 | Timestamps | RFC 3339 UTC with microsecond precision and a literal `Z`: `2026-07-24T20:57:31.123456Z`. Local time is never written |
 | Durability | Written to a temporary sibling in the same directory, `fsync`ed, then `rename(2)`d into place; the parent directory is `fsync`ed afterwards |
-| Paths | Every path field is relative POSIX, without a leading `/`, without `.` or `..` segments, and validated to stay under its root (`FS-09`). Archive paths use the **archive root**, except the `tree` and `manifest` fields of a reference (§4), which are relative to **`published/`** because a consumer mounts that directory. API control-state names (§13) use their separate local state directory |
+| Paths | Archive path fields are relative POSIX, without a leading `/`, without `.` or `..` segments, and validated to stay under their root (`FS-09`). Archive paths use the **archive root**, except `tree`/`manifest` in a reference (§4), which are relative to **`published/`** for consumer mounts. API control-state names (§13) use a separate local directory. §14's endpoint is an explicit management authority (`unix:` plus absolute socket path or normalized API URL), not an archive locator |
 | Digests | Lowercase hex |
 | Commit SHAs | Full 40-character lowercase hex; abbreviations are never written |
 | Absent values | `null` for a known-but-unset value; a key is never omitted from a written object |
@@ -971,3 +972,64 @@ reader support, not proof of nonexecution or a successful old-format read.
 No production installation occurred. The [task](plans/tasks/api-007-operation-receipts-and-idempotency.md)
 records the command/evidence; [rollback §14](deployment-centos-stream-10.md#14-rollback-plan-30)
 records the observed rule. See [decision 114](adr/decision-114.md).
+
+## 14. Scheduled client observation handle (API-014)
+
+This private local format is independent of archive schemas, API receipts and
+client TOML. It preserves observation across scheduled-client restarts, never
+queued execution intent. Only fixed `sync` or `verify-full` is permitted; there
+is no arbitrary route, request body, credential, token digest, policy fingerprint
+or stored domain result. [Decision 121](adr/decision-121.md) records the reason.
+
+| Field | Strict schema-1 value |
+| --- | --- |
+| `schema_version` | Explicit integer `1`; reject omission, bool/coercion and future versions |
+| `command` | `sync` or `verify-full` |
+| `endpoint` | `unix:` plus canonical absolute selected socket path, or normalized configured API URL without trailing slash and with prefix retained |
+| `archive_id` | Explicit expected canonical archive UUID from scheduled client configuration |
+| `principal` | Fixed `rest-writer` namespace; no token/digest binding |
+| `idempotency_key` | Generated safe 32-character lowercase hexadecimal key |
+| `operation_id` | Null before usable admission, otherwise exact 32-character lowercase hexadecimal ID |
+
+All absolute state-path components are opened without following links, owned by
+root or the effective UID, and refuse writable ancestors unless sticky. The final
+state-directory component is euid-owned `0700`.
+`pending.json` is an euid-owned `0600` regular single-link file, at most 4096
+bytes; strict bounded JSON rejects unknown/duplicate fields and unsafe/racing
+files. Persist through exclusive `.pending-<32hex>.tmp`, file fsync, atomic rename
+and directory fsync. Unexplained temporary evidence remains and blocks resumption.
+If a pending file vanishes after inventory, refuse instead of treating the
+invocation as fresh.
+The retained `.lock` is an euid-owned `0600` empty single-link regular inode;
+nonblocking flock covers observation through exact result and completion fsync.
+Never remove the lock. No key is transmitted until its handle is durable.
+Persist a validated acknowledged operation ID before further observation.
+
+A fresh invocation without a handle may persist one key and send one fixed POST.
+Any existing handle permits only authenticated lookup or exact-ID observation,
+even after a crash between key fsync and POST. Do not infer nonexecution from
+missing remote history, absent ID or expired receipts. Unknown/malformed/future/
+mismatched local state is preserved with HFAPI014 / exit 20. Missing explicit
+expected archive UUID is also HFAPI014 before HTTP or state allocation. Connectivity and
+uncertain POST retain HFAPI019/020, and remote missing/interrupted outcomes retain
+HFAPI013/015. No automatic POST replay or new key after uncertainty.
+
+Repeated finite observation windows keep the oneshot active until the exact
+terminal Envelope/exit is available. Only that validated terminal evidence permits
+owned pending-handle unlink and directory fsync. Same-class token rotation can
+recover; changing endpoint/archive/class refuses. Preserve unresolved state on
+upgrade/rollback. The compatibility drill must use actual old/current binaries
+on throwaway handles; unsupported old behavior never proves nonexecution.
+
+Golden evidence: [scheduled-observation.json](../tests/fixtures/schemas/private/scheduled-observation.json)
+and [private handle tests](../tests/unit/test_scheduled_client.py). The format's
+version is independent of archive `SCHEMA_VERSION` / `VersionedModel`.
+The actual API-014 drill built/installed predecessor `a01875c` / 0.1.10 on
+CPython 3.14.6 with locked offline dependencies. Its module invocation exited 1
+for both schema 1 and future 2 because `hfcache.scheduled_client` did not exist;
+both pending files stayed byte-identical. Current `ObservationFile` read schema 1,
+and current module invocation refused future 2 at HFAPI014 / exit 20 without
+changing bytes. This proves absence of old reader support and current refusal,
+not old-format acceptance or nonexecution. No archive operation or production
+installation occurred; the [task](plans/tasks/api-014-systemd-and-deployment-integration.md)
+records commands/results and rollback rules.

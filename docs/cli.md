@@ -482,7 +482,8 @@ verification unit additionally supplies `HF_HUB_OFFLINE=1` and denies IP sockets
 the shared service alone does not claim an operating-system egress restriction.
 See [decision 110](adr/decision-110.md) and the
 [API-004 isolation amendment](adr/decision-111.md). API-008/009 now supply the
-private REST executor/delegation; API-014 still owns installed no-IP hardening.
+private REST executor/delegation. API-014 packages no-IP hardening around that
+executor; installed enforcement remains operator acceptance.
 The shared service must not toggle the ASGI process's offline flag.
 
 Exits `0` on a clean result and `40` on any integrity finding. A finding never
@@ -662,6 +663,15 @@ queue/lock budget. Stopping a client process/service stops observation only.
 See [recovery](recovery.md#10-operation-history-and-uncertain-submissions) and
 [decision 120](adr/decision-120.md).
 
+**API-014 scheduled exception:** the fixed internal
+`python -m hfcache.scheduled_client` entrypoint repeats finite observations for
+multi-hour systemd oneshots. It retains a strict private key/operation handle;
+existing history only permits lookup/observation and never POST replay. This does
+not make ordinary CLI waits unbounded or add a public execution route. See
+[scheduled service contract](api-client.md#scheduled-service-observation-api-014),
+[schema§14](schemas.md#14-scheduled-client-observation-handle-api-014) and
+[decision 121](adr/decision-121.md).
+
 ## 3. Exit codes
 
 | Code | Meaning |
@@ -811,7 +821,7 @@ result and does not override a domain Envelope's application exit classification
 | `HFAPI009` | Metadata service is full, draining or unavailable; HTTP 503 |
 | `HFAPI011` | Daemon instance lock is unsafe, unavailable or already held; HTTP 503 classification |
 | `HFAPI013` | Operation history/result is missing or expired; execution outcome remains unknown; HTTP 404 |
-| `HFAPI014` | Operation control storage is unsafe, full, unavailable or unexplained; HTTP 503 |
+| `HFAPI014` | Operation control storage or scheduled observation handle is unsafe, full, unavailable, unsupported, mismatched or unexplained; HTTP storage refusal 503, local handle refusal exit 20 |
 | `HFAPI015` | Operation state/transition or result availability is invalid or uncertain; HTTP 409 |
 | `HFAPI016` | Isolated verification executor is unavailable, unsafe or fails protocol/peer validation; HTTP 503 |
 | `HFAPI019` | API connectivity or bounded observation cannot complete |

@@ -1,0 +1,8 @@
+# Install as /etc/hfcache/scheduled-client.toml; no archive/Hub settings.
+schema_version = 1
+api_socket = "/run/hfcache/api.sock"
+credential_name = "hfcache.api"
+# REQUIRED: replace with the configured archive UUID before enabling timers.
+expected_archive_id = "00000000-0000-0000-0000-000000000000"
+# Finite windows repeat; the oneshot stays active until the exact terminal result.
+wait_timeout = 300.0

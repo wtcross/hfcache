@@ -343,7 +343,8 @@ headers. Explicit trusted TLS proxy rules and one Unix/TCP lifespan are tested
 on disposable sockets. Shared no-follow reader/work budgets cover legacy local
 query paths too; unsafe derived catalogs retain unknown confidence and never
 grant repair authority. API-008 supplies the execution/protocol boundary; API-014
-still owns installed service hardening and acceptance. No production listener or rollout is asserted. See
+packages service hardening while installed enforcement remains operator
+acceptance. No production listener or rollout is asserted. See
 [decision 112](adr/decision-112.md) and [server policy](server.md).
 
 **Control-state boundary (API-007).** Local receipts bind admission to a fixed
@@ -352,6 +353,9 @@ execution. Store no raw key, bearer, token digest/path or candidate request body
 The key digest is private comparison state and is omitted from HTTP metadata.
 All authenticated REST readers may observe operation metadata/events/results
 under the whole-archive boundary; key lookup searches only the caller's namespace.
+The separate API-014 scheduled observer stores its generated nonsecret key in
+private local state for lookup-only recovery, never a bearer or token digest;
+that does not add raw keys to server receipts/HTTP metadata.
 Rotation preserves that class identity, without creating individual-user audit
 claims. A status/result fetch never executes work.
 
@@ -377,9 +381,10 @@ evidence and disables execution across restarts; it cannot erase the barrier by
 marking an unreachable worker interrupted. Reader metadata remains available.
 
 These process/protocol checks do not enforce OS egress restrictions or identify
-arbitrary unknown secrets. API-014 must provision socket activation, service
-identities, a credential-free environment, `IPAddressDeny=any` and installed
-hardening acceptance. Standalone development invocation cannot claim that
+arbitrary unknown secrets. API-014 packages socket activation, service identities,
+credential-source masking and `IPAddressDeny=any`; actual cgroup/credential/
+SELinux/NFS enforcement remains installed hardening acceptance. Custom development
+source paths need explicit masks/probes. Standalone development invocation cannot claim that
 sandbox. No request starts a generic subprocess or invokes systemctl/sudo.
 See [decision 115](adr/decision-115.md) and
 [private verification trust](server.md#verification-wire-and-local-trust).
@@ -536,6 +541,17 @@ operator-supervised reconnect evaluation, not an enabled protection.
 reflect the existing deployed-unit decisions 60, 61, and 66. The authorization
 statements in §§6–7 also reflect `HUB-010` / `AD-21`; no runtime control or
 authorization policy changes here.
+
+**API-014 role amendment (2026-10-18, [decision 121](adr/decision-121.md)).**
+The setgid-compatible archive policy now applies to actual API/private-verifier
+executors; AF_UNIX scheduled clients mask archive access and can safely enable
+`RestrictSUIDSGID=true`. Worker startup is offline and imports no credentials;
+its namespace hides standard credential stores/runtime credentials/daemon token
+cache, with custom development paths requiring explicit masks/probes. Executor-
+aware probes use installed unit/drop-in properties and refuse wrapper-unit names.
+Repository activation/unit/dry-run evidence cannot certify actual cgroup no-IP/
+no-credential, SELinux or NFS behavior; those remain deployment holds. No sandbox
+is weakened to pass a test.
 
 SELinux remains enforcing throughout development and acceptance testing.
 Denials are resolved by fixing ownership, labels, or unit restrictions first, and

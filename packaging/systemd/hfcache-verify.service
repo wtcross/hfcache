@@ -1,85 +1,32 @@
-# The quarterly full verification (docs/plan.md §22.3, §16.2).
-#
-# A distinct unit from the sync, not a mode of it, because the two have opposite
-# shapes: one reaches the Hub and writes, the other reaches nothing and re-reads.
-# They share the *application* lock — one lock for every mutating command
-# (`AD-17`) — which is what makes them mutually exclusive with each other and with
-# prune and repair. There is no second lock domain to keep in step.
-#
-# The hardening block is §22.5 and is applied and tested at SYS-002, including
-# whether PrivateNetwork=true holds on the deployed NFS mount under reconnect.
-
+# API-backed observer; retained private state never authorizes replay (ADR121).
 [Unit]
-Description=Verify every retained revision against its manifest
-Documentation=file:///opt/hfcache/current/docs/cli.md
+Description=Observe full verification of every retained revision
 Documentation=file:///opt/hfcache/current/docs/operations.md
-After=remote-fs.target
-RequiresMountsFor=/srv/hfcache
+Requires=hfcache-api.socket
+After=hfcache-api.socket
 PartOf=hfcache.target
-# §24's monitoring seam, left rather than wired, and it carries more weight on
-# this unit than on the sync: a quarterly job that fails has three months to go
-# unnoticed, and exit `40` here means the archive may be corrupt. Whoever
-# activates hfcache-failure@.service.example should start with this unit.
 #OnFailure=hfcache-failure@%n.service
 
 [Service]
 Type=oneshot
 User=hfcache
 Group=hfcache
-UMask=0027
-ExecStart=/opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml verify --full
-
-# A full verification reads every unique object in the archive. `verify
-# --estimate` is what an operator sizes the maintenance window from; this unit
-# does not get to decide the run has taken too long.
+UMask=0077
+ExecStart=/opt/hfcache/current/.venv/bin/python -m hfcache.scheduled_client --client-config /etc/hfcache/scheduled-client.toml --state-directory /var/lib/hfcache/scheduled/verify verify-full
+# Multiple finite HTTP windows preserve the original unlimited oneshot lifetime.
 TimeoutStartSec=infinity
-
-# The same cache bound as the sync, for the read direction: hashing every unique
-# object pulls the whole archive through the page cache, and each page is read
-# once and never again. Unbounded, that walk makes the guest touch all of its
-# RAM — memory the hypervisor then has committed for good (decision 86). No
-# `MemoryMax=`, for the sync unit's reason: above `high` the kernel throttles
-# and reclaims rather than kills, and exit `40` from this unit has to mean "the
-# archive may be corrupt", never "the cap was tight this quarter".
-MemoryHigh=4G
-
-StateDirectory=hfcache
-StateDirectoryMode=0750
-CacheDirectory=hfcache
-CacheDirectoryMode=0750
+# Client shutdown leaves its handle and never proves execution stopped.
+TimeoutStopSec=30
+StateDirectory=hfcache/scheduled/verify
+StateDirectoryMode=0700
 RuntimeDirectory=hfcache
 RuntimeDirectoryMode=0700
 RuntimeDirectoryPreserve=yes
-
-# Belt and braces, in that order. The real guarantee is structural and asserted in
-# the test suite — `verify` constructs no HubClient and resolves no credential, so
-# there is no code path from here to the network. This makes the same statement to
-# the library, so a future dependency that reached out on import fails loudly
-# instead of quietly phoning home during a maintenance window.
-Environment=HF_HUB_OFFLINE=1
-
-# The third layer, and §22.3's "narrower host egress control" rather than the
-# `PrivateNetwork=true` it asks be tested first. Both were tested on this
-# deployment and both block egress while leaving the already-mounted NFS
-# filesystem fully readable — a probe read all 21 published files under each. What
-# decides between them is the condition §22.3 attaches: enable PrivateNetwork
-# "if the already-mounted filesystem remains reliable **under reconnect**", and a
-# reconnect cannot be provoked here (§36.4 defers NFS interruption against the
-# live mount to an operator window). So the setting that does not move the unit
-# into a different network namespace at all wins: IPAddressDeny filters the
-# unit's own sockets in its cgroup, while the NFS client's RPC sockets belong to
-# the kernel and are untouched, so there is no reconnect path to be unsure about.
-# The handoff list carries the PrivateNetwork evaluation for that window.
+LoadCredentialEncrypted=hfcache.api:/etc/credstore.encrypted/hfcache.api
+UnsetEnvironment=HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN
+# No archive access or Hub state is needed by an HTTP observer.
+InaccessiblePaths=-/srv/hfcache -/var/lib/hfcache/hf-home
 IPAddressDeny=any
-Environment=HF_XET_CACHE=/var/cache/hfcache/xet
-Environment=HF_HOME=/var/lib/hfcache/hf-home
-
-# --- §22.5 hardening. Every setting here is tested by
-# --- scripts/check-hardening.sh, which runs a real workload — DNS, TLS, a
-# --- huggingface_hub API call, an hf_xet download, native extension imports, and
-# --- a create/fsync/rename/unlink on the NFS archive — under these exact
-# --- properties, and then confirms each one is in effect. A property systemd
-# --- parsed but could not apply reads as protection in this file and is not there.
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true
@@ -93,36 +40,13 @@ ProtectClock=true
 ProtectHostname=true
 ProtectProc=invisible
 ProcSubset=pid
-# RestrictSUIDSGID is **not** set, and this is the one §22.5 setting that is not.
-# The failing requirement: `publication.create_staging` creates the staging tree at
-# PUBLISHED_DIRECTORY_MODE = 0o2750, setgid, because publication is a rename and a
-# rename does not change a mode — so every published directory carries the group
-# the consumer export's read identity depends on (§5.2, and the `published/`
-# anchor the NAS was provisioned with is 2750 for the same reason).
-# `RestrictSUIDSGID=true` makes that `mkdir` EPERM, which failed a real sync with
-# `HFSYN005` (decision 61). The alternative — stop asking for setgid and hope the
-# parent's inheritance covers it — would trade a durable, consumer-visible
-# on-disk contract for a hardening flag, and would be silent when it was wrong.
-#
-# The narrower control that replaces it, and why the residual risk is closed
-# twice over: /srv/hfcache is mounted `nosuid,nodev,noexec`, so a setuid or setgid
-# file on the only filesystem this service can write is inert; `NoNewPrivileges=true`
-# means this service and every child can never gain privileges from such a bit
-# wherever it sits; and the capability bounding and ambient sets are empty. The
-# systemd-managed directories are 0750/0700 `hfcache:hfcache`, reachable only by
-# this account and root, and root ignores setgid on exec anyway.
+RestrictSUIDSGID=true
 RestrictNamespaces=true
 LockPersonality=true
 CapabilityBoundingSet=
 AmbientCapabilities=
 SystemCallArchitectures=native
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-
-# The only writable path that is not systemd-managed. `ProtectSystem=strict`
-# makes the whole filesystem read-only and StateDirectory/CacheDirectory/
-# RuntimeDirectory carry their own write access, so this one line is the entire
-# mutation surface of the service (§22.5's last item).
-ReadWritePaths=/srv/hfcache
+RestrictAddressFamilies=AF_UNIX
 
 [Install]
-# Not enabled. The timer starts this.
+# Timers retain their existing names/calendars; verify stays disabled by default.

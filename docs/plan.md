@@ -1200,6 +1200,20 @@ activating it is two steps and neither is guesswork.
 
 ### 22.1 Target
 
+**API-014 amendment (2026-10-18, [decision 121](adr/decision-121.md)).**
+Add `hfcache-api.service/.socket` and `hfcache-verification.service/.socket`.
+One activated API application adopts Unix and optional loopback TCP; the private
+verifier alone performs offline verification under no-IP/credential-source policy.
+Existing sync/verify names/calendars/OnFailure remain, but those oneshots now use
+AF_UNIX API credentials and strict private observation handles, repeating finite
+windows to preserve multi-hour lifetime without POST replay. Only the daemon
+imports Hub `hf-token`; daemon/clients use API `hfcache.api`, worker imports
+neither. Shared runtime lock lifetime and target/mount behavior remain. Actual
+archive executors retain setgid-compatible policy (decision 61); no-archive clients
+may apply `RestrictSUIDSGID=true`. The historical direct-execution properties below
+do not describe the new client/executor roles. Installed socket/cgroup/credential/
+SELinux/NFS acceptance remains operator work, not repository-test proof.
+
 `hfcache.target` groups the archive automount plus the sync and verification timers. Starting the target enables the scheduled lifecycle without forcing an immediate oneshot run; missed calendar events are handled by `Persistent=true`.
 
 ### 22.2 Sync service

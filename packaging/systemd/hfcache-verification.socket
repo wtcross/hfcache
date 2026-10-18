@@ -1,0 +1,22 @@
+# A private typed listener, never generic command execution (AD-17, ADR121).
+[Unit]
+Description=hfcache private offline verification listener
+Documentation=file:///opt/hfcache/current/docs/server.md
+Requires=systemd-tmpfiles-setup.service
+After=systemd-tmpfiles-setup.service
+AssertPathIsDirectory=/run/hfcache
+PartOf=hfcache.target
+
+[Socket]
+ListenStream=/run/hfcache/verification.sock
+FileDescriptorName=hfcache-verification
+SocketUser=hfcache
+SocketGroup=hfcache
+SocketMode=0600
+DirectoryMode=0700
+Accept=no
+Service=hfcache-verification.service
+RemoveOnStop=no
+
+[Install]
+WantedBy=hfcache.target

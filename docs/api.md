@@ -575,7 +575,9 @@ Side-effecting submissions require `Idempotency-Key`. Persist a restrictive
 atomic JSON receipt under service-private `/var/lib/hfcache/api/` before 202 or
 execution. Bind fixed credential-class principal identity and the SHA-256 key
 digest to a canonical route/request digest and admitted policy fingerprint.
-Persist no raw key, candidate body, bearer or credential source/digest. The
+Persist no raw key, candidate body, bearer or credential source/digest in server
+receipts. API-014's separate private scheduled-client handle retains only its
+generated nonsecret key for observation; it changes no server receipt schema. The
 receipt itself is the authoritative binding; indexes are derived. Matching
 retries return the original operation before requesting a fresh policy snapshot,
 even after policy changes; conflicting requests/routes return 409. Every
@@ -728,6 +730,8 @@ result. A known queued/waiting/running/interrupted receipt without a result retu
 It never invents an empty successful result. Invalid IDs/header/query input is
 `HFAPI006`/422 without echoing input. Unsafe/unavailable/unexplained storage is
 `HFAPI014`/503, exit 20.
+API-014 also uses HFAPI014 / exit 20 locally for unsafe/malformed/future/mismatched
+scheduled observation handles; that client refusal is not an HTTP response.
 
 Collection ordering is descending `(created_at, operation_id)`. Its default
 limit is 100, bounded by `max_page_size`; its opaque cursor binds ordered IDs

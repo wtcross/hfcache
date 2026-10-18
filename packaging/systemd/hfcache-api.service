@@ -1,0 +1,60 @@
+# Actual online executor: Hub credential, archive writes, memory bound (ADR121).
+[Unit]
+Description=hfcache authenticated REST API and online executor
+Documentation=file:///opt/hfcache/current/docs/server.md
+Wants=network-online.target hfcache-verification.socket
+# Ordering only: if both stop, API drains before a surviving worker is stopped.
+After=network-online.target remote-fs.target hfcache-verification.socket hfcache-verification.service
+Requires=hfcache-api.socket
+RequiresMountsFor=/srv/hfcache
+PartOf=hfcache.target
+#OnFailure=hfcache-failure@%n.service
+
+[Service]
+Type=simple
+User=hfcache
+Group=hfcache
+UMask=0027
+ExecStart=/opt/hfcache/current/.venv/bin/hfcache serve --server-config /etc/hfcache/server.toml
+Sockets=hfcache-api.socket
+TimeoutStartSec=300
+# Stop closes admission and drains; no execution wall limit is imposed.
+TimeoutStopSec=infinity
+MemoryHigh=4G
+StateDirectory=hfcache
+StateDirectoryMode=0750
+CacheDirectory=hfcache
+CacheDirectoryMode=0750
+RuntimeDirectory=hfcache
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+LoadCredentialEncrypted=hfcache.api:/etc/credstore.encrypted/hfcache.api
+# Optional Hub token belongs only to this executor; absent means public-only.
+ImportCredential=hf-token
+Environment=HF_XET_CACHE=/var/cache/hfcache/xet
+Environment=HF_HOME=/var/lib/hfcache/hf-home
+UnsetEnvironment=HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+ProcSubset=pid
+# Published setgid directories forbid RestrictSUIDSGID (decision61).
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/srv/hfcache
+
+[Install]
+Also=hfcache-api.socket hfcache-verification.socket

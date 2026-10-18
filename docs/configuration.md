@@ -465,7 +465,8 @@ uses the API process's effective UID. These settings require restart and cannot
 be overridden by an inbound request. They grant no process-launch, arbitrary
 configuration path or credential-forwarding authority. The dedicated worker's
 trusted service startup supplies its fixed archive config and separate private
-state root; API-014 owns installed socket/identity/no-IP provisioning. See
+state root. API-014 packages socket/identity/no-IP policy; installed enforcement
+remains operator acceptance. See
 [server verifier settings](server.md#private-verifier-client-settings-api-008)
 and [decision 115](adr/decision-115.md).
 
@@ -541,3 +542,14 @@ never enter archive-policy fingerprints or receipts. API-012 uses the stored
 global choices for reader/candidate modes; API-013 completes operational CLI and
 explicit observation through the same authority. See
 [decision 118](adr/decision-118.md).
+
+API-014's [scheduled-client example](../packaging/scheduled-client.example.toml)
+uses this same client schema and the API-only named credential `hfcache.api`.
+Scheduled sync/verify-full requires an explicit `expected_archive_id` before any
+HTTP or private state allocation; replace the example UUID with the installed
+archive UUID. Its `wait_timeout` bounds each observation window, while the
+scheduled oneshot repeats windows through exact terminal output. The private
+[observation handle](schemas.md#14-scheduled-client-observation-handle-api-014)
+binds endpoint/UUID/REST-writer class across restarts and token rotation; it never
+contains a bearer, credential digest or archive policy. It is not another client
+configuration or execution queue. See [decision 121](adr/decision-121.md).

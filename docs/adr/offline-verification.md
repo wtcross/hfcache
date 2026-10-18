@@ -1,6 +1,7 @@
 # Quarterly full verification reads the retained archive offline
 
-- Status: accepted; an existing locked plan decision without an AD number; amended by decisions 110, 111 and 115.
+- Status: accepted; an existing locked plan decision without an AD number;
+  amended by decisions 110/111/115 and [121](decision-121.md).
 - Original record: 2026-07-24, `87323c2` (initial plan, §4 and §16).
 - ADR backfill: 2026-10-17.
 - Authority: [plan §16](../plan.md#16-integrity-and-verification),
@@ -114,3 +115,20 @@ imports/use; that flag alone cannot deny IP sockets. Socket-activated units,
 credential-free environment provisioning, `IPAddressDeny=any` and installed-host
 hardening evidence remain API-014. Standalone development tests prove protocol,
 identity and structural no-Hub behavior without claiming OS egress isolation.
+
+## API-014 packaged executor amendment (2026-10-18)
+
+[Decision 121](decision-121.md) places offline startup, `IPAddressDeny=any` and
+credential-source masking around the actual dedicated verification service,
+including hashing/report/catalog persistence. The AF_UNIX scheduled verify client
+uses an API-only credential and may keep its own IP denial; it is not the
+credential-free executor. The worker imports no Hub/API/MCP source, hides
+`/run/credentials` and trusted source stores, and uses account/euid peer checks,
+never manager `%U`. Custom development source paths require explicit sandbox
+restrictions. The library flag alone still denies no IP sockets; no production
+in-process fallback, generic privileged worker or altered verification algorithm.
+
+The quarterly calendar/disabled timer and existing NFS/network-namespace policy
+remain unchanged. Positive inherited-socket/protocol fixtures and unit contracts
+are repository evidence; real activation/cgroup no-IP/no-credential, SELinux/NFS
+and executor-aware hardening acceptance remain operator deployment prerequisites.

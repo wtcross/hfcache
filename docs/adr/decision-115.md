@@ -2,6 +2,7 @@
 
 - Status: Accepted; implemented by API-008.
 - Command-route integration: [decision 116](decision-116.md), API-009.
+- Activated-service/observer packaging: [decision 121](decision-121.md), API-014.
 - Date: 2026-10-17.
 - Work package: API-008, this commit.
 - Source: [progress decision 115](../progress.md#decisions),
@@ -112,3 +113,14 @@ Evidence: [runner tests](../../tests/unit/test_runner.py),
 [private executor/protocol tests](../../tests/unit/test_verification_executor.py),
 [sync producer tests](../../tests/unit/test_synchronize.py) and
 [shared command lock tests](../../tests/unit/test_command_locking.py).
+
+## API-014 activation and executor policy (2026-10-18)
+
+[Decision 121](decision-121.md) packages named Unix/optional TCP activation into
+one API lifespan and a separate actual verification service with offline/no-IP/
+credential-source masking. Account/euid peer checks replace manager-UID guesses;
+the worker imports no Hub/API/MCP credential. Existing pending scheduled handles
+permit observation only. Actual server/worker drain and retained locks, not stopped
+client wrappers, govern upgrades/recovery. Repository inherited-FD/unit/protocol
+rehearsals do not prove installed cgroup/SELinux/NFS enforcement; those remain
+operator holds. Archive execution and exact surviving-worker reconciliation stand.

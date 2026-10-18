@@ -1137,6 +1137,51 @@ package in this family.
   Next is API-014 pending after this commit; installed unit/no-IP/caller and REST
   acceptance remain gated.)
 
+- [x] API-014 Package activated executors and durable scheduled observation
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-014-systemd-and-deployment-integration.md)).
+  Named Unix/optional TCP activation feeds one application/lifespan; a separate
+  unprivileged verifier validates inherited descriptors before shared imports,
+  resolves trusted account/euid peers and carries offline/no-IP/source-masking
+  policy. No manager `%U`, credential import or online fallback in the verifier;
+  custom source paths require explicit masks/probes.
+  Existing sync/verify service names/calendars, disabled verify timer, OnFailure,
+  target/mount and shared runtime lock inodes remain. API-only AF_UNIX scheduled
+  clients use independent strict schema-1 handles: key fsync before sole POST,
+  endpoint/expected UUID/REST-writer binding, accepted ID and lookup-only recovery.
+  Repeated finite windows preserve oneshot lifetime; exact terminal Envelope/exit
+  alone permits owned pending removal. Same-class rotation can recover. Actual
+  SIGINT/SIGTERM subprocesses preserve exact bytes/exclusive ownership with
+  HFAPI019/20, no POST or terminal stdout; main restores handlers and library
+  import/calls install none. Installer dry-run, locked server-extra smoke and
+  two-tree switch/rollback fixtures retain evidence and hold a noncreating flock
+  through switching; actual executor/cgroup accounting and target observer
+  compatibility gate changes. Review corrected noncanonical archive aliases,
+  ambiguous task accounting and the pending-state scan default; initial focused
+  smoke also corrected a `str`/`Path` call before final 63 installer/probe cases.
+  Final installed smoke: 2 passed in 6.73 seconds; activation/runtime: 99 in 37.03;
+  scheduler/unit/model: 247 in 3.76; nine unit files verify without diagnostics
+  under systemd 257. Actual installed predecessor `a01875c` lacks the observer
+  module and preserves schema 1/future 2 bytes; current reads 1/refuses 2 at
+  HFAPI014/20, using locked offline CPython 3.14.6 fixtures with no archive operation.
+  Decision 121 and scheduling/offline, AD-17, 061/065/115/120/framework amendments,
+  affected invariants, original plan/cancellation, server/client/API/schema/CLI/
+  configuration/security, deployment/recovery/operations/agent guidance and
+  README/Unreleased agree. First full gate was interrupted at exit 130 after a
+  stale shipped-example assertion (`rest-writer`→`hfcache.api`), with no final
+  suite count; assertion-only correction passed 1 test in 0.27 seconds. Definitive
+  `rtk proxy bash scripts/check.sh > .scratch/api-014-gate.log 2>&1` exits 0:
+  lock/sync, 360 formatted files, lint/types clean, 3,223 Python tests
+  (40 deselected, 349.85 seconds), 0.1.10 sdist/wheel, actual locked isolated
+  base/server install/import/help/version, 45 Cockpit tests and production build.
+  No post-gate source change. Final links/current/dependencies, 29 implemented
+  parity rows, 121 unique indexed decision/ADR records and whitespace pass.
+  New private handle only; archive/receipt formats and dependencies unchanged.
+  No MCP, production service/archive operation, deployment, push/merge/tag.
+  Real installed socket/cgroup/no-IP/credential-source/SELinux/NFS/hardening and
+  verify-calendar acceptance remain explicit operator holds; live/NFS and extra
+  build-marker suites did not run. Next is API-015 pending after this commit.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -1275,6 +1320,11 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     operation returns an error. If it does, remove the drop-in and leave
     `IPAddressDeny=any` as the egress control. Steady-state reads are already
     proven under `PrivateNetwork=true`; only the reconnect path is open.
+    **API-014 amendment (2026-10-18):** after the API arrangement is deployed,
+    the actual executor is `hfcache-verification.service`; the named verify
+    oneshot is an API-credentialed AF_UNIX observer. Probe executor cgroup/
+    credential/NFS behavior, not just the wrapper. This task performs no such
+    operator or live-mount test; item 16 tracks the new deployment holds.
 11. **`docs/truenas.md` (plan §7):** the one document in §7's set with no work
     package that produces it. `OPS-001`–`OPS-004` account for
     `deployment-centos-stream-10.md`, `operations.md`, and `recovery.md`, and
@@ -1354,6 +1404,23 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     active on its existing schedule; verification stays disabled pending
     item 8. Complete these checks and tag the current candidate rather than
     a superseded deployed version from item 14.
+
+16. **API-014 deployment acceptance holds (2026-10-18, decision 121):**
+    repository activation/unit/installer/disposable drain/rollback tests do not
+    prove the installed host. Before rollout acceptance, verify actual named
+    socket activation feeds one API app across Unix/optional TCP; peer account
+    identity and private socket restrictions hold; the actual verification cgroup
+    denies IP and cannot access provisioned Hub/API/MCP credentials or daemon
+    token cache; custom development source paths have explicit masks/probes;
+    executor-aware installed hardening and SELinux/NFS behavior pass. Preserve
+    verify timer disabled until item 8, shared runtime locks, and unresolved API/
+    verifier/scheduled state. Rehearse actual server/worker drain before switch,
+    and prove a stopped observer never authorizes duplicate execution. Use
+    [deployment](deployment-centos-stream-10.md#13-upgrade-plan-30),
+    [server](server.md#activated-services-and-scheduled-observation-api-014) and
+    [scheduled schema](schemas.md#14-scheduled-client-observation-handle-api-014).
+    No production deployment, service/timer/mount manipulation or archive operation
+    is authorized by implementation of this plan.
 
 ## Operator decisions needed
 
@@ -3841,3 +3908,19 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      explicit confirmation; no-confirm inspection/refusal never submits. Server
      maintenance/DTO/lock/recovery/private-verifier authority stays unchanged.
      No durable shape, dependency, MCP or production change.
+
+121. **Activate one server and retain scheduled observation without replay**
+     (2026-10-18, API-014). [ADR](adr/decision-121.md): Unix/optional TCP activation
+     shares one application/lifespan; dedicated unprivileged private verification
+     encloses actual work with offline/no-IP/credential-free policy and peer UID
+     account resolution, never manager `%U`. Hide credential/source stores, with
+     explicit restrictions required for custom development paths. Preserve names,
+     calendars, disabled verify timer, OnFailure/target/mount and shared lock
+     lifetime. Scheduled AF_UNIX clients use distinct API credentials and strict
+     private schema-1 observation handles: fixed sync/verify-full, endpoint, archive
+     UUID, REST-writer namespace, key fsync before sole POST and accepted ID.
+     Existing/unknown history never authorizes replay; repeated finite windows
+     retain the active oneshot until exact terminal Envelope/exit, then safe handle
+     removal. Same-class rotation can recover. No bearer/digest/body/queue, new
+     dependency, MCP or production operation. Actual socket/cgroup/no-IP/credential/
+     SELinux/NFS acceptance stays an explicit deployment hold.

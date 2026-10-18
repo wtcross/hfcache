@@ -1,7 +1,7 @@
 """Exercise everything plan §22.5 says the hardening must not break.
 
 Run by `scripts/check-hardening.sh` inside a transient unit carrying the *exact*
-`[Service]` properties of the installed `hfcache-sync.service`, so what is tested
+`[Service]` properties of the installed API or private-verification executor, so what is tested
 is what is deployed rather than a copy of it that can drift.
 
 Two halves, and both matter.
@@ -33,7 +33,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-ARCHIVE = Path("/srv/hfcache")
+EXECUTOR = os.environ.get("HFCACHE_PROBE_EXECUTOR")
+if EXECUTOR not in {"api", "verification"}:
+    sys.stderr.write("hardening-probe: use the executor-aware check-hardening.sh wrapper\n")
+    raise SystemExit(2)
+
+ARCHIVE = Path(os.environ.get("HFCACHE_PROBE_ARCHIVE", "/srv/hfcache"))
 PROBE_AREA = ARCHIVE / ".store" / "health"
 PUBLISHED_DIRECTORY_MODE = 0o2750
 """Mirrors `publication.PUBLISHED_DIRECTORY_MODE`, restated rather than imported.
@@ -213,12 +218,12 @@ def _address_families() -> None:
 @check("writable paths")
 def _writable_paths() -> str:
     allowed = []
-    for path in (
-        ARCHIVE,
-        Path("/var/lib/hfcache"),
-        Path("/var/cache/hfcache"),
-        Path("/run/hfcache"),
-    ):
+    paths = [ARCHIVE]
+    for name in ("STATE_DIRECTORY", "CACHE_DIRECTORY", "RUNTIME_DIRECTORY"):
+        value = os.environ.get(name)
+        assert value, f"systemd did not supply {name}"
+        paths.extend(Path(item) for item in value.split(":"))
+    for path in dict.fromkeys(paths):
         probe = path / ".hfcache-hardening-probe"
         probe.touch()
         probe.unlink()
@@ -230,7 +235,7 @@ def _writable_paths() -> str:
 # The workload still runs
 # --------------------------------------------------------------------------- #
 
-OFFLINE = os.environ.get("HF_HUB_OFFLINE") == "1"
+OFFLINE = EXECUTOR == "verification"
 """Whether this unit is one that must *not* reach the Hub (§22.3).
 
 The verification unit sets `HF_HUB_OFFLINE=1` and `IPAddressDeny=any`, so for it
@@ -243,6 +248,36 @@ is the one a dependency upgrade can quietly undo.
 
 network = denied if OFFLINE else check
 _expected = "refused" if OFFLINE else "permitted"
+
+
+@check("executor credential isolation")
+def _executor_credentials() -> str:
+    if not OFFLINE:
+        return "API executor has its separately provisioned API/Hub credential scope"
+    assert os.environ.get("HF_HUB_OFFLINE") == "1", "executor library offline flag is absent"
+    forbidden = (
+        "CREDENTIALS_DIRECTORY",
+        "HF_TOKEN",
+        "HUGGING_FACE_HUB_TOKEN",
+        "HUGGINGFACE_HUB_TOKEN",
+        "HUGGINGFACEHUB_API_TOKEN",
+        "HF_TOKEN_PATH",
+        "HFCACHE_API_TOKEN",
+        "HFCACHE_MCP_TOKEN",
+    )
+    assert not any(name in os.environ for name in forbidden), "credential environment is present"
+    # The root wrapper checked that this file exists outside the sandbox. An
+    # absent masked path therefore proves isolation rather than an empty store.
+    path = os.environ.get("HFCACHE_PROBE_CREDENTIAL")
+    assert path is not None, "no known protected credential-source probe supplied"
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    except FileNotFoundError, PermissionError:
+        return "no credential environment; known protected source is inaccessible"
+    else:
+        os.close(descriptor)  # Never read or print any credential bytes.
+        message = "known protected credential source is accessible to the verifier"
+        raise AssertionError(message)
 
 
 @network(f"DNS ({_expected})", "the Hub is resolvable from an offline unit")

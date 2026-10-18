@@ -6,10 +6,88 @@ API-007 adds bounded receipt/admission primitives and operation observation;
 API-008 adds the heavyweight lane and private verifier process/protocol; API-009
 adds typed sync, verification, planning, diagnostics and installed validation.
 API-010 adds explicit maintenance preview/apply, repair and guarded initialization.
-API-012 adds candidate operations/read CLI and API-013 operational CLI/observation;
-installed service hardening remains later work.
+API-012 adds candidate/read CLI, API-013 operational CLI/observation and API-014
+activated service/scheduled-client packaging; installed-host acceptance remains
+an explicit deployment hold.
 See [the API contract](api.md) and [active plan](plans/2026-10-17-plan-rest-api-and-mcp.md).
 No service is installed or listening as a result of this document.
+
+## Activated services and scheduled observation (API-014)
+
+[Decision 121](adr/decision-121.md) packages one server application/lifespan for
+systemd-activated Unix plus optional TCP sockets. Both API listeners use
+`FileDescriptorName=hfcache-api`; activation does not create a second registry,
+pool or execution lane. The shipped arrangement matches the configured private
+Unix socket and loopback TCP port 8787. Foreground development binding remains
+explicit; no source/test result claims a production listener was started.
+Adopt activation only with complete, matching `LISTEN_PID`, `LISTEN_FDS` and
+`LISTEN_FDNAMES` metadata and the exact enabled Unix/TCP listener set. Identify
+sockets by validated family/address/name, never descriptor order; activated paths
+are neither rebound nor unlinked by the application. Partial/mismatched activation
+fails rather than silently binding a new listener. See systemd's
+[descriptor contract](https://www.freedesktop.org/software/systemd/man/latest/sd_listen_fds.html)
+and [socket units](https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html).
+Validate protected Unix UID/mode/group/parent and exact IPv6-only listener policy;
+never call shutdown on manager sockets. When present, `LISTEN_PIDFDID` must match
+the process's own pidfd, and activation variables are cleared before serving.
+
+The dedicated worker uses its own socket/service and
+`FileDescriptorName=hfcache-verification`, unprivileged hfcache identity,
+`IPAddressDeny=any`, startup offline initialization and no Hub/API/MCP credential
+imports. Resolve trusted peer identity through mutually exclusive `--api-user`
+account name or `--api-uid`, with effective UID as default, never system-manager
+`%U`. Reject credential environment spellings including `HUGGINGFACE_HUB_TOKEN`.
+Hide `/run/credentials`, `/etc/credstore`, `/etc/credstore.encrypted`,
+`/etc/hfcache/credentials` and daemon HF_HOME `/var/lib/hfcache/hf-home`
+from the worker. Custom development token-file paths
+outside those stores require explicit additional sandbox restrictions; no
+arbitrary-path credential-isolation guarantee is asserted.
+Inherited-descriptor/environment validation precedes NSS/account resolution and
+shared imports, so their legitimate runtime descriptors cannot be mistaken for
+inherited credential descriptors.
+
+Sync/verify units keep their names/calendars, terminal exit and OnFailure hooks;
+the verify timer remains disabled pending operator calendar approval. Their
+AF_UNIX scheduled clients import only the distinct API credential `hfcache.api`.
+The daemon imports that API source plus separate Hub `hf-token`; worker imports
+neither. Use the same systemd credential name on server and clients so encrypted
+credential-name binding is preserved. Shared runtime lock inodes survive client/
+server/worker lifecycle; target/mount behavior and scheduling authority do not
+change.
+
+The fixed client entrypoint is:
+
+```text
+python -m hfcache.scheduled_client --client-config PATH --state-directory PATH sync
+python -m hfcache.scheduled_client --client-config PATH --state-directory PATH verify-full
+```
+
+Its private [schema-1 pending handle](schemas.md#14-scheduled-client-observation-handle-api-014)
+requires explicit expected archive UUID and binds fixed intent, endpoint and
+REST-writer namespace without credential digest. Fsync one generated key before
+the sole POST; persist accepted ID. Existing state permits lookup/observation
+only. Repeated finite windows keep the oneshot active through multi-hour execution
+until exact terminal Envelope/exit, preventing timer overlap. Unknown/malformed/
+future/mismatched handles remain at HFAPI014/20, missing remote history never
+permits replay, and same-class token rotation can recover. Only validated exact
+terminal outcome permits owned-handle removal/fsync. This is not a request queue.
+Only the module entrypoint temporarily handles SIGINT/SIGTERM as observation
+interruption, returns HFAPI019 / exit 20 with preserved-state recovery notices,
+and restores both prior handlers. Importing it or calling `run_scheduled` installs
+no signal handler. Client interruption never cancels accepted execution.
+
+Repository unit/activation/installer/disposable drain/rollback fixtures and
+`systemd-analyze verify` are distinct from operator deployment acceptance. Real
+systemd activation, executor cgroup no-IP/no-credential enforcement, SELinux/NFS
+and executor-aware hardening probes remain explicit deployment holds; no host
+service, timer, mount or production archive operation is authorized here.
+
+Activated process fixtures observe API drain followed by raw `-SIGTERM` because
+[locked Uvicorn replays its captured signal](https://github.com/Kludex/uvicorn/blob/0.54.0/uvicorn/server.py)
+after shutdown. Systemd treats SIGTERM as clean for these non-oneshot services
+([service termination rules](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#Restart=));
+the worker's explicit handler returns 0. Neither process status alone substitutes
+for exact operation outcomes or actual executor-drain proof.
 
 ## Implemented configuration boundary (API-005)
 
@@ -481,8 +559,9 @@ The separate verifier uses the same complete target/hash/report/catalog lock
 boundary. The HTTP process imports its protocol/client without executing archive
 verification. A missing/untrusted executor is `HFAPI016`, HTTP 503 / exit 20;
 there is no production in-process fallback, process spawning from a request or
-generic systemctl/sudo command. Socket-activated systemd units and installed
-no-IP/credential-free hardening remain API-014, not proof supplied by API-008.
+generic systemctl/sudo command. API-014 packages socket-activated units and
+no-IP/credential-source policy; installed enforcement remains operator acceptance,
+not proof supplied by API-008.
 
 ### Verification wire and local trust
 
@@ -582,8 +661,9 @@ modules. It refuses known Hub/API/MCP credential sources, including
 `CREDENTIALS_DIRECTORY`, and live inherited descriptors above FD 3 rather than
 carrying API secrets into the worker. No credential is resolved by the
 verification path. These checks do not discover every arbitrary secret string
-or deny IP sockets: API-014 must provision the independent credential-free
-environment, socket activation, permissions and `IPAddressDeny=any` sandbox.
+or deny IP sockets: API-014 packages the independent credential-free environment,
+socket activation, permissions and `IPAddressDeny=any` sandbox, with actual
+installed enforcement still requiring operator acceptance.
 Standalone development execution alone cannot make that installed-host claim.
 
 The worker holds a retained sibling `<state-name>.instance.lock` before opening
@@ -610,7 +690,7 @@ API-008's lane and API-007's registry already share the unprivileged application
 and separate bounded metadata pool across both listeners. The daemon-instance
 lock prevents competing registries; actual archive work retains the operation-
 scoped flock. API-009/010 add typed command routes and API-012 adds candidate/
-reader integration; API-013 adds operational CLI/observation and later tasks unit integration without another
+reader integration; API-013 adds operational CLI/observation and API-014 unit integration without another
 execution authority. Metadata reads create no archive layout or catalog.
 Systemd remains scheduling authority.
 

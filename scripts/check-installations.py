@@ -77,15 +77,20 @@ def main():
                 "from hfcache import __version__; "
                 "import hfcache.cli,hfcache.http_transport,hfcache.api.auth; "
                 "import hfcache.client,hfcache.client_config; "
+                "import hfcache.scheduled_client,hfcache.verification_worker; "
                 "print(json.dumps({'version':__version__,'server':"
                 "importlib.util.find_spec('fastapi') is not None,'uvicorn':"
                 "importlib.util.find_spec('uvicorn') is not None,'mcp':"
-                "importlib.util.find_spec('fastmcp') is not None}))"
+                "importlib.util.find_spec('fastmcp') is not None,'cold':"
+                "not any(name in __import__('sys').modules for name in "
+                "('hfcache.services.commands','hfcache.archive','hfcache.hub',"
+                "'huggingface_hub','hfcache.verification_executor'))}))"
             )
             result = json.loads(run([str(python), "-I", "-c", code], cwd=scratch))
             assert result["server"] is bool(extra), result
             assert result["uvicorn"] is bool(extra), result
             assert result["mcp"] is False, result
+            assert result["cold"] is True, result
             executable = environment / "bin" / "hfcache"
             assert "Usage:" in run([str(executable), "--help"], cwd=scratch)
             version = json.loads(run([str(executable), "--json", "version"], cwd=scratch))

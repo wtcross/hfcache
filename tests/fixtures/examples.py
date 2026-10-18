@@ -55,6 +55,7 @@ from hfcache.reporting import (
     VerificationRevisionEntry,
     VerificationScope,
 )
+from hfcache.scheduled_client import ScheduledObservation
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 SHA = "0123456789abcdef0123456789abcdef01234567"
@@ -539,6 +540,19 @@ def operation_receipt() -> OperationReceipt:
         updated_at=at("2026-10-17T12:00:00.000000Z"),
         events=(operation_event(),),
         next_event_sequence=2,
+    )
+
+
+def scheduled_observation() -> ScheduledObservation:
+    """Private API-014 observation schema is independent of archive formats."""
+    return ScheduledObservation(
+        schema_version=1,
+        command="sync",
+        endpoint="unix:/run/hfcache/api.sock",
+        archive_id=ARCHIVE_ID,
+        principal="rest-writer",
+        idempotency_key="a" * 32,
+        operation_id="b" * 32,
     )
 
 

@@ -1,0 +1,24 @@
+# Both configured listeners feed one API app and admission registry (ADR121).
+[Unit]
+Description=hfcache authenticated API listeners
+Documentation=file:///opt/hfcache/current/docs/server.md
+Requires=systemd-tmpfiles-setup.service
+After=systemd-tmpfiles-setup.service
+AssertPathIsDirectory=/run/hfcache
+PartOf=hfcache.target
+
+[Socket]
+ListenStream=/run/hfcache/api.sock
+ListenStream=127.0.0.1:8787
+FileDescriptorName=hfcache-api
+SocketUser=hfcache
+SocketGroup=hfcache
+SocketMode=0660
+DirectoryMode=0700
+Accept=no
+Service=hfcache-api.service
+# Keep manager-owned listeners while a surviving service may still use them.
+RemoveOnStop=no
+
+[Install]
+WantedBy=hfcache.target

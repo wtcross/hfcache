@@ -109,6 +109,17 @@ obtains an omitted optional UUID from authenticated inspection, keeps explicit
 root/confirmation and server gates, and never submits without confirmation.
 No durable schema, runtime dependency, MCP or production operation changes.
 
+API and private-verifier socket/services now package one application with
+account-checked peers and actual-executor offline/no-IP/credential-source policy.
+Scheduled clients use separate API credentials and AF_UNIX while preserving unit
+names/calendars, disabled verify timer, failure hooks and runtime lock lifetime.
+A new independent private schema-1 observer handle fsyncs one key before one POST;
+existing/unknown history never authorizes replay, and finite windows keep oneshots
+active until exact terminal outcomes. Installer dry-run, quiescence guards and
+local bootstrap smoke support disposable upgrade/rollback. Actual socket/cgroup/
+credential/SELinux/NFS and executor-aware hardening remain deployment holds. No
+archive/receipt format, runtime dependency, MCP or production deployment changes.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

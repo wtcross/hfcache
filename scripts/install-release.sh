@@ -17,6 +17,7 @@
 #   sudo scripts/install-release.sh --no-switch     # stage only, leave `current`
 #   sudo scripts/install-release.sh --switch 0.1.0  # point `current` at a release
 #   scripts/install-release.sh --list               # what is installed, and what is live
+#   scripts/install-release.sh --dry-run            # review only; no writes or service calls
 #
 # Environment overrides, for deployments that move a default deliberately:
 #   HFCACHE_PREFIX       install prefix                (default /opt/hfcache)
@@ -28,6 +29,10 @@ set -euo pipefail
 
 PREFIX=${HFCACHE_PREFIX:-/opt/hfcache}
 SOURCE=${HFCACHE_SOURCE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
+# Shared with disposable upgrade/rollback fixtures, never sourced from an installed
+# application or the archive. This library performs no work merely by loading it.
+SCRIPT_DIRECTORY=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+source "${SCRIPT_DIRECTORY}/release-functions.sh"
 
 # Pinned, because a deployment tool that silently accepts whatever resolver
 # happens to be installed is not a deployment tool (plan §21.4). Override
@@ -90,45 +95,51 @@ release_version() {
   sed -n 's/^version = "\(.*\)"$/\1/p' "${SOURCE}/pyproject.toml" | head -1
 }
 
-switch_to() {
-  # Atomic by construction: a symlink is created beside `current` and renamed
-  # over it. `ln -sfn` unlinks first and leaves a window in which `current` does
-  # not exist, which is the one thing a running service must never see.
-  local version=$1 target="${PREFIX}/releases/$1"
-  [[ -d ${target} ]] || die "release ${version} is not installed under ${PREFIX}/releases"
-  [[ -x "${target}/.venv/bin/hfcache" ]] || die "release ${version} has no built environment"
-  local staged="${PREFIX}/.current.$$"
-  ln -s "releases/${version}" "${staged}"
-  mv -T "${staged}" "${PREFIX}/current"
-  printf 'current -> releases/%s\n' "${version}"
-}
-
-installed_releases() {
-  [[ -d "${PREFIX}/releases" ]] || return 0
-  find "${PREFIX}/releases" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V
-}
-
-smoke() {
+smoke() (
   # The release's own entry point, run from the release's own environment. A
   # release that cannot report its version is not one to switch to.
   local binary=$1
   "${binary}" --help > /dev/null
   "${binary}" version
   "${binary}" --json version > /dev/null
-  if [[ -r /etc/hfcache/config.toml ]]; then
-    step 'hfcache config validate'
-    "${binary}" --config /etc/hfcache/config.toml config validate
+  "$(dirname "${binary}")/python" -I -c \
+    'import fastapi, uvicorn, hfcache.server, hfcache.verification_worker, hfcache.scheduled_client'
+  local scratch
+  scratch=$(mktemp -d)
+  trap 'rm -rf -- "${scratch}"' EXIT
+  printf 'schema_version=1\n[storage]\narchive_root="%s/archive"\narchive_id="00000000-0000-0000-0000-000000000001"\n[hub]\ntoken_mode="disabled"\n' \
+    "${scratch}" > "${scratch}/config.toml"
+  "${binary}" --config "${scratch}/config.toml" config validate --local > /dev/null
+  local archive_config=${HFCACHE_ARCHIVE_CONFIG:-/etc/hfcache/config.toml}
+  if [[ -r ${archive_config} ]]; then
+    step 'installed archive policy syntax and constraints'
+    # Build/stage needs neither API nor Hub secrets. The real daemon owns
+    # credential validation and archive proof; required Hub mode is valid here.
+    "$(dirname "${binary}")/python" -I - "${archive_config}" <<'PY'
+import sys
+from pathlib import Path
+from hfcache.config import load_config
+from hfcache.errors import HfcacheError
+
+try:
+    load_config(Path(sys.argv[1]))
+except HfcacheError as error:
+    sys.stderr.write("install-release: archive policy rejected; use explicit local validation for details\n")
+    raise SystemExit(int(error.exit_code)) from None
+PY
   else
-    printf 'no /etc/hfcache/config.toml yet; skipping config validate\n'
+    printf 'no archive policy available; installed synthetic --local smoke passed\n'
   fi
-}
+)
 
 MODE=install
 SWITCH_TARGET=
+DRY_RUN=false
 for argument in "$@"; do
   case "${argument}" in
     --no-switch) MODE=stage ;;
     --list) MODE=list ;;
+    --dry-run) DRY_RUN=true ;;
     --switch)
       MODE=switch
       SWITCH_TARGET=pending
@@ -144,6 +155,19 @@ for argument in "$@"; do
   esac
 done
 [[ ${SWITCH_TARGET} == pending ]] && die '--switch requires a version'
+canonical_absolute_path "${PREFIX}" || die 'unsafe install prefix'
+[[ -z ${SWITCH_TARGET} ]] || valid_release_version "${SWITCH_TARGET}"
+
+if ${DRY_RUN}; then
+  printf 'mode: %s\nprefix: %s\nsource: %s\n' "${MODE}" "${PREFIX}" "${SOURCE}"
+  printf 'dependency profile: locked server extra; no dev or editable install\n'
+  printf 'smoke: installed help/version/server imports, synthetic validate --local and policy parsing\n'
+  printf 'switch/rebuild guard: timers, clients, API/verification sockets and executors inactive\n'
+  printf 'orphan guard: noncreating exclusive shared-lock check retained through switch\n'
+  printf 'archive operations: none; no service stop/start or timer activation\n'
+  [[ -z ${SWITCH_TARGET} ]] || printf 'switch target: %s\n' "${SWITCH_TARGET}"
+  exit 0
+fi
 
 if [[ ${MODE} == list ]]; then
   printf 'prefix:  %s\n' "${PREFIX}"
@@ -156,12 +180,18 @@ fi
 [[ ${EUID} -eq 0 ]] || die "must run as root to write ${PREFIX}"
 
 if [[ ${MODE} == switch ]]; then
+  require_quiescent
   switch_to "${SWITCH_TARGET}"
   exit 0
 fi
 
 VERSION=$(release_version)
 [[ -n ${VERSION} ]] || die "could not read the version from ${SOURCE}/pyproject.toml"
+valid_release_version "${VERSION}"
+if [[ ${MODE} == install ]] || \
+  [[ $(readlink "${PREFIX}/current" 2>/dev/null) == "releases/${VERSION}" ]]; then
+  require_quiescent
+fi
 RELEASE="${PREFIX}/releases/${VERSION}"
 UV=$(uv_binary)
 
@@ -219,8 +249,7 @@ if [[ -d ${RELEASE} ]]; then
   # the release *name*, so it dangles while this runs — which is why plan §30's
   # upgrade stops `hfcache.target` and waits for active jobs before step 3.
   if [[ $(readlink "${PREFIX}/current" 2> /dev/null) == "releases/${VERSION}" ]]; then
-    printf 'note: current points at %s and is being rebuilt in place;\n' "${VERSION}" >&2
-    printf '      hfcache.target should be stopped (plan §30 upgrade step 1)\n' >&2
+    printf 'rebuilding quiesced release %s; runtime lock retained\n' "${VERSION}" >&2
   fi
   RESTORE="${RELEASE}.replaced.$$"
   mv -T "${RELEASE}" "${RESTORE}"
@@ -228,14 +257,14 @@ fi
 mv -T "${STAGING}" "${RELEASE}"
 STAGING=
 
-step 'uv sync --frozen --no-dev --no-editable'
+step 'uv sync --frozen --extra server --no-dev --no-editable'
 # `--no-editable` so the installed package is a built wheel rather than a path
 # reference: nothing at runtime reads `src/`, and the venv keeps working if the
 # release tree's sources are later made unreadable.
 # `--no-python-downloads` so this step can only use the interpreter pinned above.
 (
   cd "${RELEASE}"
-  "${UV}" sync --frozen --no-dev --no-editable --no-python-downloads \
+  "${UV}" sync --frozen --extra server --no-dev --no-editable --no-python-downloads \
     --python "${PYTHON_VERSION}"
 )
 

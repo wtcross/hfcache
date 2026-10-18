@@ -3,6 +3,7 @@
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
+API-backed quiescence is amended by [decision 121](decision-121.md).
 
 - Original decision date: 2026-07-27.
 - Original work package: `OPS-001`.
@@ -71,3 +72,21 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [tests/system/test_wheel_smoke.py](../../tests/system/test_wheel_smoke.py).
+
+## API-014 quiescence and compatibility amendment (2026-10-18)
+
+[Decision 121](decision-121.md) requires actual API/worker sockets/services,
+scheduled clients and timers inactive before switch/rebuild, with a noncreating
+archive-flock guard retained through the switch. Unknown quiescence refuses;
+installer never auto-stops/kills or clears locks. Stop admission/activation and
+drain API work while private outcome handoff remains available, then drain the
+private worker. Stopped client wrappers alone prove nothing about execution.
+Never stop the lifecycle target for upgrades.
+
+Writer release smoke installs locked server dependencies, parses real archive
+policy without credentials/archive/network and exercises CLI local validation
+using synthetic disabled-token policy. Real daemon credential validation stays
+operator/API preflight. Preserve pending observation/operation stores and perform
+the new independent handle's actual old/current binary drill. Disposable two-tree
+switch/drain/rollback fixtures do not constitute production deployment or real
+systemd/cgroup/SELinux/NFS acceptance.

@@ -8,11 +8,11 @@ mcp_enabled = false
 log_level = "info"
 
 [credentials.writer]
-systemd_name = "rest-writer"
+systemd_name = "hfcache.api"
 
 # Optional reader classes are disabled when their source is not configured.
 # [credentials.reader]
-# systemd_name = "rest-reader"
+# systemd_name = "hfcache.api-reader"
 
 [listener]
 unix_enabled = true

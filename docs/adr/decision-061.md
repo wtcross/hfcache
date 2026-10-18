@@ -3,6 +3,7 @@
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
+Executor/client unit roles are amended by [decision 121](decision-121.md).
 
 - Original decision date: 2026-07-26.
 - Original work package: `SEL-001`.
@@ -75,3 +76,13 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [scripts/hardening-probe.py](../../scripts/hardening-probe.py).
+
+## API-014 executor/client role amendment (2026-10-18)
+
+[Decision 121](decision-121.md) moves archive execution to API/private-verifier
+units. Those actual executors retain the setgid-compatible hardening exception
+and archive controls above. The old sync/verify unit names now identify AF_UNIX
+observers with archive access masked; `RestrictSUIDSGID=true` is appropriate there
+because they cannot publish or invoke local repair. This strengthens client
+policy without weakening executor protection or changing published permissions.
+Probe actual executors, not wrapper properties; real host acceptance remains held.

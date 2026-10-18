@@ -1306,6 +1306,16 @@ insufficient. This does not waive the normal stale-age policy or activate a new
 cancellation endpoint. The currently shipped direct-service workflow is migrated
 only by the later client/packaging tasks; no production service change is claimed.
 
+**API-014 clarification (2026-10-18, [decision 121](adr/decision-121.md)).**
+The packaged sync/verify services are observers with retained pending handles.
+Stop API activation and drain the actual daemon while its private verifier remains
+available for exact outcome handoff, then stop/drain private activation/service
+and prove actual executor termination before mount/release/recovery work. Never
+delete handles or lock inodes to make quiescence appear true. The original exact
+run/transaction, empty `staging_created`-only evidence, exclusive lock and review
+conditions remain mandatory; no general cancellation/zero-age endpoint is added.
+Repository rehearsals do not prove installed no-IP/SELinux/NFS behavior.
+
 ### 7.9 What stops the machine
 
 Automatic recovery halts, sets `state = "needs_operator"`, and changes nothing
@@ -1503,8 +1513,9 @@ evidence permits parent interruption. A private durable `running` label without
 an owned live thread does not prove liveness.
 
 No durable archive/schema family or dependency changes. API-009/010 retain public
-submissions and API-014 retains socket-activated units, credential-free environment,
-`IPAddressDeny=any` and installed-host acceptance. Startup offline initialization
+submissions and API-014 packages socket-activated units, credential-source masking
+and `IPAddressDeny=any`; actual enforcement remains installed-host acceptance.
+Startup offline initialization
 is only a library switch. See [server](server.md), [API lifecycle](api.md#admission-idempotency-and-lifecycle),
 INV-014/015 and the [supervised recovery boundary](#782-explicit-cancellation-of-an-interrupted-download).
 

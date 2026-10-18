@@ -34,6 +34,33 @@ the version stand.
 
 ## Deploy (deployment §13, compressed)
 
+**API-014 amendment (2026-10-18, [decision 121](../adr/decision-121.md)).**
+The historical command block below predates API-backed execution. Follow the
+current [deployment quiescence procedure](../deployment-centos-stream-10.md#13-upgrade-plan-30):
+pause timers, retain scheduled/operation handles, prevent API reactivation and
+drain the actual API while private verifier status/result handoff stays available,
+then stop/drain private activation/service. Switch/rebuild requires timers,
+clients and actual API/worker sockets/services quiescent, including zero service
+PIDs and no cgroup tasks, plus a noncreating orphan-lock check held through the
+switch. Missing task accounting requires explicitly empty control-group evidence.
+The installer refuses unknown quiescence and never auto-stops/kills.
+Do not stop `hfcache.target`, unlink locks or treat client exit as termination.
+
+Writer installation provisions locked `server` dependencies. Smoke parses actual
+archive TOML through the installed strict loader without credentials/archive/
+network, and exercises explicit CLI `config validate --local` against an owned
+synthetic disabled-token policy. Required Hub credentials are not imported into
+the installer; daemon-source validation remains operator/API preflight. Preserve
+pending handles, both operation stores and previous release trees through rollback.
+If `/var/lib/hfcache/scheduled` contains a pending handle, the installer refuses a
+target whose actual installed Python lacks `hfcache.scheduled_client`; state links
+also refuse. Trusted custom state layout uses `HFCACHE_CLIENT_STATE_DIRECTORY`.
+The new [handle schema](../schemas.md#14-scheduled-client-observation-handle-api-014)
+requires actual old/current binary compatibility drill in addition to archive
+format drills. Real socket/cgroup/no-IP/no-credential/SELinux/NFS and executor-aware
+hardening proof remain deployment prerequisites; repository fixtures do not pass
+them. No deploy/tag/push is authorized by implementation of this task.
+
 ```bash
 sudo systemctl stop hfcache-sync.timer          # quiesce — never hfcache.target
 sudo scripts/install-release.sh --no-switch     # stage the new release

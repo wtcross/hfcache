@@ -180,10 +180,11 @@ installing the extra starts no listener and changes no deployed writer.
 API-007 adds bounded local receipt/idempotency primitives and authenticated
 operation observation. Control-state history survives client loss and is never
 automatically replayed; interrupted history is retained. Reader CLI integration
-is API-012 and operational CLI/observation API-013; systemd packaging remains later work.
+is API-012, operational CLI/observation API-013, and systemd packaging API-014.
 API-008 supplies one bounded execution lane and private verifier protocol/process
-primitives. Installed socket activation and OS no-IP enforcement still require
-API-014; the library offline flag alone is insufficient. MCP stays behind the REST acceptance
+primitives. API-014 packages activation/no-IP policy; installed OS enforcement
+remains operator acceptance. The library offline flag alone is insufficient.
+MCP stays behind the REST acceptance
 gate and adds no dependency yet. Disposable-socket TLS tests use the OpenSSL CLI
 as a development test tool; Python production dependencies remain locked.
 API-009 exposes keyed command admission with HTTP 202 and authenticated status,
@@ -228,8 +229,20 @@ resume observation without submission; Ctrl-C/timeouts preserve handles and do
 not cancel accepted work. Use [the client runbook](docs/api-client.md#submit-detach-and-resume-api-013)
 for finite wait, same-key retry and uncertainty. Initialization keeps explicit
 root/confirmation and the server's disabled gate; no-confirm inspection never
-submits. Installed systemd/Cockpit integration and OS isolation proof remain later
-tasks; this branch has not been deployed.
+submits. API-014 packages systemd integration; Cockpit caller integration remains
+API-015 and installed OS isolation proof remains operator work. This branch has
+not been deployed.
+
+API-014 packages activated API/private-verifier services and API-only scheduled
+clients. One API socket feeds one application across Unix/optional loopback TCP.
+The actual verifier carries offline/no-IP/credential-source policy; no-IP on a
+client wrapper alone is insufficient. Private strict scheduled handles persist a
+key before one POST and retain lookup-only recovery through finite observation
+windows, preserving long-running oneshot behavior without replay. Unit names,
+calendars, disabled verify timer and shared runtime locks remain. Installer dry-run
+and disposable stage/drain/rollback tests do not establish installed cgroup,
+credential, SELinux or NFS acceptance; those remain explicit deployment holds.
+No production service or archive operation is performed by this implementation.
 
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —

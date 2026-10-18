@@ -1,86 +1,32 @@
-# The scheduled sync (docs/plan.md §22.2).
-#
-# `Type=oneshot`, because a run ends. systemd records the exit code, and the
-# application's §11.2 classifications are chosen so that a scheduler can tell a
-# malformed invocation from a repository failure from a safety refusal.
-#
-# The hardening block is §22.5 and is applied and tested at SYS-002.
-
+# API-backed observer; retained private state never authorizes replay (ADR121).
 [Unit]
-Description=Synchronize configured Hugging Face repositories
-Documentation=file:///opt/hfcache/current/docs/cli.md
+Description=Observe synchronization of configured repositories
 Documentation=file:///opt/hfcache/current/docs/operations.md
-Wants=network-online.target
-After=network-online.target remote-fs.target
-# The mount boundary. This pulls in srv-hfcache.automount and orders the service
-# after it, so a NAS that cannot be reached fails this unit *before* the
-# application runs rather than during it — no download into a missing archive.
-RequiresMountsFor=/srv/hfcache
+Requires=hfcache-api.socket
+After=hfcache-api.socket
 PartOf=hfcache.target
-# §24's monitoring seam, left rather than wired. A scheduled run that fails is
-# otherwise silent until somebody thinks to run `hfcache status` — and the
-# failures that leave no durable run report behind (preflight refusal, lock
-# timeout, a crash mid-download) are exactly the ones nothing else records. The
-# handler ships complete and uninstalled at hfcache-failure@.service.example,
-# which carries the evidence that it works and the two steps to activate it.
-# Uncomment this line as the second of those steps.
 #OnFailure=hfcache-failure@%n.service
 
 [Service]
 Type=oneshot
 User=hfcache
 Group=hfcache
-UMask=0027
-ExecStart=/opt/hfcache/current/.venv/bin/hfcache --config /etc/hfcache/config.toml sync
-
-# A first sync of a large repository legitimately takes hours, and there is no
-# honest number to put here: a timeout would kill a healthy transfer. The bounds
-# that matter are the application's own — per-request Hub timeouts, the lock wait,
-# and the capacity gate — and none of them is a wall-clock limit on the run.
+UMask=0077
+ExecStart=/opt/hfcache/current/.venv/bin/python -m hfcache.scheduled_client --client-config /etc/hfcache/scheduled-client.toml --state-directory /var/lib/hfcache/scheduled/sync sync
+# Multiple finite HTTP windows preserve the original unlimited oneshot lifetime.
 TimeoutStartSec=infinity
-
-# The writer is a guest, and a terabyte-scale sync streams every byte through the
-# page cache — `snapshot_download` writes ordinary buffered files, so without a
-# bound the cache grows until the guest has touched all of its RAM. Memory a
-# guest has touched is memory the hypervisor has committed; on 2026-07-29 a
-# 1.5 TB download did exactly that and the host OOM-killed the VM mid-run
-# (decision 86). `MemoryHigh=` makes the kernel reclaim this cgroup's cache
-# continuously instead, so the run's footprint stays near this figure no matter
-# the repository size — at no real cost, because a repository larger than guest
-# RAM was never going to be served from cache anyway. The figure is a working
-# set, not a quota: several times the process's own anonymous memory, so the
-# throttle only ever squeezes cache. `MemoryMax=` is deliberately absent — it
-# kills, which would trade the host's OOM for one of our own; above `high` the
-# kernel throttles and reclaims, and a slow sync beats a dead one.
-MemoryHigh=4G
-
-# /var/lib/hfcache, /var/cache/hfcache, /run/hfcache: created, owned, and mode-set
-# by systemd, so the deployment does not depend on them having been provisioned by
-# hand. RuntimeDirectoryMode matches locking.LOCK_DIRECTORY_MODE, and
-# RuntimeDirectoryPreserve keeps /run/hfcache after the oneshot exits so an
-# operator running the CLI directly still has somewhere to take the lock.
-StateDirectory=hfcache
-StateDirectoryMode=0750
-CacheDirectory=hfcache
-CacheDirectoryMode=0750
+# Client shutdown leaves its handle and never proves execution stopped.
+TimeoutStopSec=30
+StateDirectory=hfcache/scheduled/sync
+StateDirectoryMode=0700
 RuntimeDirectory=hfcache
 RuntimeDirectoryMode=0700
 RuntimeDirectoryPreserve=yes
-
-# No Hub library state may resolve toward a home directory: the service account
-# has none, and a library that fell back to one would write archive-critical cache
-# outside every path this deployment reasons about. The Hub cache itself is *not*
-# set here — it is passed explicitly to snapshot_download from the archive layout
-# (§12), so it cannot be redirected by the environment at all.
-Environment=HF_XET_CACHE=/var/cache/hfcache/xet
-Environment=HF_HOME=/var/lib/hfcache/hf-home
-
-# --- §22.5 hardening. Every setting here is tested by
-# --- scripts/check-hardening.sh, which runs a real workload — DNS, TLS, a
-# --- huggingface_hub API call, an hf_xet download, native extension imports, and
-# --- a create/fsync/rename/unlink on the NFS archive — under these exact
-# --- properties, and then confirms each one is in effect. A property systemd
-# --- parsed but could not apply reads as protection in this file and is not there.
+LoadCredentialEncrypted=hfcache.api:/etc/credstore.encrypted/hfcache.api
+UnsetEnvironment=HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN
+# No archive access or Hub state is needed by an HTTP observer.
+InaccessiblePaths=-/srv/hfcache -/var/lib/hfcache/hf-home
+IPAddressDeny=any
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true
@@ -94,37 +40,13 @@ ProtectClock=true
 ProtectHostname=true
 ProtectProc=invisible
 ProcSubset=pid
-# RestrictSUIDSGID is **not** set, and this is the one §22.5 setting that is not.
-# The failing requirement: `publication.create_staging` creates the staging tree at
-# PUBLISHED_DIRECTORY_MODE = 0o2750, setgid, because publication is a rename and a
-# rename does not change a mode — so every published directory carries the group
-# the consumer export's read identity depends on (§5.2, and the `published/`
-# anchor the NAS was provisioned with is 2750 for the same reason).
-# `RestrictSUIDSGID=true` makes that `mkdir` EPERM, which failed a real sync with
-# `HFSYN005` (decision 61). The alternative — stop asking for setgid and hope the
-# parent's inheritance covers it — would trade a durable, consumer-visible
-# on-disk contract for a hardening flag, and would be silent when it was wrong.
-#
-# The narrower control that replaces it, and why the residual risk is closed
-# twice over: /srv/hfcache is mounted `nosuid,nodev,noexec`, so a setuid or setgid
-# file on the only filesystem this service can write is inert; `NoNewPrivileges=true`
-# means this service and every child can never gain privileges from such a bit
-# wherever it sits; and the capability bounding and ambient sets are empty. The
-# systemd-managed directories are 0750/0700 `hfcache:hfcache`, reachable only by
-# this account and root, and root ignores setgid on exec anyway.
+RestrictSUIDSGID=true
 RestrictNamespaces=true
 LockPersonality=true
 CapabilityBoundingSet=
 AmbientCapabilities=
 SystemCallArchitectures=native
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-
-# The only writable path that is not systemd-managed. `ProtectSystem=strict`
-# makes the whole filesystem read-only and StateDirectory/CacheDirectory/
-# RuntimeDirectory carry their own write access, so this one line is the entire
-# mutation surface of the service (§22.5's last item).
-ReadWritePaths=/srv/hfcache
+RestrictAddressFamilies=AF_UNIX
 
 [Install]
-# Not enabled. The timer starts this; an operator runs it by hand with
-# `systemctl start hfcache-sync.service` or by invoking the CLI directly.
+# Timers retain their existing names/calendars; verify stays disabled by default.

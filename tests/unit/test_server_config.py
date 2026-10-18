@@ -199,7 +199,7 @@ def test_malformed_toml_never_echoes_source_or_unregistered_secret(tmp_path):
 def test_shipped_example_matches_schema():
     assert (
         load_server_config(Path("packaging/server.toml")).credentials.writer.systemd_name
-        == "rest-writer"
+        == "hfcache.api"
     )
 
 

@@ -1,0 +1,60 @@
+# Actual verifier: no credentials, startup offline switches and cgroup no-IP.
+[Unit]
+Description=hfcache private offline verification executor
+Documentation=file:///opt/hfcache/current/docs/server.md
+After=remote-fs.target
+Requires=hfcache-verification.socket
+RequiresMountsFor=/srv/hfcache
+PartOf=hfcache.target
+#OnFailure=hfcache-failure@%n.service
+
+[Service]
+Type=simple
+User=hfcache
+Group=hfcache
+UMask=0027
+ExecStart=/opt/hfcache/current/.venv/bin/python -m hfcache.verification_worker --config /etc/hfcache/config.toml --state-directory /var/lib/hfcache/verification --socket /run/hfcache/verification.sock --api-user hfcache
+Sockets=hfcache-verification.socket
+TimeoutStopSec=infinity
+MemoryHigh=4G
+# Writable parent also holds verification.instance.lock; store creates0700 root.
+StateDirectory=hfcache
+StateDirectoryMode=0750
+CacheDirectory=hfcache-verification
+CacheDirectoryMode=0700
+RuntimeDirectory=hfcache
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+Environment=HF_HUB_OFFLINE=1
+Environment=HF_DATASETS_OFFLINE=1
+Environment=HF_HUB_DISABLE_TELEMETRY=1
+Environment=HF_HOME=/var/lib/hfcache/verification-hf-home
+Environment=HF_XET_CACHE=/var/cache/hfcache-verification/xet
+UnsetEnvironment=HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN CREDENTIALS_DIRECTORY HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN
+# Same-UID services must not expose other units' or cached Hub credentials.
+InaccessiblePaths=-/run/credentials -/etc/credstore -/etc/credstore.encrypted -/etc/hfcache/credentials -/var/lib/hfcache/hf-home
+IPAddressDeny=any
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+# Keep the measured cgroup no-IP/NFS policy rather than a private network.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/srv/hfcache
+
+[Install]
+Also=hfcache-verification.socket

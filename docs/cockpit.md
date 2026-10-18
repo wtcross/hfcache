@@ -23,6 +23,19 @@ Operator-facing installation and usage documentation is
 `docs/cockpit-plugin/` (`CPT-012`), written against this contract; where
 they disagree, this document wins and the operator pages are corrected.
 
+**API-014 deployment amendment (2026-10-18, [decision 121](adr/decision-121.md)).**
+The shipped sync/verify service names now observe API operations through private
+AF_UNIX clients. Their names, calendars, disabled verification timer, OnFailure
+hooks and target/mount boundary stay intact (CP-05/06/13). Stopping an observer
+does not stop accepted execution or prove a free archive; preserve its pending
+handle and use the [executor drain procedure](deployment-centos-stream-10.md#13-upgrade-plan-30).
+The actual API/private worker owns archive/Hub authority. A browser/transient
+client must not receive a Hub credential; API credentials remain systemd-managed
+and never enter the page (CP-08). API-015 owns the plugin's caller/credential and
+observation integration. The older direct-execution mechanisms below are retained
+as that migration's baseline, not evidence that API-014 deployed them or completed
+plugin integration. Installed hardening/SELinux/NFS acceptance remains pending.
+
 ## 1. Rules
 
 | ID | Rule |

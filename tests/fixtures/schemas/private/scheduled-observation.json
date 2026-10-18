@@ -1,0 +1,9 @@
+{
+  "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+  "command": "sync",
+  "endpoint": "unix:/run/hfcache/api.sock",
+  "idempotency_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "operation_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "principal": "rest-writer",
+  "schema_version": 1
+}

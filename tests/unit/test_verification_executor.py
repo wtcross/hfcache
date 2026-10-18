@@ -532,7 +532,12 @@ def test_activated_worker_entrypoint(tmp_path, extra_descriptor):
                 str(os.geteuid()),
             ],
             pass_fds=descriptors,
-            env={"PATH": os.environ["PATH"], "LISTEN_FDS": "1", "LANG": "C.UTF-8"},
+            env={
+                "PATH": os.environ["PATH"],
+                "LISTEN_FDS": "1",
+                "LISTEN_FDNAMES": "hfcache-verification",
+                "LANG": "C.UTF-8",
+            },
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )

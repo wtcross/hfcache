@@ -378,6 +378,56 @@ notices a failed run until somebody runs `hfcache status`.
 
 ## 10. Install the units
 
+**API-014 source contract (2026-10-18, [decision 121](adr/decision-121.md)).**
+The activated arrangement adds `hfcache-api.service` / `.socket` and
+`hfcache-verification.service` / `.socket`. One API socket unit owns private Unix
+and loopback `127.0.0.1:8787` listeners, both named `hfcache-api`; one application
+adopts the exact configured set. Disabling TCP requires a paired socket drop-in
+that resets `ListenStream=` to Unix only and server `tcp_enabled=false`, not a
+second app. The worker descriptor is `hfcache-verification`, with account/euid
+peer checks; never substitute manager `%U`. [Server](server.md#activated-services-and-scheduled-observation-api-014)
+owns exact activation/credential/sandbox rules. These are packaged source
+requirements, not evidence that any host unit was installed or started here.
+
+Provision API-only `hfcache.api` under the same systemd credential name for daemon
+and scheduled clients, preserving encrypted-name binding. Hub `hf-token` is
+daemon-only; the actual verifier imports neither. The worker masks
+`/run/credentials`, `/etc/credstore`, `/etc/credstore.encrypted`,
+`/etc/hfcache/credentials` and `/var/lib/hfcache/hf-home`; custom development
+credential-file locations require explicit additional mask and probe. The
+scheduled client configuration must pin the expected archive UUID, and private
+per-unit state must preserve unresolved [observation handles](schemas.md#14-scheduled-client-observation-handle-api-014).
+The verify timer stays disabled. Shared runtime lock inodes must survive unit
+stops; no service may clear another executor's lock.
+
+The pre-API historical install/probe commands below are retained deployment
+evidence. Before using the new arrangement, install/verify all four new unit
+files with the existing units and test the actual executor's hardening, not just
+the sync/verify client wrappers. Real systemd socket activation, cgroup no-IP/
+no-credential behavior, SELinux/NFS and installed hardening remain deployment
+holds, not replaced by repository fixtures or unit-file parsing.
+
+Current installed executor probes, for an authorized operator acceptance window:
+
+```text
+sudo /opt/hfcache/current/scripts/check-hardening.sh hfcache-api.service
+sudo /opt/hfcache/current/scripts/check-hardening.sh hfcache-verification.service --credential-probe /etc/credstore.encrypted/hfcache.api
+```
+
+The verification probe requires a known protected file that exists outside its
+sandbox; use a provisioned safe path, never a token value. The script reads
+installed unit/drop-in properties, excludes work/activation/lifecycle commands,
+and starts a separate probe under the executor policy. It refuses client-wrapper
+unit names; property diagnostics show names without secret values.
+Writable-path checks derive from the actual executor's `STATE_DIRECTORY`,
+`CACHE_DIRECTORY` and `RUNTIME_DIRECTORY`, including the verifier's separate cache.
+The Python probe refuses bare invocation outside its selected executor context.
+Its fixture
+`--dry-run --unit-directory PATH` performs no transient-unit/network/credential/
+archive probes and is not installed-hardening evidence. Require every actual
+probe and SELinux/NFS acceptance check to pass; historical 23-check scores below
+do not certify the new executors.
+
 ```bash
 sudo install -m 0644 -o root -g root \
   packaging/systemd/hfcache.target \
@@ -492,6 +542,38 @@ srv-hfcache.mount          static
 ---
 
 ## 13. Upgrade (plan §30)
+
+**API-014 current quiescence rule (2026-10-18, [decision 121](adr/decision-121.md)).**
+The historical stop-client/free-lock recipe below is insufficient for API-backed
+execution. Record current timers and operation/key handles; pause scheduling
+without stopping `hfcache.target` or changing the disabled verification calendar.
+Let clients finish, or deliberately stop only their observation while retaining
+pending handles. Prevent API reactivation by stopping `hfcache-api.socket`, then
+stop/drain the actual API service while the private verifier socket/service stays
+available for exact status/result handoff. After API work is drained, stop the
+verification socket/service and prove their actual workers ended. Preserve API,
+verifier and scheduled state, including ambiguous/orphan evidence.
+
+Before switch or rebuild, both timers, both scheduled clients and actual API/worker
+sockets/services must be quiescent: inactive or failed, with service PIDs zero and
+no cgroup tasks. Unavailable task accounting is accepted only with explicitly
+empty control-group evidence. A noncreating flock probe must prove no orphan
+archive-lock holder and retain that lock through the atomic release switch.
+Inability to establish any part refuses installation;
+the installer does not auto-stop/kill services or unlink locks. An inactive client,
+free flock, PID or missing history alone is not execution proof. Forced termination
+requires supervised exact operation/run/transaction evidence and the existing
+recovery conditions; never reset a pending handle to replay.
+
+The writer installation includes the locked `server` extra. Its service-independent
+smoke parses actual archive TOML with the installed strict loader without
+credentials/archive/network, then exercises CLI `config validate --local` on an
+owned synthetic disabled-token policy. It never borrows daemon Hub credentials;
+real daemon-source validation remains operator/API preflight. The installer's dry
+run is read-only. Rehearse stage/drain/switch/rollback on disposable
+fixtures and preserve both release trees; actual deployed systemd/cgroup/SELinux/
+NFS acceptance remains operator work. No such production procedure is executed
+or authorized by this implementation package.
 
 > **Read this before step 1.** Plan §30 says "stop `hfcache.target`". On this
 > deployment `srv-hfcache.mount` is `PartOf=hfcache.target`, so stopping the
@@ -772,6 +854,33 @@ acceptance remain later tasks; this drill installs no production release and
 does not authorize host operations. See [schema §13](schemas.md#13-service-private-operation-control-state-api-007)
 and the [API-007 evidence](plans/tasks/api-007-operation-receipts-and-idempotency.md).
 
+**API-014 scheduled-handle rollback barrier (2026-10-18, decision 121).**
+Preserve `/var/lib/hfcache/scheduled/` and both operation stores, including unknown/
+future/temp evidence. The actual installed predecessor `a01875c` / 0.1.10 wheel
+on CPython 3.14.6 lacks `hfcache.scheduled_client`: module invocation exits 1 for
+both private schema 1 and future 2 and preserves their bytes. The current reader
+accepts schema 1 and refuses future 2 with HFAPI014/20, also preserving bytes.
+The locked offline drill performed no archive operation or production install;
+details are in the [task](plans/tasks/api-014-systemd-and-deployment-integration.md)
+and [schema§14](schemas.md#14-scheduled-client-observation-handle-api-014).
+
+An old binary's missing observer support cannot establish nonexecution. Keep a
+compatible API/observer available to reconcile exact retained outcomes before
+restoring an older direct-execution unit or scheduling another job. Never delete
+handles, change keys or restore old service commands to bypass unresolved history.
+After exact terminal evidence, a compatible observer can durably clear its owned
+pending file. Actual server/worker quiescence and the held orphan-lock guard still
+govern release switches; do not stop the lifecycle target or erase lock inodes.
+
+The installer checks retained `pending.json` under `/var/lib/hfcache/scheduled`
+before switching. If any exists, the target release's actual installed Python
+must provide `hfcache.scheduled_client`; otherwise the switch refuses and preserves
+the handle. State symlinks also refuse. Trusted custom layouts can set
+`HFCACHE_CLIENT_STATE_DIRECTORY`; `HFCACHE_RUNTIME_DIRECTORY` and
+`HFCACHE_SYSTEMCTL` select the corresponding runtime/control interfaces for
+deliberate local layouts or disposable tests. These settings do not waive
+quiescence, evidence retention or the target compatibility check.
+
 Keep at least the previous release installed (plan §21.4 item 7). `--list` is how
 you see what you have:
 
@@ -787,6 +896,16 @@ releases:
 ---
 
 ## 15. Acceptance checklist
+
+The table retains the earlier direct-execution deployment acceptance. API-014
+additionally requires real named Unix/TCP activation with one application,
+private-worker peer restrictions, executor cgroup no-IP/credential-source masking,
+executor-aware `check-hardening.sh` for API and verification services, graceful
+drain/orphan checks, and SELinux/NFS acceptance after unit installation. The
+repository's inherited-descriptor fixtures and unit verification do not satisfy
+those host checks. The historical 23-check wrapper score below is not a score for
+the new executors. Keep verification's timer disabled until full-duration host
+measurement authorizes it.
 
 | Check | Expected |
 | --- | --- |

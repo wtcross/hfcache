@@ -1,6 +1,7 @@
 # Decision 120 — Separate command execution from resumable CLI observation
 
-- Status: Accepted; implemented by API-013 on 2026-10-18, this commit.
+- Status: Accepted; implemented by API-013 on 2026-10-18; scheduled observation
+  lifecycle refined by [decision 121](decision-121.md).
 - Date: 2026-10-18.
 - Work package: API-013, this commit.
 - Source: [progress decision 120](../progress.md#decisions),
@@ -95,3 +96,13 @@ Evidence: [authenticated server/private-worker fixture](../../tests/api_cli.py),
 [write CLI integration](../../tests/unit/test_cli_api_writes.py),
 [helper tests](../../tests/unit/test_cli_operation_helpers.py) and
 [CLI interruption/idempotency/security tests](../../tests/unit/test_cli_operations_adversarial.py).
+
+## API-014 scheduled observer refinement (2026-10-18)
+
+[Decision 121](decision-121.md) retains finite ordinary CLI observation while a
+fixed scheduled-client entrypoint repeats finite windows to preserve multi-hour
+oneshot lifetime. Its private strict versioned handle fsyncs a key before the sole
+POST; existing history permits lookup/observe only, including uncertain pre-POST
+crashes. Exact terminal evidence alone permits handle removal. This is observer
+continuity, not replay, cancellation or a request queue; no credentials/digests/
+bodies/results are stored. Ordinary detach/wait output and domain authority stand.

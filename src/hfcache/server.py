@@ -1,4 +1,4 @@
-"""Single-process Unix/TCP bootstrap; optional server dependencies stay lazy.
+"""Single-process activated or foreground Unix/TCP bootstrap (decision 121).
 
 One Uvicorn instance and lifespan own both listeners. Its small startup override
 applies direct TLS only to TCP; the local Unix socket never acquires IP egress.
@@ -29,15 +29,140 @@ if TYPE_CHECKING:
 
     from hfcache.server_config import ListenerConfig, ServerConfig
 
+_ACTIVATION_START = 3
+_ACTIVATION_NAME = "hfcache-api"
+_ACTIVATION_ENVIRONMENT = ("LISTEN_PID", "LISTEN_FDS", "LISTEN_FDNAMES", "LISTEN_PIDFDID")
+
+
+def _activation_count(policy: ListenerConfig) -> int | None:
+    """An incomplete activation never falls back to binding another listener."""
+    if not any(name in os.environ for name in _ACTIVATION_ENVIRONMENT):
+        return None
+    count = int(policy.unix_address is not None) + int(policy.tcp_address is not None)
+    if (
+        os.environ.get("LISTEN_PID") != str(os.getpid())
+        or os.environ.get("LISTEN_FDS") != str(count)
+        or os.environ.get("LISTEN_FDNAMES") != ":".join([_ACTIVATION_NAME] * count)
+    ):
+        message = "socket activation does not match the configured listeners"
+        raise ValueError(message)
+    if (identity := os.environ.get("LISTEN_PIDFDID")) is not None:
+        descriptor = os.pidfd_open(os.getpid())
+        try:
+            if identity != str(os.fstat(descriptor).st_ino):
+                message = "socket activation does not identify this process"
+                raise ValueError(message)
+        finally:
+            os.close(descriptor)
+    return count
+
+
+def _activated_unix(policy: ListenerConfig, channel: socket.socket) -> None:
+    if policy.unix_address is None:
+        message = "activated Unix listener is disabled by server policy"
+        raise ValueError(message)
+    parent = open_directory(policy.unix_socket.parent)
+    try:
+        directory = os.fstat(parent)
+        info = os.stat(policy.unix_socket.name, dir_fd=parent, follow_symlinks=False)
+        if (
+            channel.getsockname() != str(policy.unix_socket)
+            or not stat.S_ISSOCK(info.st_mode)
+            or info.st_uid != os.geteuid()
+            or info.st_gid not in {os.getegid(), *os.getgroups()}
+            or stat.S_IMODE(info.st_mode) != policy.socket_mode
+            or directory.st_uid not in {0, os.geteuid()}
+            or stat.S_IMODE(directory.st_mode) & 0o022
+        ):
+            message = "activated Unix listener does not match its protected configured path"
+            raise ValueError(message)
+    finally:
+        os.close(parent)
+
+
+def _activated_tcp(policy: ListenerConfig, channel: socket.socket) -> None:
+    if policy.tcp_address is None:
+        message = "activated TCP listener is disabled by server policy"
+        raise ValueError(message)
+    host, port = policy.tcp_address
+    family = socket.AF_INET6 if ":" in host else socket.AF_INET
+    expected = socket.getaddrinfo(
+        host,
+        port,
+        family=family,
+        type=socket.SOCK_STREAM,
+        proto=socket.IPPROTO_TCP,
+        flags=socket.AI_NUMERICHOST | socket.AI_NUMERICSERV,
+    )[0][4]
+    if (
+        channel.family != family
+        or channel.getsockname() != expected
+        or (
+            family == socket.AF_INET6
+            and channel.getsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY) != 1
+        )
+    ):
+        message = "activated TCP listener does not match its configured address"
+        raise ValueError(message)
+
+
+@contextmanager
+def _activated_listeners(policy: ListenerConfig, count: int) -> Iterator[list[socket.socket]]:
+    """Adopt only declared listeners; the manager retains their path and lifetime."""
+    opened: list[socket.socket] = []
+    seen: set[str] = set()
+    try:
+        for descriptor in range(_ACTIVATION_START, _ACTIVATION_START + count):
+            channel = socket.socket(fileno=descriptor)
+            opened.append(channel)
+            if channel.getsockopt(
+                socket.SOL_SOCKET, socket.SO_TYPE
+            ) != socket.SOCK_STREAM or not channel.getsockopt(
+                socket.SOL_SOCKET, socket.SO_ACCEPTCONN
+            ):
+                message = "activation requires listening stream sockets"
+                raise ValueError(message)
+            if channel.family == socket.AF_UNIX:
+                identity = "unix"
+                _activated_unix(policy, channel)
+            elif channel.family in {socket.AF_INET, socket.AF_INET6}:
+                identity = "tcp"
+                _activated_tcp(policy, channel)
+            else:
+                message = "activated socket family is unsupported"
+                raise ValueError(message)
+            if identity in seen:
+                message = "activation contains a duplicate listener"
+                raise ValueError(message)
+            seen.add(identity)
+            channel.set_inheritable(False)
+            channel.setblocking(False)  # noqa: FBT003 - socket API has positional-only flag
+        for name in _ACTIVATION_ENVIRONMENT:
+            os.environ.pop(name, None)
+        yield opened
+    finally:
+        # close(), never shutdown(): manager descriptors share the same sockets.
+        for channel in opened:
+            channel.close()
+
 
 @contextmanager
 def listeners(policy: ListenerConfig) -> Iterator[list[socket.socket]]:
-    """Bind configured addresses without adopting or unlinking an existing path.
+    """Adopt manager sockets or explicitly bind foreground development listeners.
 
-    A pinned parent fd protects the socket path from ancestor swaps. Cleanup is
-    limited to the exact socket inode created here; a replaced name is retained.
-    Runtime directories are provisioned by the operator, never by archive init.
+    Activation is all-or-nothing and never falls back to creating a listener.
     """
+    if (count := _activation_count(policy)) is not None:
+        with _activated_listeners(policy, count) as activated:
+            yield activated
+    else:
+        with _foreground_listeners(policy) as opened:
+            yield opened
+
+
+@contextmanager
+def _foreground_listeners(policy: ListenerConfig) -> Iterator[list[socket.socket]]:
+    """Bind with pinned parents and clean only the exact inode created here."""
     opened: list[socket.socket] = []
     parent = None
     owned = None

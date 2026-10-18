@@ -1,6 +1,8 @@
 # Keep host scheduling in systemd timers and drop-ins
 
-- Status: accepted; an existing locked plan decision without an AD number; provenance clarified by [decision 111](decision-111.md).
+- Status: accepted; an existing locked plan decision without an AD number;
+  provenance clarified by [111](decision-111.md), API client lifecycle amended by
+  [121](decision-121.md).
 - Original record: 2026-07-24, `87323c2` (initial plan, §4 and §22).
 - ADR backfill: 2026-10-17.
 - Authority: [plan §22](../plan.md#22-systemd-design),
@@ -63,6 +65,19 @@ operation receipts carry authenticated submitter metadata separately. No new
 scheduler, calendar change, unit installation or timer activation is introduced.
 
 ## History and evidence
+
+**API-014 amendment (2026-10-18, [decision 121](decision-121.md)).**
+The named sync/verify oneshots now observe fixed API jobs through AF_UNIX with a
+distinct API credential. Keep calendars, disabled verify timer, OnFailure and
+target/mount behavior. A private schema-1 pending handle persists the key before
+the sole POST and accepted operation ID; existing state permits lookup/observation
+only. Repeated finite windows keep the oneshot active until exact terminal
+Envelope/exit, preserving timer overlap semantics without replaying unknown work.
+Same-class credential rotation can recover; missing/malformed/future/mismatched
+history is retained rather than reset. No bearer/digest/body/queue is stored.
+Server/worker drain, not client-service exit, proves executor termination. Shared
+runtime locks must survive unit stops. Repository fixtures do not establish real
+systemd/cgroup/SELinux/NFS acceptance; those remain deployment holds.
 
 `87323c2` (2026-07-24) records scheduling authority and initial calendars.
 `2fd432a` (`SYS-001`, 2026-07-26),

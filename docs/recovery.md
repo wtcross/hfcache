@@ -265,7 +265,8 @@ the logical file bytes still held there, not uniquely reclaimable NAS space.
 
 ### Maintenance after an intentionally stopped download
 
-Stopping a sync with `systemctl stop hfcache-sync.service` preserves its Hub
+The historical direct-service procedure stopped the actual sync with
+`systemctl stop hfcache-sync.service`. That preserves its Hub
 download cache but can leave an open publication journal. Ordinary recovery
 still waits for `sync.stale_staging_age_hours`; stopping the service does not
 silently waive that rule. When the operator explicitly chooses immediate
@@ -285,10 +286,15 @@ For API-backed execution, a stopped CLI/systemd client or closed Cockpit session
 is not proof that accepted work ended. Identify the exact operation, its domain
 run/transactions and real daemon/verifier executor; reconcile exact worker status
 or durable outcome before considering interruption. A PID or released lock alone
-is insufficient. API-008 preserves this distinction; public client/service
-migration remains later work. The supervised zero-age exception above still
+is insufficient. API-014 now packages observer clients and the actual API/private
+executor; stop activation and drain/prove those executors, not just their clients.
+Keep the verifier available while API outcome handoff completes, then stop/drain
+its socket/service. Retain scheduled pending handles and both operation stores;
+unknown/malformed/future history is preserved, never reset to replay. The supervised zero-age exception above still
 requires every original identity/emptiness/lock check and grants no general
-cancel/replay authority. See [decision 115](adr/decision-115.md).
+cancel/replay authority. See [decision 115](adr/decision-115.md),
+[121](adr/decision-121.md) and
+[deployment quiescence](deployment-centos-stream-10.md#13-upgrade-plan-30).
 
 ---
 

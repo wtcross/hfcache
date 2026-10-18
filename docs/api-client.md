@@ -278,7 +278,8 @@ hfcache --client-config /etc/hfcache/client.toml archive init --inspect
 Candidate validate/plan requires the writer API source; `--config` names a file on
 the CLI host, never a server file to open. Installation/backups remain privileged
 host work. Shipped Cockpit/systemd caller and credential integration remain the
-later API-014/015 work; browser code never receives the API bearer. See
+API-014 packaged-unit and later API-015 Cockpit work; actual host acceptance stays
+an explicit hold and browser code never receives the API bearer. See
 [decision 119](adr/decision-119.md) and [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012).
 
 ## Submit, detach and resume (API-013)
@@ -355,7 +356,43 @@ client or sync/verify client service stops observation, not the server executor;
 use [server drain](server.md#restart-and-drain) and
 [recovery](recovery.md#10-operation-history-and-uncertain-submissions) for execution
 ownership. [Decision 120](adr/decision-120.md) records this boundary. Shipped
-systemd/Cockpit caller and credential integration remain API-014/015.
+systemd integration is packaged by API-014 with deployment holds; Cockpit caller
+integration remains API-015.
+
+## Scheduled service observation (API-014)
+
+Ordinary CLI waits remain finite. The packaged sync/verify oneshots use
+[`scheduled_client`](../src/hfcache/scheduled_client.py) for only fixed `sync` or
+`verify-full`, keeping the unit active across repeated finite windows until the
+exact terminal Envelope/exit is observed. Later timer ticks therefore merge into
+the active service rather than creating duplicate submissions. No request queue,
+domain engine, automatic POST replay or application scheduler is added.
+
+[`scheduled-client.example.toml`](../packaging/scheduled-client.example.toml)
+selects local Unix socket, API-only named `hfcache.api` credential and an explicit
+expected archive UUID; replace its placeholder before enabling scheduling.
+The same credential name is used by daemon/clients for encrypted-name binding,
+separate from daemon-only Hub `hf-token`. Clients use AF_UNIX and need no archive
+access; actual verifier imports no credential and has independent no-IP/source
+masking. Host enforcement remains deployment acceptance.
+
+The private [schema-1 handle](schemas.md#14-scheduled-client-observation-handle-api-014)
+binds fixed command, canonical endpoint, expected UUID and REST-writer class to
+one key and optional accepted ID. Fsync key before the sole POST. Any existing
+handle, including a crash before POST, permits only lookup/observation. Unknown/
+malformed/future/mismatched history stays at HFAPI014/20; missing remote history
+HFAPI013 or interrupted HFAPI015 grants no replay. Same-class credential rotation
+can recover without a stored bearer/digest. Only exact terminal evidence permits
+pending-file unlink/fsync; retained lock inode is never removed. Preserve state
+on rollback and follow [actual executor drain](deployment-centos-stream-10.md#13-upgrade-plan-30),
+not client-service termination. [Decision 121](adr/decision-121.md) records the
+required refinement and repository-versus-host acceptance boundary.
+
+The module entrypoint treats SIGINT/SIGTERM as observation interruption, reports
+HFAPI019 / exit 20 and the sanitized preserved-state path, and restores both prior
+handlers. Library import and `run_scheduled` have no signal side effects. Stopping
+the client unit therefore preserves recovery handles; it does not cancel the
+server's accepted operation.
 
 ## Troubleshooting and rollback
 

@@ -43,6 +43,19 @@ apply wherever the archive mount exists.
 
 ## Hard limits
 
+**API-014 source/deployment boundary (2026-10-18).** The branch now packages API
+and private verification socket/services plus API-only scheduled clients. Installed
+facts above are historical deployment evidence, not proof these units are running.
+The actual verifier, not its client wrapper, needs no-IP/offline/credential-source
+masking acceptance. Custom development credential paths need explicit masks/probes.
+Preserve API/verifier/scheduled state and shared runtime locks. Stopping a client
+or seeing a free lock does not prove execution ended; follow actual server/worker
+drain and exact operation evidence before release/mount work. Real activation,
+cgroup no-IP/no-credential, SELinux/NFS and installed hardening remain operator
+deployment holds. See [decision 121](../adr/decision-121.md) and
+[deployment quiescence](../deployment-centos-stream-10.md#13-upgrade-plan-30).
+This task authorizes no host operations or production archive work.
+
 Carried from plan §36.4–§36.5 and not relaxed by §36's supersession
 (decision 82). These bind any session on this host.
 
