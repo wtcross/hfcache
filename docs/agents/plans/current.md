@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [REST/MCP documentation alignment](2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
-| Next task | [API-018](tasks/api-018-cli-help-output-and-migration-remnants.md) |
+| Next task | [DOC-012](tasks/doc-012-human-rest-and-client-reference.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

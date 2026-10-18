@@ -508,7 +508,11 @@ route enforcement from installed host acceptance.
   boundary. See [schemas §13](schemas.md#13-service-private-operation-control-state-api-007).
 - **`INV-006` — CLI output and failure classification are stable contracts.**
   `--json` emits exactly one schema-1 envelope on stdout, including failures;
-  stderr is display/event output. Error classes, stable taxonomy codes, and
+  stderr is display/event output. Quiet preserves warnings/errors and mandatory
+  safety handles, including with JSON. Ordinary live events require both output
+  streams to be terminals; gap diagnostics remain visible. No-color applies to
+  help and human rendering through per-invocation controls.
+  Error classes, stable taxonomy codes, and
   exit priority must agree. Warnings alone keep exit `0`; any failed repository
   makes the aggregate run fail. `success` carries no warnings,
   `success_with_warnings` requires them, and `failed` may retain earlier

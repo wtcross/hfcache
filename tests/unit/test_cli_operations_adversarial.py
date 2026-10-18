@@ -15,6 +15,7 @@ from tests.api_cli import api_cli
 from tests.unit.test_api_commands import (
     configured as command_archive,  # noqa: F401 - fixture
 )
+from tests.unit.test_cli_diagnostics import TerminalRunner
 from tests.unit.test_synchronize import MODEL, SHA_A
 
 
@@ -278,6 +279,7 @@ def test_operations_wait_resumes_event_cursor_and_returns_exact_terminal_envelop
         finally:
             release.set()
 
+        remote.runner = TerminalRunner(terminal=True)
         resumed = remote.invoke(["operations", "wait", receipt.operation_id, "--after", str(after)])
 
         assert resumed.exit_code == 0, resumed.output

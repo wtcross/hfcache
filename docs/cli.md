@@ -1,89 +1,28 @@
-# hfcache Command-Line Contract
+# Command line reference
 
-| Field | Value |
-| --- | --- |
-| Status | Normative contract for implementation |
-| Derived from | `docs/agents/history/plan.md` §11, §22.2, §24 |
-| Work package | `ARC-005` |
-| Entry point | `hfcache = "hfcache.cli:app"` |
-| JSON envelope version | `1` |
+`hfcache` uses the authenticated REST API for operational commands. The writer
+owns archive policy, Hub credentials, locks, publication and recovery. Clients
+never fall back to local archive execution or start a daemon after a connection
+failure. Read results are complete within explicit bounds or fail; there is no
+unbounded local operational mode.
 
-The CLI is the only interface to the application. Scheduled runs use exactly the
-same commands an operator types, so a behaviour that cannot be reproduced by hand
-does not exist.
+Local exceptions are help, ordinary `version`, explicit `config validate --local`
+and foreground `serve`. `version --server` and ordinary `config validate` use
+HTTP. Local validation reads policy and resolves a Hub credential source without
+network, mount checks or archive writes. `serve` starts the actual writer and
+opens its local control state.
 
-**2026-10-17 API-001 amendment:** the CLI-only statement above records the
-historical interface. [Decision 108](adr/decision-108.md) and the activated
-[API contract](api.md) introduce REST-backed CLI migration incrementally.
-Existing CLI behavior remains until its migration packages; remote routes and
-MCP are planned, not deployed. Local help/version remain independent.
+Planning and maintenance previews preserve archived content but are keyed jobs
+that write operation receipts. Planning and both diagnostic modes contact the
+Hub; `doctor --read-only` skips archive-write probes and the archive lock. Actual
+verification runs in the private offline worker and writes reports/catalog state.
+See [API routes](api.md), [client settings](api-client.md) and
+[deployment profiles](scripts.md).
 
-**2026-10-17 API-006 amendment:** authenticated metadata REST and the foreground
-`serve` bootstrap are implemented ([decision 113](adr/decision-113.md)). Existing
-operational CLI commands still use local services; the API-backed client and all
-job/write routes remain later tasks. No deployment is asserted.
-
-**2026-10-17 API-009 amendment:** sync, every non-estimate verification mode,
-installed planning, explicit read-only/probing diagnostics and installed
-validation now have authenticated REST routes ([decision 116](adr/decision-116.md)).
-The public operational CLI still uses local services until API-011–013; its
-schema-1 output/exit behavior is unchanged. REST jobs return admission receipts
-and expose their exact terminal Envelope through operation polling. Maintenance
-routes and candidate HTTP/CLI integration remain later tasks; no deployment is
-asserted.
-
-**2026-10-17 API-010 amendment:** separate maintenance preview/apply routes,
-exact-manifest repair and guarded initialization extend the REST surface
-([decision 117](adr/decision-117.md)). The HTTP URL defines mode; no omitted
-boolean or posted preview authorizes apply. Apply retains shared locked policy/
-scope/evidence checks and exact terminal Envelopes. Initialization alone requires
-the disabled-by-default server maintenance gate, strict confirmation and restated
-configured root/UUID; ordinary maintenance does not use that switch. The public
-CLI remains local until its migration packages; these routes are not a deployed
-writer or authorization for production initialization.
-
-**2026-10-17 API-011 amendment:** the independent synchronous typed client and
-separate client configuration are implemented ([decision 118](adr/decision-118.md)).
-The four API selection options below are parsed/stored without switching existing
-operational commands to HTTP; API-012/013 own that migration. Local help/version
-remain independent of configuration/credentials/server. The
-[client contract](api-client.md) defines exact source/endpoint precedence, finite
-observation, safe errors and retained-key uncertainty. No direct archive fallback
-or automatic daemon startup is introduced.
-
-**2026-10-18 API-012 amendment:** metadata reads, installed/candidate validation,
-planning and explicitly read-only diagnostics now use the typed API client
-([decision 119](adr/decision-119.md)). Remote rendering retains the exact server
-Envelope IDs/timestamps/status/errors and walks complete pages within finite
-aggregate limits. Help/local version and explicit `config validate --local` remain
-local bootstrap; no API failure falls back to archive filesystem access. The
-[client migration table](api-client.md#cli-migration-api-012) identifies migrated
-modes while side-effecting CLI migration remains API-013. Candidate files are read
-on the CLI host and uploaded as bounded TOML content, never interpreted as server
-paths. Validity and installed-authority compatibility are reported separately.
-
-**2026-10-18 API-013 amendment:** all operational CLI modes now submit typed API
-requests; no operational command imports or invokes a local mutation backend.
-Default job output is the exact terminal server Envelope. Explicit detach emits
-identified admission data instead. Keys and accepted operation IDs are printed
-to stderr even in quiet mode; interruption/timeout stops observation, never
-accepted execution. [Decision 120](adr/decision-120.md) and
-[operation observation](#operations) define the exception and resume behavior.
-
-**2026-10-18 API-016 acceptance amendment:** the earlier amendments retain each
-migration stage's history. All operational modes now use typed HTTP, with explicit
-local help/version, `serve` and `config validate --local` bootstrap exceptions.
-API-014 packages scheduled observers and API-015 integrates Cockpit. Native Unix
-uses fixed unprefixed paths even with a public TCP prefix; public clients retain
-their configured URL prefix/security. [Decision 123](adr/decision-123.md) and the
-[complete parity matrix](api.md#operation-parity-matrix) govern REST acceptance;
-MCP remains absent until API-016 passes and commits. No deployment is asserted.
-
-**MCP-001 amendment (2026-10-18).** API-016 acceptance is committed; optional
-MCP transport now has its own distinct credential and no curated tools yet.
-The operational CLI remains the typed REST client, with no MCP command migration.
-See [MCP enablement/limits](mcp.md) and [decision 124](adr/decision-124.md).
-
+The entrypoint is `hfcache = "hfcache.cli:app"`. Terminal JSON results use schema
+1. Explicit detach is a separately typed admission receipt; acceptance alone does
+not establish completion. Client timeout or interruption stops observation while
+accepted work may continue. Preserve the original key and accepted operation ID.
 
 ## 1. Invocation shape
 
@@ -101,10 +40,10 @@ hfcache --client-config /etc/hfcache/client.toml --json status
 | --- | --- | --- |
 | `--config PATH` | `/etc/hfcache/config.toml` | Local policy only for explicit bootstrap validation; an explicit flag means candidate content only for API validate/plan and is rejected by other operational modes |
 | `--json` | off | Emit the machine-readable envelope (§4) on stdout and nothing else |
-| `--verbose` / `-v` | off | Adds the `hfcache.logging.DEBUG_EVENTS` detail to the §24 event log. Repeatable, and repeats beyond the first are currently equivalent to one, because the vocabulary bottoms out at `DEBUG`. Never enables secret logging |
-| `--quiet` / `-q` | off | Suppress progress and informational output; warnings and errors still print |
-| `--no-color` | auto | Force plain output; also implied when stdout is not a terminal |
-| `--token-file PATH` | none | Read a token from this file for an operator-run command (§`docs/configuration.md` §7) |
+| `--verbose` / `-v` | off | Raises client-local logging to DEBUG; repeatable counts have the same effective level. Does not change server logs, event vocabulary or secret redaction |
+| `--quiet` / `-q` | off | Suppress progress and informational output; warnings/errors and safety handles remain on stderr, including with `--json` |
+| `--no-color` | auto | Force plain help and human output, including explicit help and forced-color environments; ordinary automatic color follows the terminal |
+| `--token-file PATH` | none | Read a Hub token only for `config validate --local`; operational commands use the separate API bearer source |
 | `--client-config PATH` | optional `/etc/hfcache/client.toml` | Separate strict API client settings for migrated commands |
 | `--api-url URL` | none | Explicit API URL, mutually exclusive with `--api-socket`; overrides the configured endpoint group |
 | `--api-socket PATH` | none | Explicit API Unix socket; overrides the configured endpoint group |
@@ -129,8 +68,10 @@ Explicit `config validate --local` remains the Hub-token/bootstrap exception.
 Endpoint/source precedence follows [client configuration](api-client.md).
 
 
-Progress rendering is disabled automatically when stdout is not a terminal, so
-journald never receives progress spam.
+Ordinary event progress is rendered only when both stdout and stderr are terminals
+and quiet is off. Event-history gaps, warnings/errors and retained safety handles
+remain on stderr on pipes and in quiet mode. Scheduled observation has a separate
+bounded notice/terminal-result stream; client verbosity does not change server events.
 
 ### 1.1 Selector grammar
 
@@ -150,13 +91,13 @@ goes further and refuses a repository that remains configured (`AD-20`).
 
 ## 2. Commands
 
-| Command | Mutates | Purpose |
+| Command | Archive effects | Purpose |
 | --- | --- | --- |
-| `serve` | private runtime/control state only | Foreground authenticated management server bootstrap |
+| `serve` | none at startup; admitted jobs can mutate | Foreground server opens private runtime/control state |
 | `config validate` | no | Parse and fully validate configuration |
 | `archive init` | yes | One-time guarded archive creation |
 | `archive init --inspect` | no | Describe a partial or existing initialization |
-| `doctor` | probe only | Prove mount, sentinel, permissions, capabilities, capacity, DNS, Hub reachability |
+| `doctor` | temporary health probes; none with `--read-only` | Prove mount, sentinel, permissions, capabilities, capacity, DNS, Hub reachability |
 | `plan` | no | Resolve configured revisions and report expected work |
 | `sync` | yes | Synchronize all or selected repositories |
 | `status` | no | Configured, retained, current, warning, and verification state |
@@ -169,6 +110,12 @@ goes further and refuses a repository that remains configured (`AD-20`).
 | `repair` | yes | Reconstruct and republish a damaged known revision |
 | `version` | no | Local or explicit server application/dependency versions |
 | `operations show`, `operations lookup`, `operations wait` | no | Authenticated observation of existing receipts/results; never submission |
+
+Keyed sync/plan/diagnostic/verification/maintenance jobs write private operation
+receipts even when the archive-effects column says no. Planning and both doctor
+modes contact the Hub. Metadata reads, synchronous validation, initialization
+inspection and verification estimates submit no job. Local exceptions and
+remote execution are described above; apply always retains writer-side guards.
 
 ### `serve`
 
@@ -647,10 +594,11 @@ Keyed jobs wait by default, including planning, diagnostics and maintenance
 previews. Before their first POST, validate/generate the nonsecret key and print
 it to stderr; after a validated 202 print operation ID before waiting. Both
 messages are mandatory even in quiet mode. Sanitized event progress stays on
-stderr and is suppressed by quiet; no raw journald output is forwarded. Distinct
+stderr and requires both streams to be terminals with quiet off; no raw journald
+output is forwarded. Gap notices and safety handles are diagnostics in every mode. Distinct
 request/operation/domain IDs retain their separate meanings.
 Event rendering escapes nonprintable characters, including newline/ESC, so each
-event stays one plain stderr line. Quiet suppresses that progress rendering.
+event stays one plain stderr line. Quiet and nonterminal output suppress ordinary progress rendering.
 
 Explicit global `--detach` stops after admission. In JSON mode it emits exactly
 one object with these fields, separately from the terminal Envelope family:

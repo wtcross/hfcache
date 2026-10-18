@@ -204,18 +204,6 @@ def _inventory(client: ApiClient, params: Mapping[str, Any], *, revisions: bool)
     return result.model_copy(update={"data": {"repositories": joined}})
 
 
-def run_job(
-    client: ApiClient,
-    path: str,
-    body: Mapping[str, Any],
-    *,
-    on_key: Callable[[str], None] | None = None,
-) -> Envelope:
-    return observe_operation(
-        client, client.submit(path, body, on_key=on_key).acceptance.operation.operation_id
-    )
-
-
 def admission_payload(submitted: Submission) -> dict[str, Any]:
     """An explicit admission is a receipt, never a fabricated command Envelope."""
     return {

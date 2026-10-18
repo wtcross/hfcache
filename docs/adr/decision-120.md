@@ -138,3 +138,15 @@ and [observer budget tests](../../tests/unit/test_cli_operation_helpers.py) pass
 the final task records the first required --with-build gate exit 0 (3,624 Python
 tests), final installed-reader drill and completed plan. This adds evidence to
 the existing decision; installed-host acceptance remains separate.
+
+## CLI presentation clarification
+
+Quiet suppresses informational summaries while warnings/errors, event-history gaps
+and mandatory safety handles remain on stderr, including JSON mode. Ordinary live
+progress requires both streams to be terminals with quiet off. No-color selects
+plain help/human output on the current invocation's Typer/Click command graph;
+it changes no process-wide Rich/environment state or daemon configuration.
+Remote JSON retains the exact sanitized server Envelope and exit classification.
+These enforce the existing CLI output contract; observer deadlines, replay rules,
+receipt shapes and execution authority are unchanged. See the
+[public diagnostics fixtures](../../tests/unit/test_cli_diagnostics.py).

@@ -395,7 +395,6 @@ def test_invalid_cli_wait_budget_is_refused_before_client_settings(tmp_path, tim
         json_output=False,
         verbose=0,
         quiet=False,
-        color=False,
         token_file=None,
         wait_timeout=timeout,
     )
@@ -411,7 +410,6 @@ def test_only_submissions_accept_detach_or_key(tmp_path, flags):
         json_output=False,
         verbose=0,
         quiet=False,
-        color=False,
         token_file=None,
         **flags,
     )
@@ -426,7 +424,6 @@ def test_wait_budget_is_rejected_on_metadata_reads_but_allowed_on_existing_wait(
         json_output=False,
         verbose=0,
         quiet=False,
-        color=False,
         token_file=None,
         wait_timeout=1,
     )

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
 | Depends on | [OPS-021](ops-021-profile-aware-install-and-diagnostic-scripts.md) |
 | Phase | 1 — Correctness before editorial cleanup |
@@ -23,11 +23,11 @@ No CLI fallback to local operational execution, no auto-daemon startup and no ch
 
 ## Acceptance
 
-- [ ] Every CLI help example describes its actual local/remote dispatch and side effects; no stage/task IDs reach generated help.
-- [ ] Quiet failed/partial and warning-only results retain stderr diagnostics, correct exit status and safety handles; JSON stdout stays one valid result or explicitly typed admission.
-- [ ] `--no-color` is behaviorally tested for supported help/output cases; unused color state is gone.
-- [ ] Ordinary non-TTY progress behavior matches the revised human contract; server logging is not implied to change with client verbosity.
-- [ ] Each removal has a call-site/disposition record; public result, argument and transport tests replace any implementation-only coverage lost.
+- [x] Every CLI help example describes its actual local/remote dispatch and side effects; no stage/task IDs reach generated help.
+- [x] Quiet failed/partial and warning-only results retain stderr diagnostics, correct exit status and safety handles; JSON stdout stays one valid result or explicitly typed admission.
+- [x] `--no-color` is behaviorally tested for supported help/output cases; unused color state is gone.
+- [x] Ordinary non-TTY progress behavior matches the revised human contract; server logging is not implied to change with client verbosity.
+- [x] Each removal has a call-site/disposition record; public result, argument and transport tests replace any implementation-only coverage lost.
 
 ## Contracts, invariants and ADRs
 
@@ -57,15 +57,47 @@ with weaker assertions merely to accommodate wording changes.
 
 ## Execution notes and handoff
 
-Not started. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
+Started 2026-10-18 after completed OPS-021 db55170. Work on `feat/rest-api-and-mcp`, preserving existing user changes and
 all live-host restrictions. Do not push, merge, tag, deploy, rotate credentials,
 run production probes or manipulate NAS/services. If blocked, record the missing
 prerequisite and precise unblock condition here and in the current selector.
 
 ## Completion evidence
 
-Pending. On completion record: date; accepted behavior and removal/retention
-results; focused test/gate evidence; documentation/link checks; invariant/ADR review;
-any remaining operator prerequisite; and a link to the completed agent progress
-entry. Update this task, plan/selector as needed and progress in the same commit.
-Use "this commit" until the actual commit exists; do not invent a hash.
+Completed 2026-10-18 in this commit. All 18 registered command docstrings and
+relevant options describe local/HTTP/server/worker dispatch and actual effects.
+Quiet and JSON retain stderr warnings/errors, degraded status, event gaps and
+mandatory safety handles. Partial result/exit and exact server Envelope metadata
+are preserved. Ordinary progress requires both streams to be terminals and quiet
+off; scheduled bounded observation remains separate. Local version respects quiet.
+No-color uses per-invocation Typer plain-help and Click context controls before
+eager help, with no global Rich/environment/daemon mutation; inert color state is gone.
+
+Branch-wide caller proof and dispositions are in
+[code removals](../../code-removals.md): remove unused `_emit`, `run_job`, old
+ServiceResult rendering input and CLI-only constant re-export; retain bootstrap
+`emit_envelope`, real domain ServiceResult/services and preflight exports.
+CLI introduction chronology is preserved under agent history; current flags,
+command archive/control effects and output documentation agree with implementation.
+
+Validation: `uv run --locked --extra server --extra mcp pytest
+tests/unit/test_cli*.py tests/unit/test_readonly_commands.py
+tests/unit/test_rest_parity_gate.py tests/unit/test_rest_examples_gate.py
+tests/unit/test_docs_migration.py --no-cov` exited 0, 343 passed in 54.19s.
+The final 23-case diagnostics run, including colored help controls, passed in
+3.60s. Tests use the real ApiClient with fake HTTP transport, exact failed/warning
+Envelopes across default/quiet/JSON/combined modes, real command rendering and
+explicit captured TTY identity; existing timeout/uncertainty/reconnect tests remain.
+Initial fixture event shape/type inference was corrected before acceptance.
+
+`scripts/check.sh` exited 0: 4,171 passed, 40 deselected in 475.75s; wheel/sdist;
+all three locked isolated installation profiles; actual Cockpit lint/types,
+135 tests and production build. Ruff/types/link checks passed. Log:
+`/tmp/hfcache-api018-gate.log`.
+
+Reviewed INV-002/005/006/012–014 and decisions 118/119/120/121. Clarified existing
+INV-006 and decision 120's presentation guarantees; no new architecture, schema,
+dependency, receipt/replay/execution or MCP tool authority. No production operation
+or host acceptance was performed. See
+[completed progress evidence](../../progress.md#documentation-and-script-alignment).
+Feature-branch pushes remain deferred until final plan acceptance.

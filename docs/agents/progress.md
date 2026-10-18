@@ -4774,6 +4774,17 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
 
 ## Documentation and script alignment
 
+- [x] API-018 Align CLI diagnostics and remove migration remnants (2026-10-18,
+  this commit). Current command/option help separates local, REST, writer and
+  private-worker effects. Quiet/JSON retain warnings/errors, degraded/gap notices
+  and safety handles; exact Envelopes/exits remain. Per-invocation no-color covers
+  eager help and output; ordinary progress requires both TTYs. Caller-audited
+  unused helpers/rendering inputs/re-export and inert color field removed, with
+  ledger and history retained. INV-006/decision 120 clarified, no new architecture.
+  Focused 343 passed; final diagnostics 23 passed. Full `scripts/check.sh`:
+  4,171 passed, 40 deselected; three locked wheel installation profiles; actual
+  Cockpit lint/types, 135 tests and build. No production/live host operations.
+
 - [x] OPS-021 Make deployment helpers profile aware (2026-10-18, this commit).
   Positive source/current/target proof, one parsed staging version and fresh-prefix
   ancestry checks refuse cross-profile/unknown native effects. Static help and

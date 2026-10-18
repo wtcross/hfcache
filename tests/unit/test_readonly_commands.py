@@ -21,11 +21,12 @@ from pathlib import Path
 import pytest
 
 from hfcache.archive import initialize_archive
-from hfcache.cli import UNPROVABLE_READ_ONLY, _bytes
+from hfcache.cli import _bytes
 from hfcache.errors import ExitCode, SynchronizationError
 from hfcache.hub import DownloadEstimate, HubClient, RepositoryFacts, TreeEntry
 from hfcache.identity import CommitSha, new_run_id, new_transaction_id
 from hfcache.paths import ArchiveLayout
+from hfcache.services.requests import UNPROVABLE_READ_ONLY
 from hfcache.transactions import open_transaction
 from tests.api_cli import api_cli
 

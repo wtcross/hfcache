@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 
 import typer
+from typer.core import TyperCommand, TyperGroup
 
 from hfcache import cli_client
 from hfcache.config import load_config
@@ -34,7 +35,6 @@ from hfcache.reporting import Envelope
 from hfcache.services.bootstrap import query_version, validate_config
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.requests import (
-    UNPROVABLE_READ_ONLY,
     MaintenanceRequest,
     QuarantineRequest,
     RepairRequest,
@@ -44,18 +44,41 @@ from hfcache.services.requests import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from typer._click import Context as ClickContext
+
     from hfcache.client import ApiClient
     from hfcache.client_models import ClientEvents
 
 
-__all__ = ["UNPROVABLE_READ_ONLY", "app"]
+__all__ = ["app"]
 
 DEFAULT_CONFIG_PATH = Path("/etc/hfcache/config.toml")
 """Matches the systemd invocation in docs/security.md hardening posture."""
 
+
+def _plain_help(command: TyperCommand | TyperGroup) -> None:
+    """Use Typer's plain renderer on this invocation's command graph only."""
+    command.rich_markup_mode = None
+    if isinstance(command, TyperGroup):
+        for child in command.commands.values():
+            if isinstance(child, TyperCommand | TyperGroup):
+                _plain_help(child)
+
+
+class ClientGroup(TyperGroup):
+    """Apply plain-help controls before eager help callbacks, in either order."""
+
+    def parse_args(self, ctx: ClickContext, args: list[str]) -> list[str]:
+        if "--no-color" in args:
+            ctx.color = False
+            _plain_help(self)
+        return super().parse_args(ctx, args)
+
+
 app = typer.Typer(
     name="hfcache",
-    help=("Archive complete revisions of Hugging Face repositories on long-term storage."),
+    cls=ClientGroup,
+    help="Use the authenticated REST API to inspect and manage the archive.",
     no_args_is_help=True,
     add_completion=False,
 )
@@ -69,7 +92,6 @@ class GlobalOptions:
     json_output: bool
     verbose: int
     quiet: bool
-    color: bool
     token_file: Path | None
     client_config_path: Path | None = None
     api_url: str | None = None
@@ -171,6 +193,8 @@ def _report_failure(
         evidence["work_may_continue"] = True
     if uncertain:
         typer.echo("Accepted work may continue; reconnect using the retained handles", err=True)
+    for problem in error.problems:
+        typer.echo(problem.as_line(), err=True)
     if _options(ctx).json_output:
         emit_envelope(
             command,
@@ -180,8 +204,6 @@ def _report_failure(
             exit_code=int(error.exit_code),
         )
     else:
-        for problem in error.problems:
-            typer.echo(problem.as_line(), err=True)
         if key is not None:
             typer.echo(f"Original idempotency key: {key}", err=True)
         if operation_id is not None:
@@ -198,10 +220,10 @@ def _echo_pairs(payload: dict[str, Any]) -> None:
 
 def _progress(ctx: typer.Context, page: ClientEvents) -> None:
     """Only bounded, validated server events reach the progress stream."""
-    if _options(ctx).quiet:
-        return
     if page.truncated:
         typer.echo(f"Event history gap; retained events start at {page.oldest_sequence}", err=True)
+    if _options(ctx).quiet or not (sys.stdout.isatty() and sys.stderr.isatty()):
+        return
     for event in page.events:
         message = "".join(
             character if character.isprintable() else f"\\u{ord(character):04x}"
@@ -261,7 +283,6 @@ def _operation_metadata(ctx: typer.Context, identity: str, *, lookup: bool) -> N
     _show_result(
         ctx,
         result,
-        started_at=started_at,
         lines={
             key: str(operation[key])
             for key in ("operation_id", "state", "route")
@@ -274,13 +295,13 @@ def _operation_metadata(ctx: typer.Context, identity: str, *, lookup: bool) -> N
 def operations_lookup(
     ctx: typer.Context, key: Annotated[str, typer.Argument(help="Original key.")]
 ) -> None:
-    """Find the receipt using its nonsecret idempotency key."""
+    """Look up a remote receipt using the original nonsecret key. Submits no work."""
     _operation_metadata(ctx, key, lookup=True)
 
 
 @operations_app.command("show")
 def operations_show(ctx: typer.Context, operation_id: str) -> None:
-    """Inspect an operation without submitting or waiting."""
+    """Inspect a remote operation without submitting or waiting."""
     _operation_metadata(ctx, operation_id, lookup=False)
 
 
@@ -290,7 +311,9 @@ def operations_wait(
     operation_id: str,
     after: Annotated[int, typer.Option("--after", min=0, help="Last observed event sequence.")] = 0,
 ) -> None:
-    """Resume event observation and return the original terminal result."""
+    """Observe remote work and return its original terminal result.
+
+    Timeout or interruption stops observation; accepted server work may continue."""
     started_at = utc_now()
     options = _options(ctx)
     try:
@@ -309,7 +332,6 @@ def operations_wait(
     _show_result(
         ctx,
         result,
-        started_at=started_at,
         lines={
             "command": result.command,
             "outcome": result.outcome,
@@ -320,39 +342,17 @@ def operations_wait(
 
 def _show_result(
     ctx: typer.Context,
-    result: ServiceResult | Envelope,
+    result: Envelope,
     *,
-    started_at: str,
     lines: dict[str, str] | None = None,
     rows: Sequence[str] = (),
-    human_errors: bool = True,
 ) -> None:
     """Render a classified service result; domain orchestration stays in services."""
     options = _options(ctx)
-    if isinstance(result, Envelope):
-        if options.json_output:
-            sys.stdout.write(cli_client.safe_envelope(result))
-            if result.exit_code:
-                raise typer.Exit(result.exit_code)
-            return
-        result = ServiceResult(
-            result.command,
-            result.data,
-            tuple(cli_client.problem(item) for item in result.warnings),
-            tuple(cli_client.problem(item) for item in result.errors),
-            result.exit_code,
-            run_id=RunId(result.run_id),
-        )
+    for item in (*result.warnings, *result.errors):
+        typer.echo(cli_client.problem(item).as_line(), err=True)
     if options.json_output:
-        emit_envelope(
-            result.command,
-            result.data,
-            started_at=started_at,
-            warnings=result.warnings,
-            errors=result.errors,
-            exit_code=result.exit_code,
-            run_id=result.run_id,
-        )
+        sys.stdout.write(cli_client.safe_envelope(result))
     else:
         refusal = bool(
             result.errors
@@ -364,9 +364,6 @@ def _show_result(
                 _echo_pairs(lines)
             for row in rows:
                 typer.echo(row)
-        if (human_errors and (not options.quiet or refusal)) or not result.data:
-            for problem in result.errors:
-                typer.echo(problem.as_line(), err=True)
     if result.exit_code:
         raise typer.Exit(result.exit_code)
 
@@ -385,7 +382,12 @@ def main(
         # It also has to be off for the commands that never load configuration —
         # `version` and `--help` must answer on a host where /etc/hfcache is
         # readable only by root and the service account (decision 57).
-        typer.Option("--config", metavar="PATH", readable=False, help="Configuration file."),
+        typer.Option(
+            "--config",
+            metavar="PATH",
+            readable=False,
+            help="Candidate TOML for remote validate/plan; local policy with --local.",
+        ),
     ] = DEFAULT_CONFIG_PATH,
     json_output: Annotated[
         bool,
@@ -393,7 +395,12 @@ def main(
     ] = False,
     verbose: Annotated[
         int,
-        typer.Option("--verbose", "-v", count=True, help="Raise log detail. Repeatable."),
+        typer.Option(
+            "--verbose",
+            "-v",
+            count=True,
+            help="Raise client-local log detail; does not change server logging.",
+        ),
     ] = 0,
     quiet: Annotated[
         bool,
@@ -412,7 +419,7 @@ def main(
             # `HFARG005` at exit `10`, reported by `credentials` by shape and
             # never by content, not a usage error at exit `2`.
             readable=False,
-            help="Read a Hub token from this file. Never logged.",
+            help="Hub token file for config validate --local only. Never logged.",
         ),
     ] = None,
     client_config: Annotated[
@@ -452,15 +459,14 @@ def main(
     # ignored. This also binds the run id every event carries; a command that
     # writes a durable report rebinds it to that report's id.
     configure_logging(verbose=verbose, quiet=quiet)
+    if no_color:
+        ctx.color = False
     config_source = ctx.get_parameter_source("config")
     ctx.obj = GlobalOptions(
         config_path=config,
         json_output=json_output,
         verbose=verbose,
         quiet=quiet,
-        # Colour is also suppressed when stdout is not a terminal, so journald
-        # never receives escape sequences.
-        color=not no_color and sys.stdout.isatty(),
         token_file=token_file,
         client_config_path=client_config,
         api_url=api_url,
@@ -492,7 +498,10 @@ def serve(
         ),
     ] = None,
 ) -> None:
-    """Run the authenticated REST server (requires the server installation extra)."""
+    """Run the authenticated writer daemon on this host (requires the server extra).
+
+    Loads server policy and credentials, opens local control state and joins owned
+    work on shutdown. Operational clients never start this daemon automatically."""
     started_at = utc_now()
     try:
         options = _options(ctx)
@@ -520,11 +529,9 @@ def version(
         bool, typer.Option("--server", help="Report the API writer's version.")
     ] = False,
 ) -> None:
-    """Show application and dependency versions.
+    """Show local application and dependency versions without policy or archive access.
 
-    Reads no configuration and touches no archive, so it works on a deployment
-    that is otherwise broken.
-    """
+    Use --server to request the authenticated API writer version instead."""
     started_at = utc_now()
     try:
         cli_client.check_job_options(_options(ctx))
@@ -540,7 +547,6 @@ def version(
         _show_result(
             ctx,
             remote,
-            started_at=started_at,
             lines={key: str(value) for key, value in remote.data.items()},
         )
         return
@@ -548,7 +554,8 @@ def version(
     if _options(ctx).json_output:
         emit_envelope("version", payload, started_at=started_at)
         return
-    _echo_pairs(payload)
+    if not _options(ctx).quiet:
+        _echo_pairs(payload)
 
 
 config_app = typer.Typer(
@@ -566,15 +573,11 @@ def config_validate(
         bool, typer.Option("--local", help="Validate on this host for offline bootstrap.")
     ] = False,
 ) -> None:
-    """Parse and fully validate configuration, touching nothing.
+    """Validate the installed policy through the authenticated API.
 
-    Runs exactly the validation every mutating command runs — the same loader,
-    the same credential resolution — and takes no lock, checks no mount, and
-    makes no network request (`docs/cli.md` §2). That is what makes it safe to
-    run against production configuration from a shell at any time, and it is why
-    a green `config validate` means a scheduled run will get as far as the mount
-    check rather than failing on a typo hours later.
-    """
+    An explicit --config uploads bounded candidate TOML and requires writer authority.
+    Use --local for offline bootstrap on this host: it reads policy and resolves its
+    Hub credential source without mount checks, archive writes or network."""
     started_at = utc_now()
     options = _options(ctx)
     try:
@@ -601,7 +604,6 @@ def config_validate(
         _show_result(
             ctx,
             remote.envelope,
-            started_at=started_at,
             lines={key: str(value) for key, value in remote.envelope.data.items()},
         )
         return
@@ -705,16 +707,14 @@ def archive_init(
     ] = False,
     inspect: Annotated[
         bool,
-        typer.Option("--inspect", help="Describe the target without touching it."),
+        typer.Option("--inspect", help="Read authenticated target metadata; submits no job."),
     ] = False,
 ) -> None:
-    """Create the archive layout and its sentinel, exactly once.
+    """Request one-time initialization through the API writer.
 
-    This is the only command that creates the archive (`FS-21`), it is never
-    reached from a timer or a recovery path, and it refuses anything it did not
-    create rather than making room for itself. Without `--confirm` it describes
-    what it would do and exits `10`.
-    """
+    Requires --confirm, matching configured root/UUID, writer authority and the
+    server maintenance gate. --inspect reads authenticated target metadata; without
+    confirmation no job is submitted. Never reinitialize an existing archive."""
     started_at = utc_now()
     try:
         options = _options(ctx)
@@ -763,24 +763,7 @@ def archive_init(
         }
     else:
         lines = {}
-    _show_result(ctx, result, started_at=started_at, lines=lines)
-
-
-def _emit(
-    ctx: typer.Context,
-    command: str,
-    payload: dict[str, Any],
-    *,
-    started_at: str,
-    lines: dict[str, str],
-) -> None:
-    """Write either the envelope or the human summary, never both."""
-    options = _options(ctx)
-    if options.json_output:
-        emit_envelope(command, payload, started_at=started_at)
-        return
-    if not options.quiet:
-        _echo_pairs(lines)
+    _show_result(ctx, result, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -803,18 +786,16 @@ def doctor(
     ctx: typer.Context,
     read_only: Annotated[
         bool,
-        typer.Option("--read-only", help="Run only the checks that mutate nothing."),
+        typer.Option(
+            "--read-only",
+            help="Skip archive probes/lock; still contacts Hub and writes a job receipt.",
+        ),
     ] = False,
 ) -> None:
-    """Prove the deployment can do what a scheduled run will ask of it.
+    """Run deployment diagnostics on the API writer and retain a job receipt.
 
-    Every check is reported, in the normative order of the `docs/cli.md` §2
-    table, so the output is a record of what was proven rather than of where the
-    command stopped. The checks themselves are `hfcache.preflight`'s, which is
-    the same runner a mutating command's hard gate uses — the report an operator
-    reads and the preflight a scheduled run performs cannot describe different
-    things (docs/cli.md doctor contract).
-    """
+    Both modes contact the Hub. --read-only skips archive-write probes and the
+    archive lock; ordinary mode performs locked temporary health probes."""
     started_at = utc_now()
     try:
         with cli_client.connect(_options(ctx)) as client:
@@ -830,7 +811,7 @@ def doctor(
             f"{check['outcome']:<7}  {check['name']:<{width}}  {check['detail']}"
             for check in checks
         ]
-    _show_result(ctx, result, started_at=started_at, rows=rows, human_errors=False)
+    _show_result(ctx, result, rows=rows)
 
 
 # --------------------------------------------------------------------------- #
@@ -840,19 +821,11 @@ def doctor(
 
 @app.command()
 def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
-    """Report the work a sync would do. Mutates nothing and takes no lock.
+    """Preview sync work on the API writer using Hub metadata.
 
-    This is the command run before enabling a large repository, and its output
-    is what the dataset quota is sized from (`docs/cli.md` §2). It resolves each
-    enabled repository's configured reference to a full commit SHA, which is the
-    same resolution a sync performs — so a `plan` that answers cleanly is
-    evidence the sync will get as far as downloading.
-
-    One repository failing does not abandon the rest: each is reported with the
-    upstream state that was observed, and the run exits `30` if any failed. An
-    operator with ten repositories and one typo should learn about the typo and
-    still see the other nine.
-    """
+    The keyed job writes control receipts, takes no archive lock and downloads no
+    payload or archive content. An explicit --config uploads candidate TOML and
+    requires writer authority. Repository failures retain the other partial results."""
     started_at = utc_now()
     try:
         options = _options(ctx)
@@ -870,9 +843,7 @@ def plan(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     _show_result(
         ctx,
         result,
-        started_at=started_at,
         rows=[_plan_line(entry) for entry in result.data.get("repositories", [])],
-        human_errors=False,
     )
 
 
@@ -912,13 +883,10 @@ def _bytes(value: int) -> str:
 
 @app.command()
 def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
-    """Report local truth about the archive.
+    """Read the API writer's local archive metadata without contacting the Hub.
 
-    Never fails merely because the Hub is unreachable (`docs/cli.md` §2): it
-    reports what is known locally and marks upstream state `unknown`. This is the
-    command an operator runs first, so it answers even when everything else is
-    broken.
-    """
+    Collects complete pages within client/server bounds or fails explicitly.
+    An unavailable API is an error; it never falls back to a local archive."""
     started_at = utc_now()
     options = _options(ctx)
     try:
@@ -930,30 +898,26 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
     except HfcacheError as error:
         _report_failure(ctx, "status", started_at, error)
 
-    if result.exit_code or options.json_output:
-        _show_result(ctx, result, started_at=started_at)
+    if result.exit_code:
+        _show_result(ctx, result)
         return
     payload = result.data
     archive = payload["archive"]
     entries = payload["repositories"]
-    warnings = tuple(cli_client.problem(item) for item in result.warnings)
-    if not options.quiet:
-        for entry in entries:
-            state = (
-                ("enabled" if entry["enabled"] else "disabled") if entry["managed"] else "unmanaged"
-            )
-            typer.echo(
-                f"{entry['repository_type']}:{entry['repository_id']}  {state}"
-                f"  {entry['verification_state']}"
-            )
-        if archive["verification"]["degraded"]:
-            typer.echo(
-                f"archive degraded: {archive['verification']['outstanding_failures']} "
-                f"outstanding verification failures",
-                err=True,
-            )
-        for warning in warnings:
-            typer.echo(warning.as_line(), err=True)
+    rows = []
+    for entry in entries:
+        state = ("enabled" if entry["enabled"] else "disabled") if entry["managed"] else "unmanaged"
+        rows.append(
+            f"{entry['repository_type']}:{entry['repository_id']}  {state}"
+            f"  {entry['verification_state']}"
+        )
+    if archive["verification"]["degraded"]:
+        typer.echo(
+            f"archive degraded: {archive['verification']['outstanding_failures']} "
+            f"outstanding verification failures",
+            err=True,
+        )
+    _show_result(ctx, result, rows=rows)
 
 
 # --------------------------------------------------------------------------- #
@@ -963,25 +927,10 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
 
 @app.command()
 def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
-    """Synchronize configured repositories (docs/cli.md sync contract).
+    """Submit synchronization to the API writer and observe its result.
 
-    The scheduled command, and the only one that downloads. It runs the the sync run contract
-    sequence in order: load configuration, take the exclusive lock, prove the
-    the preflight contract storage requirements, then process repositories in deterministic
-    configuration order, rebuild the derived catalog, and write a durable run
-    report.
-
-    The lock and the preflight are held for the whole run rather than checked
-    per repository, which is what makes them mean anything: proving the archive
-    sound and then letting another command mutate it throughout would prove
-    nothing.
-
-    Inside them the run opens its §7.6 journal and reconciles every unfinished
-    transaction before a single Hub request is made (`TX-07`). A journal that
-    stopped and asked for an operator stops this run at exit `20` with nothing
-    downloaded and nothing changed — which is the whole reason an unattended
-    scheduled sync is safe to leave running.
-    """
+    The writer owns recovery, preflight, the archive lock, Hub resolution/downloads,
+    publication, retention and durable reports. Client exit does not cancel it."""
     started_at = utc_now()
     try:
         body = {"selectors": cli_client.selection(selectors or ())}
@@ -995,7 +944,7 @@ def sync(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
         f"{'  ' + item['resolved_commit_sha'] if item['resolved_commit_sha'] else ''}"
         for item in result.data.get("repositories", [])
     ]
-    _show_result(ctx, result, started_at=started_at, rows=rows)
+    _show_result(ctx, result, rows=rows)
 
 
 # --------------------------------------------------------------------------- #
@@ -1016,16 +965,10 @@ def list_repositories(
         typer.Option("--revisions", help="Include every retained revision."),
     ] = False,
 ) -> None:
-    """List archived repositories and revisions.
+    """List repositories and optional revisions through the authenticated API.
 
-    Reads only manifests and references (`docs/cli.md` §2), never the catalog.
-    That is the point of the command: the catalog is derived and can be missing
-    or corrupt (`FS-16`), and an operator taking inventory during an incident is
-    exactly the person who cannot rely on it. Rebuilding the same view from the
-    authoritative artifacts costs a directory walk and answers regardless.
-
-    Takes no lock and mutates nothing, so it is safe to run during a sync.
-    """
+    The writer reads authoritative references/manifests, including unmanaged data.
+    The client collects complete pages within bounds or fails explicitly."""
     started_at = utc_now()
     options = _options(ctx)
     try:
@@ -1046,7 +989,6 @@ def list_repositories(
     _show_result(
         ctx,
         result,
-        started_at=started_at,
         lines={
             f"{entry['repository_type']}:{entry['repository_id']}": (
                 f"{entry['retained_revisions']} revisions"
@@ -1090,37 +1032,13 @@ def verify(
         typer.Option("--run-id", metavar="ID", help="Which run --new checks. Default: the newest."),
     ] = None,
 ) -> None:
-    """Re-read published content and compare it with its manifest (docs/cli.md verification
-    contract).
+    """Verify published content through the API's private offline worker.
 
-    Exits `0` on a clean result and `40` on any integrity finding. A finding
-    never rewrites a manifest, prunes a revision, or re-downloads over the
-    evidence (`docs/cli.md` §2, `AD-13`): it is recorded, reported, and left for
-    an operator to act on with `repair`.
-
-    `--new` covers exactly the content one run introduced, which is what makes it
-    cheap enough to run after every sync. It resolves through the archive's
-    current references rather than through the publication ids the run recorded,
-    so a revision a later prune rotated out is not verified and a revision a
-    later repair replaced is verified in its replacement.
-
-    `--full` covers every retained revision of every repository the archive
-    holds, including repositories no longer in configuration (`AD-06`) — a
-    quarterly job that skipped those would leave exactly the content nothing else
-    touches unchecked. It takes the exclusive lock, which is what makes it
-    mutually exclusive with sync, prune, purge, and repair, and runs with Hub
-    networking disabled because it re-reads what the archive already has.
-
-    `--revision TYPE:ID@SHA` checks one retained revision, which is what an
-    operator reaches for after a `--full` reported a finding and again after a
-    `repair` claims to have fixed it. The repository need not be in
-    configuration: an unmanaged repository's data is still the archive's (`AD-06`)
-    and is still worth checking.
-
-    `--estimate` hashes nothing and takes no lock. It reports what `--full`
-    would read, so that scheduling it against a NAS maintenance window is a
-    decision made from a measurement rather than from a guess (docs/cli.md verification contract).
-    """
+    Actual verification holds the archive lock, hashes content and writes reports/
+    catalog state; integrity findings exit 40 and preserve evidence. --new selects
+    content introduced by one run through currently retained references; --full
+    covers all retained data, and --revision selects one full immutable SHA.
+    --estimate only reads metadata/stat cost; it neither hashes nor starts a job."""
     started_at = utc_now()
     request = VerificationRequest(
         new=new, full=full, revision=revision, estimate=estimate, run_id=run_id
@@ -1173,7 +1091,7 @@ def verify(
             "findings": str(len(payload["findings"])),
             "report": payload["report"],
         }
-    _show_result(ctx, result, started_at=started_at, lines=lines)
+    _show_result(ctx, result, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -1190,14 +1108,19 @@ def quarantine(
     ] = None,
     dry_run: Annotated[
         bool,
-        typer.Option("--dry-run", help="Validate the exact cleanup plan and mutate nothing."),
+        typer.Option(
+            "--dry-run", help="Preview through API; writes a job receipt without archive changes."
+        ),
     ] = False,
     apply: Annotated[
         bool,
         typer.Option("--apply", help="Permanently remove the proven redundant quarantine entries."),
     ] = False,
 ) -> None:
-    """Clean explicitly selected abandoned staging after proving its content redundant."""
+    """Preview or apply cleanup of explicitly selected redundant staging via the API.
+
+    Preview is a keyed control-state job with no archive writes. Apply requires
+    writer authority and locked evidence; unexplained content remains preserved."""
     started_at = utc_now()
     command = f"quarantine {'--apply' if apply else '--dry-run'}"
     try:
@@ -1224,7 +1147,7 @@ def quarantine(
         else f"{len(item['files'])} redundant files, {item['logical_bytes']} logical bytes"
         for item in result.data.get("plans", [])
     }
-    _show_result(ctx, result, started_at=started_at, lines=lines)
+    _show_result(ctx, result, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -1238,27 +1161,19 @@ def prune(
     selectors: SelectorArgument = None,
     dry_run: Annotated[
         bool,
-        typer.Option("--dry-run", help="Print the exact plan and mutate nothing."),
+        typer.Option(
+            "--dry-run", help="Preview through API; writes a job receipt without archive changes."
+        ),
     ] = False,
     apply: Annotated[
         bool,
         typer.Option("--apply", help="Execute a validated plan."),
     ] = False,
 ) -> None:
-    """Inspect or complete retention cleanup (docs/architecture.md retention contract).
+    """Preview or apply retention cleanup through the API.
 
-    Retention normally runs inside `sync`; this command exists to inspect the
-    plan before it runs and to complete retention an earlier failure deferred
-    (`docs/cli.md` §2).
-
-    `--dry-run` reads only and takes no lock: it reports the plan `--apply`
-    would execute, built from the same references and manifests the prune itself
-    reads, so what an operator reviewed is what runs.
-
-    `--apply` mutates, so it takes the exclusive lock and passes the same the preflight contract
-    preflight as any other mutating command, and plans *inside* them — a plan
-    made before the lock could be stale by the time it ran.
-    """
+    Preview writes a job receipt without archive mutation. Apply replans under the
+    writer's archive lock and preflight; a prior preview is not apply authority."""
     started_at = utc_now()
     command = f"prune {'--apply' if apply else '--dry-run'}"
     try:
@@ -1283,7 +1198,7 @@ def prune(
         )
         for item in result.data.get("plans", [])
     } or {"retention": "nothing to prune"}
-    _show_result(ctx, result, started_at=started_at, lines=lines)
+    _show_result(ctx, result, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -1297,7 +1212,9 @@ def purge(
     selectors: SelectorArgument = None,
     dry_run: Annotated[
         bool,
-        typer.Option("--dry-run", help="Print the exact purge plan and mutate nothing."),
+        typer.Option(
+            "--dry-run", help="Preview through API; writes a job receipt without archive changes."
+        ),
     ] = False,
     apply: Annotated[
         bool,
@@ -1311,7 +1228,10 @@ def purge(
         ),
     ] = False,
 ) -> None:
-    """Permanently remove explicitly selected unmanaged repositories (`AD-20`)."""
+    """Preview or permanently remove selected unmanaged repositories through the API.
+
+    Preview retains control receipts without archive writes. Apply requires writer
+    authority, explicit scope and locked validation; managed repositories refuse."""
     started_at = utc_now()
     command = f"purge {'--apply' if apply else '--dry-run'}"
     try:
@@ -1352,7 +1272,7 @@ def purge(
         )
         for item in result.data.get("plans", [])
     } or {"purge": "nothing to purge"}
-    _show_result(ctx, result, started_at=started_at, lines=lines)
+    _show_result(ctx, result, lines=lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -1365,24 +1285,19 @@ def recover(
     ctx: typer.Context,
     dry_run: Annotated[
         bool,
-        typer.Option("--dry-run", help="Describe the plan and mutate nothing."),
+        typer.Option(
+            "--dry-run", help="Preview through API; writes a job receipt without archive changes."
+        ),
     ] = False,
     apply: Annotated[
         bool,
         typer.Option("--apply", help="Execute a fully validated plan. Idempotent."),
     ] = False,
 ) -> None:
-    """Reconcile unfinished transaction journals (docs/architecture.md recovery contract).
+    """Preview or reconcile unfinished transaction journals through the API.
 
-    Roll-forward oriented: it never replaces an expected digest, chooses a
-    revision by modification time, or removes unknown data (`AD-16`). A state it
-    may not resolve on its own is reported and exits `20` rather than guessed at,
-    because a state two valid executions could both have produced has no single
-    correct resolution.
-
-    `--dry-run` reads only. `--apply` takes the same exclusive lock and runs the
-    same storage preflight every mutating command does, because it is one.
-    """
+    Preview writes control receipts only. Apply runs under writer lock/preflight,
+    rolls forward explainable states and preserves ambiguous evidence at exit 20."""
     started_at = utc_now()
     command = f"recover {'--apply' if apply else '--dry-run'}"
     try:
@@ -1405,7 +1320,7 @@ def recover(
         if "actionable" in payload
         else {}
     )
-    _show_result(ctx, result, started_at=started_at, lines=lines)
+    _show_result(ctx, result, lines=lines)
 
 
 @app.command()
@@ -1420,22 +1335,11 @@ def repair(
         typer.Option("--reason", metavar="TEXT", help="Why this repair is being performed."),
     ] = "operator_requested",
 ) -> None:
-    """Replace a damaged publication instance with a verified one (docs/cli.md verification
-    contract).
+    """Request an exact-manifest repair through the API writer.
 
-    The exact immutable SHA is downloaded into an isolated
-    `.store/repair/<transaction-id>/hub` and checked against the **original**
-    manifest. If any expected digest differs the command stops with `HFRET006`
-    and the published revision is unchanged: newly observed bytes are evidence of
-    a failed repair, never a new expectation (`AD-13`).
-
-    The replacement is published under a new publication id at a new immutable
-    locator, re-verified where it now lives, and only then do the references
-    switch. The superseded instance stays readable at its original locator for
-    the configured grace period, so a consumer copy already in flight can finish;
-    after that a checkpointed cleanup *quarantines* it rather than deleting it,
-    and `recover --apply` is what performs that.
-    """
+    The writer downloads the immutable SHA in isolated repair staging, verifies
+    against original expected digests and publishes a new exact instance. It never
+    changes the expected manifest; the superseded locator retains its grace period."""
     started_at = utc_now()
     try:
         request = RepairRequest(selector, reason=reason)
@@ -1468,4 +1372,4 @@ def repair(
         if payload
         else {}
     )
-    _show_result(ctx, result, started_at=started_at, lines=lines)
+    _show_result(ctx, result, lines=lines)
