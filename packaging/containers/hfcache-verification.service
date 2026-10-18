@@ -1,14 +1,12 @@
 [Unit]
 Description=hfcache rootless credential-free offline verifier
-Requires=hfcache-verification.socket
-After=hfcache-verification.socket
 PartOf=hfcache.target
 
 [Service]
-Type=exec
+Type=notify
+NotifyAccess=all
 ExecStart=/usr/local/libexec/hfcache-container-service worker
 ExecStop=/usr/local/libexec/hfcache-container-service stop worker
-Sockets=hfcache-verification.socket
 TimeoutStartSec=300
 TimeoutStopSec=infinity
 SendSIGKILL=no

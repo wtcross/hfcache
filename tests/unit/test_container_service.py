@@ -82,6 +82,13 @@ def test_nas_and_private_peer_paths_are_exposed_only_to_executors():
         )
     assert "--network=none" in commands["worker"]
     assert "--network=none" in commands["client"]
+    assert "/run/hfcache/verification:/run/hfcache/verification:rw,z" in commands["worker"]
+    assert "/run/hfcache/verification:/run/hfcache/verification:ro,z" in commands["api"]
+    assert "--sdnotify=container" in commands["worker"]
+    assert "--container-listener" in commands["worker"]
+    assert not any(
+        "--sdnotify" in item or item == "--container-listener" for item in commands["api"]
+    )
     assert (
         f"--security-opt=seccomp={runtime.PROFILE_DIRECTORY}/worker-seccomp.json"
         in commands["worker"]

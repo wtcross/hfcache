@@ -157,7 +157,7 @@ def command(profile, role, arguments=()):  # noqa: PLR0912, PLR0915 - one closed
     if role in {"api", "client", "caddy"}:
         argv += volume("/run/hfcache/api", writable=role == "api", shared=True)
     if role in {"api", "worker"}:
-        argv += volume("/run/hfcache/verification", shared=True)
+        argv += volume("/run/hfcache/verification", writable=role == "worker", shared=True)
     if role == "api":
         argv += volume("/run/hfcache/api.lock", writable=True, shared=True)
         argv += volume("/var/lib/hfcache/api", writable=True, shared=True)
@@ -179,6 +179,7 @@ def command(profile, role, arguments=()):  # noqa: PLR0912, PLR0915 - one closed
             "/run/secrets/hf-token",
         ]
     elif role == "worker":
+        argv += ["--sdnotify=container"]
         argv += [f"--security-opt=seccomp={PROFILE_DIRECTORY}/worker-seccomp.json"]
         argv += volume("/var/lib/hfcache/verification", writable=True, shared=True)
         argv += volume("/var/lib/hfcache/verification.instance.lock", writable=True, shared=True)
@@ -194,6 +195,7 @@ def command(profile, role, arguments=()):  # noqa: PLR0912, PLR0915 - one closed
             "/opt/hfcache/.venv/bin/python",
             "-m",
             "hfcache.verification_worker",
+            "--container-listener",
             "--config",
             "/etc/hfcache/config.toml",
             "--state-directory",
@@ -335,7 +337,7 @@ def main():
             archive_readonly()
         if role != "client":
             prepare_start(profile, role)
-        # exec preserves manager-origin FD3 and LISTEN_PID for Podman's handoff.
+        # exec retains the manager's notify proxy; the confined worker owns FD3.
         os.execv(PODMAN, argv)  # noqa: S606
     except Exception:  # noqa: BLE001 - unknown stop errors must never reach fallback termination
         sys.stderr.write("hfcache container boundary refused; retained state requires inspection\n")

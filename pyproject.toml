@@ -1,6 +1,6 @@
 [project]
 name = "hfcache"
-version = "0.2.0"
+version = "0.2.1"
 description = "Archive complete revisions of Hugging Face repositories on long-term storage"
 readme = "README.md"
 requires-python = ">=3.14"

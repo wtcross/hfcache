@@ -1,6 +1,7 @@
 [Unit]
-Description=hfcache rootless private verification activation
+Description=hfcache retired rootless verification activation (native profile unchanged)
 PartOf=hfcache.target
+RefuseManualStart=yes
 
 [Socket]
 ListenStream=/run/hfcache/verification/verification.sock

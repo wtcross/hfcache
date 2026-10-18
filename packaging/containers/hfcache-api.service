@@ -1,7 +1,7 @@
 [Unit]
 Description=hfcache rootless API and online executor
-Wants=hfcache-verification.socket
-After=hfcache-verification.socket hfcache-verification.service
+Requires=hfcache-verification.service
+After=hfcache-verification.service
 PartOf=hfcache.target
 
 [Service]

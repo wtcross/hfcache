@@ -186,3 +186,18 @@ Production enablement stays OPS-016; no tag or
 NAS/full-domain acceptance follows from packaging. Decision 126 restrictions remain.
 
 Detailed [rootless runtime/build/profile contract](../containers.md) owns the selected deployment boundaries and actual task evidence.
+
+## Worker-listener correction release boundary (OPS-017)
+
+[Decision 128](../adr/decision-128.md) changes the planned rootless listener to
+creation inside the confined PID1 worker with real container-proxied READY.
+Native inherited activation stays strict. Source fixtures do not close the
+deployed 0.2.0 API-to-worker SELinux hold: clean committed 0.2.1 artifacts, actual
+separate-container notify/peer/isolation proof and guarded installed PROBE must
+precede a corrected local release. No dependency or durable format change is
+intended; retain actual compatibility evidence rather than assume it.
+Join active work before exact-owned socket cleanup; stale/replacement evidence
+or unknown executors must refuse rather than trigger unlink, force or replay.
+Rollback to 0.2.0 returns to its documented worker hold. Keep independent host
+guard, NAS-ro, writer masks, both stores/observer handles and lock inodes. No NAS
+file I/O/jobs or remote publication is authorized by this correction.

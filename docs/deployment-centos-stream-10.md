@@ -1214,3 +1214,27 @@ and review the label-at-creation/activation design in a later authorized task.
 Do not weaken Enforcing policy, alter container labels or execute verification
 on the host as a workaround. NAS write/full-domain/NFS workload checks remain
 forbidden/unrun; metadata readiness and the local release cannot certify them.
+
+## 21. Planned confined worker listener correction (OPS-017)
+
+[Decision 128](adr/decision-128.md) replaces only the planned rootless profile's
+host-created private listener with explicit PID1 --container-listener. It audits
+inherited FDs/activation/credential environment before resources/imports, owns a
+fresh 0600 socket in a pinned euid/gid-0700 parent under the worker's existing
+confinement, and holds instance/parent/inode identity through joined cleanup.
+Existing/stale/replaced paths are preserved/refused. Native named-FD3 activation
+remains strict, without fallback or permission to weaken its validation.
+
+The rootless worker service uses Type=notify/NotifyAccess=all with
+--sdnotify=container and signals only after listener/store/worker initialization.
+API Requires+After it; target starts worker.service and the indexed .socket stays
+dormant RefuseManualStart=yes without automatic references. Only worker private
+directory access becomes writable, with API read-only. No SELinux policy/process
+label, seccomp, secrets, root/cgroup/lock or infinite-drain restriction is weakened.
+
+OPS-017 prepares source/version 0.2.1 and local fixtures; REL-013 builds clean
+artifacts and proves separate confined container peer/notify/isolation, then
+OPS-018 owns guarded installed selection and actual PROBE. Only that production
+proof can close hold 22. Existing 0.2.0 partial tag/history stays immutable; rollback
+to it deliberately restores the known connection hold. Fixed host guard, NAS-ro,
+writer masks/stores/handles/lock inodes and all forbidden NAS workloads remain.

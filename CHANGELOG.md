@@ -7,6 +7,20 @@ and 0.1.1 exist only as install targets under `/opt/hfcache/releases` — one
 proved the install mechanism, the other gave rollback somewhere to go — and
 were never releases.
 
+## 0.2.1 — Preparing
+
+Source implements the rootless worker-listener correction: explicit direct PID1 startup creates
+the private AF_UNIX socket under the worker's existing confinement, with strict
+early inheritance audit, instance/pinned-parent/exact-inode ownership through
+joined cleanup and real container-proxied READY before API startup. Native named
+FD3 activation stays strict. No SELinux policy/label, seccomp, credential or
+verification-domain authority is widened; no dependency/durable format change
+is intended. Clean artifacts and installed proof are later tasks: **not deployed
+or tagged**. The 0.2.0 worker hold and NAS restrictions below remain explicit.
+Source/kernel tests, actual explicitly dirty container-peer/notify/isolation
+preview and the full --with-build gate pass; these do not certify a clean release
+artifact or installed API-to-worker acceptance.
+
 ## 0.2.0 — 2026-10-18, local partial-acceptance release
 
 The local rootless Caddy/API deployment is running and has local annotated

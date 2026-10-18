@@ -63,6 +63,13 @@ The [actual worker probe](../scripts/check-container-worker.py) takes --image
 (derived baseline-preserving file). It retains known containers, logs and
 proof.json or safe failure.json. Failed/partial activation is not isolation proof;
 exact peer/FD/rootless/secret/network/cleanup evidence remains task-owned.
+In the 0.2.1 proof design, a separate ordinary container_t API-role peer fixture
+uses the same app image/UID mapping and a read-only private-directory view for a
+fixed VerificationClient PROBE. It is not an HTTP API server or verification
+admission. Actual installed API-container PROBE remains OPS-018. A separate
+direct-PID1 companion tests seccomp; podman exec is not evidence of PID1 filter
+inheritance. Actual worker PID1 metadata and manager notify attribution are
+recorded separately from that companion.
 
 ## Protected runtime profile
 
@@ -175,6 +182,37 @@ allow rule, label-disable or host execution bypass is an approved quick fix.
 A reviewed label-at-creation/container-activation design is operator backlog,
 not an activated implementation task. Preserve the
 [explicit hold](progress.md#operator-handoff) and all NAS-write/full-domain holds.
+
+### Planned 0.2.1 listener correction (OPS-017)
+
+[Decision 128](adr/decision-128.md) selects explicit --container-listener in the
+direct PID1 worker. Before own resources/NSS/shared imports, reject inherited FDs
+above stderr, any LISTEN_* activation field and known credential environment.
+Preserve separate strict native named-FD3 activation without fallback. Acquire
+worker instance ownership before listener creation; no-follow pin an effective-
+UID/GID-owned 0700 private parent, refuse every existing pathname, bind via its
+proc-fd address and enforce socket 0600/exact-created-inode identity. Validate
+the trusted bound spelling and filesystem identity; internally use FD3 without
+shell/init. Join active work before closing/removing only that exact owned inode,
+holding parent and instance through cleanup. A crash's stale socket remains
+evidence and refuses restart until reviewed handling; no automatic unlink/replay.
+Before opening its parent or binding, refuse socket/archive-root lexical overlap
+and require a known local filesystem from bounded fixed /proc/self/mountinfo.
+Unknown/network mounts refuse without realpath/NAS stat or parent traversal;
+this new IPC authority never permits NAS access through misconfiguration.
+
+Only the worker private-directory bind becomes writable. API's bind remains
+read-only; keep all root/network/seccomp/secret/capability/cgroup/lock boundaries.
+Rootless worker.service uses Type=notify, NotifyAccess=all and
+--sdnotify=container; the worker sends READY only after listener/instance/store/
+worker initialization. The user target starts worker.service, API Requires+After
+it, and no target/API/service automatically references the .socket. Keep that
+artifact/binding dormant RefuseManualStart=yes, preserving nine bindings; native
+socket activation stays unchanged. Infinite non-killing drain and stop ordering
+remain. Actual container-proxied notification and separate API-container PROBE
+under Enforcing SELinux are proof obligations, not supplied by host probes or
+podman exec isolation alone. 0.2.0 remains deployed with its hold until clean
+REL-013 artifacts and actual OPS-018 acceptance; no NAS job is authorized.
 
 ## Filesystem, secrets and resource limits
 

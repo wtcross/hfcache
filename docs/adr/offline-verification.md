@@ -132,3 +132,13 @@ The quarterly calendar/disabled timer and existing NFS/network-namespace policy
 remain unchanged. Positive inherited-socket/protocol fixtures and unit contracts
 are repository evidence; real activation/cgroup no-IP/no-credential, SELinux/NFS
 and executor-aware hardening acceptance remain operator deployment prerequisites.
+
+## Confined rootless listener amendment (OPS-017, 2026-10-18)
+
+[Decision 128](decision-128.md) creates the rootless worker listener inside the
+existing confined PID1 process, with strict early inheritance audit and real
+container-proxied readiness. Native named-FD3 activation remains a separate strict
+mode. No secrets, Hub use, IP permission or verification algorithm is added;
+socket cleanup preserves unknown evidence and joins active work first. Production
+API-to-worker SELinux acceptance awaits OPS-018, while all live NAS verification/
+report/catalog tests remain forbidden under the current data-preserving scope.

@@ -142,3 +142,14 @@ Selected-profile Cockpit retains outer privilege/candidate guards but API secret
 delivery moves to the fixed Podman client launcher, without host ImportCredential.
 NAS/other-host restrictions, exact operation truth and previous evidence remain;
 OPS-015 fixtures bind no NAS and perform no production switch or release.
+
+## Rootless worker-created listener amendment (OPS-017, 2026-10-18)
+
+[Decision 128](decision-128.md) qualifies only the rootless worker profile.
+The direct PID1 worker creates its private AF_UNIX listener under existing
+confinement, after strict no-inherited-FD/activation audit. Worker.service uses
+Type=notify/NotifyAccess=all and --sdnotify=container; API Requires+After its real
+READY state. The rootless .socket artifact remains dormant RefuseManualStart=yes,
+with no automatic references, preserving existing indexed bindings. Native named
+FD3/socket activation stays strict and unchanged. Credentials, offline/no-IP,
+actual-executor drain and scheduled observation/no-replay contracts stand.

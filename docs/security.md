@@ -758,3 +758,26 @@ stand in for the host view; retain hardening and host PID/proc visibility for th
 control only. Application containers still get no host PID/proc authority.
 The bridge requires guard readiness and the user default target cannot start the
 app target. No generic paths/commands or app imports are added to the guard.
+
+## Confined private listener ownership (OPS-017)
+
+[Decision 128](adr/decision-128.md) corrects the planned rootless listener's
+creation context rather than granting a new SELinux permission. Explicit direct
+PID1 --container-listener refuses inherited FDs above stderr, activation fields
+and known credential environment before resources/shared imports. The worker
+owns only a fresh protected private socket under its existing confinement; native
+named-FD3 activation remains strict with no bind fallback. The instance/pinned
+parent/created inode remain owned through joined work and exact cleanup; any
+existing or replacement path is preserved and refuses automatic reuse/deletion.
+The new owned IPC path must be lexically disjoint from configured archive root
+and proven local via bounded fixed /proc/self/mountinfo before parent traversal
+or bind. Unknown/network mounts refuse without realpath or NAS stat; a bad
+startup socket path cannot authorize archive/NAS filesystem access.
+
+Only worker private-directory access becomes writable; API mounts it read-only.
+Network=none, native AF_UNIX-only seccomp, no secrets/source-store masks, read-only
+root, empty caps, NNP, UID/cgroup limits and the shared archive lock remain.
+Actual worker-proxied READY follows listener/store/runtime initialization, not
+process launch. No allow module, label override/disable, `+` execution, host worker
+or network-enabled fallback is authorized. Actual production API-container peer
+access must close hold 22 in OPS-018; source tests and host probes cannot do so.

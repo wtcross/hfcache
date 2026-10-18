@@ -292,3 +292,16 @@ Keep this release hold and review a label-at-creation/container-activation desig
 under a future authorized task; do not add an allow, change container labels or
 bypass the isolated executor to force a pass. The existing data-preserving plan
 permits honest partial rollout, not end-to-end verification acceptance.
+
+## Worker-owned listener amendment (OPS-017, 2026-10-18)
+
+[Decision 128](decision-128.md) supersedes rootless host-created socket activation
+for the planned 0.2.1 profile. The direct confined PID1 worker binds its protected
+private pathname after strict inheritance audit, retains instance/parent/socket
+identity through joined cleanup and sends container-proxied READY only after
+listener/store/runtime initialization. Only its private directory becomes writable;
+API mounts it read-only. API Requires+After worker.service; the target starts that
+service and the indexed .socket stays dormant RefuseManualStart=yes without any
+automatic reference. Nine bindings/native activation and all secret/network/
+seccomp/SELinux/drain/lock restrictions remain. Installed 0.2.0 evidence and hold
+stay unchanged until actual OPS-018 production container-peer acceptance.

@@ -24,10 +24,10 @@ TOKEN_ENV = {
 }
 
 
-def fields(name, section):
+def fields(name, section, *, directory=UNITS):
     """Retain repeated keys: socket activation and credential lists depend on them."""
     selected, result = None, {}
-    for raw in (UNITS / name).read_text().splitlines():
+    for raw in (directory / name).read_text().splitlines():
         line = raw.strip()
         if not line or line.startswith(("#", ";")):
             continue
@@ -37,6 +37,38 @@ def fields(name, section):
             key, value = line.split("=", 1)
             result.setdefault(key, []).append(value)
     return result
+
+
+def test_rootless_api_waits_for_worker_readiness_without_host_socket_activation():
+    directory = PACKAGING / "containers"
+    api = fields("hfcache-api.service", "Unit", directory=directory)
+    worker = fields("hfcache-verification.service", "Service", directory=directory)
+    assert api["Requires"] == api["After"] == ["hfcache-verification.service"]
+    assert worker["Type"] == ["notify"]
+    assert worker["NotifyAccess"] == ["all"]
+    assert "Sockets" not in worker
+    for name in ("hfcache.target", "hfcache-api.service", "hfcache-verification.service"):
+        unit = fields(name, "Unit", directory=directory)
+        assert "hfcache-verification.socket" not in {
+            value for values in unit.values() for line in values for value in line.split()
+        }
+    target = fields("hfcache.target", "Unit", directory=directory)
+    assert set(target["Wants"][0].split()) == {
+        "hfcache-api.service",
+        "hfcache-caddy.service",
+        "hfcache-verification.service",
+    }
+    dormant = fields("hfcache-verification.socket", "Unit", directory=directory)
+    assert dormant["RefuseManualStart"] == ["yes"]
+    assert not fields("hfcache-verification.socket", "Install", directory=directory)
+    for name in ("hfcache-api.service", "hfcache-verification.service"):
+        service = fields(name, "Service", directory=directory)
+        assert service["TimeoutStopSec"] == ["infinity"]
+        assert service["SendSIGKILL"] == ["no"]
+        assert service["ExecStop"] == [
+            "/usr/local/libexec/hfcache-container-service stop "
+            + ("api" if name == "hfcache-api.service" else "worker")
+        ]
 
 
 @pytest.mark.parametrize("name", [*EXECUTORS, *CLIENTS])

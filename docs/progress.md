@@ -1645,6 +1645,27 @@ package in this family.
   original lock/writer masks/stores/handles and all forbidden storage/other-host/
   calendar checks remain. No remote publication or follow-up activation.)
 
+## Confined rootless worker listener (OPS/REL, 2026-10-18)
+
+- [x] OPS-017 Implement the confined worker-owned listener
+  (2026-10-18, this commit — [plan](plans/2026-10-18-plan-container-worker-listener.md),
+  [task](plans/tasks/ops-017-container-worker-listener.md)). Decision 128 preserves
+  strict native named FD3 and adds explicit PID1-owned listener/locality/early
+  signal audit, exact instance-parent-inode cleanup and real container READY.
+  Rootless worker notify ordering/RW private-dir/API RO and dormant .socket retain
+  existing bindings and confinement. Metadata 0.2.1 changes no dependency record,
+  schema or domain algorithm. Focused app 162/runtime 197 and actual dirty preview 2
+  container-peer/notify/isolation/direct-drain pass; failed early-stop regression,
+  superseded untested preview 1 and simulated-PID1 source fixtures remain explicit.
+  Full masked --with-build exits 0: 415 formatted/Ruff/whole types 0, 3,912 Python/
+  40 deselected in 487.56s, 0.2.1 builds/three locked profiles, 135 Cockpit tests/
+  build and four wheel smokes. Reviewed INV-002/003/005–007/010–016, AD-16/17/21,
+  FS/TX and decisions 115/121/126/127/128/offline verification; contracts/index/
+  register/enforcement links and final records/whitespace pass. REL-013 remains
+  pending until commit. Dirty proof is not a clean release or installed acceptance:
+  deployed/tagged 0.2.0/hold 22, NAS-ro/guard/masks and all forbidden NAS I/O/jobs/
+  other-host/remote actions remain unchanged.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -4588,3 +4609,19 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      missing/copied/drifted links refuse and effective managers still need review.
      REL-010 owns reviewed 0.2.0 source, REL-012 clean-source artifacts, and
      OPS-016 production profile enablement under the unchanged NAS-write ban.
+
+128. **Create the rootless verifier listener inside its confinement**
+     (2026-10-18, OPS-017). [ADR](adr/decision-128.md): explicit PID1
+     --container-listener audits inherited descriptors/activation/credential
+     environment before opening resources, then creates the protected AF_UNIX
+     listener under the worker's existing confinement. Native named-FD3 mode
+     remains strict, with no fallback. Hold instance/pinned-parent/created-inode
+     ownership through joined work and exact cleanup; stale/replaced evidence
+     never grants deletion/replay authority. Worker Type=notify/NotifyAccess=all
+     and --sdnotify=container report READY only after listener/store/worker init;
+     API Requires+After that service. Rootless .socket stays dormant with its
+     indexed binding. Reject SELinux allow/label/host-execution and seccomp/secret
+     shortcuts. Planned 0.2.1 clean-image/installed proof is later work: existing
+     0.2.0 partial evidence and worker hold remain until actual OPS-018 peer
+     acceptance. Fixed host guard, NAS-ro/writer masks and no NAS I/O/jobs remain;
+     no dependency/durable-format/domain change or remote action is introduced.

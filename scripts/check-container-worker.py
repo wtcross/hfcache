@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Opt-in decision 127 proof using an owned local fixture and an exact image.
+"""Opt-in decisions 127/128 proof using local fixtures and an exact image.
 
 This never binds or opens the NAS, submits verification, removes containers, or
 kills a surviving executor. Run as the rootless account. Retain the workspace
@@ -13,14 +13,9 @@ import json
 import os
 import re
 import secrets
-import socket
 import subprocess
-import sys
 import time
 from pathlib import Path
-
-from hfcache.errors import OperationError
-from hfcache.verification_protocol import VerificationClient
 
 _SPEC = importlib.util.spec_from_file_location(
     "hfcache_container_build", Path(__file__).with_name("build-container.py")
@@ -39,17 +34,34 @@ _MASKS = (
     "/etc/credstore.encrypted",
     "/etc/hfcache/credentials",
 )
-_TRAMPOLINE = """
-import os,sys
-source=int(sys.argv[1])
-os.dup2(source,3,inheritable=True)
-if source!=3: os.close(source)
-os.set_inheritable(3,True)
-os.environ.pop('LISTEN_PIDFDID',None)
-os.environ['LISTEN_PID']=str(os.getpid())
-os.environ['LISTEN_FDS']='1'
-os.environ['LISTEN_FDNAMES']='hfcache-verification'
-os.execv(sys.argv[2],sys.argv[2:])
+_UNIT_FIELDS = (
+    "Type",
+    "NotifyAccess",
+    "ActiveState",
+    "SubState",
+    "MainPID",
+    "ControlGroup",
+    "ExecMainStartTimestampMonotonic",
+    "ActiveEnterTimestampMonotonic",
+)
+_PEER_PROBE = """
+import json,os,sys
+from pathlib import Path
+from hfcache.verification_protocol import VerificationClient
+assert os.geteuid()==os.getegid()==981
+VerificationClient(Path(sys.argv[1]),expected_uid=981,timeout_seconds=5).check_available()
+print(json.dumps({'api_container_peer':True,'uid':981,'expected_worker_uid':981}))
+"""
+_WORKER_METADATA = """
+import json,os
+command=open('/proc/1/cmdline','rb').read().split(b'\\0')
+assert b'hfcache.verification_worker' in command and b'--container-listener' in command
+assert os.readlink('/proc/1/fd/3').startswith('socket:[')
+status=dict(line.split(':',1) for line in open('/proc/1/status') if ':' in line)
+assert int(status['CapEff'].strip(),16)==0 and status['NoNewPrivs'].strip()=='1'
+assert status['Seccomp'].strip()=='2' and int(status['Seccomp_filters'].strip())>=1
+print(json.dumps({'worker_pid1':True,'internal_fd3':True,'capabilities_empty':True,
+ 'no_new_privileges':True,'seccomp_filter':True}))
 """
 _ISOLATION = """
 import errno,fcntl,json,os,socket,sys
@@ -84,7 +96,7 @@ try:
  check='read_only_root'
  assert os.statvfs('/').f_flag & os.ST_RDONLY
  check='pid1_entrypoint'
- assert b'hfcache.verification_worker' in open('/proc/1/cmdline','rb').read()
+ assert os.getpid()==1
  check='lock_identity'
  assert os.stat('/run/hfcache/hfcache.lock').st_ino==int(sys.argv[4])
  check='lock_contention'
@@ -139,10 +151,86 @@ def engine(*arguments: str, check: bool = True) -> subprocess.CompletedProcess[s
     )
 
 
+def manager(*arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(  # noqa: S603 - fixed caller's user manager, never the system manager
+        ["/usr/bin/systemctl", "--user", *arguments],
+        check=check,
+        capture_output=True,
+        text=True,
+    )
+
+
+def transient_command(unit: str, worker_name: str, run: list[str]) -> list[str]:
+    """Exercise actual readiness attribution; no conmon-only startup shortcut."""
+    if (
+        not re.fullmatch(r"hfcache-proof-[a-z0-9-]+\.service", unit)
+        or not re.fullmatch(r"hfcache-proof-[a-z0-9-]+", worker_name)
+        or unit != worker_name + ".service"
+    ):
+        _BUILD.refuse("invalid disposable user unit")
+    properties = (
+        "Type=notify",
+        "NotifyAccess=all",
+        "TimeoutStartSec=45",
+        "TimeoutStopSec=infinity",
+        "SendSIGKILL=no",
+        "Restart=no",
+        "UMask=0077",
+    )
+    return [
+        "/usr/bin/systemd-run",
+        "--user",
+        "--unit=" + unit,
+        "--pipe",
+        "--wait",
+        "--quiet",
+        *["--property=" + value for value in properties],
+        *run,
+    ]
+
+
+def ready_state(body: str) -> dict[str, str] | None:
+    state = dict(line.split("=", 1) for line in body.splitlines() if "=" in line)
+    if state.get("ActiveState") != "active":
+        return None
+    if (
+        set(state) != set(_UNIT_FIELDS)
+        or state["Type"] != "notify"
+        or state["NotifyAccess"] != "all"
+        or state["SubState"] != "running"
+        or not state["MainPID"].isdigit()
+        or int(state["MainPID"]) <= 0
+        or not state["ControlGroup"].startswith("/user.slice/")
+        or not state["ExecMainStartTimestampMonotonic"].isdigit()
+        or not state["ActiveEnterTimestampMonotonic"].isdigit()
+        or not 0
+        < int(state["ExecMainStartTimestampMonotonic"])
+        <= int(state["ActiveEnterTimestampMonotonic"])
+    ):
+        _BUILD.refuse("user manager did not establish worker readiness")
+    return state
+
+
+def wait_ready(unit: str, process: subprocess.Popen, *, seconds: float = 45) -> dict[str, str]:
+    deadline = time.monotonic() + seconds
+    while True:
+        result = manager("show", unit, "--property=" + ",".join(_UNIT_FIELDS), check=False)
+        if result.returncode == 0 and (state := ready_state(result.stdout)) is not None:
+            return state
+        if process.poll() is not None or time.monotonic() >= deadline:
+            _BUILD.refuse("actual user unit did not receive worker readiness")
+        time.sleep(0.05)
+
+
 def rootless_storage() -> str:
     info = json.loads(engine("info", "--format=json").stdout)
     if os.geteuid() == 0 or info["host"]["security"]["rootless"] is not True:
         _BUILD.refuse("proof requires a rootless local engine")
+    if (
+        info["host"]["security"].get("selinuxEnabled") is not True
+        or Path("/sys/fs/selinux/enforce").read_text().strip() != "1"
+    ):
+        _BUILD.refuse("container peer proof requires SELinux enforcing")
     graph = _BUILD.local_path(Path(info["store"]["graphRoot"]))
     return str(graph)
 
@@ -183,7 +271,18 @@ def inspect_owned(name: str, marker: str, image: str) -> dict:
     actual = data["Image"]
     if isinstance(actual, str) and re.fullmatch(r"[0-9a-f]{64}", actual):
         actual = "sha256:" + actual
-    if data["Config"]["Labels"].get("io.hfcache.proof") != marker or actual != image:
+    state = data.get("State")
+    if (
+        data["Config"]["Labels"].get("io.hfcache.proof") != marker
+        or actual != image
+        or not isinstance(data.get("Id"), str)
+        or not re.fullmatch(r"[0-9a-f]{64}", data["Id"])
+        or not isinstance(state, dict)
+        or type(state.get("Running")) is not bool
+        or type(state.get("Pid")) is not int
+        or state["Pid"] < 0
+        or (state["Running"] and state["Pid"] == 0)
+    ):
         _BUILD.refuse("container identity changed; preserve it for investigation")
     return data
 
@@ -199,13 +298,21 @@ def _prove(  # noqa: PLR0912, PLR0915 - one explicit owned lifecycle, never hidd
     profile = _BUILD.local_path(profile)
     profile_hash = _BUILD.digest(profile.read_bytes())
     marker = secrets.token_hex(8)
-    worker_name, client_name = f"hfcache-proof-{marker}-worker", f"hfcache-proof-{marker}-client"
+    worker_name, client_name, peer_name, isolation_name = (
+        f"hfcache-proof-{marker}-{role}" for role in ("worker", "client", "api", "isolation")
+    )
+    unit = worker_name + ".service"
     common = base_arguments(image, worker_name, profile, marker)
     trace["stage"] = "rootless_engine"
     graph = rootless_storage()
-    for name in (worker_name, client_name):
+    for name in (worker_name, client_name, peer_name, isolation_name):
         if engine("container", "exists", name, check=False).returncode != 1:
             _BUILD.refuse("disposable name is not proven absent")
+    if (
+        manager("show", unit, "--property=LoadState", "--value", check=False).stdout.strip()
+        != "not-found"
+    ):
+        _BUILD.refuse("disposable user unit is not proven absent")
     workspace.mkdir(mode=0o700)
     trace.update({"workspace": str(workspace), "stage": "local_fixture"})
     policy, runtime, states = (workspace / item for item in ("policy", "runtime", "states"))
@@ -234,125 +341,148 @@ def _prove(  # noqa: PLR0912, PLR0915 - one explicit owned lifecycle, never hidd
         "seccomp_sha256": profile_hash,
         "worker_container": worker_name,
         "client_container": client_name,
+        "api_peer_container": peer_name,
+        "isolation_container": isolation_name,
+        "user_unit": unit,
         "host_uid": os.geteuid(),
         "container_uid": 981,
         "nas_mounted": False,
         "verification_submitted": False,
     }
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
-        listener.bind(str(address))
-        address.chmod(0o600)
-        listener.listen(8)
-        inode = address.stat().st_ino
-        run = [
-            "/usr/bin/podman",
-            "--remote=false",
-            "run",
-            *common,
-            "--volume",
-            f"{policy}:/etc/hfcache:ro,z",
-            "--volume",
-            f"{runtime}:{runtime}:rw,z",
-            "--volume",
-            f"{states}:/var/lib/hfcache:rw,z",
-            "--volume",
-            f"{lock}:/run/hfcache/hfcache.lock:rw,z",
-            image,
-            "-m",
-            "hfcache.verification_worker",
-            "--config",
-            "/etc/hfcache/config.toml",
-            "--state-directory",
-            "/var/lib/hfcache/verification",
-            "--socket",
-            str(address),
-        ]
-        with (workspace / "worker.log").open("xb") as log:
-            trace["stage"] = "activation"
-            process = subprocess.Popen(  # noqa: S603 - inherited FD3 and fixed local engine
-                [sys.executable, "-c", _TRAMPOLINE, str(listener.fileno()), *run],
-                pass_fds=(listener.fileno(),),
-                stdout=log,
-                stderr=log,
+    run = [
+        "/usr/bin/podman",
+        "--remote=false",
+        "run",
+        *common,
+        "--sdnotify=container",
+        "--volume",
+        f"{policy}:/etc/hfcache:ro,z",
+        "--volume",
+        f"{runtime}:{runtime}:rw,z",
+        "--volume",
+        f"{states}:/var/lib/hfcache:rw,z",
+        "--volume",
+        f"{lock}:/run/hfcache/hfcache.lock:rw,z",
+        image,
+        "-m",
+        "hfcache.verification_worker",
+        "--container-listener",
+        "--config",
+        "/etc/hfcache/config.toml",
+        "--state-directory",
+        "/var/lib/hfcache/verification",
+        "--socket",
+        str(address),
+    ]
+    with (workspace / "worker.log").open("xb") as log:
+        trace["stage"] = "user_notify"
+        process = subprocess.Popen(  # noqa: S603 - fixed disposable user unit and exact local image
+            transient_command(unit, worker_name, run),
+            stdin=subprocess.DEVNULL,
+            stdout=log,
+            stderr=log,
+        )
+        try:
+            state = wait_ready(unit, process)
+            evidence["notify"] = state
+            trace["stage"] = "worker_identity"
+            owned = inspect_owned(worker_name, marker, image)
+            if (
+                owned["HostConfig"]["NetworkMode"] != "none"
+                or ":container_t:" not in owned.get("ProcessLabel", "")
+                or type(owned["State"].get("ConmonPid")) is not int
+                or owned["State"]["ConmonPid"] != int(state["MainPID"])
+            ):
+                _BUILD.refuse("actual notify worker identity changed")
+            inode = address.lstat().st_ino
+            evidence["worker_metadata"] = json.loads(
+                engine("exec", worker_name, _PYTHON, "-c", _WORKER_METADATA).stdout
             )
-            try:
-                trace["stage"] = "availability"
-                client = VerificationClient(
-                    address,
-                    expected_uid=os.geteuid(),
-                    timeout_seconds=0.2,
-                    expected_archive_id=_ARCHIVE_ID,
-                )
-                deadline = time.monotonic() + 30
-                while True:
-                    try:
-                        client.check_available()
-                        break
-                    except OperationError:
-                        if process.poll() is not None or time.monotonic() >= deadline:
-                            _BUILD.refuse("actual activated worker did not become available")
-                        time.sleep(0.05)
-                trace["stage"] = "worker_identity"
-                owned = inspect_owned(worker_name, marker, image)
-                if owned["HostConfig"]["NetworkMode"] != "none":
-                    _BUILD.refuse("actual worker network mode changed")
-                trace["stage"] = "isolation"
-                with lock.open("r+b") as held:
-                    fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    proof = engine(
-                        "exec",
-                        worker_name,
-                        _PYTHON,
-                        "-c",
-                        _ISOLATION,
-                        str(source),
-                        str(Path("/proc/self/ns/net").stat().st_ino),
-                        str(Path("/proc/self/ns/pid").stat().st_ino),
-                        str(lock.stat().st_ino),
-                        check=False,
-                    )
-                if proof.returncode:
-                    detail = json.loads(proof.stdout)
-                    check = detail.get("failed_check")
-                    trace["failed_check"] = check if check in _CHECK_NAMES else "unknown"
-                    _BUILD.refuse("payload isolation proof failed")
-                evidence["isolation"] = json.loads(proof.stdout)
-                trace["stage"] = "protected_reader"
-                result = engine(
+            trace["stage"] = "api_container_peer"
+            result = engine(
+                "run",
+                *base_arguments(image, peer_name, profile, marker),
+                "--label=io.hfcache.role=api",
+                "--volume",
+                f"{runtime}:{runtime}:ro,z",
+                image,
+                "-c",
+                _PEER_PROBE,
+                str(address),
+            )
+            peer = inspect_owned(peer_name, marker, image)
+            if ":container_t:" not in peer.get("ProcessLabel", ""):
+                _BUILD.refuse("API peer is not under ordinary container confinement")
+            evidence["private_probe"] = json.loads(result.stdout)
+            evidence["selinux_enforcing_container_peer"] = True
+            trace["stage"] = "pid1_isolation_companion"
+            with lock.open("r+b") as held:
+                fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                proof = engine(
                     "run",
-                    *base_arguments(image, client_name, profile, marker),
+                    *base_arguments(image, isolation_name, profile, marker),
                     "--volume",
-                    f"{source}:/run/secrets/proof-api:ro,z",
+                    f"{policy}:/etc/hfcache:ro,z",
+                    "--volume",
+                    f"{lock}:/run/hfcache/hfcache.lock:rw,z",
                     image,
                     "-c",
-                    _PROTECTED_READER,
+                    _ISOLATION,
+                    str(source),
+                    str(Path("/proc/self/ns/net").stat().st_ino),
+                    str(Path("/proc/self/ns/pid").stat().st_ino),
+                    str(lock.stat().st_ino),
+                    check=False,
                 )
-                evidence["protected_reader"] = json.loads(result.stdout)
-                inspect_owned(client_name, marker, image)
-                trace["stage"] = "drain"
-            finally:
-                exists = engine("container", "exists", worker_name, check=False)
-                if exists.returncode == 0:
-                    inspect_owned(worker_name, marker, image)
-                    engine("stop", "--time", "-1", worker_name)
-                    process.wait()  # no timeout/kill of an unexplained surviving executor
-                elif process.poll() is None:
-                    _BUILD.refuse("activation state is uncertain; preserve process and fixture")
-        trace["stage"] = "retained_state"
-        stopped = inspect_owned(worker_name, marker, image)
-        if stopped["State"]["Running"] or stopped["State"]["ExitCode"] != 0:
-            _BUILD.refuse("actual worker did not drain cleanly")
-        if address.stat().st_ino != inode or not listener.getsockopt(
-            socket.SOL_SOCKET, socket.SO_ACCEPTCONN
-        ):
-            _BUILD.refuse("activation socket identity or ownership changed")
+            inspect_owned(isolation_name, marker, image)
+            if proof.returncode:
+                detail = json.loads(proof.stdout)
+                check = detail.get("failed_check")
+                trace["failed_check"] = check if check in _CHECK_NAMES else "unknown"
+                _BUILD.refuse("PID1 companion isolation proof failed")
+            evidence["pid1_isolation_companion"] = json.loads(proof.stdout)
+            trace["stage"] = "protected_reader"
+            result = engine(
+                "run",
+                *base_arguments(image, client_name, profile, marker),
+                "--volume",
+                f"{source}:/run/secrets/proof-api:ro,z",
+                image,
+                "-c",
+                _PROTECTED_READER,
+            )
+            evidence["protected_reader"] = json.loads(result.stdout)
+            inspect_owned(client_name, marker, image)
+            trace["stage"] = "drain"
+        finally:
+            exists = engine("container", "exists", worker_name, check=False)
+            if exists.returncode == 0:
+                owned = inspect_owned(worker_name, marker, image)
+                # Validate exact ownership, stop the ID, then let the user unit
+                # finish naturally. Never stop an unknown replacement by name.
+                engine("stop", "--time", "-1", owned["Id"])
+                process.wait()  # no timeout/kill of an unexplained surviving executor
+            elif process.poll() is None:
+                _BUILD.refuse("worker state is uncertain; preserve user unit and fixture")
+    trace["stage"] = "retained_state"
+    stopped = inspect_owned(worker_name, marker, image)
+    if stopped["State"]["Running"] or stopped["State"]["ExitCode"] != 0 or process.returncode != 0:
+        _BUILD.refuse("actual worker did not drain cleanly")
+    try:
+        address.lstat()
+    except FileNotFoundError:
+        pass
+    else:
+        _BUILD.refuse("owned listener was not removed after joined drain")
     if sorted(path.name for path in (states / "verification").iterdir()) != [".lock"]:
         _BUILD.refuse("probe unexpectedly created operation history")
     if archive.exists() or token.encode() in (workspace / "worker.log").read_bytes():
         _BUILD.refuse(
             "proof unexpectedly touched archive state or disclosed its synthetic credential"
         )
-    evidence.update({"clean_stop": True, "retained_socket_inode": inode, "empty_operations": True})
+    evidence.update(
+        {"clean_stop": True, "removed_owned_socket_inode": inode, "empty_operations": True}
+    )
     (workspace / "proof.json").write_text(json.dumps(evidence, sort_keys=True, indent=2) + "\n")
     return evidence
 
@@ -391,7 +521,7 @@ def main() -> int:
     options = parser.parse_args()
     try:
         evidence = prove(options.image, options.workspace, options.seccomp_profile)
-    except OSError, ValueError, KeyError, subprocess.CalledProcessError:
+    except Exception:  # noqa: BLE001 - no raw engine/SDK data is suitable for proof diagnostics
         print("container worker proof failed; preserve the local fixture and container evidence")
         return 1
     print(json.dumps(evidence, sort_keys=True))

@@ -19,6 +19,7 @@ from hfcache.errors import HfcacheError, OperationError
 from hfcache.locking import CommandLockControl, scoped_command_lock
 from hfcache.services.commands import CommandServices, VerificationRequest
 from hfcache.services.context import ExecutionContext, ServiceResult
+from hfcache.verification_listener import DIRECTORY_MODE, SOCKET_MODE
 from hfcache.verification_protocol import (
     MAX_FRAME_BYTES,
     ROUTE,
@@ -206,17 +207,37 @@ class VerificationWorker:
             active.join()
 
 
-def validate_listener(listener: socket.socket, path: Path) -> None:
+def validate_listener(
+    listener: socket.socket,
+    path: Path,
+    *,
+    bound_address: str | None = None,
+    owned_identity: tuple[int, int] | None = None,
+) -> None:
+    """Keep native canonical checks; owned mode also proves its created inode."""
     parent = -1
     try:
         parent = open_directory(path.parent)
         directory = os.fstat(parent)
         info = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+        owned = bound_address is not None
         if (
-            listener.family != socket.AF_UNIX
+            owned != (owned_identity is not None)
+            or (
+                owned
+                and (
+                    (info.st_dev, info.st_ino) != owned_identity
+                    or info.st_gid != os.getegid()
+                    or stat.S_IMODE(info.st_mode) != SOCKET_MODE
+                    or directory.st_uid != os.geteuid()
+                    or directory.st_gid != os.getegid()
+                    or stat.S_IMODE(directory.st_mode) != DIRECTORY_MODE
+                )
+            )
+            or listener.family != socket.AF_UNIX
             or listener.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE) != socket.SOCK_STREAM
             or not listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN)
-            or listener.getsockname() != str(path)
+            or listener.getsockname() != (bound_address if owned else str(path))
             or not stat.S_ISSOCK(info.st_mode)
             or info.st_uid != os.geteuid()
             or stat.S_IMODE(info.st_mode) not in {0o600, 0o660}

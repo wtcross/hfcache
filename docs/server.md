@@ -889,3 +889,52 @@ profile. Settled image/profile/helper/unit APIs and actual gate evidence follow
 in the [task](plans/tasks/ops-015-rootless-container-runtime.md), not a release claim.
 
 Detailed [rootless runtime/build/profile contract](containers.md) owns the selected deployment boundaries and actual task evidence.
+
+## Confined worker-created listener (OPS-017)
+
+[Decision 128](adr/decision-128.md) adds explicit --container-listener to the
+private worker, only as direct container PID1. Default native named inherited-FD3
+activation retains its strict canonical listener/descriptor rules and never binds
+as a fallback. Owned mode rejects every inherited FD above stderr, LISTEN_*
+activation field and existing forbidden credential environment source before
+NSS/shared imports, policy/state access or creating its own resources. Offline
+initialization still precedes shared runtime imports.
+After the inheritance audit, reserve the owned unbound AF_UNIX socket as FD3
+before NSS/shared imports open their descriptors; bind only under later instance/
+parent ownership. Own bootstrap descriptors must not appear as inherited secrets.
+Owned SIGTERM/SIGINT handlers are installed just after the cold audit, before FD3
+reservation/NSS/imports, and share one stop Event through runtime. A stop during
+initialization must suppress later readiness; native signal placement is unchanged.
+
+Hold the worker instance lock before binding. Pin the no-follow private parent,
+requiring effective UID/GID and mode 0700; preserve/refuse every existing final
+path. Bind through its proc-fd address with restrictive umask/socket mode 0600,
+retain created device/inode and validate that exact bound spelling plus configured
+path owner/mode/inode. Normalize only the owned socket to internal FD3. Parent/
+instance ownership encloses runtime join and exact-own-inode cleanup; replacement,
+stale socket, locks and stores are never automatically removed or replayed.
+
+Before traversing that parent, owned mode refuses lexical socket/archive-root
+overlap in either direction and requires proven local filesystem metadata from
+bounded fixed /proc/self/mountinfo. Unknown/network mounts refuse before open/
+bind; no realpath or NAS stat is used to establish this guard. Native inherited
+activation retains its existing behavior.
+
+Only the worker private-directory bind becomes writable, with API read-only.
+Rootless worker.service uses Type=notify/NotifyAccess=all and --sdnotify=container;
+READY is sent by the direct worker only after listener, instance, store and worker
+initialization. API Requires+After worker.service; target starts that service.
+Owned mode requires valid NOTIFY_SOCKET and sends no READY after a stop request;
+native mode ignores this notification mechanism.
+The indexed rootless .socket is dormant RefuseManualStart=yes with no automatic
+references; native package activation stays unchanged. Private framing, peer UID,
+exact result/reconciliation, lock/preflight and infinite drain remain unchanged.
+Actual new-image and production container-peer acceptance are later tasks; the
+installed 0.2.0 SELinux hold and all NAS workload restrictions remain explicit.
+
+Concrete helpers in hfcache.verification_listener are reserve_listener(),
+owned_listener(channel, path) and notify_ready(stop). OwnedListener carries the
+trusted bound_address and created (dev, ino); executor validate_listener accepts
+that paired trusted evidence only for owned mode. Native defaults are unchanged.
+The helper module is stdlib-only; local child-driver tests that simulate PID1
+preconditions are distinct from actual container/manager proof.

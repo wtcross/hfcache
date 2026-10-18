@@ -64,6 +64,12 @@ consumers at all.
 
 ## Status
 
+**Preparing `0.2.1`; not deployed or tagged.** The
+[worker-listener correction](docs/plans/2026-10-18-plan-container-worker-listener.md)
+creates the private socket inside the already confined worker and provides
+real container readiness. Native FD3 activation and existing hardening remain;
+the deployed 0.2.0 worker hold stays open until actual later rollout acceptance.
+
 **`0.2.0` is running locally with partial acceptance and a local annotated tag.** Caddy and the
 API run rootless, and verified local TLS, version/authentication, the exact nine
 MCP tools and the container CLI pass. The private worker's local isolation checks
@@ -103,8 +109,8 @@ a second client, reboot persistence, and enabling the quarterly verification
 timer. All of it is listed, with copy-pasteable instructions and acceptance
 checks, under **Operator handoff** in `docs/progress.md`.
 
-[The current tracker](docs/plans/current.md) has no active selection after this
-rollout's partial-acceptance closure; dated
+[The current tracker](docs/plans/current.md) selects the active listener correction;
+dated
 plans and individual task files own scope and execution status.
 `docs/progress.md` retains completed work-package evidence, Decisions, Operator
 handoff, and the unmigrated backlog. `docs/plan.md` remains the historical

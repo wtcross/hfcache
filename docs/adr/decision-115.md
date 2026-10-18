@@ -124,3 +124,15 @@ permit observation only. Actual server/worker drain and retained locks, not stop
 client wrappers, govern upgrades/recovery. Repository inherited-FD/unit/protocol
 rehearsals do not prove installed cgroup/SELinux/NFS enforcement; those remain
 operator holds. Archive execution and exact surviving-worker reconciliation stand.
+
+## Rootless listener ownership amendment (OPS-017, 2026-10-18)
+
+[Decision 128](decision-128.md) adds explicit PID1 --container-listener startup
+without weakening native named-FD3 activation. Owned mode audits inheritance
+before resources/imports, pins a protected parent, refuses existing socket paths
+and holds the worker instance through joined runtime/exact-inode cleanup. The
+listener is created by the confined worker, not the host user manager. Private
+frames, peers, durable reconciliation and no replay remain unchanged. Container
+READY follows listener/store/worker initialization; actual API-container peer
+access remains unaccepted until dependent rollout proof. No in-process fallback,
+credential source, domain algorithm or durable format is added.

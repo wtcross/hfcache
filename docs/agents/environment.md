@@ -123,3 +123,12 @@ continuous monitor and a private read-only sandbox view is not host proof.
 Application/immutable artifacts remain clean 481fcc4; host policy, actual
 activation and residual holds are separately recorded in
 [OPS-016](../plans/tasks/ops-016-local-rootless-deployment.md).
+
+The selected [listener correction](../plans/2026-10-18-plan-container-worker-listener.md)
+follows the local 0.2.0 partial release. OPS-017 is source/owned-fixture work only:
+explicit PID1 worker-created listener and container READY under existing
+confinement, preserving strict native FD3 activation. Root alone performs later
+guarded artifact selection/host acceptance. Installed 0.2.0 and its API-to-worker
+SELinux hold remain until actual OPS-018 container-peer PROBE; no host-origin
+probe or source test can clear it. No NAS file I/O/jobs, policy/label/seccomp
+weakening, other-host change, remote publication or automatic backlog activation.

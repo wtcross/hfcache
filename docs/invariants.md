@@ -443,6 +443,19 @@ History: `SYNC-007` (`54e4671`), decision 94.
   Enforcement: [fixed host guard](../scripts/hold-readonly-guard.py) and
   [guard/unit/tmpfiles tests](../tests/unit/test_readonly_guard.py); actual host
   readiness/lock transfer is separately recorded in OPS-016.
+  **OPS-017 listener ownership ([decision 128](adr/decision-128.md)).** Planned
+  rootless PID1 startup explicitly creates its own private socket after rejecting
+  inherited activation/FDs before resources. Instance/pinned-parent/created-inode
+  ownership lasts through joined shutdown and exact cleanup; existing/replaced
+  paths remain. Owned socket/archive lexical disjointness and mountinfo-only
+  local-filesystem proof precede parent traversal/bind, with no realpath/NAS stat.
+  Worker writable private directory/API read-only view and real
+  container-proxied READY change no SELinux/seccomp/credential authority. Native
+  FD3 activation stays strict. Actual production container-peer proof is later
+  OPS-018 acceptance; the deployed 0.2.0 worker hold is not cleared by source tests.
+  Enforcement/evidence: [owned listener](../src/hfcache/verification_listener.py),
+  [bootstrap](../src/hfcache/verification_worker.py) and
+  [kernel/cleanup tests](../tests/unit/test_verification_listener.py).
 - **`INV-004` — Capacity admission includes publication cost and reserve.**
   Require free capacity beyond estimated download bytes, explicit copy-mode
   publication bytes, and the greater of the GiB and percentage reserves.
@@ -888,6 +901,15 @@ separate protected verifier only after REST acceptance. API-011's independent cl
   [activation/bootstrap tests](../tests/unit/test_verification_worker_bootstrap.py)
   and [unit contracts](../tests/unit/test_systemd_units.py); decision
   [121](adr/decision-121.md). Real peer/cgroup/source-masking probes remain held.
+  [Decision 128](adr/decision-128.md) adds a distinct PID1-only container-listener
+  mode without a native bind fallback. Early inherited-FD/activation/credential
+  audit precedes owned resources and shared imports; parent/instance ownership
+  encloses listener creation, joined work and exact-inode cleanup. READY follows
+  listener/store/worker initialization, never a sleep or conmon start. Only the
+  worker's private directory becomes writable; API stays read-only. Offline/no-IP,
+  no credentials, exact private protocol/results and no replay remain. Rootless
+  API Requires+After worker.service; dormant .socket/native activation remain
+  separate. Source/fixture evidence cannot close installed SELinux hold 22.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. API-016 completed before MCP-001

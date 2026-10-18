@@ -4,10 +4,7 @@ import errno
 import importlib.util
 import io
 import json
-import os
-import socket
 import subprocess
-import sys
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -262,11 +259,45 @@ def test_unknown_container_identity_is_never_stopped_or_removed(probe, monkeypat
 
 @pytest.mark.parametrize("actual", [IMAGE, IMAGE.removeprefix("sha256:")])
 def test_inspect_accepts_exact_podman_bare_or_prefixed_image_identity(probe, monkeypatch, actual):
-    data = {"Config": {"Labels": {"io.hfcache.proof": "expected"}}, "Image": actual}
+    data = {
+        "Id": "c" * 64,
+        "Config": {"Labels": {"io.hfcache.proof": "expected"}},
+        "Image": actual,
+        "State": {"Running": False, "Pid": 0},
+    }
     monkeypatch.setattr(
         probe, "engine", lambda *_: subprocess.CompletedProcess([], 0, stdout=json.dumps([data]))
     )
     assert probe.inspect_owned("hfcache-proof-fixture-worker", "expected", IMAGE) == data
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"Id": "unexpected"},
+        {"State": {}},
+        {"State": {"Running": "true", "Pid": 123}},
+        {"State": {"Running": True, "Pid": 0}},
+    ],
+)
+def test_malformed_container_identity_never_authorizes_proof_drain(probe, monkeypatch, change):
+    data = {
+        "Id": "c" * 64,
+        "Config": {"Labels": {"io.hfcache.proof": "expected"}},
+        "Image": IMAGE,
+        "State": {"Running": True, "Pid": 123},
+    } | change
+    calls = []
+
+    def engine(*arguments, **kwargs):
+        calls.append(arguments)
+        assert arguments[0] == "inspect"
+        return subprocess.CompletedProcess([], 0, stdout=json.dumps([data]))
+
+    monkeypatch.setattr(probe, "engine", engine)
+    with pytest.raises(ValueError, match="preserve"):
+        probe.inspect_owned("hfcache-proof-fixture-worker", "expected", IMAGE)
+    assert len(calls) == 1
 
 
 def test_proof_failure_records_fixed_stage_and_class_without_exception_text(
@@ -338,6 +369,7 @@ def test_payload_accepts_measured_enosys_denial_and_records_both_socket_errnos(p
     fake_os = SimpleNamespace(
         geteuid=lambda: 981,
         getegid=lambda: 981,
+        getpid=lambda: 1,
         environ={"HF_HUB_OFFLINE": "1"},
         open=denied,
         O_RDONLY=0,
@@ -350,7 +382,7 @@ def test_payload_accepts_measured_enosys_denial_and_records_both_socket_errnos(p
         "os": fake_os,
         "socket": SimpleNamespace(AF_INET=2, AF_INET6=10, SOCK_STREAM=1, socket=socket_denied),
         "fcntl": SimpleNamespace(LOCK_EX=2, LOCK_NB=4, flock=busy),
-        "sys": SimpleNamespace(argv=["-c", "/source", "1", "1", "3"], exit=sys.exit),
+        "sys": SimpleNamespace(argv=["-c", "/source", "1", "1", "3"]),
     }
 
     def imports(name, *args, **kwargs):
@@ -390,38 +422,78 @@ def test_nonroot_engine_or_remote_graphroot_is_not_proof(probe, monkeypatch, roo
         probe.rootless_storage()
 
 
-def test_actual_descriptor_trampoline_keeps_named_fd3_and_clears_stale_host_pidfd(probe, tmp_path):
-    path = tmp_path / "verify.sock"
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
-        listener.bind(str(path))
-        listener.listen(1)
-        inode = path.stat().st_ino
-        code = """
-import json,os,socket
-with socket.socket(fileno=3) as channel:
- assert channel.getsockopt(socket.SOL_SOCKET,socket.SO_ACCEPTCONN)==1
- assert os.environ['LISTEN_PID']==str(os.getpid())
- assert os.environ['LISTEN_FDS']=='1'
- assert os.environ['LISTEN_FDNAMES']=='hfcache-verification'
- assert 'LISTEN_PIDFDID' not in os.environ
- print(json.dumps({'fd3':True}))
-"""
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-c",
-                probe._TRAMPOLINE,
-                str(listener.fileno()),
-                sys.executable,
-                "-c",
-                code,
-            ],
-            pass_fds=(listener.fileno(),),
-            check=True,
-            capture_output=True,
-            text=True,
-            env={"PATH": os.environ["PATH"], "LISTEN_PIDFDID": "stale-host-identity"},
-        )
-        assert json.loads(result.stdout) == {"fd3": True}
-        assert listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN) == 1
-        assert path.stat().st_ino == inode
+def _ready_text(**changes):
+    fields = {
+        "Type": "notify",
+        "NotifyAccess": "all",
+        "ActiveState": "active",
+        "SubState": "running",
+        "MainPID": "123",
+        "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/proof.service",
+        "ExecMainStartTimestampMonotonic": "100",
+        "ActiveEnterTimestampMonotonic": "200",
+    } | changes
+    return "\n".join(f"{key}={value}" for key, value in fields.items())
+
+
+def test_transient_proof_uses_actual_user_notify_and_unbounded_non_killing_stop(probe):
+    command = probe.transient_command(
+        "hfcache-proof-fixture-worker.service", "hfcache-proof-fixture-worker", ["podman", "run"]
+    )
+    assert command[:2] == ["/usr/bin/systemd-run", "--user"]
+    assert {"--property=Type=notify", "--property=NotifyAccess=all"} <= set(command)
+    assert "--property=TimeoutStopSec=infinity" in command
+    assert "--property=SendSIGKILL=no" in command
+    # The parent drains the validated exact ID; no name-based stop command can
+    # return an error into systemd's fallback termination path.
+    assert not any("ExecStop=" in argument for argument in command)
+    assert command[-2:] == ["podman", "run"]
+    assert not any("conmon" in argument or "SIGKILL=yes" in argument for argument in command)
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"Type": "exec"},
+        {"NotifyAccess": "main"},
+        {"SubState": "exited"},
+        {"MainPID": "0"},
+        {"MainPID": "unknown"},
+        {"ControlGroup": ""},
+        {"ExecMainStartTimestampMonotonic": "0"},
+        {"ActiveEnterTimestampMonotonic": "99"},
+    ],
+)
+def test_readiness_refuses_optimistic_or_incomplete_manager_state(probe, change):
+    with pytest.raises(ValueError, match="readiness"):
+        probe.ready_state(_ready_text(**change))
+
+
+def test_readiness_waits_through_starting_and_records_actual_notify_transition(probe, monkeypatch):
+    states = iter([_ready_text(ActiveState="activating", SubState="start"), _ready_text()])
+    captured = []
+
+    def manager(*arguments, **kwargs):
+        captured.append(arguments)
+        return subprocess.CompletedProcess([], 0, stdout=next(states))
+
+    monkeypatch.setattr(probe, "manager", manager)
+    monkeypatch.setattr(probe.time, "sleep", lambda _: None)
+    result = probe.wait_ready(
+        "hfcache-proof-fixture-worker.service", SimpleNamespace(poll=lambda: None)
+    )
+    assert result["MainPID"] == "123"
+    assert result["ActiveEnterTimestampMonotonic"] == "200"
+    assert len(captured) == 2
+
+
+def test_exit_before_ready_never_becomes_acceptance(probe, monkeypatch):
+    monkeypatch.setattr(
+        probe,
+        "manager",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(
+            [], 0, stdout=_ready_text(ActiveState="failed")
+        ),
+    )
+    with pytest.raises(ValueError, match="readiness"):
+        probe.wait_ready("hfcache-proof-fixture-worker.service", SimpleNamespace(poll=lambda: 20))

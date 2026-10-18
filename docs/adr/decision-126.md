@@ -166,3 +166,13 @@ Enforcement: [fixed host helper](../../scripts/hold-readonly-guard.py),
 [notify/flock/host-view/tmpfiles fixtures](../../tests/unit/test_readonly_guard.py).
 Actual installed hashes, readiness/handoff and post-activation restrictions remain
 OPS-016 task evidence; fixture passes alone are not deployment acceptance.
+
+## Confined listener correction scope (OPS-017, 2026-10-18)
+
+The continuing authorized local rollout includes [decision 128](decision-128.md)'s
+worker-owned listener correction. OPS-017 changes source/contracts and uses local
+fixtures only; it does not modify the installed 0.2.0 partial release or clear
+its SELinux hold. Later clean build and guarded rollout tasks must prove actual
+API-container peer access without policy/label/hardening bypass. Fixed host boot
+guard, original lock, read-only NAS, writer masks and forbidden live workloads
+remain. No NAS file I/O/jobs, other-host action or remote publication is granted.
