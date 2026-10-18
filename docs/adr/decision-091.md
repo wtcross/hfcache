@@ -3,6 +3,7 @@
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
+API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 - Original decision date: 2026-07-30.
 - Original work package: `CPT-008`.
@@ -44,3 +45,13 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [cockpit/test/config.test.ts](../../cockpit/test/config.test.ts).
+
+
+## 2026-10-18 Cockpit API integration amendment (API-015)
+
+Bundled TOML still serves form/text editing, without a Python dependency.
+Readiness now binds exact candidate and installed-base bytes under the root config
+flock, with server syntax/authority assessment, required preview and exact installed
+fingerprint confirmation. Edits invalidate readiness; incompatible/unknown authority
+requires manual operator installation/restart rather than plugin install. See
+[decision 122](decision-122.md).

@@ -16,7 +16,10 @@ import { Label } from "@patternfly/react-core/dist/esm/components/Label/index.js
 import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/index.js";
 
 import { followUnitJournal } from './api/journal';
-import { interpretEvent, JournalEvent } from './lib/events';
+import { RecoveryHandles } from './components';
+import { useOperationHandles } from './hooks';
+import { interpretEvent, interpretOperationLine, JournalEvent } from './lib/events';
+import { appendDisplayLine } from './lib/stream';
 
 function latestPerRepository(events: JournalEvent[]): Array<[string, JournalEvent]> {
     const latest = new Map<string, JournalEvent>();
@@ -29,22 +32,38 @@ function latestPerRepository(events: JournalEvent[]): Array<[string, JournalEven
 
 export const UnitActivity = ({ unit }: { unit: string }) => {
     const [lines, setLines] = useState<string[]>([]);
+    const { handles, reset: resetHandles, onNotice } = useOperationHandles();
 
     useEffect(() => {
+        setLines([]);
+        resetHandles();
         const stop = followUnitJournal(unit, line => {
-            setLines(previous => [...previous, line].slice(-200));
-        });
+            setLines(previous => appendDisplayLine(previous, line));
+        }, onNotice);
         return stop;
-    }, [unit]);
+    }, [unit, onNotice, resetHandles]);
 
     const events = lines.map(interpretEvent).filter(event => event !== null);
     const perRepository = latestPerRepository(events);
+    const notices = lines.map(interpretOperationLine).filter(notice => notice !== null);
+    const progress = [...notices].reverse().find(notice => notice.kind === 'progress');
+    const gap = [...notices].reverse().find(notice => notice.kind === 'gap');
 
     return (
         <Card>
             <CardTitle>Live activity — {unit}</CardTitle>
             <CardBody>
                 <Stack hasGutter>
+                    <StackItem><RecoveryHandles evidence={handles} /></StackItem>
+                    {progress?.kind === 'progress' &&
+                        <StackItem>
+                            <Label isCompact>{progress.phase}</Label>{' '}
+                            [{progress.sequence}] {progress.message}
+                        </StackItem>}
+                    {gap?.kind === 'gap' &&
+                        <StackItem>Earlier operation events are no longer retained; history starts
+                            at sequence {gap.oldestSequence}.
+                        </StackItem>}
                     {perRepository.length > 0 &&
                         <StackItem>
                             <DescriptionList isHorizontal isCompact>

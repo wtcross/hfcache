@@ -277,8 +277,8 @@ hfcache --client-config /etc/hfcache/client.toml archive init --inspect
 
 Candidate validate/plan requires the writer API source; `--config` names a file on
 the CLI host, never a server file to open. Installation/backups remain privileged
-host work. Shipped Cockpit/systemd caller and credential integration remain the
-API-014 packaged-unit and later API-015 Cockpit work; actual host acceptance stays
+host work. API-014 packages scheduled callers and API-015 integrates Cockpit's
+API-only client/candidate pipeline; actual host acceptance stays
 an explicit hold and browser code never receives the API bearer. See
 [decision 119](adr/decision-119.md) and [candidate contract](configuration.md#12-candidate-authority-validation-and-planning-api-012).
 
@@ -356,8 +356,29 @@ client or sync/verify client service stops observation, not the server executor;
 use [server drain](server.md#restart-and-drain) and
 [recovery](recovery.md#10-operation-history-and-uncertain-submissions) for execution
 ownership. [Decision 120](adr/decision-120.md) records this boundary. Shipped
-systemd integration is packaged by API-014 with deployment holds; Cockpit caller
-integration remains API-015.
+systemd integration is packaged by API-014 with deployment holds; Cockpit uses
+the API-only client integration described below.
+
+## Cockpit client integration (API-015)
+
+The root bridge starts a service-identity transient CLI unit with fixed
+`--client-config /etc/hfcache/client.toml --api-socket /run/hfcache/api.sock --json`
+and systemd `ImportCredential=hfcache.api`. Provision that name for the REST
+writer class, separately from daemon Hub `hf-token`; no bearer reaches the page,
+argv or ambient environment. Ordinary runtime calls omit archive `--config`.
+Candidate validate/plan alone uploads the fixed protected candidate file, guarded
+with exact candidate and installed-base content under the privileged config flock.
+
+The plugin requires a strict terminal schema-1 Envelope up to 16 MiB, independently
+collecting bounded progress (8 KiB line, 64 KiB retained diagnostics) and validated
+key/operation handles. Lost/uncertain observation, client stop and page closure
+never cancel accepted execution or justify recovery/replay. Reconnect using the
+same authenticated lookup/wait authority. Candidate syntax, installed compatibility,
+required preview and exact installed confirmation are distinct gates; unknown or
+incompatible authority blocks plugin installation. See
+[Cockpit](cockpit.md), [configuration pipeline](cockpit.md#6-configuration-editing)
+and [decision 122](adr/decision-122.md). Real installed credential/hardening proof
+remains operator acceptance.
 
 ## Scheduled service observation (API-014)
 

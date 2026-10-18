@@ -46,11 +46,12 @@ export function repositorySelectors(document: ConfigDocument): string[] {
  * document — the set the contract's §6 step 3 sizing preview covers. */
 export function selectorsNeedingPreview(installed: ConfigDocument, candidate: ConfigDocument): string[] {
     const before = new Map((installed.repositories ?? [])
-            .map(entry => [`${entry.type}:${entry.id}`, entry.revision]));
+            .map(entry => [`${entry.type}:${entry.id}`, entry]));
     const need: string[] = [];
     for (const entry of candidate.repositories ?? []) {
         const selector = `${entry.type}:${entry.id}`;
-        if (before.get(selector) !== entry.revision && entry.enabled)
+        const previous = before.get(selector);
+        if (entry.enabled && (previous === undefined || !previous.enabled || previous.revision !== entry.revision))
             need.push(selector);
     }
     return need;
@@ -131,7 +132,7 @@ export function setField(document: ConfigDocument, spec: FieldSpec, value: unkno
 export function extractFieldPath(issue: { message: string; context?: unknown }): string | null {
     if (typeof issue.context === 'object' && issue.context !== null) {
         const context = issue.context as Record<string, unknown>;
-        for (const candidate of [context.key, context.path, context.field]) {
+        for (const candidate of [context.location, context.key, context.path, context.field]) {
             if (typeof candidate === 'string' && candidate !== '')
                 return candidate;
         }

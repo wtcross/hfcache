@@ -7,6 +7,41 @@
  * them (docs/cockpit.md §5). Pure logic: no cockpit import.
  */
 
+import { PROGRESS_LINE_BYTES, utf8Bytes } from './stream.ts';
+
+export type OperationNotice =
+    { kind: 'key'; key: string } |
+    { kind: 'operation'; operationId: string } |
+    { kind: 'progress'; sequence: number; phase: string; message: string } |
+    { kind: 'gap'; oldestSequence: number } |
+    { kind: 'continuing' };
+
+/* These are the API CLI's bounded display records, not the journal's closed
+ * domain-event vocabulary. No human diagnostic is used to classify a result.
+ * Only exact validated handle lines are retained as reconnect evidence. */
+export function interpretOperationLine(line: string): OperationNotice | null {
+    if (utf8Bytes(line) > PROGRESS_LINE_BYTES || Array.from(line).some(character => {
+        const code = character.charCodeAt(0);
+        return code < 32 || (code >= 127 && code <= 159);
+    }))
+        return null;
+    const key = /^(?:Idempotency key|Original idempotency key): ([A-Za-z0-9._~+-]{1,128})$/.exec(line);
+    if (key !== null)
+        return { kind: 'key', key: key[1] };
+    const operation = /^Operation: ([0-9a-f]{32})(?:; accepted work may continue)?$/.exec(line);
+    if (operation !== null)
+        return { kind: 'operation', operationId: operation[1] };
+    if (line === 'Accepted work may continue; reconnect using the retained handles')
+        return { kind: 'continuing' };
+    const gap = /^Event history gap; retained events start at ([1-9][0-9]{0,15})$/.exec(line);
+    if (gap !== null && Number.isSafeInteger(Number(gap[1])))
+        return { kind: 'gap', oldestSequence: Number(gap[1]) };
+    const progress = /^\[([1-9][0-9]{0,15})\] ([a-z][a-z0-9_.-]{0,63}): (.*)$/.exec(line);
+    if (progress !== null && Number.isSafeInteger(Number(progress[1])))
+        return { kind: 'progress', sequence: Number(progress[1]), phase: progress[2], message: progress[3] };
+    return null;
+}
+
 /* hfcache.logging.EVENTS, verbatim. A name added there is added here in the
  * same change or the UI simply does not react to it — never an error. */
 export const EVENTS = [

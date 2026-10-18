@@ -3,9 +3,8 @@
  *
  * Sync operations (docs/cockpit.md §3, §5): the full run through the
  * shipped unit (CP-04), the schedule through the timer alone (CP-05),
- * selector-restricted runs as page-spawned processes with the consequence
- * stated first (decision 89), and live activity from the journal's closed
- * event vocabulary.
+ * selector-restricted runs through the API-backed CLI, with observation
+ * lifetime distinct from accepted execution (ADR122).
  */
 
 import React, { useState } from 'react';
@@ -28,11 +27,12 @@ import { UnitActivity } from './activity';
 import { ScheduleEditor } from './schedule';
 import { runHfcacheStreaming } from './api/hfcache';
 import { startUnit, stopUnit, SYNC_SERVICE, SYNC_TIMER } from './api/systemd';
-import { DataSummary, EnvelopeAlert, Loading, QueryError } from './components';
-import { useHfcache, useUnitPoll } from './hooks';
-import { Envelope } from './lib/envelope';
+import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
+import { useHfcache, useObservationSignal, useOperationHandles, useUnitPoll } from './hooks';
+import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatSelector } from './lib/command';
 import { formatTimestamp } from './lib/format';
+import { appendDisplayLine } from './lib/stream';
 
 const Item = ({ term, children }: { term: string; children: React.ReactNode }) => (
     <DescriptionListGroup>
@@ -59,33 +59,9 @@ const ConfirmModal = ({ title, confirmLabel, isOpen, onClose, onConfirm, childre
     </Modal>
 );
 
-/* After an interruption the contract surfaces reconciliation
- * (docs/cockpit.md §5): recover --dry-run is always safe. */
-const RecoverHint = () => {
-    const recover = useHfcache(['recover', '--dry-run']);
-    return (
-        <Card>
-            <CardTitle>Reconciliation (recover --dry-run)</CardTitle>
-            <CardBody>
-                {recover.loading && <Loading />}
-                {recover.error !== null && <QueryError error={recover.error} />}
-                {recover.envelope !== null && !recover.loading &&
-                    <Stack hasGutter>
-                        <StackItem><EnvelopeAlert envelope={recover.envelope} /></StackItem>
-                        <StackItem><DataSummary data={recover.envelope.data} /></StackItem>
-                        <StackItem>
-                            Applying an actionable plan is on the Maintenance tab; recovery never
-                            guesses (AD-16).
-                        </StackItem>
-                    </Stack>}
-            </CardBody>
-        </Card>
-    );
-};
-
 const ACTIVE_STATES = ['active', 'activating', 'reloading', 'deactivating'];
 
-const SyncControls = ({ onStopped }: { onStopped: () => void }) => {
+const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean) => void }) => {
     const service = useUnitPoll(SYNC_SERVICE);
     const timer = useUnitPoll(SYNC_TIMER);
     const [confirming, setConfirming] = useState<'start' | 'stop' | 'pause' | null>(null);
@@ -94,15 +70,15 @@ const SyncControls = ({ onStopped }: { onStopped: () => void }) => {
     const running = ACTIVE_STATES.includes(service.state?.activeState ?? '');
     const timerActive = ACTIVE_STATES.includes(timer.state?.activeState ?? '');
 
-    const act = (action: Promise<unknown>, thenStopped = false) => {
+    const act = (action: Promise<unknown>, observerStopped?: boolean) => {
         setConfirming(null);
         setActionError(null);
         action
                 .then(() => {
                     service.refresh();
                     timer.refresh();
-                    if (thenStopped)
-                        onStopped();
+                    if (observerStopped !== undefined)
+                        onObserverState(observerStopped);
                 })
                 .catch(failure => setActionError(failure as Error));
     };
@@ -140,7 +116,7 @@ const SyncControls = ({ onStopped }: { onStopped: () => void }) => {
                                     isDisabled={running}
                                     onClick={() => setConfirming('start')}
                                 >
-                                    Sync now
+                                    Start / resume full sync
                                 </Button>
                             </FlexItem>
                             <FlexItem>
@@ -149,7 +125,7 @@ const SyncControls = ({ onStopped }: { onStopped: () => void }) => {
                                     isDisabled={!running}
                                     onClick={() => setConfirming('stop')}
                                 >
-                                    Stop running sync
+                                    Stop observing full sync
                                 </Button>
                             </FlexItem>
                             <FlexItem>
@@ -168,22 +144,23 @@ const SyncControls = ({ onStopped }: { onStopped: () => void }) => {
                     confirmLabel="Start hfcache-sync.service"
                     isOpen={confirming === 'start'}
                     onClose={() => setConfirming(null)}
-                    onConfirm={() => act(startUnit(SYNC_SERVICE))}
+                    onConfirm={() => act(startUnit(SYNC_SERVICE), false)}
                 >
-                    This runs the production unit — the same sandbox, identity, and journal the
-                    02:00 timer uses. A first sync of a large repository legitimately takes hours
-                    and is never killed for being long.
+                    Starts the installed API client used by the 02:00 timer. It resumes a
+                    retained operation, or submits one sync when no pending handle exists.
+                    The server executes accepted work; a large repository can take hours.
                 </ConfirmModal>
                 <ConfirmModal
-                    title="Stop the running sync"
-                    confirmLabel="Stop"
+                    title="Stop observing the full sync"
+                    confirmLabel="Stop observer"
                     isOpen={confirming === 'stop'}
                     onClose={() => setConfirming(null)}
                     onConfirm={() => act(stopUnit(SYNC_SERVICE), true)}
                 >
-                    Everything already published stays published: each repository is its own
-                    transaction. Partial downloads resume from the cache on the next run (AD-09),
-                    and reconciliation handles the rest — it runs below after the stop.
+                    Stops hfcache-sync.service, the API observer. Accepted server work may
+                    continue. Its pending handle is retained; starting the service again
+                    observes the existing operation. This does not cancel execution or prove
+                    that recovery or a release switch is safe.
                 </ConfirmModal>
                 <ConfirmModal
                     title="Pause the schedule"
@@ -208,7 +185,7 @@ interface StatusRepositoryLite {
     managed: boolean;
 }
 
-const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
+const SelectorSync = () => {
     const status = useHfcache(['status']);
     const [selected, setSelected] = useState<Record<string, boolean>>({});
     const [confirming, setConfirming] = useState(false);
@@ -216,6 +193,8 @@ const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
     const [feed, setFeed] = useState<string[]>([]);
     const [result, setResult] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
+    const { handles, reset: resetHandles, onNotice } = useOperationHandles();
+    const observationSignal = useObservationSignal();
 
     const repositories = (((status.envelope?.data ?? {}) as { repositories?: StatusRepositoryLite[] })
             .repositories ?? []).filter(repository => repository.managed && repository.enabled);
@@ -224,21 +203,28 @@ const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
             .filter(selector => selected[selector] === true);
 
     const run = () => {
+        const signal = observationSignal();
         setConfirming(false);
         setRunning(true);
         setFeed([]);
         setResult(null);
         setError(null);
+        resetHandles();
         runHfcacheStreaming(['sync', ...selectors], {
-            onLine: line => setFeed(previous => [...previous, line].slice(-200)),
+            signal,
+            onLine: line => setFeed(previous => appendDisplayLine(previous, line)),
+            onNotice,
         })
-                .then(envelope => setResult(envelope),
+                .then(envelope => { if (!signal.aborted) setResult(envelope); },
                       failure => {
-                          setError(failure as Error);
-                          onInterrupted();
+                          if (!signal.aborted)
+                              setError(failure as Error);
                       })
-                .finally(() => setRunning(false));
+                .finally(() => { if (!signal.aborted) setRunning(false); });
     };
+
+    const uncertain = (result !== null && classifyEnvelope(result) === 'observation') ||
+        (error !== null && (handles.idempotencyKey !== undefined || handles.operationId !== undefined));
 
     return (
         <Card>
@@ -268,7 +254,7 @@ const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
                     <StackItem>
                         <Button
                             variant="secondary"
-                            isDisabled={running || selectors.length === 0}
+                            isDisabled={running || uncertain || selectors.length === 0}
                             onClick={() => setConfirming(true)}
                         >
                             Sync selected ({selectors.length})
@@ -279,9 +265,12 @@ const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
                             <Alert
                                 variant="info"
                                 isInline
-                                title="Running as a page process — keep this tab open"
-                            />
+                                title="Observing a server operation"
+                            >Closing this view stops its display; accepted work continues. Retain
+                                the key and operation ID to reconnect.
+                            </Alert>
                         </StackItem>}
+                    <StackItem><RecoveryHandles evidence={handles} /></StackItem>
                     {feed.length > 0 &&
                         <StackItem>
                             <pre className="hfcache-journal">{feed.join('\n')}</pre>
@@ -301,12 +290,10 @@ const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
                     onClose={() => setConfirming(false)}
                     onConfirm={run}
                 >
-                    This run is a transient unit spawned from this page: closing the tab
-                    detaches this view and loses the final result — the run itself continues
-                    and its run report records the outcome. Interruption, if the run does
-                    stop early, is a designed crash shape — per-repository transactions,
-                    resumable downloads (AD-09) — and reconciliation is surfaced afterwards,
-                    but the full-archive run belongs to the unit above (CP-04).
+                    The transient CLI client submits one operation to the API and observes it.
+                    Closing this view or losing the connection does not cancel accepted work.
+                    Retain its key and operation ID and observe that operation before submitting
+                    again. The full-archive run belongs to the installed service above (CP-04).
                 </ConfirmModal>
             </CardBody>
         </Card>
@@ -314,7 +301,7 @@ const SelectorSync = ({ onInterrupted }: { onInterrupted: () => void }) => {
 };
 
 export const SyncOperations = () => {
-    const [showRecover, setShowRecover] = useState(false);
+    const [observerStopped, setObserverStopped] = useState(false);
     const [scheduleGeneration, setScheduleGeneration] = useState(0);
 
     return (
@@ -322,14 +309,21 @@ export const SyncOperations = () => {
             <StackItem>
                 <SyncControls
                     key={scheduleGeneration}
-                    onStopped={() => setShowRecover(true)}
+                    onObserverState={setObserverStopped}
                 />
             </StackItem>
             <StackItem>
                 <ScheduleEditor onApplied={() => setScheduleGeneration(value => value + 1)} />
             </StackItem>
-            <StackItem><SelectorSync onInterrupted={() => setShowRecover(true)} /></StackItem>
-            {showRecover && <StackItem><RecoverHint /></StackItem>}
+            <StackItem><SelectorSync /></StackItem>
+            {observerStopped &&
+                <StackItem>
+                    <Alert variant="info" isInline title="The sync observer stopped">
+                        Accepted server work may continue. Preserve the pending handle and inspect
+                        its journal; start hfcache-sync.service to resume observation. A stopped
+                        client does not establish that the archive is idle.
+                    </Alert>
+                </StackItem>}
         </Stack>
     );
 };

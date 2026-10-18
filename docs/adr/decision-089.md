@@ -3,6 +3,7 @@
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
+API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 - Original decision date: 2026-07-30.
 - Original work package: `CPT-001`.
@@ -55,3 +56,12 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [cockpit/test/command.test.ts](../../cockpit/test/command.test.ts).
+
+
+## 2026-10-18 Cockpit API integration amendment (API-015)
+
+Page/transient observer loss and stopping the sync client no longer imply
+execution interruption. Accepted work belongs to the API/private worker; expose
+retained key/operation lookup/wait and never automatic recovery or a cancellation
+claim. Full sync/verification keep installed units; sync-timer-only/no-init/target
+controls remain. See [decision 122](decision-122.md).

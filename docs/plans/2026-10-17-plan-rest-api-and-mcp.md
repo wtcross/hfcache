@@ -826,3 +826,23 @@ versions when implementing, especially FastMCP imports and test transports:
   old/current handle drill preserves unsupported/future evidence. Real installed
   activation/cgroup/SELinux/NFS and verify-calendar acceptance remain holds.
   API-015 is next pending after this package's commit; no MCP work has begun.
+
+- 2026-10-18 API-015: Decision 122 retains Cockpit's CLI/systemd/admin/service
+  boundary with fixed local API client settings, named API-only `hfcache.api` and
+  no Hub/browser bearer. Strict bounded terminal Envelopes govern outcomes;
+  separate validated progress/handles retain safe observation/reconnection.
+  Stop/page closure never cancels accepted work or proves recovery safe.
+  Root config flock and exact candidate/base guards bind assessment/required
+  preview/atomic install; compatible authority and exact installed fingerprint
+  confirmation are separate gates. Unknown/incompatible authority blocks plugin
+  installation with manual guidance; admitted operation snapshots do not change.
+  CP-01–14, full sync/verify units and sync-timer-only/no-init controls remain.
+  No new durable JSON/dependency/MCP or production authorization; installed-host
+  browser/credential/hardening acceptance remains an explicit handoff.
+  Completed repository acceptance on 2026-10-18: standalone full Cockpit gate
+  passes 127 tests, lint/style/types and production build; source/decompressed
+  production security scans are clean. First full project gate exits 0 with
+  3,223 Python tests passed (40 deselected, 352.53 seconds), locked builds/isolated
+  base+server installs and 127 Cockpit tests/production build. No gate restart or
+  post-gate source change. API-016 is next pending after this package's commit;
+  no MCP implementation has begun and installed-host holds remain explicit.

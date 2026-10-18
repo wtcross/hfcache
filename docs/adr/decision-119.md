@@ -7,6 +7,7 @@
 - Source: [progress decision 119](../progress.md#decisions),
   [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
   [task](../plans/tasks/api-012-migrate-read-cli-and-candidates.md).
+API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 ## Context and decision
 
@@ -128,3 +129,13 @@ unchanged; explicit detach is identified admission, while mandatory key/operatio
 handles survive quiet and interrupted observation. Candidate authority and
 historical canonical key mappings are unchanged. Pure request extraction grants
 no local mutation authority or configuration-install path.
+
+
+## 2026-10-18 Cockpit API integration amendment (API-015)
+
+Cockpit now applies the syntax/installed-authority distinction through its
+API-only CLI boundary. Exact candidate/base checks under a retained root config
+flock prevent stale assessment/preview reuse. Incompatible/unknown authority blocks
+plugin installation with manual guidance; successful installed confirmation must
+match the exact expected fingerprint. Planning remains installed-credential-only;
+REST gains no install authority. See [decision 122](decision-122.md).

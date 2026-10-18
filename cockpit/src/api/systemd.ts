@@ -9,11 +9,11 @@
 
 import cockpit from 'cockpit';
 
-export const SYNC_SERVICE = 'hfcache-sync.service';
-export const VERIFY_SERVICE = 'hfcache-verify.service';
-export const SYNC_TIMER = 'hfcache-sync.timer';
-export const VERIFY_TIMER = 'hfcache-verify.timer';
-export const HFCACHE_TARGET = 'hfcache.target';
+import { assertOperable } from '../lib/systemd';
+
+export {
+    ForbiddenUnitError, HFCACHE_TARGET, SYNC_SERVICE, SYNC_TIMER, VERIFY_SERVICE, VERIFY_TIMER,
+} from '../lib/systemd';
 
 const BUS = 'org.freedesktop.systemd1';
 const MANAGER_PATH = '/org/freedesktop/systemd1';
@@ -23,19 +23,6 @@ const UNIT = 'org.freedesktop.systemd1.Unit';
 const TIMER = 'org.freedesktop.systemd1.Timer';
 const SERVICE = 'org.freedesktop.systemd1.Service';
 
-export class ForbiddenUnitError extends Error {}
-
-function assertOperable(unit: string): void {
-    if (unit === HFCACHE_TARGET) {
-        throw new ForbiddenUnitError('hfcache.target is never operated from the plugin (CP-05): ' +
-            'stopping it unmounts /srv/hfcache; pausing the schedule means stopping hfcache-sync.timer');
-    }
-    if (unit === VERIFY_TIMER) {
-        throw new ForbiddenUnitError('hfcache-verify.timer is display-only (CP-06): ' +
-            'operator handoff item 8 owns its calendar');
-    }
-}
-
 let cachedClient: cockpit.DBusClient | null = null;
 
 function client(): cockpit.DBusClient {
@@ -44,17 +31,17 @@ function client(): cockpit.DBusClient {
 }
 
 export function startUnit(name: string): Promise<unknown[]> {
-    assertOperable(name);
+    assertOperable(name, 'start');
     return client().call(MANAGER_PATH, MANAGER, 'StartUnit', [name, 'replace']);
 }
 
 export function stopUnit(name: string): Promise<unknown[]> {
-    assertOperable(name);
+    assertOperable(name, 'stop');
     return client().call(MANAGER_PATH, MANAGER, 'StopUnit', [name, 'replace']);
 }
 
 export function restartUnit(name: string): Promise<unknown[]> {
-    assertOperable(name);
+    assertOperable(name, 'restart');
     return client().call(MANAGER_PATH, MANAGER, 'RestartUnit', [name, 'replace']);
 }
 
@@ -63,13 +50,13 @@ export function daemonReload(): Promise<unknown[]> {
 }
 
 export async function enableUnit(name: string): Promise<void> {
-    assertOperable(name);
+    assertOperable(name, 'enable');
     await client().call(MANAGER_PATH, MANAGER, 'EnableUnitFiles', [[name], false, true]);
     await daemonReload();
 }
 
 export async function disableUnit(name: string): Promise<void> {
-    assertOperable(name);
+    assertOperable(name, 'disable');
     await client().call(MANAGER_PATH, MANAGER, 'DisableUnitFiles', [[name], false]);
     await daemonReload();
 }

@@ -13,7 +13,7 @@ The plugin is a Cockpit package — `manifest.json` plus static HTML, JS, and
 CSS — that gives the operator a browser UI over one deployed writer. It is a
 *client* of the contracts this repository already has: the CLI's JSON
 envelope, the configuration schema, and the shipped systemd units are its
-entire API. The application remains CLI-only (`docs/cli.md` §1's own claim);
+entire API. The plugin keeps the CLI/systemd boundary while the CLI uses the writer API;
 nothing the plugin does is anything an operator could not reproduce by hand
 with the commands in `docs/operations.md`, and the UI displays the underlying
 command wherever practical so the plugin teaches the runbook rather than
@@ -31,90 +31,102 @@ does not stop accepted execution or prove a free archive; preserve its pending
 handle and use the [executor drain procedure](deployment-centos-stream-10.md#13-upgrade-plan-30).
 The actual API/private worker owns archive/Hub authority. A browser/transient
 client must not receive a Hub credential; API credentials remain systemd-managed
-and never enter the page (CP-08). API-015 owns the plugin's caller/credential and
-observation integration. The older direct-execution mechanisms below are retained
-as that migration's baseline, not evidence that API-014 deployed them or completed
-plugin integration. Installed hardening/SELinux/NFS acceptance remains pending.
+and never enter the page (CP-08). Decision 122 below governs the plugin's API
+integration; this API-014 amendment records its earlier scope, without claiming
+deployment. Installed hardening/SELinux/NFS acceptance remains pending.
+
+**API-015 governing amendment (2026-10-18, [decision 122](adr/decision-122.md)).**
+Transient commands use fixed `--client-config /etc/hfcache/client.toml
+--api-socket /run/hfcache/api.sock --json`, service UID/GID, `UMask=0027`,
+`MemoryHigh=4G` and `ImportCredential=hfcache.api`. Omit ordinary archive
+`--config` and Hub environment/credential imports; only explicit candidate
+validate/plan adds `/etc/hfcache/.candidate.toml`. The browser never handles a
+bearer. This supersedes the historical direct Hub execution and stop/recover
+mechanisms retained in decisions 087/089/092.
+
+Require bounded strict schema-1 terminal Envelopes. Separately validated bounded
+CLI progress and safety handles may render and support reconnection, never
+inventing domain outcome/checkpoint/byte percentage. Page closure/client stop
+ends observation; it does not cancel accepted work or prove recovery safe.
+HFAPI013/015/019/020 or `work_may_continue` retain uncertainty and offer exact
+lookup/wait, without automatic recover or replay.
+Bound terminal JSON to 16 MiB, a partial progress line to 8 KiB and retained
+diagnostics/progress to 64 KiB. Explicitly drop oversized progress while preserving
+independent validated handles and the terminal collector. Oversized terminal
+output refuses observation without cancelling accepted work.
+Each display push is bounded to 256 lines, and retained activity feeds additionally
+cap at 200 whole lines within 64 KiB. UTF-8 counting handles split surrogate pairs;
+display truncation never turns a partial line into a plausible handle/event.
+
+Under persistent root-owned `0600` `/etc/hfcache/.configuration.lock`, compare
+exact candidate content and the installed base bytes through validation/required
+preview and before installation. Candidate bytes are bounded inert stdin, never
+shell code. Edits invalidate readiness. Syntax validity, compatible authority,
+preview success and exact installed fingerprint confirmation are separate gates;
+incompatible/unknown authority blocks plugin installation and explains the manual
+operator install/restart/compatible-preview sequence. Failed preview/confirmation
+cannot render success. Preserve atomic backup/install, service identity and
+`0640 root:hfcache`. New policy changes future admissions, never an admitted
+snapshot; the server refuses stale queued mutations.
 
 ## 1. Rules
 
 | ID | Rule |
 | --- | --- |
 | `CP-01` | The plugin invokes the installed CLI and systemd; it never reads or writes archive state directly and never re-implements resolution, validation, verification, or retention logic. One read-only exception: §4's run-report browsing |
-| `CP-02` | Every CLI invocation passes `--json`; the envelope is the only parsed surface. An envelope `schema_version` other than `1` is refused with an upgrade message, never guessed at. Stderr is display-only |
+| `CP-02` | Every CLI invocation passes `--json`; command outcomes require a bounded strict schema-1 Envelope. Refuse unknown versions. Separately validated bounded progress and recovery handles may render/reconnect; stderr never grants domain authority or fabricates outcome/checkpoints/percentages |
 | `CP-03` | Mutating actions require Cockpit administrative access. The CLI runs as the service identity inside a transient systemd unit (§2), never as root |
 | `CP-04` | A full sync and a full verification run only through `hfcache-sync.service` and `hfcache-verify.service` — never as page-spawned processes |
 | `CP-05` | Pausing or resuming the schedule operates on `hfcache-sync.timer` only. The plugin never stops, starts, enables, or disables `hfcache.target` — stopping it unmounts `/srv/hfcache` (`docs/operations.md` §9) |
 | `CP-06` | The plugin never enables `hfcache-verify.timer`. It displays the timer's state and the reason it is disabled (operator handoff item 8). Enabling and disabling `hfcache-sync.timer` is permitted |
 | `CP-07` | `archive init`, in any form including `--inspect`, is outside the plugin's surface (`FS-21`; `docs/agents/environment.md`) |
-| `CP-08` | No credential surface: the plugin never reads `$CREDENTIALS_DIRECTORY` or a token file, never offers token entry, and renders only the `token_source` string from envelopes (`docs/security.md` T-07). The deployment's encrypted credential reaches spawned CLI runs only through systemd's `ImportCredential=` (§2), decrypted by PID 1, never by the page |
+| `CP-08` | No credential surface: the page never reads credentials or accepts tokens. Transient clients receive only named API `hfcache.api` through systemd, never Hub authority or browser/environment/argument bearers. Only safe source descriptions render (`docs/security.md` T-07) |
 | `CP-09` | The plugin never writes under `/srv/hfcache`. Its only direct read there is `runs/*.json`, performed as the service identity; every other statement about the archive comes from a CLI envelope |
 | `CP-10` | One mutating command at a time (`AD-17`). `HFMNT010` renders as a benign busy state naming the holder, never as a failure; the plugin never removes or bypasses the lock |
-| `CP-11` | Configuration changes go only through the §6 pipeline: candidate file, `config validate` exit `0`, atomic install preserving `0640 root:hfcache`, predecessor retained |
+| `CP-11` | Configuration changes use §6's root config flock and exact candidate/base guards, syntax-valid compatible server assessment, required successful preview, atomic install with `0640 root:hfcache` and predecessor retained, then exact expected installed fingerprint confirmation. Incompatible/unknown authority blocks plugin install |
 | `CP-12` | Timer schedule changes are drop-ins under `/etc/systemd/system/hfcache-sync.timer.d/` (§7); shipped unit files are never edited, and calendar expressions are validated with `systemd-analyze calendar` before anything is written |
 | `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is fixed per `docs/plan.md` §23 or reported |
 | `CP-14` | The node toolchain is build-time only. The plugin ships as static files; the application's closed runtime dependency set (`FW-03`) is untouched, and `cockpit/node_modules/` and `cockpit/dist/` are never committed |
 
 ## 2. Privilege and identity
 
-Cockpit authenticates against the host (PAM); the plugin performs privileged
-work through Cockpit's superuser bridge, which an administrative session
-escalates to root. This sits inside the existing trust model: root and the
-operator are already the boundary (`docs/security.md` §6), and the plugin
-adds no listener, daemon, or state of its own beyond the files §6 and §7
-name.
+Cockpit authenticates against the host (PAM). Administrative sessions use its
+superuser bridge for systemd/configuration work; the installed CLI runs as the
+unprivileged `hfcache` service identity. The plugin adds no listener or credential
+backend. API execution stays in the daemon/private worker, with the existing
+archive, policy, lock and credential authority.
 
-From the root bridge, CLI invocations run in a transient systemd unit that
-drops to the service identity (decision 92; before it, the shape was
-`runuser`):
+The fixed transient invocation is:
 
 ```text
 systemd-run --quiet --wait --pipe --collect \
     --property=User=hfcache --property=Group=hfcache \
-    --property=ImportCredential=hf-token \
+    --property=ImportCredential=hfcache.api \
     --property=UMask=0027 --property=MemoryHigh=4G \
-    --property=Environment=HF_HOME=/var/lib/hfcache/hf-home \
-    --property=Environment=HF_XET_CACHE=/var/cache/hfcache/xet \
     -- /opt/hfcache/current/.venv/bin/hfcache \
-    --config /etc/hfcache/config.toml --json <command>
+    --client-config /etc/hfcache/client.toml \
+    --api-socket /run/hfcache/api.sock --json <command>
 ```
 
-Never root (`CP-03`): anything a command publishes must carry the service
-identity, and `/etc/hfcache/config.toml` is `0640 root:hfcache`. systemd
-operations (units, timers, drop-ins, `daemon-reload`) and journal reads run
-as root via the bridge. What the transient unit adds over a plain drop:
+PID 1 supplies the API-only encrypted credential under its bound name
+`hfcache.api`; the page never receives its bytes. Provision that credential for the
+REST writer class, distinct from daemon Hub `hf-token`, and install the separate
+client TOML with `credential_name="hfcache.api"`. An absent/unusable API source
+fails closed; there is no anonymous Hub fallback. Never pass a literal bearer,
+ambient token environment or token-file override through the browser/argv.
+Ordinary commands omit archive `--config`; candidate validate/plan alone adds the
+fixed `/etc/hfcache/.candidate.toml` path for bounded local content upload (§6).
 
-- **The deployment's Hub credential, without a credential surface**
-  (`CP-08`). `ImportCredential=hf-token` makes PID 1 decrypt
-  `/etc/credstore.encrypted/hf-token` — the same host-bound encrypted
-  credential `hfcache-sync.service` loads
-  (`packaging/systemd/hfcache-sync.service.d/credential.conf.example`) —
-  into the unit's ramfs credentials directory, where the CLI's own §7
-  resolution finds it. When no credential is installed the import is silently
-  skipped: `token_mode = "optional"` runs anonymously, while `required` fails
-  with `HFARG008` before a Hub request. Token bytes never pass through the bridge
-  or the page. The name is the documented default; a deployment that renames
-  `hub.credential_name` resolves no page credential, which is anonymous under
-  `optional` and a clear refusal under `required`. `doctor`'s `credential` and
-  `hub_identity` rows report exactly what resolved.
-- **Environment and resource parity with the shipped units**: `HF_HOME`,
-  `HF_XET_CACHE`, `UMask=0027`, and `MemoryHigh=4G` match
-  `hfcache-sync.service`, so a page-spawned run cannot touch a home
-  directory the service identity does not have, and a selector sync streams
-  through the page cache under the same bound that protects the guest from
-  the decision-86 OOM.
-- **Faithful exit codes**: `--wait --pipe` propagate the CLI's exit status
-  to the spawn, which §4's mapping depends on, and stream stdout/stderr
-  unchanged. `--collect` keeps failed transient units from accumulating.
+`UMask=0027` and `MemoryHigh=4G` bound the transient observer; they do not prove
+that it executes or hardens archive work. The actual API/private-worker units own
+that work. `--wait --pipe` retains CLI output and exit status, including classified
+failure Envelopes; `--collect` avoids accumulating completed transient units.
 
-The one CLI-adjacent exception stays `runuser`: §3's run-report reads are
-direct file reads as the service identity (`CP-09`), touch neither the Hub
-nor the configuration, and need none of the above.
-
-Without administrative access the page presents read-only systemd state and
-says why everything else is locked. There is no degraded data path: the
-configuration is unreadable to an ordinary user by design, and inventing a
-side channel would violate `CP-01`.
+Root bridge work is limited to installed unit/timer/drop-in control, journal
+reads and the guarded configuration pipeline. The run-report browsing exception
+uses direct reads as the service identity (`CP-09`), without Hub/config access.
+Without administrative access the page presents permitted read-only systemd state
+and explains why privileged actions are locked. It invents no archive side channel.
 
 ## 3. Operation surface
 
@@ -125,7 +137,7 @@ side channel would violate `CP-01`.
 | Sizing preview | `plan --json`, optionally against a candidate configuration (§6) | `docs/operations.md` §3 |
 | Sync now (all repositories) | `systemctl start hfcache-sync.service` | `CP-04`; `docs/operations.md` §4 |
 | Sync selected repositories | Page-spawned CLI `sync TYPE:ID …` (§5) | decision 89 |
-| Stop a running sync | `systemctl stop hfcache-sync.service`, behind a consequence-stating confirmation | §5 |
+| Stop sync observation | `systemctl stop hfcache-sync.service`; accepted server work may continue | §5 |
 | Pause / resume schedule | `systemctl stop` / `systemctl start` on `hfcache-sync.timer` | `CP-05` |
 | Live sync activity | Journal stream of the unit, §24 event vocabulary | §5 |
 | Verify — estimate | CLI `verify --estimate` | `docs/cli.md` §2 |
@@ -163,124 +175,148 @@ Exit codes map to UI states, not to a generic error toast:
 | --- | --- |
 | `0` | Success; render `data`, surface `warnings[]` |
 | `10` | Invocation or configuration problem; map `HFCFG`/`HFARG` codes onto the offending form fields where the UI owns the input |
-| `20` | Safety refusal; nothing changed. `HFMNT010` is the benign busy case (`CP-10`); the rest render `doctor`'s vocabulary |
+| `20` | Safety/storage/observation refusal; inspect classified evidence. `HFMNT010` is benign busy; uncertainty never proves nothing changed |
 | `30` | Partial failure; per-repository outcomes from the `RunReport` payload |
 | `40` | Integrity finding: prominent, persistent, linking the repair flow; the UI never offers to sync or prune from this state (`docs/operations.md` §7) |
-| `50` | Retention/repair failure; the UI surfaces `recover --dry-run` |
+| `50` | Retention/repair failure; use retained evidence and the supervised recovery runbook |
 
 The envelope is emitted even on failure, so the plugin never diagnoses by
 parsing human text (`CP-02`). `warnings[]` and `errors[]` render with their
 stable codes; the codes are the join key to the runbook guidance the UI
-carries. Raw stderr is available in a collapsed log pane for the operator who
-wants it, and is never interpreted.
+carries. Bounded stderr is available for diagnostics. Only documented strictly validated
+progress/recovery notices are interpreted for display/reconnection; domain
+outcomes still require the terminal Envelope. HFAPI013/015/019/020 or
+`data.work_may_continue=true` render as uncertain observation with retained handles,
+never a claim of cancellation, nonexecution or automatic recovery authority.
+
+These CLI stderr forms alone become typed operation notices, after the 8 KiB
+UTF-8 line bound and control-character checks. They are separate from journal
+logfmt and never a terminal result:
+
+| Line form | Typed display/reconnection value |
+| --- | --- |
+| `Idempotency key: KEY` or `Original idempotency key: KEY` | Safe nonsecret key, 1–128 ASCII characters from letters/digits/`._~+-` |
+| `Operation: ID` with optional `; accepted work may continue` suffix | Exact 32-character lowercase hexadecimal operation ID |
+| `[N] KIND: MESSAGE` | Positive safe-integer sequence; kind starts lowercase and uses at most 64 lowercase/digit/`_.-` characters; message remains plain text |
+| `Event history gap; retained events start at N` | Positive safe-integer retained sequence, not invented missing events |
+| `Accepted work may continue; reconnect using the retained handles` | Observation-continuation notice, never a domain outcome |
+
+Reject malformed notices; unknown lines remain bounded diagnostics. Keep validated
+key/ID independently of log eviction. Reconnect commands keep handles as arguments,
+not executable text, use `--` before positional values and quote copied keys so
+even valid leading `-`/`~` characters remain data. Display
+abort/callback failure detaches view updates without
+closing the spawned process or cancelling server work.
 
 ## 5. Long-running operations and concurrency
 
-Work spawned from a browser page dies with the page — Cockpit's own guidance,
-and the reason for `CP-04`. The units also carry what a bare spawn would
-lose: the §22.5 sandbox, `MemoryHigh=`, the journal identity, and systemd's
-merge semantics for a timer elapse during a run.
+Full sync/full verification start the existing installed services (`CP-04`). Their
+API-backed scheduled observers retain private recovery handles and stay active
+through repeated finite observation windows; timer elapses merge into the same
+active oneshot. Selected sync, single-revision verification, repair and other
+explicit CLI jobs use §2's transient observer. The server owns accepted work;
+closing a tab or stopping an observer never cancels it.
 
-**Selector-restricted sync** is the deliberate exception (decision 89): it
-runs from the page rather than through a shipped unit. Under the §2 shape
-that means a transient unit whose page-side waiter dies with the page while
-the unit itself continues (decision 92): closing the tab loses the live view
-and the final envelope, not the run, whose durable record is its run report
-like any other run's. Interruption remains a crash shape the application is
-designed for — per-repository transactions, resumable cache partials
-(`AD-09`), and reconciliation (`docs/operations.md` §9) — and after any
-mutating operation whose envelope was lost the UI surfaces
-`recover --dry-run`. The UI states the detach consequence before starting
-one. A templated `hfcache-sync@.service` carrying selectors under the full
-§22.5 hardening is still the recorded follow-up seam; decision 92's
-transient unit narrows the gap (identity, credential, memory bound) without
-closing it (sandbox).
+Before a keyed POST, the CLI prints its validated key; after acceptance it prints
+the operation ID. The plugin retains those independently of bounded display logs
+and offers authenticated `operations lookup -- KEY` / `operations wait -- ID` guidance.
+A lost result, timeout, page closure or stopped client is uncertain observation,
+not proof of execution failure/nonexecution. Never automatically submit another
+key, invoke recovery, or infer that an archive lock is free. Use exact operation
+history and the [executor drain/recovery runbook](recovery.md#10-operation-history-and-uncertain-submissions).
 
-**Stopping a running sync** is `systemctl stop` (SIGTERM). The confirmation
-states the consequences plainly: everything already published stays
-published, partial downloads resume from the cache on the next run, and
-reconciliation handles the rest.
+The sync stop control stops only `hfcache-sync.service`'s observation. Its dialog
+states that accepted server work may continue and that the pending handle is
+preserved for lookup/observation. The UI must not promise cancellation, resumable
+partial-download behavior or safe automatic recovery from this action. It never
+stops the API/private verifier or lifecycle target on the user's behalf.
 
-**Live activity** comes from the unit's journal: `ActiveState` plus the
-structured `event=` lines. The vocabulary is closed (`docs/plan.md` §24;
-`hfcache.logging.EVENTS`), so the UI keys only on documented event names —
-`run.started`, `repository.resolved`, `repository.skipped`,
-`publication.completed`, `run.completed`, and peers — and ignores names it
-does not know rather than failing on them. Progress is checkpoint-grained by
-design; the UI does not invent percentages the events do not carry.
+Progress is only the bounded validated sequence/kind/message emitted by the CLI,
+with explicit event-retention gaps and mandatory safety handles. Do not infer
+per-repository phases, checkpoint completion or byte percentages absent from that
+stream. Installed-unit journal views remain bounded diagnostics, never authority
+for a terminal result. Unknown progress lines are display-only and cannot change
+an operation's outcome. The 8 KiB line/64 KiB retained-log bounds do not discard
+validated recovery handles or prevent collection of the independent terminal
+Envelope (maximum 16 MiB).
 
-Queue-ahead syncs expose distinct repository states through
-`repository.queued`, `download.started`, `download.completed`, `hash.started`,
-`hash.completed`, and `publication.completed`. The latest-per-repository view
-therefore distinguishes idle WAN because local hashing is active from a stalled
-download, without claiming byte-level progress the application has not emitted.
-
-Before offering any mutating action the UI reads `is-active` for both
-services and reflects the single-writer reality (`CP-10`); it never polls the
-lock file itself.
+`is-active` for sync/verify services remains a useful observation hint, not the
+single-writer authority. The server's bounded lane and archive flock decide
+admission/execution. Busy/stale/error classifications remain visible; the plugin
+never probes, removes or bypasses the lock. Full service drain and supervised
+recovery remain operator procedures.
 
 ## 6. Configuration editing
 
-**API-012 candidate transport amendment (2026-10-18, [decision 119](adr/decision-119.md)).**
-CLI validate/plan now upload bounded candidate content from their host; the API
-never opens the candidate path or installs it. Syntax-valid authority changes can
-validate while reporting false compatibility; candidate planning requires the six
-installed authority fields to match and uses installed credentials. With invalid
-installed policy, valid syntax can report unknown compatibility. Only a compatible
-preview grants the existing sizing evidence, never apply/install authority.
-Privileged atomic installation/backups below remain outside REST. API-015 owns
-the shipped caller/API-credential/UI integration; this amendment does not claim
-that deployed Cockpit has migrated or give browser code a bearer.
+Candidate validation/planning upload bounded exact TOML text through the API;
+the server never opens the candidate pathname or installs it. Root owns the
+fixed candidate/install/backup paths on the Cockpit host. Candidate syntax/policy
+validity does not prove installed-authority compatibility, credential availability
+or preview readiness ([decision 119](adr/decision-119.md)).
 
-The pipeline, in order, all steps mandatory (`CP-11`):
+Every pipeline command takes the persistent root-owned `0600`
+`/etc/hfcache/.configuration.lock` flock. Compare the expected candidate and
+loaded installed-base bytes while holding it; refuse changed content rather than
+borrow earlier validation/preview. Hold the lock through that command and its
+atomic changes. Each candidate/base document is at most 1 MiB of complete UTF-8
+without NUL. Payloads travel as bounded inert stdin, never shell interpolation or
+generic executable/path input. Retain the lock inode. The config directory is
+root-owned and not group/world writable; installed/candidate/backup files must be
+root-owned `0640 root:hfcache`, regular, single-link and not symlinks. The retained
+lock is root-owned `0600`, regular, single-link and inode-checked after flock.
+External root edits remain the trusted operator boundary; the flock serializes
+cooperating plugin commands.
+The fixed installed-config read uses the same flock/metadata/1 MiB checks and
+no-follow file access before returning editor content.
+Editing either form or text invalidates the browser's prior readiness.
 
-1. **Candidate.** The edited document is written to
-   `/etc/hfcache/.candidate.toml`, `0640 root:hfcache` — same directory as
-   the target, so the final rename is atomic and the service identity can
-   read it.
-2. **Validate.** `hfcache --config /etc/hfcache/.candidate.toml --json
-   config validate`, as the service identity. Exit `0` is required;
-   `HFCFG`/`HFARG` codes map back onto the form (`docs/configuration.md`
-   §8).
-3. **Preview, when the change adds or retargets a repository.**
-   `hfcache --config /etc/hfcache/.candidate.toml --json plan TYPE:ID` — the
-   runbook's mandatory sizing step, run against the candidate before it is
-   installed. `plan` takes no lock and mutates nothing, so a candidate is a
-   legitimate target.
-4. **Install.** The current file is copied to `/etc/hfcache/config.toml.bak`
-   (one predecessor, `0640 root:hfcache`), then the candidate is fsynced and
-   renamed over `/etc/hfcache/config.toml`.
-5. **Confirm.** `config validate` once more against the installed path, and
-   the reported `config_fingerprint` is displayed — the value run reports
-   will carry.
+The pipeline, in order (`CP-11`):
 
-Two editing modes, one pipeline. **Form mode** renders the schema as
-controls — per-repository `id`, `type`, `revision`, `enabled`,
-`declared_dependencies`, and the `[hub]`/`[storage]`/`[sync]`/
-`[verification]`/`[repair]` tables — with each key's documented constraint
-enforced client-side and re-enforced by step 2. Form mode serializes
-canonically and **does not preserve operator comments**; the UI says so, and
-the generated header comment names the plugin and the write time. **Text
-mode** edits the document verbatim for the operator who keeps comments. The
-editor writes only schema-version-1 keys; there is no token field to offer
-(`CP-08`, `HFCFG010`).
+1. **Candidate.** Write exact edited content to `/etc/hfcache/.candidate.toml`,
+   `0640 root:hfcache`, in the target directory. Retain the loaded installed bytes
+   as the expected base; an external edit requires reload/revalidation.
+2. **Assess.** As the service identity, run API-backed `config validate` with the
+   fixed candidate path. Require strict schema-1 output, syntax validity and
+   `authority_compatible=true` with valid installed policy. Report ordered
+   mismatch field names without credential values. Valid incompatible/unknown
+   authority remains valid syntax but blocks plugin installation.
+3. **Preview when required.** Added/retargeted enabled repositories require a
+   successful API-backed candidate `plan` under the same exact-content/base guard.
+   Planning uses installed authority/credentials, cannot install policy and grants
+   no later apply authority. Failed/malformed/uncertain preview leaves install
+   disabled; edits invalidate a prior preview.
+4. **Install.** Recheck exact candidate/base and readiness under the root flock.
+   Preserve the predecessor at `/etc/hfcache/config.toml.bak`, `0640 root:hfcache`,
+   fsync and atomically rename the candidate over `/etc/hfcache/config.toml`.
+5. **Confirm.** Validate installed policy through the API, require a successful
+   strict Envelope and the exact expected candidate fingerprint. Only then display
+   success. Failed confirmation reports installed state as unconfirmed, preserves
+   evidence and never claims the old file remains or silently rolls back.
+   Install/confirmation errors remove readiness and require reloading the installed
+   configuration before another candidate validation; installation may have
+   completed even when its observer failed.
 
-`storage.maximum_revisions` offers the integer policies `3` and `5`; an omitted
-key displays the default `3` without rewriting an explicit `5` (`RET-010`,
-decision 102).
+Authority changes require a privileged manual sequence: review mismatch fields,
+install/backup the proposal outside this plugin, restart the daemon when startup
+root/UUID authority changes (and any affected service settings), then obtain a
+compatible validated preview before credential-bearing work. With broken installed
+policy, candidate syntax may validate with unknown compatibility; that does not
+unlock install/plan. The plugin never rewrites authority fields to match silently.
 
-The `token_mode` control offers `disabled`, `optional`, and `required`; choosing
-`required` is the explicit private/gated repository opt-in (`AD-21`). Candidate
-validation fails with `HFARG008` unless the transient validation unit imports the
-named credential. The plugin still has no token-entry surface (`CP-08`).
+Form mode serializes canonical TOML and states that comments are not preserved;
+text mode edits verbatim. Only schema-1 keys are offered, with no token field.
+`maximum_revisions` supports 3/5 and default 3 without rewriting an explicit 5.
+`token_mode=required` remains the explicit restricted-scope opt-in; candidate
+syntax validation resolves no credential, while compatible planning/installed
+validation use daemon-owned credentials. The transient client never imports Hub
+credentials. AD-21's whole-archive authorization and expected-account checks remain.
 
-The add-repository wizard is this pipeline with steps 3 and an optional
-selector sync (§5) attached — entry, validate, sizing preview, install, and
-only then, offer to sync.
-
-Removing a repository never deletes archived data (`AD-06`); the UI states
-beside the removal control that revisions remain and will appear as
-unmanaged (`HFWRN007`).
+The add-repository wizard uses the same assess → required preview → guarded
+install → confirmation pipeline, then may offer selected sync. Removing a
+repository never deletes its archive; retained publications become unmanaged.
+Installed policy governs future admissions. Already-admitted operations keep their
+fingerprint/snapshot, and stale queued mutations refuse under the server lock;
+installation neither cancels work nor changes its receipt.
 
 ## 7. Sync schedule
 

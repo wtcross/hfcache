@@ -927,6 +927,19 @@ list in `docs/progress.md`.
 
 ## 16. The Cockpit plugin
 
+**API-015 amendment (2026-10-18, [decision 122](adr/decision-122.md)).**
+The plugin's transient service-identity clients use fixed
+`/etc/hfcache/client.toml`, local API socket and systemd `hfcache.api` credentials,
+never Hub authority or browser bearer values. Review/install the
+[client example](../packaging/cockpit-client.toml) as `0640 root:hfcache` and
+provision the API writer source separately from daemon `hf-token`. No deploy is
+performed here. Candidate changes use the retained root config flock and exact
+candidate/base guards, compatible assessment/required preview, atomic backup and
+exact installed fingerprint confirmation. A stopped client remains observation
+loss, never automatic recovery authority. See [Cockpit install](cockpit-plugin/installation.md)
+and [usage](cockpit-plugin/usage.md); actual browser/credential/SELinux/NFS acceptance
+remains an operator hold.
+
 Optional browser administration for this deployment; `docs/cockpit.md` is its
 contract, and `docs/cockpit-plugin/` is the full installation and usage
 guide — this section is the deployment-step summary. The plugin is static

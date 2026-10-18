@@ -289,7 +289,7 @@ interface VersionData {
 }
 
 const VersionCard = () => {
-    const version = useHfcache(['version']);
+    const version = useHfcache(['version', '--server']);
     const data = (version.envelope?.data ?? {}) as VersionData;
     return (
         <Card>

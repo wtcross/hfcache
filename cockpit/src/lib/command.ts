@@ -6,24 +6,14 @@
  */
 
 export const HFCACHE_CLI = '/opt/hfcache/current/.venv/bin/hfcache';
-export const HFCACHE_CONFIG = '/etc/hfcache/config.toml';
+export const HFCACHE_CLIENT_CONFIG = '/etc/hfcache/client.toml';
+export const HFCACHE_API_SOCKET = '/run/hfcache/api.sock';
 export const SERVICE_IDENTITY = 'hfcache';
-/* The deployment's documented default credential name
- * (docs/configuration.md §7). A deployment that renames
- * `hub.credential_name` resolves no page token: `optional` is anonymous and
- * `required` fails closed. Doctor reports the result (docs/cockpit.md §2). */
-export const CREDENTIAL_NAME = 'hf-token';
+export const CREDENTIAL_NAME = 'hfcache.api';
 
-/* The one invocation shape (CP-03): a transient unit that drops to the
- * service identity and speaks JSON. systemd-run rather than runuser
- * (decision 92) so that PID 1 imports the deployment's encrypted Hub
- * credential — `ImportCredential=` is silently skipped when none is installed.
- * That is anonymous fallback under `optional` and `HFARG008` under `required`;
- * the page never touches token bytes (CP-08) — and so the run carries the sync
- * unit's environment, umask, and `MemoryHigh=` (decision 86).
- * `--wait --pipe` propagates the CLI's exit code, which the envelope
- * mapping depends on. `--config` is stated even though it is the
- * default, matching the systemd units and the runbook's `$H`. */
+/* CP-03/08, decision 122: this process is an API client, with only a named
+ * API credential imported by PID 1. Ordinary calls have no archive policy or
+ * Hub environment. A candidate is explicit local content for CLI upload. */
 export function hfcacheArgv(command: string[], options?: { config?: string }): string[] {
     return [
         'systemd-run', '--quiet', '--wait', '--pipe', '--collect',
@@ -32,10 +22,12 @@ export function hfcacheArgv(command: string[], options?: { config?: string }): s
         `--property=ImportCredential=${CREDENTIAL_NAME}`,
         '--property=UMask=0027',
         '--property=MemoryHigh=4G',
-        '--property=Environment=HF_HOME=/var/lib/hfcache/hf-home',
-        '--property=Environment=HF_XET_CACHE=/var/cache/hfcache/xet',
         '--',
-        HFCACHE_CLI, '--config', options?.config ?? HFCACHE_CONFIG, '--json',
+        HFCACHE_CLI,
+        '--client-config', HFCACHE_CLIENT_CONFIG,
+        '--api-socket', HFCACHE_API_SOCKET,
+        '--json',
+        ...(options?.config === undefined ? [] : ['--config', options.config]),
         ...command,
     ];
 }

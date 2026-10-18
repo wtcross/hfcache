@@ -1182,6 +1182,45 @@ package in this family.
   verify-calendar acceptance remain explicit operator holds; live/NFS and extra
   build-marker suites did not run. Next is API-015 pending after this commit.)
 
+- [x] API-015 Preserve Cockpit workflows through guarded API clients
+  (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
+  [task](plans/tasks/api-015-cockpit-api-client-compatibility.md)).
+  Fixed service-identity transient CLI commands use local client TOML/socket and
+  systemd API-only `hfcache.api`, never Hub/browser bearer authority. Strict
+  complete/coherent schema-1 terminal parsing preserves failures and safe upgrade
+  guidance. Independent UTF-8 framing bounds terminal JSON to 16 MiB, progress
+  lines to 8 KiB, diagnostics/feeds to 64 KiB and feeds to 200 whole lines; validated
+  handles survive display eviction. Abort/callback failure detaches the view,
+  never cancels accepted work. Sync observer stop shows uncertainty/reconnect,
+  without automatic recovery or no-change claims. Copied lookup keys are quoted
+  and use `--`, including leading `-`/`~`; dashboard inspects server version.
+  Unit/action allowlist preserves full sync/verify services, sync-timer-only
+  controls and no target/init UI. Persistent root config flock and exact 1 MiB
+  candidate/base guards protect no-follow editor reads, compatible assessment,
+  required preview, atomic predecessor/install and exact installed fingerprint
+  confirmation. Edits invalidate readiness; incompatible/unknown authority blocks
+  plugin install. Install/confirmation failure requires reload and never invents
+  success, prior-file preservation or rollback. Admitted snapshots/server fresh
+  lock proof remain authoritative. Decision 122 and 087/089/091/092/119/120/121,
+  CP-01–14/INV-002/003/006 and affected operator/client/config/security/contracts,
+  README/Unreleased agree. Focused runner 35, envelope/unit 19 and candidate 59
+  cases pass; actual disposable Bash/flock/cmp/fsync/rename guards fake only the
+  systemd leaf. Standalone complete Cockpit gate passes 127 tests/2.035 seconds,
+  lint/style/types and production build. Source and decompressed production
+  searches find no bearer/Authorization/API token-file/Hub-token/environment
+  handling, while expected API name/socket/client path remain. First full
+  `rtk proxy bash scripts/check.sh > .scratch/api-015-gate.log 2>&1` exits 0:
+  lock/sync, 361 formatted files, Ruff/types clean, 3,223 Python tests
+  (40 deselected, 352.53 seconds), 0.1.10 sdist/wheel, actual locked isolated
+  base/server install/import/help/version, 127 Cockpit tests/2.093 seconds and
+  production build/1,171 ms. No gate correction/restart or post-gate source change.
+  Final links/current/dependencies, 29 implemented parity rows, 122 unique indexed
+  decision/ADR records and whitespace pass. No durable JSON/dependency/MCP or
+  production operation/deployment/push/merge/tag. Actual browser/PAM/credential/
+  cgroup/custom masks/hardening/SELinux/NFS/drain/verify-calendar checks remain
+  operator holds; live/NFS and extra build-marker suites did not run. Next is
+  API-016 pending after this commit; REST acceptance still gates all MCP work.)
+
 ## Live rollout checkpoints (§29, writer-side)
 
 - [x] Archive initialized on `/srv/hfcache` with the UUID already provisioned in
@@ -1421,6 +1460,18 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     [scheduled schema](schemas.md#14-scheduled-client-observation-handle-api-014).
     No production deployment, service/timer/mount manipulation or archive operation
     is authorized by implementation of this plan.
+
+17. **API-015 Cockpit deployment acceptance (2026-10-18, decision 122):**
+    repository process/config/browser-independent fixtures do not prove the
+    installed Cockpit PAM/superuser bridge, named API credential delivery or
+    SELinux/NFS behavior. Provision fixed local client TOML/socket and API-only
+    `hfcache.api` without transient Hub authority; confirm closing/stopping an
+    observer leaves accepted work independently observable. Check bounded
+    terminal/progress handling and exact candidate/base/backup/fingerprint
+    confirmation in an authorized disposable/deployment window. Preserve retained
+    config locks and API/scheduled evidence. Actual executor hardening/drain and
+    verify-calendar holds from item 16 remain. No production installation or
+    operation is authorized by this work package.
 
 ## Operator decisions needed
 
@@ -3924,3 +3975,21 @@ _Settled implementation deviations from `docs/plan.md`, with rationale (§36.3).
      removal. Same-class rotation can recover. No bearer/digest/body/queue, new
      dependency, MCP or production operation. Actual socket/cgroup/no-IP/credential/
      SELinux/NFS acceptance stays an explicit deployment hold.
+
+122. **Preserve Cockpit authority through the API client and guarded candidates**
+     (2026-10-18, API-015). [ADR](adr/decision-122.md): transient service-identity
+     clients import only named API `hfcache.api`, use fixed local client settings/
+     socket and never pass ordinary archive config or Hub/browser bearer authority.
+     Strict bounded terminal schema-1 Envelopes govern outcomes; separately
+     validated bounded progress/handles may render and reconnect without invented
+     checkpoint/percentage/outcome. Closing a page or stopping an observer never
+     proves accepted work cancelled or recovery safe. Retain uncertain handles
+     and use lookup/wait, without automatic recovery/replay. A persistent root
+     config flock guards exact candidate and installed-base bytes through server
+     validation/required preview/atomic install; edits invalidate readiness.
+     Syntax validity, compatible authority and exact installed fingerprint
+     confirmation are distinct gates. Incompatible/unknown authority blocks
+     plugin installation with manual operator guidance. Preserve backup/mode,
+     root/admin/service separation, installed full-sync/verify units, sync-timer
+     only controls and no init UI. No durable JSON/dependency/MCP or production
+     change; real host acceptance remains operator work.

@@ -7,7 +7,7 @@
  * Both go candidate → validate → preview → install → confirm.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
@@ -32,8 +32,13 @@ import {
 import { EnvelopeAlert, Loading, QueryError, Sha } from './components';
 import {
     ConfigDocument, extractFieldPath, FieldSpec, getField, GLOBAL_FIELDS, parseConfig,
-    RepositoryEntry, selectorsNeedingPreview, serializeConfig, setField, validateRevisionReference,
+    RepositoryEntry, serializeConfig, setField, validateRevisionReference,
 } from './lib/config';
+import { CandidateGuard } from './lib/candidate-guard';
+import {
+    CandidatePreparation, ConfigurationPorts, installConfiguration, MANUAL_AUTHORITY_GUIDANCE,
+    prepareConfiguration, UNCONFIRMED_INSTALLATION,
+} from './lib/config-pipeline';
 import { Envelope } from './lib/envelope';
 import { formatBytes, shortSha } from './lib/format';
 
@@ -276,7 +281,6 @@ type Phase = 'idle' | 'checking' | 'ready' | 'installing' | 'done';
 
 export const Configuration = () => {
     const [installedText, setInstalledText] = useState<string | null>(null);
-    const [installedDocument, setInstalledDocument] = useState<ConfigDocument | null>(null);
     const [loadError, setLoadError] = useState<Error | null>(null);
     const [mode, setMode] = useState<'form' | 'text'>('form');
     const [document, setDocument] = useState<ConfigDocument | null>(null);
@@ -287,19 +291,22 @@ export const Configuration = () => {
     const [plan, setPlan] = useState<Envelope | null>(null);
     const [fingerprint, setFingerprint] = useState<string | null>(null);
     const [pipelineError, setPipelineError] = useState<Error | null>(null);
+    const [preparation, setPreparation] = useState<CandidatePreparation | null>(null);
+    const [diskGuard, setDiskGuard] = useState<CandidateGuard | null>(null);
+    const [unconfirmed, setUnconfirmed] = useState(false);
+    const revision = useRef(0);
 
     const load = useCallback(() => {
         setLoadError(null);
         readInstalledConfig()
                 .then(content => {
+                    setUnconfirmed(false);
                     setInstalledText(content);
                     setText(content);
                     try {
                         const parsed = parseConfig(content);
-                        setInstalledDocument(parsed);
                         setDocument(parsed);
                     } catch (failure) {
-                        setInstalledDocument(null);
                         setDocument(null);
                         setMode('text');
                         setLoadError(new Error(`installed configuration does not parse: ${String(failure)}`));
@@ -315,65 +322,112 @@ export const Configuration = () => {
         return serializeConfig(document ?? {}, new Date());
     };
 
+    const invalidate = () => {
+        revision.current += 1;
+        setPhase('idle');
+        setPreparation(null);
+        setValidation(null);
+        setPlan(null);
+        setFingerprint(null);
+        setFieldErrors({});
+        setPipelineError(null);
+    };
+
+    const editDocument = (value: ConfigDocument) => {
+        if (phase !== 'installing') {
+            invalidate();
+            setDocument(value);
+        }
+    };
+
+    const ports: ConfigurationPorts = {
+        write: writeCandidate,
+        validate: validateCandidate,
+        preview: planCandidate,
+        install: installCandidate,
+        confirm: validateInstalled,
+    };
+
     const check = () => {
+        if (installedText === null || unconfirmed)
+            return;
+        revision.current += 1;
+        const capturedRevision = revision.current;
         setPhase('checking');
+        setPreparation(null);
         setValidation(null);
         setPlan(null);
         setFingerprint(null);
         setPipelineError(null);
         setFieldErrors({});
-        const content = candidateContent();
         const flow = async () => {
-            await writeCandidate(content);
-            const result = await validateCandidate();
-            setValidation(result);
-            if (result.exit_code !== 0) {
-                const errors: FieldErrors = {};
-                for (const issue of result.errors) {
-                    const path = extractFieldPath(issue);
-                    if (path !== null)
-                        errors[path] = issue.message;
-                }
-                setFieldErrors(errors);
-                setPhase('idle');
+            const guard = { candidateContent: candidateContent(), installedContent: installedText };
+            const prepared = await prepareConfiguration(guard, {
+                ...ports,
+                write: async expected => {
+                    await writeCandidate(expected);
+                    if (revision.current === capturedRevision)
+                        setDiskGuard(expected);
+                },
+            }, () => revision.current === capturedRevision);
+            if (revision.current !== capturedRevision)
                 return;
+            setPreparation(prepared);
+            setValidation(prepared.validation);
+            setPlan(prepared.plan);
+            const errors: FieldErrors = {};
+            for (const issue of prepared.validation.errors) {
+                const path = extractFieldPath(issue);
+                if (path !== null)
+                    errors[path] = issue.message;
             }
-            if (installedDocument !== null) {
-                const selectors = selectorsNeedingPreview(installedDocument, parseConfig(content));
-                if (selectors.length > 0)
-                    setPlan(await planCandidate(selectors));
-            }
-            setPhase('ready');
+            setFieldErrors(errors);
+            setPhase(prepared.proposal === null ? 'idle' : 'ready');
         };
         flow().catch(failure => {
-            setPipelineError(failure as Error);
-            setPhase('idle');
+            if (revision.current === capturedRevision) {
+                setPipelineError(failure as Error);
+                setPhase('idle');
+            }
         });
     };
 
     const install = () => {
+        const proposal = preparation?.proposal;
+        if (proposal === undefined || proposal === null || phase !== 'ready')
+            return;
         setPhase('installing');
         setPipelineError(null);
         const flow = async () => {
-            await installCandidate();
-            const confirmed = await validateInstalled();
-            const data = (confirmed.data ?? {}) as { config_fingerprint?: string };
-            setFingerprint(data.config_fingerprint ?? null);
-            setValidation(confirmed);
+            const confirmed = await installConfiguration(proposal, ports);
+            setFingerprint(confirmed.fingerprint);
+            setValidation(confirmed.envelope);
+            setDiskGuard(null);
+            setPreparation(null);
             setPhase('done');
             load();
         };
         flow().catch(failure => {
+            setPreparation(null);
+            setValidation(null);
+            setPlan(null);
+            setDiskGuard(null);
+            setUnconfirmed(true);
             setPipelineError(failure as Error);
             setPhase('idle');
         });
     };
 
     const cancel = () => {
-        removeCandidate().finally(() => {
-            setPhase('idle');
-            setValidation(null);
-            setPlan(null);
+        if (diskGuard === null || phase === 'installing')
+            return;
+        revision.current += 1;
+        removeCandidate(diskGuard).then(() => {
+            setDiskGuard(null);
+            invalidate();
+        }, failure => {
+            invalidate();
+            setPipelineError(failure as Error);
         });
     };
 
@@ -392,26 +446,35 @@ export const Configuration = () => {
                                         <ToggleGroupItem
                                             text="Form (canonical; comments not preserved)"
                                             isSelected={mode === 'form'}
-                                            isDisabled={document === null}
-                                            onChange={() => setMode('form')}
+                                            isDisabled={document === null || phase === 'installing'}
+                                            onChange={() => {
+                                                if (phase !== 'installing') {
+                                                    invalidate();
+                                                    setMode('form');
+                                                }
+                                            }}
                                         />
                                         <ToggleGroupItem
                                             text="Text (verbatim)"
                                             isSelected={mode === 'text'}
-                                            onChange={() => setMode('text')}
+                                            isDisabled={phase === 'installing'}
+                                            onChange={() => {
+                                                invalidate();
+                                                setMode('text');
+                                            }}
                                         />
                                     </ToggleGroup>
                                 </StackItem>
                                 {mode === 'form' && document !== null &&
                                     <>
                                         <StackItem>
-                                            <Repositories document={document} onChange={setDocument} />
+                                            <Repositories document={document} onChange={editDocument} />
                                         </StackItem>
                                         <StackItem>
                                             <GlobalFields
                                                 document={document}
                                                 errors={fieldErrors}
-                                                onChange={setDocument}
+                                                onChange={editDocument}
                                             />
                                         </StackItem>
                                     </>}
@@ -423,7 +486,11 @@ export const Configuration = () => {
                                             className="hfcache-config-text"
                                             value={text}
                                             rows={26}
-                                            onChange={(_event, value) => setText(value)}
+                                            isDisabled={phase === 'installing'}
+                                            onChange={(_event, value) => {
+                                                invalidate();
+                                                setText(value);
+                                            }}
                                         />
                                     </StackItem>}
                                 <StackItem>
@@ -431,19 +498,19 @@ export const Configuration = () => {
                                         <FlexItem>
                                             <Button
                                                 variant="primary"
-                                                isDisabled={phase === 'checking' || phase === 'installing'}
+                                                isDisabled={phase === 'checking' || phase === 'installing' || unconfirmed}
                                                 onClick={check}
                                             >
                                                 Validate candidate
                                             </Button>
                                         </FlexItem>
-                                        {phase === 'ready' &&
+                                        {phase === 'ready' && preparation?.proposal != null &&
                                             <FlexItem>
                                                 <Button variant="danger" onClick={install}>
                                                     Install validated candidate
                                                 </Button>
                                             </FlexItem>}
-                                        {phase === 'ready' &&
+                                        {diskGuard !== null && phase !== 'installing' && phase !== 'checking' &&
                                             <FlexItem>
                                                 <Button variant="link" onClick={cancel}>Discard candidate</Button>
                                             </FlexItem>}
@@ -453,8 +520,28 @@ export const Configuration = () => {
                                 </StackItem>
                                 {pipelineError !== null &&
                                     <StackItem><QueryError error={pipelineError} /></StackItem>}
-                                {validation !== null &&
+                                {unconfirmed &&
+                                    <StackItem>
+                                        <Alert variant="warning" isInline title={UNCONFIRMED_INSTALLATION}>
+                                            <Button variant="link" onClick={() => { invalidate(); load() }}>
+                                                Reload installed configuration
+                                            </Button>
+                                        </Alert>
+                                    </StackItem>}
+                                {validation !== null && (validation.exit_code !== 0 || phase === 'done') &&
                                     <StackItem><EnvelopeAlert envelope={validation} /></StackItem>}
+                                {preparation?.assessment.syntaxValid &&
+                                    <StackItem>
+                                        <Alert variant="info" isInline title="Candidate configuration syntax is valid" />
+                                    </StackItem>}
+                                {preparation?.blocked === 'authority' &&
+                                    <StackItem>
+                                        <Alert variant="warning" isInline title="Candidate cannot be previewed or installed through this API authority">
+                                            {preparation.assessment.mismatches.length > 0 &&
+                                                <p>Changed authority fields: {preparation.assessment.mismatches.join(', ')}.</p>}
+                                            {MANUAL_AUTHORITY_GUIDANCE}
+                                        </Alert>
+                                    </StackItem>}
                                 {phase === 'ready' && validation !== null &&
                                     <StackItem>
                                         <Alert
@@ -463,16 +550,20 @@ export const Configuration = () => {
                                             title="Candidate validated. Installing keeps one predecessor at config.toml.bak, then renames atomically (CP-11)."
                                         />
                                     </StackItem>}
-                                {plan !== null && <StackItem><PlanPreview envelope={plan} /></StackItem>}
+                                {plan !== null &&
+                                    <StackItem>
+                                        {plan.exit_code !== 0 && <EnvelopeAlert envelope={plan} />}
+                                        {plan.exit_code === 0 && <PlanPreview envelope={plan} />}
+                                    </StackItem>}
                                 {phase === 'done' &&
                                     <StackItem>
                                         <Alert
                                             variant="success"
                                             isInline
-                                            title={`Installed and re-validated. Configuration fingerprint: ${fingerprint ?? 'unknown'}`}
+                                            title={`Installed and re-validated. Configuration fingerprint: ${fingerprint}`}
                                         >
-                                            Run reports will carry this fingerprint
-                                            (docs/configuration.md §9).
+                                            Future admissions use the installed policy. Existing operations retain their admitted
+                                            policy; queued mutations reject stale policy before work begins.
                                         </Alert>
                                     </StackItem>}
                             </Stack>

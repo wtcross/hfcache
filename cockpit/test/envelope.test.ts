@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
-    classifyEnvelope, EnvelopeError, EnvelopeSchemaError, EXIT_CODE_GUIDANCE, extractEnvelope, parseEnvelope,
+    classifyEnvelope, EnvelopeError, EnvelopeSchemaError, EXIT_CODE_GUIDANCE, extractEnvelope,
+    operationCommands, operationEvidence, parseEnvelope,
 } from '../src/lib/envelope.ts';
 
 function envelope(overrides: Record<string, unknown> = {}): string {
@@ -61,7 +62,11 @@ test('every non-zero class maps to its UI state', () => {
         [10, 'invalid'], [30, 'sync_failures'], [40, 'integrity'], [50, 'maintenance'],
     ];
     for (const [code, kind] of expectations) {
-        const parsed = parseEnvelope(envelope({ exit_code: code, outcome: 'failed' }));
+        const parsed = parseEnvelope(envelope({
+            exit_code: code,
+            outcome: 'failed',
+            errors: [{ code: 'HFERR001', repository: null, message: 'classified failure' }]
+        }));
         assert.equal(classifyEnvelope(parsed), kind, `exit ${code}`);
     }
 });
@@ -100,4 +105,79 @@ test('every documented exit code carries operator guidance', () => {
         assert.ok(EXIT_CODE_GUIDANCE[code]?.title, `exit ${code}`);
         assert.ok(EXIT_CODE_GUIDANCE[code]?.guidance, `exit ${code}`);
     }
+});
+
+test('schema-1 decisions require complete coherent terminal evidence (CP-02)', () => {
+    for (const overrides of [
+        { run_id: 'short' }, { run_id: null }, { started_at: 'unknown' },
+        { completed_at: undefined }, { data: [] }, { data: null },
+        { exit_code: '0' }, { exit_code: true }, { exit_code: 21 },
+        { outcome: 'done' }, { outcome: 'failed' }, { outcome: 'success_with_warnings' },
+        { exit_code: 20, outcome: 'failed', errors: [] },
+        { errors: [{ code: 'HFAPI018', repository: null, message: 'invalid' }] },
+        { warnings: [{ code: 'HFWRN001', repository: null, message: 'warning' }] },
+        { warnings: [{ code: 'HFWRN001', repository: null, message: 'warning', context: [] }] },
+    ]) {
+        assert.throws(() => parseEnvelope(envelope(overrides)), EnvelopeError, JSON.stringify(overrides));
+    }
+});
+
+test('lost observation preserves handles without claiming that execution stopped (ADR122)', () => {
+    for (const code of ['HFAPI013', 'HFAPI015', 'HFAPI019', 'HFAPI020']) {
+        const result = parseEnvelope(envelope({
+            command: 'sync',
+            exit_code: 20,
+            outcome: 'failed',
+            data: { idempotency_key: 'original-key', operation_id: 'a'.repeat(32), work_may_continue: true },
+            errors: [{ code, repository: null, message: 'observation unavailable' }],
+        }));
+        assert.equal(classifyEnvelope(result), 'observation');
+        assert.deepEqual(operationEvidence(result), {
+            idempotencyKey: 'original-key', operationId: 'a'.repeat(32), workMayContinue: true,
+        });
+    }
+    const internal = parseEnvelope(envelope({
+        exit_code: 20,
+        outcome: 'failed',
+        data: { work_may_continue: true },
+        errors: [{ code: 'HFAPI008', repository: null, message: 'internal failure after submission' }]
+    }));
+    assert.equal(classifyEnvelope(internal), 'observation');
+    assert.doesNotMatch(EXIT_CODE_GUIDANCE[10].guidance, /nothing was touched/i);
+    assert.doesNotMatch(EXIT_CODE_GUIDANCE[20].guidance, /nothing.*changed/i);
+});
+
+test('malformed recovery handles never become displayed commands', () => {
+    for (const data of [
+        { idempotency_key: 'key; command', operation_id: '../../file', work_may_continue: 'true' },
+        { idempotency_key: 'x'.repeat(129), operation_id: 'A'.repeat(32) },
+        { idempotency_key: '[REDACTED]', operation_id: 12 },
+    ])
+        assert.deepEqual(operationEvidence(parseEnvelope(envelope({ data }))), { workMayContinue: false });
+});
+
+test('stale policy refusal stays a classified result with its exact evidence', () => {
+    const result = parseEnvelope(envelope({
+        command: 'prune',
+        exit_code: 10,
+        outcome: 'failed',
+        errors: [{ code: 'HFAPI007', repository: null, message: 'Installed policy changed after admission' }]
+    }));
+    assert.equal(classifyEnvelope(result), 'invalid');
+    assert.equal(result.errors[0].code, 'HFAPI007');
+});
+
+test('valid option-like keys remain positional data in reconnect commands', () => {
+    const evidence = operationEvidence(parseEnvelope(envelope({
+        data: {
+            idempotency_key: '--help', operation_id: 'a'.repeat(32),
+        }
+    })));
+    assert.deepEqual(operationCommands(evidence), {
+        lookup: "hfcache --json operations lookup -- '--help'",
+        wait: `hfcache --json operations wait -- ${'a'.repeat(32)}`,
+    });
+    assert.deepEqual(operationCommands({ idempotencyKey: 'x; command', workMayContinue: false }), {});
+    assert.equal(operationCommands({ idempotencyKey: '~root', workMayContinue: false }).lookup,
+                 "hfcache --json operations lookup -- '~root'");
 });

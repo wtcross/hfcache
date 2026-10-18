@@ -513,9 +513,14 @@ Only an absent candidate means installed intent; explicit null is refused. The
 absent optional field is omitted from plan canonical bodies, preserving existing
 installed-plan key digests.
 Candidate exact text binds a new request; no raw candidate body is durable control
-state. REST cannot install policy or backups. Cockpit's candidate → validate →
-preview → privileged atomic install/backup boundary (CP-11) remains, with shipped
-caller/credential integration completed by API-015. See [decision 119](adr/decision-119.md)
+state. REST cannot install policy or backups. Cockpit's CP-11 pipeline now guards
+exact candidate/base bytes under the retained root config flock, requires valid
+compatible assessment and any required successful preview, then preserves atomic
+backup/install and confirms the exact expected installed fingerprint. Edits
+invalidate readiness; incompatible/unknown authority blocks plugin install with
+manual operator guidance. API-only clients never receive Hub authority. See
+[decision 122](adr/decision-122.md), [Cockpit pipeline](cockpit.md#6-configuration-editing)
+and [decision 119](adr/decision-119.md)
 and [candidate wire contract](api.md#candidate-content-and-installed-authority-api-012).
 
 ## 13. Independent reader/client configuration (API-011)

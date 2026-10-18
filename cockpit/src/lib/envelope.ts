@@ -45,7 +45,17 @@ function isIssue(value: unknown): value is EnvelopeIssue {
     const issue = value as Record<string, unknown>;
     return typeof issue.code === 'string' &&
         (typeof issue.repository === 'string' || issue.repository === null) &&
-        typeof issue.message === 'string';
+        typeof issue.message === 'string' &&
+        (issue.context === undefined || isRecord(issue.context));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isTimestamp(value: unknown): value is string {
+    return typeof value === 'string' && value.length <= 64 &&
+        /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value));
 }
 
 /* Parse one envelope from stdout. The envelope is emitted even on failure
@@ -63,17 +73,27 @@ export function parseEnvelope(stdout: string): Envelope {
     const env = parsed as Record<string, unknown>;
     if (env.schema_version !== ENVELOPE_SCHEMA_VERSION)
         throw new EnvelopeSchemaError(env.schema_version);
-    if (typeof env.command !== 'string' || typeof env.exit_code !== 'number' ||
-        typeof env.outcome !== 'string' ||
+    if (typeof env.command !== 'string' || env.command.length === 0 ||
+        typeof env.run_id !== 'string' || !/^[0-9a-f]{32}$/.test(env.run_id) ||
+        !isTimestamp(env.started_at) || !isTimestamp(env.completed_at) ||
+        !isRecord(env.data) ||
+        ![0, 10, 20, 30, 40, 50].includes(env.exit_code as number) ||
+        !['success', 'success_with_warnings', 'failed'].includes(env.outcome as string) ||
         !Array.isArray(env.warnings) || !Array.isArray(env.errors) ||
         !env.warnings.every(isIssue) || !env.errors.every(isIssue))
         throw new EnvelopeError('stdout is not a JSON envelope: required fields missing or mistyped');
+    const success = env.exit_code === 0;
+    if (success !== (env.outcome !== 'failed') ||
+        (success && (env.errors.length !== 0 ||
+            ((env.outcome === 'success_with_warnings') !== (env.warnings.length > 0)))) ||
+        (!success && env.errors.length === 0))
+        throw new EnvelopeError('stdout is not a JSON envelope: outcome and failure evidence disagree');
     return env as unknown as Envelope;
 }
 
-/* A page-spawned selector sync merges stderr into the stream so checkpoint
- * events are visible live (docs/cockpit.md §5); the envelope is the last
- * JSON document in that mixed output. logfmt lines never start with `{`,
+/* A page observer merges stderr into the stream so API progress is visible
+ * (docs/cockpit.md §5); the envelope is the last JSON document in that mixed
+ * output. Documented progress/handle lines never start with `{`,
  * so scanning line starts from the end finds it deterministically. */
 export function extractEnvelope(output: string): Envelope {
     try {
@@ -100,12 +120,51 @@ export function extractEnvelope(output: string): Envelope {
 export const LOCK_BUSY_CODE = 'HFMNT010';
 
 export type ResultKind =
-    'success' | 'warnings' | 'invalid' | 'busy' | 'refused' |
+    'success' | 'warnings' | 'invalid' | 'busy' | 'refused' | 'observation' |
     'sync_failures' | 'integrity' | 'maintenance' | 'unknown';
+
+export interface OperationEvidence {
+    idempotencyKey?: string;
+    operationId?: string;
+    workMayContinue: boolean;
+}
+
+/* Only validated nonsecret handles become reconnection commands (ADR122).
+ * Evidence never turns an observer failure into an execution outcome. */
+export function operationEvidence(envelope: Envelope): OperationEvidence {
+    return readOperationEvidence(envelope.data);
+}
+
+export function readOperationEvidence(value: unknown): OperationEvidence {
+    const data = isRecord(value) ? value : {};
+    const evidence: OperationEvidence = { workMayContinue: data.work_may_continue === true };
+    if (typeof data.idempotency_key === 'string' && /^[A-Za-z0-9._~+-]{1,128}$/.test(data.idempotency_key))
+        evidence.idempotencyKey = data.idempotency_key;
+    if (typeof data.operation_id === 'string' && /^[0-9a-f]{32}$/.test(data.operation_id))
+        evidence.operationId = data.operation_id;
+    return evidence;
+}
+
+export function operationCommands(evidence: OperationEvidence): { lookup?: string; wait?: string } {
+    const valid = readOperationEvidence({
+        idempotency_key: evidence.idempotencyKey, operation_id: evidence.operationId,
+    });
+    const commands: { lookup?: string; wait?: string } = {};
+    if (valid.idempotencyKey !== undefined)
+        commands.lookup = `hfcache --json operations lookup -- '${valid.idempotencyKey}'`;
+    if (valid.operationId !== undefined)
+        commands.wait = `hfcache --json operations wait -- ${valid.operationId}`;
+    return commands;
+}
+
+const OBSERVATION_CODES = new Set(['HFAPI013', 'HFAPI015', 'HFAPI019', 'HFAPI020']);
 
 /* Exit codes map to UI states, not to a generic error toast
  * (docs/cockpit.md §4; docs/cli.md §3). */
 export function classifyEnvelope(envelope: Envelope): ResultKind {
+    if (envelope.exit_code !== 0 && (operationEvidence(envelope).workMayContinue ||
+        envelope.errors.some(issue => OBSERVATION_CODES.has(issue.code))))
+        return 'observation';
     switch (envelope.exit_code) {
     case 0:
         return envelope.warnings.length > 0 ? 'warnings' : 'success';
@@ -132,12 +191,13 @@ export const EXIT_CODE_GUIDANCE: Record<number, { title: string; guidance: strin
     },
     10: {
         title: 'Invalid configuration or invocation',
-        guidance: 'Fix the command or the file. Nothing was touched.',
+        guidance: 'Review the request, API credential and configuration. Refresh policy or preview ' +
+            'evidence before submitting a corrected request; retain any operation handles.',
     },
     20: {
         title: 'Safety refusal',
-        guidance: 'Stop. Nothing was downloaded or changed. The common benign cause is the ' +
-            'single-writer lock (AD-17); otherwise run doctor.',
+        guidance: 'Read the reported safety condition. The single-writer lock (AD-17) is a benign ' +
+            'busy case. A stopped or unavailable observer does not prove execution stopped.',
     },
     30: {
         title: 'One or more repository sync failures',

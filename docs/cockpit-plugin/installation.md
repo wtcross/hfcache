@@ -7,14 +7,14 @@
 else: no unit, no daemon, and no addition to the application's runtime
 dependency set (`CP-14`).
 
-Two further pieces of host state exist only after you use the features that
-manage them, and both are removable from the UI:
+The plugin manages these fixed host paths after their features are used:
 
 | Path | Created by | Removed by |
 | --- | --- | --- |
 | `/etc/systemd/system/hfcache-sync.timer.d/50-cockpit.conf` | The schedule override (Sync tab) | "Reset to shipped schedule" |
 | `/etc/hfcache/.candidate.toml` | The configuration editor, mid-pipeline | "Discard candidate", or installing it |
 | `/etc/hfcache/config.toml.bak` | Installing a configuration | Kept deliberately — the one retained predecessor |
+| `/etc/hfcache/.configuration.lock` | Guarded configuration pipeline | Retained; never unlink to bypass locking |
 
 ## Requirements
 
@@ -22,8 +22,17 @@ On the host that will serve the plugin:
 
 - an hfcache deployment in the runbook's shape —
   `/opt/hfcache/current/.venv/bin/hfcache`, `/etc/hfcache/config.toml`, and
-  the shipped units ([`deployment-centos-stream-10.md`](../deployment-centos-stream-10.md));
+  the API/private-verifier and scheduled-client units
+  ([`deployment-centos-stream-10.md`](../deployment-centos-stream-10.md));
   the plugin invokes exactly those paths;
+- `/etc/hfcache/client.toml` with the fixed local socket and API-only named
+  credential `hfcache.api`, readable as `0640 root:hfcache`; no API token file or
+  Hub settings. Use the shipped [Cockpit client example](../../packaging/cockpit-client.toml) and pin
+  the expected archive UUID for the deployment;
+- an encrypted API credential provisioned under the name `hfcache.api` for the
+  REST writer class. PID 1 imports it into transient clients; the page never
+  reads it. Hub `hf-token` stays on the daemon. Missing/unusable API credentials
+  fail closed, without anonymous fallback;
 - `cockpit` ≥ 137 with its socket enabled
   (`systemctl enable --now cockpit.socket`); the reference deployment runs
   cockpit 364.
@@ -109,4 +118,17 @@ schedule override keeps working without the plugin. To retire that too:
 reset the schedule from the UI first (or remove the drop-in and run
 `systemctl daemon-reload`), and delete a leftover
 `/etc/hfcache/.candidate.toml`. Leave `config.toml.bak` unless you are sure
-you do not want the predecessor.
+you do not want the predecessor. Retain `.configuration.lock`; its persistent
+inode serializes config operations. Removing the UI never cancels accepted API
+operations or authorizes deleting scheduled/operation history.
+
+## Acceptance boundary
+
+Repository acceptance runs Cockpit lint/style/type/tests and production build
+through `make -C cockpit check` and `scripts/check.sh`; skipped plugin stages do
+not complete API-015. Injected process/config fixtures test API auth/busy/stale/
+uncertain results, bounded streams, page detachment and exact candidate/base
+guards without changing this host's units or archive. Actual browser/PAM bridge,
+named credential delivery, executor hardening, SELinux/NFS and deployed candidate
+install behavior remain operator acceptance in an authorized disposable or rollout
+environment. No installation is performed by implementing this package.

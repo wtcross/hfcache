@@ -120,6 +120,16 @@ local bootstrap smoke support disposable upgrade/rollback. Actual socket/cgroup/
 credential/SELinux/NFS and executor-aware hardening remain deployment holds. No
 archive/receipt format, runtime dependency, MCP or production deployment changes.
 
+Cockpit transient commands now use named API-only credentials and fixed client
+settings/socket instead of Hub authority. Strict bounded terminal Envelopes and
+separate validated progress/recovery handles preserve failure and reconnect
+semantics; stopping observation never claims cancellation or triggers recovery.
+Configuration assessment/preview/install uses exact candidate/base guards under
+a retained root config flock, preserves atomic backup/mode and confirms the
+expected installed fingerprint. Incompatible/unknown authority blocks plugin
+installation with manual guidance. No archive schema, dependency, browser bearer
+backend, MCP or production deployment change.
+
 ## v0.1.10 — 2026-09-14
 
 Completed journals unrelated to selected quarantine entries no longer block

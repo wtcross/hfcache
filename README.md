@@ -229,8 +229,8 @@ resume observation without submission; Ctrl-C/timeouts preserve handles and do
 not cancel accepted work. Use [the client runbook](docs/api-client.md#submit-detach-and-resume-api-013)
 for finite wait, same-key retry and uncertainty. Initialization keeps explicit
 root/confirmation and the server's disabled gate; no-confirm inspection never
-submits. API-014 packages systemd integration; Cockpit caller integration remains
-API-015 and installed OS isolation proof remains operator work. This branch has
+submits. API-014 packages systemd integration and API-015 integrates Cockpit's
+API-only client; installed OS isolation proof remains operator work. This branch has
 not been deployed.
 
 API-014 packages activated API/private-verifier services and API-only scheduled
@@ -243,6 +243,15 @@ calendars, disabled verify timer and shared runtime locks remain. Installer dry-
 and disposable stage/drain/rollback tests do not establish installed cgroup,
 credential, SELinux or NFS acceptance; those remain explicit deployment holds.
 No production service or archive operation is performed by this implementation.
+
+API-015 keeps Cockpit on the installed CLI/systemd boundary with API-only named
+credentials, strict bounded terminal/progress parsing and validated reconnect
+handles. Closing a page or stopping a client does not cancel accepted work.
+Configuration changes bind exact candidate/base content under a root flock and
+require compatible server assessment, required preview and exact installed
+fingerprint confirmation; incompatible/unknown authority needs manual operator
+installation. Full sync/verify units, sync-timer-only controls and no init UI
+remain. Browser credentials, direct REST installs and MCP are not added.
 
 The quality gate is one script — lock check, formatting, lint, types, the
 default test suite, a build and locked base/server wheel-install smoke checks —

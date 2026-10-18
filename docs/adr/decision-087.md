@@ -4,6 +4,7 @@ Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 Reader/candidate API integration is amended by [decision 119](decision-119.md).
+API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 - Original decision date: 2026-07-30.
 - Original work package: `CPT-001`.
@@ -58,3 +59,12 @@ compatible proposal can plan with installed credentials. REST grants no policy
 installation authority. This package supplies those CLI/API semantics; API-015
 still owns the shipped Cockpit caller and credential integration, without browser
 bearers. See [decision 119](decision-119.md) and [Cockpit contract](../cockpit.md).
+
+
+## 2026-10-18 Cockpit API integration amendment (API-015)
+
+The plugin remains a CLI/systemd client, now with fixed local API settings and
+API-only systemd `hfcache.api` authority. Strict bounded terminal Envelopes retain
+command authority; separately validated bounded notices retain safe progress and
+reconnection handles. No browser bearer/backend or direct archive mutation is
+added. See [decision 122](decision-122.md) and [Cockpit](../cockpit.md).

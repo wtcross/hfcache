@@ -7,6 +7,7 @@
 - Source: [progress decision 120](../progress.md#decisions),
   [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
   [task](../plans/tasks/api-013-migrate-write-cli-and-operation-waiting.md).
+API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 ## Context and decision
 
@@ -106,3 +107,12 @@ POST; existing history permits lookup/observe only, including uncertain pre-POST
 crashes. Exact terminal evidence alone permits handle removal. This is observer
 continuity, not replay, cancellation or a request queue; no credentials/digests/
 bodies/results are stored. Ordinary detach/wait output and domain authority stand.
+
+
+## 2026-10-18 Cockpit API integration amendment (API-015)
+
+Cockpit consumes the same exact terminal results and separately validates
+bounded CLI progress/recovery notices. Unknown/lost/unfinished history and observer
+stop remain uncertainty, never cancellation/replay/recovery proof. API-only
+transient credential delivery leaves execution on the server. See
+[decision 122](decision-122.md).

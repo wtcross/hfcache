@@ -1,0 +1,7 @@
+# Install as /etc/hfcache/client.toml, 0640 root:hfcache.
+# PID 1 imports this API credential into the transient client; the page never reads it.
+schema_version = 1
+api_socket = "/run/hfcache/api.sock"
+credential_name = "hfcache.api"
+# Pin the configured writer UUID for this deployment:
+# expected_archive_id = "00000000-0000-4000-8000-000000000000"

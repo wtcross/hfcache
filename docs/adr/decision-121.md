@@ -7,6 +7,7 @@
 - Source: [progress decision 121](../progress.md#decisions),
   [active plan](../plans/2026-10-17-plan-rest-api-and-mcp.md),
   [task](../plans/tasks/api-014-systemd-and-deployment-integration.md).
+API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 ## Context and decision
 
@@ -99,3 +100,12 @@ Evidence: [inherited-descriptor tests](../../tests/unit/test_server_activation.p
 [installer fixtures](../../tests/unit/test_release_installer.py) and
 [probe contracts](../../tests/unit/test_hardening_probe.py). Installed enforcement
 remains separate operator acceptance.
+
+
+## 2026-10-18 Cockpit API integration amendment (API-015)
+
+Cockpit full sync/verification keep the installed scheduled observer units,
+API-only credential name and explicit client socket/configuration. Stopping the
+sync observer preserves its pending handle and accepted work, so the plugin offers
+observation/reconnection rather than automatic recovery. The actual executor drain
+and installed-host holds remain unchanged. See [decision 122](decision-122.md).

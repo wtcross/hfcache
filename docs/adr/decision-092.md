@@ -3,6 +3,7 @@
 Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
+API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
 - Original decision date: 2026-07-30.
 - Original work package: `CPT-013`.
@@ -78,3 +79,14 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [cockpit/test/command.test.ts](../../cockpit/test/command.test.ts).
+
+
+## 2026-10-18 Cockpit API integration amendment (API-015)
+
+The credential-delivery mechanism remains systemd, but its authority changes:
+transient API clients import only `hfcache.api`, use fixed client TOML/socket and
+omit ordinary archive config/Hub environment. Hub `hf-token` stays daemon-only;
+there is no anonymous fallback for missing API credentials. Browser/argv/environment
+bearers remain forbidden. Closing/stopping a client loses observation, never
+cancels accepted execution or proves recovery safe. This supersedes the Hub-import
+and direct-execution implications above; see [decision 122](decision-122.md).

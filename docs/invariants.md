@@ -363,6 +363,8 @@ History: `SYNC-007` (`54e4671`), decision 94.
   fail. That anonymous fallback applies to Hub policy; API writer authentication
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
+  Cockpit transient clients import named API-only `hfcache.api`; Hub authority
+  remains daemon-side and the page never handles a bearer (decision 122).
   A reader resolves only its selected protected API file/named systemd source;
   no Hub/netrc/ambient token or anonymous fallback after source failure.
   The server's explicit Hub file is a trusted startup option, never request input;
@@ -559,7 +561,10 @@ acceptance evidence; it is an example consumer, not an application dependency.
 - **`CP-01`, `CP-02`, `CP-09`** — The plugin uses installed CLI JSON envelopes
   and systemd, never reimplements archive logic or writes archive files. The
   sole direct archive-read exception is run-report browsing as the service
-  identity. Refuse unknown envelope versions; stderr is display-only.
+  identity. Refuse unknown envelope versions and unbounded/malformed terminal
+  output. Separately validated bounded progress/safety notices may render and
+  reconnect, never grant domain authority or invent outcome/checkpoints/percentages
+  (decision [122](adr/decision-122.md)).
 - **`CP-03`, `CP-04`, `CP-10`** — Mutation needs administrative Cockpit access,
   while CLI work runs as the service identity in a transient unit, never root.
   Full sync/verification use their installed services. Respect the single
@@ -567,10 +572,13 @@ acceptance evidence; it is an example consumer, not an application dependency.
 - **`CP-05`–`CP-08`** — Schedule controls affect only the sync timer; never
   manipulate `hfcache.target`, enable the verify timer, or expose archive init.
   The page never reads credentials or accepts tokens; systemd imports its
-  credential directly into spawned CLI work.
+  API-only `hfcache.api` credential directly into spawned CLI work, never Hub
+  authority or browser/environment/argument bearers (decision 122).
 - **`CP-11`, `CP-12`** — Config installs follow candidate → successful CLI
-  validation → atomic install, retaining the predecessor and `0640`
-  `root:hfcache` ownership/mode. Timer changes use validated calendar drop-ins,
+  validation → required successful preview → atomic install → exact installed
+  fingerprint confirmation. A retained root config flock and exact candidate/base
+  bytes guard the pipeline; incompatible/unknown authority blocks plugin install.
+  Retain the predecessor and `0640 root:hfcache` ownership/mode. Timer changes use validated calendar drop-ins,
   never edit shipped units.
 - **`CP-13`, `CP-14`** — Never weaken host hardening. The plugin ships static
   files; Node tooling is build-time only, adds no Python runtime dependency,
@@ -581,6 +589,19 @@ Enforcement: [CLI/unit API](../cockpit/src/api/hfcache.ts),
 [config API](../cockpit/src/api/config.ts),
 [schedule API](../cockpit/src/api/schedule.ts), and
 [command boundary](../cockpit/src/lib/command.ts).
+API-015 enforcement: [bounded observation runner](../cockpit/src/lib/runner.ts),
+[UTF-8 framing](../cockpit/src/lib/stream.ts),
+[validated notices](../cockpit/src/lib/events.ts),
+[terminal classification](../cockpit/src/lib/envelope.ts) and
+[unit/action allowlist](../cockpit/src/lib/systemd.ts), decision
+[122](adr/decision-122.md). The browser can stop only sync observation, start
+installed sync/verify clients and control the sync timer; actual API/worker/socket/
+mount/arbitrary unit actions are refused.
+Candidate enforcement/evidence: [exact-content guard](../cockpit/src/lib/candidate-guard.ts),
+[readiness/confirmation pipeline](../cockpit/src/lib/config-pipeline.ts),
+[guarded filesystem fixtures](../cockpit/test/candidate-guard.test.ts) and
+[pipeline cases](../cockpit/test/config-pipeline.test.ts). These preserve the
+privileged host-install boundary and do not prove deployed browser/SELinux behavior.
 Evidence: [plugin tests](../cockpit/test/) and the
 [operator install/acceptance runbooks](cockpit-plugin/README.md).
 

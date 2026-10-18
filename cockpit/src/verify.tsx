@@ -28,11 +28,12 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 import { UnitActivity } from './activity';
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
 import { startUnit, VERIFY_SERVICE, VERIFY_TIMER } from './api/systemd';
-import { DataSummary, EnvelopeAlert, Loading, QueryError } from './components';
-import { useUnitPoll } from './hooks';
+import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
+import { useObservationSignal, useOperationHandles, useUnitPoll } from './hooks';
 import { parseSelector, SelectorError } from './lib/command';
-import { Envelope } from './lib/envelope';
+import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatBytes, formatDuration, formatTimestamp } from './lib/format';
+import { appendDisplayLine } from './lib/stream';
 
 const Item = ({ term, children }: { term: string; children: React.ReactNode }) => (
     <DescriptionListGroup>
@@ -73,8 +74,8 @@ const EstimateCard = () => {
             <CardBody>
                 <Stack hasGutter>
                     <StackItem>
-                        Sizes the maintenance window before a full read. Takes no lock, reads
-                        nothing, always safe (docs/operations.md §5).
+                        Sizes the maintenance window from retained metadata. Takes no archive
+                        lock and performs no hashing or verification persistence.
                     </StackItem>
                     <StackItem>
                         <Button variant="secondary" isDisabled={running} onClick={run}>
@@ -130,7 +131,8 @@ const FullVerifyCard = () => {
                 <Stack hasGutter>
                     <StackItem>
                         Re-reads every unique retained object against its manifest, offline —
-                        the unit runs with Hub networking disabled. Exit 40 means the archive
+                        the private server executor has Hub networking disabled. The installed
+                        service observes its operation. Exit 40 means the archive
                         may be corrupt: findings are never repaired from here (AD-13).
                     </StackItem>
                     {actionError !== null && <StackItem><QueryError error={actionError} /></StackItem>}
@@ -166,9 +168,10 @@ const FullVerifyCard = () => {
                     <ModalHeader title="Start full verification" />
                     <ModalBody>
                         Runs hfcache-verify.service (CP-04). It shares the one application lock
-                        with sync, prune, and repair — a verification waits up to 24 hours for a
-                        legitimately long sync rather than racing it. Run the estimate first and
-                        check it does not overlap storage maintenance (HFWRN010).
+                        with sync, prune, and repair. The server's configured queue/lock budget
+                        applies before execution; a stopped client does not cancel accepted
+                        verification. Run the estimate first and check it does not overlap
+                        storage maintenance (HFWRN010).
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="primary" onClick={start}>Start hfcache-verify.service</Button>
@@ -186,6 +189,8 @@ const RevisionVerifyCard = () => {
     const [feed, setFeed] = useState<string[]>([]);
     const [result, setResult] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
+    const observationSignal = useObservationSignal();
+    const { handles, reset: resetHandles, onNotice } = useOperationHandles();
 
     let validationError: string | null = null;
     if (selectorText !== '') {
@@ -199,16 +204,24 @@ const RevisionVerifyCard = () => {
     }
 
     const run = () => {
+        const signal = observationSignal();
         setRunning(true);
         setFeed([]);
         setResult(null);
         setError(null);
+        resetHandles();
         runHfcacheStreaming(['verify', '--revision', selectorText], {
-            onLine: line => setFeed(previous => [...previous, line].slice(-100)),
+            signal,
+            onNotice,
+            onLine: line => setFeed(previous => appendDisplayLine(previous, line, 100)),
         })
-                .then(envelope => setResult(envelope), failure => setError(failure as Error))
-                .finally(() => setRunning(false));
+                .then(envelope => { if (!signal.aborted) setResult(envelope); },
+                      failure => { if (!signal.aborted) setError(failure as Error); })
+                .finally(() => { if (!signal.aborted) setRunning(false); });
     };
+
+    const uncertain = (result !== null && classifyEnvelope(result) === 'observation') ||
+        (error !== null && (handles.idempotencyKey !== undefined || handles.operationId !== undefined));
 
     return (
         <Card>
@@ -217,8 +230,9 @@ const RevisionVerifyCard = () => {
                 <Stack hasGutter>
                     <StackItem>
                         The mode for a targeted suspicion. Reads that one revision's bytes in
-                        a transient unit; closing the tab only detaches this view, and an
-                        interrupted read changes nothing. Copy the full SHA from the
+                        the offline server executor. Closing the tab detaches this view;
+                        accepted verification may still persist its report and catalog. Retain
+                        the operation handles to reconnect. Copy the full SHA from the
                         Repositories tab.
                     </StackItem>
                     <StackItem>
@@ -236,13 +250,14 @@ const RevisionVerifyCard = () => {
                     <StackItem>
                         <Button
                             variant="secondary"
-                            isDisabled={running || selectorText === '' || validationError !== null}
+                            isDisabled={running || uncertain || selectorText === '' || validationError !== null}
                             onClick={run}
                         >
                             Run verify --revision
                         </Button>
                     </StackItem>
                     {running && <StackItem><Loading /></StackItem>}
+                    <StackItem><RecoveryHandles evidence={handles} /></StackItem>
                     {feed.length > 0 &&
                         <StackItem>
                             <ExpandableSection toggleText="Command log">

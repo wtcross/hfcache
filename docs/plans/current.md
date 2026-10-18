@@ -4,7 +4,7 @@
 | --- | --- |
 | State | Active |
 | Active plan | [REST API and MCP](2026-10-17-plan-rest-api-and-mcp.md) |
-| Next task | [API-015](tasks/api-015-cockpit-api-client-compatibility.md) |
+| Next task | [API-016](tasks/api-016-rest-acceptance-gate.md) |
 | Blockers | None |
 | Updated | 2026-10-18 |
 

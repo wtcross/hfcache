@@ -295,17 +295,28 @@ a browser behind cockpit-ws.
 every mutating path requires the superuser bridge, which only an
 administrative session obtains — the same boundary as a shell, and §6 already
 places root and the operator out of scope as adversaries. The plugin is
-static files under `/usr/share/cockpit/hfcache` with no listener, daemon, or
-durable state of its own; CLI work drops to the service identity in a
+static files under `/usr/share/cockpit/hfcache` with no listener or daemon;
+fixed privileged config/candidate/backup/lock paths are documented separately.
+CLI work drops to the service identity in a
 transient systemd unit and never runs as root (`CP-03`); it never reads
 `$CREDENTIALS_DIRECTORY`, offers token entry, or renders a credential — the
-deployment's encrypted Hub credential reaches spawned runs only through
-systemd's `ImportCredential=`, decrypted by PID 1 (`CP-08`, upholding T-07);
+deployment's encrypted API-only `hfcache.api` credential reaches transient clients
+only through systemd, decrypted by PID 1 (`CP-08`, upholding T-07). Hub authority
+stays on the daemon; no browser/environment/argument bearer is introduced;
 the archive is
 reached only through CLI envelopes plus one read-only run-report read as the
 service identity (`CP-01`, `CP-09`); and `archive init`, `hfcache.target`,
 and `hfcache-verify.timer` are refused structurally in its API layer
 (`CP-05`–`CP-07`).
+
+Strict bounded terminal Envelopes govern outcomes. Separately validated bounded
+progress/handles support reconnection, never outcome/checkpoint authority. Client
+stop/page closure and uncertain HFAPI013/015/019/020 retain handles without
+automatic recovery/replay. Config operations compare exact candidate and installed
+base under the retained root configuration flock; compatible assessment, required
+preview and exact installed fingerprint confirmation precede reported success.
+Incompatible/unknown authority blocks plugin installation and requires manual
+operator review/install/restart. See [decision 122](adr/decision-122.md).
 
 **Residual risk.** cockpit-ws itself, patched with the distribution like
 `sshd`. An administrative browser session is as powerful as an administrative

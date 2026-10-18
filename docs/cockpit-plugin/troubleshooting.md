@@ -44,43 +44,59 @@ deployed release.
 
 ## Spawn errors, or an error about missing output instead of a result
 
-The plugin invokes `/opt/hfcache/current/.venv/bin/hfcache` with
-`--config /etc/hfcache/config.toml` in a transient systemd unit — the
-runbook's deployment shape (docs/cockpit.md §2). If the deployment moved,
-that path is stale. Prove the CLI works exactly as the plugin runs it:
+The plugin invokes the installed API-backed CLI with fixed local client TOML/
+socket in a service-identity transient unit. Ordinary commands omit archive
+`--config`. Confirm the deployed CLI/plugin match and the API authority is ready:
 
 ```bash
 sudo systemd-run --quiet --wait --pipe --collect \
-    -p User=hfcache -p Group=hfcache -p ImportCredential=hf-token \
-    -E HF_HOME=/var/lib/hfcache/hf-home \
-    -E HF_XET_CACHE=/var/cache/hfcache/xet \
+    -p User=hfcache -p Group=hfcache -p ImportCredential=hfcache.api \
+    -p UMask=0027 -p MemoryHigh=4G \
     -- /opt/hfcache/current/.venv/bin/hfcache \
-    --config /etc/hfcache/config.toml --json version
+    --client-config /etc/hfcache/client.toml \
+    --api-socket /run/hfcache/api.sock --json version --server
 ```
 
-and check `install-release.sh --list` shows `current` where you expect.
-Run it in a terminal or pipe the output; redirecting stdout to a file makes
-`systemd-run --pipe` hand PID 1 a file descriptor SELinux rightly refuses
-(`init_t` writing a user-labelled file), which surfaces as a cryptic
-`Remote peer disconnected`. The plugin itself always spawns onto pipes.
+Do not add a bearer or Hub token to the command/environment. Missing API source
+is HFAPI003; invalid bearer is HFAPI001 and insufficient class is HFAPI002. Check
+systemd's named API credential provisioning and the fixed client TOML, not Hub
+credentials or browser state. The daemon alone owns Hub `hf-token`; daemon
+HFARG008/HFHUB003 diagnostics require the existing operator credential/account
+runbook, never importing a Hub token into the plugin's client.
 
-## Doctor reports the run as anonymous, or `HFHUB003` names `expected_account`
+Check `install-release.sh --list` for the current tree. Reproduce onto pipes:
+redirecting `systemd-run --pipe` stdout to an unsuitable labelled file can cause
+an SELinux denial. Fix the deployment/label per the runbook; never weaken SELinux.
+The plugin refuses malformed, unknown-version or oversized terminal output and
+retains bounded diagnostics/validated handles instead of inventing success.
 
-The Hub credential reaches a run only when systemd supplies it: the
-scheduled sync's drop-in and the plugin's transient units both import the
-encrypted credential named `hf-token` from `/etc/credstore.encrypted/`
-(docs/cockpit.md §2). A run that reports `anonymous` had no credential to
-import — nothing is installed there, or the deployment renamed
-`hub.credential_name` away from the default the plugin imports. A plain
-`sudo -u hfcache hfcache doctor` from a shell is anonymous by design;
-reproduce with the systemd-run shape above instead.
+## The page closed, timed out or stopped observing a sync
 
-Under `token_mode = "required"`, the same missing or mismatched credential is
-`HFARG008` rather than an anonymous fallback. `optional` may use a credential for
-identity and rate limits but remains public-only; `HFHUB006` for a private/gated
-repository means restricted scope was not explicitly enabled. After selecting
-`required`, use the systemd-run doctor shape above and require both a resolved
-`systemd-credential` and the expected Hub account before syncing.
+Accepted server work may continue. Preserve the validated key and operation ID
+and reconnect with authenticated `operations lookup -- KEY` / `operations wait -- ID`
+through the same client authority. HFAPI013 missing history and HFAPI015
+interrupted/no-result state do not prove nonexecution; HFAPI019 observation and
+HFAPI020 lost-ack uncertainty preserve handles. Never submit a new key or run
+recovery merely because an observer stopped. For actual executor termination,
+follow [server drain and supervised recovery](../recovery.md#10-operation-history-and-uncertain-submissions).
+
+## Candidate validity succeeds but install stays disabled
+
+Syntax validity is separate from installed-authority compatibility and preview
+readiness. Incompatible or unknown authority requires manual privileged review/
+install/backup, any required daemon restart, then compatible validation/preview.
+The page never sends daemon credentials to proposed endpoints or credential
+sources. Failed required preview leaves install disabled. Editing either candidate
+or installed base invalidates prior evidence: reload/revalidate rather than
+bypass `/etc/hfcache/.configuration.lock` or replace it.
+
+If installed confirmation fails or its fingerprint differs, installation is
+unconfirmed. Retain the backup and evidence, inspect installed API validation,
+and follow the operator runbook; do not assume the previous file still exists,
+show success or silently roll back.
+Reload the installed configuration before validating another candidate; readiness
+is cleared after install/confirmation failure because the rename may already have
+completed. Never remove the retained config lock to force another attempt.
 
 ## Build fails: `pnpm: command not found` or `node: command not found`
 
@@ -103,9 +119,10 @@ from a clean checkout rather than updating dependencies to get past it.
 
 ## The live activity feed shows nothing during a run
 
-Events appear at transaction checkpoints, not continuously — there is no
-percentage to show, by design. Confirm the unit is actually running and
-that the persistent journal has its `event=` lines:
+The client reports only bounded operation events actually emitted by the API;
+there may be no per-repository checkpoint or byte percentage. Retention gaps and
+dropped oversized lines are explicit. Unit activity/journal diagnostics do not
+prove terminal outcome. Inspect the observer and preserve its recovery handles:
 
 ```bash
 systemctl is-active hfcache-sync.service

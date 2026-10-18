@@ -14,7 +14,10 @@ import {
 import { Label } from "@patternfly/react-core/dist/esm/components/Label/index.js";
 import { Spinner } from "@patternfly/react-core/dist/esm/components/Spinner/index.js";
 
-import { classifyEnvelope, Envelope, EnvelopeIssue, EXIT_CODE_GUIDANCE, ResultKind } from './lib/envelope';
+import {
+    classifyEnvelope, Envelope, EnvelopeIssue, EXIT_CODE_GUIDANCE, OperationEvidence,
+    operationCommands, operationEvidence, readOperationEvidence, ResultKind,
+} from './lib/envelope';
 import { WARNING_GUIDANCE } from './lib/warnings';
 
 type AlertVariant = 'success' | 'info' | 'warning' | 'danger';
@@ -25,6 +28,7 @@ export const ALERT_VARIANT: Record<ResultKind, AlertVariant> = {
     invalid: 'warning',
     busy: 'info',
     refused: 'danger',
+    observation: 'warning',
     sync_failures: 'warning',
     integrity: 'danger',
     maintenance: 'warning',
@@ -59,22 +63,57 @@ export const EnvelopeAlert = ({ envelope }: { envelope: Envelope }) => {
         return null;
     const guidance = EXIT_CODE_GUIDANCE[envelope.exit_code];
     const busy = kind === 'busy';
+    const observation = kind === 'observation';
     const title = busy
         ? 'Another mutating command holds the archive lock (AD-17) — normal; exactly one runs at a time'
-        : `${envelope.command}: ${guidance?.title ?? `exit ${envelope.exit_code}`}`;
+        : observation
+            ? `${envelope.command}: execution outcome is not confirmed`
+            : `${envelope.command}: ${guidance?.title ?? `exit ${envelope.exit_code}`}`;
     return (
         <Alert variant={ALERT_VARIANT[kind]} isInline title={title}>
-            {!busy && guidance !== undefined && <p>{guidance.guidance}</p>}
+            {observation &&
+                <p>Accepted server work may continue. Preserve the original handles and observe
+                    that operation before considering another submission.
+                </p>}
+            {!busy && !observation && guidance !== undefined && <p>{guidance.guidance}</p>}
             <IssueRows issues={[...envelope.errors, ...envelope.warnings]} />
+            <RecoveryHandles evidence={operationEvidence(envelope)} />
         </Alert>
     );
 };
 
-/* A spawn- or envelope-level failure: hfcache itself never got to answer. */
-export const QueryError = ({ error }: { error: Error }) => (
-    <Alert variant="danger" isInline title="hfcache could not be invoked">
-        {error.message}
-    </Alert>
+/* A lost/malformed response cannot establish whether accepted work stopped. */
+export const QueryError = ({ error }: { error: Error }) => {
+    const retained = error as Error & {
+        idempotencyKey?: unknown; operationId?: unknown; workMayContinue?: unknown;
+    };
+    const evidence = readOperationEvidence({
+        idempotency_key: retained.idempotencyKey,
+        operation_id: retained.operationId,
+        work_may_continue: retained.workMayContinue
+    });
+    return (
+        <Alert variant="danger" isInline title="hfcache response could not be observed">
+            <p>{error.message}</p>
+            <p>A missing response does not cancel accepted server work. Use retained handles
+                before submitting again; stopping an observer does not prove recovery is safe.
+            </p>
+            <RecoveryHandles evidence={evidence} />
+        </Alert>
+    );
+};
+
+export const RecoveryHandles = ({ evidence }: { evidence: OperationEvidence }) => (
+    <>
+        {evidence.idempotencyKey !== undefined &&
+            <p>Original key: <code>{evidence.idempotencyKey}</code><br />
+                <code>{operationCommands(evidence).lookup}</code>
+            </p>}
+        {evidence.operationId !== undefined &&
+            <p>Operation: <code>{evidence.operationId}</code><br />
+                <code>{operationCommands(evidence).wait}</code>
+            </p>}
+    </>
 );
 
 export const Loading = () => <Spinner size="lg" aria-label="Loading" />;

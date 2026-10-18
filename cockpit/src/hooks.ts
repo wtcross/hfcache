@@ -4,19 +4,48 @@
  * React glue over the invocation layer.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { runHfcache } from './api/hfcache';
 import {
     ServiceResult, serviceResult, TimerState, timerState, UnitState, unitState,
 } from './api/systemd';
-import { Envelope } from './lib/envelope';
+import { Envelope, OperationEvidence } from './lib/envelope';
+import { OperationNotice } from './lib/events';
 
 export interface EnvelopeQuery {
     envelope: Envelope | null;
     error: Error | null;
     loading: boolean;
     refresh: () => void;
+}
+
+/* Abort detaches this page's display only. API admission/execution and the
+ * existing CLI observer are never cancelled or resubmitted (ADR122). */
+export function useObservationSignal(): () => AbortSignal {
+    const controller = useRef<AbortController | null>(null);
+    useEffect(() => () => controller.current?.abort(), []);
+    return useCallback(() => {
+        controller.current?.abort();
+        controller.current = new AbortController();
+        return controller.current.signal;
+    }, []);
+}
+
+export function useOperationHandles() {
+    const [handles, setHandles] = useState<OperationEvidence>({ workMayContinue: false });
+    const reset = useCallback(() => setHandles({ workMayContinue: false }), []);
+    const onNotice = useCallback((notice: OperationNotice) => {
+        if (notice.kind === 'key')
+            setHandles(previous => previous.idempotencyKey === notice.key
+                ? previous
+                : { idempotencyKey: notice.key, workMayContinue: false });
+        if (notice.kind === 'operation')
+            setHandles(previous => ({ ...previous, operationId: notice.operationId, workMayContinue: true }));
+        if (notice.kind === 'continuing')
+            setHandles(previous => ({ ...previous, workMayContinue: true }));
+    }, []);
+    return { handles, reset, onNotice };
 }
 
 /* Run one read-only hfcache command and hold its envelope. A non-zero exit

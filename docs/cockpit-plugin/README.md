@@ -2,7 +2,7 @@
 
 Browser administration for one deployed hfcache writer, as a
 [Cockpit](https://cockpit-project.org/) package. It is static files served
-by cockpit itself — no daemon, no listener, no state of its own — and a
+by cockpit itself — no daemon, listener or independent credential backend — and a
 client of surfaces the deployment already has: the CLI's `--json` envelope,
 the shipped systemd units, and `/etc/hfcache/config.toml`. Every button is a
 documented runbook command, and the UI names the underlying command wherever
@@ -11,11 +11,13 @@ practical, so the plugin teaches the runbook rather than hiding it.
 From the browser you can:
 
 - watch archive health, findings, and per-repository state, and run `doctor`;
-- start, stop, and observe syncs — full runs through the production unit,
-  selected repositories as a page process — with live journal activity;
+- start and observe syncs — full runs through installed services, selected
+  repositories through transient API clients; stopping observation leaves accepted
+  execution independent, with validated recovery handles;
 - browse archived repositories and every retained revision;
 - edit the configuration (form or text) through a validate-before-install
-  pipeline, with the runbook's sizing preview when adding a repository;
+  pipeline, with exact candidate/base guards, compatible authority, required sizing
+  preview and exact installed fingerprint confirmation;
 - change the sync schedule as a managed systemd drop-in;
 - verify — an estimate, one revision, or the full offline read;
 - read durable run reports joined to their journal trails;
@@ -44,3 +46,15 @@ Mutating anything requires an administrative Cockpit session: the plugin
 escalates through Cockpit's superuser bridge and runs every CLI command as
 the `hfcache` service identity — root never runs the CLI. Without
 administrative access the page is read-only and says so.
+
+Fixed privileged config/candidate/backup and retained config-lock paths are listed
+in [installation](installation.md); the page adds no execution queue or archive
+state store.
+
+
+API-backed clients receive only the named encrypted API credential `hfcache.api`
+through systemd and use fixed local client TOML/socket. No Hub/browser bearer
+backend is added. Terminal outcomes require strict bounded schema-1 Envelopes;
+bounded progress/handles support display/reconnection without invented success.
+See [decision 122](../adr/decision-122.md). Repository test/build acceptance does
+not establish installed systemd/credential/hardening/SELinux/NFS acceptance.

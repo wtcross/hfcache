@@ -21,9 +21,11 @@ import { Flex, FlexItem } from "@patternfly/react-core/dist/esm/layouts/Flex/ind
 import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/index.js";
 
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
-import { DataSummary, EnvelopeAlert, Loading, QueryError } from './components';
+import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
+import { useObservationSignal, useOperationHandles } from './hooks';
 import { parseSelector, SelectorError } from './lib/command';
 import { classifyEnvelope, Envelope } from './lib/envelope';
+import { appendDisplayLine } from './lib/stream';
 
 const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     title: string;
@@ -36,8 +38,10 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     const [applied, setApplied] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
     const [confirming, setConfirming] = useState(false);
+    const observationSignal = useObservationSignal();
 
     const run = (apply: boolean) => {
+        const signal = observationSignal();
         setConfirming(false);
         setBusy(true);
         setError(null);
@@ -45,19 +49,22 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
             setApplied(null);
         else
             setDryRun(null);
-        runHfcache([command, apply ? '--apply' : '--dry-run'])
+        runHfcache([command, apply ? '--apply' : '--dry-run'], { signal })
                 .then(envelope => {
+                    if (signal.aborted)
+                        return;
                     if (apply) {
                         setApplied(envelope);
                     } else {
                         setDryRun(envelope);
                         setApplied(null);
                     }
-                }, failure => setError(failure as Error))
-                .finally(() => setBusy(false));
+                }, failure => { if (!signal.aborted) setError(failure as Error); })
+                .finally(() => { if (!signal.aborted) setBusy(false); });
     };
 
-    const canApply = dryRun !== null && classifyEnvelope(dryRun) === 'success';
+    const uncertain = [dryRun, applied].some(result => result !== null && classifyEnvelope(result) === 'observation');
+    const canApply = !uncertain && dryRun !== null && classifyEnvelope(dryRun) === 'success';
 
     return (
         <Card>
@@ -68,7 +75,7 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
                     <StackItem>
                         <Flex>
                             <FlexItem>
-                                <Button variant="secondary" isDisabled={busy} onClick={() => run(false)}>
+                                <Button variant="secondary" isDisabled={busy || uncertain} onClick={() => run(false)}>
                                     Dry run
                                 </Button>
                             </FlexItem>
@@ -130,6 +137,8 @@ const RepairCard = () => {
     const [feed, setFeed] = useState<string[]>([]);
     const [result, setResult] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
+    const observationSignal = useObservationSignal();
+    const { handles, reset: resetHandles, onNotice } = useOperationHandles();
 
     let validationError: string | null = null;
     if (selectorText !== '') {
@@ -143,20 +152,28 @@ const RepairCard = () => {
     }
 
     const run = () => {
+        const signal = observationSignal();
         setConfirming(false);
         setRunning(true);
         setFeed([]);
         setResult(null);
         setError(null);
+        resetHandles();
         const command = reason === ''
             ? ['repair', selectorText]
             : ['repair', selectorText, '--reason', reason];
         runHfcacheStreaming(command, {
-            onLine: line => setFeed(previous => [...previous, line].slice(-100)),
+            signal,
+            onNotice,
+            onLine: line => setFeed(previous => appendDisplayLine(previous, line, 100)),
         })
-                .then(envelope => setResult(envelope), failure => setError(failure as Error))
-                .finally(() => setRunning(false));
+                .then(envelope => { if (!signal.aborted) setResult(envelope); },
+                      failure => { if (!signal.aborted) setError(failure as Error); })
+                .finally(() => { if (!signal.aborted) setRunning(false); });
     };
+
+    const uncertain = (result !== null && classifyEnvelope(result) === 'observation') ||
+        (error !== null && (handles.idempotencyKey !== undefined || handles.operationId !== undefined));
 
     return (
         <Card>
@@ -194,13 +211,14 @@ const RepairCard = () => {
                     <StackItem>
                         <Button
                             variant="danger"
-                            isDisabled={running || selectorText === '' || validationError !== null}
+                            isDisabled={running || uncertain || selectorText === '' || validationError !== null}
                             onClick={() => setConfirming(true)}
                         >
                             Repair…
                         </Button>
                     </StackItem>
                     {running && <StackItem><Loading /></StackItem>}
+                    <StackItem><RecoveryHandles evidence={handles} /></StackItem>
                     {feed.length > 0 &&
                         <StackItem>
                             <ExpandableSection toggleText="Command log">
@@ -225,10 +243,10 @@ const RepairCard = () => {
                     <ModalBody>
                         Downloads that revision again and publishes a replacement instance; the
                         superseded instance stays readable for the configured grace period (at
-                        least seven days). This runs as a transient unit — closing the tab
-                        detaches this view while the repair continues, and its transaction is
-                        reconciled like any other (recover describes it afterwards). It shares
-                        the single archive lock.
+                        least seven days). The transient API client observes server execution;
+                        closing this view does not cancel accepted repair. Retain the key and
+                        operation ID and observe that result before submitting again or
+                        considering recovery. The executor holds the single archive lock.
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="danger" onClick={run}>Start repair</Button>
@@ -250,8 +268,9 @@ export const Maintenance = () => (
                     'oldest non-current one out (AD-04). This exists to inspect the plan and to ' +
                     'finish a deferred rotation or apply a lower limit. Each invocation removes at most one ' +
                     'revision per repository; review and repeat until no eligible excess remains.'}
-                applyWarning={'Executes exactly the plan the dry run described. Where a prune can ' +
-                    'fail leaving more or less data, it leaves more (TX-06).'}
+                applyWarning={'The server recomputes and validates a fresh plan under the archive ' +
+                    'lock; a preview grants no apply authority. Changed queued policy refuses. ' +
+                    'Where a prune can fail leaving more or less data, it leaves more (TX-06).'}
             />
         </StackItem>
         <StackItem>
