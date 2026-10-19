@@ -157,6 +157,47 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Feature-only normal github/forgejo pushes follow per explicit user steering;
   no tag/merge/deploy/production archive operations. Live/installed acceptance remains unrun.
 
+## Timestral live configuration checkpoint (2026-10-19)
+
+- [x] OPS-022 Configure Timestral models and trigger a scoped live sync
+  (2026-10-19, this commit). Operational evidence is recorded in the
+[task](plans/tasks/ops-022-timestral-model-sync.md) and
+[plan](plans/2026-10-19-plan-timestral-model-sync.md). Root preserves the original configuration flock, exact protected
+predecessor and SELinux metadata, then atomically appends only four enabled
+Timestral model entries with `revision = "main"` and empty dependencies.
+Installed policy grows from 156 to 160 enabled repositories; every unrelated
+parsed field and the original byte prefix remain unchanged. Compatible candidate
+validation and four-model planning succeed; total expected Hub bytes are
+1,459,902,655. Installed API validation exits 0 at `13:46:09 UTC` and confirms
+fingerprint `4c33dc7bb7a5f5573d8ae1e9b4a3e20eaac3b3a0759e30747c406ade655c7b8c`.
+Protected backup is `/etc/hfcache/config.toml.before-timestral-20261019` and full
+local JSON evidence is `/opt/hfcache/deployment/20261019-timestral/`.
+
+Exactly one four-model sync is durably admitted at `13:46:11 UTC`, operation
+`0cb77c1c970e21033a9cab7fb8ea872d`, key
+`timestral-sync-20261019-410f6659ff9b48379249e7a167a36400`. Show/lookup at
+`13:46:39/41 UTC` report `waiting_lock`, no domain run/result. The custom root
+orchestrator incorrectly expected a terminal Envelope after valid detached
+admission; saved 202/handles resolve the uncertainty through observation only,
+without a second POST. Initial wrong-identity/private-cwd client refusals are
+also retained. The original guard PID `809950`/archive inode `27:2273`, NAS-ro,
+writer/timer masks, lock identities, receipt stores and installed release `0.2.1`
+remain; no restart, guard release, writable remount, hardening/secret/schedule
+change or archive write occurs. Admission proves a trigger, not publication.
+NAS-shadowed `scripts/check.sh` exits 0 in `hfcache-ops022-gate`; protected process
+mount evidence confirms an empty read-only tmpfs over `/srv/hfcache`.
+Formatting/lint/types/docs alignment pass; 4,315 Python tests pass/40 opt-in
+deselected in 495.19 seconds, distribution build and all three locked installation
+profiles pass, as do actual Cockpit lint/style/types/135 tests/production build.
+Task retains the exact command, invocation and protected log SHA-256. Final
+`13:56:31/34 UTC` validation/lookup confirms the same 160-entry fingerprint and
+guard-held `waiting_lock`, no domain run/result. Invariant/ADR review finds no
+behavior/architecture change. Plan is complete and selector inactive; trigger
+completion does not claim download or publication.
+Independent read-only review confirms exact policy/metadata preservation,
+unchanged four lock identities and NAS-ro, actual guard flock ownership, and
+exactly one new sync receipt without removal.
+
 ## Phase 0 — Contract and Architecture
 
 - [x] ARC-001 Record architecture decisions and non-goals (2026-07-24, this commit — `docs/architecture.md` §1–4: `AD-01`–`AD-18`, `NG-01`–`NG-12`)
@@ -2197,6 +2238,24 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     guard/original lock, read-only NAS, writer masks, stores/handles and history.
     Live NAS verification/jobs/full-domain/NFS workload, calendar and other-host
     acceptance remain unrun; this is not general writer-readiness certification.
+
+23. **Timestral sync admitted but guard-held (OPS-022, 2026-10-19):** four requested
+    Timestral model entries are installed and validated; one scoped sync is
+    admitted as operation `0cb77c1c970e21033a9cab7fb8ea872d`, key
+    `timestral-sync-20261019-410f6659ff9b48379249e7a167a36400`. Last observed
+    `13:56:34 UTC`: `waiting_lock`, no domain run/result, guard PID `809950`
+    still holding original `27:2273`, NAS-ro and all masks intact. From working
+    directory `/`, observe under the service identity using the exact command:
+
+    ```bash
+    rtk proxy sudo -n -H -u hfcache -- /usr/local/libexec/hfcache-client --client-config /etc/hfcache/client.toml --json operations lookup -- timestral-sync-20261019-410f6659ff9b48379249e7a167a36400
+    ```
+
+    Preserve existing handles/stores and use observation only; a lock wait or
+    terminal refusal is not publication. Do not release the guard, remount NAS,
+    unmask writers, enable schedules or retry under a new key. Protected backup
+    and full evidence paths are in the [task](plans/tasks/ops-022-timestral-model-sync.md).
+    This scoped request does not resolve other live acceptance holds.
 
 ## Operator decisions needed
 
