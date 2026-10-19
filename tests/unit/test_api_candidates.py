@@ -144,3 +144,18 @@ def test_deep_toml_is_a_safe_domain_refusal_instead_of_parser_failure(configured
     assert envelope["exit_code"] == 10
     assert [problem["code"] for problem in envelope["errors"]] == ["HFCFG002"]
     assert configured.calls == []
+
+
+def test_tag_only_candidates_keep_policy_identity_but_conflict_under_same_key(configured):
+    first = configured.policy.read_text() + '\ntags=["coding"]\n'
+    second = configured.policy.read_text() + '\ntags=["vision"]\n'
+    assert parse_candidate(first).fingerprint() == parse_candidate(second).fingerprint()
+    assert (
+        parse_candidate(first).curation_fingerprint()
+        != parse_candidate(second).curation_fingerprint()
+    )
+    admitted = _post(configured, "/plans", {"candidate": first}, key="tag-change")
+    assert admitted.status_code == 202
+    conflict = _post(configured, "/plans", {"candidate": second}, key="tag-change")
+    assert conflict.status_code == 409
+    assert len(configured.app.state.operations.list()) == 1

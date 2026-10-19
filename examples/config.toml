@@ -58,6 +58,7 @@ id = "hf-internal-testing/tiny-random-gpt2"
 type = "model"
 revision = "main"
 enabled = true
+tags = ["test-fixture"] # labels only; no download or retention effect
 declared_dependencies = []
 
 [[repositories]]
@@ -65,4 +66,12 @@ id = "hf-internal-testing/fixtures_ade20k"
 type = "dataset"
 revision = "main"
 enabled = true
+tags = ["test-fixture"] # labels only; no download or retention effect
 declared_dependencies = []
+
+# Fictional authoring example (disabled, so it never selects a download):
+# [[repositories]]
+# id = "example-org/code-model"
+# type = "model"
+# enabled = false
+# tags = ["coding", "local-inference", "project:assistant"]

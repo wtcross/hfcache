@@ -1,7 +1,7 @@
 # Tags and local discovery
 
-This is the proposed discovery contract. Configuration, extraction and transport
-support are introduced separately; this contract alone does not make the commands
+Configuration tags and separate curation identity are supported. Extraction and
+transport support below remain proposed; this contract alone does not make the commands
 below available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 

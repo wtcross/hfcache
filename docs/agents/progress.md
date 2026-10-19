@@ -41,6 +41,17 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   contract tests and whitespace check passed. All feature code remains pending;
   no live/credential/production/push action occurred.
 
+- [x] CAT-002 Add strict configuration tags and separate curation identity
+  (2026-10-19, this commit — [task](plans/tasks/cat-002-configuration-tags-and-identities.md)).
+  Shared bounded ASCII normalizer, frozen optional tags and schema-1 curation hash
+  preserve the pinned old policy hash. Full caller audit retains operational
+  comparisons, six-field authority and strict wrappers; real keyed admission
+  distinguishes tag-only candidate content. Shared frontend fixture and config/
+  discovery/example docs added. Focused 193 and final 43 tests passed. Full gate:
+  4351 passed/40 deselected, build/three locked profiles and actual Cockpit lint/
+  types/135 tests/build. INV-001/002/005/018 and decisions 119/122/133 reviewed;
+  no new architectural choice/dependency, live action or push.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

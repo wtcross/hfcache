@@ -244,7 +244,24 @@ declared_dependencies = []
 | `type` | str | — (required) | `"model"` \| `"dataset"` |
 | `revision` | str | `"main"` | A branch name, a tag name, or a full 40-character lowercase commit SHA |
 | `enabled` | bool | `true` | — |
+| `tags` | list[str] | `[]` | At most 64 raw strings; canonical label grammar below |
 | `declared_dependencies` | list[str] | `[]` | Each entry a valid two-segment repository id; no duplicates |
+
+`tags` is the only operator-managed organizational field. The backend trims outer
+ASCII spaces, lowercases ASCII letters, deduplicates and sorts byte-wise. Each raw
+string is at most 128 characters and its canonical value must match
+`[a-z0-9][a-z0-9._:/-]{0,63}`. Reject nonstrings, empty values, controls, internal
+whitespace and non-ASCII text; limits apply before deduplication. For example,
+`tags = ["Coding", " coding ", "project:assistant", "vision/ocr"]` becomes
+`["coding", "project:assistant", "vision/ocr"]`. Slashes and colons are literal,
+with no hierarchy, wildcard or filesystem meaning. Omitted and empty tags agree;
+disabled entries retain tags. Tags never change authorization, retention, file
+selection, scheduling or policy fingerprints. Keep credentials out of labels.
+
+Tag syntax is supported by local/candidate validation. Discovery interfaces are
+specified separately in [discovery](discovery.md). Existing configuration without
+tags remains valid. Older binaries reject the new key: preserve configuration
+backups and restore a tag-free compatible document before guarded rollback.
 
 Single-segment canonical identifiers such as `gpt2` are rejected (`HFCFG008`).
 Every canonical Hub repository now has a namespaced form — `openai-community/gpt2`,
@@ -372,7 +389,11 @@ credential path. It covers `schema_version`, all of `[storage]`, `[sync]`,
 and `declared_dependencies`. Operator tags are excluded; adding tags must preserve
 all existing policy fingerprint values. A separate versioned curation digest
 identifies canonical `(type, id, tags)` for all entries, including disabled and
-empty-tag entries; see the [proposed discovery contract](discovery.md).
+empty-tag entries; see the [discovery contract](discovery.md). Its canonical JSON
+object has `schema_version=1` and `repositories` sorted by `(type, id)`, each with
+only `type`, `id`, and canonical `tags`. Use the same sorted-key, compact UTF-8
+serialization and SHA-256. It includes no credential, operational path or enabled
+flag; disabled entries remain included. No existing response wrapper gains fields.
 
 Two runs with byte-identical intent produce an identical fingerprint; any change
 to what is archived, how much is retained, or where it is stored produces a

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 1 — Foundation |
 | Depends on | [CAT-001](cat-001-contracts-and-activation.md) |
@@ -15,7 +15,7 @@ Follow `AGENTS.md` and `docs/agents/workflow.md`. Read relevant sections of the
 [design](../support/tags-and-discovery/design.md),
 [source review](../support/tags-and-discovery/source-review.md) and
 [validation matrix](../support/tags-and-discovery/validation-matrix.md).
-Tasks own execution status; this file is pending, not a claim of implementation.
+Tasks own execution status; completion evidence below records actual validation.
 
 ## Likely implementation touchpoints
 
@@ -60,15 +60,42 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
+Implemented shared strict tag normalization, optional frozen field and separate
+schema-1 canonical curation fingerprint. Preserved the old fingerprint enumeration
+and pinned its prior hash before changing code. Shared frontend/backend grammar
+fixture is `tests/fixtures/tags.json`. No old strict wrapper/payload fields changed.
+
+Fingerprint caller audit: run/journal/bootstrap/server policy, API runner and
+private verifier comparisons correctly retain operational identity. Candidate
+PlanSubmission/OperationStore digests already bind full candidate text; a new real
+admission regression proves tag-only requests conflict under one key. Six fixed
+authority fields remain unchanged. Candidate diagnostics retain field location
+without rejected contents. Cockpit privileged guard already compares full bytes;
+its final policy-only confirmation needs strengthening in CAT-003. No config
+installation authority or secret-bearing full-config hash was added.
+
+Reviewed INV-001/002/005/018 and AD-12/17, decisions 119/122/133. The implemented
+normalizer/identity follows the accepted contract; no new architectural choice or
+runtime dependency. The full gate and focused checks passed; evidence follows.
 When work starts, record any relevant newer-source reconciliation, implementation
 choices, blockers and scope amendments here. Preserve prior completed evidence.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-002, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-002, this commit). V01–V04 covered by
+`tests/unit/test_tags.py`: shared normalization goldens, generated idempotence,
+raw/canonical limits and strict rejection, useful safe error locations, pinned
+pre-feature policy/curation hashes, disabled/empty/reordered entries and authority
+exclusions. Candidate tests prove same-policy/different-tag content conflicts
+under one key. Old wrappers and fixed authority comparisons remain unchanged.
+
+Focused config/tag/candidate/docs selection: 193 passed; final tag/candidate
+selection: 43 passed. `rtk proxy scripts/check.sh` exited 0: 4351 passed,
+40 opt-in deselected in 480.08s; lock/format/lint/types/docs/build/three locked
+installation profiles and actual Cockpit lint/types/135 tests/build all passed.
+Final format/lint/whitespace checks passed after added golden assertions.
+Reviewed INV-001/002/005/018, AD-12/17 and decisions 119/122/133: implementation
+follows existing accepted boundaries; no new ADR or runtime dependency needed.
+Updated configuration/discovery guides and fictional authoring example.
+No live/credential/production/push work. CAT-003 owns the remaining Cockpit
+confirmation/tag-authoring changes; later tasks own discovery interfaces.

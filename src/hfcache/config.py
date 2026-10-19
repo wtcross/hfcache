@@ -33,6 +33,7 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationEr
 
 from hfcache.errors import CodedError, ConfigurationError, Problem
 from hfcache.identity import RepositoryIdentity, parse_repository_id, parse_revision
+from hfcache.tags import Tags  # noqa: TC001 - Pydantic resolves the annotated validator at runtime
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -254,6 +255,7 @@ class RepositoryConfig(_Strict):
     type: Literal["model", "dataset"]
     revision: Revision = "main"
     enabled: bool = True
+    tags: Tags = ()
     declared_dependencies: Annotated[tuple[RepositoryId, ...], BeforeValidator(_as_tuple)] = ()
 
     @model_validator(mode="after")
@@ -343,6 +345,18 @@ class ApplicationConfig(_Strict):
             "storage": self.storage.model_dump(mode="json"),
             "sync": self.sync.model_dump(mode="json"),
             "verification": self.verification.model_dump(mode="json"),
+        }
+        canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def curation_fingerprint(self) -> str:
+        """Identify only normalized configured labels, including disabled entries (INV-018)."""
+        payload = {
+            "schema_version": 1,
+            "repositories": [
+                {"type": repository.type, "id": repository.id, "tags": list(repository.tags)}
+                for repository in sorted(self.repositories, key=lambda entry: entry.key)
+            ],
         }
         canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

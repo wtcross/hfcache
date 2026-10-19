@@ -1,0 +1,9 @@
+{
+  "valid": [
+    {"input": [], "expected": []},
+    {"input": ["Coding", " coding ", "coding"], "expected": ["coding"]},
+    {"input": ["vision/ocr", "project:Assistant", "A.B_C-D"], "expected": ["a.b_c-d", "project:assistant", "vision/ocr"]},
+    {"input": ["z", "A", "0"], "expected": ["0", "a", "z"]}
+  ],
+  "invalid": [null, "coding", {}, [1], [true], [null], [""], [" "], ["a b"], ["a\tb"], ["a\n"], ["\ta"], ["é"], ["İ"], ["-a"], ["a*"], ["a\\b"]]
+}
