@@ -2,7 +2,7 @@
 
 Configuration tags, Cockpit authoring, curation identity and supplemental record
 storage, static declarations, GGUF headers and scoped AWQ/GPTQ variants are
-supported, including sync/repair capture, typed offline refresh and REST reads.
+supported, including sync/repair capture, keyed offline refresh and REST reads.
 Client and MCP discovery support below remain proposed; this contract alone
 does not make those commands available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.

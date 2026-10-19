@@ -27,6 +27,7 @@ JOB_ROUTES = frozenset(
         "quarantine-cleanups",
         "repairs",
         "archive/initializations",
+        "catalog/refreshes",
     )
 )
 

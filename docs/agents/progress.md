@@ -169,6 +169,21 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   reviewed; human API/server/discovery and enforcement links current. No runtime
   dependency, production/live/credential/host/push action.
 
+- [x] CAT-012 Admit keyed offline catalog refreshes (2026-10-19, this commit —
+  [task](plans/tasks/cat-012-rest-catalog-refresh-admission.md)). Strict writer-only
+  selectors/scope/flags use the existing lane, original lock/preflight and fresh
+  curation callback. Canonical route/command identify the new kind without changing
+  receipt/result-reference/Envelope schemas or verifier authority. Existing
+  operation clients recognize its observation. Real HTTP fixtures prove replay,
+  conflict, new-key recapture, post-wait policy/curation, declared unpublished
+  skips, exact GGUF headers, lost acknowledgement with an active held write and
+  interrupted restart without replay. Forbidden-capability spies remain clear.
+  Focused 223 pass; full gate 4899 pass/40 deselected in 544.62s, build/three locked
+  profiles and actual Cockpit lint/types/169 tests/build. INV-012/014/015/018,
+  TX/FS/AD and decisions 114-117/133 reviewed; API/server/discovery/schema and
+  enforcement links current. No runtime dependency, host, production/live,
+  credential or push action.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

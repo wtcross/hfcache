@@ -1021,3 +1021,7 @@ REST enforcement: [catalog adapters](../src/hfcache/api/catalog.py), the existin
 [metadata pool/render boundary](../src/hfcache/api/app.py) and
 [HTTP grammar/auth/cursor fixtures](../tests/unit/test_api_catalog.py) preserve
 strict existing wrappers and whole-archive read capability.
+Refresh admission: [strict intent DTO](../src/hfcache/api/command_models.py),
+[keyed writer adapter](../src/hfcache/api/catalog_refresh.py) and
+[HTTP replay/wait/disconnect/restart fixtures](../tests/unit/test_api_catalog_refresh.py)
+reuse the same lane/guard/result ownership without widening verifier authority.

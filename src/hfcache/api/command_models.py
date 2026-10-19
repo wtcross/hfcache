@@ -7,9 +7,11 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_valida
 from hfcache.api.models import (
     OperationView,  # noqa: TC001 - Pydantic resolves nested DTOs at runtime
 )
+from hfcache.errors import ConfigurationError
 from hfcache.identity import parse_selector
 from hfcache.models import RunIdField, as_tuple
 from hfcache.services.commands import VerificationRequest
+from hfcache.services.requests import CatalogRefreshRequest
 
 
 def _selection(value: object) -> str:
@@ -52,6 +54,37 @@ class SyncSubmission(CommandModel):
     def canonical(self) -> Self:
         object.__setattr__(self, "selectors", tuple(sorted(set(self.selectors))))
         return self
+
+
+class CatalogRefreshSubmission(CommandModel):
+    """Whole-repository offline intent, without path, credential or candidate fields."""
+
+    selectors: Annotated[
+        tuple[Annotated[str, Field(max_length=201)], ...],
+        BeforeValidator(as_tuple),
+        Field(max_length=256),
+    ] = ()
+    revision_scope: Literal["current", "retained"] = "retained"
+    tags: bool = True
+    technical: bool = True
+
+    @model_validator(mode="after")
+    def canonical(self) -> Self:
+        try:
+            request = self.service_request()
+        except ConfigurationError:
+            message = "Invalid catalog refresh intent"
+            raise ValueError(message) from None
+        object.__setattr__(self, "selectors", request.selectors)
+        return self
+
+    def service_request(self) -> CatalogRefreshRequest:
+        return CatalogRefreshRequest(
+            selectors=self.selectors,
+            revision_scope=self.revision_scope,
+            tags=self.tags,
+            technical=self.technical,
+        )
 
 
 class PlanSubmission(SyncSubmission):

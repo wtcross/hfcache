@@ -56,6 +56,7 @@ READER_POSTS = (
     "/quarantine-plans",
 )
 WRITER_POSTS = (
+    "/catalog/refreshes",
     "/syncs",
     "/verifications",
     "/prunes",
@@ -170,7 +171,7 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
     if not docs_enabled:
         expected.remove(("GET", PREFIX + "/docs"))
     assert actual == expected
-    assert len(actual) == (38 if docs_enabled else 37)
+    assert len(actual) == (39 if docs_enabled else 38)
     documented = {
         (row[0].split(" ", 1)[0], PREFIX + row[0].split(" ", 1)[1])
         for row in matrix_rows()
@@ -190,6 +191,7 @@ def test_documented_post_routes_use_the_strict_named_request_models(configured):
         "/plans": "PlanSubmission",
         "/diagnostics": "DiagnosticsSubmission",
         "/syncs": "SyncSubmission",
+        "/catalog/refreshes": "CatalogRefreshSubmission",
         "/verifications": "VerificationSubmission",
         "/prune-plans": "PruneSubmission",
         "/prunes": "PruneSubmission",

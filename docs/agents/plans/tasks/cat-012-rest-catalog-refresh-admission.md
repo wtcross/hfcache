@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | complete |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 4 — REST and CLI |
 | Depends on | [CAT-009](cat-009-offline-refresh-service.md), [CAT-011](cat-011-rest-catalog-read-routes.md) |
@@ -15,7 +15,7 @@ Follow `AGENTS.md` and `docs/agents/workflow.md`. Read relevant sections of the
 [design](../support/tags-and-discovery/design.md),
 [source review](../support/tags-and-discovery/source-review.md) and
 [validation matrix](../support/tags-and-discovery/validation-matrix.md).
-Tasks own execution status; this file is pending, not a claim of implementation.
+The status above and completion evidence below own execution truth.
 
 ## Likely implementation touchpoints
 
@@ -60,15 +60,37 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
-When work starts, record any relevant newer-source reconciliation, implementation
-choices, blockers and scope amendments here. Preserve prior completed evidence.
+Strict writer-only refresh admission now uses the existing typed receipt lane,
+original guarded service and fresh installed curation callback. Canonical route
+and Envelope command identify the new kind; receipt/result-reference/Envelope
+fields and schema versions remain unchanged. The base operation allowlist accepts
+its observation, with no new typed discovery/CLI methods yet. Independent REST
+security/reference/schema inventories include the new writer method.
+
+HTTP fixtures cover exact replay, canonical duplicate selectors, conflict, a new
+key after tag-only edits, strict bodies/roles/keys, current policy revalidation and
+fresh curation after lock wait, default/unpublished skips, real GGUF technical-only
+capture, lost acknowledgement while an actual write is held open, and abandoned
+restart interruption without replay. Credential/Hub/network/hash/verifier dispatch
+spies deny those capabilities during refresh. The initial test helper named the
+verifier method incorrectly; corrected to the actual execute/reconcile methods.
+Expanded domain/HTTP/REST/model/client selection: 223 passed in 21.55s. Ruff and
+Pyrefly pass (zero errors), documentation alignment passes; full gate passed as recorded below.
+Reviewed INV-012/014/015/018, TX-07/AD-12/14/17 and decisions 114-117/133. No new
+runtime dependency, private verifier kind or existing durable-format change. No
+production/live/credential/host/push action performed.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-012, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-012, this commit). V39-V40 expanded HTTP/domain/REST/
+model/client selection: 223 passed in 21.55s; Ruff/Pyrefly/document alignment pass.
+`scripts/check.sh` exited 0: 4899 passed, 40 deselected in 544.62s; wheel/sdist,
+all three locked installation profiles and actual Cockpit lint/types/169 tests/
+production build passed. Exact replay/conflict/new-key recapture, policy and
+curation after waiting, held active writer after lost acknowledgement and preserved
+interrupted restart are observed with real services and synthetic archives.
+Reviewed INV-012/014/015/018, relevant TX/FS/AD and decisions 114-117/133; API,
+server/discovery/schema contracts and invariant/ADR enforcement links are current.
+No new receipt fields/version, private verifier kind, runtime dependency, host,
+production/live workload, credential access or push. [Progress](../../progress.md)
+records completion; CAT-013 is next.

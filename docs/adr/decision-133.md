@@ -103,3 +103,9 @@ startup. No new runtime dependency or production operation is approved.
   additive routes, while OpenAPI advertises independent catalog schemas. New
   fields on that strict object would unnecessarily reject old clients. No
   command, writer or verifier dispatch is reachable from catalog GET handlers.
+- Keyed writer-only refresh admission reuses the original serialized runner,
+  guard hooks and exact operation observation. Canonical route and Envelope command
+  identify the new kind; independent refresh result schema 1 leaves existing
+  receipt/result-reference/Envelope fields unchanged. Current clients recognize
+  the new operation route; older explicit allowlists may refuse it. Restart never
+  reconstructs refresh intent or dispatches it to the private verifier.

@@ -26,6 +26,7 @@ from starlette.exceptions import HTTPException
 
 from hfcache.api.auth import Capability, CredentialRegistry, load_credentials, require_capability
 from hfcache.api.catalog import install_catalog_routes
+from hfcache.api.catalog_refresh import install_catalog_refresh_route
 from hfcache.api.commands import install_command_routes
 from hfcache.api.lifecycle import MetadataPool, instance_lock
 from hfcache.api.maintenance import install_maintenance_routes
@@ -1179,4 +1180,5 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
 
     install_command_routes(app, server, render)
     install_maintenance_routes(app, server)
+    install_catalog_refresh_route(app, server)
     return app

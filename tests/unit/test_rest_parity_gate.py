@@ -70,11 +70,11 @@ def parameter_values(
 def test_manifest_has_exactly_all_29_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
     assert len(PARITY) == len(PARITY_REFERENCE) == 29
-    assert len(REFERENCE) == len(rows) == 43
+    assert len(REFERENCE) == len(rows) == 44
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
     assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
     assert rows == REFERENCE
-    assert len({row[:2] for row in rows}) == 43
+    assert len({row[:2] for row in rows}) == 44
     assert all(len(row) == 9 for row in rows)
 
 
@@ -162,5 +162,19 @@ def test_purge_rows_cover_both_scope_branches_with_their_distinct_modes(flag):
 @pytest.mark.parametrize("route", tuple(CATALOG_API_REFERENCE))
 def test_catalog_routes_have_independent_http_evidence_before_cli_acceptance(route):
     row = next(row for row in matrix_rows() if row[0] == route)
-    assert row[1:] == ("default", "SDK / HTTP", "R", "synchronous", "none", "no", "none", "none")
+    expected = (
+        (
+            "default",
+            "SDK / HTTP",
+            "W",
+            "keyed job",
+            "archive",
+            "no",
+            "supplemental metadata",
+            "receipt, events and result",
+        )
+        if route.startswith("POST ")
+        else ("default", "SDK / HTTP", "R", "synchronous", "none", "no", "none", "none")
+    )
+    assert row[1:] == expected
     evidence_function(Evidence(*CATALOG_API_REFERENCE[route]))

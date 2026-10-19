@@ -170,6 +170,17 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
         "none",
     ),
     (
+        "POST /catalog/refreshes",
+        "default",
+        "SDK / HTTP",
+        "W",
+        "keyed job",
+        "archive",
+        "no",
+        "supplemental metadata",
+        "receipt, events and result",
+    ),
+    (
         "GET /status",
         "default",
         "status [selectors]",
@@ -493,6 +504,10 @@ PARITY_REFERENCE: dict[str, tuple[tuple[str, str], ...]] = {
 
 # New reads have concrete HTTP evidence before their CLI modes are introduced.
 CATALOG_API_REFERENCE = {
+    "POST /catalog/refreshes": (
+        "test_api_catalog_refresh",
+        "test_refresh_http_captures_once_replays_original_and_new_key_recaptures",
+    ),
     "GET /catalog/search": (
         "test_api_catalog",
         "test_reads_are_off_thread_and_cannot_write_resolve_credentials_or_open_payload",

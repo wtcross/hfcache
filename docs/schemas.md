@@ -1207,7 +1207,11 @@ added to old inventory payloads or strict read wrappers.
 ### 17.3 Offline refresh result
 
 The typed `catalog refresh` service payload uses independent strict schema 1
-inside the existing Envelope. Public REST admission remains a separate interface.
+inside the existing Envelope. Writer-only keyed REST admission uses
+`/api/v1/catalog/refreshes`, with command `catalog refresh`. The canonical route
+discriminates this operation kind without changing existing receipt, result
+reference or Envelope fields/versions. Explicit older client route allowlists may
+refuse it; preserve control evidence and drain executors before rollback.
 Fields are `schema_version`, `archive_id`, `state`, `revision_scope`, `tags`,
 `technical`, `curation_fingerprint`, `curation_observed_at`, `counts` and
 `repositories`. The curation identity/time describe the actual installed source

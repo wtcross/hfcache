@@ -59,6 +59,7 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `GET /catalog/facets` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /catalog/repositories/{repository_type}/{namespace}/{name}` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants` | default | SDK / HTTP | R | synchronous | none | no | none | none |
+| `POST /catalog/refreshes` | default | SDK / HTTP | W | keyed job | archive | no | supplemental metadata | receipt, events and result |
 | `GET /status` | default | status [selectors] | R | synchronous | none | no | none | none |
 | `GET /repositories` | default | list [selectors] [--type] | R | synchronous | none | no | none | none |
 | `GET /repositories/revisions` | default | list --revisions [selectors] [--type] | R | synchronous | none | no | none | none |
@@ -235,6 +236,29 @@ selectors, each at most 256 characters.
   `confirm=true`. Root paths are absolute, at most 4096 UTF-8 bytes, with no dot,
   traversal, backslash or nonprintable components. The root/UUID must match
   installed authority; they never choose a different archive.
+
+### Offline catalog refresh
+
+`POST /catalog/refreshes` accepts only `selectors=[]`, `revision_scope=retained`,
+`tags=true`, `technical=true`. Selectors are at most 256 raw canonical whole
+repository identities; they sort/deduplicate, and revision suffixes, paths and
+URLs refuse. Flags are strict booleans with at least one enabled. This writer-only
+keyed operation uses the existing FIFO lane, original shared archive guard and
+exact receipt/event/result observation. Admission grants no configuration-install,
+credential override, verifier dispatch or model download authority.
+
+Fresh installed curation and scope are resolved after lock wait, retaining admitted
+operational authority. Tag-only changes can affect a new capture without changing
+the policy hash. The original key always observes its original operation; a new
+capture needs a new key. Failed/partial per-record outcomes remain visible in the
+strict [refresh payload](schemas.md#173-offline-refresh-result). Refresh performs
+no recovery/repair/prune/cleanup or integrity hashing. Observer departure cannot
+cancel it; startup never replays it. Preserve uncertain handles and original state.
+
+The canonical route identifies this operation kind; its Envelope command is
+`catalog refresh`. Existing receipt/result-reference/Envelope versions and fields
+remain unchanged. Strict older operation-route clients may refuse the new kind.
+Drain and preserve control evidence before any separately approved rollback.
 
 ### Candidate content and installed authority
 

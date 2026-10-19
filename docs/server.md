@@ -458,6 +458,14 @@ Whole selected evidence is validated before paging; a small page does not expand
 the scan budget. [Catalog semantics](discovery.md#queries-coverage-and-pages)
 define coverage and visible cursor identity independently of old policy hashes.
 
+Writer-only catalog refresh uses the same heavy lane and original archive lock.
+It refreshes only adjunct records with fresh installed curation after waiting;
+there is no verifier dispatch, credential resolution, recovery or implicit startup
+refresh. Its canonical operation route is `/api/v1/catalog/refreshes`; existing
+receipts and exact results remain independently versioned. Lost acknowledgements
+and reconnects use the original key, and restart preserves interrupted work without
+replaying it. A new capture after label changes needs a new key.
+
 ### Dedicated worker bootstrap and limitations
 
 `python -m hfcache.verification_worker` is a private local service entrypoint,
