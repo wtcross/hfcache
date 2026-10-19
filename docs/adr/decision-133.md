@@ -128,3 +128,13 @@ projection. Tag and technical identifier normalization can change case before
 queries see values; exact-literal-only checks would expose those normalized
 representations through results/counts/cursors. The stricter catalog check is
 explicit and leaves ordinary exact output redaction semantics unchanged.
+
+Actual isolated installed wheels from pre-feature 75d93a5 and deployed application
+source 4088994 (both displayed 0.2.1) confirm the compatibility boundary. Tag-free
+config validates; explicit tags, even empty, refuse. All 17 old goldens remain
+identical/parseable. The old initialization inspector flags the optional metadata
+directory in a controlled empty layout; ordinary published inventory still reads.
+Strict old client route allowlists refuse refresh receipts, while generic stores
+preserve completed results and old runner startup interrupts queued work without
+replay. These are separate surfaces, not universal old-startup failure. Preserve
+new state and validate a reviewed rollback target under actual executor drain.

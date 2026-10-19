@@ -1244,3 +1244,15 @@ attempts and 1 MiB serialized result, reserved before the first mutation using
 bounded identifiers, fixed statuses/codes and actual generation widths. Aggregate
 scope/result exhaustion refuses; it never returns a truncated success. Ordinary
 classified failure envelopes remain valid when scope cannot be established.
+
+### Observed compatibility of supplemental records
+
+The two supplemental record families have independent schema-1 versions; no old
+manifest, reference, report, journal, receipt or wrapper version changes. Actual
+installed pre-feature targets parse all 17 unchanged old goldens. Their strict
+config/client allowlists can still refuse the new tags field and refresh route.
+The old initialization inspector flags the optional directory, while ordinary
+inventory and generic stored terminal Envelopes remain readable. Preserve records
+and control history, validate actual target behavior and follow
+[discovery rollback](discovery.md#guarded-rollback-and-backup); a stable version
+number alone does not establish compatibility.

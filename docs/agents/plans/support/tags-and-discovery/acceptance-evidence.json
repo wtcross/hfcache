@@ -1,0 +1,383 @@
+{
+  "schema_version": 1,
+  "scope": "Offline temporary fixtures only; no production, live NFS/Hub, deployment or push acceptance.",
+  "execution_record": "docs/agents/plans/tasks/cat-016-compatibility-docs-and-final-acceptance.md",
+  "required_final_gate": "scripts/check.sh --with-build",
+  "cases": [
+    {
+      "case": "V01",
+      "evidence": [
+        "tests/unit/test_tags.py::test_omitted_and_explicit_empty_tags_preserve_pre_feature_policy_golden"
+      ]
+    },
+    {
+      "case": "V02",
+      "evidence": [
+        "tests/unit/test_tags.py::test_shared_normalization_goldens",
+        "tests/unit/test_tags.py::test_normalization_is_idempotent"
+      ]
+    },
+    {
+      "case": "V03",
+      "evidence": [
+        "tests/unit/test_tags.py::test_invalid_inputs_refuse_without_values",
+        "tests/unit/test_tags.py::test_tag_limits_are_checked_before_deduplication"
+      ]
+    },
+    {
+      "case": "V04",
+      "evidence": [
+        "tests/unit/test_tags.py::test_curation_changes_without_changing_policy_or_other_fields"
+      ]
+    },
+    {
+      "case": "V05",
+      "evidence": [
+        "cockpit/test/candidate-guard.test.ts::concurrent tag-only ${target} edit refuses without overwriting labels",
+        "cockpit/test/config-pipeline.test.ts::equal policy hash never bypasses changed installed tag bytes during confirmation"
+      ]
+    },
+    {
+      "case": "V06",
+      "evidence": [
+        "cockpit/test/config.test.ts::tag forms, toggles, add/remove and text serialization preserve canonical labels"
+      ]
+    },
+    {
+      "case": "V07",
+      "evidence": [
+        "cockpit/test/config.test.ts::existing tags are suggestions for an invalid draft, with no registry or silent repair",
+        "tests/unit/test_tags.py::test_bad_tag_error_is_located_without_rejected_secret"
+      ]
+    },
+    {
+      "case": "V08",
+      "evidence": [
+        "tests/unit/test_catalog_storage.py::test_round_trip_whole_records_and_original_evidence_unchanged",
+        "tests/unit/test_catalog_storage.py::test_observation_identity_must_agree_with_exact_authority"
+      ]
+    },
+    {
+      "case": "V09",
+      "evidence": [
+        "tests/unit/test_catalog_storage.py::test_unsupported_prior_record_is_preserved_before_replacement"
+      ]
+    },
+    {
+      "case": "V10",
+      "evidence": [
+        "tests/unit/test_catalog_storage.py::test_crash_boundaries_expose_only_whole_old_or_new_record",
+        "tests/unit/test_catalog_storage.py::test_two_record_updates_have_no_cross_file_atomicity_promise"
+      ]
+    },
+    {
+      "case": "V11",
+      "evidence": [
+        "tests/unit/test_catalog_storage.py::test_initialized_archive_and_approved_namespace_only",
+        "tests/unit/test_catalog_storage.py::test_optional_extension_does_not_become_required_or_authorize_initialization"
+      ]
+    },
+    {
+      "case": "V12",
+      "evidence": [
+        "tests/unit/test_catalog_extractors.py::test_hostile_json_is_bounded_before_selected_fields",
+        "tests/unit/test_catalog_extractors.py::test_unsupported_and_hostile_yaml_never_constructs_objects"
+      ]
+    },
+    {
+      "case": "V13",
+      "evidence": [
+        "tests/unit/test_catalog_extractors.py::test_model_selected_declarations_have_exact_provenance_and_no_operator_tags"
+      ]
+    },
+    {
+      "case": "V14",
+      "evidence": [
+        "tests/unit/test_catalog_extractors.py::test_dataset_static_context_and_formats_never_read_payload_or_follow_urls",
+        "tests/unit/test_catalog_extractors.py::test_dataset_data_file_split_is_a_declaration_without_url_availability"
+      ]
+    },
+    {
+      "case": "V15",
+      "evidence": [
+        "tests/unit/test_catalog_gguf.py::test_pinned_file_type_mapping_not_tensor_type_or_filename",
+        "tests/unit/test_catalog_gguf.py::test_float_declaration_must_have_compatible_aggregate_tensor_kinds"
+      ]
+    },
+    {
+      "case": "V16",
+      "evidence": [
+        "tests/unit/test_catalog_gguf.py::test_missing_unknown_removed_or_guessed_file_type_stays_candidate"
+      ]
+    },
+    {
+      "case": "V17",
+      "evidence": [
+        "tests/unit/test_catalog_gguf.py::test_hostile_counts_lengths_types_and_magic_terminate_bounded",
+        "tests/unit/test_catalog_gguf.py::test_header_truncation_at_every_offset_never_escapes_or_claims_complete"
+      ]
+    },
+    {
+      "case": "V18",
+      "evidence": [
+        "tests/unit/test_catalog_gguf.py::test_normal_split_uses_first_header_only_and_exact_complete_members",
+        "tests/unit/test_catalog_gguf.py::test_incomplete_or_contradictory_shards_never_form_positive_variants",
+        "tests/unit/test_catalog_gguf.py::test_separate_publications_never_supply_each_others_missing_shards"
+      ]
+    },
+    {
+      "case": "V19",
+      "evidence": [
+        "tests/unit/test_catalog_gguf.py::test_auxiliary_adapter_and_unknown_roles_do_not_promote_to_primary"
+      ]
+    },
+    {
+      "case": "V20",
+      "evidence": [
+        "tests/unit/test_catalog_weights.py::test_explicit_supported_declarations_bind_one_same_directory_bundle",
+        "tests/unit/test_catalog_weights.py::test_no_runtime_import_network_unpickle_or_tensor_body_read"
+      ]
+    },
+    {
+      "case": "V21",
+      "evidence": [
+        "tests/unit/test_catalog_weights.py::test_invalid_index_never_falls_back_to_available_singleton",
+        "tests/unit/test_catalog_weights.py::test_complete_index_deduplicates_normal_repeated_shard_values",
+        "tests/unit/test_catalog_weights.py::test_pointer_empty_hostile_or_inconsistent_members_never_become_complete"
+      ]
+    },
+    {
+      "case": "V22",
+      "evidence": [
+        "tests/unit/test_catalog_weights.py::test_multiple_quantized_directories_keep_methods_and_bytes_separate",
+        "tests/unit/test_catalog_weights.py::test_root_config_never_lends_method_or_role_to_child_weights"
+      ]
+    },
+    {
+      "case": "V23",
+      "evidence": [
+        "tests/unit/test_catalog_lifecycle.py::test_sync_binds_exact_new_publication_without_changing_manifest"
+      ]
+    },
+    {
+      "case": "V24",
+      "evidence": [
+        "tests/unit/test_catalog_lifecycle.py::test_retained_sync_captures_current_tags_without_download_or_generation"
+      ]
+    },
+    {
+      "case": "V25",
+      "evidence": [
+        "tests/unit/test_catalog_lifecycle.py::test_extractor_defect_records_failed_coverage_without_invalidating_publication",
+        "tests/unit/test_catalog_lifecycle.py::test_capture_runs_after_producer_join_under_original_lock"
+      ]
+    },
+    {
+      "case": "V26",
+      "evidence": [
+        "tests/unit/test_catalog_refresh.py::test_tag_only_unpublished_disabled_refresh_is_offline_and_adjunct_only",
+        "tests/unit/test_api_catalog_refresh.py::test_refresh_requires_writer_key_and_empty_query_before_admission"
+      ]
+    },
+    {
+      "case": "V27",
+      "evidence": [
+        "tests/unit/test_catalog_refresh.py::test_partial_version_refusal_preserves_bad_record_and_reports_independent_progress",
+        "tests/unit/test_catalog_refresh_replay.py::test_refresh_replay_preserves_exact_result_until_new_key"
+      ]
+    },
+    {
+      "case": "V28",
+      "evidence": [
+        "tests/unit/test_catalog_refresh.py::test_removed_uncaptured_tags_are_never_invented_then_real_history_is_preserved",
+        "tests/unit/test_catalog_queries.py::test_last_observed_tags_only_actual_snapshot_and_current_empty_overrides"
+      ]
+    },
+    {
+      "case": "V29",
+      "evidence": [
+        "tests/unit/test_catalog_queries.py::test_configured_disabled_unpublished_and_same_id_different_type"
+      ]
+    },
+    {
+      "case": "V30",
+      "evidence": [
+        "tests/unit/test_catalog_query_models.py::test_query_normalizes_literal_text_tags_and_ascii_technical_names",
+        "tests/unit/test_cli_catalog.py::test_search_and_tags_map_all_any_and_literal_predicates"
+      ]
+    },
+    {
+      "case": "V31",
+      "evidence": [
+        "tests/unit/test_catalog_queries.py::test_same_variant_conjunction_and_truthful_representative"
+      ]
+    },
+    {
+      "case": "V32",
+      "evidence": [
+        "tests/unit/test_catalog_queries.py::test_current_is_explicit_no_cross_revision_matching_or_retired_fallback",
+        "tests/unit/test_catalog_final_lifecycle.py::test_real_prune_and_unmanaged_purge_preserve_but_never_search_orphan_metadata"
+      ]
+    },
+    {
+      "case": "V33",
+      "evidence": [
+        "tests/unit/test_catalog_queries.py::test_incomplete_parent_and_unknown_extractors_are_truthful",
+        "tests/unit/test_catalog_queries.py::test_missing_vs_corrupt_selected_records_and_full_scan_bounds"
+      ]
+    },
+    {
+      "case": "V34",
+      "evidence": [
+        "tests/unit/test_catalog_queries.py::test_filtered_facets_count_repositories_from_only_matching_variants"
+      ]
+    },
+    {
+      "case": "V35",
+      "evidence": [
+        "tests/unit/test_catalog_queries.py::test_same_variant_conjunction_and_truthful_representative",
+        "tests/unit/test_api_catalog.py::test_exact_detail_and_full_variant_pages_do_not_fall_back"
+      ]
+    },
+    {
+      "case": "V36",
+      "evidence": [
+        "tests/unit/test_api_catalog.py::test_cursor_canonical_tag_sets_and_tag_only_staleness_keep_policy_hash",
+        "tests/unit/test_catalog_final_lifecycle.py::test_catalog_cursor_refuses_publication_and_coverage_changes"
+      ]
+    },
+    {
+      "case": "V37",
+      "evidence": [
+        "tests/unit/test_api_catalog.py::test_catalog_search_rejects_unknown_repeated_or_coerced_parameters",
+        "tests/unit/test_api_catalog.py::test_authentication_and_body_budgets_precede_routing_and_no_raw_echo"
+      ]
+    },
+    {
+      "case": "V38",
+      "evidence": [
+        "tests/unit/test_api_catalog.py::test_catalog_routes_share_strict_wrappers_and_original_capabilities",
+        "tests/unit/test_mcp_acceptance.py::test_every_rest_role_and_real_command_remains_identical_with_optional_mcp"
+      ]
+    },
+    {
+      "case": "V39",
+      "evidence": [
+        "tests/unit/test_api_catalog_refresh.py::test_refresh_requires_writer_key_and_empty_query_before_admission",
+        "tests/unit/test_api_catalog_refresh.py::test_refresh_body_is_strict_and_rejections_have_no_writes"
+      ]
+    },
+    {
+      "case": "V40",
+      "evidence": [
+        "tests/unit/test_api_catalog_refresh.py::test_lost_http_acknowledgement_keeps_one_owned_refresh_and_key_lookup",
+        "tests/unit/test_api_catalog_refresh.py::test_restart_preserves_abandoned_refresh_without_execution_or_replay"
+      ]
+    },
+    {
+      "case": "V41",
+      "evidence": [
+        "tests/unit/test_catalog_client.py::test_typed_search_walk_preserves_first_server_envelope_and_complete_rows",
+        "tests/unit/test_catalog_client.py::test_inconsistent_walk_never_becomes_a_successful_collection",
+        "tests/unit/test_catalog_client.py::test_page_limit_and_unfinished_walk_fail_visibly"
+      ]
+    },
+    {
+      "case": "V42",
+      "evidence": [
+        "tests/unit/test_catalog_client.py::test_base_catalog_imports_keep_writer_hub_and_optional_frameworks_cold",
+        "tests/system/test_wheel_smoke.py::test_help_runs_from_a_clean_install"
+      ]
+    },
+    {
+      "case": "V43",
+      "evidence": [
+        "tests/unit/test_cli_catalog.py::test_cli_catalog_reads_collect_and_preserve_server_envelope",
+        "tests/unit/test_cli_catalog.py::test_human_provenance_representative_and_quiet_incomplete_coverage"
+      ]
+    },
+    {
+      "case": "V44",
+      "evidence": [
+        "tests/unit/test_mcp_tools.py::test_actual_mounted_registry_has_exact_typed_allowlist_and_read_only_hints"
+      ]
+    },
+    {
+      "case": "V45",
+      "evidence": [
+        "tests/unit/test_mcp_catalog.py::test_catalog_facade_has_only_five_named_reads_and_no_command_capability",
+        "tests/unit/test_mcp_security.py::test_every_tool_rejects_mutation_fields_without_archive_or_control_writes"
+      ]
+    },
+    {
+      "case": "V46",
+      "evidence": [
+        "tests/unit/test_mcp_catalog.py::test_actual_rest_and_mcp_catalog_payload_identity_coverage_and_evidence_match",
+        "tests/unit/test_catalog_adversarial.py::test_full_rest_cli_mcp_walks_share_rows_coverage_and_catalog_identity"
+      ]
+    },
+    {
+      "case": "V47",
+      "evidence": [
+        "tests/unit/test_catalog_adversarial.py::test_prompt_like_source_values_and_filenames_are_inert_and_terminal_controls_escape",
+        "cockpit/test/config.test.ts::script, shell, URL and terminal fragments cannot become browser tag labels"
+      ]
+    },
+    {
+      "case": "V48",
+      "evidence": [
+        "tests/unit/test_catalog_adversarial.py::test_catalog_reads_cannot_open_sources_or_reach_lock_network_runtime_or_writer"
+      ]
+    },
+    {
+      "case": "V49",
+      "evidence": [
+        "tests/unit/test_catalog_concurrency.py::test_actual_catalog_worker_retains_shared_capacity_until_completion",
+        "tests/unit/test_catalog_adversarial.py::test_huge_single_variant_and_tiny_page_full_scan_refuse_without_truncation",
+        "tests/unit/test_catalog_adversarial.py::test_huge_variant_row_refuses_on_both_actual_read_transports"
+      ]
+    },
+    {
+      "case": "V50",
+      "evidence": [
+        "tests/unit/test_catalog_adversarial.py::test_normalized_registered_secret_tags_cannot_change_predicates_facets_or_cursor",
+        "tests/unit/test_catalog_adversarial.py::test_registered_secret_substitutions_are_inert_over_actual_rest_and_mcp",
+        "tests/unit/test_catalog_queries.py::test_hidden_source_path_and_fingerprint_substitution_leave_cursor_unchanged"
+      ]
+    },
+    {
+      "case": "V51",
+      "evidence": [
+        "tests/unit/test_catalog_final_lifecycle.py::test_config_disable_removal_readd_noop_and_exact_repair_discovery",
+        "tests/unit/test_catalog_final_lifecycle.py::test_real_prune_and_unmanaged_purge_preserve_but_never_search_orphan_metadata",
+        "tests/unit/test_mcp_tools.py::test_verification_confidence_binds_exact_publication_not_only_repository_and_sha"
+      ]
+    },
+    {
+      "case": "V52",
+      "evidence": [
+        "tests/system/test_catalog_compatibility.py::test_actual_old_binary_catalog_compatibility"
+      ]
+    },
+    {
+      "case": "V53",
+      "evidence": [
+        "tests/system/test_catalog_compatibility.py::test_actual_old_binary_catalog_compatibility",
+        "tests/unit/test_mcp_tools.py::test_every_success_and_failed_tool_preserves_archive_and_operation_state"
+      ]
+    },
+    {
+      "case": "V54",
+      "evidence": [
+        "tests/system/test_wheel_smoke.py::test_version_reports_the_declared_version",
+        "tests/unit/test_docs_alignment.py::test_complete_repository_audience_links_anchors_and_catalog_pass_without_baseline"
+      ]
+    },
+    {
+      "case": "V55",
+      "evidence": [
+        "tests/unit/test_catalog_acceptance_evidence.py::test_predecessor_commits_and_plan_selector_preserve_the_execution_record"
+      ]
+    }
+  ]
+}

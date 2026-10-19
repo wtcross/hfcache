@@ -299,7 +299,7 @@ configuration cannot reconstruct removed or uncaptured history. Publication
 observations under `published/metadata/observations/` are derived from exact
 retained manifests and bounded static source inspection; they never establish
 integrity confidence. Read requests do not capture or rebuild either family.
-See [discovery](discovery.md) for proposed refresh/query interfaces.
+See [discovery](discovery.md) for current query/refresh interfaces and observed compatibility limits.
 
 Supplemental records are independent atomic files. Interruption can leave mixed
 observation times; preserve unknown/unsupported canonical records and ambiguous
@@ -308,3 +308,19 @@ Prune/purge may leave inert metadata, so growth is a documented storage cost;
 there is no automatic garbage collector. Old tag-free configs stay valid, but
 new config/layout/operation support needs a target-binary compatibility drill
 and guarded executor drain/backup procedure before rollback.
+
+Use existing protected client settings for local discovery and explicit backfill:
+
+```bash
+hfcache search --scope configured --tag coding
+hfcache search --type dataset --tag science --format parquet
+hfcache catalog refresh --tags-only model:fictional/coding-model
+hfcache catalog refresh --technical-only --revision-scope retained
+```
+
+The fictional selector illustrates scope; use an actual configured or retained
+identity. Refresh requires the REST writer capability and existing keyed operation
+observation. A lost acknowledgement retains the original key/ID; lookup that
+operation instead of issuing a new capture. Reads never refresh implicitly.
+Repair captures its replacement publication independently; prune/purge remove
+membership even when old metadata remains. See [rollback and backup](discovery.md#guarded-rollback-and-backup).

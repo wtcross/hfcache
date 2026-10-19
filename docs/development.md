@@ -133,3 +133,11 @@ missing helpers, malformed references and changed numeric defaults/bounds.
 Edit human reference tables and their governing source together. Keep independent
 route/tool expectations: regenerating a table must not weaken the tests that
 check its completeness, authorization or side effects.
+
+The extended build gate also exercises actual installed pre-feature wheels from
+retained Git source objects against disposable catalog compatibility fixtures.
+It requires the complete repository history for those targets and their locked
+base/server/MCP dependency closure in uv's offline cache. Installed package bytes
+are compared with the selected old sources before behavior is tested. Synthetic
+mount tables and temporary state establish only offline behavior; no archive
+initialization command, real mount, service, credential or Hub workload is used.

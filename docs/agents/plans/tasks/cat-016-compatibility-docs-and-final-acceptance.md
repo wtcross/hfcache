@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | complete |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 6 — Acceptance |
 | Depends on | [CAT-008](cat-008-sync-metadata-lifecycle.md), [CAT-009](cat-009-offline-refresh-service.md), [CAT-015](cat-015-adversarial-and-parity-validation.md) |
@@ -15,7 +15,8 @@ Follow `AGENTS.md` and `docs/agents/workflow.md`. Read relevant sections of the
 [design](../support/tags-and-discovery/design.md),
 [source review](../support/tags-and-discovery/source-review.md) and
 [validation matrix](../support/tags-and-discovery/validation-matrix.md).
-Tasks own execution status; this file is pending, not a claim of implementation.
+The status table and completion evidence below record actual execution; scope
+requirements alone are not successful-check evidence.
 
 ## Likely implementation touchpoints
 
@@ -62,15 +63,63 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
-When work starts, record any relevant newer-source reconciliation, implementation
-choices, blockers and scope amendments here. Preserve prior completed evidence.
+CAT-001 through CAT-015 are committed with green per-package gates. Final scope
+is synthetic lifecycle acceptance, actual isolated installed wheels from reviewed
+pre-feature 75d93a5 and recorded deployed application source 4088994, complete
+V01-V55 evidence, human documentation and scripts/check.sh --with-build. Both
+targets use package version 0.2.1; source/wheel identity will distinguish them.
+Reviewed INV-002/006/012/014-016/018, FS/TX/AD and decisions 65/78/114-125/133;
+no deployment, live/credential/host/push operation is authorized.
+
+Actual end-to-end repair/prune/purge/config-history and all visible cursor-change
+cases: 7 passed in 3.39s. New evidence-reference/workflow audit plus lifecycle:
+9 passed in 3.51s. The audit resolves every V01-V55 reference to actual Python or
+frontend tests and verifies the fifteen predecessor commits each contain their
+completed task, progress and selector records. Both accepted historical spellings
+of completed status are preserved. No unrelated backlog is activated.
+
+Actual installed compatibility targets 75d93a5 and 4088994: 2 passed in 14.28s.
+All 69 installed Python source files match each exact old source export, all 17
+original goldens remain byte-identical/parseable, and actual old factories retain
+nine tools. Tag-free/empty-tag/nonempty-tag CLI validation exits are 0/10/10.
+Controlled empty layouts isolate HFMNT014 for the optional namespace; ordinary
+inventory still reads. Old strict client routes refuse refresh, while generic
+stores preserve completed Envelopes and old runners interrupt queued work without
+replay. [Observed artifact hashes/results](../support/tags-and-discovery/compatibility-results.json)
+retain exact focused evidence. Version strings alone are not binary identity.
+
+Early focused fixture failures exposed a stale pre-no-op observation comparison
+and incorrect InstalledPolicy/Path argument construction (two old-target failures
+in 11.17s, then two in 13.93s). Fixtures were corrected; no product behavior was
+weakened. Initial audit assumptions about a test name/completed spelling were
+corrected before the passing audit. All-source lint/format/types and human
+alignment pass. The final extended gate passed as recorded below. Human navigation/release notes,
+current discovery, lifecycle/backups and observed guarded rollback are updated;
+INV-018/decision 133 enforcement and rationale link the actual target probes.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-016, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-016, this commit). Final
+`scripts/check.sh --with-build` exited 0: 5008 offline tests passed/42 opt-in tests
+deselected in 583.36s; all three locked isolated installation profiles passed;
+actual Cockpit lint/types/170 tests/production build passed with zero skips;
+extended build stage passed 6 tests/5044 deselected in 18.26s, including both
+actual installed-old-wheel targets and current clean-wheel smoke. Earlier focused
+lifecycle/cursor/evidence selection passed 9 in 3.51s; installed target probes
+passed 2 in 14.28s with preserved artifact hashes/results. No required gate is
+skipped or red. Live Hub/NFS, deployed/browser/host acceptance was not run.
+
+All V01-V55 references resolve to concrete tests in
+[acceptance evidence](../support/tags-and-discovery/acceptance-evidence.json), with
+per-package gates retained in their task records and incremental commits.
+All sixteen packages are complete; the dated plan is complete and current.md is
+inactive. Human README/navigation/release/development/discovery/schema/operations/
+recovery/rollback guidance is current; original 17 evidence goldens remain intact.
+INV-002/006/012/014-016/018, FS/TX/AD and decisions 65/78/114-125/133 were reviewed;
+INV-018/decision 133 record lifecycle and actual compatibility enforcement.
+[Completed progress](../../progress.md#tags-and-discovery-2026-10-19) and
+[operator handoff 24](../../progress.md#operator-handoff) retain verification,
+rollback and separate deployment prerequisites. No runtime dependency, production
+archive/service/timer/hardening/credential action, live workload, deployment,
+push/merge/release tag or registry publication was performed. Source remains
+on feat/tags-and-discovery; no old backlog or production authority is activated.

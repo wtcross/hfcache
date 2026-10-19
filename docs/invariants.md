@@ -1040,3 +1040,10 @@ registered-secret representations before matching, facets and cursor identity.
 Enforcement: [catalog checks](../src/hfcache/services/catalog_queries.py),
 [explicit folded literal check](../src/hfcache/redaction.py) and
 [adversarial evidence](../tests/unit/test_catalog_adversarial.py).
+
+INV-018 lifecycle/compatibility enforcement also includes
+[real repair/prune/purge discovery](../tests/unit/test_catalog_final_lifecycle.py)
+and [actual isolated installed targets](../tests/system/test_catalog_compatibility.py).
+Old goldens remain identical; unknown adjuncts never restore membership or
+confidence. Target-specific config/layout/client refusals require preservation
+and guarded validation, not deletion or a universal compatibility assumption.

@@ -228,6 +228,23 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   111/113/125/133 reviewed; discovery/security/invariant/ADR rationale current.
   No runtime dependency or production/live/credential/host/push action.
 
+- [x] CAT-016 Complete lifecycle compatibility and final acceptance (2026-10-19,
+  this commit — [task](plans/tasks/cat-016-compatibility-docs-and-final-acceptance.md)).
+  Actual config history, retained no-op, repair, prune and purge preserve exact
+  membership and inert orphan metadata; all visible publication/coverage changes
+  invalidate cursors. Installed old targets 75d93a5/4088994 verify all 69 package
+  source files and 17 unchanged goldens. Tag configs/client refresh routes refuse;
+  controlled initialization inspection flags the namespace while inventory reads;
+  generic stores preserve terminal results and interrupt queued work without
+  replay. Artifact hashes and all V01-V55 concrete references are retained.
+  Focused lifecycle/evidence 9 pass; actual old targets 2 pass. Final
+  `scripts/check.sh --with-build`: 5008 pass/42 deselected in 583.36s, three locked
+  profiles, actual Cockpit lint/types/170 tests/build, and 6 extended build/
+  compatibility tests pass in 18.26s. Human guides/navigation/Unreleased notes,
+  INV-018/decision 133 and operator handoff 24 current; all sixteen serial tasks
+  complete and selector inactive. No new runtime dependency, production/live/
+  credential/host/deployment/push/merge/tag/registry action. Existing holds remain.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records
@@ -2457,6 +2474,28 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     unmask writers, enable schedules or retry under a new key. Protected backup
     and full evidence paths are in the [task](plans/tasks/ops-022-timestral-model-sync.md).
     This scoped request does not resolve other live acceptance holds.
+
+24. **Tags and discovery source handoff (CAT-016, 2026-10-19):** all sixteen
+    packages are committed on feat/tags-and-discovery, with final extended gate
+    and concrete [V01-V55 evidence](plans/support/tags-and-discovery/acceptance-evidence.json).
+    This is source/offline acceptance, not an installed release or production
+    readiness proof. Current source offers tag authoring, bounded static
+    observations, REST/client/CLI discovery, keyed offline refresh and fourteen
+    explicit read-only MCP tools. Package metadata remains 0.2.1; future artifact
+    selection must pin source and hashes, not that displayed version alone.
+    [Actual old-target results](plans/support/tags-and-discovery/compatibility-results.json)
+    distinguish strict config/client refusals, initialization inspection, readable
+    inventory and generic preserved stores. Before any separately authorized
+    rollout/rollback, follow [backup/drain/target validation](../discovery.md#guarded-rollback-and-backup),
+    preserve historical tags/observations, immutable evidence, both stores,
+    scheduled handles and original lock/guard inodes; never delete unsupported
+    state to force acceptance. Confirm actual TLS/auth/whole-archive entitlement,
+    frontend installation/browser behavior and real NFS/SELinux/executor isolation
+    in the authorized profile. Existing NAS-ro, writer-mask, scheduling and live
+    workload holds are not cleared. Item 23's operation was not observed or
+    changed here: preserve its exact handles and do not resubmit or release its
+    guard based on this implementation. No push, deployment or host action was
+    performed or authorized; implementation completion selects no old backlog.
 
 ## Operator decisions needed
 
@@ -5153,6 +5192,14 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      atomic-file boundaries under lock/preflight/TX-07 guards; no existing archive
      transaction or registered read capability changes. Human discovery/schema/
      architecture contracts and INV-018 establish proposed behavior before code.
+
+     Accepted implementation amendments (2026-10-19, CAT-016) remain in the same
+     [ADR](../adr/decision-133.md): explicit read-only MCP additions follow REST/
+     client acceptance; normalized registered literals are suppressed before
+     catalog predicates/hashes; exact lifecycle and actual old-target behavior
+     constrain rollback without evidence deletion. Original wrappers, policy and
+     durable evidence remain unchanged. Offline acceptance grants no deployment.
+
 
 ## Documentation and script alignment
 

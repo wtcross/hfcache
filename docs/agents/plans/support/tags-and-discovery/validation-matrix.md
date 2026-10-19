@@ -1,7 +1,8 @@
 # Acceptance and validation matrix
 
-All cases below are **planned, not executed**. Task completion evidence must cite
-actual test names, commands, outcomes and relevant fixtures. IDs are test-scenario
+The rows below are acceptance requirements, not independent execution claims.
+[Concrete evidence references](acceptance-evidence.json) resolve to real tests;
+final commands/results are recorded in the task completion evidence. IDs are test-scenario
 references, not another work-package/task sequence. Synthetic repositories and
 small constructed headers are required; never download real weights for tests.
 

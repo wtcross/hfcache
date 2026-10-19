@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | active |
+| Status | complete |
 | Created | 2026-10-19 |
 | Authorization | User explicitly requested implementation and the linked execution instruction on 2026-10-19; scoped offline implementation is authorized. |
 | Reviewed repository / branch | `wtcross/hfcache` / `main` |
@@ -21,9 +21,9 @@ an entry tagged `coding` and `local-inference`, find it immediately as configure
 and later find a retained GGUF `Q4_K_M` variant with exact publication identity.
 Datasets share the same tag vocabulary and scope rules without model-only fields.
 
-This is a drop-in **draft plan bundle**, not executable implementation, installation
-or authority to operate the live writer. The bundle deliberately supplies no
-replacement `current.md`, no root configuration and no modified application code.
+The original supplied draft bundle granted no installation or live-writer
+authority. Explicit implementation authorization activated it; linked tasks own
+actual execution evidence. Production, host and publication restrictions remain.
 
 ### Required user-facing results
 
@@ -58,6 +58,8 @@ operator fields are not needed to implement the agreed tags design.
 - [Start here](support/tags-and-discovery/START-HERE.md) — safe extraction and entry point.
 - [Design](support/tags-and-discovery/design.md) — chosen technical behavior and boundaries.
 - [Validation matrix](support/tags-and-discovery/validation-matrix.md) — 55 planned observable cases.
+- [Concrete V01–V55 evidence](support/tags-and-discovery/acceptance-evidence.json) and
+  [actual installed-old-wheel results](support/tags-and-discovery/compatibility-results.json).
 - [Pinned source review](support/tags-and-discovery/source-review.md) — baseline facts and source map.
 - [Implementation prompt](support/tags-and-discovery/implementation-prompt.md) — authorization/start/resume instruction.
 - [Proposed TOML fragment](support/tags-and-discovery/repositories.example.toml) and
@@ -201,3 +203,12 @@ compatibility barriers and any separate operator prerequisites.
   plan and guard-held operation remain preserved and are not selected here.
   CAT-001–016 and decision 133/INV-018 were checked for collisions; none exist.
   The supplied bundle is retained intact except explicit lifecycle/evidence updates.
+
+- 2026-10-19: Completed all sixteen serial packages on feat/tags-and-discovery,
+  each with its own passing gate and incremental commit. Final extended gate:
+  5008 offline tests, 6 build/actual compatibility tests, three isolated profiles
+  and actual Cockpit 170 tests/build passed. Concrete V01-V55 references and
+  actual installed target hashes/results are linked above. Historical records
+  and unsupported state are preserved; current selector is inactive. No live,
+  production/credential/host, deployment, push/merge/tag or registry action ran.
+  Operator handoff 24 retains separate authorization and real acceptance needs.

@@ -1,11 +1,13 @@
 # Tags and local discovery
 
-Configuration tags, Cockpit authoring, curation identity and supplemental record
-storage, static declarations, GGUF headers and scoped AWQ/GPTQ variants are
-supported, including sync/repair capture, keyed offline refresh and REST reads.
-MCP discovery support below remains proposed; this contract alone
-does not make those commands available. Existing inventory and the nine existing MCP tools keep their
-current behavior until the corresponding interfaces are implemented.
+Use configured tags to organize models and datasets, then search local archived
+observations through REST, the API-backed CLI or five explicit read-only MCP tools.
+Tag edits are visible immediately, including disabled and unpublished entries;
+use scope=configured or scope=all. Technical evidence comes from bounded static
+inspection during sync/repair or an explicit writer-only offline refresh.
+Existing inventory, immutable artifacts and the original nine MCP calls retain
+their behavior. Discovery never downloads, loads models, verifies payloads or
+installs configuration.
 
 ## Operator tags
 
@@ -445,6 +447,50 @@ combining only the paged entries. Human output labels tag provenance, technical
 coverage and representative variants, and escapes nonprintable data. Quiet mode
 retains warnings/errors and uncertain operation handles. No archive policy or
 mount, Hub credential or server/MCP/model runtime is needed on the client.
+
+### Observed pre-feature compatibility
+
+Disposable installed wheels from source `75d93a5` and recorded deployed application
+source `4088994` were exercised separately. Both report package version 0.2.1;
+source and artifact identity are required to distinguish them. This is offline
+compatibility evidence, without a production switch or live NFS acceptance.
+
+| Surface | Observed behavior of both targets |
+| --- | --- |
+| Tag-free configuration | Installed local validation succeeds |
+| Explicit tags=[] or nonempty tags | Strict old configuration validation exits 10 |
+| Original durable artifacts | All 17 old schema goldens are byte-identical and parse with installed old models |
+| Optional metadata directory | An otherwise empty initialized layout passes the old initialization inspector; adding published/metadata makes that inspector report HFMNT014 and an unknown entry |
+| Ordinary published inventory | Existing publications remain readable; the inspector result is not a universal daemon-startup refusal |
+| New refresh receipt | Old strict client refuses its route; the old generic operation store reads/preserves the terminal receipt and exact Envelope |
+| Queued refresh on old runner startup | Becomes interrupted without replay; existing completed result bytes remain unchanged |
+| Original MCP interface | The old installed factory retains its nine-tool registry |
+
+### Guarded rollback and backup
+
+1. Follow the selected profile's [executor drain](deployment-centos-stream-10.md#upgrade-and-drain).
+   Retain operation IDs/keys and scheduled handles, wait for actual API/private
+   executor completion, and keep original locks and independent host guards.
+2. Preserve the full installed configuration, historical tag snapshots, exact
+   observation records, immutable evidence, both operation stores and scheduled
+   handles in a reviewed coordinated backup/snapshot. Current config cannot
+   recreate removed labels; atomic individual records do not promise one global
+   observation timestamp. Preserve unsupported records and temporary evidence.
+3. Stage a reviewed target-compatible tag-free configuration separately. Validate
+   it with the actual target binary. Preserve the tagged original; removing a
+   field from a reviewed compatibility copy is not permission to erase history.
+4. Validate the target's archive and control-state behavior against the reviewed
+   backup or compatible layout. Inventory readability, equal displayed versions
+   or unchanged schema numbers do not establish full rollback compatibility.
+   Keep a compatible observer for new receipt kinds. Never delete metadata or
+   receipts to force an older tool to accept state.
+5. Switch only through the separately authorized profile procedure. Recheck
+   transport/auth, exact archive identity and preserved handles. Schedules and
+   writers remain disabled until their separate operator prerequisites are met.
+
+Prune/purge can leave inert observations and tag snapshots. They never restore
+membership or verification confidence, and there is no automatic metadata garbage
+collector. Backup/space planning must include this growth.
 
 Catalog projections suppress registered secret literals and their casefolded
 representations before predicates, facets and cursor identity. This includes

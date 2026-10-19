@@ -5,6 +5,7 @@ copying are separate paths.
 
 | Audience | Start here | Reference |
 | --- | --- | --- |
+| Discovery reader/curator | [Tags and local discovery](discovery.md) | [Configuration](configuration.md), [CLI](cli.md), [REST](api.md), [MCP](mcp.md) |
 | API reader | [Quickstart](quickstart.md) | [Client settings and reconnect](api-client.md), [CLI](cli.md), [REST API](api.md) |
 | Writer administrator | [Deployment profiles](deployment-centos-stream-10.md), [operations](operations.md) | [Server](server.md), [archive policy](configuration.md), [recovery](recovery.md) |
 | MCP client or administrator | [Connect and use fourteen metadata tools](mcp.md) | [Security](security.md), [consumer identity](consumers.md) |

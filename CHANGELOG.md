@@ -4,6 +4,22 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
+## Unreleased
+
+- Optional normalized configuration tags, Cockpit authoring and current versus
+  last-observed provenance are separate from operational policy and immutable
+  publication/integrity identity.
+- Local search, facets, exact catalog detail and variant pages share bounded
+  REST, base-client/CLI and five additional read-only MCP tools. Technical
+  predicates match one supported complete primary variant; unknown coverage
+  remains explicit. Static GGUF/AWQ/GPTQ and dataset declarations execute no code.
+- Sync/repair capture and writer-only keyed offline refresh store independently
+  atomic supplemental records. Reads never fetch, open model payloads or refresh.
+- Old durable evidence stays byte-compatible. New tags, directory and refresh
+  kinds have observed target-specific compatibility limits; retain backup/state/
+  handles and actual executor drain. See [discovery rollback](docs/discovery.md#guarded-rollback-and-backup).
+  This source feature has not been deployed or release-tagged.
+
 ## 0.2.1 — 2026-10-18, local release with workload holds
 
 - Service images use pinned UBI 10 micro with authenticated portable Python and

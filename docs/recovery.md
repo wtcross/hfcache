@@ -272,3 +272,17 @@ installation and must never lift its restrictions. Finish separately with an
 independent consumer copy pinned to one exact publication and full local path/
 size/hash verification before serving. See [consumers](consumers.md) and the
 [deployment acceptance scope](deployment-status.md).
+
+## Supplemental discovery during recovery and rollback
+
+Historical tag snapshots and derived observations are independent atomic records,
+not journals or integrity evidence. Preserve unsupported versions and ambiguous
+temporaries; recovery never silently rebuilds them. Exact references/manifests
+remain authoritative after repair, prune and purge, so leftover observations never
+restore inventory or confidence. Current reads cannot reconstruct labels removed
+before capture. Include supplemental files and the original tagged configuration
+with reviewed backups, alongside both operation stores and scheduled handles.
+[Observed old-binary behavior and guarded rollback](discovery.md#compatibility-and-operation)
+distinguish strict old configuration/client refusals from readable generic stores
+and ordinary inventory. Drain actual executors and retain exact handles before
+any separately authorized switch; no evidence deletion or automatic replay.

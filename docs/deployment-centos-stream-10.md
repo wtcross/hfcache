@@ -238,6 +238,7 @@ readers before switching. Preserve all independent compatibility domains:
 | Three-revision policy (0.1.7) | Before 0.1.7, explicitly validate maximum_revisions=5; this cannot restore pruned revisions |
 | Quarantine cleanup (0.1.8–0.1.10) | Formats remain compatible; older tools lack cleanup and do not restore removed redundant entries |
 | API receipts and scheduled handles | Retain separate stores/handles and a compatible observer/reconciler; absent old commands/modules never prove nonexecution |
+| Tags and supplemental discovery | Old strict configs refuse even empty tags; old initialization inspection flags the optional namespace, while ordinary inventory can remain readable. Old client receipt allowlists refuse refresh kinds although generic stores preserve them. Require actual target validation, preserved backups/handles and a compatible observer; never delete evidence to force acceptance. See [observed compatibility](discovery.md#observed-pre-feature-compatibility). |
 | Optional MCP | Disable deliberately before server-only/pre-MCP startup; no automatic fallback or schema migration |
 | Rootless 0.2.0 | Recorded API-to-worker SELinux connection limitation returns; do not weaken policy to bypass it |
 

@@ -18,6 +18,7 @@ NFS export; neither API serves model downloads.
 
 | You want to | Guide |
 | --- | --- |
+| Organize and discover models/datasets | [Tags and local discovery](docs/discovery.md) |
 | Inspect an existing archive through its API | [Reader quickstart](docs/quickstart.md) |
 | Administer a writer | [Operations](docs/operations.md), [deployment](docs/deployment-centos-stream-10.md) |
 | Connect an MCP client | [MCP connection and tools](docs/mcp.md) |
@@ -62,6 +63,11 @@ rootless managers, credentials, sockets, upgrades and rollback. The
 [storage contract](docs/storage-requirements.md) defines NFSv4.2 semantics,
 identity mapping and export protection. Writer preflight refuses a local-directory
 archive fallback.
+
+Configured tags and evidence-backed local discovery are available in source
+through REST, CLI and fourteen read-only MCP tools. Explicit offline metadata
+refresh uses writer-only keyed operations; reads never load models or contact Hub.
+See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollback.
 
 ## Status
 

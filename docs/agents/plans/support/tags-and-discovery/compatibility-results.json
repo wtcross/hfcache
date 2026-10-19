@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-19",
+  "command": "uv run --locked --extra server --extra mcp pytest -m build tests/system/test_catalog_compatibility.py --no-cov -q -s --tb=short",
+  "outcome": "2 passed in 14.28s",
+  "scope": "Disposable installed old wheels, fake mount table, synthetic disabled-token config and owned operation stores; no production actions.",
+  "targets": [
+    {
+      "config_cli_exit_codes": [
+        0,
+        10,
+        10
+      ],
+      "report": {
+        "control_layouts": [
+          {
+            "codes": [],
+            "state": "initialized",
+            "unknown_entries": []
+          },
+          {
+            "codes": [
+              "HFMNT014"
+            ],
+            "state": "unusable",
+            "unknown_entries": [
+              "published/metadata"
+            ]
+          }
+        ],
+        "inspection_codes": [
+          "HFMNT014"
+        ],
+        "inspection_state": "unusable",
+        "installed_config_sha256": "4fb8a6226c79f3a846c1eb4c5742dae64361258b171b926b9605724b6559710a",
+        "installed_source_files_equal": 69,
+        "inventory": [
+          "model:organization/model-name"
+        ],
+        "old_client_refuses_refresh_route": true,
+        "old_goldens_unchanged_and_parsed": [
+          "journal",
+          "manifest",
+          "operation-event",
+          "operation-receipt",
+          "operation-result-reference",
+          "prune-plan",
+          "pruned-record",
+          "purge-plan",
+          "reference",
+          "repair-manifest",
+          "repair-retirement",
+          "repositories-catalog",
+          "run-report",
+          "sentinel",
+          "verification-catalog",
+          "verification-catalog-degraded",
+          "verification-report"
+        ],
+        "old_mcp_tools": [
+          "estimate_verification",
+          "get_archive_status",
+          "get_current_reference",
+          "get_revision_manifest",
+          "get_run_report",
+          "get_verification_report",
+          "list_repositories",
+          "list_revisions",
+          "list_run_reports"
+        ],
+        "old_store_reads_refresh_route": "/api/v1/catalog/refreshes",
+        "queued_restart": "interrupted_without_replay",
+        "terminal_result_preserved": true,
+        "unknown_entries": [
+          ".store/hub/models--organization--model-name",
+          ".store/transactions/25619f5606164491971e10c14e6ac4b0.json",
+          ".store/transactions/51b05b4b45ea4306b0ce8a35a5b48da4.json",
+          "published/catalog/repositories.json",
+          "published/manifests/models",
+          "published/metadata",
+          "published/repos/models",
+          "runs/20261019T213111Z-eccd14fc469940bab9b52895d1ddb389.json"
+        ]
+      },
+      "revision": "75d93a5",
+      "wheel_sha256": "3cddcc5b1bb1452723767041dd30f1fc6a32f2bfa0539d4334e4399e5fe83256"
+    },
+    {
+      "config_cli_exit_codes": [
+        0,
+        10,
+        10
+      ],
+      "report": {
+        "control_layouts": [
+          {
+            "codes": [],
+            "state": "initialized",
+            "unknown_entries": []
+          },
+          {
+            "codes": [
+              "HFMNT014"
+            ],
+            "state": "unusable",
+            "unknown_entries": [
+              "published/metadata"
+            ]
+          }
+        ],
+        "inspection_codes": [
+          "HFMNT014"
+        ],
+        "inspection_state": "unusable",
+        "installed_config_sha256": "4fb8a6226c79f3a846c1eb4c5742dae64361258b171b926b9605724b6559710a",
+        "installed_source_files_equal": 69,
+        "inventory": [
+          "model:organization/model-name"
+        ],
+        "old_client_refuses_refresh_route": true,
+        "old_goldens_unchanged_and_parsed": [
+          "journal",
+          "manifest",
+          "operation-event",
+          "operation-receipt",
+          "operation-result-reference",
+          "prune-plan",
+          "pruned-record",
+          "purge-plan",
+          "reference",
+          "repair-manifest",
+          "repair-retirement",
+          "repositories-catalog",
+          "run-report",
+          "sentinel",
+          "verification-catalog",
+          "verification-catalog-degraded",
+          "verification-report"
+        ],
+        "old_mcp_tools": [
+          "estimate_verification",
+          "get_archive_status",
+          "get_current_reference",
+          "get_revision_manifest",
+          "get_run_report",
+          "get_verification_report",
+          "list_repositories",
+          "list_revisions",
+          "list_run_reports"
+        ],
+        "old_store_reads_refresh_route": "/api/v1/catalog/refreshes",
+        "queued_restart": "interrupted_without_replay",
+        "terminal_result_preserved": true,
+        "unknown_entries": [
+          ".store/hub/models--organization--model-name",
+          ".store/transactions/df7538363b694eea9c336e8e6569b2ff.json",
+          ".store/transactions/e323dd52c81a40c6a7bdfa056b9fdc66.json",
+          "published/catalog/repositories.json",
+          "published/manifests/models",
+          "published/metadata",
+          "published/repos/models",
+          "runs/20261019T213118Z-67124fb711294102b585a7d8ea847b7d.json"
+        ]
+      },
+      "revision": "4088994",
+      "wheel_sha256": "2ffc0980a76603b5eeafec2a4f0a1fe2151fc58135b7c7107aec3bbf8cc2be7d"
+    }
+  ]
+}
