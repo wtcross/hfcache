@@ -1199,3 +1199,40 @@ Collection limits and cursors stay in the transport's existing page contract;
 new payload identity binds all relevant visible rows and coverage. Incomplete
 coverage is explicit even when known `total_matches` is zero. No new fields are
 added to old inventory payloads or strict read wrappers.
+
+### 17.3 Offline refresh result
+
+The typed `catalog refresh` service payload uses independent strict schema 1
+inside the existing Envelope. Public REST admission remains a separate interface.
+Fields are `schema_version`, `archive_id`, `state`, `revision_scope`, `tags`,
+`technical`, `curation_fingerprint`, `curation_observed_at`, `counts` and
+`repositories`. The curation identity/time describe the actual installed source
+read under the lock, even when tag output is disabled. They do not claim that a
+failed write persisted a snapshot.
+
+`state` is `complete` when all requested work completed or was intentionally
+skipped without warning/error; `partial` when warnings/errors coexist with at
+least one written record; otherwise `failed`. Complete processing of an
+unpublished repository can explicitly skip technical work without claiming
+technical availability. Every count agrees with the per-record rows.
+
+Repository rows are unique and sorted by `(repository_type, repository_id)`, with
+`tag_status` (captured, not_requested, skipped_unconfigured, failed),
+`technical_status` (complete, incomplete, failed, not_requested,
+skipped_unpublished), `publications`, and sorted unique `warnings`/`errors` code
+arrays (at most eight codes each). Technical attempts sort by generation/SHA.
+Each includes `commit_sha`, `publication_id`, `publication_generation`,
+`write_status` (written or failed), nullable `observation_status`, `observed_at`,
+`manifest_digest`, and `error_code`. A written record requires exact observation
+identity and no error; a failed write has an error and no claimed recorded
+observation. Written partial/unsupported/failed observations are successful record
+writes with incomplete interpretation and `HFWRN011`.
+
+Counts are `repositories`, `snapshots_written`, `observations_written`,
+`records_failed`, `technical_incomplete` and `technical_skipped`.
+`technical_incomplete` counts attempted publications without a written complete
+observation, including failed writes. Limits are 256 repositories, 512 publication
+attempts and 1 MiB serialized result, reserved before the first mutation using
+bounded identifiers, fixed statuses/codes and actual generation widths. Aggregate
+scope/result exhaustion refuses; it never returns a truncated success. Ordinary
+classified failure envelopes remain valid when scope cannot be established.

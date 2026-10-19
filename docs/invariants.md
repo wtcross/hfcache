@@ -244,8 +244,8 @@ control-state jobs and confer no deletion authority; retention remains unchanged
 - **`TX-07`** — A mutating command reconciles unfinished journals under its own
   exclusive lock before Hub contact or its new archive work. A sync excludes
   its own active run journal. Resolved journals need no replay; a
-  `needs_operator` journal remains unresolved. Quarantine cleanup instead
-  refuses unfinished work and does not recover unrelated transactions.
+  `needs_operator` journal remains unresolved. Quarantine cleanup and supplemental
+  refresh instead refuse unfinished work without recovering unrelated transactions.
 - **`FS-18`** — Acting on stale transaction artifacts requires a recognized
   transaction-ID name, its journal, and the configured minimum age. Age alone
   never grants deletion authority. The sole early-recovery exception is the
@@ -1004,5 +1004,9 @@ and [scope/pointer/ambiguity fixtures](../tests/unit/test_catalog_weights.py).
 Lifecycle enforcement: [joined writer capture](../src/hfcache/catalog_capture.py),
 [sync/repair service](../src/hfcache/services/commands.py) and
 [retained/repair/failure fixtures](../tests/unit/test_catalog_lifecycle.py).
-Remaining proposed refresh/query/transport interfaces require their own
+Refresh enforcement: [typed offline service](../src/hfcache/catalog_refresh.py),
+[bounded ref inventory](../src/hfcache/catalog_inventory.py),
+[scope/failure fixtures](../tests/unit/test_catalog_refresh.py) and
+[keyed replay fixture](../tests/unit/test_catalog_refresh_replay.py).
+Remaining proposed query/transport interfaces require their own
 validation before support is declared. Offline evidence is not production acceptance.

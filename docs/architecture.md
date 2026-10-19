@@ -977,8 +977,10 @@ new metadata work; there is no replay, cross-file commit or broader exception.
   reversible (`AD-16`).
 - **`TX-07`** — Every mutating command reconciles unfinished journals **before**
   contacting the Hub or changing archive state, under the same exclusive lock it
-  will hold for its own work. Quarantine cleanup checks that no unfinished
-  journal remains and refuses otherwise; it does not recover unrelated work.
+  will hold for its own work. Quarantine cleanup and supplemental-only refresh
+  instead check for unfinished journals and refuse without recovering unrelated
+  work. Supplemental refresh recognizes only validated committed-repair pending
+  retirement as safe; it never applies repair, prune or cleanup (decision 133).
 
 ### 7.2 The atomic operations this design relies on
 

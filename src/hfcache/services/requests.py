@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from hfcache.errors import CodedError, ConfigurationError
 from hfcache.identity import (
+    SEGMENT_MAXIMUM_LENGTH,
     CommitSha,
+    RepositoryIdentity,
     RepositorySelector,
     parse_run_id,
     parse_selector,
@@ -47,6 +49,50 @@ class SelectionRequest:
 
 
 ALL_CONFIGURED = SelectionRequest()
+MAX_REFRESH_SELECTORS: Final = 256
+MAX_REFRESH_SELECTOR_LENGTH: Final = len("dataset:") + 2 * SEGMENT_MAXIMUM_LENGTH + 1
+
+
+@dataclass(frozen=True, slots=True)
+class CatalogRefreshRequest:
+    """Whole-repository offline refresh intent; no input path or credential capability."""
+
+    selectors: tuple[str, ...] = ()
+    revision_scope: Literal["current", "retained"] = "retained"
+    tags: bool = True
+    technical: bool = True
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.selectors, (tuple, list))
+            or len(self.selectors) > MAX_REFRESH_SELECTORS
+            or type(self.tags) is not bool
+            or type(self.technical) is not bool
+            or not (self.tags or self.technical)
+            or type(self.revision_scope) is not str
+            or self.revision_scope not in {"current", "retained"}
+        ):
+            msg = "Invalid catalog refresh scope or outputs"
+            raise ConfigurationError.single(msg, code="HFARG002")
+        found: set[RepositoryIdentity] = set()
+        for text in self.selectors:
+            if not isinstance(text, str) or len(text) > MAX_REFRESH_SELECTOR_LENGTH:
+                msg = "Catalog refresh requires bounded canonical whole-repository selectors"
+                raise ConfigurationError.single(msg, code="HFARG001")
+            try:
+                parsed = parse_selector(text)
+            except CodedError, ConfigurationError:
+                msg = "Catalog refresh requires canonical whole-repository selectors"
+                raise ConfigurationError.single(msg, code="HFARG001") from None
+            if parsed.commit_sha is not None or text != parsed.identity.selector:
+                msg = "Catalog refresh requires canonical whole-repository selectors"
+                raise ConfigurationError.single(msg, code="HFARG001")
+            found.add(parsed.identity)
+        object.__setattr__(
+            self,
+            "selectors",
+            tuple(item.selector for item in sorted(found, key=lambda identity: identity.sort_key)),
+        )
 
 
 @dataclass(frozen=True, slots=True)

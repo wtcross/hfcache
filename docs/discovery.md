@@ -2,9 +2,9 @@
 
 Configuration tags, Cockpit authoring, curation identity and supplemental record
 storage, static declarations, GGUF headers and scoped AWQ/GPTQ variants are
-supported, including sync and repair capture. Refresh and transport support
-below remain proposed; this contract alone does not make those commands
-available. Existing inventory and the nine existing MCP tools keep their
+supported, including sync/repair capture and the typed offline refresh service.
+REST/client and MCP discovery support below remain proposed; this contract alone
+does not make those commands available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 
 ## Operator tags
@@ -113,6 +113,36 @@ plus a 64 KiB directory allowance. Exhaustion preserves earlier whole records
 and reports incomplete capture; near-reserve `HFWRN005` warnings remain visible.
 No deferred callbacks, background writers,
 dependency downloads or additional pruning are introduced.
+
+### Offline refresh service
+
+Refresh accepts at most 256 raw canonical whole-repository selectors, deduplicated
+and sorted by identity; revision suffixes, paths, unknown identities, invalid
+revision scopes, non-boolean flags and both outputs disabled refuse. Empty
+selection means current configured identities plus repositories with authoritative
+retained per-SHA refs. Metadata snapshots and orphan instance directories
+cannot create scope. Current revision selection follows the explicit current ref
+and its matching retained ref, never the greatest generation.
+
+The service acquires the common guard once, obtains fresh installed curation and
+resolves all scope/result bounds before writing. It uses the admitted storage and
+archive authority. Unavailable fresh curation refuses without a stale fallback.
+Bounded journal checks refuse unfinished or operator-required work; refresh never
+applies recovery, repair, prune or cleanup as a side effect. A committed repair's
+validated pending retirement remains safe as above. Existing preflight probes
+retain their normal behavior.
+
+At most 256 repositories and 512 publications fit one refresh, with a 1 MiB
+result budget reserved before mutation. One bounded metadata reader and the
+shared invocation extraction/write budgets cover the full operation. Tag-only
+refresh can capture disabled or unpublished entries. Unmanaged tags are explicitly
+skipped and existing historical snapshots remain intact. Technical work without
+a retained publication is explicitly skipped. Each record independently reports
+write success or failure; writing an unsupported/failed observation succeeds as
+a record while remaining incomplete technical coverage. Partial writes remain
+visible with exact publication identity and counts. No successful truncation,
+network, credential resolution, payload integrity hashing, configuration write
+or separate background work is permitted.
 
 ## Static extraction and variants
 

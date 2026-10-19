@@ -127,6 +127,21 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   decision 133 reviewed; human lifecycle/schema/CLI contracts updated. No new
   dependency or production/live/credential/host/push action.
 
+- [x] CAT-009 Add typed offline refresh service (2026-10-19, this commit —
+  [task](plans/tasks/cat-009-offline-refresh-service.md)). Strict canonical intent,
+  fresh installed curation and one original lock/preflight guard resolve bounded
+  configured/retained scope before independent record attempts. Exact current
+  refs, honest skips/counts and typed partial/failed outcomes preserve history,
+  unsupported records and immutable authority. Shared reader/extraction/write and
+  complete-result budgets include actual generation widths. Unfinished work
+  refuses without recovery/repair/prune/cleanup; no Hub/credential/config/hash
+  authority is added. V26-V28 focused 184 pass, including 49 new cases and actual
+  same-key/new-key runner replay; independent review clear. Full gate: 4677 pass/
+  40 deselected in 507.48s, build/three locked profiles and actual Cockpit lint/
+  types/169 tests/build. INV-018/AD/FS/TX and decision 133 reviewed; architecture,
+  discovery/schema and invariant/ADR links current. No new runtime dependency,
+  production/live/credential/host/push action or public endpoint activation.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Final
 
 from hfcache.archive import initialize_archive
 from hfcache.catalog_capture import CatalogCapture, capture_warning
+from hfcache.catalog_refresh import refresh_catalog as run_catalog_refresh
 from hfcache.credentials import resolve_token
 from hfcache.errors import (
     ConfigurationError,
@@ -53,6 +54,7 @@ from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.queries import LocalQueries
 from hfcache.services.requests import (
     ALL_CONFIGURED,
+    CatalogRefreshRequest,
     DoctorRequest,
     InitializationRequest,
     MaintenanceRequest,
@@ -66,6 +68,7 @@ from hfcache.services.requests import (
 )
 from hfcache.storage import read_model
 from hfcache.sync import synchronize
+from hfcache.taxonomy import aggregate_exit_code
 from hfcache.transactions import open_transaction
 from hfcache.verification import (
     FINDING_CODES,
@@ -91,6 +94,7 @@ if TYPE_CHECKING:
 # Existing server adapters retain these compatibility exports (decision 120).
 __all__ = [
     "ALL_CONFIGURED",
+    "CatalogRefreshRequest",
     "CommandServices",
     "DoctorRequest",
     "InitializationRequest",
@@ -610,6 +614,33 @@ class CommandServices:
                 )
             except HfcacheError as error:
                 return _failure("repair", error)
+
+    def refresh_catalog(self, request: CatalogRefreshRequest) -> ServiceResult:
+        """Offline adjunct-only command; pending archive work refuses instead of being recovered."""
+        with self.context.activate():
+            try:
+                with guarded(
+                    self.layout,
+                    storage=self.config.storage,
+                    command="catalog refresh",
+                    lock_wait_seconds=self.config.sync.lock_wait_seconds,
+                ) as checks:
+                    result, warnings, errors = run_catalog_refresh(
+                        CatalogCapture(
+                            self.layout, self.config, checks, curation_source=self.curation_source
+                        ),
+                        request,
+                    )
+                return ServiceResult(
+                    "catalog refresh",
+                    result.to_payload(),
+                    warnings=warnings,
+                    errors=errors,
+                    exit_code=int(aggregate_exit_code([error.code for error in errors])),
+                    run_id=self.context.run_id,
+                )
+            except HfcacheError as error:
+                return _failure("catalog refresh", error)
 
     def _reconcile(self, envelope: Mapping[str, Any]) -> None:
         """Private helper requiring the caller's existing common-lock ownership."""

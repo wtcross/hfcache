@@ -56,6 +56,15 @@ startup. No new runtime dependency or production operation is approved.
   layout validation and candidate byte comparisons. Parser, storage, capability
   and compatibility evidence must accompany corresponding implementation.
 - No production acceptance is claimed.
+- [Typed offline refresh](../../src/hfcache/catalog_refresh.py) reserves finite
+  scope/result capacity before writes and records independent per-record outcomes.
+  Its TX-07 guard refuses unfinished archive work without applying recovery:
+  automatic repair/prune/cleanup would exceed the metadata-only command's intent.
+  [Reference inventory](../../src/hfcache/catalog_inventory.py) has one bounded
+  no-follow reader; orphan instances and metadata snapshots confer no membership.
+  [Service fixtures](../../tests/unit/test_catalog_refresh.py) and
+  [existing-runner replay](../../tests/unit/test_catalog_refresh_replay.py) preserve
+  offline scope, historical curation, partial progress and exact keyed observation.
 - [Joined sync/repair capture](../../src/hfcache/catalog_capture.py) obtains fresh
   curation under the original lock without replacing admitted execution policy.
   [Lifecycle fixtures](../../tests/unit/test_catalog_lifecycle.py) preserve exact

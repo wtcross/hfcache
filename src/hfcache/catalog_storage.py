@@ -173,7 +173,7 @@ def read_tag_snapshot(
     return record
 
 
-def _authority[ModelT: VersionedModel](
+def read_authority[ModelT: VersionedModel](
     path: Path,
     model: type[ModelT],
     reader: MetadataReader,
@@ -197,7 +197,7 @@ def publication_binding(
 ) -> tuple[RevisionManifest, str]:
     """Read canonical authoritative metadata only, never tree payloads or confidence."""
     repository = layout.repository(identity)
-    reference, _ = _authority(repository.revision_ref(sha), Reference, reader)
+    reference, _ = read_authority(repository.revision_ref(sha), Reference, reader)
     if (
         reference.identity != identity
         or reference.commit_sha != sha
@@ -206,7 +206,9 @@ def publication_binding(
         or reference.manifest != str(repository.manifest_reference(sha, publication))
     ):
         raise _invalid()
-    manifest, digest = _authority(repository.manifest(sha, publication), RevisionManifest, reader)
+    manifest, digest = read_authority(
+        repository.manifest(sha, publication), RevisionManifest, reader
+    )
     if (
         manifest.identity != identity
         or manifest.commit_sha != sha
@@ -312,7 +314,7 @@ class CatalogWriter:
         self.layout = layout
         self.archive_id = storage.archive_id
         self.reader = MetadataReader(layout.root, RECORD_BOUNDS)
-        sentinel, _ = _authority(layout.sentinel, ArchiveSentinel, self.reader)
+        sentinel, _ = read_authority(layout.sentinel, ArchiveSentinel, self.reader)
         if sentinel.archive_id != self.archive_id:
             raise _invalid()
         self._journals(active_sync)
@@ -340,7 +342,7 @@ class CatalogWriter:
                 entry.info.st_mode
             ):
                 raise _invalid()
-            journal, _ = _authority(entry.path, TransactionJournal, self.reader)
+            journal, _ = read_authority(entry.path, TransactionJournal, self.reader)
             if journal.archive_id != self.archive_id or entry.path != self.layout.journal(
                 TransactionId(journal.transaction_id)
             ):
@@ -392,7 +394,7 @@ class CatalogWriter:
             self.layout.archive_relative(path)
         ):
             raise _invalid()
-        record, _ = _authority(path, RepairRetirementRecord, self.reader)
+        record, _ = read_authority(path, RepairRetirementRecord, self.reader)
         replacement = PublicationId(record.replacement_publication_id)
         if (
             record.transaction_id != journal.transaction_id

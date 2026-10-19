@@ -16,7 +16,7 @@ from hfcache.catalog_models import PublicationObservation, RepositoryTagSnapshot
 from hfcache.catalog_parsing import ExtractionError
 from hfcache.catalog_storage import CatalogWriter, publication_binding
 from hfcache.catalog_weights import extract_weights
-from hfcache.errors import Problem
+from hfcache.errors import ConfigurationError, HfcacheError, Problem
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity
 from hfcache.locking import require_archive_lock
 from hfcache.logging import emit
@@ -120,7 +120,9 @@ class CatalogCapture:
         self.bytes_attempted = 0
         self.capacity_warnings: dict[str, Problem] = {}
 
-    def _begin(self, active_sync: TransactionJournal | None = None) -> None:
+    def begin(
+        self, active_sync: TransactionJournal | None = None, *, required_curation: bool = False
+    ) -> None:
         require_archive_lock(expected=self.ownership)
         self.writer = None
         self.curation = None
@@ -149,11 +151,17 @@ class CatalogCapture:
             )
         except Exception:  # noqa: BLE001 - isolate only the optional fresh curation source
             self.curation_failed = True
+            if required_curation:
+                msg = "Current installed curation is unavailable or incompatible"
+                raise ConfigurationError.single(msg, code="HFCFG001") from None
 
-    def _write(self, record: RepositoryTagSnapshot | PublicationObservation) -> bool:
+    def write_record(
+        self, record: RepositoryTagSnapshot | PublicationObservation
+    ) -> tuple[str, ...]:
+        """Independent write outcome; fixed codes distinguish explicit partial refresh progress."""
         require_archive_lock(expected=self.ownership)
         if self.writer is None:
-            return False
+            return (EXTRACTION_WARNING_CODE,)
         try:
             size = len(dump(record))
             self.records_attempted += 1
@@ -162,7 +170,7 @@ class CatalogCapture:
                 self.records_attempted > MAX_CAPTURE_RECORDS
                 or self.bytes_attempted > MAX_CAPTURE_BYTES
             ):
-                return False
+                return ("HFAPI005",)
             warnings = require_capacity(
                 self.layout,
                 self.config.storage,
@@ -170,42 +178,58 @@ class CatalogCapture:
             )
             self.capacity_warnings.update((warning.code, warning) for warning in warnings)
             self.writer.write(record)
+        except HfcacheError as exc:
+            return (exc.problems[0].code,)
         except Exception:  # noqa: BLE001 - this independently atomic adjunct cannot roll back publication
-            return False
-        return True
+            return ("HFVER007",)
+        return ()
+
+    def _write(self, record: RepositoryTagSnapshot | PublicationObservation) -> bool:
+        return not self.write_record(record)
+
+    def tag_record(self, identity: RepositoryIdentity) -> tuple[RepositoryTagSnapshot | None, bool]:
+        """Actual curation only; removal preserves history and secret suppression is visible."""
+        require_archive_lock(expected=self.ownership)
+        if self.curation is None or identity not in self.curation.tags:
+            return None, self.curation_failed
+        tags = self.curation.tags[identity]
+        safe_tags = tuple(tag for tag in tags if redact_text(tag) == tag)
+        return RepositoryTagSnapshot(
+            archive_id=self.config.storage.archive_id,
+            repository_type=identity.type,
+            repository_id=identity.id,
+            tags=safe_tags,
+            observed_at=self.curation.observed_at,
+            curation_fingerprint=self.curation.fingerprint,
+        ), tags != safe_tags
 
     def _capture(
         self, identity: RepositoryIdentity, sha: str | None, publication: str | None
     ) -> bool:
         """True means incomplete adjunct work; no exception from optional work escapes."""
         require_archive_lock(expected=self.ownership)
-        incomplete = self.curation_failed
-        if self.curation is not None and identity in self.curation.tags:
-            tags = self.curation.tags[identity]
-            safe_tags = tuple(tag for tag in tags if redact_text(tag) == tag)
-            incomplete |= tags != safe_tags
-            incomplete |= not self._write(
-                RepositoryTagSnapshot(
-                    archive_id=self.config.storage.archive_id,
-                    repository_type=identity.type,
-                    repository_id=identity.id,
-                    tags=safe_tags,
-                    observed_at=self.curation.observed_at,
-                    curation_fingerprint=self.curation.fingerprint,
-                )
-            )
+        snapshot, incomplete = self.tag_record(identity)
+        if snapshot is not None:
+            incomplete |= not self._write(snapshot)
         if sha is None or publication is None or self.writer is None:
             return incomplete
         try:
-            manifest, digest = publication_binding(
-                self.layout,
-                identity,
-                CommitSha(sha),
-                PublicationId(publication),
-                reader=self.writer.reader,
-            )
+            record = self.publication_record(identity, CommitSha(sha), PublicationId(publication))
         except Exception:  # noqa: BLE001 - failure to bind optional evidence never reclassifies publication
             return True
+        return (not self._write(record)) or record.status != "complete" or incomplete
+
+    def publication_record(
+        self, identity: RepositoryIdentity, sha: CommitSha, publication: PublicationId
+    ) -> PublicationObservation:
+        """Bind exact retained evidence before extraction; failed interpretation stays recorded."""
+        require_archive_lock(expected=self.ownership)
+        if self.writer is None:
+            msg = "Catalog capture has not begun"
+            raise RuntimeError(msg)
+        manifest, digest = publication_binding(
+            self.layout, identity, sha, publication, reader=self.writer.reader
+        )
         try:
             result = extract_publication(SourceAccess(self.layout, manifest, budget=self.budget))
             record = self._record(manifest, digest, result)
@@ -215,7 +239,7 @@ class CatalogCapture:
         except Exception:  # noqa: BLE001 - preserve a truthful failed observation for an extractor defect
             result = ExtractionResult("failed", diagnostics=("extractor_failure",))
             record = self._record(manifest, digest, result)
-        return (not self._write(record)) or result.status != "complete" or incomplete
+        return record
 
     def _record(
         self, manifest: RevisionManifest, digest: str, result: ExtractionResult
@@ -260,7 +284,7 @@ class CatalogCapture:
         self, results: Sequence[RepositoryRunResult], active_sync: TransactionJournal
     ) -> list[RepositoryRunResult]:
         try:
-            self._begin(active_sync)
+            self.begin(active_sync)
         except Exception:  # noqa: BLE001 - optional namespace/guard refusal cannot change archive outcomes
             self.curation_failed = True
         updated = []
@@ -290,7 +314,7 @@ class CatalogCapture:
         self, identity: RepositoryIdentity, sha: str, publication: str
     ) -> tuple[Problem, ...]:
         try:
-            self._begin()
+            self.begin()
         except Exception:  # noqa: BLE001 - optional capture cannot invalidate a committed repair
             self.curation_failed = True
         return self._safe_capture(identity, sha, publication)
