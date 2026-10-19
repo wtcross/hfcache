@@ -54,7 +54,7 @@ DEFAULT_QUERY = CatalogQuery()
 
 
 def _safe(value: object) -> bool:
-    return redact_text(str(value)) == str(value)
+    return redact_text(str(value), folded_literals=True) == str(value)
 
 
 def _json(value: object) -> bytes:

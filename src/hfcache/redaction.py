@@ -48,10 +48,15 @@ def clear_registered_secrets() -> None:
         _registered.clear()
 
 
-def redact_text(value: str) -> str:
-    """Remove known literals and legacy recognizable credential/URL shapes."""
+def redact_text(value: str, *, folded_literals: bool = False) -> str:
+    """Remove known literals/shapes; catalog checks can also suppress casefolded literals."""
     with _registry_lock:
         secrets = tuple(sorted(_registered, key=lambda item: (-len(item), item)))
+    if folded_literals:
+        folded = value.casefold()
+        if any(secret.casefold() in folded for secret in secrets):
+            # INV-018: normalized catalog identifiers must not bypass known literals.
+            return REDACTED
     for secret in secrets:
         value = value.replace(secret, REDACTED)
     if _SECRET_VALUE.search(value) or _SIGNED_URL.search(value):

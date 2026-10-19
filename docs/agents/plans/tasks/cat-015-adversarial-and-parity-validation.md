@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | complete |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 6 — Acceptance |
 | Depends on | [CAT-003](cat-003-cockpit-tag-authoring.md), [CAT-008](cat-008-sync-metadata-lifecycle.md), [CAT-014](cat-014-read-only-mcp-catalog-tools.md) |
@@ -60,15 +60,47 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
-When work starts, record any relevant newer-source reconciliation, implementation
-choices, blockers and scope amendments here. Preserve prior completed evidence.
+CAT-014 is committed with a green full gate. Reviewing INV-002/006/012/016/018
+and decisions 111/113/125/133 before adversarial acceptance. Existing extractor,
+record, query and transport negative fixtures are retained; new integration cases
+will target normalized secret representations, whole walks, source-open/lock/
+network/runtime spies, cancellation ownership and oversized individual variants.
+
+Reproduced a normalized-secret regression before its fix (one focused failure):
+a registered mixed-case value became a visible lowercase tag, changing results
+and cursor identity. Catalog checks now explicitly suppress casefolded registered
+literals before projection; default literal redaction stays unchanged. INV-002/
+018 and decision 133 document the normalization rationale. Public-label changes
+still invalidate cursors; hidden substitutions cannot change results, facets,
+counts or continuation. Actual REST/MCP and API-backed CLI confirm this behavior.
+
+New integration tests complete REST/CLI/MCP walks and compare full rows, coverage
+and identity. File-open, import, archive-lock, credential, hash, writer, refresh,
+network and shell spies reject effectful/source capabilities across all five MCP
+reads and REST. Actual filesystem snapshots remain unchanged. Prompt-like source
+values and shell-looking filenames remain data; terminal controls escape. A
+frontend negative-label test rejects script/shell/URL/control input without echo.
+Oversized 512-member variant rows refuse on both actual transports with bounded
+HFAPI005, never a successful truncation. Shared 1-worker/1-queue fixtures prove
+saturation, responsive non-pool metadata and retained MCP leases after observer
+cancellation, with eventual zero leases and unchanged archive/control state.
+
+Focused adversarial/extraction/storage/query/MCP/CLI/logging selection: 396 passed
+in 25.81s; actual `make -C cockpit check` exited 0. Early test-only context-manager,
+HTTP parameter typing and frontend whitespace defects were fixed before this
+passing selection. All-source lint/types and documentation alignment pass.
+Full gate passed as recorded below. No new dependencies or production/live/credential/host/push work.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-015, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-015, this commit). Full `scripts/check.sh` exited 0:
+4999 passed/40 deselected in 583.75s; wheel/sdist, all three locked profiles,
+actual Cockpit lint/types/170 tests/build passed. Focused expanded selection:
+396 passed in 25.81s; standalone frontend gate also exited 0. V47-V50 have
+actual effect/import/file-open guards, inert display/input, complete transport
+walks, blocked/canceled worker leases, oversized-row refusals and hidden-secret
+substitution evidence. Reviewed INV-002/006/012/016/018 and decisions 111/113/125/
+133; human discovery/security, invariant and ADR rationale updated. No unresolved
+failures, runtime dependencies, production/live/credential/host/push work.
+[Progress](../../progress.md#tags-and-discovery-2026-10-19) records completion;
+CAT-016 remains for lifecycle, actual installed old binaries and final acceptance.

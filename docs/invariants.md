@@ -1034,3 +1034,9 @@ Client enforcement: [typed HTTP methods](../src/hfcache/client.py),
 [client consistency/import fixtures](../tests/unit/test_catalog_client.py) and
 [actual HTTP CLI evidence](../tests/unit/test_cli_catalog.py), preserve the base
 reader boundary and exact server Envelope identity through complete collection.
+
+Catalog normalization under INV-018 must not bypass INV-002: suppress casefolded
+registered-secret representations before matching, facets and cursor identity.
+Enforcement: [catalog checks](../src/hfcache/services/catalog_queries.py),
+[explicit folded literal check](../src/hfcache/redaction.py) and
+[adversarial evidence](../tests/unit/test_catalog_adversarial.py).

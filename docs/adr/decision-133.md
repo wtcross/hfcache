@@ -122,3 +122,9 @@ nine-method metadata and five-method catalog read ports. Catalog tools share RES
 query semantics, bounded pool ownership and strict payloads. Dataset search omits
 quantization knobs. Unknown arguments, dispatcher aliases and refresh attempts
 refuse with fixed safe errors; no writable or credential capability enters tools.
+
+Catalog secret checks also suppress casefolded registered values before visible
+projection. Tag and technical identifier normalization can change case before
+queries see values; exact-literal-only checks would expose those normalized
+representations through results/counts/cursors. The stricter catalog check is
+explicit and leaves ordinary exact output redaction semantics unchanged.

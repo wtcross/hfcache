@@ -445,3 +445,10 @@ combining only the paged entries. Human output labels tag provenance, technical
 coverage and representative variants, and escapes nonprintable data. Quiet mode
 retains warnings/errors and uncertain operation handles. No archive policy or
 mount, Hub credential or server/MCP/model runtime is needed on the client.
+
+Catalog projections suppress registered secret literals and their casefolded
+representations before predicates, facets and cursor identity. This includes
+labels normalized to lowercase and technical identifiers normalized by case.
+Opaque curation hashes remain withheld from read projections. Hidden-value
+substitutions cannot become observable through counts or continuation identity;
+this does not claim recognition of unregistered arbitrary secrets.

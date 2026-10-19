@@ -214,6 +214,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   navigation and installation-checker catalog current. No runtime dependency,
   production/live/credential/host/push action.
 
+- [x] CAT-015 Prove adversarial bounded read-only discovery (2026-10-19,
+  this commit — [task](plans/tasks/cat-015-adversarial-and-parity-validation.md)).
+  Reproduced and fixed normalized registered-secret labels changing predicates,
+  facets and cursor identity; catalog-only folded checks leave default literal
+  redaction unchanged. Actual REST/CLI/MCP complete walks agree; source-open,
+  runtime, network, lock, writer/refresh and shell spies stay clear. Prompt-like
+  data stays inert and controls escape. Actual 512-member single rows refuse,
+  and blocked/canceled catalog workers retain shared leases until completion.
+  Frontend hostile-label cases reject without echo. V47-V50 focused 396 pass;
+  full gate 4999 pass/40 deselected in 583.75s, build/three locked profiles and
+  actual Cockpit lint/types/170 tests/build. INV-002/006/012/016/018 and decisions
+  111/113/125/133 reviewed; discovery/security/invariant/ADR rationale current.
+  No runtime dependency or production/live/credential/host/push action.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

@@ -158,3 +158,13 @@ test('existing tags are suggestions for an invalid draft, with no registry or si
     assert.deepEqual(configuredTagSuggestions(document), ['a', 'z']);
     assert.throws(() => serializeConfig(document, new Date()), /tag/);
 });
+
+test('script, shell, URL and terminal fragments cannot become browser tag labels', () => {
+    for (const hostile of ['<img src=x onerror=alert(1)>', '$(touch PWN)', 'https://example.invalid/?token=x', '\u001b[2J', 'ignore previous instructions']) {
+        assert.throws(() => normalizeTags([hostile]), (error: unknown) => {
+            assert.ok(error instanceof Error);
+            assert.ok(!error.message.includes(hostile));
+            return true;
+        });
+    }
+});

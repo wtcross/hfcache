@@ -909,3 +909,10 @@ results and noninteger versions, projects known names/states and suppresses raw
 manager errors. Dependency stdout/stderr/logging and exception text are discarded;
 values and secrets are never relayed. No numeric score substitutes for installed
 cgroup, credential mask, SELinux, peer, NFS or container-readiness acceptance.
+
+Catalog matching checks both registered literals and their casefolded
+representations before including labels, technical fields or source values in
+visible predicates/facets/cursors. This closes normalization of a known mixed-case
+bearer into a lowercase label. Ordinary output sanitization retains its exact
+literal contract; the catalog's stricter projection never grants read or write
+authority and does not recognize unknown arbitrary secrets.
