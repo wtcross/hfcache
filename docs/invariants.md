@@ -628,7 +628,9 @@ acceptance evidence; it is an example consumer, not an application dependency.
   authority or browser/environment/argument bearers (decision 122).
 - **`CP-11`, `CP-12`** — Config installs follow candidate → successful CLI
   validation → required successful preview → atomic install → exact installed
-  fingerprint confirmation. A retained root config flock and exact candidate/base
+  content and operational fingerprint confirmation. Confirmation compares installed
+  bytes before/after API validation under the root config flock, including tags
+  excluded from policy identity. A retained root config flock and exact candidate/base
   bytes guard the pipeline; incompatible/unknown authority blocks plugin install.
   Retain the predecessor and `0640 root:hfcache` ownership/mode. Timer changes use validated calendar drop-ins,
   never edit shipped units.

@@ -41,7 +41,7 @@ export class HfcacheSpawnError extends Error {
 /* Callback exceptions and page closure detach display, never domain execution.
  * Internal framing/handle capture continues until the existing process ends. */
 export async function runSpawned(
-    argv: string[], spawn: Spawn, options: ObservationOptions = {}
+    argv: string[], spawn: Spawn, options: ObservationOptions = {}, requireSuccessfulProcess = false,
 ): Promise<Envelope> {
     const lines = new BoundedLineDecoder();
     const diagnostics = new DiagnosticTail();
@@ -99,6 +99,9 @@ export async function runSpawned(
     }
     emit(lines.finish(inspect));
     const stderr = diagnostics.text();
+    // Installed confirmation also owns byte postchecks after the CLI completes (CP-11).
+    if (requireSuccessfulProcess && failure !== null)
+        throw new HfcacheSpawnError('Installed confirmation did not complete successfully; reload and validate again', stderr, key, operationId);
     if (terminal.overflow)
         throw new HfcacheSpawnError('Terminal result exceeds the observation limit; accepted work may continue', stderr, key, operationId);
     if (terminal.text().trim() === '') {

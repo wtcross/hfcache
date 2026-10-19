@@ -62,3 +62,7 @@ export function validateInstalled(): Promise<Envelope> {
 export function removeCandidate(guard: CandidateGuard): Promise<void> {
     return mutate('remove', guard);
 }
+
+export function confirmInstalledCandidate(expected: string): Promise<Envelope> {
+    return runHfcache(['config', 'validate'], { confirmInstalledContent: expected });
+}

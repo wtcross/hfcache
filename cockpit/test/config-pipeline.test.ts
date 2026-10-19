@@ -59,7 +59,7 @@ function ports() {
             return envelope('plan', { repositories: [{ repository_id: 'org/model' }] });
         },
         install: async expected => { assert.deepEqual(expected, guard); calls.push('install') },
-        confirm: async () => { calls.push('confirm'); return envelope('config validate', { config_fingerprint: FINGERPRINT }) },
+        confirm: async expected => { assert.equal(expected, guard.candidateContent); calls.push('confirm'); return envelope('config validate', { config_fingerprint: FINGERPRINT }) },
     };
     return { calls, guard, adapter };
 }
@@ -250,3 +250,41 @@ for (const stage of ['validate', 'preview'] as const) {
         assert.equal(previewed, stage === 'preview');
     });
 }
+
+test('tag-only candidate preserves labels through the pipeline without sizing', async () => {
+    const { adapter } = ports();
+    const content = BASE + 'tags=["Coding", " coding "]\n';
+    const guard = { candidateContent: content, installedContent: BASE };
+    const calls: string[] = [];
+    const configured: ConfigurationPorts = {
+        ...adapter,
+        write: async actual => { assert.deepEqual(actual, guard); calls.push('write') },
+        validate: async actual => { assert.deepEqual(actual, guard); return validation() },
+        preview: async () => { assert.fail('tag-only edit must not contact sizing') },
+        install: async actual => { assert.equal(actual.candidateContent, content); calls.push('install') },
+        confirm: async expected => {
+            assert.equal(expected, content);
+            calls.push('confirm');
+            return envelope('config validate', { config_fingerprint: FINGERPRINT });
+        },
+    };
+    const prepared = await prepareConfiguration(guard, configured);
+    assert.ok(prepared.proposal);
+    assert.equal(prepared.plan, null);
+    assert.equal((await installConfiguration(prepared.proposal, configured)).fingerprint, FINGERPRINT);
+    assert.deepEqual(calls, ['write', 'install', 'confirm']);
+});
+
+test('equal policy hash never bypasses changed installed tag bytes during confirmation', async () => {
+    const { adapter, guard } = ports();
+    const prepared = await prepareConfiguration(guard, adapter);
+    assert.ok(prepared.proposal);
+    let confirmations = 0;
+    adapter.confirm = async expected => {
+        assert.equal(expected, CONTENT);
+        confirmations += 1;
+        throw new Error('installed bytes differ only in tags, reload');
+    };
+    await assert.rejects(installConfiguration(prepared.proposal, adapter), /Installation may have completed/);
+    assert.equal(confirmations, 1);
+});

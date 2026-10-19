@@ -12,7 +12,7 @@ import { setTimeout as pause } from 'node:timers/promises';
 import { test } from 'node:test';
 
 import {
-    candidateMutationInvocation, CONFIGURATION_PATHS, guardCandidateInvocation,
+    candidateMutationInvocation, CONFIGURATION_PATHS, guardCandidateInvocation, guardInstalledInvocation,
     MAX_CANDIDATE_BYTES, readInstalledInvocation, validateCandidateText,
 } from '../src/lib/candidate-guard.ts';
 import type { CandidateGuard, ConfigurationFixture, GuardedInvocation } from '../src/lib/candidate-guard.ts';
@@ -311,4 +311,98 @@ test('config flock remains held through the CLI and serializes a competing insta
             installing.kill('SIGKILL');
         files.close();
     }
+});
+
+for (const target of ['installed', 'candidate'] as const) {
+    test(`concurrent tag-only ${target} edit refuses without overwriting labels`, () => {
+        const files = fixture();
+        try {
+            const base = 'schema_version=1\n[[repositories]]\nid="org/model"\ntype="model"\ntags=["coding"]\n';
+            const proposed = base.replace('coding', 'local-inference');
+            const guard = { installedContent: base, candidateContent: proposed };
+            writeFileSync(files.paths.installed, base);
+            assert.equal(files.write(guard).status, 0);
+            const changed = (target === 'installed' ? base : proposed).replace(/coding|local-inference/, 'changed');
+            writeFileSync(files.paths[target], changed);
+            assert.notEqual(files.run(files.cli(guard)).status, 0);
+            assert.notEqual(files.run(candidateMutationInvocation('install', guard, files.identity)).status, 0);
+            assert.equal(readFileSync(files.paths[target], 'utf8'), changed);
+            assert.equal(existsSync(files.paths.backup), false);
+            assert.equal(existsSync(files.called), false);
+        } finally { files.close() }
+    });
+}
+
+test('installed confirmation compares exact tags under lock after candidate rename', () => {
+    const files = fixture();
+    try {
+        const guard = { ...GUARD, candidateContent: CONTENT + '# tags=["coding"]\n' };
+        assert.equal(files.write(guard).status, 0);
+        assert.equal(files.run(candidateMutationInvocation('install', guard, files.identity)).status, 0);
+        assert.equal(existsSync(files.paths.candidate), false);
+        const lock = statSync(files.paths.lock).ino;
+        const argv = hfcacheArgv(['config', 'validate']);
+        const confirm = guardInstalledInvocation(argv, guard.candidateContent, files.identity);
+        assert.ok(!argv.includes('--config'));
+        assert.equal(files.run(confirm).status, 0);
+        assert.equal(readFileSync(files.paths.backup, 'utf8'), BASE);
+        rmSync(files.called);
+        const concurrent = guard.candidateContent.replace('coding', 'vision');
+        writeFileSync(files.paths.installed, concurrent);
+        const refused = files.run(confirm);
+        assert.notEqual(refused.status, 0);
+        assert.equal(refused.stdout, '');
+        assert.equal(existsSync(files.called), false);
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), concurrent);
+        assert.equal(readFileSync(files.paths.backup, 'utf8'), BASE);
+        assert.equal(statSync(files.paths.lock).ino, lock);
+        assert.throws(() => guardInstalledInvocation(
+            hfcacheArgv(['config', 'validate'], { config: files.paths.candidate }), CONTENT, files.identity));
+    } finally { files.close() }
+});
+
+test('changed installed tags during confirmation withhold a plausible terminal response', async () => {
+    const files = fixture();
+    let child: ReturnType<typeof spawn> | null = null;
+    const entered = join(files.root, 'confirm-entered');
+    const release = join(files.root, 'confirm-release');
+    try {
+        const expected = BASE + '# tags=["coding"]\n';
+        writeFileSync(files.paths.installed, expected);
+        const invocation = guardInstalledInvocation(hfcacheArgv(['config', 'validate']), expected, files.identity);
+        child = spawn(invocation.argv[0], invocation.argv.slice(1), {
+            env: { ...files.env, HFCACHE_TEST_ENTERED: entered, HFCACHE_TEST_RELEASE: release },
+            stdio: ['pipe', 'pipe', 'ignore']
+        });
+        const finished = new Promise<number | null>(resolve => child?.once('exit', resolve));
+        let output = '';
+        child.stdout?.on('data', bytes => { output += String(bytes) });
+        child.stdin?.end(invocation.input);
+        for (let attempt = 0; attempt < 250 && !existsSync(entered); attempt += 1)
+            await pause(20);
+        assert.ok(existsSync(entered));
+        const changed = expected.replace('coding', 'vision');
+        writeFileSync(files.paths.installed, changed);
+        writeFileSync(release, 'release');
+        assert.notEqual(await finished, 0);
+        assert.equal(output, '');
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), changed);
+    } finally {
+        if (child?.exitCode === null)
+            child.kill('SIGKILL');
+        files.close();
+    }
+});
+
+test('oversized confirmation output refuses without releasing a partial response', () => {
+    const files = fixture();
+    try {
+        writeFileSync(files.env.HFCACHE_TEST_RESPONSE, 'x'.repeat(4 * 1024 * 1024 + 1));
+        const invocation = guardInstalledInvocation(hfcacheArgv(['config', 'validate']), BASE, files.identity);
+        const result = files.run(invocation);
+        assert.notEqual(result.status, 0);
+        assert.equal(result.stdout, '');
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), BASE);
+        assert.equal(readdirSync(files.root).some(name => name.startsWith('.confirmation.')), false);
+    } finally { files.close() }
 });

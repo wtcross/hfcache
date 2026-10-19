@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 1 — Foundation |
 | Depends on | [CAT-002](cat-002-configuration-tags-and-identities.md) |
@@ -15,7 +15,7 @@ Follow `AGENTS.md` and `docs/agents/workflow.md`. Read relevant sections of the
 [design](../support/tags-and-discovery/design.md),
 [source review](../support/tags-and-discovery/source-review.md) and
 [validation matrix](../support/tags-and-discovery/validation-matrix.md).
-Tasks own execution status; this file is pending, not a claim of implementation.
+Tasks own execution status; completion evidence below records actual validation.
 
 ## Likely implementation touchpoints
 
@@ -60,15 +60,46 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
+Implemented optional legacy-safe frontend tags, shared backend grammar fixtures,
+free comma-separated entry and bounded current-config suggestions. Form/text
+switching now serializes/parses the actual draft, preserving tag edits. Tags do
+not affect sizing selectors; backend validation and authority checks remain final.
+
+Retained exact candidate/base guards. Added a fixed installed-confirm action:
+compare exact expected bytes under the retained root flock, invoke installed API
+validation without candidate path, withhold bounded stdout until postchecks and
+require successful confirmation process completion. The last condition is
+necessary because ordinary CLI observers intentionally accept exact domain
+Envelopes from nonzero processes. No generic invocation/path authority, new
+credential source or validation wrapper field. Confirmation tests preserve
+backup/lock and reject tag-only races before/during validation.
+
+Reviewed CP-02/03/08/11/12, INV-001/002/005/018, decisions 119/122/133. Updated
+CP-11 human contract, invariant and ADR122 amendment plus usage/troubleshooting
+and discovery support labeling. This implements existing exact-content authority;
+no new architectural decision or runtime dependency. Actual frontend and full gates passed, including final output-bound regression.
 When work starts, record any relevant newer-source reconciliation, implementation
 choices, blockers and scope amendments here. Preserve prior completed evidence.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-003, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-003, this commit). V05–V07 have shared backend/frontend
+grammar fixtures, canonical draft/form/text/toggle/add/remove checks, tag-only
+no-sizing pipeline checks and real shell fixtures for stale tag-only base/candidate
+content, successful confirmation after candidate rename, during-validation tag
+changes, bounded stdout, predecessor/lock preservation and rejected-process
+success Envelopes. No registry, archive access, config API or extra operator fields.
+Independent read-only review found the confirmation output/process edge, corrected
+before final gate; final review found no further material issue.
+
+`rtk proxy make -C cockpit check PNPM=/home/tyler/.local/share/pnpm/bin/pnpm`
+actually executed lint/types, 168 tests and build; final focused guard/runner run
+passed 36 tests including the added output-bound case. `rtk proxy scripts/check.sh`
+exited 0: 4351 passed, 40 opt-in deselected in 484.73s; build, three locked
+installation profiles and actual Cockpit lint/types/169 tests/build passed.
+Final docs alignment (182 documents/19 helpers) and whitespace checks passed.
+Reviewed CP-02/03/08/11/12, INV-001/002/005/018, decisions 119/122/133; amended
+CP-11/ADR122 for exact content plus successful confirmation completion. No new
+architectural choice/dependency. Updated Cockpit contract/guides and discovery.
+All execution used owned fixtures; no production config/service/credential/live
+archive action or push. CAT-004 is next; no later package has started.

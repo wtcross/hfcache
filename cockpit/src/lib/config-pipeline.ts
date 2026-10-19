@@ -29,7 +29,7 @@ export const MANUAL_AUTHORITY_GUIDANCE =
     'before starting synchronization.';
 
 export const UNCONFIRMED_INSTALLATION =
-    'Installation may have completed, but installed validation did not confirm the exact expected fingerprint. ' +
+    'Installation may have completed, but installed validation did not confirm the expected document and operational fingerprint. ' +
     'Reload and validate the installed configuration before another operation.';
 
 function record(value: unknown): Record<string, unknown> {
@@ -81,7 +81,7 @@ export interface ConfigurationPorts {
     validate: (guard: CandidateGuard) => Promise<Envelope>;
     preview: (selectors: string[], guard: CandidateGuard) => Promise<Envelope>;
     install: (guard: CandidateGuard) => Promise<void>;
-    confirm: () => Promise<Envelope>;
+    confirm: (expected: string) => Promise<Envelope>;
 }
 
 export class PreparationSuperseded extends Error {
@@ -142,7 +142,7 @@ export async function installConfiguration(
         throw new Error('Validated candidate fingerprint is missing');
     try {
         await ports.install(proposal.guard);
-        const envelope = await ports.confirm();
+        const envelope = await ports.confirm(proposal.guard.candidateContent);
         return { envelope, fingerprint: confirmedFingerprint(envelope, proposal.fingerprint) };
     } catch {
         throw new Error(UNCONFIRMED_INSTALLATION);

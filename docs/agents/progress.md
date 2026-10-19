@@ -52,6 +52,18 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   types/135 tests/build. INV-001/002/005/018 and decisions 119/122/133 reviewed;
   no new architectural choice/dependency, live action or push.
 
+- [x] CAT-003 Add Cockpit tag authoring (2026-10-19, this commit —
+  [task](plans/tasks/cat-003-cockpit-tag-authoring.md)). Legacy-safe optional tags,
+  shared normalization, existing-config suggestions and repaired draft mode
+  switching preserve labels. Exact installed-byte confirmation holds the root
+  flock across API validation, buffers bounded stdout until postcheck and requires
+  successful process completion. Tag-only races cannot hide behind equal policy
+  hashes; backup/lock/privilege boundaries remain. CP-11/ADR122 amended under
+  INV-018. Frontend gate actually ran; final focused guards/runner: 36 passed.
+  Full gate: 4351 passed/40 deselected, build/three locked profiles and actual
+  Cockpit lint/types/169 tests/build. Docs/whitespace and independent review pass.
+  No production/live/credential/push action or new runtime dependency.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

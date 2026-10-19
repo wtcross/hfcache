@@ -26,13 +26,14 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 import { ListingTable } from 'cockpit-components-table';
 
 import {
-    installCandidate, planCandidate, readInstalledConfig, removeCandidate, validateCandidate,
-    validateInstalled, writeCandidate,
+    confirmInstalledCandidate, installCandidate, planCandidate, readInstalledConfig, removeCandidate,
+    validateCandidate, writeCandidate,
 } from './api/config';
 import { EnvelopeAlert, Loading, QueryError, Sha } from './components';
 import {
     ConfigDocument, extractFieldPath, FieldSpec, getField, GLOBAL_FIELDS, parseConfig,
     RepositoryEntry, serializeConfig, setField, validateRevisionReference,
+    configuredTagSuggestions, normalizeTags, tagInput,
 } from './lib/config';
 import { CandidateGuard } from './lib/candidate-guard';
 import {
@@ -118,13 +119,17 @@ const GlobalFields = ({ document, errors, onChange }: {
     </div>
 );
 
-const RepositoryRow = ({ entry, index, onChange, onRemove }: {
+const RepositoryRow = ({ entry, index, suggestions, onChange, onRemove }: {
     entry: RepositoryEntry;
     index: number;
+    suggestions: string[];
     onChange: (entry: RepositoryEntry) => void;
     onRemove: () => void;
 }) => {
     const revisionError = validateRevisionReference(entry.revision);
+    let tagError: string | null = null;
+    try { normalizeTags(entry.tags ?? []) } catch (failure) { tagError = (failure as Error).message }
+
     return (
         <Card isCompact className="hfcache-repository">
             <CardBody>
@@ -184,6 +189,32 @@ const RepositoryRow = ({ entry, index, onChange, onRemove }: {
                                 .filter(part => part !== ''),
                     })}
                 />
+                <label htmlFor={`repo-tags-${index}`}>Tags</label>
+                <TextInput
+                    id={`repo-tags-${index}`}
+                    aria-label="Tags"
+                    value={(entry.tags ?? []).join(',')}
+                    validated={tagError === null ? 'default' : 'error'}
+                    onChange={(_event, text) => onChange({ ...entry, tags: tagInput(text) })}
+                />
+                <div className="hfcache-issue-guidance">
+                    Comma-separated flat labels. Outer spaces are trimmed and ASCII letters lowercased
+                    when serialized; duplicates are removed. Tags do not change downloads or retention.
+                    The backend validates the final candidate.
+                </div>
+                {tagError !== null && <div className="hfcache-field-error">{tagError}</div>}
+                {suggestions.length > 0 &&
+                    <FormSelect
+                        aria-label="Add an existing configured tag"
+                        value=""
+                        onChange={(_event, tag) => {
+                            if (tag !== '')
+                                onChange({ ...entry, tags: [...(entry.tags ?? []), tag] });
+                        }}
+                    >
+                        <FormSelectOption value="" label="Add an existing configured tag…" />
+                        {suggestions.map(tag => <FormSelectOption key={tag} value={tag} label={tag} />)}
+                    </FormSelect>}
                 {revisionError !== null &&
                     <div className="hfcache-field-error">{revisionError}</div>}
             </CardBody>
@@ -196,6 +227,7 @@ const Repositories = ({ document, onChange }: {
     onChange: (next: ConfigDocument) => void;
 }) => {
     const entries = document.repositories ?? [];
+    const suggestions = configuredTagSuggestions(document);
     const replace = (repositories: RepositoryEntry[]) => onChange({ ...document, repositories });
     return (
         <Stack hasGutter>
@@ -208,6 +240,7 @@ const Repositories = ({ document, onChange }: {
                     <RepositoryRow
                         entry={entry}
                         index={index}
+                        suggestions={suggestions}
                         onChange={changed => replace(entries.map((e, i) => i === index ? changed : e))}
                         onRemove={() => replace(entries.filter((_e, i) => i !== index))}
                     />
@@ -221,6 +254,7 @@ const Repositories = ({ document, onChange }: {
                         type: 'model',
                         revision: 'main',
                         enabled: true,
+                        tags: [],
                         declared_dependencies: [],
                     }])}
                 >
@@ -345,7 +379,7 @@ export const Configuration = () => {
         validate: validateCandidate,
         preview: planCandidate,
         install: installCandidate,
-        confirm: validateInstalled,
+        confirm: confirmInstalledCandidate,
     };
 
     const check = () => {
@@ -446,11 +480,17 @@ export const Configuration = () => {
                                         <ToggleGroupItem
                                             text="Form (canonical; comments not preserved)"
                                             isSelected={mode === 'form'}
-                                            isDisabled={document === null || phase === 'installing'}
+                                            isDisabled={phase === 'installing'}
                                             onChange={() => {
-                                                if (phase !== 'installing') {
-                                                    invalidate();
-                                                    setMode('form');
+                                                if (phase !== 'installing' && mode !== 'form') {
+                                                    try {
+                                                        const parsed = parseConfig(text);
+                                                        invalidate();
+                                                        setDocument(parsed);
+                                                        setMode('form');
+                                                    } catch {
+                                                        setPipelineError(new Error('Fix the text document before switching to form mode'));
+                                                    }
                                                 }
                                             }}
                                         />
@@ -459,8 +499,16 @@ export const Configuration = () => {
                                             isSelected={mode === 'text'}
                                             isDisabled={phase === 'installing'}
                                             onChange={() => {
-                                                invalidate();
-                                                setMode('text');
+                                                if (mode === 'text')
+                                                    return;
+                                                try {
+                                                    const content = serializeConfig(document ?? {}, new Date());
+                                                    invalidate();
+                                                    setText(content);
+                                                    setMode('text');
+                                                } catch {
+                                                    setPipelineError(new Error('Fix invalid tags before switching to text mode'));
+                                                }
                                             }}
                                         />
                                     </ToggleGroup>

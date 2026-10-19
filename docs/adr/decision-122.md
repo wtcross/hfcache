@@ -75,3 +75,14 @@ independent-atomic adjunct exception and protected read capabilities. Existing
 archive, candidate-byte, whole-archive authorization and registered MCP boundaries
 remain in force until corresponding additive implementation is accepted. Tags do
 not change operational policy identity or grant installation/write authority.
+
+### Exact installed-content confirmation
+
+Installed confirmation compares validated candidate bytes with the installed file
+before and after API validation under the retained configuration flock. The
+candidate pathname has already been consumed by rename. Buffer at most 4 MiB
+of confirmation stdout until postchecks pass, and require successful confirmation
+process completion before accepting its Envelope. The operational hash
+continues to exclude tags, so it cannot substitute for document equality. This
+strengthens the existing exact-content guard rather than adding curation or
+full-config hashes to old validation wrappers. See [configuration editing](../cockpit.md#6-configuration-editing).

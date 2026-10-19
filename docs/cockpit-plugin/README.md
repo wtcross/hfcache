@@ -22,7 +22,7 @@ From the browser you can inspect:
 - browse archived repositories and every retained revision;
 - edit the configuration (form or text) through a validate-before-install
   pipeline, with exact candidate/base guards, compatible authority, required sizing
-  preview and exact installed fingerprint confirmation;
+  preview and exact installed-content and operational-fingerprint confirmation;
 - change the sync schedule as a managed systemd drop-in;
 - verify — an estimate, one revision, or the full offline read;
 - read durable run reports joined to their journal trails;

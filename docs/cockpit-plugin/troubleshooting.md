@@ -145,3 +145,16 @@ On a separately accepted system-manager integration, the override is removed by:
 `systemctl daemon-reload`). A leftover `/etc/hfcache/.candidate.toml` is
 inert — the service reads only `config.toml` — and **Discard candidate**
 or a plain removal clears it.
+
+## Tags and installed confirmation
+
+Tags are comma-separated flat labels. Invalid characters, empty elements or
+oversized lists must be fixed before form serialization; text mode can submit a
+candidate to authoritative backend validation. Existing configured tags supply
+suggestions without a registry. Tags never choose files or grant access.
+
+A tag-only external edit leaves the operational fingerprint unchanged but changes
+the document. Exact candidate/base checks and installed confirmation refuse that
+conflict. Reload the installed document and validate the intended draft again;
+never retry an uncertain install automatically or overwrite the other editor's
+labels. The retained backup and configuration lock remain evidence.

@@ -32,7 +32,7 @@ Under persistent root-owned `0600` `/etc/hfcache/.configuration.lock`, compare
 exact candidate content and the installed base bytes through validation/required
 preview and before installation. Candidate bytes are bounded inert stdin, never
 shell code. Edits invalidate readiness. Syntax validity, compatible authority,
-preview success and exact installed fingerprint confirmation are separate gates;
+preview success and exact installed content and operational fingerprint confirmation are separate gates;
 incompatible/unknown authority blocks plugin installation and explains the manual
 operator install/restart/compatible-preview sequence. Failed preview/confirmation
 cannot render success. Preserve atomic backup/install, service identity and
@@ -53,7 +53,7 @@ snapshot; the server refuses stale queued mutations.
 | `CP-08` | No credential surface: the page never reads credentials or accepts tokens. Transient clients receive only named API `hfcache.api` inside the fixed rootless client, never Hub authority or browser/environment/argument bearers. Only safe source descriptions render (`docs/security.md` T-07) |
 | `CP-09` | The plugin never writes under `/srv/hfcache`. Its only direct read there is `runs/*.json`, performed as the service identity; every other statement about the archive comes from a CLI envelope |
 | `CP-10` | One mutating command at a time (`AD-17`). `HFMNT010` renders as a benign busy state naming the holder, never as a failure; the plugin never removes or bypasses the lock |
-| `CP-11` | Configuration changes use §6's root config flock and exact candidate/base guards, syntax-valid compatible server assessment, required successful preview, atomic install with `0640 root:hfcache` and predecessor retained, then exact expected installed fingerprint confirmation. Incompatible/unknown authority blocks plugin install |
+| `CP-11` | Configuration changes use §6's root config flock and exact candidate/base guards, syntax-valid compatible server assessment, required successful preview, atomic install with `0640 root:hfcache` and predecessor retained, then exact installed-content and expected operational-fingerprint confirmation. Incompatible/unknown authority blocks plugin install |
 | `CP-12` | Timer schedule changes are drop-ins under `/etc/systemd/system/hfcache-sync.timer.d/` (§7); shipped unit files are never edited, and calendar expressions are validated with `systemd-analyze calendar` before anything is written |
 | `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is diagnosed under the security contract or reported; safeguards remain enforced |
 | `CP-14` | The node toolchain is build-time only. The plugin ships as static files; the application's closed runtime dependency set (`FW-03`) is untouched, and `cockpit/node_modules/` and `cockpit/dist/` are never committed |
@@ -268,7 +268,12 @@ The pipeline, in order (`CP-11`):
    Preserve the predecessor at `/etc/hfcache/config.toml.bak`, `0640 root:hfcache`,
    fsync and atomically rename the candidate over `/etc/hfcache/config.toml`.
 5. **Confirm.** Validate installed policy through the API, require a successful
-   strict Envelope and the exact expected candidate fingerprint. Only then display
+   strict Envelope and the exact expected operational fingerprint. Under the retained
+   root config flock, compare installed bytes with the validated candidate before
+   and after API validation, without requiring the consumed candidate pathname.
+   Withhold the bounded CLI response until byte postchecks pass and require
+   successful completion of this confirmation process. Equal policy fingerprints
+   alone never establish tag/document equality. Only then display
    success. Failed confirmation reports installed state as unconfirmed, preserves
    evidence and never claims the old file remains or silently rolls back.
    Install/confirmation errors remove readiness and require reloading the installed
@@ -284,6 +289,18 @@ unlock install/plan. The plugin never rewrites authority fields to match silentl
 
 Form mode serializes canonical TOML and states that comments are not preserved;
 text mode edits verbatim. Only schema-1 keys are offered, with no token field.
+Repository rows offer a comma-separated `tags` control and existing configured-tag
+suggestions (up to 64 sorted suggestions), with free entry and no registry. Form
+serialization uses the backend's ASCII normalization grammar: outer spaces trim,
+ASCII lowercase, sorted unique values, at most 64 raw entries and 128 characters
+per raw value, with canonical length at most 64. Labels are flat and never change
+file selection, retention or authorization; see [configuration](configuration.md#6-repositories).
+Legacy omitted tags render as empty; toggling/removing/editing and form/text
+switching preserve the current draft. Text-to-form parses the edited document;
+form-to-text serializes that draft. Invalid tags block form serialization and
+text candidates remain subject to backend validation. Tag-only edits need no sizing
+preview. The server remains authoritative; direct malformed candidates refuse.
+
 `maximum_revisions` supports 3/5 and default 3 without rewriting an explicit 5.
 `token_mode=required` remains the explicit restricted-scope opt-in; candidate
 syntax validation resolves no credential, while compatible planning/installed

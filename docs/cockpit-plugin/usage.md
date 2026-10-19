@@ -151,12 +151,19 @@ browser state or command arguments.
 
 - **Form mode** renders the schema: repository rows (id, type, revision —
   validated live, with abbreviated commit SHAs rejected just as the CLI
-  would — enabled, declared dependencies, add/remove) and every global key
+  would — enabled, tags, declared dependencies, add/remove) and every global key
   with its documented constraint as the hint. Form mode serializes
   canonically and **does not preserve comments**; the generated header says
   when and by what the file was written.
 - **Text mode** edits the document verbatim, for the operator who keeps
   comments.
+
+Enter comma-separated tags in repository rows or add suggestions from existing
+configured labels. The list is optional, applies to models and datasets, and has
+no hierarchy or download/retention effect. Form serialization trims outer ASCII
+spaces, lowercases ASCII letters, deduplicates and sorts labels. The backend
+validates the same grammar and limits. Tags survive enable/disable and form/text
+switching; a tag-only edit needs no sizing preview. See [tag rules](../configuration.md#6-repositories).
 
 **Validate candidate** writes exact content to the fixed candidate path with
 `0640 root:hfcache`, then invokes the service-identity API client. Every pipeline
@@ -175,7 +182,9 @@ page never redirects daemon credentials to proposed authority.
 **Install validated candidate** rechecks exact candidate/base content and
 readiness under the config flock, preserves `config.toml.bak`, fsyncs and atomically
 renames. It then validates installed policy through the API and requires the exact
-expected fingerprint before showing success. A confirmation failure means the
+expected operational fingerprint plus exact installed bytes under the retained
+config lock before showing success. A tag-only change has the same policy hash
+but still fails exact-content confirmation. A confirmation failure means the
 installed state is unconfirmed; it does not prove the old file remains or trigger
 a silent rollback. **Discard candidate** abandons that proposal, never deletes
 operation evidence or the retained config lock.

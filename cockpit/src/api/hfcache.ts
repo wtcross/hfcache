@@ -10,7 +10,7 @@
 import cockpit from 'cockpit';
 
 import { hfcacheArgv } from '../lib/command';
-import { guardCandidateInvocation, CandidateGuard } from '../lib/candidate-guard';
+import { guardCandidateInvocation, guardInstalledInvocation, CandidateGuard } from '../lib/candidate-guard';
 import { Envelope } from '../lib/envelope';
 import { HfcacheSpawnError, ObservationOptions, runSpawned } from '../lib/runner';
 
@@ -21,13 +21,19 @@ export interface RunOptions extends ObservationOptions {
      * configuration (docs/cockpit.md §6). */
     config?: string;
     candidateGuard?: CandidateGuard;
+    confirmInstalledContent?: string;
 }
 
 export async function runHfcache(command: string[], options: RunOptions = {}): Promise<Envelope> {
     const argv = hfcacheArgv(command, options);
-    const guarded = options.candidateGuard === undefined
-        ? undefined
-        : guardCandidateInvocation(argv, options.candidateGuard);
+    if (options.confirmInstalledContent !== undefined &&
+        (options.config !== undefined || options.candidateGuard !== undefined))
+        throw new Error('Installed confirmation cannot select a candidate');
+    const guarded = options.confirmInstalledContent !== undefined
+        ? guardInstalledInvocation(argv, options.confirmInstalledContent)
+        : options.candidateGuard === undefined
+            ? undefined
+            : guardCandidateInvocation(argv, options.candidateGuard);
     return runSpawned(guarded?.argv ?? argv, arguments_ => {
         // Merge bounded CLI progress/handle notices with terminal stdout; the
         // independent collector never mistakes them for result authority.
@@ -35,7 +41,7 @@ export async function runHfcache(command: string[], options: RunOptions = {}): P
         if (guarded !== undefined)
             proc.input(guarded.input);
         return proc;
-    }, options);
+    }, options, options.confirmInstalledContent !== undefined);
 }
 
 export type StreamRunOptions = RunOptions;

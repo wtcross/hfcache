@@ -141,3 +141,11 @@ test('lost result retains early handles independently of diagnostic tail evictio
         return true;
     });
 });
+
+test('installed confirmation requires process completion even with a valid success Envelope', async () => {
+    const result = envelope();
+    result.command = 'config validate';
+    await assert.rejects(runSpawned(['fixed-confirmation'], () => process([JSON.stringify(result)], true), {}, true),
+                         /Installed confirmation did not complete successfully/);
+    assert.deepEqual(await runSpawned(['fixed-confirmation'], () => process([JSON.stringify(result)]), {}, true), result);
+});

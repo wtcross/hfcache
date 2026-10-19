@@ -15,6 +15,7 @@ export interface RepositoryEntry {
     revision: string;
     enabled: boolean;
     declared_dependencies: string[];
+    tags?: string[];
 }
 
 export type ConfigDocument = Record<string, unknown> & { repositories?: RepositoryEntry[] };
@@ -23,6 +24,10 @@ export function parseConfig(text: string): ConfigDocument {
     const document = parse(text) as ConfigDocument;
     if (!Array.isArray(document.repositories))
         document.repositories = [];
+    for (const entry of document.repositories) {
+        if (entry.tags !== undefined)
+            entry.tags = normalizeTags(entry.tags);
+    }
     return document;
 }
 
@@ -35,7 +40,42 @@ export function serializeConfig(document: ConfigDocument, writtenAt: Date): stri
         `# ${writtenAt.toISOString()}\n` +
         '# Form mode serializes canonically; operator comments are not preserved\n' +
         '# (docs/cockpit.md §6). Text mode edits the document verbatim.\n\n';
-    return header + stringify(document) + '\n';
+    const canonical = {
+        ...document,
+        repositories: (document.repositories ?? []).map(entry =>
+            entry.tags === undefined ? { ...entry } : { ...entry, tags: normalizeTags(entry.tags) })
+    };
+    return header + stringify(canonical) + '\n';
+}
+
+/* Shared grammar: tests/fixtures/tags.json also drives backend tests (INV-018). */
+export function normalizeTags(value: unknown): string[] {
+    if (!Array.isArray(value) || value.length > 64)
+        throw new Error('Tags must be a list of at most 64 strings');
+    const canonical = value.map(raw => {
+        if (typeof raw !== 'string' || raw.length > 128)
+            throw new Error('Each tag must be a string of at most 128 raw characters');
+        const tag = raw.replace(/^ +| +$/g, '').replace(/[A-Z]/g, letter => letter.toLowerCase());
+        if (!/^[a-z0-9][a-z0-9._:/-]{0,63}(?![\s\S])/.test(tag))
+            throw new Error('Each canonical tag must match [a-z0-9][a-z0-9._:/-]{0,63}');
+        return tag;
+    });
+    return [...new Set(canonical)].sort();
+}
+
+export function tagInput(text: string): string[] {
+    return text === '' ? [] : text.split(',');
+}
+
+export function configuredTagSuggestions(document: ConfigDocument): string[] {
+    const tags = new Set<string>();
+    for (const entry of document.repositories ?? []) {
+        try {
+            for (const tag of normalizeTags(entry.tags ?? []))
+                tags.add(tag);
+        } catch { /* An invalid draft is still editable; the backend rejects it. */ }
+    }
+    return [...tags].sort().slice(0, 64);
 }
 
 export function repositorySelectors(document: ConfigDocument): string[] {

@@ -10,8 +10,8 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import {
-    extractFieldPath, GLOBAL_FIELDS, getField, parseConfig, repositorySelectors,
-    selectorsNeedingPreview, serializeConfig, setField, validateRevisionReference,
+    configuredTagSuggestions, extractFieldPath, GLOBAL_FIELDS, getField, normalizeTags, parseConfig, repositorySelectors,
+    selectorsNeedingPreview, serializeConfig, setField, tagInput, validateRevisionReference,
 } from '../src/lib/config.ts';
 
 function workedExample(): string {
@@ -100,4 +100,61 @@ test('validation issues map back to fields best-effort', () => {
     assert.equal(extractFieldPath({ message: 'no path here', context: { key: 'hub.endpoint' } }),
                  'hub.endpoint');
     assert.equal(extractFieldPath({ message: 'nothing at all' }), null);
+});
+
+const tagCases = JSON.parse(readFileSync(new URL('../../tests/fixtures/tags.json', import.meta.url), 'utf8'));
+for (const { input, expected } of tagCases.valid) {
+    test('tag normalization agrees with shared backend golden', () => {
+        assert.deepEqual(normalizeTags(input), expected);
+        assert.deepEqual(normalizeTags(normalizeTags(input)), expected);
+    });
+}
+for (const input of [...tagCases.invalid, ['a'.repeat(65)], [' '.repeat(128) + 'a'], Array(65).fill('a')]) {
+    test('invalid tag grammar refuses without echoing the input', () => {
+        assert.throws(() => normalizeTags(input), /[Tt]ag/);
+    });
+}
+
+test('tag forms, toggles, add/remove and text serialization preserve canonical labels', () => {
+    const document = parseConfig(workedExample());
+    const original = JSON.stringify(document);
+    document.repositories = [...(document.repositories ?? []), {
+        id: 'org/tagged',
+        type: 'model',
+        revision: 'main',
+        enabled: true,
+        tags: tagInput(' Coding, coding ,project:Assistant'),
+        declared_dependencies: [],
+    }];
+    const before = JSON.stringify(document);
+    const text = serializeConfig(document, new Date('2026-10-19T00:00:00Z'));
+    assert.equal(JSON.stringify(document), before, 'serialize must not mutate the draft');
+    const form = parseConfig(text);
+    assert.deepEqual(form.repositories?.[2].tags, ['coding', 'project:assistant']);
+    assert.deepEqual(configuredTagSuggestions(form), ['coding', 'project:assistant']);
+    assert.deepEqual(normalizeTags(Array(64).fill('a')), ['a']);
+    assert.deepEqual(tagInput(''), []);
+    assert.ok(form.repositories);
+    form.repositories[2] = { ...form.repositories[2], enabled: false };
+    const disabled = parseConfig(serializeConfig(form, new Date()));
+    assert.deepEqual(disabled.repositories?.[2].tags, ['coding', 'project:assistant']);
+    assert.deepEqual(selectorsNeedingPreview(form, disabled), []);
+    form.repositories = form.repositories.slice(0, 2);
+    assert.equal(JSON.stringify(form), original);
+});
+
+test('existing tags are suggestions for an invalid draft, with no registry or silent repair', () => {
+    const document = parseConfig('[[repositories]]\nid="org/a"\ntype="dataset"\ntags=["Z", "a"]');
+    assert.deepEqual(document.repositories?.[0].tags, ['a', 'z']);
+    assert.ok(document.repositories);
+    document.repositories.push({
+        id: 'org/b',
+        type: 'model',
+        revision: 'main',
+        enabled: false,
+        tags: ['bad tag'],
+        declared_dependencies: []
+    });
+    assert.deepEqual(configuredTagSuggestions(document), ['a', 'z']);
+    assert.throws(() => serializeConfig(document, new Date()), /tag/);
 });

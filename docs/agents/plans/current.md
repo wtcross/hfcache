@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [Tags and discovery](2026-10-19-plan-tags-and-discovery.md) |
-| Next task | [CAT-003: Cockpit tag authoring](tasks/cat-003-cockpit-tag-authoring.md) |
+| Next task | [CAT-004: metadata records and storage](tasks/cat-004-metadata-records-and-storage.md) |
 | Blockers | None |
 | Last completed plan | [Timestral model sync](2026-10-19-plan-timestral-model-sync.md) |
 | Updated | 2026-10-19 |

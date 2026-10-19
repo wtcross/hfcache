@@ -90,11 +90,12 @@ if [[ "$action" == read ]]; then
     dd if="$installed" iflag=nofollow,count_bytes count=1048576 status=none
     exit
 fi
-expected_candidate= expected_base= predecessor=
+expected_candidate= expected_base= predecessor= confirmation=
 cleanup() {
     [[ -z "$expected_candidate" ]] || rm -f -- "$expected_candidate"
     [[ -z "$expected_base" ]] || rm -f -- "$expected_base"
     [[ -z "$predecessor" ]] || rm -f -- "$predecessor"
+    [[ -z "$confirmation" ]] || rm -f -- "$confirmation"
     return 0
 }
 trap cleanup EXIT
@@ -110,6 +111,16 @@ printf '%s' "$original" > "$expected_base"
 regular "$installed"
 cmp -s -- "$installed" "$expected_base" || fail
 case "$action" in
+confirm)
+    confirmation=$(mktemp "$directory/.confirmation.XXXXXX")
+    if (ulimit -f 4096; "$@" > "$confirmation"); then status=0; else status=$?; fi
+    case "$status" in 0|10|20|30|40|50) ;; *) fail ;; esac
+    (( $(stat -c '%s' -- "$confirmation") <= 4194304 )) || fail
+    regular "$installed"
+    cmp -s -- "$installed" "$expected_base" || fail
+    cat -- "$confirmation"
+    exit "$status"
+    ;;
 write)
     if [[ -e "$candidate" || -L "$candidate" ]]; then regular "$candidate"; fi
     chown "$owner:$group" "$expected_candidate"
@@ -144,7 +155,7 @@ esac
 `;
 
 function invocation(
-    action: 'read' | 'write' | 'guard' | 'install' | 'remove',
+    action: 'read' | 'write' | 'guard' | 'install' | 'remove' | 'confirm',
     guard: CandidateGuard | null,
     argv: string[],
     fixture?: ConfigurationFixture,
@@ -188,4 +199,14 @@ export function candidateMutationInvocation(
     fixture?: ConfigurationFixture,
 ): GuardedInvocation {
     return invocation(action, guard, [], fixture);
+}
+
+/* Confirm the installed bytes after install consumed the candidate pathname. */
+export function guardInstalledInvocation(
+    argv: string[], expected: string, fixture?: ConfigurationFixture,
+): GuardedInvocation {
+    if (argv[0] !== 'systemd-run' || argv.includes('--config') ||
+        argv.slice(-2).join(' ') !== 'config validate')
+        throw new Error('Installed confirmation requires the fixed installed validation adapter');
+    return invocation('confirm', { candidateContent: expected, installedContent: expected }, argv, fixture);
 }
