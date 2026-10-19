@@ -1,8 +1,8 @@
 # Tags and local discovery
 
 Configuration tags, Cockpit authoring, curation identity and supplemental record
-storage, static declarations and GGUF header variants are supported. Writer
-lifecycle and transport support below remain proposed; this contract alone does not make the commands
+storage, static declarations, GGUF headers and scoped AWQ/GPTQ variants are
+supported. Writer lifecycle and transport support below remain proposed; this contract alone does not make the commands
 below available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 
@@ -198,6 +198,58 @@ filename hints only downgrade role. Unknown roles stay visible with incomplete
 coverage; zero-tensor standalone files are not primary weight sets. Completeness
 describes the retained declared member set and header bounds, never tensor
 integrity, model loadability or runtime compatibility.
+
+### Supported scoped weight declarations
+
+The supported producer schema is an explicit `quantization_config` object in a
+same-directory `config.json`, with literal `quant_method=awq` or `gptq`, strict
+integer `bits` and optional `group_size`. The primary pins are
+[Transformers configuration](https://github.com/huggingface/transformers/blob/0bc252863a4e5c0e709893664cc57369ebcd7353/src/transformers/utils/quantization_config.py)
+and [index resolution](https://github.com/huggingface/transformers/blob/f4410762062c274fb53471e551e62b377df44cc1/src/transformers/utils/hub.py).
+The initial AWQ subset requires explicit 4-bit declarations; GPTQ accepts explicit
+2/3/4/8 bits. Missing/invalid/unsupported widths stay unknown; runtime defaults are
+never filled in. Group sizes are positive integers or `-1` (per-column, represented
+as null with `per_column_group_size`). An absent group stays null with
+`group_size_unknown`. Dynamic per-layer layouts are unsupported.
+
+Format is independent: `safetensors` or `pytorch_bin`, method `awq`/`gptq`, nullable
+scheme/encoding and declared nominal bits. Missing quantization declarations
+never establish unquantized weights. A primary role requires a recognized static
+model type; adapter configuration/names and projector/sidecar names only downgrade
+role. No runtime class is imported or instantiated.
+
+One directory may bind one canonical singleton (`model.safetensors`,
+`pytorch_model.bin`, or attributed adapter equivalents) or one recognized
+`model.safetensors.index.json`/`pytorch_model.bin.index.json`. An index must have a
+nonempty `weight_map`; repeated filename values across tensor keys are normal and
+count once. Duplicate JSON keys, aliases/escaping/nested paths, known optimizer/
+training artifacts, absent members and mixed formats refuse completeness. Members
+must be canonical same-directory manifest names. Named shard ordinals/counts must
+form the complete set. Shards without an authoritative index remain candidates.
+Multiple alternatives/index formats/extra weights in one directory are ambiguous;
+a malformed index never falls back to an available singleton. Independently
+configured subdirectories remain separate; root declarations never apply to child
+weights. Bytes total the identified members once, including their headers.
+
+Git-LFS pointers, empty/truncated/unsafe members and contradictory headers are
+not available sets. Safetensors reads only its bounded length-prefixed JSON header
+using the [pinned format](https://github.com/huggingface/safetensors/blob/62e4d8b86063a6e5f8967547fa09a09f67420e2a/README.md#format):
+known byte-sized float/integer/bool dtypes, bounded shapes and overflow-safe
+products, exact nonoverlapping offsets and full declared data coverage. Header
+bytes stop before tensor content. A declared quantized set requires some nonempty integer
+storage in those headers; float-only storage is insufficient. Unknown dtypes and
+oversized headers remain unsupported. Binary members use only an eight-byte
+ZIP/pickle-container sniff (or bounded LFS-prefix detection) and a conservative
+128-byte minimum; no archive or pickle deserialization occurs. These checks
+establish bounded static declarations and members, never tensor correctness or
+functional compatibility.
+
+Standalone legacy `quantize_config.json`/`quant_config.json`, including sidecars
+beside a nested declaration, are unsupported pending an explicit producer-schema
+extractor. Custom unindexed basenames, nested index members and other layouts
+remain attributed candidates. A quantization config without weights records
+missing coverage; an ordinary config without optional weight candidates is not
+an extraction failure. Work/source/member limits apply across every scope.
 
 ## Queries, coverage and pages
 

@@ -56,6 +56,11 @@ startup. No new runtime dependency or production operation is approved.
   layout validation and candidate byte comparisons. Parser, storage, capability
   and compatibility evidence must accompany corresponding implementation.
 - No production acceptance is claimed.
+- [Scoped weight declarations](../../src/hfcache/catalog_weights.py) bind explicit
+  producer fields and safe indexes to one directory's unambiguous retained member
+  set. [Counterexample fixtures](../../tests/unit/test_catalog_weights.py) retain
+  missing/ambiguous/unsupported state without root-policy inheritance, tensor
+  reads, runtime imports, unsafe deserialization or new dependencies.
 - [GGUF headers/grouping](../../src/hfcache/catalog_gguf.py) use pinned primary
   mappings and bounded unbuffered access, with exact publication/directory/prefix
   shard identity and first-shard declaration authority. Tensor metadata provides

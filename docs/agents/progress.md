@@ -100,6 +100,19 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   reviewed; human supported-subset/source/evidence docs updated. No new runtime
   dependency, production/live/credential/host/push operation.
 
+- [x] CAT-007 Detect scoped AWQ/GPTQ declarations (2026-10-19, this commit —
+  [task](plans/tasks/cat-007-quantized-weight-config-variants.md)). Explicit pinned
+  producer fields bind one same-directory canonical/indexed member set; repeated
+  index shard references count once. No root-policy inheritance, implicit defaults,
+  runtime imports, unpickling or tensor reads. Pointer/truncated/ambiguous/unsafe/
+  unsupported/contradictory candidates stay non-available; header arithmetic and
+  aggregate work are bounded. V20-V22 expanded focused 248 pass; independent review
+  and 4,394-case type probe clear. Full gate: 4605 passed/40 deselected in
+  485.32s, build/three locked profiles and actual Cockpit lint/types/169 tests/
+  build. INV-018/AD-15/133 and related FS/authority requirements reviewed; human
+  producer/layout/schema/evidence docs updated. No new dependency or production/
+  live/credential/host/push operation.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

@@ -1148,6 +1148,12 @@ extractor limits in discovery. Nullable fields are explicit nulls, never omitted
 | Variant member | `path: manifest member`, `size_bytes: nonnegative integer` |
 | Variant | `variant_id: SHA256`, `format: identifier`, `encoding: nullable identifier`, `quantization: nullable identifier`, `quantization_method: nullable identifier`, `bits: nullable integer 1..64`, `group_size: nullable positive integer`, `role: primary / adapter / projector / auxiliary / unknown`, `members: member[1..4096]`, `total_bytes: nullable nonnegative integer`, `completeness: complete / incomplete / unknown`, `evidence: header / declaration / filename`, `source_paths: manifest member[1..64]`, `diagnostics: safe string[0..64]` |
 
+Scoped AWQ/GPTQ observations use declaration evidence, independent
+`safetensors`/`pytorch_bin` format and nullable scheme/encoding. Per-column producer
+`group_size=-1` becomes null with diagnostic `per_column_group_size`; missing group
+size remains null with `group_size_unknown`. No runtime defaults or unquantized
+claim are inferred from absence. See [supported layouts](discovery.md#supported-scoped-weight-declarations).
+
 Identifiers are ASCII strings of at most 64 characters; safe diagnostic strings
 are at most 512 characters; source scalar values are at most 2048 characters.
 Manifest member paths use the existing safe relative repository path grammar.

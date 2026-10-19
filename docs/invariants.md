@@ -999,5 +999,7 @@ Extraction enforcement: [bounded static access](../src/hfcache/catalog_extractor
 [hostile declaration fixtures](../tests/unit/test_catalog_extractors.py).
 Variant enforcement: [GGUF bounded headers/grouping](../src/hfcache/catalog_gguf.py)
 and [synthetic mapping/shard/budget fixtures](../tests/unit/test_catalog_gguf.py).
+Scoped declarations: [weight indexes/headers](../src/hfcache/catalog_weights.py)
+and [scope/pointer/ambiguity fixtures](../tests/unit/test_catalog_weights.py).
 Remaining proposed lifecycle/query/transport interfaces require their own
 validation before support is declared. Offline evidence is not production acceptance.
