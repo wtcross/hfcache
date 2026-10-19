@@ -1,8 +1,8 @@
 # Tags and local discovery
 
 Configuration tags, Cockpit authoring, curation identity and supplemental record
-storage are supported. Extraction, writer lifecycle and transport support below
-remain proposed; this contract alone does not make the commands
+storage and the static declaration extractor are supported. Writer lifecycle and
+transport support below remain proposed; this contract alone does not make the commands
 below available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 
@@ -88,8 +88,34 @@ Initial ceilings are 1 MiB per card/JSON file, 64 MiB actual metadata reads and
 64 KiB, preferring summaries of 2048 characters. Counts, skipped values, seeks,
 aliases and aggregate sync work must also be bounded before allocations.
 
+The `static-1` declaration parser uses only the standard library. It accepts a
+root `README.md` front matter block and manifest-listed `config.json`,
+`adapter_config.json`, `dataset_info.json` and `dataset_infos.json`, including
+recognized JSON files within subdirectories. YAML support is deliberately limited
+to block mappings/sequences, quoted/plain scalars and simple scalar flow lists
+(including JSON string lists). Mixed quoted/plain flow lists, anchors, aliases,
+merge keys, custom tags, block scalars and complex flow structures are unsupported. All physical lines count
+toward a 20,000-line ceiling, and skipped content counts toward a 100,000-token/
+node ceiling before containers are allocated. JSON rejects duplicate keys,
+nonfinite numbers and invalid Unicode. No looser parser is attempted.
+
+Only task, language, license, base-model and upstream-tag strings are retained.
+Dataset configuration, split and feature names come from recognized declaration
+contexts; `configs[].data_files[].split` is a declaration even when its path is
+external or absent. Filename extensions can suggest formats, excluding recognized
+metadata JSON files; payloads are not opened to confirm dataset formats.
+Summaries contain at most 64 values per source field and 2048 characters per
+value, with a 64 KiB aggregate retained-text ceiling. Sources retain exact path and
+manifest-expected digest, without claiming a fresh integrity check. Registered
+secret values and recognized credentials are suppressed before retention.
+
 Extraction status is `complete`, `partial`, `unsupported` or `failed`. Missing
 optional declarations are not failures. Unsupported/failed fields stay unknown.
+An unsupported construct yields `unsupported`, malformed/unsafe input or exhausted
+limits yield `failed`, and independent useful observations surviving either yield
+`partial`. Diagnostics are fixed classifications without rejected source contents.
+The supplemental warning class is `HFWRN011`; warnings do not change integrity or
+the successful publication exit classification.
 Supplemental extraction failure warns without invalidating a valid publication;
 producer work must still join before releasing the lock. Dataset formats and
 static split/configuration/feature declarations remain attributed observations,

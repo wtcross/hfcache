@@ -994,5 +994,8 @@ Contract: [discovery](discovery.md), [record schemas](schemas.md#17-supplemental
 [bounded no-follow storage](../src/hfcache/catalog_storage.py),
 [active caller lock](../src/hfcache/locking.py) and
 [crash/identity/preservation fixtures](../tests/unit/test_catalog_storage.py).
-Remaining proposed extraction/query/transport interfaces require their own
+Extraction enforcement: [bounded static access](../src/hfcache/catalog_extractors.py),
+[inert parsers](../src/hfcache/catalog_parsing.py) and
+[hostile declaration fixtures](../tests/unit/test_catalog_extractors.py).
+Remaining proposed lifecycle/query/transport interfaces require their own
 validation before support is declared. Offline evidence is not production acceptance.

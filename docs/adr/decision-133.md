@@ -56,3 +56,8 @@ startup. No new runtime dependency or production operation is approved.
   layout validation and candidate byte comparisons. Parser, storage, capability
   and compatibility evidence must accompany corresponding implementation.
 - No production acceptance is claimed.
+- [Static source access/extraction](../../src/hfcache/catalog_extractors.py) and
+  [conservative data parsers](../../src/hfcache/catalog_parsing.py) preserve
+  AD-15 without new runtime dependencies. Shared actual-read/work limits include
+  failed reads and skipped fields. [Hostile source fixtures](../../tests/unit/test_catalog_extractors.py)
+  distinguish declarations from availability and upstream from operator tags.

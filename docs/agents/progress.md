@@ -76,6 +76,18 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   build. Affected INV/FS/TX and decision 133 reviewed; human contracts updated.
   No new dependency, production/live/credential/push operation.
 
+- [x] CAT-005 Extract bounded static declarations (2026-10-19, this commit —
+  [task](plans/tasks/cat-005-bounded-static-metadata-extraction.md)). Standard-library
+  conservative YAML/strict JSON, exact no-follow manifest sources and shared actual
+  byte/work limits retain only allowlisted attributed fields. Dataset declarations
+  remain distinct from filename formats/availability; upstream tags remain separate.
+  Hostile allocation/Unicode/alias fixtures and network/import/open spies cover
+  V12-V14; independent review clear. Expanded focused 224 passed; final extractor
+  37 passed. Full gate: 4452 passed/40 deselected in 485.46s, build/three locked
+  profiles and actual Cockpit lint/types/169 tests/build. INV-018/AD-15/133 and
+  related FS/authority requirements reviewed; human contracts/links updated.
+  No runtime dependency, production/live/credential/host/push operation.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

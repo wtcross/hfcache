@@ -867,6 +867,7 @@ revision.
 | `HFWRN008` | A retired repair instance is past its grace period and awaits cleanup |
 | `HFWRN009` | Local Xet transfer cache exceeded its advisory ceiling |
 | `HFWRN010` | Verification window may overlap detected storage maintenance |
+| `HFWRN011` | Supplemental discovery extraction is partial, unsupported or failed; publication integrity is unchanged |
 
 `HFDEP001` marks the repository `completed_with_warnings`, is written to the
 manifest and the run report, is surfaced by `status`, and leaves the exit code at

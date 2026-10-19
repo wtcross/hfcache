@@ -62,9 +62,16 @@ repository content, never sets `trust_remote_code`, and never constructs
 Transformers, Datasets, PEFT, or tokenizer objects (`AD-15`, `NG-09`). Files are
 opened for reading bytes and hashing only. Dependency detection parses a fixed
 set of known static metadata files — model-card front matter and
-`adapter_config.json` — with a bounded JSON/YAML parser, and unparseable input is
+`adapter_config.json` — without constructing repository objects; unparseable input is
 recorded as a low-confidence observation rather than retried with a looser parser
 (`AD-07`).
+
+The independent discovery extractor uses no-follow exact-manifest source access
+and [bounded static parsing](discovery.md#static-extraction-and-variants), including
+ignored YAML/JSON structure, byte, candidate and retained-output limits. It accepts
+a conservative YAML subset without aliases/tags/constructors, never follows URLs
+and retains only selected attributed declarations. Its bounds do not retroactively
+claim a parser resource bound for the older dependency detector.
 
 **Residual risk.** A parser vulnerability in the standard library or in
 `huggingface_hub`. Mitigated by keeping the dependency set small and locked, and
