@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [Tags and discovery](2026-10-19-plan-tags-and-discovery.md) |
-| Next task | [CAT-010: catalog queries and facets](tasks/cat-010-catalog-queries-and-facets.md) |
+| Next task | [CAT-011: REST catalog read routes](tasks/cat-011-rest-catalog-read-routes.md) |
 | Blockers | None |
 | Last completed plan | [Timestral model sync](2026-10-19-plan-timestral-model-sync.md) |
 | Updated | 2026-10-19 |

@@ -1171,7 +1171,7 @@ paths and expected sizes/digests must agree with the authoritative
 manifest. Every read also checks archive/repository/SHA/publication/generation and
 manifest identity. A total member-work ceiling applies across variants.
 
-### 17.2 Proposed catalog payloads
+### 17.2 Catalog payloads
 
 New strict schema-1 payloads fit inside existing unmodified result/read wrappers.
 Every payload includes `schema_version: 1`, `catalog_identity: SHA256`, and
@@ -1183,7 +1183,8 @@ to publication count. Counts cover the scoped candidate set before pagination.
 Search adds `total_matches` and bounded `entries`. Each entry has
 `repository_type`, `repository_id`, `tags`, `tag_origin` (configured, last_observed,
 unknown), nullable `tag_observed_at`, nullable `curation_fingerprint`, booleans
-`configured`, `enabled`, `archived`, `matching_variant_count`, nullable
+`configured`, nullable boolean `enabled` (unmanaged is null), `archived`,
+`matching_variant_count`, nullable
 `representative_variant`, and `dataset_formats`. A publication-qualified variant
 wraps `commit_sha`, `publication_id`, `publication_generation` and `variant`.
 Detail adds one `entry` and bounded `observations` (at most 64), with no nested
@@ -1196,7 +1197,10 @@ rather than silently omitting declarations. Variant pages add
 `total_matches` and bounded publication-qualified `entries`. Facet pages add
 `facet`, `total_matches` and bounded entries with `value` and `repository_count`.
 Collection limits and cursors stay in the transport's existing page contract;
-new payload identity binds all relevant visible rows and coverage. Incomplete
+new payload identity binds all relevant visible rows and coverage. Opaque source
+curation fingerprints are withheld as null in read projections; durable snapshots
+retain them. Identity hashes only the sanitized visible policy and projection,
+never a raw digest derived from suppressed labels or membership. Incomplete
 coverage is explicit even when known `total_matches` is zero. No new fields are
 added to old inventory payloads or strict read wrappers.
 

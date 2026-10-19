@@ -142,6 +142,18 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   discovery/schema and invariant/ADR links current. No new runtime dependency,
   production/live/credential/host/push action or public endpoint activation.
 
+- [x] CAT-010 Share bounded catalog queries and facets (2026-10-19, this commit —
+  [task](plans/tasks/cat-010-catalog-queries-and-facets.md)). Strict pure intent/
+  payload DTOs and a lock-free reader use explicit current/retained authority,
+  whole scoped coverage, same-variant predicates, unique repository facets and
+  full variant paging. Selected corruption/exhaustion refuses, orphan metadata
+  stays inert, and secret substitutions cannot change visible matches or cursor
+  identity. Opaque source curation hashes stay durable and are withheld from read
+  projections. V29-V35 focused 270 pass; full gate 4839 pass/40 deselected in
+  507.37s, build/three locked profiles, actual Cockpit lint/types/169 tests/build.
+  INV-018/FS/AD and decision 133 reviewed, discovery/schema/invariant/ADR links
+  current. No runtime dependency, production/live/credential/host/push action.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

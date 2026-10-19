@@ -87,3 +87,13 @@ startup. No new runtime dependency or production operation is approved.
   AD-15 without new runtime dependencies. Shared actual-read/work limits include
   failed reads and skipped fields. [Hostile source fixtures](../../tests/unit/test_catalog_extractors.py)
   distinguish declarations from availability and upstream from operator tags.
+
+- Shared catalog reads hash the visible projection rather than raw source digests.
+  Historical curation hashes may encode suppressed labels, so public nullable
+  curation fingerprints are withheld while durable provenance remains intact.
+  Whole member bundles are suppressed when their membership is sensitive; nullable
+  technical fields become unknown before matching. This concretizes the accepted
+  redaction boundary without changing operational or curation fingerprint formats.
+  [Query fixtures](../../tests/unit/test_catalog_queries.py) cover same-variant
+  conjunction, exact retained identity, coverage, facets, cursor invalidation,
+  secret-substitution invariance and absence of writer/payload capabilities.

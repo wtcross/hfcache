@@ -1010,3 +1010,10 @@ Refresh enforcement: [typed offline service](../src/hfcache/catalog_refresh.py),
 [keyed replay fixture](../tests/unit/test_catalog_refresh_replay.py).
 Remaining proposed query/transport interfaces require their own
 validation before support is declared. Offline evidence is not production acceptance.
+
+Query enforcement: [shared catalog reader](../src/hfcache/services/catalog_queries.py),
+[strict query/payload models](../src/hfcache/catalog_query_models.py) and
+[scope/variant/privacy fixtures](../tests/unit/test_catalog_queries.py).
+Sanitize before predicates, counts and cursor identity; opaque source curation
+fingerprints are withheld from read projections. Whole selected coverage and
+finite aggregate bounds apply before paging.

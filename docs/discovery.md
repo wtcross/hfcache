@@ -366,6 +366,20 @@ Cursors bind normalized scope, route/tool, exact selectors, archive/policy ident
 visible curation, authoritative refs, observations, coverage and ordering. Relevant
 edits/repair/prune/enrichment refuse continuation. No global snapshot is promised.
 
+The read projection withholds opaque curation fingerprints (`null`): historical
+fingerprints can encode labels outside the visible projection. Catalog identity
+instead hashes visible policy, labels and exact publication summaries. Secret-bearing
+labels, source values and paths are suppressed before predicates and counts; a
+variant with suppressed membership is omitted as a whole. Nullable sensitive
+technical values become unknown. Such suppression qualifies coverage as partial.
+Unknown extractor versions cannot establish positive technical matches. The
+representative is the first eligible match ordered by generation, SHA, publication
+ID and variant ID. Explicit SHA/publication detail selects that exact retained
+instance regardless of the default current scope; both selectors are required.
+Queries share finite metadata budgets and a 32 MiB visible projection ceiling,
+including rows beyond the requested page. Oversized detail refuses rather than
+silently dropping observations.
+
 ## Transport and refresh boundary
 
 Planned REST reads are `/catalog/search`, `/catalog/facets`,

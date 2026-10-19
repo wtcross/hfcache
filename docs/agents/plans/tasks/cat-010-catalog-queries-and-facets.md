@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | complete |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 4 — REST and CLI |
 | Depends on | [CAT-002](cat-002-configuration-tags-and-identities.md), [CAT-004](cat-004-metadata-records-and-storage.md), [CAT-005](cat-005-bounded-static-metadata-extraction.md), [CAT-006](cat-006-gguf-variants-and-shards.md), [CAT-007](cat-007-quantized-weight-config-variants.md) |
@@ -62,15 +62,29 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
-When work starts, record any relevant newer-source reconciliation, implementation
-choices, blockers and scope amendments here. Preserve prior completed evidence.
+Implemented strict pure query/payload models and one bounded lock-free reader.
+Predicates bind a single supported complete primary variant. Current follows its
+explicit retained ref; selected corruption and exhaustion refuse. Whole coverage
+precedes predicates/pages. Facets count distinct matching repositories, and detail
+keeps variants separately paged. DTO construction was delegated before resuming
+serial root implementation; no later work package has been implemented.
+
+Visible projection identity suppresses sensitive labels, values and whole member
+bundles before matching/counts/hash. Opaque historical curation fingerprints are
+withheld as nullable read fields, preserving durable fingerprints and old policy
+identities. INV-018 and decision 133 are amended with this implementation detail.
+Focused query/model/storage/refresh selection: 270 passed in 13.41s. Format/lint
+and focused Pyrefly passed. No live or host actions.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-010, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-010, this commit). V29-V35 focused query/model/storage/
+refresh selection: 270 passed in 13.41s. `scripts/check.sh` exited 0: 4,839 passed,
+40 deselected in 507.37s; wheel/sdist built, all three locked installation profiles
+passed, and actual Cockpit lint/types/169 tests/production build passed. Reviewed
+INV-018, FS-08/09/11/12/15, AD-12/15/17/18 and decision 133; no transaction,
+confidence, dependency or existing inventory/MCP capability changes. Updated
+human discovery/schema contracts, invariant and ADR enforcement links. Explicit
+privacy projection detail preserves existing operational/curation hash formats.
+[Progress](../../progress.md) records completion. Next is CAT-011; no deployment,
+live workload, credential access or push is authorized or performed.

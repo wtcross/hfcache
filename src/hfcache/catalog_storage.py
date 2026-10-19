@@ -133,7 +133,7 @@ def parse_record[RecordT: CatalogRecord](model: type[RecordT], raw: bytes) -> Re
         return record
 
 
-def _check_namespace(layout: ArchiveLayout, reader: MetadataReader) -> None:
+def check_namespace(layout: ArchiveLayout, reader: MetadataReader) -> None:
     for entry in reader.walk(layout.metadata):
         kind = layout.supplemental_entry_kind(entry.path)
         if not (
@@ -325,7 +325,7 @@ class CatalogWriter:
                 for entry in self.reader.entries(layout.published, missing_ok=False)
             ):
                 raise _invalid()
-            _check_namespace(layout, self.reader)
+            check_namespace(layout, self.reader)
         except (OSError, ValueError) as exc:
             raise _invalid() from exc
         descriptor = self.reader.open(layout.published, directory=True)
