@@ -928,7 +928,11 @@ status. The stable event names are:
 `hash.completed`, `verification.completed`,
 `dependency.undeclared`, `publication.completed`, `retention.pruned`,
 `retention.deferred`, `quarantine.cleaned`, `repository.failed`, `run.completed`,
-`mcp.diagnostic`.
+`mcp.diagnostic`, `catalog.capture_incomplete`.
+
+`catalog.capture_incomplete` emits the bounded `HFWRN011` warning after optional
+supplemental capture fails or produces incomplete evidence. Successful
+publication and repair integrity outcomes remain authoritative.
 
 The MCP diagnostic bridge emits only sanitized bounded warning/error provenance,
 never SDK message arguments, raw exceptions or tracebacks. Debug-only events are

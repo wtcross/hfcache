@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 import stat
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -16,14 +17,23 @@ from hfcache.catalog_models import (
     RepositoryTagSnapshot,
 )
 from hfcache.errors import IntegrityError, SafetyError
-from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity
+from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, TransactionId
 from hfcache.locking import require_archive_lock
 from hfcache.manifests import RevisionManifest
 from hfcache.metadata import MetadataReader, QueryBounds
-from hfcache.models import ArchiveSentinel, Reference, VersionedModel, dump, load
+from hfcache.models import (
+    ArchiveSentinel,
+    Reference,
+    RepairRetirementRecord,
+    TransactionJournal,
+    VersionedModel,
+    dump,
+    load,
+)
 from hfcache.preflight import CHECK_ORDER, require_storage_safety
 from hfcache.publication import PUBLISHED_DIRECTORY_MODE, PUBLISHED_FILE_MODE
 from hfcache.storage import atomic_write_bytes
+from hfcache.transactions import checkpoint_order_problems
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -269,6 +279,7 @@ class CatalogWriter:
         storage: StorageConfig,
         checks: tuple[Check, ...] | None = None,
         table: Sequence[MountEntry] | None = None,
+        active_sync: TransactionJournal | None = None,
     ) -> None:
         self._ownership = require_archive_lock()
         if layout.root != storage.archive_root:
@@ -304,6 +315,7 @@ class CatalogWriter:
         sentinel, _ = _authority(layout.sentinel, ArchiveSentinel, self.reader)
         if sentinel.archive_id != self.archive_id:
             raise _invalid()
+        self._journals(active_sync)
         try:
             allowed = {layout.repos, layout.manifests, layout.catalog, layout.metadata}
             if any(
@@ -320,6 +332,88 @@ class CatalogWriter:
             self._published_identity = info.st_dev, info.st_ino
         finally:
             os.close(descriptor)
+
+    def _journals(self, active_sync: TransactionJournal | None) -> None:
+        """No unexplained unfinished work; only the exact caller's active run is exempt."""
+        for entry in self.reader.entries(self.layout.transactions, missing_ok=False):
+            if not re.fullmatch(r"[0-9a-f]{32}\.json", entry.path.name) or not stat.S_ISREG(
+                entry.info.st_mode
+            ):
+                raise _invalid()
+            journal, _ = _authority(entry.path, TransactionJournal, self.reader)
+            if journal.archive_id != self.archive_id or entry.path != self.layout.journal(
+                TransactionId(journal.transaction_id)
+            ):
+                raise _invalid()
+            if checkpoint_order_problems(journal):
+                raise _invalid()
+            if journal.is_resolved:
+                continue
+            if self._committed_repair(journal):
+                continue
+            if (
+                journal == active_sync
+                and journal.operation == "sync"
+                and journal.state == "open"
+                and tuple(cp.name for cp in journal.checkpoints)
+                == ("run_started", "preflight_passed", "journals_reconciled")
+            ):
+                continue
+            msg = (
+                "supplemental metadata requires resolved archive journals or the exact active sync"
+            )
+            raise SafetyError.single(msg, code="HFTXN001")
+
+    def _committed_repair(self, journal: TransactionJournal) -> bool:
+        """AD-13: a validated committed repair waits for grace without closing its journal."""
+        names = tuple(checkpoint.name for checkpoint in journal.checkpoints)
+        if (
+            journal.operation != "repair"
+            or journal.state != "open"
+            or names[-1:] != ("repair_committed",)
+        ):
+            return False
+        checkpoint = next(
+            cp for cp in journal.checkpoints if cp.name == "retirement_record_written"
+        )
+        if (
+            journal.repository_type is None
+            or journal.repository_id is None
+            or journal.commit_sha is None
+            or journal.publication_id is None
+        ):
+            raise _invalid()
+        identity = RepositoryIdentity.of(journal.repository_type, journal.repository_id)
+        repository = self.layout.repository(identity)
+        sha = CommitSha(journal.commit_sha)
+        retired = PublicationId(journal.publication_id)
+        path = repository.retirement_record(sha, retired)
+        if checkpoint.evidence.get("retirement_record_path") != str(
+            self.layout.archive_relative(path)
+        ):
+            raise _invalid()
+        record, _ = _authority(path, RepairRetirementRecord, self.reader)
+        replacement = PublicationId(record.replacement_publication_id)
+        if (
+            record.transaction_id != journal.transaction_id
+            or (
+                record.repository_type,
+                record.repository_id,
+                record.commit_sha,
+                record.retired_publication_id,
+            )
+            != (identity.type, identity.id, sha, retired)
+            or record.cleanup.state != "pending"
+            or record.retired_tree != str(repository.manifest_tree_field(sha, retired))
+            or record.replacement_tree != str(repository.manifest_tree_field(sha, replacement))
+        ):
+            raise _invalid()
+        manifest, _ = publication_binding(
+            self.layout, identity, sha, replacement, reader=self.reader
+        )
+        if manifest.publication_generation != record.publication_generation:
+            raise _invalid()
+        return True
 
     def _parent(self, path: Path) -> int:
         descriptor = self.reader.open(self.layout.published, directory=True)

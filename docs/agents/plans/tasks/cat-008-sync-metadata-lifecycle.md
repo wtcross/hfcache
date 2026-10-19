@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 3 — Writer lifecycle |
 | Depends on | [CAT-004](cat-004-metadata-records-and-storage.md), [CAT-005](cat-005-bounded-static-metadata-extraction.md), [CAT-006](cat-006-gguf-variants-and-shards.md), [CAT-007](cat-007-quantized-weight-config-variants.md) |
@@ -15,7 +15,7 @@ Follow `AGENTS.md` and `docs/agents/workflow.md`. Read relevant sections of the
 [design](../support/tags-and-discovery/design.md),
 [source review](../support/tags-and-discovery/source-review.md) and
 [validation matrix](../support/tags-and-discovery/validation-matrix.md).
-Tasks own execution status; this file is pending, not a claim of implementation.
+Tasks own execution status; completion requires the recorded checks below.
 
 ## Likely implementation touchpoints
 
@@ -60,15 +60,62 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
-When work starts, record any relevant newer-source reconciliation, implementation
-choices, blockers and scope amendments here. Preserve prior completed evidence.
+2026-10-19: resumed from completed CAT-007 on `feat/tags-and-discovery` with no
+unrelated working-tree changes. Sync capture runs after producer shutdown and
+deferred retention, before result/report checkpoints. Repair capture runs after
+the durable replacement inside the existing guard. The original live lock token,
+complete storage proof, bounded journal scans, exact active sync identity and
+canonical committed-repair retirement evidence guard independent writes.
+
+The API supplies a fresh installed-policy curation provider. Only current tags,
+curation fingerprint/time are projected under the lock; admitted operational
+policy, selection and credentials remain frozen. Failed or removed source
+entries never fall back to admitted tags. Each invocation shares extraction
+budgets plus 4096 write attempts/128 MiB serialized records, and each write checks
+capacity with 64 KiB directory allowance. Optional failures yield HFWRN011 and
+missing/failed evidence without changing domain success; near-reserve HFWRN005
+is preserved. No new durable schema, runtime dependency or transaction replay.
+
+Read-only independent review found and resolved the committed-repair grace
+exception, checkpoint-order validation and canonical-before-read retirement
+guard. Actual repair and payload open-spy fixtures cover those boundaries.
+Earlier focused regressions exposed old service fixture expectations of
+`published`/`success`; those unsupported arbitrary weight fixtures now correctly
+expect supplemental warnings, while direct domain seams keep their behavior.
+Two intermediate gates were interrupted (exit 2) for final canonical-path and
+retirement identity corrections; neither is counted as passing. The first full
+suite reported 3 failed/4625 passed/40 deselected in 495.38s: the closed logging
+vocabulary fixture and two MCP on/off sync acceptance expectations needed the new
+warning event/status. Those expectations were corrected without changing the
+nine-tool boundary. Final required gate evidence follows at completion.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-008, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-008, this commit). V23 binds exact new-publication
+observations/tags and raw immutable manifest digest. V24's four retained-SHA
+cases preserve downloads, references, generations and manifest bytes through
+empty/disabled/tag-only changes; removed/unavailable current curation has no stale
+fallback. V25 injects extractor/store/capacity/budget failures, proves a shared
+invocation budget, original-lock capture after joined producers, and existing
+real runner drain. Actual repair preserves original manifest/observation and
+generation while binding the replacement; four corrupted retirement path/identity/
+SHA/publication cases refuse without opening payloads. Capacity warnings remain
+visible. Independent read-only review found no remaining material acceptance gap.
+
+Final focused command: `rtk uv run --locked --extra server --extra mcp pytest -q
+tests/unit/test_catalog_lifecycle.py tests/unit/test_catalog_storage.py
+tests/unit/test_command_services.py tests/unit/test_api_commands.py
+tests/unit/test_synchronize.py`: 221 passed in 91.94s. Corrected logging/MCP
+expectations: `rtk uv run --locked --extra server --extra mcp pytest -q
+tests/unit/test_logging.py tests/unit/test_mcp_acceptance.py`: 73 passed in 4.47s.
+Full `rtk proxy scripts/check.sh` exited 0: 4628 passed/40 opt-in deselected in
+494.66s, format/lint/types/docs, build, three locked installation profiles and
+actual Cockpit lint/types/169 tests/build. Ignored log: `.git/cat-008-check.log`.
+
+Reviewed INV-018, AD-12/13/14/17/18/19, TX-01/02/07, FS-06/07/09/17/19 and
+decision 133. Discovery, CLI event/warning and report schema semantics plus
+invariant/ADR enforcement links are current; no new architecture exception,
+schema, runtime dependency or broadened authority. [Progress entry](../../progress.md#tags-and-discovery-2026-10-19)
+records completion. No production, live Hub/NFS, credential, host/service,
+archive CLI initialization or push action. Next: CAT-009; final compatibility
+and operator handoff remain within the active plan.

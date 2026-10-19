@@ -118,7 +118,8 @@ def test_every_rest_role_and_real_command_remains_identical_with_optional_mcp(
             terminal = await result(client, accepted)
             assert terminal["command"] == "sync"
             assert terminal["exit_code"] == 0
-            assert terminal["data"]["repositories"][0]["status"] == "published"
+            assert terminal["data"]["repositories"][0]["status"] == "completed_with_warnings"
+            assert terminal["data"]["repositories"][0]["warnings"] == ["HFWRN011"]
             assert (layout.root / terminal["data"]["report"]).is_file()
             assert len(hub.downloads) == 1
             response = await client.get("/api/v1/operations", headers=READER_HEADERS)

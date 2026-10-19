@@ -21,13 +21,20 @@ from hfcache.catalog_storage import (
 )
 from hfcache.config import StorageConfig
 from hfcache.errors import HfcacheError, IntegrityError, SafetyError
-from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity
+from hfcache.identity import (
+    CommitSha,
+    PublicationId,
+    RepositoryIdentity,
+    new_run_id,
+    new_transaction_id,
+)
 from hfcache.locking import exclusive_lock, require_archive_lock
 from hfcache.metadata import MetadataReader, QueryLimitError
 from hfcache.models import dump
 from hfcache.paths import ArchiveLayout
 from hfcache.preflight import CHECK_ORDER, Check
 from hfcache.storage import parse_mount_table
+from hfcache.transactions import open_transaction
 from tests.fixtures import examples
 
 
@@ -71,6 +78,47 @@ def published(archive):
     reference.parent.mkdir(parents=True)
     reference.write_bytes(dump(examples.reference()))
     return manifest
+
+
+def test_adjuncts_exempt_only_exact_active_sync_after_reconciliation(archive):
+    layout, storage, table = archive
+    with exclusive_lock(layout.root.parent / "locks/hfcache.lock", command="sync", wait_seconds=0):
+        transaction = open_transaction(
+            layout,
+            transaction_id=new_transaction_id(),
+            operation="sync",
+            run_id=new_run_id(),
+            archive_id=examples.ARCHIVE_ID,
+            config_fingerprint="0" * 64,
+        )
+        transaction.checkpoint("run_started")
+        transaction.checkpoint("preflight_passed")
+        with pytest.raises(SafetyError):
+            CatalogWriter(layout, storage=storage, table=table, active_sync=transaction.journal)
+        transaction.checkpoint("journals_reconciled")
+        with pytest.raises(SafetyError):
+            CatalogWriter(layout, storage=storage, table=table)
+        with pytest.raises(SafetyError):
+            CatalogWriter(
+                layout,
+                storage=storage,
+                table=table,
+                active_sync=transaction.journal.model_copy(update={"run_id": new_run_id()}),
+            )
+        CatalogWriter(layout, storage=storage, table=table, active_sync=transaction.journal).write(
+            examples.tag_snapshot()
+        )
+
+
+def test_resolved_but_impossible_journal_preserves_and_refuses(archive):
+    layout, _, _ = archive
+    journal = examples.journal().model_copy(update={"state": "committed"})
+    path = layout.transactions / f"{journal.transaction_id}.json"
+    original = dump(journal)
+    path.write_bytes(original)
+    with pytest.raises(IntegrityError), writer(archive):
+        pytest.fail("impossible checkpoint order passed adjunct guard")
+    assert path.read_bytes() == original
 
 
 def test_round_trip_whole_records_and_original_evidence_unchanged(archive):

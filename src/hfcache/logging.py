@@ -101,6 +101,7 @@ EVENTS: Final = (
     "repository.failed",
     "run.completed",
     "mcp.diagnostic",
+    "catalog.capture_incomplete",
 )
 """docs/cli.md output discipline's stable vocabulary, including the decision 103 cleanup
 amendment."""
@@ -118,7 +119,9 @@ They are not part of the the CLI event contract contract and may change; the `EV
 """
 
 _ERROR: Final = frozenset({"preflight.failed", "repository.failed"})
-_WARNING: Final = frozenset({"dependency.undeclared", "retention.deferred", "mcp.diagnostic"})
+_WARNING: Final = frozenset(
+    {"dependency.undeclared", "retention.deferred", "mcp.diagnostic", "catalog.capture_incomplete"}
+)
 
 _PRIORITY: Final = {
     logging.ERROR: "<3>",

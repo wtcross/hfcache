@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Final
 
 from hfcache.archive import initialize_archive
+from hfcache.catalog_capture import CatalogCapture, capture_warning
 from hfcache.credentials import resolve_token
 from hfcache.errors import (
     ConfigurationError,
@@ -77,7 +78,7 @@ from hfcache.verification import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
     from pathlib import Path
 
     from hfcache.config import ApplicationConfig, RepositoryConfig
@@ -125,6 +126,7 @@ class CommandServices:
     context: ExecutionContext
     token_file: Path | None = None
     config_label: str = "installed configuration"
+    curation_source: Callable[[], ApplicationConfig] | None = None
 
     @property
     def layout(self) -> ArchiveLayout:
@@ -301,6 +303,7 @@ class CommandServices:
                         checks=checks,
                         run_id=self.context.run_id,
                         started_at=self.context.started_at,
+                        curation_source=self.curation_source,
                     )
                 payload = outcome.report.model_dump(mode="json")
                 payload["report"] = str(self.layout.archive_relative(outcome.report_path))
@@ -579,7 +582,7 @@ class CommandServices:
                     storage=self.config.storage,
                     command="repair",
                     lock_wait_seconds=self.config.sync.lock_wait_seconds,
-                ):
+                ) as checks:
                     self._reconcile(envelope)
                     client.require_identity(self.config.hub.expected_account)
                     outcome = repair_revision(
@@ -594,7 +597,17 @@ class CommandServices:
                         envelope=envelope,
                         run_id=self.context.run_id,
                     )
-                return ServiceResult("repair", outcome.as_payload(), run_id=self.context.run_id)
+                    try:
+                        warnings = CatalogCapture(
+                            self.layout, self.config, checks, curation_source=self.curation_source
+                        ).repair(
+                            parsed.identity, outcome.commit_sha, outcome.replacement_publication_id
+                        )
+                    except Exception:  # noqa: BLE001 - only optional work after durable repair
+                        warnings = capture_warning(parsed.identity)
+                return ServiceResult(
+                    "repair", outcome.as_payload(), warnings=warnings, run_id=self.context.run_id
+                )
             except HfcacheError as error:
                 return _failure("repair", error)
 
@@ -751,6 +764,7 @@ def _run(  # noqa: PLR0913 - extracted run orchestration preserves domain inputs
     checks: Sequence[Check],
     run_id: RunId,
     started_at: datetime,
+    curation_source: Callable[[], ApplicationConfig] | None = None,
 ) -> RunOutcome:
     """The §7.6 run transaction: open it, reconcile, then do the work.
 
@@ -798,6 +812,7 @@ def _run(  # noqa: PLR0913 - extracted run orchestration preserves domain inputs
             envelope=envelope,
             run_id=run_id,
             started_at=started_at,
+            metadata=CatalogCapture(layout, config, checks, curation_source=curation_source),
         )
     except HfcacheError as error:
         transaction.fail(error.problems[0].code, error.problems[0].message)

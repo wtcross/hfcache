@@ -507,12 +507,16 @@ Per-repository `status` is one of:
 
 | Status | Meaning |
 | --- | --- |
-| `skipped` | Resolved SHA is already current; nothing to do |
+| `skipped` | Resolved SHA is already current; no revision download or publication |
 | `ref_moved_to_retained_revision` | Resolved SHA is already retained but was not current; `current.json` was atomically moved to it |
 | `published` | A new revision was downloaded, verified, and published |
-| `completed_with_warnings` | Published, with non-fatal warnings such as `HFDEP001` |
+| `completed_with_warnings` | Published, with non-fatal warnings such as `HFDEP001` or supplemental `HFWRN011` |
 | `failed` | The repository operation did not complete; publication fields show if a new revision landed before a later retention failure; other repositories may have continued |
-| `disabled` | Present in configuration with `enabled = false`; reported for completeness, not processed |
+| `disabled` | Present in configuration with `enabled = false`; no revision processing |
+
+Supplemental tag/observation capture can refresh independently of revision
+processing. Existing statuses and domain exit codes remain unchanged; their
+`warnings` can include incomplete capture without implying an absent publication.
 
 A failed result retains planning and completed-transfer facts known before the
 failure: its resolved SHA, estimate file count, cache reuse, and

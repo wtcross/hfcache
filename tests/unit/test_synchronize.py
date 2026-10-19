@@ -1196,7 +1196,7 @@ def test_the_sync_command_publishes_and_exits_zero(config_file: Path):
 
     assert result.exit_code == ExitCode.SUCCESS
     payload = json.loads(result.stdout)["data"]
-    assert {entry["status"] for entry in payload["repositories"]} == {"published"}
+    assert {entry["status"] for entry in payload["repositories"]} == {"completed_with_warnings"}
     assert payload["report"].startswith("runs/")
 
 
@@ -1216,7 +1216,7 @@ def test_required_token_syncs_private_repositories(config_file: Path, tmp_path: 
 
     assert result.exit_code == ExitCode.SUCCESS
     payload = json.loads(result.stdout)["data"]
-    assert {entry["status"] for entry in payload["repositories"]} == {"published"}
+    assert {entry["status"] for entry in payload["repositories"]} == {"completed_with_warnings"}
 
 
 @pytest.mark.usefixtures("_wired")
@@ -1264,8 +1264,8 @@ def test_the_sync_command_restricts_a_run_to_its_selectors(config_file: Path):
 def test_the_sync_command_prints_one_line_per_repository(config_file: Path):
     result = invoke_api(config_file, ["sync"], json_output=False)
 
-    assert "model:organization/model-name  published" in result.output
-    assert "dataset:organization/dataset-name  published" in result.output
+    assert "model:organization/model-name  completed_with_warnings" in result.output
+    assert "dataset:organization/dataset-name  completed_with_warnings" in result.output
 
 
 @pytest.mark.usefixtures("_wired")
@@ -1388,6 +1388,7 @@ def test_a_run_leaves_the_plan_section_24_event_trail_on_writer_stderr(config_fi
             "hash.started",
             "hash.completed",
             "publication.completed",
+            "catalog.capture_incomplete",
         ]
 
     completed = next(line for line in lines if line.startswith("event=hash.completed"))
@@ -1538,12 +1539,12 @@ def test_the_run_journal_carries_the_evidence_each_checkpoint_names(config_file:
         "reconciled_transaction_ids": [],
     }
     assert evidence["repositories_processed"]["statuses"] == {
-        DATASET.selector: "published",
-        MODEL.selector: "published",
+        DATASET.selector: "completed_with_warnings",
+        MODEL.selector: "completed_with_warnings",
     }
     assert evidence["catalog_rebuilt"]["catalog_path"] == "published/catalog/repositories.json"
     assert evidence["run_report_written"]["run_report_path"].startswith("runs/")
-    assert evidence["run_completed"] == {"exit_code": 0, "outcome": "success"}
+    assert evidence["run_completed"] == {"exit_code": 0, "outcome": "success_with_warnings"}
 
 
 @pytest.mark.usefixtures("_wired")
@@ -1712,7 +1713,7 @@ def test_status_reports_retained_and_current_state(config_file: Path):
     assert entries[MODEL.selector]["retained_revisions"] == 1
     assert entries[MODEL.selector]["current_commit_sha"] == SHA_A
     assert entries[MODEL.selector]["retained_generations"] == [1]
-    assert entries[MODEL.selector]["last_run_status"] == "published"
+    assert entries[MODEL.selector]["last_run_status"] == "completed_with_warnings"
 
 
 @pytest.mark.usefixtures("_wired")
@@ -2671,7 +2672,9 @@ def test_runner_drain_joins_real_sync_producer_before_releasing_archive_lock(
             assert drained.is_set()
             result = runner.wait(receipt.operation_id, timeout=5)
             assert result.exit_code == 0
-            assert {row["status"] for row in result.data["repositories"]} == {"published"}
+            assert {row["status"] for row in result.data["repositories"]} == {
+                "completed_with_warnings"
+            }
             assert result.run_id == store.get(receipt.operation_id).domain_run_id
         finally:
             release.set()

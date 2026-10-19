@@ -90,6 +90,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
+    from hfcache.catalog_capture import CatalogCapture
     from hfcache.config import ApplicationConfig, RepositoryConfig
     from hfcache.hub import DownloadEstimate, HubClient, RepositoryFacts, TreeEntry
     from hfcache.identity import RunId
@@ -1471,6 +1472,7 @@ def synchronize(  # noqa: PLR0913 - docs/cli.md sync contract's inputs, one argu
     envelope: Mapping[str, Any],
     run_id: RunId,
     started_at: datetime,
+    metadata: CatalogCapture | None = None,
 ) -> RunOutcome:
     """Process every selected repository and record the run (docs/cli.md sync contract).
 
@@ -1527,6 +1529,8 @@ def synchronize(  # noqa: PLR0913 - docs/cli.md sync contract's inputs, one argu
             configured=configured,
             run_id=run_id,
         )
+    if metadata is not None:
+        results = metadata.sync(results, transaction.journal)
     totals = {
         "downloaded_bytes": sum(result.downloaded_bytes for result in results),
         "hashed_bytes": sum(result.hashed_bytes for result in results),

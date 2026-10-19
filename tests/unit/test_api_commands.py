@@ -112,7 +112,8 @@ def test_sync_rest_runs_real_publication_and_reobserves_without_download(configu
         assert completed["exit_code"] == 0
         assert completed["command"] == "sync"
         assert completed["run_id"] != first["operation"]["operation_id"]
-        assert completed["data"]["repositories"][0]["status"] == "published"
+        assert completed["data"]["repositories"][0]["status"] == "completed_with_warnings"
+        assert completed["data"]["repositories"][0]["warnings"] == ["HFWRN011"]
         assert (layout.root / completed["data"]["report"]).is_file()
         reference = read_reference(layout, RepositoryLayout(layout, MODEL).current_ref)
         assert reference.commit_sha == SHA_A

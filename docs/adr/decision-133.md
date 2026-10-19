@@ -56,6 +56,12 @@ startup. No new runtime dependency or production operation is approved.
   layout validation and candidate byte comparisons. Parser, storage, capability
   and compatibility evidence must accompany corresponding implementation.
 - No production acceptance is claimed.
+- [Joined sync/repair capture](../../src/hfcache/catalog_capture.py) obtains fresh
+  curation under the original lock without replacing admitted execution policy.
+  [Lifecycle fixtures](../../tests/unit/test_catalog_lifecycle.py) preserve exact
+  publications, retained generations, repair grace, immutable manifests and
+  successful domain exits through optional failures. Bounded journal guards
+  exempt only the exact active sync and validated committed-repair grace state.
 - [Scoped weight declarations](../../src/hfcache/catalog_weights.py) bind explicit
   producer fields and safe indexes to one directory's unambiguous retained member
   set. [Counterexample fixtures](../../tests/unit/test_catalog_weights.py) retain

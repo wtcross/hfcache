@@ -123,7 +123,12 @@ def command_service(
     request: Request, snapshot: PolicySnapshot, context: ExecutionContext
 ) -> CommandServices:
     """Use only the trusted lifespan credential path, never a request-selected file."""
-    return CommandServices(snapshot.config, context, token_file=request.app.state.hub_token_file)
+    return CommandServices(
+        snapshot.config,
+        context,
+        token_file=request.app.state.hub_token_file,
+        curation_source=lambda: request.app.state.policy.snapshot().config,
+    )
 
 
 def admit_command(  # noqa: PLR0913 - explicit trusted route execution policy

@@ -113,6 +113,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   producer/layout/schema/evidence docs updated. No new dependency or production/
   live/credential/host/push operation.
 
+- [x] CAT-008 Capture sync and repair metadata (2026-10-19, this commit —
+  [task](plans/tasks/cat-008-sync-metadata-lifecycle.md)). Joined producer/retention
+  completion precedes original-lock capture; fresh installed curation projects
+  tags/fingerprint/time without replacing admitted policy or credentials. Retained
+  sync changes no download/publication/generation; repair binds only its exact
+  replacement and preserves historical evidence/grace. Shared extraction/record
+  budgets, capacity, bounded journal order/identity and canonical-before-read
+  guards keep optional errors visible without changing successful domain exits.
+  V23-V25 focused 221 pass; logging/MCP expectation checks 73 pass; independent
+  review clear. Full gate: 4628 passed/40 deselected in 494.66s, build/three locked
+  profiles and actual Cockpit lint/types/169 tests/build. INV-018/AD/TX/FS and
+  decision 133 reviewed; human lifecycle/schema/CLI contracts updated. No new
+  dependency or production/live/credential/host/push action.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

@@ -2,8 +2,9 @@
 
 Configuration tags, Cockpit authoring, curation identity and supplemental record
 storage, static declarations, GGUF headers and scoped AWQ/GPTQ variants are
-supported. Writer lifecycle and transport support below remain proposed; this contract alone does not make the commands
-below available. Existing inventory and the nine existing MCP tools keep their
+supported, including sync and repair capture. Refresh and transport support
+below remain proposed; this contract alone does not make those commands
+available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 
 ## Operator tags
@@ -77,6 +78,41 @@ Crashes can leave mixed observation times, always whole visible records. The
 exception does not cover any existing transaction, verification catalog, tree,
 manifest, reference, prune, repair or initialization. An existing valid archive
 may acquire this namespace through writer work; never rerun initialization.
+
+### Sync and repair capture
+
+Production sync captures after all download producers join and retention finishes,
+before recording its repository results and report. The exact caller-owned sync
+journal may remain open only at `journals_reconciled`; other unfinished journals
+refuse supplemental writes. A repair journal waiting at `repair_committed` is
+safe only with its canonical, matching pending retirement record and exact
+retained replacement manifest. Its grace cleanup remains open. Corrupt journal
+schemas, identities and checkpoint order refuse capture.
+
+Capture reads the current validated installed curation once under the same lock,
+after the archive work, and projects only tags, source fingerprint and time.
+The admitted operational policy, repository selection and credentials remain
+unchanged. A source that changes archive authority or cannot be validated does
+not fall back to stale tags; technical extraction can still proceed. Removal
+before capture creates no historical labels and leaves any prior snapshot intact.
+Present empty or disabled entries can replace their tag snapshots.
+
+Retained-SHA sync refreshes observations without a new download, publication ID
+or generation. Repair observes its exact replacement and preserves the retired
+instance's manifest and observation. Optional capture errors produce `HFWRN011`
+and missing or failed coverage; they never roll back or reclassify valid
+publication integrity, swallow domain errors or change its successful exit code.
+Existing repository statuses retain their archive meaning; a newly published
+revision with supplemental warnings uses `completed_with_warnings`.
+
+One invocation shares all extraction ceilings across publications, plus a
+4096-record attempt ceiling and 128 MiB aggregate serialized-record ceiling.
+Failed attempts count. Curation projection refuses more than 100,000 configured
+repositories. Each write checks available capacity for the serialized record
+plus a 64 KiB directory allowance. Exhaustion preserves earlier whole records
+and reports incomplete capture; near-reserve `HFWRN005` warnings remain visible.
+No deferred callbacks, background writers,
+dependency downloads or additional pruning are introduced.
 
 ## Static extraction and variants
 
