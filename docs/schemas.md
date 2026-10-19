@@ -1109,3 +1109,79 @@ indexed files; missing, copied or drifted bindings refuse selection. Provisionin
 and both-manager reload remain separate guarded operations. The selected physical
 rendered profile/config/worker policy and helper must govern actual execution
 together; changing a symlink while retaining an unrelated runtime copy is invalid.
+
+## 17. Supplemental discovery records
+
+Proposed independently versioned schema-1 families use the existing strict JSON,
+ordering, timestamp, digest and atomic-file conventions. See [discovery](discovery.md)
+for field bounds, exact identity, historical authority, coverage and query payloads.
+`RepositoryTagSnapshot` contains `kind`, `schema_version`, `archive_id`,
+`repository_type`, `repository_id`, `tags`, `observed_at`, `curation_fingerprint`
+and `source=installed_config`. `PublicationObservation` contains exact repository,
+SHA/publication/generation, manifest locator/digest, extractor identity/time/status,
+attributed sources, model variants/dataset declarations and diagnostics. They do
+not widen any existing manifest/ref/report/catalog or read-wrapper schema.
+
+The optional `published/metadata/` namespace may be added after initialized writer
+preflight. Every record is an independent atomic replacement (decision 133), never
+a multi-file transaction. Prior malformed, future-version or unsafe canonical files
+are preserved and refuse replacement. Missing metadata means unknown coverage;
+selected corrupt metadata refuses. Only `<canonical-name>.tmp-<16 lowercase hex digits>` siblings are ignored by
+reads and preserved; unknown sibling names are refused. Historical labels require backup; observations
+are rebuildable without changing old evidence. New config/layout/operation kinds
+require actual old-binary compatibility drills before claiming rollback support.
+
+### 17.1 Proposed exact record fields and bounds
+
+All objects reject extra fields and coercions. Existing canonical UUID/SHA/digest,
+repository type/ID, publication ID, positive generation and UTC timestamp types
+apply. All array limits apply before duplicate elimination. Records are bounded
+by 16 MiB encoded JSON; no individual source metadata file can exceed the
+extractor limits in discovery. Nullable fields are explicit nulls, never omitted.
+
+| Object | Exact fields |
+| --- | --- |
+| Tag snapshot | `schema_version: 1`, `kind: repository_tag_snapshot`, `archive_id: UUID`, `repository_type: model / dataset`, `repository_id: ID`, `tags: canonical tag[0..64]`, `observed_at: timestamp`, `curation_fingerprint: SHA256`, `source: installed_config` |
+| Publication observation | `schema_version: 1`, `kind: publication_observation`, `archive_id: UUID`, `repository_type: model / dataset`, `repository_id: ID`, `commit_sha: SHA`, `publication_id: ID`, `publication_generation: positive integer`, `manifest_path: archive-relative locator`, `manifest_digest: SHA256`, `extractor_version: bounded identifier`, `observed_at: timestamp`, `status: complete / partial / unsupported / failed`, `sources: Source[0..4096]`, `variants: Variant[0..4096]`, `dataset_formats: identifier[0..64]`, `diagnostics: safe string[0..64]` |
+| Source | `path: manifest member`, `sha256: manifest expected SHA256`, `field: task / language / license / base_model / upstream_tags / dataset_config / dataset_split / dataset_feature / format`, `values: string[0..64]`, `evidence: declaration / header / filename` |
+| Variant member | `path: manifest member`, `size_bytes: nonnegative integer` |
+| Variant | `variant_id: SHA256`, `format: identifier`, `encoding: nullable identifier`, `quantization: nullable identifier`, `quantization_method: nullable identifier`, `bits: nullable integer 1..64`, `group_size: nullable positive integer`, `role: primary / adapter / projector / auxiliary / unknown`, `members: member[1..4096]`, `total_bytes: nullable nonnegative integer`, `completeness: complete / incomplete / unknown`, `evidence: header / declaration / filename`, `source_paths: manifest member[1..64]`, `diagnostics: safe string[0..64]` |
+
+Identifiers are ASCII strings of at most 64 characters; safe diagnostic strings
+are at most 512 characters; source scalar values are at most 2048 characters.
+Manifest member paths use the existing safe relative repository path grammar.
+Sources order by `(path, field, evidence)`; variants by variant ID; members and
+source paths by path; dataset formats/diagnostics/values are sorted unique arrays.
+Model observations have no dataset formats. Dataset observations have no variants.
+All source/member paths and expected sizes/digests must agree with the authoritative
+manifest. Every read also checks archive/repository/SHA/publication/generation and
+manifest identity. A total member-work ceiling applies across variants.
+
+### 17.2 Proposed catalog payloads
+
+New strict schema-1 payloads fit inside existing unmodified result/read wrappers.
+Every payload includes `schema_version: 1`, `catalog_identity: SHA256`, and
+`coverage`. Coverage contains nonnegative counts `repositories`, `tags_known`,
+`tags_unknown`, `publications`, `usable`, `partial`, `unsupported`, `failed`,
+`missing`, and boolean `technical_required`, `incomplete`; publication states sum
+to publication count. Counts cover the scoped candidate set before pagination.
+
+Search adds `total_matches` and bounded `entries`. Each entry has
+`repository_type`, `repository_id`, `tags`, `tag_origin` (configured, last_observed,
+unknown), nullable `tag_observed_at`, nullable `curation_fingerprint`, booleans
+`configured`, `enabled`, `archived`, `matching_variant_count`, nullable
+`representative_variant`, and `dataset_formats`. A publication-qualified variant
+wraps `commit_sha`, `publication_id`, `publication_generation` and `variant`.
+Detail adds one `entry` and bounded `observations` (at most 64), with no nested
+variant collection. Each observation summary contains `commit_sha`,
+`publication_id`, `publication_generation`, `extractor_version`, `observed_at`,
+`status`, `sources`, `dataset_formats` and `diagnostics`, with record bounds above.
+Exact selectors constrain these summaries too; missing observations are coverage,
+never fabricated summaries. Aggregate source/wire bounds refuse oversized detail
+rather than silently omitting declarations. Variant pages add
+`total_matches` and bounded publication-qualified `entries`. Facet pages add
+`facet`, `total_matches` and bounded entries with `value` and `repository_count`.
+Collection limits and cursors stay in the transport's existing page contract;
+new payload identity binds all relevant visible rows and coverage. Incomplete
+coverage is explicit even when known `total_matches` is zero. No new fields are
+added to old inventory payloads or strict read wrappers.

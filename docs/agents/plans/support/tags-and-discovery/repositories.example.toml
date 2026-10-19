@@ -1,0 +1,24 @@
+# PROPOSED repository fragments, not a complete or currently valid hfcache config.
+# Keep the checkout's required schema/storage/hub settings. Never install this
+# example on a host. The IDs are fictional and must not be fetched by tests.
+
+[[repositories]]
+id = "example-org/code-model-gguf"
+type = "model"
+revision = "main"
+enabled = true
+tags = ["coding", "local-inference", "coding-evaluation", "candidate"]
+
+[[repositories]]
+id = "example-org/code-review-examples"
+type = "dataset"
+revision = "main"
+enabled = true
+tags = ["coding", "coding-evaluation", "evaluation"]
+
+[[repositories]]
+id = "example-org/archived-baseline"
+type = "model"
+revision = "main"
+enabled = false
+tags = ["baseline", "project:assistant"]

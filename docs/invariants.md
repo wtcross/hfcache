@@ -126,6 +126,7 @@ refuses POST retries without hiding original operation observation.
   paths resolve relative to the archive root.
 - **`FS-16`, `AD-12`** — Manifests and references are authority; catalogs are
   derived, rebuildable indexes, never a database or an independent authority.
+  Historical tag snapshots have the narrow last-observed-label authority (`INV-018`); they cannot establish archive membership or integrity.
 
 Contract: [architecture §3, §5.2–§7.3](architecture.md#3-architecture-decisions),
 [schema path conventions](schemas.md#1-conventions), and
@@ -228,7 +229,9 @@ control-state jobs and confer no deletion authority; retention remains unchanged
   durable transaction journal before its first mutation. Append a checkpoint
   only after the named operation is durable. Journals describe filesystem
   facts, never instructions to replay. The resolved-quarantine exception below
-  reuses existing terminal journals and creates no new one.
+  reuses existing terminal journals and creates no new one. `INV-018` separately
+  permits independently atomic supplemental records and their approved namespace
+  creation after initialized preflight; no existing transaction is exempted.
 - **`TX-03`–`TX-05`** — Checkpoints are append-only, consecutively sequenced,
   and supported by re-observable evidence. Each state-changing step has its
   own atomic boundary; no ordering between separate renames is assumed.
@@ -966,3 +969,25 @@ Evidence: [app build tests](../tests/unit/test_container_runtime.py),
 [fetch tests](../tests/unit/test_fetch_container_python.py) and
 [foundation tests](../tests/unit/test_container_foundation.py), with actual
 image/worker/TLS fixture records and clean immutable artifact identities.
+
+## Tags and supplemental discovery metadata
+
+- **`INV-018` — Separate curation, observations and archive authority.** Current
+  validated config supplies operator tags, including disabled/empty entries;
+  only an actual writer-observed snapshot supplies historical labels. Policy
+  fingerprints exclude tags; curation has a separate versioned identity.
+  Supplemental schema-1 records live only in optional `published/metadata/`.
+  Each replacement and approved directory creation is independently atomic under
+  the sole writer lock, initialized identity, storage preflight and TX-07 guards;
+  this is a narrow FS-17/TX-01 exception without multi-file atomicity or replay.
+  Unsupported/malformed/unsafe existing records remain preserved and refuse.
+  Derived publication observations bind exact retained manifests and cannot
+  establish membership or verification confidence. Reads never write, refresh,
+  contact Hub or open payloads. Technical predicates bind one complete eligible
+  variant in one publication; missing coverage stays unknown. Historical tags
+  require backup. Inert metadata cannot resurrect pruned or purged content.
+
+Contract: [discovery](discovery.md), [record schemas](schemas.md#17-supplemental-discovery-records),
+[decision 133](adr/decision-133.md). Enforcement and adversarial fixture evidence
+are required before each proposed interface is declared supported; this contract
+amendment alone makes no claim of implementation or production acceptance.

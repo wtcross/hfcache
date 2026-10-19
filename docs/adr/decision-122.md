@@ -2,7 +2,7 @@
 
 - Decision identity: 122.
 
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Amended; see decision 133 and the amendments referenced below.
 - Date: 2026-10-18.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
@@ -67,3 +67,11 @@ trusting a posted preview or silently rolling back would discard these boundarie
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
+
+## Supplemental discovery amendment (2026-10-19)
+
+[Decision 133](decision-133.md) defines proposed tag/curation identities, the narrow
+independent-atomic adjunct exception and protected read capabilities. Existing
+archive, candidate-byte, whole-archive authorization and registered MCP boundaries
+remain in force until corresponding additive implementation is accepted. Tags do
+not change operational policy identity or grant installation/write authority.

@@ -2,7 +2,7 @@
 
 - Decision identity: 125.
 
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Amended; see decision 133 and the amendments referenced below.
 - Date: 2026-10-18.
 
 
@@ -58,3 +58,11 @@ Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
 
 - [FastMCP tool/typed output/annotation reference](https://gofastmcp.com/servers/tools)
+
+## Supplemental discovery amendment (2026-10-19)
+
+[Decision 133](decision-133.md) defines proposed tag/curation identities, the narrow
+independent-atomic adjunct exception and protected read capabilities. Existing
+archive, candidate-byte, whole-archive authorization and registered MCP boundaries
+remain in force until corresponding additive implementation is accepted. Tags do
+not change operational policy identity or grant installation/write authority.

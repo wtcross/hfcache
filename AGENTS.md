@@ -42,6 +42,7 @@ run `hfcache archive init` — the archive exists.
 | Understand the system | `docs/invariants.md` navigation, then `docs/architecture.md` §1–§4: mission, decisions `AD-01`–`AD-21`, non-goals |
 | Change code, any area | The affected sections of `docs/invariants.md`, the area contract (rows below), and `docs/agents/conventions.md`; use `docs/adr/README.md` to load only relevant decisions |
 | Storage layout, atomicity, crash recovery | `docs/architecture.md` §5–§7 |
+| Tags, supplemental metadata, or local discovery | `docs/discovery.md`, then the relevant configuration/schema/transport rows |
 | Configuration keys or validation | `docs/configuration.md` |
 | Durable JSON formats | `docs/schemas.md`, and `docs/agents/release.md` on the drill a format change requires |
 | CLI surface, exit codes, error taxonomy | `docs/cli.md` |

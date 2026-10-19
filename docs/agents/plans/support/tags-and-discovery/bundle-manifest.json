@@ -1,0 +1,264 @@
+{
+  "bundle": "hfcache-tags-and-discovery-plan",
+  "created": "2026-10-19",
+  "status": "draft",
+  "reviewed_repository": "wtcross/hfcache",
+  "reviewed_commit": "45f91c3534244d8f2b360a68e79be3e58c97b239",
+  "implementation_branch": "feat/tags-and-discovery",
+  "plan": "docs/agents/plans/2026-10-19-plan-tags-and-discovery.md",
+  "extraction_modifies_existing_selector": false,
+  "note": "Delivery hashes exclude this manifest itself. Implementation will legitimately edit plan/tasks; this is not a runtime gate.",
+  "task_count": 16,
+  "validation_case_count": 55,
+  "tasks": [
+    {
+      "id": "CAT-001",
+      "path": "docs/agents/plans/tasks/cat-001-contracts-and-activation.md",
+      "depends_on": []
+    },
+    {
+      "id": "CAT-002",
+      "path": "docs/agents/plans/tasks/cat-002-configuration-tags-and-identities.md",
+      "depends_on": [
+        "CAT-001"
+      ]
+    },
+    {
+      "id": "CAT-003",
+      "path": "docs/agents/plans/tasks/cat-003-cockpit-tag-authoring.md",
+      "depends_on": [
+        "CAT-002"
+      ]
+    },
+    {
+      "id": "CAT-004",
+      "path": "docs/agents/plans/tasks/cat-004-metadata-records-and-storage.md",
+      "depends_on": [
+        "CAT-002"
+      ]
+    },
+    {
+      "id": "CAT-005",
+      "path": "docs/agents/plans/tasks/cat-005-bounded-static-metadata-extraction.md",
+      "depends_on": [
+        "CAT-004"
+      ]
+    },
+    {
+      "id": "CAT-006",
+      "path": "docs/agents/plans/tasks/cat-006-gguf-variants-and-shards.md",
+      "depends_on": [
+        "CAT-005"
+      ]
+    },
+    {
+      "id": "CAT-007",
+      "path": "docs/agents/plans/tasks/cat-007-quantized-weight-config-variants.md",
+      "depends_on": [
+        "CAT-005",
+        "CAT-006"
+      ]
+    },
+    {
+      "id": "CAT-008",
+      "path": "docs/agents/plans/tasks/cat-008-sync-metadata-lifecycle.md",
+      "depends_on": [
+        "CAT-004",
+        "CAT-005",
+        "CAT-006",
+        "CAT-007"
+      ]
+    },
+    {
+      "id": "CAT-009",
+      "path": "docs/agents/plans/tasks/cat-009-offline-refresh-service.md",
+      "depends_on": [
+        "CAT-004",
+        "CAT-005",
+        "CAT-006",
+        "CAT-007"
+      ]
+    },
+    {
+      "id": "CAT-010",
+      "path": "docs/agents/plans/tasks/cat-010-catalog-queries-and-facets.md",
+      "depends_on": [
+        "CAT-002",
+        "CAT-004",
+        "CAT-005",
+        "CAT-006",
+        "CAT-007"
+      ]
+    },
+    {
+      "id": "CAT-011",
+      "path": "docs/agents/plans/tasks/cat-011-rest-catalog-read-routes.md",
+      "depends_on": [
+        "CAT-010"
+      ]
+    },
+    {
+      "id": "CAT-012",
+      "path": "docs/agents/plans/tasks/cat-012-rest-catalog-refresh-admission.md",
+      "depends_on": [
+        "CAT-009",
+        "CAT-011"
+      ]
+    },
+    {
+      "id": "CAT-013",
+      "path": "docs/agents/plans/tasks/cat-013-catalog-client-and-cli.md",
+      "depends_on": [
+        "CAT-011",
+        "CAT-012"
+      ]
+    },
+    {
+      "id": "CAT-014",
+      "path": "docs/agents/plans/tasks/cat-014-read-only-mcp-catalog-tools.md",
+      "depends_on": [
+        "CAT-013"
+      ]
+    },
+    {
+      "id": "CAT-015",
+      "path": "docs/agents/plans/tasks/cat-015-adversarial-and-parity-validation.md",
+      "depends_on": [
+        "CAT-003",
+        "CAT-008",
+        "CAT-014"
+      ]
+    },
+    {
+      "id": "CAT-016",
+      "path": "docs/agents/plans/tasks/cat-016-compatibility-docs-and-final-acceptance.md",
+      "depends_on": [
+        "CAT-008",
+        "CAT-009",
+        "CAT-015"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "docs/agents/plans/2026-10-19-plan-tags-and-discovery.md",
+      "sha256": "fb156ca9c65a454d49f24b59cf78a34019263ab9910c9241a54c7ea5881e5b94",
+      "bytes": 14101
+    },
+    {
+      "path": "docs/agents/plans/support/tags-and-discovery/START-HERE.md",
+      "sha256": "7602134651553901ff1b8118c1244dbc081dd9001d103114972f41b6a91a3557",
+      "bytes": 3118
+    },
+    {
+      "path": "docs/agents/plans/support/tags-and-discovery/design.md",
+      "sha256": "cbd731cb1b6d60e42c16692a5a564fcda73c31a87a0666f0331b90a90b795f57",
+      "bytes": 31828
+    },
+    {
+      "path": "docs/agents/plans/support/tags-and-discovery/implementation-prompt.md",
+      "sha256": "5bc1dd57a77e6c6245cfea6d65381c558eb78f01af68886622fa5fb03f997c79",
+      "bytes": 2676
+    },
+    {
+      "path": "docs/agents/plans/support/tags-and-discovery/repositories.example.toml",
+      "sha256": "28ef7cdfd5630b315d631bfb476b1a0b14623b94e554076671f0ecb88193c2be",
+      "bytes": 717
+    },
+    {
+      "path": "docs/agents/plans/support/tags-and-discovery/search-examples.json",
+      "sha256": "93411332a932fa3126ba907a33cd3f0f00119b3f935a53a8d8e92a8cb81d6449",
+      "bytes": 2209
+    },
+    {
+      "path": "docs/agents/plans/support/tags-and-discovery/source-review.md",
+      "sha256": "c0b9da7ed81de81568b1fc6122dd93ebe0f16b5822e25eda983f2a4a10556abe",
+      "bytes": 9909
+    },
+    {
+      "path": "docs/agents/plans/support/tags-and-discovery/validation-matrix.md",
+      "sha256": "7ada2547e368418d3e444b5152a2cc988b26a26555849ebf34e86e27c7536652",
+      "bytes": 11023
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-001-contracts-and-activation.md",
+      "sha256": "8a9c9f48aedddb9fe5e7caced375eb968cd6799d5c261b7df58729d83514f787",
+      "bytes": 5600
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-002-configuration-tags-and-identities.md",
+      "sha256": "b958b978d5e76eebc622481cdc53085aae2ac5d9702b0c0904ec0261192fecb7",
+      "bytes": 4729
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-003-cockpit-tag-authoring.md",
+      "sha256": "57d3b809f930494ded13cca629254c24bacd83ec909fa46133da26ad74bfe0e5",
+      "bytes": 4601
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-004-metadata-records-and-storage.md",
+      "sha256": "d80829f8b497db8d869db6768190a78d22e8e6d0b9058c36bc7101762380612d",
+      "bytes": 4866
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-005-bounded-static-metadata-extraction.md",
+      "sha256": "f757a8cc2c63796404550b5811e10e000f6e506c6dad98974324b2a0ac84a990",
+      "bytes": 4540
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-006-gguf-variants-and-shards.md",
+      "sha256": "b2c3db6b6f3af820ee7608a69d5eea6937518a5b4863ce18ed30be5727f16f49",
+      "bytes": 4571
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-007-quantized-weight-config-variants.md",
+      "sha256": "5f78f631add593ec7fb0e5060791faf3e3ad7e3e8767516564126aa585ae1923",
+      "bytes": 4579
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-008-sync-metadata-lifecycle.md",
+      "sha256": "2deba41b8c5d76057f169c7f9c2655a416df518d68c01f8ecedac79c01e27d49",
+      "bytes": 4867
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-009-offline-refresh-service.md",
+      "sha256": "649e1cdf7c6280fbd84fd40bfc4c69a565147af808e5f4adea3027ccf5528bf4",
+      "bytes": 4863
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-010-catalog-queries-and-facets.md",
+      "sha256": "22a210870b4e09522db83eb54ab2f5807c4549e0f2b80e308033be2b8b6b6b40",
+      "bytes": 5267
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-011-rest-catalog-read-routes.md",
+      "sha256": "08424961ce818f01629517b8451bcce541df45b6d25f4857c519ed1c027336f4",
+      "bytes": 4555
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-012-rest-catalog-refresh-admission.md",
+      "sha256": "4462c49d40b3a2639268d1a8957f836b33c2a402f5cb3383c9d9a2322ee75fe1",
+      "bytes": 4632
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-013-catalog-client-and-cli.md",
+      "sha256": "34a015b456f5ed56ad9a41847ad10d26c9a3948cbaab87de505771b8324466f5",
+      "bytes": 4933
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-014-read-only-mcp-catalog-tools.md",
+      "sha256": "1346dc7a2cbc28e9bc5d77110f0f72d98cf88801f996542d1e6b41c56f0580c5",
+      "bytes": 4790
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-015-adversarial-and-parity-validation.md",
+      "sha256": "17a6221ae8cc4448af95a94650eeadc6bd91eab5108c75d6f418db70827f431a",
+      "bytes": 4747
+    },
+    {
+      "path": "docs/agents/plans/tasks/cat-016-compatibility-docs-and-final-acceptance.md",
+      "sha256": "11f79e2adc770e2d88fb97008554af8b32076af52859d1b2793815322de8e4a9",
+      "bytes": 5484
+    }
+  ]
+}

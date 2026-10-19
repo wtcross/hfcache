@@ -2,7 +2,7 @@
 
 - Decision identity: 119.
 
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Amended; see decision 133 and the amendments referenced below.
 - Date: 2026-10-18.
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
@@ -72,3 +72,11 @@ Recorded installed scope and remaining acceptance are described in
 - [connection pools](https://www.encode.io/httpcore/connection-pools/)
 
 - [affected locked implementation](https://github.com/encode/httpcore/blob/1.0.9/httpcore/_backends/sync.py)
+
+## Supplemental discovery amendment (2026-10-19)
+
+[Decision 133](decision-133.md) defines proposed tag/curation identities, the narrow
+independent-atomic adjunct exception and protected read capabilities. Existing
+archive, candidate-byte, whole-archive authorization and registered MCP boundaries
+remain in force until corresponding additive implementation is accepted. Tags do
+not change operational policy identity or grant installation/write authority.

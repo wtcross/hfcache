@@ -409,6 +409,13 @@ indexes are derived. It never supersedes archive evidence or reconstructs a
 command from a journal. The no-database rule remains unchanged; see
 [schemas §13](schemas.md#13-service-private-operation-control-state).
 
+**Supplemental metadata amendment (2026-10-19, decision 133).** The optional
+`published/metadata/` extension holds independently versioned historical tag
+snapshots and derived exact-publication observations. Snapshots preserve only
+last-observed configured labels, which are not reconstructible from current
+config. They cannot authorize archive membership or integrity. Observations
+remain subordinate to retained references/manifests; see [discovery](discovery.md).
+
 ### AD-13 — Repair replaces a damaged instance without changing what the revision *is*
 
 **Decision.** `repair` re-downloads the same immutable SHA into an isolated,
@@ -439,6 +446,12 @@ each intermediate on-disk state being unambiguous and forward-recoverable.
 **Consequences.** Every state a crash can leave behind is enumerated (`TX-01`
 onward) and has exactly one correct resolution. When state is ambiguous, the
 application stops and reports rather than guessing (`AD-16`).
+
+**Supplemental atomic-file exception (2026-10-19, decision 133).** Approved
+metadata adjuncts and their directory creation alone use independently atomic,
+idempotent updates under the common lock, initialized-archive/storage preflight
+and unfinished-journal guards. No new journal or cross-file atomicity is promised.
+This does not change existing transaction algorithms or verification catalogs.
 
 ### AD-15 — Repository content is data, never code
 
@@ -686,6 +699,12 @@ within a single filesystem.
     └── <YYYYMMDD>T<HHMMSS>Z-<run-id>.json             one report per invocation
 ```
 
+An initialized archive may optionally contain `published/metadata/tags/` and
+`published/metadata/observations/` with paths specified in [discovery](discovery.md).
+This named supplemental extension is writer-created after normal preflight; old
+archives without it remain valid. Unknown siblings are still refused. The
+sentinel and initial required layout are never recreated or rewritten.
+
 Writer-local paths, none of which hold archive content:
 
 ```text
@@ -871,6 +890,10 @@ immediately after a crash. Each is directly testable.
   from immutable manifests plus references, and disagreement between the catalog
   and that authority is resolved in favour of manifests and references.
 
+Historical tag snapshots under the approved metadata extension have only the
+limited last-observed label authority described by decision 133. Publication
+observations are derived and cannot override retained manifests/references.
+
 ### Transactions and unknown data
 
 - **`FS-17`** — Every sync, publication, prune, purge, repair, and recovery mutation has
@@ -892,8 +915,10 @@ immediately after a crash. Each is directly testable.
 ### Initialization
 
 - **`FS-21`** — The explicit archive initialization operation is the only way to
-  create the sentinel and top-level directories. It is exposed by `archive init`
-  and the guarded configured-target REST initialization resource (decision 117).
+  create the sentinel and initial required top-level directories. The optional
+  supplemental metadata extension (decision 133) is created only after initialized
+  preflight and does not change this initial required layout. Initialization is
+  exposed by `archive init` and the guarded configured-target REST initialization resource (decision 117).
   It is an explicit operator action, never reached from a timer, sync, daemon
   startup, health check or automatic recovery path.
 - **`FS-22`** — Initialization refuses a target that is not the expected
@@ -910,7 +935,8 @@ immediately after a crash. Each is directly testable.
   from an interrupted sentinel write; the retry removes the latter, which is the
   one deletion initialization performs and is on a file it owns.
 - **`FS-23`** — Initialization writes `.hfcache-root` last, after the directory
-  structure is durable, so a sentinel's existence proves the layout beneath it.
+  initial required structure is durable, so a sentinel's existence proves that
+  initial layout. The optional metadata extension is not sentinel authority.
 
 ## 7. Transaction and crash-recovery boundaries
 
@@ -920,6 +946,11 @@ mount, or be killed at any instruction, and every resulting on-disk state must
 have exactly one correct resolution.
 
 ### 7.1 Rules that hold for every transaction
+
+**Decision 133 exception to FS-17/TX-01:** supplemental metadata replacements and
+approved directory creation alone are independent atomic units, as specified in
+[discovery](discovery.md). TX-07 unfinished-journal guards remain required before
+new metadata work; there is no replay, cross-file commit or broader exception.
 
 - **`TX-01`** — Every mutating operation opens a journal at
   `.store/transactions/<transaction-id>.json` before its first mutation, and the

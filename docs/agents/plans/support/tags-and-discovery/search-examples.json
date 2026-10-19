@@ -1,0 +1,89 @@
+{
+  "status": "proposed API inputs; fictional repositories; no requests are executed",
+  "queries": [
+    {
+      "name": "coding GGUF available now",
+      "query": {
+        "repository_type": "model",
+        "tags_all": [
+          "coding",
+          "local-inference"
+        ],
+        "format": "gguf",
+        "quantization": "Q4_K_M",
+        "scope": "archived",
+        "revision_scope": "current"
+      }
+    },
+    {
+      "name": "model and dataset evaluation collection",
+      "query": {
+        "tags_all": [
+          "coding-evaluation"
+        ],
+        "scope": "all",
+        "revision_scope": "current"
+      }
+    },
+    {
+      "name": "either modality",
+      "query": {
+        "tags_any": [
+          "vision",
+          "audio"
+        ],
+        "scope": "archived"
+      }
+    },
+    {
+      "name": "AWQ with four-bit declaration",
+      "query": {
+        "repository_type": "model",
+        "quantization_method": "awq",
+        "bits": 4,
+        "scope": "archived",
+        "revision_scope": "retained"
+      }
+    },
+    {
+      "name": "discover tag vocabulary",
+      "facet": "tag",
+      "query": {
+        "scope": "all",
+        "tag_source": "current_or_last_observed"
+      }
+    },
+    {
+      "name": "exclude historical labels",
+      "query": {
+        "tags_all": [
+          "preferred"
+        ],
+        "scope": "archived",
+        "tag_source": "current_only"
+      }
+    }
+  ],
+  "rest_examples": [
+    "GET /api/v1/catalog/search?type=model&tag_all=coding&tag_all=local-inference&format=gguf&quantization=Q4_K_M",
+    "GET /api/v1/catalog/facets?facet=tag&scope=all",
+    "GET /api/v1/catalog/repositories/model/example-org/code-model-gguf",
+    "GET /api/v1/catalog/repositories/model/example-org/code-model-gguf/variants?revision_scope=retained",
+    "POST /api/v1/catalog/refreshes (writer-only keyed operation; no config edits)"
+  ],
+  "refresh_body": {
+    "selectors": [
+      "model:example-org/code-model-gguf"
+    ],
+    "revision_scope": "retained",
+    "tags": true,
+    "technical": true
+  },
+  "mcp_tools": [
+    "search_models",
+    "search_datasets",
+    "get_catalog_entry",
+    "list_model_variants",
+    "get_catalog_facets"
+  ]
+}

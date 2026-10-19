@@ -1,0 +1,200 @@
+# Tags and local discovery
+
+This is the proposed discovery contract. Configuration, extraction and transport
+support are introduced separately; this contract alone does not make the commands
+below available. Existing inventory and the nine existing MCP tools keep their
+current behavior until the corresponding interfaces are implemented.
+
+## Operator tags
+
+Repositories have one optional direct `tags` list. Tags organize models and
+datasets; they do not grant access, select files, change retention or schedule
+downloads. There are no categories, groups, expected variants, hierarchy or
+separate editable annotation store. Upstream declarations and technical metadata
+remain separate from operator tags.
+
+The shared normalizer accepts a list or tuple of at most 64 strings before
+deduplication, each at most 128 raw characters. Trim outer ASCII spaces, lowercase
+ASCII letters and require `[a-z0-9][a-z0-9._:/-]{0,63}`. Reject invalid values
+without echoing their contents. Sort and deduplicate canonical values. Colons and
+slashes have no path, wildcard or inheritance meaning. Omitted and empty lists
+are equivalent. Never put credentials in tags.
+
+Current validated configuration supplies tags, including empty lists, for enabled
+and disabled repositories. Unmanaged retained repositories use only an actual
+last writer-observed snapshot (`tag_origin=last_observed`), or expose empty tags
+with `tag_origin=unknown`. Current configuration has `tag_origin=configured`.
+Expose nullable `tag_observed_at`; historical observations are never current
+configuration. Removing an entry before capture cannot create historical labels.
+A surviving snapshot cannot resurrect a purged repository.
+
+The existing operational policy fingerprint excludes tags and keeps its original
+canonical representation. A separate curation fingerprint hashes a schema-1
+canonical representation of all configured `(type, id, normalized tags)` entries,
+including empty and disabled entries, sorted by identity. Candidate installation
+continues to compare complete candidate and base bytes, never policy hashes alone.
+There is no remote configuration installation or tag-edit API.
+
+## Durable supplemental records
+
+The approved extension is beneath `published/metadata/`:
+
+```text
+tags/<type>/<namespace>/<name>.json
+observations/<type>/<namespace>/<name>/<sha>/<publication_id>.json
+```
+
+Type path components use the existing plural `models`/`datasets` grammar. Only
+central layout builders and validated identities may construct these paths.
+`RepositoryTagSnapshot` schema 1 records kind, archive UUID, repository type/ID,
+canonical tags, observation time, curation fingerprint and
+`source=installed_config`. It is authoritative only for last-observed historical
+labels, which must be backed up; they cannot be reconstructed from present config.
+
+`PublicationObservation` schema 1 records kind, archive UUID, repository type/ID,
+SHA, publication ID/generation, manifest locator/digest, extractor version/time,
+status, selected attributed sources, model variants or dataset declarations and
+bounded diagnostics. Sources must belong to the complete authoritative manifest.
+Observations are derived interpretations, never publication or integrity evidence.
+Existing manifests, references, verification confidence and trees stay unchanged.
+
+Both families require strict fields, bounded strings/collections, deterministic
+ordering and independently versioned atomic JSON. Unsupported, malformed or
+unsafe existing canonical records refuse replacement and remain preserved.
+Selected corrupt records refuse reads; absence means missing coverage. Only
+temporary siblings named `<canonical-name>.tmp-<16 lowercase hex digits>` may
+be ignored; unknown siblings are refused. No aggregate on-disk index is
+introduced. Pruned/purged records may remain inert; automatic garbage collection
+is outside this contract.
+
+Each record replacement and approved directory creation is an independent,
+idempotent unit under the common local writer lock, initialized archive identity,
+storage preflight and unfinished-journal guards. This narrowly excepts these
+adjuncts from journal-before-mutation. Use temporary sibling, file fsync, atomic
+replace and parent fsync. There is no multi-file atomicity or journal replay.
+Crashes can leave mixed observation times, always whole visible records. The
+exception does not cover any existing transaction, verification catalog, tree,
+manifest, reference, prune, repair or initialization. An existing valid archive
+may acquire this namespace through writer work; never rerun initialization.
+
+## Static extraction and variants
+
+Only writer-owned post-publication work and explicit offline refresh may read
+payload metadata. Use exact manifest-listed ordinary files with no-follow access.
+Never execute code, loaders, YAML objects, model libraries or external URLs.
+Initial ceilings are 1 MiB per card/JSON file, 64 MiB actual metadata reads and
+4096 candidates per publication, structural depth 64 (JSON 32) and retained text
+64 KiB, preferring summaries of 2048 characters. Counts, skipped values, seeks,
+aliases and aggregate sync work must also be bounded before allocations.
+
+Extraction status is `complete`, `partial`, `unsupported` or `failed`. Missing
+optional declarations are not failures. Unsupported/failed fields stay unknown.
+Supplemental extraction failure warns without invalidating a valid publication;
+producer work must still join before releasing the lock. Dataset formats and
+static split/configuration/feature declarations remain attributed observations,
+never inferred physical splits, row counts or external payload completeness.
+
+A model variant identifies one logical member set in one exact publication.
+Expose deterministic variant ID, format, encoding, quantization scheme/method,
+nullable known bits, role, members/count, known weight bytes, completeness,
+evidence grade/sources and diagnostics. Completeness is `complete`, `incomplete`
+or `unknown`. Supported complete primary-model variants alone satisfy positive
+technical searches. Availability describes retained declared content; it is not a
+fresh filesystem/hash check or runtime/hardware compatibility claim.
+
+GGUF is a format. Recognized header mappings establish `ggml` method and exact
+scheme; filenames alone cannot prove quantization. F16/F32 are float encodings.
+Only explicit agreeing split identity/count/indices within the same publication
+form a complete shard set. Ambiguous, contradictory, auxiliary, adapter and
+projector candidates remain inspectable without becoming primary-model matches.
+AWQ/GPTQ declarations bind to an unambiguous same-directory weight bundle and
+validated manifest-contained index members. A declaration/index/LFS pointer alone
+does not establish complete weights. Safetensors format is independent of method.
+
+## Queries, coverage and pages
+
+One bounded transport-neutral read service owns exact predicates and projections.
+Reads are lock-free, write-free, network-free and never open payload files, hash,
+refresh, resolve credentials or instantiate a writer/Hub capability.
+
+| Field | Meaning |
+| --- | --- |
+| `repository_type` | Optional model/dataset; omitted searches both |
+| `q` | At most 256 characters, case-insensitive literal substring of ID/tags |
+| `tags_all`, `tags_any` | Shared-normalized exact sets; empty adds no constraint |
+| `tag_source` | `current_or_last_observed` default, or `current_only` |
+| `scope` | `archived` default, `configured` or identity-deduplicated `all` |
+| `revision_scope` | Explicit `current` default or authoritative `retained` refs |
+| `format` | Exact normalized format identifier |
+| `quantization`, `quantization_method` | Exact scheme/method identifiers |
+| `bits` | Strict integer 1–64 |
+| `max_variant_bytes` | Strict nonnegative bounded logical weight bytes |
+| `limit`, `cursor` | Bounded pages with existing stale-cursor refusal |
+
+Fields combine with AND; every technical predicate must match the same variant
+in the same publication. Unknown valid values yield zero known matches. Explicit
+dataset plus model-only filters refuses; omitted type with such filters selects
+models. Dataset format filters use observed dataset formats. `current_only`
+excludes historical labels from predicates, tag text and facets, preserving
+attributed detail. Configured scope includes disabled/unpublished entries;
+snapshot-only records never add entries.
+
+Return one repository hit sorted by `(type, id)`, state, tags/provenance,
+coverage, exact `matching_variant_count` and at most one deterministic
+representative variant. Page the full variant set separately. Exact detail uses
+both SHA and publication ID or neither; vanished identity never falls back.
+Dataset summaries do not invent model fields.
+
+Schema-1 catalog payloads inside existing Envelope/read wrappers carry catalog
+identity, entire scoped coverage, exact known total and paged entries. Coverage
+counts known/unknown tags and eligible publications by missing/usable/partial/
+unsupported/failed technical state. Incomplete coverage explicitly qualifies
+zero known matches: it is not proof of absence. Exhausted scan/read/wire budgets
+refuse instead of truncating success. Sanitize registered secrets before matching,
+counting and digesting; hidden substitutions cannot influence cursor identity.
+
+Facets select one of `tag`, `format`, `quantization_method`, `quantization`. Apply
+the full query, then count distinct matching repositories per value from eligible
+matching variants, never unrelated variants/shards/revisions. Sort values and page.
+Cursors bind normalized scope, route/tool, exact selectors, archive/policy identity,
+visible curation, authoritative refs, observations, coverage and ordering. Relevant
+edits/repair/prune/enrichment refuse continuation. No global snapshot is promised.
+
+## Transport and refresh boundary
+
+Planned REST reads are `/catalog/search`, `/catalog/facets`,
+`/catalog/repositories/{type}/{namespace}/{name}` and its `/variants` child under
+`/api/v1`. REST maps repeated `tag_all`/`tag_any` and `type` to shared fields.
+Retain strict unknown/repeated scalar/body/numeric/path rejection, authentication,
+finite response budgets and existing wrappers. Readers/writers may read.
+
+Writer-only `POST /catalog/refreshes` uses existing keyed serialized operations,
+receipts and exact result observation. Strict body fields are whole-repository
+`selectors=[]`, `revision_scope=retained`, `tags=true`, `technical=true`, with at
+least one boolean true. Empty selection means configured/retained union; unknown
+selectors refuse. Fresh scope and installed curation are checked after lock wait
+without replacing admitted operational authority. Unpublished technical work is
+explicitly skipped; tag-only capture is valid. Refresh never downloads, verifies,
+repairs, installs config or increases integrity confidence. A new capture needs a
+new key; replaying a key observes the original operation.
+
+The independent client and CLI expose search, tag facets, catalog detail/variants
+and writer refresh through REST, preserving JSON evidence, qualified human output,
+complete bounded collection and uncertain-operation handles. No local fallback.
+After these interfaces are accepted, exactly five additional read-only MCP tools
+are planned: `search_models`, `search_datasets`, `get_catalog_entry`,
+`list_model_variants`, `get_catalog_facets`. Existing nine tools remain unchanged.
+No MCP refresh/mutation, resources, prompts or generic dispatcher is authorized.
+The narrow app-owned async read capability and separate credential classes remain;
+authorization covers the entire archive, never per-tag ACLs.
+
+## Compatibility and operation
+
+Old tag-free configurations and old evidence formats remain supported. New tags,
+metadata directories and operation kinds can be refused by older binaries despite
+unchanged old schema versions. Compatibility must be observed with actual target
+binaries and disposable fixtures. Rollback requires executor drain, preserved
+metadata/control evidence, a reviewed backup/snapshot or validated compatible
+layout, tag-free target-compatible config and validation with the target binary.
+Never delete new state to force old startup. No automatic metadata cleanup or
+production rollout follows from feature implementation.

@@ -368,8 +368,11 @@ of the loaded configuration — sorted keys, no insignificant whitespace, UTF-8 
 with these fields excluded: `hub.credential_name` and any resolved token or
 credential path. It covers `schema_version`, all of `[storage]`, `[sync]`,
 `[verification]`, `[repair]`, `hub.endpoint`, `hub.expected_account`,
-`hub.token_mode`, and the full repository list including `enabled` flags and
-declared dependencies.
+`hub.token_mode`, and the repository operational fields: `type`, `id`, `revision`, `enabled`
+and `declared_dependencies`. Operator tags are excluded; adding tags must preserve
+all existing policy fingerprint values. A separate versioned curation digest
+identifies canonical `(type, id, tags)` for all entries, including disabled and
+empty-tag entries; see the [proposed discovery contract](discovery.md).
 
 Two runs with byte-identical intent produce an identical fingerprint; any change
 to what is archived, how much is retained, or where it is stored produces a

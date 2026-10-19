@@ -27,6 +27,20 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Tags and discovery (2026-10-19)
+
+- [x] CAT-001 Activate the feature plan and establish technical contracts
+  (2026-10-19, this commit — [task](plans/tasks/cat-001-contracts-and-activation.md),
+  [plan](plans/2026-10-19-plan-tags-and-discovery.md)). Reconciled `75d93a5`
+  against reviewed `45f91c3`, preserving separate Timestral evidence. Proposed
+  discovery/record/query contracts, optional metadata namespace, historical tag
+  authority and narrow atomic adjunct exception are explicit in decision 133 and
+  INV-018; relevant ADRs amended. Full baseline gate exited 0: 4315 passed/40
+  deselected, build/three locked profiles and actual Cockpit lint/types/135 tests/
+  build. Final changed-doc alignment (182 docs/19 helpers), 173 affected parser/
+  contract tests and whitespace check passed. All feature code remains pending;
+  no live/credential/production/push action occurred.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records
@@ -4942,6 +4956,16 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      native install remain supported. Retain rootless fixed roles, all scripts,
      dormant socket/native FD3, handles/stores and original lock authority.
      [Decision 132](../adr/decision-132.md) records rationale and evidence.
+
+
+133. **Separate curation from publication authority** (2026-10-19, CAT-001).
+     [Decision 133](../adr/decision-133.md) records current configuration tags,
+     actual historical snapshots, separate curation identity and exact derived
+     technical observations. Reject mutable manifest labels and a parallel tagging
+     database. Approved optional metadata records/directories alone have independent
+     atomic-file boundaries under lock/preflight/TX-07 guards; no existing archive
+     transaction or registered read capability changes. Human discovery/schema/
+     architecture contracts and INV-018 establish proposed behavior before code.
 
 ## Documentation and script alignment
 
