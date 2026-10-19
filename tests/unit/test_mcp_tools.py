@@ -71,6 +71,36 @@ TOOLS = {
     "get_verification_report": ({"run_id", *PAGE_ARGUMENTS}, {"run_id"}),
     "estimate_verification": (set(), set()),
 }
+CATALOG_COMMON = {
+    "q",
+    "tags_all",
+    "tags_any",
+    "tag_source",
+    "scope",
+    "revision_scope",
+    "format",
+    *PAGE_ARGUMENTS,
+}
+MODEL_FILTERS = {"quantization", "quantization_method", "bits", "max_variant_bytes"}
+TOOLS.update(
+    {
+        "search_models": (CATALOG_COMMON | MODEL_FILTERS, set()),
+        "search_datasets": (CATALOG_COMMON, set()),
+        "get_catalog_entry": (
+            {"repository_type", "repository_id", "revision_scope", "commit_sha", "publication_id"},
+            {"repository_type", "repository_id"},
+        ),
+        "list_model_variants": (
+            {"repository_id", "revision_scope", "commit_sha", "publication_id", *PAGE_ARGUMENTS},
+            {"repository_id"},
+        ),
+        "get_catalog_facets": (
+            {"facet", "repository_type", *CATALOG_COMMON, *MODEL_FILTERS},
+            {"facet"},
+        ),
+    }
+)
+
 WRAPPER_FIELDS = {
     "schema_version",
     "request_id",
@@ -118,6 +148,14 @@ class Archive:
             "get_run_report": {"run_id": self.reports[0].run_id},
             "get_verification_report": {"run_id": self.reports[2].run_id},
             "estimate_verification": {},
+            "search_models": {},
+            "search_datasets": {},
+            "get_catalog_entry": {
+                "repository_type": self.primary.repository_type,
+                "repository_id": self.primary.repository_id,
+            },
+            "list_model_variants": {"repository_id": self.primary.repository_id},
+            "get_catalog_facets": {"facet": "tag"},
         }
 
 
@@ -369,7 +407,7 @@ def test_actual_mounted_registry_has_exact_typed_allowlist_and_read_only_hints(a
         async with mounted(archive) as client:
             tools = await client.list_tools()
             assert {tool.name for tool in tools} == TOOLS.keys()
-            assert len(tools) == 9
+            assert len(tools) == 14
             guide = (Path(__file__).parents[2] / "docs/mcp.md").read_text()
             table = guide.split("| Tool | Inputs |", 1)[1].split("### Metadata output", 1)[0]
             assert re.findall(r"^\| `([a-z_]+)` \|", table, re.MULTILINE) == list(TOOLS)

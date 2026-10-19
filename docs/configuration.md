@@ -505,7 +505,7 @@ optional MCP transport uses the existing restart-only `mcp_enabled` and
 `credentials.mcp_reader` fields, without a schema change. Disabled mode loads no
 MCP package or credential; enabled mode requires both optional dependencies and
 a protected distinct source. Do not reuse a REST/Hub secret or add a literal
-token to TOML. optional MCP transport activates transport; curated metadata tools registers nine narrow
+token to TOML. The optional MCP transport registers fourteen narrow
 metadata tools without another setting or schema change.
 See [MCP enablement](mcp.md#deployment-profiles) and
 [decision 124](adr/decision-124.md).

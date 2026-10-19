@@ -35,7 +35,7 @@ capabilities. Technical predicates bind the same complete eligible variant; miss
 observations stay unknown. Rows come from configuration and retained references. Retained references gate
 publication matches, so leftover records cannot resurrect deleted publications. Back up historical labels. Preserve old
 fingerprint goldens, candidate byte comparisons and existing strict read wrappers.
-REST/client acceptance precedes five proposed additive MCP tools; existing nine
+REST/client acceptance precedes five explicit additive MCP tools; existing nine
 remain the current registered set until implemented. Whole-archive trust remains.
 
 New tags/layout/operation kinds may block old binaries. Actual disposable-fixture
@@ -116,3 +116,9 @@ startup. No new runtime dependency or production operation is approved.
   writer or optional framework. CLI search/tags/detail/variants use only REST,
   preserve first-server Envelope evidence and escape untrusted human text. Keyed
   refresh uses existing uncertain handles and never automatically resubmits.
+
+The accepted MCP extension registers fourteen explicit names through separate
+nine-method metadata and five-method catalog read ports. Catalog tools share REST
+query semantics, bounded pool ownership and strict payloads. Dataset search omits
+quantization knobs. Unknown arguments, dispatcher aliases and refresh attempts
+refuse with fixed safe errors; no writable or credential capability enters tools.

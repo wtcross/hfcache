@@ -1,8 +1,9 @@
 # Read-only MCP metadata interface
 
 hfcache provides an optional MCP interface for exploring archive metadata. Its
-nine tools inspect status, repositories, retained revisions, references, manifests
-and existing run or verification reports, and estimate verification work. They
+fourteen tools inspect status, repositories, retained revisions, references, manifests
+and existing run or verification reports, estimate verification work, and search
+configured tags and exact-publication technical observations. They
 cannot start jobs, download repositories, repair/delete data or perform integrity
 verification.
 
@@ -101,7 +102,7 @@ requires OAuth discovery cannot use this pre-provisioned endpoint automatically.
 
 ## Available tools
 
-[Decision 125](adr/decision-125.md) permits exactly the following nine names.
+[Decision 125](adr/decision-125.md) permits exactly the following fourteen names.
 No resources or prompts are registered. Every adapter receives only the narrow
 async read protocol, with app-owned bounded metadata offload to a transport-neutral
 backend. No SDK Context/Request/app object, command service, Hub client, credential
@@ -113,7 +114,19 @@ background task execution; those hints do not enforce the boundary.
 run IDs use the shared validated grammars. Common page arguments are `limit=None`
 and `cursor=None`; omission resolves to min(100, configured server maximum).
 Requested limits are strict integers 1–10,000 and cannot exceed that maximum.
-Cursors are at most 256 characters. Inventory selector lists are at most 64
+Cursors are at most 256 characters. Catalog cursors are ASCII and bind the tool,
+normalized filters, selected references, visible curation/evidence and coverage.
+Catalog tags are at most 64 raw values per list, each at most 128 characters;
+q is a literal casefolded substring of at most 256 characters. Tag predicates
+use ALL for tags_all and ANY for tags_any. Defaults are tag_source=current_or_last_observed,
+scope=archived and revision_scope=current. Catalog entry/variants use scope=all.
+Quantization/size constraints imply models and must match the same complete
+supported primary variant. Dataset search has no such parameters. See
+[discovery](discovery.md) for normalized tags, scopes and technical coverage.
+Catalog responses retain independent schema-1 payloads inside the unchanged
+metadata wrapper. Incomplete coverage emits HFWRN011 even for empty results;
+unknown metadata never proves absence. Current configured labels and actual
+last-observed labels retain distinct provenance. No tool refreshes metadata. Inventory selector lists are at most 64
 strings of at most 256 characters each; no selector is a filesystem locator.
 Selectors retain shared inventory semantics: a valid full-SHA suffix is accepted
 but ignored for repository scope. Cursor scope uses sorted unique canonical
@@ -131,6 +144,24 @@ returned source ordering is unchanged.
 | `get_run_report` | Required run_id; limit/cursor | Existing run/recovery/verification report, explicit primary-collection projection and original evidence identity |
 | `get_verification_report` | Required run_id; limit/cursor | Existing VerificationReport only; wrong report type refuses HFARG004; no archive-byte hashing or persistence |
 | `estimate_verification` | None | Existing stat/metadata estimator, no archive-byte hashing/writes/Hub/lock or increase in verification confidence; large scans remain bounded work |
+| `search_models` | Optional literal q, tags_all/tags_any, tag_source, scope, revision_scope, format/quantization/quantization_method/bits/max_variant_bytes; limit/cursor | Model catalog with same-variant constraints, exact representative and whole-scope coverage |
+| `search_datasets` | Optional q, tags_all/tags_any, tag_source, scope, revision_scope, format; limit/cursor | Dataset catalog with attributed static formats; no model-only quantization knobs |
+| `get_catalog_entry` | Required repository_type/repository_id; revision_scope and paired commit_sha/publication_id | One catalog entry and bounded observation summaries; exact pins never substitute current |
+| `list_model_variants` | Required repository_id; revision_scope and paired commit_sha/publication_id; limit/cursor | All selected model variant observations, including explicit incomplete/unsupported evidence |
+| `get_catalog_facets` | Required facet; optional repository_type and catalog search filters; limit/cursor | Distinct-repository tag/format/quantization_method/quantization counts over matching evidence |
+
+For a coding model with one complete supported 4-bit GGUF variant, call
+search_models with:
+
+```json
+{"tags_all":["coding","local-inference"],"format":"gguf","bits":4,"max_variant_bytes":5000000000,"limit":20}
+```
+
+Inspect tag_origin, coverage and the exact representative SHA/publication before
+selection. Use list_model_variants with that repository_id and paired commit_sha/
+publication_id to inspect full evidence. search_datasets accepts format and the
+shared label/scope filters; get_catalog_facets with facet=tag returns distinct
+repository counts. Returned descriptions, paths and source values remain data.
 
 ### Metadata output and pages
 
@@ -204,7 +235,7 @@ fixed HFAPI006 and unknown tool to HFAPI007; an exact-name guard refuses aliases
 and unapproved names before SDK lookup/tracing. It never echoes rejected inputs.
 Unexpected errors remain fixed/masked. HTTP/protocol success alone does not mean
 a successful metadata call; inspect MCP isError and the returned domain Envelope.
-This protocol guard supplies no SDK context/app capability to the nine functions.
+This protocol guard supplies no SDK context/app capability to the fourteen functions.
 No partial page, malformed artifact or missing state grants execution authority.
 
 The transport cannot submit jobs, run actual verification, perform diagnostics/
@@ -218,7 +249,7 @@ Authentication sources are loaded at startup, not watched. Replacing the source
 file alone does not revoke an in-memory old credential. An operator provisions a
 new distinct MCP secret, follows the existing API drain/restart procedure with
 that source, then recreates clients so they reread it. No session ID bridges the
-rotation. Verify old credentials refuse, the new credential sees the exact nine
+rotation. Verify old credentials refuse, the new credential sees the exact fourteen
 tools and separate REST credentials retain their own authority. Do not give the
 private verification worker the MCP source or use the REST token as a workaround.
 
@@ -426,3 +457,8 @@ arguments use the defaults and bounds above. Names absent here are rejected.
 | `get_run_report` | `["run_id"]` | `["limit", "cursor"]` |
 | `get_verification_report` | `["run_id"]` | `["limit", "cursor"]` |
 | `estimate_verification` | `[]` | `[]` |
+| `search_models` | `[]` | `["q", "tags_all", "tags_any", "tag_source", "scope", "revision_scope", "format", "quantization", "quantization_method", "bits", "max_variant_bytes", "limit", "cursor"]` |
+| `search_datasets` | `[]` | `["q", "tags_all", "tags_any", "tag_source", "scope", "revision_scope", "format", "limit", "cursor"]` |
+| `get_catalog_entry` | `["repository_type", "repository_id"]` | `["revision_scope", "commit_sha", "publication_id"]` |
+| `list_model_variants` | `["repository_id"]` | `["revision_scope", "commit_sha", "publication_id", "limit", "cursor"]` |
+| `get_catalog_facets` | `["facet"]` | `["repository_type", "q", "tags_all", "tags_any", "tag_source", "scope", "revision_scope", "format", "quantization", "quantization_method", "bits", "max_variant_bytes", "limit", "cursor"]` |

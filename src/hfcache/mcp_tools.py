@@ -12,17 +12,17 @@ from fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
-from hfcache.errors import HfcacheError
+from hfcache.errors import CodedError, HfcacheError
 from hfcache.services.mcp_queries import (
     MetadataRead,  # noqa: TC001 - output schema uses runtime model
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from collections.abc import Awaitable, Callable
 
     from fastmcp import FastMCP
 
-TOOL_NAMES = frozenset(
+METADATA_TOOL_NAMES = frozenset(
     {
         "get_archive_status",
         "list_repositories",
@@ -35,6 +35,17 @@ TOOL_NAMES = frozenset(
         "estimate_verification",
     }
 )
+
+CATALOG_TOOL_NAMES = frozenset(
+    {
+        "search_models",
+        "search_datasets",
+        "get_catalog_entry",
+        "list_model_variants",
+        "get_catalog_facets",
+    }
+)
+TOOL_NAMES = METADATA_TOOL_NAMES | CATALOG_TOOL_NAMES
 
 RepositoryType = Literal["model", "dataset"]
 ManifestCollection = Literal["files", "dependencies"]
@@ -111,9 +122,15 @@ class MetadataReadPort(Protocol):
     async def estimate_verification(self) -> MetadataRead: ...
 
 
-async def _read(work: Awaitable[MetadataRead]) -> MetadataRead:
+async def read_metadata(
+    work: Awaitable[MetadataRead] | Callable[[], Awaitable[MetadataRead]],
+) -> MetadataRead:
     try:
-        return await work
+        return await (work() if callable(work) else work)
+    except CodedError as error:
+        code = error.code if _CODE.fullmatch(error.code) else "HFAPI008"
+        message = code + ": metadata query failed"
+        raise ToolError(message) from None
     except HfcacheError as error:
         codes = dict.fromkeys(
             problem.code for problem in error.problems if _CODE.fullmatch(problem.code)
@@ -136,7 +153,9 @@ def install_read_tools(server: FastMCP, reads: MetadataReadPort, *, max_page_siz
         cursor: Cursor | None = None,
     ) -> MetadataRead:
         """Read archive state and a bounded repository page; unknown confidence stays unknown."""
-        return await _read(reads.get_archive_status(selectors, repository_type, limit, cursor))
+        return await read_metadata(
+            reads.get_archive_status(selectors, repository_type, limit, cursor)
+        )
 
     @server.tool(annotations=hints, task=False)
     async def list_repositories(
@@ -146,7 +165,9 @@ def install_read_tools(server: FastMCP, reads: MetadataReadPort, *, max_page_siz
         cursor: Cursor | None = None,
     ) -> MetadataRead:
         """List a canonical published inventory page, including unmanaged repositories."""
-        return await _read(reads.list_repositories(selectors, repository_type, limit, cursor))
+        return await read_metadata(
+            reads.list_repositories(selectors, repository_type, limit, cursor)
+        )
 
     @server.tool(annotations=hints, task=False)
     async def list_revisions(
@@ -156,7 +177,7 @@ def install_read_tools(server: FastMCP, reads: MetadataReadPort, *, max_page_siz
         cursor: Cursor | None = None,
     ) -> MetadataRead:
         """List a bounded canonical page of exact retained publication identities and confidence."""
-        return await _read(reads.list_revisions(selectors, repository_type, limit, cursor))
+        return await read_metadata(reads.list_revisions(selectors, repository_type, limit, cursor))
 
     @server.tool(annotations=hints, task=False)
     async def get_current_reference(
@@ -164,7 +185,7 @@ def install_read_tools(server: FastMCP, reads: MetadataReadPort, *, max_page_siz
         repository_id: Identifier,
     ) -> MetadataRead:
         """Read and pin the current exact publication; locators are relative to published/."""
-        return await _read(reads.get_current_reference(repository_type, repository_id))
+        return await read_metadata(reads.get_current_reference(repository_type, repository_id))
 
     @server.tool(annotations=hints, task=False)
     async def get_revision_manifest(  # noqa: PLR0913, PLR0917 - exact publication and page fields
@@ -177,7 +198,7 @@ def install_read_tools(server: FastMCP, reads: MetadataReadPort, *, max_page_siz
         cursor: Cursor | None = None,
     ) -> MetadataRead:
         """Read a pinned manifest header and file/dependency page; never substitute an instance."""
-        return await _read(
+        return await read_metadata(
             reads.get_revision_manifest(
                 repository_type,
                 repository_id,
@@ -195,7 +216,7 @@ def install_read_tools(server: FastMCP, reads: MetadataReadPort, *, max_page_siz
         cursor: Cursor | None = None,
     ) -> MetadataRead:
         """List a bounded page of existing report IDs; no run is executed or evidence rebuilt."""
-        return await _read(reads.list_run_reports(limit, cursor))
+        return await read_metadata(reads.list_run_reports(limit, cursor))
 
     @server.tool(annotations=hints, task=False)
     async def get_run_report(
@@ -204,7 +225,7 @@ def install_read_tools(server: FastMCP, reads: MetadataReadPort, *, max_page_siz
         cursor: Cursor | None = None,
     ) -> MetadataRead:
         """Read an existing run, recovery or verification report header and primary records page."""
-        return await _read(reads.get_run_report(run_id, limit, cursor))
+        return await read_metadata(reads.get_run_report(run_id, limit, cursor))
 
     @server.tool(annotations=hints, task=False)
     async def get_verification_report(
@@ -213,9 +234,9 @@ def install_read_tools(server: FastMCP, reads: MetadataReadPort, *, max_page_siz
         cursor: Cursor | None = None,
     ) -> MetadataRead:
         """Read verification evidence by run ID; never hash files or persist verification."""
-        return await _read(reads.get_verification_report(run_id, limit, cursor))
+        return await read_metadata(reads.get_verification_report(run_id, limit, cursor))
 
     @server.tool(annotations=hints, task=False)
     async def estimate_verification() -> MetadataRead:
         """Estimate verification cost from metadata/stat reads; no hashing, Hub or writes."""
-        return await _read(reads.estimate_verification())
+        return await read_metadata(reads.estimate_verification())

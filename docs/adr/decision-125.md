@@ -66,3 +66,14 @@ independent-atomic adjunct exception and protected read capabilities. Existing
 archive, candidate-byte, whole-archive authorization and registered MCP boundaries
 remain in force until corresponding additive implementation is accepted. Tags do
 not change operational policy identity or grant installation/write authority.
+
+## Accepted discovery tool extension (2026-10-19)
+
+After REST and base-client/CLI acceptance, decision 133 extends the explicit
+registry to fourteen names: the original nine plus search_models, search_datasets,
+get_catalog_entry, list_model_variants and get_catalog_facets. A separate five-method
+catalog read port and app-owned adapter share the transport-neutral catalog
+queries and original bounded pool. Dataset search omits model-only arguments.
+No command, refresh, arbitrary route/path dispatch, resource, prompt, job or
+credential authority enters either read port. Catalog cursors bind sanitized
+visible evidence and complete coverage; whole-archive authorization remains.

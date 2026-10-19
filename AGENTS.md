@@ -47,7 +47,7 @@ run `hfcache archive init` — the archive exists.
 | Durable JSON formats | `docs/schemas.md`, and `docs/agents/release.md` on the drill a format change requires |
 | CLI surface, exit codes, error taxonomy | `docs/cli.md` |
 | REST server, authentication, operation receipts, or API-backed CLI | `docs/api.md`, `docs/server.md`, `docs/api-client.md`; then the affected contract rows below |
-| Read-only MCP transport, tools, or example client | `docs/mcp.md`, `docs/security.md`, `docs/consumers.md`; retain the nine-tool allowlist and whole-archive trust boundary |
+| Read-only MCP transport, tools, or example client | `docs/mcp.md`, `docs/security.md`, `docs/consumers.md`; retain the fourteen-tool allowlist and whole-archive trust boundary |
 | Threat model and controls | `docs/security.md` |
 | Draft, activate, resume, or close a plan; add a task | `docs/agents/planning.md` and `docs/agents/invariants.md`, then `docs/agents/plans/current.md` and the relevant dated plan/task; implementation authorization permits activation, while a draft alone does not |
 | A new feature or work package | The planning row above, affected `docs/invariants.md` sections, and relevant records from `docs/adr/README.md`; use `docs/agents/historical-contract-map.md` for former plan requirements |

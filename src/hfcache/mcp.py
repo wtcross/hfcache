@@ -1,7 +1,7 @@
 """Optional, stateless MCP transport; importing this module requires the MCP extra.
 
 The REST factory imports this module only when MCP is enabled. Only the explicit
-nine-method metadata port reaches tools; no resource/prompt provider, command
+metadata and catalog read ports reach tools; no resource/prompt provider, command
 service or archive credential resolver is registered.
 """
 
@@ -22,6 +22,7 @@ from hfcache.api.auth import Capability, require_capability
 from hfcache.api.lifecycle import unavailable
 from hfcache.errors import AuthenticationError, RequestError, SafetyError
 from hfcache.logging import emit
+from hfcache.mcp_catalog_tools import install_catalog_tools
 from hfcache.mcp_tools import TOOL_NAMES, install_read_tools
 from hfcache.redaction import redact_text, sanitize
 
@@ -35,7 +36,9 @@ if TYPE_CHECKING:
     from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
     from hfcache.api.auth import CredentialRegistry
+    from hfcache.mcp_catalog_tools import CatalogReadPort
     from hfcache.mcp_tools import MetadataReadPort
+    from hfcache.services.catalog_queries import CatalogQueries
     from hfcache.services.mcp_queries import MetadataRead, MetadataReadQueries, QueryPage
 
 
@@ -230,6 +233,7 @@ def create_mcp_app(
     reads: MetadataReadPort | None = None,
     *,
     max_page_size: int = 1000,
+    catalog_reads: CatalogReadPort | None = None,
 ) -> StarletteWithLifespan:
     """Create an inert optional app; its public lifespan is composed by REST."""
     server = FastMCP(
@@ -257,6 +261,14 @@ def create_mcp_app(
 
         reads = MetadataReadAdapter(unavailable_read)
     install_read_tools(server, reads, max_page_size=max_page_size)
+    if catalog_reads is None:
+        from hfcache.api.catalog_mcp_reads import CatalogReadAdapter  # noqa: PLC0415 - fallback
+
+        async def unavailable_catalog(_: Callable[[CatalogQueries], QueryPage]) -> MetadataRead:
+            raise unavailable()
+
+        catalog_reads = CatalogReadAdapter(unavailable_catalog)
+    install_catalog_tools(server, catalog_reads, max_page_size=max_page_size)
     application = server.http_app(
         path="/",
         transport="streamable-http",

@@ -401,8 +401,7 @@ new key; replaying a key observes the original operation.
 The independent client and CLI expose search, tag facets, catalog detail/variants
 and writer refresh through REST, preserving JSON evidence, qualified human output,
 complete bounded collection and uncertain-operation handles. No local fallback.
-After these interfaces are accepted, exactly five additional read-only MCP tools
-are planned: `search_models`, `search_datasets`, `get_catalog_entry`,
+The optional MCP interface exposes five additional read-only discovery tools: `search_models`, `search_datasets`, `get_catalog_entry`,
 `list_model_variants`, `get_catalog_facets`. Existing nine tools remain unchanged.
 No MCP refresh/mutation, resources, prompts or generic dispatcher is authorized.
 The narrow app-owned async read capability and separate credential classes remain;

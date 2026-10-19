@@ -446,3 +446,12 @@ manifest or permission to promote. Keep the exact publication fixed during a
 copy; a failed/changed walk is restarted as a new attempt rather than combined
 with old pages. The same whole-archive authorization covers restricted metadata;
 MCP remains independent of bulk copy and serving ownership.
+
+Catalog discovery through MCP uses search_models, search_datasets, get_catalog_entry,
+list_model_variants and get_catalog_facets. Use exact SHA/publication pins after
+selection, preserve coverage and tag provenance, and complete bounded page walks
+before treating a list as complete. A representative is a deterministic summary;
+variant detail contains the full observations. Unknown/partial technical metadata
+does not establish absence, runtime suitability or integrity. The separate MCP
+credential grants whole-archive metadata access. See [MCP](mcp.md) and
+[discovery](discovery.md).

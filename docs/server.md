@@ -233,7 +233,7 @@ fail authentication after restart. No request mutates the registry or discovers
 replacement credentials automatically. Enabling MCP activates the existing MCP source
 only when `mcp_enabled` is true; disabled MCP never reads that source. Enabling
 requires a usable distinct credential and the optional package. It exposes
-exactly nine metadata tools through a narrow
+exactly fourteen metadata tools through a narrow
 read protocol; no resources/prompts or command paths. See [MCP](mcp.md).
 
 ## Metadata lifespan and request boundary
@@ -553,7 +553,7 @@ See [client observation](api-client.md#scheduled-service-observation) and
 Base and REST-only profiles keep `mcp_enabled=false`: no optional import, credential
 read or endpoint mount. Enabling requires the locked MCP extra, a separate usable
 MCP-reader source and restart. Compose its lifespan with the same application;
-it has nine narrow read tools, finite authenticated requests and no writes,
+it has fourteen narrow read tools, finite authenticated requests and no writes,
 commands, resources/prompts or OAuth issuance. The selected rootless template
 already enables MCP with its own file secret; native provisioning remains explicit.
 [MCP](mcp.md) owns connect/tool/rotation/budget details. Source/fixture acceptance

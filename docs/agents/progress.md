@@ -199,6 +199,21 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   discovery/quickstart and enforcement links current. No runtime dependency,
   production/live/credential/host/push action.
 
+- [x] CAT-014 Add five explicit read-only MCP catalog tools (2026-10-19,
+  this commit — [task](plans/tasks/cat-014-read-only-mcp-catalog-tools.md)). Separate
+  five-method async catalog port/facade shares REST queries and original bounded
+  pool/lease ownership. Exact registry is fourteen; all original methods, wrappers,
+  credentials and whole-archive authorization remain. Dataset signatures omit
+  model-only knobs; classified intent failures are masked before SDK diagnostics.
+  Independent schemas/mutation sweeps and archive/control snapshots cover all
+  tools; actual REST/MCP payloads/coverage/facets/identities agree. V44-V46 focused
+  165 pass; corrected example 6 pass. Full gate: 4988 pass/40 deselected in 579.39s,
+  build/three locked profiles, actual Cockpit lint/types/169 tests/build. Prior
+  documentation-example parser failure remains task history. INV-016/018,
+  AD-10/15/21/FW-01 and decisions 124/125/133 reviewed; contracts/ADRs/router/
+  navigation and installation-checker catalog current. No runtime dependency,
+  production/live/credential/host/push action.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

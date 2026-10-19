@@ -704,7 +704,7 @@ Enforcement and evidence: [dependency/tool configuration](../pyproject.toml),
 
 Authenticated REST uses typed query/command services, bounded receipt-backed
 execution and a separate private verifier. Public CLI and Cockpit clients retain
-server authority and finite observation. Optional MCP exposes exactly nine read
+server authority and finite observation. Optional MCP exposes exactly fourteen read
 tools with no execution capability. [API](api.md), [server](server.md), [MCP](mcp.md)
 and [deployment status](deployment-status.md) define current behavior and the
 limits of recorded installed acceptance.
@@ -891,7 +891,7 @@ separate protected verifier only after REST acceptance. independent REST client'
   0.2.0 restores its recorded connection limitation.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
-  persistence, recovery, or operation admission. The optional transport registers exactly nine approved metadata tools, no resources/prompts or REST OpenAPI conversion; only the distinct
+  persistence, recovery, or operation admission. The optional transport registers exactly fourteen approved metadata tools, no resources/prompts or REST OpenAPI conversion; only the distinct
   MCP-reader credential is accepted through a
   production supported verifier. Disabled mode imports/resolves neither package
   nor credential; one composed lifespan retains REST ownership and transport
@@ -918,8 +918,10 @@ separate protected verifier only after REST acceptance. independent REST client'
   [direct verifier/lifecycle tests](../tests/unit/test_mcp_mount.py) and
   [mounted streaming/security tests](../tests/unit/test_mcp_transport.py).
   Curated enforcement: [read-only projection backend](../src/hfcache/services/mcp_queries.py),
-  [nine tool functions/read port](../src/hfcache/mcp_tools.py) and
-  [app-owned bounded facade](../src/hfcache/api/mcp_reads.py).
+  [original tool functions/read port](../src/hfcache/mcp_tools.py),
+  [five catalog tools/read port](../src/hfcache/mcp_catalog_tools.py) and
+  [app-owned bounded facade](../src/hfcache/api/mcp_reads.py) and
+  [catalog facade](../src/hfcache/api/catalog_mcp_reads.py).
   Evidence: [backend](../tests/unit/test_mcp_queries.py) and
   [mounted registry/tools](../tests/unit/test_mcp_tools.py).
   See [MCP](mcp.md), [decision 124](adr/decision-124.md) and

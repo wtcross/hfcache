@@ -632,7 +632,7 @@ permitted. Disabled mode imports/resolves neither package nor MCP credential.
 Transport checks retain strict Host/Origin/TLS/proxy/public prefix, corroborated
 native Unix identity and finite resource limits. MCP startup composes with REST
 ownership and fails closed if its package/credential is unavailable. Exactly
-nine curated metadata tools are exposed; no resource, prompt, arbitrary dispatcher,
+fourteen curated metadata tools are exposed; no resource, prompt, arbitrary dispatcher,
 OAuth login/discovery or credential issuance is supplied. Pre-provisioned bearer clients must protect
 and send their credential over the configured verified transport; compatibility
 with OAuth-only clients is not promised. Exact wire/session and streaming
@@ -655,7 +655,8 @@ safely reflected must refuse rather than leak or silently change identity.
 
 ## Curated MCP read capability
 
-[Decision 125](adr/decision-125.md) adds exactly nine typed metadata tools, with
+[Decision 125](adr/decision-125.md) and its discovery amendment expose fourteen
+typed metadata tools, with
 no resources/prompts, automatic OpenAPI conversion, generic command/path/URL
 fetcher or hidden writable capability. Tool functions receive a narrow async read
 protocol only, not SDK Context/Request/app objects or command, Hub, credential

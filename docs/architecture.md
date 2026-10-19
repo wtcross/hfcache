@@ -1419,11 +1419,12 @@ installations stay independent. One explicitly composed application retains REST
 startup/ownership and a production shared-registry MCP-reader verifier. Disabled
 MCP imports/resolves neither package nor credential. No automatic OpenAPI tool
 conversion, command/job path, workflow framework or durable authority is added;
-exactly nine curated read-only tools have no execution authority. Existing FS/TX and whole-archive rules stand.
+exactly fourteen curated read-only tools have no execution authority. Existing
+FS/TX and whole-archive rules stand.
 
 ### 2026-10-18 Curated MCP metadata capability
 
-[Decision 125](adr/decision-125.md) adds exactly nine explicit typed metadata
+[Decision 125](adr/decision-125.md) and its discovery amendment expose fourteen explicit typed metadata
 tools through a narrow read protocol and app-owned bounded metadata offload.
 Tools receive no SDK app/request context, commands, Hub/credential resolver or
 writable helpers; no resources/prompts or automatic OpenAPI conversion exists.

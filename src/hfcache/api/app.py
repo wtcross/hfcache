@@ -670,6 +670,20 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         },
     )
     app.add_middleware(Boundary, owner=app, server=server)
+
+    def catalog_queries(config: ApplicationConfig) -> CatalogQueries:
+        limits = server.limits
+        return CatalogQueries(
+            config,
+            bounds=QueryBounds(
+                maximum_entries=limits.max_scan_entries,
+                maximum_artifact_bytes=limits.max_artifact_bytes,
+                maximum_total_bytes=limits.max_artifact_bytes,
+            ),
+            max_page_size=limits.max_page_size,
+            max_response_bytes=limits.max_response_bytes,
+        )
+
     if server.mcp_enabled:
         # Optional import is deliberately below the enabled branch: base/server
         # installations and disabled credentials have no MCP dependency.
@@ -678,6 +692,9 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                 get_http_request,
             )
 
+            from hfcache.api.catalog_mcp_reads import (  # noqa: PLC0415 - optional facade
+                CatalogReadAdapter,
+            )
             from hfcache.api.mcp_reads import (  # noqa: PLC0415 - optional adapter
                 MetadataReadAdapter,
             )
@@ -724,9 +741,35 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
             request.state.metadata_leases.append(lease)
             return await lease.future
 
+        async def execute_mcp_catalog(
+            read: Callable[[CatalogQueries], QueryPage],
+        ) -> MetadataRead:
+            pool = getattr(app.state, "pool", None)
+            if pool is None or pool.closed:
+                message = "metadata service is not started or is draining"
+                raise SafetyError.single(message, code="HFAPI009")
+            request = get_http_request()
+            context = request.state.execution_context
+
+            def work() -> MetadataRead:
+                snapshot = app.state.policy.snapshot()
+                page = read(catalog_queries(snapshot.config))
+                return MetadataRead(
+                    request_id=context.request_id,
+                    archive_id=snapshot.config.storage.archive_id,
+                    config_fingerprint=snapshot.fingerprint,
+                    envelope=page.result.envelope(context),
+                    next_cursor=page.next_cursor,
+                )
+
+            lease = pool.submit(work)
+            request.state.metadata_leases.append(lease)
+            return await lease.future
+
         app.state.mcp_app = create_mcp_app(
             lambda: getattr(app.state, "credentials", None),
             MetadataReadAdapter(execute_mcp),
+            catalog_reads=CatalogReadAdapter(execute_mcp_catalog),
             max_page_size=server.limits.max_page_size,
         )
         app.state.mcp_server = app.state.mcp_app.state.fastmcp_server
@@ -807,19 +850,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
     ) -> Response:
         def work() -> Response:
             snapshot = app.state.policy.snapshot()
-            limits = server.limits
-            page = read(
-                CatalogQueries(
-                    snapshot.config,
-                    bounds=QueryBounds(
-                        maximum_entries=limits.max_scan_entries,
-                        maximum_artifact_bytes=limits.max_artifact_bytes,
-                        maximum_total_bytes=limits.max_artifact_bytes,
-                    ),
-                    max_page_size=limits.max_page_size,
-                    max_response_bytes=limits.max_response_bytes,
-                )
-            )
+            page = read(catalog_queries(snapshot.config))
             return render(request, page.result, snapshot=snapshot, cursor=page.next_cursor)
 
         lease = app.state.pool.submit(work)

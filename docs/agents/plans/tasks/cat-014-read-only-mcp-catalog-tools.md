@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | complete |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 5 — MCP |
 | Depends on | [CAT-013](cat-013-catalog-client-and-cli.md) |
@@ -62,15 +62,48 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
-When work starts, record any relevant newer-source reconciliation, implementation
-choices, blockers and scope amendments here. Preserve prior completed evidence.
+CAT-013 is committed with a green full gate. Implementing exactly five explicit
+additional tools over a separate narrow catalog read port, sharing CatalogQueries
+and the existing pool/lease/wire/auth boundary. Original nine methods and semantics
+remain unchanged. No newer independently authorized tools exist. Reviewed INV-016/018
+and decisions 124/125/133; allowlist amendments and contracts precede implementation.
+
+The optional registry now installs the five explicit catalog tools through
+CatalogReadPort/CatalogReadAdapter. It receives only a trusted async executor;
+no public generic dispatcher, app/request/command/Hub/credential/writable helper
+is exposed. The original nine read methods and wrappers remain unchanged.
+REST/MCP use one bounded CatalogQueries factory and the original shared worker
+pool/leases; tool-specific cursors cannot cross tools/routes. Strict schemas omit
+model-only dataset knobs; intent construction runs inside fixed classified error
+masking. Independent mounted schemas/names, mutation-field sweeps and actual
+success/failure filesystem/control snapshots now cover all fourteen tools.
+
+Focused mounted catalog/registry/security/transport/REST acceptance selection:
+165 passed in 63.33s. Direct REST/MCP comparisons cover normalized labels, same-
+variant predicates/size, dataset formats, facets, exact entry/variants and coverage;
+explicit complete variant pages and stale intent/tool/curation cursors are tested.
+Early focused failures caught an incorrect identity constructor and an incorrect
+UTF-8 byte-limit test assumption (the shared contract is 256 characters); both
+were corrected before the passing selection. All-source lint/types (zero errors)
+and documentation alignment pass. Full gate passed as recorded below; no runtime dependencies,
+production/live/credential/host/push action.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-014, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-014, this commit). `scripts/check.sh` exited 0:
+4988 passed/40 deselected in 579.39s; wheel/sdist, all three locked isolated
+profiles, actual Cockpit lint/types/169 tests/build passed. Focused mounted suite:
+165 passed in 63.33s; corrected example suite: 6 passed in 11.61s. V44-V46 have
+actual registry/schema, capability/side-effect and REST/MCP evidence. Reviewed
+INV-016/018, AD-10/15/21, FW-01 and decisions 124/125/133; affected current
+contracts, ADR amendments, router, documentation navigation and installation-
+checker catalog are updated. [Progress](../../progress.md#tags-and-discovery-2026-10-19)
+records completion. No runtime dependency, production/live/credential/host/push
+operation. Prior failed gate remains documented below; no failure was waived.
+
+First full gate failed one documentation-example assertion: 4987 passed/40
+deselected in 582.80s. Its parser selected the guide's first JSON block, which is
+now the new search input example. The check now anchors the original program
+output section and still compares its complete subprocess JSON. All six actual
+example tests (TLS and modern/legacy negotiation included) pass in 11.61s.
+The failed log is retained locally; a corrected full gate is required.
