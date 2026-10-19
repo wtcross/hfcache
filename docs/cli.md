@@ -937,3 +937,32 @@ publication and repair integrity outcomes remain authoritative.
 The MCP diagnostic bridge emits only sanitized bounded warning/error provenance,
 never SDK message arguments, raw exceptions or tracebacks. Debug-only events are
 separate and may evolve. Never log secrets, bearer headers or signed URLs.
+
+## Catalog discovery
+
+`search [filters]` reads repository hits; `tags [filters]` lists the tag facet.
+Both use only REST and collect every bounded page before rendering. Filters are
+`--type model|dataset`, `--query TEXT`, repeated `--tag TAG` (ALL), repeated
+`--any-tag TAG` (ANY), `--tag-source current_or_last_observed|current_only`,
+`--scope archived|configured|all`, `--revision-scope current|retained`, `--format`,
+`--quantization`, `--quantization-method`, `--bits`, `--max-variant-bytes` and
+`--page-size`. Defaults match the [catalog contract](discovery.md). Model-only
+predicates cannot be combined with explicit dataset type. Cursors are SDK-only;
+the CLI requires complete collection and fails on an unfinished or stale walk.
+
+`catalog show TYPE:ID` reads detail; `catalog variants TYPE:ID` collects the full
+model variant set. Revision scope defaults current, with optional paired
+`--commit-sha` and `--publication-id` selecting an exact retained publication.
+Variants also accepts `--page-size`. Human output labels current/historical/unknown
+tags, incomplete coverage and the representative's exact publication. Dataset
+summaries show observed formats and declarations without inventing model variants.
+Nonprintable archive text is escaped; it never executes or becomes terminal control.
+
+`catalog refresh [TYPE:ID ...]` is a writer-only keyed offline operation. Optional
+`--tags-only` and `--technical-only` are mutually exclusive; default refreshes both.
+Revision scope defaults retained. Existing global `--idempotency-key`, `--detach`
+and `--wait-timeout` semantics apply. A new capture needs a new key; observation
+never resubmits. JSON retains exact server Envelopes and evidence; complete page
+assembly changes only entries, retaining the first Envelope's identity/times.
+Quiet retains warnings, errors and uncertainty handles. API unavailability never
+falls back to an archive mount, local Hub source or model runtime.

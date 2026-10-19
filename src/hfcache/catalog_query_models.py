@@ -1,8 +1,8 @@
 """Pure catalog query intent and strict schema-1 projections (discovery, schemas §17.2)."""
 
 import re
-from dataclasses import dataclass
-from typing import Annotated, Literal, Self
+from dataclasses import dataclass, field
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import BeforeValidator, Field, TypeAdapter, field_validator, model_validator
 
@@ -76,6 +76,7 @@ class CatalogQuery:
     max_variant_bytes: int | None = None
     limit: int | None = None
     cursor: str | None = None
+    _wire_q: str | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if (
@@ -102,6 +103,7 @@ class CatalogQuery:
         try:
             if self.q is not None:
                 self.q.encode("utf-8")
+            object.__setattr__(self, "_wire_q", self.q)
             object.__setattr__(self, "q", self.q.casefold() if self.q else None)
             object.__setattr__(self, "tags_all", normalize_tags(self.tags_all))
             object.__setattr__(self, "tags_any", normalize_tags(self.tags_any))
@@ -112,7 +114,8 @@ class CatalogQuery:
             raise _invalid_query() from None
         if self.model_only:
             if self.repository_type == "dataset":
-                raise _invalid_query()
+                message = "Dataset search does not accept model-only variant filters"
+                raise ConfigurationError.single(message, code="HFARG002")
             object.__setattr__(self, "repository_type", "model")
 
     @property
@@ -149,6 +152,20 @@ class CatalogQuery:
             "bits": self.bits,
             "max_variant_bytes": self.max_variant_bytes,
         }
+
+    def wire_filters(self) -> dict[str, Any]:
+        """Preserve valid raw Unicode length when casefold expands characters."""
+        return self.canonical_filters() | {
+            "q": self._wire_q,
+            "limit": self.limit,
+            "cursor": self.cursor,
+        }
+
+    def with_cursor(self, cursor: str | None) -> CatalogQuery:
+        """Continue normalized intent without revalidating an expanded literal as raw input."""
+        values: dict[str, Any] = self.wire_filters()
+        values["cursor"] = cursor
+        return CatalogQuery(**values)
 
 
 def _ordered(values: tuple[str, ...]) -> None:

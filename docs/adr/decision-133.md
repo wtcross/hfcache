@@ -109,3 +109,10 @@ startup. No new runtime dependency or production operation is approved.
   receipt/result-reference/Envelope fields unchanged. Current clients recognize
   the new operation route; older explicit allowlists may refuse it. Restart never
   reconstructs refresh intent or dispatches it to the private verifier.
+- Base-client catalog reads validate pure independent payload models, exact
+  requested detail/publication identities and complete ordered cursor walks. They
+  retain archive/policy/catalog/coverage identity and fail on unfinished or oversized
+  collection. Refresh result DTOs live in a pure module so observation imports no
+  writer or optional framework. CLI search/tags/detail/variants use only REST,
+  preserve first-server Envelope evidence and escape untrusted human text. Keyed
+  refresh uses existing uncertain handles and never automatically resubmits.

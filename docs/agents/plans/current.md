@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [Tags and discovery](2026-10-19-plan-tags-and-discovery.md) |
-| Next task | [CAT-013: typed catalog client and CLI](tasks/cat-013-catalog-client-and-cli.md) |
+| Next task | [CAT-014: read-only MCP catalog tools](tasks/cat-014-read-only-mcp-catalog-tools.md) |
 | Blockers | None |
 | Last completed plan | [Timestral model sync](2026-10-19-plan-timestral-model-sync.md) |
 | Updated | 2026-10-19 |

@@ -15,7 +15,7 @@ from hfcache.client_errors import (
 )
 from hfcache.client_models import JOB_ROUTES
 from hfcache.errors import CodedError, ConfigurationError, HfcacheError, Problem
-from hfcache.identity import parse_selector
+from hfcache.identity import RepositoryIdentity, parse_selector
 from hfcache.models import serialize
 from hfcache.redaction import sanitize
 
@@ -117,6 +117,18 @@ def selection(values: Sequence[str]) -> list[str]:
         return [parse_selector(value).identity.selector for value in values]
     except CodedError as error:
         raise ConfigurationError.single(str(error), code=error.code) from None
+
+
+def catalog_selector(value: str) -> RepositoryIdentity:
+    """Whole canonical catalog identity only; no revision suffix or local path."""
+    try:
+        parsed = parse_selector(value)
+        if parsed.commit_sha is not None or value != parsed.identity.selector:
+            raise ValueError  # noqa: TRY301 - one fixed input diagnostic
+    except CodedError, ConfigurationError, ValueError:
+        message = "Catalog requires a canonical whole-repository TYPE:ID selector"
+        raise ConfigurationError.single(message, code="HFARG001") from None
+    return parsed.identity
 
 
 def collect(

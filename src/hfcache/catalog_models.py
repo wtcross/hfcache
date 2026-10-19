@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Annotated, Literal, Self
 
 from pydantic import BeforeValidator, Field, model_validator
 
-from hfcache.config import ArchiveId  # noqa: TC001 - runtime Pydantic annotation
 from hfcache.models import (
+    ArchiveIdField,
     ArchivePath,
     CommitShaField,
     DurableModel,
@@ -69,7 +69,7 @@ class RepositoryTagSnapshot(CatalogRecord):
     """Only actual last writer-observed curation, never current config (INV-018)."""
 
     kind: Literal["repository_tag_snapshot"] = "repository_tag_snapshot"
-    archive_id: ArchiveId
+    archive_id: ArchiveIdField
     repository_type: RepositoryTypeField
     repository_id: RepositoryIdField
     tags: Annotated[tuple[str, ...], BeforeValidator(_canonical_tags), Field(max_length=64)]
@@ -169,7 +169,7 @@ class PublicationObservation(CatalogRecord):
     """Rebuildable interpretation; manifest/ref authority and integrity remain separate."""
 
     kind: Literal["publication_observation"] = "publication_observation"
-    archive_id: ArchiveId
+    archive_id: ArchiveIdField
     repository_type: RepositoryTypeField
     repository_id: RepositoryIdField
     commit_sha: CommitShaField

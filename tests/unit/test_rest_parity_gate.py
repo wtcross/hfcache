@@ -67,9 +67,9 @@ def parameter_values(
     return tuple(found)
 
 
-def test_manifest_has_exactly_all_29_unique_semantic_rows_in_contract_order():
+def test_manifest_has_exactly_all_34_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
-    assert len(PARITY) == len(PARITY_REFERENCE) == 29
+    assert len(PARITY) == len(PARITY_REFERENCE) == 34
     assert len(REFERENCE) == len(rows) == 44
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
     assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
@@ -176,5 +176,14 @@ def test_catalog_routes_have_independent_http_evidence_before_cli_acceptance(rou
         if route.startswith("POST ")
         else ("default", "SDK / HTTP", "R", "synchronous", "none", "no", "none", "none")
     )
-    assert row[1:] == expected
+    labels = {
+        "GET /catalog/search": "search",
+        "GET /catalog/facets": "tags",
+        "GET /catalog/repositories/{repository_type}/{namespace}/{name}": "catalog show TYPE:ID",
+        "GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants": (
+            "catalog variants TYPE:ID"
+        ),
+        "POST /catalog/refreshes": "catalog refresh [selectors]",
+    }
+    assert row[1:] == (*expected[:1], labels[route], *expected[2:])
     evidence_function(Evidence(*CATALOG_API_REFERENCE[route]))

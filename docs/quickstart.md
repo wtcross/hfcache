@@ -134,3 +134,24 @@ Production rollout, credentials/TLS/firewall, actual worker no-IP/source masks,
 SELinux/NFS/hardening and drain/rollback require separate operator acceptance.
 The verification timer remains disabled pending calendar approval. Setup examples require the applicable operator authority; they are not run by
 the documentation checks.
+
+## Find configured tags and retained variants
+
+Use the protected REST reader configuration; no archive mount or Hub source is
+needed on this client:
+
+```bash
+hfcache --client-config /etc/hfcache/client.toml search --scope configured --tag coding
+hfcache --client-config /etc/hfcache/client.toml search --type model --format gguf --quantization Q4_K_M
+hfcache --client-config /etc/hfcache/client.toml tags --tag-source current_only
+hfcache --client-config /etc/hfcache/client.toml catalog show model:organization/model-name
+hfcache --client-config /etc/hfcache/client.toml catalog variants model:organization/model-name
+```
+
+Tags label enabled and disabled configuration entries immediately. Technical
+results require retained publication observations; incomplete coverage qualifies
+zero known matches. Human output labels representatives and historical tags;
+`--json` retains evidence. [Discovery](discovery.md) explains scopes and predicates.
+An explicitly selected writer credential can request `catalog refresh --tags-only`
+for offline historical capture; it is a keyed operation, never an implicit read
+side effect. Configuration installation remains the existing operator workflow.

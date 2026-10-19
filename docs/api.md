@@ -55,11 +55,11 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `POST /plans` | installed | plan (installed) | R | keyed job | none | yes | none | receipt, events and result |
 | `POST /plans` | candidate | --config PATH plan | W | keyed job | none | yes | none | receipt, events and result |
 | `POST /syncs` | default | sync | W | keyed job | archive | yes | journals/cache/publication/catalog/report | receipt, events and result |
-| `GET /catalog/search` | default | SDK / HTTP | R | synchronous | none | no | none | none |
-| `GET /catalog/facets` | default | SDK / HTTP | R | synchronous | none | no | none | none |
-| `GET /catalog/repositories/{repository_type}/{namespace}/{name}` | default | SDK / HTTP | R | synchronous | none | no | none | none |
-| `GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants` | default | SDK / HTTP | R | synchronous | none | no | none | none |
-| `POST /catalog/refreshes` | default | SDK / HTTP | W | keyed job | archive | no | supplemental metadata | receipt, events and result |
+| `GET /catalog/search` | default | search | R | synchronous | none | no | none | none |
+| `GET /catalog/facets` | default | tags | R | synchronous | none | no | none | none |
+| `GET /catalog/repositories/{repository_type}/{namespace}/{name}` | default | catalog show TYPE:ID | R | synchronous | none | no | none | none |
+| `GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants` | default | catalog variants TYPE:ID | R | synchronous | none | no | none | none |
+| `POST /catalog/refreshes` | default | catalog refresh [selectors] | W | keyed job | archive | no | supplemental metadata | receipt, events and result |
 | `GET /status` | default | status [selectors] | R | synchronous | none | no | none | none |
 | `GET /repositories` | default | list [selectors] [--type] | R | synchronous | none | no | none | none |
 | `GET /repositories/revisions` | default | list --revisions [selectors] [--type] | R | synchronous | none | no | none | none |

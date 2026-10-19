@@ -5,7 +5,7 @@ in `docs/cli.md`. Scheduled runs use exactly the same commands an operator types
 """
 
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from http import HTTPStatus
 from pathlib import Path
@@ -15,6 +15,9 @@ import typer
 from typer.core import TyperCommand, TyperGroup
 
 from hfcache import cli_client
+from hfcache.catalog_display import catalog_rows
+from hfcache.catalog_query_models import CatalogQuery
+from hfcache.client_catalog import collect_catalog
 from hfcache.config import load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import (
@@ -35,6 +38,7 @@ from hfcache.reporting import Envelope
 from hfcache.services.bootstrap import query_version, validate_config
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.requests import (
+    CatalogRefreshRequest,
     MaintenanceRequest,
     QuarantineRequest,
     RepairRequest,
@@ -923,6 +927,191 @@ def status(ctx: typer.Context, selectors: SelectorArgument = None) -> None:
 # --------------------------------------------------------------------------- #
 # sync (`docs/cli.md` §2)
 # --------------------------------------------------------------------------- #
+
+
+@app.command("tags", help="List operator tag facets through REST with complete bounded collection.")
+@app.command(
+    "search", help="Search local catalog metadata through REST; never opens model payloads."
+)
+def search_catalog(
+    ctx: typer.Context,
+    repository_type: Annotated[str | None, typer.Option("--type", metavar="model|dataset")] = None,
+    query: Annotated[
+        str | None, typer.Option("--query", help="Case-insensitive literal ID/tag text.")
+    ] = None,
+    tag: Annotated[
+        list[str] | None, typer.Option("--tag", help="Require every tag; repeatable.")
+    ] = None,
+    any_tag: Annotated[
+        list[str] | None, typer.Option("--any-tag", help="Require at least one tag.")
+    ] = None,
+    tag_source: Annotated[str, typer.Option("--tag-source")] = "current_or_last_observed",
+    scope: Annotated[str, typer.Option("--scope", metavar="archived|configured|all")] = "archived",
+    revision_scope: Annotated[
+        str, typer.Option("--revision-scope", metavar="current|retained")
+    ] = "current",
+    weight_format: Annotated[str | None, typer.Option("--format")] = None,
+    quantization: Annotated[str | None, typer.Option("--quantization")] = None,
+    quantization_method: Annotated[str | None, typer.Option("--quantization-method")] = None,
+    bits: Annotated[int | None, typer.Option("--bits")] = None,
+    max_variant_bytes: Annotated[int | None, typer.Option("--max-variant-bytes")] = None,
+    page_size: Annotated[
+        int | None, typer.Option("--page-size", help="Per-page size; collection stays complete.")
+    ] = None,
+) -> None:
+    started_at = utc_now()
+    options = _options(ctx)
+    facets = ctx.info_name == "tags"
+    try:
+        cli_client.check_job_options(options)
+        values: dict[str, Any] = {
+            "repository_type": repository_type,
+            "q": query,
+            "tags_all": tuple(tag or ()),
+            "tags_any": tuple(any_tag or ()),
+            "tag_source": tag_source,
+            "scope": scope,
+            "revision_scope": revision_scope,
+            "format": weight_format,
+            "quantization": quantization,
+            "quantization_method": quantization_method,
+            "bits": bits,
+            "max_variant_bytes": max_variant_bytes,
+            "limit": page_size,
+        }
+        intent = CatalogQuery(**values)
+        with cli_client.connect(options) as client:
+            client.require_capabilities("read", "reads")
+            if facets:
+                result = collect_catalog(
+                    client.iter_catalog_facets("tag", intent),
+                    maximum_bytes=client.config.max_response_bytes,
+                )
+            else:
+                result = collect_catalog(
+                    client.iter_catalog_search(intent),
+                    maximum_bytes=client.config.max_response_bytes,
+                )
+    except HfcacheError as error:
+        _report_failure(ctx, "tags" if facets else "search", started_at, error)
+    _show_result(
+        ctx,
+        result,
+        rows=catalog_rows(result.data, "facets" if facets else "search")
+        if not result.exit_code
+        else (),
+    )
+
+
+catalog_app = typer.Typer(
+    name="catalog",
+    help="Inspect catalog evidence or request writer metadata refresh.",
+    no_args_is_help=True,
+)
+app.add_typer(catalog_app)
+
+
+@catalog_app.command("show")
+def show_catalog(
+    ctx: typer.Context,
+    selector: Annotated[str, typer.Argument(metavar="TYPE:ID")],
+    revision_scope: Annotated[str, typer.Option("--revision-scope")] = "current",
+    commit_sha: Annotated[str | None, typer.Option("--commit-sha")] = None,
+    publication_id: Annotated[str | None, typer.Option("--publication-id")] = None,
+) -> None:
+    """Read bounded attributed detail through REST; full variants are separately collected."""
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        cli_client.check_job_options(options)
+        identity = cli_client.catalog_selector(selector)
+        values: dict[str, Any] = {
+            "revision_scope": revision_scope,
+            "commit_sha": commit_sha,
+            "publication_id": publication_id,
+        }
+        with cli_client.connect(options) as client:
+            client.require_capabilities("read", "reads")
+            result = client.catalog_entry(identity, **values).response.envelope
+    except HfcacheError as error:
+        _report_failure(ctx, "catalog show", started_at, error)
+    _show_result(
+        ctx, result, rows=catalog_rows(result.data, "detail") if not result.exit_code else ()
+    )
+
+
+@catalog_app.command("variants")
+def catalog_variants(
+    ctx: typer.Context,
+    selector: Annotated[str, typer.Argument(metavar="TYPE:ID")],
+    revision_scope: Annotated[str, typer.Option("--revision-scope")] = "current",
+    commit_sha: Annotated[str | None, typer.Option("--commit-sha")] = None,
+    publication_id: Annotated[str | None, typer.Option("--publication-id")] = None,
+    page_size: Annotated[int | None, typer.Option("--page-size")] = None,
+) -> None:
+    """Collect every retained model variant through REST within finite client bounds."""
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        cli_client.check_job_options(options)
+        identity = cli_client.catalog_selector(selector)
+        values: dict[str, Any] = {
+            "revision_scope": revision_scope,
+            "commit_sha": commit_sha,
+            "publication_id": publication_id,
+            "limit": page_size,
+        }
+        with cli_client.connect(options) as client:
+            client.require_capabilities("read", "reads")
+            result = collect_catalog(
+                client.iter_catalog_variants(identity, **values),
+                maximum_bytes=client.config.max_response_bytes,
+            )
+    except HfcacheError as error:
+        _report_failure(ctx, "catalog variants", started_at, error)
+    _show_result(
+        ctx, result, rows=catalog_rows(result.data, "variants") if not result.exit_code else ()
+    )
+
+
+@catalog_app.command("refresh")
+def refresh_catalog(
+    ctx: typer.Context,
+    selectors: SelectorArgument = None,
+    revision_scope: Annotated[str, typer.Option("--revision-scope")] = "retained",
+    tags_only: Annotated[bool, typer.Option("--tags-only")] = False,
+    technical_only: Annotated[bool, typer.Option("--technical-only")] = False,
+) -> None:
+    """Submit one writer-only offline metadata refresh; existing key/detach/wait options apply."""
+    started_at = utc_now()
+    try:
+        if tags_only and technical_only:
+            message = "--tags-only and --technical-only are mutually exclusive"
+            raise ConfigurationError.single(message, code="HFARG002")
+        values: dict[str, Any] = {
+            "selectors": tuple(selectors or ()),
+            "revision_scope": revision_scope,
+            "tags": not technical_only,
+            "technical": not tags_only,
+        }
+        intent = CatalogRefreshRequest(**values)
+        with cli_client.connect(_options(ctx)) as client:
+            client.require_capabilities("write", "operations")
+            result = _submit(ctx, client, "/api/v1/catalog/refreshes", asdict(intent))
+    except HfcacheError as error:
+        _report_failure(ctx, "catalog refresh", started_at, error)
+    counts = result.data.get("counts", {})
+    _show_result(
+        ctx,
+        result,
+        lines={"state": str(result.data.get("state", "failed"))}
+        | {key: str(value) for key, value in counts.items()},
+        rows=[
+            f"{item['repository_type']}:{item['repository_id']}  "
+            f"tags={item['tag_status']}  technical={item['technical_status']}"
+            for item in result.data.get("repositories", [])
+        ],
+    )
 
 
 @app.command()

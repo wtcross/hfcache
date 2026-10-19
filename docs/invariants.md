@@ -1025,3 +1025,10 @@ Refresh admission: [strict intent DTO](../src/hfcache/api/command_models.py),
 [keyed writer adapter](../src/hfcache/api/catalog_refresh.py) and
 [HTTP replay/wait/disconnect/restart fixtures](../tests/unit/test_api_catalog_refresh.py)
 reuse the same lane/guard/result ownership without widening verifier authority.
+Client enforcement: [typed HTTP methods](../src/hfcache/client.py),
+[pure catalog validation/collection](../src/hfcache/client_catalog.py),
+[pure refresh DTOs](../src/hfcache/catalog_refresh_models.py) and
+[inert human rendering](../src/hfcache/catalog_display.py), with
+[client consistency/import fixtures](../tests/unit/test_catalog_client.py) and
+[actual HTTP CLI evidence](../tests/unit/test_cli_catalog.py), preserve the base
+reader boundary and exact server Envelope identity through complete collection.

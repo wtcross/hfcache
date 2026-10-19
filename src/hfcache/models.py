@@ -26,6 +26,7 @@ file once rather than one field per run.
 import json
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal, Self, final
+from uuid import UUID
 
 from pydantic import (
     BaseModel,
@@ -53,6 +54,7 @@ __all__ = [
     "INDENT",
     "LAYOUT_VERSION",
     "SCHEMA_VERSION",
+    "ArchiveIdField",
     "ArchivePath",
     "ArchiveSentinel",
     "ByteCount",
@@ -174,6 +176,22 @@ def _parse_sha256(value: object) -> str:
     return value
 
 
+def _parse_archive_id(value: object) -> str:
+    """Canonical UUID value without importing application policy (decision 118)."""
+    if not isinstance(value, str):
+        message = "Archive identity must be a canonical UUID string"
+        raise ValueError(message)  # noqa: TRY004 - collected by Pydantic
+    try:
+        canonical = str(UUID(value))
+    except ValueError:
+        message = "Archive identity must be a canonical UUID string"
+        raise ValueError(message) from None
+    if canonical != value:
+        message = "Archive identity must use canonical lowercase UUID spelling"
+        raise ValueError(message)
+    return value
+
+
 def _archive_path(value: object) -> str:
     return str(parse_archive_relative(value))
 
@@ -200,6 +218,7 @@ Timestamp = Annotated[
     PlainSerializer(format_timestamp, return_type=str, when_used="json"),
 ]
 Sha256 = Annotated[str, BeforeValidator(_parse_sha256)]
+ArchiveIdField = Annotated[str, BeforeValidator(_parse_archive_id)]
 CommitShaField = Annotated[str, BeforeValidator(parse_commit_sha)]
 PublicationIdField = Annotated[str, BeforeValidator(parse_publication_id)]
 TransactionIdField = Annotated[str, BeforeValidator(parse_transaction_id)]

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | complete |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 4 — REST and CLI |
 | Depends on | [CAT-011](cat-011-rest-catalog-read-routes.md), [CAT-012](cat-012-rest-catalog-refresh-admission.md) |
@@ -62,15 +62,53 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
-When work starts, record any relevant newer-source reconciliation, implementation
-choices, blockers and scope amendments here. Preserve prior completed evidence.
+Typed base-client search/facet/detail/variant methods retain exact responses with
+validated pure payloads; explicit detail/publication identity cannot substitute.
+Named complete iterators enforce stable archive/policy/catalog/coverage/totals,
+strict order and uniqueness, page/aggregate bytes and unfinished-walk refusal.
+Generic legacy page methods remain restricted to their old surfaces. Valid raw
+Unicode query spelling survives casefold expansion on transport/continuation.
+
+Refresh result DTOs moved into a pure module with unchanged fields, versions and
+compatibility exports. Generic exact operation observation validates the new
+payload, and catalog_refresh_result exposes typed evidence. No writer/framework
+imports enter the client. CLI search/tags/show/variants/refresh use only REST;
+complete assembly preserves first-server Envelope metadata and original evidence.
+Human output qualifies provenance, coverage, representatives, diagnostics and
+per-record refresh progress, escaping controls. Existing quiet/key/detach/timeout
+and uncertainty handling remains shared. Independent REST parity now has 34 modes
+with actual named CLI/HTTP evidence, preserving all 44 route/mode rows.
+
+Broad client/CLI/query/refresh/REST regression selection: 583 passed in 43.74s.
+After final typed-result additions, 340 focused tests passed in 23.45s; all-source
+format/lint/types (zero errors) and documentation alignment pass. Cold subprocess
+imports prove no writer/Hub/server/MCP/model runtime import. The final full gate includes actual isolated installation profiles and frontend execution.
+Reviewed INV-006/012/014/015/018 and decisions 118-120/133; human CLI/client/API/
+discovery/quickstart contracts and invariant/ADR links updated. No new runtime
+dependency, script, durable format, production/live/credential/host/push action.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-013, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-013, this commit). Full `scripts/check.sh` exited 0:
+4956 passed/40 deselected in 552.27s; wheel/sdist, all three locked isolated
+installation profiles, actual Cockpit lint/types/169 tests/build passed. Focused
+post-fix selection: 326 passed in 17.94s; direct cold/client selection: 33 passed
+in 5.31s. V41-V43 have actual client/CLI, complete collection, human/JSON, exact
+refresh observation and uncertain-admission evidence. INV-006/012/014/015/018 and
+decisions 118-120/133 reviewed; CLI/client/API/discovery/quickstart and enforcement
+links updated. [Progress](../../progress.md#tags-and-discovery-2026-10-19) records
+completion. No runtime dependency, production/live/credential/host/push action.
+MCP remains the next serial task; no operator action is needed to continue.
+
+The first full gate reported one existing client-only import-boundary failure:
+4948 passed/40 deselected in 555.40s. Catalog UUID annotations still imported
+application configuration despite the writer-free refactor. Added a canonical UUID
+value type to the pure model layer and use it in both catalog record/result DTOs.
+Existing client-only cold-import assertion remains unchanged; the new catalog
+probe now checks this stronger boundary before importing the CLI's explicit local
+bootstrap surface. No value constraints or serialized formats changed.
+
+After the pure UUID fix, socket/client/record/storage/refresh/CLI/old-model selection
+passed 326 tests in 17.94s, including unchanged client-only isolation. Canonical UUID
+value tests preserve noncoercion and exact lowercase spelling. All-source lint/types
+and document alignment pass; the updated full gate passed as recorded above.

@@ -128,7 +128,7 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
     (
         "GET /catalog/search",
         "default",
-        "SDK / HTTP",
+        "search",
         "R",
         "synchronous",
         "none",
@@ -139,7 +139,7 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
     (
         "GET /catalog/facets",
         "default",
-        "SDK / HTTP",
+        "tags",
         "R",
         "synchronous",
         "none",
@@ -150,7 +150,7 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
     (
         "GET /catalog/repositories/{repository_type}/{namespace}/{name}",
         "default",
-        "SDK / HTTP",
+        "catalog show TYPE:ID",
         "R",
         "synchronous",
         "none",
@@ -161,7 +161,7 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
     (
         "GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants",
         "default",
-        "SDK / HTTP",
+        "catalog variants TYPE:ID",
         "R",
         "synchronous",
         "none",
@@ -172,7 +172,7 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
     (
         "POST /catalog/refreshes",
         "default",
-        "SDK / HTTP",
+        "catalog refresh [selectors]",
         "W",
         "keyed job",
         "archive",
@@ -500,6 +500,15 @@ PARITY_REFERENCE: dict[str, tuple[tuple[str, str], ...]] = {
         ("GET /operations/{operation_id}/result", "default"),
         ("GET /operations/{operation_id}/events", "default"),
     ),
+    "search": (("GET /catalog/search", "default"),),
+    "tags": (("GET /catalog/facets", "default"),),
+    "catalog show TYPE:ID": (
+        ("GET /catalog/repositories/{repository_type}/{namespace}/{name}", "default"),
+    ),
+    "catalog variants TYPE:ID": (
+        ("GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants", "default"),
+    ),
+    "catalog refresh [selectors]": (("POST /catalog/refreshes", "default"),),
 }
 
 # New reads have concrete HTTP evidence before their CLI modes are introduced.

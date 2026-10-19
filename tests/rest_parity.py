@@ -857,4 +857,117 @@ PARITY = (
             PAGINATION,
         ),
     ),
+    ParityMode(
+        "search",
+        "catalog_search",
+        "GET /catalog/search",
+        "R",
+        "none",
+        "no",
+        "Q",
+        "none",
+        (
+            Evidence(
+                "test_cli_catalog",
+                "test_cli_catalog_reads_collect_and_preserve_server_envelope",
+                "arguments",
+                "['search', '--scope', 'all', '--page-size', '1']",
+            ),
+        ),
+        (
+            Evidence(
+                "test_api_catalog",
+                "test_catalog_routes_share_strict_wrappers_and_original_capabilities",
+            ),
+        ),
+    ),
+    ParityMode(
+        "tags",
+        "catalog_facets",
+        "GET /catalog/facets",
+        "R",
+        "none",
+        "no",
+        "Q",
+        "none",
+        (
+            Evidence(
+                "test_cli_catalog",
+                "test_cli_catalog_reads_collect_and_preserve_server_envelope",
+                "arguments",
+                "['tags', '--scope', 'all', '--page-size', '1']",
+            ),
+        ),
+        (
+            Evidence(
+                "test_api_catalog",
+                "test_catalog_routes_share_strict_wrappers_and_original_capabilities",
+            ),
+        ),
+    ),
+    ParityMode(
+        "catalog show TYPE:ID",
+        "catalog_entry",
+        "GET /catalog/repositories/{repository_type}/{namespace}/{name}",
+        "R",
+        "none",
+        "no",
+        "Q",
+        "none",
+        (
+            Evidence(
+                "test_cli_catalog",
+                "test_cli_catalog_reads_collect_and_preserve_server_envelope",
+                "arguments",
+                "['catalog', 'show', MODEL.selector]",
+            ),
+        ),
+        (
+            Evidence(
+                "test_api_catalog",
+                "test_catalog_routes_share_strict_wrappers_and_original_capabilities",
+            ),
+        ),
+    ),
+    ParityMode(
+        "catalog variants TYPE:ID",
+        "catalog_variants",
+        "GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants",
+        "R",
+        "none",
+        "no",
+        "Q",
+        "none",
+        (
+            Evidence(
+                "test_cli_catalog",
+                "test_cli_catalog_reads_collect_and_preserve_server_envelope",
+                "arguments",
+                "['catalog', 'variants', MODEL.selector, '--page-size', '1']",
+            ),
+        ),
+        (
+            Evidence(
+                "test_api_catalog",
+                "test_catalog_routes_share_strict_wrappers_and_original_capabilities",
+            ),
+        ),
+    ),
+    ParityMode(
+        "catalog refresh [selectors]",
+        "refresh_catalog",
+        "POST /catalog/refreshes",
+        "W",
+        "archive",
+        "no",
+        "J",
+        "receipt; supplemental metadata",
+        (Evidence("test_cli_catalog", "test_refresh_cli_observes_exact_typed_writer_result"),),
+        (
+            Evidence(
+                "test_api_catalog_refresh",
+                "test_refresh_http_captures_once_replays_original_and_new_key_recaptures",
+            ),
+        ),
+    ),
 )

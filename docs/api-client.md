@@ -460,3 +460,26 @@ An older client without API-option support can reject `--client-config` with
 usage exit 2; keep settings and retained observation state through rollback.
 Unsupported client options never authorize deleting credentials/history or
 inferring that accepted work did not execute.
+
+## Catalog client
+
+`ApiClient.catalog_search(CatalogQuery(...))`, `catalog_facets(facet, query)`,
+`catalog_entry(identity, ...)` and `catalog_variants(identity, ...)` return typed
+catalog reads: `response` is the exact `ClientRead`, and `payload` is validated
+schema-1 data (null only for a failed Envelope). Inputs use pure `CatalogQuery`
+and `RepositoryIdentity`, without importing server or archive execution modules.
+`iter_catalog_search`, `iter_catalog_facets` and `iter_catalog_variants` enforce
+stable archive/policy/catalog/coverage identity, unique ordered entries, exact
+known totals and finite page/aggregate budgets. Exhaustion or a stale/inconsistent
+walk raises; it cannot become a partial successful collection. SDK single-page
+methods retain cursors. Unicode query text retains its bounded original spelling
+for transport while matching/cursor identity uses the normalized literal.
+
+`catalog_refresh(CatalogRefreshRequest(...), key=...)` submits once through the
+existing operation lane. Observe its original operation with `observe`/`result`;
+`catalog_refresh_result` additionally returns the exact response with a typed
+`CatalogRefreshResult` payload. Result data is independently validated without
+a writer import. Missing
+or malformed acknowledgements retain the original key/route and uncertainty.
+Current capabilities and read wrappers remain unchanged; their existing reads,
+write and operations permissions cover the additive interfaces.

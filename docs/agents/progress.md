@@ -184,6 +184,21 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   enforcement links current. No runtime dependency, host, production/live,
   credential or push action.
 
+- [x] CAT-013 Add typed catalog client and CLI (2026-10-19, this commit —
+  [task](plans/tasks/cat-013-catalog-client-and-cli.md)). REST-only search/tags/
+  show/variants/refresh preserve exact server Envelopes, current/historical
+  provenance, explicit representatives, coverage and operation handles. Named
+  complete iterators enforce stable archive/policy/catalog identities, totals,
+  coverage, order, uniqueness and finite page/aggregate budgets. Pure refresh
+  DTOs and UUID value types preserve strict base-client import isolation and
+  serialized formats. Independent REST parity covers 34 modes/44 route rows.
+  V41-V43 focused post-fix 326 pass; full gate 4956 pass/40 deselected in 552.27s,
+  build/three locked profiles and actual Cockpit lint/types/169 tests/build.
+  Earlier import-boundary failure and correction remain task-owned history.
+  INV-006/012/014/015/018 and decisions 118-120/133 reviewed; human CLI/client/API/
+  discovery/quickstart and enforcement links current. No runtime dependency,
+  production/live/credential/host/push action.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

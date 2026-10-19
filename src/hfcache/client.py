@@ -5,14 +5,30 @@ import json
 import math
 import re
 import time
+from dataclasses import asdict
 from http import HTTPStatus
 from itertools import pairwise
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Literal, Self
 from uuid import uuid4
 
 import httpx
 from pydantic import ValidationError
 
+from hfcache.catalog_query_models import (
+    CatalogDetailPayload,
+    CatalogFacetPayload,
+    CatalogQuery,
+    CatalogSearchPayload,
+    CatalogVariantsPayload,
+    Facet,
+)
+from hfcache.client_catalog import (
+    CatalogRead,
+    RefreshRead,
+    validate_catalog,
+    validate_refresh,
+    walk_catalog,
+)
 from hfcache.client_config import resolve_api_token
 from hfcache.client_errors import (
     ClientConnectionError,
@@ -33,7 +49,7 @@ from hfcache.client_models import (
 )
 from hfcache.errors import ConfigurationError, HfcacheError
 from hfcache.http_transport import create_http_client
-from hfcache.identity import parse_run_id
+from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, parse_run_id
 from hfcache.redaction import redact_text
 from hfcache.taxonomy import classify
 
@@ -41,6 +57,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Mapping, Sequence
 
     from hfcache.client_config import ClientConfig
+    from hfcache.services.requests import CatalogRefreshRequest
 
 _KEY = re.compile(r"[A-Za-z0-9._~+-]{1,128}")
 _PATH = re.compile(r"/api/v1(?:/[A-Za-z0-9_-][A-Za-z0-9._-]*)+")
@@ -60,6 +77,30 @@ _PAGE_ROUTES = frozenset(
         "/api/v1/operations",
     }
 )
+_CATALOG_PAGE_ROUTES = frozenset({"/api/v1/catalog/search", "/api/v1/catalog/facets"})
+_CATALOG_FILTERS = frozenset(
+    {
+        "type",
+        "q",
+        "tag_all",
+        "tag_any",
+        "tag_source",
+        "scope",
+        "revision_scope",
+        "format",
+        "quantization",
+        "quantization_method",
+        "bits",
+        "max_variant_bytes",
+        "limit",
+        "cursor",
+        "facet",
+        "commit_sha",
+        "publication_id",
+    }
+)
+_CATALOG_VARIANTS = re.compile(r"/api/v1/catalog/repositories/model/[^/]+/[^/]+/variants")
+_DEFAULT_CATALOG_QUERY = CatalogQuery()
 
 
 def _pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -343,7 +384,12 @@ class ApiClient:
         self, path: str, params: Mapping[str, Any] | None = None, *, _deadline: float | None = None
     ) -> ClientRead:
         if params is not None and any(
-            key not in {"limit", "cursor", "selector", "type", "after"}
+            key
+            not in (
+                _CATALOG_FILTERS
+                if path.startswith("/api/v1/catalog/")
+                else {"limit", "cursor", "selector", "type", "after"}
+            )
             or redact_text(str(value)) != str(value)
             for key, value in params.items()
         ):
@@ -354,7 +400,11 @@ class ApiClient:
         except ValueError, HfcacheError:
             raise ClientProtocolError from None
         self._identity(result.archive_id)
-        if path not in _PAGE_ROUTES and result.next_cursor is not None:
+        if (
+            path not in _PAGE_ROUTES | _CATALOG_PAGE_ROUTES
+            and not _CATALOG_VARIANTS.fullmatch(path)
+            and result.next_cursor is not None
+        ):
             raise ClientProtocolError
         if _deadline is not None and self.monotonic() >= _deadline:
             raise ClientConnectionError
@@ -566,6 +616,8 @@ class ApiClient:
             or (known.state == "succeeded") != (result.envelope.exit_code == 0)
         ):
             raise ClientProtocolError
+        if known.route == "/api/v1/catalog/refreshes":
+            validate_refresh(result)
         return result
 
     def events(
@@ -714,6 +766,202 @@ class ApiClient:
 
     def health(self) -> ClientRead:
         return self.read("/api/v1/health")
+
+    @staticmethod
+    def _catalog_params(query: CatalogQuery) -> dict[str, Any]:
+        aliases = {"repository_type": "type", "tags_all": "tag_all", "tags_any": "tag_any"}
+        return {
+            aliases.get(key, key): value
+            for key, value in query.wire_filters().items()
+            if value is not None and value != []
+        }
+
+    @staticmethod
+    def _catalog_path(identity: RepositoryIdentity) -> str:
+        return f"/api/v1/catalog/repositories/{identity.type}/{identity.namespace}/{identity.name}"
+
+    @staticmethod
+    def _catalog_exact(
+        revision_scope: Literal["current", "retained"],
+        commit_sha: str | None,
+        publication_id: str | None,
+    ) -> dict[str, Any]:
+        CatalogQuery(revision_scope=revision_scope)
+        if (commit_sha is None) != (publication_id is None):
+            message = "Catalog detail requires both commit SHA and publication ID"
+            raise ConfigurationError.single(message, code="HFARG002")
+        if commit_sha is None or publication_id is None:
+            return {"revision_scope": revision_scope}
+        try:
+            sha, publication = CommitSha(commit_sha), PublicationId(publication_id)
+        except ValueError:
+            message = "Invalid exact catalog publication identity"
+            raise ConfigurationError.single(message, code="HFARG001") from None
+        return {"revision_scope": revision_scope, "commit_sha": sha, "publication_id": publication}
+
+    def catalog_search(
+        self,
+        query: CatalogQuery = _DEFAULT_CATALOG_QUERY,
+    ) -> CatalogRead[CatalogSearchPayload]:
+        return validate_catalog(
+            self.read("/api/v1/catalog/search", self._catalog_params(query)),
+            CatalogSearchPayload,
+            "catalog.search",
+        )
+
+    def catalog_facets(
+        self,
+        facet: Facet,
+        query: CatalogQuery = _DEFAULT_CATALOG_QUERY,
+    ) -> CatalogRead[CatalogFacetPayload]:
+        if type(facet) is not str or facet not in {
+            "tag",
+            "format",
+            "quantization_method",
+            "quantization",
+        }:
+            message = "Invalid catalog facet"
+            raise ConfigurationError.single(message, code="HFARG002")
+        return validate_catalog(
+            self.read("/api/v1/catalog/facets", self._catalog_params(query) | {"facet": facet}),
+            CatalogFacetPayload,
+            "catalog.facets",
+        )
+
+    def catalog_entry(
+        self,
+        identity: RepositoryIdentity,
+        *,
+        revision_scope: Literal["current", "retained"] = "current",
+        commit_sha: str | None = None,
+        publication_id: str | None = None,
+    ) -> CatalogRead[CatalogDetailPayload]:
+        params = self._catalog_exact(revision_scope, commit_sha, publication_id)
+        found = validate_catalog(
+            self.read(self._catalog_path(identity), params),
+            CatalogDetailPayload,
+            "catalog.detail",
+        )
+        if found.payload is not None and (
+            (found.payload.entry.repository_type, found.payload.entry.repository_id)
+            != (identity.type, identity.id)
+            or (
+                commit_sha is not None
+                and any(
+                    (item.commit_sha, item.publication_id) != (commit_sha, publication_id)
+                    for item in found.payload.observations
+                )
+            )
+        ):
+            raise ClientProtocolError
+        return found
+
+    def catalog_variants(  # noqa: PLR0913 - paired exact publication and page fields
+        self,
+        identity: RepositoryIdentity,
+        *,
+        revision_scope: Literal["current", "retained"] = "current",
+        commit_sha: str | None = None,
+        publication_id: str | None = None,
+        limit: int | None = None,
+        cursor: str | None = None,
+    ) -> CatalogRead[CatalogVariantsPayload]:
+        if identity.type != "model":
+            message = "Catalog variants requires a model identity"
+            raise ConfigurationError.single(message, code="HFARG002")
+        params = self._catalog_exact(revision_scope, commit_sha, publication_id)
+        page = CatalogQuery(limit=limit, cursor=cursor)
+        params |= {
+            key: value
+            for key, value in {"limit": page.limit, "cursor": page.cursor}.items()
+            if value is not None
+        }
+        found = validate_catalog(
+            self.read(self._catalog_path(identity) + "/variants", params),
+            CatalogVariantsPayload,
+            "catalog.variants",
+        )
+        if (
+            found.payload is not None
+            and commit_sha is not None
+            and any(
+                (item.commit_sha, item.publication_id) != (commit_sha, publication_id)
+                for item in found.payload.entries
+            )
+        ):
+            raise ClientProtocolError
+        return found
+
+    def _catalog_page_size(self, limit: int | None) -> int:
+        return (
+            limit
+            if limit is not None
+            else min(100, self._capabilities.max_page_size if self._capabilities else 100)
+        )
+
+    def iter_catalog_search(
+        self,
+        query: CatalogQuery = _DEFAULT_CATALOG_QUERY,
+    ) -> Iterator[CatalogRead[CatalogSearchPayload]]:
+        return walk_catalog(
+            lambda cursor: self.catalog_search(query.with_cursor(cursor)),
+            maximum_pages=self.config.max_pages,
+            maximum_bytes=self.config.max_response_bytes,
+            page_size=self._catalog_page_size(query.limit),
+            initial_cursor=query.cursor,
+        )
+
+    def iter_catalog_facets(
+        self,
+        facet: Facet,
+        query: CatalogQuery = _DEFAULT_CATALOG_QUERY,
+    ) -> Iterator[CatalogRead[CatalogFacetPayload]]:
+        return walk_catalog(
+            lambda cursor: self.catalog_facets(facet, query.with_cursor(cursor)),
+            maximum_pages=self.config.max_pages,
+            maximum_bytes=self.config.max_response_bytes,
+            page_size=self._catalog_page_size(query.limit),
+            initial_cursor=query.cursor,
+        )
+
+    def iter_catalog_variants(
+        self,
+        identity: RepositoryIdentity,
+        *,
+        revision_scope: Literal["current", "retained"] = "current",
+        commit_sha: str | None = None,
+        publication_id: str | None = None,
+        limit: int | None = None,
+    ) -> Iterator[CatalogRead[CatalogVariantsPayload]]:
+        return walk_catalog(
+            lambda cursor: self.catalog_variants(
+                identity,
+                revision_scope=revision_scope,
+                commit_sha=commit_sha,
+                publication_id=publication_id,
+                limit=limit,
+                cursor=cursor,
+            ),
+            maximum_pages=self.config.max_pages,
+            maximum_bytes=self.config.max_response_bytes,
+            page_size=self._catalog_page_size(limit),
+        )
+
+    def catalog_refresh(
+        self,
+        request: CatalogRefreshRequest,
+        *,
+        key: str | None = None,
+        on_key: Callable[[str], None] | None = None,
+    ) -> Submission:
+        return self.submit("/api/v1/catalog/refreshes", asdict(request), key=key, on_key=on_key)
+
+    def catalog_refresh_result(self, operation_id: str) -> RefreshRead:
+        identifier = self._identifier(operation_id)
+        result = self.result(identifier)
+        if self._operations[identifier].route != "/api/v1/catalog/refreshes":
+            raise ClientProtocolError
+        return RefreshRead(result, validate_refresh(result))
 
     def validate_installed(self) -> ClientRead:
         return self._validation({})

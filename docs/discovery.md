@@ -3,7 +3,7 @@
 Configuration tags, Cockpit authoring, curation identity and supplemental record
 storage, static declarations, GGUF headers and scoped AWQ/GPTQ variants are
 supported, including sync/repair capture, keyed offline refresh and REST reads.
-Client and MCP discovery support below remain proposed; this contract alone
+MCP discovery support below remains proposed; this contract alone
 does not make those commands available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 
@@ -418,3 +418,31 @@ metadata/control evidence, a reviewed backup/snapshot or validated compatible
 layout, tag-free target-compatible config and validation with the target binary.
 Never delete new state to force old startup. No automatic metadata cleanup or
 production rollout follows from feature implementation.
+
+## Client and command-line discovery
+
+The base HTTP client provides typed `catalog_search`, `catalog_facets`,
+`catalog_entry`, `catalog_variants` and `catalog_refresh` methods. Read methods
+return the original strict response plus its validated independent catalog payload.
+Paged search/facet/variant iterators enforce complete known totals, ordering,
+unique rows, archive/policy/catalog/coverage identity, page and aggregate byte
+bounds. The CLI assembles the complete walk before output; it never prints a
+partial successful inventory. Single-page SDK calls expose the original cursor.
+Refresh uses the existing submission and exact observation handles.
+
+`hfcache search` and `hfcache tags` accept `--type`, `--query`, repeated `--tag`
+(ALL), repeated `--any-tag` (ANY), `--tag-source`, `--scope`, `--revision-scope`,
+`--format`, `--quantization`, `--quantization-method`, `--bits`,
+`--max-variant-bytes`, and optional `--page-size`. Defaults match REST; tags lists
+the tag facet after those filters. `catalog show TYPE:ID` reads bounded detail;
+`catalog variants TYPE:ID` collects model variants. Both accept revision scope and
+paired `--commit-sha`/`--publication-id`; variants also accepts page size.
+`catalog refresh [TYPE:ID ...]` accepts revision scope (default retained) and
+mutually exclusive `--tags-only`/`--technical-only`, with existing global key,
+detach and observation-timeout options. There is no local archive fallback.
+
+JSON preserves the first server Envelope's identity/timestamps and all evidence,
+combining only the paged entries. Human output labels tag provenance, technical
+coverage and representative variants, and escapes nonprintable data. Quiet mode
+retains warnings/errors and uncertain operation handles. No archive policy or
+mount, Hub credential or server/MCP/model runtime is needed on the client.
