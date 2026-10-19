@@ -502,11 +502,11 @@ def test_inspection_sentinel_swap_cannot_read_a_symlink_target(tmp_path):
     outside.write_text(sentinel().to_json(), encoding="utf-8")
 
     class SwapSentinel(MetadataReader):
-        def read(self, path):
+        def read(self, path, *, maximum_bytes=None):
             assert path == layout.sentinel
             path.unlink()
             path.symlink_to(outside)
-            return super().read(path)
+            return super().read(path, maximum_bytes=maximum_bytes)
 
     inspection = inspect_archive(
         layout, archive_id=ARCHIVE_ID, table=_nfs_table(root), reader=SwapSentinel(root)
@@ -525,12 +525,12 @@ def test_inspection_diagnoses_corrupt_or_vanished_sentinel_without_repair(tmp_pa
     layout.sentinel.write_text(sentinel().to_json(), encoding="utf-8")
 
     class ChangedSentinel(MetadataReader):
-        def read(self, path):
+        def read(self, path, *, maximum_bytes=None):
             if mutation == "malformed":
                 path.write_bytes(b"{malformed")
             else:
                 path.unlink()
-            return super().read(path)
+            return super().read(path, maximum_bytes=maximum_bytes)
 
     inspection = inspect_archive(
         layout, archive_id=ARCHIVE_ID, table=_nfs_table(root), reader=ChangedSentinel(root)

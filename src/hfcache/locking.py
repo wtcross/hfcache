@@ -43,6 +43,7 @@ __all__ = [
     "lock_path",
     "read_holder",
     "remaining_wait_seconds",
+    "require_archive_lock",
     "scoped_command_lock",
 ]
 
@@ -84,6 +85,23 @@ class CommandLockControl:
     nonblocking: bool = False
     allow_lock: bool = True
     clock: Callable[[], float] = time.monotonic
+
+
+@dataclass(slots=True)
+class _LockOwnership:
+    active: bool = True
+
+
+_lock_ownership: ContextVar[_LockOwnership | None] = ContextVar("archive_lock_owner", default=None)
+
+
+def require_archive_lock(*, expected: object | None = None) -> object:
+    """Require the caller's still-active common lock without acquiring it again (AD-17)."""
+    owner = _lock_ownership.get()
+    if owner is None or not owner.active or (expected is not None and owner is not expected):
+        message = "supplemental writes require the original caller's archive lock"
+        raise SafetyError.single(message, code="HFMNT010")
+    return owner
 
 
 _command_control: ContextVar[CommandLockControl | None] = ContextVar("command_lock", default=None)
@@ -170,12 +188,16 @@ def exclusive_lock(
     try:
         _acquire(descriptor, path, command=command, wait_seconds=wait_seconds, poll=poll_seconds)
         token = _controlled_owner.set(control is not None)
+        ownership = _LockOwnership()
+        owner_token = _lock_ownership.set(ownership)
         try:
             if control is not None:
                 control.revalidate()
                 control.acquired()
             yield path
         finally:
+            ownership.active = False
+            _lock_ownership.reset(owner_token)
             _controlled_owner.reset(token)
             # Clear the record before releasing, so the next command to fail an
             # acquisition never reports a process that has already finished.

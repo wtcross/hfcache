@@ -1112,7 +1112,7 @@ together; changing a symlink while retaining an unrelated runtime copy is invali
 
 ## 17. Supplemental discovery records
 
-Proposed independently versioned schema-1 families use the existing strict JSON,
+Independently versioned schema-1 families use the existing strict JSON,
 ordering, timestamp, digest and atomic-file conventions. See [discovery](discovery.md)
 for field bounds, exact identity, historical authority, coverage and query payloads.
 `RepositoryTagSnapshot` contains `kind`, `schema_version`, `archive_id`,
@@ -1131,12 +1131,13 @@ reads and preserved; unknown sibling names are refused. Historical labels requir
 are rebuildable without changing old evidence. New config/layout/operation kinds
 require actual old-binary compatibility drills before claiming rollback support.
 
-### 17.1 Proposed exact record fields and bounds
+### 17.1 Exact record fields and bounds
 
 All objects reject extra fields and coercions. Existing canonical UUID/SHA/digest,
 repository type/ID, publication ID, positive generation and UTC timestamp types
 apply. All array limits apply before duplicate elimination. Records are bounded
-by 16 MiB encoded JSON; no individual source metadata file can exceed the
+by 16 MiB encoded JSON, depth 32 and 100,000 structural tokens/nodes before
+untrusted container allocation; no individual source metadata file can exceed the
 extractor limits in discovery. Nullable fields are explicit nulls, never omitted.
 
 | Object | Exact fields |
@@ -1153,7 +1154,10 @@ Manifest member paths use the existing safe relative repository path grammar.
 Sources order by `(path, field, evidence)`; variants by variant ID; members and
 source paths by path; dataset formats/diagnostics/values are sorted unique arrays.
 Model observations have no dataset formats. Dataset observations have no variants.
-All source/member paths and expected sizes/digests must agree with the authoritative
+Variant IDs hash compact sorted-key UTF-8 JSON with `extractor_version` and
+`members` (path/size objects sorted by path), using SHA-256. They are scoped by
+exact publication identity in their enclosing observation. All source/member
+paths and expected sizes/digests must agree with the authoritative
 manifest. Every read also checks archive/repository/SHA/publication/generation and
 manifest identity. A total member-work ceiling applies across variants.
 

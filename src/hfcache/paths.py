@@ -326,6 +326,19 @@ class RepositoryLayout:
         return self.revision(commit_sha) / _publication(publication_id)
 
     @property
+    def tag_snapshot(self) -> Path:
+        """Last writer-observed configured labels, outside immutable evidence (INV-018)."""
+        return self.archive.tag_snapshots.joinpath(*self._key[:-1]) / f"{self.identity.name}.json"
+
+    def observation(self, commit_sha: CommitSha, publication_id: PublicationId) -> Path:
+        """A derived observation for exactly one publication instance."""
+        return (
+            self.archive.publication_observations.joinpath(*self._key)
+            / _sha(commit_sha)
+            / f"{_publication(publication_id)}.json"
+        )
+
+    @property
     def manifests(self) -> Path:
         """`published/manifests/<type>/<org>/<repo>`."""
         return self.archive.manifests.joinpath(*self._key)
@@ -461,6 +474,58 @@ class ArchiveLayout:
     def manifests(self) -> Path:
         """Immutable manifests, by repository and SHA."""
         return self.published / "manifests"
+
+    @property
+    def metadata(self) -> Path:
+        """Optional approved adjunct namespace; never part of initialization's required set."""
+        return self.published / "metadata"
+
+    @property
+    def tag_snapshots(self) -> Path:
+        return self.metadata / "tags"
+
+    @property
+    def publication_observations(self) -> Path:
+        return self.metadata / "observations"
+
+    def supplemental_entry_kind(self, path: Path) -> str | None:  # noqa: PLR0911, PLR0912 - explicit optional layout levels
+        """Classify only approved names; no filesystem access or arbitrary tag paths."""
+        type_depth, namespace_depth, repository_depth, sha_depth, record_depth = range(2, 7)
+        try:
+            parts = path.relative_to(self.metadata).parts
+            if not parts:
+                return "directory"
+            if parts[0] not in {"tags", "observations"}:
+                return None
+            if len(parts) == 1:
+                return "directory"
+            kind = {"models": "model", "datasets": "dataset"}.get(parts[1])
+            if kind is None:
+                return None
+            if len(parts) == type_depth:
+                return "directory"
+            RepositoryIdentity.of(kind, f"{parts[2]}/placeholder")
+            if len(parts) == namespace_depth:
+                return "directory"
+            leaf = re.sub(r"\.tmp-[0-9a-f]{16}\Z", "", parts[-1])
+            if parts[0] == "tags":
+                if len(parts) != repository_depth or not leaf.endswith(".json"):
+                    return None
+                RepositoryIdentity.of(kind, f"{parts[2]}/{leaf.removesuffix('.json')}")
+                return "file"
+            RepositoryIdentity.of(kind, f"{parts[2]}/{parts[3]}")
+            if len(parts) == repository_depth:
+                return "directory"
+            _sha(CommitSha(parts[4]))
+            if len(parts) == sha_depth:
+                return "directory"
+            if len(parts) != record_depth or not leaf.endswith(".json"):
+                return None
+            _publication(PublicationId(leaf.removesuffix(".json")))
+        except ValueError:
+            return None
+        else:
+            return "file"
 
     @property
     def catalog(self) -> Path:

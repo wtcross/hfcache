@@ -127,12 +127,19 @@ class MetadataReader:
                 if stat.S_ISDIR(entry.info.st_mode):
                     pending.append(entry.path)
 
-    def read(self, path: Path) -> bytes:
+    def read(self, path: Path, *, maximum_bytes: int | None = None) -> bytes:
         """Read at most the artifact and remaining total budget, including growth."""
+        if maximum_bytes is not None and (type(maximum_bytes) is not int or maximum_bytes < 1):
+            message = "metadata read bound must be a positive integer"
+            raise ValueError(message)
         descriptor = self.open(path)
         try:
             self._consume()
-            caps = [value for value in (self.bounds.maximum_artifact_bytes,) if value is not None]
+            caps = [
+                value
+                for value in (self.bounds.maximum_artifact_bytes, maximum_bytes)
+                if value is not None
+            ]
             if self.bounds.maximum_total_bytes is not None:
                 caps.append(self.bounds.maximum_total_bytes - self._bytes)
             cap = min(caps) if caps else None

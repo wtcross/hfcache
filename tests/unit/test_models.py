@@ -15,6 +15,8 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
+from hfcache.catalog_models import CatalogRecord, PublicationObservation, RepositoryTagSnapshot
+from hfcache.catalog_storage import parse_record
 from hfcache.errors import ExitCode, HfcacheError, IntegrityError, SafetyError
 from hfcache.manifests import FileProvenance, RevisionManifest
 from hfcache.models import (
@@ -47,6 +49,8 @@ from tests.fixtures.examples import EXAMPLES, at
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "schemas"
 
 MODEL_FOR = {
+    "repository-tag-snapshot": RepositoryTagSnapshot,
+    "publication-observation": PublicationObservation,
     "operation-event": OperationEvent,
     "operation-result-reference": ResultReference,
     "operation-receipt": OperationReceipt,
@@ -91,7 +95,12 @@ def test_serialization_is_byte_stable(name):
 def test_every_fixture_round_trips(name):
     raw = (FIXTURES / f"{name}.json").read_bytes()
 
-    parsed = load(MODEL_FOR[name], raw, error=IntegrityError, code="HFVER007")
+    expected = EXAMPLES[name]()
+    parsed = (
+        parse_record(type(expected), raw)
+        if isinstance(expected, CatalogRecord)
+        else load(type(expected), raw, error=IntegrityError, code="HFVER007")
+    )
 
     assert dump(parsed) == raw
     assert parsed == EXAMPLES[name]()

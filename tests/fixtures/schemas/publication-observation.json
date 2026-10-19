@@ -1,0 +1,53 @@
+{
+  "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+  "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+  "dataset_formats": [],
+  "diagnostics": [],
+  "extractor_version": "static-1",
+  "kind": "publication_observation",
+  "manifest_digest": "83f570f6983668699ddf0d1cb38724aa4bbef4ccfcf05b456d3348b311fdad7b",
+  "manifest_path": "published/manifests/models/organization/model-name/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27.json",
+  "observed_at": "2026-10-19T12:00:00.000000Z",
+  "publication_generation": 1,
+  "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+  "repository_id": "organization/model-name",
+  "repository_type": "model",
+  "schema_version": 1,
+  "sources": [
+    {
+      "evidence": "declaration",
+      "field": "task",
+      "path": "config.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "values": [
+        "text-generation"
+      ]
+    }
+  ],
+  "status": "complete",
+  "variants": [
+    {
+      "bits": 4,
+      "completeness": "complete",
+      "diagnostics": [],
+      "encoding": null,
+      "evidence": "declaration",
+      "format": "safetensors",
+      "group_size": 128,
+      "members": [
+        {
+          "path": "model.safetensors",
+          "size_bytes": 486123092
+        }
+      ],
+      "quantization": null,
+      "quantization_method": "awq",
+      "role": "primary",
+      "source_paths": [
+        "config.json"
+      ],
+      "total_bytes": 486123092,
+      "variant_id": "71c04772156edf16f71f3e85dde155ee01267e1cc387dbbf499d3a3a702eeac4"
+    }
+  ]
+}

@@ -152,6 +152,17 @@ def _walk(
                 symlinks.append(where)
             elif child == layout.sentinel:
                 sentinel_present = True
+            elif child.is_relative_to(layout.metadata):
+                # INV-018: only an initialized archive can gain this optional extension.
+                kind = layout.supplemental_entry_kind(child) if sentinel_present else None
+                is_directory = stat.S_ISDIR(mode) if mode is not None else child.is_dir()
+                is_file = stat.S_ISREG(mode) if mode is not None else child.is_file()
+                if kind == "directory" and is_directory:
+                    queue.append(child)
+                elif kind == "file" and is_file:
+                    continue
+                else:
+                    unknown.append(where)
             elif is_temporary_sibling(child.name) and (
                 stat.S_ISREG(mode) if mode is not None else child.is_file()
             ):

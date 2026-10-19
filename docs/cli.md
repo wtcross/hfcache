@@ -834,7 +834,7 @@ revision.
 | `HFVER004` | Publication tree contains a path the manifest does not list |
 | `HFVER005` | Manifest path is not a regular file |
 | `HFVER006` | Object could not be read |
-| `HFVER007` | Manifest fails schema validation or internal consistency |
+| `HFVER007` | Manifest or selected supplemental metadata fails schema, identity or internal consistency validation |
 | `HFVER008` | Reference names a missing or inconsistent tree or manifest, or a current reference that cannot be read |
 
 ### 5.5 Retention, purge, repair, and recovery — exit `50`

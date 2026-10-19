@@ -1,0 +1,14 @@
+{
+  "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+  "curation_fingerprint": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+  "kind": "repository_tag_snapshot",
+  "observed_at": "2026-10-19T12:00:00.000000Z",
+  "repository_id": "organization/model-name",
+  "repository_type": "model",
+  "schema_version": 1,
+  "source": "installed_config",
+  "tags": [
+    "coding",
+    "project:assistant"
+  ]
+}

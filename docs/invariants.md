@@ -990,6 +990,9 @@ image/worker/TLS fixture records and clean immutable artifact identities.
   require backup. Inert metadata cannot resurrect pruned or purged content.
 
 Contract: [discovery](discovery.md), [record schemas](schemas.md#17-supplemental-discovery-records),
-[decision 133](adr/decision-133.md). Enforcement and adversarial fixture evidence
-are required before each proposed interface is declared supported; this contract
-amendment alone makes no claim of implementation or production acceptance.
+[decision 133](adr/decision-133.md). Record enforcement: [strict models](../src/hfcache/catalog_models.py),
+[bounded no-follow storage](../src/hfcache/catalog_storage.py),
+[active caller lock](../src/hfcache/locking.py) and
+[crash/identity/preservation fixtures](../tests/unit/test_catalog_storage.py).
+Remaining proposed extraction/query/transport interfaces require their own
+validation before support is declared. Offline evidence is not production acceptance.

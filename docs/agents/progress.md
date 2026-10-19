@@ -64,6 +64,18 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Cockpit lint/types/169 tests/build. Docs/whitespace and independent review pass.
   No production/live/credential/push action or new runtime dependency.
 
+- [x] CAT-004 Implement bounded supplemental metadata records and storage
+  (2026-10-19, this commit — [task](plans/tasks/cat-004-metadata-records-and-storage.md)).
+  Strict independent record families/goldens, exact ref/manifest/source bindings,
+  optional named namespace and original-live-lock/preflight capability guard
+  descriptor-relative atomic records. Hard actual-read/JSON structure ceilings
+  apply with shared budgets; unsupported/unsafe prior records and ambiguous temps
+  remain preserved. No journal/index/GC/evidence rewrite. Review gaps fixed and
+  final independent review clear. Focused 518 pass; full gate 4415 passed/40
+  deselected, build/three locked profiles and actual Cockpit lint/types/169 tests/
+  build. Affected INV/FS/TX and decision 133 reviewed; human contracts updated.
+  No new dependency, production/live/credential/push operation.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

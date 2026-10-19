@@ -290,3 +290,21 @@ Use [capacity/performance measurements](storage-requirements.md) after NAS/netwo
 changes or before large repositories. Measure logical versus unique-inode bytes,
 snapshot-held space and actual read/publication throughput; do not extrapolate
 small idle-host results into a production quota or verification window.
+
+## Supplemental metadata backup and compatibility
+
+`published/metadata/tags/` preserves last writer-observed labels, including labels
+of unmanaged retained repositories. Include it in reviewed backups: current
+configuration cannot reconstruct removed or uncaptured history. Publication
+observations under `published/metadata/observations/` are derived from exact
+retained manifests and bounded static source inspection; they never establish
+integrity confidence. Read requests do not capture or rebuild either family.
+See [discovery](discovery.md) for proposed refresh/query interfaces.
+
+Supplemental records are independent atomic files. Interruption can leave mixed
+observation times; preserve unknown/unsupported canonical records and ambiguous
+temporary siblings. Never delete metadata to force an older binary to start.
+Prune/purge may leave inert metadata, so growth is a documented storage cost;
+there is no automatic garbage collector. Old tag-free configs stay valid, but
+new config/layout/operation support needs a target-binary compatibility drill
+and guarded executor drain/backup procedure before rollback.

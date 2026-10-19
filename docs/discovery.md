@@ -1,7 +1,8 @@
 # Tags and local discovery
 
-Configuration tags, Cockpit authoring and separate curation identity are supported. Extraction and
-transport support below remain proposed; this contract alone does not make the commands
+Configuration tags, Cockpit authoring, curation identity and supplemental record
+storage are supported. Extraction, writer lifecycle and transport support below
+remain proposed; this contract alone does not make the commands
 below available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 

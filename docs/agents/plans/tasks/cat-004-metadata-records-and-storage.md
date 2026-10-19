@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 2 — Metadata foundation |
 | Depends on | [CAT-002](cat-002-configuration-tags-and-identities.md) |
@@ -15,7 +15,7 @@ Follow `AGENTS.md` and `docs/agents/workflow.md`. Read relevant sections of the
 [design](../support/tags-and-discovery/design.md),
 [source review](../support/tags-and-discovery/source-review.md) and
 [validation matrix](../support/tags-and-discovery/validation-matrix.md).
-Tasks own execution status; this file is pending, not a claim of implementation.
+Tasks own execution status; completion evidence below records actual validation.
 
 ## Likely implementation touchpoints
 
@@ -60,15 +60,53 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
+Implemented independent strict schema-1 tag snapshots/publication observations,
+centralized optional layout builders and a named initialized-only inspection
+extension. Record parsing rejects duplicates/nonfinite JSON, unsupported/missing
+versions, noncanonical shapes and over-budget depth/tokens before allocation.
+No-follow reads retain shared counters and enforce a hard per-record limit even
+with an unbounded supplied reader. Exact reference/manifest identity, raw manifest
+digest, source digests/member sizes and scoped variant IDs are checked.
+
+CatalogWriter requires the original caller-held live lock lifetime, complete
+passing storage preflight (only explicit copy-mode hardlink skip allowed), matching
+sentinel and allowed namespace/published siblings. Directory creation is descriptor
+anchored, same-device and fsynced; per-file replacement validates prior canonical
+records before the shared atomic primitive. Unknown/future/corrupt/symlink evidence
+and ambiguous temporary siblings are preserved. No second lock, journal, index,
+automatic GC, sentinel rewrite or payload read. Historical snapshots remain
+separate from derived observations. New goldens join existing format inventory;
+old goldens are unchanged.
+
+Independent review found and fixed lifetime, skipped-proof, unknown-sibling and
+unbounded-reader gaps; final review found no further material issue. Focused
+518 tests, lint/types/docs/whitespace pass. Full gate passed; evidence follows. Reviewed
+INV-001/005/018, AD-01/06/07/12/13/14/15/17/18, FS-01/02/03/05–12/15–17/19/21–23
+and TX-01/07 against decision 133; no broader exception or new dependency.
+Updated schema/discovery, invariant enforcement, ADR133, error-code description
+and backup/compatibility guidance. CLI/transport and extraction remain pending.
 When work starts, record any relevant newer-source reconciliation, implementation
 choices, blockers and scope amendments here. Preserve prior completed evidence.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-004, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-004, this commit). V08–V11 are exercised by
+`tests/unit/test_catalog_storage.py` and the two new golden fixtures: strict
+independent versions/shape/order, exact authority/source/member binding, prior
+future/corrupt/unsafe record preservation, before/after-fsync/rename failures,
+independent record progress, active original lock lifetime, missing/wrong sentinel,
+local fallback, unknown published/metadata names, recognized temporary preservation,
+copy-mode proof exception and hard read/JSON allocation bounds. Old fixture bytes
+remain unchanged. The optional namespace never becomes an initial requirement.
+
+Focused expanded suites: 518 passed in 23.80s. Full `rtk proxy scripts/check.sh`
+exited 0: 4415 passed, 40 opt-in deselected in 483.69s; format/lint/types/docs,
+build, three locked installation profiles and actual Cockpit lint/types/169 tests/
+build passed. Complete local output is `.git/cat-004-check.log` (ignored gate log).
+Final docs and whitespace checks passed. Independent review findings are fixed and
+reviewed again with no remaining material concern. Reviewed INV-001/005/018,
+AD-01/06/07/12/13/14/15/17/18, affected FS/TX requirements and decision 133; no new
+architectural decision/dependency or broader transaction exception. Updated human
+schema/discovery/error/backup contracts and invariant/ADR enforcement links.
+No production, credential, live Hub/NFS, archive CLI initialization, service or push
+operation. Storage is supported; extraction/lifecycle/query/transport remain pending.

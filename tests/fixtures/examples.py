@@ -11,9 +11,18 @@ value fails inside the test that asked for it.
 """
 
 from datetime import UTC, datetime
+from hashlib import sha256
 
 from hfcache.api.auth import CredentialClass
 from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
+from hfcache.catalog_models import (
+    ModelVariant,
+    PublicationObservation,
+    RepositoryTagSnapshot,
+    SourceObservation,
+    VariantMember,
+    variant_identity,
+)
 from hfcache.manifests import (
     DependencyObservation,
     FileEntry,
@@ -37,6 +46,7 @@ from hfcache.models import (
     RepairRetirementRecord,
     RevisionSummary,
     TransactionJournal,
+    dump,
 )
 from hfcache.reporting import (
     CatalogRevision,
@@ -556,7 +566,59 @@ def scheduled_observation() -> ScheduledObservation:
     )
 
 
+def tag_snapshot() -> RepositoryTagSnapshot:
+    return RepositoryTagSnapshot(
+        archive_id=ARCHIVE_ID,
+        repository_type="model",
+        repository_id=REPOSITORY_ID,
+        tags=("coding", "project:assistant"),
+        observed_at=at("2026-10-19T12:00:00.000000Z"),
+        curation_fingerprint=FINGERPRINT,
+    )
+
+
+def publication_observation() -> PublicationObservation:
+    members = (VariantMember(path="model.safetensors", size_bytes=486123092),)
+    variant = ModelVariant(
+        variant_id=variant_identity(members),
+        format="safetensors",
+        quantization_method="awq",
+        bits=4,
+        group_size=128,
+        role="primary",
+        members=members,
+        total_bytes=486123092,
+        completeness="complete",
+        evidence="declaration",
+        source_paths=("config.json",),
+    )
+    return PublicationObservation(
+        archive_id=ARCHIVE_ID,
+        repository_type="model",
+        repository_id=REPOSITORY_ID,
+        commit_sha=SHA,
+        publication_id=PUBLICATION,
+        publication_generation=1,
+        manifest_path=f"published/manifests/models/{REPOSITORY_ID}/{SHA}/{PUBLICATION}.json",
+        manifest_digest=sha256(dump(manifest())).hexdigest(),
+        observed_at=at("2026-10-19T12:00:00.000000Z"),
+        status="complete",
+        sources=(
+            SourceObservation(
+                path="config.json",
+                sha256=DIGEST,
+                field="task",
+                values=("text-generation",),
+                evidence="declaration",
+            ),
+        ),
+        variants=(variant,),
+    )
+
+
 EXAMPLES = {
+    "repository-tag-snapshot": tag_snapshot,
+    "publication-observation": publication_observation,
     "operation-event": operation_event,
     "operation-result-reference": operation_result_reference,
     "operation-receipt": operation_receipt,

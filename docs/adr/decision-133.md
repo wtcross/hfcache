@@ -48,6 +48,10 @@ startup. No new runtime dependency or production operation is approved.
   [INV-018](../invariants.md#tags-and-supplemental-discovery-metadata).
 - Amends [AD-12](ad-12.md), [AD-14](ad-14.md), [AD-17](ad-17.md),
   [119](decision-119.md), [122](decision-122.md), [125](decision-125.md).
+- [Strict record models](../../src/hfcache/catalog_models.py),
+  [atomic adjunct store](../../src/hfcache/catalog_storage.py) and
+  [failure/identity/preservation tests](../../tests/unit/test_catalog_storage.py)
+  enforce the record boundary with caller-held lock/preflight and bounded JSON.
 - Contract review inspected config fingerprint enumeration, safe atomic writes,
   layout validation and candidate byte comparisons. Parser, storage, capability
   and compatibility evidence must accompany corresponding implementation.
