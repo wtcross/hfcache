@@ -204,7 +204,13 @@ class CatalogQueries:
             for source in record.sources
             if all(_safe(v) for v in (source.path, source.sha256, source.field, source.evidence))
         )
-        formats = tuple(value for value in record.dataset_formats if _safe(value)) if usable else ()
+        formats = (
+            tuple(
+                value for value in record.dataset_formats if _safe(value) and value == value.lower()
+            )
+            if usable
+            else ()
+        )
         state = record.status if supported else "unsupported"
         if state == "complete" and (
             len(variants) != len(record.variants)
@@ -323,6 +329,8 @@ class CatalogQueries:
         identity: RepositoryIdentity | None = None,
         exact: tuple[str, str] | None = None,
     ) -> _Snapshot:
+        if identity is not None and not _safe(identity.id):
+            raise RequestError(code="HFAPI007", status_code=404)
         layout = ArchiveLayout(self.config.storage.archive_root)
         reader = MetadataReader(layout.root, self.bounds)
         sentinel, _ = read_authority(layout.sentinel, ArchiveSentinel, reader)
@@ -355,7 +363,7 @@ class CatalogQueries:
         if identity is not None:
             selected &= {identity}
             if not selected:
-                raise RequestError(code="HFVER008", status_code=404, message="Catalog entry absent")
+                raise RequestError(code="HFAPI007", status_code=404, message="Catalog entry absent")
         if len(selected) > MAXIMUM_ROWS:
             raise _limit()
         rows = []
@@ -371,7 +379,7 @@ class CatalogQueries:
                 )
                 if not refs:
                     raise RequestError(
-                        code="HFVER008", status_code=404, message="Publication absent"
+                        code="HFAPI007", status_code=404, message="Publication absent"
                     )
             elif query.revision_scope == "retained":
                 refs = retained
@@ -592,6 +600,8 @@ class CatalogQueries:
     def _exact(commit_sha: str | None, publication_id: str | None) -> tuple[str, str] | None:
         if (commit_sha is None) != (publication_id is None):
             raise RequestError
+        if any(value is not None and not _safe(value) for value in (commit_sha, publication_id)):
+            raise RequestError
         return (
             (CommitSha(commit_sha), PublicationId(publication_id))
             if commit_sha is not None and publication_id is not None
@@ -612,7 +622,7 @@ class CatalogQueries:
             query, identity=identity, exact=self._exact(commit_sha, publication_id)
         )
         if not snapshot.rows:
-            raise RequestError(code="HFVER008", status_code=404)
+            raise RequestError(code="HFAPI007", status_code=404)
         row = snapshot.rows[0]
         if len(row.observations) > MAXIMUM_SUMMARIES:
             raise _limit()
@@ -635,6 +645,8 @@ class CatalogQueries:
         cursor: str | None = None,
         route: str = "catalog.variants",
     ) -> QueryPage:
+        if identity.type != "model":
+            raise RequestError
         query = CatalogQuery(scope="all", revision_scope=revision_scope, limit=limit, cursor=cursor)
         snapshot = self._snapshot(
             query, identity=identity, exact=self._exact(commit_sha, publication_id)

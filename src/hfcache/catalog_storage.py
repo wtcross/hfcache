@@ -134,13 +134,16 @@ def parse_record[RecordT: CatalogRecord](model: type[RecordT], raw: bytes) -> Re
 
 
 def check_namespace(layout: ArchiveLayout, reader: MetadataReader) -> None:
-    for entry in reader.walk(layout.metadata):
-        kind = layout.supplemental_entry_kind(entry.path)
-        if not (
-            (kind == "directory" and stat.S_ISDIR(entry.info.st_mode))
-            or (kind == "file" and stat.S_ISREG(entry.info.st_mode))
-        ):
-            raise _invalid()
+    try:
+        for entry in reader.walk(layout.metadata):
+            kind = layout.supplemental_entry_kind(entry.path)
+            if not (
+                (kind == "directory" and stat.S_ISDIR(entry.info.st_mode))
+                or (kind == "file" and stat.S_ISREG(entry.info.st_mode))
+            ):
+                raise _invalid()
+    except (OSError, ValueError) as exc:
+        raise _invalid() from exc
 
 
 def _optional[RecordT: CatalogRecord](

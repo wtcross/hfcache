@@ -55,6 +55,10 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `POST /plans` | installed | plan (installed) | R | keyed job | none | yes | none | receipt, events and result |
 | `POST /plans` | candidate | --config PATH plan | W | keyed job | none | yes | none | receipt, events and result |
 | `POST /syncs` | default | sync | W | keyed job | archive | yes | journals/cache/publication/catalog/report | receipt, events and result |
+| `GET /catalog/search` | default | SDK / HTTP | R | synchronous | none | no | none | none |
+| `GET /catalog/facets` | default | SDK / HTTP | R | synchronous | none | no | none | none |
+| `GET /catalog/repositories/{repository_type}/{namespace}/{name}` | default | SDK / HTTP | R | synchronous | none | no | none | none |
+| `GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /status` | default | status [selectors] | R | synchronous | none | no | none | none |
 | `GET /repositories` | default | list [selectors] [--type] | R | synchronous | none | no | none | none |
 | `GET /repositories/revisions` | default | list --revisions [selectors] [--type] | R | synchronous | none | no | none | none |
@@ -108,6 +112,35 @@ fresh diagnosis, or null if capacity prevents it; archive diagnostics can be nul
 Health neither probes writability nor repairs/rebuilds state. Version/capabilities
 remain available if the installed archive policy later becomes invalid; startup
 still requires valid server configuration, credentials and initial policy.
+
+### Catalog reads
+
+Catalog routes use the same authenticated, bounded metadata pool and strict
+`ReadResponse`. Their Envelope data is an independently strict schema-1
+[catalog payload](schemas.md#172-catalog-payloads). Search accepts `type`, `q`,
+repeated `tag_all`/`tag_any`, `tag_source`, `scope`, `revision_scope`, `format`,
+`quantization`, `quantization_method`, `bits`, `max_variant_bytes`, `limit`,
+`cursor`. Facets accepts the same query plus required `facet` (`tag`, `format`,
+`quantization_method`, `quantization`). Scalars cannot repeat. Numbers use
+canonical unsigned decimal spelling; booleans, signs and fractions refuse.
+Unknown keys and GET bodies refuse. Tags normalize as in configuration.
+
+Detail and variant collections accept `revision_scope` and paired `commit_sha`/
+`publication_id`; the model-only variants collection additionally accepts `limit`/`cursor`. An exact pair
+selects that retained publication, including a noncurrent one; a vanished pair
+returns 404 without falling back. Detail has at most 64 observation summaries;
+full variants are separately paged. Reads never scan payloads, acquire the archive
+lock, refresh metadata, resolve Hub credentials or write. Availability describes
+retained declarations, not a fresh integrity check. Entire scoped coverage and
+`HFWRN011` qualify known matches, including zero. See [predicate and provenance
+semantics](discovery.md#queries-coverage-and-pages).
+
+The API version and exact capabilities object remain unchanged: existing `reads`
+covers these additive reads. New catalog schemas are independently versioned and
+advertised in OpenAPI; adding a capability field would break strict existing
+clients. Catalog cursors bind route, normalized predicates, visible policy and
+curation, exact refs, observations, ordering and coverage. Tag-only edits can
+invalidate them even when the old operational fingerprint remains unchanged.
 
 ### Read response
 

@@ -25,6 +25,7 @@ from pydantic import ValidationError
 from starlette.exceptions import HTTPException
 
 from hfcache.api.auth import Capability, CredentialRegistry, load_credentials, require_capability
+from hfcache.api.catalog import install_catalog_routes
 from hfcache.api.commands import install_command_routes
 from hfcache.api.lifecycle import MetadataPool, instance_lock
 from hfcache.api.maintenance import install_maintenance_routes
@@ -46,6 +47,7 @@ from hfcache.metadata import QueryBounds
 from hfcache.redaction import sanitize
 from hfcache.reporting import Envelope
 from hfcache.server_config import InstalledPolicy, PolicySnapshot, ServerConfig
+from hfcache.services.catalog_queries import CatalogQueries
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.queries import LocalQueries, PublicationQuery, RepositoryQuery, query_version
 from hfcache.verification_protocol import VerificationClient
@@ -57,6 +59,7 @@ if TYPE_CHECKING:
 
     from hfcache.api.auth import Principal
     from hfcache.config import ApplicationConfig
+    from hfcache.services.mcp_queries import QueryPage
     from hfcache.services.queries import MetadataQueries
     from hfcache.verification_protocol import VerificationDelegate
 
@@ -684,7 +687,6 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
             from hfcache.services.mcp_queries import (  # noqa: PLC0415 - optional read projection
                 MetadataRead,
                 MetadataReadQueries,
-                QueryPage,
             )
         except ImportError:
             message = "MCP is enabled but its optional runtime is unavailable"
@@ -797,6 +799,33 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         lease = app.state.pool.submit(work)
         request.state.metadata_leases.append(lease)
         return await lease.future
+
+    async def execute_catalog(
+        request: Request,
+        read: Callable[[CatalogQueries], QueryPage],
+    ) -> Response:
+        def work() -> Response:
+            snapshot = app.state.policy.snapshot()
+            limits = server.limits
+            page = read(
+                CatalogQueries(
+                    snapshot.config,
+                    bounds=QueryBounds(
+                        maximum_entries=limits.max_scan_entries,
+                        maximum_artifact_bytes=limits.max_artifact_bytes,
+                        maximum_total_bytes=limits.max_artifact_bytes,
+                    ),
+                    max_page_size=limits.max_page_size,
+                    max_response_bytes=limits.max_response_bytes,
+                )
+            )
+            return render(request, page.result, snapshot=snapshot, cursor=page.next_cursor)
+
+        lease = app.state.pool.submit(work)
+        request.state.metadata_leases.append(lease)
+        return await lease.future
+
+    install_catalog_routes(app, execute_catalog)
 
     @app.get(PREFIX + "/version", response_model=ReadResponse)
     async def version(request: Request) -> Response:

@@ -474,3 +474,30 @@ def test_cursor_binds_exact_scope_and_canonical_filters(config, layout):
         search(config, tags_all=(" coding ", "CODING")).result.data
         == search(config, tags_all=("coding",)).result.data
     )
+
+
+def test_model_variants_refuse_dataset_identity_and_unknown_format_stays_unknown(config, layout):
+    identity = RepositoryIdentity.of("dataset", "org/data")
+    record = publish(layout, identity)
+    with pytest.raises(RequestError):
+        CatalogQueries(config).variants(identity)
+    path = layout.repository(identity).observation(
+        CommitSha(record.commit_sha), PublicationId(record.publication_id)
+    )
+    path.write_bytes(dump(record.model_copy(update={"dataset_formats": ("CSV",)})))
+    data = search(config, repository_type="dataset", format="csv").result.data
+    assert data["total_matches"] == 0
+    assert data["coverage"]["partial"] == 1
+
+
+def test_hidden_exact_identity_cannot_reveal_membership(config, layout):
+    identity = RepositoryIdentity.of("model", "org/private-one")
+    publish(layout, identity)
+    register_secret("private-one")
+    register_secret("private-two")
+    for selected in (identity, RepositoryIdentity.of("model", "org/private-two")):
+        for method in (CatalogQueries(config).detail, CatalogQueries(config).variants):
+            with pytest.raises(RequestError) as caught:
+                method(selected)
+            assert caught.value.status_code == 404
+            assert caught.value.problems[0].code == "HFAPI007"

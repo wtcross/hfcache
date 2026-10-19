@@ -450,6 +450,14 @@ Lifespan cleanup shields the entire runner/metadata drain against repeated task
 cancellation before releasing store/instance ownership. This is joined graceful
 shutdown, not a claim that SIGKILL can finish work.
 
+Catalog search/detail/variant/facet reads share this metadata pool and its leases,
+scan/artifact/response ceilings and shutdown ownership. They instantiate only the
+bounded catalog reader from a fresh policy snapshot. No read can enter the heavy
+lane or create a writer, Hub client, credential resolver or background refresh.
+Whole selected evidence is validated before paging; a small page does not expand
+the scan budget. [Catalog semantics](discovery.md#queries-coverage-and-pages)
+define coverage and visible cursor identity independently of old policy hashes.
+
 ### Dedicated worker bootstrap and limitations
 
 `python -m hfcache.verification_worker` is a private local service entrypoint,

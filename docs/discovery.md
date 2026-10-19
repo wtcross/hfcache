@@ -2,8 +2,8 @@
 
 Configuration tags, Cockpit authoring, curation identity and supplemental record
 storage, static declarations, GGUF headers and scoped AWQ/GPTQ variants are
-supported, including sync/repair capture and the typed offline refresh service.
-REST/client and MCP discovery support below remain proposed; this contract alone
+supported, including sync/repair capture, typed offline refresh and REST reads.
+Client and MCP discovery support below remain proposed; this contract alone
 does not make those commands available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 
@@ -382,7 +382,7 @@ silently dropping observations.
 
 ## Transport and refresh boundary
 
-Planned REST reads are `/catalog/search`, `/catalog/facets`,
+Authenticated REST reads are `/catalog/search`, `/catalog/facets`,
 `/catalog/repositories/{type}/{namespace}/{name}` and its `/variants` child under
 `/api/v1`. REST maps repeated `tag_all`/`tag_any` and `type` to shared fields.
 Retain strict unknown/repeated scalar/body/numeric/path rejection, authentication,

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | complete |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 4 — REST and CLI |
 | Depends on | [CAT-010](cat-010-catalog-queries-and-facets.md) |
@@ -15,7 +15,7 @@ Follow `AGENTS.md` and `docs/agents/workflow.md`. Read relevant sections of the
 [design](../support/tags-and-discovery/design.md),
 [source review](../support/tags-and-discovery/source-review.md) and
 [validation matrix](../support/tags-and-discovery/validation-matrix.md).
-Tasks own execution status; this file is pending, not a claim of implementation.
+The status above and completion evidence below own execution truth.
 
 ## Likely implementation touchpoints
 
@@ -60,15 +60,31 @@ tests remain blockers, with their exact unblock condition recorded below.
 
 ## Execution notes and handoff
 
-Not started. No source changes, tests, commits or operator actions are recorded.
-When work starts, record any relevant newer-source reconciliation, implementation
-choices, blockers and scope amendments here. Preserve prior completed evidence.
+Four explicit authenticated GET routes use the shared reader and existing pool,
+lease, renderer and fresh policy. Strict keys/repetitions/numbers/body/exact pairs
+refuse safely. Model-only variants refuse at both route and shared core; unknown
+dataset format spellings remain partial/unknown. OpenAPI advertises independent
+catalog schemas and constraints. Existing capabilities/API version and wrappers
+remain exact; reads already covers the additive routes.
+
+The first full gate was interrupted (130) to tighten model-only/OpenAPI behavior.
+The next full gate reported three independent route-audit failures (4866 passed,
+40 deselected in 535.43s). Added the four exact methods to the independent security
+inventory and human route reference, plus actual named HTTP evidence; no fabricated
+unimplemented CLI parity. A further in-progress gate was interrupted (130) after
+taxonomy review: absence now uses HFAPI007/404/10, unsafe namespace uses
+HFVER007/409/40, and hidden exact identities refuse uniformly before membership.
+All these runs remain historical evidence, never passing gate claims.
 
 ## Completion evidence
 
-Not completed. Replace this paragraph at completion with the local date, concrete
-acceptance results, exact test/gate commands and outcomes, invariant/ADR review,
-changed human docs, progress-entry link and remaining operator handoff. Before the
-commit exists cite `CAT-011, this commit`; do not invent a future hash. Update
-this task, parent/current pointers and completed progress evidence in the same
-implementation commit. Never mark completion while a required gate is skipped or red.
+Completed 2026-10-19 (CAT-011, this commit). Expanded query/storage/HTTP and
+independent REST security/parity/pagination/transport selection: 208 passed in
+15.15s. Ruff and focused Pyrefly pass (zero errors). Final `scripts/check.sh`
+exited 0: 4875 passed, 40 deselected in 535.67s; wheel/sdist, all three locked
+installation profiles and actual Cockpit lint/types/169 tests/build passed.
+Reviewed INV-012/014/015/016/018, relevant FS/AD rules and decisions 108,
+113-120/125/133. Human API/server/discovery contracts, invariant and ADR links
+are current; no existing transaction, confidence, dependency or MCP tool changes.
+[Progress](../../progress.md) records completion. Next is CAT-012. No deployment,
+production/live workload, credential access, host change or push was performed.

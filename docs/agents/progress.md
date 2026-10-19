@@ -154,6 +154,21 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   INV-018/FS/AD and decision 133 reviewed, discovery/schema/invariant/ADR links
   current. No runtime dependency, production/live/credential/host/push action.
 
+- [x] CAT-011 Expose bounded authenticated REST catalog reads (2026-10-19,
+  this commit — [task](plans/tasks/cat-011-rest-catalog-read-routes.md)). Four
+  explicit handlers share pure intent/projections and the original pool/lease/
+  render boundary. Strict query/body/identity grammar, canonical cursors, current
+  curation staleness, model-only variants and finite encoding preserve old reads.
+  OpenAPI carries independently versioned catalog payloads; exact old capabilities
+  and wrappers remain unchanged. Independent route security/reference inventories
+  include concrete HTTP evidence. Taxonomy aligns missing resources and unsafe
+  metadata; hidden exact identities cannot reveal membership. Focused 208 pass;
+  final full gate 4875 pass/40 deselected in 535.67s, build/three locked profiles,
+  actual Cockpit lint/types/169 tests/build. Earlier audit failures/interrupted
+  runs remain task-owned history. INV-012/014-016/018, FS/AD and decisions 113/133
+  reviewed; human API/server/discovery and enforcement links current. No runtime
+  dependency, production/live/credential/host/push action.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

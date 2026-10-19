@@ -97,3 +97,9 @@ startup. No new runtime dependency or production operation is approved.
   [Query fixtures](../../tests/unit/test_catalog_queries.py) cover same-variant
   conjunction, exact retained identity, coverage, facets, cursor invalidation,
   secret-substitution invariance and absence of writer/payload capabilities.
+- Authenticated REST catalog adapters reuse the existing metadata pool, lease
+  lifetime, policy snapshot, error sanitizer and exact read wrapper. Keep the
+  version-1 capabilities object unchanged: its existing reads permission covers
+  additive routes, while OpenAPI advertises independent catalog schemas. New
+  fields on that strict object would unnecessarily reject old clients. No
+  command, writer or verifier dispatch is reachable from catalog GET handlers.

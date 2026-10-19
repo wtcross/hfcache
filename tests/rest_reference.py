@@ -126,6 +126,50 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
         "receipt, events and result",
     ),
     (
+        "GET /catalog/search",
+        "default",
+        "SDK / HTTP",
+        "R",
+        "synchronous",
+        "none",
+        "no",
+        "none",
+        "none",
+    ),
+    (
+        "GET /catalog/facets",
+        "default",
+        "SDK / HTTP",
+        "R",
+        "synchronous",
+        "none",
+        "no",
+        "none",
+        "none",
+    ),
+    (
+        "GET /catalog/repositories/{repository_type}/{namespace}/{name}",
+        "default",
+        "SDK / HTTP",
+        "R",
+        "synchronous",
+        "none",
+        "no",
+        "none",
+        "none",
+    ),
+    (
+        "GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants",
+        "default",
+        "SDK / HTTP",
+        "R",
+        "synchronous",
+        "none",
+        "no",
+        "none",
+        "none",
+    ),
+    (
         "GET /status",
         "default",
         "status [selectors]",
@@ -444,5 +488,25 @@ PARITY_REFERENCE: dict[str, tuple[tuple[str, str], ...]] = {
         ("GET /operations/{operation_id}", "default"),
         ("GET /operations/{operation_id}/result", "default"),
         ("GET /operations/{operation_id}/events", "default"),
+    ),
+}
+
+# New reads have concrete HTTP evidence before their CLI modes are introduced.
+CATALOG_API_REFERENCE = {
+    "GET /catalog/search": (
+        "test_api_catalog",
+        "test_reads_are_off_thread_and_cannot_write_resolve_credentials_or_open_payload",
+    ),
+    "GET /catalog/facets": (
+        "test_api_catalog",
+        "test_catalog_routes_share_strict_wrappers_and_original_capabilities",
+    ),
+    "GET /catalog/repositories/{repository_type}/{namespace}/{name}": (
+        "test_api_catalog",
+        "test_exact_detail_and_full_variant_pages_do_not_fall_back",
+    ),
+    "GET /catalog/repositories/{repository_type}/{namespace}/{name}/variants": (
+        "test_api_catalog",
+        "test_exact_detail_and_full_variant_pages_do_not_fall_back",
     ),
 }

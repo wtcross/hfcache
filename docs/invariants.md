@@ -1017,3 +1017,7 @@ Query enforcement: [shared catalog reader](../src/hfcache/services/catalog_queri
 Sanitize before predicates, counts and cursor identity; opaque source curation
 fingerprints are withheld from read projections. Whole selected coverage and
 finite aggregate bounds apply before paging.
+REST enforcement: [catalog adapters](../src/hfcache/api/catalog.py), the existing
+[metadata pool/render boundary](../src/hfcache/api/app.py) and
+[HTTP grammar/auth/cursor fixtures](../tests/unit/test_api_catalog.py) preserve
+strict existing wrappers and whole-archive read capability.
