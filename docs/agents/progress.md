@@ -88,6 +88,18 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   related FS/authority requirements reviewed; human contracts/links updated.
   No runtime dependency, production/live/credential/host/push operation.
 
+- [x] CAT-006 Detect bounded GGUF headers and exact shard sets (2026-10-19,
+  this commit — [task](plans/tasks/cat-006-gguf-variants-and-shards.md)). Pinned
+  v3LE mapping, explicit first-shard declaration authority and full unique
+  publication/directory/prefix grouping retain honest formats/schemes/bits/roles.
+  Safe tensor extents and contradiction checks never read tensor bodies;
+  unbuffered source reads and realistic tokenizer arrays retain finite budgets.
+  V15-V19 focused 194 passed; independent review clear. Full gate: 4551 passed/
+  40 deselected in 486.30s, build/three locked profiles and actual Cockpit
+  lint/types/169 tests/build. INV-018/AD-15/133 and related FS/authority requirements
+  reviewed; human supported-subset/source/evidence docs updated. No new runtime
+  dependency, production/live/credential/host/push operation.
+
 ## Documentation authority separation (2026-10-18)
 
 - [x] DOC-011 Separate human documentation from implementation records

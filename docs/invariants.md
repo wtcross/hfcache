@@ -997,5 +997,7 @@ Contract: [discovery](discovery.md), [record schemas](schemas.md#17-supplemental
 Extraction enforcement: [bounded static access](../src/hfcache/catalog_extractors.py),
 [inert parsers](../src/hfcache/catalog_parsing.py) and
 [hostile declaration fixtures](../tests/unit/test_catalog_extractors.py).
+Variant enforcement: [GGUF bounded headers/grouping](../src/hfcache/catalog_gguf.py)
+and [synthetic mapping/shard/budget fixtures](../tests/unit/test_catalog_gguf.py).
 Remaining proposed lifecycle/query/transport interfaces require their own
 validation before support is declared. Offline evidence is not production acceptance.

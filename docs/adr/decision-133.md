@@ -56,6 +56,12 @@ startup. No new runtime dependency or production operation is approved.
   layout validation and candidate byte comparisons. Parser, storage, capability
   and compatibility evidence must accompany corresponding implementation.
 - No production acceptance is claimed.
+- [GGUF headers/grouping](../../src/hfcache/catalog_gguf.py) use pinned primary
+  mappings and bounded unbuffered access, with exact publication/directory/prefix
+  shard identity and first-shard declaration authority. Tensor metadata provides
+  safe extent checks and contradiction suppression without tensor-body reads.
+  [Synthetic fixtures](../../tests/unit/test_catalog_gguf.py) cover unsupported,
+  auxiliary, ambiguous and incomplete cases without inference dependencies.
 - [Static source access/extraction](../../src/hfcache/catalog_extractors.py) and
   [conservative data parsers](../../src/hfcache/catalog_parsing.py) preserve
   AD-15 without new runtime dependencies. Shared actual-read/work limits include

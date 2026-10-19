@@ -25,7 +25,8 @@ if TYPE_CHECKING:
     from hfcache.paths import ArchiveLayout
 
 MAXIMUM_READ_BYTES = 64 * 1024 * 1024
-MAXIMUM_WORK = 100_000
+MAXIMUM_WORK = 8_000_000
+MAXIMUM_MANIFEST_FILES = 100_000
 MAXIMUM_TEXT_BYTES = 64 * 1024
 MAXIMUM_VALUES = 64
 MAXIMUM_VALUE_CHARACTERS = 2048
@@ -128,7 +129,10 @@ class SourceAccess:
             raise ExtractionError(msg)
         self.reader = MetadataReader(layout.root)
         self.files: dict[str, FileEntry] = {}
-        for entry in manifest.files:
+        for index, entry in enumerate(manifest.files):
+            if index >= MAXIMUM_MANIFEST_FILES:
+                msg = "manifest_entry_limit"
+                raise ExtractionError(msg)
             self.budget.step()
             self.files[entry.path] = entry
 
@@ -144,7 +148,7 @@ class SourceAccess:
             if os.fstat(descriptor).st_size != entry.size:
                 msg = "source_size_changed"
                 raise ExtractionError(msg)
-            with os.fdopen(descriptor, "rb", closefd=False) as stream:
+            with os.fdopen(descriptor, "rb", buffering=0, closefd=False) as stream:
                 yield SourceStream(stream, entry, self.budget)
         finally:
             os.close(descriptor)

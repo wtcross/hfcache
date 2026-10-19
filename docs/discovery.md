@@ -1,8 +1,8 @@
 # Tags and local discovery
 
 Configuration tags, Cockpit authoring, curation identity and supplemental record
-storage and the static declaration extractor are supported. Writer lifecycle and
-transport support below remain proposed; this contract alone does not make the commands
+storage, static declarations and GGUF header variants are supported. Writer
+lifecycle and transport support below remain proposed; this contract alone does not make the commands
 below available. Existing inventory and the nine existing MCP tools keep their
 current behavior until the corresponding interfaces are implemented.
 
@@ -116,6 +116,12 @@ limits yield `failed`, and independent useful observations surviving either yiel
 `partial`. Diagnostics are fixed classifications without rejected source contents.
 The supplemental warning class is `HFWRN011`; warnings do not change integrity or
 the successful publication exit classification.
+
+Writer metadata work has an eight-million-step ceiling and 100,000 manifest
+members per publication. The byte/candidate ceilings above still apply. Header
+access uses unbuffered descriptors: accounting measures returned bytes without
+user-space read-ahead into tensor data. Exhaustion is explicit incomplete
+coverage; it does not bypass the limits or change publication evidence.
 Supplemental extraction failure warns without invalidating a valid publication;
 producer work must still join before releasing the lock. Dataset formats and
 static split/configuration/feature declarations remain attributed observations,
@@ -137,6 +143,61 @@ projector candidates remain inspectable without becoming primary-model matches.
 AWQ/GPTQ declarations bind to an unambiguous same-directory weight bundle and
 validated manifest-contained index members. A declaration/index/LFS pointer alone
 does not establish complete weights. Safetensors format is independent of method.
+
+### Supported GGUF interpretation
+
+The reader accepts version 3 little-endian headers. Big-endian files, other
+versions, unknown/removed/guessed enums and unsupported tensor types remain
+inspectable candidates. Pinned primary references are the
+[GGUF structure](https://github.com/ggml-org/ggml/blob/6af560d55df03ad92116e3c0a697779584477e85/docs/gguf.md),
+[file-type and tensor-size enums](https://github.com/ggml-org/llama.cpp/blob/412a363c655b479279d3050d0d1c67a5733697b4/gguf-py/gguf/constants.py)
+and [split writer](https://github.com/ggml-org/llama.cpp/blob/8f97d82da33b5f4262a87b9c4208298378b8a165/tools/gguf-split/gguf-split.cpp).
+No executor or GGUF package is imported.
+
+| `general.file_type` values | Encoding/scheme in corresponding order |
+| --- | --- |
+| 0, 1 | F32, F16 (float encodings; no quantization method/scheme) |
+| 2, 3, 7, 8, 9 | Q4_0, Q4_1, Q8_0, Q5_0, Q5_1 |
+| 10–18 | Q2_K, Q3_K_S, Q3_K_M, Q3_K_L, Q4_K_S, Q4_K_M, Q5_K_S, Q5_K_M, Q6_K |
+| 19–24 | IQ2_XXS, IQ2_XS, Q2_K_S, IQ3_XS, IQ3_XXS, IQ1_S |
+| 25–31 | IQ4_NL, IQ3_S, IQ3_M, IQ2_S, IQ2_M, IQ4_XS, IQ1_M |
+| 32 | BF16 (float encoding; no quantization method/scheme) |
+
+Known quantized mappings use method `ggml`. Nominal bits are 4/5/8 for the
+corresponding simple Q schemes and 16/32 for float encodings; mixed K/IQ schemes
+retain unknown bits. Tensor types support offset arithmetic and negative
+contradiction checks, never inference of an exact majority scheme. A quantized
+declaration with only float/integer tensors, or a float declaration containing
+quantized tensors, cannot become a complete positive variant. Declared float
+encodings require the corresponding tensor kind; F32 permits only F32, while F16/
+BF16 may also include F32 tensors.
+
+Every metadata key is a bounded ASCII hierarchical name; duplicate keys fail.
+Headers cap metadata/tensor counts at 100,000, array elements at 1,048,576,
+nesting at 64 and individual strings at 64 KiB (keys 256 bytes, tensor names
+64 bytes, retained identities 2048 characters). Ignored arrays/strings consume
+the shared work/byte budget; no array is allocated from an unchecked count.
+Alignment must be a multiple of eight at most 65,536. Tensor dimension products,
+aligned offsets, nonoverlapping extents and file bounds are checked from header
+data; neither padding nor tensor bytes are read.
+
+Split grouping requires the exact publication, directory and entire canonical
+filename prefix before `-00001-of-00002.gguf`. Every member must explicitly agree
+on zero-based `split.no`, positive `split.count`, and `split.tensors.count`, with
+the complete unique index range, matching filename ordinals and total tensor
+count. Duplicate tensor names across shards refuse completeness. Shard zero
+owns model/scheme declarations; later shards may omit them, but present values
+must agree. An empty tensor table in shard zero is valid for a complete nonempty
+set. Missing shard zero, conflicting/missing metadata or different directories/
+prefixes cannot be combined. Source attribution identifies the declaring shard.
+
+Primary role requires a recognized model architecture and model/default type.
+Explicit adapter/projector/imatrix headers and LoRA tensor names suppress primary
+role. Conservative `mmproj`, `mtp-`, adapter/LoRA and canonical `-LoRA`/`-vocab`
+filename hints only downgrade role. Unknown roles stay visible with incomplete
+coverage; zero-tensor standalone files are not primary weight sets. Completeness
+describes the retained declared member set and header bounds, never tensor
+integrity, model loadability or runtime compatibility.
 
 ## Queries, coverage and pages
 

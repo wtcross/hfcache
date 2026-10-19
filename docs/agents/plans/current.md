@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [Tags and discovery](2026-10-19-plan-tags-and-discovery.md) |
-| Next task | [CAT-006: GGUF variants and shard sets](tasks/cat-006-gguf-variants-and-shards.md) |
+| Next task | [CAT-007: scoped quantized weight bundles](tasks/cat-007-quantized-weight-config-variants.md) |
 | Blockers | None |
 | Last completed plan | [Timestral model sync](2026-10-19-plan-timestral-model-sync.md) |
 | Updated | 2026-10-19 |
