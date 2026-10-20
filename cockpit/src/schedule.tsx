@@ -7,7 +7,8 @@
  * schedule lives in.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import cockpit from 'cockpit';
 
 import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
@@ -23,12 +24,16 @@ import { Flex, FlexItem } from "@patternfly/react-core/dist/esm/layouts/Flex/ind
 import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/index.js";
 
 import { checkCalendar, readDropIn, removeDropIn, writeDropIn } from './api/schedule';
-import { daemonReload, restartUnit, SYNC_TIMER, unitState } from './api/systemd';
+import { daemonReload, restartUnit, SYNC_TIMER, unitState, UnitState } from './api/systemd';
 import { QueryError } from './components';
-import { useConnection } from './hooks';
+import { useConnection, useHostProfile } from './hooks';
+import { hostActionAllowed, hostActionReason } from './api/profile';
 import { assertSession, captureSession, connectionSnapshot } from './api/connection';
 import { normalizeFailure } from './lib/failure';
-import { CalendarCheck, parseDropIn } from './lib/schedule';
+import { AcknowledgedHostChangeError, HostProfileError } from './lib/host-profile';
+import { CalendarCheck, parseDropIn, renderDropIn } from './lib/schedule';
+import { MAX_SCHEDULE_ATTEMPTS, scheduleSession, ScheduleSessionError } from './lib/schedule-session';
+import type { ScheduleAttempt } from './lib/schedule-session';
 
 const Item = ({ term, children }: { term: string; children: React.ReactNode }) => (
     <DescriptionListGroup>
@@ -37,20 +42,46 @@ const Item = ({ term, children }: { term: string; children: React.ReactNode }) =
     </DescriptionListGroup>
 );
 
+interface ScheduleInspection {
+    matches: boolean;
+    unit: UnitState;
+    generation: number;
+    host: string;
+}
+
+function knownTimer(state: UnitState): boolean {
+    return ['active', 'inactive', 'failed'].includes(state.activeState) &&
+        ['enabled', 'enabled-runtime', 'disabled', 'static', 'linked', 'linked-runtime'].includes(state.unitFileState);
+}
+
 export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
     const connection = useConnection();
+    const profile = useHostProfile();
+    const allowed = profile.permissions.schedule;
+    const submitted = useRef(false);
+    const checkRevision = useRef(0);
+    const attempts = useSyncExternalStore(scheduleSession.subscribe, scheduleSession.snapshot);
+    const attempted = attempts.find(attempt => attempt.host === cockpit.transport.host) ?? null;
+    const capacityBlocked = attempted === null && attempts.length >= MAX_SCHEDULE_ATTEMPTS;
+    const [inspection, setInspection] = useState<ScheduleInspection | null>(null);
+    const [inspectionError, setInspectionError] = useState<Error | null>(null);
     const [current, setCurrent] = useState<string | null>(null);
     const [onCalendar, setOnCalendar] = useState('');
     const [delay, setDelay] = useState('');
     const [checked, setChecked] = useState<CalendarCheck | null>(null);
     const [checkError, setCheckError] = useState<Error | null>(null);
     const [confirming, setConfirming] = useState<'apply' | 'reset' | null>(null);
-    const [busy, setBusy] = useState(false);
-    const [actionError, setActionError] = useState<Error | null>(null);
+    const [localBusy, setBusy] = useState(false);
+    const busy = localBusy || attempted?.state === 'pending';
+    const [localActionError, setActionError] = useState<Error | null>(null);
+    const actionError = attempted?.error ?? localActionError;
+    const [localRestrictionReason, setRestrictionReason] = useState<string | null>(null);
+    const restrictionReason = attempted?.restrictionReason ?? localRestrictionReason;
     const [readError, setReadError] = useState<Error | null>(null);
     const [readRevision, setReadRevision] = useState(0);
     const [observedOrigin, setObservedOrigin] = useState('');
-    const readOrigin = JSON.stringify([connection.generation, connection.administrative, readRevision]);
+    const host = cockpit.transport.host;
+    const readOrigin = JSON.stringify([host, connection.generation, connection.administrative, readRevision]);
     const fresh = connection.administrative && observedOrigin === readOrigin;
 
     const load = useCallback(() => {
@@ -65,7 +96,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
         if (connection.administrative) {
             const generation = connection.generation;
             readDropIn().then(content => {
-                if (cancelled || generation !== connectionSnapshot().generation)
+                if (cancelled || generation !== connectionSnapshot().generation || host !== cockpit.transport.host)
                     return;
                 setCurrent(content);
                 if (content !== null) {
@@ -75,56 +106,140 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                 }
                 setObservedOrigin(readOrigin);
             }, failure => {
-                if (!cancelled && generation === connectionSnapshot().generation)
+                if (!cancelled && generation === connectionSnapshot().generation && host === cockpit.transport.host)
                     setReadError(normalizeFailure(failure, { stage: 'schedule-read' }));
             });
         }
         return () => {
             cancelled = true;
         };
-    }, [connection.generation, connection.administrative, readOrigin]);
+    }, [connection.generation, connection.administrative, readOrigin, host]);
     useEffect(() => {
+        checkRevision.current += 1;
         setChecked(null);
         setConfirming(null);
+        setInspection(null);
     }, [connection.generation]);
 
     const check = () => {
+        const revision = ++checkRevision.current;
+        const generation = connectionSnapshot().generation;
         setChecked(null);
         setCheckError(null);
         checkCalendar(onCalendar)
-                .then(result => setChecked(result), failure => setCheckError(failure as Error));
+                .then(result => {
+                    if (revision === checkRevision.current && generation === connectionSnapshot().generation)
+                        setChecked(result);
+                }, failure => {
+                    if (revision === checkRevision.current && generation === connectionSnapshot().generation)
+                        setCheckError(failure as Error);
+                });
     };
 
-    const applySchedule = async (write: boolean) => {
+    const applySchedule = async (write: boolean, attempt: Readonly<ScheduleAttempt>) => {
         const generation = captureSession('schedule-write');
-        if (write)
-            await writeDropIn(onCalendar, delay === '' ? null : delay);
-        else
-            await removeDropIn();
-        assertSession(generation, 'schedule-write', true);
-        await daemonReload();
-        assertSession(generation, 'schedule-write', true);
-        const state = await unitState(SYNC_TIMER);
-        assertSession(generation, 'schedule-write', true);
-        if (state.activeState === 'active')
-            await restartUnit(SYNC_TIMER);
+        const host = cockpit.transport.host;
+        if (attempt.host !== host)
+            throw new HostProfileError();
+        let acknowledged = false;
+        try {
+            if (write)
+                await writeDropIn(onCalendar, delay === '' ? null : delay);
+            else
+                await removeDropIn();
+            acknowledged = true;
+            assertSession(generation, 'schedule-write', true);
+            if (host !== cockpit.transport.host)
+                throw new HostProfileError();
+            await daemonReload();
+            assertSession(generation, 'schedule-write', true);
+            const state = await unitState(SYNC_TIMER);
+            assertSession(generation, 'schedule-write', true);
+            if (host !== cockpit.transport.host)
+                throw new HostProfileError();
+            if (state.activeState === 'active')
+                await restartUnit(SYNC_TIMER);
+        } catch (failure) {
+            throw acknowledged ? new AcknowledgedHostChangeError(failure, 'schedule-write') : failure;
+        }
     };
 
-    const uncertain = actionError !== null && normalizeFailure(actionError).hostMutationUncertain;
+    const uncertain = attempted?.state === 'uncertain';
+    const inspected = inspection !== null && inspection.matches && knownTimer(inspection.unit) &&
+        inspection.generation === connection.generation && inspection.host === cockpit.transport.host && connection.administrative;
+
+    const inspect = async () => {
+        if (!uncertain || busy || !attempted || !connectionSnapshot().administrative)
+            return;
+        const attempt = attempted;
+        const generation = captureSession('schedule-read');
+        const host = cockpit.transport.host;
+        setBusy(true);
+        setInspection(null);
+        setInspectionError(null);
+        try {
+            if (attempt.host !== host)
+                throw new HostProfileError();
+            const content = await readDropIn();
+            const unit = await unitState(SYNC_TIMER);
+            assertSession(generation, 'schedule-read');
+            if (host !== cockpit.transport.host || !scheduleSession.snapshot().some(record => record.id === attempt.id))
+                throw new HostProfileError();
+            setInspection({ matches: content === attempt.expected, unit, generation, host });
+            setCurrent(content);
+            setObservedOrigin(readOrigin);
+        } catch (failure) {
+            setInspectionError(failure as Error);
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const acknowledge = () => {
+        if (!uncertain || !inspected || busy || !inspection ||
+            !attempted || inspection.host !== cockpit.transport.host || attempted.host !== inspection.host ||
+            inspection.generation !== connectionSnapshot().generation || !connectionSnapshot().administrative)
+            return;
+        checkRevision.current += 1;
+        setChecked(null);
+        setActionError(actionError);
+        setRestrictionReason(restrictionReason);
+        scheduleSession.acknowledge(attempted);
+    };
 
     const act = (write: boolean) => {
-        if (!fresh || uncertain || busy)
+        if (!fresh || attempted !== null || capacityBlocked || busy || submitted.current || !hostActionAllowed('schedule'))
             return;
+        let attempt: Readonly<ScheduleAttempt>;
+        try {
+            attempt = scheduleSession.begin(cockpit.transport.host,
+                                            write ? renderDropIn(onCalendar, delay === '' ? null : delay) : null);
+        } catch (failure) {
+            setActionError(failure as Error);
+            return;
+        }
+        submitted.current = true;
+        setInspection(null);
+        setInspectionError(null);
         setConfirming(null);
         setBusy(true);
         setActionError(null);
-        applySchedule(write)
+        setRestrictionReason(null);
+        applySchedule(write, attempt)
                 .then(() => {
+                    scheduleSession.complete(attempt);
                     setChecked(null);
                     load();
                     onApplied();
-                }, failure => setActionError(failure as Error))
-                .finally(() => setBusy(false));
+                }, failure => {
+                    scheduleSession.fail(attempt, failure);
+                    setActionError(failure as Error);
+                    setRestrictionReason(failure instanceof AcknowledgedHostChangeError ? failure.restrictionReason : null);
+                })
+                .finally(() => {
+                    submitted.current = false;
+                    setBusy(false);
+                });
     };
 
     return (
@@ -132,6 +247,8 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
             <CardTitle>Schedule</CardTitle>
             <CardBody>
                 <Stack hasGutter>
+                    {!allowed &&
+                        <StackItem><Alert variant="warning" isInline title={hostActionReason('schedule')} /></StackItem>}
                     <StackItem>
                         <DescriptionList isHorizontal isCompact>
                             <Item term="Shipped schedule">
@@ -162,7 +279,9 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                                     aria-label="OnCalendar expression"
                                     placeholder="*-*-* 02:00:00"
                                     value={onCalendar}
+                                    isDisabled={!allowed || busy}
                                     onChange={(_event, value) => {
+                                        checkRevision.current += 1;
                                         setOnCalendar(value);
                                         setChecked(null);
                                     }}
@@ -174,13 +293,18 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                                     aria-label="RandomizedDelaySec"
                                     placeholder="RandomizedDelaySec (optional, e.g. 30m)"
                                     value={delay}
-                                    onChange={(_event, value) => setDelay(value)}
+                                    isDisabled={!allowed || busy}
+                                    onChange={(_event, value) => {
+                                        checkRevision.current += 1;
+                                        setChecked(null);
+                                        setDelay(value);
+                                    }}
                                 />
                             </FlexItem>
                             <FlexItem>
                                 <Button
                                     variant="secondary"
-                                    isDisabled={onCalendar === '' || busy || !fresh}
+                                    isDisabled={onCalendar === '' || busy || !fresh || !allowed}
                                     onClick={check}
                                 >
                                     Check calendar
@@ -189,7 +313,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                             <FlexItem>
                                 <Button
                                     variant="primary"
-                                    isDisabled={checked === null || busy || uncertain || !fresh}
+                                    isDisabled={checked === null || busy || uncertain || capacityBlocked || !fresh || !allowed}
                                     onClick={() => setConfirming('apply')}
                                 >
                                     Apply override
@@ -198,7 +322,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                             <FlexItem>
                                 <Button
                                     variant="link"
-                                    isDisabled={current === null || busy || uncertain || !fresh}
+                                    isDisabled={current === null || busy || uncertain || capacityBlocked || !fresh || !allowed}
                                     onClick={() => setConfirming('reset')}
                                 >
                                     Reset to shipped schedule
@@ -215,7 +339,35 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                                 title={`Normalized: ${checked.normalized ?? '?'} — next elapse ${checked.next ?? '?'}`}
                             />
                         </StackItem>}
-                    {actionError !== null && <StackItem><QueryError error={actionError} /></StackItem>}
+                    {actionError instanceof ScheduleSessionError
+                        ? <StackItem><Alert variant="warning" isInline title={actionError.message} /></StackItem>
+                        : actionError !== null && <StackItem><QueryError error={actionError} /></StackItem>}
+                    {capacityBlocked && <StackItem>Schedule recovery memory is full. Preserve and reconcile the retained attempts before another change.</StackItem>}
+                    {restrictionReason && <StackItem>{restrictionReason}</StackItem>}
+                    {uncertain &&
+                        <StackItem>
+                            <Alert variant="warning" isInline title="Schedule change requires read-only reconciliation">
+                                A host change may have completed before the later failure. Preserve the original error.
+                                Inspect the captured drop-in state and fixed timer before another deliberate change.
+                            </Alert>
+                            <Button isDisabled={busy || !connection.administrative} onClick={() => { inspect() }}>
+                                Inspect changed schedule
+                            </Button>
+                        </StackItem>}
+                    {inspectionError && <StackItem><QueryError error={inspectionError} /></StackItem>}
+                    {inspection &&
+                        <StackItem>
+                            <p>Stored drop-in: {inspection.matches ? 'matches the captured attempt' : 'changed or unavailable'}.
+                                Timer: {knownTimer(inspection.unit) ? `${inspection.unit.activeState}, ${inspection.unit.unitFileState}` : 'unavailable or masked'}.
+                            </p>
+                            <p>This inspection does not establish the loaded calendar or success of the earlier reload/restart.
+                                Resolve manager application through the operator runbook. Inspection and acknowledgement perform no reload or restart.
+                            </p>
+                            {uncertain &&
+                                <Button isDisabled={busy || !inspected} onClick={acknowledge}>
+                                    Acknowledge inspected schedule
+                                </Button>}
+                        </StackItem>}
                 </Stack>
 
                 <Modal
@@ -234,7 +386,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                         fires one run immediately on restart.
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="primary" isDisabled={busy || uncertain || !fresh} onClick={() => act(confirming === 'apply')}>
+                        <Button variant="primary" isDisabled={busy || uncertain || capacityBlocked || !fresh || !allowed} onClick={() => act(confirming === 'apply')}>
                             {confirming === 'apply' ? 'Write drop-in and apply' : 'Remove drop-in and apply'}
                         </Button>
                         <Button variant="link" onClick={() => setConfirming(null)}>Cancel</Button>

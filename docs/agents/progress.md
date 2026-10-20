@@ -114,6 +114,28 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   cause remain unproven, no production/NAS effects. CPR-005 follows; CP04/09
   service/report exceptions remain until their explicit packages.
 
+- [x] CPR-005 Align manual REST jobs and guarded host controls (2026-10-20,
+  this commit — [task](plans/tasks/cpr-005-rest-operations-and-host-controls.md)).
+  Full manual sync/verification use original keyed REST receipts/results; scheduled
+  observer state/journals remain separate. Fresh protected six-category policy and
+  root-only indexed-release/guard/unit proof gate every scoped effect. Existing
+  rootless scheduled bindings are unproven, so schedule/observer control remains
+  denied. Calendar injection, direct permission bypass, mutable callback intent,
+  arbitrary null-as-read dispatch and partial-mutation/remount loss were reproduced
+  and repaired. Closed immutable commands preserve original action identity;
+  bounded8-host/64KiB app-memory schedule attempts retain pending/uncertain effects
+  across tabs, with explicit exact read/ack and no replay/reload/restart.
+  Actual subprocess CLI/Unix socket/private verifier3 tests and protected host61
+  tests pass; full gate5165 Python/42 deselected in829.52s, three wheel profiles,
+  actual frontend lint/style/types,436 unit/62 mounted cases/build. All source
+  failure evidence retained. CP04/related boundaries/INV006 reviewed; repository
+  ADR135 accepted, ADR89/122/134/index/register and human guides amended. No runtime
+  dependency, REST route, archive format, credentials, scheduler or binding expansion.
+  [Evidence](plans/support/cockpit-rest-repair/gates/cpr-005.txt). Current-source
+  real Cockpit/PAM V54 and original installed symptom remain unproven. Production,
+  NAS and older guest evidence/guards/masks/locks unchanged. Continue CPR-006;
+  direct-report exception remains until its replacement, plan stays active.
+
 ## Tags and discovery (2026-10-19)
 
 - [x] CAT-001 Activate the feature plan and establish technical contracts
@@ -2597,6 +2619,19 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     the guest's candidate, predecessor expectations and original evidence; no
     cleanup/reinstall or pending-operation replay follows uncertainty. Existing
     item23 operation, NAS/workload holds and separate deployment authority remain.
+
+26. **Manual REST jobs and explicit host permission deployment (CPR-005,
+    2026-10-20):** source acceptance does not change the installed profile.
+    A future separately authorized deployment must include the indexed installer
+    required for read-only inspection and independently provision protected
+    source/index-pinned Cockpit permissions after review. The app never writes
+    that policy. Older releases, mixed bindings or unknown facts deny effects;
+    current rootless scheduled-observer/timer proof remains unsupported/denied.
+    Keep all original guard/lock/mask/NAS-ro/credential/pending-operation holds.
+    Source/manual CLI fixtures do not prove Cockpit/PAM or the original installed
+    reconnected trigger. Item25 and [runtime-004](plans/support/cockpit-rest-repair/runtime-004.md)
+    retain the exact disposable handoff. No production or guest change occurred
+    in this package. Next scoped source work is CPR-006; no historical backlog.
 
 ## Operator decisions needed
 
@@ -5319,6 +5354,17 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      Existing credentials/guards/holds, full-service/report exceptions and separate
      current-runtime/installed acceptance remain. No production cause is invented.
 
+
+135. **Separate manual REST jobs from guarded host observers** (2026-10-20,
+     CPR-005). [Decision 135](../adr/decision-135.md) amends CP-04: manual full
+     jobs use the keyed fixed REST client; scheduled service state is separate.
+     Effects require fresh root-only indexed-release inspection and protected
+     explicit six-category policy. Unknown/mixed evidence denies; guard absence
+     never grants authority. The existing rootless bindings do not prove a
+     scheduled observation-only system service, so schedule/observer permissions
+     remain effectively denied. No new scheduler, manager, listener, credential,
+     lock authority or workload permission is introduced. Source fixture acceptance
+     remains separate from disposable Cockpit/PAM and installed symptom proof.
 
 ## Documentation and script alignment
 

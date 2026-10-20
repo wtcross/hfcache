@@ -7,9 +7,14 @@
  * this module rather than trusted to every call site.
  */
 
-import { assertOperable } from '../lib/systemd';
+import cockpit from 'cockpit';
+
+import { assertOperable, SYNC_SERVICE } from '../lib/systemd';
 import { normalizeFailure } from '../lib/failure';
-import { hostCall, systemConnection } from './connection';
+import { assertSession, captureSession, hostCall, systemConnection } from './connection';
+import { requireHostAction } from './profile';
+import { AcknowledgedHostChangeError, HostProfileError } from '../lib/host-profile';
+import type { HostAction } from '../lib/host-profile';
 
 export {
     ForbiddenUnitError, HFCACHE_TARGET, SYNC_SERVICE, SYNC_TIMER, VERIFY_SERVICE, VERIFY_TIMER,
@@ -22,40 +27,58 @@ const UNIT = 'org.freedesktop.systemd1.Unit';
 const TIMER = 'org.freedesktop.systemd1.Timer';
 const SERVICE = 'org.freedesktop.systemd1.Service';
 
-function mutate(method: string, arguments_: unknown[]): Promise<unknown[]> {
+async function mutate(method: string, arguments_: unknown[], action: HostAction): Promise<unknown[]> {
+    const generation = captureSession('unit-mutation');
+    const host = cockpit.transport.host;
+    await requireHostAction(action);
+    assertSession(generation, 'unit-mutation');
+    if (host !== cockpit.transport.host)
+        throw new HostProfileError();
     return hostCall('unit-mutation', true, () => systemConnection.mutate(client =>
         client.call(MANAGER_PATH, MANAGER, method, arguments_, { timeout: 5000 })));
 }
 
 export function startUnit(name: string): Promise<unknown[]> {
     assertOperable(name, 'start');
-    return mutate('StartUnit', [name, 'replace']);
+    return mutate('StartUnit', [name, 'replace'], 'schedule');
 }
 
 export function stopUnit(name: string): Promise<unknown[]> {
     assertOperable(name, 'stop');
-    return mutate('StopUnit', [name, 'replace']);
+    return mutate('StopUnit', [name, 'replace'], name === SYNC_SERVICE ? 'observer' : 'schedule');
 }
 
 export function restartUnit(name: string): Promise<unknown[]> {
     assertOperable(name, 'restart');
-    return mutate('RestartUnit', [name, 'replace']);
+    return mutate('RestartUnit', [name, 'replace'], 'schedule');
 }
 
 export function daemonReload(): Promise<unknown[]> {
-    return mutate('Reload', []);
+    return mutate('Reload', [], 'schedule');
 }
 
 export async function enableUnit(name: string): Promise<void> {
     assertOperable(name, 'enable');
-    await mutate('EnableUnitFiles', [[name], false, true]);
-    await daemonReload();
+    const generation = captureSession('unit-mutation');
+    await mutate('EnableUnitFiles', [[name], false, false], 'schedule');
+    try {
+        assertSession(generation, 'unit-mutation', true);
+        await daemonReload();
+    } catch (failure) {
+        throw new AcknowledgedHostChangeError(failure, 'unit-mutation');
+    }
 }
 
 export async function disableUnit(name: string): Promise<void> {
     assertOperable(name, 'disable');
-    await mutate('DisableUnitFiles', [[name], false]);
-    await daemonReload();
+    const generation = captureSession('unit-mutation');
+    await mutate('DisableUnitFiles', [[name], false], 'schedule');
+    try {
+        assertSession(generation, 'unit-mutation', true);
+        await daemonReload();
+    } catch (failure) {
+        throw new AcknowledgedHostChangeError(failure, 'unit-mutation');
+    }
 }
 
 type VariantMap = Record<string, { v: unknown } | undefined>;

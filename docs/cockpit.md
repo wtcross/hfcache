@@ -82,6 +82,12 @@ credential. Server restart alone does not change an otherwise identical scope.
 Unknown archive UUID blocks jobs and saved recovery. Plain validation remains a
 synchronous read and creates no operation record.
 
+Capture command, candidate and authority options before asynchronous proof or
+display callbacks. Dispatch accepts only the plugin's closed command/argument
+forms; an unrecognized command is never inferred to be a safe read. Global CLI
+option prefixes, local/bootstrap validation and out-of-scope mutations refuse
+before a client process starts. This does not change the CLI's own surface.
+
 Recover through authenticated lookup/wait of the original operation; missing
 history does not prove nonexecution. No replay, cancel or cleanup follows an
 uncertain response.
@@ -94,10 +100,10 @@ Browser-session storage may disappear when the session ends; keep the displayed
 original handles for operator review. A quota failure after transmission retains
 the known key/ID in application memory and visibly blocks further submissions.
 
-Manual full REST jobs and REST report browsing require the explicit, separately
-implemented amendments to CP-04 and CP-01/09. Until those amendments and adapters
-land, the existing service controls and report exception below describe current
-implementation. Neither amendment permits workloads on guarded/unknown profiles,
+Manual full jobs follow [decision135](adr/decision-135.md)'s shared REST client
+path and explicit trusted host permissions. REST report browsing still requires
+the separately implemented CP-01/09 amendment; its exception below remains current.
+Neither amendment permits workloads on guarded/unknown profiles,
 changes to host guards or schedules during source implementation, or a
 user-manager fallback. All failed read
 Envelopes must render their codes before success-only fields are accessed.
@@ -109,7 +115,7 @@ Envelopes must render their codes before success-only fields are accessed.
 | `CP-01` | The plugin invokes the installed CLI and systemd; it never reads or writes archive state directly and never re-implements resolution, validation, verification, or retention logic. One read-only exception: §4's run-report browsing |
 | `CP-02` | Every CLI invocation passes `--json`; command outcomes require a bounded strict schema-1 Envelope. Refuse unknown versions. Separately validated bounded progress and recovery handles may render/reconnect; stderr never grants domain authority or fabricates outcome/checkpoints/percentages |
 | `CP-03` | Mutating actions require Cockpit administrative access. The CLI runs as the service identity inside a transient systemd unit (§2), never as root |
-| `CP-04` | A full sync and a full verification run only through `hfcache-sync.service` and `hfcache-verify.service` — never as page-spawned processes |
+| `CP-04` | Manual full sync and verification use fixed REST-backed CLI `sync` / `verify --full`, with original keyed receipts/results and explicit permitted-profile checks. Scheduled observers remain separate host services; their exit state is not manual operation outcome. The page never starts sync/verify services |
 | `CP-05` | Pausing or resuming the schedule operates on `hfcache-sync.timer` only. The plugin never stops, starts, enables, or disables `hfcache.target` — stopping it unmounts `/srv/hfcache` ([scheduling](operations.md#scheduling-and-capacity)) |
 | `CP-06` | The plugin never enables `hfcache-verify.timer`. It displays the timer's state and the reason it is disabled (deployment calendar approval). Sync timer controls use only the fixed system manager; the selected profile blocks them |
 | `CP-07` | `archive init`, including inspection, is outside the plugin surface (`FS-21`); an existing archive must never be initialized again |
@@ -121,10 +127,12 @@ Envelopes must render their codes before success-only fields are accessed.
 | `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is diagnosed under the security contract or reported; safeguards remain enforced |
 | `CP-14` | The node toolchain is build-time only. The plugin ships as static files; the application's closed runtime dependency set (`FW-03`) is untouched, and `cockpit/node_modules/` and `cockpit/dist/` are never committed |
 
-The controls in CP-04–06 and CP-12 remain fixed system-manager operations. On the
-selected rootless installation, masks/guards intentionally prevent them from
-authorizing workload or schedule changes. Administrative access does not lift that
-restriction; use the recorded acceptance scope above.
+Host schedule/observer controls remain fixed system-manager operations. The
+selected rootless masks/guards prevent workload or schedule approval; moving a
+manual action to REST cannot bypass them. Administrative access alone does not
+lift these restrictions. Fresh read-only proof from the fixed helper and explicit
+protected host policy gate effects at both adapter and UI boundaries. Missing,
+unsafe, unknown or drifted proof refuses; absence of a guard/mask is not approval.
 
 ## 2. Privilege and identity
 
@@ -177,14 +185,15 @@ and explains why privileged actions are locked. It invents no archive side chann
 | Health dashboard | `--json status` — the six archive-health fields, free space against reserve, per-repository state | [status](operations.md#read-status-and-inventory) |
 | Archived repositories and revisions | `--json list --revisions`, including `managed: false` entries; repository names link to their type-aware Hugging Face pages | `docs/cli.md` §2 |
 | Sizing preview | `--json plan`, optionally against a candidate configuration (§6) | [planning](operations.md#plan-diagnose-and-synchronize) |
-| Sync now (all repositories) | `systemctl start hfcache-sync.service` | `CP-04`; [sync](operations.md#plan-diagnose-and-synchronize) |
+| Sync now (all repositories) | Fixed REST-backed CLI `sync`, one original key | `CP-04`; [sync](operations.md#plan-diagnose-and-synchronize) |
 | Sync selected repositories | Page-spawned CLI `sync TYPE:ID …` (§5) | decision 89 |
-| Stop sync observation | `systemctl stop hfcache-sync.service`; accepted server work may continue | §5 |
+| Detach manual observation | Detach display only; original registry remains | §5 |
+| Stop scheduled sync observer | Fixed system `hfcache-sync.service` stop only with explicit permission and proven observer binding; accepted work may continue | §5 |
 | Pause / resume schedule | `systemctl stop` / `systemctl start` on `hfcache-sync.timer` | `CP-05` |
 | Live sync activity | Journal stream of the unit, §24 event vocabulary | §5 |
 | Verify — estimate | CLI `verify --estimate` | `docs/cli.md` §2 |
 | Verify — one revision | CLI `verify --revision TYPE:ID@SHA` | `docs/cli.md` §2 |
-| Verify — full | `systemctl start hfcache-verify.service` | `CP-04` |
+| Verify — full | Fixed REST-backed CLI `verify --full`, one original key | `CP-04` |
 | Verification timer | Display state and reason only | `CP-06` |
 | Doctor | CLI `doctor` / `doctor --read-only`, 17 named checks rendered in order | `docs/cli.md` §2 |
 | Retention | CLI `prune --dry-run`, then `--apply` behind confirmation | `docs/cli.md` §2 |
@@ -279,11 +288,12 @@ closing the spawned process or cancelling server work.
 
 ## 5. Long-running operations and concurrency
 
-Full sync/full verification start the existing installed services (`CP-04`). Their
-API-backed scheduled observers retain private recovery handles and stay active
-through repeated finite observation windows; timer elapses merge into the same
-active oneshot. Selected sync, single-revision verification, repair and other
-explicit CLI jobs use §2's transient observer. The server owns accepted work;
+Manual full sync/full verification use the same keyed transient REST observer as
+selected sync and revision verification (`CP-04`). Exact server receipts/results
+and events describe manual execution. Separately labeled scheduled services retain
+their private handles through finite observation windows; timer elapses merge
+into their active oneshot. Service state/journals describe only those observers.
+The server owns accepted work;
 closing a tab or stopping an observer never cancels it.
 
 Before a keyed POST, the CLI prints its validated key; after acceptance it prints

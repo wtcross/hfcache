@@ -5,6 +5,17 @@ import { test } from 'node:test';
 import { BoundaryError, FAILURE_STAGES, normalizeFailure } from '../src/lib/failure.ts';
 import { utf8Bytes } from '../src/lib/stream.ts';
 
+test('reclassifying an explicit preflight refusal does not invent a transmitted host change', () => {
+    const preflight = normalizeFailure({ problem: 'access-denied' }, {
+        stage: 'candidate-write', hostMutationUncertain: false,
+    });
+    const pipeline = normalizeFailure(preflight, { stage: 'candidate-write' });
+    assert.equal(pipeline.hostMutationUncertain, false);
+    assert.equal(pipeline.category, 'access');
+    const transmitted = normalizeFailure(pipeline, { stage: 'install', hostMutationUncertain: true });
+    assert.equal(normalizeFailure(transmitted, { hostMutationUncertain: false }).hostMutationUncertain, true);
+});
+
 const KEY = 'original-safe-key';
 const ID = 'a'.repeat(32);
 const SECRET = 'synthetic-api-hub-mcp-candidate-secret';

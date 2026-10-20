@@ -10,13 +10,11 @@ import {
 
 const actions: UnitAction[] = ['start', 'stop', 'restart', 'enable', 'disable'];
 
-test('full operations retain the installed observer services (CP-04)', () => {
-    assert.doesNotThrow(() => assertOperable(SYNC_SERVICE, 'start'));
+test('manual full jobs never start scheduled observer services (CP-04)', () => {
     assert.doesNotThrow(() => assertOperable(SYNC_SERVICE, 'stop'));
-    assert.doesNotThrow(() => assertOperable(VERIFY_SERVICE, 'start'));
-    for (const action of ['restart', 'enable', 'disable'] as const)
+    for (const action of ['start', 'restart', 'enable', 'disable'] as const)
         assert.throws(() => assertOperable(SYNC_SERVICE, action), ForbiddenUnitError);
-    for (const action of actions.filter(action => action !== 'start'))
+    for (const action of actions)
         assert.throws(() => assertOperable(VERIFY_SERVICE, action), ForbiddenUnitError);
 });
 

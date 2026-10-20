@@ -13,6 +13,22 @@ export interface DropIn {
     randomizedDelaySec: string | null;
 }
 
+export class ScheduleInputError extends Error {}
+
+export function validateCalendarExpression(value: string): void {
+    if (typeof value !== 'string' || value.trim() === '' || value.length > 4096 ||
+        !/^[\x20-\x7e]+$/.test(value) || value.includes('\\'))
+        throw new ScheduleInputError('Calendar must be one nonempty bounded printable line.');
+}
+
+export function validateScheduleInput(onCalendar: string, randomizedDelaySec: string | null): void {
+    validateCalendarExpression(onCalendar);
+    if (randomizedDelaySec !== null && (typeof randomizedDelaySec !== 'string' ||
+        randomizedDelaySec.length > 256 || !/^[\x20-\x7e]*$/.test(randomizedDelaySec) ||
+        randomizedDelaySec.includes('\\')))
+        throw new ScheduleInputError('Randomized delay must be one bounded printable line.');
+}
+
 /* OnCalendar= is list-valued: an empty assignment clears the shipped value,
  * then the replacement is appended. The last non-empty assignment is the
  * one that matters when reading our own file back. */
@@ -31,6 +47,7 @@ export function parseDropIn(content: string): DropIn {
 }
 
 export function renderDropIn(onCalendar: string, randomizedDelaySec: string | null): string {
+    validateScheduleInput(onCalendar, randomizedDelaySec);
     const delay = randomizedDelaySec === null || randomizedDelaySec === ''
         ? ''
         : `RandomizedDelaySec=${randomizedDelaySec}\n`;

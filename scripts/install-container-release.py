@@ -43,6 +43,7 @@ HEX = re.compile(r"[0-9a-f]{64}\Z")
 VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\Z")
 HOSTNAME = re.compile(r"[a-zA-Z0-9](?:[a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?\Z")
 REQUIRED = {
+    "scripts/install-container-release.py",
     "scripts/container-service.py",
     "scripts/hfcache-client",
     "packaging/systemd/hfcache.target",

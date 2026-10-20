@@ -1,0 +1,47 @@
+CPR-005 actual CLI/socket and candidate-preflight evidence (2026-10-20)
+
+rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_manual_socket.py
+Final observed exit0:3 passed in16.52s. This executes a separate real Python CLI
+against an authenticated private Unix socket, actual API/service code and framed
+private verifier. The archive is a newly provisioned temporary fixture; Hub and
+mount metadata are explicitly controlled. No production/NAS/runtime workload.
+
+Cases: full sync; full verification after a real fixture publication; corrupted
+full verification with exact integrity exit40. Assert exact POST route/body and
+one original key, receipt identity and terminal Envelope equality; authenticated
+original lookup/wait perform no second POST. Hub construction is forbidden during
+offline full verification. The verification request carries mode=full and null
+revision/run_id; the initial test expectation was corrected to the existing exact
+wire shape. An earlier fixture mistake passed a path instead of ServerConfig to
+the private verifier; both initial failures are setup failures, not repaired bugs.
+
+rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_manual_socket.py tests/unit/test_cockpit_host_profile.py
+Observed exit0:64 passed in31.23s, combining the3 actual CLI/socket cases and61
+protected host-inspection filesystem/accounting/process cases. Those inspection
+tests control fixed systemctl output and use private temporary files; no actual
+manager, installed helper or container is invoked.
+
+rtk proxy node --test cockpit/test/failure.test.ts
+New explicit-preflight rewrap regression first failed:25 passed/1 failed,exit1.
+Explicit mutation=false was changed to true by the default mutation stage during
+pipeline wrapping. Preserve explicit prior false unless an actual later mutation
+sets true; existing true uncertainty remains monotonic. After fix:26 passed,exit0.
+
+rtk proxy node --test cockpit/test/config-pipeline.test.ts
+Observed exit0:102 passed. New write/install preflight refusal keeps the stage,
+access classification, no acknowledged host effect and hostMutationUncertain=false;
+all prior exact-result/guard/reconciliation cases remain green.
+
+rtk proxy node --test cockpit/test/host-profile.test.ts cockpit/test/failure.test.ts cockpit/test/schedule.test.ts cockpit/test/systemd.test.ts
+Observed exit0:42 passed,0 failures/skips. Separate helper and frontend host-control
+records preserve their red/green evidence. Mounted direct-call bypass red/green,
+manual job component tests and final package gate are recorded separately.
+
+rtk proxy uv run --locked --extra server --extra mcp pyrefly check
+Observed exit0:0 errors (11 suppressed,63 warnings not shown).
+rtk proxy uv run --locked --extra server --extra mcp python scripts/check-docs.py
+Observed exit0:184 human documents;19 helpers.
+
+No current-source Cockpit/PAM or installed-symptom acceptance follows from these
+source fixtures. V54 remains required. Existing guards/masks/locks/mounts, pending
+scheduled handles and the older disposable guest are preserved.

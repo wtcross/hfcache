@@ -10,6 +10,42 @@ export const HFCACHE_CLIENT_CONFIG = '/etc/hfcache/client.toml';
 export const HFCACHE_API_SOCKET = '/run/hfcache/api/api.sock';
 export const SERVICE_IDENTITY = 'hfcache';
 
+export class CommandSurfaceError extends Error {
+    constructor() {
+        super('This invocation is outside the fixed Cockpit management surface.');
+        this.name = 'CommandSurfaceError';
+    }
+}
+
+/* A null job classification is never permission to forward arbitrary CLI text.
+ * In particular global flags, bootstrap/local modes and omitted commands cannot
+ * reach another execution path through this management adapter. */
+export function assertCockpitCommand(command: readonly string[]): void {
+    const exact = (...expected: string[]) => command.length === expected.length &&
+        expected.every((value, index) => command[index] === value);
+    const selectors = (values: readonly string[], revision = false) => {
+        try {
+            return values.every(value => {
+                const selector = parseSelector(value);
+                return !value.startsWith('-') && (!revision || selector.sha !== undefined);
+            });
+        } catch { return false }
+    };
+    if (!Array.isArray(command) || command.some(value => typeof value !== 'string'))
+        throw new CommandSurfaceError();
+    if (exact('version', '--server') || exact('client', 'describe') || exact('status') ||
+        exact('list', '--revisions') || exact('config', 'validate') || exact('verify', '--estimate') ||
+        exact('verify', '--full') || exact('verify', '--new') || exact('doctor') || exact('doctor', '--read-only') ||
+        ((command[0] === 'prune' || command[0] === 'recover') && command.length === 2 &&
+            ['--apply', '--dry-run'].includes(command[1])) ||
+        ((command[0] === 'plan' || command[0] === 'sync') && selectors(command.slice(1))) ||
+        (command[0] === 'verify' && command[1] === '--revision' && command.length === 3 && selectors(command.slice(2), true)) ||
+        (command[0] === 'repair' && (command.length === 2 || (command.length === 4 && command[2] === '--reason')) &&
+            selectors(command.slice(1, 2), true)))
+        return;
+    throw new CommandSurfaceError();
+}
+
 /* CP-03/08, decision 127: the fixed installed launcher selects the immutable
  * rootless client and its API-only mounted secret. The transient unit retains
  * the service identity; image, engine arguments and credentials stay outside

@@ -70,12 +70,12 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V32 | Source pass: independent notice collection survives flood/abort/callback errors; mismatched key/ID fails closed without overwriting original identity or prior summary. Mounted explicit wait with one wrong ID and valid success stdout fails before the original-observer identity callback fix. Final current suite evidence below. |
 | V33 | Source pass: fixed rootless transient argv and copied commands carry original scope, quoted handles and positional --. Real repository Bash and Python launcher hops formerly intercepted --help/-h handles after --: four behavioral red failures; 72 focused tests green after repair, including leading-dash/tilde exact forwarding. Exec is intercepted hermetically; no installed runtime claim. |
 | V34 | `runner.test.ts` page closure, callback failure, late handles and abort tests pass without process-close/cancellation capability. D-Bus channel disposal does not stop application execution. |
-| V35 | Not executed; owning repair and regression pending. |
-| V36 | Not executed; owning repair and regression pending. |
-| V37 | Not executed; owning repair and regression pending. |
-| V38 | Not executed; owning repair and regression pending. |
-| V39 | Not executed; owning repair and regression pending. |
-| V40 | Not executed; owning repair and regression pending. |
+| V35 | Source pass: mounted manual full sync submits one original keyed fixed client with no service start; detach preserves original identity and collects the result independently. Actual separate CLI/private UDS test asserts POST /syncs, exact body/key/receipt/terminal result, then original lookup/wait with zero second POST. [Boundary record](gates/cpr-005-boundaries.txt), [components](gates/cpr-005-components.txt). Permitted temporary/component fixtures are distinct from required real Cockpit/PAM V54. |
+| V36 | Source pass: mounted verify --full preserves exact integrity exit40; actual CLI/Unix socket and framed private verifier exercise clean and deliberately damaged newly provisioned temporary publications, with Hub forbidden during verification. Original lookup/wait preserves terminal identity and emits no POST. Same boundary/component artifacts as V35; no installed or NAS workload claim. |
+| V37 | Source pass: unknown/guarded actual full/selected/revision/maintenance controls disable, and direct job/config adapters refuse before target processes. Both direct bypass cases were observed red before central enforcement. Full Doctor needs both hub and archive permission; readonly Doctor still needs hub permission. Fresh adapter proof is independent of cached UI state. [Red/green](gates/cpr-005-components.txt), [host controls](gates/cpr-005-host-controls.txt). |
+| V38 | Source pass: strict protected policy/index/selected-release/fixed-binding filesystem tests and bounded frontend parser reject unsafe/missing/duplicate/drifted facts. Actual mounted delayed allowed response cannot supersede newer denial; reconnect during pending inspection triggers one fresh proof and no effect. Immutable request capture and closed command grammar close reproduced callback/global-option bypasses. [Host proof](gates/cpr-005-host-profile.txt), component evidence as V37. Production profile not inspected. |
+| V39 | Source pass: fixed-system adapter tests refuse masked/unavailable schedule changes before file/D-Bus effects; no force enable, target or verify-timer mutation. Calendar/delay injection was reproduced red, then rejected before rendering/effect. Acknowledged file change followed by Reload refusal stays uncertain across pending and failed tab remounts; only exact explicit read inspection/acknowledgement unlocks another deliberate change, with zero replay/reload/restart. Current rootless helper denies schedule/observer permission because their binding is unverified. [Host controls](gates/cpr-005-host-controls.txt), [components](gates/cpr-005-components.txt). |
+| V40 | Source pass: mounted permitted fixture shows scheduled system observer state/journal separately from an active manual REST job. Exact StopUnit targets only hfcache-sync.service; journal text and observer stop cannot complete/cancel the manual operation or submit another job. Actual current rootless scheduling remains unsupported/denied; no new scheduler was introduced. [Components](gates/cpr-005-components.txt). |
 | V41 | Not executed; owning repair and regression pending. |
 | V42 | Not executed; owning repair and regression pending. |
 | V43 | Not executed; owning repair and regression pending. |
@@ -86,7 +86,7 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V48 | Not executed; owning repair and regression pending. |
 | V49 | Shared read/unit hooks now remove stale healthy evidence and reject old generations; mounted regressions pass. Per-surface full read rendering audit remains CPR-007. |
 | V50 | Not executed; owning repair and regression pending. |
-| V51 | Failure/runner and mounted QueryError synthetic secret tests pass; only safe validated problem/status/signal/handle fields retained. Registry/storage and all read surfaces remain CPR-004/007 scope. |
+| V51 | Failure/runner and mounted QueryError synthetic secret tests pass; only safe validated problem/status/signal/handle fields retained. CPR-004 registry/metadata collision defenses and CPR-005 strict profile/closed dispatcher/bounded schedule memory reject or withhold unknown input. No browser bearer or policy mutation surface. All read surfaces remain CPR-007 scope. |
 | V52 | Partial: actual CLI process over temporary authenticated UDS covers client metadata, writer/reader/wrong credentials, original lookup, exact failed Envelopes and scope mismatch with zero POSTs. Candidate/job/report boundary acceptance remains CPR-008; this is not a mock substitution for those cases. |
 | V53 | Not executed; owning repair and regression pending. |
 | V54 | UNPASSED: isolated guest now passes real systemd/rootless fixed-client authenticated UDS and guarded candidate validation after the exact empty-placeholder prerequisite correction. Failed starts remain evidence. [Current handoff](runtime-004.md) pins the older source/image and unchanged guard/NFS-ro/masks. Current-source immutable artifact plus real Cockpit/PAM reconnect acceptance remain required; original installed symptom is unproven. |
@@ -251,7 +251,7 @@ Runtime fixture setup is retained and qualified separately in runtime-003;
 V52/V54 and final extended acceptance remain required, never inferred from these
 source tests. Next package CPR-004; plan remains active.
 
-CPR-004, this commit (2026-10-20): final `scripts/check.sh` exit0,5101 Python
+CPR-004 commit `ca034e3` (2026-10-20): final `scripts/check.sh` exit0,5101 Python
 passed/42 deselected in606.10s, all three locked wheel profiles; actual frontend
 lint/style/types,412 unit/47 mounted Firefox cases and production build. Explicit
 `make -C cockpit check` exit0. [Gate record](gates/cpr-004.txt),
@@ -285,3 +285,28 @@ launcher/UDS/candidate validation while retaining original guard/masks/locks and
 failed starts. Current-source real Cockpit/PAM/reconnect remains V54 unpassed,
 with a second isolated immutable fixture recommended. Production/NAS untouched;
 original installed symptom unresolved. Continue CPR-005; plan remains active.
+
+CPR-005, this commit (2026-10-20): `rtk proxy scripts/check.sh` exit0,
+5165 Python passed/42 deselected in829.52s; source/wheel and all three locked
+installation profiles; actual Cockpit lint/style/types,436 unit tests,62 mounted
+Firefox cases and production build. [Accepted gate](gates/cpr-005.txt),
+[full-gate component artifact](gates/cpr-005-gate-mounted.json). Production JS
+SHA256 `a767670965c618504a532951962050ab88f114ecaf1dd04af9815a519d8225a8`;
+mounted bundle `e14553088ce64bb328142daf693dfa575f6a10ebf51537fbd521f95cc0941191`.
+
+V35–V40 source/temporary fixture acceptance now covers manual full REST jobs,
+fresh guarded/unknown/explicit permission gates, fixed-manager refusal and
+scheduled-observer separation. Real CLI/UDS/private verifier parity3 cases and
+protected temporary host-proof61 cases pass. Reproduced callback command mutation,
+global-option/null-as-read forwarding, schedule injection, post-write Reload
+refusal and pending/uncertain remount loss have retained red/green regressions.
+Original classification survives; no new job, cancellation, reload/restart or
+cleanup follows uncertainty. Exact read inspection/acknowledgement is explicit.
+
+CP04/related boundaries, INV006 and ADR89/122/127/134 reviewed; actual ADR135,
+index/register and human usage/operations/container/deployment docs amended.
+No new dependency, archive format, REST route, scheduler, host binding or credential
+authority. CP09 reports remain for CPR-006. Current rootless schedule/observer
+proof remains denied, and no production/NAS/old-guest mutation occurred. Required
+real current-source Cockpit/PAM V54 and original installed cause remain unproven;
+plan stays active. Continue CPR-006.

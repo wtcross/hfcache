@@ -152,7 +152,7 @@ and [mounted application tests](../../cockpit/test/browser.fixture.tsx).
 These source tests are distinct from actual disposable Cockpit/PAM acceptance.
 An isolated older-artifact launcher/candidate test does not validate this new
 registry/metadata implementation or establish the original installed symptom.
-The CP-04 full-service and CP-01/09 direct-report exceptions, production workload
+The historical CP-04 full-service and CP-01/09 direct-report exceptions, production workload
 holds, root locks/guards/masks and deployment restrictions remain unchanged.
 
 The required repository gate also reproduced a real owned Unix transport defect:
@@ -162,3 +162,10 @@ locked backend's empty-write no-op. [Decision119's amendment](decision-119.md#em
 records deterministic actual-socket red/green and repeated original-case proof.
 This changes neither dependency versions nor replay policy and establishes no
 causal claim about the original installed Cockpit bridge interruption.
+
+## Manual full-job amendment (2026-10-20)
+
+[Decision 135](decision-135.md) now replaces the CP-04 manual service-start
+exception with keyed REST full jobs. The report exception remains current. Fresh
+protected host-profile inspection gates effects; all operation recovery,
+uncertainty, credential separation and deployment restrictions above remain.

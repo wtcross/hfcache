@@ -12,6 +12,7 @@ import type { Envelope } from './envelope.ts';
 import type { OperationNotice } from './events.ts';
 import { normalizeFailure } from './failure.ts';
 import type { BoundaryError, FailureReason } from './failure.ts';
+import { HostProfileError } from './host-profile.ts';
 
 const FINGERPRINT = /^[0-9a-f]{64}$/;
 const AUTHORITY_FIELDS = new Set([
@@ -313,8 +314,10 @@ function configurationEvidence(guard: Readonly<CandidateGuard>, options: Configu
         reason?: FailureReason): ConfigurationPipelineError => {
         const cause = error === null
             ? null
-            : normalizeFailure(error, {
-                stage, ...(reason === undefined ? {} : { reason }),
+            : normalizeFailure(error instanceof HostProfileError ? { problem: 'access-denied' } : error, {
+                stage,
+                ...(reason === undefined ? {} : { reason }),
+                ...(error instanceof HostProfileError ? { hostMutationUncertain: false } : {}),
             });
         publish({ stage, status: 'failed', error: cause, envelope });
         return new ConfigurationPipelineError(stage, guard, acknowledgedStages, cause, envelope, proposal);

@@ -8,13 +8,16 @@
 import React, { useState } from 'react';
 
 import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
+import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
 import { Page, PageSection } from "@patternfly/react-core/dist/esm/components/Page/index.js";
 import { Tab, Tabs, TabTitleText } from "@patternfly/react-core/dist/esm/components/Tabs/index.js";
 
 import { ArchiveBrowser } from './archive';
 import { Configuration } from './configuration';
 import { Dashboard } from './dashboard';
-import { useConnection } from './hooks';
+import { useConnection, useHostProfile } from './hooks';
+import { readHostProfile } from './api/profile';
+import { QueryError } from './components';
 import { Maintenance } from './maintenance';
 import { RunReports } from './reports';
 import { SyncOperations } from './sync';
@@ -27,6 +30,25 @@ const AdministrativeControls = ({ children }: { children: React.ReactNode }) => 
         <fieldset className="hfcache-administrative-controls" disabled={!connection.administrative}>
             {children}
         </fieldset>
+    );
+};
+
+const HostRestrictions = () => {
+    const profile = useHostProfile();
+    const connection = useConnection();
+    return (
+        <>
+            <Alert variant={profile.permissions.archive ? 'info' : 'warning'} isInline title="Host restrictions">
+                <p>{profile.reason}</p>
+                <Button
+variant="link" isDisabled={profile.loading || !connection.administrative}
+                    onClick={() => { readHostProfile().catch(() => { /* Error remains visible below. */ }) }}
+                >
+                    Refresh host restrictions
+                </Button>
+            </Alert>
+            {profile.error && <QueryError error={profile.error} />}
+        </>
     );
 };
 
@@ -43,6 +65,7 @@ export const Application = () => {
                         and host changes remain uncertain until reconciled; no action is repeated.
                     </Alert>}
                 <OriginalOperations />
+                <HostRestrictions />
                 <Tabs
                     activeKey={activeTab}
                     onSelect={(_event, eventKey) => setActiveTab(eventKey)}

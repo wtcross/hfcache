@@ -10,6 +10,23 @@ import {
 import { hfcacheArgv } from '../src/lib/command';
 import type { Envelope } from '../src/lib/envelope';
 
+export const DEFAULT_HOST_PROFILE = Object.freeze({
+    schema_version: 1,
+    state: 'permitted',
+    deployment: 'rootless',
+    source_commit: 'a'.repeat(40),
+    index_sha256: 'b'.repeat(64),
+    image: 'sha256:' + 'c'.repeat(64),
+    policy_sha256: 'd'.repeat(64),
+    permissions: { archive: true, hub: true, control: true, schedule: true, configuration: true, observer: true },
+    facts: {
+        guard: 'absent',
+        archive_mount: 'local-rw',
+        units: Object.fromEntries(['hfcache-sync.service', 'hfcache-verify.service', 'hfcache-sync.timer', 'hfcache-verify.timer']
+                .map(unit => [unit, { load: 'loaded', active: 'inactive', unit_file: 'disabled' }])),
+    },
+});
+
 export const DEFAULT_CLIENT_METADATA = Object.freeze({
     metadata_schema_version: 1,
     profile_fingerprint: 'a'.repeat(64),
@@ -55,7 +72,7 @@ export function envelope(command: string, marker: string): string {
 export class ProcessBoundary {
     private static sequence = 0;
     readonly argv: string[];
-    readonly action: 'cli' | 'read' | 'inspect' | 'write' | 'install' | 'remove' | 'guard' | 'confirm';
+    readonly action: 'schedule-validate' | 'schedule-remove' | 'profile' | 'cli' | 'read' | 'inspect' | 'write' | 'install' | 'remove' | 'guard' | 'confirm';
     readonly clientArgv: string[] | null;
     readonly command: readonly string[];
     readonly key: string | null;
@@ -76,7 +93,25 @@ export class ProcessBoundary {
 
     constructor(argv: string[], options: Record<string, unknown>) {
         this.argv = [...argv];
-        if (argv[0] === 'bash') {
+        if (argv[0] === 'systemd-analyze') {
+            invariant(argv[1] === 'calendar' && argv[2] === '--iterations=1' && argv[3] === '--' &&
+                      argv.length === 5 && options.err === 'message' && options.superuser === undefined,
+                      'Only fixed read-only schedule calendar validation is permitted');
+            this.action = 'schedule-validate';
+            this.clientArgv = null;
+        } else if (argv[0] === '/usr/local/libexec/hfcache-container-service' && argv[1] === 'inspect-cockpit') {
+            invariant(argv.length === 2 && options.superuser === 'require' && options.err === 'message',
+                      'Host profile inspection must retain its exact privileged read-only helper');
+            this.action = 'profile';
+            this.clientArgv = null;
+        } else if (argv[0] === 'bash' && argv.length === 3) {
+            invariant(argv[1] === '-ec' && argv[2] ===
+                      'rm -f /etc/systemd/system/hfcache-sync.timer.d/50-cockpit.conf\n' +
+                      'rmdir /etc/systemd/system/hfcache-sync.timer.d 2>/dev/null || true\n' &&
+                      options.superuser === 'require' && options.err === 'message', 'Only the fixed schedule removal script is permitted');
+            this.action = 'schedule-remove';
+            this.clientArgv = null;
+        } else if (argv[0] === 'bash') {
             // Compare the actual imported helper, every fixed path and root
             // identity. This boundary records data and never runs that script.
             const expected = readInstalledInvocation().argv;
@@ -129,7 +164,7 @@ export class ProcessBoundary {
                 return this.handle;
             },
             input: (value: string) => {
-                invariant(this.action !== 'cli', 'Direct CLI processes accept no host-write input');
+                invariant(this.action !== 'cli' && this.action !== 'profile', 'Read-only helper and direct CLI accept no host-write input');
                 invariant(this.capturedInput === null && typeof value === 'string',
                           'Guarded stdin must be captured exactly once');
                 // Two separately bounded documents plus their NUL framing. No
@@ -330,6 +365,28 @@ export class FileBoundary {
     fail(error = bridgeFailure('access-denied')): void { this.reject(error) }
 }
 
+export class JournalBoundary {
+    readonly unit: string;
+    readonly handle: Promise<string> & { stream: (callback: (chunk: string) => void) => unknown; close: () => void };
+    closeCalls = 0;
+    private receive: (chunk: string) => void = () => undefined;
+
+    constructor(argv: string[], options: Record<string, unknown>) {
+        this.unit = argv[2];
+        invariant(['hfcache-sync.service', 'hfcache-verify.service'].includes(this.unit) &&
+                  JSON.stringify(argv) === JSON.stringify(['journalctl', '-u', this.unit, '-n', '80', '-f', '-q', '-o', 'cat']) &&
+                  options.superuser === 'require' && options.err === 'ignore', 'Only fixed scheduled observer journal display is permitted');
+        let complete!: (value: string) => void;
+        const completion = new Promise<string>(resolve => { complete = resolve });
+        this.handle = Object.assign(completion, {
+            stream: (callback: (chunk: string) => void) => { this.receive = callback; return this.handle },
+            close: () => { this.closeCalls += 1; complete('') },
+        });
+    }
+
+    emit(chunk: string): void { this.receive(chunk) }
+}
+
 export class CockpitBoundary {
     readonly transport = { host: 'cpr-initial' };
     // Every actual process remains observable. The legacy nonmetadata index
@@ -337,15 +394,34 @@ export class CockpitBoundary {
     readonly invocations: ProcessBoundary[] = [];
     readonly processes: ProcessBoundary[] = [];
     readonly metadataProcesses: ProcessBoundary[] = [];
+    readonly profileProcesses: ProcessBoundary[] = [];
+    profileMode: 'automatic' | 'manual' = 'automatic';
+    profile: Record<string, unknown> = structuredClone(DEFAULT_HOST_PROFILE);
     metadataMode: 'automatic' | 'manual' | 'failure' = 'automatic';
     metadata: Record<string, unknown> = { ...DEFAULT_CLIENT_METADATA };
     readonly buses: BusBoundary[] = [];
     readonly files: FileBoundary[] = [];
+    readonly journals: JournalBoundary[] = [];
     readonly superuser = new SuperuserBoundary();
 
-    spawn(argv: string[], options: Record<string, unknown>): ProcessBoundary['handle'] {
+    spawn(argv: string[], options: Record<string, unknown>): ProcessBoundary['handle'] | JournalBoundary['handle'] {
+        if (argv[0] === 'journalctl') {
+            const journal = new JournalBoundary(argv, options);
+            this.journals.push(journal);
+            return journal.handle;
+        }
         const process = new ProcessBoundary(argv, options);
         this.invocations.push(process);
+        if (process.action === 'profile') {
+            this.profileProcesses.push(process);
+            if (this.profileMode === 'automatic') {
+                queueMicrotask(() => {
+                    process.emit(JSON.stringify(this.profile));
+                    process.rawSuccess();
+                });
+            }
+            return process.handle;
+        }
         const metadata = process.command.join(' ') === 'client describe';
         (metadata ? this.metadataProcesses : this.processes).push(process);
         if (!this.superuser.allowed) {

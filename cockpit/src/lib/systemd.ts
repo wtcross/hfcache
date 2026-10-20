@@ -13,8 +13,7 @@ export type UnitAction = 'start' | 'stop' | 'restart' | 'enable' | 'disable';
 export class ForbiddenUnitError extends Error {}
 
 const ACTIONS = new Map<string, ReadonlySet<UnitAction>>([
-    [SYNC_SERVICE, new Set(['start', 'stop'])],
-    [VERIFY_SERVICE, new Set(['start'])],
+    [SYNC_SERVICE, new Set(['stop'])],
     [SYNC_TIMER, new Set(['start', 'stop', 'restart', 'enable', 'disable'])],
 ]);
 
@@ -27,5 +26,5 @@ export function assertOperable(unit: string, action: UnitAction): void {
             'operator handoff item 8 owns its calendar');
     if (!ACTIONS.get(unit)?.has(action))
         throw new ForbiddenUnitError('This unit/action is outside the plugin controls: ' +
-            'only installed sync/verification clients and the sync schedule are operated');
+            'only a proven scheduled sync observer may be stopped; manual jobs use REST, and scheduling uses the sync timer');
 }

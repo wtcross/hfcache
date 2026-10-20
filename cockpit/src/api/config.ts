@@ -18,7 +18,9 @@ import { OperationNotice } from '../lib/events';
 import { normalizeFailure } from '../lib/failure';
 import type { OperationScope } from '../lib/operation-registry';
 import { runHfcache } from './hfcache';
-import { hostCall } from './connection';
+import { assertSession, captureSession, hostCall } from './connection';
+import { requireHostAction } from './profile';
+import { HostProfileError } from '../lib/host-profile';
 
 export const CONFIG_PATH = CONFIGURATION_PATHS.installed;
 export const CANDIDATE_PATH = CONFIGURATION_PATHS.candidate;
@@ -26,6 +28,13 @@ export const BACKUP_PATH = CONFIGURATION_PATHS.backup;
 
 async function mutate(action: 'write' | 'install' | 'remove', guard: CandidateGuard): Promise<void> {
     const invocation = candidateMutationInvocation(action, guard);
+    const stage = action === 'install' ? 'install' : 'candidate-write';
+    const generation = captureSession(stage);
+    const host = cockpit.transport.host;
+    await requireHostAction('configuration');
+    assertSession(generation, stage);
+    if (host !== cockpit.transport.host)
+        throw new HostProfileError();
     await hostCall(action === 'install' ? 'install' : 'candidate-write', true, async () => {
         const proc = cockpit.spawn(invocation.argv, { superuser: 'require', err: 'message' });
         proc.input(invocation.input);

@@ -49,7 +49,10 @@ import {
     prepareConfiguration, UNCONFIRMED_INSTALLATION,
 } from './lib/config-pipeline';
 import { classifyEnvelope, Envelope } from './lib/envelope';
-import { useConnection, useOperations } from './hooks';
+import { useConnection, useOperations, useHostProfile } from './hooks';
+import { hostActionAllowed } from './api/profile';
+import { HostProfileError } from './lib/host-profile';
+import { BoundaryError } from './lib/failure';
 import { formatBytes, shortSha } from './lib/format';
 
 type FieldErrors = Record<string, string>;
@@ -373,6 +376,7 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
     } = state;
     const connection = useConnection();
     const operations = useOperations();
+    const profile = useHostProfile();
     const unconfirmed = state.uncertainty === 'install';
     const busy = sessionBusy(state);
     const currentAuthority = operations.views.authority.scope;
@@ -488,12 +492,14 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
     const failed = (failure: unknown, installing = false) => {
         const current = session.snapshot();
         const pipeline = failure instanceof ConfigurationPipelineError ? failure : null;
-        const writeUncertain = pipeline?.stage === 'candidate-write';
+        const preflightRefused = pipeline?.cause?.hostMutationUncertain === false &&
+            !pipeline.acknowledgedStages.includes('install');
+        const writeUncertain = pipeline?.stage === 'candidate-write' && !preflightRefused;
         session.patch({
             pipelineError: failure as Error,
             phase: 'idle',
             preparation: null,
-            uncertainty: installing
+            uncertainty: installing && !preflightRefused
                 ? 'install'
                 : writeUncertain || failure instanceof PreparationSuperseded
                     ? 'candidate'
@@ -503,10 +509,12 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
             inspectedGeneration: null,
             confirmed: false
         });
+        if (preflightRefused && pipeline.stage === 'candidate-write')
+            session.patch({ diskGuard: null });
     };
     const check = (reuse = false) => {
         const current = session.snapshot();
-        if (sessionBusy(current) || !connectionSnapshot().administrative || current.installedText === null ||
+        if (sessionBusy(current) || !connectionSnapshot().administrative || (!reuse && !hostActionAllowed('configuration')) || current.installedText === null ||
             current.uncertainty === 'install' || current.previewUncertain || (!reuse && submissionBlocked()))
             return;
         if (reuse
@@ -603,7 +611,7 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
     const install = () => {
         const current = session.snapshot();
         const proposal = current.proposal;
-        if (!proposal || current.phase !== 'ready' || !connectionSnapshot().administrative ||
+        if (!proposal || current.phase !== 'ready' || !connectionSnapshot().administrative || !hostActionAllowed('configuration') ||
             current.generation !== connectionSnapshot().generation || current.uncertainty !== null || submissionBlocked())
             return;
         const generation = connectionSnapshot().generation;
@@ -731,7 +739,7 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
     };
     const cancel = () => {
         const current = session.snapshot();
-        if (!current.diskGuard || sessionBusy(current) || current.uncertainty !== null || current.previewUncertain ||
+        if (!current.diskGuard || sessionBusy(current) || !hostActionAllowed('configuration') || current.uncertainty !== null || current.previewUncertain ||
             current.generation !== connectionSnapshot().generation || !connectionSnapshot().administrative)
             return;
         session.patch({ phase: 'discarding' });
@@ -749,7 +757,10 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
                     session.patch({
                         phase: 'idle',
                         pipelineError: failure as Error,
-                        uncertainty: 'candidate',
+                        uncertainty: failure instanceof HostProfileError ||
+                            (failure instanceof BoundaryError && !failure.hostMutationUncertain)
+                            ? current.uncertainty
+                            : 'candidate',
                         inspection: null,
                         inspectedGeneration: null
                     });
@@ -766,6 +777,7 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
                     </Alert>
                 </StackItem>}
             {loadError !== null && <StackItem><QueryError error={loadError} /></StackItem>}
+            {!profile.permissions.configuration && <StackItem>{profile.reason}</StackItem>}
             {diskGuard === null && state.uncertainty === null && !busy &&
                 <StackItem>
                     <Button
@@ -852,7 +864,7 @@ variant="link" isDisabled={!connection.administrative}
                                         <FlexItem>
                                             <Button
                                                 variant="primary"
-                                                isDisabled={busy || operations.blocked || !connection.administrative || diskGuard !== null || state.uncertainty !== null}
+                                                isDisabled={busy || operations.blocked || !connection.administrative || !profile.permissions.configuration || diskGuard !== null || state.uncertainty !== null}
                                                 onClick={() => check()}
                                             >
                                                 Validate candidate
@@ -860,13 +872,13 @@ variant="link" isDisabled={!connection.administrative}
                                         </FlexItem>
                                         {phase === 'ready' && preparation?.proposal != null && fresh && state.uncertainty === null &&
                                             <FlexItem>
-                                                <Button variant="danger" onClick={install}>
+                                                <Button variant="danger" isDisabled={!profile.permissions.configuration} onClick={install}>
                                                     Install validated candidate
                                                 </Button>
                                             </FlexItem>}
                                         {diskGuard !== null && !busy && state.uncertainty === null && !state.previewUncertain && fresh &&
                                             <FlexItem>
-                                                <Button variant="link" onClick={cancel}>Discard candidate</Button>
+                                                <Button variant="link" isDisabled={!profile.permissions.configuration} onClick={cancel}>Discard candidate</Button>
                                             </FlexItem>}
                                         {busy &&
                                             <FlexItem><Loading /></FlexItem>}

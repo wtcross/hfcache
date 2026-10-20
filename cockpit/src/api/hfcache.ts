@@ -13,7 +13,7 @@ import { assertSession, captureSession } from './connection';
 import { keyedAction, observeOriginal, readOperationAuthority, submitOperation } from './operations';
 import type { FailureStage } from '../lib/failure';
 
-import { hfcacheArgv } from '../lib/command';
+import { assertCockpitCommand, hfcacheArgv } from '../lib/command';
 import type { ClientCommandOptions } from '../lib/command';
 import type { OperationScope } from '../lib/operation-registry';
 import { guardCandidateInvocation, guardInstalledInvocation, CandidateGuard } from '../lib/candidate-guard';
@@ -72,9 +72,22 @@ async function observeHfcache(command: string[], options: RunOptions & ClientCom
     return envelope;
 }
 
-export function runHfcache(command: string[], options: RunOptions = {}): Promise<Envelope> {
-    const action = keyedAction(command, options.config !== undefined);
-    return action === null ? observeHfcache(command, options) : submitOperation(command, options, action, observeHfcache);
+export async function runHfcache(command: string[], options: RunOptions = {}): Promise<Envelope> {
+    // Capture the authorized intent before any asynchronous proof or display
+    // callback. A caller retaining its arrays/options cannot change the route,
+    // candidate or authority after permissions and original identity were chosen.
+    const capturedCommand = [...command];
+    Object.freeze(capturedCommand);
+    assertCockpitCommand(capturedCommand);
+    const capturedOptions = Object.freeze({
+        ...options,
+        ...(options.candidateGuard === undefined ? {} : { candidateGuard: Object.freeze({ ...options.candidateGuard }) }),
+        ...(options.requiredScope === undefined ? {} : { requiredScope: Object.freeze({ ...options.requiredScope }) }),
+    });
+    const action = keyedAction(capturedCommand, capturedOptions.config !== undefined);
+    return action === null
+        ? observeHfcache(capturedCommand, capturedOptions)
+        : submitOperation(capturedCommand, capturedOptions, action, observeHfcache);
 }
 
 export const readClientAuthority = () => readOperationAuthority(observeHfcache);

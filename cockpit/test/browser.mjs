@@ -22,8 +22,11 @@ async function main() {
     const cockpit = fileURLToPath(new URL('../', import.meta.url));
     const repository = resolve(cockpit, '..');
     const sourceRef = process.argv[2];
+    const manualBaseline = process.env.CPR_BROWSER_MANUAL_BASELINE;
     if (sourceRef !== undefined && !/^[0-9a-f]{40}$/.test(sourceRef))
         throw new Error('An optional baseline must be an exact forty-character commit SHA');
+    if (manualBaseline !== undefined && !/^[0-9a-f]{40}$/.test(manualBaseline))
+        throw new Error('A manual-component baseline must be an exact forty-character commit SHA');
     const RESULT_BYTES = 32768;
     const resultPath = '/result/' + randomUUID();
     const profileParent = await mkdtemp(join(tmpdir(), 'hfcache-cpr-mounted-'));
@@ -73,6 +76,13 @@ async function main() {
                         ], { cwd: repository, maxBuffer: 2 * 1024 * 1024 }).toString('utf8'),
                         loader: args.path.endsWith('.tsx') ? 'tsx' : 'ts',
                     }));
+                } else if (manualBaseline !== undefined) {
+                    builder.onLoad({ filter: /[/\\]cockpit[/\\]src[/\\](sync|verify)\.tsx$/ }, args => ({
+                        contents: execFileSync('rtk', [
+                            'proxy', 'git', 'show', manualBaseline + ':' + relative(repository, args.path),
+                        ], { cwd: repository, maxBuffer: 2 * 1024 * 1024 }).toString('utf8'),
+                        loader: 'tsx',
+                    }));
                 }
             },
         }],
@@ -91,7 +101,7 @@ async function main() {
         if (request.method === 'GET' && pathname === '/') {
             response.setHeader('Content-Type', 'text/html; charset=utf-8');
             response.end('<!doctype html><meta charset="utf-8"><title>Owned mounted hfcache tests</title>' +
-            '<div id="fixture"></div><script>window.cprResultPath=' + JSON.stringify(resultPath) +
+            '<div id="fixture"></div><script>window.cprTestFilter=' + JSON.stringify(process.env.CPR_BROWSER_TEST_FILTER ?? '') + ';window.cprResultPath=' + JSON.stringify(resultPath) +
             '</script><script src="/bundle.js"></script>');
         } else if (request.method === 'GET' && request.url === '/bundle.js') {
             response.setHeader('Content-Type', 'application/javascript');
@@ -170,12 +180,13 @@ async function main() {
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
     const passed = result.state === 'passed' && Array.isArray(result.tests) &&
-    result.tests.length >= 6 && result.tests.every(test => test.passed === true);
+    result.tests.length >= (process.env.CPR_BROWSER_TEST_FILTER ? 1 : 6) && result.tests.every(test => test.passed === true);
     console.log(JSON.stringify({
         fixture: 'actual mounted React with controlled Cockpit boundaries',
         real_pam: false,
         real_api_or_shell: false,
         source_ref: sourceRef ?? 'working-tree',
+        ...(manualBaseline === undefined ? {} : { manual_component_baseline: manualBaseline }),
         bundle_sha256: bundleSha256,
         ...result,
     }));

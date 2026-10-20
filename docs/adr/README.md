@@ -199,3 +199,4 @@ status and current-contract links before applying a historical choice.
 | 132 | [Positively classify native releases before effects](decision-132.md) |
 | 133 | [Separate curation from publication authority](decision-133.md) |
 | 134 | [Preserve Cockpit failure evidence and original operation identity](decision-134.md) |
+| 135 | [Separate manual REST jobs from guarded host observers](decision-135.md) |

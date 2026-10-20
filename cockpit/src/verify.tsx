@@ -3,7 +3,7 @@
  *
  * Verification (docs/cockpit.md §3): estimate first — it sizes the window
  * and is always safe; one revision on a targeted suspicion; the full read
- * only through hfcache-verify.service (CP-04). The quarterly timer is
+ * through the shared REST operation flow (CP-04). The quarterly timer is
  * displayed and never enabled from here (CP-06).
  */
 
@@ -18,20 +18,18 @@ import {
     ExpandableSection,
 } from "@patternfly/react-core/dist/esm/components/ExpandableSection/index.js";
 import { Label } from "@patternfly/react-core/dist/esm/components/Label/index.js";
-import {
-    Modal, ModalBody, ModalFooter, ModalHeader,
-} from "@patternfly/react-core/dist/esm/components/Modal/index.js";
 import { TextInput } from "@patternfly/react-core/dist/esm/components/TextInput/index.js";
-import { Flex, FlexItem } from "@patternfly/react-core/dist/esm/layouts/Flex/index.js";
 import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/index.js";
 
+import { ManualFullJob } from './manual-job';
+import { hostActionAllowed } from './api/profile';
 import { UnitActivity } from './activity';
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
 import { connectionSnapshot } from './api/connection';
 import { submissionBlocked } from './api/operations';
-import { startUnit, VERIFY_SERVICE, VERIFY_TIMER } from './api/systemd';
+import { VERIFY_SERVICE, VERIFY_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useObservationSignal, useOperationHandles, useUnitPoll, useConnection, useOperations } from './hooks';
+import { useObservationSignal, useOperationHandles, useUnitPoll, useConnection, useOperations, useHostProfile } from './hooks';
 import { parseSelector, SelectorError } from './lib/command';
 import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatBytes, formatDuration, formatTimestamp } from './lib/format';
@@ -112,84 +110,30 @@ const EstimateCard = () => {
 
 const ACTIVE_STATES = ['active', 'activating', 'reloading', 'deactivating'];
 
-const FullVerifyCard = () => {
-    const connection = useConnection();
+const ScheduledVerifyCard = () => {
     const service = useUnitPoll(VERIFY_SERVICE);
-    const [confirming, setConfirming] = useState(false);
-    const [actionError, setActionError] = useState<Error | null>(null);
-
     const running = ACTIVE_STATES.includes(service.state?.activeState ?? '');
-
-    const start = () => {
-        if (service.state === null || !connection.administrative)
-            return;
-        setConfirming(false);
-        setActionError(null);
-        startUnit(VERIFY_SERVICE)
-                .then(() => service.refresh(), failure => setActionError(failure as Error));
-    };
-
     return (
         <Card>
-            <CardTitle>Full verification</CardTitle>
+            <CardTitle>Scheduled verification observer</CardTitle>
             <CardBody>
                 <Stack hasGutter>
-                    <StackItem>
-                        Re-reads every unique retained object against its manifest, offline —
-                        the private server executor has Hub networking disabled. The installed
-                        service observes its operation. Exit 40 means the archive
-                        may be corrupt: findings are never repaired from here (AD-13).
-                    </StackItem>
-                    {actionError !== null && <StackItem><QueryError error={actionError} /></StackItem>}
+                    <StackItem>System service state and journals describe the scheduled observer only. They do not establish the result of a manual server operation.</StackItem>
                     {service.error !== null && <StackItem><QueryError error={service.error} /></StackItem>}
                     <StackItem>
-                        <Flex>
-                            <FlexItem>
-                                <Label isCompact color={running ? 'blue' : 'grey'}>
-                                    {service.state?.activeState ?? '…'}
-                                </Label>
-                                {' '}last result: {service.result?.result ?? '…'}
-                                {service.result !== null && ` (exit ${service.result.execMainStatus})`}
-                            </FlexItem>
-                            <FlexItem>
-                                <Button
-                                    variant="primary"
-                                    isDisabled={running || service.state === null || !connection.administrative}
-                                    onClick={() => setConfirming(true)}
-                                >
-                                    Run full verification
-                                </Button>
-                            </FlexItem>
-                        </Flex>
+                        <Label isCompact color={running ? 'blue' : 'grey'}>{service.state?.activeState ?? '…'}</Label>
+                        {' '}observer process result: {service.result?.result ?? '…'}
+                        {service.result !== null && ` (exit ${service.result.execMainStatus})`}
                     </StackItem>
                     {running && <StackItem><UnitActivity unit={VERIFY_SERVICE} /></StackItem>}
                 </Stack>
-
-                <Modal
-                    isOpen={confirming}
-                    onClose={() => setConfirming(false)}
-                    variant="small"
-                    aria-label="Start full verification"
-                >
-                    <ModalHeader title="Start full verification" />
-                    <ModalBody>
-                        Runs hfcache-verify.service (CP-04). It shares the one application lock
-                        with sync, prune, and repair. The server's configured queue/lock budget
-                        applies before execution; a stopped client does not cancel accepted
-                        verification. Run the estimate first and check it does not overlap
-                        storage maintenance (HFWRN010).
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="primary" isDisabled={service.state === null || !connection.administrative} onClick={start}>Start hfcache-verify.service</Button>
-                        <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
-                    </ModalFooter>
-                </Modal>
             </CardBody>
         </Card>
     );
 };
 
 const RevisionVerifyCard = () => {
+    const profile = useHostProfile();
     const connection = useConnection();
     const operations = useOperations();
     const [selectorText, setSelectorText] = useState('');
@@ -213,7 +157,7 @@ const RevisionVerifyCard = () => {
     }
 
     const run = () => {
-        if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative || selectorText === '')
+        if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative || !hostActionAllowed('archive') || selectorText === '')
             return;
         try {
             if (parseSelector(selectorText).sha === undefined)
@@ -270,7 +214,7 @@ const RevisionVerifyCard = () => {
                         <Button
                             variant="secondary"
                             isDisabled={running || uncertain || operations.blocked || !connection.administrative ||
-                                selectorText === '' || validationError !== null}
+                                !profile.permissions.archive || selectorText === '' || validationError !== null}
                             onClick={run}
                         >
                             Run verify --revision
@@ -325,7 +269,8 @@ const VerifyTimerCard = () => {
 export const Verification = () => (
     <Stack hasGutter>
         <StackItem><EstimateCard /></StackItem>
-        <StackItem><FullVerifyCard /></StackItem>
+        <StackItem><ManualFullJob mode="verify-full" /></StackItem>
+        <StackItem><ScheduledVerifyCard /></StackItem>
         <StackItem><RevisionVerifyCard /></StackItem>
         <StackItem><VerifyTimerCard /></StackItem>
     </Stack>

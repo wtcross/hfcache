@@ -1,0 +1,123 @@
+CPR-005 focused frontend host-control evidence
+Date: 2026-10-20
+Scope: source and controlled pure tests only. No production/guest/systemd/Podman
+inspection or mutation was executed by these checks. No runtime acceptance is
+claimed. The root agent records the full gate and mounted component evidence
+separately.
+
+Red regression before scalar validation was implemented:
+  cd cockpit
+  rtk proxy node --test test/schedule.test.ts
+  Exit 1: 3 passed, 1 failed.
+  Failed: V39 calendar and delay cannot inject another drop-in directive.
+  Missing expected exception demonstrated that the previous renderer accepted
+  blank/control-bearing/newline/backslash/oversized input.
+
+Independent committed-source injection reproduction:
+  rtk proxy node --input-type=module -
+  The inline script read ca034e3:cockpit/src/lib/schedule.ts using git show,
+  transformed only that pure TypeScript module with the existing esbuild,
+  imported its result from memory and called renderDropIn with each fixture:
+    onCalendar="daily\nUnit=sshd.service", randomizedDelaySec=null
+    onCalendar="daily", randomizedDelaySec="30m\nUnit=sshd.service"
+  Exit 0: both outputs included a separate Unit=sshd.service directive.
+  No system manager, service or filesystem action was executed by that module.
+
+Green after scalar validation and host-control adapter changes:
+  cd cockpit
+  rtk proxy node --test test/host-profile.test.ts test/systemd.test.ts test/schedule.test.ts test/schedule-session.test.ts
+  Final exit 0: 25 passed, 0 failed, 0 skipped.
+  Cases:
+  - Explicit permissions, deep immutable facts, and no permission inferred from
+    absent guards or writable-looking storage.
+  - Held original guard refuses archive permission.
+  - Read-only runtime facts do not replace explicit policy or final API checks.
+  - Every fixed unknown reason refuses all six effect categories.
+  - Missing/extra/secret-bearing fields and malformed identities/facts refuse.
+  - Masked/unavailable units cannot carry effective schedule/observer permission.
+  - Exact linked/runtime unit state forms remain representable.
+  - Duplicate decoded JSON keys, overflow, excessive depth and malformed JSON
+    refuse without echoing input.
+  - Manual jobs cannot start sync/verification services; only the fixed sync
+    timer actions and optional proven sync-observer stop remain structurally
+    eligible. Target, verify timer and arbitrary units remain forbidden.
+  - Calendar and delay scalar injection refuses before rendering a drop-in.
+  - Acknowledged file effects followed by permission refusal retain safe
+    access-denied classification and hostMutationUncertain=true. Other later
+    failures preserve their original safe bridge/process classification.
+  - A host-scoped pending attempt is reserved before asynchronous preflight;
+    detached components cannot drop it or erase a later uncertain completion.
+    A late success cannot erase an already uncertain record.
+  - Known no-effect preflight refusal releases only its own pending record.
+  - Captured bytes preserve the actual UTF-8 public drop-in header exactly.
+    Invalid hosts, malformed/oversized bytes, full capacity and a second
+    unresolved attempt for the same host refuse before effects.
+  - Bounded recovery memory never evicts unresolved records; safe retained
+    errors omit raw rejection prose and stacks. No browser storage is used.
+
+Scoped source lint:
+  cd cockpit
+  rtk proxy node_modules/.bin/eslint src/lib/host-profile.ts src/lib/schedule-session.ts src/api/profile.ts src/lib/systemd.ts src/api/systemd.ts src/api/schedule.ts src/lib/schedule.ts src/schedule.tsx test/host-profile.test.ts test/schedule-session.test.ts test/systemd.test.ts test/schedule.test.ts
+  Exit 0 after scoped formatting fixes.
+
+Frontend typecheck:
+  cd cockpit
+  rtk proxy node_modules/.bin/tsc --noEmit
+  Exit 0.
+
+Adapter source boundaries reviewed:
+  - Fixed privileged argv is exactly
+    /usr/local/libexec/hfcache-container-service inspect-cockpit; no inputs,
+    executable/path/manager selection or container start is accepted.
+  - Inspection streams at most 16 KiB of retained data; helper/process failure
+    is not parsed as successful inspection. UI facts never authorize effects.
+  - requireHostAction performs a fresh inspection, checks trusted host/session,
+    and refuses an older response superseded by newer profile facts.
+  - Every mutating D-Bus call, including Reload, requires fresh permission.
+    Observer stop and timer scheduling use separate permission categories.
+    EnableUnitFiles uses runtime=false and force=false; no forced replacement
+    or unmask path is added. Its exact D-Bus assertion belongs to the separately
+    recorded mounted adapter checks.
+  - Drop-in write/removal require fresh schedule proof before file effects.
+    Writes validate current calendar and optional delay with fixed read-only
+    systemd-analyze argv, then refresh permission immediately before writing.
+    Positional expressions follow --. Session/host changes refuse before effect;
+    no mutation is replayed.
+  - Schedule UI gates all controls, prevents duplicate confirmation submission
+    synchronously and discards older calendar-check results after input/session
+    changes. Delay edits invalidate the earlier calendar check. Schedule reads
+    are scoped to both the captured host and connection generation.
+  - Pending and uncertain attempts survive tab unmount in application memory:
+    at most eight host records, each at most 8 KiB of expected drop-in bytes,
+    with a conservative aggregate 64 KiB budget including retained safe error
+    allowance. No unresolved record is evicted to make room for another host.
+  - After an acknowledged write/removal, later Reload/read/restart refusal
+    requires explicit read-only inspection of the exact captured bytes/null
+    and a known unmasked fixed timer, then separate acknowledgement. Inspection
+    and acknowledgement perform no Reload/restart and do not prove the loaded
+    calendar or success of the prior manager action. Original safe error and
+    policy refusal remain visible; another calendar check cannot clear the latch.
+  - Hook refresh after a generation change during an in-flight probe does not
+    get stuck on the old request. A failed new Doctor run cannot retain an old
+    successful card result as its current result.
+
+The current shipped rootless binding has no proven system scheduled-observer
+implementation; the trusted helper conservatively returns schedule=false and
+observer=false. Positive schedule cases above are explicit source fixtures, not
+installation permission or a new scheduling backend. Existing guards, masks,
+lock inodes, read-only mounts and hardening are unchanged.
+
+Actual mounted RED artifacts are separately owned/recorded by the browser
+regression agent:
+  cpr-005-schedule-red.jsonl
+    Post-removal Reload refusal enabled another file mutation without
+    reconciliation (observed exit 1).
+    Old-source bundle sha256:
+    147b59cc665cafd9c2bbe3cc09e61f2d9dafe794156fdeca76e538b818ae959a
+  cpr-005-schedule-remount-red.jsonl
+    Original uncertainty/error and Inspect control disappeared after actual
+    component unmount/remount (observed exit 1).
+    Old-source bundle sha256:
+    22aaee25340a975e05e2ffb7510a63f4e74a55aefbdde3c9083a519e36981cda
+The final whole mounted suite and full package gate are recorded separately;
+these controlled tests are not disposable-runtime or installed-host evidence.

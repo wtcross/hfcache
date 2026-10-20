@@ -28,6 +28,12 @@ native/user-manager selector. The report and journal browsers require privileged
 host-local access, including the archive runs directory for reports. Repository
 plugin fixtures do not establish deployed browser/PAM or candidate-install acceptance.
 
+The newer source routes manual full jobs through the fixed REST client and gates
+effects on fresh indexed-release facts and explicit root-provisioned policy.
+This is a source change, not a changed installed profile: the recorded guards,
+masks, read-only mount and workload holds above remain. Older selected releases
+without the required inspection artifact are unverified and fail closed.
+
 Before a future operational window, record the exact selected artifacts, effective
 system/user units and drop-ins, original lock identities, API/verifier stores,
 scheduled handles, archive UUID, secret delivery and read-only guard state. A

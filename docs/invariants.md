@@ -618,8 +618,10 @@ acceptance evidence; it is an example consumer, not an application dependency.
 [Decision 134](adr/decision-134.md) requires stage-aware error preservation,
 close-aware read recovery and authority-scoped operation handles outside tab
 lifetimes. These boundaries are implemented in source; the existing
-CP-04 service and CP-01/09 report exceptions below remain current until their
-explicit adapter amendments. No new workload or deployment authority follows.
+CP-01/09 report exception remains current until its explicit adapter amendment.
+[Decision 135](adr/decision-135.md) replaces manual service starts with keyed
+REST jobs and requires fresh protected host-profile permission before effects.
+No new workload or deployment authority follows.
 
 - **`CP-01`, `CP-02`, `CP-09`** — The plugin uses installed CLI JSON envelopes
   and systemd, never reimplements archive logic or writes archive files. The
@@ -637,12 +639,24 @@ explicit adapter amendments. No new workload or deployment authority follows.
   bridge/process failure and missing or expired observation history.
 - **`CP-03`, `CP-04`, `CP-10`** — Mutation needs administrative Cockpit access,
   while CLI work runs as the service identity in a transient unit, never root.
-  Full sync/verification use their installed services. Respect the single
-  writer lock; report busy without bypassing it.
+  Manual full sync/verification use the same keyed REST-backed transient client
+  as selected jobs. Scheduled observers remain separate; their unit/journal state
+  cannot establish a manual result. Respect the single writer lock; report busy
+  without bypassing it. Fresh root-only read-only inspection must prove the
+  selected indexed deployment and protected explicit permission before archive,
+  Hub/control job, configuration, schedule or observer effects. Unknown or drifted
+  evidence denies effects; absence of a guard/mask cannot grant permission.
+  A held or unconfirmed guard denies archive execution. No native fallback or
+  alternate manager is permitted. Metadata and synchronous validation remain
+  separate from keyed sizing/diagnostics and archive jobs.
   Page-keyed jobs persist an original key before their submit process starts and
   preserve it across tab/reload. An unresolved record blocks additional keyed
   submissions on that host. Uncertain maintenance Apply cannot reuse an old
   successful dry run; Apply consumes its preview before asynchronous work.
+  Capture invocation intent before asynchronous checks/callbacks and use a closed
+  plugin command grammar; null job classification cannot forward arbitrary CLI
+  text. An acknowledged host mutation followed by a failure remains uncertain
+  across tab lifetimes until explicit read-only reconciliation/acknowledgement.
 - **`CP-05`–`CP-08`** — Schedule controls affect only the sync timer; never
   manipulate `hfcache.target`, enable the verify timer, or expose archive init.
   The page never reads credentials or accepts tokens; the fixed launcher mounts its

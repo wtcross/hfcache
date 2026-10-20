@@ -6,13 +6,20 @@ import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
 import { runHfcache } from '../src/api/hfcache';
+import { hostActionAllowed, readHostProfile, requireHostAction } from '../src/api/profile';
+import { writeCandidate, installCandidate, removeCandidate } from '../src/api/config';
+import { removeDropIn, writeDropIn } from '../src/api/schedule';
 import { Application } from '../src/app';
+import { ManualFullJob } from '../src/manual-job';
+import { SyncOperations } from '../src/sync';
+import { Verification } from '../src/verify';
 import { OriginalOperations } from '../src/operations';
 import { operationRegistry, operationViews } from '../src/api/operations';
-import { startUnit, unitState } from '../src/api/systemd';
+import { enableUnit, startUnit, unitState } from '../src/api/systemd';
 import { QueryError } from '../src/components';
-import { useHfcache, useUnitPoll } from '../src/hooks';
+import { useHfcache, useHostProfile, useUnitPoll } from '../src/hooks';
 import { Maintenance } from '../src/maintenance';
+import { Dashboard } from '../src/dashboard';
 import { ScheduleEditor } from '../src/schedule';
 import { Configuration } from '../src/configuration';
 import { createConfigurationSession } from '../src/lib/configuration-session';
@@ -22,7 +29,7 @@ import { CONFIGURATION_PATHS } from '../src/lib/candidate-guard';
 import { MAX_OPERATION_STORAGE_BYTES, OPERATION_STORAGE_KEY } from '../src/lib/operation-registry';
 import type { OperationRecord } from '../src/lib/operation-registry';
 import {
-    bridgeFailure, BusRequest, controlledCockpit, DEFAULT_CLIENT_METADATA, FileBoundary, invariant, ProcessBoundary,
+    bridgeFailure, BusRequest, controlledCockpit, DEFAULT_CLIENT_METADATA, DEFAULT_HOST_PROFILE, FileBoundary, invariant, ProcessBoundary,
 } from './cockpit-fixture';
 
 window.cprFixture = controlledCockpit;
@@ -36,6 +43,7 @@ declare global {
     interface Window {
         cprResultPath: string;
         cprProbeReady?: boolean;
+        cprTestFilter?: string;
     }
 }
 
@@ -78,6 +86,11 @@ function button(label: string, within: ParentNode = document): HTMLButtonElement
             .find(node => node.textContent?.replace(/\s+/g, ' ').trim() === label) ?? null;
 }
 
+function readyButton(label: string, within: ParentNode = document): HTMLButtonElement | null {
+    const control = button(label, within);
+    return control && !control.disabled ? control : null;
+}
+
 function ReadProbe(): React.ReactElement {
     const query = useHfcache(['version', '--server']);
     const data = query.envelope?.data as Record<string, unknown> | undefined;
@@ -112,6 +125,11 @@ function UnitProbe({ name }: { name: string }): React.ReactElement {
             </pre>
         </>
     );
+}
+
+function ProfileProbe(): React.ReactElement {
+    const profile = useHostProfile();
+    return <pre>{JSON.stringify({ archive: profile.permissions.archive, loading: profile.loading, reason: profile.reason })}</pre>;
 }
 
 function allRequests(): BusRequest[] {
@@ -299,6 +317,8 @@ async function resolvePoll(start: number, marker: string): Promise<void> {
 }
 
 async function test(name: string, body: () => Promise<void>): Promise<void> {
+    if (window.cprTestFilter && !name.includes(window.cprTestFilter))
+        return;
     try {
         boundary.transport.host = 'cpr-test-' + tests.length;
         await body();
@@ -318,11 +338,403 @@ async function test(name: string, body: () => Promise<void>): Promise<void> {
         boundary.superuser.change(true);
         boundary.metadataMode = 'automatic';
         boundary.metadata = { ...DEFAULT_CLIENT_METADATA };
-        await delay();
+        boundary.profileMode = 'automatic';
+        boundary.profile = structuredClone(DEFAULT_HOST_PROFILE);
+        await delay(75);
     }
 }
 
 async function run(): Promise<void> {
+    await test('V39 masked schedule facts refuse actual file and fixed system manager mutations', async () => {
+        const profile = structuredClone(DEFAULT_HOST_PROFILE);
+        profile.facts.units['hfcache-sync.timer'] = { load: 'masked', active: 'inactive', unit_file: 'masked' };
+        boundary.profile = { ...profile, permissions: { ...profile.permissions, schedule: false } };
+        const commands = [() => writeDropIn('*-*-* 03:00:00', null), () => removeDropIn(), () => startUnit('hfcache-sync.timer')];
+        for (const command of commands) {
+            const start = boundary.processes.length;
+            const requests = allRequests().length;
+            let failure: unknown;
+            await command().catch(error => { failure = error });
+            invariant(failure instanceof Error && boundary.processes.length === start && allRequests().length === requests,
+                      'Masked schedule profile reached a file mutation or system manager effect');
+        }
+    });
+
+    await test('V37 direct plugin commands reject global option prefixes unsupported local effects and mixed modes', async () => {
+        const commands = [['--quiet', 'sync'], ['archive', 'init'], ['config', 'validate', '--local'],
+            ['verify', '--estimate', '--full'], ['unsupported-command']];
+        for (const command of commands) {
+            const start = boundary.processes.length;
+            let failure: unknown;
+            const observing = Promise.resolve().then(() => runHfcache(command))
+                    .catch(error => { failure = error });
+            await delay(75);
+            for (const process of boundary.processes.slice(start))
+                process.fail();
+            await observing;
+            invariant(boundary.processes.length === start && failure instanceof Error,
+                      'Unsupported plugin command reached the fixed client: ' + command.join(' '));
+        }
+    });
+
+    await test('V37 caller command mutation cannot turn a Hub sizing permission into an archive job', async () => {
+        boundary.profile = { ...structuredClone(DEFAULT_HOST_PROFILE), permissions: { ...DEFAULT_HOST_PROFILE.permissions, archive: false } };
+        await readHostProfile();
+        const start = boundary.processes.length;
+        const command = ['plan'];
+        let failure: unknown;
+        const observing = runHfcache(command, { onNotice: notice => { if (notice.kind === 'key') command[0] = 'sync'; } })
+                .catch(error => { failure = error });
+        const process = await until(() => boundary.processes[start] ?? (failure instanceof Error ? false : null), 'captured original sizing invocation');
+        process.succeed(process.command[0], 'captured-original-command');
+        await observing;
+        invariant(process.command.join(' ') === 'plan', 'Caller mutation submitted an archive job through Hub-only permission');
+        invariant(process.key !== null && retainedRecord(process.key).route === '/api/v1/plans', 'Caller mutation changed the original route identity');
+    });
+
+    await test('V39 a completed schedule file mutation remains uncertain after Reload permission refusal until explicit reconciliation', async () => {
+        await readHostProfile();
+        const files = boundary.files.length;
+        const start = boundary.processes.length;
+        const schedule = (key: string) => mount(<div><ProfileProbe /><ScheduleEditor key={key} onApplied={() => undefined} /></div>);
+        schedule('initial');
+        (await nextFile(files)).succeed('[Timer]\nOnCalendar=*-*-* 03:00:00\nRandomizedDelaySec=15m\n');
+        (await until(() => readyButton('Reset to shipped schedule'), 'permitted managed schedule reset')).click();
+        (await until(() => readyButton('Remove drop-in and apply'), 'managed schedule reset confirmation')).click();
+        const removal = await until(() => boundary.processes.slice(start).find(item => item.action === 'schedule-remove') ?? null, 'fixed schedule file removal');
+        const pendingReads = boundary.files.length;
+        schedule('pending-remount');
+        (await nextFile(pendingReads)).succeed('[Timer]\nOnCalendar=*-*-* 03:00:00\nRandomizedDelaySec=15m\n');
+        await delay(50);
+        invariant(button('Reset to shipped schedule')?.disabled === true && button('Apply override')?.disabled === true,
+                  'Remount permitted another schedule change before the original file mutation acknowledged');
+        invariant(boundary.processes.slice(start).filter(item => item.action === 'schedule-remove').length === 1,
+                  'Pending schedule remount repeated the original file mutation');
+        boundary.profileMode = 'manual';
+        const profiles = boundary.profileProcesses.length;
+        removal.rawSuccess();
+        const reloadProof = await until(() => boundary.profileProcesses[profiles] ?? null, 'fresh Reload permission inspection after removal');
+        reloadProof.emit(JSON.stringify({ schema_version: 1, state: 'unknown', reason: 'policy-missing' }));
+        reloadProof.rawSuccess();
+        await until(() => text().includes('not provisioned'), 'classified post-removal permission refusal');
+        boundary.profileMode = 'automatic';
+        await readHostProfile();
+        await delay(75);
+        invariant(button('Reset to shipped schedule')?.disabled === true && button('Apply override')?.disabled === true,
+                  'Post-removal Reload refusal enabled another file mutation without reconciliation');
+        invariant(boundary.processes.slice(start).filter(item => item.action === 'schedule-remove').length === 1, 'Uncertain schedule mutation repeated automatically');
+        const remountReads = boundary.files.length;
+        schedule('uncertain-remount');
+        (await nextFile(remountReads)).succeed(null);
+        await until(() => text().includes('not provisioned') && button('Inspect changed schedule'), 'original schedule uncertainty retained through actual component remount');
+        const input = await until(() => document.querySelector<HTMLInputElement>('#schedule-oncalendar'), 'remounted schedule calendar input');
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '*-*-* 03:00:00');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        const checks = boundary.processes.length;
+        (await until(() => readyButton('Check calendar'), 'fresh calendar validation after remount')).click();
+        const check = await until(() => boundary.processes.slice(checks).find(item => item.action === 'schedule-validate') ?? null, 'fixed read-only calendar validation');
+        check.rawSuccess('Normalized form: *-*-* 03:00:00\nNext elapse: Wed 2026-10-21 03:00:00 EDT\n');
+        await until(() => text().includes('Normalized:'), 'fresh calendar evidence while schedule remains uncertain');
+        invariant(button('Apply override')?.disabled === true && button('Reset to shipped schedule')?.disabled === true,
+                  'Remount and fresh calendar validation bypassed retained schedule uncertainty');
+        const reads = boundary.files.length;
+        const requests = allRequests().length;
+        (await until(() => readyButton('Inspect changed schedule'), 'explicit read-only changed schedule inspection')).click();
+        (await nextFile(reads)).succeed(null);
+        const [properties] = await propertyRequests(requests, 1);
+        properties.succeed({ ActiveState: { v: 'inactive' }, SubState: { v: 'dead' }, UnitFileState: { v: 'enabled' } });
+        (await until(() => readyButton('Acknowledge inspected schedule'), 'explicit exact schedule inspection acknowledgement')).click();
+        await until(() => readyButton('Check calendar'), 'deliberate fresh schedule validation after acknowledgement');
+        invariant(text().includes('not provisioned') && text().includes('does not establish the loaded calendar'),
+                  'Acknowledgement erased the original refusal or claimed manager application');
+        invariant(button('Apply override')?.disabled === true, 'Schedule acknowledgement reused the old calendar validation');
+        invariant(boundary.processes.slice(start).filter(item => item.action === 'schedule-remove').length === 1 &&
+                  allRequests().slice(requests)
+                          .every(item => item.method === 'GetAll'), 'Schedule inspection or acknowledgement replayed a host mutation');
+    });
+
+    await test('V38 delayed permitted profile proof cannot supersede a newer denied profile', async () => {
+        boundary.profileMode = 'manual';
+        const start = boundary.profileProcesses.length;
+        let authorized = false;
+        let failure: unknown;
+        const old = requireHostAction('archive').then(() => { authorized = true }, error => { failure = error });
+        const first = await until(() => boundary.profileProcesses[start] ?? null, 'old pending host permission inspection');
+        mount(<ProfileProbe />);
+        const newest = readHostProfile();
+        const second = await until(() => boundary.profileProcesses[start + 1] ?? null, 'newer host restriction inspection');
+        second.emit(JSON.stringify({ schema_version: 1, state: 'unknown', reason: 'policy-missing' }));
+        second.rawSuccess();
+        await newest;
+        first.emit(JSON.stringify(DEFAULT_HOST_PROFILE));
+        first.rawSuccess();
+        await old;
+        await until(() => evidence().archive === false && evidence().loading === false, 'latest denied host permission rendered');
+        invariant(!authorized && failure instanceof Error && !hostActionAllowed('archive'), 'Older permitted host proof authorized an effect after newer denial');
+        invariant(boundary.profileProcesses.length === start + 2, 'Superseded host proof created an unbounded retry');
+    });
+
+    await test('V08/V38 profile permission remains unavailable through a session change until one fresh inspection completes', async () => {
+        boundary.profileMode = 'manual';
+        const start = boundary.profileProcesses.length;
+        mount(<ProfileProbe />);
+        const old = await until(() => boundary.profileProcesses[start] ?? null, 'pending old-session host inspection');
+        boundary.superuser.change(false);
+        await until(() => evidence().archive === false, 'permission cleared on privilege loss');
+        boundary.superuser.change(true);
+        await delay(50);
+        invariant(boundary.profileProcesses.length === start + 1, 'Session change created overlapping host probe storm');
+        old.emit(JSON.stringify(DEFAULT_HOST_PROFILE));
+        old.rawSuccess();
+        const fresh = await until(() => boundary.profileProcesses[start + 1] ?? null, 'fresh host inspection after stale completion');
+        invariant(evidence().archive === false && !hostActionAllowed('archive'), 'Old-session host permission restored effect authority');
+        fresh.emit(JSON.stringify(DEFAULT_HOST_PROFILE));
+        fresh.rawSuccess();
+        await until(() => evidence().archive === true && evidence().loading === false, 'fresh current-session host permission');
+        await delay(75);
+        invariant(boundary.profileProcesses.length === start + 2, 'Current host proof did not end the bounded inspection retry');
+    });
+
+    await test('V39 permitted sync timer enabling uses the fixed system manager without force or unmask', async () => {
+        await readHostProfile();
+        const start = allRequests().length;
+        const enabling = enableUnit('hfcache-sync.timer');
+        const enable = await until(() => allRequests().slice(start)
+                .find(item => item.method === 'EnableUnitFiles') ?? null,
+                                   'explicitly permitted fixed sync timer enable');
+        invariant(JSON.stringify(enable.arguments) === JSON.stringify([['hfcache-sync.timer'], false, false]),
+                  'Timer enable used force, runtime manager selection or another unit');
+        enable.succeed();
+        const reload = await until(() => allRequests().slice(start)
+                .find(item => item.method === 'Reload') ?? null, 'fixed system manager reload after timer enable');
+        reload.succeed();
+        await enabling;
+        invariant(allRequests().slice(start)
+                .every(item => ['EnableUnitFiles', 'Reload'].includes(item.method)),
+                  'Timer enable introduced an unmask or unrelated manager operation');
+    });
+
+    await test('V35 manual full sync uses one original keyed REST client and exact result without a service start', async () => {
+        await readHostProfile();
+        const start = boundary.processes.length;
+        const requests = allRequests().length;
+        mount(<SyncOperations />);
+        const run = await until(() => { const control = button('Run full sync'); return control && !control.disabled ? control : null }, 'permitted manual full sync');
+        run.click();
+        const confirm = await until(() => button('Start full sync'), 'manual sync confirmation');
+        confirm.click();
+        confirm.click();
+        const process = await keyedProcess(start);
+        invariant(process.command.join(' ') === 'sync' && process.clientScope !== null, 'Full sync changed its fixed keyed REST command');
+        process.succeed('sync', 'manual-sync-result');
+        await until(() => text().includes('manual-sync-result'), 'exact manual sync terminal result');
+        invariant(process.key !== null && retainedRecord(process.key).state === 'terminal', 'Manual sync lost its terminal original record');
+        invariant(boundary.processes.slice(start).filter(item => item.key !== null).length === 1, 'Manual sync confirmation submitted twice');
+        invariant(allRequests().slice(requests)
+                .every(item => item.method !== 'StartUnit'), 'Manual sync started a systemd service');
+        invariant(button('Start / resume full sync') === null, 'Legacy full service-start control remains');
+    });
+
+    await test('V36 manual full verification preserves the exact failed domain result through the REST operation flow', async () => {
+        await readHostProfile();
+        const start = boundary.processes.length;
+        const requests = allRequests().length;
+        mount(<Verification />);
+        const run = await until(() => { const control = button('Run full verification'); return control && !control.disabled ? control : null }, 'permitted manual full verification');
+        run.click();
+        (await until(() => button('Start full verification'), 'manual verification confirmation')).click();
+        const process = await keyedProcess(start);
+        invariant(process.command.join(' ') === 'verify --full', 'Full verification changed its original command');
+        process.emit('Idempotency key: ' + process.key + '\nOperation: ' + process.operationId + '\n');
+        const failure = { ...configEnvelope({ marker: 'manual-corruption-result' }, 40, 'HFVER001'), command: 'verify --full' };
+        process.failEnvelope(failure);
+        await until(() => text().includes('manual-corruption-result') && text().includes('HFVER001'), 'classified full verification failure');
+        invariant(process.key !== null && retainedRecord(process.key).terminal?.exitCode === 40, 'Domain verification exit was replaced with observer success');
+        invariant(allRequests().slice(requests)
+                .every(item => item.method !== 'StartUnit'), 'Manual full verification started a service');
+        invariant(button('Start hfcache-verify.service') === null, 'Legacy full verification service start remains');
+    });
+
+    await test('V35/V36 detaching a manual display retains the original operation without closing or replaying execution', async () => {
+        await readHostProfile();
+        const start = boundary.processes.length;
+        mount(<ManualFullJob mode="sync" />);
+        (await until(() => { const control = button('Run full sync'); return control && !control.disabled ? control : null }, 'permitted detachable full sync')).click();
+        (await until(() => button('Start full sync'), 'detachable full sync confirmation')).click();
+        const process = await keyedProcess(start);
+        invariant(process.key !== null, 'Detachable operation key is absent');
+        process.emit('Idempotency key: ' + process.key + '\nOperation: ' + process.operationId + '\n');
+        await until(() => text().includes(process.operationId), 'original handles before detach');
+        (await until(() => button('Detach manual display'), 'manual detach control')).click();
+        process.succeed('sync', 'late-detached-result');
+        await until(() => retainedRecord(process.key!).state === 'terminal', 'original result after display detach');
+        invariant(text().includes('Manual display detached') && text().includes(process.operationId), 'Detaching lost the original local evidence');
+        invariant(!text().includes('late-detached-result'), 'Detached display accepted late callbacks');
+        invariant(button('Run full sync')?.disabled === true, 'Detached display allowed a replacement job');
+        invariant(boundary.processes.slice(start).filter(item => item.key !== null).length === 1, 'Detach replayed the original job');
+    });
+
+    await test('V40 scheduled observer journals and stopping remain separate from an active manual REST operation', async () => {
+        await readHostProfile();
+        const start = boundary.processes.length;
+        const requests = allRequests().length;
+        const journals = boundary.journals.length;
+        mount(<SyncOperations />);
+        for (let wave = 0; wave < 5; wave++) {
+            resolveProperties(allRequests().slice(requests), 'active');
+            await delay();
+        }
+        const journal = await until(() => boundary.journals[journals] ?? null, 'fixed scheduled observer journal');
+        invariant(journal.unit === 'hfcache-sync.service', 'Scheduled journal changed its fixed unit');
+        (await until(() => { const control = button('Run full sync'); return control && !control.disabled ? control : null }, 'manual sync beside scheduled observer')).click();
+        (await until(() => button('Start full sync'), 'coexisting manual sync confirmation')).click();
+        const process = await keyedProcess(start);
+        invariant(process.key !== null, 'Coexisting manual operation key is absent');
+        process.emit('Idempotency key: ' + process.key + '\nOperation: ' + process.operationId + '\n');
+        journal.emit(JSON.stringify({ ...configEnvelope({ marker: 'scheduled-journal-only' }), command: 'sync' }) + '\n');
+        await until(() => text().includes('scheduled-journal-only'), 'separate host journal display');
+        invariant(retainedRecord(process.key).state !== 'terminal', 'Scheduled journal became a manual operation result');
+        invariant(text().includes('Scheduled sync observer') && text().includes('observer process result') &&
+                  text().includes('They do not establish the result of a manual server operation'), 'Scheduled state lacks separate observer labels');
+        (await until(() => { const control = button('Stop scheduled sync observer'); return control && !control.disabled ? control : null }, 'independently permitted observer stop')).click();
+        (await until(() => button('Stop observer'), 'scheduled observer stop confirmation')).click();
+        const stop = await until(() => allRequests().slice(requests)
+                .find(item => item.method === 'StopUnit') ?? null, 'fixed system observer stop');
+        invariant(JSON.stringify(stop.arguments) === JSON.stringify(['hfcache-sync.service', 'replace']), 'Observer stop targeted another unit');
+        stop.succeed();
+        await delay(75);
+        invariant(retainedRecord(process.key).state !== 'terminal', 'Stopping a scheduled observer cancelled or completed a manual job');
+        process.succeed('sync', 'coexisting-manual-result');
+        await until(() => text().includes('coexisting-manual-result'), 'manual result independent of observer stop');
+        invariant(boundary.processes.slice(start).filter(item => item.key !== null).length === 1, 'Observer controls submitted another job');
+        invariant(allRequests().slice(requests)
+                .every(item => item.method !== 'StartUnit'), 'Observer display started a service');
+    });
+
+    await test('V37/V38 guarded and unknown profiles disable actual manual selected revision and maintenance controls', async () => {
+        for (const state of ['unknown', 'guarded']) {
+            boundary.profile = state === 'unknown'
+                ? { schema_version: 1, state: 'unknown', reason: 'policy-missing' }
+                : {
+                    ...structuredClone(DEFAULT_HOST_PROFILE),
+                    state: 'guarded',
+                    permissions: { archive: false, hub: false, control: false, schedule: false, configuration: false, observer: false },
+                    facts: { ...structuredClone(DEFAULT_HOST_PROFILE.facts), guard: 'held', archive_mount: 'nfs-ro' }
+                };
+            await readHostProfile();
+            const start = boundary.processes.length;
+            mount(<><SyncOperations /><Verification /><Maintenance /><Dashboard /></>);
+            await until(() => button('Run full sync') && button('Run full verification') && button('Dry run'), 'denied actual job controls');
+            const status = await until(() => boundary.processes.slice(start).find(item => item.command[0] === 'status') ?? null, 'selected sync status metadata');
+            status.succeedEnvelope({ ...configEnvelope({ repositories: [{ repository_type: 'model', repository_id: 'org/model', managed: true, enabled: true }] }), command: 'status' });
+            const checkbox = await until(() => document.querySelector<HTMLInputElement>('[id="select-model:org/model"]'), 'valid selected repository control');
+            checkbox.click();
+            const revision = await until(() => document.querySelector<HTMLInputElement>('#verify-revision-selector'), 'valid revision selector input');
+            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(revision, 'model:org/model@' + 'a'.repeat(40));
+            revision.dispatchEvent(new Event('input', { bubbles: true }));
+            await delay();
+            for (const label of ['Run full sync', 'Run full verification', 'Sync selected (1)', 'Run verify --revision', 'Dry run', 'Run checks (read-only)', 'Run full checks (write probes)'])
+                invariant(button(label)?.disabled === true, 'Denied profile enabled ' + label);
+            invariant(button('Run verify --estimate')?.disabled === false, 'Denied profile blocked ordinary metadata estimation');
+            invariant(text().includes(state === 'guarded' ? 'read-only' : 'not provisioned'), 'Denied controls omit the trusted restriction reason');
+            invariant(boundary.processes.slice(start).every(item => item.key === null), 'Rendering denied controls submitted a job');
+            const readStart = boundary.processes.length;
+            const records = operationRegistry.snapshot().records.length;
+            const validation = runHfcache(['config', 'validate']);
+            const process = await nextProcess(readStart);
+            invariant(process.command.join(' ') === 'config validate' && process.key === null,
+                      'Denied workload profile rerouted synchronous validation into a job');
+            process.succeed('config validate', 'validation-remains-available');
+            await validation;
+            invariant(operationRegistry.snapshot().records.length === records, 'Denied-profile synchronous validation invented a job');
+            mounted?.unmount();
+            mounted = null;
+        }
+    });
+
+    await test('V37/V38 direct job adapters refuse unknown and guarded profiles before client submission', async () => {
+        const commands = [['sync'], ['verify', '--full'], ['repair', 'model:org/model@' + 'a'.repeat(40), '--reason', 'synthetic fixture'],
+            ['prune', '--apply'], ['recover', '--apply'], ['plan'], ['doctor', '--read-only'], ['doctor'],
+            ['prune', '--dry-run'], ['recover', '--dry-run']];
+        for (const state of ['unknown', 'guarded']) {
+            boundary.profile = state === 'unknown'
+                ? { schema_version: 1, state: 'unknown', reason: 'policy-missing' }
+                : {
+                    ...structuredClone(DEFAULT_HOST_PROFILE),
+                    state: 'guarded',
+                    permissions: { archive: false, hub: false, control: false, schedule: false, configuration: false, observer: false },
+                    facts: { ...structuredClone(DEFAULT_HOST_PROFILE.facts), guard: 'held', archive_mount: 'nfs-ro' }
+                };
+            for (const command of commands) {
+                boundary.transport.host = 'cpr-denied-' + state + '-' + command[0];
+                await readHostProfile();
+                const start = boundary.processes.length;
+                let failure: unknown;
+                const result = runHfcache(command).catch(error => { failure = error });
+                await delay(75);
+                for (const process of boundary.processes.slice(start))
+                    process.fail();
+                await result;
+                invariant(boundary.processes.length === start,
+                          'Direct ' + command.join(' ') + ' bypassed the ' + state + ' profile');
+                invariant(failure instanceof Error, 'Denied direct job was not classified');
+            }
+        }
+    });
+
+    await test('V37 job categories enforce their own explicit Hub control and archive permissions', async () => {
+        const cases: Array<{ command: string[]; permission: 'archive' | 'hub' | 'control' }> = [
+            { command: ['plan'], permission: 'hub' },
+            { command: ['doctor', '--read-only'], permission: 'hub' },
+            { command: ['doctor'], permission: 'hub' },
+            { command: ['doctor'], permission: 'archive' },
+            { command: ['prune', '--dry-run'], permission: 'control' },
+            { command: ['recover', '--dry-run'], permission: 'control' },
+        ];
+        for (const [index, item] of cases.entries()) {
+            boundary.transport.host = 'cpr-effect-category-' + index;
+            boundary.profile = {
+                ...structuredClone(DEFAULT_HOST_PROFILE),
+                permissions: { ...DEFAULT_HOST_PROFILE.permissions, [item.permission]: false }
+            };
+            const start = boundary.processes.length;
+            const metadata = boundary.metadataProcesses.length;
+            let failure: unknown;
+            const result = runHfcache(item.command).catch(error => { failure = error });
+            await delay(75);
+            for (const process of boundary.processes.slice(start))
+                process.fail();
+            await result;
+            invariant(failure instanceof Error && boundary.processes.length === start && boundary.metadataProcesses.length === metadata,
+                      item.command.join(' ') + ' bypassed its denied ' + item.permission + ' permission');
+        }
+    });
+
+    await test('V37/V38 direct configuration mutations refuse unknown and guarded profiles before filesystem effects', async () => {
+        for (const state of ['unknown', 'guarded']) {
+            boundary.profile = state === 'unknown'
+                ? { schema_version: 1, state: 'unknown', reason: 'policy-missing' }
+                : {
+                    ...structuredClone(DEFAULT_HOST_PROFILE),
+                    state: 'guarded',
+                    permissions: { archive: false, hub: false, control: false, schedule: false, configuration: false, observer: false },
+                    facts: { ...structuredClone(DEFAULT_HOST_PROFILE.facts), guard: 'held', archive_mount: 'nfs-ro' }
+                };
+            await readHostProfile();
+            for (const mutate of [writeCandidate, installCandidate, removeCandidate]) {
+                const start = boundary.processes.length;
+                let failure: unknown;
+                const result = mutate({ installedContent: CONFIG_BASE, candidateContent: CONFIG_DRAFT }).catch(error => { failure = error });
+                await delay(75);
+                for (const process of boundary.processes.slice(start))
+                    process.fail();
+                await result;
+                invariant(boundary.processes.length === start, 'Direct configuration mutation bypassed the ' + state + ' profile');
+                invariant(failure instanceof Error, 'Denied configuration mutation was not classified');
+            }
+        }
+    });
+
     await test('V01/V51 QueryError retains candidate bridge stage without raw secret disclosure', async () => {
         const index = boundary.processes.length;
         const observing = runHfcache(['config', 'validate'], { stage: 'candidate-validate' });
@@ -411,7 +823,7 @@ async function run(): Promise<void> {
 
     await test('V06/V08 a failed unit mutation is observed once and never replayed', async () => {
         const start = allRequests().length;
-        const changing = startUnit('hfcache-sync.service');
+        const changing = startUnit('hfcache-sync.timer');
         const observed = changing.then(() => false, () => true);
         const request = await until(() => allRequests().slice(start)
                 .find(item => item.method === 'StartUnit') ?? null,
@@ -535,7 +947,7 @@ async function run(): Promise<void> {
     await test('V08 a maintenance confirmation portal disables its action after privilege loss', async () => {
         const start = boundary.processes.length;
         mount(<Maintenance />);
-        const dryRun = await until(() => button('Dry run'), 'actual maintenance mount');
+        const dryRun = await until(() => readyButton('Dry run'), 'actual maintenance mount');
         dryRun.click();
         (await nextProcess(start)).succeed('prune', 'safe dry-run result');
         const apply = await until(() => {
@@ -937,7 +1349,7 @@ async function run(): Promise<void> {
         const startup = await until(() => boundary.metadataProcesses[start] ?? null, 'actual startup client authority read');
         startup.failEnvelope({ ...configEnvelope({}, 10, 'HFAPI003'), command: 'capabilities' });
         await until(() => text().includes('HFAPI003'), 'original authenticated startup metadata refusal');
-        const readOnlyDoctor = await until(() => button('Run checks (read-only)'), 'actual diagnostic job control');
+        const readOnlyDoctor = await until(() => readyButton('Run checks (read-only)'), 'actual diagnostic job control');
         readOnlyDoctor.click();
         const retry = await until(() => boundary.metadataProcesses[start + 1] ?? null, 'actual pre-submission metadata check');
         retry.failEnvelope({ ...configEnvelope({}, 10, 'HFAPI018'), command: 'version' });
@@ -950,7 +1362,7 @@ async function run(): Promise<void> {
     await test('V24/V27 actual Application tabs retain uncertain maintenance Apply and recover its original operation', async () => {
         mount(<Application />);
         (await until(() => button('Maintenance'), 'actual Application maintenance tab')).click();
-        const dry = await until(() => button('Dry run'), 'mounted prune maintenance card');
+        const dry = await until(() => readyButton('Dry run'), 'mounted prune maintenance card');
         const start = boundary.processes.length;
         dry.click();
         const preview = await keyedProcess(start);
@@ -1151,7 +1563,7 @@ async function run(): Promise<void> {
 
     await test('V26 maintenance Apply cannot reuse a preview through a changed client profile', async () => {
         mount(<Maintenance />);
-        const dry = await until(() => button('Dry run'), 'actual maintenance preview');
+        const dry = await until(() => readyButton('Dry run'), 'actual maintenance preview');
         const start = boundary.processes.length;
         dry.click();
         (await keyedProcess(start)).succeed('prune', 'same-scope-preview');
@@ -1298,7 +1710,7 @@ async function run(): Promise<void> {
             let child = frame.contentWindow;
             invariant(child && frame.contentDocument, 'Owned application frame is inaccessible');
             button('Maintenance', frame.contentDocument)?.click();
-            await until(() => button('Dry run', frame.contentDocument!), 'fresh iframe maintenance tab');
+            await until(() => readyButton('Dry run', frame.contentDocument!), 'fresh iframe maintenance tab');
             const first = child.cprFixture;
             const start = first.processes.length;
             button('Dry run', frame.contentDocument)?.click();
@@ -1366,7 +1778,7 @@ async function run(): Promise<void> {
                 const frame = await frameApplication('cpr-actual-quota');
                 invariant(frame.contentDocument && frame.contentWindow, 'Owned quota-test module is inaccessible');
                 button('Maintenance', frame.contentDocument)?.click();
-                const dry = await until(() => button('Dry run', frame.contentDocument!), 'actual quota-test maintenance control');
+                const dry = await until(() => readyButton('Dry run', frame.contentDocument!), 'actual quota-test maintenance control');
                 dry.click();
                 await until(() => frame.contentDocument?.body.textContent?.includes('Operation recovery storage is unavailable') === true,
                             'explicit actual browser quota refusal');
@@ -1389,7 +1801,7 @@ async function run(): Promise<void> {
                 const frame = await frameApplication(host);
                 invariant(frame.contentDocument && frame.contentWindow, 'Owned terminal-restore module is inaccessible');
                 button('Maintenance', frame.contentDocument)?.click();
-                const dry = await until(() => button('Dry run', frame.contentDocument!), 'owned terminal-restore maintenance control');
+                const dry = await until(() => readyButton('Dry run', frame.contentDocument!), 'owned terminal-restore maintenance control');
                 const first = frame.contentWindow.cprFixture;
                 const start = first.processes.length;
                 dry.click();

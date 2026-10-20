@@ -1,0 +1,134 @@
+CPR-005 mounted component and adapter evidence (2026-10-20)
+
+Repository: /home/tyler/Projects/hfcache; commands below run from cockpit/.
+Every browser run uses an owned Firefox profile and loopback fixture. Actual
+React components, hooks, adapters, scoped operation registry and runner execute;
+only external Cockpit process/D-Bus/file/privilege ports are controlled. No real
+host command, PAM authentication, API request, credential, archive/NAS access,
+service change or application installation is performed by this fixture.
+This does not substitute for the separate real CLI/Unix-socket evidence or
+required current-source disposable Cockpit/rootless runtime acceptance.
+
+Direct-adapter permission RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V37/V38 direct' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-gates-red.jsonl
+Observed before central permission enforcement: 2 cases, 0 pass, 2 fail; exit 1.
+An unknown profile allowed the actual sync adapter to start a controlled client
+process and allowed the actual configuration adapter to start a guarded mutation.
+Bundle SHA-256:
+d7f5928b0b41dfd55f24ae9f4f3dd5ad286ac36af5395c979216ddbdc69080b9
+
+Direct-adapter permission GREEN:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V37/V38 direct' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-gates-green.json
+Observed after enforcement: 2 cases, 2 pass; exit 0. This focused version tested
+sync/full verify/repair/prune apply/recover apply for unknown and guarded facts,
+and configuration write/install/remove for unknown facts. The final full suite
+extends these cases with Hub/control modes and guarded configuration mutations.
+Bundle SHA-256:
+1250102a46dfee665462203ae9d7eca54c5148cb1c1e262d5b99aa7389c2731f
+
+Manual-control component RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V35 manual full sync' CPR_BROWSER_MANUAL_BASELINE=ca034e31f6077c2edb74cda2cdecb89be3bcb96f node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-manual-red.jsonl
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V36 manual full verification' CPR_BROWSER_MANUAL_BASELINE=ca034e31f6077c2edb74cda2cdecb89be3bcb96f node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-verify-red.jsonl
+Each observed 1 case, 0 pass, 1 fail; exit 1. Only sync.tsx and verify.tsx are
+loaded from the exact prior commit; other adapters are current. The prior actual
+components lack the new manual REST controls, so each case times out at that
+specific control. This is component-surface baseline evidence, not proof of an
+installed service-start failure, full old-stack behavior or PAM defect.
+Sync bundle: cfed2c52d139a8246291263cf3504902b96596744c31b984f104f360337bf2c7
+Verify bundle: 0a4e299eb5b48e659f6ea6b21eedb1e869f68f45eddff857307183bb5e6fe600
+
+Caller-command mutation RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V37 caller command mutation' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-command-red.jsonl
+Observed 1 case, 0 pass, 1 fail; exit 1. With Hub permission and archive permission
+denied, the real pre-send key callback changed the caller's ['plan'] array into
+['sync']; the controlled actual CLI invocation then submitted sync.
+Bundle: 147b59cc665cafd9c2bbe3cc09e61f2d9dafe794156fdeca76e538b818ae959a
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V37 caller command mutation' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-command-green.json
+Observed after command/options capture: 1 case, 1 pass; exit 0. The actual command
+and original recorded route remain plan and /api/v1/plans.
+Bundle: 839d3af90e9b7f6204e028ceb5ee551e9bb912fb7e3420cdf66d21692aae0b1a
+
+Closed plugin grammar RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V37 direct plugin commands' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-grammar-red.jsonl
+Observed 1 case, 0 pass, 1 fail; exit 1. The first tested unsupported vector,
+['--quiet','sync'], reached the fixed client instead of being rejected. Later
+vectors in that case were not reached in the RED run. The final case covers
+archive init, local validation, mixed verification modes and an unknown command.
+Bundle: f200a501ad388c092ec3cb0b956f9c9d2c24df55bdebf2fca137d3543d5b1104
+
+Partial schedule change RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V39 a completed schedule file' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-schedule-red.jsonl
+Observed 1 case, 0 pass, 1 fail; exit 1. Actual ScheduleEditor Reset acknowledges
+the fixed file removal, then receives a denied fresh permission proof before
+Reload. Restoring permission incorrectly enabled another file mutation without
+reconciliation. Bundle:
+147b59cc665cafd9c2bbe3cc09e61f2d9dafe794156fdeca76e538b818ae959a
+
+Partial schedule remount RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V39 a completed schedule file' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-schedule-remount-red.jsonl
+Observed after the first uncertainty latch but before retaining it outside the
+component: 1 case, 0 pass, 1 fail; exit 1. Actual unmount/remount and a fresh file
+read lost the original refusal and explicit inspection control. The later
+calendar/inspection/acknowledgement steps were not reached in this RED run.
+Bundle: 22aaee25340a975e05e2ffb7510a63f4e74a55aefbdde3c9083a519e36981cda
+
+Final mounted GREEN:
+  rtk node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-005-mounted.json
+Observed after all corrections: 62 cases, 62 pass; exit 0. This includes the
+original 47 cases and fifteen new cases for V35-V40 and profile/session bounds.
+The exact bundle SHA-256 is:
+e14553088ce64bb328142daf693dfa575f6a10ebf51537fbd521f95cc0941191
+
+Manual full sync confirms once and double-clicks confirmation: exactly one
+pre-keyed, scope-pinned sync client starts, with no systemd StartUnit. Manual full
+verification uses exactly verify --full, retains original receipts and the exact
+failed domain Envelope/exit 40. Explicit manual display detach suppresses late
+display callbacks without closing its process; the original registry still
+records its terminal result and no second job starts. A simultaneously active
+scheduled observer has separately labeled state/journal. Its journal cannot
+complete a manual job; independently permitted StopUnit targets only the fixed
+sync observer and does not cancel or duplicate the manual operation.
+
+Unknown and guarded fixtures disable actual full/selected/revision sync/verify,
+maintenance dry-run and both Doctor controls with fixed reasons, while metadata
+estimation and keyless remote synchronous validation remain available. Direct
+job/configuration adapters refuse prohibited effects before target processes;
+independent permission cases distinguish sizing/readonly Doctor Hub authority,
+full Doctor Hub and archive authority, and maintenance control authority.
+Masked timer facts refuse writeDropIn/removeDropIn/startUnit before any target
+process or D-Bus effect. The permitted timer case asserts exact system-manager
+EnableUnitFiles arguments [[hfcache-sync.timer], false, false], then Reload: no
+force, unmask, alternate unit or manager operation.
+
+The actual profile lifecycle refuses an older permitted proof after a newer
+denied response. A privilege/session change during a pending probe clears effect
+permission, waits for stale completion and performs exactly one fresh inspection.
+The command-mutation and closed-grammar cases now refuse authority bypasses while
+the existing verify --new keyed adapter remains supported. The intermediate
+closed-grammar omission was caught by the unchanged adapter matrix: 61 cases,
+60 pass, 1 fail (missing original keyed invocation), exit 1. That bounded output
+is retained as cpr-005-verify-new-grammar-red.jsonl; its exact source bundle was
+94a10dfb22b53b70bc22f3ecc35ce70710e3ef935de411cdc4451d026d64f173.
+
+The final schedule case uses a mounted sibling subscription, matching the
+Application lifetime while replacing keyed actual ScheduleEditor children. It
+first unmounts/remounts during the pending file removal: both changes remain
+blocked and only one removal exists. After the old promise acknowledges removal,
+fresh Reload permission is denied. Another actual remount plus a fresh null file
+read preserves the original refusal/uncertainty. A new successful read-only
+calendar check cannot enable Apply. Explicit inspection reads only the exact
+expected null file and known unmasked timer, then separate acknowledgement clears
+calendar readiness, preserves the original refusal and explains that loaded
+calendar/reload success remain unproven. Inspection and acknowledgement perform
+zero reload, restart, second file mutation or cleanup.
+
+Focused final GREEN:
+  rtk pnpm exec eslint --fix src/manual-job.tsx src/sync.tsx src/verify.tsx test/cockpit-fixture.ts test/browser.fixture.tsx test/browser.mjs
+  rtk pnpm exec tsc --noEmit
+  (cwd repository) rtk git diff --check -- cockpit/src/manual-job.tsx cockpit/src/sync.tsx cockpit/src/verify.tsx cockpit/test/browser.fixture.tsx cockpit/test/cockpit-fixture.ts cockpit/test/browser.mjs
+Observed: all exit 0. The focused completed schedule regression also passes in
+gates/cpr-005-schedule-green.json with the same final bundle hash.
+
+No temporary source omissions were used for any CPR-005 baseline. Failed runs
+retain bounded JSONL plus the owned Firefox log location; passing runs retain
+bounded JSON including every case name and the exact bundled-source hash.

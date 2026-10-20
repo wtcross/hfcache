@@ -1,0 +1,40 @@
+CPR-005 accepted package gate — 2026-10-20, this commit
+
+rtk proxy scripts/check.sh > /tmp/hfcache-cpr005-gate.log 2>&1
+Observed exit0. Full output SHA256:
+2e5d04f3696d7faf9db46e17c5f6d3be6bc81f285254247113f5d6a5efc034a4
+
+Locked dependency check/sync, Ruff format/lint, Pyrefly and documentation alignment
+passed. Documentation:184 human documents/19 helpers. Python:5165 passed,
+42 deselected in829.52s. Wheel and source distribution built; locked base,
+server and server-plus-MCP installation/import/help/version profiles passed.
+
+Cockpit portion actually executed make -C cockpit check: ESLint, stylelint,
+TypeScript,436 unit tests (0 failures/skips),62 mounted Firefox cases and fresh
+production build all passed. Full-gate mounted artifact:
+cpr-005-gate-mounted.json SHA256
+44578c262ca95f4cfc289d7bfb47bea4b019edacf1b14abbd73132a7067e25aa
+Mounted source bundle SHA256:
+e14553088ce64bb328142daf693dfa575f6a10ebf51537fbd521f95cc0941191
+Production index.js.gz decompressed-content SHA256:
+a767670965c618504a532951962050ab88f114ecaf1dd04af9815a519d8225a8
+
+Focused records: cpr-005-components.txt (reproduced bypass, partial schedule,
+remount and old manual-component failures); cpr-005-boundaries.txt (actual CLI/
+UDS/private verifier and candidate preflight); cpr-005-host-profile.txt (protected
+temporary filesystem/proc/fixed-query proof); cpr-005-host-controls.txt (strict
+frontend facts, post-acknowledgement error and bounded schedule session tests).
+Earlier genuine failed/red and intermediate verify--new omission artifacts remain.
+The exact supported verification form was restored before this accepted gate.
+
+CP04, CP01/02/03/05/06/08/10/11/12/13, INV006 and ADR89/122/127/134 reviewed.
+Repository-allocated ADR135 amends manual full jobs and protected host permission.
+CP09 direct reports remain for the next package. No new runtime dependency, REST
+route, archive format, credential authority, scheduler, host binding or manager.
+
+Source/component fixtures and private UDS acceptance are distinct from real
+Cockpit/PAM/rootless V54 and the original installed symptom. Current-rootless
+schedule/observer proof remains unsupported/denied. Existing production and old
+disposable guest guards/masks/locks/credentials/candidates remain unchanged;
+no NAS/production inspection, deployment, workload, replay or cleanup occurred.
+Next task CPR-006; plan remains active until required runtime/final acceptance.

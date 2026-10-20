@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Cockpit REST repair](../2026-10-19-plan-cockpit-rest-repair.md) |
 | Depends on | [CPR-004 — Retain operation handles and prevent uncertain resubmission](cpr-004-operation-recovery-and-replay-guards.md) |
 | Work package / commit | `CPR-005` — one complete package per commit |
@@ -63,7 +63,7 @@ commit. No live-host privilege or workload authority is granted by a task status
 
 ## Validation
 
-**Planned, not executed:** Cover V35–V40, V49 and V51 with exact argv/request route assertions and denied /
+Executed source fixtures cover V35–V40 and scoped V49/V51 with exact argv/request route assertions and denied /
 unknown/permitted profile fixtures. Assert fixed-manager and target/timer allowlist
 rules at adapter level, not just disabled buttons. Verify full job receipt/result
 parity through the actual client and run the complete gate.
@@ -74,13 +74,53 @@ commands/environment and any separately blocked disposable/installed checks.
 
 ## Execution notes and handoff
 
-Not started. On activation/resumption, record source drift, exact implementation
-scope, relevant runtime cause evidence, and any blocker with its unblock condition.
-Do not rewrite this section as completed merely because the plan was extracted.
+Started2026-10-20 after CPR-004 ca034e3 with clean source and full gate5101 Python,
+412 unit/47 mounted frontend green. Sole active task on the existing branch.
+Revalidated service-start full-job paths and schedule writes lacking an adapter
+profile gate. Amend CP04 before changing full jobs; retain fixed rootless client,
+system-manager schedule/observer identities, all guards/masks/hardening and final
+server policy/lock authority. Introduce only narrow read-only selected-profile
+facts plus explicit root-provisioned permissions, never inferred approval from an
+absent guard. Missing/mixed/unsafe facts fail closed. No production/runtime
+provisioning or guard transition is part of this source package.
+Decision 135 was allocated after actual decision 134 and accepted before source
+changes. It amends CP-04 while retaining the direct-report exception for CPR-006.
+Current-source real Cockpit/PAM fixture acceptance remains unpassed for CPR-008;
+the prior guest/guards/candidate/evidence stay unchanged.
+
+Source now implements manual keyed full jobs, fresh six-category permission gates,
+bounded protected root-only inspection and denied current-rootless schedule/observer
+permissions. The existing nine bindings and normal launcher/service roles remain.
+Actual subprocess CLI/private Unix socket tests pass three full-job/result/recovery
+cases; 61 protected host-inspection tests pass. Mounted direct-call bypass tests
+were observed red, then green; final62 component cases pass. Full
+`rtk proxy scripts/check.sh` passed with actual frontend execution; output is
+`/tmp/hfcache-cpr005-gate.log`. Review findings additionally reproduced/fixed
+mutable/unknown sender dispatch and post-acknowledgement schedule uncertainty,
+including pending/failed component remounts. Next specific action: commit this
+accepted package, then start CPR-006. Real current-source Cockpit/PAM remains V54.
 
 ## Completion evidence
 
-Pending. Replace with the completion date, accepted test/fixture results, executed
-gate evidence, invariant/ADR review outcome, changed docs, remaining operator
-handoff, and the corresponding completed `docs/agents/progress.md` entry. Before
-commit use `CPR-005, this commit`; after commit, record only actual git evidence.
+Completed 2026-10-20, CPR-005, this commit. [Accepted gate](../support/cockpit-rest-repair/gates/cpr-005.txt):
+`rtk proxy scripts/check.sh` exit0; 5165 Python passed/42 deselected in829.52s,
+all three locked wheel profiles, actual Cockpit lint/style/types,436 unit tests,
+62 mounted Firefox cases and production build. No frontend skip. Focused actual
+CLI/private Unix socket/private verifier3 cases and protected host proof61 cases
+pass; component/pure regressions preserve fail-before evidence for direct gates,
+immutable/closed dispatch, calendar injection, partial host mutations and remounts.
+
+Manual full jobs now share original-key REST recovery; scheduled observers remain
+separate. Fresh root-provisioned six-category permissions, indexed release proof,
+bounded host facts and guarded configuration checks enforce effects. Current
+rootless scheduled bindings remain unsupported, so schedule/observer permissions
+are effectively denied. Bounded app-memory schedule attempts retain pending and
+uncertain effects across tabs; explicit exact read/ack never reloads/restarts.
+
+CP04/related CP boundaries and INV006 reviewed; actual next ADR135 allocated and
+accepted, ADR89/122/134/index/invariant register and human Cockpit/usage/container/
+deployment/operations docs amended. CP09 report exception remains for CPR-006.
+No dependency, archive schema, REST route, credential, scheduler or binding change.
+Completed progress entry and operator handoff accompany this package. Required
+current-source Cockpit/PAM V54 and original installed cause remain unproven; no
+production/NAS/old-guest changes. Continue CPR-006; no unrelated backlog activation.

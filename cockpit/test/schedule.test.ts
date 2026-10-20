@@ -24,6 +24,14 @@ test('a drop-in round-trips through the parser', () => {
     assert.equal(withDelay.randomizedDelaySec, '30m');
 });
 
+test('V39 calendar and delay cannot inject another drop-in directive', () => {
+    for (const calendar of ['', '  ', '*-*-* 02:00:00\nUnit=sshd.service', 'daily\r',
+        'daily\0', 'daily\\', 'x'.repeat(4097)])
+        assert.throws(() => renderDropIn(calendar, null));
+    for (const delay of ['30m\nUnit=sshd.service', '30m\r', '30m\0', '30m\\', 'x'.repeat(257)])
+        assert.throws(() => renderDropIn('daily', delay));
+});
+
 test('systemd-analyze calendar output parses, from the ops §9 sample', () => {
     const output = 'Normalized form: Wed *-01,04,07,10-01..07 04:00:00\n' +
         '    Next elapse: Wed 2026-10-07 04:00:00 EDT\n' +

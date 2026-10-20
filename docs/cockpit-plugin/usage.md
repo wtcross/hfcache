@@ -41,8 +41,8 @@ lock. `HFMNT010` renders as a plain busy notice naming the holder. A legitimate 
 also intentionally hold the lock; waiting does not grant authority to release it.
 Never remove the lock.
 
-**Service runs and observers.** Full sync/full verification start their existing
-installed services; selected jobs use a service-identity transient API client.
+**Manual jobs and scheduled observers.** Full and selected jobs use the same
+service-identity transient REST client, with original operation recovery.
 The server owns accepted work. Closing a tab or stopping its client ends the view,
 not execution. Keep the displayed idempotency key and operation ID: use
 `operations lookup -- KEY` / `operations wait -- ID` through the same API authority to
@@ -118,16 +118,16 @@ These service/schedule controls use the fixed system manager. They remain blocke
 on the selected rootless installation; the following describes their mechanism,
 not permission to unmask/enable them or redirect to the user manager.
 
-**Synchronization** shows live state for `hfcache-sync.service` (with its
-last result and exit status) and `hfcache-sync.timer` (scheduled or paused,
-next and last elapse), polled every few seconds.
+**Scheduled sync observer** shows live state for `hfcache-sync.service` and
+`hfcache-sync.timer`, polled every few seconds. Their exit status and journals
+describe scheduled observation, never the outcome of a manual job.
 
-- **Sync now** starts `hfcache-sync.service` — the production unit, same
-  sandbox, identity, and journal as the nightly timer. While a run is
-  active the button is disabled: starting the unit again merges into the
-  running sync rather than queueing a second one (a timer elapse mid-run
-  does the same, by design).
-- **Stop sync observation** stops only the installed sync client. Its
+- **Sync now** submits REST-backed CLI `sync` after fresh protected host permission
+  checks. It retains the original key/receipt and displays server events/results.
+  **Detach display** ends display updates; original operation recovery remains
+  above the tabs. It never cancels execution or permits uncertain resubmission.
+- **Stop scheduled sync observation** requires explicit permission and positive
+  proof of the fixed observation-only service binding. It stops only that client. Its
   confirmation says accepted server work may continue and the pending recovery
   handle is preserved. It neither cancels execution nor starts recovery; reconnect
   through operation lookup/wait. Actual executor drain remains an operator action.
@@ -147,12 +147,27 @@ override** is enabled only after a successful check; it writes the drop-in,
 reloads systemd, and restarts the timer if it was active. **Reset to
 shipped schedule** removes the override the same way.
 
+If a file change completes before a later manager failure, preserve the original
+error and use **Inspect changed schedule**, then **Acknowledge inspected schedule**
+only after the captured stored bytes and fixed timer match. Tab changes retain
+that uncertainty. Inspection and acknowledgement perform no reload or restart and
+do not prove the effective calendar; resolve manager application through the
+operator runbook before claiming the earlier schedule change succeeded.
+
 **Sync selected repositories** offers the enabled, managed repositories as
 checkboxes and runs `sync TYPE:ID …` as a page-spawned transient unit —
 keep the tab open to see the result; the confirmation states the
 consequence. Output streams live, and the result envelope renders at the
 end. If observation is lost, retain the displayed handles and reconnect; do not
 infer execution stopped or automatically reconcile.
+
+**Host restrictions** above the tabs reports fresh trusted deployment evidence.
+Missing or unsafe administrator policy, mixed artifacts or unknown host facts
+deny effects. Archive, Hub-capable/control jobs, configuration, schedule and
+observer permissions are separate; absence of a guard or mask grants none.
+Both Doctor modes contact the Hub and write receipts; full Doctor also performs
+archive write probes. Ordinary metadata and synchronous validation remain
+distinct. Source fixtures do not establish installed workload acceptance.
 
 **Live activity** displays bounded CLI operation events and unit journal
 diagnostics. It reports only emitted sequence/kind/message and retention gaps;
@@ -265,10 +280,10 @@ Ordered by escalation, and the estimate comes first deliberately:
   whether the window would overlap storage maintenance. Takes no lock,
   reads no payload bytes and persists no report/receipt. It is a bounded metadata
   read under the installation's access restrictions, not an integrity check.
-- **Full verification** — only through `hfcache-verify.service` (`CP-04`),
-  behind a dialog noting that it shares the single application lock and
-  will wait behind a legitimately long sync. Live journal activity renders
-  while it runs; the last result and exit status are shown. Exit `40`
+- **Full verification** — REST-backed CLI `verify --full` (`CP-04`),
+  with the same original-key recovery as sync and fresh archive permission.
+  The server's private offline verifier holds the single application lock.
+  Bounded events and the exact terminal Envelope describe its outcome. Exit `40`
   means the archive may be corrupt — the UI links the repair flow and
   never offers to sync or prune from that state.
 - **Verify one revision** — `verify --revision TYPE:ID@SHA` with the full

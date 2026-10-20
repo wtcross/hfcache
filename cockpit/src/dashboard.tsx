@@ -24,7 +24,8 @@ import { submissionBlocked } from './api/operations';
 import {
     EnabledLabel, EnvelopeAlert, IssueRows, Loading, QueryError, Sha, UnmanagedLabel, VerificationLabel,
 } from './components';
-import { useHfcache, useConnection, useOperations } from './hooks';
+import { useHfcache, useConnection, useOperations, useHostProfile } from './hooks';
+import { hostActionAllowed } from './api/profile';
 import { Envelope } from './lib/envelope';
 import { formatBytes, formatHours, formatTimestamp, shortSha } from './lib/format';
 
@@ -219,16 +220,19 @@ const DOCTOR_COLORS: Record<string, 'green' | 'red' | 'grey'> = {
 const DoctorCard = () => {
     const connection = useConnection();
     const operations = useOperations();
+    const profile = useHostProfile();
     const [running, setRunning] = useState(false);
     const [result, setResult] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
     const submitted = useRef(false);
 
     const run = (readOnly: boolean) => {
-        if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative)
+        if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative ||
+            !hostActionAllowed('hub') || (!readOnly && !hostActionAllowed('archive')))
             return;
         submitted.current = true;
         setRunning(true);
+        setResult(null);
         setError(null);
         const command = readOnly ? ['doctor', '--read-only'] : ['doctor'];
         runHfcache(command)
@@ -244,17 +248,19 @@ const DoctorCard = () => {
             <CardBody>
                 <Flex>
                     <FlexItem>
-                        <Button variant="secondary" isDisabled={running || operations.blocked || !connection.administrative} onClick={() => run(true)}>
+                        <Button variant="secondary" isDisabled={running || operations.blocked || !connection.administrative || !profile.permissions.hub} onClick={() => run(true)}>
                             Run checks (read-only)
                         </Button>
                     </FlexItem>
                     <FlexItem>
-                        <Button variant="secondary" isDisabled={running || operations.blocked || !connection.administrative} onClick={() => run(false)}>
+                        <Button variant="secondary" isDisabled={running || operations.blocked || !connection.administrative || !profile.permissions.hub || !profile.permissions.archive} onClick={() => run(false)}>
                             Run full checks (write probes)
                         </Button>
                     </FlexItem>
                     {running && <FlexItem><Loading /></FlexItem>}
                 </Flex>
+                {(!profile.permissions.hub || !profile.permissions.archive) && <p>{profile.reason}</p>}
+                <p>Both checks contact the Hub and write a control receipt. Full checks also perform archive write probes.</p>
                 {error !== null && <QueryError error={error} />}
                 {result !== null && !running &&
                     <Stack hasGutter>

@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  *
  * Sync operations (docs/cockpit.md §3, §5): the full run through the
- * shipped unit (CP-04), the schedule through the timer alone (CP-05),
+ * shared REST operation flow (CP-04), the schedule through the timer alone (CP-05),
  * selector-restricted runs through the API-backed CLI, with observation
  * lifetime distinct from accepted execution (ADR122).
  */
@@ -24,13 +24,15 @@ import { Flex, FlexItem } from "@patternfly/react-core/dist/esm/layouts/Flex/ind
 import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/index.js";
 
 import { UnitActivity } from './activity';
+import { ManualFullJob } from './manual-job';
+import { hostActionAllowed, hostActionReason } from './api/profile';
 import { ScheduleEditor } from './schedule';
 import { runHfcacheStreaming } from './api/hfcache';
 import { connectionSnapshot } from './api/connection';
 import { submissionBlocked } from './api/operations';
 import { startUnit, stopUnit, SYNC_SERVICE, SYNC_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useHfcache, useObservationSignal, useOperationHandles, useUnitPoll, useConnection, useOperations } from './hooks';
+import { useHfcache, useObservationSignal, useOperationHandles, useUnitPoll, useConnection, useOperations, useHostProfile } from './hooks';
 import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatSelector, parseSelector } from './lib/command';
 import { formatTimestamp } from './lib/format';
@@ -70,7 +72,8 @@ const ACTIVE_STATES = ['active', 'activating', 'reloading', 'deactivating'];
 const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean) => void }) => {
     const service = useUnitPoll(SYNC_SERVICE);
     const timer = useUnitPoll(SYNC_TIMER);
-    const [confirming, setConfirming] = useState<'start' | 'stop' | 'pause' | null>(null);
+    const profile = useHostProfile();
+    const [confirming, setConfirming] = useState<'stop' | 'pause' | null>(null);
     const [actionError, setActionError] = useState<Error | null>(null);
 
     const running = ACTIVE_STATES.includes(service.state?.activeState ?? '');
@@ -93,9 +96,12 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
 
     return (
         <Card>
-            <CardTitle>Synchronization</CardTitle>
+            <CardTitle>Scheduled sync observer</CardTitle>
             <CardBody>
                 <Stack hasGutter>
+                    <StackItem>System service state and journals describe the scheduled observer only. They do not establish the result of a manual server operation.</StackItem>
+                    {!profile.permissions.schedule && <StackItem><Alert variant="warning" isInline title="Schedule changes unavailable">{profile.reason}</Alert></StackItem>}
+                    {running && !profile.permissions.observer && <StackItem>{hostActionReason('observer')}</StackItem>}
                     {actionError !== null && <StackItem><QueryError error={actionError} /></StackItem>}
                     {service.error !== null && <StackItem><QueryError error={service.error} /></StackItem>}
                     {timer.error !== null && <StackItem><QueryError error={timer.error} /></StackItem>}
@@ -105,7 +111,7 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                                 <Label isCompact color={running ? 'blue' : 'grey'}>
                                     {service.state?.activeState ?? '…'}
                                 </Label>
-                                {' '}last result: {service.result?.result ?? '…'}
+                                {' '}observer process result: {service.result?.result ?? '…'}
                                 {service.result !== null && ` (exit ${service.result.execMainStatus})`}
                             </Item>
                             <Item term="hfcache-sync.timer">
@@ -122,27 +128,18 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                         <Flex>
                             <FlexItem>
                                 <Button
-                                    variant="primary"
-                                    isDisabled={running || !serviceAvailable}
-                                    onClick={() => setConfirming('start')}
-                                >
-                                    Start / resume full sync
-                                </Button>
-                            </FlexItem>
-                            <FlexItem>
-                                <Button
                                     variant="danger"
-                                    isDisabled={!running || !serviceAvailable}
+                                    isDisabled={!running || !serviceAvailable || !profile.permissions.observer}
                                     onClick={() => setConfirming('stop')}
                                 >
-                                    Stop observing full sync
+                                    Stop scheduled sync observer
                                 </Button>
                             </FlexItem>
                             <FlexItem>
                                 {timerAvailable && timerActive &&
-                                    <Button variant="secondary" onClick={() => setConfirming('pause')}>Pause schedule</Button>}
+                                    <Button variant="secondary" isDisabled={!profile.permissions.schedule} onClick={() => setConfirming('pause')}>Pause schedule</Button>}
                                 {timerAvailable && !timerActive &&
-                                    <Button variant="secondary" onClick={() => act(startUnit(SYNC_TIMER))}>Resume schedule</Button>}
+                                    <Button variant="secondary" isDisabled={!profile.permissions.schedule} onClick={() => { if (hostActionAllowed('schedule')) act(startUnit(SYNC_TIMER)); }}>Resume schedule</Button>}
                             </FlexItem>
                         </Flex>
                     </StackItem>
@@ -150,37 +147,25 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                 </Stack>
 
                 <ConfirmModal
-                    title="Start a full sync"
-                    confirmLabel="Start hfcache-sync.service"
-                    disabled={!serviceAvailable}
-                    isOpen={confirming === 'start'}
-                    onClose={() => setConfirming(null)}
-                    onConfirm={() => { if (serviceAvailable) act(startUnit(SYNC_SERVICE), false); }}
-                >
-                    Starts the installed API client used by the 02:00 timer. It resumes a
-                    retained operation, or submits one sync when no pending handle exists.
-                    The server executes accepted work; a large repository can take hours.
-                </ConfirmModal>
-                <ConfirmModal
-                    title="Stop observing the full sync"
+                    title="Stop the scheduled sync observer"
                     confirmLabel="Stop observer"
-                    disabled={!serviceAvailable}
+                    disabled={!serviceAvailable || !profile.permissions.observer}
                     isOpen={confirming === 'stop'}
                     onClose={() => setConfirming(null)}
-                    onConfirm={() => { if (serviceAvailable) act(stopUnit(SYNC_SERVICE), true); }}
+                    onConfirm={() => { if (serviceAvailable && hostActionAllowed('observer')) act(stopUnit(SYNC_SERVICE), true); }}
                 >
                     Stops hfcache-sync.service, the API observer. Accepted server work may
-                    continue. Its pending handle is retained; starting the service again
-                    observes the existing operation. This does not cancel execution or prove
+                    continue. Its pending handle is retained separately from manual jobs.
+                    This does not cancel execution or prove
                     that recovery or a release switch is safe.
                 </ConfirmModal>
                 <ConfirmModal
                     title="Pause the schedule"
                     confirmLabel="Stop hfcache-sync.timer"
-                    disabled={!timerAvailable}
+                    disabled={!timerAvailable || !profile.permissions.schedule}
                     isOpen={confirming === 'pause'}
                     onClose={() => setConfirming(null)}
-                    onConfirm={() => { if (timerAvailable) act(stopUnit(SYNC_TIMER)); }}
+                    onConfirm={() => { if (timerAvailable && hostActionAllowed('schedule')) act(stopUnit(SYNC_TIMER)); }}
                 >
                     Stops the timer only — the mount and hfcache.target are untouched (CP-05).
                     Resume from here; a Persistent timer whose calendar elapsed while stopped
@@ -199,6 +184,7 @@ interface StatusRepositoryLite {
 }
 
 const SelectorSync = () => {
+    const profile = useHostProfile();
     const status = useHfcache(['status']);
     const connection = useConnection();
     const operations = useOperations();
@@ -228,7 +214,7 @@ const SelectorSync = () => {
 
     const run = () => {
         if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative ||
-            !statusReady || selectors.length === 0)
+            !hostActionAllowed('archive') || !statusReady || selectors.length === 0)
             return;
         try {
             for (const value of selectors) {
@@ -292,7 +278,7 @@ const SelectorSync = () => {
                         <Button
                             variant="secondary"
                             isDisabled={running || uncertain || operations.blocked || !connection.administrative ||
-                                !statusReady || selectors.length === 0}
+                                !profile.permissions.archive || !statusReady || selectors.length === 0}
                             onClick={() => setConfirming(true)}
                         >
                             Sync selected ({selectors.length})
@@ -324,7 +310,7 @@ const SelectorSync = () => {
                 <ConfirmModal
                     title={`Sync ${selectors.length} selected`}
                     confirmLabel="Start selector sync"
-                    disabled={running || uncertain || operations.blocked || !statusReady || selectors.length === 0}
+                    disabled={running || uncertain || operations.blocked || !profile.permissions.archive || !statusReady || selectors.length === 0}
                     isOpen={confirming}
                     onClose={() => setConfirming(false)}
                     onConfirm={run}
@@ -332,7 +318,7 @@ const SelectorSync = () => {
                     The transient CLI client submits one operation to the API and observes it.
                     Closing this view or losing the connection does not cancel accepted work.
                     Retain its key and operation ID and observe that operation before submitting
-                    again. The full-archive run belongs to the installed service above (CP-04).
+                    again. The full-archive run uses the manual REST job above.
                 </ConfirmModal>
             </CardBody>
         </Card>
@@ -345,6 +331,7 @@ export const SyncOperations = () => {
 
     return (
         <Stack hasGutter>
+            <StackItem><ManualFullJob mode="sync" /></StackItem>
             <StackItem>
                 <SyncControls
                     key={scheduleGeneration}
@@ -359,8 +346,8 @@ export const SyncOperations = () => {
                 <StackItem>
                     <Alert variant="info" isInline title="The sync observer stopped">
                         Accepted server work may continue. Preserve the pending handle and inspect
-                        its journal; start hfcache-sync.service to resume observation. A stopped
-                        client does not establish that the archive is idle.
+                        its journal independently of manual jobs. A stopped client does not
+                        establish that the archive is idle.
                     </Alert>
                 </StackItem>}
         </Stack>

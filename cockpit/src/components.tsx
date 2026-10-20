@@ -23,6 +23,9 @@ import { normalizeFailure } from './lib/failure';
 import { OperationRegistryError } from './lib/operation-registry';
 import { OperationAuthorityError } from './lib/operation-authority';
 import { HfcacheSpawnError } from './lib/runner';
+import { HostProfileError } from './lib/host-profile';
+import { ScheduleInputError } from './lib/schedule';
+import { CommandSurfaceError } from './lib/command';
 
 type AlertVariant = 'success' | 'info' | 'warning' | 'danger';
 
@@ -88,6 +91,12 @@ export const EnvelopeAlert = ({ envelope }: { envelope: Envelope }) => {
 
 /* A lost/malformed response cannot establish whether accepted work stopped. */
 export const QueryError = ({ error }: { error: Error }) => {
+    if (error instanceof CommandSurfaceError)
+        return <Alert variant="warning" isInline title="Unsupported Cockpit command">{error.message}</Alert>;
+    if (error instanceof HostProfileError)
+        return <Alert variant="warning" isInline title="Host permissions require attention">{error.message}</Alert>;
+    if (error instanceof ScheduleInputError)
+        return <Alert variant="warning" isInline title="Schedule input requires attention">{error.message}</Alert>;
     if (error instanceof OperationRegistryError)
         return <Alert variant="warning" isInline title="Original operation recovery requires attention">{error.message}</Alert>;
     if (error instanceof OperationAuthorityError) {

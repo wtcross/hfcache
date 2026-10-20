@@ -239,6 +239,16 @@ is restart-only; client `--verbose` changes local diagnostics. Selected rootless
 services use the service account's user manager; native services use the system
 manager. See [deployment profiles](deployment-centos-stream-10.md).
 
+Cockpit manual full `sync` and `verify --full` now use the fixed REST-backed
+client and original operation registry. Scheduled observer unit status never
+establishes their outcome. Every effect requires fresh selected-release proof and
+explicit protected host permission; missing evidence refuses without changing
+guards, masks or locks. A held guard denies archive jobs. Sizing and both Doctor
+modes may contact the Hub and create receipts; full Doctor also probes archive
+writes. Ordinary metadata/validation stays separate. Review
+[the host permission contract](cockpit.md#5-long-running-operations-and-concurrency)
+before provisioning; this source support grants no production workload authority.
+
 ## Warnings
 
 | Code | Meaning | Response |

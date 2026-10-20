@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"f200a501ad388c092ec3cb0b956f9c9d2c24df55bdebf2fca137d3543d5b1104","state":"failed","tests":[{"name":"V37 direct plugin commands reject global option prefixes unsupported local effects and mixed modes","passed":false,"message":"Unsupported plugin command reached the fixed client: --quiet sync"}]}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-0TSSiC/firefox-tail.log"}

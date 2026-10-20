@@ -22,7 +22,8 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useObservationSignal, useOperationHandles, useConnection, useOperations } from './hooks';
+import { useObservationSignal, useOperationHandles, useConnection, useOperations, useHostProfile } from './hooks';
+import { hostActionAllowed } from './api/profile';
 import { operationRegistry, submissionBlocked } from './api/operations';
 import { connectionSnapshot } from './api/connection';
 import { sameOperationScope } from './lib/operation-registry';
@@ -45,6 +46,7 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     const observationSignal = useObservationSignal();
     const connection = useConnection();
     const operations = useOperations();
+    const profile = useHostProfile();
     const submitted = useRef(false);
     const consumed = useRef(false);
     const dryRunKey = useRef<string | null>(null);
@@ -52,7 +54,7 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     const [dryRunGeneration, setDryRunGeneration] = useState<number | null>(null);
 
     const run = (apply: boolean) => {
-        if (!connection.administrative || submitted.current || submissionBlocked() ||
+        if (!connection.administrative || !hostActionAllowed(apply ? 'archive' : 'control') || submitted.current || submissionBlocked() ||
             (apply && (consumed.current || error !== null || dryRun === null || !dryRunScope ||
                 dryRunGeneration !== connectionSnapshot().generation || classifyEnvelope(dryRun) !== 'success')))
             return;
@@ -105,7 +107,7 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     const previewFresh = dryRunGeneration === connection.generation && dryRunScope !== null &&
         operations.views.authority.generation === connection.generation && operations.views.authority.scope !== null &&
         sameOperationScope(dryRunScope, operations.views.authority.scope);
-    const canApply = !uncertain && previewFresh && !consumed.current && applied === null && dryRun !== null && classifyEnvelope(dryRun) === 'success';
+    const canApply = profile.permissions.archive && !uncertain && previewFresh && !consumed.current && applied === null && dryRun !== null && classifyEnvelope(dryRun) === 'success';
 
     return (
         <Card>
@@ -113,10 +115,11 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
             <CardBody>
                 <Stack hasGutter>
                     <StackItem>{intro}</StackItem>
+                    {(!profile.permissions.control || !profile.permissions.archive) && <StackItem>{profile.reason}</StackItem>}
                     <StackItem>
                         <Flex>
                             <FlexItem>
-                                <Button variant="secondary" isDisabled={busy || uncertain || !connection.administrative} onClick={() => run(false)}>
+                                <Button variant="secondary" isDisabled={busy || uncertain || !connection.administrative || !profile.permissions.control} onClick={() => run(false)}>
                                     Dry run
                                 </Button>
                             </FlexItem>
@@ -181,6 +184,7 @@ const RepairCard = () => {
     const observationSignal = useObservationSignal();
     const connection = useConnection();
     const operations = useOperations();
+    const profile = useHostProfile();
     const submitted = useRef(false);
     const { handles, reset: resetHandles, onNotice } = useOperationHandles();
 
@@ -196,7 +200,7 @@ const RepairCard = () => {
     }
 
     const run = () => {
-        if (!connectionSnapshot().administrative || submitted.current || submissionBlocked())
+        if (!connectionSnapshot().administrative || !hostActionAllowed('archive') || submitted.current || submissionBlocked())
             return;
         try {
             if (parseSelector(selectorText).sha === undefined)
@@ -265,13 +269,14 @@ const RepairCard = () => {
                     <StackItem>
                         <Button
                             variant="danger"
-                            isDisabled={running || uncertain || !connection.administrative || selectorText === '' || validationError !== null}
+                            isDisabled={running || uncertain || !connection.administrative || !profile.permissions.archive || selectorText === '' || validationError !== null}
                             onClick={() => setConfirming(true)}
                         >
                             Repair…
                         </Button>
                     </StackItem>
                     {running && <StackItem><Loading /></StackItem>}
+                    {!profile.permissions.archive && <StackItem>{profile.reason}</StackItem>}
                     <StackItem><RecoveryHandles evidence={handles} /></StackItem>
                     {feed.length > 0 &&
                         <StackItem>
@@ -303,7 +308,7 @@ const RepairCard = () => {
                         considering recovery. The executor holds the single archive lock.
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="danger" isDisabled={!connection.administrative || running || uncertain || validationError !== null || selectorText === ''} onClick={run}>Start repair</Button>
+                        <Button variant="danger" isDisabled={!connection.administrative || !profile.permissions.archive || running || uncertain || validationError !== null || selectorText === ''} onClick={run}>Start repair</Button>
                         <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
                     </ModalFooter>
                 </Modal>

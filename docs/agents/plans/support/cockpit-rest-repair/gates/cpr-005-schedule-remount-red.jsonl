@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"22aaee25340a975e05e2ffb7510a63f4e74a55aefbdde3c9083a519e36981cda","state":"failed","tests":[{"name":"V39 a completed schedule file mutation remains uncertain after Reload permission refusal until explicit reconciliation","passed":false,"message":"Timed out: original schedule uncertainty retained through actual component remount"}]}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-B9DfjI/firefox-tail.log"}

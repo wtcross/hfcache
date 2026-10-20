@@ -4,7 +4,7 @@
 import cockpit from 'cockpit';
 
 import { assertSession, captureSession } from './connection';
-import { HFCACHE_API_SOCKET } from '../lib/command';
+import { assertCockpitCommand, HFCACHE_API_SOCKET } from '../lib/command';
 import type { ClientCommandOptions } from '../lib/command';
 import { Envelope } from '../lib/envelope';
 import { normalizeFailure } from '../lib/failure';
@@ -15,6 +15,8 @@ import {
 import type { OperationAction, OperationRecord, OperationScope, OperationStorage } from '../lib/operation-registry';
 import { HfcacheSpawnError } from '../lib/runner';
 import type { ObservationOptions } from '../lib/runner';
+import { requireHostAction } from './profile';
+import { HostProfileError, profileActionAllowed, profileActionReason } from '../lib/host-profile';
 
 function storage(): OperationStorage | null {
     try { return window.sessionStorage } catch { return null }
@@ -120,8 +122,17 @@ export function keyedAction(command: string[], candidate: boolean): OperationAct
     }
 }
 
-export async function submitOperation(command: string[], options: OperationRunOptions,
+export async function submitOperation(input: string[], settings: OperationRunOptions,
     action: OperationAction, observe: ClientObserver): Promise<Envelope> {
+    const command = [...input];
+    Object.freeze(command);
+    assertCockpitCommand(command);
+    const options = Object.freeze({
+        ...settings,
+        ...(settings.requiredScope === undefined ? {} : { requiredScope: Object.freeze({ ...settings.requiredScope }) }),
+    });
+    if (keyedAction(command, options.config !== undefined) !== action)
+        throw new OperationRegistryError('scope');
     const host = currentOperationHost();
     if (submissionBlocked())
         throw new OperationRegistryError('blocked');
@@ -131,11 +142,26 @@ export async function submitOperation(command: string[], options: OperationRunOp
     let record: Readonly<OperationRecord> | null = null;
     try {
         const generation = captureSession('operation-observe');
+        const permission = action === 'candidate-plan' || action === 'plan' || action === 'doctor'
+            ? 'hub'
+            : action === 'prune-dry-run' || action === 'recover-dry-run'
+                ? 'control'
+                : 'archive';
+        const authorize = async () => {
+            const profile = await requireHostAction(permission);
+            if (action === 'doctor' && !command.includes('--read-only') && !profileActionAllowed(profile, 'archive'))
+                throw new HostProfileError(profileActionReason(profile, 'archive'));
+        };
+        await authorize();
+        assertSession(generation, 'operation-observe');
+        if (host !== currentOperationHost())
+            throw new HostProfileError();
         const scope = await readOperationAuthority(observe);
         if (scope.archiveId === null)
             throw new OperationAuthorityError('unknown-archive');
         if (options.requiredScope && !sameOperationScope(options.requiredScope, scope))
             throw new OperationAuthorityError('changed');
+        await authorize();
         assertSession(generation, 'operation-observe');
         if (host !== currentOperationHost() || operationRegistry.snapshot().records.some(item =>
             item.scope.host === host && item.state !== 'terminal'))

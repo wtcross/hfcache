@@ -14,10 +14,29 @@ import {
 } from './api/systemd';
 import { Envelope, OperationEvidence } from './lib/envelope';
 import { OperationNotice } from './lib/events';
-import { operationRegistry, operationViews, subscribeOperationViews, submissionBlocked } from './api/operations';
+import { currentOperationHost, operationRegistry, operationViews, subscribeOperationViews, submissionBlocked } from './api/operations';
+import { hostActionAllowed, profileSnapshot, readHostProfile, subscribeProfile } from './api/profile';
+import { HOST_ACTIONS } from './lib/host-profile';
 
 export function useConnection() {
     return useSyncExternalStore(subscribeConnection, connectionSnapshot);
+}
+
+export function useHostProfile() {
+    const connection = useConnection();
+    const host = currentOperationHost();
+    const profile = useSyncExternalStore(subscribeProfile, profileSnapshot);
+    useEffect(() => {
+        const current = profileSnapshot();
+        if (connection.administrative && !current.loading &&
+            (current.host !== host || current.generation !== connection.generation || (current.profile === null && current.error === null)))
+            readHostProfile().catch(() => { /* Safe classified error is retained by the adapter. */ });
+    }, [connection.administrative, connection.generation, host, profile.loading, profile.generation]);
+    return {
+        ...profile,
+        permissions: Object.fromEntries(HOST_ACTIONS.map(action =>
+            [action, hostActionAllowed(action)])) as typeof profile.permissions
+    };
 }
 
 export function useOperations() {

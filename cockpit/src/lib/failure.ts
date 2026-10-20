@@ -7,7 +7,7 @@ export const FAILURE_STAGES = [
     'installed-read', 'candidate-write', 'candidate-validate', 'candidate-preview',
     'install', 'installed-confirm', 'installed-validate', 'operation-lookup',
     'operation-wait', 'operation-observe', 'api-read', 'unit-read', 'unit-mutation',
-    'schedule-read', 'schedule-validate', 'schedule-write',
+    'schedule-read', 'schedule-validate', 'schedule-write', 'profile-read',
 ] as const;
 
 export type FailureStage = typeof FAILURE_STAGES[number];
@@ -41,6 +41,7 @@ const STAGE_LABELS: Record<FailureStage, string> = {
     'schedule-read': 'schedule read',
     'schedule-validate': 'schedule validation',
     'schedule-write': 'schedule write',
+    'profile-read': 'host profile inspection',
 };
 
 const REASONS = new Set<FailureReason>([
@@ -174,7 +175,7 @@ function facts(failure: unknown, context: FailureContext): FailureFacts {
         workMayContinue: previous?.workMayContinue === true || context.workMayContinue === true ||
             idempotencyKey !== undefined || operationId !== undefined,
         hostMutationUncertain: previous?.hostMutationUncertain === true ||
-            (context.hostMutationUncertain ?? HOST_MUTATIONS.has(stage_)),
+            (context.hostMutationUncertain ?? previous?.hostMutationUncertain ?? HOST_MUTATIONS.has(stage_)),
     };
 }
 

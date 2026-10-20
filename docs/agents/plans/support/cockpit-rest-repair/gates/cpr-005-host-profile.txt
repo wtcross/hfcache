@@ -1,0 +1,64 @@
+CPR-005 trusted host-profile inspection evidence
+
+All fixture execution below used repository code, private temporary local release,
+policy, mount/lock-accounting files and controlled systemctl subprocess output.
+No installed helper, actual manager, Podman, production credentials or NAS archive
+was inspected or changed. This is source/fixture evidence, not runtime acceptance.
+
+Initial role/help RED (repository root, before helper implementation):
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cockpit_host_profile.py
+Observed:2 failed, exit1. Existing grammar refused inspect-cockpit with exit20;
+static help did not describe the read-only role. The exact new root-only role
+returns bounded explicit denial before any host/profile read for nonroot calls.
+All valid inspection results use exit0, including unknown/denied inspection;
+extra arguments and actual bridge/process failures retain separate failures.
+
+Guard-transition RED (before final guard snapshot recheck):
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cockpit_host_profile.py -k newly_held_guard
+Observed:1 failed,59 deselected,exit1. A previously inactive guard could become
+held during unit fact collection while the old snapshot still granted archive
+submission. The final guard/accounting comparison now refuses the stale snapshot.
+
+Focused GREEN after implementation and guard-transition correction:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cockpit_host_profile.py tests/unit/test_container_service.py tests/unit/test_container_release_installer.py tests/unit/test_script_help.py
+Observed:238 passed,exit0 in24.37s. This included60 host-profile cases plus the
+existing runtime-helper, installer and static-help tests. The original client,
+service roles, original nine bindings, credential separation and mounts remained
+unchanged. The new required indexed artifact is the installer itself; inspection
+executes only its captured policy-index-authenticated source and calls only the
+read-only stage/binding verifiers. Old releases without that proof refuse.
+
+An additional bounded owned-readonly-query deadline regression was then added:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cockpit_host_profile.py
+Observed:61 passed,exit0 in11.33s. Coverage includes exact role grammar/root gate,
+missing/duplicate/unsafe/oversize/symlink/hardlink/FIFO policy, explicit six Boolean
+permissions, source/index pins, all nine bindings, changed helper/rendered policy,
+untrusted valid Python never executing, same-inode kernel flock proof, replaced
+locks, unavailable/oversize accounting, NAS mount drift, absent/local disposable
+mount facts, selector/policy/guard transitions, fixed system-manager argv with a
+clean environment, bounded hostile output and owned-query deadline termination.
+No inspection acquires or recreates the domain lock or opens it for content.
+
+The explicit permitted fixture grants submission only. Archive :ro binds and API
+policy/identity/lock/capacity/executor checks remain final. A held/unconfirmed guard
+never permits archive jobs; absence of guard/masks never creates permission.
+Current rootless bindings do not prove a system scheduled-client observer/timer;
+effective observer/schedule permissions remain false even if requested by policy.
+No scheduler, direct-client substitute, additional host binding or policy file is
+automatically provisioned. Unknown results contain only a fixed bounded reason.
+
+Final focused checks:
+  rtk proxy uv run --locked ruff check scripts/container-service.py scripts/install-container-release.py tests/unit/test_cockpit_host_profile.py
+Observed:exit0,All checks passed.
+  rtk proxy uv run --locked ruff format --check scripts/container-service.py scripts/install-container-release.py tests/unit/test_cockpit_host_profile.py
+Observed:exit0,3 files already formatted.
+  rtk proxy uv run --locked --extra server --extra mcp pyrefly check
+Observed:exit0,0 errors (11 suppressed,63 warnings not shown).
+  rtk proxy uv run --locked python scripts/check-docs.py
+Observed:exit0,documentation alignment passed:184 human documents;19 helpers.
+  rtk git diff --check
+Observed:exit0.
+
+The complete package gate, frontend/component acceptance and any real disposable
+runtime evidence are recorded separately by the package owner. These focused
+results do not establish installed Cockpit/PAM readiness or NAS/workload approval.

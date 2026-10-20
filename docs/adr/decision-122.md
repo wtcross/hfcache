@@ -124,3 +124,13 @@ installation success or readiness. Apparent success with failed process/postchec
 still refuses; missing/malformed output still preserves uncertainty. The guarded
 helper emits results only after exact byte postchecks. This clarifies classification
 without weakening exact-content or successful-confirmation requirements.
+
+## Manual jobs and host permission amendment (2026-10-20)
+
+[Decision 135](decision-135.md) replaces the full-service exception with manual
+full jobs through the same fixed REST-backed client and scoped operation registry.
+The direct-report exception remains pending its separate replacement. Host effects
+require fresh root-only selected-release inspection and explicit protected policy;
+missing, mixed, unsafe or drifted evidence fails closed. Scheduled observer state
+and journal text cannot substitute for manual operation results. No user-manager,
+mask, guard, original lock, API policy or credential boundary is weakened.

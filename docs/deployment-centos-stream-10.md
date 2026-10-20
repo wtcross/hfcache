@@ -141,6 +141,26 @@ API gets Hub/REST/MCP sources, client REST writer only, Caddy TLS only, worker n
 API/Caddy use pasta; worker/client use network none, and the worker additionally
 permits only native AF_UNIX socket creation under baseline-preserving seccomp.
 
+Cockpit effect controls additionally require a separately reviewed root-owned
+`/etc/hfcache/cockpit-policy.json`, pinned to the selected source commit and
+artifact-index SHA256. The application never provisions or updates this policy.
+The exact `inspect-cockpit` role of the existing fixed container helper checks
+it without running Podman, changing units, acquiring locks, or reading archive
+contents/credential values. New release manifests must include the indexed
+installer script needed for its read-only stage/binding verification. An old
+release without that proof, a missing policy or any drift denies effects.
+See the [policy and output schema](containers.md#read-only-cockpit-host-permission-inspection).
+
+The selected guarded profile retains archive denial. Explicit permissions in a
+disposable fixture permit only submission; existing read-only mounts and API
+gates may still refuse the operation. Current rootless bindings do not prove the
+system scheduled observer/timer, so schedule and observer permissions remain
+denied even if requested by policy. Do not install a native `.venv` client,
+redirect to a user unit, alter masks or clear the guard to satisfy this check.
+Source implementation does not provision policy, select a release or change
+the recorded installed holds. Any deployment/provisioning remains a separate
+operator action with its own evidence and authorization.
+
 ## Native installation
 
 Use `scripts/install-release.sh` only for a positively classified native prefix.

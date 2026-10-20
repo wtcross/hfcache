@@ -150,6 +150,84 @@ For API/worker, the helper explicitly forwards only a canonical non-secret
 automatically. This preserves executing-service metadata/log framing, not timer
 or client provenance. Other ambient environment is not forwarded.
 
+### Read-only Cockpit host permission inspection
+
+The existing helper accepts the exact additional role `inspect-cockpit`, with no
+arguments. Run it as root through the privileged Cockpit bridge. It starts no
+container, acquires no lock, changes no host files or units, and reads neither
+archive contents nor credential values. The normal service/client roles retain
+their service-account identity and fixed launcher behavior.
+
+Inspection requires an independently administrator-provisioned
+`/etc/hfcache/cockpit-policy.json`. The application never creates or edits it.
+It must be a root-owned, single-link regular file of at most 4 KiB, with no
+group/other writes or symlinked parents. JSON is duplicate-free and permits
+exactly this schema:
+
+```json
+{
+  "schema_version": 1,
+  "source_commit": "cccccccccccccccccccccccccccccccccccccccc",
+  "index_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "permissions": {
+    "archive": false,
+    "hub": false,
+    "control": false,
+    "schedule": false,
+    "configuration": false,
+    "observer": false
+  }
+}
+```
+
+The source and index values must identify the selected immutable release; these
+example values grant nothing. Permissions distinguish archive-effecting jobs,
+Hub-capable sizing/diagnostic jobs, other keyed control jobs, fixed sync scheduling, guarded host
+configuration changes, and stopping a proven scheduled sync observer. Permission
+to submit is not proof of writable storage or workload readiness. Server
+authentication, policy, capacity, identity, executor and archive locks remain
+final, and the runtime archive binds remain read-only.
+
+The selected release must include `scripts/install-container-release.py` as an
+indexed, authenticated required artifact. Inspection verifies captured bytes of
+that fixed script against the policy-pinned index before using only its
+read-only stage and nine-binding verifiers. Releases lacking that proof are
+unsupported. Root-owned protected descriptor reads, manifest/rendered hashes and
+the physical helper root must match the selected `releases/VERSION` target.
+Selection, policy, index and host mount facts are checked again before returning.
+
+Host facts come from bounded `/proc/1/mountinfo`, `/proc/locks`, metadata of the
+existing local domain lock, and fixed system-manager unit properties. A held
+guard requires its actual main PID to own the exclusive flock on that same
+device/inode. Inspection never opens the lock for content or attempts to acquire
+it. It never invokes Podman as root or queries a different manager. A held guard
+forces archive permission false; missing or unconfirmed facts deny effects.
+An absent guard or mask does not create permission.
+
+The current nine rootless bindings do not prove a system scheduled observer or
+timer binding. Native `.venv` scheduled-client units are insufficient for this
+profile. Effective `observer` and `schedule` permissions therefore remain false,
+including when the policy requests them. No scheduler, alternate direct client,
+user-manager redirection, unit unmasking or binding is installed by inspection.
+
+Output is one JSON object, bounded to 16 KiB. A supported result has exactly
+`schema_version=1`, `state` (`guarded` or `permitted`), `deployment=rootless`,
+`source_commit`, `index_sha256`, selected `image`, `policy_sha256`, the six
+effective `permissions`, and `facts`. Facts contain `guard` (`held`, `inactive`,
+`absent`), `archive_mount` (`nfs-ro`, `local-ro`, `local-rw`, `absent`) and `units`.
+The units object has exactly the sync/verify system services and timers; each
+has `load`, `active` and `unit_file`. Load is `loaded`, `masked` or `not-found`;
+active is `active`, `inactive` or `failed`. Unit-file states are `enabled`,
+`enabled-runtime`, `disabled`, `static`, `linked`, `linked-runtime`, `masked`,
+`masked-runtime` or `not-found`.
+
+An unavailable result has exactly `schema_version=1`, `state=unknown` and a
+`reason`: `privilege-required`, `policy-missing`, `policy-invalid`,
+`deployment-unverified` or `facts-unavailable`. It includes no permissions or
+partial facts. Every valid inspection result exits zero, including denied
+inspection; this is not successful workload acceptance. Invalid arguments or
+bridge/process failures remain separate failures. No raw diagnostics are emitted.
+
 ## Bind selection to actual execution
 
 The two libexec entrypoints, system hfcache.target/bridge and five user unit

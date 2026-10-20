@@ -11,6 +11,7 @@ import type { ConfigurationEvidence, ConfigurationPorts } from '../src/lib/confi
 import type { Envelope } from '../src/lib/envelope.ts';
 import { extractFieldPath, parseConfig, selectorsNeedingPreview } from '../src/lib/config.ts';
 import { BoundaryError } from '../src/lib/failure.ts';
+import { HostProfileError } from '../src/lib/host-profile.ts';
 
 const FINGERPRINT = 'a'.repeat(64);
 const BASE = 'schema_version=1\n[[repositories]]\nid="org/model"\ntype="model"\nrevision="main"\nenabled=false\n';
@@ -85,6 +86,25 @@ function ports() {
     };
     return { calls, guard, adapter };
 }
+
+test('host permission refusal before candidate write/install is classified without inventing host uncertainty', async () => {
+    const { adapter, guard, calls } = ports();
+    const deny = async () => { throw new HostProfileError('Trusted host profile refuses this effect.') };
+    for (const stage of ['candidate-write', 'install'] as const) {
+        const action = stage === 'candidate-write'
+            ? prepareConfiguration(guard, { ...adapter, write: deny })
+            : installConfiguration({ guard, fingerprint: FINGERPRINT }, { ...adapter, install: deny });
+        await assert.rejects(action, failure => {
+            assert.ok(failure instanceof ConfigurationPipelineError);
+            assert.equal(failure.stage, stage);
+            assert.equal(failure.cause?.category, 'access');
+            assert.equal(failure.cause?.hostMutationUncertain, false);
+            assert.deepEqual(failure.acknowledgedStages, []);
+            return true;
+        });
+    }
+    assert.deepEqual(calls, []);
+});
 
 test('compatible candidate follows guarded validation, required preview, install and exact confirmation', async () => {
     const { calls, guard, adapter } = ports();

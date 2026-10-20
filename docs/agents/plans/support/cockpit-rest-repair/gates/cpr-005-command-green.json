@@ -1,0 +1,1 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"839d3af90e9b7f6204e028ceb5ee551e9bb912fb7e3420cdf66d21692aae0b1a","state":"passed","tests":[{"name":"V37 caller command mutation cannot turn a Hub sizing permission into an archive job","passed":true}]}

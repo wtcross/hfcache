@@ -64,3 +64,12 @@ execution interruption. Accepted work belongs to the API/private worker; expose
 retained key/operation lookup/wait and never automatic recovery or a cancellation
 claim. Full sync/verification keep installed units; sync-timer-only/no-init/target
 controls remain. See [decision 122](decision-122.md).
+
+## Manual REST jobs amendment (2026-10-20)
+
+[Decision 135](decision-135.md) supersedes the full-job service-start rule:
+manual `sync` and `verify --full` use the fixed keyed REST client and original
+operation recovery. Scheduled observers remain separate host objects. The plugin
+never starts sync/verify units; optional stopping requires positive proof of the
+fixed observation-only binding and explicit protected permission. Sync scheduling
+stays on its fixed system timer. Guarded or unknown profiles deny effects.

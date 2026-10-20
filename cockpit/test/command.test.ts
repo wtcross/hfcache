@@ -4,10 +4,33 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
-    formatSelector, hfcacheArgv, isFullCommitSha, parseSelector, SelectorError,
+    assertCockpitCommand, CommandSurfaceError, formatSelector, hfcacheArgv, isFullCommitSha, parseSelector, SelectorError,
 } from '../src/lib/command.ts';
 
 const SHA = '0123456789abcdef0123456789abcdef01234567';
+
+test('plugin dispatch accepts only its closed authenticated command surface', () => {
+    for (const command of [
+        ['version', '--server'], ['client', 'describe'], ['status'], ['list', '--revisions'],
+        ['config', 'validate'], ['verify', '--estimate'], ['verify', '--full'], ['verify', '--new'], ['doctor'], ['doctor', '--read-only'],
+        ['prune', '--apply'], ['recover', '--dry-run'], ['sync'], ['sync', 'model:org/model'],
+        ['plan'], ['plan', 'dataset:org/data'], ['verify', '--revision', `model:org/model@${SHA}`],
+        ['repair', `model:org/model@${SHA}`, '--reason', '--help'],
+    ])
+        assert.doesNotThrow(() => assertCockpitCommand(command));
+    for (const command of [
+        [], ['--quiet', 'sync'], ['--api-url', 'https://SYNTHETIC_SECRET', 'sync'],
+        ['archive', 'init', '--confirm'], ['config', 'validate', '--local'], ['version'],
+        ['verify', '--estimate', '--full'], ['sync', '--config', '/tmp/other'],
+        ['purge', '--apply'], ['catalog', 'refresh'], ['unknown'], ['doctor', '--local'],
+        ['verify', '--revision', 'model:org/model'], ['repair', 'model:org/model'],
+    ])
+        assert.throws(() => assertCockpitCommand(command), error => {
+            assert.ok(error instanceof CommandSurfaceError);
+            assert.ok(!error.message.includes('SYNTHETIC_SECRET'));
+            return true;
+        });
+});
 
 test('the invocation drops to the service identity and speaks JSON (CP-03)', () => {
     assert.deepEqual(hfcacheArgv(['status']), [

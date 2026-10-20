@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"147b59cc665cafd9c2bbe3cc09e61f2d9dafe794156fdeca76e538b818ae959a","state":"failed","tests":[{"name":"V39 a completed schedule file mutation remains uncertain after Reload permission refusal until explicit reconciliation","passed":false,"message":"Post-removal Reload refusal enabled another file mutation without reconciliation"}]}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-hTyEUp/firefox-tail.log"}
