@@ -1,0 +1,27 @@
+CPR-007 selected-host owner and Estimate evidence
+
+No production, guest, real PAM or archive command was executed. Node unit tests exercise actual OwnedConnection and strict estimate payload parsing. Firefox cases use actual components/hooks/adapters with controlled Cockpit process ports, never real PAM.
+
+Observed fail-before command:
+rtk node --test cockpit/test/connection.test.ts
+With the prior OwnedConnection source, the three new selected-host tests failed: cached client reuse after host change without close; late previous-host read acceptance; mutation falsely successful after host shift. Existing six cases passed. Raw log: /tmp/hfcache-cpr007-host-owner-red.log.
+
+Observed focused pass-after command:
+rtk node --test cockpit/test/connection.test.ts cockpit/test/estimate-read.test.ts
+21 passed, zero failures/skips. Raw log: /tmp/hfcache-cpr007-host-estimate-green.log.
+
+Strict estimate parser covers exact nine fields, safe counters/rates/duration consistency, explicit unknown measured rate, negative empty Envelope, validated partial observations and malformed/unknown data without arbitrary-field echo. Existing successful Envelope resolution and read-only estimate semantics stay intact.
+
+Mounted host-change regressions additionally reproduced lazy owner-generation publication defects in the shared read hook and systemd unit polling (read-host/unit-host RED artifacts, then focused GREEN artifacts). The expanded 94-case suite reproduced a further no-subscriber publication race: 73 passed, 21 failed. The first full package gate passed Python and pure frontend tests but failed these mounted cases; /tmp/hfcache-cpr007-gate-owner-failed.log is retained, not acceptance. The correction synchronizes/publishes host ownership before session capture and asynchronous read initiation, independent of subscriber lifetime. Report and schedule consumers refuse obsolete rendered origins before spawning. Mutations remain unreplayed and original operation identities remain unchanged.
+
+Final complete gate and mounted results are recorded separately after execution.
+
+Independent final review found that a modal rendered for a previous host could see newly permitted current-host profile facts before React rerender. Schedule calendar checks/change/acknowledgement now compare the exact rendered connection and host before recording an attempt or writing. Other submitted read/job controls are reviewed for the same binding; existing authenticated original scope checks remain authoritative. The denied captureSession path publishes fresh privilege state before refusing, without changing its original classified cause. Final mounted evidence follows actual execution.
+
+The same explicit origin binding is applied to manual full jobs, revision verification, Doctor, maintenance dry runs and Repair before local reset or submission. Open Manual/Repair confirmations additionally retain their opening host/connection, so rerendering for another host cannot turn the earlier modal into new-host consent. Only confirmation readiness is invalidated; ongoing operations, errors, observer identities and unresolved recovery evidence are preserved.
+
+A strict startup metadata regression also caught OriginalOperations and useHostProfile starting a read before lazy owner reconciliation completed. Both effects now synchronize exact rendered host/connection before beginning a read; the regression requires exactly one current startup describe and preserves original HFAPI003/HFAPI018 refusals with zero jobs. Final independent source review found no retry loop or changed-authority original lookup bypass.
+
+The separate103/104 run after the transitional green gate reproduced a Configuration passive mount invalidator erasing an explicit inspection already completed in the current connection generation, because original pipeline generation intentionally remains older until revalidation. A focused unchanged rerun passed, so the regression is strengthened deterministically: retain a sibling connection owner, rekey actual Configuration with original pipeline A and actual acknowledged inspection B, flush a following passive barrier, require B evidence/original error retained; reconnect C must still invalidate B, then explicit C inspection/revalidation performs no second write. The source invalidator now refuses obsolete rendered snapshots and preserves only a current-generation inspection. Original uncertainty, exact bytes, authority checks and stale pipeline invalidation remain. This additional source change requires a fresh whole gate despite the earlier green result.
+
+The sibling authority invalidator had the same mixed-snapshot defect: it read the current session but a captured older loading/error authority and could clear a newer confirmed installation or ready proposal. Four persistent Node cases execute the exact production effect body, not a duplicated state machine: exact f0a35c2 effect0/4RED, repaired effect4/4GREEN; live unavailable or changed authority still invalidates both states. The effect synchronizes the rendered connection and reads current authority/registry stores. Mounted lifecycle coverage is separate and retained. See cpr-007-authority-effect-{red,green}.txt and configuration-authority-effect.test.ts.

@@ -9,6 +9,7 @@
 
 import React from 'react';
 
+import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
 import { Card, CardBody, CardTitle } from "@patternfly/react-core/dist/esm/components/Card/index.js";
 import { Flex, FlexItem } from "@patternfly/react-core/dist/esm/layouts/Flex/index.js";
@@ -18,44 +19,21 @@ import { ListingTable } from 'cockpit-components-table';
 import {
     EnabledLabel, EnvelopeAlert, Loading, QueryError, Sha, UnmanagedLabel, VerificationLabel,
 } from './components';
-import { useHfcache } from './hooks';
-import type { RepositoryType } from './lib/command';
+import { useConnection, useHfcache } from './hooks';
 import { formatBytes, formatTimestamp, shortSha } from './lib/format';
+import { parseInventory } from './lib/inventory-read';
+import type { InventoryRepository } from './lib/inventory-read';
 import { huggingFaceRepositoryUrl } from './lib/repository';
 
-/* The list payload (docs/cli.md §4.1), fields as deployed at 0.1.3. */
-export interface ListRevision {
-    commit_sha: string;
-    file_count: number;
-    publication_generation: number;
-    publication_id: string;
-    published_at: string;
-    total_bytes: number;
-    verification_state: string;
-}
+export type { InventoryRepository as ListRepository, InventoryRevision as ListRevision } from './lib/inventory-read';
 
-export interface ListRepository {
-    repository_id: string;
-    repository_type: RepositoryType;
-    enabled: boolean;
-    managed: boolean;
-    current_commit_sha: string | null;
-    current_publication_id?: string | null;
-    retained_revisions: number;
-    revisions?: ListRevision[];
-}
-
-interface ListData {
-    repositories?: ListRepository[];
-}
-
-const RevisionsTable = ({ repository }: { repository: ListRepository }) => (
+const RevisionsTable = ({ repository }: { repository: InventoryRepository }) => (
     <ListingTable
         aria-label={`Retained revisions of ${repository.repository_id}`}
         variant="compact"
         columns={['Generation', 'Commit', 'Files', 'Size', 'Published', 'Verification']}
         emptyCaption="No retained revisions"
-        rows={(repository.revisions ?? []).map(revision => ({
+        rows={repository.revisions.map(revision => ({
             props: { key: revision.publication_id },
             columns: [
                 {
@@ -77,23 +55,24 @@ const RevisionsTable = ({ repository }: { repository: ListRepository }) => (
     />
 );
 
-function currentSize(repository: ListRepository): number | null {
-    const current = (repository.revisions ?? [])
+function currentSize(repository: InventoryRepository): number | null {
+    const current = repository.revisions
             .find(revision => revision.commit_sha === repository.current_commit_sha);
     return current === undefined ? null : current.total_bytes;
 }
 
 export const ArchiveBrowser = () => {
     const list = useHfcache(['list', '--revisions']);
-    const data = (list.envelope?.data ?? {}) as ListData;
-    const repositories = data.repositories ?? [];
+    const connection = useConnection();
+    const parsed = list.envelope === null ? null : parseInventory(list.envelope);
+    const repositories = parsed?.payload?.repositories;
 
     return (
         <Stack hasGutter>
             <StackItem>
                 <Flex>
                     <FlexItem align={{ default: 'alignRight' }}>
-                        <Button variant="secondary" onClick={() => list.refresh()} isDisabled={list.loading}>
+                        <Button variant="secondary" onClick={() => list.refresh()} isDisabled={list.loading || !connection.administrative}>
                             Refresh
                         </Button>
                     </FlexItem>
@@ -104,14 +83,18 @@ export const ArchiveBrowser = () => {
             {list.envelope !== null && !list.loading &&
                 <>
                     <StackItem><EnvelopeAlert envelope={list.envelope} /></StackItem>
+                    {parsed?.error && <StackItem><QueryError error={parsed.error} /></StackItem>}
+                    {parsed?.partial && <StackItem><Alert variant="warning" isInline title="Partial archive inventory">Validated rows from a failed read are informational. They do not establish complete inventory or authorize an operation.</Alert></StackItem>}
+                    {repositories === undefined && parsed?.error === null && <StackItem><Alert variant="warning" isInline title="Archive inventory unavailable">The response did not provide a validated repository inventory.</Alert></StackItem>}
+                    {repositories !== undefined &&
                     <StackItem>
                         <Card>
-                            <CardTitle>Archived repositories</CardTitle>
+                            <CardTitle>{parsed?.partial ? 'Archived repositories (partial)' : 'Archived repositories'}</CardTitle>
                             <CardBody>
                                 <ListingTable
                                     aria-label="Archived repositories and revisions"
                                     columns={['Repository', 'Type', 'State', 'Current', 'Retained', 'Current size']}
-                                    emptyCaption="Nothing archived yet"
+                                    emptyCaption={parsed?.partial ? 'No repository rows in this partial response' : 'Nothing archived yet'}
                                     rows={repositories.map(repository => ({
                                         props: { key: `${repository.repository_type}:${repository.repository_id}` },
                                         expandedContent: <RevisionsTable repository={repository} />,
@@ -134,10 +117,9 @@ export const ArchiveBrowser = () => {
                                             repository.repository_type,
                                             {
                                                 title: (
-                                                    <>
-                                                        <EnabledLabel enabled={repository.enabled} />
-                                                        {!repository.managed && <>{' '}<UnmanagedLabel /></>}
-                                                    </>
+                                                    repository.managed
+                                                        ? <EnabledLabel enabled={repository.enabled === true} />
+                                                        : <UnmanagedLabel />
                                                 ),
                                             },
                                             { title: <Sha sha={repository.current_commit_sha} short={shortSha(repository.current_commit_sha)} /> },
@@ -148,7 +130,7 @@ export const ArchiveBrowser = () => {
                                 />
                             </CardBody>
                         </Card>
-                    </StackItem>
+                    </StackItem>}
                 </>}
         </Stack>
     );

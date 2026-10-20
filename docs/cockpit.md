@@ -199,7 +199,7 @@ and explains why privileged actions are locked. It invents no archive side chann
 | Retention | CLI `prune --dry-run`, then `--apply` behind confirmation | `docs/cli.md` §2 |
 | Recovery | CLI `recover --dry-run`, then `--apply`; blocked states shown with their `HFTXN` codes | [maintenance](operations.md#preview-and-apply-maintenance) |
 | Repair | CLI `repair TYPE:ID@SHA --reason TEXT`, launched from a verification finding | `docs/cli.md` §2 |
-| Version | CLI `version` | `docs/cli.md` §2 |
+| Version | Authenticated CLI `version --server` | `docs/cli.md` §2 |
 | Configuration | §6 pipeline | `docs/configuration.md` |
 | Sync schedule | §7 drop-in | `packaging/systemd/hfcache-sync.timer` |
 | Run reports | Authenticated CLI `runs list` / `runs show RUN_ID`, explicit one-page inventory | `CP-09`; `docs/schemas.md` §6 |
@@ -285,6 +285,27 @@ not executable text, use `--` before positional values and quote copied keys so
 even valid leading `-`/`~` characters remain data. Display
 abort/callback failure detaches view updates without
 closing the spawned process or cancelling server work.
+
+### Read states and deployment diagnostics
+
+Every read card validates its command and payload before presenting data.
+Failed Envelopes render original codes before success-only fields are used.
+Valid partial data is labeled informational; absent or malformed data cannot
+become zero counters, empty-success captions or readiness. Unreachable archive
+status has no inferred health counters. Refresh, host and session changes clear
+old current evidence and discard late results without closing CLI observers.
+Passive invalidation compares current connection and authority stores. It retires
+old readiness while preserving a newer explicit inspection or confirmation that
+already passed the current generation's exact-content and original-scope checks.
+
+Advisory deployment diagnostics separate the loaded browser's source/input
+identity, selected protected physical release source/index/image, and authenticated
+client endpoint/profile/credential class/archive/API instance. Selected bindings
+do not prove a running payload, and package versions or health readiness do not
+prove parity or writability. Missing, stale, dirty or mismatched facts are explicit.
+The browser's independent strict build metadata and its limits are defined by
+[decision 137](adr/decision-137.md); it grants no action permission and adds no
+server capability field, endpoint selector or native fallback.
 
 ### Run reports and optional host journals
 

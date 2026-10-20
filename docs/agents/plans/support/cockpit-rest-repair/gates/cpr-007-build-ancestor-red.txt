@@ -1,0 +1,30 @@
+✖ V50 a symlinked ancestor cannot open or hash an external private fixture leaf (8.332466ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 204.320256
+
+✖ failing tests:
+
+test at test/build-info.test.ts:132:1
+✖ V50 a symlinked ancestor cannot open or hash an external private fixture leaf (8.332466ms)
+  AssertionError [ERR_ASSERTION]: Declared ancestor refusal must happen before any external private leaf is opened
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///home/tyler/Projects/hfcache/cockpit/test/build-info.test.ts:149:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

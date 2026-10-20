@@ -11,6 +11,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
+import { assertStableBuildSnapshot, browserBuildInfo, captureBuildProvenance, captureBuildSnapshot, UNKNOWN_BUILD_INFO } from './build-info.js';
+
 import { sassPlugin } from 'esbuild-sass-plugin';
 
 import { cockpitRsyncEsbuildPlugin } from './pkg/lib/cockpit-rsync-plugin.js';
@@ -33,6 +35,9 @@ parser.add_argument('-r', '--rsync', { help: "rsync bundles to ssh target after 
 parser.add_argument('-w', '--watch', { action: 'store_true', help: "Enable watch mode", default: process.env.ESBUILD_WATCH === "true" });
 /* eslint-enable max-len */
 const args = parser.parse_args();
+
+const sourceSnapshot = captureBuildProvenance(production, args.watch, process.platform) ? captureBuildSnapshot('.') : null;
+const buildInfo = sourceSnapshot === null ? UNKNOWN_BUILD_INFO : browserBuildInfo(sourceSnapshot);
 
 if (args.rsync)
     process.env.RSYNC = args.rsync;
@@ -117,6 +122,7 @@ function bundledPackageVersions(metafile) {
 const context = await esbuild.context({
     ...!production ? { sourcemap: "linked" } : {},
     bundle: true,
+    define: { __HFCACHE_BUILD_INFO__: JSON.stringify(buildInfo) },
     entryPoints: ['./src/index.tsx'],
     // Allow external font files which live in ../../static/fonts
     external: ['*.woff', '*.woff2', '*.jpg', '*.svg', '../../assets*'],
@@ -153,6 +159,20 @@ const context = await esbuild.context({
         }),
 
         ...production ? [cockpitCompressPlugin()] : [],
+        {
+            name: 'stable-public-build-inputs',
+            setup(build) {
+                build.onEnd(result => {
+                    if (result.errors.length !== 0 || sourceSnapshot === null)
+                        return;
+                    try {
+                        assertStableBuildSnapshot(sourceSnapshot, captureBuildSnapshot('.'));
+                    } catch {
+                        return { errors: [{ text: 'Public browser build inputs changed during the build. Rebuild from a stable source tree.' }] };
+                    }
+                });
+            }
+        },
         cockpitRsyncEsbuildPlugin({ dest: packageJson.name }),
         notifyEndPlugin(),
     ]
@@ -167,8 +187,11 @@ try {
         fs.writeFileSync('runtime-npm-modules.txt', bundledPackageVersions(result.metafile).join('\n') + '\n');
     }
 } catch (e) {
-    if (!args.watch)
+    if (!args.watch) {
+        // Only generated repository output: a failed build is not deployable.
+        fs.rmSync(outdir, { recursive: true, force: true });
         process.exit(1);
+    }
     // ignore errors in watch mode
 }
 

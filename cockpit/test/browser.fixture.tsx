@@ -24,6 +24,10 @@ import { QueryError } from '../src/components';
 import { useHfcache, useHostProfile, useUnitPoll } from '../src/hooks';
 import { Maintenance } from '../src/maintenance';
 import { Dashboard } from '../src/dashboard';
+import { ArchiveBrowser } from '../src/archive';
+import { DeploymentDiagnostics } from '../src/diagnostics';
+import { DOCTOR_CHECK_NAMES } from '../src/lib/read-results';
+import { scheduleSession } from '../src/lib/schedule-session';
 import { ScheduleEditor } from '../src/schedule';
 import { Configuration } from '../src/configuration';
 import { createConfigurationSession } from '../src/lib/configuration-session';
@@ -95,6 +99,18 @@ function readyButton(label: string, within: ParentNode = document): HTMLButtonEl
     return control && !control.disabled ? control : null;
 }
 
+// Retain the actual mounted handler, as an already queued callback may outlive
+// its rendered host. This deliberately bypasses a later disabled DOM state;
+// the component's own handler must reject stale authority before any effect.
+function retainedClick(control: HTMLButtonElement): () => void {
+    const key = Object.keys(control).find(name => name.startsWith('__reactProps$'));
+    invariant(key, 'Mounted React button props are unavailable');
+    const props = (control as unknown as Record<string, { onClick?: (event: MouseEvent) => void }>)[key];
+    invariant(typeof props?.onClick === 'function', 'Mounted button click handler is unavailable');
+    const click = props.onClick;
+    return () => click(new MouseEvent('click', { bubbles: true, cancelable: true }));
+}
+
 function ReadProbe(): React.ReactElement {
     const query = useHfcache(['version', '--server']);
     const data = query.envelope?.data as Record<string, unknown> | undefined;
@@ -134,6 +150,11 @@ function UnitProbe({ name }: { name: string }): React.ReactElement {
 function ProfileProbe(): React.ReactElement {
     const profile = useHostProfile();
     return <pre>{JSON.stringify({ archive: profile.permissions.archive, loading: profile.loading, reason: profile.reason })}</pre>;
+}
+
+function PassiveBarrier({ committed }: { committed: () => void }): null {
+    React.useEffect(() => { committed() }, [committed]);
+    return null;
 }
 
 function allRequests(): BusRequest[] {
@@ -236,6 +257,78 @@ function configEnvelope(data: Record<string, unknown>, exit = 0, code = 'HFAPI00
                 context: { key: 'storage.archive_id' }
             }],
     };
+}
+
+function readEnvelope(command: string, data: Record<string, unknown>, exit = 0): Envelope {
+    return { ...configEnvelope(data, exit), command };
+}
+function statusRepository(): Record<string, unknown> {
+    return {
+        repository_type: 'model',
+        repository_id: 'org/model',
+        managed: true,
+        enabled: true,
+        requested_revision: 'main',
+        current_commit_sha: null,
+        current_publication_generation: null,
+        retained_revisions: 0,
+        retained_generations: [],
+        last_run_status: null,
+        upstream_state: 'unknown',
+        verification_state: 'unverified'
+    };
+}
+function statusData(repositories: Record<string, unknown>[] = [statusRepository()], reachable = true): Record<string, unknown> {
+    const archive = {
+        archive_id: '11111111-1111-4111-8111-111111111111',
+        root: '/fixture/archive',
+        reachable,
+        verification: { degraded: false, outstanding_failures: 0, last_full_verification: null }
+    };
+    return {
+        archive: reachable
+            ? {
+                ...archive,
+                available_bytes: 100,
+                available_gib: 0,
+                reserve_bytes: 10,
+                headroom_bytes: 90,
+                total_bytes: 200,
+                quarantined_bytes: 0,
+                unfinished_transactions: 0,
+                deferred_cleanup: 0,
+                findings: [],
+                unknown_entries: []
+            }
+            : archive,
+        repositories
+    };
+}
+const VERSION_DATA = { application: '0.1.3', python: '3.13.9', huggingface_hub: '1.0.0', transfer_backend: 'http' };
+function doctorChecks(detail: unknown): Record<string, unknown>[] {
+    return DOCTOR_CHECK_NAMES.map((name, index) => ({
+        name,
+        outcome: index === 0 ? 'pass' : 'skipped',
+        detail: index === 0 ? detail : 'Synthetic explicit unexercised check'
+    }));
+}
+const ESTIMATE_DATA = {
+    mode: 'estimate',
+    repositories: 1,
+    revisions: 2,
+    unique_objects: 31337,
+    unique_bytes: 1024,
+    unreadable_objects: 0,
+    measured_throughput_bytes_per_second: null,
+    estimated_duration_seconds: null,
+    storage_maintenance: 'undetectable'
+};
+async function readProcess(start: number, command: string): Promise<ProcessBoundary> {
+    return await until(() => boundary.processes.slice(start).find(item => item.command.join(' ') === command) ?? null, command + ' read');
+}
+async function mountDashboard(): Promise<{ start: number; status: ProcessBoundary; version: ProcessBoundary }> {
+    const start = boundary.processes.length; mount(<Dashboard />);
+    return { start, status: await readProcess(start, 'status'), version: await readProcess(start, 'version --server') };
 }
 
 const REPORT_A = 'd'.repeat(32);
@@ -401,6 +494,315 @@ async function test(name: string, body: () => Promise<void>): Promise<void> {
 }
 
 async function run(): Promise<void> {
+    for (const action of ['sync', 'repair']) {
+        await test('V49 ' + action + ' confirmation opened on another host cannot authorize a rerendered submission', async () => {
+            await readHostProfile();
+            if (action === 'sync') {
+                mount(<ManualFullJob mode="sync" />);
+                (await until(() => readyButton('Run full sync'), 'manual sync confirmation opener')).click();
+            } else {
+                mount(<Maintenance />);
+                const input = await until(() => document.querySelector<HTMLInputElement>('#repair-selector'), 'repair selector');
+                Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'model:org/model@' + 'a'.repeat(40));
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                (await until(() => readyButton('Repair…'), 'repair confirmation opener')).click();
+            }
+            const label = action === 'sync' ? 'Start full sync' : 'Start repair';
+            await until(() => readyButton(label), 'confirmation opened on original host');
+            const records = operationRegistry.snapshot().records.length;
+            boundary.transport.host += '-new'; await readHostProfile(); await delay(75);
+            const start = boundary.processes.length;
+            const confirmation = button(label);
+            invariant(confirmation === null || confirmation.disabled, 'A confirmation from another host remained enabled after rerender');
+            confirmation?.click(); await delay(75);
+            invariant(operationRegistry.snapshot().records.length === records && boundary.processes.slice(start).every(process => process.key === null),
+                      'A retained confirmation submitted a job to another host');
+        });
+    }
+    for (const action of ['sync', 'verify-full', 'doctor', 'revision', 'repair', 'prune', 'recover']) {
+        await test('V49 retained actual ' + action + ' handler rejects a newly authorized different host', async () => {
+            await readHostProfile();
+            let control: HTMLButtonElement;
+            if (action === 'sync' || action === 'verify-full') {
+                mount(<ManualFullJob mode={action} />);
+                const name = action === 'sync' ? 'full sync' : 'full verification';
+                (await until(() => readyButton('Run ' + name), 'actual manual confirmation opener')).click();
+                control = await until(() => readyButton('Start ' + name), 'actual manual confirmed submission');
+            } else if (action === 'doctor') {
+                mount(<Dashboard />);
+                control = await until(() => readyButton('Run checks (read-only)'), 'actual diagnostic submission');
+            } else if (action === 'revision' || action === 'repair') {
+                mount(action === 'revision' ? <Verification /> : <Maintenance />);
+                const input = await until(() => document.querySelector<HTMLInputElement>(action === 'revision' ? '#verify-revision-selector' : '#repair-selector'), 'actual revision selector');
+                Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'model:org/model@' + 'a'.repeat(40));
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                if (action === 'repair') {
+                    (await until(() => readyButton('Repair…'), 'actual repair confirmation opener')).click();
+                    control = await until(() => readyButton('Start repair'), 'actual confirmed repair action');
+                } else control = await until(() => readyButton('Run verify --revision'), 'actual revision verification action');
+            } else {
+                mount(<Maintenance />);
+                control = await until(() => {
+                    const controls = [...document.querySelectorAll('button')].filter(node => node.textContent?.trim() === 'Dry run');
+                    const found = controls[action === 'prune' ? 0 : 1];
+                    return found && !found.disabled ? found : null;
+                }, 'actual ' + action + ' dry-run action');
+            }
+            const click = retainedClick(control);
+            const records = operationRegistry.snapshot().records.length;
+            boundary.transport.host += '-new';
+            await readHostProfile();
+            invariant(hostActionAllowed('archive') && hostActionAllowed('hub') && hostActionAllowed('control'), 'New host was not explicitly provisioned for the adversarial callback');
+            const start = boundary.processes.length;
+            click(); await delay(75);
+            invariant(operationRegistry.snapshot().records.length === records, 'Stale ' + action + ' callback prepared a new original operation on another host');
+            invariant(boundary.processes.slice(start).every(process => process.key === null), 'Stale ' + action + ' callback submitted a keyed CLI process on another host');
+        });
+    }
+    await test('V49 retained actual schedule confirmation cannot mutate a newly authorized different host', async () => {
+        await readHostProfile(); const files = boundary.files.length;
+        mount(<ScheduleEditor onApplied={() => undefined} />);
+        (await nextFile(files)).succeed('[Timer]\nOnCalendar=\nOnCalendar=daily\n');
+        (await until(() => readyButton('Reset to shipped schedule'), 'actual managed reset opener')).click();
+        const click = retainedClick(await until(() => readyButton('Remove drop-in and apply'), 'actual schedule reset confirmation'));
+        const attempts = scheduleSession.snapshot().length;
+        boundary.transport.host += '-new'; await readHostProfile();
+        invariant(hostActionAllowed('schedule'), 'New host lacked explicit schedule permission');
+        const start = boundary.processes.length; const requests = allRequests().length;
+        click(); await delay(75);
+        invariant(scheduleSession.snapshot().length === attempts, 'Retained old-host confirmation began a schedule attempt');
+        invariant(boundary.processes.slice(start).every(process => process.action !== 'schedule-remove'), 'Retained old-host confirmation removed another host schedule');
+        invariant(allRequests().slice(requests)
+                .every(request => request.method === 'GetAll'), 'Retained old-host confirmation mutated the new host manager');
+    });
+    await test('V49 Read hooks hide old host evidence and discard late callbacks without bridge close', async () => {
+        const start = boundary.processes.length; mount(<ReadProbe />);
+        const old = await readProcess(start, 'version --server');
+        boundary.transport.host += '-changed'; mount(<ReadProbe />);
+        const fresh = await readProcess(start + 1, 'version --server');
+        old.succeed('version', 'old-host-marker'); await delay(50);
+        invariant(evidence().marker === null, 'Late old-host read became current');
+        fresh.succeed('version', 'fresh-host-marker');
+        await until(() => evidence().marker === 'fresh-host-marker', 'fresh selected-host read result');
+        invariant(boundary.processes.length === start + 2, 'Host transition replayed a CLI read observer');
+    });
+    await test('V49 Unit hooks replace a cached D-Bus owner when host changes without close', async () => {
+        let start = allRequests().length; mount(<UnitProbe name="hfcache-sync.service" />);
+        const oldBus = await until(() => boundary.buses.find(bus => bus.requests.some(request => allRequests().slice(start)
+                .includes(request))) ?? null, 'old selected-host D-Bus owner');
+        await resolvePoll(start, 'old-host-unit'); await until(() => evidence().state === 'old-host-unit', 'initial unit evidence');
+        start = allRequests().length; boundary.transport.host += '-changed'; mount(<UnitProbe name="hfcache-sync.service" />);
+        await propertyRequests(start, 1);
+        invariant(evidence().state === null && evidence().result === null, 'Old host unit evidence remained current during new read');
+        const freshBus = boundary.buses.find(bus => bus.requests.some(request => allRequests().slice(start)
+                .includes(request)));
+        invariant(freshBus && freshBus !== oldBus, 'Host change reused the prior selected-host D-Bus client');
+        await resolvePoll(start, 'fresh-host-unit'); await until(() => evidence().state === 'fresh-host-unit', 'fresh unit owner result');
+    });
+    await test('V48 Verification observer and timer failures are visible unavailable states', async () => {
+        const start = allRequests().length; mount(<Verification />);
+        await until(() => {
+            for (const request of allRequests().slice(start)) request.fail(bridgeFailure('access-denied'));
+            return text().includes('Scheduled observer state is unavailable.') && text().includes('Scheduled verification timer state is unavailable.');
+        }, 'failed scheduled observer and timer unavailable messages');
+        invariant(text().includes('Administrative access is unavailable'), 'System read failure lost its safe original access classification');
+        invariant(!text().includes('observer process result:'), 'Failed observer read manufactured a process result');
+    });
+    await test('V50/V51 Diagnostics withholds unknown malformed build metadata and arbitrary fields', async () => {
+        const start = boundary.invocations.length;
+        mount(<DeploymentDiagnostics buildInfo={{ schema_version: 1, source_commit: 'synthetic-build-secret', source_dirty: false, inputs_sha256: 'a'.repeat(64), extra: 'synthetic-build-extra' }} />);
+        (await until(() => button('Inspect browser, selected release and API identities'), 'diagnostic disclosure')).click();
+        await until(() => text().includes('Browser build provenance is unavailable'), 'fixed unknown build warning');
+        invariant(!text().includes('synthetic-build-secret') && !text().includes('synthetic-build-extra'), 'Rejected build fields leaked into diagnostics');
+        invariant(text().includes('Selected physical bindings do not identify the running API payload'), 'Diagnostic identities claimed running payload authority');
+        invariant(boundary.invocations.slice(start).every(process => process.action === 'profile'), 'Opening diagnostics inferred a local executable or API authority');
+    });
+    await test('V50 Diagnostics distinguishes browser selected source dirty state and authenticated client identity', async () => {
+        const build = { schema_version: 1, source_commit: DEFAULT_HOST_PROFILE.source_commit, source_dirty: false, inputs_sha256: 'b'.repeat(64) };
+        mount(<DeploymentDiagnostics buildInfo={build} />);
+        (await until(() => button('Inspect browser, selected release and API identities'), 'diagnostic disclosure')).click();
+        await until(() => text().includes('source commits agree'), 'fresh selected source comparison');
+        invariant(text().includes('does not prove bundle equality or the running payload'), 'Matching source became output or runtime proof');
+        (await until(() => readyButton('Refresh diagnostic client identity'), 'explicit diagnostic client read')).click();
+        await until(() => text().includes('Credential class') && text().includes('rest-writer') && text().includes(DEFAULT_CLIENT_METADATA.endpoint), 'authenticated selected client identity');
+        mount(<DeploymentDiagnostics buildInfo={{ ...build, source_dirty: true }} />);
+        await until(() => text().includes('Browser build contains uncommitted changes'), 'dirty browser provenance warning');
+        invariant(!text().includes('source commits agree'), 'Dirty source commit became clean parity proof');
+        mount(<DeploymentDiagnostics buildInfo={{ ...build, source_commit: 'f'.repeat(40) }} />);
+        await until(() => text().includes('source commits differ'), 'different browser and selected source warning');
+    });
+    await test('V49/V50 Diagnostics clears stale client identities and preserves explicit refresh failure', async () => {
+        mount(<DeploymentDiagnostics />);
+        (await until(() => button('Inspect browser, selected release and API identities'), 'diagnostic disclosure')).click();
+        (await until(() => readyButton('Refresh diagnostic client identity'), 'diagnostic client read')).click();
+        await until(() => text().includes('Credential class') && text().includes('rest-writer'), 'initial authenticated client identity');
+        boundary.superuser.change(false); await delay(50);
+        invariant(!text().includes('Credential class') && !text().includes('Selected release source commit'), 'Lost privilege retained current client or selected release evidence');
+        boundary.superuser.change(true); await delay(50); boundary.metadataMode = 'manual';
+        const start = boundary.metadataProcesses.length;
+        (await until(() => readyButton('Refresh diagnostic client identity'), 'diagnostic refresh after reconnect')).click();
+        const pending = await until(() => boundary.metadataProcesses[start] ?? null, 'fixed client describe refresh');
+        invariant(pending.command.join(' ') === 'client describe', 'Diagnostic refresh selected a fallback executable or command');
+        pending.failEnvelope(readEnvelope('client describe', {}, 20));
+        await until(() => text().includes('HFAPI003'), 'original failed authenticated metadata Envelope');
+        invariant(!text().includes('Credential class') && !text().includes('rest-writer'), 'Failed metadata refresh restored stale client authority');
+    });
+    await test('V46 Version failed Envelope remains visible without invented version facts', async () => {
+        const { version } = await mountDashboard();
+        invariant(version.command.join(' ') === 'version --server', 'Version read changed the authenticated server command');
+        version.failEnvelope(readEnvelope('version', {}, 20));
+        await until(() => text().includes('HFAPI003'), 'original failed server version classification');
+        invariant(!text().includes('Transfer backend'), 'Failed version rendered absent fields as success facts');
+    });
+    await test('V48 Version rejects malformed secret-bearing data before presentation', async () => {
+        const { version } = await mountDashboard();
+        version.succeedEnvelope(readEnvelope('version', { ...VERSION_DATA, transfer_backend: { synthetic_secret: 'synthetic-version-secret' } }));
+        await until(() => text().includes('No valid terminal Envelope'), 'safe malformed version error');
+        invariant(!text().includes('synthetic-version-secret') && !text().includes('Transfer backend'), 'Malformed version data leaked or became facts');
+    });
+    await test('V48 Status unreachable success renders unavailable measurements without false zeros', async () => {
+        const { status, version } = await mountDashboard();
+        status.succeedEnvelope(readEnvelope('status', statusData([], false)));
+        version.succeedEnvelope(readEnvelope('version', VERSION_DATA));
+        await until(() => text().includes('Health measurements') && text().includes('capacity and cleanup counters were not returned'), 'valid unreachable archive branch');
+        invariant(!text().includes('Free space') && !text().includes('Deferred cleanup') && !text().includes('Unknown entries'), 'Unavailable archive invented counters');
+        invariant(text().includes('not yet fully verified'), 'Missing full verification became a healthy assertion');
+    });
+    await test('V48 Status rejects malformed success before health or diagnostic echo', async () => {
+        const { status } = await mountDashboard();
+        status.succeedEnvelope(readEnvelope('status', { ...statusData(), archive: { synthetic_secret: 'synthetic-status-secret' } }));
+        await until(() => text().includes('No valid terminal Envelope'), 'safe malformed status error');
+        invariant(!text().includes('synthetic-status-secret') && !text().includes('Archive health'), 'Malformed status became health or leaked prose');
+    });
+    await test('V48 Status failed partial repository observations are explicitly informational', async () => {
+        const { status } = await mountDashboard();
+        status.failEnvelope(readEnvelope('status', { repositories: [statusRepository()] }, 20));
+        await until(() => text().includes('HFAPI003') && text().includes('Partial archive status') && text().includes('org/model'), 'original refusal plus validated partial status');
+        invariant(!text().includes('Archive health'), 'Partial repository status invented archive health');
+    });
+    await test('V49 Status failed refresh removes prior health evidence immediately', async () => {
+        const { status } = await mountDashboard(); status.succeedEnvelope(readEnvelope('status', statusData()));
+        await until(() => text().includes('Archive health'), 'initial validated archive health');
+        const next = boundary.processes.length; (await until(() => readyButton('Refresh'), 'status refresh')).click();
+        await until(() => !text().includes('Archive health'), 'health hidden during refresh');
+        (await readProcess(next, 'status')).fail();
+        await until(() => text().includes('reconnected'), 'classified refreshed status bridge failure');
+        invariant(!text().includes('Archive health') && !text().includes('org/model'), 'Failed refresh retained current-looking healthy evidence');
+    });
+    await test('V48 Doctor failed Envelope shows validated partial checks without empty success', async () => {
+        const { start } = await mountDashboard();
+        (await until(() => readyButton('Run checks (read-only)'), 'read-only Doctor action')).click();
+        const doctor = await readProcess(start, 'doctor --read-only');
+        doctor.failEnvelope(readEnvelope('doctor', { checks: [{ name: 'configuration', outcome: 'fail', detail: 'Synthetic safe check refusal' }] }, 20));
+        await until(() => text().includes('HFAPI003') && text().includes('Partial diagnostics') && text().includes('Synthetic safe check refusal'), 'original Doctor classification with partial checks');
+        invariant(!text().includes('No checks ran'), 'Failed Doctor manufactured empty diagnostics success');
+    });
+    await test('V48 Doctor refuses malformed checks before dereference or diagnostic echo', async () => {
+        const { start } = await mountDashboard(); (await until(() => readyButton('Run checks (read-only)'), 'Doctor action')).click();
+        (await readProcess(start, 'doctor --read-only')).succeedEnvelope(readEnvelope('doctor', { checks: doctorChecks({ synthetic_secret: 'synthetic-doctor-secret' }) }));
+        await until(() => text().includes('No valid terminal Envelope'), 'safe malformed Doctor error');
+        invariant(!text().includes('synthetic-doctor-secret') && !text().includes('No checks ran'), 'Malformed Doctor echoed raw detail or empty success');
+    });
+    await test('V49 Doctor invalidates completed checks on privilege generation change', async () => {
+        const { start } = await mountDashboard(); (await until(() => readyButton('Run checks (read-only)'), 'Doctor action')).click();
+        (await readProcess(start, 'doctor --read-only')).succeedEnvelope(readEnvelope('doctor', { checks: doctorChecks('old-doctor-evidence-marker') }));
+        await until(() => text().includes('old-doctor-evidence-marker'), 'initial Doctor evidence');
+        boundary.superuser.change(false); await delay(50);
+        invariant(!text().includes('old-doctor-evidence-marker'), 'Old Doctor evidence survived session loss');
+        boundary.superuser.change(true); await delay(50);
+        invariant(!text().includes('old-doctor-evidence-marker'), 'Reconnect restored old Doctor checks');
+        invariant(boundary.processes.slice(start).filter(item => item.command[0] === 'doctor').length === 1, 'Session transition replayed Doctor');
+    });
+    await test('V47 Estimate failed Envelope stays visible without absent-value facts', async () => {
+        const start = boundary.processes.length; mount(<Verification />);
+        (await until(() => readyButton('Run verify --estimate'), 'estimate read')).click();
+        (await readProcess(start, 'verify --estimate')).failEnvelope(readEnvelope('verify --estimate', {}, 20));
+        await until(() => text().includes('HFAPI003'), 'original failed Estimate code');
+        invariant(!text().includes('Unique objects') && !text().includes('Measured throughput'), 'Failed Estimate invented facts');
+    });
+    await test('V47 Estimate refuses malformed success before zero or secret presentation', async () => {
+        const start = boundary.processes.length; mount(<Verification />);
+        (await until(() => readyButton('Run verify --estimate'), 'estimate read')).click();
+        (await readProcess(start, 'verify --estimate')).succeedEnvelope(readEnvelope('verify --estimate', { ...ESTIMATE_DATA, unique_objects: 'synthetic-estimate-secret' }));
+        await until(() => text().includes('No valid terminal Envelope'), 'safe malformed Estimate error');
+        invariant(!text().includes('synthetic-estimate-secret') && !text().includes('Unique objects'), 'Malformed Estimate became facts');
+    });
+    await test('V49 Estimate failed refresh clears prior valid counts', async () => {
+        const start = boundary.processes.length; mount(<Verification />);
+        (await until(() => readyButton('Run verify --estimate'), 'estimate read')).click();
+        (await readProcess(start, 'verify --estimate')).succeedEnvelope(readEnvelope('verify --estimate', ESTIMATE_DATA));
+        await until(() => text().includes('31337'), 'validated estimate count');
+        const next = boundary.processes.length; (await until(() => readyButton('Run verify --estimate'), 'estimate refresh')).click();
+        await until(() => !text().includes('31337'), 'old estimate hidden while refresh pending');
+        (await readProcess(next, 'verify --estimate')).fail();
+        await until(() => text().includes('reconnected'), 'Estimate refresh bridge failure');
+        invariant(!text().includes('31337') && !text().includes('Unique objects'), 'Failed Estimate refresh retained healthy-looking counts');
+    });
+    await test('V49 Estimate ignores a late read after privilege loss without replay', async () => {
+        const start = boundary.processes.length; mount(<Verification />);
+        (await until(() => readyButton('Run verify --estimate'), 'estimate read')).click();
+        const pending = await readProcess(start, 'verify --estimate'); boundary.superuser.change(false); await delay();
+        pending.succeedEnvelope(readEnvelope('verify --estimate', ESTIMATE_DATA)); await delay(75);
+        invariant(!text().includes('31337') && !text().includes('Unique objects'), 'Late old-session Estimate became current');
+        boundary.superuser.change(true); await delay(50);
+        invariant(boundary.processes.slice(start).filter(item => item.command.join(' ') === 'verify --estimate').length === 1, 'Reconnect replayed Estimate');
+    });
+    await test('V47 Estimate repeated clicks create one bounded pending read', async () => {
+        const start = boundary.processes.length; mount(<Verification />);
+        const action = await until(() => readyButton('Run verify --estimate'), 'estimate action'); action.click(); action.click();
+        await readProcess(start, 'verify --estimate'); await delay(75);
+        invariant(boundary.processes.slice(start).filter(item => item.command.join(' ') === 'verify --estimate').length === 1, 'Repeated clicks created concurrent Estimate processes');
+    });
+    await test('V48 Inventory failed and malformed reads never become an empty archive', async () => {
+        let start = boundary.processes.length; mount(<ArchiveBrowser />);
+        (await readProcess(start, 'list --revisions')).failEnvelope(readEnvelope('list', {}, 20));
+        await until(() => text().includes('HFAPI003'), 'original inventory failure');
+        invariant(!text().includes('Nothing archived yet'), 'Failed list became successful empty archive');
+        start = boundary.processes.length; (await until(() => readyButton('Refresh'), 'inventory refresh')).click();
+        (await readProcess(start, 'list --revisions')).succeedEnvelope(readEnvelope('list', { repositories: {} }));
+        await until(() => text().includes('No valid terminal Envelope'), 'malformed inventory schema refusal');
+        invariant(!text().includes('Nothing archived yet'), 'Malformed list became successful empty archive');
+    });
+    await test('V48 Inventory valid empty and partial unmanaged rows remain distinct', async () => {
+        let start = boundary.processes.length; mount(<ArchiveBrowser />);
+        (await readProcess(start, 'list --revisions')).succeedEnvelope(readEnvelope('list', { repositories: [] }));
+        await until(() => text().includes('Nothing archived yet'), 'genuine successful empty inventory');
+        start = boundary.processes.length; (await until(() => readyButton('Refresh'), 'inventory refresh')).click();
+        (await readProcess(start, 'list --revisions')).failEnvelope(readEnvelope('list', {
+            repositories: [{
+                repository_type: 'model',
+                repository_id: 'org/unmanaged',
+                managed: false,
+                enabled: null,
+                current_commit_sha: null,
+                current_publication_id: null,
+                retained_revisions: 0,
+                revisions: []
+            }]
+        }, 20));
+        await until(() => text().includes('HFAPI003') && text().includes('Partial') && text().includes('org/unmanaged'), 'validated partial unmanaged inventory');
+        invariant(!text().includes('Nothing archived yet') && !text().includes('disabled'), 'Partial unmanaged inventory became empty or disabled managed configuration');
+    });
+    await test('V49 Selected sync refuses partial and refreshed failed status as authority', async () => {
+        let start = boundary.processes.length; mount(<SyncOperations />);
+        (await readProcess(start, 'status')).failEnvelope(readEnvelope('status', statusData(), 20));
+        await until(() => text().includes('HFAPI003') && text().includes('Partial'), 'selected-sync partial status refusal');
+        const partial = document.getElementById('select-model:org/model') as HTMLInputElement | null;
+        invariant(partial?.disabled === true, 'Partial failed status enabled selected-sync authority');
+        start = boundary.processes.length; (await until(() => readyButton('Refresh repository selection'), 'selection refresh')).click();
+        (await readProcess(start, 'status')).succeedEnvelope(readEnvelope('status', statusData()));
+        const checkbox = await until(() => {
+            const node = document.getElementById('select-model:org/model') as HTMLInputElement | null;
+            return node && !node.disabled ? node : null;
+        }, 'fresh successful selected-sync evidence'); checkbox.click();
+        (await until(() => readyButton('Sync selected (1)'), 'selected-sync preview')).click();
+        await until(() => button('Start selector sync'), 'selected-sync confirmation');
+        start = boundary.processes.length; (await until(() => readyButton('Refresh repository selection'), 'selected-sync invalidating refresh')).click();
+        (await readProcess(start, 'status')).failEnvelope(readEnvelope('status', {}, 20));
+        await until(() => text().includes('HFAPI003'), 'refreshed selected-sync original failure');
+        invariant(!button('Start selector sync') && !document.getElementById('select-model:org/model'), 'Failed refresh retained prior selected-sync readiness');
+        invariant(boundary.processes.slice(start).every(process => process.command[0] !== 'sync'), 'Failed status submitted a selected sync');
+    });
     await test('V41 report detail loading serializes repeated and alternate row clicks', async () => {
         const start = await mountReports();
         const first = await until(() => readyButton('Open report ' + REPORT_A), 'first selectable report row');
@@ -884,7 +1286,7 @@ async function run(): Promise<void> {
             mount(<><SyncOperations /><Verification /><Maintenance /><Dashboard /></>);
             await until(() => button('Run full sync') && button('Run full verification') && button('Dry run'), 'denied actual job controls');
             const status = await until(() => boundary.processes.slice(start).find(item => item.command[0] === 'status') ?? null, 'selected sync status metadata');
-            status.succeedEnvelope({ ...configEnvelope({ repositories: [{ repository_type: 'model', repository_id: 'org/model', managed: true, enabled: true }] }), command: 'status' });
+            status.succeedEnvelope({ ...configEnvelope(statusData()), command: 'status' });
             const checkbox = await until(() => document.querySelector<HTMLInputElement>('[id="select-model:org/model"]'), 'valid selected repository control');
             checkbox.click();
             const revision = await until(() => document.querySelector<HTMLInputElement>('#verify-revision-selector'), 'valid revision selector input');
@@ -1387,11 +1789,12 @@ async function run(): Promise<void> {
         button('Validate candidate')?.click();
         (await guardedProcess(start, 'write')).fail();
         await until(() => text().includes('Candidate acknowledgement is uncertain'), 'lost candidate-write acknowledgement');
+        const originalCause = session.snapshot().pipelineError;
         invariant(button('Validate candidate')?.disabled, 'Uncertain write enabled a new candidate write');
         invariant(!button('Discard candidate') && !button('Install validated candidate'), 'Uncertain write offered cleanup or installation');
         mounted?.unmount();
         mounted = null;
-        mount(<Configuration session={session} />);
+        mount(<><ProfileProbe /><Configuration key="before-inspection" session={session} /></>);
         await until(() => document.querySelector<HTMLTextAreaElement>('#config-text')?.value === CONFIG_DRAFT,
                     'captured draft after actual component remount');
         invariant(boundary.processes.length === start + 1, 'Remount replayed candidate write or initial load');
@@ -1403,9 +1806,36 @@ async function run(): Promise<void> {
             installedCandidate: 'changed',
             backupBase: 'absent'
         }));
-        const revalidate = await until(() => button('Revalidate captured candidate'), 'explicit inspected-candidate revalidation');
+        await until(() => session.snapshot().inspection?.candidate === 'matching', 'actual matching inspection before a new passive invalidator');
+        const inspected = session.snapshot().inspection;
+        const inspectedGeneration = session.snapshot().inspectedGeneration;
+        let committed = false;
+        // ProfileProbe retains this connection while Configuration is rekeyed.
+        // Its real new passive invalidator therefore runs after an explicit
+        // current-generation inspection has already committed.
+        mount(
+            <>
+                <ProfileProbe />
+                <Configuration key="after-inspection" session={session} />
+                <PassiveBarrier committed={() => { committed = true }} />
+            </>
+        );
+        await until(() => committed, 'actual remounted Configuration passive invalidator');
+        invariant(session.snapshot().inspection === inspected && session.snapshot().inspectedGeneration === inspectedGeneration,
+                  'A remounted invalidator erased a newer explicit inspection');
+        invariant(session.snapshot().pipelineError === originalCause && session.snapshot().uncertainty === 'candidate',
+                  'A remounted invalidator erased the original uncertain write cause');
+        invariant(boundary.processes.length === start + 2, 'Retaining current inspection replayed a host action');
+        boundary.superuser.reconnect();
+        await until(() => session.snapshot().inspection === null && !button('Revalidate captured candidate'), 'previous-generation inspection invalidated after reconnect');
+        invariant(session.snapshot().pipelineError === originalCause, 'Session invalidation erased the original classified write failure');
+        (await until(() => readyButton('Inspect captured configuration'), 'new-generation explicit candidate inspection')).click();
+        (await guardedProcess(start + 2, 'inspect')).rawSuccess(JSON.stringify({
+            candidate: 'matching', installedBase: 'matching', installedCandidate: 'changed', backupBase: 'absent',
+        }));
+        const revalidate = await until(() => readyButton('Revalidate captured candidate'), 'explicit inspected-candidate revalidation');
         revalidate.click();
-        const validation = await guardedProcess(start + 2, 'guard');
+        const validation = await guardedProcess(start + 3, 'guard');
         validation.succeedEnvelope(assessment());
         await until(() => button('Install validated candidate'), 'fresh revalidated captured candidate');
         invariant(boundary.processes.slice(start).filter(process => process.action === 'write').length === 1,
@@ -1607,9 +2037,12 @@ async function run(): Promise<void> {
         const startup = await until(() => boundary.metadataProcesses[start] ?? null, 'actual startup client authority read');
         startup.failEnvelope({ ...configEnvelope({}, 10, 'HFAPI003'), command: 'capabilities' });
         await until(() => text().includes('HFAPI003'), 'original authenticated startup metadata refusal');
+        await delay(50);
+        invariant(boundary.metadataProcesses.length === start + 1, 'Startup authority inspection spawned a superseded duplicate read');
         const readOnlyDoctor = await until(() => readyButton('Run checks (read-only)'), 'actual diagnostic job control');
+        const retryStart = boundary.metadataProcesses.length;
         readOnlyDoctor.click();
-        const retry = await until(() => boundary.metadataProcesses[start + 1] ?? null, 'actual pre-submission metadata check');
+        const retry = await until(() => boundary.metadataProcesses[retryStart] ?? null, 'actual pre-submission metadata check');
         retry.failEnvelope({ ...configEnvelope({}, 10, 'HFAPI018'), command: 'version' });
         await until(() => text().includes('HFAPI018'), 'original diagnostic pre-submission metadata refusal');
         invariant(operationRegistry.snapshot().records.length === records, 'Metadata refusal invented an admitted job record');
@@ -1883,11 +2316,7 @@ async function run(): Promise<void> {
                 if (!answered.has(inventory)) {
                     answered.add(inventory);
                     inventory.succeedEnvelope({
-                        ...configEnvelope({
-                            repositories: [{
-                                repository_type: 'model', repository_id: 'org/model', enabled: true, managed: true,
-                            }]
-                        }),
+                        ...configEnvelope(statusData()),
                         command: 'status'
                     });
                 }

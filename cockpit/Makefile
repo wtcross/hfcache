@@ -46,7 +46,7 @@ $(NODE_MODULES_STAMP): package.json pnpm-lock.yaml
 	$(PNPM) install --frozen-lockfile
 	touch $(NODE_MODULES_STAMP)
 
-$(DIST_STAMP): $(NODE_MODULES_STAMP) $(COCKPIT_REPO_STAMP) $(shell find src -type f 2>/dev/null) build.js package.json
+$(DIST_STAMP): $(NODE_MODULES_STAMP) $(COCKPIT_REPO_STAMP) $(shell find src pkg/lib -type f 2>/dev/null) build.js build-info.js package.json pnpm-lock.yaml Makefile
 	NODE_ENV=$(NODE_ENV) $(PNPM) run build
 
 watch: $(NODE_MODULES_STAMP) $(COCKPIT_REPO_STAMP)

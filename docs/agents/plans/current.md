@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [Cockpit REST repair](2026-10-19-plan-cockpit-rest-repair.md) |
-| Next task | [CPR-007: read results and diagnostics](tasks/cpr-007-read-results-and-diagnostics.md) |
+| Next task | [CPR-008: cross-boundary and runtime acceptance](tasks/cpr-008-cross-boundary-regressions.md) |
 | Blockers | V54 unpassed: isolated fixed rootless launcher/authenticated UDS and candidate validation now work; real Cockpit/PAM reconnect and current-source artifact acceptance remain in support/cockpit-rest-repair/runtime-004.md. Original installed cause unproven. |
 | Last completed plan | [Tags and discovery](2026-10-19-plan-tags-and-discovery.md) |
 | Updated | 2026-10-20 |

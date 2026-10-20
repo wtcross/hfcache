@@ -1,0 +1,140 @@
+CPR-007 Archive and selected Sync source evidence (2026-10-20)
+
+Read-only revalidation:
+  src/hfcache/services/queries.py _listed/_listed_revision and cli_client.py
+  inventory() provide the exact existing joined list --revisions payload. The
+  CLI already collects complete bounded repository/revision pages, pins archive
+  and policy identity, binds the current revision and checks retained counts.
+  This package changes no CLI/API paging or archive access.
+  Old Archive defaulted missing failure data to an empty-success caption and
+  blindly mapped malformed rows. Unmanaged enabled is actually null. Old Sync
+  silently filtered malformed success status rows and omitted the original
+  failed status Envelope. The shared read-results status parser is imported,
+  not duplicated in Sync.
+
+Implemented owned source:
+  Inventory parser requires the exact repository/revision fields, safe identities,
+  nullable current pair and unmanaged enabled state, nonnegative safe integer
+  counters, UTC timestamps, coherent count/current binding, canonical ordered
+  unique revisions and distinct repository identities. It returns only validated
+  typed data. Exact failed empty data remains unavailable; validated failed rows
+  are explicitly informational; unknown/malformed partial data receives a separate
+  fixed protocol error while the original Envelope remains unchanged.
+  Archive renders its original Envelope first and shows known empty only after
+  validated successful empty inventory. It does not falsely label unmanaged
+  repositories disabled.
+  Selected Sync requires a fresh successful shared parsed status. Partial rows
+  are disabled informational choices. Changed read/host/session clears selection
+  and confirmation. Confirmation captures the exact status Envelope, and the
+  handler checks the current host plus exact connection snapshot before admitting
+  a selected operation. Existing central host/profile/operation gates remain.
+
+Focused observed RED:
+  rtk proxy node --test --test-name-pattern='unknown failed payload' test/inventory-read.test.ts
+  cwd cockpit; exit 1, 1 failed, 0 skipped, duration 193.948231ms. The parser
+  silently ignored an unknown failed payload instead of returning a separate
+  fixed protocol error. Repaired by requiring exact recognized partial fields.
+
+Final owned-source checks:
+  rtk proxy ./node_modules/.bin/eslint src/archive.tsx src/sync.tsx src/lib/inventory-read.ts test/inventory-read.test.ts
+  cwd cockpit; exit 0, no errors.
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+  cwd cockpit; exit 0, no errors.
+  rtk proxy node --test test/inventory-read.test.ts test/read-results.test.ts
+  cwd cockpit; exit 0, 30 passed, 0 failed, 0 skipped, duration 247.557607ms.
+  Nine inventory cases cover exact managed/unmanaged data, real empty vs missing,
+  original classified failure/validated partial, malformed success and nested
+  fields, current/revision bindings, duplicates/order, unknown partial fields and
+  fixed non-mutating protocol classification. The other 21 cases exercise the
+  shared status/version/Doctor result parser.
+  rtk git diff --check
+  exit 0.
+
+Mounted baseline/current component and complete check.sh evidence is recorded by
+the package owner. These pure source checks do not establish disposable runtime,
+installed symptom, deployment or archive workload acceptance.
+
+Additional independently reviewed effect-readiness repair:
+  Current cached permission could become valid for a new host/session before an
+  old rendered button callback ran. Entry guards now synchronize the connection
+  and require the exact rendered connection snapshot and captured host before
+  changing local state or submitting. This covers ManualFullJob full sync/full
+  verify, revision verification, maintenance prune/recovery preview or Apply,
+  Repair and Doctor. Existing Apply requiredScope and original operation/observer
+  identities remain unchanged.
+
+  Full-job and Repair confirmations additionally capture the host and exact
+  connection at opening. A changed host/session hides/disables that confirmation
+  through exact captured-origin comparison. Running feeds, errors, results, handles and
+  observers are preserved; nothing is cancelled or replayed.
+
+  rtk proxy ./node_modules/.bin/eslint src/manual-job.tsx src/verify.tsx src/maintenance.tsx src/dashboard.tsx
+  cwd cockpit; exit 0, no errors.
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+  cwd cockpit; exit 0, no errors.
+  rtk git diff --check
+  exit 0. Queued-callback and post-rerender stale-modal component regressions are
+  owned and recorded by the mounted-fixture package contributor.
+
+Final confirmation lifecycle correction:
+  The unchanged 104-case mounted suite reported 103 passing and one failure:
+  V35 manual full sync timed out waiting for the first confirmation. The passive
+  mount effect that cleared confirmation on connection/host dependencies could
+  erase a just-opened valid modal. Removed those redundant clearing effects only
+  from ManualFullJob and Repair. Exact captured-origin readiness already hides
+  stale confirmation and prevents its use after host/session changes; the run
+  handler still synchronizes and compares the rendered origin before effects.
+  No operation state, observer, result or handle was cleared.
+
+  rtk proxy ./node_modules/.bin/eslint src/manual-job.tsx src/maintenance.tsx
+  cwd cockpit; exit 0, no errors.
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+  cwd cockpit; exit 0, no errors.
+  rtk git diff --check
+  exit 0. The unchanged full mounted-suite rerun is owned and recorded by the
+  mounted-fixture contributor; these source checks do not substitute for it.
+
+Independent Configuration passive-effect review and repair:
+  Root's connection invalidator now preserves inspection/confirmation evidence
+  acknowledged in the current synchronized generation while retiring old pipeline
+  readiness and uncertainty. Inspection clears confirmed before transmission;
+  confirmation and acknowledgement still require exact current original scope.
+
+  A second concrete issue was reproduced by extracting and executing the actual
+  authority effect body from configuration.tsx. It read the current editor session
+  but used captured loading/error authority: an older effect cleared a newer
+  confirmed installation or ready proposal. Conversely, captured matching authority
+  could leave readiness intact when the live authority had become unavailable.
+  The effect now checks the exact synchronized rendered connection, reads authority
+  and recovery records from the live stores, and preserves all existing host,
+  administrative, generation and sameOperationScope checks.
+
+  Permanent regression:
+    cockpit/test/configuration-authority-effect.test.ts
+  It executes the exact production effect body in node:vm with controlled stores
+  and the real sameOperationScope helper; it does not implement a parallel effect.
+  Four cases cover confirmed installation and ready proposal, each with stale
+  loading/error captures versus live matching authority, and captured matching
+  authority versus live loading/error/changed profile. This is a source-effect
+  regression, separate from mounted component and disposable runtime acceptance.
+
+  Observed RED command:
+    rtk proxy node --test <temporary-layout>/test/configuration-authority-effect.test.ts
+  The temporary layout contained the unchanged current test, exact source from
+    rtk proxy git show f0a35c2:cockpit/src/configuration.tsx
+  and a link to the current pure library. Product source was never reverted.
+  Exit 1; 0 passed, 4 failed, 0 skipped; duration 408.136106ms. All failures were
+  behavior assertions, retained in cpr-007-authority-effect-red.txt.
+
+  Observed GREEN command (cwd cockpit):
+    rtk proxy node --test test/configuration-authority-effect.test.ts
+  Exit 0; 4 passed, 0 failed, 0 skipped; duration 364.461397ms, retained in
+  cpr-007-authority-effect-green.txt.
+
+    rtk proxy ./node_modules/.bin/eslint src/configuration.tsx test/configuration-authority-effect.test.ts
+    rtk proxy ./node_modules/.bin/tsc --noEmit
+  Both cwd cockpit; exit 0, no errors.
+    rtk git diff --check
+  Exit 0. Source frozen and mounted-fixture owner notified. No other concrete
+  Configuration passive-effect defect found in this review; initial loading reads
+  the current initialized state, and hostCall checks the returned generation.

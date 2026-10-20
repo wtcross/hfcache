@@ -1,0 +1,132 @@
+CPR-007 loaded-browser and selected/client identity evidence
+Date: 2026-10-20
+
+Scope: repository build inputs, owned temporary synthetic source fixtures and
+controlled frontend metadata. No installed-host/guest, archive, NAS, service,
+container, registry, credential or running-payload inspection was executed.
+Source build evidence does not establish disposable Cockpit/PAM acceptance or
+verification of the original installed symptom.
+
+Observed focused checks:
+  cd cockpit
+  rtk proxy node --test test/build-info.test.ts
+  Final exit 0: 14 passed, 0 failed, 0 skipped.
+  rtk proxy node_modules/.bin/eslint build.js build-info.js src/lib/build-info.ts src/diagnostics.tsx src/app.tsx test/build-info.test.ts
+  Exit 0 after scoped formatting corrections.
+  rtk proxy node_modules/.bin/tsc --noEmit
+  Exit 0 for the full frontend.
+  rtk git diff --check
+  Exit 0.
+
+Focused cases:
+  - Exact immutable four-field build schema; source exports may retain a known
+    input digest with unknown commit and dirty state. Missing/invalid/extra
+    fields, unknown schemas, unsafe hashes and inconsistent null states refuse.
+  - Accessors, revoked/hostile proxies and unknown symbol fields never become
+    presentation authority or echo a synthetic credential value.
+  - Same-source, different-source, dirty and unavailable evidence are distinct;
+    commit agreement is never running-payload or output-bundle evidence.
+  - Hash framing is deterministic across input order, distinguishes path/byte
+    boundaries and detects byte changes. Duplicate, unsafe, oversized and excess
+    inputs refuse with fixed safe errors.
+  - Owned source-export fixtures exclude private/hidden fixture content; changing
+    a private fixture cannot change the public input digest. Public source byte
+    changes do change it. No absolute fixture path is emitted in browser metadata.
+  - Public symlinks, oversized files and excessive directory depth refuse.
+    Ambient GIT_DIR cannot redirect a source export to another repository.
+  - Changed source commit, working-copy state, public digest or internal Git
+    status snapshot refuses production build provenance.
+  - A fixed public input replaced by an owned temporary named pipe refuses
+    without blocking. The actual isolated child-process regression failed before
+    O_NONBLOCK (child reached its one-second deadline), then passed after the
+    nonblocking read-only open refused the nonregular file. No application
+    operation or host service was involved. Captured RED/GREEN outputs:
+    cpr-007-build-fifo-red.txt and cpr-007-build-fifo-green.txt.
+    Command: rtk proxy node --test --test-name-pattern='named pipe' test/build-info.test.ts
+    RED exit1, 0 passed/1 failed; GREEN exit0, 1 passed/0 failed; neither skipped.
+  - Independent review reproduced an unchecked pkg ancestor symlink reading a
+    synthetic external private.js. The real-open counter regression failed with
+    one private leaf open before the correction, then passed with zero after
+    descriptor-anchored nofollow traversal of every declared ancestor.
+    Captured RED/GREEN outputs: cpr-007-build-ancestor-red.txt and
+    cpr-007-build-ancestor-green.txt.
+    Command: rtk proxy node --test --test-name-pattern='symlinked ancestor' test/build-info.test.ts
+    RED exit1, 0 passed/1 failed; GREEN exit0, 1 passed/0 failed; neither skipped.
+  - The pure platform policy requests provenance only for fresh Linux production
+    builds. Development, watch and non-Linux builders emit all-null unknown
+    provenance. This policy unit test does not claim execution on another OS.
+
+Actual production build:
+  rtk proxy env -u RSYNC -u RSYNC_DEVEL NODE_ENV=production node build.js
+  Exit 0; reported build duration 3138 ms. Existing remote-copy environment was
+  explicitly absent; no installation, rsync, deployment or runtime action ran.
+
+Bounded inspection of the generated single .js.gz browser bundle used Node
+gunzipSync with maxOutputLength=16 MiB, then required exactly one embedded
+source_commit/source_dirty/inputs_sha256 identity. Exit 0; observed public fields:
+  schema_version: 1
+  source_commit: f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a
+  source_dirty: true
+  inputs_sha256: e49efa5f696ccc55f6d3ccaf67bdbf2047c015e9418029e134938f1d13eb2749
+After the nonblocking-read correction, normal gate lint wiring and parent source
+changes, the same production-build command ran again: exit0, 2912 ms. The same
+bounded generated-bundle inspection exited0 and observed exactly one identity:
+  schema_version: 1
+  source_commit: f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a
+  source_dirty: true
+  inputs_sha256: 78bf6a2fbd8cff0bde6dc9c3fe889ea856fe0cdba78a6126fc97fa23f61be602
+After descriptor-anchored traversal and the non-Linux unknown policy were added,
+the production command exited0 again, 3088 ms. Bounded bundle inspection exited0
+and observed exactly one identity:
+  schema_version: 1
+  source_commit: f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a
+  source_dirty: true
+  inputs_sha256: a68e4192a57ae9350243f74662304f6b4c085e87e18272e53c935b812bc6a9ca
+These were dirty source builds during CPR-007. Each input digest identifies that
+build's declared public input snapshot; later source builds may have another
+digest. Neither is the generated bundle checksum, installed dependency checksum
+or an installed/running release identity.
+
+Boundary implementation reviewed:
+  - Build-only Node helper reads declared regular public src/build/package/lock/
+    Makefile/pkg-lib inputs. It excludes hidden/private fixture trees, rejects
+    symlinks and nonregular public entries, and bounds scans to 1024 files,
+    2 MiB per file, 16 MiB total, 4096 tree entries and depth 32. Sized reads plus
+    an EOF probe avoid unbounded allocation if a public file grows during read.
+    Linux traversal holds the selected root and every declared ancestor with
+    O_DIRECTORY/O_NOFOLLOW/O_NONBLOCK and accesses only own /proc/self/fd
+    directory anchors. Final leaf opens are read-only, nofollow and nonblocking.
+    Unsafe ancestors or missing descriptor traversal refuse without a native
+    path fallback; no external private leaf is opened to compute a rejected hash.
+  - Production captures commit, working-copy state and framed public-input digest
+    before the build and compares them after compression, before the existing
+    remote-copy success hook. A failed build removes only generated repository
+    dist output. Linux provenance capture requires the safe /proc/self/fd path.
+    Development/watch and non-Linux production embed unknown provenance without
+    changing the build's existing ability to produce a bundle on another machine.
+  - Only the four strict public browser fields are embedded. Internal Git status,
+    absolute paths, environment and private/fixture bytes are never emitted.
+  - Diagnostics reuse existing typed host/client metadata and issue no extra
+    automatic CLI invocation. An explicit client identity refresh uses only the
+    existing fixed authenticated client describe command.
+  - Selected and client metadata require current host, generation, administrative
+    access, no pending refresh and no read error before presentation as current.
+    Dirty/unavailable/mismatched browser state is explicit. Protected selected
+    source/index/image and client profile/endpoint/class/archive/API instance are
+    separate facts; neither those facts nor health readiness grant write/workload
+    permission or prove the currently running API payload.
+
+The separately owned mounted diagnostics cases are recorded in
+  cpr-007-diagnostics.json
+The final mounted suite and full package gate are recorded by their owning agent.
+
+Independent read-only security review closed after the correction. The reviewer
+reported 100 repetitions of its original owned synthetic symlinked-pkg probe:
+100 BuildInputError refusals, zero external private-leaf opens and zero net own
+file-descriptor change. It also replaced the leaf and pkg/lib ancestor immediately
+before real openSync calls; both refused. It found no remaining concrete privacy
+or resource defect in the frozen descriptor traversal. These are independently
+reported source-fixture review findings, not another runtime acceptance gate;
+the directly executed regression commands and captured outputs above provide
+the permanent reproducer. No production data, credentials or host service was
+used by the review.

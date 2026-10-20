@@ -1,0 +1,300 @@
+{
+  "fixture": "actual mounted component baseline comparisons",
+  "source_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+  "real_pam": false,
+  "real_api_or_shell": false,
+  "passed": 0,
+  "failed": 26,
+  "groups": [
+    {
+      "group": "V48 payloads",
+      "command": "rtk proxy env CPR_BROWSER_TEST_FILTER='V48' CPR_BROWSER_READ_BASELINE=f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a rtk node test/browser.mjs",
+      "capture": {
+        "fixture": "actual mounted React with controlled Cockpit boundaries",
+        "real_pam": false,
+        "real_api_or_shell": false,
+        "source_ref": "working-tree",
+        "read_component_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+        "bundle_sha256": "bed8ed229074ce02eb0015aafd7c1d72809d4b8a0fc55509a1989baf54f2280b",
+        "state": "failed",
+        "tests": [
+          {
+            "name": "V48 Verification observer and timer failures are visible unavailable states",
+            "passed": false,
+            "message": "Timed out: failed scheduled observer and timer unavailable messages"
+          },
+          {
+            "name": "V48 Version rejects malformed secret-bearing data before presentation",
+            "passed": false,
+            "message": "Timed out: safe malformed version error"
+          },
+          {
+            "name": "V48 Status unreachable success renders unavailable measurements without false zeros",
+            "passed": false,
+            "message": "Timed out: valid unreachable archive branch"
+          },
+          {
+            "name": "V48 Status rejects malformed success before health or diagnostic echo",
+            "passed": false,
+            "message": "Timed out: safe malformed status error"
+          },
+          {
+            "name": "V48 Status failed partial repository observations are explicitly informational",
+            "passed": false,
+            "message": "Timed out: original refusal plus validated partial status"
+          },
+          {
+            "name": "V48 Doctor failed Envelope shows validated partial checks without empty success",
+            "passed": false,
+            "message": "Timed out: original Doctor classification with partial checks"
+          },
+          {
+            "name": "V48 Doctor refuses malformed checks before dereference or diagnostic echo",
+            "passed": false,
+            "message": "Timed out: safe malformed Doctor error"
+          },
+          {
+            "name": "V48 Inventory failed and malformed reads never become an empty archive",
+            "passed": false,
+            "message": "Failed list became successful empty archive"
+          },
+          {
+            "name": "V48 Inventory valid empty and partial unmanaged rows remain distinct",
+            "passed": false,
+            "message": "Timed out: validated partial unmanaged inventory"
+          }
+        ]
+      },
+      "additional_capture_metadata": [
+        {
+          "bounded_browser_log": "/tmp/hfcache-cpr-mounted-qpCOQd/firefox-tail.log"
+        }
+      ]
+    },
+    {
+      "group": "V46 Version",
+      "command": "rtk proxy env CPR_BROWSER_TEST_FILTER='V46 Version' CPR_BROWSER_READ_BASELINE=f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a rtk node test/browser.mjs",
+      "capture": {
+        "fixture": "actual mounted React with controlled Cockpit boundaries",
+        "real_pam": false,
+        "real_api_or_shell": false,
+        "source_ref": "working-tree",
+        "read_component_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+        "bundle_sha256": "bed8ed229074ce02eb0015aafd7c1d72809d4b8a0fc55509a1989baf54f2280b",
+        "state": "failed",
+        "tests": [
+          {
+            "name": "V46 Version failed Envelope remains visible without invented version facts",
+            "passed": false,
+            "message": "Timed out: original failed server version classification"
+          }
+        ]
+      },
+      "additional_capture_metadata": [
+        {
+          "bounded_browser_log": "/tmp/hfcache-cpr-mounted-59inlY/firefox-tail.log"
+        }
+      ]
+    },
+    {
+      "group": "V47 Estimate",
+      "command": "rtk proxy env CPR_BROWSER_TEST_FILTER='V47 Estimate' CPR_BROWSER_READ_BASELINE=f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a rtk node test/browser.mjs",
+      "capture": {
+        "fixture": "actual mounted React with controlled Cockpit boundaries",
+        "real_pam": false,
+        "real_api_or_shell": false,
+        "source_ref": "working-tree",
+        "read_component_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+        "bundle_sha256": "bed8ed229074ce02eb0015aafd7c1d72809d4b8a0fc55509a1989baf54f2280b",
+        "state": "failed",
+        "tests": [
+          {
+            "name": "V47 Estimate failed Envelope stays visible without absent-value facts",
+            "passed": false,
+            "message": "Timed out: original failed Estimate code"
+          },
+          {
+            "name": "V47 Estimate refuses malformed success before zero or secret presentation",
+            "passed": false,
+            "message": "Timed out: safe malformed Estimate error"
+          },
+          {
+            "name": "V47 Estimate repeated clicks create one bounded pending read",
+            "passed": false,
+            "message": "Repeated clicks created concurrent Estimate processes"
+          }
+        ]
+      },
+      "additional_capture_metadata": [
+        {
+          "bounded_browser_log": "/tmp/hfcache-cpr-mounted-2xLFd8/firefox-tail.log"
+        }
+      ]
+    },
+    {
+      "group": "V49 Doctor",
+      "command": "rtk proxy env CPR_BROWSER_TEST_FILTER='V49 Doctor' CPR_BROWSER_READ_BASELINE=f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a rtk node test/browser.mjs",
+      "capture": {
+        "fixture": "actual mounted React with controlled Cockpit boundaries",
+        "real_pam": false,
+        "real_api_or_shell": false,
+        "source_ref": "working-tree",
+        "read_component_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+        "bundle_sha256": "bed8ed229074ce02eb0015aafd7c1d72809d4b8a0fc55509a1989baf54f2280b",
+        "state": "failed",
+        "tests": [
+          {
+            "name": "V49 Doctor invalidates completed checks on privilege generation change",
+            "passed": false,
+            "message": "Old Doctor evidence survived session loss"
+          }
+        ]
+      },
+      "additional_capture_metadata": [
+        {
+          "bounded_browser_log": "/tmp/hfcache-cpr-mounted-GjF1b8/firefox-tail.log"
+        }
+      ]
+    },
+    {
+      "group": "V49 Selected sync",
+      "command": "rtk proxy env CPR_BROWSER_TEST_FILTER='V49 Selected sync' CPR_BROWSER_READ_BASELINE=f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a rtk node test/browser.mjs",
+      "capture": {
+        "fixture": "actual mounted React with controlled Cockpit boundaries",
+        "real_pam": false,
+        "real_api_or_shell": false,
+        "source_ref": "working-tree",
+        "read_component_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+        "bundle_sha256": "bed8ed229074ce02eb0015aafd7c1d72809d4b8a0fc55509a1989baf54f2280b",
+        "state": "failed",
+        "tests": [
+          {
+            "name": "V49 Selected sync refuses partial and refreshed failed status as authority",
+            "passed": false,
+            "message": "Timed out: selected-sync partial status refusal"
+          }
+        ]
+      },
+      "additional_capture_metadata": [
+        {
+          "bounded_browser_log": "/tmp/hfcache-cpr-mounted-k63ohK/firefox-tail.log"
+        }
+      ]
+    },
+    {
+      "group": "V49 retained callbacks",
+      "command": "rtk proxy env CPR_BROWSER_TEST_FILTER='retained actual' CPR_BROWSER_READ_BASELINE=f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a rtk node test/browser.mjs",
+      "capture": {
+        "fixture": "actual mounted React with controlled Cockpit boundaries",
+        "real_pam": false,
+        "real_api_or_shell": false,
+        "source_ref": "working-tree",
+        "read_component_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+        "bundle_sha256": "68b822f1846ec2aeeeca382dc74d0650b939a0bc66af0d2a0b3a992d98eea42c",
+        "state": "failed",
+        "tests": [
+          {
+            "name": "V49 retained actual sync handler rejects a newly authorized different host",
+            "passed": false,
+            "message": "Stale sync callback prepared a new original operation on another host"
+          },
+          {
+            "name": "V49 retained actual verify-full handler rejects a newly authorized different host",
+            "passed": false,
+            "message": "Stale verify-full callback prepared a new original operation on another host"
+          },
+          {
+            "name": "V49 retained actual doctor handler rejects a newly authorized different host",
+            "passed": false,
+            "message": "Stale doctor callback prepared a new original operation on another host"
+          },
+          {
+            "name": "V49 retained actual revision handler rejects a newly authorized different host",
+            "passed": false,
+            "message": "Stale revision callback prepared a new original operation on another host"
+          },
+          {
+            "name": "V49 retained actual repair handler rejects a newly authorized different host",
+            "passed": false,
+            "message": "Stale repair callback prepared a new original operation on another host"
+          },
+          {
+            "name": "V49 retained actual prune handler rejects a newly authorized different host",
+            "passed": false,
+            "message": "Stale prune callback prepared a new original operation on another host"
+          },
+          {
+            "name": "V49 retained actual recover handler rejects a newly authorized different host",
+            "passed": false,
+            "message": "Stale recover callback prepared a new original operation on another host"
+          },
+          {
+            "name": "V49 retained actual schedule confirmation cannot mutate a newly authorized different host",
+            "passed": false,
+            "message": "Retained old-host confirmation began a schedule attempt"
+          }
+        ]
+      },
+      "additional_capture_metadata": [
+        {
+          "bounded_browser_log": "/tmp/hfcache-cpr-mounted-kBq4Os/firefox-tail.log"
+        }
+      ]
+    },
+    {
+      "group": "V49 modal origins",
+      "command": "rtk proxy env CPR_BROWSER_TEST_FILTER='confirmation opened on another host' CPR_BROWSER_READ_BASELINE=f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a rtk node test/browser.mjs",
+      "capture": {
+        "fixture": "actual mounted React with controlled Cockpit boundaries",
+        "real_pam": false,
+        "real_api_or_shell": false,
+        "source_ref": "working-tree",
+        "read_component_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+        "bundle_sha256": "bed8ed229074ce02eb0015aafd7c1d72809d4b8a0fc55509a1989baf54f2280b",
+        "state": "failed",
+        "tests": [
+          {
+            "name": "V49 sync confirmation opened on another host cannot authorize a rerendered submission",
+            "passed": false,
+            "message": "A confirmation from another host remained enabled after rerender"
+          },
+          {
+            "name": "V49 repair confirmation opened on another host cannot authorize a rerendered submission",
+            "passed": false,
+            "message": "A confirmation from another host remained enabled after rerender"
+          }
+        ]
+      },
+      "additional_capture_metadata": [
+        {
+          "bounded_browser_log": "/tmp/hfcache-cpr-mounted-18nl4t/firefox-tail.log"
+        }
+      ]
+    },
+    {
+      "group": "V17 actual passive invalidator",
+      "command": "rtk proxy env CPR_BROWSER_TEST_FILTER='Configuration keeps a lost-write draft' CPR_BROWSER_READ_BASELINE=f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a rtk node test/browser.mjs",
+      "capture": {
+        "fixture": "actual mounted React with controlled Cockpit boundaries",
+        "real_pam": false,
+        "real_api_or_shell": false,
+        "source_ref": "working-tree",
+        "read_component_baseline": "f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a",
+        "bundle_sha256": "3963e5e61db34f1bf5e578ade68e07d9141cc446585e856d4cf61dbcec02d059",
+        "state": "failed",
+        "tests": [
+          {
+            "name": "V17 Configuration keeps a lost-write draft across remount and revalidates only after inspection",
+            "passed": false,
+            "message": "A remounted invalidator erased a newer explicit inspection"
+          }
+        ]
+      },
+      "additional_capture_metadata": [
+        {
+          "bounded_browser_log": "/tmp/hfcache-cpr-mounted-JYp6FW/firefox-tail.log"
+        }
+      ]
+    }
+  ]
+}

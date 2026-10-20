@@ -7,8 +7,9 @@
  * displayed and never enabled from here (CP-06).
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
+import { Alert } from '@patternfly/react-core/dist/esm/components/Alert/index.js';
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
 import { Card, CardBody, CardTitle } from "@patternfly/react-core/dist/esm/components/Card/index.js";
 import {
@@ -25,8 +26,8 @@ import { ManualFullJob } from './manual-job';
 import { hostActionAllowed } from './api/profile';
 import { UnitActivity } from './activity';
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
-import { connectionSnapshot } from './api/connection';
-import { submissionBlocked } from './api/operations';
+import { connectionSnapshot, synchronizeConnection } from './api/connection';
+import { currentOperationHost, submissionBlocked } from './api/operations';
 import { VERIFY_SERVICE, VERIFY_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
 import { useObservationSignal, useOperationHandles, useUnitPoll, useConnection, useOperations, useHostProfile } from './hooks';
@@ -34,6 +35,8 @@ import { parseSelector, SelectorError } from './lib/command';
 import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatBytes, formatDuration, formatTimestamp } from './lib/format';
 import { appendDisplayLine } from './lib/stream';
+import { parseEstimate } from './lib/estimate-read';
+import { normalizeFailure } from './lib/failure';
 
 const Item = ({ term, children }: { term: string; children: React.ReactNode }) => (
     <DescriptionListGroup>
@@ -42,32 +45,48 @@ const Item = ({ term, children }: { term: string; children: React.ReactNode }) =
     </DescriptionListGroup>
 );
 
-interface EstimateData {
-    repositories?: number;
-    revisions?: number;
-    unique_objects?: number;
-    unique_bytes?: number;
-    unreadable_objects?: number;
-    measured_throughput_bytes_per_second?: number | null;
-    estimated_duration_seconds?: number | null;
-    storage_maintenance?: string;
-}
-
 const EstimateCard = () => {
+    const connection = useConnection();
+    const host = currentOperationHost();
+    const origin = JSON.stringify([connection, host]);
+    const [readyOrigin, setReadyOrigin] = useState('');
+    const [observedOrigin, setObservedOrigin] = useState('');
     const [running, setRunning] = useState(false);
     const [result, setResult] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
-
+    const revision = useRef(0);
+    const pending = useRef(false);
+    const mounted = useRef(true);
+    useEffect(() => {
+        mounted.current = true;
+        return () => { mounted.current = false };
+    }, []);
+    useEffect(() => {
+        revision.current += 1;
+        setResult(null); setError(null); setObservedOrigin(''); setReadyOrigin(origin);
+        return () => { revision.current += 1 };
+    }, [origin]);
     const run = () => {
-        setRunning(true);
-        setError(null);
+        if (pending.current || readyOrigin !== origin || !connection.administrative ||
+            connection !== connectionSnapshot() || host !== currentOperationHost()) return;
+        pending.current = true;
+        const request = ++revision.current;
+        const current = () => request === revision.current && connection === connectionSnapshot() && host === currentOperationHost();
+        setRunning(true); setResult(null); setError(null);
         runHfcache(['verify', '--estimate'])
-                .then(envelope => setResult(envelope), failure => setError(failure as Error))
-                .finally(() => setRunning(false));
+                .then(envelope => {
+                    if (current()) { setObservedOrigin(origin); setResult(envelope) }
+                }, failure => {
+                    if (current()) { setObservedOrigin(origin); setError(normalizeFailure(failure, { stage: 'api-read' })) }
+                })
+                .finally(() => {
+                    pending.current = false;
+                    if (mounted.current) setRunning(false);
+                });
     };
-
-    const data = (result?.data ?? {}) as EstimateData;
-
+    const shown = observedOrigin === origin ? result : null;
+    const parsed = parseEstimate(shown);
+    const data = parsed.payload;
     return (
         <Card>
             <CardTitle>Estimate</CardTitle>
@@ -75,31 +94,34 @@ const EstimateCard = () => {
                 <Stack hasGutter>
                     <StackItem>
                         Sizes the maintenance window from retained metadata. Takes no archive
-                        lock and performs no hashing or verification persistence.
+                        lock and performs no hashing or verification persistence. Metadata reads
+                        do not prove integrity, an available execution lane or workload acceptance.
                     </StackItem>
                     <StackItem>
-                        <Button variant="secondary" isDisabled={running} onClick={run}>
+                        <Button variant="secondary" isDisabled={running || readyOrigin !== origin || !connection.administrative} onClick={run}>
                             Run verify --estimate
                         </Button>
                     </StackItem>
                     {running && <StackItem><Loading /></StackItem>}
-                    {error !== null && <StackItem><QueryError error={error} /></StackItem>}
-                    {result !== null && !running &&
+                    {observedOrigin === origin && error !== null && <StackItem><QueryError error={error} /></StackItem>}
+                    {shown !== null && !running && <StackItem><EnvelopeAlert envelope={shown} /></StackItem>}
+                    {parsed.error !== null && <StackItem><QueryError error={parsed.error} /></StackItem>}
+                    {data !== null && !running &&
                         <StackItem>
+                            {parsed.partial && <Alert variant="warning" isInline title="Partial estimate metadata">Informational only; the request failed and grants no execution readiness.</Alert>}
                             <DescriptionList isHorizontal isCompact>
-                                <Item term="Repositories">{data.repositories ?? '—'}</Item>
-                                <Item term="Revisions">{data.revisions ?? '—'}</Item>
-                                <Item term="Unique objects">{data.unique_objects ?? '—'}</Item>
+                                <Item term="Repositories">{data.repositories}</Item>
+                                <Item term="Revisions">{data.revisions}</Item>
+                                <Item term="Unique objects">{data.unique_objects}</Item>
                                 <Item term="Unique bytes">{formatBytes(data.unique_bytes)}</Item>
-                                <Item term="Estimated duration">
-                                    {formatDuration(data.estimated_duration_seconds)}
-                                </Item>
+                                <Item term="Unreadable objects">{data.unreadable_objects}</Item>
+                                <Item term="Estimated duration">{formatDuration(data.estimated_duration_seconds)}</Item>
                                 <Item term="Measured throughput">
-                                    {data.measured_throughput_bytes_per_second == null
-                                        ? 'unknown'
+                                    {data.measured_throughput_bytes_per_second === null
+                                        ? 'unknown — never measured'
                                         : `${formatBytes(data.measured_throughput_bytes_per_second)}/s`}
                                 </Item>
-                                <Item term="Storage maintenance">{data.storage_maintenance ?? '—'}</Item>
+                                <Item term="Storage maintenance">{data.storage_maintenance}</Item>
                             </DescriptionList>
                         </StackItem>}
                 </Stack>
@@ -119,12 +141,15 @@ const ScheduledVerifyCard = () => {
             <CardBody>
                 <Stack hasGutter>
                     <StackItem>System service state and journals describe the scheduled observer only. They do not establish the result of a manual server operation.</StackItem>
+                    {service.loading && <StackItem><Loading /></StackItem>}
                     {service.error !== null && <StackItem><QueryError error={service.error} /></StackItem>}
+                    {!service.loading && service.state === null && <StackItem>Scheduled observer state is unavailable.</StackItem>}
+                    {service.state !== null &&
                     <StackItem>
-                        <Label isCompact color={running ? 'blue' : 'grey'}>{service.state?.activeState ?? '…'}</Label>
+                        <Label isCompact color={running ? 'blue' : 'grey'}>{service.state.activeState}</Label>
                         {' '}observer process result: {service.result?.result ?? '…'}
                         {service.result !== null && ` (exit ${service.result.execMainStatus})`}
-                    </StackItem>
+                    </StackItem>}
                     {running && <StackItem><UnitActivity unit={VERIFY_SERVICE} /></StackItem>}
                 </Stack>
             </CardBody>
@@ -135,6 +160,7 @@ const ScheduledVerifyCard = () => {
 const RevisionVerifyCard = () => {
     const profile = useHostProfile();
     const connection = useConnection();
+    const host = currentOperationHost();
     const operations = useOperations();
     const [selectorText, setSelectorText] = useState('');
     const [running, setRunning] = useState(false);
@@ -157,6 +183,7 @@ const RevisionVerifyCard = () => {
     }
 
     const run = () => {
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
         if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative || !hostActionAllowed('archive') || selectorText === '')
             return;
         try {
@@ -246,9 +273,12 @@ const VerifyTimerCard = () => {
         <Card>
             <CardTitle>Quarterly timer — display only</CardTitle>
             <CardBody>
+                {timer.loading && <Loading />}
+                {timer.error !== null && <QueryError error={timer.error} />}
+                {!timer.loading && timer.state === null && <p>Scheduled verification timer state is unavailable.</p>}
                 <DescriptionList isHorizontal isCompact>
                     <Item term="hfcache-verify.timer">
-                        <Label isCompact color="grey">{timer.state?.unitFileState ?? '…'}</Label>
+                        <Label isCompact color="grey">{timer.state?.unitFileState ?? 'unavailable'}</Label>
                     </Item>
                     <Item term="Next elapse">
                         {formatTimestamp(timer.timer?.nextElapse?.toISOString())}

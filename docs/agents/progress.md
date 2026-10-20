@@ -157,6 +157,26 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   action. V54/current artifact and original installed symptom remain unproven.
   Continue CPR-007, keeping the plan selected and all historical restrictions.
 
+- [x] CPR-007 Validate failed reads and separate deployment identities (2026-10-20,
+  this commit — [task](plans/tasks/cpr-007-read-results-and-diagnostics.md)). Original
+  negative Envelopes survive CLI success-only formatters and Version/Estimate/
+  Status/Inventory/Doctor presentation. Strict partial/unavailable/empty states,
+  host/session owner recovery, queued handlers, modal opening identities and
+  current-store passive invalidation prevent stale readiness or erasure of newer
+  explicit inspection/confirmation. Existing version --server, complete paging,
+  original operation identity and no-replay rules remain. Advisory strict browser
+  provenance separates selected release and authenticated client/API facts; FIFO
+  and ancestor-symlink escapes have actual RED/GREEN and independent review.
+  Exact baseline26component failures, final104mounted passes; focused142CLI,
+  24read/12estimate/9inventory/9connection/14build/4authority-effect passes. Earlier
+  failed/transitional gates retained. Final full gate5276pass/42deselected in
+  693.88s, three wheel profiles, actual frontend lint/style/types/561unit/104mounted/
+  build, zero frontend skips. [Evidence](plans/support/cockpit-rest-repair/gates/cpr-007.txt).
+  INV006/affected CPs and server health reviewed; actual ADR137, older ADR122/134
+  amendments/status/index, register and human guides agree. No new dependency,
+  durable/API/MCP authority or production/guest/NAS action. V54/current clean
+  artifact and original installed cause remain unproven. Continue scoped CPR-008.
+
 ## Tags and discovery (2026-10-19)
 
 - [x] CAT-001 Activate the feature plan and establish technical contracts
@@ -2666,6 +2686,21 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     earlier holds. No host or guest change occurred in this package. V54 and the
     original installed reconnected symptom remain unproven under item25. Continue
     scoped CPR-007; no unrelated backlog is activated.
+
+28. **Read readiness and browser provenance rollout (CPR-007,2026-10-20):**
+    source now validates read payloads and binds submitted intent/confirmation to
+    its rendered host/session. Passive invalidation preserves newer acknowledged
+    evidence while rejecting stale readiness. Advisory browser source/dirty/input
+    metadata is separate from protected selected release and authenticated client/
+    API facts; a matching package/source or health.ready never proves the running
+    payload or archive writability. A fresh clean production build and exact bundle/
+    image/profile/index identities are needed for later rollout. The accepted
+    precommit gate truthfully reports its parent plus dirty inputs. Next scoped
+    CPR-008 must establish current-source disposable real Cockpit/PAM and installed
+    wheel/private-UDS evidence. Earlier guest/production guards, masks, original
+    locks, credentials, receipts, unknown operations and NAS/workload holds remain.
+    No production or guest change occurred here; item25 retains the original
+    installed-symptom uncertainty. No unrelated historical backlog is activated.
 
 ## Operator decisions needed
 
@@ -5409,6 +5444,17 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      independent diagnostic evidence, never operation truth. No new REST route,
      filesystem path authority, browser credential, runtime dependency or durable
      format follows. Real Cockpit/PAM and installed acceptance remain separate.
+
+137. **Validate read presentation and separate deployment identities**
+     (2026-10-20, CPR-007). [Decision 137](../adr/decision-137.md) distinguishes
+     coded failure, validated partial metadata, unavailable/malformed data and
+     authentic empty success. Stale host/session evidence cannot grant readiness;
+     existing server version, complete paging and original operation contracts
+     remain. A strict four-field advisory browser build snapshot uses bounded
+     public input hashing and stable before/after source capture. It is separate
+     from selected release and authenticated API facts; no version/health/selected
+     binding proves writability or a running payload. No transport/capability/
+     credential/runtime dependency or deployment authority is added.
 
 ## Documentation and script alignment
 

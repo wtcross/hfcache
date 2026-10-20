@@ -1,0 +1,32 @@
+✔ status accepts actual reachable and unreachable service shapes without fabricated counters (4.589282ms)
+✔ status accepts nullable unmanaged values and every actual repository report status (0.636303ms)
+✔ status preserves a complete paginated CLI aggregate above ten thousand rows (47.316874ms)
+✔ status accepts complete verification history and rejects impossible timestamps (1.509015ms)
+✔ failed read Envelopes remain values with no invented success payload (0.503972ms)
+✔ recognized failed sections are partial and preserve the exact original value (0.528527ms)
+✔ status refuses missing with fixed bounded protocol failure (0.190369ms)
+✔ status refuses bad archive with fixed bounded protocol failure (0.155839ms)
+✔ status refuses bad rows with fixed bounded protocol failure (0.268755ms)
+✔ status refuses unknown field with fixed bounded protocol failure (0.486021ms)
+✔ status refuses unknown schema with fixed bounded protocol failure (0.402505ms)
+✔ status refuses wrong headroom with fixed bounded protocol failure (0.231233ms)
+✔ status refuses unsafe count with fixed bounded protocol failure (0.193544ms)
+✔ status refuses inconsistent verification with fixed bounded protocol failure (0.302025ms)
+✔ status refuses unknown entry object with fixed bounded protocol failure (0.284995ms)
+✔ status refuses unknown finding with fixed bounded protocol failure (0.643038ms)
+✔ status refuses nullable managed with fixed bounded protocol failure (0.13215ms)
+✔ status refuses revision-qualified identity with fixed bounded protocol failure (0.283257ms)
+✔ status refuses inconsistent generations with fixed bounded protocol failure (0.254756ms)
+✔ status refuses duplicate selectors with fixed bounded protocol failure (0.218097ms)
+✔ negative malformed partials keep their classification separate from safe schema error (0.228522ms)
+✔ version requires exact current server payload and retains supported unknown versions (1.072671ms)
+✔ Doctor validates known ordered unique checks and bounded detail before rendering (0.471179ms)
+✔ Doctor requires all seventeen current success checks while negative subsets remain partial (0.243801ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 263.513764

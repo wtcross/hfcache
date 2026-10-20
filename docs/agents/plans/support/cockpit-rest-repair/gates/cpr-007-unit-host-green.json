@@ -1,0 +1,1 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"4f0cf438ac7364972cd8d0abc8b521c327d379ebc0c2494242f31b82ba5fa7e1","state":"passed","tests":[{"name":"V49 Unit hooks replace a cached D-Bus owner when host changes without close","passed":true}]}

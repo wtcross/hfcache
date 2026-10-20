@@ -6,7 +6,8 @@ import { Card, CardBody, CardTitle } from '@patternfly/react-core/dist/esm/compo
 import { Stack, StackItem } from '@patternfly/react-core/dist/esm/layouts/Stack/index.js';
 
 import { lookupOriginalOperation, readClientAuthority, waitOriginalOperation } from './api/hfcache';
-import { operationRegistry } from './api/operations';
+import { synchronizeConnection } from './api/connection';
+import { currentOperationHost, operationRegistry } from './api/operations';
 import { DataSummary, EnvelopeAlert, Loading, QueryError } from './components';
 import { useConnection, useOperations } from './hooks';
 import { operationCommands } from './lib/envelope';
@@ -16,11 +17,13 @@ import { operationCommands } from './lib/envelope';
 export const OriginalOperations = () => {
     const { registry, views } = useOperations();
     const connection = useConnection();
+    const host = currentOperationHost();
     useEffect(() => {
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
         if (connection.administrative)
             readClientAuthority().catch(() => undefined);
-    }, [connection.generation, connection.administrative]);
-    const fresh = views.authority.generation === connection.generation && connection.administrative;
+    }, [connection, host]);
+    const fresh = views.authority.generation === connection.generation && connection.administrative && views.authority.scope?.host === host;
     const scope = fresh ? views.authority.scope : null;
     return (
         <Card aria-label="Original operation recovery">

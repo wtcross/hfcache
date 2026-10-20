@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { runHfcache } from './api/hfcache';
-import { connectionSnapshot, subscribeConnection } from './api/connection';
+import { connectionSnapshot, subscribeConnection, synchronizeConnection } from './api/connection';
 import { normalizeFailure } from './lib/failure';
 import {
     ServiceResult, serviceResult, TimerState, timerState, UnitState, unitState,
@@ -27,11 +27,12 @@ export function useHostProfile() {
     const host = currentOperationHost();
     const profile = useSyncExternalStore(subscribeProfile, profileSnapshot);
     useEffect(() => {
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
         const current = profileSnapshot();
         if (connection.administrative && !current.loading &&
             (current.host !== host || current.generation !== connection.generation || (current.profile === null && current.error === null)))
             readHostProfile().catch(() => { /* Safe classified error is retained by the adapter. */ });
-    }, [connection.administrative, connection.generation, host, profile.loading, profile.generation]);
+    }, [connection, host, profile.loading, profile.generation]);
     return {
         ...profile,
         permissions: Object.fromEntries(HOST_ACTIONS.map(action =>
@@ -90,7 +91,8 @@ export function useHfcache(command: string[]): EnvelopeQuery {
     const [generation, setGeneration] = useState(0);
     const key = JSON.stringify(command);
     const connection = useConnection();
-    const origin = JSON.stringify([key, generation, connection]);
+    const host = currentOperationHost();
+    const origin = JSON.stringify([key, generation, connection, host]);
     const [observedOrigin, setObservedOrigin] = useState('');
 
     useEffect(() => {
@@ -98,28 +100,34 @@ export function useHfcache(command: string[]): EnvelopeQuery {
         setLoading(true);
         setEnvelope(null);
         setError(null);
+        if (synchronizeConnection() !== connection)
+            return () => { cancelled = true };
+        const current = () => {
+            const active = synchronizeConnection();
+            return !cancelled && active === connection && host === currentOperationHost();
+        };
         runHfcache(JSON.parse(key) as string[])
                 .then(result => {
-                    if (!cancelled) {
+                    if (current()) {
                         setObservedOrigin(origin);
                         setEnvelope(result);
                         setError(null);
                     }
                 })
                 .catch(failure => {
-                    if (!cancelled) {
+                    if (current()) {
                         setObservedOrigin(origin);
                         setError(normalizeFailure(failure));
                     }
                 })
                 .finally(() => {
-                    if (!cancelled)
+                    if (current())
                         setLoading(false);
                 });
         return () => {
             cancelled = true;
         };
-    }, [key, generation, connection, origin]);
+    }, [key, generation, connection, origin, host]);
 
     const refresh = useCallback(() => setGeneration(value => value + 1), []);
     const fresh = observedOrigin === origin;
@@ -152,7 +160,8 @@ export function useUnitPoll(name: string, intervalMs = 5000): UnitQuery {
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(true);
     const connection = useConnection();
-    const origin = JSON.stringify([name, intervalMs, generation, connection]);
+    const host = currentOperationHost();
+    const origin = JSON.stringify([name, intervalMs, generation, connection, host]);
     const [observedOrigin, setObservedOrigin] = useState('');
     const latestOrigin = useRef(origin);
     latestOrigin.current = origin;
@@ -163,7 +172,8 @@ export function useUnitPoll(name: string, intervalMs = 5000): UnitQuery {
         const poll = async () => {
             // A close invalidates rendered evidence immediately. Its next read
             // uses this finite loop, avoiding a reconnect/render retry storm.
-            const observedConnection = connectionSnapshot();
+            const observedConnection = synchronizeConnection();
+            const observedHost = currentOperationHost();
             setLoading(true);
             setState(null);
             setTimer(null);
@@ -172,8 +182,8 @@ export function useUnitPoll(name: string, intervalMs = 5000): UnitQuery {
                 const value = await unitState(name);
                 const timerValue = name.endsWith('.timer') ? await timerState(name) : null;
                 const resultValue = name.endsWith('.service') ? await serviceResult(name) : null;
-                if (!cancelled && observedConnection === connectionSnapshot()) {
-                    setObservedOrigin(latestOrigin.current);
+                if (!cancelled && observedConnection === connectionSnapshot() && observedHost === currentOperationHost()) {
+                    setObservedOrigin(JSON.stringify([name, intervalMs, generation, observedConnection, observedHost]));
                     setState(value);
                     setTimer(timerValue);
                     setResult(resultValue);
@@ -196,7 +206,7 @@ export function useUnitPoll(name: string, intervalMs = 5000): UnitQuery {
             cancelled = true;
             clearTimeout(handle);
         };
-    }, [name, intervalMs, generation, connection.administrative]);
+    }, [name, intervalMs, generation, connection.administrative, host]);
 
     const refresh = useCallback(() => setGeneration(value => value + 1), []);
     const fresh = observedOrigin === origin;

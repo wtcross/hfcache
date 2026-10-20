@@ -1,0 +1,1 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"f7c51175aea3eb14a72de5ff6dd8ab63680f6cc1ea43ee4a4f5546af1783f9cc","state":"passed","tests":[{"name":"V17 Configuration keeps a lost-write draft across remount and revalidates only after inspection","passed":true}]}

@@ -1,0 +1,1 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"289ca30592f2292785b3e3f7e902faf5b1625521c6b45176a7f9be6667224bce","state":"passed","tests":[{"name":"V11/V26 authentic metadata refusal Envelopes remain visible before any original job can be submitted","passed":true}]}

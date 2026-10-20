@@ -28,7 +28,7 @@ import { daemonReload, restartUnit, SYNC_TIMER, unitState, UnitState } from './a
 import { QueryError } from './components';
 import { useConnection, useHostProfile } from './hooks';
 import { hostActionAllowed, hostActionReason } from './api/profile';
-import { assertSession, captureSession, connectionSnapshot } from './api/connection';
+import { assertSession, captureSession, connectionSnapshot, synchronizeConnection } from './api/connection';
 import { normalizeFailure } from './lib/failure';
 import { AcknowledgedHostChangeError, HostProfileError } from './lib/host-profile';
 import { CalendarCheck, parseDropIn, renderDropIn } from './lib/schedule';
@@ -93,7 +93,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
         setCurrent(null);
         setObservedOrigin('');
         setReadError(null);
-        if (connection.administrative) {
+        if (connection.administrative && synchronizeConnection().generation === connection.generation) {
             const generation = connection.generation;
             readDropIn().then(content => {
                 if (cancelled || generation !== connectionSnapshot().generation || host !== cockpit.transport.host)
@@ -122,6 +122,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
     }, [connection.generation]);
 
     const check = () => {
+        if (synchronizeConnection() !== connection || host !== cockpit.transport.host) return;
         const revision = ++checkRevision.current;
         const generation = connectionSnapshot().generation;
         setChecked(null);
@@ -196,6 +197,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
     };
 
     const acknowledge = () => {
+        if (synchronizeConnection() !== connection || host !== cockpit.transport.host) return;
         if (!uncertain || !inspected || busy || !inspection ||
             !attempted || inspection.host !== cockpit.transport.host || attempted.host !== inspection.host ||
             inspection.generation !== connectionSnapshot().generation || !connectionSnapshot().administrative)
@@ -208,6 +210,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
     };
 
     const act = (write: boolean) => {
+        if (synchronizeConnection() !== connection || host !== cockpit.transport.host) return;
         if (!fresh || attempted !== null || capacityBlocked || busy || submitted.current || !hostActionAllowed('schedule'))
             return;
         let attempt: Readonly<ScheduleAttempt>;

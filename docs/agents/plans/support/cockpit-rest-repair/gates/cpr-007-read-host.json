@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"dea5237eb3a3c7cda119780fc3cc4a74448c04c181f5d4af08dcd910cb2c1e8e","state":"failed","tests":[{"name":"V49 Read hooks hide old host evidence and discard late callbacks without bridge close","passed":false,"message":"Timed out: fresh selected-host read result"}]}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-QSvIPc/firefox-tail.log"}

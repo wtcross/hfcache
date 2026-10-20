@@ -43,6 +43,17 @@ fixed client and needs no client archive mount. Optional journal diagnostics
 remain host-local and may be unavailable independently of reports. See the
 [contract](../cockpit.md) and [recorded restrictions](../deployment-status.md).
 
+Compare the loaded browser build-input identity, selected protected release
+source/index/image and authenticated client/API identity independently. A dirty
+or unknown browser build cannot establish source parity. The input digest covers
+declared public build inputs and lock/pin files; it is not the output bundle
+checksum or a hash of installed dependency bytes. Selected bindings do not prove
+which payload is currently running. Keep exact bundle checksums and active image
+verification in the operator rollout record; package version alone is insufficient.
+Source provenance currently requires Linux descriptor-anchored public input reads.
+Other build platforms, development and watch builds report unknown provenance;
+they do not substitute an unguarded input scan.
+
 On the machine that builds it (the same host, or any other):
 
 - node `^24.18.1` and pnpm ≥ 11 (`cockpit/package.json` pins

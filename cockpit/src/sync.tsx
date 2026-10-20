@@ -7,7 +7,7 @@
  * lifetime distinct from accepted execution (ADR122).
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
@@ -29,7 +29,7 @@ import { hostActionAllowed, hostActionReason } from './api/profile';
 import { ScheduleEditor } from './schedule';
 import { runHfcacheStreaming } from './api/hfcache';
 import { connectionSnapshot } from './api/connection';
-import { submissionBlocked } from './api/operations';
+import { currentOperationHost, submissionBlocked } from './api/operations';
 import { startUnit, stopUnit, SYNC_SERVICE, SYNC_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
 import { useHfcache, useObservationSignal, useOperationHandles, useUnitPoll, useConnection, useOperations, useHostProfile } from './hooks';
@@ -37,6 +37,7 @@ import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatSelector, parseSelector } from './lib/command';
 import { formatTimestamp } from './lib/format';
 import { appendDisplayLine } from './lib/stream';
+import { parseStatus } from './lib/read-results';
 
 const Item = ({ term, children }: { term: string; children: React.ReactNode }) => (
     <DescriptionListGroup>
@@ -176,20 +177,13 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
     );
 };
 
-interface StatusRepositoryLite {
-    repository_id: string;
-    repository_type: 'model' | 'dataset';
-    enabled: boolean;
-    managed: boolean;
-}
-
 const SelectorSync = () => {
     const profile = useHostProfile();
     const status = useHfcache(['status']);
     const connection = useConnection();
     const operations = useOperations();
     const [selected, setSelected] = useState<Record<string, boolean>>({});
-    const [confirming, setConfirming] = useState(false);
+    const [confirming, setConfirming] = useState<Envelope | null>(null);
     const [running, setRunning] = useState(false);
     const [feed, setFeed] = useState<string[]>([]);
     const [result, setResult] = useState<Envelope | null>(null);
@@ -197,24 +191,23 @@ const SelectorSync = () => {
     const { handles, reset: resetHandles, onNotice } = useOperationHandles();
     const observationSignal = useObservationSignal();
     const submitted = useRef(false);
+    const host = currentOperationHost();
 
-    const statusReady = !status.loading && status.error === null && status.envelope?.exit_code === 0;
-    const observed = ((status.envelope?.data ?? {}) as { repositories?: StatusRepositoryLite[] }).repositories;
-    const repositories = (statusReady && Array.isArray(observed) ? observed : []).filter(repository => {
-        if (!repository || repository.managed !== true || repository.enabled !== true)
-            return false;
-        try {
-            parseSelector(formatSelector({ type: repository.repository_type, id: repository.repository_id }));
-            return true;
-        } catch { return false }
-    });
-    const selectors = repositories
+    const parsed = status.envelope === null ? null : parseStatus(status.envelope);
+    const statusReady = !status.loading && status.error === null && status.envelope?.exit_code === 0 &&
+        parsed?.error === null && parsed.payload?.repositories !== undefined && !parsed.partial;
+    const repositories = (parsed?.payload?.repositories ?? [])
+            .filter(repository => repository.managed && repository.enabled === true);
+    const selectors = (statusReady ? repositories : [])
             .map(repository => formatSelector({ type: repository.repository_type, id: repository.repository_id }))
             .filter(selector => selected[selector] === true);
+    const confirmationReady = confirming !== null && confirming === status.envelope && statusReady;
+    useEffect(() => { setSelected({}); setConfirming(null) }, [status.envelope, connection, host]);
 
     const run = () => {
         if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative ||
-            !hostActionAllowed('archive') || !statusReady || selectors.length === 0)
+            connectionSnapshot() !== connection || host !== currentOperationHost() ||
+            !hostActionAllowed('archive') || !confirmationReady || selectors.length === 0)
             return;
         try {
             for (const value of selectors) {
@@ -224,7 +217,7 @@ const SelectorSync = () => {
         } catch { return }
         submitted.current = true;
         const signal = observationSignal();
-        setConfirming(false);
+        setConfirming(null);
         setRunning(true);
         setFeed([]);
         setResult(null);
@@ -256,6 +249,12 @@ const SelectorSync = () => {
                 <Stack hasGutter>
                     {status.loading && <StackItem><Loading /></StackItem>}
                     {status.error !== null && <StackItem><QueryError error={status.error} /></StackItem>}
+                    {status.envelope !== null && !status.loading && <StackItem><EnvelopeAlert envelope={status.envelope} /></StackItem>}
+                    {parsed?.error && <StackItem><QueryError error={parsed.error} /></StackItem>}
+                    {parsed?.partial && parsed.payload?.repositories !== undefined && <StackItem><Alert variant="warning" isInline title="Partial repository status">Validated rows from a failed read are informational. Refresh successfully before selecting a sync operation.</Alert></StackItem>}
+                    {!status.loading && !statusReady && <StackItem><Alert variant="warning" isInline title="Repository selection unavailable">A fresh, successful and validated repository status is required.</Alert></StackItem>}
+                    {statusReady && repositories.length === 0 && <StackItem>No enabled managed repositories in this status response.</StackItem>}
+                    <StackItem><Button variant="link" isDisabled={status.loading || !connection.administrative} onClick={() => status.refresh()}>Refresh repository selection</Button></StackItem>
                     <StackItem>
                         {repositories.map(repository => {
                             const selector = formatSelector({
@@ -267,6 +266,7 @@ const SelectorSync = () => {
                                     key={selector}
                                     id={`select-${selector}`}
                                     label={selector}
+                                    isDisabled={!statusReady || running}
                                     isChecked={selected[selector] === true}
                                     onChange={(_event, checked) =>
                                         setSelected(previous => ({ ...previous, [selector]: checked }))}
@@ -279,7 +279,7 @@ const SelectorSync = () => {
                             variant="secondary"
                             isDisabled={running || uncertain || operations.blocked || !connection.administrative ||
                                 !profile.permissions.archive || !statusReady || selectors.length === 0}
-                            onClick={() => setConfirming(true)}
+                            onClick={() => { if (statusReady) setConfirming(status.envelope); }}
                         >
                             Sync selected ({selectors.length})
                         </Button>
@@ -310,9 +310,9 @@ const SelectorSync = () => {
                 <ConfirmModal
                     title={`Sync ${selectors.length} selected`}
                     confirmLabel="Start selector sync"
-                    disabled={running || uncertain || operations.blocked || !profile.permissions.archive || !statusReady || selectors.length === 0}
-                    isOpen={confirming}
-                    onClose={() => setConfirming(false)}
+                    disabled={running || uncertain || operations.blocked || !profile.permissions.archive || !confirmationReady || selectors.length === 0}
+                    isOpen={confirming !== null}
+                    onClose={() => setConfirming(null)}
                     onConfirm={run}
                 >
                     The transient CLI client submits one operation to the API and observes it.

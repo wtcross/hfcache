@@ -36,7 +36,7 @@ import {
     configuredTagSuggestions, normalizeTags, tagInput,
 } from './lib/config';
 import { validateCandidateText } from './lib/candidate-guard';
-import { connectionSnapshot } from './api/connection';
+import { connectionSnapshot, synchronizeConnection } from './api/connection';
 import { readClientAuthority } from './api/hfcache';
 import { currentOperationHost, operationRegistry, operationViews, submissionBlocked } from './api/operations';
 import { OperationAuthorityError } from './lib/operation-authority';
@@ -408,25 +408,28 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
     };
 
     useEffect(() => {
+        if (synchronizeConnection() !== connection) return;
         const previous = session.snapshot();
         if (previous.generation !== null && previous.generation !== connection.generation) {
+            // An explicit inspection can finish before this passive effect.
+            // Retire old pipeline readiness without erasing newer evidence.
+            const inspectedHere = previous.inspectedGeneration === connection.generation;
             session.patch({
                 connectionChanged: true,
-                inspection: null,
-                inspectedGeneration: null,
-                confirmed: false,
+                ...(!inspectedHere ? { inspection: null, inspectedGeneration: null, confirmed: false } : {}),
                 ...(previous.phase === 'ready' ? { phase: 'idle' } : {}),
                 ...(previous.diskGuard && previous.uncertainty === null ? { uncertainty: 'candidate' } : {})
             });
         }
-    }, [connection.generation, session]);
+    }, [connection, session]);
 
     useEffect(() => {
+        if (synchronizeConnection() !== connection) return;
         const current = session.snapshot();
-        const recovered = operations.registry.records.find(record => record.key === current.previewKey);
+        const recovered = operationRegistry.snapshot().records.find(record => record.key === current.previewKey);
         if (current.previewUncertain && recovered?.state === 'terminal')
             session.patch({ previewUncertain: false });
-        const authority = operations.views.authority;
+        const authority = operationViews().authority;
         const matches = connection.administrative && authority.generation === connection.generation &&
             !authority.loading && authority.error === null && authority.scope !== null && current.authority !== null &&
             current.authority.host === currentOperationHost() && sameOperationScope(current.authority, authority.scope);
@@ -436,7 +439,7 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
                 confirmed: false,
                 connectionChanged: true,
             });
-    }, [operations.registry.records, operations.views.authority, connection.administrative, connection.generation, session]);
+    }, [operations.registry.records, operations.views.authority, connection, session]);
 
     useEffect(() => {
         if (session.snapshot().initialized)

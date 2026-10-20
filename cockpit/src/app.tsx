@@ -15,6 +15,7 @@ import { Tab, Tabs, TabTitleText } from "@patternfly/react-core/dist/esm/compone
 import { ArchiveBrowser } from './archive';
 import { Configuration } from './configuration';
 import { Dashboard } from './dashboard';
+import { DeploymentDiagnostics } from './diagnostics';
 import { useConnection, useHostProfile } from './hooks';
 import { readHostProfile } from './api/profile';
 import { QueryError } from './components';
@@ -66,6 +67,7 @@ export const Application = () => {
                     </Alert>}
                 <OriginalOperations />
                 <HostRestrictions />
+                <DeploymentDiagnostics />
                 <Tabs
                     activeKey={activeTab}
                     onSelect={(_event, eventKey) => setActiveTab(eventKey)}

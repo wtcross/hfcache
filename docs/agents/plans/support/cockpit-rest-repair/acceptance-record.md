@@ -81,14 +81,14 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V43 | Source pass: three actual separate-process/private UDS lifecycles deny client archive/config opens and scans while REST reports remain readable. Production adapter retirement was observed as two static failures before removal, then2/2 pass; final static/journal/events/stream selection30/30 pass0skip. [Red](gates/cpr-006-archive-boundary-red.txt), [green](gates/cpr-006-archive-boundary-green.txt), [journal/static commands](gates/cpr-006-journal.txt). No direct plugin archive report path or old privileged report-file API remains. |
 | V44 | Source pass: CLI rejects invalid IDs, paths, leading options, arbitrary route/method and job/local/candidate modes before credential/network access. Plugin accepts only fixed page50 vectors with one bounded opaque cursor and exact32hex show ID;10 command tests passed. Mounted unsafe-ID/cursor calls refuse before target invocation. [CLI](gates/cpr-006-cli.txt), [components](gates/cpr-006-components.txt). No new forwarding surface. |
 | V45 | Source pass: fixed seven-day/newest201-entry query, owned5s+1s host deadline/client6s, raw256KiB, retained200lines/64KiB and8KiB line caps. Final11 journal cases cover chunked/oversized/secret prose,201st-line close, UTF8 cap, access/bridge/launcher/124 and partial deadline. Only closed event/level/exact run-ID projects; incomplete failed frames stay withheld. Mounted report remains visible through journal bridge failure, safe partial evidence, filtering and line truncation; a reproduced initial-effect race is fixed. No host process was run. [Journal](gates/cpr-006-journal.txt), [components](gates/cpr-006-components.txt), [frontend gate](gates/cpr-006.txt). |
-| V46 | Not executed; owning repair and regression pending. |
-| V47 | Not executed; owning repair and regression pending. |
-| V48 | CPR-006 report portion: strict page/durable variants bind run/archive identity and distinguish failed read Envelope from a successful read of a historically failed report. Negative Envelopes bypass success-only parsing. CLI168 and frontend90 focused cases pass. Remaining status/list/read-card audit is CPR-007. |
-| V49 | Shared read/unit hooks now remove stale healthy evidence and reject old generations; mounted regressions pass. Per-surface full read rendering audit remains CPR-007. |
-| V50 | Not executed; owning repair and regression pending. |
-| V51 | Failure/runner and mounted QueryError synthetic secret tests pass; only safe validated problem/status/signal/handle fields retained. CPR-004 registry/metadata collision defenses and CPR-005 strict profile/closed dispatcher/bounded schedule memory reject or withhold unknown input. CPR-006 report CLI inherits recursive API/CLI redaction, including nested recovery evidence; existing actual API large-report registered-secret regression1pass. Journal arbitrary prose/unknown fields are withheld and metadata secret collisions refuse. [Read-only review](gates/cpr-006-cli.txt), [journal tests](gates/cpr-006-journal.txt). No browser bearer or policy mutation surface. All remaining read surfaces are CPR-007 scope. |
+| V46 | Source/component pass: exact version --server retains original negative code and refuses malformed secret-bearing success. Baseline case fails; current passes. [Components](gates/cpr-007-components.txt), final561unit/104mounted full gate below. |
+| V47 | Source/component pass: original Estimate failure, strict metadata schema, unknown throughput/unreadable counts, refresh/session invalidation and one pending read. No workload or verification confidence inferred. [Owner/estimate](gates/cpr-007-owner.txt), [components](gates/cpr-007-components.txt). |
+| V48 | Source pass across Version/Estimate/Status/Inventory/Doctor and prior REST reports: original failures, validated informational partials, valid empty, unreachable measurements and malformed success stay distinct. Actual CLI formatter regressions35RED thenGREEN;142focused CLI/API/socket cases pass. Complete inventories retain existing byte/page bounds without invented row limits. [CLI](gates/cpr-007-cli.txt), [components](gates/cpr-007-components.txt), prior report evidence retained. |
+| V49 | Source pass: fresh host/session ownership before reads, old callback rejection, failed-refresh clearing, queued-action and opening-modal origins, and actual Configuration remount preserving a newer explicit inspection while clearing stale generations. Both current-store authority invalidation directions have4exact-effect regressions. Exact component baseline26semantic failures; final104mounted pass. [Owner](gates/cpr-007-owner.txt), [components](gates/cpr-007-components.txt). |
+| V50 | Source pass: strict four-field advisory build provenance and mounted diagnostics separate browser source/dirty/input digest, protected selected source/index/image, and fresh authenticated endpoint/profile/class/archive/instance. Missing/malformed/mismatched/stale facts remain explicit, with no native fallback or writability claim. Build14tests, FIFO/ancestor RED/GREEN and independent100safe refusals/0private opens/0FDleak. [Evidence](gates/cpr-007-build-info.txt). |
+| V51 | Source pass: earlier bounded failures/registry/profile/report/journal secret defenses retained. CLI human read/Doctor presentation applies existing registered-credential redaction; JSON terminals preserve safe original Envelopes before success-only formatting. Closed read schemas withhold unknown/nested fields and malformed diagnostic values. Build hashing never reads environment/private inputs or follows a symlinked ancestor. [CLI](gates/cpr-007-cli.txt), [components](gates/cpr-007-components.txt), [build](gates/cpr-007-build-info.txt). Real secret delivery remains V54. |
 | V52 | Partial: actual CLI process over temporary authenticated UDS covers client metadata, writer/reader/wrong credentials, original lookup, exact failed Envelopes and scope mismatch with zero POSTs; CPR-005 adds real full-sync/private-verifier boundaries and CPR-006 adds actual report pages/detail/refusals with client archive/config denied. Candidate/build-wheel completeness audit remains CPR-008; no mock is substituted for missing cases. |
-| V53 | Source/component portion passes: actual mounted React/adapter/hook/runner lifecycle suite now71cases, including uncertain Apply across tabs/reload and report/journal/detail-loading ordering. [Final gate artifact](gates/cpr-006-gate-mounted.json), [component evidence](gates/cpr-006-components.txt). Controlled external Cockpit ports are explicitly not real PAM; final completeness review is CPR-008, physical chain is V54. |
+| V53 | Source/component portion passes104actual mounted React/adapter/hook/runner cases with controlled external Cockpit boundaries, including uncertain Apply/tab/reload, candidate stages, reports and current-read readiness. [Final package gate](gates/cpr-007-gate-mounted.json), [baseline/current attribution](gates/cpr-007-components.txt). These are explicitly not real PAM; final completeness review remains CPR-008 and physical chain V54. |
 | V54 | UNPASSED: isolated guest now passes real systemd/rootless fixed-client authenticated UDS and guarded candidate validation after the exact empty-placeholder prerequisite correction. Failed starts remain evidence. [Current handoff](runtime-004.md) pins the older source/image and unchanged guard/NFS-ro/masks. Current-source immutable artifact plus real Cockpit/PAM reconnect acceptance remain required; original installed symptom is unproven. |
 | V55 | Not executed; owning repair and regression pending. |
 | V56 | Not executed; owning repair and regression pending. |
@@ -101,7 +101,7 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 
 | Gate | Command / result / evidence |
 | --- | --- |
-| Package repository gate | CPR-006 final `rtk proxy scripts/check.sh` exit0:5241passed/42deselected, three wheel profiles, actual frontend lint/style/types/495unit/71mounted/build. Earlier package failures and accepted gates remain in their records. [Evidence](gates/cpr-006.txt) |
+| Package repository gate | CPR-007 final `rtk proxy scripts/check.sh` exit0:5276passed/42deselected, three wheel profiles, actual frontend lint/style/types/561unit/104mounted/build. Earlier failed/transitional and accepted gates remain. [Evidence](gates/cpr-007.txt) |
 | Explicit frontend gate | CPR-006 `rtk proxy make -C cockpit check` exit0:495unit/70mounted/lint/style/types/build before the detail latch; final full gate executes the same check and passes495unit/71mounted including that repair. Final-plan explicit gate remains required. [Evidence](gates/cpr-006.txt) |
 | Extended final gate | Pending — scripts/check.sh --with-build |
 | Component/lifecycle regressions | CPR-002: 12 mounted cases passed in actual Firefox; [bounded results](gates/cpr-002-mounted.json). No real PAM/API claims |
@@ -311,7 +311,7 @@ proof remains denied, and no production/NAS/old-guest mutation occurred. Require
 real current-source Cockpit/PAM V54 and original installed cause remain unproven;
 plan stays active. Continue CPR-006.
 
-CPR-006, this commit (2026-10-20): fixed REST-only one-page report CLI/view and
+CPR-006 commit `f0a35c2` (2026-10-20): fixed REST-only one-page report CLI/view and
 retired direct archive reader, with independent optional bounded journal. V41–45
 and report portions ofV48/V51 have actual subprocess/socket/component evidence.
 Initial full gate1failed/5234passed/42deselected in747.33s exposed the frozen
@@ -329,3 +329,21 @@ ADR122/134/status/index plus CLI/API/client/schema/security/operator guides agre
 No new dependency/durable format/API route/MCP capability or production/guest/NAS
 action. V54/current-source artifact and original installed symptom stay unproven;
 continue CPR-007 with the plan active and prior restrictions/evidence retained.
+
+CPR-007, this commit (2026-10-20): V46–51 source acceptance with original coded
+failures, strict honest read states and fresh host/session/authority readiness.
+Exact reviewed component source26behavioral failures, repaired104mounted passes;
+actual CLI/reader/writer/manual/report/socket focus142passes. Build FIFO/ancestor
+privacy defects and passive invalidation races have retained actual RED/GREEN.
+The first full gate failed mounted ownership, the next passed but preceded a
+separately reproduced inspection race, and the FINAL full gate after all repairs
+exited0:5276Python/42deselected in693.88s, three locked wheel profiles, frontend
+lint/style/types/561unit/104mounted/build. [Gate and artifact identities](gates/cpr-007.txt).
+ProductionJS SHA256db271a967029f87113380eeb97fee79a744b5762d923563a29a52a35641536c8;
+mounted bundle7618cdd64e77899448f6139b318965658bdcfed72a10817d77681d5e3175748f.
+Precommit browser metadata truthfully says parentf0a35c2, dirty=true, public
+inputSHA256f08227a330ffd2a4df0d1f1d05ca143bf7497dd103bf69cb59553026cbead648;
+no clean committed/deployed artifact claim. Actual ADR137/affected CPs/INV006,
+older decisions and human contracts agree. No dependency/durable/API/MCP authority
+or production/guest/NAS change. V54/current immutable artifact and the original
+installed cause stay unproven. Continue CPR-008 with the plan active.

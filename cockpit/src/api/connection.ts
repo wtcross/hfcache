@@ -9,7 +9,7 @@ import { normalizeFailure } from '../lib/failure';
 import type { FailureStage } from '../lib/failure';
 
 export const systemConnection = new OwnedConnection(() =>
-    cockpit.dbus('org.freedesktop.systemd1', { bus: 'system', superuser: 'try' }));
+    cockpit.dbus('org.freedesktop.systemd1', { bus: 'system', superuser: 'try' }), undefined, () => cockpit.transport.host);
 
 export interface ConnectionSnapshot {
     generation: number;
@@ -23,10 +23,13 @@ const listeners = new Set<() => void>();
 let detach: (() => void) | null = null;
 
 function publish(): void {
-    if (snapshot.generation === systemConnection.generation &&
-        snapshot.administrative === (superuser.allowed === true))
+    // Reading generation may itself retire an old host owner and publish once.
+    // Compare after that reconciliation, avoiding a second same-state snapshot.
+    const generation = systemConnection.generation;
+    const administrative = superuser.allowed === true;
+    if (snapshot.generation === generation && snapshot.administrative === administrative)
         return;
-    snapshot = { generation: systemConnection.generation, administrative: superuser.allowed === true };
+    snapshot = { generation, administrative };
     for (const listener of listeners)
         listener();
 }
@@ -59,14 +62,23 @@ export function subscribeConnection(listener: () => void): () => void {
 
 export function connectionSnapshot(): ConnectionSnapshot { return snapshot }
 
+/* Reconcile a trusted host change before beginning an asynchronous read. Keep
+ * this outside React snapshot/render access: invalidation can notify subscribers. */
+export function synchronizeConnection(): ConnectionSnapshot {
+    publish();
+    return snapshot;
+}
+
 export function captureSession(stage: FailureStage): number {
-    if (superuser.allowed !== true)
+    const connection = synchronizeConnection();
+    if (!connection.administrative)
         throw normalizeFailure({ problem: 'access-denied' }, { stage, hostMutationUncertain: false });
-    return systemConnection.generation;
+    return connection.generation;
 }
 
 export function assertSession(generation: number, stage: FailureStage, mutation = false): void {
-    if (superuser.allowed !== true || generation !== systemConnection.generation)
+    const connection = synchronizeConnection();
+    if (!connection.administrative || generation !== connection.generation)
         throw normalizeFailure({ problem: 'reconnected' }, { stage, hostMutationUncertain: mutation });
 }
 

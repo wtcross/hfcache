@@ -94,3 +94,40 @@ test('throwing channel disposal still publishes invalidation to every view', asy
     assert.equal(notices, 1);
     assert.equal(client.listeners.size, 0);
 });
+
+test('V49 host changes retire the cached connection even without a close event', async () => {
+    let host = 'first-host';
+    const clients: Client[] = [];
+    const owner = new OwnedConnection(() => { const value = new Client(); clients.push(value); return value },
+                                      async () => {}, () => host);
+    const original = await owner.read(async client => client);
+    host = 'second-host';
+    const replacement = await owner.read(async client => client);
+    assert.notEqual(replacement, original);
+    assert.equal(original.disposals, 1);
+    assert.equal(original.listeners.size, 0);
+    assert.equal(owner.generation, 1);
+});
+
+test('V49 a late read from another host is retried finitely without returning old evidence', async () => {
+    let host = 'first-host';
+    const owner = new OwnedConnection(() => new Client(), async () => {}, () => host);
+    let attempts = 0;
+    const result = await owner.read(async () => {
+        attempts += 1;
+        if (attempts === 1) { host = 'second-host'; return 'old-host-evidence' }
+        return 'current-host-evidence';
+    });
+    assert.equal(result, 'current-host-evidence');
+    assert.equal(attempts, 2);
+});
+
+test('V49 host change after a mutation preserves uncertainty and never repeats it', async () => {
+    let host = 'first-host';
+    const owner = new OwnedConnection(() => new Client(), async () => {}, () => host);
+    let attempts = 0;
+    await assert.rejects(owner.mutate(async () => {
+        attempts += 1; host = 'second-host'; return 'possibly-completed';
+    }), error => (error as { problem?: string }).problem === 'reconnected');
+    assert.equal(attempts, 1);
+});

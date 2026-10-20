@@ -19,8 +19,8 @@ channel — controls fail closed and say why.
 
 ## How to read the plugin
 
-**Every action is a runbook command.** Buttons start the shipped systemd
-units or run the installed CLI with `--json`; dialogs and captions name the
+**Every action is a runbook command.** Buttons use the fixed REST-backed CLI
+with `--json` or the explicitly permitted host timer/observer interfaces; dialogs and captions name the
 exact command or unit, so anything the plugin does you can reproduce — and
 script — from a shell ([`operations.md`](../operations.md)).
 
@@ -81,8 +81,8 @@ Copy recovery commands from **Original operations** on the recorded host. They
 use the fixed rootless launcher, service identity, selected client settings/socket
 and `--expected-client-scope`; quoted handles follow `--`, so a leading `-` or `~`
 remains argument data. Do not replace a failed lookup with a new submission key.
-The installed full-service controls above remain separate from this page's keyed
-client registry.
+Scheduled observer controls remain separate from this page's keyed manual jobs
+and never establish a server operation's outcome.
 
 Progress is bounded sequenced operation information, not invented checkpoint or
 byte completion. A strict terminal Envelope determines the outcome. The page
@@ -111,6 +111,18 @@ The archive's health from `--json status`, with a Refresh button:
   probing needs writer/storage approval; the named checks render in order with pass/fail/skipped
   outcomes.
 - **Version** — application, Python, `huggingface_hub`, transfer backend.
+
+Read cards retain the original coded failure instead of showing an empty success
+or placeholder counters. A partial result is informational and does not make an
+action ready. Refresh/session/host changes invalidate old data. An unreachable
+archive has unknown capacity and transaction facts, not inferred healthy zeros.
+The Version card reads the authenticated server with `version --server`.
+
+**Source and connection diagnostics** separates the loaded browser build, selected physical
+release source/index/image, and authenticated client/API authority. Missing,
+dirty, stale or mismatched identities require review. A matching package version,
+selected binding or daemon readiness does not prove running-payload parity or
+write permission. Development/watch builds report unknown source provenance.
 
 ## Sync
 

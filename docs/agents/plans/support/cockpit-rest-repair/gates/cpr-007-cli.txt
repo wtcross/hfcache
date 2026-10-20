@@ -1,0 +1,53 @@
+CPR-007 CLI result presentation evidence (2026-10-20)
+
+The existing management client authenticates/validates a terminal Envelope before
+the CLI formats human rows. Those row formatters can require fields absent from
+a legitimate failed/partial Envelope. Formatting must not replace its original
+classification or JSON evidence with a KeyError. No request, effect, identity,
+credential source, archive read or server execution path changes here.
+
+Initial package-owner RED and narrow repair:
+  /tmp/hfcache-cpr007-cli-read-red.log records 17 failed cases in 1.38s.
+  Failed nonempty verification estimate, list/revisions and initialization
+  inspection payloads raised before presentation (including root restatement
+  replacing the original failure). Malformed Doctor partial checks also raised.
+  A valid human Doctor partial check could disclose the registered synthetic
+  API credential in a detail string.
+  Early failed-read rendering now preserves original Envelopes and exits before
+  success-only field/root comparisons. Doctor keeps bounded valid partial checks
+  and original failure, while malformed negative checks bypass row formatting.
+  Human row/pair rendering applies the existing known-credential redactor.
+
+Independent additive JSON terminal RED:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_read_failures.py -k json_terminal_results
+  Result: 18 failed, 17 deselected in 6.07s, exit 1. Nine job families, each with
+  successful and negative valid terminal Envelopes, raised KeyErrors when their
+  data lacked unrelated human formatter fields. Cases cover sync, plan, full
+  verification, prune, purge, recovery, quarantine, repair and catalog refresh.
+
+  Every _submit caller was reviewed: after terminal return it performs only
+  presentation, including confirmed initialization's return/format path. The
+  shared helper now renders JSON terminal Envelopes immediately and exits with
+  their original classification before human row construction. Its context
+  managers still close normally. It neither replays nor skips domain/effect
+  logic. Human Doctor valid partial information remains supported.
+
+Final source checks:
+  rtk proxy uv run --locked --extra server --extra mcp ruff format src/hfcache/cli.py tests/unit/test_cli_read_failures.py
+  Result: 2 files unchanged.
+  rtk proxy uv run --locked --extra server --extra mcp ruff check src/hfcache/cli.py tests/unit/test_cli_read_failures.py
+  Result: all checks passed.
+  rtk proxy uv run --locked --extra server --extra mcp pyrefly check
+  Result: 0 errors (11 suppressed, 63 warnings not shown).
+
+Focused final GREEN:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_read_failures.py tests/unit/test_cli_api_reads.py tests/unit/test_cli_api_writes.py tests/unit/test_cli_operations_adversarial.py tests/unit/test_cli_runs_socket.py tests/unit/test_cli_catalog.py tests/unit/test_cli_manual_socket.py
+  Result: 142 passed in 116.10s, exit 0. Includes all 35 new presentation cases,
+  existing real CLI/API write parity and private Unix-socket manual/report cases,
+  retained-handle observation/reconnect cases and catalog/ordinary read parity.
+  No new POST replay, credential surface, archive fallback or local workload was
+  introduced. All actual runtime-facing tests used their temporary private API
+  fixtures, not installed host services.
+
+The full package gate is recorded by the package owner; no disposable-runtime,
+installed symptom or workload acceptance follows from these hermetic tests.

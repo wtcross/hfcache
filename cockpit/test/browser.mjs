@@ -25,11 +25,12 @@ async function main() {
     const manualBaseline = process.env.CPR_BROWSER_MANUAL_BASELINE;
     const reportBaseline = process.env.CPR_BROWSER_REPORT_BASELINE;
     const journalBaseline = process.env.CPR_BROWSER_JOURNAL_BASELINE;
+    const readBaseline = process.env.CPR_BROWSER_READ_BASELINE;
     if (sourceRef !== undefined && !/^[0-9a-f]{40}$/.test(sourceRef))
         throw new Error('An optional baseline must be an exact forty-character commit SHA');
     if (manualBaseline !== undefined && !/^[0-9a-f]{40}$/.test(manualBaseline))
         throw new Error('A manual-component baseline must be an exact forty-character commit SHA');
-    if ([reportBaseline, journalBaseline].some(value => value !== undefined && !/^[0-9a-f]{40}$/.test(value)))
+    if ([reportBaseline, journalBaseline, readBaseline].some(value => value !== undefined && !/^[0-9a-f]{40}$/.test(value)))
         throw new Error('Report/journal baselines must be exact forty-character commit SHAs');
     const RESULT_BYTES = 32768;
     const resultPath = '/result/' + randomUUID();
@@ -79,6 +80,12 @@ async function main() {
                             'proxy', 'git', 'show', sourceRef + ':' + relative(repository, args.path),
                         ], { cwd: repository, maxBuffer: 2 * 1024 * 1024 }).toString('utf8'),
                         loader: args.path.endsWith('.tsx') ? 'tsx' : 'ts',
+                    }));
+                } else if (readBaseline !== undefined) {
+                    builder.onLoad({ filter: /[/\\]cockpit[/\\]src[/\\](dashboard|archive|sync|verify|schedule|manual-job|maintenance|configuration)\.tsx$/ }, args => ({
+                        contents: execFileSync('rtk', ['proxy', 'git', 'show', readBaseline + ':' + relative(repository, args.path)],
+                                               { cwd: repository, maxBuffer: 2 * 1024 * 1024 }).toString('utf8'),
+                        loader: 'tsx',
                     }));
                 } else if (reportBaseline !== undefined || journalBaseline !== undefined) {
                     builder.onLoad({ filter: /[/\\]cockpit[/\\]src[/\\](reports\.tsx|api[/\\]archive\.ts)$/ }, args => {
@@ -178,7 +185,10 @@ async function main() {
     const result = await Promise.race([
         delivered,
         new Promise(resolve => {
-            timeout = setTimeout(() => resolve({ state: 'failed', message: 'Browser deadline exceeded' }), 60000);
+            // The suite mounts more than ninety actual component cases. Each
+            // assertion keeps its own three-second bound; this bounds the whole
+            // owned browser without shortening the executed acceptance surface.
+            timeout = setTimeout(() => resolve({ state: 'failed', message: 'Browser deadline exceeded' }), 120000);
         }),
         new Promise(resolve => {
             browser.once('error', () => resolve({ state: 'failed', message: 'Firefox could not start' }));
@@ -204,6 +214,7 @@ async function main() {
         ...(manualBaseline === undefined ? {} : { manual_component_baseline: manualBaseline }),
         ...(reportBaseline === undefined ? {} : { report_component_baseline: reportBaseline }),
         ...(journalBaseline === undefined ? {} : { journal_adapter_baseline: journalBaseline }),
+        ...(readBaseline === undefined ? {} : { read_component_baseline: readBaseline }),
         bundle_sha256: bundleSha256,
         ...result,
     }));

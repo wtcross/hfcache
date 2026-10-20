@@ -74,6 +74,20 @@ retains bounded diagnostics/validated handles instead of inventing success.
 
 ## A host action reports `reconnected`
 
+Read cards preserve original failed CLI codes before displaying payload data.
+Empty-success captions require validated successful reads. A failed refresh clears
+prior current evidence; partial data stays informational. Unreachable status does
+not imply zero unfinished work or healthy capacity. A malformed payload is a
+separate observation refusal and never makes a control ready.
+
+Use **Source and connection diagnostics** to compare the loaded browser build, selected
+physical release and authenticated client/API target. A missing or dirty build,
+stale profile, changed API instance or source mismatch requires review. The browser
+build-input digest is not an output checksum; selected bindings are not proof of
+the active payload. Keep exact installed checksums/image/process identities in
+the operator record. Do not repair a native default socket or import a local
+binary merely because the protected rootless overlay selects a different endpoint.
+
 The error identifies the interrupted stage and validated Cockpit problem/process
 facts. `reconnected` indicates a bridge/session transition, not an established
 API crash. Distinguish it from a launcher/process start failure, a classified

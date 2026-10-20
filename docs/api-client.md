@@ -257,6 +257,15 @@ copy and complete local verification against exact publication identity.
 
 ## CLI dispatch
 
+Terminal JSON rendering preserves a valid original Envelope before human-output
+formatting inspects optional command payloads. Failed read payloads need no
+success-only fields; human diagnostics retain only structurally valid partial
+check rows, with registered credential redaction. Cockpit further validates each
+read payload and treats partial results as informational, never submission
+authority. Its diagnostics show the effective authenticated client profile and
+endpoint; native defaults and local executables do not describe the selected
+rootless client overlay.
+
 The modes below report writer truth through the API. Reader setup needs
 only this client configuration/credential, not `/etc/hfcache/config.toml`, archive
 mount, service UID or Hub credential. Connection failure is a transport error;

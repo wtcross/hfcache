@@ -9,9 +9,10 @@ import { Card, CardBody, CardTitle } from '@patternfly/react-core/dist/esm/compo
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@patternfly/react-core/dist/esm/components/Modal/index.js';
 import { Stack, StackItem } from '@patternfly/react-core/dist/esm/layouts/Stack/index.js';
 
-import { connectionSnapshot } from './api/connection';
+import { synchronizeConnection } from './api/connection';
+import type { ConnectionSnapshot } from './api/connection';
 import { runHfcacheStreaming } from './api/hfcache';
-import { submissionBlocked } from './api/operations';
+import { currentOperationHost, submissionBlocked } from './api/operations';
 import { hostActionAllowed } from './api/profile';
 import { DataSummary, EnvelopeAlert, QueryError, RecoveryHandles } from './components';
 import { useConnection, useHostProfile, useOperationHandles, useOperations } from './hooks';
@@ -20,9 +21,10 @@ import { appendDisplayLine } from './lib/stream';
 
 export const ManualFullJob = ({ mode }: { mode: 'sync' | 'verify-full' }) => {
     const connection = useConnection();
+    const host = currentOperationHost();
     const profile = useHostProfile();
     const operations = useOperations();
-    const [confirming, setConfirming] = useState(false);
+    const [confirmation, setConfirmation] = useState<{ host: string; connection: ConnectionSnapshot } | null>(null);
     const [running, setRunning] = useState(false);
     const [detached, setDetached] = useState(false);
     const [feed, setFeed] = useState<string[]>([]);
@@ -32,6 +34,7 @@ export const ManualFullJob = ({ mode }: { mode: 'sync' | 'verify-full' }) => {
     const controller = useRef<AbortController | null>(null);
     const submitted = useRef(false);
     useEffect(() => () => controller.current?.abort(), []);
+    const confirmationReady = confirmation?.connection === connection && confirmation.host === host;
     const verification = mode === 'verify-full';
     const action = verification ? 'full verification' : 'full sync';
     const uncertain = (result !== null && classifyEnvelope(result) === 'observation') ||
@@ -40,14 +43,15 @@ export const ManualFullJob = ({ mode }: { mode: 'sync' | 'verify-full' }) => {
         !connection.administrative || !profile.permissions.archive;
 
     const run = () => {
-        if (submitted.current || running || detached || uncertain || submissionBlocked() ||
-            !connectionSnapshot().administrative || !hostActionAllowed('archive'))
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
+        if (!confirmationReady || submitted.current || running || detached || uncertain || submissionBlocked() ||
+            !connection.administrative || !hostActionAllowed('archive'))
             return;
         submitted.current = true;
         const observing = new AbortController();
         controller.current = observing;
         const { signal } = observing;
-        setConfirming(false);
+        setConfirmation(null);
         setRunning(true);
         setFeed([]);
         setResult(null);
@@ -88,7 +92,7 @@ export const ManualFullJob = ({ mode }: { mode: 'sync' | 'verify-full' }) => {
                             : 'Submits one full synchronization to the API using the installed client. The server executes accepted work independently of this view.'}
                     </StackItem>
                     {!profile.permissions.archive && <StackItem><Alert variant="warning" isInline title="Archive jobs unavailable">{profile.reason}</Alert></StackItem>}
-                    <StackItem><Button variant="primary" isDisabled={disabled} onClick={() => setConfirming(true)}>Run {action}</Button></StackItem>
+                    <StackItem><Button variant="primary" isDisabled={disabled} onClick={() => setConfirmation({ host, connection })}>Run {action}</Button></StackItem>
                     {running && <StackItem><Button variant="secondary" onClick={detach}>Detach manual display</Button></StackItem>}
                     {(running || detached) &&
                         <StackItem>
@@ -105,15 +109,15 @@ export const ManualFullJob = ({ mode }: { mode: 'sync' | 'verify-full' }) => {
                             <StackItem><DataSummary data={result.data} /></StackItem>
                         </>}
                 </Stack>
-                <Modal isOpen={confirming} onClose={() => setConfirming(false)} variant="small" aria-label={'Start ' + action}>
+                <Modal isOpen={confirmationReady} onClose={() => setConfirmation(null)} variant="small" aria-label={'Start ' + action}>
                     <ModalHeader title={'Start ' + action} />
                     <ModalBody>
                         {verification ? 'Run the estimate first and review storage maintenance windows. ' : ''}
                         Submits one keyed REST operation. Closing or detaching this display does not cancel accepted work. Scheduled service state and journals are separate host observations.
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="primary" isDisabled={disabled} onClick={run}>Start {action}</Button>
-                        <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
+                        <Button variant="primary" isDisabled={disabled || !confirmationReady} onClick={run}>Start {action}</Button>
+                        <Button variant="link" onClick={() => setConfirmation(null)}>Cancel</Button>
                     </ModalFooter>
                 </Modal>
             </CardBody>

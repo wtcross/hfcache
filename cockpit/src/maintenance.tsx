@@ -24,8 +24,9 @@ import { runHfcache, runHfcacheStreaming } from './api/hfcache';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
 import { useObservationSignal, useOperationHandles, useConnection, useOperations, useHostProfile } from './hooks';
 import { hostActionAllowed } from './api/profile';
-import { operationRegistry, submissionBlocked } from './api/operations';
-import { connectionSnapshot } from './api/connection';
+import { currentOperationHost, operationRegistry, submissionBlocked } from './api/operations';
+import { connectionSnapshot, synchronizeConnection } from './api/connection';
+import type { ConnectionSnapshot } from './api/connection';
 import { sameOperationScope } from './lib/operation-registry';
 import type { OperationScope } from './lib/operation-registry';
 import { parseSelector, SelectorError } from './lib/command';
@@ -45,6 +46,7 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     const [confirming, setConfirming] = useState(false);
     const observationSignal = useObservationSignal();
     const connection = useConnection();
+    const host = currentOperationHost();
     const operations = useOperations();
     const profile = useHostProfile();
     const submitted = useRef(false);
@@ -54,6 +56,7 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     const [dryRunGeneration, setDryRunGeneration] = useState<number | null>(null);
 
     const run = (apply: boolean) => {
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
         if (!connection.administrative || !hostActionAllowed(apply ? 'archive' : 'control') || submitted.current || submissionBlocked() ||
             (apply && (consumed.current || error !== null || dryRun === null || !dryRunScope ||
                 dryRunGeneration !== connectionSnapshot().generation || classifyEnvelope(dryRun) !== 'success')))
@@ -176,17 +179,19 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
 const RepairCard = () => {
     const [selectorText, setSelectorText] = useState('');
     const [reason, setReason] = useState('');
-    const [confirming, setConfirming] = useState(false);
+    const [confirmation, setConfirmation] = useState<{ host: string; connection: ConnectionSnapshot } | null>(null);
     const [running, setRunning] = useState(false);
     const [feed, setFeed] = useState<string[]>([]);
     const [result, setResult] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
     const observationSignal = useObservationSignal();
     const connection = useConnection();
+    const host = currentOperationHost();
     const operations = useOperations();
     const profile = useHostProfile();
     const submitted = useRef(false);
     const { handles, reset: resetHandles, onNotice } = useOperationHandles();
+    const confirmationReady = confirmation?.connection === connection && confirmation.host === host;
 
     let validationError: string | null = null;
     if (selectorText !== '') {
@@ -200,7 +205,8 @@ const RepairCard = () => {
     }
 
     const run = () => {
-        if (!connectionSnapshot().administrative || !hostActionAllowed('archive') || submitted.current || submissionBlocked())
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
+        if (!confirmationReady || !connectionSnapshot().administrative || !hostActionAllowed('archive') || submitted.current || submissionBlocked())
             return;
         try {
             if (parseSelector(selectorText).sha === undefined)
@@ -208,7 +214,7 @@ const RepairCard = () => {
         } catch { return }
         submitted.current = true;
         const signal = observationSignal();
-        setConfirming(false);
+        setConfirmation(null);
         setRunning(true);
         setFeed([]);
         setResult(null);
@@ -270,7 +276,7 @@ const RepairCard = () => {
                         <Button
                             variant="danger"
                             isDisabled={running || uncertain || !connection.administrative || !profile.permissions.archive || selectorText === '' || validationError !== null}
-                            onClick={() => setConfirming(true)}
+                            onClick={() => setConfirmation({ host, connection })}
                         >
                             Repair…
                         </Button>
@@ -293,8 +299,8 @@ const RepairCard = () => {
                 </Stack>
 
                 <Modal
-                    isOpen={confirming}
-                    onClose={() => setConfirming(false)}
+                    isOpen={confirmationReady}
+                    onClose={() => setConfirmation(null)}
                     variant="small"
                     aria-label="Start repair"
                 >
@@ -308,8 +314,8 @@ const RepairCard = () => {
                         considering recovery. The executor holds the single archive lock.
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="danger" isDisabled={!connection.administrative || !profile.permissions.archive || running || uncertain || validationError !== null || selectorText === ''} onClick={run}>Start repair</Button>
-                        <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
+                        <Button variant="danger" isDisabled={!confirmationReady || !connection.administrative || !profile.permissions.archive || running || uncertain || validationError !== null || selectorText === ''} onClick={run}>Start repair</Button>
+                        <Button variant="link" onClick={() => setConfirmation(null)}>Cancel</Button>
                     </ModalFooter>
                 </Modal>
             </CardBody>

@@ -25,14 +25,23 @@ export class OwnedConnection<C extends ManagedClient> {
     private current: { client: C; closed: () => void } | null = null;
     private epoch = 0;
     private listeners = new Set<() => void>();
+    private ownerKey: () => string;
+    private observedOwner: string;
 
     constructor(factory: () => C, pause = (milliseconds: number) =>
-        new Promise<void>(resolve => setTimeout(resolve, milliseconds))) {
+        new Promise<void>(resolve => setTimeout(resolve, milliseconds)), ownerKey = () => '') {
         this.factory = factory;
         this.pause = pause;
+        this.ownerKey = ownerKey;
+        this.observedOwner = ownerKey();
     }
 
-    get generation(): number { return this.epoch }
+    private synchronizeOwner(): void {
+        if (this.observedOwner !== this.ownerKey())
+            this.invalidate();
+    }
+
+    get generation(): number { this.synchronizeOwner(); return this.epoch }
 
     subscribe(listener: () => void): () => void {
         this.listeners.add(listener);
@@ -40,6 +49,7 @@ export class OwnedConnection<C extends ManagedClient> {
     }
 
     invalidate(): void {
+        this.observedOwner = this.ownerKey();
         const previous = this.current;
         this.current = null;
         this.epoch += 1;
@@ -54,6 +64,7 @@ export class OwnedConnection<C extends ManagedClient> {
     }
 
     private client(): C {
+        this.synchronizeOwner();
         if (this.current === null) {
             const client = this.factory();
             const closed = () => {
@@ -69,14 +80,14 @@ export class OwnedConnection<C extends ManagedClient> {
     async read<T>(action: (client: C) => Promise<T>): Promise<T> {
         for (let attempt = 0; ; attempt += 1) {
             const client = this.client();
-            const generation = this.epoch;
+            const generation = this.generation;
             try {
                 const result = await action(client);
-                if (generation !== this.epoch)
+                if (generation !== this.generation)
                     throw interrupted();
                 return result;
             } catch (error) {
-                const changed = generation !== this.epoch;
+                const changed = generation !== this.generation;
                 if (!changed && !reconnectable(error))
                     throw error;
                 if (!changed)
@@ -90,14 +101,14 @@ export class OwnedConnection<C extends ManagedClient> {
 
     async mutate<T>(action: (client: C) => Promise<T>): Promise<T> {
         const client = this.client();
-        const generation = this.epoch;
+        const generation = this.generation;
         try {
             const result = await action(client);
-            if (generation !== this.epoch)
+            if (generation !== this.generation)
                 throw interrupted();
             return result;
         } catch (error) {
-            if (generation === this.epoch && reconnectable(error))
+            if (generation === this.generation && reconnectable(error))
                 this.invalidate();
             throw error;
         }

@@ -1,0 +1,136 @@
+Command: rtk proxy node --test <temporary-layout>/test/configuration-authority-effect.test.ts
+Source: exact git show f0a35c2:cockpit/src/configuration.tsx copied into temporary src; current test copied unchanged; pure lib linked to working-copy pure modules. Repository product source was not changed.
+Exit: 1
+✖ actual Configuration authority effect preserves a fresh confirmed installation after an older authority read (21.500505ms)
+✖ actual Configuration authority effect invalidates a confirmed installation when live authority is unavailable or changed (10.653673ms)
+✖ actual Configuration authority effect preserves a fresh ready proposal after an older authority read (4.387279ms)
+✖ actual Configuration authority effect invalidates a ready proposal when live authority is unavailable or changed (5.40091ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 408.136106
+
+✖ failing tests:
+
+test at ../../../../tmp/hfcache-cpr007-authority-effect-oXfIvN/test/configuration-authority-effect.test.ts:75:5
+✖ actual Configuration authority effect preserves a fresh confirmed installation after an older authority read (21.500505ms)
+  AssertionError [ERR_ASSERTION]: A captured loading/error authority must not invalidate newer matching evidence
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      authority: {
+        archiveId: '11111111-2222-4333-8444-555555555555',
+        authorityFingerprint: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        credentialClass: 'rest-writer',
+  ...
+      },
+  +   confirmed: false,
+  +   connectionChanged: true,
+  -   confirmed: true,
+  -   connectionChanged: false,
+      inspectedGeneration: 17,
+      phase: 'idle',
+      preparation: null,
+      previewKey: null,
+      previewUncertain: false
+  
+      at TestContext.<anonymous> (file:///tmp/hfcache-cpr007-authority-effect-oXfIvN/test/configuration-authority-effect.test.ts:78:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { phase: 'idle', confirmed: false, previewUncertain: false, previewKey: null, preparation: null, authority: { host: 'synthetic-configuration-host', profile: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', authorityFingerprint: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', endpoint: 'unix:/run/hfcache/api/api.sock', credentialClass: 'rest-writer', archiveId: '11111111-2222-4333-8444-555555555555', instanceId: 'cccccccccccccccccccccccccccccccc' }, inspectedGeneration: 17, connectionChanged: true },
+    expected: { phase: 'idle', confirmed: true, previewUncertain: false, previewKey: null, preparation: null, authority: { host: 'synthetic-configuration-host', profile: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', authorityFingerprint: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', endpoint: 'unix:/run/hfcache/api/api.sock', credentialClass: 'rest-writer', archiveId: '11111111-2222-4333-8444-555555555555', instanceId: 'cccccccccccccccccccccccccccccccc' }, inspectedGeneration: 17, connectionChanged: false },
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../tmp/hfcache-cpr007-authority-effect-oXfIvN/test/configuration-authority-effect.test.ts:82:5
+✖ actual Configuration authority effect invalidates a confirmed installation when live authority is unavailable or changed (10.653673ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///tmp/hfcache-cpr007-authority-effect-oXfIvN/test/configuration-authority-effect.test.ts:85:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../tmp/hfcache-cpr007-authority-effect-oXfIvN/test/configuration-authority-effect.test.ts:75:5
+✖ actual Configuration authority effect preserves a fresh ready proposal after an older authority read (4.387279ms)
+  AssertionError [ERR_ASSERTION]: A captured loading/error authority must not invalidate newer matching evidence
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      authority: {
+        archiveId: '11111111-2222-4333-8444-555555555555',
+        authorityFingerprint: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        credentialClass: 'rest-writer',
+  ...
+      confirmed: false,
+  +   connectionChanged: true,
+  -   connectionChanged: false,
+      inspectedGeneration: 17,
+  +   phase: 'idle',
+  +   preparation: null,
+  -   phase: 'ready',
+  -   preparation: {
+  -     captured: 'exact synthetic configuration proposal'
+  -   },
+      previewKey: null,
+      previewUncertain: false
+    }
+  
+      at TestContext.<anonymous> (file:///tmp/hfcache-cpr007-authority-effect-oXfIvN/test/configuration-authority-effect.test.ts:78:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { phase: 'idle', confirmed: false, previewUncertain: false, previewKey: null, preparation: null, authority: { host: 'synthetic-configuration-host', profile: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', authorityFingerprint: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', endpoint: 'unix:/run/hfcache/api/api.sock', credentialClass: 'rest-writer', archiveId: '11111111-2222-4333-8444-555555555555', instanceId: 'cccccccccccccccccccccccccccccccc' }, inspectedGeneration: 17, connectionChanged: true },
+    expected: { phase: 'ready', confirmed: false, previewUncertain: false, previewKey: null, preparation: { captured: 'exact synthetic configuration proposal' }, authority: { host: 'synthetic-configuration-host', profile: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', authorityFingerprint: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', endpoint: 'unix:/run/hfcache/api/api.sock', credentialClass: 'rest-writer', archiveId: '11111111-2222-4333-8444-555555555555', instanceId: 'cccccccccccccccccccccccccccccccc' }, inspectedGeneration: 17, connectionChanged: false },
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../tmp/hfcache-cpr007-authority-effect-oXfIvN/test/configuration-authority-effect.test.ts:82:5
+✖ actual Configuration authority effect invalidates a ready proposal when live authority is unavailable or changed (5.40091ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'ready' !== 'idle'
+  
+      at TestContext.<anonymous> (file:///tmp/hfcache-cpr007-authority-effect-oXfIvN/test/configuration-authority-effect.test.ts:86:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'ready',
+    expected: 'idle',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

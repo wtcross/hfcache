@@ -1,7 +1,7 @@
 # Preserve Cockpit failure evidence and original operation identity
 
 - Decision identity: 134.
-- Status: Amended; boundary, candidate reconciliation and scoped recovery implemented; [decision 135](decision-135.md) replaces manual service starts and [decision 136](decision-136.md) replaces direct report reads. Disposable and installed acceptance remain separate.
+- Status: Amended; boundary, candidate reconciliation and scoped recovery implemented; [decision 135](decision-135.md) replaces manual service starts, [decision 136](decision-136.md) replaces direct report reads and [decision 137](decision-137.md) validates read presentation and separate deployment identities. Disposable and installed acceptance remain separate.
 - Date: 2026-10-19.
 
 ## Context and decision
@@ -176,3 +176,11 @@ uncertainty, credential separation and deployment restrictions above remain.
 with authenticated bounded CLI reads. Exact negative Envelopes and response/run/
 archive identity remain separate from cursor metadata, host journal diagnostics
 and read connection errors. No archive-file fallback or execution authority follows.
+
+## Read presentation amendment (2026-10-20)
+
+[Decision 137](decision-137.md) requires typed read payloads, explicit partial/
+unavailable/empty states and fresh host/session evidence. Version remains an
+authenticated server read. Browser build, selected release and API authority
+diagnostics stay advisory and independent of action permission or installed
+symptom acceptance. Original negative Envelopes and classified causes remain.

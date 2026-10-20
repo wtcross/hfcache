@@ -43,6 +43,7 @@ from hfcache.identity import (
 from hfcache.logging import configure as configure_logging
 from hfcache.logging import current_run_id
 from hfcache.models import parse_timestamp
+from hfcache.redaction import redact_text
 from hfcache.reporting import Envelope
 from hfcache.services.bootstrap import query_version, validate_config
 from hfcache.services.context import ExecutionContext, ServiceResult
@@ -67,6 +68,8 @@ __all__ = ["app"]
 
 DEFAULT_CONFIG_PATH = Path("/etc/hfcache/config.toml")
 """Matches the systemd invocation in docs/security.md hardening posture."""
+_DOCTOR_NAME_MAX = 128
+_DOCTOR_DETAIL_MAX = 4096
 
 
 def _plain_help(command: TyperCommand | TyperGroup) -> None:
@@ -232,7 +235,7 @@ def _echo_pairs(payload: dict[str, Any]) -> None:
     """Print a flat payload as aligned `key  value` lines."""
     width = max(len(key) for key in payload)
     for key in sorted(payload):
-        typer.echo(f"{key.replace('_', ' '):<{width}}  {payload[key]}")
+        typer.echo(redact_text(f"{key.replace('_', ' '):<{width}}  {payload[key]}"))
 
 
 def _progress(ctx: typer.Context, page: ClientEvents) -> None:
@@ -267,6 +270,11 @@ def _submit(ctx: typer.Context, client: ApiClient, route: str, body: dict[str, A
         on_event=lambda page: _progress(ctx, page),
     )
     if isinstance(result, Envelope):
+        if options.json_output:
+            # The terminal Envelope is already authenticated/validated. Human
+            # formatter fields cannot replace its original partial evidence.
+            _show_result(ctx, result)
+            raise typer.Exit(0)
         return result
     if options.json_output:
         from hfcache.models import serialize  # noqa: PLC0415 - admission-only renderer
@@ -458,7 +466,7 @@ def _show_result(
             if lines:
                 _echo_pairs(lines)
             for row in rows:
-                typer.echo(row)
+                typer.echo(redact_text(row))
     if result.exit_code:
         raise typer.Exit(result.exit_code)
 
@@ -833,6 +841,8 @@ def archive_init(
             with cli_client.connect(options) as client:
                 client.require_capabilities("read", "reads")
                 result = client.read("/api/v1/archive/inspection").envelope
+            if result.exit_code:
+                _show_result(ctx, result)
             if archive_root is not None and str(archive_root) != result.data.get("archive_root"):
                 message = "Restated archive root does not match the API writer"
                 raise ConfigurationError.single(message, code="HFARG002")
@@ -845,6 +855,8 @@ def archive_init(
             )
     except HfcacheError as error:
         _report_failure(ctx, "archive init", started_at, error)
+    if result.exit_code:
+        _show_result(ctx, result)
     payload = result.data
     if "state" in payload:
         mount = payload["mount"]
@@ -911,6 +923,18 @@ def doctor(
     except HfcacheError as error:
         _report_failure(ctx, "doctor", started_at, error)
     checks = result.data.get("checks", [])
+    if result.exit_code and (
+        not isinstance(checks, list)
+        or any(
+            not isinstance(check, dict)
+            or not all(isinstance(check.get(field), str) for field in ("name", "outcome", "detail"))
+            or not 1 <= len(check["name"]) <= _DOCTOR_NAME_MAX
+            or check["outcome"] not in {"pass", "fail", "skipped"}
+            or len(check["detail"]) > _DOCTOR_DETAIL_MAX
+            for check in checks
+        )
+    ):
+        _show_result(ctx, result)
     rows: list[str] = []
     if checks:
         width = max(len(check["name"]) for check in checks)
@@ -1277,6 +1301,8 @@ def list_repositories(
     except HfcacheError as error:
         _report_failure(ctx, "list", started_at, error)
 
+    if result.exit_code:
+        _show_result(ctx, result)
     entries = result.data.get("repositories", [])
     _show_result(
         ctx,
@@ -1358,6 +1384,8 @@ def verify(
                 )
     except HfcacheError as error:
         _report_failure(ctx, request.command, started_at, error)
+    if mode == "estimate" and result.exit_code:
+        _show_result(ctx, result)
     payload = result.data
     lines: dict[str, str] = {}
     if mode == "estimate" and payload:

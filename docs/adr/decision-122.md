@@ -2,7 +2,7 @@
 
 - Decision identity: 122.
 
-- Status: Amended; see [decision 133](decision-133.md), [decision 135](decision-135.md), [decision 136](decision-136.md) and the amendments below.
+- Status: Amended; see [decision 133](decision-133.md), [decision 135](decision-135.md), [decision 136](decision-136.md), [decision 137](decision-137.md) and the amendments below.
 - Date: 2026-10-18.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
@@ -143,3 +143,12 @@ separate bounded validated read-metadata line for pagination/archive correlation
 Cockpit performs no archive-file reads. Optional host journals are strictly bounded
 closed-event diagnostics, independent of report availability and outcome. Existing
 credential separation, whole-archive trust, workload holds and guards remain.
+
+## Read presentation and identity diagnostics amendment (2026-10-20)
+
+[Decision 137](decision-137.md) validates all read-card payloads before display,
+keeps failed Envelopes and informational partial results distinct from empty
+success, and invalidates old host/session evidence. Advisory browser build-input,
+selected physical release and authenticated API identities remain separate facts;
+no package-version, health-readiness or selected-binding claim proves writability
+or a running payload. No new transport, capability or credential authority follows.

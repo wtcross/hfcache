@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","read_component_baseline":"f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a","bundle_sha256":"94abc7d808533b927f2400f1c0a0acc657d61b35399db638bebcd3c7e6120be5","state":"failed","message":"Browser deadline exceeded"}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-hJHXu4/firefox-tail.log"}

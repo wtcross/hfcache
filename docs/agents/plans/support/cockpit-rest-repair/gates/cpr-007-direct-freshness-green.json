@@ -1,0 +1,1 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"2ab39c9fd3931d3fe4df3598013ba433fc157de5634d32c331ac82925df335f2","state":"passed","tests":[{"name":"V23/V28 all actual keyed adapters persist only original scoped recovery metadata","passed":true}]}

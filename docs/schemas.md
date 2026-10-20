@@ -821,6 +821,11 @@ beside the exact server Envelope; it is neither a durable report nor an operatio
 receipt. The historical report's policy fingerprint may differ from the current
 read wrapper's policy fingerprint.
 
+The [browser build metadata](adr/decision-137.md) has its own strict schema-1
+four-field identity: source commit, working-copy state and public build-input
+digest. It is an advisory build snapshot, separate from the actual bundle
+checksum, protected release index, API identity and all durable archive records.
+
 ## 12. Recovery report
 
 Path: `runs/<YYYYMMDD>T<HHMMSS>Z-<run-id>.json`, written by `recover --apply`.

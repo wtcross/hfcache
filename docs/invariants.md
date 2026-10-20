@@ -623,6 +623,14 @@ lifetimes. These boundaries are implemented in source.
 REST jobs and requires fresh protected host-profile permission before effects.
 No new workload or deployment authority follows.
 
+[Decision 137](adr/decision-137.md) requires validated read presentation with
+explicit failure, partial, unavailable and empty states. Stale/malformed/partial
+evidence never grants action readiness. Passive invalidation cannot erase newer
+acknowledged evidence in the current connection generation. Browser build provenance, selected
+physical release and authenticated API identity remain separate advisory facts;
+neither a matching version nor daemon readiness proves writability or active
+payload parity. No server capability or execution authority is added.
+
 - **`CP-01`, `CP-02`, `CP-09`** — The plugin uses installed CLI JSON envelopes
   and systemd, never reimplements archive logic or writes archive files. The
   plugin has no direct archive-read exception. Reports use authenticated fixed

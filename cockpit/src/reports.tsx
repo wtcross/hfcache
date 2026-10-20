@@ -16,7 +16,7 @@ import { JournalReadError } from './lib/run-journal';
 import type { RunJournal } from './api/archive';
 import { listRunReports, readRunReport } from './api/reports';
 import type { RunDetailResult, RunPageResult } from './api/reports';
-import { connectionSnapshot } from './api/connection';
+import { connectionSnapshot, synchronizeConnection } from './api/connection';
 import { currentOperationHost } from './api/operations';
 import { EnvelopeAlert, Loading, QueryError } from './components';
 import { useConnection } from './hooks';
@@ -48,6 +48,7 @@ const JournalTrail = ({ runId }: { runId: string }) => {
         return () => { revision.current += 1 };
     }, [origin]);
     const load = () => {
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
         const request = ++revision.current;
         const active = connectionSnapshot();
         const current = () => request === revision.current && active === connectionSnapshot() && host === currentOperationHost();
@@ -143,6 +144,7 @@ export const RunReports = () => {
         return () => { mountedView.current = false };
     }, []);
     const load = useCallback((next: string | null, expected?: Readonly<RunReadMetadata>) => {
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
         const request = ++listRevision.current;
         detailRevision.current += 1;
         const active = connectionSnapshot();
@@ -155,7 +157,7 @@ export const RunReports = () => {
             if (current()) { setListOrigin(origin); setListError(failure as Error) }
         })
                 .finally(() => { if (current()) setListLoading(false); });
-    }, [origin, host]);
+    }, [origin, host, connection]);
     useEffect(() => {
         load(null);
         return () => { listRevision.current += 1; detailRevision.current += 1 };
@@ -163,6 +165,7 @@ export const RunReports = () => {
     const fresh = listOrigin === origin;
     const page = fresh ? listing?.page ?? null : null;
     const open = (runId: string) => {
+        if (synchronizeConnection() !== connection || host !== currentOperationHost()) return;
         if (detailPending.current || page === null || !page.runs.includes(runId) || listing?.metadata === null || !connection.administrative) return;
         detailPending.current = true;
         const request = ++detailRevision.current;

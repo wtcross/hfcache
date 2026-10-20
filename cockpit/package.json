@@ -12,8 +12,8 @@
     "scripts": {
         "watch": "ESBUILD_WATCH='true' ./build.js",
         "build": "./build.js",
-        "eslint": "eslint src/ test/ build.js",
-        "eslint:fix": "eslint --fix src/ test/ build.js",
+        "eslint": "eslint src/ test/ build.js build-info.js",
+        "eslint:fix": "eslint --fix src/ test/ build.js build-info.js",
         "typecheck": "tsc --noEmit",
         "stylelint": "stylelint src/*.{css,scss}",
         "stylelint:fix": "stylelint --fix src/*.{css,scss}",

@@ -1,0 +1,12 @@
+✔ actual Configuration authority effect preserves a fresh confirmed installation after an older authority read (13.540286ms)
+✔ actual Configuration authority effect invalidates a confirmed installation when live authority is unavailable or changed (4.240332ms)
+✔ actual Configuration authority effect preserves a fresh ready proposal after an older authority read (2.818364ms)
+✔ actual Configuration authority effect invalidates a ready proposal when live authority is unavailable or changed (3.861327ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 364.461397

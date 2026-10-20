@@ -1,0 +1,39 @@
+CPR-007 read presentation and component evidence
+
+Current focused results: read-results pure 24 passed / 0 skipped; actual offline CLI/API reader suite 29 passed / 0 skipped; eight retained handler cases passed; two confirmation origin cases passed; deterministic inspection invalidation case passed. Final entire 104-case current-source rerun passed, with zero failed or skipped cases. Only a completed passing entire run is accepted; intermediate 73/94, 93/94 and 103/104 captures remain investigation evidence.
+
+No production, guest, PAM, production credential or live/NAS archive was inspected or changed. Firefox owns a temporary profile and loopback server. Actual React components, hooks, adapters and runner use controlled Cockpit process/D-Bus/file/privilege boundaries. These results do not establish disposable Cockpit/PAM acceptance or deployment/verification of the original installed symptom.
+
+Current CLI shape revalidation
+- services/queries.py archive_status/_status_entry: reachable archive measurements versus legitimate unreachable archive_id/root/reachable/verification only; exact thirteen repository fields, nullable unmanaged enabled/revision, and actual last_run_status values.
+- services/bootstrap.py query_version: application/python/huggingface_hub/transfer_backend; authenticated version --server remains selected.
+- preflight.py Check.as_entry and services/commands.py diagnose: exact detail/name/outcome checks. Storage always returns eleven named entries including skips, Hub three including offline skips, and configuration/credential/endpoint complete seventeen. Positive Doctor therefore requires all seventeen; negative validated subsets remain explicitly partial.
+- rtk uv run --locked --extra server --extra mcp pytest tests/unit/test_cli_api_reads.py -q => 29 passed in 19.93s. Existing actual authenticated CLI/API fixtures cover pagination, server version and reader modes without local writer fallback.
+- cd cockpit; rtk node --test test/read-results.test.ts => 24 passed, zero skipped; captured in cpr-007-read-results.txt. Includes actual unreachable shape, full verification history, impossible timestamps, nullable unmanaged values, every actual last-run status, exact negative values, malformed partial data, unknown nested fields, version/Doctor shapes and the complete 10,001-row paginated CLI aggregate inside the existing terminal byte limit. No invented aggregate row limit remains.
+
+Authoritative behavioral baseline
+cpr-007-components-red.json is one valid JSON object containing exact commands, captures and bundle digests for 26 semantic failures against f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a. The override loads the committed dashboard/archive/sync/verify/schedule/manual-job/maintenance/configuration components with current controlled boundaries and current supporting API/hooks. Only actual behavior failures are counted; no missing-new-interface or superseded-read timeout is accepted as a baseline defect.
+- V48 group: nine failures, including unreachable/malformed/partial status, malformed version/Doctor, failed inventory becoming empty success, partial unmanaged inventory and unavailable scheduled observer/timer presentation.
+- V46 Version: one failed classification hidden.
+- V47 Estimate: three failures (negative code hidden, malformed success facts, duplicate pending read).
+- V49 Doctor: completed checks survive privilege loss.
+- V49 selected sync: failed partial status cannot provide submission authority.
+- V49 retained actual callbacks: eight failures; seven old job callbacks prepare an original operation for another freshly permitted host, and the old schedule confirmation starts another host's attempt.
+- V49 confirmation origin: two old full-sync/Repair modals remain enabled after rerender on another permitted host.
+- V17: the actual remounted passive invalidator erases a newer explicit guarded inspection. Exact failure: A remounted invalidator erased a newer explicit inspection.
+
+Retained handler cases keep the actual enabled mounted React button onClick callback, then obtain explicit permitted host B evidence before invoking the queued callback from host A. There is no copied permission predicate or component implementation. The two normal DOM modal cases independently cover rerendered confirmations.
+
+Deterministic V17 lifecycle regression
+The existing lost-write/remount test obtains its matching inspection through the actual fixed guarded adapter. A ProfileProbe sibling retains the same connection while Configuration is rekeyed. A following PassiveBarrier React effect proves that the editor's actual new passive invalidator has run before asserting that the current-generation inspection and original classified cause remain identical. A reconnect then must clear the stale inspection and remove revalidation authority; another explicit guarded inspection is required before deliberate captured revalidation. There is exactly one candidate write, no reinstall/cleanup/replayed preparation, and no restored readiness from old authority. Paired captures: cpr-007-inspection-effect-red.json and cpr-007-inspection-effect-green.json.
+
+Preserved intermediate investigations
+- cpr-007-initial-baseline-deadline.json: the initial broad baseline exceeded its old 60-second whole-browser bound; not acceptance. The grown suite now has a 120-second whole-browser deadline; each assertion retains its original three-second bound and no case is skipped.
+- cpr-007-owner-read-red.json: 73/94, exposing lazy owner-generation publication and current-read freshness gaps. Focused current read/unit/report/direct-adapter/schedule captures establish their corrections.
+- cpr-007-metadata-index-investigation.json: 93/94, where the fixture targeted an obsolete startup metadata process; no Doctor cause-loss claim is made. Final metadata regression targets the deliberate read and requires exactly one initial authority inspection; HFAPI003 and subsequent HFAPI018 remain visible with zero job records.
+- cpr-007-confirmation-effect-red.json: 103/104, exposing an initial confirmation-clearing effect erasing a legitimate click. Source retains captured-origin guards and hides stale modals while removing that redundant clear.
+- cpr-007-inspection-effect-observed-red.json: 103/104, exposing the inspection invalidator race; the deterministic paired regression above replaces statistical reliance.
+
+Final entire component command
+cd cockpit; rtk node test/browser.mjs
+Result: 104 passed, zero failed/skipped. cpr-007-mounted.json is one valid JSON object. Bundle SHA-256: 7618cdd64e77899448f6139b318965658bdcfed72a10817d77681d5e3175748f. This final run includes the deterministic strengthened V17 regression and all ten retained-callback/modal-origin cases. Parent owns full repository gates and disposable-runtime acceptance records.

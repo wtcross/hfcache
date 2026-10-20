@@ -1,0 +1,31 @@
+CPR-007: strict read presentation and separate provenance
+
+Source baseline: f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a, dedicated implementation branch.
+All source fixtures are repository/temporary-file fixtures, controlled Cockpit ports, or an actual CLI with synthetic authenticated private Unix-socket API. No production or disposable guest action occurred in CPR-007. No NAS/live workload, browser credential, local fallback, new REST/capability field, dependency or operation replay was introduced.
+
+Contract/invariant review: INV-006 and CP-02/08/10/13; existing server health.ready is readiness, never archive writability. Actual next ADR137 allocated from the repository after136; ADR122/134 status/amendments/index updated. Human Cockpit/client/schema/usage/installation/troubleshooting contracts preserve version --server, complete status/list paging and original command/Envelope/job identities. Browser build provenance has an independent exact four-field schema, separate from protected selected release and authenticated API authority.
+
+Reproduced/fixed behaviors:
+- Version, Estimate, Status, Inventory and Doctor retain original failures, separately validate partial data, refuse malformed success and distinguish unknown/unavailable/empty. Old health evidence cannot authorize refresh/session/host actions. Doctor successful output has all17 actual checks; negative valid subsets stay informational. Unreachable status has no invented capacity zeros; unmanaged repository nulls remain valid. Complete inventories are bounded by the existing terminal byte limit, without an invented row cap.
+- Actual CLI negative estimate/list/archive-init/Doctor formatting preserved the original failed Envelope before any success-only dereference or root restatement. Human diagnostics suppress registered credentials. JSON job terminals preserve exact original Envelopes before human-only formatters across nine families. Real API/CLI regressions observed35RED before repair; focused142pass after repair. See cpr-007-cli.txt.
+- Selected-host changes without a bridge close retire the old D-Bus owner and stale CLI/unit/other read evidence. Source tests caught stale no-subscriber connection publication and obsolete initial read capture. Freshness synchronization precedes session capture and asynchronous read initiation; mutations are never replayed. See cpr-007-owner.txt and component artifacts.
+- Build hashing initially blocked on FIFO and could follow a symlinked ancestor into a private fixture. Actual RED/GREEN regressions now prove nonblocking no-follow descriptor-anchored ancestor/leaf reads; independent100-attempt review opened zero private leaves and leaked zero FDs. Non-Linux/development/watch builds report unknown provenance. See cpr-007-build-info.txt and bounded FIFO/ancestor artifacts.
+
+Failed full gate (retained, NOT acceptance):
+rtk proxy scripts/check.sh
+Exit2 at actual frontend mounted tests; Python5276passed/42deselected in793.84s, allthree wheel profiles and pure frontend556passed. Expanded component suite exposed the no-subscriber owner publication race. Raw /tmp/hfcache-cpr007-gate-owner-failed.log; SHA256d70e5a89f6859ac5fe11a0d383a62f028f5a41c207e65887932051949d0cb297. Red mounted artifact cpr-007-owner-read-red.json. Root freshness repair is included in the final retry.
+
+Final retry command (running): rtk proxy bash -c 'scripts/check.sh > /tmp/hfcache-cpr007-gate.log 2>&1'.
+The next full gate passed on its then-current source: exit0,5276Python passed/42deselected in741.06s, three locked wheel profiles, actual frontend lint/style/types/557unit/104mounted/build. Raw /tmp/hfcache-cpr007-gate-before-inspection.log; SHA2560d874107d3b98fee730447bc719e90100a4672b387360046e2a0d12f7645050f. Its mounted bundle85d801d4136b9c3c39b014fa52c25722def00f361482ba5b6a3da7a5a8ea4f33 and productionJS0a8b8146b0934f5fdee1042e015cacd5e47a16b3b4772e99c5c3e31f9f7c9c40 are transitional artifacts, not the final source gate. A separate run exposed the configuration invalidation effect erasing a newer explicit inspection before its passive mount effect settled. Preserve newer same-generation inspection/confirmation while retiring stale pipeline readiness; obsolete rendered effects do nothing. This additional repair requires the final full retry.
+
+Accepted FINAL source gate (after both passive-invalidation repairs):
+rtk proxy bash -c 'scripts/check.sh > /tmp/hfcache-cpr007-gate.log 2>&1'
+Exit0:5276 Python passed/42deselected in693.88s; source/wheel build and all three locked base/server/server-plus-MCP installation profiles; actual Cockpit eslint/stylelint/types,561unit tests with0failures/0skips,104mounted Firefox cases, production build. Documentation alignment186human documents/19helpers. No skipped frontend stage.
+Raw log /tmp/hfcache-cpr007-gate.log; SHA256f00d551257b4bf0b20634d4c739b7c5bce6e6d54de9bd0f23d47865cb815a91c.
+Full-gate mounted artifact cpr-007-gate-mounted.json SHA256fc45c92d0df299d6b721a8136c7d83776744f082c0b4682b3e8476355cfb7f5d; actual bundle7618cdd64e77899448f6139b318965658bdcfed72a10817d77681d5e3175748f.
+Production decompressed index.js.gz SHA256db271a967029f87113380eeb97fee79a744b5762d923563a29a52a35641536c8.
+Embedded build source parent f0a35c2f45ad8c402b45ef2aee98f2c76ab9f25a, source_dirty=true, public input digestf08227a330ffd2a4df0d1f1d05ca143bf7497dd103bf69cb59553026cbead648. This truthfully identifies the precommit build snapshot, not a clean committed/deployed artifact. CPR-008 must build a fresh immutable current-source artifact for real runtime acceptance.
+
+Final focused/mounted evidence:24read parsers,12estimate,9inventory,9owned-connection,14build-info and4exact-authority-effect cases pass;142CLI/read/write/operation/manual/report/socket cases pass. Consolidated exact f0a35c2 component baseline26/26behavioral failures, final actual component104/104pass. Intermediate owner, confirmation, inspection and fixture-index findings are retained with their attribution. See cpr-007-components.txt and component RED/GREEN artifacts.
+
+CPR-007, this commit. Source acceptance only. V54/current-source actual Cockpit/PAM and the original installed cause remain unproven; no production/guest/NAS changes. Continue CPR-008 without activating historical backlog.
