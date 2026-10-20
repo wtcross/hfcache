@@ -1,0 +1,111 @@
+CPR-006 optional journal diagnostic source evidence
+Date: 2026-10-20
+
+Environment: controlled in-memory process streams and deterministic deadline
+callbacks. No actual journalctl, timeout, system manager, archive, NAS, API,
+Podman or production/guest inspection was executed by these tests. These tests
+do not establish disposable-runtime or installed-symptom acceptance.
+
+Observed V43 RED before removing the retained legacy report-file functions:
+  cd cockpit
+  rtk proxy node --test test/archive-boundary.test.ts
+  Exit 1: 0 passed, 2 failed, 0 skipped.
+  The production source scan found api/archive.ts with /srv/hfcache/runs;
+  the legacy exported privileged report-file APIs were also still present.
+  Captured output: cpr-006-archive-boundary-red.txt.
+  This check reads repository source only, never the host archive or journal.
+
+After the report agent confirmed actual mounted REST list/detail/page parity,
+the legacy archive directory constant, service-identity reader, runuser/ls/cat
+functions, exports/imports and obsolete exception header were removed.
+Observed V43 GREEN:
+  rtk proxy node --test test/archive-boundary.test.ts
+  Exit 0: 2 passed, 0 failed, 0 skipped.
+  Captured output: cpr-006-archive-boundary-green.txt.
+
+Observed focused command:
+  cd cockpit
+  rtk proxy node --test test/run-journal.test.ts test/events.test.ts test/stream.test.ts
+  Exit 0: 28 passed, 0 failed, 0 skipped; 11 new run-journal cases.
+
+After the explicit --reverse argv clarification:
+  rtk proxy node --test test/run-journal.test.ts
+  Exit 0: 11 passed, 0 failed, 0 skipped.
+  rtk proxy node_modules/.bin/eslint src/lib/run-journal.ts src/api/archive.ts test/run-journal.test.ts
+  Exit 0.
+  rtk proxy node_modules/.bin/tsc --noEmit
+  Exit 0 for the full frontend.
+
+Final after legacy API removal:
+  rtk proxy node --test test/archive-boundary.test.ts test/run-journal.test.ts test/events.test.ts test/stream.test.ts
+  Exit 0: 30 passed, 0 failed, 0 skipped.
+  rtk proxy node_modules/.bin/eslint src/lib/run-journal.ts src/api/archive.ts test/run-journal.test.ts test/archive-boundary.test.ts
+  Exit 0.
+  rtk proxy node_modules/.bin/tsc --noEmit
+  Exit 0 for the full frontend.
+  rtk git diff --check
+  Exit 0.
+
+New cases exercise the actual collector and controlled process callbacks:
+  - Exact fixed timeout/journalctl argv, no shell/archive path/user manager;
+    invalid run IDs, traversal, leading options and URLs refuse before spawn.
+  - Only the exact logger prefix event=<closed event> level=<known level>
+    run_id=<requested lowercase32hex> renders. Wrong IDs, prefix extensions,
+    unknown events, controls and a run ID embedded in quoted prose are filtered.
+    Arbitrary trailing MESSAGE fields and synthetic credentials never render.
+  - Empty successful EOF remains distinguishable from a process failure.
+  - Chunk boundaries and oversized lines preserve only complete bounded events.
+    A failed/deadline read does not promote an incomplete frame to an event.
+  - The 201st line stops the owned diagnostic with explicit truncation;
+    at most 200 whole lines and 64 KiB render, with an 8 KiB source-line bound.
+  - A callback exceeding the remaining 256 KiB raw UTF-8 budget is discarded
+    without retaining or encoding arbitrary oversized content. Only this owned
+    read diagnostic is closed; the operation runner is not involved.
+  - The deterministic client deadline requests exactly 6000 ms, closes the
+    diagnostic and returns a classified timeout with bounded partial evidence.
+  - Original bridge, access, host-timeout exit124 and launcher failures retain
+    their safe classified facts independently of partial event lines.
+  - Synchronous launcher/stream registration failure never retries. Hostile
+    rejection getters are not invoked and raw rejection prose is not retained.
+
+Pinned Cockpit buffering was inspected in
+  cockpit/pkg/lib/cockpit.js: spawn().stream() assigns the channel buffer callback.
+  cockpit/pkg/lib/cockpit/_internal/channel.js: a callback returning void consumes
+  the complete current block and clears the buffer. This adapter therefore does
+  not leave an independent accumulated stdout result behind its bounded decoder.
+
+Boundary contract (ADR136):
+  timeout --signal=TERM --kill-after=1s 5s journalctl
+    --quiet --no-pager --output=cat --reverse --since=-7days --lines=201
+    --case-sensitive=yes
+    --grep=(^|[[:space:]])run_id=<validatedID>([[:space:]]|$)
+    _SYSTEMD_UNIT=hfcache-sync.service
+    _SYSTEMD_UNIT=hfcache-verify.service +
+    _SYSTEMD_USER_UNIT=hfcache-api.service
+    _SYSTEMD_USER_UNIT=hfcache-verification.service
+  Arguments are individual fixed argv elements; the pattern is not a shell
+  command. Explicit --reverse makes the newest-first order unambiguous even
+  though --grep plus --lines also implies it. Rootless user-unit journal fields are
+  matched without selecting a user manager or restricting to root's own UID.
+
+RunJournal is an immutable diagnostic result with lines, truncated and fixed
+truncationReasons. JournalReadError retains the original safe BoundaryError
+classification plus immutable partial diagnostics. Administrative permission
+and the captured host/connection generation are required; host profile effect
+permission is not needed for this ordinary read. Journal absence, truncation,
+failure or the seven-day horizon never determines a run outcome and never
+prevents authenticated REST report access.
+
+Official references checked for argv semantics:
+  https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+    Exact field matches of the same field are alternatives; + combines groups
+    with OR. --grep with --lines returns newest entries first. --user-unit adds
+    the caller UID, so fixed _SYSTEMD_USER_UNIT matches are used instead.
+  https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html
+    Relative negative timestamps permit the fixed seven-day query horizon.
+  https://www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html
+    The 5s timeout sends TERM, with a further 1s before KILL if necessary;
+    exit124 is the timeout marker. Other statuses retain their process meaning.
+
+The separately owned mounted suite provides the old-source RED proof and the
+new report UI/adapter parity. Full-gate evidence is recorded by the root agent.

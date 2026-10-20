@@ -20,6 +20,13 @@ from hfcache.catalog_query_models import CatalogQuery
 from hfcache.client_catalog import collect_catalog
 from hfcache.client_errors import ClientMetadataError
 from hfcache.client_metadata import describe_client
+from hfcache.client_runs import (
+    read_run_report,
+    read_runs_page,
+    run_read_metadata,
+    validate_report_run_id,
+    validate_run_page_arguments,
+)
 from hfcache.config import load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import (
@@ -53,7 +60,7 @@ if TYPE_CHECKING:
     from typer._click import Context as ClickContext
 
     from hfcache.client import ApiClient
-    from hfcache.client_models import ClientEvents
+    from hfcache.client_models import ClientEvents, ClientRead
 
 
 __all__ = ["app"]
@@ -279,6 +286,60 @@ client_app = typer.Typer(
     name="client", help="Describe the selected authenticated API authority.", no_args_is_help=True
 )
 app.add_typer(client_app)
+
+runs_app = typer.Typer(
+    name="runs", help="Read authenticated run inventory and durable reports.", no_args_is_help=True
+)
+app.add_typer(runs_app)
+
+
+def _show_run_read(ctx: typer.Context, response: ClientRead) -> None:
+    notice = run_read_metadata(response)
+    if notice is not None:
+        typer.echo(notice, err=True)
+    result = response.envelope
+    _show_result(
+        ctx,
+        result,
+        rows=result.data["runs"] if not result.exit_code and result.command == "runs" else (),
+        lines={"run id": result.run_id, "command": result.command},
+    )
+
+
+@runs_app.command("list")
+def runs_list(
+    ctx: typer.Context,
+    limit: Annotated[int | None, typer.Option("--limit", help="Maximum IDs in one page.")] = None,
+    cursor: Annotated[
+        str | None, typer.Option("--cursor", help="Original opaque next cursor.")
+    ] = None,
+) -> None:
+    """Read one bounded page; no implicit collection or cursor restart."""
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        cli_client.check_job_options(options)
+        validate_run_page_arguments(limit, cursor)
+        with cli_client.connect(options) as client:
+            response = read_runs_page(client, limit=limit, cursor=cursor)
+    except HfcacheError as error:
+        _report_failure(ctx, "runs", started_at, error)
+    _show_run_read(ctx, response)
+
+
+@runs_app.command("show")
+def runs_show(ctx: typer.Context, run_id: Annotated[str, typer.Argument()]) -> None:
+    """Read one report by its exact domain run ID through the selected REST API."""
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        cli_client.check_job_options(options)
+        checked = validate_report_run_id(run_id)
+        with cli_client.connect(options) as client:
+            response = read_run_report(client, checked)
+    except HfcacheError as error:
+        _report_failure(ctx, "runs read", started_at, error)
+    _show_run_read(ctx, response)
 
 
 @client_app.command("describe")

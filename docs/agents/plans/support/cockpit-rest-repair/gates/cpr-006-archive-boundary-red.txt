@@ -1,0 +1,56 @@
+✖ V43 production plugin source has no direct host run-report archive path (10.052544ms)
+✖ V43 the optional host diagnostic adapter exposes no legacy report-file read API (0.740408ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 189.273052
+
+✖ failing tests:
+
+test at test/archive-boundary.test.ts:8:1
+✖ V43 production plugin source has no direct host run-report archive path (10.052544ms)
+  AssertionError [ERR_ASSERTION]: Run reports must cross the authenticated fixed REST client, including when the client has no archive access
+  + actual - expected
+  
+  + [
+  +   'api/archive.ts'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///home/tyler/Projects/hfcache/cockpit/test/archive-boundary.test.ts:13:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'api/archive.ts' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test/archive-boundary.test.ts:16:1
+✖ V43 the optional host diagnostic adapter exposes no legacy report-file read API (0.740408ms)
+  AssertionError [ERR_ASSERTION]: The host diagnostic adapter must not retain a privileged report-file fallback
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///home/tyler/Projects/hfcache/cockpit/test/archive-boundary.test.ts:18:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

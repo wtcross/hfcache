@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"74d08a7aa07ff51b0374737e29ec818df58bf283ce51f41d9d68ca874c721a0c","state":"failed","tests":[{"name":"V41 report detail loading serializes repeated and alternate row clicks","passed":false,"message":"Repeated or alternate row clicks started concurrent detail client processes"}]}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-6kei2v/firefox-tail.log"}

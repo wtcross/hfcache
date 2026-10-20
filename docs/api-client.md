@@ -178,6 +178,36 @@ domain Envelope is yielded intact and terminates the walk, even when its failure
 data lacks the requested array; its exit must not become a generic protocol error.
 Exact nonpage responses reject a nonnull wrapper `next_cursor`.
 
+Run reports use the narrower helpers in
+[`client_runs`](../src/hfcache/client_runs.py): `read_runs_page(client, limit=None,
+cursor=None)` returns one `ClientRead` page, and `read_run_report(client, run_id)`
+returns one exact report. They negotiate read capability, enforce existing byte
+bounds and archive identity, and preserve a valid failed server Envelope without
+requiring success-only payload fields. Inventory contains unique 32-character
+lowercase hexadecimal run IDs. Detail binds the requested ID, Envelope ID and durable report ID/archive,
+using the existing run, recovery or verification report model. A historical
+report's policy fingerprint may differ from the current response fingerprint.
+These helpers never open a client archive, writer policy or report filename.
+
+`runs list [--limit N] [--cursor TOKEN]` requests one page, with a default limit of
+min(100, authenticated server page limit), an explicit range of 1–10,000 and the
+server's smaller cap. It never collects all pages or restarts a stale cursor.
+`runs show [--] RUN_ID` accepts only an exact 32-character lowercase hexadecimal
+domain run ID.
+Candidate/archive configuration, job flags and local modes are refused before
+settings or credential access. Ordinary file-based management-client setup
+remains supported.
+
+Each successful read prints the original server Envelope on JSON stdout and one
+compact stderr line before it, including in quiet mode: `Run read metadata: `
+followed by exact fields `schema_version=1`, `command` (`runs` or `runs read`),
+`run_id`, `request_id`, `archive_id`, `config_fingerprint`, `next_cursor`.
+The complete line is at most 2 KiB, has nonnull archive/policy identities and only a
+bounded safe opaque cursor; detail has a null cursor. Unsafe or secret-bearing
+metadata is refused rather than redacted into a new identity. Failed reads need
+no success notice. This metadata is read correlation and pagination evidence,
+not an operation receipt or domain outcome.
+
 `operation_response(id)` / `lookup_response(key)` return validated
 `ClientRead` with the exact server metadata Envelope; the existing operation/
 lookup conveniences still return its typed receipt. `observe(id, timeout=...,
@@ -239,6 +269,8 @@ there is no local archive fallback or automatic daemon start.
 | `client describe` | Narrow selected-authority metadata from authenticated capabilities/version reads; no new API route or submission |
 | `status [selectors]` | API pages reconstructed completely |
 | `list [selectors] [--type] [--revisions]` | API inventory plus exact revision rows when requested; consistent join or visible refusal |
+| `runs list [--limit N] [--cursor TOKEN]` | One exact authenticated inventory page and bounded separate read metadata |
+| `runs show [--] RUN_ID` | Exact authenticated durable report, with requested/run/archive identity checks |
 | `archive init --inspect` | Configured writer inspection, no required client root; optional root only checks returned authority |
 | `verify --estimate` | API metadata; no client hashing/probes |
 | `config validate` | Installed writer policy/source validation through API |
@@ -437,8 +469,10 @@ bounded diagnostics (8 KiB line, 64 KiB retained) and validated recovery handles
 Client stop, page closure or uncertainty never cancels accepted work or grants
 recovery/replay authority. Candidate syntax, installed compatibility, required
 preview and exact installed confirmation are distinct gates. Unknown/incompatible
-authority blocks installation. The host-local report browser is a documented
-exception, not another operational backend. See [Cockpit](cockpit.md) and
+authority blocks installation. Run inventory and reports use the authenticated
+REST CLI above; the plugin never lists or reads archive report files through host
+commands. An independently bounded host journal remains an optional diagnostic
+and cannot establish a run outcome. See [Cockpit](cockpit.md) and
 [configuration editing](cockpit.md#6-configuration-editing).
 
 ## Scheduled service observation

@@ -311,9 +311,10 @@ protected file inside the finite client (`CP-08`, upholding T-07). Native system
 credential delivery remains a separate supported profile; the shipped plugin
 has no host ImportCredential path. Hub authority
 stays on the daemon; no browser/environment/argument bearer is introduced;
-the archive is
-reached only through CLI envelopes plus one read-only run-report read as the
-service identity (`CP-01`, `CP-09`); and `archive init`, `hfcache.target`,
+the archive is reached only through authenticated CLI Envelopes, including
+bounded run-report reads (`CP-01`, `CP-09`). Optional host journal diagnostics
+project only closed validated event/level/run identity, with strict resource
+bounds and no arbitrary message prose. `archive init`, `hfcache.target`,
 and `hfcache-verify.timer` are refused structurally in its API layer
 (`CP-05`–`CP-07`).
 

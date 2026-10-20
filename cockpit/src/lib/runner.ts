@@ -11,6 +11,8 @@ import type { OperationIdentity } from './operation-registry.ts';
 import { BoundaryError } from './failure.ts';
 import type { FailureContext, FailureReason, FailureStage } from './failure.ts';
 import { BoundedLineDecoder, TerminalCollector } from './stream.ts';
+import { ReadMetadataCollector } from './read-metadata.ts';
+import type { RunReadMetadata } from './read-metadata.ts';
 
 export type { OperationIdentity } from './operation-registry.ts';
 
@@ -27,6 +29,7 @@ export interface ObservationOptions {
     onNotice?: (notice: OperationNotice) => void;
     expectedKey?: string;
     onIdentity?: (notice: OperationIdentity) => void;
+    onReadMetadata?: (metadata: Readonly<RunReadMetadata>) => void;
 }
 
 /* Missing/malformed/oversized result is an observation failure. Handles remain
@@ -60,6 +63,7 @@ export async function runSpawned(
 ): Promise<Envelope> {
     const lines = new BoundedLineDecoder();
     const terminal = new TerminalCollector();
+    const readMetadata = options.onReadMetadata === undefined ? null : new ReadMetadataCollector(options.onReadMetadata);
     let key: string | undefined = options.expectedKey;
     let operationId: string | undefined;
     let keyObserved = false;
@@ -119,6 +123,7 @@ export async function runSpawned(
     try {
         const proc = spawn(argv);
         proc.stream(chunk => {
+            readMetadata?.push(chunk);
             terminal.push(chunk);
             const dropped = lines.droppedLines;
             emit(lines.push(chunk, inspect));
@@ -137,6 +142,7 @@ export async function runSpawned(
         failed = true;
     }
     emit(lines.finish(inspect));
+    readMetadata?.finish();
     const observationError = (reason: FailureReason, envelope: Envelope | null = null): HfcacheSpawnError =>
         new HfcacheSpawnError('', '', key, operationId, {
             stage: options.stage ?? (requireSuccessfulProcess ? 'installed-confirm' : 'api-read'),
@@ -150,6 +156,15 @@ export async function runSpawned(
         identityConflict = true;
     if (identityConflict || identityObserverFailed)
         throw observationError('invalid-envelope', parsed);
+    if (parsed?.exit_code === 0 && readMetadata !== null) {
+        try {
+            const metadata = readMetadata.result();
+            if (metadata.command !== parsed.command || metadata.run_id !== parsed.run_id)
+                throw new Error();
+        } catch {
+            throw observationError('invalid-envelope', parsed);
+        }
+    }
     // A negative result cannot confirm installation, but its original API/domain
     // classification remains useful. Successful confirmation still requires every
     // guarded byte postcheck and successful process completion (CP-11).

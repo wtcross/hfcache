@@ -67,9 +67,9 @@ def parameter_values(
     return tuple(found)
 
 
-def test_manifest_has_exactly_all_34_unique_semantic_rows_in_contract_order():
+def test_manifest_has_exactly_all_36_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
-    assert len(PARITY) == len(PARITY_REFERENCE) == 34
+    assert len(PARITY) == len(PARITY_REFERENCE) == 36
     assert len(REFERENCE) == len(rows) == 44
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
     assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
@@ -157,6 +157,41 @@ def test_purge_rows_cover_both_scope_branches_with_their_distinct_modes(flag):
         and reference.case == repr(flag)
         for reference in mode.cli_tests
     )
+
+
+@pytest.mark.parametrize(
+    ("label", "route", "read_mode"),
+    [("runs list", "GET /runs", "list"), ("runs show RUN_ID", "GET /runs/{run_id}", "show")],
+)
+def test_run_cli_modes_have_exact_page_report_and_actual_socket_evidence(label, route, read_mode):
+    mode = next((mode for mode in PARITY if mode.cli_mode == label), None)
+    assert mode is not None, "run reads need independent CLI semantic acceptance"
+    assert PARITY_REFERENCE[label] == ((route, "default"),)
+    assert (mode.role, mode.lock, mode.hub, mode.execution, mode.effects) == (
+        "R",
+        "none",
+        "no",
+        "Q",
+        "none",
+    )
+    for role in ("reader", "writer"):
+        assert any(
+            reference.module == "test_cli_runs_socket"
+            and reference.parameter == "role"
+            and reference.case == repr(role)
+            for reference in mode.cli_tests
+        ), "real CLI/private Unix evidence must retain both authenticated roles"
+    assert any(
+        reference.module == "test_cli_runs"
+        and reference.function == "test_failed_reads_preserve_original_codes_and_envelopes"
+        and reference.parameter == "mode"
+        and reference.case == repr(read_mode)
+        for reference in mode.cli_tests
+    ), "read failures must retain original Envelopes independently of success payloads"
+    assert any(reference.module == "test_api_reads" for reference in mode.api_tests)
+    aggregate = next(mode for mode in PARITY if mode.cli_mode == "reports/references/manifests")
+    assert aggregate.service == "read_evidence"
+    assert set(PARITY_REFERENCE[label]).issubset(PARITY_REFERENCE[aggregate.cli_mode])
 
 
 @pytest.mark.parametrize("route", tuple(CATALOG_API_REFERENCE))

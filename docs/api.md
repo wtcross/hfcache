@@ -76,8 +76,8 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `POST /quarantine-plans` | default | quarantine --dry-run IDs | R | keyed job | none | no | none | receipt, events and result |
 | `POST /quarantine-cleanups` | default | quarantine --apply IDs | W | keyed job | archive | no | guarded domain mutation/audit | receipt, events and result |
 | `POST /repairs` | default | repair TYPE:ID@SHA [--reason] | W | keyed job | archive | yes | guarded domain mutation/audit | receipt, events and result |
-| `GET /runs` | default | SDK / HTTP | R | synchronous | none | no | none | none |
-| `GET /runs/{run_id}` | default | SDK / HTTP | R | synchronous | none | no | none | none |
+| `GET /runs` | default | runs list | R | synchronous | none | no | none | none |
+| `GET /runs/{run_id}` | default | runs show RUN_ID | R | synchronous | none | no | none | none |
 | `GET /repositories/{repository_type}/{namespace}/{name}/references/{revision}` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /repositories/{repository_type}/{namespace}/{name}/manifests/{commit_sha}/{publication_id}` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /operations` | default | SDK / HTTP | R | synchronous | none | no | none | none |

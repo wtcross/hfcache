@@ -1,0 +1,64 @@
+CPR-006 work-package gate evidence (2026-10-20)
+
+Parent commit: 896003d98d1264f5021bc3701a454f9188c2d235.
+Branch: fix/cockpit-rest-api-alignment. Production/NAS and the isolated older
+guest are untouched in this source package. V54 and the installed symptom remain
+separate required/unproven acceptance.
+
+Initial full gate:
+  rtk proxy bash -c 'scripts/check.sh > /tmp/hfcache-cpr006-gate.log 2>&1'
+Observed exit1, 1 failed/5234 passed/42 deselected in747.33s.
+The failed assertion is the independent semantic route reference:
+  tests/unit/test_rest_parity_gate.py::test_manifest_has_exactly_all_34_unique_semantic_rows_in_contract_order
+The human GET /runs mapping changed to runs list/show, while the independent
+reference still said SDK / HTTP. The frontend stage was not reached in this
+failed gate; this is not frontend acceptance. Preserve the failed log as:
+  /tmp/hfcache-cpr006-gate-failed-parity.log
+  SHA256 f1ad0f2edb64342da3296a1c1567939b42c61d999540e207567297d3ac79c22e
+
+Focused CLI, component, metadata, journal and static retirement evidence is in
+cpr-006-cli.txt, cpr-006-components.txt, cpr-006-journal.txt and their bounded
+RED/GREEN captures.
+
+Parity correction:
+  Retained44 independent HTTP rows and existing SDK aggregate evidence. Added
+  runs list and runs show RUN_ID as two independent CLI semantic modes (36total),
+  each linked to selected reader/writer actual subprocess/private-UDS evidence,
+  exact success and original failed Envelopes. The missing-mode regression was
+  observed2fail before the additive correction. Focused parity/security/pagination
+  and new CLI/socket suite167passed in25.44s; Ruff/Pyrefly/diff checks pass.
+  See cpr-006-cli.txt for exact commands and references.
+
+Explicit frontend gate:
+  rtk proxy bash -c 'make -C cockpit check > /tmp/hfcache-cpr006-frontend.log 2>&1'
+Observed exit0: ESLint, Stylelint, TypeScript,495pure tests/0skipped,
+70mounted Firefox cases/0failed and fresh production build.
+  Log SHA256 a8b5c73c18ede0de3096679c705a55242e3ab3c8136746dba7cfbf8acc31a0c5
+  Decompressed dist/index.js.gz SHA256
+  83c4876379ef098d1174436d9e8665820389dc0f55377d0c5b3feb9e0782e1ea
+  Mounted test bundle SHA256
+  3007b7cce0238080fef275d17f105446e42c89ae67a20ad3f8930fe3102df907
+
+Final corrected complete gate:
+  rtk proxy bash -c 'scripts/check.sh > /tmp/hfcache-cpr006-gate.log 2>&1'
+Observed exit0: lock/sync, Ruff format/lint, Pyrefly, documentation alignment,
+5241Python tests passed/42deselected in683.23s; source/wheel build and all three
+locked base/server/server+MCP installation/import/help/version profiles passed.
+Actual Cockpit ESLint/Stylelint/TypeScript,495pure tests/0skipped,71mounted cases
+and fresh production build passed. This final source includes the reproduced
+detail-click latch repair; the earlier explicit frontend build precedes it.
+  Log SHA256 6fe7914242c4debc52baf1954b1439f41d72ec1f8c727f0835e8d3a6b4015e8a
+  Decompressed dist/index.js.gz SHA256
+  c03be1d53dfbeff93af8efd9106b860ea9bfeda20ba40523debf42baea2c2e1c
+  Mounted bundle SHA256
+  f4ba38d1d40da8fa277ef66dcf5c69646948ff19437c89739e035b0d223e76ff
+  cpr-006-gate-mounted.json SHA256
+  6c9ee9308fcbddf5722d697ead73593ddf658bef822e4d3f968e9cb13c85bcc0
+
+Reviewed INV005/006, CP01/02/08/09/13/14, existing read/authorization/durable
+identity contracts, ADR122/134/135 and repository-allocated ADR136. CP01/09
+exception retired explicitly; historical records/restrictions remain. CLI/API/
+client/schema/security/Cockpit/installation/usage/troubleshooting/deployment
+guides and ADR index/status/amendments agree. No new dependency, durable format,
+REST route, credential class, MCP authority or archive execution path. Current
+runtime/installed/NAS acceptance remains separate. Continue CPR-007.

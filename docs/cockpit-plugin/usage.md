@@ -300,16 +300,23 @@ Ordered by escalation, and the estimate comes first deliberately:
 
 ## Runs
 
-The durable run reports under the archive's `runs/` directory, newest 50,
-read through privileged `runuser -u hfcache -- ls`/`cat` on
-`/srv/hfcache/runs`. This host-local exception requires the writer archive mount;
-it is not a remote API report reader. Journal browsing is also local. Selecting
-one renders the report: command,
+Run reports come through authenticated REST-backed CLI reads, with one page of
+50 domain run IDs. **Next** and **Return first** replace that page; no total
+inventory is implied. A stale cursor requires an explicit first-page refresh.
+The client needs no archive mount. Selecting a run ID renders the validated report: command,
 outcome, exit code, invocation mode, per-repository outcomes (status,
 resolved commit, downloaded/reused/hashed bytes, publication generation),
-and totals, with the raw JSON behind an expander. **Show journal trail**
-joins the report's `run_id` to the persistent journal — the report is the
-authority for what a run did; the journal says what happened along the way.
+and totals. Empty inventory differs from failed reads, missing or corrupt reports,
+and incompatible identity/schema. Refresh/navigation/session changes discard old
+current evidence. Historical report fingerprints remain historical.
+While a detail read is pending, another selection waits for it to finish.
+Navigation discards late results without starting overlapping detail readers.
+
+**Show journal trail** is optional host-local diagnostics for the exact run ID.
+It shows only closed event/level/run fields, newest first within seven days, with
+strict line/byte/time bounds and explicit truncation/unavailability. Journal
+failure leaves the REST report readable. Neither journal text nor a stopped
+observer establishes execution outcome.
 
 ## Maintenance
 

@@ -1,0 +1,107 @@
+CPR-006 report component and strict read-boundary evidence (2026-10-20)
+
+Repository: /home/tyler/Projects/hfcache. Browser and frontend commands below run
+from cockpit/. All browser runs use an owned Firefox profile and loopback fixture.
+Actual React components, adapters, hooks, runner and operation registry execute;
+external Cockpit process/D-Bus/file/privilege ports are controlled. No production
+credential, PAM session, real API request, host command, archive/NAS access,
+installation or service change occurs in these browser tests. Real CLI/Unix-socket
+evidence is separate; these checks do not complete disposable-runtime V54.
+
+Report component baseline RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V41/V43 reports use' CPR_BROWSER_REPORT_BASELINE=896003d98d1264f5021bc3701a454f9188c2d235 node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-reports-red.jsonl
+Observed: 1 case, 0 pass, 1 fail; exit 1. Only reports.tsx and api/archive.ts load
+from the exact prior commit; other modules remain current. The old actual report
+component attempts its direct archive adapter, which the controlled boundary
+refuses, and never creates the expected authenticated runs-list CLI process.
+This is source/component boundary evidence, not installed PAM or archive proof.
+Bundle SHA-256:
+bccd33614e22f76ded75fd81c36430d05f9aff6136febacba9c0a39662733c8b
+
+Journal adapter baseline RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V41/V45 optional bounded' CPR_BROWSER_JOURNAL_BASELINE=896003d98d1264f5021bc3701a454f9188c2d235 node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-journal-mounted-red.jsonl
+Observed: 1 case, 0 pass, 1 fail; exit 1. Only api/archive.ts loads from the prior
+commit. Current REST report reads/detail succeed first; the old journal adapter
+then attempts its unbounded argv and the controlled fixed-boundary refuses it.
+No fixed bounded diagnostic appears. Bundle SHA-256:
+5da91d7689f0f6b5d0c80e406594c3aea7e531996d5326b2c5404d708611f56a
+
+New journal-view lifecycle RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V41/V45 optional bounded' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-journal-focused.json
+Observed during implementation: 1 case, 0 pass, 1 fail; exit 1. An immediately
+clicked diagnostic began before the view's initial reset effect, so that effect
+invalidated its own pending request. The report remained correct, while partial
+journal evidence and the classified bridge error were dropped. Bounded output is
+preserved as cpr-006-journal-lifecycle-red.jsonl. Bundle SHA-256:
+4043062034fcec73539f818cc333044017afb7e0a887cfffeff8670a68653bd4
+The control now enables only after its current-origin setup completes.
+
+Focused component GREEN:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V41/V45 optional bounded' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-journal-focused.json
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V41/V43 reports use' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-reports-focused.json
+Each observed 1 case, 1 pass; exit 0. Bundle SHA-256:
+3007b7cce0238080fef275d17f105446e42c89ae67a20ad3f8930fe3102df907
+
+Pure read-boundary GREEN:
+  rtk node --test test/read-metadata.test.ts test/report-read.test.ts test/runner.test.ts > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-pure.txt
+Observed: 90 cases, 90 pass, zero skipped; exit 0. This includes 20 new metadata
+cases, 23 new report-shape cases using actual durable JSON fixtures, and 47
+existing runner cases. Metadata remains independent of display abort/errors and
+bounded line eviction. Missing, duplicate, malformed, oversized, unsupported or
+terminal-mismatched metadata refuses success; an exact negative Envelope remains
+resolved even when metadata is absent or invalid. Strict report/page parsing
+rejects wrong run/archive identities, stale page identity, unknown fields and
+malformed counters/arrays before success data or raw JSON rendering. Historical
+report policy identity remains separate from current wrapper policy.
+
+The mounted suite first included the original 62 cases plus eight report cases:
+one page of exactly 50 IDs, explicit opaque-cursor Next replacement, exact
+run-ID detail, Return first and observed-empty handling; refresh clears healthy
+inventory before failed reads; original failed Envelopes and stale cursor refusal
+remain visible without automatic restart; late detail/session-stale pages cannot
+overwrite current evidence; missing/corrupt/wrong-archive payloads cannot become
+healthy data or expose unknown fields; optional bounded journal bridge failure,
+safe partial events, filtering and 201st-line truncation cannot decide the report
+outcome; unsafe ID/cursor vectors refuse before a target process; successful read
+of an actual-shaped failed verification report displays recorded exit 40; and
+caller-owned expected page metadata is copied before asynchronous reads.
+
+Detail loading follow-up RED:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V41 report detail loading' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-detail-loading-red.jsonl
+Observed: 1 case, 0 pass, 1 fail; exit 1. Repeated clicks on one report row and an
+alternate row started more than one fixed CLI detail read before any response.
+Bundle SHA-256:
+74d08a7aa07ff51b0374737e29ec818df58bf283ce51f41d9d68ca874c721a0c
+
+Detail loading follow-up GREEN:
+  rtk proxy env CPR_BROWSER_TEST_FILTER='V41 report detail loading' node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-detail-loading-green.json
+Observed: 1 case, 1 pass; exit 0. A synchronous per-view latch serializes detail
+reads and disables row controls. Navigation and session changes clear selected
+data while retaining the latch until the existing read settles, with a visible
+loading explanation. The existing stale-detail case now navigates while the
+original read is pending: the next selection stays disabled, the late original
+result cannot repopulate cleared data, then an explicit next selection succeeds.
+No client observer is closed or replayed.
+
+Final mounted GREEN after removal of the old archive-file APIs:
+  rtk node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-006-mounted.json
+Observed after the detail-loading follow-up: 71 cases, 71 pass; exit 0. The bounded
+JSON contains every case name. The focused loading case uses the same final hash.
+Bundle SHA-256:
+f4ba38d1d40da8fa277ef66dcf5c69646948ff19437c89739e035b0d223e76ff
+
+Focused frontend GREEN:
+  rtk pnpm exec eslint --fix src/reports.tsx src/api/reports.ts src/lib/reports.ts src/lib/read-metadata.ts src/lib/runner.ts test/read-metadata.test.ts test/report-read.test.ts test/browser.fixture.tsx test/cockpit-fixture.ts test/browser.mjs
+  rtk pnpm exec tsc --noEmit
+  (cwd repository) rtk git diff --check -- cockpit/src/reports.tsx cockpit/src/api/reports.ts cockpit/src/lib/reports.ts cockpit/src/lib/read-metadata.ts cockpit/src/lib/runner.ts cockpit/test/read-metadata.test.ts cockpit/test/report-read.test.ts cockpit/test/browser.fixture.tsx cockpit/test/cockpit-fixture.ts cockpit/test/browser.mjs
+Observed: all exit 0. Separate archive/journal contributor evidence records the
+V43 static RED/GREEN and final 30 focused host-boundary cases. The complete
+repository gate, executed Cockpit gate and final runtime acceptance remain
+separately required.
+
+After the loading follow-up, repeated focused commands
+`rtk pnpm exec eslint src/reports.tsx test/browser.fixture.tsx` and
+`rtk pnpm exec tsc --noEmit` both exited 0. The final diff check also exited 0.
+
+No temporary product-source omission was used in these baselines. Exact prior
+modules are embedded only in owned test bundles; source files remain current.

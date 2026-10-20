@@ -23,10 +23,14 @@ async function main() {
     const repository = resolve(cockpit, '..');
     const sourceRef = process.argv[2];
     const manualBaseline = process.env.CPR_BROWSER_MANUAL_BASELINE;
+    const reportBaseline = process.env.CPR_BROWSER_REPORT_BASELINE;
+    const journalBaseline = process.env.CPR_BROWSER_JOURNAL_BASELINE;
     if (sourceRef !== undefined && !/^[0-9a-f]{40}$/.test(sourceRef))
         throw new Error('An optional baseline must be an exact forty-character commit SHA');
     if (manualBaseline !== undefined && !/^[0-9a-f]{40}$/.test(manualBaseline))
         throw new Error('A manual-component baseline must be an exact forty-character commit SHA');
+    if ([reportBaseline, journalBaseline].some(value => value !== undefined && !/^[0-9a-f]{40}$/.test(value)))
+        throw new Error('Report/journal baselines must be exact forty-character commit SHAs');
     const RESULT_BYTES = 32768;
     const resultPath = '/result/' + randomUUID();
     const profileParent = await mkdtemp(join(tmpdir(), 'hfcache-cpr-mounted-'));
@@ -76,6 +80,17 @@ async function main() {
                         ], { cwd: repository, maxBuffer: 2 * 1024 * 1024 }).toString('utf8'),
                         loader: args.path.endsWith('.tsx') ? 'tsx' : 'ts',
                     }));
+                } else if (reportBaseline !== undefined || journalBaseline !== undefined) {
+                    builder.onLoad({ filter: /[/\\]cockpit[/\\]src[/\\](reports\.tsx|api[/\\]archive\.ts)$/ }, args => {
+                        const baseline = args.path.endsWith('reports.tsx') ? reportBaseline : reportBaseline ?? journalBaseline;
+                        return baseline === undefined
+                            ? undefined
+                            : {
+                                contents: execFileSync('rtk', ['proxy', 'git', 'show', baseline + ':' + relative(repository, args.path)],
+                                                       { cwd: repository, maxBuffer: 2 * 1024 * 1024 }).toString('utf8'),
+                                loader: args.path.endsWith('.tsx') ? 'tsx' : 'ts',
+                            };
+                    });
                 } else if (manualBaseline !== undefined) {
                     builder.onLoad({ filter: /[/\\]cockpit[/\\]src[/\\](sync|verify)\.tsx$/ }, args => ({
                         contents: execFileSync('rtk', [
@@ -187,6 +202,8 @@ async function main() {
         real_api_or_shell: false,
         source_ref: sourceRef ?? 'working-tree',
         ...(manualBaseline === undefined ? {} : { manual_component_baseline: manualBaseline }),
+        ...(reportBaseline === undefined ? {} : { report_component_baseline: reportBaseline }),
+        ...(journalBaseline === undefined ? {} : { journal_adapter_baseline: journalBaseline }),
         bundle_sha256: bundleSha256,
         ...result,
     }));

@@ -62,8 +62,8 @@ The fixed rootless launcher uses `/etc/hfcache/client.toml` and
 file inside the finite client, without host ImportCredential or a browser bearer.
 Hub authority stays on the API executor. Terminal outcomes require strict bounded
 schema-1 Envelopes; bounded progress/handles support display/reconnection.
-The Runs tab reads local `/srv/hfcache/runs` through privileged
-`runuser -u hfcache -- ls`/`cat`; it needs this host's archive mount and is not a
-remote REST report client. Journal browsing is likewise host-local.
+The Runs tab reads reports through authenticated `runs list` / `runs show`
+without a client archive mount. Optional bounded journal event diagnostics remain
+host-local; journal failure does not prevent report access or establish outcome.
 Repository checks do not establish browser/PAM, secret, SELinux/NFS or workload
 acceptance. Native service support is separate; this plugin has no native launcher.

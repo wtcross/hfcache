@@ -103,6 +103,7 @@ goes further and refuses a repository that remains configured (`AD-20`).
 | `sync` | yes | Synchronize all or selected repositories |
 | `status` | no | Configured, retained, current, warning, and verification state |
 | `list` | no | Archived repositories and revisions |
+| `runs list`, `runs show` | no | One authenticated inventory page or one exact durable run report |
 | `verify` | report/catalog except `--estimate` | Integrity verification in one of four modes |
 | `prune` | yes with `--apply` | Retention cleanup |
 | `purge` | yes with `--apply` | Permanently remove unmanaged repositories |
@@ -459,6 +460,36 @@ Archived repositories, and with `--revisions` every retained revision with its
 generation, publication ID, size, publication timestamp, and verification state.
 Reads only manifests and references, so it works on an archive whose catalog is
 missing or corrupt.
+
+### `runs list` and `runs show`
+
+Read durable run reports through authenticated REST without a client archive
+mount. `runs list [--limit N] [--cursor TOKEN]` requests exactly one page of
+run IDs; default min(100, authenticated server page limit), range 1–10,000,
+further bounded by server/client limits.
+`runs show [--] RUN_ID` reads one exact 32-character lowercase hexadecimal domain
+run ID. IDs are neither
+filenames nor operation handles. No argument is a path, URL or method. These
+commands create no receipt, acquire no archive lock and accept no job/candidate/
+local-bootstrap mode. Missing/corrupt reports, stale cursors, identity and resource
+refusals retain classified errors; no empty-success or local fallback follows.
+
+Under `--json`, stdout is the exact original server schema-1 Envelope. List
+command is `runs`, with `data.runs` containing IDs; detail is `runs read`, with
+`data.report` containing the durable report and Envelope.run_id matching it.
+Historical report policy identity remains historical.
+
+Before each successful read's Envelope, stderr emits exactly one compact line
+`Run read metadata: JSON`, even in quiet mode. The complete prefixed line is at most
+2 KiB (excluding its newline) and JSON has exactly
+`schema_version:1`, `command`, `run_id`, `request_id`, `archive_id`,
+`config_fingerprint`, `next_cursor`. It contains validated wrapper identity and
+the opaque next cursor (null on the last page and all detail reads). It grants no
+execution authority and is not an operation receipt. Preserve the cursor exactly
+for an explicit next-page request; do not infer total inventory or silently
+restart a stale cursor. Successful reads require nonnull archive/policy identity.
+Failures need no metadata line and preserve their original Envelope. Unknown,
+unsafe or secret-bearing metadata refuses before output.
 
 ### `verify`
 

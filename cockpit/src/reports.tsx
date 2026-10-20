@@ -1,211 +1,226 @@
-/*
- * SPDX-License-Identifier: LGPL-2.1-or-later
- *
- * The run report browser (docs/cockpit.md §3): the durable record under
- * `runs/` is the authority for what a run did; the journal says what
- * happened, and run_id joins them (docs/operations.md §4).
+/* SPDX-License-Identifier: LGPL-2.1-or-later
+ * Authenticated historical run reports; host journals are optional diagnostics.
  */
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import React, { useCallback, useEffect, useState } from 'react';
-
-import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
-import { Card, CardBody, CardTitle } from "@patternfly/react-core/dist/esm/components/Card/index.js";
-import {
-    DescriptionList, DescriptionListDescription, DescriptionListGroup, DescriptionListTerm,
-} from "@patternfly/react-core/dist/esm/components/DescriptionList/index.js";
-import {
-    ExpandableSection,
-} from "@patternfly/react-core/dist/esm/components/ExpandableSection/index.js";
-import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/index.js";
+import { Alert } from '@patternfly/react-core/dist/esm/components/Alert/index.js';
+import { Button } from '@patternfly/react-core/dist/esm/components/Button/index.js';
+import { Card, CardBody, CardTitle } from '@patternfly/react-core/dist/esm/components/Card/index.js';
+import { DescriptionList, DescriptionListDescription, DescriptionListGroup, DescriptionListTerm } from '@patternfly/react-core/dist/esm/components/DescriptionList/index.js';
+import { ExpandableSection } from '@patternfly/react-core/dist/esm/components/ExpandableSection/index.js';
+import { Stack, StackItem } from '@patternfly/react-core/dist/esm/layouts/Stack/index.js';
 import { ListingTable } from 'cockpit-components-table';
 
-import { journalForRun, listRunReports, readRunReport } from './api/archive';
-import { Loading, QueryError } from './components';
+import { journalForRun } from './api/archive';
+import { JournalReadError } from './lib/run-journal';
+import type { RunJournal } from './api/archive';
+import { listRunReports, readRunReport } from './api/reports';
+import type { RunDetailResult, RunPageResult } from './api/reports';
+import { connectionSnapshot } from './api/connection';
+import { currentOperationHost } from './api/operations';
+import { EnvelopeAlert, Loading, QueryError } from './components';
+import { useConnection } from './hooks';
 import { formatBytes, formatTimestamp } from './lib/format';
-import { parseReportName } from './lib/reports';
-
-const REPORT_LIMIT = 50;
-
-interface ReportRepository {
-    repository_id?: string;
-    repository_type?: string;
-    status?: string;
-    resolved_commit_sha?: string;
-    downloaded_bytes?: number;
-    reused_bytes?: number;
-    hashed_bytes?: number;
-    publication_generation?: number;
-}
-
-interface RunReport {
-    command?: string;
-    outcome?: string;
-    exit_code?: number;
-    invocation_mode?: string;
-    run_id?: string;
-    repositories?: ReportRepository[];
-    totals?: Record<string, number>;
-    findings?: unknown[];
-}
+import type { RunReadMetadata } from './lib/read-metadata';
+import { REPORT_PAGE_LIMIT } from './lib/reports';
+import type { RunReport } from './lib/reports';
 
 const Item = ({ term, children }: { term: string; children: React.ReactNode }) => (
-    <DescriptionListGroup>
-        <DescriptionListTerm>{term}</DescriptionListTerm>
-        <DescriptionListDescription>{children}</DescriptionListDescription>
-    </DescriptionListGroup>
+    <DescriptionListGroup><DescriptionListTerm>{term}</DescriptionListTerm><DescriptionListDescription>{children}</DescriptionListDescription></DescriptionListGroup>
 );
 
 const JournalTrail = ({ runId }: { runId: string }) => {
-    const [lines, setLines] = useState<string[] | null>(null);
+    const connection = useConnection();
+    const host = currentOperationHost();
+    const origin = JSON.stringify([runId, host, connection]);
+    const [observedOrigin, setObservedOrigin] = useState('');
+    const [result, setResult] = useState<RunJournal | null>(null);
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(false);
-
+    const [readyOrigin, setReadyOrigin] = useState('');
+    const revision = useRef(0);
+    useEffect(() => {
+        revision.current += 1;
+        setResult(null);
+        setError(null);
+        setLoading(false);
+        setReadyOrigin(origin);
+        return () => { revision.current += 1 };
+    }, [origin]);
     const load = () => {
+        const request = ++revision.current;
+        const active = connectionSnapshot();
+        const current = () => request === revision.current && active === connectionSnapshot() && host === currentOperationHost();
         setLoading(true);
-        journalForRun(runId)
-                .then(result => setLines(result), failure => setError(failure as Error))
-                .finally(() => setLoading(false));
+        setResult(null);
+        setError(null);
+        journalForRun(runId).then(value => {
+            if (current()) { setObservedOrigin(origin); setResult(value) }
+        }, failure => {
+            if (current()) {
+                setObservedOrigin(origin);
+                setError(failure as Error);
+                if (failure instanceof JournalReadError) setResult(failure.partial);
+            }
+        })
+                .finally(() => { if (current()) setLoading(false); });
     };
-
+    const fresh = observedOrigin === origin;
     return (
         <Stack hasGutter>
-            <StackItem>
-                <Button variant="secondary" onClick={load} isDisabled={loading} isInline>
-                    Show journal trail for this run
-                </Button>
-            </StackItem>
+            <StackItem>Optional host-local event trail: the latest seven days, newest first. It does not establish the recorded run outcome.</StackItem>
+            <StackItem><Button variant="secondary" onClick={load} isDisabled={readyOrigin !== origin || loading || !connection.administrative}>Show host journal trail for this run</Button></StackItem>
             {loading && <StackItem><Loading /></StackItem>}
-            {error !== null && <StackItem><QueryError error={error} /></StackItem>}
-            {lines !== null && !loading &&
-                <StackItem>
-                    <pre className="hfcache-journal">
-                        {lines.length === 0 ? 'No journal lines for this run id.' : lines.join('\n')}
-                    </pre>
-                </StackItem>}
+            {fresh && error !== null && <StackItem><QueryError error={error} /></StackItem>}
+            {fresh && result?.truncated && <StackItem><Alert variant="warning" isInline title="Host journal diagnostic is incomplete">{result.truncationReasons.join(', ')}. The REST report remains independent.</Alert></StackItem>}
+            {fresh && result !== null && !loading && <StackItem><pre className="hfcache-journal">{result.lines.length === 0 ? 'No matching projected host events in the bounded window.' : result.lines.join('\n')}</pre></StackItem>}
         </Stack>
     );
 };
 
-const ReportView = ({ file, report }: { file: string; report: RunReport }) => {
-    const repositories = report.repositories ?? [];
-    const totals = report.totals ?? {};
-    return (
-        <Card>
-            <CardTitle>{file}</CardTitle>
-            <CardBody>
-                <Stack hasGutter>
-                    <StackItem>
-                        <DescriptionList isHorizontal isCompact>
-                            <Item term="Command">{report.command ?? '—'}</Item>
-                            <Item term="Outcome">{report.outcome ?? '—'}</Item>
-                            <Item term="Exit code">{report.exit_code ?? '—'}</Item>
-                            <Item term="Invocation">{report.invocation_mode ?? '—'}</Item>
-                            <Item term="Run id"><code>{report.run_id ?? '—'}</code></Item>
-                        </DescriptionList>
-                    </StackItem>
-                    {repositories.length > 0 &&
-                        <StackItem>
-                            <ListingTable
-                                aria-label="Per-repository outcomes"
-                                variant="compact"
-                                columns={['Repository', 'Status', 'Downloaded', 'Reused', 'Hashed', 'Generation']}
-                                emptyCaption="No repositories in this run"
-                                rows={repositories.map((repository, index) => ({
-                                    props: { key: repository.repository_id ?? String(index) },
-                                    columns: [
-                                        repository.repository_id ?? '—',
-                                        repository.status ?? '—',
-                                        formatBytes(repository.downloaded_bytes),
-                                        formatBytes(repository.reused_bytes),
-                                        formatBytes(repository.hashed_bytes),
-                                        repository.publication_generation ?? '—',
-                                    ],
-                                }))}
-                            />
-                        </StackItem>}
-                    {Object.keys(totals).length > 0 &&
-                        <StackItem>
-                            <DescriptionList isHorizontal isCompact>
-                                {Object.entries(totals).map(([key, value]) => (
-                                    <Item term={key} key={key}>
-                                        {key.endsWith('_bytes') ? formatBytes(value) : String(value)}
-                                    </Item>
-                                ))}
-                            </DescriptionList>
-                        </StackItem>}
-                    <StackItem>
-                        <ExpandableSection toggleText="Raw report JSON">
-                            <pre className="hfcache-journal">{JSON.stringify(report, null, 2)}</pre>
-                        </ExpandableSection>
-                    </StackItem>
-                    {report.run_id !== undefined &&
-                        <StackItem><JournalTrail runId={report.run_id} /></StackItem>}
-                </Stack>
-            </CardBody>
-        </Card>
-    );
-};
+const ReportView = ({ report }: { report: Readonly<RunReport> }) => (
+    <Card>
+        <CardTitle>Recorded run {report.run_id}</CardTitle>
+        <CardBody>
+            <Stack hasGutter>
+                {report.exit_code !== 0 && <StackItem><Alert variant="danger" isInline title={`Recorded run failed (exit ${report.exit_code})`}>{report.errors.join(', ')}</Alert></StackItem>}
+                {report.warnings.length > 0 && <StackItem><Alert variant="warning" isInline title="Recorded run warnings">{report.warnings.join(', ')}</Alert></StackItem>}
+                <StackItem>
+                    <DescriptionList isHorizontal isCompact>
+                        <Item term="Command">{report.command}</Item><Item term="Recorded outcome">{report.outcome}</Item>
+                        <Item term="Recorded exit code">{report.exit_code}</Item><Item term="Invocation">{report.invocation_mode}</Item>
+                        <Item term="Run id"><code>{report.run_id}</code></Item>
+                        <Item term="Started">{formatTimestamp(report.started_at)}</Item><Item term="Completed">{formatTimestamp(report.completed_at)}</Item>
+                        <Item term="Archive identity"><code>{report.archive_id}</code></Item>
+                        <Item term="Historical policy fingerprint"><code>{report.config_fingerprint}</code></Item>
+                    </DescriptionList>
+                </StackItem>
+                {report.repositories !== undefined && report.repositories.length > 0 &&
+                <StackItem>
+                    <ListingTable
+                        aria-label="Per-repository outcomes" variant="compact"
+                    columns={['Repository', 'Status', 'Downloaded', 'Reused', 'Hashed', 'Generation']} emptyCaption="No repositories in this run"
+                    rows={report.repositories.map(repository => ({
+                        props: { key: repository.repository_type + ':' + repository.repository_id },
+                        columns: [repository.repository_id, repository.status, formatBytes(repository.downloaded_bytes),
+                            formatBytes(repository.reused_bytes), formatBytes(repository.hashed_bytes), repository.publication_generation ?? '—'],
+                    }))}
+                    />
+                </StackItem>}
+                {report.totals !== undefined &&
+                <StackItem>
+                    <DescriptionList isHorizontal isCompact>
+                        {Object.entries(report.totals).map(([key, value]) => <Item term={key} key={key}>{formatBytes(value)}</Item>)}
+                    </DescriptionList>
+                </StackItem>}
+                <StackItem><ExpandableSection toggleText="Raw report JSON"><pre className="hfcache-journal">{JSON.stringify(report, null, 2)}</pre></ExpandableSection></StackItem>
+                <StackItem><JournalTrail key={report.run_id} runId={report.run_id} /></StackItem>
+            </Stack>
+        </CardBody>
+    </Card>
+);
 
 export const RunReports = () => {
-    const [names, setNames] = useState<string[] | null>(null);
-    const [error, setError] = useState<Error | null>(null);
+    const connection = useConnection();
+    const host = currentOperationHost();
+    const origin = JSON.stringify([host, connection]);
+    const [listOrigin, setListOrigin] = useState('');
+    const [listing, setListing] = useState<RunPageResult | null>(null);
+    const [listError, setListError] = useState<Error | null>(null);
+    const [listLoading, setListLoading] = useState(false);
+    const [cursor, setCursor] = useState<string | null>(null);
     const [selected, setSelected] = useState<string | null>(null);
-    const [report, setReport] = useState<RunReport | null>(null);
-    const [reportError, setReportError] = useState<Error | null>(null);
-
-    const load = useCallback(() => {
-        setError(null);
-        listRunReports()
-                .then(result => setNames(result), failure => setError(failure as Error));
+    const [detailOrigin, setDetailOrigin] = useState('');
+    const [detail, setDetail] = useState<RunDetailResult | null>(null);
+    const [detailError, setDetailError] = useState<Error | null>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const listRevision = useRef(0);
+    const detailRevision = useRef(0);
+    const detailPending = useRef(false);
+    const mountedView = useRef(true);
+    useEffect(() => {
+        mountedView.current = true;
+        return () => { mountedView.current = false };
     }, []);
-
-    useEffect(load, [load]);
-
-    const open = (file: string) => {
-        setSelected(file);
-        setReport(null);
-        setReportError(null);
-        readRunReport(file)
-                .then(result => setReport(result as RunReport),
-                      failure => setReportError(failure as Error));
+    const load = useCallback((next: string | null, expected?: Readonly<RunReadMetadata>) => {
+        const request = ++listRevision.current;
+        detailRevision.current += 1;
+        const active = connectionSnapshot();
+        const current = () => request === listRevision.current && active === connectionSnapshot() && host === currentOperationHost();
+        setListing(null); setListError(null); setSelected(null); setDetail(null); setDetailError(null);
+        setListLoading(true); setCursor(next);
+        listRunReports(next, expected).then(value => {
+            if (current()) { setListOrigin(origin); setListing(value) }
+        }, failure => {
+            if (current()) { setListOrigin(origin); setListError(failure as Error) }
+        })
+                .finally(() => { if (current()) setListLoading(false); });
+    }, [origin, host]);
+    useEffect(() => {
+        load(null);
+        return () => { listRevision.current += 1; detailRevision.current += 1 };
+    }, [load]);
+    const fresh = listOrigin === origin;
+    const page = fresh ? listing?.page ?? null : null;
+    const open = (runId: string) => {
+        if (detailPending.current || page === null || !page.runs.includes(runId) || listing?.metadata === null || !connection.administrative) return;
+        detailPending.current = true;
+        const request = ++detailRevision.current;
+        const active = connectionSnapshot();
+        const current = () => request === detailRevision.current && active === connectionSnapshot() && host === currentOperationHost();
+        setSelected(runId); setDetail(null); setDetailError(null); setDetailLoading(true);
+        readRunReport(runId, listing?.metadata?.archive_id).then(value => {
+            if (current()) { setDetailOrigin(origin); setDetail(value) }
+        }, failure => {
+            if (current()) { setDetailOrigin(origin); setDetailError(failure as Error) }
+        })
+                .finally(() => {
+                    detailPending.current = false;
+                    if (mountedView.current) setDetailLoading(false);
+                });
     };
-
+    const shownDetail = detailOrigin === origin ? detail : null;
     return (
         <Stack hasGutter>
-            {error !== null && <StackItem><QueryError error={error} /></StackItem>}
-            {names === null && error === null && <StackItem><Loading /></StackItem>}
-            {names !== null &&
+            <StackItem><Button variant="secondary" isDisabled={listLoading || !connection.administrative} onClick={() => load(null)}>Refresh run reports</Button></StackItem>
+            {listLoading && <StackItem><Loading /></StackItem>}
+            {fresh && listError !== null && <StackItem><QueryError error={listError} /></StackItem>}
+            {fresh && listing !== null && (listing.envelope.exit_code !== 0 || listing.envelope.warnings.length > 0) && <StackItem><EnvelopeAlert envelope={listing.envelope} /></StackItem>}
+            {page !== null &&
                 <StackItem>
                     <Card>
-                        <CardTitle>
-                            Run reports ({Math.min(names.length, REPORT_LIMIT)} of {names.length})
-                        </CardTitle>
+                        <CardTitle>Run reports ({page.runs.length} on this page)</CardTitle>
                         <CardBody>
-                            <ListingTable
-                                aria-label="Durable run reports"
-                                variant="compact"
-                                columns={['Started', 'Run id', 'Report']}
-                                emptyCaption="No run reports. A run that died in preflight leaves only the journal."
-                                onRowClick={(_event, row) => open(String(row.props?.key ?? ''))}
-                                rows={names.slice(0, REPORT_LIMIT).map(file => {
-                                    const parsed = parseReportName(file);
-                                    return {
-                                        props: { key: file },
-                                        columns: [
-                                            formatTimestamp(parsed.startedAt?.toISOString()),
-                                            { title: <code>{parsed.runId ?? '—'}</code> },
-                                            file,
-                                        ],
-                                    };
-                                })}
-                            />
+                            <Stack hasGutter>
+                                <StackItem>One page contains at most {REPORT_PAGE_LIMIT} run IDs in server order. Select an ID to read its historical report.</StackItem>
+                                <StackItem>
+                                    <ListingTable
+                            aria-label="Durable run reports" variant="compact" columns={['Run id']}
+                        emptyCaption="No run reports on this page. A run that died in preflight may leave only host diagnostics."
+                        rows={page.runs.map(runId => ({
+                            props: { key: runId },
+                            columns: [
+                                { title: <Button variant="link" isInline isDisabled={detailLoading || !connection.administrative} onClick={() => open(runId)}>Open report {runId}</Button> },
+                            ]
+                        }))}
+                                    />
+                                </StackItem>
+                                <StackItem>
+                                    <Button
+                            variant="secondary" isDisabled={page.nextCursor === null || listLoading || !connection.administrative}
+                        onClick={() => { if (page.nextCursor !== null && listing?.metadata) load(page.nextCursor, listing.metadata); }}
+                                    >Next report page
+                                    </Button>{' '}
+                                    <Button variant="link" isDisabled={cursor === null || listLoading || !connection.administrative} onClick={() => load(null)}>Return to first report page</Button>
+                                </StackItem>
+                            </Stack>
                         </CardBody>
                     </Card>
                 </StackItem>}
-            {selected !== null && reportError !== null &&
-                <StackItem><QueryError error={reportError} /></StackItem>}
-            {selected !== null && report !== null &&
-                <StackItem><ReportView file={selected} report={report} /></StackItem>}
+            {detailLoading && <StackItem><Loading /><p>A report read is finishing. You can select another report when it completes.</p></StackItem>}
+            {selected !== null && detailOrigin === origin && detailError !== null && <StackItem><QueryError error={detailError} /></StackItem>}
+            {selected !== null && shownDetail !== null && (shownDetail.envelope.exit_code !== 0 || shownDetail.envelope.warnings.length > 0) && <StackItem><EnvelopeAlert envelope={shownDetail.envelope} /></StackItem>}
+            {selected !== null && shownDetail?.report && <StackItem><ReportView key={selected} report={shownDetail.report} /></StackItem>}
         </Stack>
     );
 };

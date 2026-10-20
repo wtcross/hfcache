@@ -790,6 +790,98 @@ PARITY = (
         ),
     ),
     ParityMode(
+        "runs list",
+        "list_reports",
+        "GET /runs",
+        "R",
+        "none",
+        "no",
+        "Q",
+        "none",
+        (
+            Evidence(
+                "test_cli_runs",
+                "test_runs_list_is_one_exact_page_with_bound_metadata_and_no_archive_access",
+            ),
+            Evidence(
+                "test_cli_runs",
+                "test_failed_reads_preserve_original_codes_and_envelopes",
+                "mode",
+                "'list'",
+            ),
+            Evidence(
+                "test_cli_runs_socket",
+                "test_real_cli_private_socket_pages_reports_and_refusals_without_client_archive_access",
+                "role",
+                "'reader'",
+            ),
+            Evidence(
+                "test_cli_runs_socket",
+                "test_real_cli_private_socket_pages_reports_and_refusals_without_client_archive_access",
+                "role",
+                "'writer'",
+            ),
+        ),
+        (
+            Evidence(
+                "test_api_reads", "test_exact_namespace_name_refs_manifests_and_report_run_identity"
+            ),
+            Evidence(
+                "test_api_reads", "test_report_cursor_detects_new_publication_without_policy_change"
+            ),
+            PAGINATION,
+        ),
+    ),
+    ParityMode(
+        "runs show RUN_ID",
+        "read_report",
+        "GET /runs/{run_id}",
+        "R",
+        "none",
+        "no",
+        "Q",
+        "none",
+        (
+            Evidence(
+                "test_cli_runs",
+                "test_quiet_reads_still_emit_one_notice_and_original_envelope",
+                "arguments",
+                "('show', '--', examples.RUN)",
+            ),
+            Evidence(
+                "test_cli_runs",
+                "test_failed_reads_preserve_original_codes_and_envelopes",
+                "mode",
+                "'show'",
+            ),
+            Evidence(
+                "test_cli_runs",
+                "test_malformed_detail_success_binds_exact_report_and_archive",
+            ),
+            Evidence(
+                "test_cli_runs_socket",
+                "test_real_cli_private_socket_pages_reports_and_refusals_without_client_archive_access",
+                "role",
+                "'reader'",
+            ),
+            Evidence(
+                "test_cli_runs_socket",
+                "test_real_cli_private_socket_pages_reports_and_refusals_without_client_archive_access",
+                "role",
+                "'writer'",
+            ),
+        ),
+        (
+            Evidence(
+                "test_api_reads", "test_exact_namespace_name_refs_manifests_and_report_run_identity"
+            ),
+            Evidence(
+                "test_api_reads",
+                "test_large_reports_stream_in_bounded_chunks_and_sanitize_registered_secrets",
+            ),
+        ),
+    ),
+    ParityMode(
         "reports/references/manifests",
         "read_evidence",
         "GET /runs; GET /runs/{run_id}; repository subresources",

@@ -1,7 +1,7 @@
 # Preserve Cockpit failure evidence and original operation identity
 
 - Decision identity: 134.
-- Status: Accepted; boundary, candidate reconciliation and scoped recovery implemented; full-service/report amendments and installed acceptance remain separate.
+- Status: Amended; boundary, candidate reconciliation and scoped recovery implemented; [decision 135](decision-135.md) replaces manual service starts and [decision 136](decision-136.md) replaces direct report reads. Disposable and installed acceptance remain separate.
 - Date: 2026-10-19.
 
 ## Context and decision
@@ -169,3 +169,10 @@ causal claim about the original installed Cockpit bridge interruption.
 exception with keyed REST full jobs. The report exception remains current. Fresh
 protected host-profile inspection gates effects; all operation recovery,
 uncertainty, credential separation and deployment restrictions above remain.
+
+## REST reports amendment (2026-10-20)
+
+[Decision 136](decision-136.md) now replaces the CP-01/09 direct-report exception
+with authenticated bounded CLI reads. Exact negative Envelopes and response/run/
+archive identity remain separate from cursor metadata, host journal diagnostics
+and read connection errors. No archive-file fallback or execution authority follows.

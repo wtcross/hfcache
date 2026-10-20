@@ -197,7 +197,11 @@ journalctl -u hfcache-sync.service -n 20
 
 These system-manager commands inspect the legacy observer; they do not inspect
 the rootless API/worker payload. Use the selected user-manager lifecycle for those
-services. Report/journal browsing in the UI is host-local, not a remote REST feature.
+services. Report browsing uses authenticated REST; only optional bounded journal
+diagnostics are host-local. Missing journal events do not make a report absent or
+establish success/failure. Stale report cursors require an explicit first-page
+refresh; missing/corrupt/wrong-identity reports retain classified errors with no
+direct archive-file fallback.
 
 ## A schedule override or candidate file was left behind
 

@@ -136,6 +136,27 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   NAS and older guest evidence/guards/masks/locks unchanged. Continue CPR-006;
   direct-report exception remains until its replacement, plan stays active.
 
+- [x] CPR-006 Read run reports through authenticated REST (2026-10-20,
+  this commit — [task](plans/tasks/cpr-006-rest-run-reports.md)). Fixed one-page
+  CLI inventory and exact-ID detail preserve original Envelopes with independent
+  bounded read/cursor metadata. Actual subprocess/private-UDS reader/writer tests
+  deny client archive/config access; report identities, historical fingerprints,
+  corrupt/missing reports, limits and stale cursors remain distinct. Mounted UI
+  replaces pages, rejects stale results, serializes detail reads and keeps safe
+  bounded optional journals independent of outcome. Direct privileged archive
+  reader removed only after parity; static2red→2green, component baseline and
+  initial journal/detail-loading races retained. Initial full gate1failed/5234pass
+  exposed a missed independent route reference; additive36-mode/44-row parity
+  preserves all old SDK evidence. Final gate5241pass/42deselected in683.23s,
+  three wheel profiles, actual frontend lint/style/types/495unit/71mounted/build;
+  explicit frontend gate also passed. CLI168/parity167/report90/journal+static30
+  focused tests pass. INV005/006 and affected CP/ADR review complete; actual next
+  ADR136, ADR122/134 status/amendments/index, CP01/09 and human contracts/guides
+  updated together. [Evidence](plans/support/cockpit-rest-repair/gates/cpr-006.txt).
+  No runtime dependency, durable/API/MCP authority change or production/guest/NAS
+  action. V54/current artifact and original installed symptom remain unproven.
+  Continue CPR-007, keeping the plan selected and all historical restrictions.
+
 ## Tags and discovery (2026-10-19)
 
 - [x] CAT-001 Activate the feature plan and establish technical contracts
@@ -2632,6 +2653,19 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     reconnected trigger. Item25 and [runtime-004](plans/support/cockpit-rest-repair/runtime-004.md)
     retain the exact disposable handoff. No production or guest change occurred
     in this package. Next scoped source work is CPR-006; no historical backlog.
+
+27. **REST report client and browser rollout requirements (CPR-006,
+    2026-10-20):** source now requires the new fixed runs list/show CLI commands;
+    old client images can refuse even though server report routes already exist.
+    A separately authorized deployment must pin the browser bundle and physical
+    rootless client release/image together, verify authenticated inventory/detail
+    without a client archive mount, and treat package version alone as insufficient
+    parity. The page provides no direct archive fallback. Optional bounded closed
+    journal events never establish outcome. Preserve original receipts, unknown
+    operations, candidate/predecessor/config locks, guard/masks/NAS-ro and all
+    earlier holds. No host or guest change occurred in this package. V54 and the
+    original installed reconnected symptom remain unproven under item25. Continue
+    scoped CPR-007; no unrelated backlog is activated.
 
 ## Operator decisions needed
 
@@ -5365,6 +5399,16 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      remain effectively denied. No new scheduler, manager, listener, credential,
      lock authority or workload permission is introduced. Source fixture acceptance
      remains separate from disposable Cockpit/PAM and installed symptom proof.
+
+136. **Read run reports through authenticated REST** (2026-10-20, CPR-006).
+     [Decision 136](../adr/decision-136.md) retires the CP-01/09 direct archive
+     report exception. Fixed CLI one-page inventory and exact-ID detail retain
+     original server Envelopes, with a separate bounded read-identity/cursor notice.
+     The report view binds archive/run identity and distinguishes historical
+     outcomes from read success. Optional bounded host journal projection is
+     independent diagnostic evidence, never operation truth. No new REST route,
+     filesystem path authority, browser credential, runtime dependency or durable
+     format follows. Real Cockpit/PAM and installed acceptance remain separate.
 
 ## Documentation and script alignment
 

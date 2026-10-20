@@ -617,16 +617,20 @@ acceptance evidence; it is an example consumer, not an application dependency.
 
 [Decision 134](adr/decision-134.md) requires stage-aware error preservation,
 close-aware read recovery and authority-scoped operation handles outside tab
-lifetimes. These boundaries are implemented in source; the existing
-CP-01/09 report exception remains current until its explicit adapter amendment.
+lifetimes. These boundaries are implemented in source.
+[Decision 136](adr/decision-136.md) retires the CP-01/09 direct-report exception.
 [Decision 135](adr/decision-135.md) replaces manual service starts with keyed
 REST jobs and requires fresh protected host-profile permission before effects.
 No new workload or deployment authority follows.
 
 - **`CP-01`, `CP-02`, `CP-09`** — The plugin uses installed CLI JSON envelopes
   and systemd, never reimplements archive logic or writes archive files. The
-  sole direct archive-read exception is run-report browsing as the service
-  identity. Refuse unknown envelope versions and unbounded/malformed terminal
+  plugin has no direct archive-read exception. Reports use authenticated fixed
+  CLI reads with one bounded inventory page and exact run/archive identity.
+  A separate bounded read-metadata notice carries cursor/response identity while
+  terminal Envelopes remain unchanged. Optional journal events are bounded
+  host-local diagnostics and cannot define outcome. Refuse unknown Envelope
+  versions and unbounded/malformed terminal
   output. Separately validated bounded progress/safety notices may render and
   reconnect, never grant domain authority or invent outcome/checkpoints/percentages
   (decision [122](adr/decision-122.md)).

@@ -3,8 +3,8 @@
 The plugin is a static Cockpit package for a writer host. Its fixed launcher uses
 `/usr/local/libexec/hfcache-client`, `/etc/hfcache/client.toml` and the rootless
 API socket `/run/hfcache/api/api.sock`. It is a browser client of strict CLI
-Envelopes and host systemd/configuration interfaces, with one explicit host-local
-archive report-reading exception. It adds no daemon or application dependency.
+Envelopes and host systemd/configuration interfaces. It performs no direct archive
+file reads and adds no daemon or application dependency.
 See [installation and usage](cockpit-plugin/README.md).
 
 The selected installation remains [guarded/read-only](deployment-status.md).
@@ -101,8 +101,9 @@ original handles for operator review. A quota failure after transmission retains
 the known key/ID in application memory and visibly blocks further submissions.
 
 Manual full jobs follow [decision135](adr/decision-135.md)'s shared REST client
-path and explicit trusted host permissions. REST report browsing still requires
-the separately implemented CP-01/09 amendment; its exception below remains current.
+path and explicit trusted host permissions. [Decision 136](adr/decision-136.md)
+retires the CP-01/09 direct-report exception in favor of narrow authenticated
+`runs list` / `runs show` reads with explicit bounded pagination.
 Neither amendment permits workloads on guarded/unknown profiles,
 changes to host guards or schedules during source implementation, or a
 user-manager fallback. All failed read
@@ -112,7 +113,7 @@ Envelopes must render their codes before success-only fields are accessed.
 
 | ID | Rule |
 | --- | --- |
-| `CP-01` | The plugin invokes the installed CLI and systemd; it never reads or writes archive state directly and never re-implements resolution, validation, verification, or retention logic. One read-only exception: §4's run-report browsing |
+| `CP-01` | The plugin invokes the installed CLI and systemd; it never reads or writes archive state directly and never re-implements resolution, validation, verification, or retention logic. Run reports use the authenticated fixed REST client |
 | `CP-02` | Every CLI invocation passes `--json`; command outcomes require a bounded strict schema-1 Envelope. Refuse unknown versions. Separately validated bounded progress and recovery handles may render/reconnect; stderr never grants domain authority or fabricates outcome/checkpoints/percentages |
 | `CP-03` | Mutating actions require Cockpit administrative access. The CLI runs as the service identity inside a transient systemd unit (§2), never as root |
 | `CP-04` | Manual full sync and verification use fixed REST-backed CLI `sync` / `verify --full`, with original keyed receipts/results and explicit permitted-profile checks. Scheduled observers remain separate host services; their exit state is not manual operation outcome. The page never starts sync/verify services |
@@ -120,7 +121,7 @@ Envelopes must render their codes before success-only fields are accessed.
 | `CP-06` | The plugin never enables `hfcache-verify.timer`. It displays the timer's state and the reason it is disabled (deployment calendar approval). Sync timer controls use only the fixed system manager; the selected profile blocks them |
 | `CP-07` | `archive init`, including inspection, is outside the plugin surface (`FS-21`); an existing archive must never be initialized again |
 | `CP-08` | No credential surface: the page never reads credentials or accepts tokens. Transient clients receive only named API `hfcache.api` inside the fixed rootless client, never Hub authority or browser/environment/argument bearers. Only safe source descriptions render (`docs/security.md` T-07) |
-| `CP-09` | The plugin never writes under `/srv/hfcache`. Its only direct read there is `runs/*.json`, performed as the service identity; every other statement about the archive comes from a CLI envelope |
+| `CP-09` | The plugin never reads or writes under `/srv/hfcache`. Run reports use bounded authenticated CLI `runs list` / `runs show RUN_ID`; a separately bounded host-local journal is optional diagnostic evidence and cannot establish domain outcome |
 | `CP-10` | One mutating command at a time (`AD-17`). `HFMNT010` renders as a benign busy state naming the holder, never as a failure; the plugin never removes or bypasses the lock |
 | `CP-11` | Configuration changes use §6's root config flock and exact candidate/base guards, syntax-valid compatible server assessment, required successful preview, atomic install with `0640 root:hfcache` and predecessor retained, then exact installed-content and expected operational-fingerprint confirmation. Incompatible/unknown authority blocks plugin install |
 | `CP-12` | Timer schedule changes are drop-ins under `/etc/systemd/system/hfcache-sync.timer.d/` (§7); shipped unit files are never edited, and calendar expressions are validated with `systemd-analyze calendar` before anything is written |
@@ -169,12 +170,11 @@ that it executes or hardens archive work. The actual API/private-worker units ow
 that work. `--wait --pipe` retains CLI output and exit status, including classified
 failure Envelopes; `--collect` avoids accumulating completed transient units.
 
-Root bridge work is limited to installed unit/timer/drop-in control, journal
-reads and the guarded configuration pipeline. The run-report browsing exception
-uses `runuser -u hfcache -- ls` / `cat` through the privileged bridge for
-`/srv/hfcache/runs/*.json` (`CP-09`). It requires this writer host and its archive
-mount; it is not REST report browsing or a remote-reader path. Journal browsing
-is also host-local. No Hub credential is involved.
+Root bridge work is limited to fixed profile inspection, installed unit/timer/
+drop-in control, optional journal reads and the guarded configuration pipeline.
+Run reports use authenticated REST through the fixed CLI (`CP-09`), requiring no
+client archive mount. Journal browsing remains host-local. No Hub credential is
+involved in report or journal reads.
 Without administrative access the page presents permitted read-only systemd state
 and explains why privileged actions are locked. It invents no archive side channel.
 
@@ -202,7 +202,7 @@ and explains why privileged actions are locked. It invents no archive side chann
 | Version | CLI `version` | `docs/cli.md` §2 |
 | Configuration | §6 pipeline | `docs/configuration.md` |
 | Sync schedule | §7 drop-in | `packaging/systemd/hfcache-sync.timer` |
-| Run reports | List and read `runs/*.json` as the service identity | `CP-09`; `docs/schemas.md` §6 |
+| Run reports | Authenticated CLI `runs list` / `runs show RUN_ID`, explicit one-page inventory | `CP-09`; `docs/schemas.md` §6 |
 | Warnings | `status` findings, each `HFWRN` code paired with its §8 runbook response as inline guidance | [warnings](operations.md#warnings) |
 
 There is no publish operation, because the application has none: publication
@@ -285,6 +285,36 @@ not executable text, use `--` before positional values and quote copied keys so
 even valid leading `-`/`~` characters remain data. Display
 abort/callback failure detaches view updates without
 closing the spawned process or cancelling server work.
+
+### Run reports and optional host journals
+
+Report inventory uses `runs list --limit 50` and one explicit opaque cursor.
+Next and Return-first replace the current page, never accumulate a complete
+inventory or infer total count. Rows contain domain run IDs; timestamps, command
+and outcome come only from a validated selected report. Detail uses `runs show
+-- RUN_ID`. Validate exact selected run/archive identity and keep historical
+report policy fingerprints distinct from current wrapper policy metadata.
+
+The [CLI read-metadata line](cli.md#runs-list-and-runs-show) carries validated
+cursor/response identity separately from the original terminal Envelope. It is
+collected independently of display truncation and must match that Envelope.
+Missing, duplicate or incompatible metadata refuses successful presentation;
+authentic negative Envelopes render before any success-field assumptions.
+Refresh, navigation and session changes clear prior page/detail readiness and
+discard late results. Empty success differs from unavailable/corrupt/refused data.
+One detail read may remain pending per mounted view; repeated row clicks cannot
+start overlapping readers. Navigation discards its presentation and waits for
+that read to finish before another selection, without closing its CLI observer.
+
+Optional journal diagnostics never block REST reports or define execution
+outcome. Fixed system sync/verify and user API/verification journal fields are
+queried for seven days, newest first, at most 201 entries. Bound the owned read
+query to five seconds plus one second termination grace and a six-second client deadline;
+cap raw transport at 256 KiB, display at 200 lines/64 KiB and each line at 8 KiB. Render only
+closed validated event/level/exact literal run ID. Withhold arbitrary journal
+prose/unknown fields and expose truncation/unavailability explicitly. Only this
+owned diagnostic channel may be closed on its resource bound; operation observers
+remain uncancelled.
 
 ## 5. Long-running operations and concurrency
 

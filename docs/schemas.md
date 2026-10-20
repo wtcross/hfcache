@@ -815,6 +815,12 @@ do not equate their schemas. Preserve receipts/handles across rollback; absent
 old readers cannot prove nonexecution or permit replay. Partial MCP projections
 must be fully reconstructed and validated before use as durable artifacts.
 
+The [CLI run-read metadata notice](cli.md#runs-list-and-runs-show) also has an
+independent schema. It carries bounded read identity and one opaque page cursor
+beside the exact server Envelope; it is neither a durable report nor an operation
+receipt. The historical report's policy fingerprint may differ from the current
+read wrapper's policy fingerprint.
+
 ## 12. Recovery report
 
 Path: `runs/<YYYYMMDD>T<HHMMSS>Z-<run-id>.json`, written by `recover --apply`.

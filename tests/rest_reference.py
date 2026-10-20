@@ -356,11 +356,11 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
         "guarded domain mutation/audit",
         "receipt, events and result",
     ),
-    ("GET /runs", "default", "SDK / HTTP", "R", "synchronous", "none", "no", "none", "none"),
+    ("GET /runs", "default", "runs list", "R", "synchronous", "none", "no", "none", "none"),
     (
         "GET /runs/{run_id}",
         "default",
-        "SDK / HTTP",
+        "runs show RUN_ID",
         "R",
         "synchronous",
         "none",
@@ -481,6 +481,8 @@ PARITY_REFERENCE: dict[str, tuple[tuple[str, str], ...]] = {
     "quarantine --dry-run IDs": (("POST /quarantine-plans", "default"),),
     "quarantine --apply IDs": (("POST /quarantine-cleanups", "default"),),
     "repair TYPE:ID@SHA [--reason]": (("POST /repairs", "default"),),
+    "runs list": (("GET /runs", "default"),),
+    "runs show RUN_ID": (("GET /runs/{run_id}", "default"),),
     "reports/references/manifests": (
         ("GET /runs", "default"),
         ("GET /runs/{run_id}", "default"),

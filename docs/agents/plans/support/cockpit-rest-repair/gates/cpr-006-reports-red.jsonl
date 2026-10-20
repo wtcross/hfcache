@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","report_component_baseline":"896003d98d1264f5021bc3701a454f9188c2d235","bundle_sha256":"bccd33614e22f76ded75fd81c36430d05f9aff6136febacba9c0a39662733c8b","state":"failed","tests":[{"name":"V41/V43 reports use one authenticated page and exact run detail without client archive access","passed":false,"message":"Timed out: actual CLI adapter invocation"}]}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-8CIFt8/firefox-tail.log"}

@@ -38,8 +38,9 @@ The shipped launcher has no native profile selector. Native systemd credential/
 socket examples in the server guide are separate integration requirements, not
 instructions for this rootless plugin. The selected system-bus writer/timer units
 stay masked; administrative access cannot make those controls accepted workloads.
-The report browser additionally uses privileged `runuser`/`ls`/`cat` on the local
-archive's runs directory; remote API-only machines cannot provide it. See the
+The report browser uses authenticated `runs list` / `runs show` through the same
+fixed client and needs no client archive mount. Optional journal diagnostics
+remain host-local and may be unavailable independently of reports. See the
 [contract](../cockpit.md) and [recorded restrictions](../deployment-status.md).
 
 On the machine that builds it (the same host, or any other):

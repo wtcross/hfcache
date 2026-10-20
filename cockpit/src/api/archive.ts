@@ -1,48 +1,35 @@
 /*
  * SPDX-License-Identifier: LGPL-2.1-or-later
  *
- * The one direct archive read the contract allows (docs/cockpit.md CP-09):
- * run reports under `runs/`, read as the service identity. Everything else
- * about the archive arrives through CLI envelopes. Nothing here writes.
+ * Optional bounded host-local journal diagnostics (CP-09, decision 136).
+ * Durable run reports use the authenticated REST-backed client in reports.ts.
  */
 
 import cockpit from 'cockpit';
 
-import { SERVICE_IDENTITY } from '../lib/command';
-import { isReportName, isRunId } from '../lib/reports';
+import { isRunId } from '../lib/reports';
+import { assertSession, captureSession } from './connection';
+import { collectRunJournal, JournalReadError } from '../lib/run-journal';
+import type { RunJournal } from '../lib/run-journal';
 
-const RUNS_DIRECTORY = '/srv/hfcache/runs';
+export { JournalReadError } from '../lib/run-journal';
+export type { RunJournal, JournalTruncationReason } from '../lib/run-journal';
 
-function readAsService(argv: string[]): cockpit.Spawn<string> {
-    return cockpit.spawn(['runuser', '-u', SERVICE_IDENTITY, '--', ...argv],
-                         { superuser: 'require', err: 'message' });
-}
-
-/* Newest first: the timestamped names sort lexicographically. */
-export async function listRunReports(): Promise<string[]> {
-    const output = await readAsService(['ls', '-1', RUNS_DIRECTORY]);
-    return output.split('\n')
-            .filter(isReportName)
-            .sort()
-            .reverse();
-}
-
-export async function readRunReport(file: string): Promise<unknown> {
-    if (!isReportName(file))
-        throw new Error(`not a run report name: ${file}`);
-    const output = await readAsService(['cat', `${RUNS_DIRECTORY}/${file}`]);
-    return JSON.parse(output);
-}
-
-/* The journal side of the run_id join (docs/cockpit.md §3): every log line
- * carries run_id=…, so one grep over the persistent journal returns exactly
- * one run's trail. Display only — never interpreted beyond the closed
- * event vocabulary. */
-export async function journalForRun(runId: string): Promise<string[]> {
-    if (!isRunId(runId))
-        throw new Error(`not a run id: ${runId}`);
-    const output = await cockpit.spawn(
-        ['journalctl', '-q', '--no-pager', '-o', 'cat', '-g', `run_id=${runId}`],
-        { superuser: 'require', err: 'message' });
-    return output.split('\n').filter(line => line !== '');
+/* Optional host-local event trail (decision 136). REST reports remain usable
+ * independently of this diagnostic's availability, retention window or caps. */
+export async function journalForRun(runId: string): Promise<RunJournal> {
+    if (typeof runId !== 'string' || !isRunId(runId))
+        throw new JournalReadError({ problem: 'protocol-error' });
+    try {
+        const generation = captureSession('journal-read');
+        const host = cockpit.transport.host;
+        const result = await collectRunJournal(runId, argv =>
+            cockpit.spawn(argv, { superuser: 'require', err: 'ignore' }));
+        assertSession(generation, 'journal-read');
+        if (host !== cockpit.transport.host)
+            throw new JournalReadError({ problem: 'reconnected' });
+        return result;
+    } catch (failure) {
+        throw failure instanceof JournalReadError ? failure : new JournalReadError(failure);
+    }
 }

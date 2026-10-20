@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"4043062034fcec73539f818cc333044017afb7e0a887cfffeff8670a68653bd4","state":"failed","tests":[{"name":"V41/V45 optional bounded host journal never decides or blocks an authenticated report result","passed":false,"message":"Journal render flags {\"bridge\":false,\"event\":false,\"stage\":false,\"record\":true}"}]}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-J8O4fG/firefox-tail.log"}

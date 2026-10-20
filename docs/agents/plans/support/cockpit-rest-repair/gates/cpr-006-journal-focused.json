@@ -1,0 +1,1 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"3007b7cce0238080fef275d17f105446e42c89ae67a20ad3f8930fe3102df907","state":"passed","tests":[{"name":"V41/V45 optional bounded host journal never decides or blocks an authenticated report result","passed":true}]}

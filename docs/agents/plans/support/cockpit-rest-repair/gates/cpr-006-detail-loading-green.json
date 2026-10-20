@@ -1,0 +1,1 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"f4ba38d1d40da8fa277ef66dcf5c69646948ff19437c89739e035b0d223e76ff","state":"passed","tests":[{"name":"V41 report detail loading serializes repeated and alternate row clicks","passed":true}]}

@@ -9,6 +9,7 @@ import {
 } from '../src/lib/candidate-guard';
 import { hfcacheArgv } from '../src/lib/command';
 import type { Envelope } from '../src/lib/envelope';
+import { runJournalArgv } from '../src/lib/run-journal';
 
 export const DEFAULT_HOST_PROFILE = Object.freeze({
     schema_version: 1,
@@ -387,6 +388,32 @@ export class JournalBoundary {
     emit(chunk: string): void { this.receive(chunk) }
 }
 
+export class RunJournalBoundary {
+    readonly argv: readonly string[];
+    readonly runId: string;
+    readonly handle: Promise<string> & { stream: (callback: (chunk: string) => void) => unknown; close: (problem?: string) => void };
+    closeCalls = 0;
+    private receive: (chunk: string) => void = () => undefined;
+    private resolve!: (value: string) => void;
+    private reject!: (error: Error) => void;
+    constructor(argv: string[], options: Record<string, unknown>) {
+        const matched = /run_id=([0-9a-f]{32})/.exec(argv.find(value => value.startsWith('--grep=')) ?? '');
+        invariant(matched && JSON.stringify(argv) === JSON.stringify(runJournalArgv(matched[1])) &&
+                  options.superuser === 'require' && options.err === 'ignore', 'Only the fixed bounded run journal diagnostic is permitted');
+        this.argv = Object.freeze([...argv]);
+        this.runId = matched[1];
+        const completion = new Promise<string>((resolve, reject) => { this.resolve = resolve; this.reject = reject });
+        this.handle = Object.assign(completion, {
+            stream: (callback: (chunk: string) => void) => { this.receive = callback; return this.handle },
+            close: () => { this.closeCalls += 1; this.resolve('') },
+        });
+    }
+
+    emit(chunk: string): void { this.receive(chunk) }
+    succeed(): void { this.resolve('') }
+    fail(error = bridgeFailure()): void { this.reject(error) }
+}
+
 export class CockpitBoundary {
     readonly transport = { host: 'cpr-initial' };
     // Every actual process remains observable. The legacy nonmetadata index
@@ -402,9 +429,15 @@ export class CockpitBoundary {
     readonly buses: BusBoundary[] = [];
     readonly files: FileBoundary[] = [];
     readonly journals: JournalBoundary[] = [];
+    readonly runJournals: RunJournalBoundary[] = [];
     readonly superuser = new SuperuserBoundary();
 
-    spawn(argv: string[], options: Record<string, unknown>): ProcessBoundary['handle'] | JournalBoundary['handle'] {
+    spawn(argv: string[], options: Record<string, unknown>): ProcessBoundary['handle'] | JournalBoundary['handle'] | RunJournalBoundary['handle'] {
+        if (argv[0] === 'timeout') {
+            const journal = new RunJournalBoundary(argv, options);
+            this.runJournals.push(journal);
+            return journal.handle;
+        }
         if (argv[0] === 'journalctl') {
             const journal = new JournalBoundary(argv, options);
             this.journals.push(journal);

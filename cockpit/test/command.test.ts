@@ -9,6 +9,24 @@ import {
 
 const SHA = '0123456789abcdef0123456789abcdef01234567';
 
+test('report reads accept only fixed one-page and exact run-id vectors', () => {
+    const runId = 'a'.repeat(32);
+    for (const command of [
+        ['runs', 'list', '--limit', '50'],
+        ['runs', 'list', '--limit', '50', '--cursor=opaque_cursor-1'],
+        ['runs', 'list', '--limit', '50', '--cursor=opaque:+/=.-~?&value'],
+        ['runs', 'show', '--', runId], ['runs', 'show', runId],
+    ])
+        assert.doesNotThrow(() => assertCockpitCommand(command));
+    for (const command of [
+        ['runs', 'list', '--limit', '50000'], ['runs', 'list', '--limit', '50', '--cursor='],
+        ['runs', 'list', '--limit', '50', '--cursor=bad\nsecret'],
+        ['runs', 'show', '--', '../SYNTHETIC_SECRET'], ['runs', 'show', '--', runId.toUpperCase()],
+        ['runs', 'show', '--', runId, '--local'], ['runs', 'delete', runId],
+    ])
+        assert.throws(() => assertCockpitCommand(command), CommandSurfaceError);
+});
+
 test('plugin dispatch accepts only its closed authenticated command surface', () => {
     for (const command of [
         ['version', '--server'], ['client', 'describe'], ['status'], ['list', '--revisions'],

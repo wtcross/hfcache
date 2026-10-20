@@ -33,7 +33,14 @@ export function assertCockpitCommand(command: readonly string[]): void {
     };
     if (!Array.isArray(command) || command.some(value => typeof value !== 'string'))
         throw new CommandSurfaceError();
+    const runRead = command[0] === 'runs' && (
+        (command[1] === 'list' && command[2] === '--limit' && command[3] === '50' &&
+            (command.length === 4 || (command.length === 5 && /^--cursor=[\x21-\x7e]{1,256}$/.test(command[4])))) ||
+        (command[1] === 'show' && ((command.length === 3 && /^[0-9a-f]{32}$/.test(command[2])) ||
+            (command.length === 4 && command[2] === '--' && /^[0-9a-f]{32}$/.test(command[3]))))
+    );
     if (exact('version', '--server') || exact('client', 'describe') || exact('status') ||
+        runRead ||
         exact('list', '--revisions') || exact('config', 'validate') || exact('verify', '--estimate') ||
         exact('verify', '--full') || exact('verify', '--new') || exact('doctor') || exact('doctor', '--read-only') ||
         ((command[0] === 'prune' || command[0] === 'recover') && command.length === 2 &&

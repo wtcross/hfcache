@@ -24,8 +24,9 @@ restoring write access or scheduling.
 
 The fixed Cockpit launcher targets the rootless client and file-mounted API-only
 secret. Its legacy system-bus sync/verify/timer controls remain masked; it has no
-native/user-manager selector. The report and journal browsers require privileged
-host-local access, including the archive runs directory for reports. Repository
+native/user-manager selector. That recorded artifact's report and journal browsers
+use privileged host-local access; newer source replaces report archive reads with
+authenticated REST and retains only bounded optional host journal diagnostics. Repository
 plugin fixtures do not establish deployed browser/PAM or candidate-install acceptance.
 
 The newer source routes manual full jobs through the fixed REST client and gates

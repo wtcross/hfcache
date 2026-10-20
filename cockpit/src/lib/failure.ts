@@ -7,7 +7,7 @@ export const FAILURE_STAGES = [
     'installed-read', 'candidate-write', 'candidate-validate', 'candidate-preview',
     'install', 'installed-confirm', 'installed-validate', 'operation-lookup',
     'operation-wait', 'operation-observe', 'api-read', 'unit-read', 'unit-mutation',
-    'schedule-read', 'schedule-validate', 'schedule-write', 'profile-read',
+    'schedule-read', 'schedule-validate', 'schedule-write', 'profile-read', 'journal-read',
 ] as const;
 
 export type FailureStage = typeof FAILURE_STAGES[number];
@@ -42,6 +42,7 @@ const STAGE_LABELS: Record<FailureStage, string> = {
     'schedule-validate': 'schedule validation',
     'schedule-write': 'schedule write',
     'profile-read': 'host profile inspection',
+    'journal-read': 'optional host journal read',
 };
 
 const REASONS = new Set<FailureReason>([
@@ -199,7 +200,7 @@ function message(details: FailureFacts): string {
                 : 'No valid terminal Envelope was observed' + during;
         break;
     case 'observation':
-        text = (['installed-read', 'candidate-write', 'install', 'unit-read', 'unit-mutation',
+        text = (['installed-read', 'candidate-write', 'install', 'unit-read', 'unit-mutation', 'journal-read',
             'schedule-read', 'schedule-validate', 'schedule-write'].includes(details.stage)
             ? 'The host action could not be observed'
             : 'No terminal Envelope was observed') + during;

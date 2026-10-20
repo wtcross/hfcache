@@ -13,6 +13,10 @@ import { Application } from '../src/app';
 import { ManualFullJob } from '../src/manual-job';
 import { SyncOperations } from '../src/sync';
 import { Verification } from '../src/verify';
+import { RunReports } from '../src/reports';
+import { listRunReports as readReportPage, readRunReport as readReportDetail } from '../src/api/reports';
+import { READ_METADATA_PREFIX } from '../src/lib/read-metadata';
+import type { RunReadMetadata } from '../src/lib/read-metadata';
 import { OriginalOperations } from '../src/operations';
 import { operationRegistry, operationViews } from '../src/api/operations';
 import { enableUnit, startUnit, unitState } from '../src/api/systemd';
@@ -234,6 +238,58 @@ function configEnvelope(data: Record<string, unknown>, exit = 0, code = 'HFAPI00
     };
 }
 
+const REPORT_A = 'd'.repeat(32);
+const REPORT_B = 'e'.repeat(32);
+function historicalReport(runId = REPORT_A): Record<string, unknown> {
+    return {
+        schema_version: 1,
+        application_version: '1.0.0',
+        archive_id: DEFAULT_CLIENT_METADATA.archive_id,
+        command: 'sync',
+        completed_at: '2026-07-24T20:41:46.002000Z',
+        config_fingerprint: '9'.repeat(64),
+        errors: [],
+        exit_code: 0,
+        hostname: 'disposable-report-fixture',
+        huggingface_hub_version: '1.24.0',
+        invocation_mode: 'systemd',
+        outcome: 'success',
+        python_version: '3.14.6',
+        run_id: runId,
+        started_at: '2026-07-24T20:38:11.500000Z',
+        warnings: [],
+        repositories: [],
+        totals: { downloaded_bytes: 0, hashed_bytes: 0, published_bytes: 0, pruned_logical_bytes: 0, reused_bytes: 0, xet_cache_peak_bytes: 0 },
+    };
+}
+function reportPageEnvelope(ids: string[]): Envelope { return { ...configEnvelope({ runs: ids }), command: 'runs' } }
+function reportDetailEnvelope(runId = REPORT_A, report = historicalReport(runId)): Envelope {
+    return { ...configEnvelope({ report }), command: 'runs read', run_id: runId };
+}
+function succeedRunRead(process: ProcessBoundary, result: Envelope, cursor: string | null = null, changes: Record<string, unknown> = {}): void {
+    process.emit(READ_METADATA_PREFIX + JSON.stringify({
+        schema_version: 1,
+        command: result.command,
+        run_id: result.run_id,
+        request_id: '7'.repeat(32),
+        archive_id: DEFAULT_CLIENT_METADATA.archive_id,
+        config_fingerprint: '8'.repeat(64),
+        next_cursor: cursor,
+        ...changes
+    }) + '\n');
+    process.succeedEnvelope(result);
+}
+
+async function mountReports(ids = [REPORT_A, REPORT_B]): Promise<number> {
+    const start = boundary.processes.length;
+    mount(<RunReports />);
+    const request = await nextProcess(start);
+    invariant(request.command.join(' ') === 'runs list --limit 50' && request.key === null, 'Report inventory did not use its fixed keyless REST command');
+    succeedRunRead(request, reportPageEnvelope(ids));
+    await until(() => readyButton('Open report ' + ids[0]), 'actual authenticated report inventory');
+    return start;
+}
+
 function assessment(changes: Record<string, unknown> = {}, exit = 0): Envelope {
     return configEnvelope({
         valid: true,
@@ -345,6 +401,208 @@ async function test(name: string, body: () => Promise<void>): Promise<void> {
 }
 
 async function run(): Promise<void> {
+    await test('V41 report detail loading serializes repeated and alternate row clicks', async () => {
+        const start = await mountReports();
+        const first = await until(() => readyButton('Open report ' + REPORT_A), 'first selectable report row');
+        const second = await until(() => readyButton('Open report ' + REPORT_B), 'second selectable report row');
+        first.click(); first.click(); second.click();
+        const pending = await nextProcess(start + 1);
+        await delay(75);
+        invariant(boundary.processes.slice(start + 1).filter(item => item.command[0] === 'runs' && item.command[1] === 'show').length === 1,
+                  'Repeated or alternate row clicks started concurrent detail client processes');
+        invariant(button('Open report ' + REPORT_A)?.disabled === true && button('Open report ' + REPORT_B)?.disabled === true,
+                  'Pending detail read left report row controls enabled');
+        succeedRunRead(pending, reportDetailEnvelope());
+        await until(() => text().includes('Recorded run ' + REPORT_A), 'first serialized report detail');
+        (await until(() => readyButton('Open report ' + REPORT_B), 'report row after original detail completion')).click();
+        const next = await nextProcess(start + 2);
+        succeedRunRead(next, reportDetailEnvelope(REPORT_B));
+        await until(() => text().includes('Recorded run ' + REPORT_B), 'deliberate subsequent report selection');
+    });
+
+    await test('V41/V43 reports use one authenticated page and exact run detail without client archive access', async () => {
+        boundary.profile = { schema_version: 1, state: 'unknown', reason: 'policy-missing' };
+        const records = operationRegistry.snapshot().records.length;
+        const start = boundary.processes.length;
+        mount(<RunReports />);
+        const request = await nextProcess(start);
+        invariant(request.command.join(' ') === 'runs list --limit 50', 'Report list did not use the fixed REST CLI adapter');
+        const ids = Array.from({ length: 50 }, (_, index) => (index + 1).toString(16).padStart(32, '0'));
+        succeedRunRead(request, reportPageEnvelope(ids), '-opaque-next-page');
+        await until(() => document.querySelectorAll('button').length > 50, 'bounded actual report page');
+        invariant([...document.querySelectorAll('button')].filter(node => node.textContent?.startsWith('Open report ')).length === 50, 'Report page was truncated or accumulated');
+        (await until(() => readyButton('Next report page'), 'explicit next report page')).click();
+        const next = await nextProcess(start + 1);
+        invariant(next.command.join(' ') === 'runs list --limit 50 --cursor=-opaque-next-page', 'Cursor was changed, replayed or interpreted as an option');
+        invariant(button('Open report ' + ids[0]) === null, 'Previous page remained healthy during next-page loading');
+        succeedRunRead(next, reportPageEnvelope([REPORT_A]));
+        (await until(() => readyButton('Open report ' + REPORT_A), 'replacement report page')).click();
+        const detail = await nextProcess(start + 2);
+        invariant(detail.command.join(' ') === 'runs show -- ' + REPORT_A, 'Detail used a filename, URL or changed run identity');
+        succeedRunRead(detail, reportDetailEnvelope());
+        await until(() => text().includes('Recorded run ' + REPORT_A) && text().includes('9'.repeat(64)), 'historical report identity and policy');
+        invariant([...document.querySelectorAll('button')].filter(node => node.textContent?.startsWith('Open report ')).length === 1, 'Explicit pages accumulated an inventory');
+        invariant(operationRegistry.snapshot().records.length === records && boundary.processes.slice(start).every(item => item.key === null), 'Report reads created a domain operation');
+        (await until(() => readyButton('Return to first report page'), 'explicit first-page navigation')).click();
+        const first = await nextProcess(start + 3);
+        invariant(first.command.join(' ') === 'runs list --limit 50' && !text().includes('Recorded run ' + REPORT_A), 'First-page navigation retained selected detail or reused a cursor');
+        succeedRunRead(first, reportPageEnvelope([]));
+        await until(() => text().includes('No run reports on this page'), 'authentic observed empty inventory');
+    });
+
+    await test('V41/V42 report refresh clears healthy data and preserves exact failed read Envelopes', async () => {
+        const start = await mountReports();
+        (await until(() => readyButton('Refresh run reports'), 'explicit report refresh')).click();
+        const refresh = await nextProcess(start + 1);
+        invariant(button('Open report ' + REPORT_A) === null, 'Refresh left prior report inventory looking current');
+        refresh.failEnvelope({ ...configEnvelope({}, 40, 'HFVER007'), command: 'runs' });
+        await until(() => text().includes('HFVER007'), 'original classified corrupt report inventory refusal');
+        invariant(!text().includes('No run reports on this page'), 'Failed read became empty inventory success');
+        (await until(() => readyButton('Refresh run reports'), 'explicit retry after failed report read')).click();
+        const retry = await nextProcess(start + 2);
+        succeedRunRead(retry, reportPageEnvelope([REPORT_A]), 'stale-cursor');
+        (await until(() => readyButton('Next report page'), 'explicit stale-cursor request')).click();
+        const stale = await nextProcess(start + 3);
+        stale.failEnvelope({ ...configEnvelope({}, 10, 'HFAPI003'), command: 'runs' });
+        await until(() => text().includes('HFAPI003'), 'original stale-cursor refusal');
+        await delay(75);
+        invariant(boundary.processes.length === start + 4 && button('Open report ' + REPORT_A) === null, 'Stale cursor silently restarted or mixed pages');
+    });
+
+    await test('V42 report selection discards late detail responses and session-stale report pages', async () => {
+        const start = await mountReports();
+        button('Open report ' + REPORT_A)?.click();
+        const old = await nextProcess(start + 1);
+        button('Refresh run reports')?.click();
+        const replacement = await nextProcess(start + 2);
+        succeedRunRead(replacement, reportPageEnvelope([REPORT_B]));
+        await until(() => button('Open report ' + REPORT_B), 'replacement page during pending original detail');
+        invariant(button('Open report ' + REPORT_B)?.disabled === true, 'Page navigation bypassed the pending detail-read latch');
+        invariant(text().includes('A report read is finishing'), 'Navigation hid the explanation for a pending detail read');
+        succeedRunRead(old, reportDetailEnvelope());
+        const second = await until(() => readyButton('Open report ' + REPORT_B), 'new selection after stale original detail completes');
+        invariant(!text().includes('Recorded run ' + REPORT_A), 'Late detail repopulated a selection cleared by navigation');
+        second.click();
+        const current = await nextProcess(start + 3);
+        succeedRunRead(current, reportDetailEnvelope(REPORT_B));
+        await until(() => text().includes('Recorded run ' + REPORT_B), 'newer selected run detail');
+        button('Refresh run reports')?.click();
+        const stale = await nextProcess(start + 4);
+        const reconnect = boundary.processes.length;
+        boundary.superuser.change(false);
+        await until(() => !text().includes('Recorded run ' + REPORT_B), 'stale report removed on privilege loss');
+        boundary.superuser.change(true);
+        const fresh = await until(() => boundary.processes.slice(reconnect).find(item => item.command[0] === 'runs') ?? null, 'fresh report list after privilege restoration');
+        succeedRunRead(fresh, reportPageEnvelope([REPORT_B]));
+        await until(() => readyButton('Open report ' + REPORT_B), 'fresh report inventory');
+        succeedRunRead(stale, reportPageEnvelope([REPORT_A]));
+        await delay(75);
+        invariant(button('Open report ' + REPORT_A) === null && button('Open report ' + REPORT_B) !== null, 'Old-session report inventory replaced current evidence');
+    });
+
+    await test('V42 report detail failures and hostile success fields never become healthy report data', async () => {
+        const start = await mountReports();
+        button('Open report ' + REPORT_A)?.click();
+        (await nextProcess(start + 1)).failEnvelope({ ...configEnvelope({}, 10, 'HFARG004'), command: 'runs read' });
+        await until(() => text().includes('HFARG004'), 'exact missing historical report refusal');
+        invariant(!text().includes('Recorded run '), 'Missing report was substituted or accessed as success data');
+        button('Open report ' + REPORT_B)?.click();
+        const hostile = await nextProcess(start + 2);
+        succeedRunRead(hostile, reportDetailEnvelope(REPORT_B, { ...historicalReport(REPORT_B), extra_secret: 'SYNTHETIC_SECRET' }));
+        await until(() => text().includes('Client output could not be validated'), 'classified incompatible report schema');
+        invariant(!text().includes('SYNTHETIC_SECRET') && !text().includes('Recorded run '), 'Unknown report fields reached browser display');
+        button('Open report ' + REPORT_A)?.click();
+        const changed = await nextProcess(start + 3);
+        succeedRunRead(changed, reportDetailEnvelope(), null, { archive_id: '11111111-1111-1111-1111-111111111111' });
+        await until(() => text().includes('Client output could not be validated'), 'wrong archive report refusal');
+        invariant(!text().includes('Recorded run '), 'Changed archive was accepted for a selected historical report');
+    });
+
+    await test('V41/V45 optional bounded host journal never decides or blocks an authenticated report result', async () => {
+        const start = await mountReports([REPORT_A]);
+        button('Open report ' + REPORT_A)?.click();
+        succeedRunRead(await nextProcess(start + 1), reportDetailEnvelope());
+        const journalStart = boundary.runJournals.length;
+        (await until(() => readyButton('Show host journal trail for this run'), 'optional host-local report diagnostic')).click();
+        const journal = await until(() => boundary.runJournals[journalStart] ?? null, 'fixed bounded host journal invocation');
+        invariant(journal.runId === REPORT_A, 'Host journal correlated another run');
+        journal.emit('event=run.completed level=info run_id=' + REPORT_A + ' token=SYNTHETIC_SECRET\n');
+        journal.fail();
+        await until(() => text().includes('reconnected') && text().includes('event=run.completed'), 'safe partial journal and original bridge failure')
+                .catch(() => { throw new Error('Journal render flags ' + JSON.stringify({ bridge: text().includes('reconnected'), event: text().includes('event=run.completed'), stage: text().includes('journal-read'), record: text().includes('Recorded run ' + REPORT_A) })) });
+        invariant(text().includes('Recorded run ' + REPORT_A) && !text().includes('SYNTHETIC_SECRET'), 'Optional journal replaced the report or exposed arbitrary prose');
+        (await until(() => readyButton('Show host journal trail for this run'), 'explicit bounded journal retry')).click();
+        const capped = await until(() => boundary.runJournals[journalStart + 1] ?? null, 'explicit second diagnostic');
+        capped.emit(('event=run.completed level=info run_id=' + REPORT_A + '\n').repeat(201));
+        await until(() => text().includes('Host journal diagnostic is incomplete'), 'explicit journal truncation');
+        invariant(capped.closeCalls === 1 && text().includes('Recorded run ' + REPORT_A) && text().includes('latest seven days, newest first'), 'Journal cap changed domain evidence or lacked diagnostic bounds');
+    });
+
+    await test('V42/V44 report adapters reject unsafe IDs and cursors before any target invocation', async () => {
+        const start = boundary.processes.length;
+        for (const value of ['../runs/report', '--dangerous', 'https://host/report', 'A'.repeat(32), 'SYNTHETIC_SECRET\n']) {
+            let failed = false;
+            try { await readReportDetail(value) } catch { failed = true }
+            invariant(failed, 'Unsafe report identity was accepted');
+        }
+        for (const cursor of ['', 'SYNTHETIC_SECRET\n', 'x'.repeat(257)]) {
+            let failed = false;
+            try { await readReportPage(cursor) } catch { failed = true }
+            invariant(failed, 'Unsafe report cursor was accepted');
+        }
+        invariant(boundary.processes.length === start, 'Invalid report selector reached a process, local path or proxy');
+    });
+
+    await test('V41 a successful report read preserves the historical failed verification result independently', async () => {
+        const start = await mountReports([REPORT_A]);
+        button('Open report ' + REPORT_A)?.click();
+        const report = historicalReport();
+        delete report.repositories; delete report.totals;
+        Object.assign(report, {
+            command: 'verify --full',
+            exit_code: 40,
+            outcome: 'failed',
+            errors: ['HFVER001'],
+            mode: 'full',
+            scope: { repositories: 1, revisions: 1, unique_bytes_read: 1, unique_objects_read: 1 },
+            throughput_bytes_per_second: 1,
+            verification_outcome: 'failed',
+            findings: [{
+                commit_sha: 'a'.repeat(40),
+                expected: 'a'.repeat(64),
+                observed: 'b'.repeat(64),
+                kind: 'digest_mismatch',
+                path: 'weights.bin',
+                publication_id: 'f'.repeat(32),
+                repository_id: 'org/model',
+                repository_type: 'model'
+            }]
+        });
+        succeedRunRead(await nextProcess(start + 1), reportDetailEnvelope(REPORT_A, report));
+        await until(() => text().includes('Recorded run failed (exit 40)') && text().includes('HFVER001'), 'recorded failed historical domain result');
+        invariant(text().includes('verify --full') && text().includes('Historical policy fingerprint'), 'Report read success erased domain result or historical identity');
+    });
+
+    await test('V41 caller-owned expected report identity is captured before asynchronous reads', async () => {
+        const expected: RunReadMetadata = {
+            schema_version: 1,
+            command: 'runs',
+            run_id: 'c'.repeat(32),
+            request_id: '7'.repeat(32),
+            archive_id: DEFAULT_CLIENT_METADATA.archive_id,
+            config_fingerprint: '8'.repeat(64),
+            next_cursor: '-next'
+        };
+        const start = boundary.processes.length;
+        const reading = readReportPage('-next', expected);
+        expected.archive_id = '11111111-1111-1111-1111-111111111111';
+        expected.config_fingerprint = '0'.repeat(64);
+        const request = await nextProcess(start);
+        succeedRunRead(request, reportPageEnvelope([REPORT_A]));
+        const result = await reading;
+        invariant(result.page?.runs[0] === REPORT_A, 'Caller mutation changed the captured report page identity comparison');
+    });
+
     await test('V39 masked schedule facts refuse actual file and fixed system manager mutations', async () => {
         const profile = structuredClone(DEFAULT_HOST_PROFILE);
         profile.facts.units['hfcache-sync.timer'] = { load: 'masked', active: 'inactive', unit_file: 'masked' };

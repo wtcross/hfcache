@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Cockpit REST repair](../2026-10-19-plan-cockpit-rest-repair.md) |
 | Depends on | [CPR-005 — Align manual operations and guarded host controls](cpr-005-rest-operations-and-host-controls.md) |
 | Work package / commit | `CPR-006` — one complete package per commit |
@@ -56,7 +56,7 @@ commit. No live-host privilege or workload authority is granted by a task status
 
 ## Validation
 
-**Planned, not executed:** Cover V41–V45, V48 and V51. Exercise the actual CLI over temporary Unix sockets,
+**Executed:** V41–V45 and report portions of V48/V51. Exercise the actual CLI over temporary Unix sockets,
 including multiple pages, stale cursors, oversized data, unexpected run UUID/ID,
 invalid selectors, missing reports and no-local-archive-access assertions. Verify
 report UI shapes and bounded journal failures. Run the full gate.
@@ -67,13 +67,40 @@ commands/environment and any separately blocked disposable/installed checks.
 
 ## Execution notes and handoff
 
-Not started. On activation/resumption, record source drift, exact implementation
-scope, relevant runtime cause evidence, and any blocker with its unblock condition.
-Do not rewrite this section as completed merely because the plan was extracted.
+Started 2026-10-20 after committed CPR-005 `896003d` with clean source and its full
+gate passed. Sole active package. Existing report GET routes and ApiClient
+schema/pagination/identity behavior were revalidated. Repository-allocated
+decision136 freezes one-page list/exact-ID detail, original Envelopes and a
+separate bounded seven-field metadata notice before implementation. Actual
+subprocess/private-UDS regressions pass with client archive/config opens denied;
+missing-command and missing-schema red evidence is retained. Mounted report and
+bounded independent journal regressions are being completed before removal of
+the old privileged report-file APIs. Final mounted parity passes71/71 and the
+old reader is removed; static regression changed from2fail to2pass. Repeated
+row-click concurrency and an initial journal-view effect race were reproduced
+and repaired. The first complete gate failed1/5234pass because the independent
+REST parity reference still called the run routes SDK/HTTP-only. Additive CLI
+semantic modes retain44HTTP rows and all old SDK evidence; focused167passed.
+The corrected full gate passed with actual frontend execution. Next ready task
+is CPR-007. Current-source real Cockpit/PAM V54 remains required for CPR-008;
+no production/guest inspection or mutation occurred in this source package.
+All prior operation/configuration/profile boundaries, host-local journal
+independence and historical deployment holds remain.
 
 ## Completion evidence
 
-Pending. Replace with the completion date, accepted test/fixture results, executed
-gate evidence, invariant/ADR review outcome, changed docs, remaining operator
-handoff, and the corresponding completed `docs/agents/progress.md` entry. Before
-commit use `CPR-006, this commit`; after commit, record only actual git evidence.
+Completed2026-10-20, CPR-006, this commit. [Gate evidence](../support/cockpit-rest-repair/gates/cpr-006.txt)
+retains the initial failure and final exit0:5241passed/42deselected in683.23s,
+three locked wheel profiles, actual frontend lint/style/types/495unit/71mounted
+cases/build. Explicit make check also passed before the final detail latch;
+the full final gate covers that repair. CLI/client168, parity167, report/runner90,
+journal/static/events/stream30 and command10 focused cases pass. Real subprocess/
+private Unix-socket runs deny client archive/config access, preserve exact success/
+failure Envelopes and enforce identities/bounds without jobs. Actual mounted
+baseline modules and static legacy-reader checks were observed red then green;
+the final UI never reads archive files or relies on journals for report outcome.
+Reviewed INV005/006, affected CPs and ADR122/134/135, accepted actual nextADR136;
+amended index/status/CP01/09 and all CLI/API/client/schema/security/operator guides.
+No dependency/durable/API/MCP authority change. [Acceptance](../support/cockpit-rest-repair/acceptance-record.md),
+completed progress entry and Operator handoff27 retain V54/installed uncertainty.
+Continue [CPR-007](cpr-007-read-results-and-diagnostics.md); plan stays active.

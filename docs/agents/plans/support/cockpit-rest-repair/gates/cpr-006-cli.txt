@@ -1,0 +1,102 @@
+CPR-006 scoped CLI/read boundary evidence (2026-10-20)
+
+Observed RED before implementation:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_runs.py
+  1 failed in 1.19s. Exact-page regression returned exit 2, No such command 'runs'.
+
+Independent historical-source child probe:
+  Loaded git 896003d:src/hfcache/cli.py into a temporary isolated Python child and
+  invoked its actual Typer application with --json runs list. No installed
+  launcher, host settings, credentials or external archive were used.
+  Baseline CLI SHA256 55d46ae32e043f81b69bd2e78b1ac97c11c7a3d9aa3dea4eb8de378b3e331fd8.
+  Observed exit 2, missing runs command, empty stdout; assertions passed.
+
+Observed nested-report version RED after adding typed report validation:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_runs.py -k 'malformed_detail and version'
+  1 failed, 1 passed, 57 deselected in 1.07s. Removing nested schema_version was
+  incorrectly accepted because the durable model supplies its write default.
+  Explicit exact_version(payload.get('schema_version')) now refuses omission.
+
+Focused final GREEN:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_runs.py tests/unit/test_cli_runs_socket.py tests/unit/test_cli_client_describe.py tests/unit/test_cli_api_reads.py
+  168 passed in 22.66s.
+
+The three new actual child-process/private-AF_UNIX daemon cases exercise reader,
+writer and wrong credential classes. Python isolated children install an audit
+hook before executing the actual hfcache module; open/listdir/scandir under the
+fixture archive, /srv/hfcache and /etc/hfcache are denied. The API daemon alone
+reads its temporary archive. Cases prove empty inventory, authenticated default
+page cap, exact two-page IDs, original Envelope/detail parity, quiet mandatory
+metadata, literal -- run IDs, historical report policy fingerprint, stale cursor,
+missing/corrupt report classification, GET-only requests, no idempotency headers,
+no new operation and private socket cleanup. Existing missing/corrupt routes
+return ApiProblems; their code/request correlation is retained. Separate wire
+cases preserve authentic failed capability/list/detail Envelopes exactly.
+
+Adversarial CLI fixtures cover candidate/job/scope flags before credential access,
+unsafe IDs/cursors, duplicate/over-limit/empty-with-cursor inventory, wrong archive,
+wrong Envelope/report IDs, strict nested schema version, malformed report models,
+duplicate JSON keys, response byte bounds, connection loss without local fallback,
+verification/recovery models, failed historical domain result and synthetic secret
+metadata refusal. Temporary fixtures do not establish installed/runtime acceptance.
+
+  rtk proxy uv run --locked --extra server --extra mcp ruff check src/hfcache/client_runs.py src/hfcache/cli.py tests/unit/test_cli_runs.py tests/unit/test_cli_runs_socket.py
+  All checks passed.
+  rtk proxy uv run --locked --extra server --extra mcp ruff format --check src/hfcache/client_runs.py src/hfcache/cli.py tests/unit/test_cli_runs.py tests/unit/test_cli_runs_socket.py
+  4 files already formatted.
+  rtk proxy uv run --locked --extra server --extra mcp pyrefly check
+  0 errors (11 suppressed, 63 warnings not shown).
+
+Full work-package check.sh/Cockpit evidence is recorded by the package owner.
+
+Independent read-only integration review:
+  api/reports.ts returns authentic negative Envelopes before success-only
+  metadata/payload checks. RunReports uses separate list/detail revisions plus
+  host/session snapshots, so refresh/navigation/session changes invalidate late
+  evidence. One-page parsing bounds and deduplicates IDs, and binds navigation
+  to the listed archive/current policy. Detail binds selected run/archive while
+  permitting the report's historical policy fingerprint. Optional journal
+  state never gates REST inventory/detail or establishes their outcome.
+
+  Raw report presentation inherits recursive server sanitization in
+  src/hfcache/api/app.py render(), before bounded JSON streaming, and recursive
+  CLI sanitization in src/hfcache/cli_client.py safe_envelope(). The protected
+  API credential loader registers exact opaque credentials before use; the
+  same sanitizer covers free version/hostname/finding strings, arbitrary nested
+  remediation evidence values and keys. Sensitive field names, known literals
+  and recognizable credential/signed-URL patterns are removed. Arbitrary
+  unregistered secret discovery is not claimed by src/hfcache/redaction.py.
+  Existing API regression:
+  tests/unit/test_api_reads.py::test_large_reports_stream_in_bounded_chunks_and_sanitize_registered_secrets.
+  Command: rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_api_reads.py::test_large_reports_stream_in_bounded_chunks_and_sanitize_registered_secrets
+  Result: 1 passed in 2.89s.
+
+  Retirement review found the old exported archive list/read functions still
+  present during the staged parity transition. The package owner confirmed
+  their separate removal/static regression is assigned; this review does not
+  treat unused privileged archive-reading source as retired.
+
+Additive REST parity repair after the full-gate reference mismatch:
+  The existing gate correctly rejected the stale SDK / HTTP CLI mapping for
+  GET /runs and GET /runs/{run_id}. The reference now records runs list and
+  runs show RUN_ID, retaining all 44 HTTP route/mode rows and all previous SDK,
+  report/reference/manifest and other semantic evidence. Two explicit CLI modes
+  increase the semantic manifest from 34 to 36. Each requires independent exact
+  page/detail evidence, original negative Envelope evidence and selected actual
+  CLI/private Unix-socket reader and writer cases. The fixed route count,
+  contract equality, authority/effects checks and AST-selected evidence checks
+  remain enforced.
+
+  RED: rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_rest_parity_gate.py -k run_cli_modes
+  Result: 2 failed, 77 deselected in 0.34s; neither new read CLI mode had explicit
+  semantic acceptance in the manifest.
+
+  GREEN: rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_rest_parity_gate.py tests/unit/test_rest_security_gate.py tests/unit/test_rest_pagination_gate.py tests/unit/test_cli_runs.py tests/unit/test_cli_runs_socket.py
+  Result: 167 passed in 25.44s.
+
+  rtk proxy uv run --locked --extra server --extra mcp ruff format tests/rest_parity.py tests/rest_reference.py tests/unit/test_rest_parity_gate.py
+  Result: 1 file reformatted, 2 files unchanged.
+  rtk proxy uv run --locked --extra server --extra mcp ruff check tests/rest_parity.py tests/rest_reference.py tests/unit/test_rest_parity_gate.py
+  Result: all checks passed.
+  rtk proxy uv run --locked --extra server --extra mcp pyrefly check
+  Result: 0 errors (11 suppressed, 63 warnings not shown).

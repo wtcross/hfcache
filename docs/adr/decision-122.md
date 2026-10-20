@@ -2,7 +2,7 @@
 
 - Decision identity: 122.
 
-- Status: Amended; see decision 133 and the amendments referenced below.
+- Status: Amended; see [decision 133](decision-133.md), [decision 135](decision-135.md), [decision 136](decision-136.md) and the amendments below.
 - Date: 2026-10-18.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
@@ -134,3 +134,12 @@ require fresh root-only selected-release inspection and explicit protected polic
 missing, mixed, unsafe or drifted evidence fails closed. Scheduled observer state
 and journal text cannot substitute for manual operation results. No user-manager,
 mask, guard, original lock, API policy or credential boundary is weakened.
+
+## REST report browsing amendment (2026-10-20)
+
+[Decision 136](decision-136.md) retires the remaining direct-report exception.
+Narrow `runs list` / `runs show` CLI reads retain exact server Envelopes and use a
+separate bounded validated read-metadata line for pagination/archive correlation.
+Cockpit performs no archive-file reads. Optional host journals are strictly bounded
+closed-event diagnostics, independent of report availability and outcome. Existing
+credential separation, whole-archive trust, workload holds and guards remain.
