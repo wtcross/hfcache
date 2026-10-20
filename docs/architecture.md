@@ -1404,7 +1404,16 @@ authority. Base HTTPX/HTTPCore, optional server FastAPI/Uvicorn and optional MCP
 FastMCP supply maintained verified transport/protocol/lifespan/authentication
 benefits under FW-04; they do not supply domain orchestration.
 
-The sole task-queue exception is one bounded FIFO execution lane with
+The 2026-10-20 [administrator verifier amendment](adr/decision-146.md) also
+qualifies FW-03/FW-04: the optional server closure directly requires the already
+locked cryptography50.0.2 public Argon2id implementation. Canonical fixed resource
+parameters are checked before work. Two dedicated verification workers and eight
+waiting slots do not share operation/metadata execution capacity. This supplies a
+maintained password hash absent from the standard library, with no handwritten
+cryptography or dependency added to base readers. The [server](server.md) and
+[security](security.md) contracts define provider, throttling, CSRF and drain.
+
+The sole domain task-queue exception is one bounded FIFO execution lane with
 non-resuming service-private receipts. No DAG, broker, archive database, automatic
 replay, checkpoint orchestration, or in-app scheduler is permitted. A receipt
 never supersedes archive evidence. [API](api.md) and [server](server.md) state

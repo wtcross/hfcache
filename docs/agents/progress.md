@@ -29,6 +29,37 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-004 Add bounded Basic administrator authentication (2026-10-20,
+  this commit — [task](plans/tasks/web-004-basic-auth-and-permissions.md)).
+  Optional protected Argon2id provider, canonical schema1 provisioning, separate
+  internal grants, stable-subject original-key namespace and all-unsafe Basic
+  CSRF preserve legacy REST bearer/MCP classes, receipts and observation. Two
+  dedicated workers/eight waiters and30-failure/60s budget retain actual capacity
+  through cancellation and join exact workers. Real local benchmark measures
+  344–345ms median verification with wrong-user/password equivalent work and
+  8.084ms maximum event-loop heartbeat gap. Fresh isolated CentOS guest plus
+  pinned unprivileged browser tooling proves48/48 installed-API native challenge/
+  same-origin/foreign form+preflight/TLS cases, three engines and both prefixes,
+  no required skip or injected browser Authorization. Independent original
+  validators confirm actual wire OPTIONS, both-origin401→Basic200, zero untrusted
+  HTTP, live Chromium sandbox/renderers, unchanged installed inputs and complete
+  six-API/worker/50-descendant/container drain. Postverify SHA53756288…; source
+  snapshotefbae890… matches the final strict gate's1278 unchanged files.
+  `scripts/check.sh --require-web --require-cockpit` exits0 in1107.599s:
+  5940Python/52default marker deselections; three clean wheel profiles;
+  572Cockpit unit/110mountedFirefox;21process metadata;2722web unit/2748combined;
+  two shell/14actual API read checks, coverage95.85%line/92.94%branch.
+  Independent22-stage/six-report audit passes; log SHAf8a8641d… and audit
+  b5f07ede…; task retains full identities, actual arguments and scoped case map.
+  Both superseded green gates, ADR-lint gate failure and eight unsuccessful
+  native attempts remain. Decision146/invariant/FW review and human deployment,
+  rotation, login/TLS/logout and troubleshooting guides align;199human/23helpers.
+  All95 full feature cases and built-UI/shared-Caddy/installed application-role
+  proofs remain pending. Shipped assets retain the existing UBI10micro API image;
+  Noble browser tooling is unshipped. No production/NAS/retirement or remote
+  publication claim. Selector advances WEB-005; handoff33 preserves original
+  guards, stores, handles, unrelated guests and every authority limit.
+
 - [x] WEB-003 Validate generated browser wire contracts (2026-10-20,
   this commit — [task](plans/tasks/web-003-typed-wire-contracts.md)).
   Pure original-model projections and audited IR select118 exact definitions,
@@ -3011,6 +3042,23 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     stores/handles/credentials/guards and all five unrelated guests are unchanged.
     No deployment, cleanup, replay, remote publication or plugin uninstall follows.
 
+    **WEB-004 amendment (2026-10-20):** optional protected Basic authentication
+    and its separate bounded provider/permission/key/CSRF boundary pass the final
+    strict source gate and48native-browser installed-API checks in a fresh owned
+    CentOS guest. Human provisioning, delivery, rotation, TLS and browser-credential
+    lifetime procedures are in `docs/web-ui/deployment.md`. Basic is default-disabled
+    and restart-only; no live credential/drop-in/service change was made. The
+    native test uses direct owned TLS and a pinned rootless browser-tool image;
+    it proves no built UI/shared-Caddy, installed native/rootless application-role,
+    host-control or NAS behavior. Preserve its evidence and owned guest identity
+    `web-004-83a4380d0c82465fa225c00bba53359c` separately from the five unrelated
+    retained guests. All test API/browser/listener/authentication workers drain.
+    All95 full feature cases remain pending; next is WEB-005. The UI will ship
+    inside the existing pinned UBI10micro API image without runtime Node or a
+    second frontend server. Production0.2.2, Caddy, services/timers/credentials/
+    guards, original candidates/backups/locks/stores/handles and live Cockpit
+    remain unchanged. No production rollout, replay, cleanup or publication follows.
+
 ## Operator decisions needed
 
 1. **Which repositories the archive is ultimately for** (raised 2026-07-24, during
@@ -5858,7 +5906,25 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      real HTTP/React fixtures supplement generation. No new runtime dependency,
      server wire or durable-format change follows from this browser boundary.
 
+146. **Bound one protected administrator independently of operation observation**
+     (2026-10-20, WEB-004). [Decision 146](../adr/decision-146.md) fixes strict
+     optional Basic source/origin configuration, canonical fixed-profile Argon2id
+     verification using the locked cryptography server dependency, separate
+     internal administrative grants and versioned subject-bound original keys.
+     Two dedicated workers/eight waiting slots and a bounded monotonic failure
+     window preserve operation observation under authentication load; cancellation
+     does not release accepted work prematurely. Outer authentication, verified
+     transport and all-unsafe same-origin JSON/header checks preserve REST bearer
+     and MCP isolation. Unconditional Basic redaction never registers submitted
+     passwords. The implementation, actual installed direct-TLS browser proof and
+     final strict source gate now pass; shared-Caddy/built-UI/platform acceptance
+     remains for its owning tasks. No production acceptance follows. The user's
+     UBI clarification retains shipped
+     static UI assets in the existing pinned UBI 10 micro API image; separate
+     browser test images remain unshipped tooling.
+
 ## Documentation and script alignment
+
 
 - [x] API-018 Align CLI diagnostics and remove migration remnants (2026-10-18,
   this commit). Current command/option help separates local, REST, writer and

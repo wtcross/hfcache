@@ -3,6 +3,7 @@
 - Decision identity: 112.
 
 - MCP transport amendment: [decision 124](decision-124.md).
+- Basic provider implementation contract: [decision146](decision-146.md).
 - Status: Amended; current scope includes the amendments referenced below.
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.

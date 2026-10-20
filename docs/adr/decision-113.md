@@ -4,6 +4,7 @@
 
 - MCP transport amendment: [decision 124](decision-124.md).
 - Curated tool amendment: [decision 125](decision-125.md).
+- Independent bounded Basic verification: [decision146](decision-146.md).
 - Status: Amended; current scope includes the amendments referenced below.
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.

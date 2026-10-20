@@ -2,7 +2,7 @@
 export const semanticSourceHashes: Readonly<Record<string, string>> =
     Object.freeze({
         "api.problem.classification":
-            "c1b6f97bc22c408095200493744774b7e5cc9032116a27577400e605bd584d69",
+            "739c79aab56bca375194ee04be5affadfd1a3ee7c373d474b944dbf291af684b",
         "catalog.facet":
             "f4a756a1d6b5b777c4d4397ac7d3fe01a565968f307ed1305b69059d74774417",
         "catalog.publication":

@@ -21,6 +21,14 @@ their tasks; this package adds no runtime dependency.
 
 ## Frozen route delta
 
+The deployable UI is static content inside the existing API image. Per the
+2026-10-20 implementation clarification, retain its pinned UBI 10 micro build and
+runtime FROM stages and existing donor restrictions. Do not add a frontend image,
+runtime Node/package manager or larger general-purpose runtime base. WEB-021
+must prove base ancestry and installed contents using exact image identities.
+Unshipped browser test tooling has a separate dependency identity and provides no
+evidence about the product image base.
+
 Paths below are relative to `/api/v1`, except `/ui/`. Existing route DTOs,
 capabilities, Envelopes, credential classes and MCP's fourteen tools stay strict.
 
@@ -172,7 +180,10 @@ salt=16/hash=32 bytes; WEB-004 benchmarks this before acceptance. Header <=8192
 bytes; decoded username <=128 and password <=1024 UTF-8 bytes; record <=8192.
 Admission permits two active verifications/eight waiting, with a bounded global
 30-failure/60-second window; throttled work does not perform Argon2. Cheap limits
-precede verification. Use a dedicated bounded executor off the ASGI event loop,
+run before verification only for the configured Basic flow; existing bearer,
+missing and disabled-provider authentication error precedence stays unchanged.
+Every authenticated request still receives the same bounds.
+Use a dedicated bounded executor off the ASGI event loop,
 independent of metadata/operation observation pools. Recheck the failure window
 when queued work starts; request cancellation releases capacity only after the
 actual hash work completes. Validate protected PHC algorithm/version and exact

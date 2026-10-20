@@ -17,6 +17,13 @@ Deliver a strict-TypeScript React SPA that completely replaces the Cockpit plugi
 
 The UI is served by the existing hfcache API application through the **same existing Caddy instance, TLS endpoint and Unix upstream as REST and MCP**. No second Caddy/frontend server/public listener/Node runtime is introduced. One protected Basic-authenticated human administrator is the initial user; existing REST bearer clients and read-only MCP credentials remain compatible. An internal authentication-provider/principal/permission boundary enables a later identity provider without implementing multi-user/OIDC/repository ACL scope now.
 
+The shipped UI assets belong in the existing API image, whose build and runtime
+FROM stages retain the pinned, streamlined UBI 10 micro base. No separate frontend
+image is introduced. Preserve the existing CA-data-only donor boundary and omit
+frontend build tools from runtime. WEB-021 must verify actual image ancestry,
+installed asset hashes and absence of Node/package managers; labels alone do not
+prove this requirement. Isolated browser test images are unshipped tooling.
+
 The source result includes necessary missing config/card/host REST capabilities, strict runtime wire validation, immutable release asset packaging for native/rootless profiles, real unit/integration/functional coverage, human-facing guides and migration/rollback procedures, and removal of Cockpit as the newly shipped UI only after parity is proven. Source retirement does not uninstall the live host's Cockpit or erase historical records.
 
 ## Explicit non-goals and authority limits
@@ -152,3 +159,16 @@ Completion requires:
   DTOs enter the registry with their implementing endpoints, as recorded in the
   task. Baseline prefix header/redirect defects discovered read-only are retained
   for WEB-005, not silently redefined. Next is WEB-004; production limits hold.
+- 2026-10-20: [WEB-004](tasks/web-004-basic-auth-and-permissions.md) completes the
+  optional protected Basic administrator, bounded independent Argon2id provider,
+  internal grants, subject-bound original keys and browser CSRF, preserving REST
+  bearer and read-only MCP compatibility. Decision146 and human provisioning/
+  delivery/rotation/security guides align. Actual installed direct-TLS API testing
+  in a fresh isolated guest passes48native browser checks across three engines and
+  both prefixes, with real preflight/TLS negatives, kernel sandbox and exact drain.
+  A final strict source gate passes5940Python and all preserved Cockpit/web/install
+  stages on the same frozen1278-file snapshot. Superseded gates and eight failed
+  native attempts remain explicit. Built UI/shared-Caddy/platform roles and all95
+  full feature cases remain pending. Next is WEB-005; no production/remote/NAS/
+  retirement action is authorized or claimed. Shipped UI assets remain allocated
+  to the existing pinned UBI10micro API image, without runtime Node.

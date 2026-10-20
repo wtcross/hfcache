@@ -69,6 +69,7 @@ _API_SAFETY_CODES: Final = frozenset(
         "HFAPI016",
         "HFAPI019",
         "HFAPI020",
+        "HFAPI021",
     }
 )
 """Five letters of prefix and three digits, e.g. `HFVER001`."""

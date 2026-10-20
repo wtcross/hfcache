@@ -12,6 +12,14 @@ file = "/run/secrets/hfcache.api-reader"
 [credentials.mcp_reader]
 file = "/run/secrets/hfcache.mcp-reader"
 
+# Optional, explicitly provisioned human administrator hash record. Existing
+# worker/client masks hide this directory; Caddy has no /etc/hfcache bind.
+# Enabling requires a reviewed immutable release; see docs/web-ui/deployment.md.
+# [basic]
+# origin = "https://@HOSTNAME@:8443"
+# [basic.administrator]
+# file = "/etc/hfcache/credentials/ui-administrator.json"
+
 [listener]
 unix_enabled = true
 unix_socket = "/run/hfcache/api/api.sock"

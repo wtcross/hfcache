@@ -64,6 +64,7 @@ the certificate/key before accepting connections.
 | `archive_config` | path, `/etc/hfcache/config.toml` | Installed archive policy, not caller-selected candidate authority |
 | `state_directory` | path, `/var/lib/hfcache/api` | Local service-private control state; outside publication trees |
 | `credentials` | required table | Required writer source and optional reader/MCP sources below |
+| `basic` | absent | Optional restart-only Basic administrator; exact HTTPS origin and protected administrator source below |
 | `listener` | table, defaults below | Unix/TCP/TLS and browser/proxy policy |
 | `limits` | table, defaults below | Bounded resource policy for metadata, command routes and runner |
 | `verification` | table, defaults below | Private executor client policy; no worker process is launched |
@@ -209,9 +210,11 @@ digests for disabled slots, through `hmac.compare_digest`.
 | REST reader | REST only | `read` |
 | MCP reader | MCP only when enabled | `mcp-read`; rejected by the REST verifier |
 
-The framework-independent verifier returns a frozen nonsecret `Principal` with
-the configured class. It identifies a credential class, not an individual user
-or token-derived identity. Every reader must be authorized for the whole archive,
+The framework-independent bearer verifier returns a frozen nonsecret `Principal`
+with the configured class, method `bearer`, fixed subject
+`credential-class:<class>` and no administrative grants. It identifies a class,
+not an individual user or token-derived identity. Every reader must be authorized
+for the whole archive,
 including restricted repositories (AD-21). Cross-interface credentials and
 missing/malformed/invalid bearers all receive `HFAPI001`, HTTP 401 with
 `WWW-Authenticate: Bearer realm="hfcache"` and `Not authenticated`; a valid
@@ -222,7 +225,7 @@ The optional [`api.security`](../src/hfcache/api/security.py) adapter supplies
 It validates the original single bounded Authorization field before FastAPI can
 normalize input, delegates verification to the core and preserves those
 responses. The adapter itself creates no application. The outer HTTP boundary
-uses the same core verifier before framework routing/validation on every HTTP
+dispatches the selected provider before framework routing/validation on every HTTP
 surface, including health, capabilities, docs, OpenAPI, unknown paths and method
 errors, and sanitizes validation/exception output. Receipts store only the
 nonsecret principal and operation/domain correlation, never a token, credential
@@ -238,10 +241,111 @@ requires a usable distinct credential and the optional package. It exposes
 exactly fourteen metadata tools through a narrow
 read protocol; no resources/prompts or command paths. See [MCP](mcp.md).
 
+### Basic administrator
+
+Optional restart-only `[basic]` has exactly `origin` and `administrator`.
+The origin is one browser-canonical HTTPS origin without userinfo, path, query,
+fragment, whitespace or explicit default port; its host must be allowed by
+`listener.allowed_hosts` and the exact origin by `listener.allowed_origins`.
+`[basic.administrator]` contains exactly one existing `CredentialSource` form:
+protected `file` or named `systemd_name`. Absence disables Basic without reading
+a record. A configured unusable source fails startup with HFAPI003; it never
+falls back to bearer, another file or an ambient source. The writer bearer source
+remains mandatory. See [decision146](adr/decision-146.md).
+
+The protected UTF-8 JSON record is at most 8192 bytes, has no duplicate/unknown
+fields and contains exactly integer `schema_version:1`, `subject`, `username`
+and `password_hash`. Subject matches `[A-Za-z0-9][A-Za-z0-9._:-]{0,127}`;
+username is nonempty printable UTF-8, at most 128 bytes, without colon. The record
+uses the same no-follow, owner/group/mode, single-link, descriptor-race policy
+as bearer files. Only the API receives this record. Never put a plaintext password
+in TOML, arguments, environment, files, logs or browser JavaScript.
+The provisioning helper emits canonical sorted, two-space-indented UTF-8 JSON
+with one final newline; this private schema 1 has its own golden fixture and is
+independent of archive-format versioning.
+
+The rootless template uses the optional protected file
+`/etc/hfcache/credentials/ui-administrator.json`. The API's existing read-only
+`/etc/hfcache` bind supplies it; worker/client already mask the fixed credentials
+directory, and Caddy has no `/etc/hfcache` bind. Enabling Basic adds no unconditional
+Podman secret or `runtime.json` migration. The native template instead names
+`hfcache.ui-administrator`; its optional `LoadCredentialEncrypted` drop-in must be
+provisioned and activated separately. These packaging paths do not establish
+installed role isolation or authorize changing a running deployment. See the
+[operator deployment instructions](web-ui/deployment.md).
+
+The PHC string must be canonical ASCII Argon2id/version 19 with exact ordered
+`m=65536,t=3,p=1`, unpadded standard-Base64 salt 16 bytes and hash 32 bytes. Startup
+checks the complete profile before constructing a verifier; a hash cannot select
+larger memory/time/parallelism. The optional server profile uses its locked
+cryptography implementation. Encoded Authorization is at most 8192 bytes, decoded
+UTF-8 username at most 128 bytes and password at most 1024 bytes. Wrong username and
+password use the same configured hash work, then combine constant-time username
+comparison with the verification result. Failed supplied passwords are never
+registered as global redaction literals; Basic Authorization is scrubbed by shape.
+
+A dedicated two-thread executor owns at most two active attempts and eight
+waiting requests, independently of metadata/operation observation. A bounded
+global sliding 60-second deque counts failures, and active attempts reserve their
+possible failure under the same lock. When failures plus reservations reach 30,
+refuse further expensive work; queued attempts recheck at actual start. Capacity
+and throttle refusals are HFAPI021/HTTP429/exit20. Cancellation retains the slot
+until actual work completes. Stop new admission, drain every accepted job and
+join exact workers under lifespan cancellation deferral, including partial-startup
+cleanup. A draining/failed provider is unavailable, never a successful login.
+
+Basic projects as public `rest-writer` with the unchanged `read`/`write` array.
+Its separate immutable internal grants are `config-read`, `config-write`,
+`host-read`, `schedule-write`, `observer-stop`; ordinary bearer writer has none.
+These grants alone authorize no host effects or protected configuration install;
+the separate helper/policy boundary remains required and is not implemented here.
+Basic never authenticates MCP. No new class, permission, subject or attribution
+field joins the stable capabilities response or old strict receipts.
+
+Missing REST credentials advertise Basic and Bearer when configured; explicit
+REST Basic failures with the provider configured advertise only
+`Basic realm="hfcache", charset="UTF-8"`.
+Explicit bearer and MCP failures retain the existing Bearer challenge. Invalid
+credentials remain HFAPI001/401; missing capability remains HFAPI002/403.
+Disabled Basic retains the legacy Bearer challenge. There is no scheme fallback.
+Browser-managed Basic lifetime has no reliable
+application logout. Rotation replaces the protected hash record and restarts
+the API; preserving subject preserves original-key ownership across username/
+password changes. Changing subject deliberately selects a new key namespace.
+
+Authenticated REST OpenAPI describes Basic and Bearer as alternatives only when
+Basic is configured; disabled configurations retain the bearer-only description.
+The Basic schema marker does not decode a password or authenticate a request;
+the outer provider remains authoritative, including UTF-8 credentials. MCP stays
+outside the REST schema and retains its separate bearer-only boundary. The schema
+also documents HFAPI021/429 with the existing typed problem response.
+
+For configured Basic, cheap header/query/content-length work bounds and TLS proof
+precede Argon. Missing credentials and bearer authentication retain their existing
+precedence over work limits.
+Ordinary Host/Origin/routing checks and Basic CSRF follow authentication, before
+body reception. Every method except GET/HEAD requires exact single configured
+Origin, application/json (optional UTF-8 charset) and exactly
+`X-Hfcache-Request:1`, without content encoding. This includes OPTIONS/preflight,
+TRACE, CONNECT and unknown/denied paths. Missing/null/foreign/duplicate Origin,
+simple forms and missing/duplicate/wrong intent refuse HFAPI010/403. Legacy
+nonbrowser bearer requests still need no Origin.
+
+Authenticated native Unix scope uses both peer and local-address corroboration.
+Actual numeric-loopback HTTP is permitted for local access; remote Basic requires
+actual HTTPS or configured `proxy_tls`, trusted actual peer and exactly one
+`X-Forwarded-Proto:https`. A caller header cannot assert TLS or Unix locality.
+Real native browser challenges/TLS and installed profile delivery require their
+own acceptance; source tests do not enable or deploy any service. Authenticated
+SPA/static serving remains a separate unimplemented boundary below.
+
 ## Metadata lifespan and request boundary
 
 Authenticate before routing, body reception/validation and ordinary errors on
 every HTTP surface, including health, schema/docs, unknown routes and methods.
+Configured Basic's cheap header/query/content-length bounds and TLS transport
+proof are the explicit pre-verification exceptions; they never receive a body or
+route work. Missing/bearer credentials preserve authentication before work limits.
 Enforce Host/Origin, content type, header/query/body/response bounds and sanitized
 errors. No wildcard CORS, query bearer or reflected redirect is permitted.
 Trusted proxies are explicit; headers cannot upgrade caller capabilities.
@@ -315,7 +419,10 @@ Core interrupt/expiry primitives are not HTTP mutation endpoints.
 Operation observation uses authenticated bounded HTTP metadata work, never the
 archive flock or a domain command. All REST read-capable principals share this
 whole-archive metadata/result boundary; idempotency lookup alone uses the caller's
-credential-class namespace. The [API contract](api.md#admission-idempotency-and-lifecycle)
+bearer credential-class or Basic stable-subject namespace. Bearer digest bytes
+remain unchanged; Basic's versioned length-framed digest uses only subject and
+the original key, with no printable surrogate or new receipt field. The
+[API contract](api.md#admission-idempotency-and-lifecycle)
 defines wire/status/event semantics; [control-state schemas](schemas.md)
 defines the independent local family and retention compatibility. The execution
 lane and strict route matrix preserve these boundaries.
@@ -563,11 +670,12 @@ does not certify installed NAS, egress, SELinux or other-host operation.
 
 ## Web UI design and current availability
 
-The replacement browser UI, Basic provider, administration helper and asset
-release settings below are **accepted design, not implemented availability**.
-Current configuration accepts only the keys above; do not add these future
-settings to an installed server yet. The current server remains bearer-only and
-the shipped Cockpit plugin remains supported. [UI status](web-ui/README.md) and
+The replacement browser serving, administration helper and asset release
+settings below are **accepted design, not implemented availability**. The
+optional Basic provider above is implemented independently; it does not serve
+the SPA or authorize host effects. Do not add future UI/helper settings to an
+installed server yet. The shipped Cockpit plugin remains supported.
+[UI status](web-ui/README.md) and
 decisions [140](adr/decision-140.md), [141](adr/decision-141.md),
 [142](adr/decision-142.md), [143](adr/decision-143.md) describe the replacement
 boundary; [144](adr/decision-144.md) keeps retirement conditional on actual proof.
@@ -605,37 +713,13 @@ preserving unsaved drafts, uncertainty and original operation handles.
 
 ### Basic provider and request admission
 
-The future independent Basic provider uses one protected record with stable
-subject, username and Argon2id hash, loaded through no-follow protected-file
-checks. File size is at most 8192 bytes. No password is persisted in plaintext,
-passed as an argument or handled by SPA JavaScript. Password rotation requires
-restart while stable subject ownership and original-key recovery remain intact.
-Basic is REST/UI only; MCP retains its distinct bearer provider. Generic REST
-writer does not acquire configuration or host-administration capabilities.
-
-The fixed initial target hash parameters are Argon2id memory 65536 KiB, time 3,
-parallelism 1, 16-byte salt and 32-byte output. These are a selected benchmark
-target, **not measured performance or accepted implementation evidence**; record
-actual bounded-verification results before enabling the provider. Limit encoded
-Authorization to 8192 bytes, decoded UTF-8 username to 128 bytes and password to
-1024 bytes. Admit at most two active verifications and eight waiting requests.
-After 30 failed attempts in a global 60-second window, refuse further expensive
-attempts until that window ends. Do not allocate an unbounded client/IP map.
-Hashing runs off the event loop in a dedicated bounded executor independent of
-metadata/operation observation. Recheck the failure window when queued work
-starts; cancellation retains its slot until the actual hash completes. Startup
-validates PHC algorithm, version and exact parameter/salt/output bounds before
-using the verifier; oversized memory/time/parallelism cannot become startup work.
-Cheap header/body-size/work admission precedes verification and has independent
-capacity from archive observation. Wrong user/password has equivalent failures.
-
-Use the native Basic challenge and prove real browser retry/reuse/deep-link flow
-in all supported browsers. The UI explains browser-managed credential lifetime
-and has no misleading secure-logout control. Production off-host Basic requires
-verified HTTPS; direct local Unix requests remain authenticated. Unsafe Basic
-requests require exact configured same Origin, JSON media type and a non-simple
-application header. Reject missing/null/duplicate/unapproved Origin, simple form
-bodies and credentialed CORS. Existing bearer no-Origin clients remain compatible.
+The [implemented optional provider](#basic-administrator) and decision146 retain
+bearer/MCP compatibility, finite verification work, exact subject/key ownership
+and post-authentication CSRF checks. This source boundary does not establish
+installed availability, authorize credential/service changes or make the future
+UI/static/helper settings available. Native browser challenge/deep-link/reuse and
+all three browser engines require actual acceptance; no per-request Authorization
+injection or TLS bypass substitutes for it.
 
 ### Narrow administration helper
 

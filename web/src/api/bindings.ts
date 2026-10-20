@@ -70,6 +70,7 @@ const apiSafety = new Set([
     "HFAPI016",
     "HFAPI019",
     "HFAPI020",
+    "HFAPI021",
 ]);
 export function validateApiProblem(problem: ClientProblem): void {
     // Families remain extensible; an individual known-code enum would reject valid future diagnostics.

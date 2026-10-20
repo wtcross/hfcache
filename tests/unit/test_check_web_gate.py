@@ -17,6 +17,7 @@ WEB_CHECKS = (
     "lint",
     "typecheck",
     "test:strict-fixtures",
+    "test:auth-sandbox",
     "test:unit",
     "test:component",
     "build",
@@ -30,6 +31,9 @@ WEB_FILES = (
     "src/wire/generated.ts",
     "src/wire/unicode-data.json",
     "scripts/generate-wire.ts",
+    "scripts/check-auth-sandbox-tests.ts",
+    "test/auth-api/sandbox.test.mjs",
+    "test/auth-api/sandbox.mjs",
 )
 WEB_HELPERS = ("export-web-contracts.py", "check-web-read-fixture.py")
 

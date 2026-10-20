@@ -1,5 +1,41 @@
 # Development and validation
 
+## Browser authentication fixture
+
+`uv run --locked --extra server --extra mcp python scripts/check-web-auth-fixture.py --help`
+is safe inspection. Running the check requires a separately provisioned disposable
+guest and an explicit protected manifest; it never discovers a live installation
+or downloads missing dependencies. Run it inside that guest with
+`--manifest ABSOLUTE_PROVISIONED_JSON` using the installed-wheel environment.
+The manifest binds exact source inventory, wheel/installed package bytes,
+private TLS fixture, numeric loopback origins and fixed offline browser launcher.
+Provision pinned Node24.18.1 and Playwright1.64.1 package/browser closure first.
+Missing engines, wrong ownership/hashes or unsupported trust are failures.
+
+The check runs Chromium, Firefox and WebKit sequentially for root and
+`/management` paths. Native `httpCredentials` handles the actual first401 challenge
+and retry; page scripts never receive the password. It verifies trusted TLS and
+untrusted-CA refusal, authorized same-origin reads/JSON POST and real foreign-origin
+form/text/multipart/preflight refusal. No `Authorization` injection, ignored TLS
+errors, browser sandbox disablement or network pull establishes acceptance.
+Reports retain exact engine versions, case outcomes, artifact identities and
+observed browser/API drain. Test passwords remain in memory/owned pipes; do not
+enable traces/HAR or record credential headers. The fixed launcher uses rootless
+non-root browser tooling entirely inside the owned CentOS guest; any host-network
+mode refers only to that guest's isolated loopback. Keep SELinux/seccomp active.
+
+This mandatory authentication subset accompanies the complete source gate.
+The required source gate also runs `pnpm --dir web run test:auth-sandbox`, bounded
+Node metadata/drain unit tests whose retained TAP must show a positive all-pass
+count and zero failures, cancellation, skips or TODOs. Those tests supplement the
+actual browser sandbox proof; fabricated process metadata cannot establish it.
+It proves direct API TLS/authentication; shared-Caddy and complete installed
+UI/platform acceptance follow with authenticated static serving. Synthetic fixture
+storage supplies no live NAS evidence. Preserve failed workspaces and original
+operation handles; never drain or reuse an older unknown guest.
+
+## Python development environment
+
 Use the pinned Python and `uv.lock`. Install both optional transport extras
 for the complete offline suite:
 
@@ -34,10 +70,13 @@ plugin proof.
 
 Use `scripts/check.sh --require-web --require-cockpit` for replacement web
 interface work. `--require-web` first requires the web package manifest, frozen
-pnpm lock, TypeScript configuration, Node and pnpm, then retains every backend
-and applicable Cockpit check above. Its web stage runs frozen installation,
-lint, types, deliberately invalid strictness fixtures, unit tests, component
-tests, a production build and the preliminary real-browser smoke in that order.
+pnpm lock, TypeScript configuration, Node and pnpm. It checks the authoritative
+Python contract export after locked Python synchronization, then retains every
+backend and applicable Cockpit check above. Its web stage runs frozen
+installation, then `check:wire`, lint, types, deliberately
+invalid strictness fixtures, `test:auth-sandbox`, unit tests, component tests,
+a production build and the preliminary real-browser smoke in that order.
+The real API React read fixture follows those checks.
 Any failed stage or missing required browser fails the gate. Backend-only mode
 prints an explicit web omission; that result does not validate the web interface.
 

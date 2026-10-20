@@ -11,6 +11,14 @@ log_level = "info"
 [credentials.writer]
 systemd_name = "hfcache.api"
 
+# Optional human administrator; provision the encrypted named credential and
+# match both listener allowlists before enabling. This is a password-hash JSON
+# record, never a plaintext password or bearer. See docs/web-ui/deployment.md.
+# [basic]
+# origin = "https://archive.example.com:8443"
+# [basic.administrator]
+# systemd_name = "hfcache.ui-administrator"
+
 # Optional reader classes are disabled when their source is not configured.
 # [credentials.reader]
 # systemd_name = "hfcache.api-reader"

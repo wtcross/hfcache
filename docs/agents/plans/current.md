@@ -4,8 +4,8 @@
 | --- | --- |
 | State | active |
 | Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
-| Next task | [WEB-004 — Basic administrator and permissions](tasks/web-004-basic-auth-and-permissions.md) |
-| Blockers | None for the next task. Chromium is provisioned for preliminary local testing; the full three-engine/Caddy/installed dependency closure still needs proof in its owning tasks. Production browser/NAS/workload holds remain separate. |
+| Next task | [WEB-005 — Shared-Caddy UI serving](tasks/web-005-shared-caddy-spa-serving.md) |
+| Blockers | None for the next task. Three-engine native authentication against the installed API is proved in a fresh owned guest; built UI/shared-Caddy and installed native/rootless application-role proofs remain for their owning tasks. Production browser/NAS/workload holds remain separate. |
 | Last completed plan | [Cockpit repair local rollout](2026-10-20-plan-cockpit-rest-rollout.md) |
 | Updated | 2026-10-20 |
 
@@ -37,6 +37,17 @@ skip. Coverage is 95.85% lines/92.94% branches. This read fixture remains tempor
 until WEB-005 and proves no Caddy/Basic/installed behavior. All 95 feature cases
 remain pending. Next is WEB-004; known baseline prefix/header issues are recorded
 for WEB-005's routing acceptance.
+
+WEB-004 completes the protected optional Basic provider, internal permissions,
+exact-subject key namespace, bounded off-loop verification and CSRF. A fresh owned
+CentOS guest proves48native browser checks through real installed API TLS in three
+engines/both prefixes, including actual OPTIONS refusal and exact cleanup. Final
+strict gate exits0:5940Python/52default deselections,572/110Cockpit,21process,
+2722unit/2748combined web and2shell/14real-API read checks; all1278source hashes
+match the guest. Earlier failures remain. Decision146 and human/standing contracts
+align. All95full feature cases still await required layers. Next is WEB-005's
+authenticated static serving, bootstrap and actual shared-Caddy harness. No
+production deployment or installed native/rootless application-role proof follows.
 
 Scope permits source changes and owned local/disposable tests only. No merge,
 push, tag, production deployment/Caddy reload, service/timer/credential/guard

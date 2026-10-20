@@ -1,6 +1,8 @@
 # Persist non-resuming admission without discarding uncertainty
 
 - Decision identity: 114.
+- Concrete versioned Basic-subject key preimage: [decision146](decision-146.md),
+  preserving legacy bearer digests and strict receipts without an attribution store.
 
 - Amendment: [decision 140](decision-140.md) accepts a separately domain-scoped
   stable-subject key namespace for the future Basic provider only. Existing

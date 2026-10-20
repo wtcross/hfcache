@@ -1,0 +1,6 @@
+{
+  "password_hash": "$argon2id$v=19$m=65536,t=3,p=1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "schema_version": 1,
+  "subject": "archive-admin",
+  "username": "administrator"
+}

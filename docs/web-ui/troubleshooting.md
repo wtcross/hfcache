@@ -1,4 +1,28 @@
-# Troubleshoot web reads
+# Troubleshoot browser access and web reads
+
+## Administrator login
+
+The optional administrator provider is implemented in unreleased source; the
+installed interface remains unchanged. See [protected provisioning](deployment.md)
+and [interface availability](README.md) first. `/ui/` is not served yet.
+
+| Problem | Meaning and safe next step |
+| --- | --- |
+| Repeated native sign-in dialog / HFAPI001 / HTTP 401 | The browser's cached pair or configured identity did not authenticate. Verify the intended HTTPS authority, username and reviewed credential delivery with the operator. Wrong username and wrong password deliberately have the same response. Do not share Authorization headers or substitute a bearer in the page. |
+| HFAPI021 / HTTP 429 | The two verification workers/eight waiting slots or the global failed-attempt budget are occupied. Wait for accepted verification work and the 60-second failure window; repeated retries increase load. Bearer observation of an original operation remains separate. |
+| HFAPI010 / HTTP 403 on a browser mutation | Verify the exact configured HTTPS Origin, JSON Content-Type and application request header. Foreign/missing/null Origins and simple forms are refused. Use the supported UI action; do not disable CSRF or widen allowlists. |
+| HFAPI002 / HTTP 403 | The authenticated principal lacks the required permission. Administrator login grants no protected host policy; inspect effective grants and the intended action without changing a guard. |
+| HFAPI003 during startup | The selected hash record is missing, unsafe, malformed or uses unsupported hash parameters. Inspect source path/owner/mode/record version without printing its contents. Restore the reviewed source or provision a new protected record; there is no credential-source fallback. |
+| HFAPI009 / unavailable | The verifier is unavailable or draining. Keep original operation handles and investigate service readiness/drain; do not replay a mutation. |
+| Certificate warning | Stop and correct trust, certificate chain/SAN or endpoint selection. Do not bypass TLS. |
+| Old credentials remain after closing a tab | Basic authentication is browser-managed and has no reliable application logout. Close the dedicated profile/session; password rotation needs a new protected record and authorized drained restart. |
+
+An administrator record's stable subject owns its original operation keys.
+Keeping the subject during password rotation preserves that namespace. Changing
+it separates the new identity; it never proves an old operation did not execute.
+Do not delete receipts or resend a lost action to regain visibility.
+
+## Read results
 
 Check [interface availability](README.md) before using this guide. The replacement
 interface is a development preview; the installed interface and production

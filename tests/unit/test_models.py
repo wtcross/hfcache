@@ -14,6 +14,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from hfcache.api.basic import ProtectedAdministratorRecord
 from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
 from hfcache.catalog_models import CatalogRecord, PublicationObservation, RepositoryTagSnapshot
 from hfcache.catalog_storage import parse_record
@@ -49,6 +50,7 @@ from tests.fixtures.examples import EXAMPLES, at
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "schemas"
 
 MODEL_FOR = {
+    "protected-administrator": ProtectedAdministratorRecord,
     "repository-tag-snapshot": RepositoryTagSnapshot,
     "publication-observation": PublicationObservation,
     "operation-event": OperationEvent,
@@ -96,11 +98,14 @@ def test_every_fixture_round_trips(name):
     raw = (FIXTURES / f"{name}.json").read_bytes()
 
     expected = EXAMPLES[name]()
-    parsed = (
-        parse_record(type(expected), raw)
-        if isinstance(expected, CatalogRecord)
-        else load(type(expected), raw, error=IntegrityError, code="HFVER007")
-    )
+    if isinstance(expected, ProtectedAdministratorRecord):
+        # Private credentials carry independent required schema 1, not the
+        # archive-wide version preflight performed by models.load().
+        parsed = ProtectedAdministratorRecord.model_validate_json(raw)
+    elif isinstance(expected, CatalogRecord):
+        parsed = parse_record(type(expected), raw)
+    else:
+        parsed = load(type(expected), raw, error=IntegrityError, code="HFVER007")
 
     assert dump(parsed) == raw
     assert parsed == EXAMPLES[name]()

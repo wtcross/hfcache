@@ -120,6 +120,17 @@ test.each(reads)(
         );
     },
 );
+test("authentication-capacity 429 remains a safety problem without an automatic retry", async () => {
+    const fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(jsonResponse(problemWire("HFAPI021", 20), 429));
+    expect(await client(fetcher).readVersion()).toMatchObject({
+        kind: "api_problem",
+        status: 429,
+        problem: { code: "HFAPI021", exit_code: 20 },
+    });
+    expect(fetcher).toHaveBeenCalledOnce();
+});
 type SubmitInvocation = (
     api: ApiClient,
     options: SubmissionOptions,

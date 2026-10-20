@@ -20,7 +20,13 @@ from typing import TYPE_CHECKING, Annotated, Any, Literal, Self
 
 from pydantic import BeforeValidator, Field, ValidationError, model_validator
 
-from hfcache.api.auth import Capability, CredentialClass, Principal, require_capability
+from hfcache.api.auth import (
+    AuthenticationMethod,
+    Capability,
+    CredentialClass,
+    Principal,
+    require_capability,
+)
 from hfcache.api.lifecycle import open_directory
 from hfcache.config import ArchiveId  # noqa: TC001 - runtime Pydantic field validation
 from hfcache.errors import OperationError, RequestError
@@ -222,10 +228,23 @@ def _identifier(value: str) -> str:
     return value
 
 
-def _key_digest(value: str) -> str:
+def _key_digest(value: str, principal: Principal | None = None) -> str:
     if not isinstance(value, str) or not _KEY.fullmatch(value):
         raise RequestError
-    return hashlib.sha256(value.encode("ascii")).hexdigest()
+    key = value.encode("ascii")
+    if principal is None or principal.authentication_method is AuthenticationMethod.BEARER:
+        return hashlib.sha256(key).hexdigest()
+    if principal.subject is None:
+        raise RequestError
+    subject = principal.subject.encode("utf-8")
+    preimage = (
+        b"hfcache\0idempotency\0basic-subject\0v1\0"
+        + len(subject).to_bytes(4, "big")
+        + subject
+        + len(key).to_bytes(4, "big")
+        + key
+    )
+    return hashlib.sha256(preimage).hexdigest()
 
 
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -491,7 +510,7 @@ class OperationStore:
 
     def lookup(self, principal: Principal, key: str) -> OperationReceipt:
         require_capability(principal, Capability.READ)
-        digest = _key_digest(key)
+        digest = _key_digest(key, principal)
         with self._locked():
             record = self._lookup(principal, digest)
             if record is None:
@@ -519,7 +538,7 @@ class OperationStore:
         before_admit: Callable[[], None] | None = None,
     ) -> Admission:
         require_capability(principal, Capability.READ)
-        key_hash = _key_digest(key)
+        key_hash = _key_digest(key, principal)
         digest = request_digest(route, request)
         with self._locked():
             records, total = self._scan()

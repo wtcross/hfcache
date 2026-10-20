@@ -28,7 +28,10 @@ Building or testing the preview does not make those routes available on an
 installed system. Developers can use the [workspace checks](../development.md#web-workspace)
 to exercise the preliminary shell locally.
 
-Browser access will use a separately provisioned administrator account with
+The optional server authentication provider now accepts a separately provisioned
+administrator; follow [protected provisioning](deployment.md) and
+[login troubleshooting](troubleshooting.md#administrator-login). UI asset serving
+and installed release acceptance are still pending. Browser access uses
 HTTP Basic authentication over verified HTTPS. The browser manages the password;
 the page will not ask for a REST or Hub token. Basic authentication has no reliable
 application logout. Signing in will not remove a read-only guard or enable a

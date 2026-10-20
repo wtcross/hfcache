@@ -8,11 +8,12 @@ different condition, and a retired condition retires its code.
 from dataclasses import dataclass, field
 from enum import IntEnum
 from types import MappingProxyType
-from typing import Any, Self, cast
+from typing import Any, Literal, Self, cast
 
 from hfcache.redaction import redact_text, sanitize
 
 __all__ = [
+    "AuthenticationCapacityError",
     "AuthenticationError",
     "AuthorizationError",
     "CodedError",
@@ -180,7 +181,13 @@ class AuthenticationError(ConfigurationError):
     detail = "Not authenticated"
     headers = MappingProxyType({"WWW-Authenticate": 'Bearer realm="hfcache"'})
 
-    def __init__(self) -> None:
+    def __init__(self, *, challenge: Literal["bearer", "basic", "both"] = "bearer") -> None:
+        challenges = {
+            "bearer": 'Bearer realm="hfcache"',
+            "basic": 'Basic realm="hfcache", charset="UTF-8"',
+            "both": 'Basic realm="hfcache", charset="UTF-8", Bearer realm="hfcache"',
+        }
+        self.headers = MappingProxyType({"WWW-Authenticate": challenges[challenge]})
         super().__init__([Problem("HFAPI001", self.detail)])
 
 
@@ -216,6 +223,15 @@ class SafetyError(HfcacheError):
     """
 
     exit_code = ExitCode.SAFETY
+
+
+class AuthenticationCapacityError(SafetyError):
+    """Bounded administrator verification capacity is unavailable (HFAPI021)."""
+
+    status_code = 429
+
+    def __init__(self) -> None:
+        super().__init__([Problem("HFAPI021", "Authentication work is temporarily unavailable")])
 
 
 class OperationError(SafetyError):

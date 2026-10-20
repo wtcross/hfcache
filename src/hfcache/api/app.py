@@ -13,18 +13,25 @@ import logging
 import math
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast, override
 from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import JSONResponse, RedirectResponse, Response, StreamingResponse
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBasic, HTTPBearer
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException
 
-from hfcache.api.auth import Capability, CredentialRegistry, load_credentials, require_capability
+from hfcache.api.auth import (
+    AuthenticationMethod,
+    Capability,
+    CredentialRegistry,
+    load_credentials,
+    require_capability,
+)
+from hfcache.api.basic import load_basic_provider
 from hfcache.api.catalog import install_catalog_routes
 from hfcache.api.catalog_refresh import install_catalog_refresh_route
 from hfcache.api.commands import install_command_routes
@@ -34,6 +41,7 @@ from hfcache.api.models import ApiProblem, OperationView, PageQuery, ReadRespons
 from hfcache.api.operations import OperationLimits, OperationReceipt, OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.errors import (
+    AuthenticationError,
     AuthorizationError,
     CodedError,
     ConfigurationError,
@@ -59,6 +67,7 @@ if TYPE_CHECKING:
     from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
     from hfcache.api.auth import Principal
+    from hfcache.api.basic import BasicProvider
     from hfcache.config import ApplicationConfig
     from hfcache.services.mcp_queries import QueryPage
     from hfcache.services.queries import MetadataQueries
@@ -68,6 +77,7 @@ PREFIX = "/api/v1"
 _CHUNK = 8192
 _MAX_QUERY_BYTES = 8192
 _MAX_HEADER_BYTES = 32768
+_MAX_AUTHORIZATION_BYTES = 8192
 _MAX_LIMIT_DIGITS = 5
 _MAX_SELECTORS = 100
 _MAX_SELECTOR_BYTES = 256
@@ -196,6 +206,7 @@ def _problem(context: ExecutionContext, error: HfcacheError) -> JSONResponse:
         409: "Metadata is stale or inconsistent",
         413: "Request or response exceeds its limit",
         422: "Invalid request",
+        429: "Authentication work is temporarily unavailable",
         500: "Internal server error",
         503: "Service unavailable",
     }
@@ -228,6 +239,16 @@ def _native_unix(scope: Scope) -> bool:
             )
         case _:
             return False
+
+
+class _BasicDescription(HTTPBasic):
+    """Describe the outer provider without parsing or retaining its UTF-8 password."""
+
+    @override
+    async def __call__(self, request: Request) -> None:
+        # HTTPBasic's framework decoder is ASCII-only. Authentication and all
+        # unsafe-request checks already completed in Boundary before routing.
+        del request
 
 
 class Boundary:
@@ -290,10 +311,13 @@ class Boundary:
 
         with context.activate():
             try:
-                principal = self.authenticate(scope)
+                principal = await self.authenticate(scope)
+                self.validate_work_bounds(scope)
                 mcp = self.is_mcp(scope)
                 require_capability(principal, Capability.MCP_READ if mcp else Capability.READ)
                 state["principal"] = principal
+                if principal.authentication_method is AuthenticationMethod.BASIC:
+                    self.validate_basic_csrf(scope)
                 if mcp:
                     transport = self.owner.state.mcp_transport
                     transport.acquire()
@@ -318,6 +342,10 @@ class Boundary:
                     return await receive()
 
                 await self.app(scope, replay, safe_send)
+            except AuthenticationError:
+                if not started:
+                    error = AuthenticationError(challenge=self.challenge(scope))
+                    await _problem(context, error)(scope, receive, safe_send)
             except HfcacheError as exc:
                 if not started:
                     await _problem(context, exc)(scope, receive, safe_send)
@@ -377,7 +405,15 @@ class Boundary:
             require_capability(principal, Capability.WRITE)
         return body
 
-    def authenticate(self, scope: Scope) -> Any:  # noqa: ANN401 - Starlette application state
+    def challenge(self, scope: Scope) -> Literal["bearer", "basic", "both"]:
+        if self.is_mcp(scope) or self.server.basic is None:
+            return "bearer"
+        values = [value for name, value in scope["headers"] if name.lower() == b"authorization"]
+        if any(value.partition(b" ")[0].lower() == b"basic" for value in values):
+            return "basic"
+        return "both" if not values and self.server.basic is not None else "bearer"
+
+    async def authenticate(self, scope: Scope) -> Principal:
         registry = getattr(self.owner.state, "credentials", None)
         if registry is None:
             message = "service is not started"
@@ -387,10 +423,95 @@ class Boundary:
             for key, value in scope["headers"]
             if key.lower() == b"authorization"
         ]
-        return registry.authenticate(
-            values[0] if len(values) == 1 else None,
-            interface="mcp" if self.is_mcp(scope) else "rest",
+        if len(values) > 1 or (values and len(values[0]) > _MAX_AUTHORIZATION_BYTES):
+            raise AuthenticationError
+        authorization = values[0] if values else None
+        mcp = self.is_mcp(scope)
+        if authorization is not None and authorization.partition(" ")[0].lower() == "basic":
+            provider: BasicProvider | None = getattr(self.owner.state, "basic_provider", None)
+            if mcp or self.server.basic is None or provider is None:
+                raise AuthenticationError
+            self.validate_work_bounds(scope)
+            self.validate_basic_channel(scope)
+            return await provider.authenticate(authorization)
+        return registry.authenticate(authorization, interface="mcp" if mcp else "rest")
+
+    def validate_work_bounds(self, scope: Scope) -> None:
+        """Bound request work; configured Basic checks before expensive verification."""
+        headers = scope["headers"]
+        if (
+            sum(len(name) + len(value) for name, value in headers) > _MAX_HEADER_BYTES
+            or len(scope.get("query_string", b"")) > _MAX_QUERY_BYTES
+        ):
+            raise RequestError(status_code=413)
+        lengths = [value for name, value in headers if name.lower() == b"content-length"]
+        if len(lengths) > 1:
+            raise RequestError
+        if lengths:
+            length = lengths[0]
+            if not length.isascii() or not length.isdigit():
+                raise RequestError
+            if (
+                len(length) > _MAX_OFFSET_DIGITS
+                or int(length) > self.server.limits.max_request_bytes
+            ):
+                raise RequestError(status_code=413)
+
+    def validate_proxy_proof(self, scope: Scope) -> None:
+        if not self.server.listener.proxy_tls or _native_unix(scope):
+            return
+        client = scope.get("client")
+        try:
+            peer = ipaddress.ip_address(client[0]) if client else None
+        except ValueError:
+            raise RequestError(code="HFAPI010", status_code=403) from None
+        forwarded = [
+            value for name, value in scope["headers"] if name.lower() == b"x-forwarded-proto"
+        ]
+        trusted = peer is not None and any(
+            peer in ipaddress.ip_network(network)
+            for network in self.server.listener.trusted_proxies
         )
+        if not trusted or forwarded != [b"https"]:
+            raise RequestError(code="HFAPI010", status_code=403)
+
+    def validate_basic_channel(self, scope: Scope) -> None:
+        if _native_unix(scope):
+            return
+        if self.server.listener.proxy_tls:
+            self.validate_proxy_proof(scope)
+            return
+        if scope.get("scheme") == "https":
+            return
+        client = scope.get("client")
+        try:
+            peer = ipaddress.ip_address(client[0]) if client else None
+        except ValueError:
+            peer = None
+        if peer is None or not peer.is_loopback:
+            raise RequestError(code="HFAPI010", status_code=403)
+
+    def validate_basic_csrf(self, scope: Scope) -> None:
+        if scope["method"] in {"GET", "HEAD"}:
+            return
+        basic = self.server.basic
+        headers = scope["headers"]
+        origins = [value.decode("latin1") for name, value in headers if name.lower() == b"origin"]
+        intent = [value for name, value in headers if name.lower() == b"x-hfcache-request"]
+        types = [
+            value.decode("latin1") for name, value in headers if name.lower() == b"content-type"
+        ]
+        parts = [part.strip().lower() for part in types[0].split(";")] if len(types) == 1 else []
+        if (
+            basic is None
+            or origins != [basic.origin]
+            or intent != [b"1"]
+            or not parts
+            or parts[0] != "application/json"
+            or (len(parts) > 1 and parts[1:] not in (["charset=utf-8"], ['charset="utf-8"']))
+            or any(name.lower() == b"content-encoding" for name, _ in headers)
+        ):
+            raise RequestError(code="HFAPI010", status_code=403)
 
     def validate_root_path(self, scope: Scope) -> None:
         public_root = self.server.listener.root_path
@@ -439,18 +560,7 @@ class Boundary:
         if len(query) > _MAX_QUERY_BYTES:
             raise RequestError(status_code=413)
         self.validate_root_path(scope)
-        if self.server.listener.proxy_tls and not _native_unix(scope):
-            client = scope.get("client")
-            try:
-                peer = ipaddress.ip_address(client[0]) if client else None
-            except ValueError:
-                raise RequestError(code="HFAPI010", status_code=403) from None
-            trusted = peer is not None and any(
-                peer in ipaddress.ip_network(network)
-                for network in self.server.listener.trusted_proxies
-            )
-            if not trusted or values.get(b"x-forwarded-proto") != "https":
-                raise RequestError(code="HFAPI010", status_code=403)
+        self.validate_proxy_proof(scope)
         length = values.get(b"content-length")
         if sum(key.lower() == b"content-length" for key, _ in headers) > 1:
             raise RequestError
@@ -567,79 +677,102 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         )
 
     @asynccontextmanager
-    async def rest_lifespan(application: FastAPI) -> AsyncIterator[None]:
+    async def rest_lifespan(application: FastAPI) -> AsyncIterator[None]:  # noqa: PLR0915 - explicit partial-startup and owned-worker cleanup boundary
         with instance_lock(instance_lock_path or Path("/run/hfcache/api.lock")):
             configure_daemon(level=getattr(logging, server.log_level.upper()))
-            application.state.credentials = credentials or load_credentials(server)
-            application.state.policy = policy or InstalledPolicy.open(server)
-            application.state.hub_token_file = hub_token_file
-            state_root = operation_store.root if operation_store else server.state_directory
-            archive_root = application.state.policy.root
-            if state_root.is_relative_to(archive_root) or archive_root.is_relative_to(state_root):
-                message = "operation state and archive storage must not overlap"
-                raise ConfigurationError.single(message, code="HFCFG005")
-            limits = server.limits
-            with operation_store or OperationStore(
-                server.state_directory,
-                limits=OperationLimits(
-                    max_records=limits.retained_terminal_operations,
-                    max_receipt_bytes=limits.operation_max_receipt_bytes,
-                    max_result_bytes=limits.operation_max_result_bytes,
-                    max_events=limits.operation_max_events,
-                    max_event_bytes=limits.operation_max_event_bytes,
-                    max_store_bytes=limits.operation_max_store_bytes,
-                    retention_days=limits.operation_retention_days,
-                ),
-            ) as store:
-                application.state.operations = store
-                application.state.pool = MetadataPool(
-                    workers=limits.metadata_workers, pending=limits.metadata_queue
-                )
-                settings = server.verification
-
-                def worker_progress(receipt: OperationReceipt) -> None:
-                    if receipt.state == "running":
-                        application.state.runner.mark_running(
-                            receipt.operation_id, receipt.domain_run_id
-                        )
-
-                application.state.verifier = verification_executor or VerificationClient(
-                    settings.unix_socket,
-                    expected_uid=settings.expected_peer_uid,
-                    timeout_seconds=settings.timeout_seconds,
-                    poll_seconds=settings.poll_seconds,
-                    max_frame_bytes=settings.max_frame_bytes,
-                    progress=worker_progress,
-                    expected_archive_id=application.state.policy.archive_id,
-                )
-                application.state.runner = OperationRunner(
-                    store,
-                    application.state.policy,
-                    max_pending=limits.max_queued_operations,
-                    check_verification_available=application.state.verifier.check_available,
-                )
-                application.state.instance_id = ExecutionContext.create().run_id
-                application.state.version = query_version()
-                try:
+            basic = None
+            application.state.basic_provider = None
+            try:
+                application.state.credentials = credentials or load_credentials(server)
+                basic = load_basic_provider(server.basic)
+                application.state.basic_provider = basic
+                application.state.policy = policy or InstalledPolicy.open(server)
+                application.state.hub_token_file = hub_token_file
+                state_root = operation_store.root if operation_store else server.state_directory
+                archive_root = application.state.policy.root
+                if state_root.is_relative_to(archive_root) or archive_root.is_relative_to(
+                    state_root
+                ):
+                    message = "operation state and archive storage must not overlap"
+                    raise ConfigurationError.single(message, code="HFCFG005")
+                limits = server.limits
+                with operation_store or OperationStore(
+                    server.state_directory,
+                    limits=OperationLimits(
+                        max_records=limits.retained_terminal_operations,
+                        max_receipt_bytes=limits.operation_max_receipt_bytes,
+                        max_result_bytes=limits.operation_max_result_bytes,
+                        max_events=limits.operation_max_events,
+                        max_store_bytes=limits.operation_max_store_bytes,
+                        retention_days=limits.operation_retention_days,
+                    ),
+                ) as store:
+                    pool = None
+                    runner = None
                     try:
-                        await asyncio.to_thread(
-                            application.state.runner.start,
-                            reconcile=application.state.verifier.reconcile,
+                        application.state.operations = store
+                        pool = MetadataPool(
+                            workers=limits.metadata_workers, pending=limits.metadata_queue
                         )
-                    except OperationError:
-                        # Unsafe history disables admission, while healthy exact
-                        # observations and metadata remain available for diagnosis.
-                        application.state.runner.stop_admission()
-                    yield
+                        application.state.pool = pool
+                        settings = server.verification
+
+                        def worker_progress(receipt: OperationReceipt) -> None:
+                            if receipt.state == "running":
+                                application.state.runner.mark_running(
+                                    receipt.operation_id, receipt.domain_run_id
+                                )
+
+                        application.state.verifier = verification_executor or VerificationClient(
+                            settings.unix_socket,
+                            expected_uid=settings.expected_peer_uid,
+                            timeout_seconds=settings.timeout_seconds,
+                            poll_seconds=settings.poll_seconds,
+                            max_frame_bytes=settings.max_frame_bytes,
+                            progress=worker_progress,
+                            expected_archive_id=application.state.policy.archive_id,
+                        )
+                        runner = OperationRunner(
+                            store,
+                            application.state.policy,
+                            max_pending=limits.max_queued_operations,
+                            check_verification_available=application.state.verifier.check_available,
+                        )
+                        application.state.runner = runner
+                        application.state.instance_id = ExecutionContext.create().run_id
+                        application.state.version = query_version()
+                        try:
+                            await asyncio.to_thread(
+                                runner.start, reconcile=application.state.verifier.reconcile
+                            )
+                        except OperationError:
+                            # Unsafe history disables admission, while healthy exact
+                            # observations and metadata remain available for diagnosis.
+                            runner.stop_admission()
+                        yield
+                    finally:
+                        if basic is not None:
+                            basic.stop_admission()
+                        if runner is not None:
+                            runner.stop_admission()
+
+                        async def drain() -> None:
+                            try:
+                                if runner is not None:
+                                    await asyncio.to_thread(runner.drain)
+                            finally:
+                                if pool is not None:
+                                    await pool.close()
+
+                        await _finish_owned(drain())
+            finally:
+                try:
+                    if basic is not None:
+                        basic.stop_admission()
+                        await _finish_owned(basic.aclose())
                 finally:
-                    application.state.runner.stop_admission()
-
-                    async def drain() -> None:
-                        await asyncio.to_thread(application.state.runner.drain)
-                        await application.state.pool.close()
-                        application.state.credentials = None
-
-                    await _finish_owned(drain())
+                    application.state.basic_provider = None
+                    application.state.credentials = None
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
@@ -656,6 +789,11 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         finally:
             application.state.credentials = None
 
+    authentication = [Depends(HTTPBearer(auto_error=False, scheme_name="hfcacheBearer"))]
+    if server.basic is not None:
+        authentication.append(
+            Depends(_BasicDescription(auto_error=False, scheme_name="hfcacheBasic"))
+        )
     app = FastAPI(
         lifespan=lifespan,
         docs_url=None,
@@ -664,9 +802,10 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         root_path=server.listener.root_path,
         redirect_slashes=False,
         servers=[{"url": server.listener.root_path or "/"}],
-        dependencies=[Depends(HTTPBearer(auto_error=False, scheme_name="hfcacheBearer"))],
+        dependencies=authentication,
         responses={
-            status: {"model": ApiProblem} for status in (401, 403, 404, 409, 413, 422, 500, 503)
+            status: {"model": ApiProblem}
+            for status in (401, 403, 404, 409, 413, 422, 429, 500, 503)
         },
     )
     app.add_middleware(Boundary, owner=app, server=server)

@@ -25,7 +25,7 @@ SECRET_KEYS: Final = frozenset(
         "token",
     }
 )
-_SECRET_VALUE = re.compile(r"(?:hf_[A-Za-z0-9]{8,}|bearer\s+\S+)", re.IGNORECASE)
+_SECRET_VALUE = re.compile(r"(?:hf_[A-Za-z0-9]{8,}|(?:bearer|basic)\s+\S+)", re.IGNORECASE)
 _SIGNED_URL = re.compile(
     r"https?://\S*[?&](?:x-amz-|x-goog-|sig=|signature=|token=)", re.IGNORECASE
 )

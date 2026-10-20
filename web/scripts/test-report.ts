@@ -38,6 +38,37 @@ export function requirePassingReport(value: unknown): number {
     return count;
 }
 
+export function requirePassingTap(text: string): number {
+    const counts = new Map<string, number>();
+    for (const match of text.matchAll(
+        /^# (tests|pass|fail|cancelled|skipped|todo) ([0-9]+)$/gm,
+    )) {
+        const key = match[1];
+        const value = Number(match[2]);
+        if (
+            key === undefined ||
+            counts.has(key) ||
+            !Number.isSafeInteger(value)
+        )
+            throw new Error("Malformed required TAP counts.");
+        counts.set(key, value);
+    }
+    const count = counts.get("tests");
+    if (
+        counts.size !== 6 ||
+        count === undefined ||
+        count < 1 ||
+        counts.get("pass") !== count ||
+        ["fail", "cancelled", "skipped", "todo"].some(
+            (key) => counts.get(key) !== 0,
+        ) ||
+        /^not ok /m.test(text) ||
+        /^(?:not )?ok\b.*#\s*(?:SKIP|TODO)\b/im.test(text)
+    )
+        throw new Error("Required TAP tests must pass without omissions.");
+    return count;
+}
+
 export function requirePassingBrowserReport(value: unknown): number {
     if (
         !record(value) ||

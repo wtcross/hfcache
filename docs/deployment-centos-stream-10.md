@@ -24,6 +24,13 @@ records actual UID/network/mount/state/secret boundaries.
 
 ## Prerequisites and identities
 
+The unreleased replacement UI's [administrator provisioning guide](web-ui/deployment.md)
+describes its optional protected hash source, exact HTTPS origin and separate
+native/rootless delivery. Static assets belong in the existing pinned UBI 10 micro
+API image behind the same Caddy; no frontend image/server or runtime Node is
+introduced. These source requirements do not alter the installed release or
+authorize credential/service changes. Basic stays disabled when unconfigured.
+
 Provision the NAS dataset, exact-host writer export, disjoint read-only consumer
 export, quota, snapshots/replication/scrub and service identities first; see
 [storage requirements](storage-requirements.md). Use deployment-specific hostname,

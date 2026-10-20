@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "test:strict-fixtures": "node scripts/check-strict-fixtures.ts",
+    "test:auth-sandbox": "node scripts/check-auth-sandbox-tests.ts",
     "test:unit": "node scripts/test-suite.ts unit",
     "test:component": "node scripts/test-suite.ts component",
     "build": "vite build && node scripts/check-build.ts",

@@ -23,7 +23,7 @@ NFS export; neither API serves model downloads.
 | Administer a writer | [Operations](docs/operations.md), [deployment](docs/deployment-centos-stream-10.md) |
 | Connect an MCP client | [MCP connection and tools](docs/mcp.md) |
 | Copy and verify a model or dataset | [Independent consumers](docs/consumers.md) |
-| Use the browser interface | [Cockpit installation and usage](docs/cockpit-plugin/README.md), [replacement web interface status](docs/web-ui/README.md) |
+| Use the browser interface | [Cockpit installation and usage](docs/cockpit-plugin/README.md), [replacement web interface status](docs/web-ui/README.md), [administrator provisioning](docs/web-ui/deployment.md) |
 | Contribute or run tests | [Development](docs/development.md) |
 | Find a contract or helper | [Documentation index](docs/README.md), [script reference](docs/scripts.md) |
 

@@ -362,6 +362,14 @@ values. API alone receives Hub plus distinct REST/optional MCP authority, Caddy 
 only, client API only. Worker/client additionally mask /run/credentials,
 /etc/credstore, /etc/credstore.encrypted and /etc/hfcache/credentials with empty
 inaccessible read-only mounts; custom sources need explicit review/masking.
+The optional Basic provider in unreleased source can read its protected hash
+record at `/etc/hfcache/credentials/ui-administrator.json` through the API's
+existing policy-directory bind. Provision its actual mapped service owner and
+mode0400/0600; it is not a plaintext password or bearer. Worker/client masks hide
+this fixed directory, and Caddy has no `/etc/hfcache` bind. Keep the record inside
+that reviewed directory. No additional secret or source read is required when
+Basic is disabled. See [protected provisioning](web-ui/deployment.md). Actual
+installed role isolation remains a release-acceptance obligation.
 For a newly provisioned fixture, OCI setup must be able to traverse an empty host
 placeholder before installing its inaccessible mask. Verify the exact directory
 is root-owned, empty and not a symlink before assigning the intended public
@@ -443,6 +451,13 @@ or merely available activation are not successful isolation. Preserve failed att
 policy enforcement; unrelated errors never constitute passing isolation.
 
 ## UBI 10 image inputs
+
+The web UI replacement retains this image boundary: built static UI assets will
+ship inside the existing API image based on pinned UBI 10 micro, with no separate
+frontend image or runtime Node/package manager. This is a packaging requirement;
+release packaging must prove ancestry, installed asset identity and runtime
+contents before claiming release acceptance. Browser test tooling is unshipped
+and does not determine the application base.
 
 [Decision 129](adr/decision-129.md) supersedes Debian/Alpine candidate bases. Every
 FROM stage in app/Caddy builds uses pinned UBI 10 micro. Actual micro supplies

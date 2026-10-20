@@ -2,6 +2,8 @@
 
 - Decision identity: 140.
 - Status: Accepted design; implementation and installed conformance pending.
+- Provider refinement: [decision146](decision-146.md) fixes the optional-server
+  verifier, protected record, admission and legacy key-ownership contract.
 - Date: 2026-10-20.
 
 ## Context and decision

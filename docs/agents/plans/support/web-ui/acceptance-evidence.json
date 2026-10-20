@@ -14,18 +14,77 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_auth.py::test_auth_01"
+          "node_id": "tests/unit/test_web_basic_provider.py::test_actual_hash_and_both_source_profiles_authenticate_without_legacy_grant_changes"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_real_basic_login_projects_legacy_class_without_new_wire_grants"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_auth.py::test_auth_01"
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-/management]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/auth.spec.ts::AUTH-01"
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-01 (pending: built UI through shared Caddy with installed native/rootless profiles)"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_provider.py::test_actual_hash_and_both_source_profiles_authenticate_without_legacy_grant_changes"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "56c8a9335515a0956a125d26730aaf749be3fddf2b28be952334b7d8b58fb1e1",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_provider.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Actual Argon2 verification accepts the protected file and named-credential profiles, projects Basic rest-writer and the exact separate internal administrator grants, and closes the provider. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_boundary.py::test_real_basic_login_projects_legacy_class_without_new_wire_grants"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "b5ca4cce41e9a8346f385a2f64b87293e4228c77568eff758730a5ef9b74a797",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_boundary.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Actual ASGI lifespan authenticates Basic, returns the unchanged strict capabilities projection, excludes subject/admin grants from the old public payload, and preserves no-Origin bearer reads. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-/management]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-/management]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "558bcef7c2ffb4f197d602cffb5889dbfb2a85d4780e6add31fb38bfffd901b7",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_sockets.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Real Uvicorn TLS with a trusted private CA and Unix sockets at root and /management challenge unauthenticated requests and accept Basic plus the correct writer/reader bearers. This is explicit HTTP credential integration, not native-browser challenge/retry acceptance. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/python-corrected.xml, SHA256 32990f06d17f69cfec7d34e76ae81a9cdfd510cda20342d621078df508fd4dc3. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        }
+      ]
     },
     {
       "id": "AUTH-02",
@@ -39,18 +98,229 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_auth.py::test_auth_02"
+          "node_id": "tests/unit/test_web_basic_provider.py::test_wrong_user_and_wrong_password_use_one_hash_and_uniform_failure"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_actual_wrong_username_still_performs_actual_hash"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_noncanonical_basic_padding_and_padding_bits_are_refused"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_wrong_passwords_never_accumulate_in_global_redaction_registry"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_wrong_basic_credentials_still_authenticate_before_ordinary_csrf_or_host_errors"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers0]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers1]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers2]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers3]"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_auth.py::test_auth_02"
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[missing]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[duplicate]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[malformed-base64]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[missing-colon]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[invalid-utf8]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[oversized-username]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[oversized-password]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[oversized-header]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_wrong_user_and_wrong_password_have_uniform_private_failures"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls--/api/v1/not-real]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls--/api/v1/openapi.json]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls--/api/v1/health]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls--/api/v1/docs]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls-/management-/api/v1/not-real]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls-/management-/api/v1/openapi.json]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls-/management-/api/v1/health]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls-/management-/api/v1/docs]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix--/api/v1/not-real]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix--/api/v1/openapi.json]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix--/api/v1/health]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix--/api/v1/docs]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix-/management-/api/v1/not-real]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix-/management-/api/v1/openapi.json]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix-/management-/api/v1/health]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix-/management-/api/v1/docs]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/auth.spec.ts::AUTH-02"
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-02 (pending: built UI through shared Caddy with installed native/rootless profiles)"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_provider.py::test_wrong_user_and_wrong_password_use_one_hash_and_uniform_failure",
+            "tests/unit/test_web_basic_provider.py::test_actual_wrong_username_still_performs_actual_hash",
+            "tests/unit/test_web_basic_provider.py::test_noncanonical_basic_padding_and_padding_bits_are_refused",
+            "tests/unit/test_web_basic_provider.py::test_wrong_passwords_never_accumulate_in_global_redaction_registry"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "56c8a9335515a0956a125d26730aaf749be3fddf2b28be952334b7d8b58fb1e1",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_provider.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Wrong username and wrong password produce the same private authentication refusal with equivalent hash work; malformed padding is rejected; submitted passwords never accumulate in the global redaction registry. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_boundary.py::test_wrong_basic_credentials_still_authenticate_before_ordinary_csrf_or_host_errors",
+            "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers0]",
+            "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers1]",
+            "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers2]",
+            "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers3]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "b5ca4cce41e9a8346f385a2f64b87293e4228c77568eff758730a5ef9b74a797",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_boundary.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Duplicate/oversized Authorization or declared work limits refuse before provider dispatch, while wrong credentials keep authentication-before-ordinary-error precedence. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[missing]",
+            "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[duplicate]",
+            "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[malformed-base64]",
+            "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[missing-colon]",
+            "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[invalid-utf8]",
+            "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[oversized-username]",
+            "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[oversized-password]",
+            "tests/unit/test_web_basic_adversarial.py::test_malformed_auth_refuses_without_body_or_hash_work[oversized-header]",
+            "tests/unit/test_web_basic_adversarial.py::test_wrong_user_and_wrong_password_have_uniform_private_failures"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "41260d44850e825f52c8640cebc701423ade7d5b92248f940db5c7a74ad6cb4e",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_adversarial.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Real raw TLS requests reject absent/duplicate/malformed/invalid-UTF8/oversized credentials before body/hash work; wrong-user and wrong-password responses remain uniform and exclude private credentials. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/python-corrected.xml, SHA256 32990f06d17f69cfec7d34e76ae81a9cdfd510cda20342d621078df508fd4dc3. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls--/api/v1/not-real]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls--/api/v1/openapi.json]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls--/api/v1/health]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls--/api/v1/docs]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls-/management-/api/v1/not-real]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls-/management-/api/v1/openapi.json]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls-/management-/api/v1/health]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[tls-/management-/api/v1/docs]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix--/api/v1/not-real]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix--/api/v1/openapi.json]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix--/api/v1/health]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix--/api/v1/docs]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix-/management-/api/v1/not-real]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix-/management-/api/v1/openapi.json]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix-/management-/api/v1/health]",
+            "tests/unit/test_web_basic_adversarial.py::test_authentication_precedes_route_schema_and_error_disclosure[unix-/management-/api/v1/docs]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "41260d44850e825f52c8640cebc701423ade7d5b92248f940db5c7a74ad6cb4e",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_adversarial.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Real trusted TLS and Unix root-/management matrices refuse unauthenticated health/schema/docs/unknown requests before ordinary route disclosure. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/tcp-uds-prefix-expanded.xml, SHA256 d543693344035f459f9406dd317d0ac27a8ebb2ac971fe44f40595812d19da23. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        }
+      ]
     },
     {
       "id": "AUTH-03",
@@ -64,18 +334,102 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_auth.py::test_auth_03"
+          "node_id": "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[symlink]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[parent-symlink]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[hardlink]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[directory]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[world-readable]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_in_place_record_change_is_refused"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_record_is_frozen_and_cannot_coerce_values"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_provider.py::test_exact_record_byte_limit_and_named_source_has_no_ambient_fallback"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_exact_versioned_basic_preimage_and_legacy_bearer_golden"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_auth.py::test_auth_03"
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_same_original_key_is_independent_for_basic_subjects_and_legacy_classes"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_restart_rotation_with_the_same_subject_keeps_the_original_handle"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/auth.spec.ts::AUTH-03"
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-03 (pending: built UI through shared Caddy with installed native/rootless profiles)"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[symlink]",
+            "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[parent-symlink]",
+            "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[hardlink]",
+            "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[directory]",
+            "tests/unit/test_web_basic_provider.py::test_record_source_uses_protected_descriptor_policy[world-readable]",
+            "tests/unit/test_web_basic_provider.py::test_in_place_record_change_is_refused",
+            "tests/unit/test_web_basic_provider.py::test_record_is_frozen_and_cannot_coerce_values",
+            "tests/unit/test_web_basic_provider.py::test_exact_record_byte_limit_and_named_source_has_no_ambient_fallback"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "56c8a9335515a0956a125d26730aaf749be3fddf2b28be952334b7d8b58fb1e1",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_provider.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Protected loading rejects symlink parents/leaves, hardlinks, directories, permissive modes and in-place content changes; strict frozen record/8192-byte ceiling and explicit named-source policy are preserved. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_basic_operation_identity.py::test_exact_versioned_basic_preimage_and_legacy_bearer_golden"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "4699c6d7d56bbda11f1979dd2b055312a69ea4796a0920ce530ecdbff46a32ce",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_basic_operation_identity.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Basic subject/key digest matches the exact versioned NUL-domain and length-framed golden; legacy bearer key SHA256 bytes are unchanged. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_basic_operation_identity.py::test_same_original_key_is_independent_for_basic_subjects_and_legacy_classes",
+            "tests/unit/test_basic_operation_identity.py::test_restart_rotation_with_the_same_subject_keeps_the_original_handle"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "4699c6d7d56bbda11f1979dd2b055312a69ea4796a0920ce530ecdbff46a32ce",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_basic_operation_identity.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Actual on-disk OperationStore close/reopen retains the original handle for the same stable subject after grant/provider rotation, refuses cross-class lookup, keeps different subjects/bearer classes isolated and writes no raw key or subject into strict old receipts. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        }
+      ]
     },
     {
       "id": "AUTH-04",
@@ -89,18 +443,117 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_auth.py::test_auth_04"
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_legacy_principal_constructor_keeps_exact_legacy_capabilities[rest-writer]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_legacy_principal_constructor_keeps_exact_legacy_capabilities[rest-reader]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_legacy_principal_constructor_keeps_exact_legacy_capabilities[mcp-reader]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_basic_admin_grants_are_separate_frozen_internal_permissions"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_bearers_cannot_be_given_administrator_grants_or_person_identity"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_challenge_dispatch_never_falls_back_and_preserves_bearer_compatibility"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_auth.py::test_auth_04"
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[tls-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[tls-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[unix-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[unix-/management]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/auth.spec.ts::AUTH-04"
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-04 (pending: built UI through shared Caddy with installed native/rootless profiles)"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_basic_operation_identity.py::test_legacy_principal_constructor_keeps_exact_legacy_capabilities[rest-writer]",
+            "tests/unit/test_basic_operation_identity.py::test_legacy_principal_constructor_keeps_exact_legacy_capabilities[rest-reader]",
+            "tests/unit/test_basic_operation_identity.py::test_legacy_principal_constructor_keeps_exact_legacy_capabilities[mcp-reader]",
+            "tests/unit/test_basic_operation_identity.py::test_basic_admin_grants_are_separate_frozen_internal_permissions",
+            "tests/unit/test_basic_operation_identity.py::test_bearers_cannot_be_given_administrator_grants_or_person_identity"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "4699c6d7d56bbda11f1979dd2b055312a69ea4796a0920ce530ecdbff46a32ce",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_basic_operation_identity.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Legacy positional Principal construction and exact read/write/mcp-read sets remain unchanged; administrator grants are separate frozen enums and cannot be attached to a bearer identity. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_boundary.py::test_challenge_dispatch_never_falls_back_and_preserves_bearer_compatibility"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "b5ca4cce41e9a8346f385a2f64b87293e4228c77568eff758730a5ef9b74a797",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_boundary.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Challenge/provider dispatch has no anonymous or provider fallback; disabled Basic preserves the exact old Bearer challenge and MCP remains bearer-only. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-/management]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-/management]",
+            "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[tls-]",
+            "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[tls-/management]",
+            "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[unix-]",
+            "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[unix-/management]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "558bcef7c2ffb4f197d602cffb5889dbfb2a85d4780e6add31fb38bfffd901b7",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_sockets.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Real TLS and Unix root-/management servers retain writer/reader capability distinctions, reject MCP bearer at REST, reject Basic/REST bearers at MCP before parsing its body, and accept actual MCP initialize only with the separate MCP bearer. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/python-corrected.xml, SHA256 32990f06d17f69cfec7d34e76ae81a9cdfd510cda20342d621078df508fd4dc3. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        }
+      ]
     },
     {
       "id": "AUTH-05",
@@ -114,18 +567,622 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_auth.py::test_auth_05"
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-POST]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-PUT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-PATCH]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-DELETE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-OPTIONS]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-TRACE]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-CONNECT]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_basic_same_origin_json_and_legacy_no_origin_bearer_can_validate_configuration"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_auth.py::test_auth_05"
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-origin-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-origin-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-origin-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-origin-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[null-origin-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[null-origin-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[null-origin-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[null-origin-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[foreign-origin-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[foreign-origin-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[foreign-origin-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[foreign-origin-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-origin-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-origin-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-origin-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-origin-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-marker-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-marker-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-marker-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-marker-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-marker-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-marker-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-marker-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-marker-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[wrong-marker-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[wrong-marker-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[wrong-marker-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[wrong-marker-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[text-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[text-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[text-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[text-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[multipart-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[multipart-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[multipart-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[multipart-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[form-POST]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[form-PUT]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[form-PATCH]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[form-DELETE]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[tls-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[tls-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[unix-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[unix-/management]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/auth.spec.ts::AUTH-05"
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-05 (pending: built UI through shared Caddy with installed native/rootless profiles)"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-origin-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[null-origin-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[foreign-origin-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-origin-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[missing-intent-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-intent-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[wrong-intent-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[form-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[duplicate-type-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-POST]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-PUT]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-PATCH]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-DELETE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-OPTIONS]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-TRACE]",
+            "tests/unit/test_web_basic_boundary.py::test_every_unsafe_basic_method_rejects_csrf_before_receiving_any_body[encoding-CONNECT]",
+            "tests/unit/test_web_basic_boundary.py::test_basic_same_origin_json_and_legacy_no_origin_bearer_can_validate_configuration"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "b5ca4cce41e9a8346f385a2f64b87293e4228c77568eff758730a5ef9b74a797",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_boundary.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "The actual ASGI boundary rejects missing/null/duplicate/foreign Origin, missing/duplicate/wrong intent, non-JSON and encoded bodies before receiving body bytes across POST/PUT/PATCH/DELETE/OPTIONS/TRACE/CONNECT; exact same-origin JSON succeeds. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-origin-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-origin-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-origin-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-origin-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[null-origin-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[null-origin-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[null-origin-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[null-origin-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[foreign-origin-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[foreign-origin-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[foreign-origin-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[foreign-origin-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-origin-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-origin-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-origin-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-origin-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-marker-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-marker-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-marker-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[missing-marker-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-marker-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-marker-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-marker-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[duplicate-marker-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[wrong-marker-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[wrong-marker-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[wrong-marker-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[wrong-marker-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[text-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[text-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[text-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[text-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[multipart-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[multipart-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[multipart-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[multipart-DELETE]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[form-POST]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[form-PUT]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[form-PATCH]",
+            "tests/unit/test_web_basic_adversarial.py::test_every_unsafe_basic_method_refuses_csrf_before_body_read[form-DELETE]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "41260d44850e825f52c8640cebc701423ade7d5b92248f940db5c7a74ad6cb4e",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_adversarial.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Real raw TLS requests reject absent/null/foreign/duplicate Origin, missing/duplicate/wrong X-Hfcache-Request and form/text/multipart bodies across POST/PUT/PATCH/DELETE without body receipt. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/python-corrected.xml, SHA256 32990f06d17f69cfec7d34e76ae81a9cdfd510cda20342d621078df508fd4dc3. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[tls-]",
+            "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[tls-/management]",
+            "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[unix-]",
+            "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[unix-/management]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "41260d44850e825f52c8640cebc701423ade7d5b92248f940db5c7a74ad6cb4e",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_adversarial.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Real TLS and Unix root-/management configuration validation accepts only the exact Basic same-origin JSON intent contract while retaining authorized no-Origin bearer POST compatibility. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/tcp-uds-prefix-expanded.xml, SHA256 d543693344035f459f9406dd317d0ac27a8ebb2ac971fe44f40595812d19da23. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        }
+      ]
     },
     {
       "id": "AUTH-06",
@@ -139,18 +1196,127 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_auth.py::test_auth_06"
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_basic_same_origin_json_and_legacy_no_origin_bearer_can_validate_configuration"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_challenge_dispatch_never_falls_back_and_preserves_bearer_compatibility"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_legacy_missing_or_bearer_authentication_precedes_declared_work_limits[False]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_legacy_missing_or_bearer_authentication_precedes_declared_work_limits[True]"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_auth.py::test_auth_06"
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[tls-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[tls-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[unix-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[unix-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[tls-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[tls-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[unix-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[unix-/management]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/auth.spec.ts::AUTH-06"
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-06 (pending: built UI through shared Caddy with installed native/rootless profiles)"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_boundary.py::test_basic_same_origin_json_and_legacy_no_origin_bearer_can_validate_configuration",
+            "tests/unit/test_web_basic_boundary.py::test_challenge_dispatch_never_falls_back_and_preserves_bearer_compatibility",
+            "tests/unit/test_web_basic_boundary.py::test_legacy_missing_or_bearer_authentication_precedes_declared_work_limits[False]",
+            "tests/unit/test_web_basic_boundary.py::test_legacy_missing_or_bearer_authentication_precedes_declared_work_limits[True]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "b5ca4cce41e9a8346f385a2f64b87293e4228c77568eff758730a5ef9b74a797",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_boundary.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Authorized no-Origin bearer configuration POST succeeds; old missing/bearer authentication precedence and disabled-provider exact Bearer challenge are preserved without UI redirects or fallback. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-/management]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-/management]",
+            "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[tls-]",
+            "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[tls-/management]",
+            "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[unix-]",
+            "tests/unit/test_web_basic_sockets.py::test_real_mcp_listener_remains_bearer_only[unix-/management]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "558bcef7c2ffb4f197d602cffb5889dbfb2a85d4780e6add31fb38bfffd901b7",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_sockets.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Real root-/management TLS and Unix calls keep no-Origin REST bearer reads and the separate MCP bearer interface operational; neither is replaced by Basic authentication. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/python-corrected.xml, SHA256 32990f06d17f69cfec7d34e76ae81a9cdfd510cda20342d621078df508fd4dc3. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[tls-]",
+            "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[tls-/management]",
+            "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[unix-]",
+            "tests/unit/test_web_basic_adversarial.py::test_basic_exact_same_origin_post_and_legacy_no_origin_bearer_post_both_work[unix-/management]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "41260d44850e825f52c8640cebc701423ade7d5b92248f940db5c7a74ad6cb4e",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_adversarial.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Actual root-/management TLS and Unix POST configuration validation preserves the original no-Origin bearer path alongside Basic CSRF enforcement. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/tcp-uds-prefix-expanded.xml, SHA256 d543693344035f459f9406dd317d0ac27a8ebb2ac971fe44f40595812d19da23. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        }
+      ]
     },
     {
       "id": "AUTH-07",
@@ -164,18 +1330,114 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_auth.py::test_auth_07"
+          "node_id": "tests/unit/test_web_basic_pool.py::test_two_actual_workers_eight_explicit_waiters_and_cancelled_observers_keep_slots"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_pool.py::test_failure_reservations_and_queued_start_recheck_allow_no_thirty_first_hash"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_pool.py::test_cancelled_close_still_drains_waiters_and_joins_exact_workers"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_capacity_refusal_is_bounded_problem_without_password_retry_challenge"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers0]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers1]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers2]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers3]"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_auth.py::test_auth_07"
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_bad_password_flood_does_not_starve_original_bearer_operation_observation"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_disconnected_real_clients_do_not_retire_running_hash_workers_before_shutdown"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_adversarial.py::test_body_length_preflight_refuses_before_actual_password_work"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/auth.spec.ts::AUTH-07"
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-07 (pending: built UI through shared Caddy with installed native/rootless profiles)"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_pool.py::test_two_actual_workers_eight_explicit_waiters_and_cancelled_observers_keep_slots",
+            "tests/unit/test_web_basic_pool.py::test_failure_reservations_and_queued_start_recheck_allow_no_thirty_first_hash",
+            "tests/unit/test_web_basic_pool.py::test_cancelled_close_still_drains_waiters_and_joins_exact_workers"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "dac752dc4b8365dc6fb92a4d78dfab9820975edb6c0e952cbb207c2c1395c7ce",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_pool.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Deterministic bounded-executor tests with explicitly controlled verifier callbacks prove two actual worker threads, eight waiters, failure reservations/queued recheck, cancellation retaining actual-work capacity, and exact worker joins. Callback seam alone is not actual Argon2 flood acceptance. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_basic_boundary.py::test_capacity_refusal_is_bounded_problem_without_password_retry_challenge",
+            "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers0]",
+            "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers1]",
+            "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers2]",
+            "tests/unit/test_web_basic_boundary.py::test_cheap_duplicate_and_work_limits_never_dispatch_the_hash_provider[headers3]"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "b5ca4cce41e9a8346f385a2f64b87293e4228c77568eff758730a5ef9b74a797",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_boundary.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Cheap header/work refusal reaches no hash provider; saturated authentication returns bounded HFAPI021/429/exit20 without a password retry challenge. Corroborating focused report .scratch/web-004-core-canonical-final.xml, SHA256 4976a24d8d79972865e3969cce4096188d185f21966d70d777d2ef8641116471. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_sockets.py::test_bad_password_flood_does_not_starve_original_bearer_operation_observation",
+            "tests/unit/test_web_basic_sockets.py::test_disconnected_real_clients_do_not_retire_running_hash_workers_before_shutdown"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "558bcef7c2ffb4f197d602cffb5889dbfb2a85d4780e6add31fb38bfffd901b7",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_sockets.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "Actual Argon2 wrong-password flood over trusted TLS observes two workers/eight bounded waiters and typed429 while original bearer operation status/result/events remain available. Explicit real-client disconnect retains actual hash capacity until completion and shutdown joins the exact workers. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/python-corrected.xml, SHA256 32990f06d17f69cfec7d34e76ae81a9cdfd510cda20342d621078df508fd4dc3. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_basic_adversarial.py::test_body_length_preflight_refuses_before_actual_password_work"
+          ],
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "exit_status": 0,
+          "source_sha256": "41260d44850e825f52c8640cebc701423ade7d5b92248f940db5c7a74ad6cb4e",
+          "artifact_sha256": "4d7d4d825f6b6f9ce851058f02473f088a1e8fdca6e6a200cc3afc151f254450",
+          "profile": "WEB-004, this commit; parent 2050d59; source_sha256 identifies tests/unit/test_web_basic_adversarial.py; source application test profile, owned local fixtures. The second strict gate passed its executed snapshot but is superseded for final whole-snapshot acceptance because browser-fixture source changed after start; these authentication test files were unchanged.",
+          "evidence_locator": ".scratch/web-004-final-strict-gate.log",
+          "observed_assertion": "A real raw TLS request declaring an oversized body refuses413 before actual password work and before body receipt. Corroborating focused report .scratch/web-004-independent-evidence-esac54wz/python-corrected.xml, SHA256 32990f06d17f69cfec7d34e76ae81a9cdfd510cda20342d621078df508fd4dc3. This records only the stated unit/integration layer. Native-browser proof is supplementary; built-UI/shared-Caddy functional acceptance is pending and this case remains pending."
+        }
+      ]
     },
     {
       "id": "AUTH-08",

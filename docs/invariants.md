@@ -348,9 +348,13 @@ History: `synchronization` (`54e4671`), decision 94.
   fail. That anonymous fallback applies to Hub policy; API writer authentication
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
-  [Decision 140](adr/decision-140.md) accepts an additional protected Basic
-  human provider with stable internal subject and bounded Argon2id verification;
-  it is not implemented and grants no MCP authority or implicit host capability.
+  Decisions [140](adr/decision-140.md)/[146](adr/decision-146.md) add an optional
+  protected Basic human provider with stable internal subject, exact-profile
+  Argon2id verification, separate two-active/eight-waiting work and a global
+  30-failure/reservation sliding 60-second bound. Configured unusable sources fail
+  startup; failed passwords never become global redaction literals. Basic has
+  no MCP authority or implicit host capability; ordinary bearers gain no admin
+  grants. Authentication source evidence is separate from installed acceptance.
   The shipped Cockpit rootless launcher mounts API-only Podman `hfcache.api`
   inside its finite client; no host ImportCredential applies. Native named
   systemd credentials remain a separate supported source. Hub authority stays
@@ -854,6 +858,18 @@ separate protected verifier only after REST acceptance. independent REST client'
   [typed command/adversarial tests](../tests/unit/test_api_command_adversarial.py);
   decisions [113](adr/decision-113.md)/[116](adr/decision-116.md).
   This is no production deployment proof.
+  Optional Basic preserves public `rest-writer`/read+write and strict legacy
+  schemas while retaining internal method, stable subject and separate admin
+  grants. Configured Basic's cheap header/query/content-length bounds and TLS proof
+  may precede expensive verification; missing/bearer credentials preserve their
+  authentication-before-limits precedence. Ordinary errors and exact Origin/JSON/
+  `X-Hfcache-Request:1` checks for every non-GET/HEAD Basic method follow successful
+  authentication before body reception. Actual loopback/native Unix exceptions
+  need transport evidence, never caller headers. Capacity/throttling returns
+  HFAPI021/429/20 without domain admission; cancellation/shutdown retain actual
+  hash ownership until exact workers join. Source enforcement:
+  [provider](../src/hfcache/api/basic.py), [boundary tests](../tests/unit/test_web_basic_boundary.py),
+  [pool tests](../tests/unit/test_web_basic_pool.py), decision146.
   REST acceptance corroborates trusted native Unix scope using both peer/local address
   evidence; prefix and proxy-TLS exceptions share that predicate, without header
   authority or global prefix/cache mutation. Enforcement/evidence:
@@ -868,8 +884,11 @@ separate protected verifier only after REST acceptance. independent REST client'
   retain ambiguous history, and never infer success or replay from missing
   history. One bounded lane retains the cross-process archive flock.
   The receipt itself is the durable key binding; only derived indexes rebuild.
-  Key digests never expose raw keys, and fixed credential-class namespaces
-  survive rotation. All REST readers may observe operation metadata/results;
+  Key digests never expose raw keys. Bearer class namespaces and digest bytes
+  survive rotation unchanged; Basic uses the versioned subject/key preimage from
+  decision146, preserving handles across same-subject username/password rotation
+  while separating other subjects and bearers. No new receipt field or printable
+  surrogate key is introduced. All REST readers may observe operation metadata/results;
   key lookup searches only the caller's namespace. Unexpired terminal bindings
   retain the configured 30-day default window; count/byte limits refuse admission
   rather than evicting them. Interrupted/ambiguous/nonterminal/unsupported state
@@ -1157,7 +1176,9 @@ and guarded validation, not deletion or a universal compatibility assumption.
 
 The following are accepted requirements with explicit source/test conformance
 gaps. They do not establish installed behavior or retire the existing Cockpit
-boundary. Current bearer-only REST and fourteen read-only MCP tools remain.
+boundary. Optional Basic preserves existing REST bearer and fourteen read-only
+MCP behavior; authenticated SPA/static serving and host administration remain
+unimplemented.
 See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
 [144](adr/decision-144.md); retirement remains proposed until parity is proved.
 
@@ -1171,8 +1192,10 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   application header; cheap limits precede bounded password verification.
   Immutable indexed non-archive assets, strict route-specific fallback, controlled
   prefixes, no-store data and restrictive CSP preserve the management boundary.
-  Bootstrap and UI permission context have independent schemas. Source, mounted
-  real-browser challenge, Caddy and installed profile evidence is pending.
+  Bootstrap and UI permission context have independent schemas. Basic source
+  verification/admission/CSRF/key ownership are implemented under decision146;
+  mounted real-browser challenge, shared-Caddy serving and installed profile
+  evidence remain separately required.
 - **`INV-020` — Host administration has a separate narrow privileged boundary.**
   The API remains unprivileged with no broad writable host/control-socket access.
   Fixed peer-verified helper grammar plus explicit internal capability and

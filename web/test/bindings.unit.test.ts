@@ -339,6 +339,7 @@ test.each([
     ["HFCFG999", 10],
     ["HFARG999", 10],
     ["HFAPI019", 20],
+    ["HFAPI021", 20],
     ["HFHUB999", 30],
     ["HFVER999", 40],
     ["HFRET999", 50],
@@ -356,6 +357,7 @@ test.each([
 test.each([
     ["HFCFG999", 20],
     ["HFAPI019", 10],
+    ["HFAPI021", 10],
     ["HFWRN001", 0],
     ["unknown!", 10],
     ["HFCFG99\n", 10],

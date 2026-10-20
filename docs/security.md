@@ -18,6 +18,7 @@ control that is not testable is not listed.
 | Audit records and journals | The ability to explain what happened | Loss of provenance after a failure |
 | The writer host's storage authority | Whoever holds it can destroy the archive | Code execution, privilege escalation |
 | Hub credentials, when present | Reusable outside this system | Leakage into logs, TOML, or the archive |
+| Protected administrator hash record | Offline password-verification authority for the single human account | Disclosure or replacement outside the API's protected source |
 
 Availability of the *upstream* Hub is deliberately not an asset here. The system
 is designed to keep working, and keep its data, when upstream is unavailable.
@@ -186,6 +187,14 @@ tracebacks to a caller. server authentication registers resolved API credentials
 metadata lifecycle must apply the same boundary to route validation/exception output.
 See [decision 111](adr/decision-111.md).
 
+Basic Authorization text is scrubbed unconditionally, independently of the exact
+secret registry. The protected administrator record contains a salted hash,
+never plaintext; only the API receives it. Failed supplied passwords are neither
+registered globally nor retained in logs, traces, diagnostics or operation state.
+Provision passwords through protected non-echoing input, never arguments,
+environment, files or SPA JavaScript. Browser-managed Basic credentials have no
+reliable application logout; see [administrator policy](server.md#basic-administrator).
+
 **Consequence beyond leakage.** Disabling ambient discovery also removes a
 correctness hazard: a developer's cached credential cannot silently give a
 production run access that the configuration does not describe.
@@ -347,11 +356,50 @@ type, owner, mode, group access, single hardlink, bounded content and stable
 metadata. The API token grammar rejects Hub-style `hf_` values. Exact opaque
 values are registered for redaction; the registry keeps only fixed-size digests
 and constant-time comparisons over three slots. Distinct class values prevent
-cross-interface ambiguity. The principal contains a nonsecret credential class,
+cross-interface ambiguity. Bearer principals retain a nonsecret class label,
 never a token, digest or individual-user claim. Every reader shares AD-21's
 whole-archive authorization boundary.
 
-REST authentication failures use sanitized `HFAPI001`/401 plus a Bearer challenge;
+An optional restart-only Basic provider uses one strictly protected schema 1
+record with stable ASCII subject, printable UTF-8 username and canonical Argon2id
+PHC. Exact version 19/m65536/t3/p1/salt16/hash32 validation precedes any hash work;
+encoded Authorization/username/password bounds are 8192/128/1024 bytes. A dedicated
+two-worker/eight-waiting executor is independent of operation observation.
+Global failures plus active reservations are capped at 30 per sliding 60 seconds;
+queued work rechecks the budget. Cancellation retains admission until actual
+completion; shutdown/partial startup stop new work, drain accepted jobs and join
+the owned workers. Capacity/throttling is HFAPI021/429/exit20, never successful
+authentication. Wrong user/password perform equivalent configured hash work.
+
+The optional rootless record stays at
+`/etc/hfcache/credentials/ui-administrator.json` in the API's existing read-only
+configuration bind. Existing worker/client masks hide that credentials directory;
+Caddy never receives the configuration bind. This adds no unconditional Podman
+secret or runtime-format migration. Native delivery uses a separately provisioned
+optional encrypted named credential. Source packaging alone does not prove those
+roles are isolated in an installed environment or activate any service.
+
+Basic remains REST-only and projects the existing `rest-writer` class/read+write
+array. Internal stable subject/authentication method and five separate admin
+grants never widen public schemas or bearer permissions. Host effects still
+require the separate protected helper/policy proof. Preserve TLS/trusted-proxy
+and corroborated native Unix boundaries. Configured Basic's cheap work limits and
+TLS proof may precede hashing; missing/bearer credentials retain authentication
+before those limits. Ordinary Host/Origin, CSRF and route errors follow
+successful authentication, before body reception. Every Basic method other than
+GET/HEAD requires exact single configured Origin, JSON and exactly
+`X-Hfcache-Request:1`, including preflights and unknown paths. Missing/null/foreign/
+duplicate Origin, simple forms/encoding and bad intent refuse. No-Origin bearer
+compatibility and MCP bearer-only isolation remain. Source enforcement and
+[boundary](../tests/unit/test_web_basic_boundary.py),
+[provider/pool](../tests/unit/test_web_basic_pool.py) and
+[key-identity tests](../tests/unit/test_basic_operation_identity.py) are distinct
+from browser, Caddy and installed deployment acceptance; see [decision146](adr/decision-146.md).
+
+REST authentication failures use sanitized `HFAPI001`/401 plus the supplied
+scheme's challenge; missing REST credentials with Basic enabled advertise both.
+MCP and explicit bearer failures retain only the Bearer challenge;
+disabled Basic retains that same legacy challenge.
 capability denial is `HFAPI002`/403. Unsafe/malformed/racing credential sources
 and duplicate class values fail startup with `HFAPI003`/`HFAPI004`. The reusable
 FastAPI bearer adapter calls the application-owned verifier; extraction alone
@@ -369,7 +417,7 @@ acceptance. Recorded installed 0.2.1 peer connectivity has narrower scope than o
 NAS/domain/other-host acceptance; see [deployment status](deployment-status.md). See
 [decision 112](adr/decision-112.md) and [server policy](server.md).
 
-**Control-state boundary.** Local receipts bind admission to a fixed
+**Control-state boundary.** Local receipts bind admission to a fixed public
 credential-class principal and hashed idempotency key before acknowledgement or
 execution. Store no raw key, bearer, token digest/path or candidate request body.
 The key digest is private comparison state and is omitted from HTTP metadata.
@@ -378,8 +426,14 @@ under the whole-archive boundary; key lookup searches only the caller's namespac
 The separate scheduled observation scheduled observer stores its generated nonsecret key in
 private local state for lookup-only recovery, never a bearer or token digest;
 that does not add raw keys to server receipts/HTTP metadata.
-Rotation preserves that class identity, without creating individual-user audit
-claims. A status/result fetch never executes work.
+Bearer digests/rotation preserve their exact legacy class namespace. Basic uses
+the independently versioned, NUL-separated and length-framed stable-subject/key
+preimage in [the API contract](api.md#admission-idempotency-and-lifecycle), never a
+printable surrogate. Subject-preserving username/password rotation keeps the
+original handle; another subject or bearer selects a distinct namespace. No
+subject/authentication field or private attribution sidecar joins old receipts,
+and historical class labels gain no individual-user audit claim. A status/result
+fetch never executes work.
 
 Protected no-follow local state, finite record/event/result/byte budgets and
 durable atomic receipts contain storage/resource risks. An unexpired terminal
@@ -538,6 +592,7 @@ No-confirm init is inspection/refusal only, not a privileged submission. See
 | 17 | Fail-closed preflight before any download | Exit `20` |
 | 18 | Management UI confined to operator surfaces, with the limits structural | `docs/cockpit.md` `CP-01`–`CP-14` |
 | 19 | Fixed capabilities, restart-only auth and bounded typed command/metadata routes | `T-14`, `docs/server.md`, server registry, metadata boundary and typed command routes |
+| 20 | Protected single administrator, bounded independent password work and unsafe-request origin checks | `T-14`, decision146, optional Basic provider and outer application boundary |
 
 ## 5. systemd hardening posture
 
@@ -920,9 +975,10 @@ authority and does not recognize unknown arbitrary secrets.
 
 ## Browser administration design
 
-This is the accepted replacement UI security design; its controls are not yet
-implemented or established by tests. Current bearer-only REST, separate read-only
-MCP, Cockpit confinement and recorded deployment limits remain in force. Do not
+This is the accepted replacement UI serving/administration security design;
+those controls are not yet implemented or established by tests. The optional
+Basic authentication boundary is implemented separately above, preserving bearer
+REST, separate read-only MCP, Cockpit confinement and recorded deployment limits. Do not
 enable future UI/helper settings based on this design alone. See decisions
 [140](adr/decision-140.md), [141](adr/decision-141.md),
 [142](adr/decision-142.md), [143](adr/decision-143.md),
@@ -942,7 +998,7 @@ produces an internal stable subject and explicit capabilities, with separate
 versioned UI context. Existing credential-class receipt/capabilities schemas and
 bearer key mappings remain unchanged. Basic has no MCP authority; a generic REST
 writer has no privileged host/configuration authority. Passwords stay outside
-JavaScript and saved browser state. The native challenge requires actual browser
+JavaScript and application-managed saved browser state. The native challenge requires actual browser
 proof; browser-managed Basic lifetime has no reliable application logout.
 
 Basic is ambient authentication: unsafe requests require exact configured same

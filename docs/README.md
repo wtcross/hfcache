@@ -10,7 +10,7 @@ copying are separate paths.
 | Writer administrator | [Deployment profiles](deployment-centos-stream-10.md), [operations](operations.md) | [Server](server.md), [archive policy](configuration.md), [recovery](recovery.md) |
 | MCP client or administrator | [Connect and use fourteen metadata tools](mcp.md) | [Security](security.md), [consumer identity](consumers.md) |
 | Model/dataset consumer | [Copy, verify and promote](consumers.md) | [Storage/export requirements](storage-requirements.md), [schemas](schemas.md) |
-| Browser operator | [Cockpit guides](cockpit-plugin/README.md), [replacement web interface status](web-ui/README.md) | [Read troubleshooting](web-ui/troubleshooting.md), [Cockpit contract](cockpit.md) |
+| Browser operator | [Cockpit guides](cockpit-plugin/README.md), [replacement web interface status](web-ui/README.md) | [Administrator provisioning](web-ui/deployment.md), [access/read troubleshooting](web-ui/troubleshooting.md), [Cockpit contract](cockpit.md) |
 | Developer | [Setup and validation](development.md) | [Script catalog](scripts.md), [architecture](architecture.md), [invariants](invariants.md), [ADRs](adr/README.md) |
 
 The [container contract](containers.md) covers pinned images, fixed roles,

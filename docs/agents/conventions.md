@@ -34,6 +34,9 @@ it.
   bounded non-resuming execution lane. [Decision 124](../adr/decision-124.md)
   adds the actual optional FastMCP protocol transport after committed REST
   acceptance, with independent base/server installs and no workflow authority.
+  [Decision 146](../adr/decision-146.md) adds the already locked cryptography
+  package directly to the optional server closure for maintained fixed-profile
+  Argon2id verification. It does not enter the base reader dependency set.
   These scoped additions do not authorize other frameworks.
 
 ## Tests

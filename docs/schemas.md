@@ -932,7 +932,7 @@ unsupported versions rather than guessing from model defaults.
 | --- | --- |
 | `operation_id` | Server-generated receipt identity and file stem |
 | `principal` | Coarse credential class; independent of token value/rotation |
-| `key_digest` | Private SHA-256 of the validated idempotency key; never exposed by HTTP |
+| `key_digest` | Private comparison digest: bearer retains SHA-256 of the validated ASCII key; Basic hashes its versioned stable-subject/key preimage from the [API contract](api.md#admission-idempotency-and-lifecycle). Never exposed by HTTP |
 | `request_digest` | SHA-256 of deterministic JSON containing canonical route and validated request mapping |
 | `route` | Canonical `/api/v1/` operation route; no query or arbitrary filesystem path |
 | `archive_id` | Admitted installed archive UUID |
@@ -1283,8 +1283,9 @@ number alone does not establish compatibility.
 
 ## 18. Web UI and administration design records
 
-**Accepted design; these records are not yet implemented.** Current durable
-formats above remain unchanged. The independent card/helper/static/bootstrap
+**Accepted design for §18.1–18.3; administrator record §18.4 is implemented in
+unreleased source.** Current archive durable formats above remain unchanged.
+The independent card/helper/static/bootstrap
 families below must each validate their own strict integer version, reject
 unknown fields/duplicate JSON keys/coercions, enforce bounds before allocation
 and preserve unsupported/unsafe existing evidence. Design alone is not migration
@@ -1375,3 +1376,43 @@ and configuration-derived relative paths only. It is nonsecret and `no-store`,
 never a user-management API or a widening of strict `/capabilities`. Basic
 subject/audit bindings have a separate private version; old operation receipts
 retain public credential-class identity without retrospective human attribution.
+
+### 18.4 Protected administrator record schema 1
+
+This restart-only credential is independent of archive JSON and is never a REST,
+MCP, bootstrap or operation response. [Server configuration](server.md) selects
+exactly one protected file or named systemd credential. Read at most8192bytes,
+pin protected descriptors and reject duplicate/unknown fields, coercion, symlinks,
+unsafe ownership/modes, multiple links, races or unsupported content before any
+password verification. Disabled Basic reads no record. See
+[decision146](adr/decision-146.md) and [protected provisioning](web-ui/deployment.md).
+
+| Field | Type/constraint |
+| --- | --- |
+| `schema_version` | Explicit integer `1`, not boolean/string |
+| `subject` | Stable ASCII identifier matching `[A-Za-z0-9][A-Za-z0-9._:-]{0,127}`; retained across password rotation |
+| `username` | Nonempty printable UTF-8, at most128bytes, no colon |
+| `password_hash` | ASCII PHC string, exact `argon2id`, version19, ordered `m=65536,t=3,p=1`, canonical unpadded standard Base64 salt16bytes and output32bytes |
+
+Only those four fields exist. The fixed hash profile is checked before invoking
+the maintained verifier, so record parameters cannot select arbitrary resource
+work. Provisioning creates a fresh random salt and exclusive mode0600 file; no
+plaintext password is serialized. Its serializer follows §1's sorted keys,
+two-space indentation, UTF-8 without BOM and single final newline. The independent
+[protected-administrator golden](../tests/fixtures/schemas/protected-administrator.json)
+freezes those bytes with an inert all-zero salt/output, not a provisioned credential.
+
+Creation differs from archive replacement: exclusively create the new record
+without following symlinks, fsync its pinned file and then its parent, and never
+overwrite an existing path. A failed creation retains any created file for
+inspection; it does not rename, remove or restore credential evidence. Installing
+the new record and restarting a service remain separate deployment actions.
+Filesystem permissions protect the hash itself
+against offline guessing and replacement. The record never includes a bearer,
+Hub source, Origin, operation key or host permission. A version/parameter change
+needs a reviewed credential migration rather than silent coercion.
+
+Existing operation receipts retain their exact strict class labels and schema.
+Basic subject ownership changes only the private original-key digest preimage;
+it adds no receipt field or historical attribution record. Keep original handles
+through rotation/restart and never replay to reconstruct missing history.

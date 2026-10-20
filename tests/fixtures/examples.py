@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from hashlib import sha256
 
 from hfcache.api.auth import CredentialClass
+from hfcache.api.basic import ProtectedAdministratorRecord
 from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
 from hfcache.catalog_models import (
     ModelVariant,
@@ -566,6 +567,17 @@ def scheduled_observation() -> ScheduledObservation:
     )
 
 
+def protected_administrator() -> ProtectedAdministratorRecord:
+    """Independent credential schema 1; inert all-zero salt/hash, no password preimage."""
+    return ProtectedAdministratorRecord(
+        schema_version=1,
+        subject="archive-admin",
+        username="administrator",
+        password_hash="$argon2id$v=19$m=65536,t=3,p=1$"
+        "AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    )
+
+
 def tag_snapshot() -> RepositoryTagSnapshot:
     return RepositoryTagSnapshot(
         archive_id=ARCHIVE_ID,
@@ -617,6 +629,7 @@ def publication_observation() -> PublicationObservation:
 
 
 EXAMPLES = {
+    "protected-administrator": protected_administrator,
     "repository-tag-snapshot": tag_snapshot,
     "publication-observation": publication_observation,
     "operation-event": operation_event,

@@ -64,6 +64,8 @@ require_web() {
   for required in web/package.json web/pnpm-lock.yaml web/tsconfig.json \
     web/src/wire/contracts.json web/src/wire/generated.ts web/src/wire/unicode-data.json \
     web/scripts/generate-wire.ts \
+    web/scripts/check-auth-sandbox-tests.ts web/test/auth-api/sandbox.test.mjs \
+    web/test/auth-api/sandbox.mjs \
     scripts/export-web-contracts.py scripts/check-web-read-fixture.py; do
     if [[ ! -f $required ]]; then
       printf 'Web gate required: missing %s; see docs/development.md\n' "$required" >&2
@@ -147,7 +149,7 @@ if [[ $REQUIRE_WEB -eq 1 ]]; then
   require_web
   step 'web frozen install'
   "$PNPM_BIN" --dir web install --frozen-lockfile
-  for web_check in check:wire lint typecheck test:strict-fixtures test:unit test:component build test:browser; do
+  for web_check in check:wire lint typecheck test:strict-fixtures test:auth-sandbox test:unit test:component build test:browser; do
     step "web $web_check"
     "$PNPM_BIN" --dir web run "$web_check"
   done

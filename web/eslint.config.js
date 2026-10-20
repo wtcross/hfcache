@@ -17,6 +17,22 @@ export default tseslint.config(
     },
     { ...js.configs.recommended, files: ["*.js"] },
     {
+        ...js.configs.recommended,
+        files: ["test/auth-api/*.mjs"],
+        languageOptions: {
+            globals: {
+                process: "readonly",
+                Buffer: "readonly",
+                URL: "readonly",
+                setTimeout: "readonly",
+                clearTimeout: "readonly",
+                fetch: "readonly",
+                FormData: "readonly",
+                document: "readonly",
+            },
+        },
+    },
+    {
         files: ["**/*.ts", "**/*.tsx"],
         extends: [...tseslint.configs.strictTypeChecked],
         languageOptions: {

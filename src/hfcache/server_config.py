@@ -12,7 +12,15 @@ from pathlib import Path, PurePosixPath
 from typing import Annotated, Any, Literal, NoReturn, Self
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_validator,
+)
 
 from hfcache.config import ApplicationConfig, load_config
 from hfcache.errors import ConfigurationError, Problem
@@ -57,6 +65,28 @@ def _socket_mode(value: object) -> int:
     return value
 
 
+def _basic_origin(value: object) -> str:
+    """Require browser-canonical HTTPS origin text, never normalize authority silently."""
+    if not isinstance(value, str) or not value.isascii() or any(c.isspace() for c in value):
+        _invalid("Basic origin must be one canonical HTTPS origin")
+    try:
+        parsed = urlsplit(value)
+        canonical = str(AnyHttpUrl(value)).removesuffix("/")
+    except ValueError:
+        _invalid("Basic origin must be one canonical HTTPS origin")
+    if (
+        parsed.scheme != "https"
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path
+        or parsed.query
+        or parsed.fragment
+        or canonical != value
+    ):
+        _invalid("Basic origin must be one canonical HTTPS origin")
+    return value
+
+
 AbsolutePath = Annotated[Path, BeforeValidator(_path)]
 StringArray = Annotated[tuple[str, ...], BeforeValidator(_array)]
 
@@ -86,6 +116,13 @@ class ServerCredentials(_Strict):
     writer: CredentialSource
     reader: CredentialSource | None = None
     mcp_reader: CredentialSource | None = None
+
+
+class BasicConfig(_Strict):
+    """One optional restart-only human provider; no plaintext or hash in server TOML."""
+
+    origin: Annotated[str, BeforeValidator(_basic_origin)]
+    administrator: CredentialSource
 
 
 class TLSConfig(_Strict):
@@ -215,6 +252,7 @@ class ServerConfig(_Strict):
     archive_config: AbsolutePath = Path("/etc/hfcache/config.toml")
     state_directory: AbsolutePath = Path("/var/lib/hfcache/api")
     credentials: ServerCredentials
+    basic: BasicConfig | None = None
     listener: ListenerConfig = Field(default_factory=ListenerConfig)
     limits: ServerLimits = Field(default_factory=ServerLimits)
     verification: VerificationExecutorConfig = Field(default_factory=VerificationExecutorConfig)
@@ -227,6 +265,18 @@ class ServerConfig(_Strict):
     def mcp_requires_credential(self) -> Self:
         if self.mcp_enabled and self.credentials.mcp_reader is None:
             _invalid("mcp_enabled requires a distinct mcp_reader credential source")
+        return self
+
+    @model_validator(mode="after")
+    def basic_listener_policy(self) -> Self:
+        if self.basic is not None:
+            parsed = urlsplit(self.basic.origin)
+            hostname = parsed.hostname or ""
+            host = f"[{hostname}]" if ":" in hostname else hostname
+            if self.basic.origin not in self.listener.allowed_origins or host not in {
+                item.lower() for item in self.listener.allowed_hosts
+            }:
+                _invalid("Basic origin requires explicit matching listener Host and Origin policy")
         return self
 
 

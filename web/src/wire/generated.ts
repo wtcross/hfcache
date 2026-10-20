@@ -1,4 +1,4 @@
-/** Generated from source digest 4de4d55300489beb18106d141ccbc460e1eeed7ce8bb69c450bf790ee80575fd. Run generate:wire; do not edit. */
+/** Generated from source digest 98d30c358db72cc30bc8dc7c69193ae254f830c68a4451bfe04ef5212ca6a44c. Run generate:wire; do not edit. */
 import {
     wireObject,
     wireRequestObject,

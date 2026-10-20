@@ -876,6 +876,7 @@ result and does not override a domain Envelope's application exit classification
 | `HFAPI016` | Isolated verification executor is unavailable, unsafe or fails protocol/peer validation; HTTP 503 |
 | `HFAPI019` | API connectivity or bounded observation cannot complete |
 | `HFAPI020` | Submission outcome is uncertain; retain the original key and do not replay under a new key |
+| `HFAPI021` | Basic authentication verification capacity or failure-window budget is exhausted; HTTP 429, no domain work is admitted |
 
 ### 5.3 Hub and synchronization — exit `30`
 

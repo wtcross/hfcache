@@ -19,6 +19,14 @@ Also read the relevant sections of [architecture](../support/web-ui/architecture
 
 Build a reproducible separately indexed UI artifact tied to source/UI schema/lock/toolchain/license identity. Extend clean release construction to require/verify this artifact, retain base uv build without Node, and stage immutable native assets or copy them into the rootless API image. Do not put frontend files in Caddy or add a Node service. Pin/bound startup asset verification and server web configuration; UI-disabled old deployment remains valid.
 
+The user's 2026-10-20 clarification requires the appropriately streamlined UBI 10
+image for the web UI. Ship its static assets in the existing API image, retaining
+pinned UBI 10 micro for build/runtime FROM stages and the existing CA-only donor
+boundary. No separate frontend image, Node, pnpm/npm, compiler or browser belongs
+in runtime. Verify actual base ancestry with the foundation probe, inspect the
+installed asset bytes and runtime tool absence, and record exact base/final image
+identities and image size. Test-only browser images are separate unshipped inputs.
+
 Update actual release artifact indexes, strict installer requirements, role/secret/socket definitions, service confinement and safe enablement examples for Basic hash and the narrow helper. Prove read-only policy-directory replacement visibility and that Caddy/worker cannot see helper/Basic secret. Keep existing Caddy instance/template routing/port/TLS and private-worker lifecycle. Packaging must not grant default host policies, unmask timers, enable UI implicitly in existing production, or pull images at runtime.
 
 Build native and rootless artifacts from exact clean committed source using the established staged-build workflow. Keep dirty-fixture results distinguished. Validate fresh installation, enabled missing/mismatched UI refusal and backend-only installs, stable same-origin base/prefix and actual asset hashes. Any unavoidable runtime dependency/schema changes have reviewed ADR/index/lock updates.

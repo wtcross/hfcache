@@ -29,6 +29,38 @@ OAuth login, ambient discovery, redirect or proxy fallback. See
 [client setup](api-client.md#client-configuration-and-setup) and
 [server credentials](server.md) for file/name delivery and restart-based rotation.
 
+An optional application-owned [Basic administrator](server.md#basic-administrator)
+provides the same public `rest-writer` class and `read`/`write` capability array.
+It does not issue a bearer, authenticate MCP or extend existing strict wire
+schemas. Its stable subject and separate administrative grants are internal;
+host/configuration administration and authenticated SPA serving require their
+separate implemented boundaries. Browser JavaScript never handles a password.
+
+Missing REST credentials advertise Basic and Bearer when Basic is configured.
+Explicit REST Basic failures when the provider is configured advertise only
+`Basic realm="hfcache", charset="UTF-8"`; explicit bearer and all MCP failures
+retain `Bearer realm="hfcache"`; disabled Basic preserves that legacy challenge.
+There is no provider fallback. One original
+Authorization field is allowed, at most 8192 encoded bytes; Basic's decoded UTF-8
+username/password ceilings are 128/1024 bytes. Configured Basic's header/query/
+content-length work bounds and transport proof may refuse before expensive
+verification; ordinary route, Host/Origin and body errors follow authentication.
+Missing credentials and bearer authentication retain their existing precedence
+over request-size/work errors.
+
+Every Basic method except GET/HEAD, including OPTIONS, TRACE, CONNECT and unknown
+paths, requires exactly one Origin equal to configured `basic.origin`, JSON media
+type and exactly `X-Hfcache-Request: 1`. Missing/null/foreign/duplicate Origin,
+form/text/multipart bodies, content encoding and missing/duplicate/wrong intent
+headers refuse with HFAPI010/403 before receiving a body. Credentialed browser
+preflights cannot supply this actual request contract. Bearer clients retain
+their no-Origin behavior. Basic's separate two-active/eight-waiting verifier and
+global 30-failure/reservation sliding 60-second budget return HFAPI021/429/exit20 on capacity
+or throttling; no domain admission follows that refusal. Basic is authenticated
+on native corroborated Unix or numeric-loopback HTTP; remote access requires TLS
+or the configured trusted-proxy proof. These source behaviors establish no
+production deployment or shared-Caddy UI availability.
+
 ## Routes and effects
 
 Paths in this canonical matrix are relative to `/api/v1`. R permits a REST reader
@@ -323,16 +355,26 @@ bounded to 8 MiB; object insertion order is irrelevant. Store no raw key, reques
 body, candidate content, bearer or credential source/digest. Indexes are derived;
 receipts are authority. Scheduled observation handles are separate local state.
 
+Bearer key digests remain byte-for-byte SHA256(original ASCII key), with the
+existing credential-class namespace. Basic uses SHA256 of
+`hfcache\0idempotency\0basic-subject\0v1\0`, followed by a four-byte big-endian
+UTF-8 subject length, subject bytes, a four-byte big-endian ASCII key length and
+the original key bytes. Validate the unchanged key grammar before hashing or
+store locking. This is a private digest preimage, not a printable surrogate key.
+No subject/authentication fields or attribution sidecars join strict receipts.
+
 | Condition | Result |
 | --- | --- |
-| Same class/key/route/canonical request, including reordered object keys | Original operation, `created=false`; no fresh policy lookup or enqueue |
-| Same binding after policy change or same-class credential rotation | Original admitted identity/fingerprint |
-| Same class/key with changed request or route | HFAPI012/409 conflict |
-| Same key in another class | Separate namespace |
+| Same namespace/key/route/canonical request, including reordered object keys | Original operation, `created=false`; no fresh policy lookup or enqueue |
+| Same binding after policy change or subject-preserving credential rotation | Original admitted identity/fingerprint |
+| Same namespace/key with changed request or route | HFAPI012/409 conflict |
+| Same key in another bearer class, another Basic subject, or Basic versus bearer | Separate namespace |
+| Same Basic subject/key after username/password rotation | Original operation; changing subject selects a distinct namespace |
 | Missing/expired history | HFAPI013/404; execution remains unknown |
 
 Lookup uses `GET /api/v1/operations/lookup` with the original key in the header,
-never a URL. Every lookup/retry reauthenticates. Lookup is class-scoped; known-ID
+never a URL. Every lookup/retry reauthenticates. Lookup uses the caller's bearer
+class or Basic stable-subject namespace; known-ID
 observation and listing are available to all REST readers/writers under whole-
 archive trust. A missing receipt never grants replay authority.
 
@@ -381,12 +423,13 @@ redirecting or reflecting query text into Location.
 
 | HTTP status | Meaning |
 | --- | --- |
-| 401 | Missing/invalid/wrong-interface bearer; challenge included |
-| 403 | Insufficient capability or disabled initialization |
+| 401 | Missing/invalid/wrong-interface credential; scheme-specific challenge included |
+| 403 | Insufficient capability, unsafe Basic request, transport/origin refusal or disabled initialization |
 | 404 | Missing resource/history; absence does not prove nonexecution |
 | 405 | Authenticated unsupported method, HFAPI007 |
 | 409 | Stale cursor/policy, conflicting key, unfinished result or classified read-integrity refusal |
 | 413 / 422 | Oversized / invalid strict request |
+| 429 | HFAPI021: independent Basic verification capacity or failure throttle; exit20 |
 | 503 | Capacity, draining or unavailable executor |
 | 500 | Sanitized unexpected failure |
 
@@ -443,7 +486,8 @@ scope; passwords and bearer values never belong in query keys or browser state.
 
 ## Reconnect after lost acknowledgement
 
-1. Retain the original key, route, configured authority and credential class.
+1. Retain the original key, route, configured authority and credential class
+   (plus the same stable subject when using Basic).
    Do not generate another key or automatically POST again.
 2. Run `hfcache --client-config /etc/hfcache/client.toml --json operations lookup -- '<original-key>'`.
    Lookup submits nothing. Once known, preserve the operation ID.
@@ -460,9 +504,10 @@ POST. [Server lifecycle](server.md#restart-and-drain) governs actual executor dr
 
 ## Web UI and administration design
 
-The following is accepted design for the replacement browser interface;
-**these additions are not implemented or available yet**. The route matrix above,
-bearer authentication and current strict schemas remain the implemented API.
+The following routes and presentation schemas are accepted design for the
+replacement browser interface; **these additions are not implemented or available
+yet**. Optional Basic authentication above is implemented separately; it leaves
+the route matrix and current strict schemas unchanged.
 See [UI availability](web-ui/README.md), [authentication decision](adr/decision-140.md),
 [host/configuration decision](adr/decision-141.md) and
 [card decision](adr/decision-142.md). Each addition requires executable

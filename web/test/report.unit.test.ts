@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import {
     requirePassingBrowserReport,
     requirePassingReport,
+    requirePassingTap,
 } from "../scripts/test-report";
 
 const report = {
@@ -13,6 +14,26 @@ const report = {
     numTodoTests: 0,
     testResults: [{ assertionResults: [{ status: "passed" }] }],
 };
+
+const tap =
+    "TAP version 13\nok 1 - actual test\n1..1\n# tests 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n";
+test("required Node execution rejects empty, failed, skipped, todo and contradictory TAP", () => {
+    expect(requirePassingTap(tap)).toBe(1);
+    for (const text of [
+        "",
+        tap.replace("# tests 1", "# tests 0"),
+        tap.replace("# pass 1", "# pass 0"),
+        tap.replace("# fail 0", "# fail 1"),
+        tap.replace("# cancelled 0", "# cancelled 1"),
+        tap.replace("# skipped 0", "# skipped 1"),
+        tap.replace("# todo 0", "# todo 1"),
+        tap.replace("ok 1", "not ok 1"),
+        tap + "# skipped 0\n",
+        tap.replace("actual test", "actual test # SKIP"),
+        tap.replace("# todo 0\n", ""),
+    ])
+        expect(() => requirePassingTap(text)).toThrow();
+});
 
 test("a nonempty all-passing suite establishes execution", () => {
     expect(requirePassingReport(report)).toBe(1);
