@@ -6,6 +6,27 @@ rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
 ## Unreleased
 
+- Cockpit preserves classified bridge, launcher, API and domain failures, plus
+  original operation keys and IDs across tab changes and interrupted observation.
+  Uncertain execution blocks another submission; recovery authenticates and
+  observes the original operation without replay.
+- Candidate preparation retains each validation/preview/confirmation result and
+  reconciles captured exact bytes before further action. Bounded ASCII framing
+  avoids NUL-triggered Cockpit text-channel disconnects. Installed confirmation
+  gives PID1 a pipe and uses a bounded local collector, preserving SELinux
+  confinement, original process statuses, the configuration lock and backup.
+- Manual full jobs use the fixed REST client and fresh protected host permissions.
+  Run reports use authenticated paged REST reads; optional journal diagnostics
+  remain independent. Read views distinguish failed, partial, unavailable and
+  known empty results, and diagnostics separate browser, selected-release and
+  API identities.
+- The Unix HTTP adapter treats empty writes as a no-op, preventing a late empty
+  end-of-message write from closing a valid response's socket prematurely.
+- Installed-wheel/private-socket and actual isolated Cockpit/PAM/rootless checks
+  passed, including exact configuration installation/confirmation and read-only
+  reconciliation after bridge interruption. These source repairs do not change
+  application metadata 0.2.1, deploy or tag a release, clear workload holds or
+  prove the original installed symptom fixed.
 - Optional normalized configuration tags, Cockpit authoring and current versus
   last-observed provenance are separate from operational policy and immutable
   publication/integrity identity.

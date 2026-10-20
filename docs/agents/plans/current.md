@@ -2,14 +2,18 @@
 
 | Field | Value |
 | --- | --- |
-| State | active |
-| Active plan | [Cockpit REST repair](2026-10-19-plan-cockpit-rest-repair.md) |
-| Next task | [CPR-009: release evidence and operator handoff](tasks/cpr-009-release-evidence-and-handoff.md) |
-| Blockers | No mandatory source/disposable blocker through CPR-008: strict gate5299Python/570unit/109mounted, installedCLI10 and real fifthguest12checks pass. Preserve all five isolated guests and prior unknown/unconfirmed attempts. CPR-009 final release/parity/extended+explicitmake/handoff still pending. Production parity/original installed symptom/NAS-workload acceptance remain separate and unauthorized. |
-| Last completed plan | [Tags and discovery](2026-10-19-plan-tags-and-discovery.md) |
+| State | inactive |
+| Active plan | None |
+| Next task | None |
+| Blockers | None within the completed source/disposable scope. Original installed-symptom/parity and NAS/workload acceptance remain separate; see the handoff. |
+| Last completed plan | [Cockpit REST repair](2026-10-19-plan-cockpit-rest-repair.md) |
 | Updated | 2026-10-20 |
 
-Explicit user authorization selects scoped implementation. Later steering permits
-local-host development and necessary service outage/backup/restoration. Preserve
-NAS data, guards, original locks/masks/hardening and operation evidence. Provision
-independent disposable fixtures; no live archive workload is authorized.
+All nine tasks completed with required actual frontend/extended and disposable
+acceptance. [Evidence](support/cockpit-rest-repair/acceptance-record.md) and
+[operator handoff](support/cockpit-rest-repair/operator-handoff.md) retain exact
+artifacts, five guests, original locks/handles/backups and unknown/unconfirmed
+attempts. Production and NAS remain untouched; no historical backlog is activated.
+Later user steering explicitly authorizes final green implementation-branch pushes
+to Forgejo and GitHub after commit only, preserving all nine package boundaries.
+No merge, tag, force push, registry, deployment or live/NAS workload is authorized.

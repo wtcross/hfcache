@@ -41,9 +41,11 @@ snapshot; the server refuses stale queued mutations.
 
 ## Integration repair requirements
 
-The following requirements amend the presentation and recovery contract. Existing
-implementation gaps require correction before source acceptance; they do not
-establish installed browser/PAM acceptance. See [decision 134](adr/decision-134.md).
+The following requirements define the implemented presentation and recovery
+contract. Source/component checks and actual isolated Cockpit/PAM/rootless
+acceptance have passed. They do not establish parity with the recorded installed
+artifact or verify the original installed symptom. See
+[decision 134](adr/decision-134.md).
 
 Preserve classified terminal Envelopes independently of bridge/process errors.
 Missing terminal output must retain validated Cockpit problem, process status or

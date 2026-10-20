@@ -16,16 +16,18 @@ redirects to identically named user units. See [deployment scope](../deployment-
 From the browser you can inspect:
 
 - watch archive health, findings, and per-repository state, and run `doctor`;
-- start and observe syncs — full runs through installed services, selected
-  repositories through transient API clients; stopping observation leaves accepted
-  execution independent, with validated recovery handles;
+- start and observe manual full or selected syncs through the fixed REST-backed
+  client; detaching observation leaves accepted execution independent, with the
+  original operation key and ID retained for authenticated recovery;
 - browse archived repositories and every retained revision;
 - edit the configuration (form or text) through a validate-before-install
   pipeline, with exact candidate/base guards, compatible authority, required sizing
   preview and exact installed-content and operational-fingerprint confirmation;
 - change the sync schedule as a managed systemd drop-in;
-- verify — an estimate, one revision, or the full offline read;
-- read durable run reports joined to their journal trails;
+- verify — an estimate, one revision, or a manual full offline read through the
+  same REST-backed client; scheduled service observation is shown separately;
+- read authenticated durable run reports, with optional bounded host-local
+  journal event diagnostics that do not establish the operation's outcome;
 - prune, recover, and repair, dry-run first.
 
 Deliberately outside the plugin, by contract: initializing archives,
@@ -53,8 +55,13 @@ the `hfcache` service identity — root never runs the CLI. Without
 administrative access the page is read-only and says so.
 
 Fixed privileged config/candidate/backup and retained config-lock paths are listed
-in [installation](installation.md); the page adds no execution queue or archive
-state store.
+in [installation](installation.md). The page retains bounded operation keys, IDs,
+authority scope and terminal summaries in the browser tab's session storage;
+credentials, TOML and full result bodies are excluded. Restored summaries require
+authenticated observation before they can release a submission block. Preserve
+this recovery metadata after uncertain execution: clearing browser storage or
+submitting again is not a reconnect procedure. The page adds no server execution
+queue or archive state store.
 
 
 The fixed rootless launcher uses `/etc/hfcache/client.toml` and
@@ -65,5 +72,10 @@ schema-1 Envelopes; bounded progress/handles support display/reconnection.
 The Runs tab reads reports through authenticated `runs list` / `runs show`
 without a client archive mount. Optional bounded journal event diagnostics remain
 host-local; journal failure does not prevent report access or establish outcome.
-Repository checks do not establish browser/PAM, secret, SELinux/NFS or workload
-acceptance. Native service support is separate; this plugin has no native launcher.
+Ordinary repository fixtures and separately provisioned real Cockpit/PAM tests
+provide different evidence. Current isolated acceptance does not prove parity with
+the recorded installed artifact, resolve its original symptom, or accept live
+NAS/workloads. Compare browser, selected-release and authenticated API identities
+as described in [installation](installation.md); the displayed package version
+alone cannot establish parity. Native service support is separate; this plugin
+has no native launcher.

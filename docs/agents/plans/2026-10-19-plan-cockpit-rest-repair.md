@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | active |
+| Status | completed |
 | Created | 2026-10-19 (America/New_York) |
-| Authorization | 2026-10-19 user instruction explicitly authorizes activation and scoped source implementation; local-host development authorization amended below; no NAS/live workload, registry operations, push, merge, or tag. |
+| Authorization | 2026-10-19 user instruction explicitly authorizes activation and scoped source implementation; local-host development authorization amended below; no NAS/live workload, registry operations, merge or tag. Final branch pushes to both remotes explicitly authorized by later2026-10-20 instruction, after completion/commit only. |
 | Reviewed repository | `wtcross/hfcache`, `main` |
 | Reviewed commit | `dcc2c562b52304541d0cb85d20fc046072038e79` — `CAT-016: complete lifecycle compatibility and final acceptance` |
 | Tracker | `docs/agents/plans/current.md` |
@@ -71,6 +71,8 @@ redesign; new discovery features; a general-purpose HTTP/shell proxy; changes to
 NAS export, mounts, security policy, timers or production services during source
 implementation; live synchronization, verification, recovery, pruning, repair,
 initialization, deployment, image publication, tagging, pushing or merging.
+The2026-10-20 amendment below permits only the final reviewed implementation
+branch push to Forgejo and GitHub after completion and commit.
 
 All existing read-only guards, workload holds and system-unit masks remain in
 force. In particular, moving a manual full-job button to an API submission must
@@ -246,3 +248,30 @@ no-replay behavior. ADR138/139 record the latter two choices; earlier failed
 fixtures and unknown/unconfirmed executions remain preserved. No original
 production cause or installed symptom resolution is claimed. Continue only
 CPR-009; keep this plan active until its final gates and handoff pass.
+
+## Final branch publication amendment (2026-10-20)
+
+Later user instruction: “once you are finished commit our changes and push to the
+forgejo and github remotes”. This explicitly authorizes the completed green
+`fix/cockpit-rest-api-alignment` branch push to both configured remotes, preserving
+all nine incremental commits. It overrides only the earlier no-push restriction;
+no merge, tag/follow-tags, force push, registry, production deployment/inspection
+or live/NAS workload is authorized. Read-only remote checks confirmed the exact
+branch absent on both remotes. Commit final evidence first; then push the explicit
+branch ref without tags and verify both advertised refs equal the actual local
+commit. Actual push outcomes are reported after execution, not predicted here.
+
+## Scoped completion (2026-10-20)
+
+CPR-001–009 completed serially with one task/work-package commit each. The final
+extended strict gate and separate explicit frontend gate pass:5299Python plus
+16build-marked,3locked profiles,570unit/110mounted,lint/style/types/fresh build.
+Required installed CLI/private UDS, real guarded filesystem and actual disposable
+Cockpit/PAM/rootless acceptance pass with qualified independent layers; no
+mandatory runtime blocker remains. F01–F11 and V01–V60 link actual evidence in
+[acceptance](support/cockpit-rest-repair/acceptance-record.md) and the
+[reviewed handoff](support/cockpit-rest-repair/operator-handoff.md).
+Plan/task records, prior failed states and unknown/unconfirmed fixtures are retained;
+clear the selector without activating historical backlog. Original production
+parity/symptom and NAS/workload holds remain separate. Final branch pushes only
+follow the later user amendment, after the final commit; no merge/tag/deployment.

@@ -646,6 +646,66 @@ async function run(): Promise<void> {
         mount(<DeploymentDiagnostics buildInfo={{ ...build, source_commit: 'f'.repeat(40) }} />);
         await until(() => text().includes('source commits differ'), 'different browser and selected source warning');
     });
+    await test('V55 Diagnostics keeps intentionally skewed browser release image and API identities independent', async () => {
+        const browser = { schema_version: 1, source_commit: '1'.repeat(40), source_dirty: false, inputs_sha256: '2'.repeat(64) };
+        const selected = {
+            ...structuredClone(DEFAULT_HOST_PROFILE),
+            source_commit: '3'.repeat(40),
+            index_sha256: '4'.repeat(64),
+            image: 'sha256:' + '5'.repeat(64),
+        };
+        const client = {
+            ...DEFAULT_CLIENT_METADATA,
+            profile_fingerprint: '6'.repeat(64),
+            authority_fingerprint: '7'.repeat(64),
+            archive_id: 'abcdefab-1234-1234-1234-123456789abc',
+            instance_id: '8'.repeat(32),
+        };
+        const displayed = (term: string) => [...(container?.querySelectorAll('dt') ?? [])]
+                .find(item => item.textContent === term)?.nextElementSibling?.textContent ?? null;
+        const start = boundary.invocations.length;
+        const metadataStart = boundary.metadataProcesses.length;
+        const records = operationRegistry.snapshot().records.length;
+        boundary.profile = selected;
+        boundary.metadataMode = 'manual';
+        mount(<DeploymentDiagnostics buildInfo={browser} />);
+        (await until(() => button('Inspect browser, selected release and API identities'), 'skewed diagnostic disclosure')).click();
+        await until(() => displayed('Selected immutable image identity') === selected.image, 'selected image identity');
+        invariant(displayed('Browser source commit') === browser.source_commit &&
+                  displayed('Browser build-input SHA-256') === browser.inputs_sha256 &&
+                  displayed('Selected release source commit') === selected.source_commit &&
+                  displayed('Selected protected index SHA-256') === selected.index_sha256,
+                  'Skewed browser and selected-release facts were conflated');
+        invariant(text().includes('source commits differ') && !text().includes('source commits agree') &&
+                  text().includes('Selected physical bindings do not identify the running API payload'),
+                  'Intentional skew was presented as parity or running-payload proof');
+        invariant(boundary.metadataProcesses.length === metadataStart,
+                  'Opening diagnostics silently refreshed API authority');
+        (await until(() => readyButton('Refresh diagnostic client identity'), 'explicit skewed client refresh')).click();
+        const metadata = await until(() => boundary.metadataProcesses[metadataStart] ?? null, 'skewed authenticated metadata read');
+        invariant(metadata.command.join(' ') === 'client describe' && metadata.key === null,
+                  'Diagnostic refresh selected an operation or alternate command');
+        metadata.succeedEnvelope(readEnvelope('client describe', client));
+        await until(() => displayed('Authenticated API instance') === client.instance_id, 'independent authenticated API instance');
+        invariant(displayed('Public client profile fingerprint') === client.profile_fingerprint &&
+                  displayed('Archive UUID') === client.archive_id && displayed('Fixed client endpoint') === client.endpoint &&
+                  displayed('Selected immutable image identity') === selected.image,
+                  'Authenticated client facts replaced or inherited selected-release identity');
+        boundary.profile = { schema_version: 1, state: 'unknown', reason: 'deployment-unverified' };
+        await readHostProfile();
+        await until(() => text().includes('Selected protected release identities are unavailable or stale.'), 'unknown selected-release evidence');
+        invariant(!text().includes(selected.source_commit) && !text().includes(selected.index_sha256) && !text().includes(selected.image),
+                  'Unknown selected profile retained old release or image facts');
+        (await until(() => readyButton('Refresh diagnostic client identity'), 'failed skewed client refresh')).click();
+        const failed = await until(() => boundary.metadataProcesses[metadataStart + 1] ?? null, 'failed authenticated metadata read');
+        failed.failEnvelope(readEnvelope('client describe', {}, 20));
+        await until(() => text().includes('HFAPI003') && text().includes('Authenticated client/API identity is unavailable or stale.'), 'classified unavailable API identity');
+        invariant(!text().includes(client.profile_fingerprint) && !text().includes(client.archive_id) && !text().includes(client.instance_id),
+                  'Failed API read retained stale authenticated identity');
+        invariant(operationRegistry.snapshot().records.length === records && boundary.invocations.slice(start)
+                .every(process => process.key === null && (process.action === 'profile' || process.command.join(' ') === 'client describe')),
+                  'Diagnostic skew checks prepared a job or invoked another host action');
+    });
     await test('V49/V50 Diagnostics clears stale client identities and preserves explicit refresh failure', async () => {
         mount(<DeploymentDiagnostics />);
         (await until(() => button('Inspect browser, selected release and API identities'), 'diagnostic disclosure')).click();

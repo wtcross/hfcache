@@ -201,6 +201,29 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   NAS, registry, push/merge/tag. Original installed symptom remains unproven.
   Continue only CPR-009 release/parity/extended+explicitmake/operator handoff.
 
+- [x] CPR-009 Complete release evidence and operator handoff (2026-10-20,
+  this commit — [task](plans/tasks/cpr-009-release-evidence-and-handoff.md)).
+  Final strict extended gate exit0:5299Python/52deselected in757.36s,3locked wheel
+  profiles,actual frontend lint/style/types/570unit0skip/110mounted/build, then
+  16build-marked/5335deselected in45.18s (old-wheel2/smoke4/installedCLI10).
+  Separate final explicitmake passes570unit/110mounted; focused parity578,
+  identity45 and Diagnostics4 pass. Added planned controlled V55 skew coverage;
+  new-test literal lint failure corrected and retained, no fabricated product RED.
+  Two owned DESTDIR probes prove five exact assets/documented077vs022 modes;
+  no host install. All90runtime module bytes remain unchanged; new README metadata
+  explains wheel638a3274…cec1b vs accepted native578fd699…8392d. Dirty parent0dc2c93
+  browser has publicinput96fa3…f7eaf7 and JS30e03a88…8651f5; no clean/deployed claim.
+  F01–F11/V01–V60 and CP01–14/INV005/006/agentINV011/ADR134–139 reviewed; no new
+  runtime/dependency/schema/authority/version/architectural choice. Human install,
+  reports/manual jobs/cache/identity/release/removal docs and evidence links agree.
+  All9tasks/plan completed, selector cleared; historical backlog remains inactive.
+  [Acceptance](plans/support/cockpit-rest-repair/acceptance-record.md) and
+  [operator handoff](plans/support/cockpit-rest-repair/operator-handoff.md) preserve
+  five isolated guests/unknown attempts/backup/locks/original handles. Production
+  parity/original symptom and NAS/workload holds remain separate. Later user
+  explicitly authorizes final completed branch pushes to Forgejo and GitHub after
+  commit only; no merge/tag/force/registry/deployment/live workload.
+
 ## Tags and discovery (2026-10-19)
 
 - [x] CAT-001 Activate the feature plan and establish technical contracts
@@ -2746,6 +2769,23 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     authorized rollout needs a fresh clean artifact/version and exact browser,
     source, launcher/profile/index/image/running-payload verification; existing
     package0.2.1 alone is not parity. Retain all previous production holds.
+
+30. **Scoped repair closeout and later publication authority (CPR-009,
+    2026-10-20):** all9source/disposable tasks and required extended+explicit
+    frontend gates pass; no mandatory blocker remains and selector is cleared.
+    No historical backlog is activated. [Reviewed handoff](plans/support/cockpit-rest-repair/operator-handoff.md)
+    records exact independent browser/source/helper/index/image/API/wheel identities,
+    future clean release/install/drain/rollback prerequisites and separate original
+    installed-flow verification. Five guests and all original guards/masks/rootlocks,
+    handles/results/backups/unknown or unconfirmed attempts remain preserved;
+    no automatic replay/reinstall/rollback/cleanup/teardown follows uncertainty.
+    Production service/configuration/NAS were not replaced, so no production
+    restoration was required; twelve signed development prerequisite RPM additions
+    are separately recorded. Original installed symptom/parity and NAS/workload
+    holds remain unverified. Later user explicitly requests final completed branch
+    push to both remotes; commit first, push only fix/cockpit-rest-api-alignment
+    without tags/force, verify both refs, report actual outcomes after execution.
+    No merge, tag, registry, production inspection/deployment or live workload.
 
 ## Operator decisions needed
 

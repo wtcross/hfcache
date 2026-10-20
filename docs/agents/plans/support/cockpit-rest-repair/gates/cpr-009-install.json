@@ -1,0 +1,47 @@
+{
+  "purpose": "owned DESTDIR only; no host installation or service change",
+  "fixture_private_mode": "0700",
+  "runs": [
+    {
+      "umask": "077",
+      "exit": 0,
+      "modes": {
+        ".": "0700",
+        "index.css.gz": "0600",
+        "index.html": "0600",
+        "index.js.LEGAL.txt": "0600",
+        "index.js.gz": "0600",
+        "manifest.json": "0600"
+      },
+      "assets_sha256": {
+        "index.css.gz": "80dacf284443d894888c6495bd9a62f20892445e49b89ceef440fe33512ec276",
+        "index.html": "a06c2bf2ee70e6fc5d5816b64cca83c842af52cdb05dc8a6c1e976b8952811ee",
+        "index.js.LEGAL.txt": "ca3bf9aa9fcd2a062f25f520549376eb9dea5d4f7e80a4ca81fd4616c6eeadaf",
+        "index.js.gz": "f7e4779ed8fdcb38162b212c3aea39b98e9555c5d03aa77b50b9df01b52e57c6",
+        "manifest.json": "8f75fb398635a9b6c5b612ffdbe1d65ee89cfd9df52f3d21019cc9eb21a90d10"
+      },
+      "expected_public_readability": false
+    },
+    {
+      "umask": "022",
+      "exit": 0,
+      "modes": {
+        ".": "0755",
+        "index.css.gz": "0644",
+        "index.html": "0644",
+        "index.js.LEGAL.txt": "0644",
+        "index.js.gz": "0644",
+        "manifest.json": "0644"
+      },
+      "assets_sha256": {
+        "index.css.gz": "80dacf284443d894888c6495bd9a62f20892445e49b89ceef440fe33512ec276",
+        "index.html": "a06c2bf2ee70e6fc5d5816b64cca83c842af52cdb05dc8a6c1e976b8952811ee",
+        "index.js.LEGAL.txt": "ca3bf9aa9fcd2a062f25f520549376eb9dea5d4f7e80a4ca81fd4616c6eeadaf",
+        "index.js.gz": "f7e4779ed8fdcb38162b212c3aea39b98e9555c5d03aa77b50b9df01b52e57c6",
+        "manifest.json": "8f75fb398635a9b6c5b612ffdbe1d65ee89cfd9df52f3d21019cc9eb21a90d10"
+      },
+      "expected_public_readability": true
+    }
+  ],
+  "scope_limit": "Private parent deliberately stays0700; destination assets/modes proved, not production root ownership or another-account traversal. Real account readability already separately proved in accepted native fixture."
+}

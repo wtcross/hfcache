@@ -1,0 +1,130 @@
+CPR-009 release/parity evidence, 2026-10-20
+Source parent: 0dc2c93da04bd38f28770e2f3576f30720cf1533
+Branch: fix/cockpit-rest-api-alignment
+This package changes documentation/evidence and the planned controlled V55
+identity-skew regression; no product runtime code changes. Final package is CPR-009, this commit; resolve its actual ID from Git. No production inspection/install, registry, merge, tag, NAS/live
+workload or archive initialization is performed. Later2026-10-20 user steering
+explicitly authorizes final green branch pushes to Forgejo+GitHub after commit.
+Both exact remote branches were absent at read-only preflight(exit0). Push only
+explicit branch refs without tags/force; report actual verified outcomes later.
+
+Completed focused commands (actual exits 0):
+1. uv run --locked --extra server --extra mcp pytest
+   tests/unit/test_docs_alignment.py tests/unit/test_docs_config_contract.py
+   tests/unit/test_rest_parity_gate.py tests/unit/test_cli_runs.py
+   tests/unit/test_cli_runs_socket.py tests/unit/test_script_help.py
+   tests/unit/test_container_release_installer.py
+   tests/unit/test_release_installer.py tests/unit/test_container_runtime.py
+   tests/unit/test_cockpit_host_profile.py -q
+   578 passed in 79.47s. Log: /tmp/hfcache-cpr009-parity.log.
+2. CPR_BROWSER_TEST_FILTER=Diagnostics node cockpit/test/browser.mjs
+   Initial3 actual mounted React/controlled Cockpit-boundary cases passed; final
+   expanded Diagnostics4/4 passed with the planned V55 intentional-skew case. No native
+   PAM/API/shell claim. Initial bundle b9692855d5cec8e1b3e13f228531f465aa60ff6e09f60ecc31b85e3c370336c9;
+   final2f756b1e697dc6edb15d79afe4713f87c36e8e6ffdad288eaaf2353a25fe50bc.
+   Final focused source5be6d39ac250398f8b8655a40db81d7603ef31bf11fe8f9c71b3050fee69c291.
+   Final focused ESLint/types also exited0; bounded cpr-009-mounted.json retained.
+3. node --test cockpit/test/build-info.test.ts cockpit/test/host-profile.test.ts
+   cockpit/test/operation-authority.test.ts cockpit/test/command.test.ts
+   45 passed, 0 skipped in 679.055ms.
+
+Finding closure review (audit baseline preserved, not rewritten):
+F01 bridge/stage/process classification: CPR-002/003/008; V01-08, V11, V54.
+F02 candidate API refusals: CPR-003/007/008; V09-16, V20, V52, V54.
+F03 configuration uncertainty/preview: CPR-003/004/008; V17-21, V54.
+F04 handle lifetime: CPR-004/005/008; V22-26, V28-34, V52-54.
+F05 uncertain maintenance Apply: CPR-004; V24, V27, V29-34, V53.
+F06 closed D-Bus/stale readiness: CPR-002/007; V05-08, V37-40, V49.
+F07 manual full operations: CPR-005/008; V28, V35-40, V52-53.
+F08 REST run reports: CPR-006/008; V41-45, V52-53, V57.
+F09 truthful read presentation: CPR-007; V46-51.
+F10 fixed-launcher recovery commands: CPR-004/009; V26, V30, V33, V55, V57.
+F11 real boundary/gate evidence: CPR-008/009; V52-60.
+Each V row in acceptance-record.md links actual scoped proof. Pure/component,
+installed-console/private UDS, native disposable and production/workload layers
+remain separate; no component assertion is relabelled PAM or live acceptance.
+
+Owned DESTDIR install-path/mode probes passed (two actual make installs):
+rtk proxy python3 (bounded subprocess make -C cockpit NODE_ENV=production install
+DESTDIR=<new owned private fixture>/umask-{077,022} PREFIX=/usr, umask077/022).
+Exactly five regular assets byte-equal to cockpit/dist in both runs;077 yields
+0700directory/0600files,022 yields0755directory/0644files. Outer owned fixture
+stays0700. No host install/service/production ownership claim. Accepted native
+fixture separately proves actual service-account asset readability.
+Full bounded result: cpr-009-install.json.
+
+Explicit frontend history:
+- Initial pre-V55 make -C cockpit check exited0:570unit,109mounted,lint/style/
+  types/fresh production build; log /tmp/hfcache-cpr009-frontend.log SHA256
+  bcf33c611d0211e894a6d75ba82ebb3edfdd43fcdf44e1f9d47baeaebde1702a.
+- First expanded explicitmake exited2 on four object-property-newline lint errors
+  in new test literals; no product behavioral failure. Raw log
+  /tmp/hfcache-cpr009-final-frontend.log SHA256
+  4894676e1a87af7eae9ad8e3cdeecaa5901d4092afdc3721c369def3fe77cd6f.
+  Newlines corrected before final extended gate reaches frontend; source behavior
+  unchanged. The added V55 is planned coverage of existing correct presentation,
+  so no fabricated fail-before source defect is claimed.
+- Final expanded explicitmake exited0:570unit/0skip,110actualmounted React,
+  lint/style/types/fresh production build. Log
+  /tmp/hfcache-cpr009-accepted-frontend.log SHA256
+  128fe35eb87e68238a53b058ddb9b5d59e9ea221f58890dd9958ec92923beb21.
+  Bounded cpr-009-final-mounted.json, bundle
+  2f756b1e697dc6edb15d79afe4713f87c36e8e6ffdad288eaaf2353a25fe50bc.
+- Final scripts/check.sh --with-build --require-cockpit exited0:5299Python/
+  52deselected in757.36s; all3locked installation profiles; frontend lint/style/
+  types/570unit0skip/110mounted/fresh production build;16build-marked passed/
+  5335deselected in45.18s (2actual old-wheel compatibility,4wheel smoke,
+  10installed-console/private authenticated UDS). Raw log
+  /tmp/hfcache-cpr009-final-gate.log SHA256
+  5736d266150ebda625edae8dd46ecaed08c9751def7db3acaee919c512eb0698.
+  Final full-gate mounted artifact equals cpr-009-final-mounted.json; installed
+  identity cpr-009-installed.json matches final wheel638a3274…cec1b and all90
+  runtime module bytes. No skipped frontend or mocked native pass.
+
+
+Focused raw log hashes:
+parity578: f7b8aae7a93dd705c2ec7cfde8aa7b2344f7cedb73c56cf1144fc1e6af7c3db7
+identity45:90e472a306876c964e441825e73ffeb16f3970d74981aafb792f3c8f6f404810
+
+Explicit final production build (current parent0dc2c93, dirty=true):
+JS30e03a88a681ff195cfa476028211aad877c1d8a9e9b81faf0a3e61ee18651f5
+gzipf7e4779ed8fdcb38162b212c3aea39b98e9555c5d03aa77b50b9df01b52e57c6
+embedded public-input96fa3c7f220fddd342b9405df4d7532299289b2207a1376b5283e4f33ff7eaf7
+The runtime input digest equals accepted fifthguest; output differs because the
+actual embedded parent changed. No clean final-commit/deployed equality is claimed.
+
+Observed final backend/build portion:
+5299Python passed/52deselected in757.36s; uv source/wheel build exited0.
+Wheel638a3274349ddd98083a0ffd46ab993aa3e6925826457aa7771763ad5d2cec1b
+Sdistba43dbbd54757a3caf992c03f5b0373b25779d596e87a9f4f87d32aee2c6a2b1
+README231155fc36506d9db11cad0c0cc5c090545f77666eeb4b3318fe306fe6e4008b
+Wheel METADATA README equals current source exactly (apart from terminal newline).
+All90module paths/bytes equal current source, aggregate
+dc3b90cf2037ddce3f9079f6d4e337b3279a4042cf81cbdc52a394e6b75f2679.
+Only README metadata changes the wheel from accepted native fixture578fd699…8392d.
+The native image/wheel is not silently relabelled as the final gate wheel.
+These are truthful dirty precommit build snapshots. Final closeout metadata is
+checked separately; a later approved clean release build must capture new exact
+source/bundle/wheel/sdist/image/index identities. No release/tag/install is implied.
+
+Final review/closeout: F01-F11 and exactly V01-V60 traced; all nine tasks complete,
+plan completed and current selector cleared without activating historical backlog.
+Independent review corrected final109-mounted and68-filesystem evidence links;
+earlier108/67 artifacts remain preserved. CP01-14/INV005/006/agentINV011 and
+actualADR134-139/affected older amendments agree; no new architectural decision
+or runtime/dependency/durable/API/MCP change in this final package.
+Production/original installed symptom/NAS holds remain separately unverified.
+Final branch push authority is the later explicit user instruction only.
+
+Post-closeout metadata checks (actual exits0):
+rtk uv run --locked --extra server --extra mcp python scripts/check-docs.py
+  documentation alignment188human documents/19helpers.
+rtk proxy uv run --locked --extra server --extra mcp pytest
+  tests/unit/test_docs_alignment.py tests/unit/test_docs_config_contract.py
+  tests/unit/test_catalog_acceptance_evidence.py -q
+  65passed in6.22s; raw /tmp/hfcache-cpr009-closeout.log SHA256
+  72b3b8c26cdda2087a0fc2d4192f7e425a70f550090f3591a264efe8a59d88d2
+Direct lifecycle/link inspection confirms9completed tasks, completed plan, inactive
+selector, exactly V01-V60 rows and all acceptance/handoff local links present.
+rtk proxy git diff --check exits0. No source/test change after final accepted gates;
+only completion/authorization/evidence metadata, independently checked above.

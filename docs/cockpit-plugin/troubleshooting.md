@@ -261,8 +261,19 @@ never retry an uncertain install automatically or overwrite the other editor's
 labels. The retained backup and configuration lock remain evidence.
 
 Source/component checks, disposable runtime checks and installed-host diagnosis
-are separate evidence. The isolated launcher fixture's successful version and
-candidate validation used an older immutable application artifact; they do not
-validate newer authority/recovery code or prove the original installed
-`reconnected` cause. Actual Cockpit/PAM/session acceptance and guarded deployment
-verification still require their recorded environment and artifact prerequisites.
+are separate evidence. Earlier launcher checks using an older immutable artifact
+remain historical evidence. New installed-wheel/private-socket tests and actual
+isolated Cockpit/PAM/rootless checks passed for current repair artifacts, including
+exact candidate validation, installation/confirmation, bridge interruption and
+read-only reconciliation. They do not establish parity with the recorded installed
+artifact or prove its original `reconnected` cause. Retain earlier uncertain
+attempts and backups; success on a fresh fixture does not resolve them.
+
+Two transport failures were reproduced in those isolated environments: NUL bytes
+in a Cockpit text channel disconnected the bridge, and redirecting PID1 stdout to
+a configuration-directory file caused an enforcing SELinux denial. The current
+guard uses bounded canonical ASCII framing and a pipe to a bounded local output
+collector. See [text-channel framing](../adr/decision-138.md) and
+[confirmation output](../adr/decision-139.md). Keep the actual classified error
+and stage when diagnosing an installed failure; neither a changed message nor
+fresh-fixture success proves that installation fixed.

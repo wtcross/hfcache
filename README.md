@@ -80,6 +80,13 @@ other-host acceptance. See [recorded deployment scope](docs/deployment-status.md
 and [release notes](CHANGELOG.md), including the private-worker connection
 limitation that returns on rollback to 0.2.0.
 
+Newer source repairs Cockpit error handling, original-operation recovery,
+configuration validation/confirmation, manual REST jobs and report/read views.
+Installed-wheel/private-socket tests and isolated Cockpit/PAM/rootless acceptance
+passed, including bridge interruption and guarded exact configuration installation.
+These repairs have not changed the recorded deployment; verification of the original installed symptom and live
+NAS/workload acceptance remain separate.
+
 ## Repository layout
 
 | Path | Contents |
@@ -103,7 +110,8 @@ scripts/check.sh
 
 The gate includes format, lint, types, offline tests, build and three isolated
 installation profiles. Cockpit checks require pnpm and make; their explicit skip
-does not validate plugin changes. [Development instructions](docs/development.md)
+does not validate plugin changes. Use `scripts/check.sh --require-cockpit` to
+require the frontend gate. [Development instructions](docs/development.md)
 describe safe examples, build smoke tests and separately authorized live/NFS work.
 
 ## License

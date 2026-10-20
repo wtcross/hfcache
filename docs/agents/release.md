@@ -8,7 +8,7 @@ checklist compresses.
 
 The [API-017 rollout checklist](../deployment-centos-stream-10.md#acceptance-checklist)
 is the current API/private-worker/state acceptance companion. Feature completion
-keeps application metadata 0.1.10 unchanged; it does not cut or deploy a release,
+keeps application metadata 0.2.1 unchanged; it does not cut or deploy a release,
 create a tag or authorize any step below. Commit and wheel/sdist hashes identify
 an artifact; equal displayed versions do not. Actual previous-feature/baseline
 compatibility evidence must not be relabelled as a deployed previous release.
@@ -24,14 +24,21 @@ masks, disabled schedules, stores and handles. The native commands below apply
 only to a separately selected supported native profile. Native tools positively
 validate source/current/target layout and refuse container/mixed/unknown releases.
 Their dry-run is static intent, not acceptance. No implementation task grants
-release/deployment authority; current user instructions permit only final feature-
-branch pushes after this documentation plan's acceptance.
+release/deployment authority. Earlier permission for final feature-branch pushes
+belonged to a historical documentation task and does not carry forward. Current
+instructions authorize scoped source work and isolated validation, plus explicitly
+requested final green implementation-branch pushes to Forgejo and GitHub after
+commit. Push only that branch, preserving incremental commits, without tags or
+force. No merge, tag, deployment, registry operation, production change or live/NAS
+workload is authorized.
+The operational procedures below require a separately authorized release window.
 
-## Current data-preserving local release scope (OPS-014)
+## Historical data-preserving local release scope (OPS-014, 2026-10-18)
 
-The new [local rollout plan](plans/2026-10-18-plan-local-rootless-rollout.md)
-authorizes reviewed local release/deployment/tagging while forbidding all NAS
-content/metadata writes and changes to other hosts. [Decision 126](../adr/decision-126.md)
+The completed [local rollout plan](plans/2026-10-18-plan-local-rootless-rollout.md)
+authorized reviewed local release/deployment/tagging at that time while forbidding
+all NAS content/metadata writes and changes to other hosts. This is historical
+authority, not permission for another rollout. [Decision 126](../adr/decision-126.md)
 narrowly adapts acceptance: do not execute the historical supervised sync, live
 full verification, archive-writing hardening workload or automatic sync-timer
 resumption below. Their status remains NOT RUN, not passing. Actual local
@@ -39,12 +46,11 @@ container/proxy/credential/isolation checks and disposable local fixtures provid
 explicit partial acceptance only. Preserve the read-only client mount, blocked
 writers, retained state and actual executor drain/lock guards.
 
-A local annotated tag must identify the actually deployed reviewed artifact and
-state these remaining restrictions. No remote push, registry publication or ACME
-issuance is authorized; the historical publishing steps below are excluded.
-Version/profile/image selection and all actual outcomes remain their task's work,
-not an authorization to bypass missing proof. All ordinary safety requirements
-continue unless this stricter no-write scope forbids a specific acceptance step.
+That scope required a local annotated tag to identify the actually deployed
+reviewed artifact and state these remaining restrictions. It excluded remote push,
+registry publication, ACME issuance and the historical publishing steps below.
+Version/profile/image selection and recorded outcomes do not renew that authority
+or bypass missing proof. Retain all outstanding no-write and workload restrictions.
 
 ## Preconditions
 

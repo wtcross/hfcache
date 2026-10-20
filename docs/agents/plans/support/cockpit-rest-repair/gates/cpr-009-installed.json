@@ -1,0 +1,10 @@
+{
+  "cwd_outside_checkout": true,
+  "installed_console_sha256": "83f88fd2c95621840b8b76bf9a5b157ff3788b68e7f100b36d467a7e3a97ddbc",
+  "isolated_entrypoint": true,
+  "locked_base_requirements_sha256": "24350711ab995f837f6009cc30a446d41fe99c1b7322e8e1bb2376fa79488e18",
+  "matched_python_files": 90,
+  "python_package_source_wheel_sha256": "dc3b90cf2037ddce3f9079f6d4e337b3279a4042cf81cbdc52a394e6b75f2679",
+  "python_version": "Python 3.14.6",
+  "wheel_sha256": "638a3274349ddd98083a0ffd46ab993aa3e6925826457aa7771763ad5d2cec1b"
+}
