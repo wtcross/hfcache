@@ -17,11 +17,13 @@ apply wherever the archive mount exists.
 
 ## The deployment, in facts
 
-The selected recorded deployment is guarded rootless 0.2.1, not the older native
-installation described in historical evidence. See [deployment status](../deployment-status.md)
-and [script inventory](../scripts.md). This documentation task authorizes no host
-operations; the user's final feature-branch push permission does not authorize
-installation, service control or production archive access.
+The selected recorded deployment is guarded rootless 0.2.2 from clean source
+`1c685018803a365bbb8b0c1aad4b94709f60e7d7`. Actual host TLS/authentication,
+API-origin worker PROBE and confinement checks passed; the
+[rollout evidence](plans/support/cockpit-rest-rollout/acceptance-record.md) records
+the exact artifacts and remaining closeout checks. See also
+[deployment status](../deployment-status.md) and [script inventory](../scripts.md).
+These facts do not authorize another rollout or production archive access.
 
 - Rootless releases use `/opt/hfcache/releases/<version>` and atomic `current`,
   `container-release.json`, an artifact index and protected rendered runtime metadata.
@@ -38,6 +40,14 @@ installation, service control or production archive access.
 - Preserve NAS read-only, independent original-inode host guard, writer masks,
   disabled calendars, both operation stores and all scheduled handles. Neither
   wrapper exit nor free lock proves executor termination. No schedule is enabled here.
+- The protected Cockpit policy grants configuration permission only; archive,
+  Hub, control, schedule and observer permissions remain false. Existing candidate,
+  backup and configuration lock evidence remains. Production PAM/browser candidate
+  validation or installation has not been proved by the host checks.
+- Never run `systemd-analyze --user verify` with a live `XDG_RUNTIME_DIR`.
+  Use fully owned isolated runtime, bus and unit/generator paths; preserve a stale
+  endpoint for review rather than unlinking it or blindly restarting its manager.
+  See [static user-unit verification](../containers.md#static-user-unit-verification).
 - Native remains supported separately: system services, host release `.venv`,
   uv-managed pinned Python and systemd credential delivery. Positive native
   source/current/target proof precedes staging, manager access and switching.
@@ -101,7 +111,7 @@ rollback, and preserve the disabled verification calendar. No repository plan
 closure clears the actual no-IP/credential/NFS/SELinux/TLS/firewall holds.
 
 
-## Current scoped local rollout authority (OPS-014, 2026-10-18)
+## Historical scoped local rollout authority (OPS-014, 2026-10-18)
 
 Tyler's newer authorization selects the
 [local rootless rollout](plans/2026-10-18-plan-local-rootless-rollout.md),
@@ -128,8 +138,8 @@ UID/GID 981 holds the original noncreating flock and proves host NFS-ro via
 app-target enablement preserve normal boot order; root alone performs the
 quiescent holder handoff with NAS-ro/masks continuous. The guard is not a
 continuous monitor and a private read-only sandbox view is not host proof.
-At OPS-016, application artifacts were clean 481fcc4; current 0.2.1 artifacts
-are clean 4088994. Unchanged independent host policy, its original activation
+At OPS-016, application artifacts were clean 481fcc4; the later 0.2.1 artifacts
+were clean 4088994. Unchanged independent host policy, its original activation
 and residual holds are separately recorded in
 [OPS-016](plans/tasks/ops-016-local-rootless-deployment.md).
 
@@ -137,7 +147,7 @@ The selected [listener correction](plans/2026-10-18-plan-container-worker-listen
 follows the local 0.2.0 partial release. OPS-017 is source/owned-fixture work only:
 explicit PID1 worker-created listener and container READY under existing
 confinement, preserving strict native FD3 activation. Root alone performs
-guarded selection/host acceptance. Completed OPS-018 now selects 0.2.1 and closes
+guarded selection/host acceptance. Completed OPS-018 selected 0.2.1 and closed
 the connection hold through actual installed API-container PROBE; no host-origin
 probe or source test supplied that proof. No NAS file I/O/jobs, policy/label/seccomp
 weakening, other-host change, remote publication or automatic backlog activation.
@@ -145,8 +155,8 @@ weakening, other-host change, remote publication or automatic backlog activation
 Completed OPS-019 supplies fresh REL-013 artifacts under Tyler's UBI 10 requirement.
 All built service FROM stages use pinned micro, with only reviewed binary/Red
 Hat CA-data donors; [decision 129](../adr/decision-129.md) governs implementation.
-Old Debian candidates/stopped gate are superseded evidence. Current 0.2.1
-retains Enforcing policy, permanent guard, NAS-ro and writer masks.
+Old Debian candidates/stopped gate are superseded evidence. That 0.2.1 deployment
+retained Enforcing policy, permanent guard, NAS-ro and writer masks.
 No source/base work permits NAS file I/O/jobs, other-host change or remote push.
 
 ### 0.2.1 local checkpoint (OPS-018, 2026-10-18)
@@ -162,8 +172,10 @@ The user subsequently explicitly requests merge to main and pushes to both remot
 then deployment on this host in place of the existing release. This narrowly
 supersedes earlier no-host-operation language for the reviewed local replacement;
 it does not renew NAS workload or other-host authority. The completed repair is
-merged/published atcdc35a4; a separate active rollout plan prepares immutable0.2.2,
-while selected0.2.1 remains the observed running deployment until actual switch.
+merged/published at cdc35a4; REL-015 prepared clean immutable 0.2.2 source 1c68501.
+The reviewed guarded switch now selects that release, with actual host acceptance
+and remaining closeout evidence in the
+[rollout record](plans/support/cockpit-rest-rollout/acceptance-record.md).
 Keep NASro, original independent guard/locks, masks, disabled calendars, stores,
 handles, candidate/backup and secret separation. Back up required configuration
 locally/private before effects; no automatic replay/rollback/cleanup after uncertainty.
@@ -172,3 +184,8 @@ original-lock handoff; builders/gates run as login user with NAS shadowed. No im
 registry, forced termination, live/NAS workload, archive init or security weakening.
 The required deployed local tag follows actual acceptance and stays local unless
 publication is separately authorized. Completed plans/history remain unchanged.
+The new guard holds the original domain lock; the original configuration,
+candidate, backup and root configuration lock remain preserved. A reviewed
+zero-executor user-manager restoration retained the service manager's PID and
+invocation; the unrelated stale login-user manager was left unchanged. This does
+not prove the original production PAM/browser symptom fixed or permit NAS jobs.

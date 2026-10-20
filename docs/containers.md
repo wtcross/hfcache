@@ -5,6 +5,8 @@ confined private verifier. It remains guarded/read-only. See the dated
 [deployment status](deployment-status.md) before any operational change; source
 and fixture checks do not authorize NAS workloads or lifting the host guard.
 [Runtime rationale](adr/decision-127.md) explains the isolation/lifecycle choices.
+The selected installed release is 0.2.2 from clean source
+`1c685018803a365bbb8b0c1aad4b94709f60e7d7`.
 
 ## Roles and lifecycle
 
@@ -265,6 +267,23 @@ archive mount; the target Wants the bridge, so a bounded mount failure refuses
 runtime startup without requiring that bridge for successful target activation.
 Verify these bindings and the effective manager state before activation.
 
+### Static user-unit verification
+
+Never run `systemd-analyze --user verify` with a live `XDG_RUNTIME_DIR`. In
+systemd 257 its test manager can replace the live `systemd/private` socket.
+Static verification must use a fully owned disposable runtime directory,
+isolated bus endpoints and isolated unit/generator search and output paths.
+No path may resolve to a live manager socket or generator directory. Successful
+syntax verification does not prove that the running manager remains reachable.
+
+If a private endpoint becomes stale, preserve the endpoint and actual manager
+PID/starttime/invocation evidence; do not blindly unlink the socket or restart
+the manager. Restoration requires reviewed actual executor quiescence and
+authenticated observation through the existing user bus. The scoped 0.2.2
+restoration used an explicit no-reply `Reexecute` only after zero-executor proof,
+retaining the service manager's PID and invocation. It is not an automatic retry
+procedure; an unrelated stale login-user manager was left unchanged.
+
 ## Protected host boot guard
 
 The selected data-preserving deployment also needs the fixed root-owned
@@ -294,8 +313,8 @@ The system bridge keeps ProtectHome=yes. Its protected host drop-in binds only
 /run/user/<service_uid>/systemd/private to /run/hfcache/user-manager/systemd/private and
 uses /run/hfcache/user-manager as bridge-only XDG_RUNTIME_DIR. Protected boot
 directories support this narrow connection without exposing the service home.
-Verify syntax with a disposable user runtime directory; never aim verification
-at the live manager socket. Inspect the actual bridge drop-in and prove its
+Use the [isolated static verification procedure](#static-user-unit-verification);
+never aim verification at the live manager socket. Inspect the actual bridge drop-in and prove its
 hardened connection before claiming target readiness.
 
 ### Worker-created private listener
@@ -501,7 +520,18 @@ preserved and new contexts/images are built, never relabelled as passing.
 
 ### Recorded installed scope
 
-Recorded 0.2.1 checks include the installed API-container private PROBE under
+Current 0.2.2 host acceptance includes verified TLS, thirteen authentication/class
+checks, the exact fourteen read-only MCP tools, an API-container-origin private
+PROBE and actual worker PID1 offline/mask/capability/read-only-root observations
+under Enforcing SELinux. The new notify guard holds the original domain inode;
+NAS read-only, writer masks, disabled calendars and original configuration,
+candidate, backup, locks and durable stores remain. The protected Cockpit policy
+permits configuration only; archive, Hub, control, schedule and observer remain
+denied. This does not prove the original production PAM/browser candidate flow
+or permit a NAS workload. The [deployment status](deployment-status.md) records
+the installed identities, local tag and remaining holds.
+
+Historical 0.2.1 checks include the installed API-container private PROBE under
 Enforcing SELinux before and after drain/restart, verified TLS/authentication,
 MCP/client connectivity, worker readiness and confinement observations. This
 closes the listener connection limitation for 0.2.1; rollback to 0.2.0 retains it.

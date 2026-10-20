@@ -4,12 +4,14 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
-## 0.2.2 — release candidate, deployment pending
+## 0.2.2 — 2026-10-20, local release with workload holds
 
-This candidate combines the changes below since deployed source `4088994`.
-The recorded local installation remains 0.2.1. Clean release artifacts, installed
-acceptance and an annotated `v0.2.2` tag are pending; source and disposable test
-results do not establish deployment or clear existing NAS/workload holds.
+This release combines the changes below since previously deployed source `4088994`.
+The local installation now selects clean source `1c68501`, identified by local
+annotated `v0.2.2`. Actual installed acceptance passed for the indexed artifacts,
+TLS/authentication, private worker and fixed host client. Configuration, candidate,
+predecessor, locks, receipts, handles and secret identities remain intact. Existing
+NAS/workload holds remain; the tag has not been published to either remote.
 
 - Cockpit preserves classified bridge, launcher, API and domain failures, plus
   original operation keys and IDs across tab changes and interrupted observation.
@@ -29,8 +31,9 @@ results do not establish deployment or clear existing NAS/workload holds.
   end-of-message write from closing a valid response's socket prematurely.
 - Installed-wheel/private-socket and actual isolated Cockpit/PAM/rootless checks
   passed, including exact configuration installation/confirmation and read-only
-  reconciliation after bridge interruption. These repair-source checks do not
-  prove the new candidate installed or the original installed symptom fixed.
+  reconciliation after bridge interruption. These disposable checks remain
+  separate from actual installed acceptance and do not prove the original
+  installed browser symptom fixed. Its existing candidate is preserved.
 - Optional normalized configuration tags, Cockpit authoring and current versus
   last-observed provenance are separate from operational policy and immutable
   publication/integrity identity.
@@ -44,7 +47,7 @@ results do not establish deployment or clear existing NAS/workload holds.
 - Old durable evidence stays byte-compatible. New tags, directory and refresh
   kinds have observed target-specific compatibility limits; retain backup/state/
   handles and actual executor drain. See [discovery rollback](docs/discovery.md#guarded-rollback-and-backup).
-  In particular, the deployed 0.2.1 binary refuses explicit configuration tags
+  In particular, the predecessor 0.2.1 binary refuses explicit configuration tags
   and its strict client refuses new refresh routes. Preserve a target-compatible
   configuration and compatible observation of retained new operation kinds;
   rollback never authorizes deleting supplemental metadata or receipts.

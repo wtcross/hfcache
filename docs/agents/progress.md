@@ -29,6 +29,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Guarded Cockpit repair release (2026-10-20)
 
+- [x] OPS-023 Deploy and accept clean guarded0.2.2 (2026-10-20, this commit —
+  [plan](plans/2026-10-20-plan-cockpit-rest-rollout.md),
+  [task](plans/tasks/ops-023-cockpit-rest-host-rollout.md),
+  [evidence](plans/support/cockpit-rest-rollout/acceptance-record.md)). User's
+  merge/main-push/deploy authority follows published clean1c68501. New artifacts
+  and all6actual fixture proofs pass, including126old/current reader observations.
+  Clean extended gate5299Python/570unit0skip/110mounted/16installedbuild and
+  explicitmake pass. Root-private35file/402065B backup precedes actual API-first
+  non-killing drain, zeroPIDs/cgroups/containers/sockets and original-lock handoff.
+  Current0.2.2/indexbc40f9d7/appfec39364; newREADYguard1868228 holdsoriginal27:2273.
+  Original config/candidate/predecessor/rootconfiglock,6stores/handles andsecret
+  IDs/bytes unchanged. Policy grants configuration only; all other5effects denied.
+  Actual installed64file/9binding/TLS/13HTTPauth-MCP/14tool/APIoriginworkerPROBE/
+  notify/PID1confinement/hostCLI0.2.2 checks pass. Original failedTimestral result
+  is byte-identical/HFMNT010/exit20; no replay/cancel. Live-runtime static verifier
+  error is isolated/reproduced/vendor-confirmed; only after actual zeroexecutor
+  proof, one authenticated manager reexecution restoresendpoint/samePID+invocation.
+  First rootPATH refusal precedes guard/selector effects; all failed ledgers retained.
+  Localv0.2.2 objectc69ef761 targets clean1c68501 after actualacceptance. Final
+  strict NAS-shadowed extended gate exits0:5299Python704.87s/570unit0skip/110mounted/
+  16build47.17s, log71cc2234..., runtime15min16.141s. Parent invariant/ADR review
+  holds; no dependency/schema/architecture change. Human deployment/rollback/
+  verification guidance updated; task/plan complete, selectorinactive/nextnone.
+  Final main commit publication to both remotes follows without tags/force; exact
+  refs are verified afterward. Browseroriginal/NAS/liveworkload/otherhost/calendar
+  holds and five guests/unknown candidates remain; Operator handoff32 owns them.
+
 - [x] REL-015 Prepare0.2.2 release source (2026-10-20, this commit —
   [plan](plans/2026-10-20-plan-cockpit-rest-rollout.md),
   [task](plans/tasks/rel-015-cockpit-rest-release-source.md)). Latest user explicitly
@@ -2823,6 +2850,36 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     Keep NAS/workload/other-host restrictions. Local deployed tag only after actual
     acceptance; branch pushes do not authorize unrelated or remote tag publication.
     No registry, automatic replay/rollback/cleanup or historical backlog activation.
+
+32. **Guarded0.2.2 installed, remaining verification (OPS-023,2026-10-20):**
+    host now selects clean1c68501/appfec39364/indexbc40f9d7, actual installed
+    TLS/auth/private-worker/hostCLI acceptance passes; localv0.2.2 objectc69ef761
+    targets exactsource1c68501. Protectedbackup/evidence:
+    /opt/hfcache/deployment/20261020-cockpit-0.2.2. Immutable0.2.1 remains; rollback
+    needs compatibleconfig/newmetadata observation, real executor drain and
+    original-lock guard handoff, never deleting new metadata/receipts or restoring
+    NAS writes. Guard1868228/7cf576d8474f4790a6e70feadd27b3f4 holdsoriginal27:2273;
+    rootconfiglock64768:138322689/config/candidate/bak/6stores/handles/secrets are
+    preserved. Keep hostNASro,4writer/timermasks, disabledverificationcalendar,
+    SELinux/systemd/seccomp/credential boundaries. Policy enables configuration
+    only, other5permissionsfalse; no automatic configuration action is authorized.
+    Original Timestral op0cb77c1c970e21033a9cab7fb8ea872d remains failedHFMNT010/
+    exit20, exactstdout9c0b18f8... before/after; never replay/cancel to test rollout.
+    Separate original-symptom verification: fresh Cockpit reload/login, compare
+    loadedsource1c68501/selectedindex/API0.2.2, then read-only inspection of the
+    existing candidate and originaloperation. Do not install/discard/overwrite
+    candidate or submit another job merely to obtain a passing message. Native
+    disposable PAM proof is separate; original productionPAM/candidate install,
+    NAS/fulljobs/export/reboot/snapshot/otherhost/calendar remain NOTRUN.
+    Five disposable guests and prior unknown/unconfirmed execution remain retained.
+    Never run static user-unit verification against live XDG/runtime/bus/generator
+    paths: actual257-31socketreplacement was reproduced in an owned fixture.
+    The service981endpoint was restored only after zeroexecutor proof via one
+    authenticated no-reply reexecution; samePID/invocation, no defaulttarget restart.
+    Preexisting unrelated1000staleprivate endpoint remains untouched. Preserve
+    failed/unknown ledgers; no blind socket unlink, manager restart, cleanup,
+    rollback, selector retry or credential copying. No remote tags/registry or
+    unrelated backlog activation follows final authorized main publication.
 
 ## Operator decisions needed
 

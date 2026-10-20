@@ -8,14 +8,15 @@ checklist compresses.
 
 The [API-017 rollout checklist](../deployment-centos-stream-10.md#acceptance-checklist)
 is the current API/private-worker/state acceptance companion. Feature completion
-keeps application metadata 0.2.1 unchanged; it does not cut or deploy a release,
-create a tag or authorize any step below. Commit and wheel/sdist hashes identify
+alone does not cut or deploy a release, create a tag or authorize any step below.
+Commit and wheel/sdist hashes identify
 an artifact; equal displayed versions do not. Actual previous-feature/baseline
 compatibility evidence must not be relabelled as a deployed previous release.
 
 ## Selected-profile boundary
 
-The recorded selected deployment is guarded rootless 0.2.1. Use the rootless
+The recorded selected deployment is guarded rootless 0.2.2 from clean artifact
+source `1c685018803a365bbb8b0c1aad4b94709f60e7d7`. Use the rootless
 installer, fixed host client, user-manager services and protected Podman file
 secrets documented in [scripts](../scripts.md) and [containers](../containers.md).
 API follows the notify-ready worker-created listener; keep the dormant socket
@@ -28,9 +29,13 @@ release/deployment authority. Earlier permission for final feature-branch pushes
 belonged to a historical documentation task and does not carry forward. Later
 2026-10-20 user instructions explicitly authorize merging the repair to main, pushing main to Forgejo/GitHub, then replacing this host's existing guarded
 rootless deployment. The main fast-forward and both pushes at cdc35a4 are complete.
-Prepare a new immutable0.2.2 candidate from clean committed source, preserve the
-old0.2.1 deployment/backup and all original locks/state/guards, and record actual
-local acceptance before the required local deployed tag. Do not infer remote tag
+The immutable 0.2.2 release is now selected and actual host TLS/authentication,
+API-origin worker PROBE and confinement acceptance passed. Preserve the old 0.2.1
+release/backup and all original configuration, candidate, locks, stores and handles.
+The [rollout record](plans/support/cockpit-rest-rollout/acceptance-record.md) owns
+exact fixed-client, before/after preservation and local-tag outcomes; selection
+alone does not prove those checks. No production PAM/browser candidate flow or
+NAS workload has been accepted. Do not infer remote tag
 publication, registry operations, NAS writes/workloads, other-host changes, guard
 release for execution, schedule enablement or forced cleanup. This newer scoped
 maintenance instruction supplies the release window; historical authority below
@@ -146,6 +151,13 @@ passing), `systemd-analyze verify` over the installed units (silent), and no
 new SELinux AVC records. `REL-004`'s tracker entry shows a complete worked
 run.
 
+Static user-unit verification must use fully owned isolated runtime, bus and
+unit/generator paths. **Never run `systemd-analyze --user verify` with a live
+`XDG_RUNTIME_DIR`**: systemd 257's test manager can replace the live private
+socket. Do not unlink a stale endpoint or blindly restart its manager. Follow
+the [verification and reviewed restoration boundary](../containers.md#static-user-unit-verification);
+static syntax success is not actual manager or executor health.
+
 ## Tag and publish
 
 1. Annotated tag `v<version>`. The note is the complete release record:
@@ -226,7 +238,7 @@ Rollback to 0.2.0 returns to its documented worker hold. Keep independent host
 guard, NAS-ro, writer masks, both stores/observer handles and lock inodes. No NAS
 file I/O/jobs or remote publication is authorized by this correction.
 
-## UBI 10 prerequisite for corrected artifacts (OPS-019)
+## Historical UBI 10 prerequisite for corrected artifacts (OPS-019)
 
 [Decision 129](../adr/decision-129.md) requires pinned UBI micro for every app/
 Caddy FROM stage and verified portable interpreter/binary/Red Hat CA inputs.

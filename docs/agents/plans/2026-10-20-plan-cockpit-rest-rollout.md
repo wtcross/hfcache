@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | active |
+| Status | completed |
 | Created | 2026-10-20 |
 | Authorization | Latest user explicitly requests merge to main and both remote pushes, then deployment on this host in place of the existing deployment; passwordless sudo and necessary service outage are authorized. Preserve NAS data and previous safety limits. |
 | Tracker | [Current selector](current.md) |
@@ -13,9 +13,10 @@
 Publish the merged source to both main refs first (already done), then prepare a
 new immutable patch release, build it from exact clean committed source, back up
 the existing local deployment/configuration and install/accept it on this host.
-0.2.2 is unused in local tags, both remote tag refs and protected release/stage
-paths. GitHub preflight succeeded on a read-only retry after initial transient DNS
-refusal; no network/host policy was changed. Reserve0.2.2 without touching0.2.1.
+At activation, 0.2.2 was unused in local tags, both remote tag refs and protected
+release/stage paths. GitHub preflight succeeded on a read-only retry after initial
+transient DNS refusal; no network/host policy was changed. 0.2.2 was reserved
+without touching0.2.1.
 Do not overwrite immutable0.2.1 or relabel an earlier dirty fixture as a release.
 
 The later user instructions supersede earlier no-merge/no-host-deployment authority
@@ -78,3 +79,13 @@ without unrelated tags, verify refs, and report installed evidence honestly.
 no other active plan existed. REL015/OPS023 collision searches found none. Read-only
 host inventory confirms current0.2.1/source4088994, original guard809950, NASro,
 masked timers and preserved existing candidate/config predecessor/configlock.
+
+2026-10-20 scoped completion: REL015/source1c68501 is committed and published
+before deployment; OPS023 builds clean immutable0.2.2 and passes six actual local
+container proofs, guarded backup/drain/original-lock selection, installed TLS/
+auth/private-worker/CLI/state acceptance and final strict extended gate. Local
+annotatedv0.2.2 targets exact clean source1c68501; immutable0.2.1, original state,
+all failed/unknown evidence and NAS/workload/browser holds remain. Both package
+tasks complete; selector cleared without historical backlog activation. Final
+OPS023 commit/main publication follows the authorized no-tags push procedure;
+actual remote heads are checked after commit, never preclaimed in this record.
