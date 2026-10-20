@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Cockpit REST repair](../2026-10-19-plan-cockpit-rest-repair.md) |
 | Depends on | [CPR-002 — Classify bridge failures and repair connection lifecycle](cpr-002-bridge-errors-and-reconnect.md) |
 | Work package / commit | `CPR-003` — one complete package per commit |
@@ -75,13 +75,45 @@ commands/environment and any separately blocked disposable/installed checks.
 
 ## Execution notes and handoff
 
-Not started. On activation/resumption, record source drift, exact implementation
-scope, relevant runtime cause evidence, and any blocker with its unblock condition.
-Do not rewrite this section as completed merely because the plan was extracted.
+Started after CPR-002 commit 92f19b5. Sole active task. Preserve request Envelopes
+and stage evidence, add exact read-only fixed-file reconciliation and block repeat
+write/install/cleanup after uncertain acknowledgement. Collaborators share this
+package: pure pipeline, guarded-file inspection, UI/session integration and isolated
+guest diagnostic preparation. No production application/NAS effects authorized.
 
 ## Completion evidence
 
-Pending. Replace with the completion date, accepted test/fixture results, executed
-gate evidence, invariant/ADR review outcome, changed docs, remaining operator
-handoff, and the corresponding completed `docs/agents/progress.md` entry. Before
-commit use `CPR-003, this commit`; after commit, record only actual git evidence.
+Completed 2026-10-19, CPR-003, this commit. Failed request Envelopes remain
+independent of strict assessments; exact captured intent and bounded stage/cause
+history survive interruption and tab unmount. Successful sizing must prove the
+captured selectors/revisions/immutable commits and complete publication sizing;
+omitted backend defaults cannot skip preview or crash the form. Read-only
+inspection preserves the existing lock and creates no artifacts. Different
+preexisting candidates are preserved; matching reuse retains inode identity.
+Uncertain write/install blocks another mutation; matching explicit revalidation
+skips writes, while uncertain install needs exact installed/backup proof, API
+confirmation and acknowledgement. Unknown evidence remains for operator review.
+
+Focused pipeline101/101, guarded-filesystem62/62, config36/36 and mounted
+Firefox30/30 passed. Actual fail-before probes cover six pipeline defects, 37
+malformed preview cases, immutable SHA mismatch, two filesystem preservation
+behaviors, omitted-enabled sizing and omitted-default form rendering. Full
+`scripts/check.sh` exit0: Python5008 passed/42 deselected in787.38s, three locked
+wheel profiles and actual frontend lint/style/types, 327 unit +30 mounted tests
+and production build. Separate `make -C cockpit check` passed. Final doc alignment
+183/19 and whitespace check passed. [Gate](../support/cockpit-rest-repair/gates/cpr-003.txt),
+[acceptance](../support/cockpit-rest-repair/acceptance-record.md).
+
+CP-11/INV-006 and decisions122/133/134 reviewed and amended; exact tags, guards,
+credential separation and no-replay boundaries unchanged. No new architectural
+number, app dependency, archive format or REST endpoint. Configuration/Cockpit
+usage/troubleshooting contracts updated. Living deployment/container docs restore
+historically recorded public-directory/CWD/SELinux/empty-mask prerequisites;
+actual isolated fixture refusals and exact next steps remain in
+[runtime-003](../support/cockpit-rest-repair/runtime-003.md). They do not identify
+or prove repair of the original installed symptom. Required real CLI/socket/PAM
+acceptance remains V52/V54, owned by later packages; no mocked pass substituted.
+
+Next: CPR-004 original-key registry, authenticated observation and uncertain Apply
+guards. No unrelated historical backlog activation; no production/NAS operation,
+push, registry operation, merge or tag.

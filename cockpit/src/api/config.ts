@@ -11,8 +11,11 @@ import cockpit from 'cockpit';
 
 import { Envelope } from '../lib/envelope';
 import {
-    CandidateGuard, candidateMutationInvocation, CONFIGURATION_PATHS, readInstalledInvocation,
+    CandidateGuard, CandidateInspection, candidateMutationInvocation, CONFIGURATION_PATHS,
+    inspectCandidateInvocation, readInstalledInvocation,
 } from '../lib/candidate-guard';
+import { OperationNotice } from '../lib/events';
+import { normalizeFailure } from '../lib/failure';
 import { runHfcache } from './hfcache';
 import { hostCall } from './connection';
 
@@ -48,8 +51,37 @@ export function validateCandidate(guard: CandidateGuard): Promise<Envelope> {
 
 /* §6 step 3: the API sizing job holds the config flock and binds exact bytes.
  * It creates an operation receipt while remaining archive-lock-free. */
-export function planCandidate(selectors: string[], guard: CandidateGuard): Promise<Envelope> {
-    return runHfcache(['plan', ...selectors], { config: CANDIDATE_PATH, candidateGuard: guard });
+export function planCandidate(selectors: string[], guard: CandidateGuard,
+    onNotice?: (notice: OperationNotice) => void): Promise<Envelope> {
+    return runHfcache(['plan', ...selectors], {
+        config: CANDIDATE_PATH,
+        candidateGuard: guard,
+        ...(onNotice === undefined ? {} : { onNotice })
+    });
+}
+
+/* No writes, lock creation, temporary files or candidate adoption. */
+export async function inspectCandidate(guard: CandidateGuard): Promise<CandidateInspection> {
+    const invocation = inspectCandidateInvocation(guard);
+    const output = await hostCall('installed-read', false, async () => {
+        const proc = cockpit.spawn(invocation.argv, { superuser: 'require', err: 'message' });
+        proc.input(invocation.input);
+        return await proc;
+    });
+    try {
+        if (output.length > 512)
+            throw new Error();
+        const value: unknown = JSON.parse(output);
+        const fields = ['candidate', 'installedBase', 'installedCandidate', 'backupBase'];
+        if (typeof value !== 'object' || value === null || Array.isArray(value) ||
+            Object.keys(value).length !== fields.length ||
+            !fields.every(field => Object.prototype.hasOwnProperty.call(value, field) &&
+                ['matching', 'absent', 'changed', 'unknown'].includes((value as Record<string, string>)[field])))
+            throw new Error();
+        return value as CandidateInspection;
+    } catch {
+        throw normalizeFailure(null, { stage: 'installed-read', reason: 'invalid-envelope' });
+    }
 }
 
 /* §6 step 4: one predecessor kept, then fsync and rename over the target. */

@@ -100,8 +100,11 @@ The implemented [bounded presentation](decision-134.md#implemented-boundary-and-
 retains original safe stage/problem/process facts and exact failed terminal
 Envelopes. Read reconnection is finite; session transitions invalidate stale
 evidence without replaying host or API mutations. Raw rejection diagnostics are
-withheld. Higher-level candidate reconciliation and persistent operation recovery
-remain separate required work; no installed acceptance follows from these tests.
+withheld. The [candidate reconciliation amendment](decision-134.md#implemented-candidate-reconciliation)
+retains original stage evidence, uses read-only exact inspection and requires
+explicit confirmation/acknowledgement after uncertain installation. Persistent
+operation recovery remains separate required work; no installed acceptance
+follows from these tests.
 
 
 ### Negative confirmation evidence (2026-10-19)

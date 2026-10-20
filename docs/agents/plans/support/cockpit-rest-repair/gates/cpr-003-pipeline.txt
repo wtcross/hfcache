@@ -1,0 +1,94 @@
+CPR-003 pure pipeline and controlled-boundary evidence (2026-10-19)
+
+Repository: /home/tyler/Projects/hfcache
+No installed command, real API, PAM session, archive, or NAS used.
+
+RED: rtk proxy node --input-type=module -
+An inline behavioral probe loaded git show 92f19b5:cockpit/src/lib/config-pipeline.ts
+from a newly owned temporary directory, rewriting only relative dependency
+imports to the current pure library paths. The temporary directory was removed.
+The following six regression assertions each FAILED against CPR-002, as expected:
+  V11: general failed validation Envelope is retained as blocked=request.
+  V18: validation evidence is published before a rejected preview.
+  V19: interrupted install retains cause.problem=reconnected and stage=install.
+  V17: explicit skipWrite revalidation performs no candidate write.
+  V08: a negative Envelope is published after its draft is superseded.
+  V18: preview forwards the original receipt notice to its callback.
+Observed summary: 6/6 baseline regression failures. Exit 1 was intentional.
+
+GREEN (cwd cockpit): rtk proxy node --test test/config-pipeline.test.ts
+Observed: 59 tests, 59 pass, 0 fail, 0 skipped; exit 0.
+New cases cover V09-20, including authentic HFAPI003/017/018/019/HFARG001/HFCFG001
+failure Envelopes, strict successful/negative assessments, independently emitted
+validation evidence, immutable captured intent, skipped writes, superseded
+failures/results, original preview handles, bounded receipts/acknowledgements,
+lost install acknowledgement, explicit confirmation without reinstall, and
+confirmation process/postcheck failure.
+
+GREEN (cwd cockpit):
+  rtk proxy ./node_modules/.bin/eslint src/lib/config-pipeline.ts test/config-pipeline.test.ts
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+Observed: both exit 0 with no diagnostics.
+
+GREEN (cwd cockpit): rtk proxy node test/browser.mjs
+Observed: existing 12 mounted React/component tests passed; exit 0.
+Bundle SHA-256: 3d7d4f6d694a50c27399b73d958bab69f7f7a5d8cbcb53d71c1c9629f62bff27
+The controlled ProcessBoundary now also accepts only the actual imported fixed
+configuration script/paths/root identity and fixed nested CLI launcher. It records
+bounded two-document stdin as inert memory and executes no host commands.
+This run precedes the additional CPR-003 Configuration component cases.
+
+These focused checks do not substitute for scripts/check.sh or disposable-runtime
+acceptance. The work-package owner records those independently.
+
+Additional guarded-filesystem RED/GREEN (cwd repository):
+  rtk proxy node --input-type=module -
+An inline private-filesystem probe loaded the actual candidate-guard module from
+92f19b5 and the working tree; each received a separate mkdtemp directory owned by
+the invoking UID/group, a 0640 base, and the real write invocation through
+rtk proxy bash. No production paths or credentials were supplied.
+CPR-002 failed both assertions: repeating an identical candidate replaced its
+inode, and a different preexisting candidate was overwritten instead of refused.
+Working tree passed both assertions: same candidate inode reused; changed
+preexisting candidate refused and original bytes retained.
+Observed summary: CPR002 failures 2/2; working-tree failures 0/2; probe exit 0.
+All owned temporary files were removed. Inspection safety was independently
+reviewed against the 62-case guarded-filesystem suite; no additional defect was
+found within its documented cooperative-root-lock/trusted-sysadmin boundary.
+
+Required-preview completeness follow-up in the same CPR-003 package:
+Reviewed source: src/hfcache/services/commands.py::_planned (11 actual fields),
+src/hfcache/config.py repository/storage defaults, docs/cli.md plan contract,
+and tests/unit/test_readonly_commands.py success/partial-failure expectations.
+
+RED (cwd cockpit):
+  rtk proxy node --test --test-name-pattern='malformed or incomplete successful sizing|inconsistent successful sizing' test/config-pipeline.test.ts
+Observed before adding the success validator: 37 tests, 0 pass, 37 fail;
+exit 1. Each malformed/missing/inconsistent success was incorrectly accepted.
+
+GREEN (cwd cockpit): rtk proxy node --test test/config-pipeline.test.ts
+Observed after validator/shared default-selection fixes: 100 tests, 100 pass,
+0 fail, 0 skipped; exit 0. The new cases reject absent/empty/partial/duplicate/
+foreign rows, wrong revision/type/mode/projection/state/SHA and unsafe sizing
+numbers. They permit exact unordered selector sets, known schema defaults,
+copy-mode sizing, zero-sized results and unchanged nonzero partial/null plans.
+Validation binds successful sizing to the captured candidate and requested set;
+it neither replaces failed plan Envelopes nor creates another submission.
+
+Final focused verification after formatting:
+  rtk proxy node --test --test-reporter=dot test/config-pipeline.test.ts
+  rtk proxy ./node_modules/.bin/eslint src/lib/config-pipeline.ts test/config-pipeline.test.ts
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+Observed: all exit 0; 100 successful test dots and no lint/type diagnostics.
+
+Immutable requested-commit binding follow-up:
+  rtk proxy node --test --test-name-pattern='immutable requested commit' test/config-pipeline.test.ts
+Observed RED: 1 test, 1 fail, exit 1 before the semantic comparison. A valid
+40-character resolved SHA differing from the requested full SHA was accepted.
+The validator now reuses command.isFullCommitSha and requires equality when the
+captured requested revision is a full immutable commit. Branch/tag references
+retain their normal resolution semantics.
+  rtk proxy node --test --test-reporter=dot test/config-pipeline.test.ts
+Observed GREEN: 101 successful test dots, exit 0. Matching immutable SHA remains
+accepted; a different resolved SHA retains a protocol refusal and original plan.
+Focused ESLint and whole Cockpit tsc --noEmit also exited 0.

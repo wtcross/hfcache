@@ -50,7 +50,7 @@ async function main() {
         format: 'iife',
         platform: 'browser',
         define: { 'process.env.NODE_ENV': '"test"' },
-        loader: { '.css': 'empty' },
+        loader: { '.css': 'empty', '.scss': 'empty' },
         logLevel: 'silent',
         plugins: [{
             name: 'controlled-cockpit-boundaries',
@@ -62,7 +62,7 @@ async function main() {
                     contents: 'import { controlledCockpit } from ' + JSON.stringify(join(cockpit, 'test/cockpit-fixture.ts')) + ';' +
                     (args.path === 'superuser'
                         ? 'export const superuser = controlledCockpit.superuser;'
-                        : 'export default { spawn: (...args) => controlledCockpit.spawn(...args), dbus: (...args) => controlledCockpit.dbus(...args), file: (...args) => controlledCockpit.file(...args) };'),
+                        : 'export default { gettext: value => value, assert: value => { if (!value) throw new Error("Controlled Cockpit assertion failed"); }, spawn: (...args) => controlledCockpit.spawn(...args), dbus: (...args) => controlledCockpit.dbus(...args), file: (...args) => controlledCockpit.file(...args) };'),
                     loader: 'js',
                     resolveDir: cockpit,
                 }));

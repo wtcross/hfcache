@@ -114,9 +114,14 @@ If installed confirmation fails or its fingerprint differs, installation is
 unconfirmed. Retain the backup and evidence, inspect installed API validation,
 and follow the operator runbook; do not assume the previous file still exists,
 show success or silently roll back.
-Reload the installed configuration before validating another candidate; readiness
-is cleared after install/confirmation failure because the rename may already have
-completed. Never remove the retained config lock to force another attempt.
+Use **Inspect captured configuration** for read-only exact comparisons. A matching
+candidate/base permits explicit revalidation without another write. An uncertain
+installation requires matching installed bytes and retained predecessor, explicit
+confirmation through the API and acknowledgement before a fresh preparation.
+Keep the original classified error; inspection/confirmation errors are additional
+evidence. Absent, changed or unknown files do not prove nonexecution. A reload or
+tab change cannot clear uncertainty, and a new page cannot claim an old candidate.
+Never remove the retained config lock to force another attempt.
 
 ## Build fails: `pnpm: command not found` or `node: command not found`
 
@@ -161,8 +166,10 @@ On a separately accepted system-manager integration, the override is removed by:
 **Reset to shipped schedule** on the Sync tab (or remove
 `/etc/systemd/system/hfcache-sync.timer.d/50-cockpit.conf` and
 `systemctl daemon-reload`). A leftover `/etc/hfcache/.candidate.toml` is
-inert — the service reads only `config.toml` — and **Discard candidate**
-or a plain removal clears it.
+inert — the service reads only `config.toml`. **Discard candidate** is available
+only for an acknowledged, owned exact candidate/base. It refuses after uncertain
+execution or changed ownership. Preserve unknown files and backups for explicit
+operator review; their names alone never authorize removal.
 
 ## Tags and installed confirmation
 

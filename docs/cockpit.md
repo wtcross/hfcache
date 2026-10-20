@@ -286,6 +286,31 @@ recovery remain operator procedures.
 
 ## 6. Configuration editing
 
+Retain exact captured draft/base, stage acknowledgements and classified results
+independently of installation readiness, in application memory only. A general
+failed validation request need not contain assessment fields: render its original
+Envelope without synthetic assessment or installation proposal. Strict successful
+and recognized negative assessments retain their separate compatibility rules.
+Publish validation evidence before starting any required keyed preview.
+Required successful preview data must cover the exact requested repository set,
+captured revisions and publication policy with valid resolved identities and
+nonnegative sizing. Missing or inconsistent successful fields grant no proposal;
+retain failed partial preview Envelopes separately. Omitted TOML repository fields
+follow the backend defaults (`enabled = true`, `revision = "main"`, empty declared
+dependencies) when rendering and deciding whether sizing is required.
+
+Lost candidate-write or installation acknowledgement blocks another preparation,
+installation or discard. Reconnect can perform only read-only fixed-path
+inspection under the original configuration lock, comparing exact bytes without
+overwriting/removing files or creating comparison artifacts. Matching, absent,
+changed and unsafe/unknown observations remain distinct. A matching staged write
+can be explicitly revalidated without writing it again. Lost install evidence
+retains the expected bytes and predecessor; only exact guarded API confirmation
+and explicit acknowledgement can confirm it. Fingerprint equality alone cannot.
+A simple installed read or component remount never clears uncertainty. Full page
+reload does not adopt a pre-existing candidate merely from its filename.
+
+
 Candidate validation/planning upload bounded exact TOML text through the API;
 the server never opens the candidate pathname or installs it. Root owns the
 fixed candidate/install/backup paths on the Cockpit host. Candidate syntax/policy

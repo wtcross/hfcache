@@ -1,0 +1,67 @@
+CPR-003 guarded-filesystem and mounted-component evidence (2026-10-19)
+
+Repository: /home/tyler/Projects/hfcache
+No production inspection, production credential, PAM session, real API, live/NAS
+archive, installed application change, or host command was used by the browser
+fixture. It mounts actual React components/hooks/adapters/runner in an owned
+Firefox profile against controlled Cockpit process/D-Bus/file/privilege ports.
+
+GREEN (cwd cockpit): rtk node --test test/candidate-guard.test.ts
+Observed: 62 tests, 62 pass, 0 fail, 0 skipped; exit 0.
+The real Bash helper runs only in owned temporary filesystem fixtures. Cases
+cover fixed-path read-only matching/absent/changed/unknown inspection; exact
+Unicode, trailing newlines and tag-only bytes; lock existence/identity and
+serialization; malformed frames; invalid UTF-8/NUL; oversized files; unsafe
+symlink/hardlink/FIFO/directory/mode; concurrent base changes; lost write/install
+acknowledgement; matching-candidate inode reuse and refusal to overwrite a
+different preexisting candidate. Inspection creates no comparison artifacts,
+lock, backup or replacement file. See also cpr-003-pipeline.txt for the actual
+CPR-002 versus current matching/different-candidate RED/GREEN probe.
+
+RED (cwd cockpit): rtk node test/browser.mjs
+Observed before the repository default-field render correction: 27 mounted
+tests, 26 pass, 1 fail; exit 1. The failing actual Configuration case loaded
+valid installed TOML with repository revision/enabled/declared_dependencies
+omitted, then timed out waiting for the form to render. Installed-read completion
+was successful. RepositoryRow accessed undefined declared_dependencies.join.
+Bundle SHA-256:
+8f8cbb2cc9950511c2d80cb4a0927f98e0db7ca67b71139c7f4da147e2f9900d
+This is a behavioral reproduction within the in-progress CPR-003 tree, not a
+claim that the new session-injection test seam exists in the older baseline.
+
+GREEN (cwd cockpit):
+  rtk node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-003-mounted.json
+Observed: 30 tests, 30 pass, 0 fail; exit 0. The bounded JSON contains each
+actual test name/result and bundle SHA-256:
+89a7b448f48eb998143f98424ff89deb8f44682d05e802ae0f3d53a3d66321e2
+Configuration cases exercise V09-V21: failed validation Envelopes with data={},
+negative assessments/field errors, installed-policy refusal, exact tag-only
+install/confirmation, strict successful sizing and edit invalidation, malformed
+successful sizing refusal, preview-stage original key retention, lost-write
+draft persistence across actual unmount/remount, explicit read-only inspection,
+revalidation without a second write, changed/unknown ownership preservation,
+lost install acknowledgement, explicit inspect/confirm/acknowledgement without
+reinstall or cleanup, failed confirmation postcheck, exact failed confirmation
+Envelope, local empty refusal, and explicit read retry after initial access loss.
+The negative-assessment case asserts the original error message is retained at
+the authentic context.key field location storage.archive_id. Two additional
+V08 candidate-pipeline cases change actual administrative privilege while
+validation is pending: a late valid assessment remains exact, with a superseded
+readiness warning and no invented bridge error; an actual reconnected process
+failure retains its original candidate-validate stage/problem after privilege
+restoration. Neither case replays a write, validation, sizing or installation.
+The mounted HFAPI006 case uses a complete candidate below 1 MiB whose JSON-
+escaped request exceeds 1 MiB, then injects the classified CLI refusal Envelope.
+It verifies the UI preserves the exact draft and does not echo it outside the
+editor, submit sizing, or grant readiness. It does not claim an actual HTTP 413
+server request was made; real CLI/API boundary checks are recorded separately.
+The original twelve CPR-002 lifecycle and failure-presentation cases also pass.
+
+GREEN (cwd cockpit):
+  rtk pnpm exec eslint src/lib/candidate-guard.ts test/candidate-guard.test.ts
+  rtk pnpm exec eslint test/browser.fixture.tsx
+  rtk pnpm exec tsc --noEmit
+Observed: all exit 0, no lint/type diagnostics.
+
+These focused checks do not substitute for scripts/check.sh or required
+disposable Cockpit/PAM/systemd/rootless runtime acceptance.

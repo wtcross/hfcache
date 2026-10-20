@@ -104,6 +104,16 @@ Neither operation fixes unknown processes or auto-cleans unexplained artifacts.
 A selector replacement followed by parent-fsync failure is uncertain: inspect the
 actual link under the guard; exit 20 does not prove selection stayed unchanged.
 
+Before either manager activates the selected release, verify service access to
+the public directories and persistent SELinux contexts as described in
+[staging prerequisites](containers.md#staging-and-selection). Index/hash parity
+does not prove traversal permission or an allowed unit/launcher label. The
+rootless installer performs neither host fcontext provisioning nor a policy
+exception. Keep secrets/state private and SELinux Enforcing. Run administrative
+rootless diagnostics from an accessible working directory such as `/`; an
+inherited inaccessible operator home is a diagnostic invocation failure, not
+evidence that the API or container failed.
+
 Two libexec links, the system target/bridge and five user unit files bind through
 the selected release. Verify all nine exact root-owned symlinks, physical helper
 root, authenticated profile/index, effective FragmentPath/drop-ins and both manager

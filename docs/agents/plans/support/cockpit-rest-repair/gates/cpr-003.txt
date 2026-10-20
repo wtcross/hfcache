@@ -1,0 +1,32 @@
+CPR-003 repository and frontend gate (2026-10-19)
+
+Command from /home/tyler/Projects/hfcache:
+rtk proxy bash -c 'scripts/check.sh > /tmp/hfcache-cpr003-gate.log 2>&1'
+Observed exit 0; no frontend skip.
+
+uv lock/sync: passed.
+ruff format/lint, pyrefly: passed.
+Documentation alignment: 183 human documents / 19 helpers passed.
+Python: 5008 passed, 42 deselected, 787.38s.
+Source/wheel build: passed.
+Locked base, server, server+MCP wheel installation/import/help/version: passed.
+Actual Cockpit make check: lint, stylelint, TypeScript, 327 unit tests
+(327 pass, 0 fail, 0 skipped), 30 actual mounted Firefox tests, production build.
+Mounted bundle SHA256:
+89a7b448f48eb998143f98424ff89deb8f44682d05e802ae0f3d53a3d66321e2
+Decompressed production index.js.gz SHA256:
+7e937a41a3e6b0f4533b583d807ae520ed0eda05dd3443aa23ea631c4168beaa
+Full local gate log SHA256:
+869f8417d3708f26359f1ccfe171175abc8220dba71e7a0ebdbf4bc6120a8841
+
+Separate command:
+rtk proxy bash -c 'make -C cockpit check > /tmp/hfcache-cpr003-frontend.log 2>&1'
+Observed exit 0, same 327 unit / 30 mounted cases and production build.
+Focused and red/green details: cpr-003-pipeline.txt, cpr-003-components.txt,
+cpr-003-mounted.json. Final documentation alignment rerun passed after contract
+amendments; git diff --check passed.
+
+This is source/component/temporary-filesystem acceptance, not real PAM, API
+socket, installed artifact or original symptom proof. Runtime-003.md retains
+actual isolated guest setup failures, original lock/guard and exact unblock
+condition. Required V52/V54/final extended gate remain unpassed.

@@ -8,6 +8,15 @@ export interface CandidateGuard {
     installedContent: string;
 }
 
+export type GuardedFileState = 'matching' | 'absent' | 'changed' | 'unknown';
+
+export interface CandidateInspection {
+    candidate: GuardedFileState;
+    installedBase: GuardedFileState;
+    installedCandidate: GuardedFileState;
+    backupBase: GuardedFileState;
+}
+
 export interface ConfigurationPaths {
     installed: string;
     candidate: string;
@@ -64,7 +73,15 @@ export LC_ALL=C
 action=$1 installed=$2 candidate=$3 backup=$4 lock=$5 owner=$6 group=$7
 shift 7
 directory=\${installed%/*}
-fail() { printf 'Configuration changed or is unsafe; reload and validate again\\n' >&2; exit 1; }
+fail() {
+    if [[ "$action" == inspect ]]; then
+        printf '{"candidate":"unknown","installedBase":"unknown","installedCandidate":"unknown","backupBase":"unknown"}\\n'
+        exit 0
+    fi
+    printf 'Configuration changed or is unsafe; reload and validate again\\n' >&2
+    exit 1
+}
+if [[ "$action" == inspect ]]; then exec 2>/dev/null; fi
 [[ -d "$directory" && ! -L "$directory" ]] || fail
 [[ $(stat -c '%u' -- "$directory") == "$owner" ]] || fail
 mode=$(stat -c '%a' -- "$directory")
@@ -74,13 +91,19 @@ regular() {
     [[ $(stat -c '%u:%G:%a:%h' -- "$1") == "$owner:$group:640:1" ]] || fail
 }
 if [[ ! -e "$lock" && ! -L "$lock" ]]; then
+    [[ "$action" != inspect ]] || fail
     (set -o noclobber; : > "$lock") || fail
 fi
 [[ -f "$lock" && ! -L "$lock" ]] || fail
 [[ $(stat -c '%u:%a:%h' -- "$lock") == "$owner:600:1" ]] || fail
 before=$(stat -c '%d:%i' -- "$lock")
-exec 9>>"$lock"
-flock --exclusive 9
+if [[ "$action" == inspect ]]; then
+    exec 9<"$lock"
+    flock --exclusive --timeout 5 9 || fail
+else
+    exec 9>>"$lock"
+    flock --exclusive 9
+fi
 [[ $(stat -Lc '%d:%i' -- /proc/self/fd/9) == "$before" ]] || fail
 [[ $(stat -c '%d:%i' -- "$lock") == "$before" ]] || fail
 if [[ "$action" == read ]]; then
@@ -88,6 +111,60 @@ if [[ "$action" == read ]]; then
     size=$(stat -c '%s' -- "$installed")
     (( size <= 1048576 )) || fail
     dd if="$installed" iflag=nofollow,count_bytes count=1048576 status=none
+    exit
+fi
+if [[ "$action" == inspect ]]; then
+    # This branch creates no lock, comparison files, backup or other artifacts.
+    # POSIX byte ranges validate UTF-8 without another interpreter/dependency.
+    utf8_text() {
+        local valid=$'^([\\x01-\\x7f]|[\\xc2-\\xdf][\\x80-\\xbf]|\\xe0[\\xa0-\\xbf][\\x80-\\xbf]|[\\xe1-\\xec][\\x80-\\xbf][\\x80-\\xbf]|\\xed[\\x80-\\x9f][\\x80-\\xbf]|[\\xee-\\xef][\\x80-\\xbf][\\x80-\\xbf]|\\xf0[\\x90-\\xbf][\\x80-\\xbf][\\x80-\\xbf]|[\\xf1-\\xf3][\\x80-\\xbf][\\x80-\\xbf][\\x80-\\xbf]|\\xf4[\\x80-\\x8f][\\x80-\\xbf][\\x80-\\xbf])*$'
+        [[ "$1" =~ $valid ]]
+    }
+    IFS= read -r -d '' -n 1048577 proposed || fail
+    (( \${#proposed} > 0 && \${#proposed} <= 1048576 )) || fail
+    IFS= read -r -d '' -n 1048577 original || fail
+    (( \${#original} <= 1048576 )) || fail
+    if IFS= read -r -d '' -n 1 extra; then fail; fi
+    [[ -z "$extra" ]] || fail
+    utf8_text "$proposed" && utf8_text "$original" || fail
+    [[ -r "$directory" && -x "$directory" ]] || fail
+    inspect_file() {
+        file_state=unknown observed=
+        if [[ ! -e "$1" && ! -L "$1" ]]; then file_state=absent; return; fi
+        [[ -f "$1" && ! -L "$1" ]] || return 0
+        [[ $(stat -c '%u:%G:%a:%h' -- "$1") == "$owner:$group:640:1" ]] || return 0
+        local metadata size extra
+        metadata=$(stat -c '%d:%i:%u:%G:%a:%h:%s:%y:%z' -- "$1") || return 0
+        size=$(stat -c '%s' -- "$1") || return 0
+        (( size <= 1048576 )) || return 0
+        # A success sentinel follows only a complete no-follow, nonblocking read.
+        # Embedded NUL, invalid UTF-8, growth and failed reads remain unknown.
+        if ! {
+            IFS= read -r -d '' -n 1048577 observed &&
+            (( \${#observed} <= 1048576 )) &&
+            { if IFS= read -r -d '' -n 1 extra; then false; else [[ -z "$extra" ]]; fi; }
+        } < <(dd if="$1" iflag=nofollow,nonblock,noatime,count_bytes count=1048577 status=none && printf '\\0'); then
+            observed=
+            return 0
+        fi
+        utf8_text "$observed" || { observed=; return 0; }
+        [[ -f "$1" && ! -L "$1" && $(stat -c '%d:%i:%u:%G:%a:%h:%s:%y:%z' -- "$1") == "$metadata" ]] || { observed=; return 0; }
+        file_state=present
+    }
+    compared() {
+        if [[ "$file_state" != present ]]; then printf '%s' "$file_state"
+        elif [[ "$observed" == "$1" ]]; then printf matching
+        else printf changed
+        fi
+    }
+    inspect_file "$candidate"
+    candidate_state=$(compared "$proposed")
+    inspect_file "$installed"
+    installed_base=$(compared "$original")
+    installed_candidate=$(compared "$proposed")
+    inspect_file "$backup"
+    backup_base=$(compared "$original")
+    printf '{"candidate":"%s","installedBase":"%s","installedCandidate":"%s","backupBase":"%s"}\\n' "$candidate_state" "$installed_base" "$installed_candidate" "$backup_base"
     exit
 fi
 expected_candidate= expected_base= predecessor= confirmation=
@@ -122,7 +199,12 @@ confirm)
     exit "$status"
     ;;
 write)
-    if [[ -e "$candidate" || -L "$candidate" ]]; then regular "$candidate"; fi
+    if [[ -e "$candidate" || -L "$candidate" ]]; then
+        regular "$candidate"
+        cmp -s -- "$candidate" "$expected_candidate" || fail
+        # Reuse a proven exact candidate without replacing its inode.
+        exit 0
+    fi
     chown "$owner:$group" "$expected_candidate"
     chmod 0640 "$expected_candidate"
     sync "$expected_candidate"
@@ -155,7 +237,7 @@ esac
 `;
 
 function invocation(
-    action: 'read' | 'write' | 'guard' | 'install' | 'remove' | 'confirm',
+    action: 'read' | 'inspect' | 'write' | 'guard' | 'install' | 'remove' | 'confirm',
     guard: CandidateGuard | null,
     argv: string[],
     fixture?: ConfigurationFixture,
@@ -184,6 +266,14 @@ function invocation(
 
 export function readInstalledInvocation(fixture?: ConfigurationFixture): GuardedInvocation {
     return invocation('read', null, [], fixture);
+}
+
+/* Reconcile only the four fixed paths against captured bytes. Unknown evidence
+ * never becomes permission to write, reinstall, remove or clean up a candidate. */
+export function inspectCandidateInvocation(
+    guard: CandidateGuard, fixture?: ConfigurationFixture,
+): GuardedInvocation {
+    return invocation('inspect', guard, [], fixture);
 }
 
 export function guardCandidateInvocation(

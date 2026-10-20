@@ -13,9 +13,11 @@ import { test } from 'node:test';
 
 import {
     candidateMutationInvocation, CONFIGURATION_PATHS, guardCandidateInvocation, guardInstalledInvocation,
-    MAX_CANDIDATE_BYTES, readInstalledInvocation, validateCandidateText,
+    inspectCandidateInvocation, MAX_CANDIDATE_BYTES, readInstalledInvocation, validateCandidateText,
 } from '../src/lib/candidate-guard.ts';
-import type { CandidateGuard, ConfigurationFixture, GuardedInvocation } from '../src/lib/candidate-guard.ts';
+import type {
+    CandidateGuard, CandidateInspection, ConfigurationFixture, GuardedInvocation,
+} from '../src/lib/candidate-guard.ts';
 import { HFCACHE_CLI, hfcacheArgv } from '../src/lib/command.ts';
 
 const BASE = 'schema_version=1\n# original π\n\n';
@@ -58,6 +60,7 @@ function fixture() {
         HFCACHE_TEST_CALLED: called,
         HFCACHE_TEST_ARGUMENTS: argumentsPath,
         HFCACHE_TEST_RESPONSE: response,
+        HFCACHE_TEST_CHANGED_PATH: '',
     };
     const run = (invocation: GuardedInvocation) => spawnSync(invocation.argv[0], invocation.argv.slice(1), {
         input: invocation.input, encoding: 'utf8', env, timeout: 10000, maxBuffer: 4 * 1024 * 1024,
@@ -405,4 +408,311 @@ test('oversized confirmation output refuses without releasing a partial response
         assert.equal(readFileSync(files.paths.installed, 'utf8'), BASE);
         assert.equal(readdirSync(files.root).some(name => name.startsWith('.confirmation.')), false);
     } finally { files.close() }
+});
+
+const UNKNOWN_INSPECTION: CandidateInspection = {
+    candidate: 'unknown', installedBase: 'unknown', installedCandidate: 'unknown', backupBase: 'unknown',
+};
+
+function inspection(files: ReturnType<typeof fixture>, guard: CandidateGuard = GUARD): CandidateInspection {
+    const result = files.run(inspectCandidateInvocation(guard, files.identity));
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, '');
+    assert.ok(Buffer.byteLength(result.stdout) <= 160);
+    const parsed = JSON.parse(result.stdout) as CandidateInspection;
+    assert.deepEqual(Object.keys(parsed).sort(), ['backupBase', 'candidate', 'installedBase', 'installedCandidate']);
+    assert.ok(Object.values(parsed).every(value => ['matching', 'absent', 'changed', 'unknown'].includes(value)));
+    assert.ok(!result.stdout.includes(BASE) && !result.stdout.includes(CONTENT));
+    return parsed;
+}
+
+function inspectionLock(files: ReturnType<typeof fixture>): void {
+    writeFileSync(files.paths.lock, '', { mode: 0o600 });
+    chmodSync(files.paths.lock, 0o600);
+}
+
+test('read-only inspection never creates a missing lock or any comparison artifact', () => {
+    const files = fixture();
+    try {
+        const names = readdirSync(files.root).sort();
+        assert.deepEqual(inspection(files), UNKNOWN_INSPECTION);
+        assert.deepEqual(readdirSync(files.root).sort(), names);
+        assert.equal(existsSync(files.paths.lock), false);
+        assert.equal(existsSync(files.called), false);
+    } finally { files.close() }
+});
+
+test('read-only inspection gives exact status for absent, matching and changed fixed files', () => {
+    const files = fixture();
+    try {
+        inspectionLock(files);
+        const inode = statSync(files.paths.lock).ino;
+        const names = readdirSync(files.root).sort();
+        assert.deepEqual(inspection(files), {
+            candidate: 'absent', installedBase: 'matching', installedCandidate: 'changed', backupBase: 'absent',
+        });
+        assert.deepEqual(readdirSync(files.root).sort(), names);
+        writeFileSync(files.paths.candidate, CONTENT, { mode: 0o640 });
+        writeFileSync(files.paths.backup, BASE, { mode: 0o640 });
+        const presentNames = readdirSync(files.root).sort();
+        assert.deepEqual(inspection(files), {
+            candidate: 'matching', installedBase: 'matching', installedCandidate: 'changed', backupBase: 'matching',
+        });
+        writeFileSync(files.paths.installed, 'changed installed bytes\n');
+        writeFileSync(files.paths.candidate, 'changed proposed bytes\n');
+        writeFileSync(files.paths.backup, 'changed predecessor bytes\n');
+        assert.deepEqual(inspection(files), {
+            candidate: 'changed', installedBase: 'changed', installedCandidate: 'changed', backupBase: 'changed',
+        });
+        assert.deepEqual(readdirSync(files.root).sort(), presentNames);
+        assert.equal(statSync(files.paths.lock).ino, inode);
+        assert.equal(statSync(files.paths.lock).size, 0);
+        assert.equal(existsSync(files.called), false);
+    } finally { files.close() }
+});
+
+test('matching candidate write reuses its inode; a different preexisting candidate is preserved', () => {
+    const files = fixture();
+    try {
+        assert.equal(files.write().status, 0);
+        const candidate = statSync(files.paths.candidate).ino;
+        const lock = statSync(files.paths.lock).ino;
+        const names = readdirSync(files.root).sort();
+        assert.equal(files.write().status, 0);
+        assert.equal(statSync(files.paths.candidate).ino, candidate);
+        const changed = { ...GUARD, candidateContent: CONTENT + '# edited draft\n' };
+        assert.notEqual(files.write(changed).status, 0);
+        assert.equal(readFileSync(files.paths.candidate, 'utf8'), CONTENT);
+        assert.equal(statSync(files.paths.candidate).ino, candidate);
+        assert.equal(statSync(files.paths.lock).ino, lock);
+        assert.deepEqual(readdirSync(files.root).sort(), names);
+    } finally { files.close() }
+});
+
+test('inspection reconciles lost write/install acknowledgements without another mutation', () => {
+    const files = fixture();
+    try {
+        // Real owned filesystem effects occur; deliberately retain no proposal
+        // from either acknowledgement. Inspection is the subsequent read only.
+        assert.equal(files.write().status, 0);
+        const candidate = statSync(files.paths.candidate).ino;
+        const lock = statSync(files.paths.lock).ino;
+        const beforeWriteReconciliation = readdirSync(files.root).sort();
+        assert.equal(inspection(files).candidate, 'matching');
+        assert.equal(statSync(files.paths.candidate).ino, candidate);
+        assert.deepEqual(readdirSync(files.root).sort(), beforeWriteReconciliation);
+        assert.equal(files.run(candidateMutationInvocation('install', GUARD, files.identity)).status, 0);
+        const installed = statSync(files.paths.installed).ino;
+        const backup = statSync(files.paths.backup).ino;
+        const beforeInstallReconciliation = readdirSync(files.root).sort();
+        assert.deepEqual(inspection(files), {
+            candidate: 'absent', installedBase: 'changed', installedCandidate: 'matching', backupBase: 'matching',
+        });
+        assert.equal(statSync(files.paths.installed).ino, installed);
+        assert.equal(statSync(files.paths.backup).ino, backup);
+        assert.equal(statSync(files.paths.lock).ino, lock);
+        assert.deepEqual(readdirSync(files.root).sort(), beforeInstallReconciliation);
+    } finally { files.close() }
+});
+
+test('inspection compares exact Unicode, tag-only edits and trailing newlines without a fingerprint shortcut', () => {
+    const files = fixture();
+    try {
+        inspectionLock(files);
+        const base = 'schema_version=1\n[[repositories]]\nid="org/model"\ntype="model"\ntags=["coding"]\n# π 😀\n\n';
+        const proposed = base.replace('coding', 'vision') + '\n';
+        const guard = { installedContent: base, candidateContent: proposed };
+        writeFileSync(files.paths.installed, base);
+        writeFileSync(files.paths.candidate, proposed, { mode: 0o640 });
+        assert.deepEqual(inspection(files, guard), {
+            candidate: 'matching', installedBase: 'matching', installedCandidate: 'changed', backupBase: 'absent',
+        });
+        writeFileSync(files.paths.candidate, proposed.slice(0, -1));
+        assert.equal(inspection(files, guard).candidate, 'changed');
+        writeFileSync(files.paths.candidate, proposed.replace('vision', 'other-label'));
+        assert.equal(inspection(files, guard).candidate, 'changed');
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), base);
+    } finally { files.close() }
+});
+
+for (const target of ['candidate', 'installed', 'backup'] as const) {
+    for (const unsafe of ['symlink', 'hardlink', 'mode', 'directory', 'fifo', 'oversized', 'nul', 'unicode'] as const) {
+        test(`inspection preserves unsafe ${target} ${unsafe} as unknown without blocking or file artifacts`, () => {
+            const files = fixture();
+            try {
+                inspectionLock(files);
+                writeFileSync(files.paths.candidate, CONTENT, { mode: 0o640 });
+                writeFileSync(files.paths.backup, BASE, { mode: 0o640 });
+                const evidence = join(files.root, 'unsafe-evidence');
+                if (unsafe === 'symlink') {
+                    writeFileSync(evidence, 'private fixture evidence', { mode: 0o640 });
+                    rmSync(files.paths[target]);
+                    symlinkSync(evidence, files.paths[target]);
+                } else if (unsafe === 'hardlink') {
+                    linkSync(files.paths[target], evidence);
+                } else if (unsafe === 'mode') {
+                    chmodSync(files.paths[target], 0o666);
+                } else if (unsafe === 'directory' || unsafe === 'fifo') {
+                    rmSync(files.paths[target]);
+                    if (unsafe === 'directory')
+                        mkdirSync(files.paths[target]);
+                    else
+                        execFileSync('mkfifo', [files.paths[target]]);
+                } else if (unsafe === 'oversized') {
+                    writeFileSync(files.paths[target], 'x'.repeat(MAX_CANDIDATE_BYTES + 1));
+                } else {
+                    writeFileSync(files.paths[target], Buffer.from(unsafe === 'nul' ? [97, 0, 98] : [0xc0, 0xaf]));
+                }
+                const inode = lstatSync(files.paths[target]).ino;
+                const lock = statSync(files.paths.lock).ino;
+                const names = readdirSync(files.root).sort();
+                const result = inspection(files);
+                if (target === 'installed') {
+                    assert.equal(result.installedBase, 'unknown');
+                    assert.equal(result.installedCandidate, 'unknown');
+                } else {
+                    assert.equal(result[target === 'candidate' ? 'candidate' : 'backupBase'], 'unknown');
+                }
+                assert.equal(lstatSync(files.paths[target]).ino, inode);
+                assert.equal(statSync(files.paths.lock).ino, lock);
+                assert.deepEqual(readdirSync(files.root).sort(), names);
+                assert.equal(existsSync(files.called), false);
+            } finally { files.close() }
+        });
+    }
+}
+
+for (const unsafe of ['symlink', 'hardlink', 'mode', 'directory', 'fifo'] as const) {
+    test(`inspection refuses unsafe lock ${unsafe} without changing its identity or creating a replacement`, () => {
+        const files = fixture();
+        try {
+            inspectionLock(files);
+            if (unsafe === 'symlink') {
+                const evidence = join(files.root, 'unsafe-lock-evidence');
+                writeFileSync(evidence, '', { mode: 0o600 });
+                rmSync(files.paths.lock);
+                symlinkSync(evidence, files.paths.lock);
+            } else if (unsafe === 'hardlink') {
+                linkSync(files.paths.lock, join(files.root, 'unsafe-lock-evidence'));
+            } else if (unsafe === 'mode') {
+                chmodSync(files.paths.lock, 0o666);
+            } else {
+                rmSync(files.paths.lock);
+                if (unsafe === 'directory')
+                    mkdirSync(files.paths.lock);
+                else
+                    execFileSync('mkfifo', [files.paths.lock]);
+            }
+            const inode = lstatSync(files.paths.lock).ino;
+            const names = readdirSync(files.root).sort();
+            assert.deepEqual(inspection(files), UNKNOWN_INSPECTION);
+            assert.equal(lstatSync(files.paths.lock).ino, inode);
+            assert.deepEqual(readdirSync(files.root).sort(), names);
+        } finally { files.close() }
+    });
+}
+
+test('inspection rejects malformed inert frames and unsafe directory without artifacts or contents', () => {
+    const files = fixture();
+    try {
+        inspectionLock(files);
+        const names = readdirSync(files.root).sort();
+        for (const input of ['', CONTENT + '\0' + BASE, CONTENT + '\0' + BASE + '\0extra', 'x'.repeat(MAX_CANDIDATE_BYTES + 1) + '\0\0']) {
+            const invocation = inspectCandidateInvocation(GUARD, files.identity);
+            invocation.input = input;
+            const result = files.run(invocation);
+            assert.equal(result.status, 0);
+            assert.deepEqual(JSON.parse(result.stdout), UNKNOWN_INSPECTION);
+            assert.equal(result.stderr, '');
+            assert.deepEqual(readdirSync(files.root).sort(), names);
+        }
+        chmodSync(files.root, 0o777);
+        assert.deepEqual(inspection(files), UNKNOWN_INSPECTION);
+        assert.deepEqual(readdirSync(files.root).sort(), names);
+    } finally { files.close() }
+});
+
+test('inspection detects a concurrent change during its bounded read and preserves the changed evidence', () => {
+    const files = fixture();
+    try {
+        inspectionLock(files);
+        writeFileSync(files.paths.candidate, CONTENT, { mode: 0o640 });
+        files.env.HFCACHE_TEST_CHANGED_PATH = files.paths.installed;
+        writeFileSync(join(files.bin, 'dd'), '#!/usr/bin/env bash\n' +
+            '/usr/bin/dd "$@"\n' +
+            'if [[ "$1" == "if=$HFCACHE_TEST_CHANGED_PATH" ]]; then\n' +
+            '  printf "changed by a concurrent editor\\n" > "$HFCACHE_TEST_CHANGED_PATH"\n' +
+            'fi\n', { mode: 0o700 });
+        const names = readdirSync(files.root).sort();
+        const result = inspection(files);
+        assert.equal(result.installedBase, 'unknown');
+        assert.equal(result.installedCandidate, 'unknown');
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), 'changed by a concurrent editor\n');
+        assert.deepEqual(readdirSync(files.root).sort(), names);
+    } finally { files.close() }
+});
+
+test('inspection accepts the full byte bound and rejects malformed UTF-8 rather than normalizing it', () => {
+    const files = fixture();
+    try {
+        inspectionLock(files);
+        const candidate = 'λ'.repeat(MAX_CANDIDATE_BYTES / 2);
+        const guard = { installedContent: BASE, candidateContent: candidate };
+        writeFileSync(files.paths.candidate, candidate, { mode: 0o640 });
+        assert.equal(inspection(files, guard).candidate, 'matching');
+        for (const invalid of [
+            [0x80], [0xc2], [0xed, 0xa0, 0x80], [0xf0, 0x80, 0x80, 0x80], [0xf4, 0x90, 0x80, 0x80],
+        ]) {
+            writeFileSync(files.paths.candidate, Buffer.from(invalid));
+            assert.equal(inspection(files).candidate, 'unknown');
+        }
+    } finally { files.close() }
+});
+
+test('inspection waits on the original configuration flock and observes a concurrent changed base', async () => {
+    const files = fixture();
+    const entered = join(files.root, 'inspection-lock-entered');
+    const release = join(files.root, 'inspection-lock-release');
+    let validating: ReturnType<typeof spawn> | null = null;
+    let inspecting: ReturnType<typeof spawn> | null = null;
+    try {
+        assert.equal(files.write().status, 0);
+        const lock = statSync(files.paths.lock).ino;
+        const held = files.cli();
+        validating = spawn(held.argv[0], held.argv.slice(1), {
+            env: { ...files.env, HFCACHE_TEST_ENTERED: entered, HFCACHE_TEST_RELEASE: release },
+            stdio: ['pipe', 'ignore', 'ignore'],
+        });
+        const validated = new Promise<number | null>(resolve => validating?.once('exit', resolve));
+        validating.stdin?.end(held.input);
+        for (let attempt = 0; attempt < 250 && !existsSync(entered); attempt += 1)
+            await pause(20);
+        assert.ok(existsSync(entered));
+        const invocation = inspectCandidateInvocation(GUARD, files.identity);
+        inspecting = spawn(invocation.argv[0], invocation.argv.slice(1), {
+            env: files.env, stdio: ['pipe', 'pipe', 'ignore'],
+        });
+        const inspected = new Promise<number | null>(resolve => inspecting?.once('exit', resolve));
+        let output = '';
+        inspecting.stdout?.on('data', chunk => { output += String(chunk) });
+        inspecting.stdin?.end(invocation.input);
+        await pause(100);
+        assert.equal(inspecting.exitCode, null);
+        writeFileSync(files.paths.installed, 'changed while the original flock was held\n');
+        writeFileSync(release, 'release');
+        assert.equal(await validated, 0);
+        assert.equal(await inspected, 0);
+        const result = JSON.parse(output) as CandidateInspection;
+        assert.equal(result.candidate, 'matching');
+        assert.equal(result.installedBase, 'changed');
+        assert.equal(result.installedCandidate, 'changed');
+        assert.equal(statSync(files.paths.lock).ino, lock);
+        assert.equal(readdirSync(files.root).some(name => /^\.(candidate-input|installed-input|predecessor|confirmation)\./.test(name)), false);
+    } finally {
+        if (validating?.exitCode === null)
+            validating.kill('SIGKILL');
+        if (inspecting?.exitCode === null)
+            inspecting.kill('SIGKILL');
+        files.close();
+    }
 });

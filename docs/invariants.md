@@ -638,11 +638,18 @@ explicit adapter amendments. No new workload or deployment authority follows.
   authority or browser/environment/argument bearers (decision 122).
 - **`CP-11`, `CP-12`** — Config installs follow candidate → successful CLI
   validation → required successful preview → atomic install → exact installed
-  content and operational fingerprint confirmation. Confirmation compares installed
+  content and operational fingerprint confirmation. Required preview success
+  covers exact captured selectors/revisions and complete sizing; malformed success
+  never grants readiness. Confirmation compares installed
   bytes before/after API validation under the root config flock, including tags
   excluded from policy identity. A retained root config flock and exact candidate/base
   bytes guard the pipeline; incompatible/unknown authority blocks plugin install.
-  Retain the predecessor and `0640 root:hfcache` ownership/mode. Timer changes use validated calendar drop-ins,
+  Preserve original failed Envelopes and stage causes. Capture draft/base before
+  transmission in application memory; uncertain write/install blocks another
+  write/install/discard. Read-only inspection creates no files and requires the
+  original lock; explicit matching revalidation skips writes. Uncertain install
+  needs exact installed/backup proof, explicit confirmation and acknowledgement;
+  remount/reload cannot silently reset it. Retain the predecessor and `0640 root:hfcache` ownership/mode. Timer changes use validated calendar drop-ins,
   never edit shipped units.
 - **`CP-13`, `CP-14`** — Never weaken host hardening. The plugin ships static
   files; Node tooling is build-time only, adds no Python runtime dependency,

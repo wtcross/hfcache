@@ -64,6 +64,29 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   higher candidate preservation/reconciliation and operation registry follow.
 
 
+- [x] CPR-003 Preserve candidate evidence and reconcile guarded stages (2026-10-19,
+  this commit — [task](plans/tasks/cpr-003-candidate-validation-pipeline.md)).
+  Original failed API Envelopes and bridge/process causes survive independently
+  of strict assessment/readiness. Captured draft/base and bounded stage evidence
+  remain in app memory across tab unmount. Read-only exact inspection creates no
+  files/lock/backup; unknown candidates remain. Explicit matching revalidation
+  skips writes; uncertain install requires installed/backup proof, API confirmation
+  and acknowledgement. Required preview success now proves exact selectors,
+  revisions/resolved commits and complete sizing. Backend defaults cannot bypass
+  sizing or crash the form. Focused pipeline101, real temporary guard62, config36,
+  mounted30 passed, with actual red/green evidence. Full gate:5008 passed/42
+  deselected,787.38s; three wheel profiles; actual frontend lint/style/types,
+  327 unit +30 mounted tests/build. Explicit frontend gate passed. CP-11/INV-006
+  and decisions122/133/134 reviewed/amended; no new dependency/schema/API authority.
+  [Evidence](plans/support/cockpit-rest-repair/gates/cpr-003.txt).
+  Isolated guest original guard/NFS-ro/masks remain; real failed startup exposed
+  omitted fixture prerequisites already in historical operator records. Living
+  staging docs now state them; exact next empty-placeholder/executor proof is in
+  [runtime handoff](plans/support/cockpit-rest-repair/runtime-003.md). No real API/
+  PAM acceptance or original installed symptom fix claimed, no production/NAS
+  effects. CPR-004 follows; required real-runtime and final gates remain pending.
+
+
 ## Tags and discovery (2026-10-19)
 
 - [x] CAT-001 Activate the feature plan and establish technical contracts

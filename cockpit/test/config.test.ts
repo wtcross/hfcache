@@ -94,6 +94,21 @@ test('the sizing preview covers added and retargeted enabled repositories', () =
                      ['model:organization/model-name', 'model:org/new']);
 });
 
+test('sizing follows backend enabled and revision defaults without changing verbatim intent', () => {
+    const implicit = parseConfig('[[repositories]]\nid="org/model"\ntype="model"\n');
+    const explicit = parseConfig('[[repositories]]\nid="org/model"\ntype="model"\nenabled=true\nrevision="main"\n');
+    assert.deepEqual(selectorsNeedingPreview({}, implicit), ['model:org/model']);
+    assert.deepEqual(selectorsNeedingPreview(explicit, implicit), []);
+    assert.deepEqual(selectorsNeedingPreview(implicit, explicit), []);
+    const retargeted = parseConfig('[[repositories]]\nid="org/model"\ntype="model"\nrevision="v2"\n');
+    assert.deepEqual(selectorsNeedingPreview(implicit, retargeted), ['model:org/model']);
+    const disabled = parseConfig('[[repositories]]\nid="org/model"\ntype="model"\nenabled=false\n');
+    assert.deepEqual(selectorsNeedingPreview(disabled, implicit), ['model:org/model']);
+    assert.deepEqual(selectorsNeedingPreview(implicit, disabled), []);
+    assert.equal(implicit.repositories?.[0]?.enabled, undefined);
+    assert.equal(implicit.repositories?.[0]?.revision, undefined);
+});
+
 test('validation issues map back to fields best-effort', () => {
     assert.equal(extractFieldPath({ message: 'HFCFG005 [sync.max_workers]: not an integer' }),
                  'sync.max_workers');

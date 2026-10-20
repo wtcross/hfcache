@@ -55,6 +55,31 @@ The [owned connection](../../cockpit/src/lib/connection.ts) and
 listeners, bound read reconnection and reject stale results without mutation replay.
 [Mounted component tests](../../cockpit/test/browser.fixture.tsx) fail against the
 reviewed source and exercise actual hooks/adapters in an isolated Firefox profile.
-This implements the boundary/lifecycle portion of the contract, not complete
-candidate reconciliation or operation persistence, and proves no installed PAM
-or launcher cause. No new runtime dependency or host restriction changes.
+This implements the boundary/lifecycle portion of the contract and proves no
+installed PAM or launcher cause. Operation persistence remains separate work. No new runtime dependency or host restriction changes.
+
+## Implemented candidate reconciliation
+
+The candidate pipeline preserves failed request Envelopes without forcing them
+through assessment parsing. Bounded stage evidence publishes validation before
+sizing, retaining original classified causes after interruption. Application
+memory holds exact captured draft/base before transmission and survives tab
+unmount. This memory is never serialized into browser storage.
+Required successful sizing must cover the exact captured selector/revision set,
+canonical resolved commits and publication sizing; missing or inconsistent success
+fields refuse readiness. Repository defaults agree with backend policy, so omitting
+`enabled` cannot skip sizing and valid defaulted documents remain editable.
+
+Guarded read-only inspection uses the existing original lock without creating
+files and reports exact candidate/base/installed/backup matches or absent/changed/
+unknown evidence. A missing or unsafe lock is unknown, never recreated by
+inspection. Different pre-existing candidate bytes cannot be overwritten; exact
+matches can be reused without replacing their inode. Lost write acknowledgement
+permits only explicit matching revalidation without another write. Lost install
+acknowledgement requires installed/backup proof, explicit successful API
+confirmation and acknowledgement. Neither read/remount nor missing files prove
+nonexecution. No replay, cleanup, rollback or new installation endpoint results.
+
+This preserves CP-11/INV-006 and decision133's tag-only exact-byte boundary;
+operational fingerprints never replace byte comparisons. Real installed/session
+acceptance remains distinct from pure, guarded-filesystem and mounted UI tests.

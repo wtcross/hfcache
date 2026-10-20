@@ -7,7 +7,7 @@
  * Both go candidate → validate → preview → install → confirm.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useSyncExternalStore } from 'react';
 
 import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
@@ -26,7 +26,7 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 import { ListingTable } from 'cockpit-components-table';
 
 import {
-    confirmInstalledCandidate, installCandidate, planCandidate, readInstalledConfig, removeCandidate,
+    confirmInstalledCandidate, inspectCandidate, installCandidate, planCandidate, readInstalledConfig, removeCandidate,
     validateCandidate, writeCandidate,
 } from './api/config';
 import { EnvelopeAlert, Loading, QueryError, Sha } from './components';
@@ -35,12 +35,15 @@ import {
     RepositoryEntry, serializeConfig, setField, validateRevisionReference,
     configuredTagSuggestions, normalizeTags, tagInput,
 } from './lib/config';
-import { CandidateGuard } from './lib/candidate-guard';
+import { validateCandidateText } from './lib/candidate-guard';
+import { connectionSnapshot } from './api/connection';
+import { ConfigurationSession, configurationSession, ConfigurationState } from './lib/configuration-session';
 import {
-    CandidatePreparation, ConfigurationPorts, installConfiguration, MANUAL_AUTHORITY_GUIDANCE,
+    ConfigurationEvidence, ConfigurationPipelineError, ConfigurationPorts, confirmConfiguration,
+    installConfiguration, MANUAL_AUTHORITY_GUIDANCE, PreparationSuperseded,
     prepareConfiguration, UNCONFIRMED_INSTALLATION,
 } from './lib/config-pipeline';
-import { Envelope } from './lib/envelope';
+import { classifyEnvelope, Envelope } from './lib/envelope';
 import { useConnection } from './hooks';
 import { formatBytes, shortSha } from './lib/format';
 
@@ -127,7 +130,7 @@ const RepositoryRow = ({ entry, index, suggestions, onChange, onRemove }: {
     onChange: (entry: RepositoryEntry) => void;
     onRemove: () => void;
 }) => {
-    const revisionError = validateRevisionReference(entry.revision);
+    const revisionError = validateRevisionReference(entry.revision ?? 'main');
     let tagError: string | null = null;
     try { normalizeTags(entry.tags ?? []) } catch (failure) { tagError = (failure as Error).message }
 
@@ -161,7 +164,7 @@ const RepositoryRow = ({ entry, index, suggestions, onChange, onRemove }: {
                             id={`repo-revision-${index}`}
                             aria-label="Revision"
                             placeholder="main"
-                            value={entry.revision}
+                            value={entry.revision ?? 'main'}
                             validated={revisionError === null ? 'default' : 'error'}
                             onChange={(_event, revision) => onChange({ ...entry, revision })}
                         />
@@ -170,7 +173,7 @@ const RepositoryRow = ({ entry, index, suggestions, onChange, onRemove }: {
                         <Checkbox
                             id={`repo-enabled-${index}`}
                             label="enabled"
-                            isChecked={entry.enabled}
+                            isChecked={entry.enabled ?? true}
                             onChange={(_event, enabled) => onChange({ ...entry, enabled })}
                         />
                     </FlexItem>
@@ -182,7 +185,7 @@ const RepositoryRow = ({ entry, index, suggestions, onChange, onRemove }: {
                     id={`repo-deps-${index}`}
                     aria-label="Declared dependencies"
                     placeholder="declared_dependencies, comma-separated org/name entries"
-                    value={entry.declared_dependencies.join(', ')}
+                    value={(entry.declared_dependencies ?? []).join(', ')}
                     onChange={(_event, text) => onChange({
                         ...entry,
                         declared_dependencies: text.split(',')
@@ -312,175 +315,345 @@ const PlanPreview = ({ envelope }: { envelope: Envelope }) => {
     );
 };
 
-type Phase = 'idle' | 'checking' | 'ready' | 'installing' | 'done';
+const ports: ConfigurationPorts = {
+    write: writeCandidate,
+    validate: validateCandidate,
+    preview: planCandidate,
+    install: installCandidate,
+    confirm: confirmInstalledCandidate,
+};
 
-export const Configuration = () => {
-    const [installedText, setInstalledText] = useState<string | null>(null);
-    const [loadError, setLoadError] = useState<Error | null>(null);
-    const [mode, setMode] = useState<'form' | 'text'>('form');
-    const [document, setDocument] = useState<ConfigDocument | null>(null);
-    const [text, setText] = useState('');
-    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-    const [phase, setPhase] = useState<Phase>('idle');
-    const [validation, setValidation] = useState<Envelope | null>(null);
-    const [plan, setPlan] = useState<Envelope | null>(null);
-    const [fingerprint, setFingerprint] = useState<string | null>(null);
-    const [pipelineError, setPipelineError] = useState<Error | null>(null);
-    const [preparation, setPreparation] = useState<CandidatePreparation | null>(null);
-    const [diskGuard, setDiskGuard] = useState<CandidateGuard | null>(null);
-    const [unconfirmed, setUnconfirmed] = useState(false);
-    const revision = useRef(0);
+function sessionBusy(state: ConfigurationState): boolean {
+    return state.loading || ['checking', 'installing', 'confirming', 'inspecting', 'discarding'].includes(state.phase);
+}
+
+function loadInstalled(session: ConfigurationSession): void {
+    const current = session.snapshot();
+    if (sessionBusy(current) || current.diskGuard || current.uncertainty !== null)
+        return;
+    session.patch({
+        initialized: true,
+        loading: true,
+        loadError: null,
+        preparation: null,
+        proposal: null,
+        phase: 'idle',
+        generation: connectionSnapshot().generation
+    });
+    readInstalledConfig().then(content => {
+        validateCandidateText(content, true);
+        let parsed: ConfigDocument | null = null;
+        try { parsed = parseConfig(content) } catch { /* Text editing remains available. */ }
+        session.patch({
+            installedText: content,
+            loading: false,
+            text: content,
+            document: parsed,
+            mode: parsed === null ? 'text' : 'form',
+            loadError: null,
+            preparation: null,
+            proposal: null,
+            phase: 'idle',
+            draftRevision: session.snapshot().draftRevision + 1,
+        });
+    })
+            .catch(failure => session.patch({ loadError: failure as Error, loading: false }));
+}
+
+export const Configuration = ({ session = configurationSession }: { session?: ConfigurationSession }) => {
+    const state = useSyncExternalStore(session.subscribe, session.snapshot);
+    const {
+        installedText, loadError, mode, document, text, fieldErrors, phase, validation, plan,
+        fingerprint, pipelineError, preparation, diskGuard, connectionChanged,
+    } = state;
     const connection = useConnection();
-    const previousConnection = useRef(connection.generation);
-    const [connectionChanged, setConnectionChanged] = useState(false);
+    const unconfirmed = state.uncertainty === 'install';
+    const busy = sessionBusy(state);
+    const fresh = connection.administrative && state.generation === connection.generation;
+    const inspectionFresh = connection.administrative && state.inspectedGeneration === connection.generation;
+    const stagedMatches = inspectionFresh && state.inspection?.candidate === 'matching' &&
+        state.inspection.installedBase === 'matching';
+    const installedMatches = inspectionFresh && state.inspection?.installedCandidate === 'matching' &&
+        state.inspection.backupBase === 'matching';
+    const setMode = (value: 'form' | 'text') => session.patch({ mode: value });
+    const setDocument = (value: ConfigDocument) => session.patch({ document: value });
+    const setPipelineError = () => session.patch({ localError: 'Fix the document before changing editing mode.' });
+    const setText = (value: string) => {
+        try {
+            validateCandidateText(value, true);
+            session.patch({ text: value, localError: null });
+        } catch {
+            session.patch({ localError: 'Configuration text must be complete UTF-8 without NUL and at most 1 MiB.' });
+        }
+    };
 
     useEffect(() => {
-        if (previousConnection.current !== connection.generation) {
-            previousConnection.current = connection.generation;
-            revision.current += 1;
-            setPreparation(null);
-            setConnectionChanged(true);
-            if (phase === 'installing')
-                setUnconfirmed(true);
-            else
-                setPhase('idle');
+        const previous = session.snapshot();
+        if (previous.generation !== null && previous.generation !== connection.generation) {
+            session.patch({
+                connectionChanged: true,
+                inspection: null,
+                inspectedGeneration: null,
+                ...(previous.phase === 'ready' ? { phase: 'idle' } : {}),
+                ...(previous.diskGuard && previous.uncertainty === null ? { uncertainty: 'candidate' } : {})
+            });
         }
-    }, [connection.generation, phase]);
+    }, [connection.generation, session]);
 
-    const load = useCallback(() => {
-        setLoadError(null);
-        readInstalledConfig()
-                .then(content => {
-                    setUnconfirmed(false);
-                    setInstalledText(content);
-                    setText(content);
-                    try {
-                        const parsed = parseConfig(content);
-                        setDocument(parsed);
-                    } catch (failure) {
-                        setDocument(null);
-                        setMode('text');
-                        setLoadError(new Error(`installed configuration does not parse: ${String(failure)}`));
-                    }
-                }, failure => setLoadError(failure as Error));
-    }, []);
+    useEffect(() => {
+        if (session.snapshot().initialized)
+            return;
+        loadInstalled(session);
+    }, [session]);
 
-    useEffect(load, [load]);
-
-    const candidateContent = (): string => {
-        if (mode === 'text')
-            return text;
-        return serializeConfig(document ?? {}, new Date());
-    };
-
+    const candidateContent = (): string => mode === 'text' ? text : serializeConfig(document ?? {}, new Date());
     const invalidate = () => {
-        revision.current += 1;
-        setPhase('idle');
-        setPreparation(null);
-        setValidation(null);
-        setPlan(null);
-        setFingerprint(null);
-        setFieldErrors({});
-        setPipelineError(null);
+        const current = session.snapshot();
+        session.patch({
+            draftRevision: current.draftRevision + 1,
+            phase: 'idle',
+            preparation: null,
+            fieldErrors: {},
+            localError: null
+        });
     };
-
     const editDocument = (value: ConfigDocument) => {
-        if (phase !== 'installing') {
+        if (!busy && state.uncertainty === null) {
+            try { validateCandidateText(serializeConfig(value, new Date())) } catch {
+                session.patch({ localError: 'The configuration must be valid bounded text before it can be retained.' });
+                return;
+            }
             invalidate();
             setDocument(value);
         }
     };
-
-    const ports: ConfigurationPorts = {
-        write: writeCandidate,
-        validate: validateCandidate,
-        preview: planCandidate,
-        install: installCandidate,
-        confirm: confirmInstalledCandidate,
+    const onEvidence = (event: ConfigurationEvidence) => {
+        const current = session.snapshot();
+        const update: Partial<typeof current> = { evidence: [...current.evidence, event].slice(-32) };
+        if (event.status === 'result') {
+            if (event.stage === 'candidate-validate') {
+                update.validation = event.envelope;
+                const errors: FieldErrors = {};
+                for (const issue of event.envelope.errors) {
+                    const path = extractFieldPath(issue);
+                    if (path !== null)
+                        errors[path] = issue.message;
+                }
+                update.fieldErrors = errors;
+            } else if (event.stage === 'candidate-preview') {
+                update.plan = event.envelope;
+                update.previewUncertain = classifyEnvelope(event.envelope) === 'observation';
+            } else {
+                update.confirmation = event.envelope;
+            }
+        }
+        session.patch(update);
     };
-
-    const check = () => {
-        if (installedText === null || unconfirmed)
+    const failed = (failure: unknown, installing = false) => {
+        const current = session.snapshot();
+        const pipeline = failure instanceof ConfigurationPipelineError ? failure : null;
+        const writeUncertain = pipeline?.stage === 'candidate-write';
+        session.patch({
+            pipelineError: failure as Error,
+            phase: 'idle',
+            preparation: null,
+            uncertainty: installing
+                ? 'install'
+                : writeUncertain || failure instanceof PreparationSuperseded
+                    ? 'candidate'
+                    : current.uncertainty,
+            previewUncertain: current.previewUncertain || pipeline?.stage === 'candidate-preview',
+            inspection: null,
+            inspectedGeneration: null,
+            confirmed: false
+        });
+    };
+    const check = (reuse = false) => {
+        const current = session.snapshot();
+        if (sessionBusy(current) || !connectionSnapshot().administrative || current.installedText === null ||
+            current.uncertainty === 'install' || current.previewUncertain)
             return;
-        revision.current += 1;
-        const capturedRevision = revision.current;
-        setConnectionChanged(false);
-        setPhase('checking');
-        setPreparation(null);
-        setValidation(null);
-        setPlan(null);
-        setFingerprint(null);
-        setPipelineError(null);
-        setFieldErrors({});
-        const flow = async () => {
-            const guard = { candidateContent: candidateContent(), installedContent: installedText };
-            const prepared = await prepareConfiguration(guard, {
-                ...ports,
-                write: async expected => {
-                    await writeCandidate(expected);
-                    if (revision.current === capturedRevision)
-                        setDiskGuard(expected);
-                },
-            }, () => revision.current === capturedRevision);
-            if (revision.current !== capturedRevision)
+        if (reuse
+            ? !stagedMatches || current.inspectedGeneration !== connectionSnapshot().generation ||
+                current.inspection?.candidate !== 'matching' || current.inspection.installedBase !== 'matching' ||
+                current.guardRevision !== current.draftRevision
+            : current.diskGuard !== null)
+            return;
+        let guard;
+        try {
+            guard = reuse && current.diskGuard
+                ? current.diskGuard
+                : Object.freeze({
+                    candidateContent: candidateContent(), installedContent: current.installedText,
+                });
+            validateCandidateText(guard.candidateContent);
+            validateCandidateText(guard.installedContent, true);
+        } catch {
+            session.patch({ localError: 'Configuration text must be complete UTF-8 without NUL and at most 1 MiB.' });
+            return;
+        }
+        const capturedRevision = current.draftRevision;
+        const capturedGeneration = connectionSnapshot().generation;
+        const isCurrent = () => session.snapshot().draftRevision === capturedRevision &&
+            connectionSnapshot().generation === capturedGeneration && connectionSnapshot().administrative;
+        // Retain exact bytes BEFORE transmission; a lost write acknowledgement does not lose ownership evidence.
+        session.patch({
+            diskGuard: guard,
+            guardRevision: capturedRevision,
+            generation: capturedGeneration,
+            phase: 'checking',
+            preparation: null,
+            proposal: null,
+            validation: null,
+            plan: null,
+            confirmation: null,
+            fingerprint: null,
+            pipelineError: reuse ? current.pipelineError : null,
+            reconciliationError: null,
+            fieldErrors: {},
+            evidence: reuse ? current.evidence : [],
+            inspection: null,
+            inspectedGeneration: null,
+            uncertainty: null,
+            connectionChanged: false,
+            confirmed: false
+        });
+        prepareConfiguration(guard, ports, isCurrent, { skipWrite: reuse, onEvidence }).then(prepared => {
+            if (!isCurrent()) {
+                failed(new PreparationSuperseded());
                 return;
-            setPreparation(prepared);
-            setValidation(prepared.validation);
-            setPlan(prepared.plan);
-            const errors: FieldErrors = {};
-            for (const issue of prepared.validation.errors) {
-                const path = extractFieldPath(issue);
-                if (path !== null)
-                    errors[path] = issue.message;
             }
-            setFieldErrors(errors);
-            setPhase(prepared.proposal === null ? 'idle' : 'ready');
-        };
-        flow().catch(failure => {
-            if (revision.current === capturedRevision) {
-                setPipelineError(failure as Error);
-                setPhase('idle');
-            }
-        });
+            session.patch({
+                preparation: prepared,
+                proposal: prepared.proposal,
+                phase: prepared.proposal === null ? 'idle' : 'ready'
+            });
+        })
+                .catch(failure => failed(failure));
     };
-
     const install = () => {
-        const proposal = preparation?.proposal;
-        if (proposal === undefined || proposal === null || phase !== 'ready')
+        const current = session.snapshot();
+        const proposal = current.proposal;
+        if (!proposal || current.phase !== 'ready' || !connectionSnapshot().administrative ||
+            current.generation !== connectionSnapshot().generation || current.uncertainty !== null)
             return;
-        setPhase('installing');
-        setPipelineError(null);
-        const flow = async () => {
-            const confirmed = await installConfiguration(proposal, ports);
-            setFingerprint(confirmed.fingerprint);
-            setValidation(confirmed.envelope);
-            setDiskGuard(null);
-            setPreparation(null);
-            setPhase('done');
-            load();
-        };
-        flow().catch(failure => {
-            setPreparation(null);
-            setValidation(null);
-            setPlan(null);
-            setDiskGuard(null);
-            setUnconfirmed(true);
-            setPipelineError(failure as Error);
-            setPhase('idle');
+        const generation = connectionSnapshot().generation;
+        session.patch({
+            phase: 'installing',
+            pipelineError: null,
+            inspection: null,
+            inspectedGeneration: null,
+            confirmed: false
+        });
+        installConfiguration(proposal, ports, {
+            onEvidence,
+            isCurrent: () =>
+                connectionSnapshot().administrative && connectionSnapshot().generation === generation
+        }).then(confirmed => {
+            session.patch({
+                fingerprint: confirmed.fingerprint,
+                confirmation: confirmed.envelope,
+                diskGuard: null,
+                proposal: null,
+                preparation: null,
+                phase: 'done',
+                uncertainty: null,
+                installedText: proposal.guard.candidateContent
+            });
+        })
+                .catch(failure => failed(failure, true));
+    };
+    const inspect = () => {
+        const current = session.snapshot();
+        if (!current.diskGuard || sessionBusy(current) || !connectionSnapshot().administrative)
+            return;
+        const generation = connectionSnapshot().generation;
+        session.patch({
+            phase: 'inspecting',
+            confirmed: false,
+            reconciliationError: null,
+            inspection: null,
+            inspectedGeneration: null
+        });
+        inspectCandidate(current.diskGuard).then(inspection => {
+            if (connectionSnapshot().generation !== generation || !connectionSnapshot().administrative) {
+                session.patch({ phase: 'idle' });
+                return;
+            }
+            session.patch({ phase: 'idle', inspection, inspectedGeneration: generation });
+        })
+                .catch(failure => session.patch({ phase: 'idle', reconciliationError: failure as Error }));
+    };
+    const confirm = () => {
+        const current = session.snapshot();
+        if (!installedMatches || current.inspection?.installedCandidate !== 'matching' ||
+            current.inspection.backupBase !== 'matching' || sessionBusy(current) ||
+            current.inspectedGeneration !== connectionSnapshot().generation ||
+            !connectionSnapshot().administrative || !current.proposal || current.uncertainty !== 'install')
+            return;
+        const generation = connectionSnapshot().generation;
+        session.patch({ phase: 'confirming', reconciliationError: null });
+        confirmConfiguration(current.proposal, ports, {
+            onEvidence,
+            isCurrent: () =>
+                connectionSnapshot().administrative && connectionSnapshot().generation === generation
+        }).then(result => {
+            session.patch({
+                phase: 'idle',
+                confirmed: true,
+                fingerprint: result.fingerprint,
+                confirmation: result.envelope
+            });
+        })
+                .catch(failure => session.patch({ phase: 'idle', reconciliationError: failure as Error }));
+    };
+    const acknowledge = () => {
+        const current = session.snapshot();
+        if (!current.confirmed || !current.diskGuard || !installedMatches ||
+            current.inspection?.installedCandidate !== 'matching' || current.inspection.backupBase !== 'matching' || sessionBusy(current) ||
+            current.inspectedGeneration !== connectionSnapshot().generation || !connectionSnapshot().administrative)
+            return;
+        const content = current.diskGuard.candidateContent;
+        let parsed: ConfigDocument | null = null;
+        try { parsed = parseConfig(content) } catch { /* Strict API confirmation already required. */ }
+        session.patch({
+            installedText: content,
+            text: content,
+            document: parsed,
+            uncertainty: null,
+            diskGuard: null,
+            proposal: null,
+            preparation: null,
+            phase: 'done',
+            generation: connectionSnapshot().generation,
+            connectionChanged: false
         });
     };
-
     const cancel = () => {
-        if (diskGuard === null || phase === 'installing')
+        const current = session.snapshot();
+        if (!current.diskGuard || sessionBusy(current) || current.uncertainty !== null || current.previewUncertain ||
+            current.generation !== connectionSnapshot().generation || !connectionSnapshot().administrative)
             return;
-        revision.current += 1;
-        removeCandidate(diskGuard).then(() => {
-            setDiskGuard(null);
-            invalidate();
-        }, failure => {
-            invalidate();
-            setPipelineError(failure as Error);
-        });
+        session.patch({ phase: 'discarding' });
+        removeCandidate(current.diskGuard).then(() => {
+            session.patch({
+                diskGuard: null,
+                preparation: null,
+                proposal: null,
+                phase: 'idle',
+                inspection: null,
+                inspectedGeneration: null
+            });
+        })
+                .catch(failure => {
+                    session.patch({
+                        phase: 'idle',
+                        pipelineError: failure as Error,
+                        uncertainty: 'candidate',
+                        inspection: null,
+                        inspectedGeneration: null
+                    });
+                });
     };
 
     return (
@@ -493,6 +666,14 @@ export const Configuration = () => {
                     </Alert>
                 </StackItem>}
             {loadError !== null && <StackItem><QueryError error={loadError} /></StackItem>}
+            {diskGuard === null && state.uncertainty === null && !busy &&
+                <StackItem>
+                    <Button
+variant="link" isDisabled={!connection.administrative}
+                        onClick={() => loadInstalled(session)}
+                    >Reload installed configuration
+                    </Button>
+                </StackItem>}
             {installedText === null && loadError === null && <StackItem><Loading /></StackItem>}
             {installedText !== null &&
                 <StackItem>
@@ -505,16 +686,16 @@ export const Configuration = () => {
                                         <ToggleGroupItem
                                             text="Form (canonical; comments not preserved)"
                                             isSelected={mode === 'form'}
-                                            isDisabled={phase === 'installing'}
+                                            isDisabled={busy || state.uncertainty !== null}
                                             onChange={() => {
-                                                if (phase !== 'installing' && mode !== 'form') {
+                                                if (!busy && state.uncertainty === null && mode !== 'form') {
                                                     try {
                                                         const parsed = parseConfig(text);
                                                         invalidate();
                                                         setDocument(parsed);
                                                         setMode('form');
                                                     } catch {
-                                                        setPipelineError(new Error('Fix the text document before switching to form mode'));
+                                                        setPipelineError();
                                                     }
                                                 }
                                             }}
@@ -522,7 +703,7 @@ export const Configuration = () => {
                                         <ToggleGroupItem
                                             text="Text (verbatim)"
                                             isSelected={mode === 'text'}
-                                            isDisabled={phase === 'installing'}
+                                            isDisabled={busy || state.uncertainty !== null}
                                             onChange={() => {
                                                 if (mode === 'text')
                                                     return;
@@ -532,7 +713,7 @@ export const Configuration = () => {
                                                     setText(content);
                                                     setMode('text');
                                                 } catch {
-                                                    setPipelineError(new Error('Fix invalid tags before switching to text mode'));
+                                                    setPipelineError();
                                                 }
                                             }}
                                         />
@@ -559,7 +740,7 @@ export const Configuration = () => {
                                             className="hfcache-config-text"
                                             value={text}
                                             rows={26}
-                                            isDisabled={phase === 'installing'}
+                                            isDisabled={busy || state.uncertainty !== null}
                                             onChange={(_event, value) => {
                                                 invalidate();
                                                 setText(value);
@@ -571,47 +752,109 @@ export const Configuration = () => {
                                         <FlexItem>
                                             <Button
                                                 variant="primary"
-                                                isDisabled={phase === 'checking' || phase === 'installing' || unconfirmed}
-                                                onClick={check}
+                                                isDisabled={busy || !connection.administrative || diskGuard !== null || state.uncertainty !== null}
+                                                onClick={() => check()}
                                             >
                                                 Validate candidate
                                             </Button>
                                         </FlexItem>
-                                        {phase === 'ready' && preparation?.proposal != null &&
+                                        {phase === 'ready' && preparation?.proposal != null && fresh && state.uncertainty === null &&
                                             <FlexItem>
                                                 <Button variant="danger" onClick={install}>
                                                     Install validated candidate
                                                 </Button>
                                             </FlexItem>}
-                                        {diskGuard !== null && phase !== 'installing' && phase !== 'checking' &&
+                                        {diskGuard !== null && !busy && state.uncertainty === null && !state.previewUncertain && fresh &&
                                             <FlexItem>
                                                 <Button variant="link" onClick={cancel}>Discard candidate</Button>
                                             </FlexItem>}
-                                        {(phase === 'checking' || phase === 'installing') &&
+                                        {busy &&
                                             <FlexItem><Loading /></FlexItem>}
                                     </Flex>
                                 </StackItem>
                                 {pipelineError !== null &&
-                                    <StackItem><QueryError error={pipelineError} /></StackItem>}
+                                    <StackItem>
+                                        {pipelineError instanceof PreparationSuperseded &&
+                                            <Alert variant="warning" isInline title="Draft or administrative session changed; captured stage evidence was retained" />}
+                                        {pipelineError instanceof ConfigurationPipelineError && pipelineError.envelope &&
+                                            <EnvelopeAlert envelope={pipelineError.envelope} />}
+                                        {!(pipelineError instanceof PreparationSuperseded) &&
+                                            (!(pipelineError instanceof ConfigurationPipelineError) || pipelineError.cause) &&
+                                            <QueryError error={pipelineError instanceof ConfigurationPipelineError
+                                                ? pipelineError.cause!
+                                                : pipelineError}
+                                            />}
+                                    </StackItem>}
+                                {state.localError && <StackItem><Alert variant="warning" isInline title={state.localError} /></StackItem>}
+                                {state.reconciliationError &&
+                                    <StackItem>
+                                        {state.reconciliationError instanceof ConfigurationPipelineError && state.reconciliationError.envelope &&
+                                            <EnvelopeAlert envelope={state.reconciliationError.envelope} />}
+                                        {(!(state.reconciliationError instanceof ConfigurationPipelineError) || state.reconciliationError.cause) &&
+                                            <QueryError error={state.reconciliationError instanceof ConfigurationPipelineError
+                                                ? state.reconciliationError.cause!
+                                                : state.reconciliationError}
+                                            />}
+                                    </StackItem>}
+                                {state.uncertainty === 'candidate' &&
+                                    <StackItem>
+                                        <Alert variant="warning" isInline title="Candidate acknowledgement is uncertain">
+                                            Preserve the captured draft and base. Inspect the fixed files before any deliberate revalidation.
+                                            Changed, absent or unknown files do not prove that execution did not occur.
+                                        </Alert>
+                                    </StackItem>}
+                                {diskGuard !== null && !busy &&
+                                    <StackItem>
+                                        <Button isDisabled={!connection.administrative} onClick={inspect}>
+                                            Inspect captured configuration
+                                        </Button>
+                                    </StackItem>}
+                                {state.inspection && inspectionFresh &&
+                                    <StackItem>
+                                        <p>Captured candidate: {state.inspection.candidate}. Installed base: {state.inspection.installedBase}.
+                                            Installed candidate: {state.inspection.installedCandidate}. Backup base: {state.inspection.backupBase}.
+                                        </p>
+                                        {stagedMatches && state.uncertainty !== 'install' &&
+                                            <Button
+isDisabled={busy || state.previewUncertain || state.guardRevision !== state.draftRevision}
+                                                onClick={() => check(true)}
+                                            >Revalidate captured candidate
+                                            </Button>}
+                                        {installedMatches && unconfirmed && state.proposal &&
+                                            <Button isDisabled={busy} onClick={confirm}>Confirm captured installation</Button>}
+                                        {state.confirmed && installedMatches && unconfirmed &&
+                                            <Button isDisabled={busy} onClick={acknowledge}>Acknowledge confirmed installation</Button>}
+                                    </StackItem>}
+                                {state.previewUncertain &&
+                                    <StackItem>
+                                        <Alert variant="warning" isInline title="Sizing observation is uncertain">
+                                            Preserve its original operation handles and observe that operation before another sizing submission.
+                                        </Alert>
+                                    </StackItem>}
+                                {state.evidence.length > 0 &&
+                                    <StackItem>
+                                        <p aria-label="Configuration stage evidence">
+                                            {state.evidence.map(event => `${event.stage}: ${event.status}`).join('; ')}
+                                        </p>
+                                    </StackItem>}
                                 {unconfirmed &&
                                     <StackItem>
                                         <Alert variant="warning" isInline title={UNCONFIRMED_INSTALLATION}>
-                                            <Button variant="link" onClick={() => { invalidate(); load() }}>
-                                                Reload installed configuration
-                                            </Button>
+                                            Retain the original cause below. Inspect, explicitly confirm the captured installation,
+                                            and acknowledge its exact bytes before starting a fresh preparation.
                                         </Alert>
                                     </StackItem>}
                                 {validation !== null && (validation.exit_code !== 0 || phase === 'done') &&
                                     <StackItem><EnvelopeAlert envelope={validation} /></StackItem>}
-                                {preparation?.assessment.syntaxValid &&
+                                {preparation?.assessment?.syntaxValid &&
                                     <StackItem>
                                         <Alert variant="info" isInline title="Candidate configuration syntax is valid" />
                                     </StackItem>}
                                 {preparation?.blocked === 'authority' &&
                                     <StackItem>
                                         <Alert variant="warning" isInline title="Candidate cannot be previewed or installed through this API authority">
-                                            {preparation.assessment.mismatches.length > 0 &&
-                                                <p>Changed authority fields: {preparation.assessment.mismatches.join(', ')}.</p>}
+                                            {preparation.assessment!.mismatches.length > 0 &&
+                                                <p>Changed authority fields: {preparation.assessment!.mismatches.join(', ')}.</p>}
                                             {MANUAL_AUTHORITY_GUIDANCE}
                                         </Alert>
                                     </StackItem>}
@@ -626,7 +869,7 @@ export const Configuration = () => {
                                 {plan !== null &&
                                     <StackItem>
                                         {plan.exit_code !== 0 && <EnvelopeAlert envelope={plan} />}
-                                        {plan.exit_code === 0 && <PlanPreview envelope={plan} />}
+                                        {plan.exit_code === 0 && preparation?.plan === plan && <PlanPreview envelope={plan} />}
                                     </StackItem>}
                                 {phase === 'done' &&
                                     <StackItem>

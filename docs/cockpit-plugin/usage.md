@@ -188,8 +188,21 @@ but still fails exact-content confirmation. A confirmation failure means the
 installed state is unconfirmed; it does not prove the old file remains or trigger
 a silent rollback. **Discard candidate** abandons that proposal, never deletes
 operation evidence or the retained config lock.
-Install/confirmation errors remove readiness and require **Reload installed
-configuration** before validating again, because installation may have completed.
+The editor retains its captured draft/base, stage results and original cause in
+application memory across tab changes. A valid failed API result displays its
+original code even when it has no candidate assessment. Installation readiness
+never follows from a failed request.
+
+A lost write/install acknowledgement disables Validate, Install and Discard.
+**Inspect captured configuration** compares the four fixed files under the
+original lock without creating files. Matching staged candidate and installed
+base permit explicit **Revalidate captured candidate**, which skips the write.
+An uncertain install requires matching installed candidate and predecessor,
+**Confirm captured installation**, then **Acknowledge confirmed installation**.
+The original failure remains available during reconciliation. Absent, changed or
+unknown files require operator review; inspection never installs, rolls back or
+cleans up. A full page reload does not adopt a pre-existing candidate by its name.
+A fresh installed-file read alone cannot resolve uncertainty.
 Loading the editor itself takes the root config flock and checks bounded no-follow
 file access and ownership/mode; it never reads a credential source.
 

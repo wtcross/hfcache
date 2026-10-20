@@ -3,6 +3,13 @@
  * These objects never execute a host command or open a D-Bus connection.
  */
 
+import {
+    CONFIGURATION_PATHS, MAX_CANDIDATE_BYTES, readInstalledInvocation,
+    validateCandidateText
+} from '../src/lib/candidate-guard';
+import { hfcacheArgv } from '../src/lib/command';
+import type { Envelope } from '../src/lib/envelope';
+
 export function invariant(condition: unknown, description: string): asserts condition {
     if (!condition)
         throw new Error(description);
@@ -31,6 +38,8 @@ export function envelope(command: string, marker: string): string {
 
 export class ProcessBoundary {
     readonly argv: string[];
+    readonly action: 'cli' | 'read' | 'inspect' | 'write' | 'install' | 'remove' | 'guard' | 'confirm';
+    readonly clientArgv: string[] | null;
     readonly handle: Promise<string> & {
         stream: (callback: (chunk: string) => void) => unknown;
         input: (value: string) => unknown;
@@ -40,17 +49,52 @@ export class ProcessBoundary {
     private receive: (chunk: string) => void = () => undefined;
     private resolve!: (value: string) => void;
     private reject!: (error: Error) => void;
+    private capturedInput: string | null = null;
+
+    get input(): string | null { return this.capturedInput }
 
     constructor(argv: string[], options: Record<string, unknown>) {
         this.argv = [...argv];
-        invariant(argv[0] === 'systemd-run', 'Actual adapter must retain transient systemd launcher');
-        const separator = argv.indexOf('--');
-        invariant(separator > 0 && argv[separator + 1] === '/usr/local/libexec/hfcache-client',
-                  'Actual adapter must retain the fixed client helper');
-        invariant(argv.includes('--property=User=hfcache') && argv.includes('--property=Group=hfcache'),
-                  'Actual adapter must retain the service identity');
-        invariant(options.superuser === 'require' && options.err === 'out',
-                  'Actual adapter must retain privileged merged-stream observation');
+        if (argv[0] === 'bash') {
+            // Compare the actual imported helper, every fixed path and root
+            // identity. This boundary records data and never runs that script.
+            const expected = readInstalledInvocation().argv;
+            const action = argv[4];
+            invariant(action === 'read' || action === 'inspect' || action === 'write' ||
+                      action === 'install' || action === 'remove' || action === 'guard' || action === 'confirm',
+                      'Only fixed configuration guard actions are permitted');
+            expected[4] = action;
+            invariant(expected.every((argument, index) => argument === argv[index]),
+                      'Actual guarded adapter must retain the exact trusted script, paths and identity');
+            this.action = action;
+            const client = action === 'guard' || action === 'confirm';
+            invariant(client || argv.length === expected.length, 'Host-only guard must contain no command tail');
+            this.clientArgv = client ? argv.slice(expected.length) : null;
+            if (this.clientArgv !== null) {
+                validateClientArgv(this.clientArgv);
+                if (action === 'confirm') {
+                    const confirmation = hfcacheArgv(['config', 'validate']);
+                    invariant(this.clientArgv.length === confirmation.length &&
+                              confirmation.every((argument, index) => argument === this.clientArgv?.[index]),
+                              'Installed confirmation must retain its fixed installed validation command');
+                } else {
+                    const prefix = hfcacheArgv([], { config: CONFIGURATION_PATHS.candidate });
+                    invariant(prefix.every((argument, index) => argument === this.clientArgv?.[index]),
+                              'Candidate CLI must select only the fixed candidate path');
+                    const command = this.clientArgv.slice(prefix.length);
+                    invariant(command[0] === 'plan' || command.join(' ') === 'config validate',
+                              'Only candidate validation and sizing may use the guard');
+                }
+            }
+            invariant(options.superuser === 'require' && options.err === (client ? 'out' : 'message'),
+                      'Actual guarded adapter must retain privileged process observation');
+        } else {
+            this.action = 'cli';
+            this.clientArgv = [...argv];
+            validateClientArgv(argv);
+            invariant(options.superuser === 'require' && options.err === 'out',
+                      'Actual adapter must retain privileged merged-stream observation');
+        }
         const completion = new Promise<string>((resolve, reject) => {
             this.resolve = resolve;
             this.reject = reject;
@@ -60,19 +104,59 @@ export class ProcessBoundary {
                 this.receive = callback;
                 return this.handle;
             },
-            input: () => { throw new Error('This fixture accepts no host-write input') },
+            input: (value: string) => {
+                invariant(this.action !== 'cli', 'Direct CLI processes accept no host-write input');
+                invariant(this.capturedInput === null && typeof value === 'string',
+                          'Guarded stdin must be captured exactly once');
+                // Two separately bounded documents plus their NUL framing. No
+                // candidate bytes become argv, commands, storage or host I/O.
+                invariant(new TextEncoder().encode(value).length <= 2 * MAX_CANDIDATE_BYTES + 2,
+                          'Guarded stdin exceeds the two-document bound');
+                const documents = value.split('\0');
+                invariant(documents.length === 3 && documents[2] === '',
+                          'Guarded stdin must contain exactly two NUL-terminated documents');
+                validateCandidateText(documents[0]);
+                validateCandidateText(documents[1], true);
+                this.capturedInput = value;
+                return this.handle;
+            },
             close: (): never => { throw new Error('Observation must never close an admitted process') },
         });
     }
 
     succeed(command: string, marker: string): void {
-        this.receive(envelope(command, marker));
+        this.emit(envelope(command, marker));
         this.resolve('');
+    }
+
+    rawSuccess(output = ''): void { this.resolve(output) }
+
+    emit(chunk: string): void { this.receive(chunk) }
+
+    succeedEnvelope(result: Envelope): void {
+        invariant(result.exit_code === 0, 'Successful result helper requires a successful Envelope');
+        this.emit(JSON.stringify(result) + '\n');
+        this.resolve('');
+    }
+
+    failEnvelope(result: Envelope, error = Object.assign(new Error('Classified CLI result'), {
+        exit_status: result.exit_code,
+    })): void {
+        invariant(result.exit_code !== 0, 'Failed result helper requires an authentic nonzero Envelope');
+        this.emit(JSON.stringify(result) + '\n');
+        this.reject(error);
     }
 
     fail(error = bridgeFailure()): void {
         this.reject(error);
     }
+}
+
+function validateClientArgv(argv: string[]): void {
+    const fixed = hfcacheArgv([]);
+    invariant(fixed.every((argument, index) => argument === argv[index]),
+              'Actual adapter must retain the exact fixed launcher, profile, socket and service identity');
+    invariant(argv.length > fixed.length, 'Actual client command must be explicit');
 }
 
 export class BusRequest {

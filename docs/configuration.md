@@ -556,7 +556,17 @@ Candidate exact text binds a new request; no raw candidate body is durable contr
 state. REST cannot install policy or backups. Cockpit's CP-11 pipeline now guards
 exact candidate/base bytes under the retained root config flock, requires valid
 compatible assessment and any required successful preview, then preserves atomic
-backup/install and confirms the exact expected installed fingerprint. Edits
+backup/install and confirms the exact expected installed fingerprint and document
+before and after API validation. A valid failed request Envelope does not need an
+assessment payload: its original code/message remains failure evidence. Exact
+draft/base bytes and acknowledged stages stay in application memory across tab
+changes, never in browser storage. Interrupted writes/installations disable repeat
+writes, installation and discard. Read-only inspection under the existing lock
+creates no comparison/lock/backup files; only exact staged/base matches permit
+explicit revalidation without rewriting. An interrupted install additionally
+requires exact installed/backup comparison, successful explicit API confirmation
+and user acknowledgement. Missing/changed/unknown files or a fresh editor load
+cannot establish nonexecution or candidate ownership. Edits
 invalidate readiness; incompatible/unknown authority blocks plugin install with
 manual operator guidance. API-only clients never receive Hub authority. See
 [decision 122](adr/decision-122.md), [Cockpit pipeline](cockpit.md#6-configuration-editing)

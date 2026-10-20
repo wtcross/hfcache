@@ -91,7 +91,10 @@ export function selectorsNeedingPreview(installed: ConfigDocument, candidate: Co
     for (const entry of candidate.repositories ?? []) {
         const selector = `${entry.type}:${entry.id}`;
         const previous = before.get(selector);
-        if (entry.enabled && (previous === undefined || !previous.enabled || previous.revision !== entry.revision))
+        // Text-mode TOML preserves omitted fields. Match RepositoryConfig's
+        // defaults when deciding whether sizing is required, without editing it.
+        if ((entry.enabled ?? true) && (previous === undefined || !(previous.enabled ?? true) ||
+            (previous.revision ?? 'main') !== (entry.revision ?? 'main')))
             need.push(selector);
     }
     return need;

@@ -260,6 +260,14 @@ values. API alone receives Hub plus distinct REST/optional MCP authority, Caddy 
 only, client API only. Worker/client additionally mask /run/credentials,
 /etc/credstore, /etc/credstore.encrypted and /etc/hfcache/credentials with empty
 inaccessible read-only mounts; custom sources need explicit review/masking.
+For a newly provisioned fixture, OCI setup must be able to traverse an empty host
+placeholder before installing its inaccessible mask. Verify the exact directory
+is root-owned, empty and not a symlink before assigning the intended public
+placeholder mode; the in-container tmpfs remains read-only mode `000`. An existing
+credential directory is not a placeholder: preserve its permissions/content and
+review the bind setup rather than changing it. OCI permission refusal before a
+payload PID exists is launcher failure, even if a created container reports a
+default zero exit code.
 Read-only config access alone is not secret isolation. No NAS chown, relabel,
 copyup or attempted write-denial probe is allowed.
 
@@ -291,6 +299,26 @@ updates /opt/hfcache/current and fsyncs its parent. No running/unknown executor,
 libpod cgroup or activation state may be ignored. Previous native/container
 releases and all retained state remain; no force cleanup or implicit migration.
 Staging and selection require explicit operator authorization and quiescence.
+
+Before activation, verify the public release directories are root-owned,
+service-readable/searchable and not group/world writable (normally `0755`). A
+restrictive inherited staging umask can make otherwise valid indexed files
+unreachable. Keep credential, engine and control-state directories private; do
+not solve this by opening service homes or secret directories. Administrative
+`runuser`/rootless diagnostics must start from an accessible working directory
+such as `/`, rather than inheriting a private operator home.
+
+Host SELinux labeling is a separate provisioning prerequisite; the rootless
+installer authenticates bytes and bindings but does not install fcontext rules.
+Under Enforcing, verify persistent, narrowly scoped rules and actual contexts for
+the new authenticated artifacts: `systemd_unit_file_t` for system/user unit files
+(including the target and bridge), `bin_t` for executable public launchers, and
+the reviewed container-readable contexts for local bind inputs. Apply only the
+reviewed local rules with `restorecon -F`, then inspect actual target contexts and
+manager logs. Preserve denial evidence and correct a proven missing label before
+another explicit activation. Never relabel the NAS, relax policy, disable labels
+or infer launcher health from successful index checks. These provisioning
+prerequisites do not identify the cause of a later browser `reconnected` failure.
 
 A refusal after current-link replacement but failed parent-directory fsync is an
 uncertain acknowledgement: exit 20 may leave the new selector in place. Both trees
