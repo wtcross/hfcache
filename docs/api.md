@@ -411,3 +411,118 @@ HFAPI020 means an unusable POST acknowledgement after transmission may hide
 accepted execution. Even a validated retained-key 5xx can follow durable admission.
 Keep its taxonomy and warn that work may continue. Client read retries never replay
 POST. [Server lifecycle](server.md#restart-and-drain) governs actual executor drain.
+
+## Web UI and administration design
+
+The following is accepted design for the replacement browser interface;
+**these additions are not implemented or available yet**. The route matrix above,
+bearer authentication and current strict schemas remain the implemented API.
+See [UI availability](web-ui/README.md), [authentication decision](adr/decision-140.md),
+[host/configuration decision](adr/decision-141.md) and
+[card decision](adr/decision-142.md). Each addition requires executable
+unit/integration and real installed functional evidence before support is claimed.
+
+Preserve all current endpoints and wrappers. Add only these surfaces, with the
+configured public prefix before `/api/v1` or `/ui/`:
+
+| Method/path | Required authority and outcome |
+| --- | --- |
+| `GET /api/v1/config` | Explicit configuration-read administration capability and protected helper proof; strict nonsecret installed projection and opaque exact-byte base revision |
+| `POST /api/v1/config/applications` | Explicit configuration-write administration capability plus protected host policy; keyed admission and guarded helper application, never arbitrary policy paths |
+| `GET /api/v1/repositories/{repository_type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card` | REST metadata read; exact retained publication and bounded adjunct only |
+| `GET /api/v1/host/status` | Explicit administration-read capability; bounded selected-profile, permissions/reasons, fixed unit/timer and sync-schedule revision facts |
+| `POST /api/v1/host/sync-schedule/validations` | Explicit schedule administration capability and host policy; bounded read-only fixed systemd calendar/timespan validation |
+| `POST /api/v1/host/sync-schedule/changes` | Explicit schedule administration capability plus protected supported-profile proof; keyed closed action `pause`, `resume`, `replace` or `reset`, with exact expected revision |
+| `POST /api/v1/host/sync-observer/stops` | Explicit observer administration capability plus policy; keyed fixed stop with exact expected invocation identity, never job cancellation |
+| `GET /api/v1/host/journal` | Explicit administration-read capability plus policy; fixed source, bounded page/cursor, redacted diagnostics rather than job outcomes |
+| `GET`/`HEAD /ui/` recognized navigation/assets and `GET /ui/bootstrap.json` | Application-owned authentication, fixed indexed non-archive assets and independent nonsecret UI bootstrap |
+
+Do not add duplicate models/datasets/dashboard/tag CRUD, generic payload/URL,
+schedule GET, arbitrary unit/terminal, cancellation, SSE or WebSocket routes.
+`host/status` includes the sync schedule and display-only verification timer facts.
+Rootless schedule/observer changes remain denied while fixed system-manager
+bindings are unproved; supported native positive paths still require acceptance.
+
+### Managed configuration form
+
+The new strict `ManagedEditRequest` is `{base_revision, edits}`. Extend existing
+validation/planning DTOs with `{managed: ManagedEditRequest}`, mutually exclusive with literal
+`candidate`. Installed `{}` and existing candidate forms retain their exact
+request canonicalization and response shapes. Legacy plans retain existing
+`selectors`; the managed form requires them omitted or empty. The server derives
+the exact newly added, enabled or retargeted enabled repository set required by
+the existing configuration-preview rule, never a caller subset. Nonempty scope
+requires complete Hub sizing and explicit Hub host permission. Empty scope still
+requires a successful bound managed assessment after validation, without Hub
+contact; this includes tag/settings/removal-only and all-disabled changes. Apply
+verifies exact required scope, resolved revisions where sized, and complete
+assessment. Existing preview exemptions remain; no new tag-only exemption is added.
+Managed forms require explicit configuration administration capability and a new
+independently versioned assessment projection; ordinary bearer writer authority
+does not grant helper access. Reject unknown fields, explicit nulls where a value
+is required, mixed forms and coercions.
+
+`edits` contains at most 256 entries in a closed discriminated union:
+
+| `kind` | Fields and constraints |
+| --- | --- |
+| `repository-upsert` | `repository`: complete existing strict repository configuration fields; server applies by `(type,id)` |
+| `repository-remove` | `repository_type`, `repository_id`: existing grammars; remove configuration only, never retained content |
+| `settings-replace` | `settings`: nonempty closed optional field replacements under `storage`, `sync`, `verification`, `repair`; values retain existing strict field constraints |
+
+Each repository identity may be touched only once; there is at most one
+`settings-replace`, and every supplied nested settings table must be nonempty.
+Editable storage fields are `publication_mode`,
+`minimum_free_space_gib`, `minimum_free_space_percent`, `maximum_revisions`.
+Editable sync fields are the current documented fields in that table;
+verification permits `lock_wait_seconds` and repair permits
+`retired_instance_grace_hours`. Algorithm and required hashing remain protected,
+as do root/UUID/Hub/credential/server-policy keys.
+Resolve edits against fresh installed policy server-side and preserve hidden and
+protected fields; do not accept JSON pointers, paths or redaction placeholders.
+
+Read binds the complete installed document, including tag-only changes, to a
+strong opaque `base_revision` using a protected stable HMAC key. Do not return
+secret-dependent full-document hashes. Application is
+`{managed: ManagedEditRequest, preview_operation_id}`, naming the exact required
+successful managed assessment operation. Revalidate original identity, exact
+candidate/base, complete required sizing or explicit empty-scope assessment,
+server-derived scope and current capability/policy before installation.
+A preview reference is evidence, never
+a transferable authorization token. Configuration documents remain at most 1 MiB.
+
+Apply follows existing exact candidate/base comparisons under the original config
+lock, durable predecessor backup, atomic `0640 root:hfcache` install and exact
+post-install bytes/fingerprint confirmation. The lock is released during Hub
+sizing. Receipt/helper interruption yields explicit unchanged,
+installed-unconfirmed, conflict or unknown reconciliation through original handles;
+it never causes automatic replay, rollback or evidence cleanup. Generic receipts,
+events and results contain no raw configuration or credentials.
+Unknown existing candidate/backup evidence refuses application and is preserved.
+A known predecessor backup tied to a confirmed helper outcome may be superseded
+only after a durable per-operation private copy preserves it; replacing the fixed
+backup never deletes uncertain or unexplained history.
+
+### New presentation and host bounds
+
+Cards have independent [schema 1](schemas.md#181-repositorycard-schema-1).
+`not_captured` distinguishes a missing adjunct from missing README; vanished
+publication is 404 without fallback. Invalid schema/identity/bounds is a classified
+error. Card reads never open source payloads or contact the Hub, and use the same
+bounded metadata pool/lease lifetime as other reads.
+
+Calendar expressions are one nonempty printable ASCII line, at most 4096 bytes,
+without backslash; delay is a printable ASCII line at most 256 bytes without
+backslash. Only `replace` carries them. Journal source is `sync`, `verification`,
+`api` or `worker`, with at most 200 events and 64 KiB serialized page, bounded
+opaque cursor and no arbitrary filters/unit/path. Helper protocol is independently
+versioned, closed and peer-verified; its absence is unavailable, never fallback.
+
+Basic browser authentication and effective permission/bootstrap context use
+separate schemas. Existing bearer credentials, fourteen read-only MCP tools,
+public operation credential-class grammar and strict capabilities remain unchanged.
+Unsafe Basic requests require exact configured Origin, JSON and a non-simple
+application header; nonbrowser bearer no-Origin behavior remains compatible.
+No UI fallback may consume REST/MCP paths or errors. See [server configuration
+design](server.md#web-ui-design-and-current-availability) and
+[browser security](security.md#browser-administration-design).

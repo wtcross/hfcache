@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "validation_date": "2026-10-20",
+  "scope": "Bundle structure and reference integrity only; no hfcache implementation, application tests or deployment were performed.",
+  "reviewed_source_commit": "6b8fae2e0997403ae5c716a2e92148af0a972af9",
+  "status": "passed",
+  "counts": {
+    "authored_payload_files_checked": 45,
+    "markdown_files_checked": 38,
+    "local_markdown_link_targets_checked": 359,
+    "task_records": 26,
+    "acceptance_scenarios": 95,
+    "unchanged_reference_assets": 5
+  },
+  "checks": [
+    "All bundle paths are relative under docs/agents/plans; no symlinks or active selector replacement.",
+    "Markdown local links resolve; code fences balanced; text UTF-8 and JSON parseable.",
+    "Task IDs unique, pending, dependency-complete in execution order; plan remains draft.",
+    "Every task has unit/component, integration, functional and human documentation requirements.",
+    "Acceptance case IDs unique and assigned to an existing work package.",
+    "Approved reference assets byte-identical to supplied attachments; standalone kickoff matches bundled prompt."
+  ],
+  "not_run": [
+    "Project scripts/check.sh",
+    "Frontend unit/component tests",
+    "Application integration or functional suites",
+    "Native/rootless installed acceptance",
+    "Live production or NAS acceptance"
+  ]
+}

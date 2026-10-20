@@ -6,6 +6,9 @@ Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
+Current status: amended by the accepted replacement design in
+[decision 143](decision-143.md); executable replacement conformance is pending.
+
 - Original decision date: 2026-07-30.
 
 ## Context, decision and consequences
@@ -49,3 +52,9 @@ frozen installation and actual mounted-browser execution (including its Firefox
 prerequisite) remain mandatory for
 plugin acceptance. This qualifies gate invocation without adding a runtime or
 test dependency or changing the build/runtime separation.
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 143](decision-143.md) amends this record for the accepted
+replacement design. Accepted replacement asset/build and strict gate design preserves Node as build-only and Python wheel independence; executable replacement conformance remains pending.

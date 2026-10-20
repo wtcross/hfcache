@@ -1,7 +1,8 @@
 # Transport guarded configuration bytes without NUL text frames
 
 - Decision identity: 138.
-- Status: Accepted; source regressions and actual disposable Cockpit framing/configuration acceptance passed; original installed symptom remains separate.
+- Status: Amended; source regressions and actual disposable Cockpit framing/configuration acceptance passed; original installed symptom remains separate.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -50,3 +51,31 @@ The [Cockpit contract](../cockpit.md), CP-11 in the
 [filesystem regressions](../../cockpit/test/candidate-guard.test.ts) define and
 enforce the byte boundary. Native read-only reproduction, source regression,
 fresh disposable acceptance and later installed verification are separate evidence.
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 141](decision-141.md) amends this record for the accepted
+replacement design. Accepted future typed helper protocol replaces neither current framing nor original config evidence until implemented and tested. It preserves bounded exact bytes and the existing persistent lock.
+
+## In-memory line parsing correction (2026-10-20)
+
+An isolated baseline gate reproduced an intermittent false guard refusal under
+GNU Bash 5.2.26. Both canonical encoded lines and EOF had been read successfully,
+but waiting for the builtin-only line-reader process substitution returned `-1`.
+The same failure reproduced in a minimal shell-only two-line reader without
+hfcache files, Node, managers or configuration effects. This observation is
+distinct from the historical Cockpit NUL transport and PID1 output failures.
+
+Split the already bounded frame into its two encoded fields in memory and
+require exact frame reconstruction before decoding. Remove the unnecessary
+builtin-only asynchronous line producer and wait. Retain the bounded external
+reader, decoder/encoder completion checks, canonical base64, UTF-8/NUL/size
+validation and all original pre-effect guards. Here-string/tempfile parsing
+would introduce file effects before validation and is not selected. No wire,
+dependency, permission, lock or uncertainty contract changes.
+
+The regression exercises the real rendered guard with a deterministic synthetic
+line-reader wait failure; maximum-size and malformed frames retain their bounds.
+Source gate and owned shell fixtures prove that correction, not a cause or fix
+for an uninspected installed host. Production replacement remains separate.

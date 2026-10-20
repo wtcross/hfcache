@@ -1,0 +1,2381 @@
+{
+  "schema_version": 1,
+  "purpose": "Planned test allocation is not executable or passing evidence. Implementing owners replace planned IDs with actual covering nodes and record observed executions. All feature cases remain pending until required layers pass.",
+  "cases": [
+    {
+      "id": "AUTH-01",
+      "owner": "WEB-004",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-02",
+      "owner": "WEB-004",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-03",
+      "owner": "WEB-004",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-04",
+      "owner": "WEB-004",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-05",
+      "owner": "WEB-004",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-06",
+      "owner": "WEB-004",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-07",
+      "owner": "WEB-004",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_07"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_07"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-07"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-08",
+      "owner": "WEB-006",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_08"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_08"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-08"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-09",
+      "owner": "WEB-005",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_09"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_09"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-09"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "AUTH-10",
+      "owner": "WEB-020",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_auth.py::test_auth_10"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_auth.py::test_auth_10"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/auth.spec.ts::AUTH-10"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "ROUTE-01",
+      "owner": "WEB-005",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_route.py::test_route_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/route.spec.ts::ROUTE-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "ROUTE-02",
+      "owner": "WEB-005",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_route.py::test_route_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/route.spec.ts::ROUTE-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "ROUTE-03",
+      "owner": "WEB-005",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_route.py::test_route_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/route.spec.ts::ROUTE-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "ROUTE-04",
+      "owner": "WEB-005",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_route.py::test_route_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/route.spec.ts::ROUTE-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "ROUTE-05",
+      "owner": "WEB-005",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_route.py::test_route_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/route.spec.ts::ROUTE-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "ROUTE-06",
+      "owner": "WEB-005",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_route.py::test_route_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/route.spec.ts::ROUTE-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "ROUTE-07",
+      "owner": "WEB-005",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_07"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_route.py::test_route_07"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/route.spec.ts::ROUTE-07"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "ROUTE-08",
+      "owner": "WEB-021",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_08"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_route.py::test_route_08"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/route.spec.ts::ROUTE-08"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-01",
+      "owner": "WEB-007",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-02",
+      "owner": "WEB-007",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-03",
+      "owner": "WEB-007",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-04",
+      "owner": "WEB-007",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-05",
+      "owner": "WEB-007",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-06",
+      "owner": "WEB-008",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-07",
+      "owner": "WEB-008",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_07"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_07"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-07"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-08",
+      "owner": "WEB-008",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_08"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_08"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-08"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-09",
+      "owner": "WEB-008",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_09"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_09"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-09"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-10",
+      "owner": "WEB-008",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_10"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_10"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-10"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-11",
+      "owner": "WEB-008",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_11"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_11"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-11"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CONFIG-12",
+      "owner": "WEB-015",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_config.py::test_config_12"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_config.py::test_config_12"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/config.spec.ts::CONFIG-12"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-01",
+      "owner": "WEB-009",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-02",
+      "owner": "WEB-009",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-03",
+      "owner": "WEB-009",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-04",
+      "owner": "WEB-009",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-05",
+      "owner": "WEB-009",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-06",
+      "owner": "WEB-009",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-07",
+      "owner": "WEB-010",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_07"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_07"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-07"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-08",
+      "owner": "WEB-010",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_08"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_08"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-08"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-09",
+      "owner": "WEB-010",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_09"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_09"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-09"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-10",
+      "owner": "WEB-014",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_10"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_10"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-10"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-11",
+      "owner": "WEB-014",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_11"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_11"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-11"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CARD-12",
+      "owner": "WEB-014",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_card.py::test_card_12"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_card.py::test_card_12"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/card.spec.ts::CARD-12"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-01",
+      "owner": "WEB-012",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-02",
+      "owner": "WEB-012",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-03",
+      "owner": "WEB-012",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-04",
+      "owner": "WEB-012",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-05",
+      "owner": "WEB-012",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-06",
+      "owner": "WEB-013",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-07",
+      "owner": "WEB-013",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_07"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_07"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-07"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-08",
+      "owner": "WEB-013",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_08"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_08"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-08"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "CATALOG-09",
+      "owner": "WEB-020",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_catalog.py::test_catalog_09"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_catalog.py::test_catalog_09"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-09"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-01",
+      "owner": "WEB-011",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-02",
+      "owner": "WEB-011",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-03",
+      "owner": "WEB-011",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-04",
+      "owner": "WEB-011",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-05",
+      "owner": "WEB-011",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-06",
+      "owner": "WEB-016",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-07",
+      "owner": "WEB-016",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_07"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_07"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-07"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-08",
+      "owner": "WEB-016",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_08"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_08"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-08"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-09",
+      "owner": "WEB-016",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_09"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_09"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-09"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "OPS-10",
+      "owner": "WEB-019",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ops.py::test_ops_10"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ops.py::test_ops_10"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ops.spec.ts::OPS-10"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-01",
+      "owner": "WEB-006",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-02",
+      "owner": "WEB-006",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-03",
+      "owner": "WEB-006",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-04",
+      "owner": "WEB-018",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-05",
+      "owner": "WEB-018",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-06",
+      "owner": "WEB-018",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-07",
+      "owner": "WEB-018",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_07"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_07"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-07"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-08",
+      "owner": "WEB-018",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_08"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_08"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-08"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-09",
+      "owner": "WEB-018",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_09"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_09"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-09"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "HOST-10",
+      "owner": "WEB-022",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_host.py::test_host_10"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_host.py::test_host_10"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/host.spec.ts::HOST-10"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "MAINT-01",
+      "owner": "WEB-017",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_maint.py::test_maint_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_maint.py::test_maint_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/maint.spec.ts::MAINT-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "MAINT-02",
+      "owner": "WEB-017",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_maint.py::test_maint_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_maint.py::test_maint_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/maint.spec.ts::MAINT-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "MAINT-03",
+      "owner": "WEB-017",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_maint.py::test_maint_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_maint.py::test_maint_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/maint.spec.ts::MAINT-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "MAINT-04",
+      "owner": "WEB-017",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_maint.py::test_maint_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_maint.py::test_maint_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/maint.spec.ts::MAINT-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "MAINT-05",
+      "owner": "WEB-017",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_maint.py::test_maint_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_maint.py::test_maint_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/maint.spec.ts::MAINT-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "MAINT-06",
+      "owner": "WEB-017",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_maint.py::test_maint_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_maint.py::test_maint_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/maint.spec.ts::MAINT-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-01",
+      "owner": "WEB-021",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-02",
+      "owner": "WEB-021",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-03",
+      "owner": "WEB-021",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-04",
+      "owner": "WEB-022",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-05",
+      "owner": "WEB-023",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_05"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-06",
+      "owner": "WEB-023",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_06"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_06"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-06"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-07",
+      "owner": "WEB-023",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_07"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_07"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-07"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-08",
+      "owner": "WEB-025",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_08"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_08"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-08"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "RELEASE-09",
+      "owner": "WEB-026",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_release.py::test_release_09"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_release.py::test_release_09"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/release.spec.ts::RELEASE-09"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "DOC-01",
+      "owner": "WEB-024",
+      "status": "pending",
+      "required_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "planned_tests": [
+        {
+          "layer": "documentation-validation",
+          "node_id": "tests/unit/test_web_documentation.py::test_doc_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_doc.py::test_doc_01"
+        },
+        {
+          "layer": "human-functional-walkthrough",
+          "node_id": "web/test/walkthrough/docs.spec.ts::DOC-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "DOC-02",
+      "owner": "WEB-024",
+      "status": "pending",
+      "required_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "planned_tests": [
+        {
+          "layer": "documentation-validation",
+          "node_id": "tests/unit/test_web_documentation.py::test_doc_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_doc.py::test_doc_02"
+        },
+        {
+          "layer": "human-functional-walkthrough",
+          "node_id": "web/test/walkthrough/docs.spec.ts::DOC-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "DOC-03",
+      "owner": "WEB-024",
+      "status": "pending",
+      "required_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "planned_tests": [
+        {
+          "layer": "documentation-validation",
+          "node_id": "tests/unit/test_web_documentation.py::test_doc_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_doc.py::test_doc_03"
+        },
+        {
+          "layer": "human-functional-walkthrough",
+          "node_id": "web/test/walkthrough/docs.spec.ts::DOC-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "DOC-04",
+      "owner": "WEB-024",
+      "status": "pending",
+      "required_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "planned_tests": [
+        {
+          "layer": "documentation-validation",
+          "node_id": "tests/unit/test_web_documentation.py::test_doc_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_doc.py::test_doc_04"
+        },
+        {
+          "layer": "human-functional-walkthrough",
+          "node_id": "web/test/walkthrough/docs.spec.ts::DOC-04"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "DOC-05",
+      "owner": "WEB-026",
+      "status": "pending",
+      "required_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "planned_tests": [
+        {
+          "layer": "documentation-validation",
+          "node_id": "tests/unit/test_web_documentation.py::test_doc_05"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_doc.py::test_doc_05"
+        },
+        {
+          "layer": "human-functional-walkthrough",
+          "node_id": "web/test/walkthrough/docs.spec.ts::DOC-05"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "UX-01",
+      "owner": "WEB-020",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ux.py::test_ux_01"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ux.py::test_ux_01"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ux.spec.ts::UX-01"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "UX-02",
+      "owner": "WEB-020",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ux.py::test_ux_02"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ux.py::test_ux_02"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ux.spec.ts::UX-02"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "UX-03",
+      "owner": "WEB-020",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ux.py::test_ux_03"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ux.py::test_ux_03"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ux.spec.ts::UX-03"
+        }
+      ],
+      "executions": []
+    },
+    {
+      "id": "UX-04",
+      "owner": "WEB-020",
+      "status": "pending",
+      "required_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "planned_tests": [
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ux.py::test_ux_04"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/integration/test_web_ux.py::test_ux_04"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional/ux.spec.ts::UX-04"
+        }
+      ],
+      "executions": []
+    }
+  ]
+}

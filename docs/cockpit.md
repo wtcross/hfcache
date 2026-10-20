@@ -1,5 +1,9 @@
 # Cockpit administration contract
 
+The [standalone replacement web interface](web-ui/README.md) is under
+development. Cockpit remains the shipped interface until replacement parity and
+installed functional acceptance pass; this contract still governs its behavior.
+
 The plugin is a static Cockpit package for a writer host. Its fixed launcher uses
 `/usr/local/libexec/hfcache-client`, `/etc/hfcache/client.toml` and the rootless
 API socket `/run/hfcache/api/api.sock`. It is a browser client of strict CLI

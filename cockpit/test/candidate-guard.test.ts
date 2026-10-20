@@ -116,11 +116,52 @@ test('every guarded action transports exact bounded bytes through a NUL-free Coc
     }
 });
 
+test('complete frame parsing does not depend on a line-producer process-substitution wait', () => {
+    const files = fixture();
+    try {
+        const invocation = candidateMutationInvocation('write', GUARD, files.identity);
+        const argv = [...invocation.argv];
+        // Model the observed Bash wait refusal only after both lines were read.
+        // Preserve real reader/decoder waits and all production helper checks;
+        // this function exists only in this owned test's rendered script.
+        argv[2] = `wait() {
+  if [[ "\${FUNCNAME[1]-}" != decode_frame && -v encoded_proposed && -v encoded_original ]]; then return 255; fi
+  builtin wait "$@"
+}
+` + argv[2];
+        const result = files.run({ ...invocation, argv });
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(readFileSync(files.paths.candidate, 'utf8'), CONTENT);
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), BASE);
+        assert.equal(existsSync(files.called), false);
+    } finally {
+        files.close();
+    }
+});
+
+test('a valid empty installed base retains its exact empty second wire line', () => {
+    const files = fixture();
+    try {
+        writeFileSync(files.paths.installed, '');
+        const result = files.write({ candidateContent: CONTENT, installedContent: '' });
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(readFileSync(files.paths.candidate, 'utf8'), CONTENT);
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), '');
+        assert.equal(existsSync(files.called), false);
+    } finally {
+        files.close();
+    }
+});
+
 test('malformed transport frames refuse before lock creation, filesystem changes or CLI execution', () => {
     const encode = (value: string) => Buffer.from(value).toString('base64');
     const valid = encode(CONTENT) + '\n' + encode(BASE) + '\n';
     const frames = [
         '', CONTENT + '\0' + BASE + '\0', valid.slice(0, -1), valid + '\n', valid + 'extra',
+        encode(CONTENT) + '\n\n' + encode(BASE) + '\n',
+        encode(CONTENT) + '\n' + encode(BASE) + '\n' + encode(BASE) + '\n',
+        encode(CONTENT) + '\r\n' + encode(BASE) + '\n',
+        encode(CONTENT) + '\n' + encode(BASE) + '\r\n',
         '\n' + encode(BASE) + '\n', '!\n' + encode(BASE) + '\n',
         'YR==\n' + encode(BASE) + '\n', // noncanonical pad bits
         Buffer.from([0xff]).toString('base64') + '\n' + encode(BASE) + '\n',

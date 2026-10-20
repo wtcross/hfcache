@@ -1,5 +1,10 @@
 # The hfcache Cockpit plugin
 
+The [standalone replacement web interface](../web-ui/README.md) is under
+development. This plugin remains shipped and supported during that transition.
+Do not uninstall an installed plugin or change its host controls based on the
+replacement design alone.
+
 Browser administration for one deployed hfcache writer, as a
 [Cockpit](https://cockpit-project.org/) package. It is static files served
 by cockpit itself — no daemon, listener or independent credential backend — and a

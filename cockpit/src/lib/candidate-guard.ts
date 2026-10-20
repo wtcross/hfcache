@@ -98,14 +98,14 @@ if [[ "$action" != read ]]; then
     } < <(head --bytes=2796211 && printf '\\0')
     wait "$!" || fail
     (( \${#wire} <= 2796210 )) || fail
-    # Line reads avoid quadratic glob matching on a maximum-size frame.
-    {
-        IFS= read -r encoded_proposed || fail
-        IFS= read -r encoded_original || fail
-        if IFS= read -r -n 1 extra; then fail; fi
-        [[ -z "$extra" ]] || fail
-    } < <(printf '%s' "$wire")
-    wait "$!" || fail
+    # Capture exactly two in-memory ASCII lines without another producer/wait.
+    # Fixed character classes keep maximum-size matching linear; shell prefix
+    # removal patterns can rescan a large frame quadratically.
+    line_pattern=$'^([A-Za-z0-9+/=]+)\\n([A-Za-z0-9+/=]*)\\n$'
+    [[ "$wire" =~ $line_pattern ]] || fail
+    encoded_proposed=\${BASH_REMATCH[1]}
+    encoded_original=\${BASH_REMATCH[2]}
+    [[ "$wire" == "$encoded_proposed"$'\\n'"$encoded_original"$'\\n' ]] || fail
     decode_frame() {
         local encoded=$2 decoded canonical
         (( \${#encoded} <= 1398104 )) || fail

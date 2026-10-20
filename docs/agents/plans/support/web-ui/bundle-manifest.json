@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "bundle": "hfcache-web-ui-plan",
+  "created": "2026-10-20",
+  "baseline_commit": "6b8fae2e0997403ae5c716a2e92148af0a972af9",
+  "plan": "docs/agents/plans/2026-10-20-plan-web-ui.md",
+  "branch": "feat/web-ui",
+  "task_count": 26,
+  "acceptance_case_count": 95,
+  "extraction_root": "repository root",
+  "implementation_status": "draft; no implementation or deployment performed",
+  "manifest_exclusions": [
+    "docs/agents/plans/support/web-ui/bundle-manifest.json",
+    "docs/agents/plans/support/web-ui/SHA256SUMS"
+  ],
+  "files": [
+    {
+      "path": "docs/agents/plans/2026-10-20-plan-web-ui.md",
+      "bytes": 16815,
+      "sha256": "2b17d3fad2599e26b66f98f67e831d2db1e584dc688eec9bf82db43ac3b5c7cb"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/KICKOFF.md",
+      "bytes": 5050,
+      "sha256": "59fc5854d1485a94fe137deee6288c82e91ae54dc2c3bcd04d3d22ae9ee63a64"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/README.md",
+      "bytes": 3199,
+      "sha256": "66e2621fedde53bc3a18a2954e8d58cecc252e527d04096f1486fc6e02172b43"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/VALIDATION.json",
+      "bytes": 1350,
+      "sha256": "50d68ac23112d054c3b1b524fb8f63b15fdcc9318a6cec5eaaa6a7581a4c4062"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/acceptance-cases.json",
+      "bytes": 49464,
+      "sha256": "f5bcce0e74f687bce0cc743864a38430474e0ce5b2ec79f8730471aba3402ed3"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/acceptance-matrix.md",
+      "bytes": 27382,
+      "sha256": "3ad4ddebe04a654712258db6de34dc9a36e061f5764db72af2d2265808fcdbbc"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/api-contracts.md",
+      "bytes": 11537,
+      "sha256": "c137ef685b841915076bde2cebf5a8cbd31887aeb92c39a8e09a14d5a3558cbb"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/architecture.md",
+      "bytes": 19857,
+      "sha256": "4977d5917c7464d61e686215c2206b22af848f93d96a6d7897474432e2d4196b"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/documentation-map.md",
+      "bytes": 8699,
+      "sha256": "34a0d39d391901c0d48557115d727143ffe67646a5e52cf3c226078c3913247d"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/interface-and-parity.md",
+      "bytes": 8857,
+      "sha256": "b703d89a05473074370a41fec0b8f02e7cb651c8e0396cf9670ef7cf697f448b"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/migration-and-compatibility.md",
+      "bytes": 7377,
+      "sha256": "42a7d3ea02da411c834f432234be671533ca9b9bdd2f3f8d32042ba665db1cf2"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/reference/README.md",
+      "bytes": 1313,
+      "sha256": "55096559aadc744251d3e0f2d8ef1d22e38cd5b92d78a1efd4742c6782c11a6f"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/reference/hfcache-ui-dataset-detail.png",
+      "bytes": 234529,
+      "sha256": "fdb2dcde4b18aab436b4719392f14237b6e1d674bf7b82ccafdc048dee6fdb5b"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/reference/hfcache-ui-library.png",
+      "bytes": 235033,
+      "sha256": "a2c1279d85d6f72d5140d05b389b14e0229f7781440e3be965cc9e2a89cd2b2c"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/reference/hfcache-ui-model-detail.png",
+      "bytes": 244543,
+      "sha256": "0833ca83a56da024aaca13fee70ba9bb67893e17afbc9d6670a2e1ef0f76e2bf"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/reference/hfcache-ui-operations.png",
+      "bytes": 179407,
+      "sha256": "1dd1a7e4d0fe90df4ec1bf3afbe3e68a58f51916565eb286b962635fc83ce5f4"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/reference/hfcache-web-ui-mockup.html",
+      "bytes": 79340,
+      "sha256": "e5d97d8b70a49c956aadf6826d02fabf436b2b2654d9a676b90b81fc26fb4ccb"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/source-review.md",
+      "bytes": 7436,
+      "sha256": "c90a3649c194118aa78ef5a97897ccf2380fed44c4a916da574eb205c5cd535c"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/task-index.json",
+      "bytes": 7169,
+      "sha256": "ce1704ddacf9cf7182bdfff8ffe77b10010cfaea883ed389ab4947905762e835"
+    },
+    {
+      "path": "docs/agents/plans/support/web-ui/testing-strategy.md",
+      "bytes": 15203,
+      "sha256": "39a0ca363e4383a938f24514e5e260cfe0a1d912a5b4f9f4fac40a5436d81df5"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-001-baseline-and-contracts.md",
+      "bytes": 6176,
+      "sha256": "aa321e8961f11b5f71c3b2e9c44df22dffd251c6a40f7701beb2afaa44c262c3"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-002-strict-frontend-and-gates.md",
+      "bytes": 5178,
+      "sha256": "dc7d27b9169625c7ef947d94b515ad468a7a6c64097a4557b14bddcc0cac18dd"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-003-typed-wire-contracts.md",
+      "bytes": 5176,
+      "sha256": "effe9980a09bb2defbd0b1257247791185e1595b2d549a7af051d2194fe82e37"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-004-basic-auth-and-permissions.md",
+      "bytes": 5681,
+      "sha256": "112596fd7e39963f3eb2739422708373054e4a1c45ce73a2f7a09c545ec0fb2f"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-005-shared-caddy-spa-serving.md",
+      "bytes": 5543,
+      "sha256": "5582398c3265950f555729b4ba6634c52515d122e2ad4890ba182c15cd84afce"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-006-guarded-host-adapter.md",
+      "bytes": 5584,
+      "sha256": "230852f7057f04ec464fafe367c8845d4356a4d6377900329263ac179adee383"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-007-configuration-read-and-preview.md",
+      "bytes": 5639,
+      "sha256": "a93502875b5a3391981326ec3f2e3e17c44f9d3275378e6c41eebc8881c2f9c3"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-008-atomic-configuration-application.md",
+      "bytes": 5680,
+      "sha256": "d74cc572bd3fa5ab77b237f5bca4c23d470aac841af7dd04727db9ce9d331878"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-009-repository-card-capture.md",
+      "bytes": 5763,
+      "sha256": "5d093eafb81ea68d6ddb469f21dac82739e06e97a447c2ed919dc9277338f5e0"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-010-repository-card-read-api.md",
+      "bytes": 4882,
+      "sha256": "a4f4aca23884052426ea0a888846f314d6b8ffe3841451b83b281210d3b8cb29"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-011-query-and-operation-state.md",
+      "bytes": 5407,
+      "sha256": "2e9b73be30a69672231464b7612e09dcebf143a602fe49302c3fb7fa1a66cac7"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-012-library-and-discovery.md",
+      "bytes": 5192,
+      "sha256": "d695cd58fec1f270118ac4e6c6092eda8f7e8739b92ce1ce54ca7b172458fbba"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-013-publication-detail-pages.md",
+      "bytes": 5349,
+      "sha256": "c50fcc0c567011db72d16b3e0223d409eef44ce9d5c6a4360bd9bf4cbf0fc28e"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-014-safe-markdown-rendering.md",
+      "bytes": 5352,
+      "sha256": "e7ec304bd129819592dcb2ff84f455e3b25007028a4b7ff6752738e2d59f5919"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-015-configuration-and-tag-ui.md",
+      "bytes": 5364,
+      "sha256": "b18a1bfa012d22ecfe4be55ba098b5482a3f2b63179f567c8824e31d89d58ebd"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-016-operations-and-reports-ui.md",
+      "bytes": 5270,
+      "sha256": "5f1ca704cbb29060763881824526a4f3b1a314259fa9d85ecf0ae729ce6ef1a5"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-017-maintenance-ui.md",
+      "bytes": 5240,
+      "sha256": "f6be42eb3495bffd58f7d25751dd6cb3b542142cb817019270be6f9e6e708f13"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-018-schedule-observer-and-journal.md",
+      "bytes": 5552,
+      "sha256": "0b8b9701efe3f211510e88f264c3d13fd7a97463934258e516df9b4c8cf5ce71"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-019-administration-and-diagnostics-ui.md",
+      "bytes": 5162,
+      "sha256": "57a5c0e0653aa64fafa157b896d2c06bd370fe236b4ee61857cb7c05dba20f89"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-020-cross-browser-accessibility-and-load.md",
+      "bytes": 5088,
+      "sha256": "2c3507b94424402eaf8b9b098011b2a15ba8e3193df62acfc980e9c81c2b2202"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-021-immutable-ui-release-packaging.md",
+      "bytes": 5616,
+      "sha256": "418c8714e88979e8f6b4a032ef97f98ce0344fa7b9edbd6112f7535bb7502221"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-022-installed-functional-acceptance.md",
+      "bytes": 5291,
+      "sha256": "b547ebcd6e94e13a9a37356262b9c6ffc7b2128a852ecd8de605b86a17ce92e6"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-023-compatibility-and-rollback-drill.md",
+      "bytes": 5232,
+      "sha256": "2c7f79647fb94c455bf9da2de6dd6fdcdc3394eca6a621af1bab5fbfc14a6594"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-024-human-documentation-acceptance.md",
+      "bytes": 5306,
+      "sha256": "e5393570d5cc9fe0d8f248e081f4ec19497e9644bcd11b085ee7fba7b427d709"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-025-retire-cockpit-plugin.md",
+      "bytes": 5357,
+      "sha256": "9dde9a1cb983b5712b7a56ffe913b78297098bc10bf12882995b9446b98f2501"
+    },
+    {
+      "path": "docs/agents/plans/tasks/web-026-final-gate-and-handoff.md",
+      "bytes": 5432,
+      "sha256": "525d0fdfa3203d08172c87c360444ef65219f73d3aecf83cbcc526c443535da2"
+    }
+  ]
+}

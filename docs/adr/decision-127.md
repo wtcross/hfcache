@@ -2,7 +2,8 @@
 
 - Decision identity: 127.
 
-- Status: Accepted; current profile is qualified by the recorded deployment scope.
+- Status: Amended; current profile is qualified by the recorded deployment scope.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-18.
 
 
@@ -80,3 +81,9 @@ than general NAS/isolation/other-host acceptance.
 - [Decision 129](decision-129.md)
 
 See [deployment status](../deployment-status.md) for recorded scope and remaining acceptance.
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 141](decision-141.md) amends this record for the accepted
+replacement design. Accepted future narrow host helper preserves unprivileged API and protected rootless bindings. Unproved rootless schedule/observer permissions remain denied; no manager/control-socket fallback is accepted.

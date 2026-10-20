@@ -1,7 +1,8 @@
 # Confirm installed configuration through a pipe and bounded local collector
 
 - Decision identity: 139.
-- Status: Accepted; source FD/status regressions and actual enforcing disposable installation/confirmation passed; original installed symptom remains separate.
+- Status: Amended; source FD/status regressions and actual enforcing disposable installation/confirmation passed; original installed symptom remains separate.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -50,3 +51,9 @@ does not confirm that installation or prove the original production symptom.
 [invariant register](../invariants.md#cockpit-boundary) define the boundary.
 Native denial, source regression, fresh disposable acceptance and later installed
 verification remain separate evidence.
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 141](decision-141.md) amends this record for the accepted
+replacement design. Accepted future helper confirmation retains exact installed-content and operational-fingerprint confirmation, original failed evidence and no-replay uncertainty; current Cockpit collector remains supported.

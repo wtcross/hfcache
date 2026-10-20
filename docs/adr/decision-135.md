@@ -1,7 +1,8 @@
 # Separate manual REST jobs from guarded host observers
 
 - Decision identity: 135.
-- Status: Accepted; source and temporary fixture acceptance passed. Fixed-manager inspection is qualified below; disposable and installed acceptance remain separate.
+- Status: Amended; source and temporary fixture acceptance passed. Fixed-manager inspection is qualified below; disposable and installed acceptance remain separate.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -93,3 +94,9 @@ their real numeric `MainPID`; missing service PID facts remain unavailable.
 Normalize a known timer's internal PID to zero only after that exact field set
 is validated. This does not infer service permissions from a missing property,
 relax guard identity or change the strict public inspection response schema.
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 141](decision-141.md) amends this record for the accepted
+replacement design. Accepted future helper transport retains separate manual REST jobs, scheduled observation and protected host permission proof; native positive and rootless denied conformance remains pending.

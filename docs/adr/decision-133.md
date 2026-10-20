@@ -1,7 +1,8 @@
 # Separate curation from publication authority
 
 - Decision identity: 133.
-- Status: Accepted contract; corresponding interfaces require implementation.
+- Status: Amended contract; corresponding interfaces require implementation.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-19.
 
 ## Context and decision
@@ -138,3 +139,9 @@ Strict old client route allowlists refuse refresh receipts, while generic stores
 preserve completed results and old runner startup interrupts queued work without
 replay. These are separate surfaces, not universal old-startup failure. Preserve
 new state and validate a reviewed rollback target under actual executor drain.
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 142](decision-142.md) amends this record for the accepted
+replacement design. Accepted card adjunct design extends only the approved optional metadata namespace and bounded writer-owned README source-copy check; existing records, integrity confidence and read-only transport authority remain unchanged. Card conformance is pending.

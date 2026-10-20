@@ -3,7 +3,8 @@
 - Decision identity: 112.
 
 - MCP transport amendment: [decision 124](decision-124.md).
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Amended; current scope includes the amendments referenced below.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.
 
 
@@ -88,3 +89,9 @@ Recorded installed scope and remaining acceptance are described in
 - [constant-time comparison](https://docs.python.org/3.14/library/hmac.html)
 
 - [RFC 6750 bearer token alphabet and header use](https://www.rfc-editor.org/rfc/rfc6750#section-2.1)
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 140](decision-140.md) amends this record for the accepted
+replacement design. Accepted Basic/internal-principal design preserves existing bearer classes and strict public schemas; the new provider and privileged capabilities are not implemented yet.

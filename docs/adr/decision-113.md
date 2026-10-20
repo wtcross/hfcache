@@ -4,7 +4,8 @@
 
 - MCP transport amendment: [decision 124](decision-124.md).
 - Curated tool amendment: [decision 125](decision-125.md).
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Amended; current scope includes the amendments referenced below.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
@@ -56,3 +57,9 @@ retains the same transport trust boundary with its separate read-only capability
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 140](decision-140.md) amends this record for the accepted
+replacement design. Accepted application-owned authenticated UI/static design retains this one lifespan and bounds; UI routing and assets are not implemented yet.

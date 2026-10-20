@@ -1,0 +1,1146 @@
+{
+  "schema_version": 1,
+  "purpose": "Required scenarios, not executed test evidence. Bind each to actual tests and evidence during implementation.",
+  "cases": [
+    {
+      "id": "AUTH-01",
+      "owner": "WEB-004",
+      "requirement": "Native Basic browser authentication",
+      "required_assertions": "Real browser receives the challenge, authenticates the configured user and makes same-origin reads/writes without JavaScript receiving a password or a per-request test Authorization override.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-02",
+      "owner": "WEB-004",
+      "requirement": "Wrong or malformed credentials",
+      "required_assertions": "Wrong user/password, duplicate schemes/headers, invalid encodings, over-limit values and missing credentials produce uniform bounded refusal before effects; secrets are absent from responses/logs.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-03",
+      "owner": "WEB-004",
+      "requirement": "Protected hash provisioning and rotation",
+      "required_assertions": "Unsafe or changed inode, wrong ownership/mode, symlink and invalid hash refuse startup; protected rotation preserves stable subject and does not change legacy bearer sources.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-04",
+      "owner": "WEB-004",
+      "requirement": "Credential-class isolation",
+      "required_assertions": "REST writer/reader capabilities remain distinct; MCP bearer is not REST/UI authority; Basic and REST bearer never become MCP authority; no anonymous fallback.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-05",
+      "owner": "WEB-004",
+      "requirement": "CSRF on ambient Basic writes",
+      "required_assertions": "Cross-origin/simple form/text/multipart, absent/null/duplicate Origin and missing non-simple header refuse all unsafe Basic routes, including new host/config routes.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-06",
+      "owner": "WEB-004",
+      "requirement": "Nonbrowser bearer compatibility",
+      "required_assertions": "Existing no-Origin CLI/REST bearer requests still succeed where authorized and never redirect to a UI or Basic-only login layer.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-07",
+      "owner": "WEB-004",
+      "requirement": "Authentication work budgets",
+      "required_assertions": "Bad-password flood and oversized headers cannot create unbounded work/storage; bounded concurrency/refusal leaves operation observation correctly classified.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-08",
+      "owner": "WEB-006",
+      "requirement": "Backend administrative enforcement",
+      "required_assertions": "Forged UI capability/user headers and direct POST cannot bypass protected host policy; old writer token does not implicitly gain config/host admin authority.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-09",
+      "owner": "WEB-005",
+      "requirement": "Basic credentials over TLS only off-host",
+      "required_assertions": "Trusted test CA positive path succeeds; plaintext and untrusted certificate paths refuse; no ignoreHTTPSErrors/-k/wildcard TLS workaround counts.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "AUTH-10",
+      "owner": "WEB-020",
+      "requirement": "Authentication lifecycle and privacy",
+      "required_assertions": "Auth/authority change clears private query data, never silently rebinds unresolved handles; no fake logout or passwords/tokens in storage, bundles or URLs.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "ROUTE-01",
+      "owner": "WEB-005",
+      "requirement": "One Caddy endpoint for three interfaces",
+      "required_assertions": "Browser SPA, REST bearer and all allowed MCP tools traverse the same existing Caddy configuration/port/upstream; no second frontend server or global Basic gate.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "ROUTE-02",
+      "owner": "WEB-005",
+      "requirement": "Empty and nonempty public prefix",
+      "required_assertions": "P/ui, P/api/v1 and P/mcp links, redirects, assets and pagination work for empty prefix and /management; request headers cannot choose P.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "ROUTE-03",
+      "owner": "WEB-005",
+      "requirement": "Deep-link navigation and refresh",
+      "required_assertions": "Direct entry/refresh/back-forward on Library and exact detail routes loads authenticated assets and correct client state in all three browser engines.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "ROUTE-04",
+      "owner": "WEB-005",
+      "requirement": "Fallback isolation",
+      "required_assertions": "API/MCP unknown routes/errors, non-GET methods and missing JS/CSS assets retain classified HTTP errors and never return SPA index HTML.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "ROUTE-05",
+      "owner": "WEB-005",
+      "requirement": "Asset safety and startup identity",
+      "required_assertions": "Enabled UI missing/wrong manifest refuses; symlink/traversal/encoded escape/directory/special-file requests never serve unindexed filesystem content.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "ROUTE-06",
+      "owner": "WEB-005",
+      "requirement": "Static/UI data security headers",
+      "required_assertions": "HTML/bootstrap/API/cards are no-store, assets use private policy; CSP/nosniff/referrer/frame rules apply on success/error without breaking app operation.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "ROUTE-07",
+      "owner": "WEB-005",
+      "requirement": "Existing Caddy and worker boundaries",
+      "required_assertions": "Caddy retains no archive/helper/Hub/password access and existing TLS/admin/ACME/log/stream settings; one application lifespan/pool/worker is retained.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "ROUTE-08",
+      "owner": "WEB-021",
+      "requirement": "Old open page after release selection",
+      "required_assertions": "Stale asset/UI schema mismatch is explicit; reload invitation preserves unsaved drafts/original handles instead of auto-reload/replay.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-01",
+      "owner": "WEB-007",
+      "requirement": "Safe installed editable projection",
+      "required_assertions": "GET config is permission-gated, nonsecret, full-byte-revision-bound and read-only; protected/hidden fields cannot be overwritten by redaction placeholders.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-02",
+      "owner": "WEB-007",
+      "requirement": "Typed candidate reconstruction",
+      "required_assertions": "Managed edits reconstruct deterministic exact candidate bytes server-side; mixed/unknown/coercive fields and arbitrary pointers/paths are rejected.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-03",
+      "owner": "WEB-007",
+      "requirement": "Tag-only concurrency",
+      "required_assertions": "Two tag edits with unchanged operational fingerprint still conflict using full-byte base identity; no silent lost update or fake policy change.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-04",
+      "owner": "WEB-007",
+      "requirement": "Validation versus authority compatibility",
+      "required_assertions": "Valid incompatible candidate remains distinguishable from invalid syntax; root/UUID/Hub/credential source changes cannot redirect authority or get auto-installed.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-05",
+      "owner": "WEB-007",
+      "requirement": "Existing candidate clients",
+      "required_assertions": "Installed/literal TOML CLI validation and sizing keep old request/response contracts and capability requirements; no new hidden install effect.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-06",
+      "owner": "WEB-008",
+      "requirement": "Preview and Apply exact correspondence",
+      "required_assertions": "Failed/stale/mismatched preview or modified draft cannot apply; required successful preview and same exact base/candidate are revalidated server-side.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-07",
+      "owner": "WEB-008",
+      "requirement": "Atomic replacement and permissions",
+      "required_assertions": "Apply retains predecessor, original common lock inode, 0640 root:hfcache and exact installed bytes/fingerprint; configured-only removal does not delete archive content.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-08",
+      "owner": "WEB-008",
+      "requirement": "Crash at each configuration boundary",
+      "required_assertions": "Faults before/after staging/backup/fsync/rename/confirmation/result yield correct unchanged/installed-unconfirmed/unknown evidence and never erase candidate/backups.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-09",
+      "owner": "WEB-008",
+      "requirement": "Lost helper/API response after effect",
+      "required_assertions": "Original key/ID reconciles by safe exact reads; no automatic helper replay/new key/rollback or a false not-applied inference after disconnect/restart.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-10",
+      "owner": "WEB-008",
+      "requirement": "Legacy and new writer concurrency",
+      "required_assertions": "Actual legacy/new fixed config clients use the same lock/target and cannot race into inconsistent installed content or overwrite unknown candidates.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-11",
+      "owner": "WEB-008",
+      "requirement": "Fresh policy and queue semantics",
+      "required_assertions": "Permission/base/authority drift during queue wait refuses; old admitted domain policy remains immutable; stale queued archive mutations retain existing refusal.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CONFIG-12",
+      "owner": "WEB-015",
+      "requirement": "Human configuration workflow",
+      "required_assertions": "Browser add model/dataset/tags, validation, preview, reviewed apply and confirmation matches guide; dirty navigation, historical labels, protected fields and concurrent conflicts are clear.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-01",
+      "owner": "WEB-009",
+      "requirement": "Exact writer-owned capture",
+      "required_assertions": "Sync/repair/technical refresh captures only root manifest-listed README with exact archive/repository/SHA/publication provenance; GET never triggers capture.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-02",
+      "owner": "WEB-009",
+      "requirement": "No payload execution or remote work",
+      "required_assertions": "Hostile card names/content cannot invoke loaders, code, unpickle, URL fetch or tensor inspection; missing README does not cause implicit download.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-03",
+      "owner": "WEB-009",
+      "requirement": "Source and encoded size/work bounds",
+      "required_assertions": "Oversize raw/Unicode-expanded/JSON output, deep parsing and aggregate capture work stop before exceeding finite budgets or partial-record success.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-04",
+      "owner": "WEB-009",
+      "requirement": "Unsafe filesystem and content identity",
+      "required_assertions": "Symlink/special/replaced inode and source digest mismatch refuse safe presentation; immutable manifest/ref/observation bytes are unchanged.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-05",
+      "owner": "WEB-009",
+      "requirement": "Failure classification without integrity inflation",
+      "required_assertions": "Absent/not-captured/unsupported/failed/redacted card states remain explicit; failed optional capture warns without undoing successful publication or increasing verification confidence.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-06",
+      "owner": "WEB-009",
+      "requirement": "Adjunct atomicity and unknown preservation",
+      "required_assertions": "Faults around temporary file/fsync/replace leave whole records; unsupported existing records and unknown siblings are preserved, not deleted or overwritten blindly.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-07",
+      "owner": "WEB-010",
+      "requirement": "Exact retained card read",
+      "required_assertions": "Requested publication pair is validated against authoritative retained identity; stale card cannot resurrect purged entry; vanished pair never falls forward to current.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-08",
+      "owner": "WEB-010",
+      "requirement": "Read has no payload/Hub/lock/write effects",
+      "required_assertions": "Instrumented real GET reads adjunct/allowed metadata only, uses bounded lease/pool through disconnect and never resolves credentials or acquires archive lock.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-09",
+      "owner": "WEB-010",
+      "requirement": "Wire state and body limits",
+      "required_assertions": "Valid/invalid schema states, UTF-8/JSON expansion, slow clients and missing/corrupt adjuncts produce precise bounded authenticated JSON/no-store responses.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-10",
+      "owner": "WEB-014",
+      "requirement": "Executable markup and unsafe URLs blocked",
+      "required_assertions": "Actual browser DOM/network proves no script/MDX/raw HTML/iframe/form/SVG/event/style/unsafe-protocol execution, including encoded/control-character variants.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-11",
+      "owner": "WEB-014",
+      "requirement": "No external assets or URL proxy",
+      "required_assertions": "Image/font/script references cause no external requests; placeholders are clear; safe relative links resolve against pinned upstream identity with no opener/referrer.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CARD-12",
+      "owner": "WEB-014",
+      "requirement": "Safe source and pathological Markdown",
+      "required_assertions": "Source toggle is sanitized derivative; secrets never appear; hostile headings cannot clobber app IDs; nested/table/code cases remain bounded and accessible.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-01",
+      "owner": "WEB-012",
+      "requirement": "Type/scope and ID/tag search",
+      "required_assertions": "All/models/datasets, configured/archived/all and current/retained scopes work with literal ID/tag text, not README full-text or live Hub search.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-02",
+      "owner": "WEB-012",
+      "requirement": "Tag normalization and provenance",
+      "required_assertions": "All/any filters and current-only/last-observed semantics match server; canonical limits and disabled/unpublished/unmanaged distinctions stay visible.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-03",
+      "owner": "WEB-012",
+      "requirement": "Technical predicates match one eligible variant",
+      "required_assertions": "Format/method/scheme/bits/max bytes all match the same supported primary complete variant; unknown/adapters/projectors cannot become false positives.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-04",
+      "owner": "WEB-012",
+      "requirement": "Coverage and zero-known-match state",
+      "required_assertions": "Partial/missing/unsupported metadata qualifies counts and zero matches; one page never becomes an archive-wide total or proof of absence.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-05",
+      "owner": "WEB-012",
+      "requirement": "Pagination and identity-safe joins",
+      "required_assertions": "Cursors/limits/curation-only invalidation and malformed pages refuse/restart finitely; status/catalog rows join by type/ID/authority, not list position.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-06",
+      "owner": "WEB-013",
+      "requirement": "Publication-pinned detail switching",
+      "required_assertions": "Current moves/repair same SHA/new publication/racing responses do not mix README/variants/integrity; exact vanished publication is unavailable.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-07",
+      "owner": "WEB-013",
+      "requirement": "Model and dataset evidence semantics",
+      "required_assertions": "Models expose supported variant sources/completeness; datasets expose static declarations only, no inferred row counts, GPU fit or model fields.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-08",
+      "owner": "WEB-013",
+      "requirement": "Manifest and consumer locators",
+      "required_assertions": "Files/bytes/digests/paths are bounded metadata with correct locator bases and no raw weight-file serving; missing catalog does not erase authoritative inventory.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "CATALOG-09",
+      "owner": "WEB-020",
+      "requirement": "Large integer and read-race safety",
+      "required_assertions": "Unsafe JS integers do not silently round; route/auth/archive changes cancel stale reads; large tables and errors remain usable without unbounded fetch/DOM.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-01",
+      "owner": "WEB-011",
+      "requirement": "Original handle before submission",
+      "required_assertions": "Registry stores a validated original key before any POST; storage failure before transmission prevents the effect.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-02",
+      "owner": "WEB-011",
+      "requirement": "No retry after uncertain admission",
+      "required_assertions": "Drop connection before/after backend admission; exactly one original operation/effect exists; original lookup is used and no new-key replay occurs.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-03",
+      "owner": "WEB-011",
+      "requirement": "Navigation/reload and restored state",
+      "required_assertions": "Tabs/unmount/reload preserve bounded handles; restored terminal summary does not unblock until authenticated original observation verifies it.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-04",
+      "owner": "WEB-011",
+      "requirement": "Storage corruption/quota and scope drift",
+      "required_assertions": "Malformed/out-of-scope restored entries refuse; unresolved records are never evicted; post-transmit storage loss retains handle in memory and blocks submissions.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-05",
+      "owner": "WEB-011",
+      "requirement": "Missing/expired history remains unknown",
+      "required_assertions": "404/expired/interrupted/ambiguous result never proves nonexecution or enables automatic cleanup/recovery/replay.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-06",
+      "owner": "WEB-016",
+      "requirement": "Admission versus domain outcome",
+      "required_assertions": "202, queued/waiting/running and HTTP-200 failed Envelopes preserve exact classification; no fake terminal success/byte percentage from observer state.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-07",
+      "owner": "WEB-016",
+      "requirement": "Busy, partial and integrity outcomes",
+      "required_assertions": "HFMNT010 is busy; warning/per-repo partial/10/20/30/40/50 classes retain useful data and safe human guidance; no blind repair/sync/prune suggestion.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-08",
+      "owner": "WEB-016",
+      "requirement": "Events and reports are bounded",
+      "required_assertions": "Gap/overflow/large result/slow observer/history pagination retain explicit limits; request/operation/run IDs and loaded history extent are not conflated.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-09",
+      "owner": "WEB-016",
+      "requirement": "All existing manual job types",
+      "required_assertions": "Full/selected sync, sizing, new/full/revision verify/estimate, diagnostics and refresh run through existing real services/worker and yield exact reports.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "OPS-10",
+      "owner": "WEB-019",
+      "requirement": "Observer and journal semantics",
+      "required_assertions": "Stop observing/journal activity never claims executor cancellation or domain completion; original recovery panel remains available in Administration.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-01",
+      "owner": "WEB-006",
+      "requirement": "Actual helper peer and isolation",
+      "required_assertions": "Real unprivileged native/rootless peer mapping succeeds only for intended API caller; Caddy/worker/forged user header cannot gain helper rights.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-02",
+      "owner": "WEB-006",
+      "requirement": "Fixed protocol and protected policy",
+      "required_assertions": "Unknown command/version/unit/manager/path/schema, unsafe policy or release index drift refuses before host effects; no generic shell/DBus/engine access.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-03",
+      "owner": "WEB-006",
+      "requirement": "Status unknown versus allowed",
+      "required_assertions": "Missing/helper timeout/unproved guard or binding is visibly unknown/denied, not inactive/healthy/authorized; absence of a guard is not permission.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-04",
+      "owner": "WEB-018",
+      "requirement": "Calendar/timespan validation",
+      "required_assertions": "Real systemd-analyze validates fixed strict argv; injection/control/oversize/timeout cases refuse without creating/modifying drop-ins.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-05",
+      "owner": "WEB-018",
+      "requirement": "Schedule apply/reset with concurrency",
+      "required_assertions": "Expected revision, managed drop-in ownership, backup/outcome and explicit manager reload rules hold; stale/concurrent edits do not silently overwrite.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-06",
+      "owner": "WEB-018",
+      "requirement": "Pause/resume and forbidden units",
+      "required_assertions": "Only fixed supported sync timer is controlled; verification timer remains disabled/read-only and hfcache.target/API/worker never stop or change.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-07",
+      "owner": "WEB-018",
+      "requirement": "Exact observer stop is not cancellation",
+      "required_assertions": "Actual matching observer invocation may stop under explicit policy while accepted backend work continues; wrong invocation/unproven binding refuses.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-08",
+      "owner": "WEB-018",
+      "requirement": "Guarded rootless and permitted native",
+      "required_assertions": "Positive supported native behavior is proven; selected rootless profile denies unproved system schedule/observer controls without user-manager substitution.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-09",
+      "owner": "WEB-018",
+      "requirement": "Bounded journal evidence",
+      "required_assertions": "Only enumerated sources/cursors/limits, bounded time/bytes/redaction; logs cannot trigger commands or establish an operation result.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "HOST-10",
+      "owner": "WEB-022",
+      "requirement": "Installed role hardening",
+      "required_assertions": "Actual installed process/cgroup/socket/secret/mount observations match protected roles; no root API, worker IP/credential access, Caddy archive/helper mount or security weakening.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "MAINT-01",
+      "owner": "WEB-017",
+      "requirement": "Fresh preview/apply authority",
+      "required_assertions": "All maintenance applies recheck exact current scope/policy/locks rather than trusting browser preview or posted plan bodies.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "MAINT-02",
+      "owner": "WEB-017",
+      "requirement": "Prune current protection and one-round policy",
+      "required_assertions": "Protected current survives and lower retention obeys existing single-round/over-retention semantics; no silent delete on config edit.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "MAINT-03",
+      "owner": "WEB-017",
+      "requirement": "Unmanaged-only explicit purge",
+      "required_assertions": "Configured repositories and empty/invalid scopes refuse; whole unmanaged fixture purge retains required audits/evidence.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "MAINT-04",
+      "owner": "WEB-017",
+      "requirement": "Ambiguous recovery and quarantine",
+      "required_assertions": "Unknown journals/files are preserved; quarantine uses explicit bounded valid IDs and full batch proof, never filesystem paths.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "MAINT-05",
+      "owner": "WEB-017",
+      "requirement": "Same-SHA exact repair",
+      "required_assertions": "Repair preserves original manifest/generation and expected bytes, uses new publication ID/grace behavior and presents findings without self-authorized mutation.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "MAINT-06",
+      "owner": "WEB-017",
+      "requirement": "Interrupted destructive apply",
+      "required_assertions": "Lost response/restart retains original operation evidence and no replay/automatic cleanup; real fixture outcomes/audits are checked.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-01",
+      "owner": "WEB-021",
+      "requirement": "Separate reproducible asset artifact",
+      "required_assertions": "Source/lock/toolchain/UI contract and per-file hashes identify native/rootless assets; mismatched/missing artifact fails without untracked dist fallback.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-02",
+      "owner": "WEB-021",
+      "requirement": "Base Python installs remain independent",
+      "required_assertions": "Base/server/server+MCP wheel profiles remain valid without runtime Node or forced frontend source build; optional UI enablement is explicit.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-03",
+      "owner": "WEB-021",
+      "requirement": "No new edge deployment surface",
+      "required_assertions": "One existing Caddy instance/port/TLS/upstream serves all; no extra proxy/frontend service/CDN/runtime dependency or secret exposure.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-04",
+      "owner": "WEB-022",
+      "requirement": "Installed artifacts not only source fixtures",
+      "required_assertions": "Browser/Caddy/API/worker/helper execute selected installed bytes on native/rootless guests; identities, actual permissions and isolation are recorded.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-05",
+      "owner": "WEB-023",
+      "requirement": "Actual legacy client compatibility",
+      "required_assertions": "Pinned installed old CLI reader/writer and MCP clients validate actual new server envelopes/capabilities/receipts and literal candidate behavior.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-06",
+      "owner": "WEB-023",
+      "requirement": "Durable format downgrade drill",
+      "required_assertions": "Old binaries inspect copied new cards/helper/config operation state and either work or refuse as documented, preserving all unknown/new evidence.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-07",
+      "owner": "WEB-023",
+      "requirement": "Evidence-preserving rollback",
+      "required_assertions": "Actual isolated upgrade/rollback drains executors, retains original locks/stores/handles/candidates and refuses unsafe target observation; no forced kill/delete/replay.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-08",
+      "owner": "WEB-025",
+      "requirement": "Cockpit-independent full replacement",
+      "required_assertions": "Built/staged release and full browser flows function without Cockpit installed; generic helpers/history/licenses and all ported safety tests remain.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "RELEASE-09",
+      "owner": "WEB-026",
+      "requirement": "No production or remote publication claims",
+      "required_assertions": "Final evidence separates source/fixture acceptance from unperformed live deployment, Caddy reload, NAS, push, tag and production Cockpit removal.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "DOC-01",
+      "owner": "WEB-024",
+      "requirement": "Human navigation and complete guides",
+      "required_assertions": "Root README/docs index lead to usable user/operator guides for all workflows without requiring agent plan knowledge or placeholder pages.",
+      "minimum_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "DOC-02",
+      "owner": "WEB-024",
+      "requirement": "Docs match actual contracts",
+      "required_assertions": "Links/anchors/images/examples, route permissions/effects, strict config/defaults/bounds and helper inventory are independently validated against code.",
+      "minimum_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "DOC-03",
+      "owner": "WEB-024",
+      "requirement": "Safe actionable troubleshooting",
+      "required_assertions": "Guides explain Basic lifetime, unknown execution, exact config conflicts, missing cards and denied host actions without secret literals/security bypass/replay.",
+      "minimum_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "DOC-04",
+      "owner": "WEB-024",
+      "requirement": "Real guide walkthrough and screenshots",
+      "required_assertions": "Login/filter/detail/card/tags/apply/reconnect/maintenance/admin guides run on actual synthetic installed fixture; screenshot alt text/version/fake-data labels are correct.",
+      "minimum_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "DOC-05",
+      "owner": "WEB-026",
+      "requirement": "Continuous docs and evidence",
+      "required_assertions": "Each implementation package includes its human docs and test evidence; final gate checks no deferred documentation or fabricated production status.",
+      "minimum_layers": [
+        "documentation-validation",
+        "integration",
+        "human-functional-walkthrough"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "UX-01",
+      "owner": "WEB-020",
+      "requirement": "Three browser engines",
+      "required_assertions": "Chromium/Firefox/WebKit prove native Basic, prefixes, reads/writes and core workflows through real Caddy/API; mocked-only or preinjected auth is not sufficient.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "UX-02",
+      "owner": "WEB-020",
+      "requirement": "Keyboard and assistive interaction",
+      "required_assertions": "Focus order/trap/restoration, field labels/errors, status announcements and tables work with keyboard and screen-reader smoke; serious/critical automated violations resolved.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "UX-03",
+      "owner": "WEB-020",
+      "requirement": "Responsive and zoom behavior",
+      "required_assertions": "1440px/390px and 200% zoom preserve controls/readability/recovery panel, no clipped actions, with reduced-motion support and no external fonts.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    },
+    {
+      "id": "UX-04",
+      "owner": "WEB-020",
+      "requirement": "Finite performance and memory",
+      "required_assertions": "Recorded fixture meets approved initial JS/usability/memory/poll/DOM targets or explicit reviewed amendments; 100 route/refresh cycles stay bounded without mutation retries.",
+      "minimum_layers": [
+        "unit",
+        "integration",
+        "functional"
+      ],
+      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+    }
+  ]
+}

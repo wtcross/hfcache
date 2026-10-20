@@ -121,6 +121,15 @@ uses a bounded local privileged collector and exact byte postchecks. Preserve
 an already installed file, backup and failed confirmation; do not relabel files,
 weaken SELinux or repeat installation to resolve that observation.
 
+**Configuration changed or is unsafe** can also follow a framing failure before
+the guard opens any configuration file. Read-only exact comparison determines
+the file evidence; the message alone does not prove that bytes changed. The
+current source removes a reproduced Bash line-reader wait race by splitting the
+bounded canonical frame in memory. Verify the actual installed source before
+assuming that correction is present. Preserve the captured candidate/base and
+any uncertain installation, use **Inspect captured configuration**, and follow
+the confirmation procedure; another write or install is not a diagnostic test.
+
 ## The page closed, timed out or stopped observing a sync
 
 Accepted server work may continue. Preserve the validated key and operation ID

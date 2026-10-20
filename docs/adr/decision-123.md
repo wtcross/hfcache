@@ -3,7 +3,8 @@
 - Decision identity: 123.
 
 - MCP transport amendment: [decision 124](decision-124.md).
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Amended; current scope includes the amendments referenced below.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-18.
 
 
@@ -50,3 +51,9 @@ proxy/Unix acceptance remains profile-specific rather than implied by source tes
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 140](decision-140.md) amends this record for the accepted
+replacement design. Accepted UI prefix design extends future recognized paths without trusting forwarded headers or weakening corroborated native Unix exceptions; current REST/MCP behavior remains implemented authority.

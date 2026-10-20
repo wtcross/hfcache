@@ -9,6 +9,57 @@ Existing inventory, immutable artifacts and the original nine MCP calls retain
 their behavior. Discovery never downloads, loads models, verifies payloads or
 installs configuration.
 
+## Repository card design
+
+**Accepted design; not yet implemented.** Existing technical observations contain
+declarations only, not renderable README bodies. A future independent
+[RepositoryCard schema 1](schemas.md#181-repositorycard-schema-1) extends the
+optional namespace with
+`cards/<type>/<namespace>/<name>/<sha>/<publication_id>.json`, using existing
+plural `models`/`datasets` grammar. It does not widen old observations/manifests,
+change publication or verification confidence, or make leftover records authority.
+See [decision 142](adr/decision-142.md) and [UI availability](web-ui/README.md).
+
+Joined writer-owned sync/repair and existing `technical=true` offline refresh
+capture only root manifest-listed `README.md` through no-follow ordinary-file
+access. Source bytes must fit 1 MiB and their bounded fresh SHA-256 must agree
+with the manifest's expected digest before presentation retention. This narrow
+source-copy check is not whole-publication verification and cannot update
+integrity confidence. No other payload hashing, live Hub fetch, arbitrary file
+selection or separate card-refresh route is authorized.
+
+Sanitize recognized secrets before retention. Sanitized Markdown's UTF-8 bytes
+and JSON-encoded string each fit 1 MiB; the entire canonical record fits 2 MiB.
+Charge actual failed/source reads to the shared 64 MiB read ceiling, all parsing/
+suppression work to the eight-million-step ceiling, and all attempts/writes to
+the existing 4096-record/128 MiB serialized aggregate budgets. Byte expansion
+and whole-record limits are independent; a raw-source limit does not establish
+safe output size. Whole records remain independently atomic under the same
+writer/preflight/unfinished-journal guards. Unsupported/malformed existing state
+is preserved and refuses replacement.
+
+States distinguish present, absent README, unsupported, oversize, unsafe and
+failed capture. Missing adjunct is explicit read state `not_captured`. Non-success
+card states retain no Markdown/presentation digest and never undo valid archive
+publication success. Existing refresh request/result shape remains unchanged;
+bounded existing supplemental warning classifications expose incomplete capture.
+
+Authenticated exact card GET reads only adjunct plus authoritative metadata,
+using existing bounded reader/lease rules. It never opens payloads, resolves
+credentials, refreshes or contacts Hub. Retained noncurrent exact publications
+may be read only when current reference rules authorize them. Pruned, purged or
+repaired-away identity is 404 with no current-instance fallback. Invalid adjunct
+identity/schema/bounds is an error, never successful empty content.
+
+The renderer uses bounded inert React Markdown/GFM with a reviewed allowlist;
+no raw HTML/MDX, SVG, scripts, iframes, forms, handlers, unsafe protocols, remote
+plugins, code execution or automatic external images/fonts. External assets are
+placeholders, never an arbitrary image proxy. Safe relative links resolve to
+pinned upstream repository/commit; external links use `noopener noreferrer`.
+Prefix heading IDs against DOM clobbering. A source toggle shows labelled sanitized
+presentation only. These are required controls; source and installed/browser
+conformance evidence remains pending.
+
 ## Operator tags
 
 Repositories have one optional direct `tags` list. Tags organize models and
@@ -37,7 +88,10 @@ canonical representation. A separate curation fingerprint hashes a schema-1
 canonical representation of all configured `(type, id, normalized tags)` entries,
 including empty and disabled entries, sorted by identity. Candidate installation
 continues to compare complete candidate and base bytes, never policy hashes alone.
-There is no remote configuration installation or tag-edit API.
+The current implementation has no remote configuration installation or tag-edit
+API. The [accepted UI administration design](api.md#web-ui-and-administration-design)
+adds guarded configuration installation only after implementation and acceptance;
+it introduces no separate tag store or tag CRUD endpoint.
 
 ## Durable supplemental records
 
@@ -143,8 +197,11 @@ a retained publication is explicitly skipped. Each record independently reports
 write success or failure; writing an unsupported/failed observation succeeds as
 a record while remaining incomplete technical coverage. Partial writes remain
 visible with exact publication identity and counts. No successful truncation,
-network, credential resolution, payload integrity hashing, configuration write
+network, credential resolution, publication integrity hashing, configuration write
 or separate background work is permitted.
+The [accepted card design](#repository-card-design) narrowly allows a bounded
+README source-copy SHA-256 comparison during future technical capture; it grants
+no publication verification or confidence update and is not implemented yet.
 
 ## Static extraction and variants
 

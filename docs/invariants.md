@@ -31,7 +31,7 @@ Read only the affected areas:
 | Configuration, credentials, authorization | [Configuration and security](#configuration-and-security) |
 | JSON, CLI, verification confidence | [Durable formats and reporting](#durable-formats-and-reporting) |
 | Downstream copies and serving | [Consumer boundary](#consumer-boundary) |
-| Browser management | [Cockpit boundary](#cockpit-boundary) |
+| Browser management | [Cockpit boundary](#cockpit-boundary), [replacement browser UI](#replacement-browser-ui-design) |
 | Dependencies, tests, implementation model | [Framework and engineering](#framework-and-engineering) |
 
 ## Identity and location
@@ -338,6 +338,8 @@ History: `synchronization` (`54e4671`), decision 94.
   (decisions 116/119). Valid incompatible syntax remains valid; unavailable installed
   policy gives unknown compatibility, never permission to plan. See
   [configuration §1–§2, §6](configuration.md#1-validation-rules-that-apply-to-every-field).
+  [Decision 141](adr/decision-141.md) accepts a future managed-edit/guarded-helper
+  form preserving these exact-byte/authority rules; its API is not implemented.
 - **`INV-002` — Credentials have only explicit sources and never become
   evidence.** Accept only an explicit token file or systemd credential, with
   the documented precedence and file validation. Disable ambient discovery;
@@ -346,6 +348,9 @@ History: `synchronization` (`54e4671`), decision 94.
   fail. That anonymous fallback applies to Hub policy; API writer authentication
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
+  [Decision 140](adr/decision-140.md) accepts an additional protected Basic
+  human provider with stable internal subject and bounded Argon2id verification;
+  it is not implemented and grants no MCP authority or implicit host capability.
   The shipped Cockpit rootless launcher mounts API-only Podman `hfcache.api`
   inside its finite client; no host ImportCredential applies. Native named
   systemd credentials remain a separate supported source. Hub authority stays
@@ -716,6 +721,11 @@ payload parity. No server capability or execution authority is added.
   stage never supplies plugin acceptance. Executed browser and real disposable
   Cockpit/PAM evidence remain separate test layers.
 
+The accepted [replacement browser design](#replacement-browser-ui-design)
+preserves applicable CP safety rules while changing the future transport.
+[Conditional retirement](adr/decision-144.md) remains proposed; current plugin
+implementation/packaging and its required checks remain in force until parity.
+
 Contract: [Cockpit rules and pipelines](cockpit.md#1-rules).
 Enforcement: [CLI/unit API](../cockpit/src/api/hfcache.ts),
 [config API](../cockpit/src/api/config.ts),
@@ -763,6 +773,10 @@ Evidence: [plugin tests](../cockpit/test) and the
   standard library for TOML, JSON, hashing, filesystem work, locking, and
   logging. An addition needs a recorded material correctness argument, not
   convenience or fewer lines.
+  [Decision 140](adr/decision-140.md) records the correctness case for a future
+  maintained Argon2id verifier in the optional server group; no dependency is
+  added by accepting that design. [Decision 143](adr/decision-143.md) preserves
+  Node as build-only and base Python wheel/reader independence.
 - **`INV-010` — Safety checks and evidence survive routine execution.** Source
   safety checks raise exceptions and never depend on removable assertions.
   Default tests stay offline/hermetic and strip ambient credentials; Hub tests
@@ -1073,6 +1087,14 @@ image/worker/TLS fixture records and clean immutable artifact identities.
   contact Hub or open payloads. Technical predicates bind one complete eligible
   variant in one publication; missing coverage stays unknown. Historical tags
   require backup. Inert metadata cannot resurrect pruned or purged content.
+  **Accepted card extension; conformance pending:** [decision 142](adr/decision-142.md)
+  adds independent schema-1 `RepositoryCard` records in `published/metadata/cards/`
+  under the same lock/atomic/preservation guards. Only writer capture may read
+  exact manifest-listed root README and perform its bounded source-copy digest
+  check; it never changes publication verification confidence. Card reads open
+  adjunct/authoritative metadata only, preserve exact retained identity and do
+  not fallback. This source/API extension is not implemented yet; existing
+  observations and their schemas remain unchanged. See [card contract](discovery.md#repository-card-design).
 
 Contract: [discovery](discovery.md), [record schemas](schemas.md#17-supplemental-discovery-records),
 [decision 133](adr/decision-133.md). Record enforcement: [strict models](../src/hfcache/catalog_models.py),
@@ -1130,3 +1152,43 @@ and [actual isolated installed targets](../tests/system/test_catalog_compatibili
 Old goldens remain identical; unknown adjuncts never restore membership or
 confidence. Target-specific config/layout/client refusals require preservation
 and guarded validation, not deletion or a universal compatibility assumption.
+
+## Replacement browser UI design
+
+The following are accepted requirements with explicit source/test conformance
+gaps. They do not establish installed behavior or retire the existing Cockpit
+boundary. Current bearer-only REST and fourteen read-only MCP tools remain.
+See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
+[144](adr/decision-144.md); retirement remains proposed until parity is proved.
+
+- **`INV-019` — Authenticate browser presentation inside the application.** The
+  existing Caddy/TLS/Unix upstream serves one API-owned SPA; no global edge Basic
+  gate, second frontend server/listener, public static exception or deployed Node
+  runtime. One protected bounded Basic provider produces internal stable subject
+  and capabilities, never MCP authority or implicit host privileges. Preserve
+  strict legacy capability/receipt credential-class schemas and bearer key
+  identity. Unsafe Basic requires configured exact Origin, JSON and non-simple
+  application header; cheap limits precede bounded password verification.
+  Immutable indexed non-archive assets, strict route-specific fallback, controlled
+  prefixes, no-store data and restrictive CSP preserve the management boundary.
+  Bootstrap and UI permission context have independent schemas. Source, mounted
+  real-browser challenge, Caddy and installed profile evidence is pending.
+- **`INV-020` — Host administration has a separate narrow privileged boundary.**
+  The API remains unprivileged with no broad writable host/control-socket access.
+  Fixed peer-verified helper grammar plus explicit internal capability and
+  protected host policy authorize only guarded config and existing fixed schedule/
+  observer/diagnostic functions. Bind actual release/profile/peer and exact
+  revisions/invocations at execution. Preserve original config lock, full base/
+  candidate bytes, required preview, predecessor and exact confirmation, releasing
+  config lock during Hub work. No generic paths/commands/units, verification-timer
+  changes, target stops, new scheduler or automatic replay/rollback/cleanup.
+  Durable private outcome evidence and original handles survive interruptions.
+  Unproved rootless schedule/observer bindings deny; supported native positive
+  behavior requires real isolated proof. Helper/API source and conformance tests
+  remain pending.
+
+Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-and-current-availability),
+[API](api.md#web-ui-and-administration-design),
+[security](security.md#browser-administration-design),
+[record families](schemas.md#18-web-ui-and-administration-design-records).
+No enforcement or acceptance is claimed from these new register entries alone.

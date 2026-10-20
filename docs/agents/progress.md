@@ -27,6 +27,36 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Web UI replacement (2026-10-20)
+
+- [x] WEB-001 Activate web contracts and stabilize baseline framing (2026-10-20,
+  this commit — [plan](plans/2026-10-20-plan-web-ui.md),
+  [task](plans/tasks/web-001-baseline-and-contracts.md)). Explicit implementation
+  instruction activates `feat/web-ui`: HEAD matches reviewed `6b8fae2`, prior
+  selector inactive, intended bundle only and no WEB collisions. Validate all 26
+  task dependencies, 95 case owners/pending evidence and original reference hashes.
+  Decisions 140–143 accept design with conformance gaps; 144 retirement remains
+  proposed. Public contracts, invariants, ADRs and human introduction/navigation/
+  transition guides align. Available KVM base/Caddy OCI and a safe provisioning
+  path are recorded; five earlier guests remain untouched.
+  Baseline: 5,299 Python tests, build and three installs pass, then one of 570
+  Cockpit unit tests fails. Focused and minimal shell reproduction proves a
+  builtin-only parser wait returns -1 before effects. Bounded in-memory ERE
+  capture removes that wait while retaining exact frame/base64/UTF-8, external
+  status, lock and backup guards. Deterministic old-fail/new-pass, empty-base,
+  malformed/maximal-frame and 20/20 confirmation runs pass; maximum parse 0.415 s.
+  Final `scripts/check.sh --require-cockpit` exits 0: 5,308 Python tests pass,
+  52 opt-in deselected in 770.35 s; three locked install profiles; 572 unit tests
+  with zero skips, 110 mounted Firefox tests, lint/style/types and production
+  build. Log SHA256 `7f3897c3...`; exact artifacts and evidence are task-owned.
+  Focused 86 plan/docs and 140 backend regressions pass; docs: 194 human/19 helpers.
+  Required ADR/invariant review is complete; parser repair under decision 138 adds
+  no dependency/wire/permission exception. All 95 web cases remain pending; no UI
+  functional, installed or production acceptance or Cockpit retirement is claimed.
+  Selector advances to WEB-002; handoff 33 retains guards/unknown state and the
+  prohibition on remote publication, production changes and NAS access. No
+  unrelated backlog is activated.
+
 ## Guarded Cockpit repair release (2026-10-20)
 
 - [x] OPS-023 Deploy and accept clean guarded0.2.2 (2026-10-20, this commit —
@@ -2881,6 +2911,22 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     rollback, selector retry or credential copying. No remote tags/registry or
     unrelated backlog activation follows final authorized main publication.
 
+33. **Web replacement source work only (WEB-001,2026-10-20):**
+    the feature branch is active with contracts, typed acceptance allocation and
+    a validated baseline framing repair. Production remains the recorded guarded
+    rootless0.2.2; no Caddy, manager, service/timer/credential/guard, NAS, live
+    plugin or release selector changed. The actual source Bash defect and its
+    deterministic regression do not establish the original installed symptom's
+    cause or authorize a rollout. Preserve original configuration/candidate/backup,
+    both operation stores/handles, lock inodes and five earlier guests/unknown
+    attempts. Original detached baseline and failed/slow synthetic evidence remain
+    in `.scratch/`; no diagnostic burners remain. Later tasks must provision pinned
+    browsers and a new owned isolated environment and prove actual Caddy/installed
+    API/native/rootless behavior; all 95 web feature cases are still pending. WEB-002
+    is next. No merge/push/tag/deploy/live access or automatic cleanup/replay follows
+    this source commit; source retirement requires every parity/compatibility/
+    installed functional and documentation gate before its own task.
+
 ## Operator decisions needed
 
 1. **Which repositories the archive is ultimately for** (raised 2026-07-24, during
@@ -5654,6 +5700,55 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      fixed API-only launcher and SELinux remain. No relabel/policy/dependency/
      replay/rollback or cleanup authority is added. Source/fresh runtime acceptance
      passes; preserve the fourth guest's unconfirmed installation.
+
+140. **Serve the authenticated SPA through the existing application/Caddy**
+     (2026-10-20, WEB-001). [Decision 140](../adr/decision-140.md) accepts
+     application-owned indexed static serving and a replaceable internal Basic
+     principal. Preserve existing bearer/MCP classes, strict capability/receipt
+     wires and bearer key hashes; scope Basic original keys to stable subject.
+     Cheap admission precedes bounded off-loop Argon2 work; exact Origin/JSON/
+     application-header CSRF guards apply to ambient browser writes. Reject a
+     global Caddy Basic gate, token translation and another frontend listener.
+     Current source still has no UI/Basic implementation; conformance remains
+     explicitly pending, with no production authorization.
+
+141. **Separate protected host/configuration authority from the API**
+     (2026-10-20, WEB-001). [Decision 141](../adr/decision-141.md) accepts a
+     fixed peer-verified helper, internal admin capabilities plus protected host
+     policy, opaque full-byte revisions and server-reconstructed managed edits.
+     Preserve original lock/candidate/predecessor and exact confirmation. Derive
+     required sizing scope from existing newly-added/enabled/retargeted rules;
+     empty scope gets a bound no-Hub assessment. No new tag exemption or implicit
+     Hub authority. Private durable outcomes reconcile original handles without
+     replay/rollback. Rootless unproved schedule/observer bindings stay denied;
+     positive native paths need actual isolated proof. Implementation pending.
+
+142. **Capture exact inert README adjuncts without raising confidence**
+     (2026-10-20, WEB-001). [Decision 142](../adr/decision-142.md) accepts a
+     separately versioned publication-bound card under supplemental metadata.
+     Narrowly permit bounded README source digest comparison in writer capture/
+     technical refresh; no whole-payload hash expansion or integrity claim.
+     Card GET remains adjunct/authoritative-metadata-only, never falls forward,
+     captures or fetches. Bound raw/encoded bodies, record/work totals and inert
+     rendering; retain unsupported/unknown evidence. Implementation pending.
+
+143. **Keep strict frontend artifacts independent and require real acceptance**
+     (2026-10-20, WEB-001). [Decision 143](../adr/decision-143.md) accepts
+     a frozen strict React toolchain, precise runtime wire validators, separate
+     indexed immutable web assets and provider-neutral required gates. Node stays
+     build-time only; dependency versions/licenses need actual selection and
+     validation. Preserve base/server/MCP installation boundaries and applicable
+     Cockpit checks. Every feature needs continuous human docs and unit/integration/
+     actual Caddy/installed/native/rootless functional coverage; pending planned
+     test identifiers never count as passing scenarios.
+
+144. **Keep Cockpit retirement conditional on complete replacement proof**
+     (2026-10-20, WEB-001). [Decision 144](../adr/decision-144.md) is proposed,
+     not retirement approval or completion. Parity, compatibility, installed
+     functional acceptance, usable guides and evidence-preserving rollback must
+     pass before source/package removal. Preserve generic helpers, LGPL notices,
+     safety tests and history. Production plugin uninstall/rollout remains a
+     separate authorization; no existing source/package has been retired.
 
 ## Documentation and script alignment
 

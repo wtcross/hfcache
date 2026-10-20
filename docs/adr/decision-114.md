@@ -2,7 +2,14 @@
 
 - Decision identity: 114.
 
-- Status: Accepted; current scope includes the amendments referenced below.
+- Amendment: [decision 140](decision-140.md) accepts a separately domain-scoped
+  stable-subject key namespace for the future Basic provider only. Existing
+  bearer class lookup/digests and strict public receipt schemas remain unchanged;
+  implementation conformance is pending. Historical receipts gain no human
+  attribution from this design amendment.
+
+- Status: Amended; current scope includes the amendments referenced below.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Execution/reconciliation extension: [decision 115](decision-115.md), bounded runner and private verifier.
 - Public CLI observation clarification: [decision 120](decision-120.md), CLI operation observation.
 - Date: 2026-10-17.

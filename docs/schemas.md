@@ -1267,3 +1267,98 @@ inventory and generic stored terminal Envelopes remain readable. Preserve record
 and control history, validate actual target behavior and follow
 [discovery rollback](discovery.md#guarded-rollback-and-backup); a stable version
 number alone does not establish compatibility.
+
+## 18. Web UI and administration design records
+
+**Accepted design; these records are not yet implemented.** Current durable
+formats above remain unchanged. The independent card/helper/static/bootstrap
+families below must each validate their own strict integer version, reject
+unknown fields/duplicate JSON keys/coercions, enforce bounds before allocation
+and preserve unsupported/unsafe existing evidence. Design alone is not migration
+or installed compatibility proof. See decisions [140](adr/decision-140.md),
+[141](adr/decision-141.md), [142](adr/decision-142.md),
+[143](adr/decision-143.md) and [UI availability](web-ui/README.md).
+
+### 18.1 RepositoryCard schema 1
+
+Path: `published/metadata/cards/<type>/<namespace>/<name>/<sha>/<publication_id>.json`.
+Type uses plural `models`/`datasets`; identities use existing grammars.
+`source_path` is a repository-relative manifest member key, distinct from the
+archive-relative `manifest_path`; neither grants a browser payload locator.
+Serialization follows §1 and never modifies old manifests, references or observations.
+
+| Field | Type/constraint |
+| --- | --- |
+| `schema_version`, `kind` | Integer `1`; literal `repository_card` |
+| `archive_id` | Canonical archive UUID |
+| `repository_type`, `repository_id` | `model`/`dataset` and validated namespace/name |
+| `commit_sha`, `publication_id`, `publication_generation` | Exact full lowercase SHA, 32-hex publication and existing generation grammar |
+| `manifest_path`, `manifest_digest` | Canonical archive-relative manifest locator and SHA-256 of exact manifest bytes |
+| `source_path`, `expected_source_sha256` | `README.md` and manifest-expected source digest; both null only for absent README |
+| `captured_at` | UTC microsecond timestamp |
+| `presentation_version` | Literal `markdown-1` |
+| `state` | `present`, `absent`, `unsupported`, `oversize`, `unsafe`, `failed` |
+| `markdown`, `presentation_sha256` | Sanitized inert source and SHA-256 of its UTF-8 bytes only when present; otherwise both null |
+| `diagnostics` | Sorted unique fixed codes below, no rejected source fragments or raw exceptions |
+
+Diagnostic vocabulary: `readme_absent`, `source_oversize`, `presentation_oversize`,
+`source_digest_mismatch`, `source_changed`, `invalid_utf8`, `unsupported_markdown`,
+`unsafe_content`, `secret_suppressed`, `work_limit`, `read_failed`. At most eleven
+diagnostics fit one record. Present requires Markdown (including valid empty
+text) and its matching digest; every non-present state withholds both. Absent
+requires null source identity; other states bind the manifest-listed README even
+when capture fails. All identities/generation/manifest/source digests must agree
+with authoritative retained metadata before a card is served or replaced.
+
+Raw source is at most 1 MiB. Presentation UTF-8 bytes and its serialized JSON
+string are each at most 1 MiB; the canonical whole record is at most 2 MiB.
+Shared writer extraction/read/work/attempt/128 MiB aggregate-write budgets still
+apply. Bounded source SHA comparison is README provenance only, never a
+verification result. Writer no-follow identity checks and atomic replace/fsync
+follow the existing supplemental boundary; unknown/unsafe evidence remains.
+
+Card read projection is independently schema 1 and adds state `not_captured` for
+an absent adjunct of an otherwise authorized exact retained publication. It does
+not write a synthetic record. Missing exact publication is HTTP 404, not a card
+state or fallback. Invalid records remain classified errors. No unsanitized raw
+payload or HTML representation is exposed. See [discovery](discovery.md#repository-card-design).
+
+### 18.2 Private helper protocol and outcomes
+
+Protocol schema 1 is length-prefixed UTF-8 JSON, at most 2 MiB per encoded frame,
+one request per connection, finite deadline and no descriptor passing. Request
+fields are `schema_version`, `request_id`, `operation`, strict operation-specific
+`body`; response binds the same identity and closed outcome. Operations are
+`status`, `config-read`, `config-prepare`, `config-apply`, `outcome-read`,
+`schedule-validate`, `schedule-change`, `observer-stop`, `journal-read`.
+No operation accepts caller-selected path/command/unit/manager/UID/credential.
+Preparation sends managed edits and opaque base token, never a maximal raw
+base/candidate pair; helper reconstructs privately. Every encoded response is
+independently bounded even when its candidate text satisfies the 1 MiB raw limit.
+
+Private helper workspace is protected local mode `0700`; versioned outcome
+records/material are `0600`, outside the archive. Keep fixed protected candidate,
+predecessor and original configuration lock. Persist intent before effect and
+never replay after interruption. Outcomes distinguish `unchanged`, `confirmed`,
+`installed-unconfirmed`, `conflict`, `unknown`; missing history never means
+unchanged. Generic API receipts retain old strict schema/class grammar and contain
+neither executable requests nor raw configuration. Helper verifies exact preview
+against fixed receipt/result storage through bounded read-only access without
+acquiring API writer locks. No unknown outcome is evicted or cleaned to make room.
+
+### 18.3 Web release manifest and UI bootstrap
+
+Static artifact manifest schema 1 binds source commit, UI contract version,
+toolchain and lock digests, license notices, and each canonical indexed member's
+path, bytes, SHA-256 and MIME. Bound 4096 members, 64 MiB aggregate, 8 MiB/member
+and 2 MiB manifest. Initial types are HTML, CSS, JavaScript, JSON, PNG, WebP and
+WOFF2. Reject SVG, source maps, unindexed members, symlinks and special files.
+Enabled missing/mismatched assets fail startup. The separately shipped artifact
+does not change Python wheel/reader runtime requirements.
+
+Authenticated bootstrap schema 1 carries safe subject/display, effective internal
+capabilities/reasons, confirmed archive and UI/server contract/release identity,
+and configuration-derived relative paths only. It is nonsecret and `no-store`,
+never a user-management API or a widening of strict `/capabilities`. Basic
+subject/audit bindings have a separate private version; old operation receipts
+retain public credential-class identity without retrospective human attribution.

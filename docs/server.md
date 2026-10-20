@@ -51,8 +51,10 @@ format; The independent local receipt schema is described separately below.
 The server configuration default is `/etc/hfcache/server.toml`.
 [`packaging/server.toml`](../packaging/server.toml) is an example for this separate
 domain, not an addition to `examples/config.toml` and not an installed listener.
-Install/update ownership remains operator-controlled `root:hfcache`; the server
-has no configuration-install API. Listener/auth settings are immutable until
+Install/update ownership remains operator-controlled `root:hfcache`; the current
+server has no configuration-install API. The [accepted administration design](#web-ui-design-and-current-availability)
+adds a separately guarded helper boundary only after implementation and acceptance.
+Listener/auth settings are immutable until
 restart. Configured TLS paths are declarations; the listener loads and validates
 the certificate/key before accepting connections.
 
@@ -558,3 +560,101 @@ commands, resources/prompts or OAuth issuance. The selected rootless template
 already enables MCP with its own file secret; native provisioning remains explicit.
 [MCP](mcp.md) owns connect/tool/rotation/budget details. Source/fixture acceptance
 does not certify installed NAS, egress, SELinux or other-host operation.
+
+## Web UI design and current availability
+
+The replacement browser UI, Basic provider, administration helper and asset
+release settings below are **accepted design, not implemented availability**.
+Current configuration accepts only the keys above; do not add these future
+settings to an installed server yet. The current server remains bearer-only and
+the shipped Cockpit plugin remains supported. [UI status](web-ui/README.md) and
+decisions [140](adr/decision-140.md), [141](adr/decision-141.md),
+[142](adr/decision-142.md), [143](adr/decision-143.md) describe the replacement
+boundary; [144](adr/decision-144.md) keeps retirement conditional on actual proof.
+
+### Authenticated application assets
+
+Keep the existing Caddy TLS instance and API Unix upstream. The application owns
+authenticated `/ui/` navigation, indexed assets and independently versioned
+`/ui/bootstrap.json`; Caddy does not gain a file server, archive mount, hash record
+or global Basic gate. Do not add a second proxy/frontend server/public listener
+or deployed Node runtime. Preserve existing TLS secret delivery, discarded default
+logging, `admin off`, `auto_https off`, `persist_config off` and streaming.
+
+Future restart-only `web` configuration defaults disabled. Enabled UI requires an
+explicit immutable indexed asset root and matching manifest/release/contract
+identity; missing or mismatched assets fail startup. The root is physically and
+lexically disjoint from archive, credentials, policy and writable state. It is not
+a general operator/browser-selected static directory. Validate no-follow regular
+files and stable identity at startup, with at most 4096 indexed files, 64 MiB
+aggregate assets, 8 MiB per asset and 2 MiB manifest. Initial MIME allowlist is
+HTML, CSS, JavaScript, JSON, PNG, WebP and WOFF2; SVG, source maps, symlinks and
+special files are refused. Reads serve only bounded indexed members, with no
+per-request whole-bundle scan or hash.
+
+The public prefix comes only from validated deployment configuration. Recognized
+GET/HEAD UI routes alone receive shell fallback. Missing assets, wrong methods,
+API typos and MCP errors never become index HTML. Authenticate before revealing
+route state, including disabled UI. Build relative assets and a safely escaped
+deployment-derived base; never interpolate request headers into executable code.
+Bootstrap schema 1 contains only nonsecret paths, release/UI/server contract
+identity and effective subject/permission context, separately from the stable
+strict API capabilities object. Bootstrap/HTML/data are `no-store`; hashed assets
+may use bounded private caching. Release switching offers explicit reload while
+preserving unsaved drafts, uncertainty and original operation handles.
+
+### Basic provider and request admission
+
+The future independent Basic provider uses one protected record with stable
+subject, username and Argon2id hash, loaded through no-follow protected-file
+checks. File size is at most 8192 bytes. No password is persisted in plaintext,
+passed as an argument or handled by SPA JavaScript. Password rotation requires
+restart while stable subject ownership and original-key recovery remain intact.
+Basic is REST/UI only; MCP retains its distinct bearer provider. Generic REST
+writer does not acquire configuration or host-administration capabilities.
+
+The fixed initial target hash parameters are Argon2id memory 65536 KiB, time 3,
+parallelism 1, 16-byte salt and 32-byte output. These are a selected benchmark
+target, **not measured performance or accepted implementation evidence**; record
+actual bounded-verification results before enabling the provider. Limit encoded
+Authorization to 8192 bytes, decoded UTF-8 username to 128 bytes and password to
+1024 bytes. Admit at most two active verifications and eight waiting requests.
+After 30 failed attempts in a global 60-second window, refuse further expensive
+attempts until that window ends. Do not allocate an unbounded client/IP map.
+Hashing runs off the event loop in a dedicated bounded executor independent of
+metadata/operation observation. Recheck the failure window when queued work
+starts; cancellation retains its slot until the actual hash completes. Startup
+validates PHC algorithm, version and exact parameter/salt/output bounds before
+using the verifier; oversized memory/time/parallelism cannot become startup work.
+Cheap header/body-size/work admission precedes verification and has independent
+capacity from archive observation. Wrong user/password has equivalent failures.
+
+Use the native Basic challenge and prove real browser retry/reuse/deep-link flow
+in all supported browsers. The UI explains browser-managed credential lifetime
+and has no misleading secure-logout control. Production off-host Basic requires
+verified HTTPS; direct local Unix requests remain authenticated. Unsafe Basic
+requests require exact configured same Origin, JSON media type and a non-simple
+application header. Reject missing/null/duplicate/unapproved Origin, simple form
+bodies and credentialed CORS. Existing bearer no-Origin clients remain compatible.
+
+### Narrow administration helper
+
+The unprivileged API connects only to an independently protected, peer-verified
+Unix protocol with fixed host/configuration operations. Caddy/verifier cannot
+connect, and the API receives no broad writable `/etc`, manager or container-engine
+socket. Bind actual native/rootless peer process/namespace identity rather than
+trusting a username/UID field. The helper has no Hub credentials or payload access.
+Each action rechecks selected physical release/profile/config, explicit protected
+permissions, guard/mask and expected object revision/invocation at execution.
+Unavailable/unsafe proof yields a classified denial, never fallback.
+
+Keep the original persistent configuration lock, candidate and predecessor backup.
+Read creates no missing files. Prepare exact bytes briefly under that lock, release
+it for validation/Hub preview, then reacquire/recheck for backup/install/confirmation.
+Never nest operation-store/admission locks around helper calls; the helper cannot
+acquire those locks or the archive flock. Private outcome evidence and original
+key/ID support read-only reconciliation after interruption, never mutation replay.
+Rootless schedule/observer permissions remain denied until their actual bindings
+are proved; same-named user units are not substitutes. Native positive controls
+must be accepted on an isolated supported profile. See the [API design](api.md#web-ui-and-administration-design)
+and [private record design](schemas.md#18-web-ui-and-administration-design-records).

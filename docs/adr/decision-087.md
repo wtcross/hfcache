@@ -66,3 +66,10 @@ API-only systemd `hfcache.api` authority. Strict bounded terminal Envelopes reta
 command authority; separately validated bounded notices retain safe progress and
 reconnection handles. No browser bearer/backend or direct archive mutation is
 added. See [decision 122](decision-122.md) and [Cockpit](../cockpit.md).
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 144](decision-144.md) proposes eventual replacement of this interface.
+Retirement remains proposed; current plugin support and all safety requirements
+remain in force until parity and real acceptance. This record is not superseded.

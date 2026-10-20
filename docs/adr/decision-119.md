@@ -3,6 +3,7 @@
 - Decision identity: 119.
 
 - Status: Amended; see decisions 133/134 and the amendments referenced below.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-18.
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
@@ -94,3 +95,9 @@ response tests establish the repair; no framing/pool internals, dependency updat
 fallback or request replay is added. [Decision134](decision-134.md) records the
 Cockpit integration scope. This observed client defect does not identify the
 original installed bridge/session trigger.
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 141](decision-141.md) amends this record for the accepted
+replacement design. Accepted managed-edit/helper design extends future configuration administration while preserving exact candidate/base bytes, installed authority and original key canonicalization. New helper/API conformance is pending.

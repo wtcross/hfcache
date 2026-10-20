@@ -917,3 +917,73 @@ visible predicates/facets/cursors. This closes normalization of a known mixed-ca
 bearer into a lowercase label. Ordinary output sanitization retains its exact
 literal contract; the catalog's stricter projection never grants read or write
 authority and does not recognize unknown arbitrary secrets.
+
+## Browser administration design
+
+This is the accepted replacement UI security design; its controls are not yet
+implemented or established by tests. Current bearer-only REST, separate read-only
+MCP, Cockpit confinement and recorded deployment limits remain in force. Do not
+enable future UI/helper settings based on this design alone. See decisions
+[140](adr/decision-140.md), [141](adr/decision-141.md),
+[142](adr/decision-142.md), [143](adr/decision-143.md),
+[UI status](web-ui/README.md) and [server bounds](server.md#web-ui-design-and-current-availability).
+
+Application-owned static serving uses the existing Caddy/TLS/Unix upstream.
+Assets are a bounded immutable indexed non-archive release root, authenticated
+even on direct Unix access. There is no public static exception, arbitrary file
+endpoint, second frontend listener, global edge Basic requirement or hidden bearer
+translation. Caddy receives no management hash, archive mount or privileged helper.
+Configured paths/prefixes and actual transport establish authority; forwarded
+headers, browser storage and request-selected URLs do not.
+
+The independent Basic provider verifies one protected Argon2id record under
+finite header/credential/concurrency/failure budgets before domain work. It
+produces an internal stable subject and explicit capabilities, with separate
+versioned UI context. Existing credential-class receipt/capabilities schemas and
+bearer key mappings remain unchanged. Basic has no MCP authority; a generic REST
+writer has no privileged host/configuration authority. Passwords stay outside
+JavaScript and saved browser state. The native challenge requires actual browser
+proof; browser-managed Basic lifetime has no reliable application logout.
+
+Basic is ambient authentication: unsafe requests require exact configured same
+Origin, JSON media and a non-simple application header. Reject absent/null/duplicate
+or foreign Origin, form/text/multipart mutations and cross-origin credentialed
+preflights. Bearer clients preserve their existing no-Origin contract. Fetch
+Metadata may add protection but cannot replace these checks. Cheap size/work
+admission precedes expensive hashing; failed-login capacity is independent of
+operation observation. No secrets enter diagnostics, traces or original-handle
+recovery state.
+
+Apply restrictive CSP with same-origin scripts/styles/connect, no inline
+executable scripts/eval, framing/plugins or card forms; `base-uri` permits only
+the controlled same-origin deployment base. Use `nosniff` and `no-referrer`.
+No CDN fonts/scripts, service workers, offline archive-data cache or automatic
+external asset requests are permitted. HTML/bootstrap/API/card output is
+`no-store`; hashed static assets use private caching only. Release changes must
+retain drafts and uncertain operation handles until explicit reload/reconciliation.
+
+Host effects cross a narrow privileged Unix helper only after explicit internal
+capability, actual peer identity and independently provisioned protected host
+policy. Fixed enum operations cannot choose paths/commands/units/managers/UIDs or
+credentials. Root API, broad writable host mounts and control sockets are
+excluded. Preserve original config/archive locks, candidate/predecessor evidence
+and no-replay outcome records. Readiness/version/absence of a mask cannot grant
+permission. Rootless unproved schedule/observer bindings deny effects; supported
+native positive paths require isolated installed proof.
+
+Cards are untrusted derived presentation, separately bound to exact retained
+publication and immutable manifest/source identity. Writer-only bounded source
+SHA comparison checks the copied README alone and never raises integrity
+confidence. HTTP reads only the adjunct, never the payload/Hub. Sanitize known
+secrets before retention and render bounded inert Markdown using React allowlists.
+Disable HTML/MDX/SVG/scripts/iframes/forms/handlers/unsafe protocols, code execution
+and automatic images/fonts. Safe relative links use pinned upstream identity;
+external links use `noopener noreferrer`; heading IDs prevent DOM clobbering.
+The source toggle exposes sanitized presentation only. Missing/unsafe/oversize/
+failed capture remains explicit and cannot invalidate valid publication success.
+
+Conformance requires adversarial unit/integration cases and built-UI tests through
+actual Caddy/TLS plus installed isolated native/rootless profiles in Chromium,
+Firefox and WebKit. Mocks, skipped required tests or source-only namespace claims
+cannot establish the replaced host/authentication boundary. Production deployment,
+live archive/guard changes and Cockpit uninstall remain separate operator actions.

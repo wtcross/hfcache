@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "plan": "docs/agents/plans/2026-10-20-plan-web-ui.md",
+  "baseline_commit": "6b8fae2e0997403ae5c716a2e92148af0a972af9",
+  "branch": "feat/web-ui",
+  "task_status_authority": "individual task Markdown files; this index contains no mutable status",
+  "tasks": [
+    {
+      "id": "WEB-001",
+      "path": "docs/agents/plans/tasks/web-001-baseline-and-contracts.md",
+      "title": "Activate the reviewed scope and resolve contracts",
+      "phase": "P0",
+      "depends_on": []
+    },
+    {
+      "id": "WEB-002",
+      "path": "docs/agents/plans/tasks/web-002-strict-frontend-and-gates.md",
+      "title": "Create the strict React workspace and mandatory local gates",
+      "phase": "P0",
+      "depends_on": [
+        "WEB-001"
+      ]
+    },
+    {
+      "id": "WEB-003",
+      "path": "docs/agents/plans/tasks/web-003-typed-wire-contracts.md",
+      "title": "Make the browser wire boundary precisely typed and validated",
+      "phase": "P0",
+      "depends_on": [
+        "WEB-002"
+      ]
+    },
+    {
+      "id": "WEB-004",
+      "path": "docs/agents/plans/tasks/web-004-basic-auth-and-permissions.md",
+      "title": "Add one Basic administrator through a replaceable principal boundary",
+      "phase": "P1",
+      "depends_on": [
+        "WEB-003"
+      ]
+    },
+    {
+      "id": "WEB-005",
+      "path": "docs/agents/plans/tasks/web-005-shared-caddy-spa-serving.md",
+      "title": "Serve authenticated assets through the existing Caddy and build the real functional harness",
+      "phase": "P1",
+      "depends_on": [
+        "WEB-004"
+      ]
+    },
+    {
+      "id": "WEB-006",
+      "path": "docs/agents/plans/tasks/web-006-guarded-host-adapter.md",
+      "title": "Implement a narrowly privileged host adapter and safe status projection",
+      "phase": "P1",
+      "depends_on": [
+        "WEB-005"
+      ]
+    },
+    {
+      "id": "WEB-007",
+      "path": "docs/agents/plans/tasks/web-007-configuration-read-and-preview.md",
+      "title": "Expose safe installed configuration and exact managed-edit validation/preview",
+      "phase": "P1",
+      "depends_on": [
+        "WEB-006"
+      ]
+    },
+    {
+      "id": "WEB-008",
+      "path": "docs/agents/plans/tasks/web-008-atomic-configuration-application.md",
+      "title": "Implement guarded atomic configuration application and recovery",
+      "phase": "P1",
+      "depends_on": [
+        "WEB-007"
+      ]
+    },
+    {
+      "id": "WEB-009",
+      "path": "docs/agents/plans/tasks/web-009-repository-card-capture.md",
+      "title": "Capture publication-pinned README presentation records safely",
+      "phase": "P2",
+      "depends_on": [
+        "WEB-008"
+      ]
+    },
+    {
+      "id": "WEB-010",
+      "path": "docs/agents/plans/tasks/web-010-repository-card-read-api.md",
+      "title": "Expose a bounded exact-publication card read",
+      "phase": "P2",
+      "depends_on": [
+        "WEB-009"
+      ]
+    },
+    {
+      "id": "WEB-011",
+      "path": "docs/agents/plans/tasks/web-011-query-and-operation-state.md",
+      "title": "Build authority-scoped query state and durable browser observation",
+      "phase": "P3",
+      "depends_on": [
+        "WEB-010"
+      ]
+    },
+    {
+      "id": "WEB-012",
+      "path": "docs/agents/plans/tasks/web-012-library-and-discovery.md",
+      "title": "Implement the unified model and dataset Library",
+      "phase": "P3",
+      "depends_on": [
+        "WEB-011"
+      ]
+    },
+    {
+      "id": "WEB-013",
+      "path": "docs/agents/plans/tasks/web-013-publication-detail-pages.md",
+      "title": "Build rich exact-publication model and dataset detail pages",
+      "phase": "P3",
+      "depends_on": [
+        "WEB-012"
+      ]
+    },
+    {
+      "id": "WEB-014",
+      "path": "docs/agents/plans/tasks/web-014-safe-markdown-rendering.md",
+      "title": "Render archived README cards as inert, bounded React content",
+      "phase": "P3",
+      "depends_on": [
+        "WEB-013"
+      ]
+    },
+    {
+      "id": "WEB-015",
+      "path": "docs/agents/plans/tasks/web-015-configuration-and-tag-ui.md",
+      "title": "Implement repository configuration and tag management workflows",
+      "phase": "P3",
+      "depends_on": [
+        "WEB-014"
+      ]
+    },
+    {
+      "id": "WEB-016",
+      "path": "docs/agents/plans/tasks/web-016-operations-and-reports-ui.md",
+      "title": "Expose existing jobs, verification, diagnostics and reports",
+      "phase": "P3",
+      "depends_on": [
+        "WEB-015"
+      ]
+    },
+    {
+      "id": "WEB-017",
+      "path": "docs/agents/plans/tasks/web-017-maintenance-ui.md",
+      "title": "Implement guarded maintenance and integrity remediation",
+      "phase": "P3",
+      "depends_on": [
+        "WEB-016"
+      ]
+    },
+    {
+      "id": "WEB-018",
+      "path": "docs/agents/plans/tasks/web-018-schedule-observer-and-journal.md",
+      "title": "Preserve fixed schedule, observer and diagnostic host functions",
+      "phase": "P4",
+      "depends_on": [
+        "WEB-017"
+      ]
+    },
+    {
+      "id": "WEB-019",
+      "path": "docs/agents/plans/tasks/web-019-administration-and-diagnostics-ui.md",
+      "title": "Complete the operator administration workspace",
+      "phase": "P4",
+      "depends_on": [
+        "WEB-018"
+      ]
+    },
+    {
+      "id": "WEB-020",
+      "path": "docs/agents/plans/tasks/web-020-cross-browser-accessibility-and-load.md",
+      "title": "Harden end-user workflows, accessibility and bounded performance",
+      "phase": "P5",
+      "depends_on": [
+        "WEB-019"
+      ]
+    },
+    {
+      "id": "WEB-021",
+      "path": "docs/agents/plans/tasks/web-021-immutable-ui-release-packaging.md",
+      "title": "Integrate web assets and the host adapter into native/rootless releases",
+      "phase": "P5",
+      "depends_on": [
+        "WEB-020"
+      ]
+    },
+    {
+      "id": "WEB-022",
+      "path": "docs/agents/plans/tasks/web-022-installed-functional-acceptance.md",
+      "title": "Prove full installed functionality on isolated native and rootless targets",
+      "phase": "P5",
+      "depends_on": [
+        "WEB-021"
+      ]
+    },
+    {
+      "id": "WEB-023",
+      "path": "docs/agents/plans/tasks/web-023-compatibility-and-rollback-drill.md",
+      "title": "Verify old clients, durable formats and evidence-preserving rollback",
+      "phase": "P5",
+      "depends_on": [
+        "WEB-022"
+      ]
+    },
+    {
+      "id": "WEB-024",
+      "path": "docs/agents/plans/tasks/web-024-human-documentation-acceptance.md",
+      "title": "Complete the human operator and user documentation walkthrough",
+      "phase": "P6",
+      "depends_on": [
+        "WEB-023"
+      ]
+    },
+    {
+      "id": "WEB-025",
+      "path": "docs/agents/plans/tasks/web-025-retire-cockpit-plugin.md",
+      "title": "Retire Cockpit packaging only after proven complete replacement",
+      "phase": "P6",
+      "depends_on": [
+        "WEB-024"
+      ]
+    },
+    {
+      "id": "WEB-026",
+      "path": "docs/agents/plans/tasks/web-026-final-gate-and-handoff.md",
+      "title": "Close the implementation with complete evidence and an operator handoff",
+      "phase": "P6",
+      "depends_on": [
+        "WEB-025"
+      ]
+    }
+  ]
+}

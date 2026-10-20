@@ -2,26 +2,24 @@
 
 | Field | Value |
 | --- | --- |
-| State | inactive |
-| Active plan | None |
-| Next task | None |
-| Blockers | None within completed guarded local scope; separate browser/NAS/workload holds remain in the operator handoff. |
+| State | active |
+| Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
+| Next task | [WEB-002 — strict frontend and gates](tasks/web-002-strict-frontend-and-gates.md) |
+| Blockers | None for the next task; browser/installed dependency closure still needs provisioning and proof in its owning tasks. Production browser/NAS/workload holds remain separate. |
 | Last completed plan | [Cockpit repair local rollout](2026-10-20-plan-cockpit-rest-rollout.md) |
 | Updated | 2026-10-20 |
 
-REL015 and OPS023 are complete. The host runs guarded rootless0.2.2 from clean
-source1c685018803a365bbb8b0c1aad4b94709f60e7d7, localannotatedv0.2.2 object
-c69ef761829856bd995454129432f46f6b79dfc9. Required clean/runtime/installed/final
-strict gates pass; [evidence](support/cockpit-rest-rollout/acceptance-record.md).
-Original configuration/candidate/backup/locks/stores/handles/secrets, NASro,
-writer masks and disabled calendars remain. No historical backlog is activated.
+The explicit implementation instruction activates the extracted web UI plan on
+`feat/web-ui`. HEAD matched its reviewed baseline `6b8fae2` exactly; the prior
+selector was inactive. The bundle is intended new planning material. No older
+plan or historical backlog is activated or abandoned.
 
-The [nine-package repair](2026-10-19-plan-cockpit-rest-repair.md) remains completed
-with all records and five disposable guests/unknown attempts retained. During that
-repair, production and NAS were untouched; the later explicit merge/main-push/
-local-deployment instruction authorized this separate rollout. Original production
-browser symptom and NAS/workload/other-host acceptance remain unclaimed.
+WEB-001 completed the contract/ADR/acceptance/prerequisite audit and fixed a
+reproduced baseline Bash frame-reader wait defect. Its corrected strict gate
+passes 5308 Python/572 Cockpit unit/110 mounted Firefox tests. All 95 web feature
+cases remain pending. The exact original baseline and failed evidence remain.
 
-This OPS023 package is committed before final main publication to both authorized
-remotes, followed by exact remote-head verification. No tags, registry operations,
-force pushes or unrelated historical work are authorized by that publication.
+Scope permits source changes and owned local/disposable tests only. No merge,
+push, tag, production deployment/Caddy reload, service/timer/credential/guard
+change, NAS access or live Cockpit uninstall. Preserve the earlier operator
+handoff and all original candidates, backups, locks, stores and handles.

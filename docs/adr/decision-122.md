@@ -3,6 +3,7 @@
 - Decision identity: 122.
 
 - Status: Amended; see [decision 133](decision-133.md), [decision 135](decision-135.md), [decision 136](decision-136.md), [decision 137](decision-137.md), [decision 138](decision-138.md), [decision 139](decision-139.md) and the amendments below.
+- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-18.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
@@ -152,3 +153,9 @@ success, and invalidates old host/session evidence. Advisory browser build-input
 selected physical release and authenticated API identities remain separate facts;
 no package-version, health-readiness or selected-binding claim proves writability
 or a running payload. No new transport, capability or credential authority follows.
+
+
+## Replacement UI design amendment (2026-10-20)
+
+[Decision 141](decision-141.md) amends this record for the accepted
+replacement design. Accepted replacement helper design preserves exact config guards, original handles and protected host authority. The current Cockpit transport remains until implemented replacement and conditional retirement are accepted.
