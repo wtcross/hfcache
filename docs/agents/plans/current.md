@@ -4,8 +4,8 @@
 | --- | --- |
 | State | active |
 | Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
-| Next task | [WEB-002 — strict frontend and gates](tasks/web-002-strict-frontend-and-gates.md) |
-| Blockers | None for the next task; browser/installed dependency closure still needs provisioning and proof in its owning tasks. Production browser/NAS/workload holds remain separate. |
+| Next task | [WEB-003 — typed wire contracts](tasks/web-003-typed-wire-contracts.md) |
+| Blockers | None for the next task. Chromium is provisioned for preliminary local testing; the full three-engine/Caddy/installed dependency closure still needs proof in its owning tasks. Production browser/NAS/workload holds remain separate. |
 | Last completed plan | [Cockpit repair local rollout](2026-10-20-plan-cockpit-rest-rollout.md) |
 | Updated | 2026-10-20 |
 
@@ -18,6 +18,16 @@ WEB-001 completed the contract/ADR/acceptance/prerequisite audit and fixed a
 reproduced baseline Bash frame-reader wait defect. Its corrected strict gate
 passes 5308 Python/572 Cockpit unit/110 mounted Firefox tests. All 95 web feature
 cases remain pending. The exact original baseline and failed evidence remain.
+
+WEB-002 adds the strict React workspace, required web gate, full locked license
+inventory, retained per-run evidence and actual preliminary browser checks. Its
+final strict gate passes 5337 Python, 572 Cockpit unit, 110 mounted Firefox,
+45 web unit/50 combined component and 2 sandboxed Chromium tests. Coverage is
+98.46% lines/98% branches. The source preview is disconnected; Caddy/API serving
+and authentication remain unimplemented. All 95 feature cases remain pending.
+An extra whitespace check found a generator-added trailing notice separator
+after the unpublished commit. Its narrow correction passes the complete strict
+gate again; that same work-package commit is amended before advancing.
 
 Scope permits source changes and owned local/disposable tests only. No merge,
 push, tag, production deployment/Caddy reload, service/timer/credential/guard

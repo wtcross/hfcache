@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+node_modules
+dist
+coverage
+.cache
+.artifacts
+dependencies/licenses.json
+dependencies/THIRD_PARTY_NOTICES.txt
+test/strict-fixtures

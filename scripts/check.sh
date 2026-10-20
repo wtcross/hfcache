@@ -12,6 +12,7 @@
 #   scripts/check.sh              # the §8.4 gate
 #   scripts/check.sh --with-build # additionally build and smoke-test the wheel
 #   scripts/check.sh --require-cockpit # fail if frontend checks cannot execute
+#   scripts/check.sh --require-web # require the strict web workspace and browser smoke
 #
 set -euo pipefail
 
@@ -19,12 +20,20 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 WITH_BUILD=0
 REQUIRE_COCKPIT=0
+REQUIRE_WEB=0
 for arg in "$@"; do
   case "$arg" in
     --with-build) WITH_BUILD=1 ;;
     --require-cockpit) REQUIRE_COCKPIT=1 ;;
+    --require-web) REQUIRE_WEB=1 ;;
     -h | --help)
-      sed -n '3,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      printf '%s\n' \
+        'Usage: scripts/check.sh [--with-build] [--require-cockpit] [--require-web]' \
+        '  --with-build       additionally smoke-test the installed wheel' \
+        '  --require-cockpit  refuse missing Cockpit sources or tools' \
+        '  --require-web      require frozen web checks and preliminary browser smoke' \
+        '  -h, --help         show this help without running checks' \
+        'See docs/development.md for provisioning and acceptance limits.'
       exit 0
       ;;
     *)
@@ -49,8 +58,20 @@ require_cockpit() {
   fi
 }
 
+require_web() {
+  find_pnpm
+  if [[ ! -f web/package.json || ! -f web/pnpm-lock.yaml || ! -f web/tsconfig.json || -z $PNPM_BIN ]] \
+    || ! command -v node > /dev/null 2>&1; then
+    printf 'Web gate required: web/package.json, pnpm-lock.yaml, tsconfig.json, node and pnpm must be available; see docs/development.md\n' >&2
+    exit 69
+  fi
+}
+
 if [[ $REQUIRE_COCKPIT -eq 1 ]]; then
   require_cockpit
+fi
+if [[ $REQUIRE_WEB -eq 1 ]]; then
+  require_web
 fi
 
 if ! command -v uv > /dev/null 2>&1; then
@@ -106,6 +127,18 @@ else
   elif [[ -d cockpit ]]; then
     printf '\nNOTE: cockpit/ exists but pnpm or make is missing — plugin gate SKIPPED (docs/cockpit.md §8)\n' >&2
   fi
+fi
+
+if [[ $REQUIRE_WEB -eq 1 ]]; then
+  require_web
+  step 'web frozen install'
+  "$PNPM_BIN" --dir web install --frozen-lockfile
+  for web_check in lint typecheck test:strict-fixtures test:unit test:component build test:browser; do
+    step "web $web_check"
+    "$PNPM_BIN" --dir web run "$web_check"
+  done
+elif [[ -d web ]]; then
+  printf '\nNOTE: web/ exists but its gate is OMITTED; use --require-web. This run does not establish web UI acceptance (docs/development.md).\n' >&2
 fi
 
 if [[ $WITH_BUILD -eq 1 ]]; then

@@ -32,10 +32,120 @@ for the executed frontend tests; its absence fails that stage. The default mode
 retains its loud toolchain skip for backend-only development; that result is not
 plugin proof.
 
+Use `scripts/check.sh --require-web --require-cockpit` for replacement web
+interface work. `--require-web` first requires the web package manifest, frozen
+pnpm lock, TypeScript configuration, Node and pnpm, then retains every backend
+and applicable Cockpit check above. Its web stage runs frozen installation,
+lint, types, deliberately invalid strictness fixtures, unit tests, component
+tests, a production build and the preliminary real-browser smoke in that order.
+Any failed stage or missing required browser fails the gate. Backend-only mode
+prints an explicit web omission; that result does not validate the web interface.
+
+The installed application/platform functional runner is not available yet.
+`--with-web-functional` is currently an unknown argument and exits nonzero;
+the preliminary browser smoke does not establish Caddy, authentication, API,
+worker, helper or installed native/rootless acceptance.
+
 Application safety checks raise exceptions instead of relying on assertions.
 Keep durable-format golden fixtures and checkpoint-contract tests synchronized
 with their contracts. Specialized test dependencies require a concrete test
 that cannot be expressed cleanly with pytest fixtures and deterministic doubles.
+
+## Web workspace
+
+The replacement interface has a separate [web package](../web/package.json)
+and frozen [pnpm lock](../web/pnpm-lock.yaml). Node and pnpm are build/test
+tools only. Base Python wheel builds and reader/server installations do not
+invoke Node or install frontend dependencies. Production serving remains owned
+by the application behind its existing Caddy endpoint; the preliminary test
+server is an owned loopback fixture only.
+
+| Tool | Selected version |
+| --- | --- |
+| Node / pnpm | `24.18.1` / `11.18.0` |
+| React / React DOM | `18.3.1` |
+| TypeScript | `6.0.3` |
+| Vite / React plugin | `8.3.4` / `6.1.2` |
+| ESLint / JavaScript rules / typescript-eslint | `10.13.0` / `10.0.1` / `8.63.0` |
+| Vitest / V8 coverage | `5.0.5` |
+| React Testing Library / user-event / jsdom | `16.3.3` / `14.6.8` / `30.1.3` |
+| Playwright | `1.64.1` |
+| axe Playwright integration / axe-core | `4.14.0` |
+| Prettier | `3.9.10` |
+
+The package manifest and lock contain the complete direct/transitive selection.
+The workspace enables strict engine and peer checks; incompatible Node/pnpm
+versions and unresolved peer requirements fail installation.
+Keep the [license inventory](../web/dependencies/licenses.json) and
+[third-party notices](../web/THIRD_PARTY_NOTICES.txt) synchronized with changes;
+browser libraries become shipped static assets, while lint/test/browser tools
+remain development dependencies. Preserve any reused Cockpit LGPL notices.
+After changing the lock, refresh the inventory explicitly with
+`pnpm --dir web exec node scripts/licenses.ts --refresh`. This contacts the
+registry for exact locked versions, including optional packages for other
+platforms, and retains actual bundled license texts. Review the resulting
+inventory and notices. `pnpm --dir web run licenses` checks their frozen-lock
+binding offline; the production build also performs that check.
+
+Provision dependencies explicitly before running offline validation. From the
+repository root, run frozen installation twice to check that the resolved lock
+remains unchanged, then provision the pinned preliminary Chromium binary into
+the owned web cache:
+
+```bash
+pnpm --dir web install --frozen-lockfile
+pnpm --dir web install --frozen-lockfile
+PLAYWRIGHT_BROWSERS_PATH="$PWD/web/.cache/ms-playwright" pnpm --dir web exec playwright install chromium
+```
+
+Browser provisioning downloads test dependencies; validation never downloads a
+missing browser or invokes a system dependency installer. Missing host libraries
+are a prerequisite failure to resolve in a suitable owned test environment.
+Keep browser caches, coverage, traces and build output in ignored web artifact
+directories: `web/.cache/`, `web/coverage/`, `web/.artifacts/` and `web/dist/`.
+The documentation checker excludes these exact generated roots while continuing
+to check web source guides. Do not commit dependency trees, `dist/` or private
+browser profiles.
+
+Run individual stages with:
+
+```bash
+pnpm --dir web run lint
+pnpm --dir web run typecheck
+pnpm --dir web run test:strict-fixtures
+pnpm --dir web run test:unit
+pnpm --dir web run test:component
+pnpm --dir web run build
+pnpm --dir web run test:browser
+scripts/check.sh --require-web --require-cockpit
+```
+
+Strict fixtures must demonstrate that unsafe assignments and deliberately invalid
+TypeScript fail validation. Unit/component coverage includes all new source and
+requires at least 90% lines and 85% branches. `test:unit` runs the isolated utility
+project; `test:component` runs both projects together with enforced coverage.
+The existing Python coverage policy is unchanged. Component fixtures may control
+their own external boundaries, but
+cannot establish authenticated or installed behavior.
+
+Required test wrappers reject empty, skipped, pending, todo or inconsistent
+reports. Retries are disabled; browser reports must show one passing execution
+per test. A timeout fails even if the child leaves a positive report and exits
+zero. Each run retains its evidence under `web/.artifacts/unit-*/`,
+`component-*/` or `browser-*/`; retain failed reports and screenshots when
+investigating a later passing run.
+
+`test:browser` exercises the production-built shell and keyboard navigation in
+the pinned Chromium on an owned loopback fixture, including desktop/mobile axe
+scans and semantic navigation checks. It retains an explicit
+development-preview status and makes no API, archive or credential request.
+The wrapper owns the sandboxed Chromium process and loopback listeners, closes
+them on success or failure and waits for the exact browser process to exit.
+Failed or timed-out cleanup fails the check; preserve its evidence for diagnosis.
+Missing browser prerequisites fail rather than skip. This preliminary smoke does
+not replace the later Chromium, Firefox and WebKit workflows through real Caddy
+and installed native/rootless services. See [UI availability](web-ui/README.md)
+for the current user-facing status.
 
 ## Offline tests
 

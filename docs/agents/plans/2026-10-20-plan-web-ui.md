@@ -132,3 +132,11 @@ Completion requires:
   deterministic regression, bounded timing and human troubleshooting in this
   baseline package before proceeding. No web feature or production rollout is
   folded into that correction; the exact original baseline/evidence remains.
+- 2026-10-20: [WEB-002](tasks/web-002-strict-frontend-and-gates.md) introduces the
+  strict locked React workspace and mandatory web gate, complete dependency
+  license inventory, no-skip/timeout refusal and retained local browser evidence.
+  Required backend/Cockpit/web gates pass; the built-shell check is preliminary
+  and disconnected. Initial contrast-artifact loss is recorded, and subsequent
+  real failure-retention and timeout proofs pass. No Caddy/API/installed feature
+  acceptance is inferred; all 95 feature cases remain pending. Next is WEB-003's
+  precise wire boundary. Scope, task order and production restrictions are unchanged.

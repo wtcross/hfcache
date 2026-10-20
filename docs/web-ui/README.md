@@ -5,9 +5,12 @@ release. Continue using the [existing Cockpit interface](../cockpit-plugin/READM
 for installed systems. Creating these guides does not change an installed
 service, enable a schedule, or grant archive write permission.
 
-The replacement will provide four workspaces:
+The developer preview now provides navigation between four workspaces. It shows
+**Development preview** and **Archive not connected**; it has no sign-in,
+archive connection or operational controls. The workspace descriptions below
+explain the intended workflows, which are still under development:
 
-| Workspace | Purpose |
+| Workspace | Intended workflow |
 | --- | --- |
 | Library | Find configured and archived models or datasets, inspect exact publications and distinguish metadata coverage from integrity evidence. |
 | Operations | Submit supported jobs and observe their original operation handles, including after a connection interruption. |
@@ -18,6 +21,9 @@ The planned entrypoint is `/ui/` behind the same Caddy HTTPS endpoint that serve
 REST and MCP. A deployment with public prefix `/management` will use
 `/management/ui/`. No additional frontend server or port is needed. These paths
 are reserved design targets; the current application does not serve them.
+Building or testing the preview does not make those routes available on an
+installed system. Developers can use the [workspace checks](../development.md#web-workspace)
+to exercise the preliminary shell locally.
 
 Browser access will use a separately provisioned administrator account with
 HTTP Basic authentication over verified HTTPS. The browser manages the password;

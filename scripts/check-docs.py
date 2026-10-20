@@ -22,7 +22,18 @@ CATALOG_CELLS = 7
 MINIMUM_CELLS = 3
 
 EXCLUDED = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
-GENERATED = {".scratch", "dist", "cockpit/dist", "build", ".hypothesis", ".coverage"}
+GENERATED = {
+    ".scratch",
+    "dist",
+    "cockpit/dist",
+    "web/dist",
+    "web/coverage",
+    "web/.cache",
+    "web/.artifacts",
+    "build",
+    ".hypothesis",
+    ".coverage",
+}
 TECHNICAL_IDS = {
     "AD",
     "FS",

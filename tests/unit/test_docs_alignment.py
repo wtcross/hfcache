@@ -118,11 +118,19 @@ def test_discovery_includes_new_guides_and_adrs_but_excludes_only_owned_record_r
         "docs/new/guide.md",
         "docs/adr/new.md",
         "examples/README.md",
+        "web/README.md",
+        "web/docs/dist/README.md",
+        "web/docs/.cache/guide.md",
+        "web/.cache-old/README.md",
         "AGENTS.md",
         "CLAUDE.md",
         "docs/agents/history.md",
         "node_modules/vendor.md",
         ".scratch/build.md",
+        "web/dist/generated.md",
+        "web/coverage/generated.md",
+        "web/.cache/browser.md",
+        "web/.artifacts/trace.md",
     ):
         path = tmp_path / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -133,6 +141,10 @@ def test_discovery_includes_new_guides_and_adrs_but_excludes_only_owned_record_r
         "docs/new/guide.md",
         "docs/adr/new.md",
         "examples/README.md",
+        "web/README.md",
+        "web/docs/dist/README.md",
+        "web/docs/.cache/guide.md",
+        "web/.cache-old/README.md",
     }
 
 

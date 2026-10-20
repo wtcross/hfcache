@@ -1,7 +1,7 @@
 # Keep strict web assets separate from Python runtime and require real acceptance
 
 - Decision identity: 143.
-- Status: Accepted design; implementation and conformance pending.
+- Status: Accepted; initial workspace and preliminary gate implemented. Typed wire, release artifact and installed functional conformance remain pending.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -66,6 +66,63 @@ At baseline `6b8fae2e0997403ae5c716a2e92148af0a972af9`, `web/` and its
 strict gate/artifact do not exist. Existing Cockpit checks remain current. This
 commit accepts the design and claims no frontend or installed acceptance.
 
+## Selected workspace tooling and preliminary gate amendment (2026-10-20)
+
+The initial workspace selects Node `24.18.1`, pnpm `11.18.0`, React/React DOM
+`18.3.1`, TypeScript `6.0.3`, Vite `8.3.4` with React plugin `6.1.2`,
+ESLint `10.13.0` with JavaScript rules `10.0.1` and typescript-eslint `8.63.0`,
+Vitest/V8 coverage `5.0.5`,
+React Testing Library `16.3.3`, user-event `14.6.8`, jsdom `30.1.3`,
+Playwright `1.64.1`, axe Playwright integration/axe-core `4.14.0` and Prettier
+`3.9.10`. Exact remaining dependencies and
+transitive resolution live in the separate frozen web lock; license inventory
+and notices accompany that selection. These are browser asset or build/test
+dependencies and add no deployed Node process or Python runtime requirement.
+Reusing the repository's TypeScript-6-compatible lint release avoids unnecessary
+package release-age exceptions while retaining strict dependency admission.
+Select the maintained ESLint 10 line: the official
+[support policy](https://eslint.org/version-support/) records ESLint 9's end of
+life on 2026-08-06. The selected type-aware and React plugins declare compatible
+peers. The older JSX accessibility plugin does not support that major; semantic
+component/keyboard tests and actual desktop/mobile axe browser checks provide
+accessibility enforcement instead. The MPL-2.0 axe packages are test-only and
+are not shipped in the browser application bundle.
+
+The implemented script contract is `lint`, `typecheck`, `test:strict-fixtures`,
+`test:unit`, `test:component`, `build`, `test:browser`. The strictness fixtures
+exercise deliberate invalid TypeScript/unsafe assignments rather than accepting
+configuration flags alone. Combined new-source unit/component coverage must meet
+90% lines and 85% branches; existing Python coverage is not redefined.
+
+`scripts/check.sh --require-web` preflights the package manifest, frozen lock,
+TypeScript configuration and Node/pnpm before backend work. It preserves backend
+and applicable Cockpit gates, then runs frozen web installation and every script
+above in order. A missing tool/input/browser, failed stage or late disappearance
+fails. Default backend-only invocation explicitly omits web validation and cannot
+establish web acceptance. Help remains free of runtime/credential/archive access.
+
+Browser dependency provisioning is explicit and separate from execution.
+The initial `test:browser` uses a production-built shell in pinned Chromium on
+an owned loopback fixture, with a clear development/ disconnected status and no
+API authentication or archive behavior. It must fail if Chromium is unavailable.
+This preliminary check is deliberately distinct from the required three-engine
+real Caddy/installed application/platform acceptance. The future
+`--with-web-functional` option is not yet implemented and currently remains an
+unknown argument, rather than a successful placeholder.
+
+Workspace/gate source conformance and actual command results are recorded when
+their checks run. This tooling amendment alone claims no passing test, Caddy
+integration, installed availability or production rollout. See the
+[development commands](../development.md#web-workspace),
+[web package](../../web/package.json), [license inventory](../../web/dependencies/licenses.json)
+and [user status](../web-ui/README.md).
+
+The workspace and preliminary gate implement the first part of this decision.
+Precise API wire schemas, authentication, application-owned static serving,
+immutable native/rootless release integration and full three-engine installed
+functional acceptance remain pending. Their requirements are unchanged by a
+successful shell-only check.
+
 ## Evidence and relationships
 
 Amends [088](decision-088.md), [FW-01–FW-04](fw-01.md),
@@ -74,5 +131,6 @@ See [server asset design](../server.md#web-ui-design-and-current-availability),
 [record formats](../schemas.md#18-web-ui-and-administration-design-records),
 [web UI status](../web-ui/README.md), [development](../development.md),
 [security](../security.md#browser-administration-design) and
-[conditional retirement](decision-144.md). Introducing design is this commit;
-implementation and executable gate evidence remains pending.
+[conditional retirement](decision-144.md). The initial accepted design remains
+the basis for the implementation amendments above; each implemented boundary
+requires its own executable evidence, and installed conformance remains pending.

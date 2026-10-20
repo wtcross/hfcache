@@ -224,9 +224,13 @@ until it is mapped."""
 
 def test_every_documented_injection_point_is_mapped():
     contract = Path("docs/development.md").read_text()
+    heading = "## Failure injection\n"
+    assert contract.count(heading) == 1
+    section = contract.split(heading, 1)[1].split("\n## ", 1)[0]
+    assert section.count("| Injection point |") == 1
     documented = {
         line.removeprefix("| ").removesuffix(" |")
-        for line in contract.splitlines()
+        for line in section.splitlines()
         if line.startswith("| ") and line not in {"| Injection point |", "| --- |"}
     }
     assert set(MATRIX) == documented

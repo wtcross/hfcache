@@ -29,6 +29,39 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-002 Add strict React workspace and required gates (2026-10-20,
+  this commit — [task](plans/tasks/web-002-strict-frontend-and-gates.md)).
+  React/Vite strict TypeScript shell provides four accessible disconnected
+  workspaces without fictional archive facts. Exact Node/pnpm/tool pins, frozen
+  lock and all 274 direct/transitive/optional-platform licenses are audited;
+  actual production MIT notices remain. No deployed Node/Python dependency is
+  added. Required web gate preserves every backend/Cockpit stage, refuses
+  missing inputs/tools, skips and timeouts, checks actual strict negative
+  fixtures, coverage, production output and sandboxed Chromium. Unique evidence
+  paths retain failures. Independent real copied assertion-failure/success and
+  post-positive-report timeout proofs observe exact browser/listener drain;
+  synthetic unit-wrapper timeout proofs reject status0 plus ETIMEDOUT. Initial
+  contrast screenshots were overwritten before retention was fixed; that gap
+  remains explicit. New version table exposed an overly broad matrix parser;
+  scope correction preserves exact eleven points and every mapped test.
+  Focused 104 tests and independent review pass. Final
+  `scripts/check.sh --require-web --require-cockpit` exits0: 5337 Python tests,
+  52 opt-in deselected in708.97s; three locked wheel profiles; 572 Cockpit unit
+  zero skip/110 mounted Firefox; 45 web unit/50 combined component; 2 real
+  Chromium tests zero skip/retry. Coverage98.46%line/98%branch, 47,654 gzip JS
+  bytes, deterministic consecutive builds, missing-browser refusal. Gate log
+  SHA256 `795a5efc...`; task retains exact source/artifact/report hashes.
+  An extra whitespace check found a final generator-added notice separator
+  after the unpublished commit; its narrow correction preserves upstream
+  license text, passes the entire strict gate again and is amended into this
+  same work-package commit. Earlier source and passing/failing runs remain.
+  Human development/script/UI status guides and ADR143 tooling amendment align;
+  docs194human/19helpers and44doc tests pass. INV-003/010/019, FW-01–04,
+  AD-01/15, retained CP-01–14 and ADR88/113/138/143 reviewed. All95 feature
+  cases remain pending; no Caddy/API/Basic/installed/native/rootless/NAS/
+  production acceptance or Cockpit retirement. Current advances WEB-003;
+  handoff33 retains all restrictions, original state and unrelated guests.
+
 - [x] WEB-001 Activate web contracts and stabilize baseline framing (2026-10-20,
   this commit — [plan](plans/2026-10-20-plan-web-ui.md),
   [task](plans/tasks/web-001-baseline-and-contracts.md)). Explicit implementation
@@ -2927,6 +2960,18 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     this source commit; source retirement requires every parity/compatibility/
     installed functional and documentation gate before its own task.
 
+    **WEB-002 amendment (2026-10-20):** the strict frontend workspace and
+    required local gate pass, including the preliminary disconnected Chromium
+    shell. Chromium is provisioned only in an owned cache; full three-engine,
+    same-Caddy/installed API and fresh native/rootless guest proofs remain for
+    their tasks. The first overwritten contrast screenshots cannot be restored;
+    unique evidence and independent failure-retention/timeout proofs now pass.
+    All 95 feature cases remain pending. Current next task is WEB-003, superseding
+    the earlier next-task sentence above. No production interface, credential,
+    manager, NAS, selector, guard or live plugin changed. Preserve all original
+    files/stores/handles, five earlier guests and unknown attempts; no cleanup,
+    replay, deployment or remote publication follows this source commit.
+
 ## Operator decisions needed
 
 1. **Which repositories the archive is ultimately for** (raised 2026-07-24, during
@@ -5741,6 +5786,15 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      Cockpit checks. Every feature needs continuous human docs and unit/integration/
      actual Caddy/installed/native/rootless functional coverage; pending planned
      test identifiers never count as passing scenarios.
+
+     WEB-002 amendment (2026-10-20): select maintained ESLint10 with compatible
+     strict TypeScript/React peers, explicit test-only axe checks, all-lock license
+     auditing and exact production notices. Implement the required local web
+     stage without removing backend/Cockpit checks. Positive test counts,
+     no-skips/retries, strict rejection fixtures and timeout/owned-process drain
+     are executable requirements. The initial shell proves only preliminary
+     local behavior; typed wire, Caddy/Basic and installed functional acceptance
+     remain outstanding under the same decision.
 
 144. **Keep Cockpit retirement conditional on complete replacement proof**
      (2026-10-20, WEB-001). [Decision 144](../adr/decision-144.md) is proposed,
