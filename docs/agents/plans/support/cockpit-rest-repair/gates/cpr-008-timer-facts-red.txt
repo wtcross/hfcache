@@ -1,0 +1,164 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_ test_system_manager_reader_has_closed_argv_clean_environment_and_bounded_output _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5d3f583a80>
+
+    def test_system_manager_reader_has_closed_argv_clean_environment_and_bounded_output(monkeypatch):
+        original = subprocess.Popen
+        calls = []
+
+        def controlled(argv, **options):
+            calls.append((argv, options))
+            body = (
+                "Id=hfcache-sync.timer\nLoadState=loaded\nActiveState=inactive\n"
+                "SubState=dead\nUnitFileState=linked\n"
+            )
+            return original(
+                [sys.executable, "-c", "import sys; sys.stdout.write(" + repr(body) + ")"], **options
+            )
+
+        monkeypatch.setenv("DBUS_SYSTEM_BUS_ADDRESS", "SYNTHETIC_API_SECRET")
+        monkeypatch.setenv("SYSTEMD_UNIT_PATH", "/untrusted")
+        monkeypatch.setattr(subprocess, "Popen", controlled)
+>       facts = runtime._inspection_system_show("hfcache-sync.timer")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_cockpit_host_profile.py:452:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts/container-service.py:305: in _inspection_system_show
+    _inspection_refuse()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _inspection_refuse():
+        message = "read-only Cockpit inspection refused"
+>       raise ValueError(message)
+E       ValueError: read-only Cockpit inspection refused
+
+scripts/container-service.py:95: ValueError
+_ test_captured_masked_timer_output_without_pid_is_a_complete_readonly_fact[hfcache-sync.timer] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5d3f583950>
+unit = 'hfcache-sync.timer'
+
+    @pytest.mark.parametrize("unit", tuple(CAPTURED_MASKED_TIMERS))
+    def test_captured_masked_timer_output_without_pid_is_a_complete_readonly_fact(monkeypatch, unit):
+        original = subprocess.Popen
+        calls = []
+
+        def controlled(argv, **options):
+            calls.append(argv)
+            return original(
+                [
+                    sys.executable,
+                    "-c",
+                    "import sys; sys.stdout.write(" + repr(CAPTURED_MASKED_TIMERS[unit]) + ")",
+                ],
+                **options,
+            )
+
+        monkeypatch.setattr(subprocess, "Popen", controlled)
+>       assert runtime._inspection_system_show(unit) == {
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "Id": unit,
+            "LoadState": "masked",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "UnitFileState": "masked",
+            "MainPID": "0",
+        }
+
+tests/unit/test_cockpit_host_profile.py:495:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts/container-service.py:305: in _inspection_system_show
+    _inspection_refuse()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _inspection_refuse():
+        message = "read-only Cockpit inspection refused"
+>       raise ValueError(message)
+E       ValueError: read-only Cockpit inspection refused
+
+scripts/container-service.py:95: ValueError
+_ test_captured_masked_timer_output_without_pid_is_a_complete_readonly_fact[hfcache-verify.timer] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5d3f474170>
+unit = 'hfcache-verify.timer'
+
+    @pytest.mark.parametrize("unit", tuple(CAPTURED_MASKED_TIMERS))
+    def test_captured_masked_timer_output_without_pid_is_a_complete_readonly_fact(monkeypatch, unit):
+        original = subprocess.Popen
+        calls = []
+
+        def controlled(argv, **options):
+            calls.append(argv)
+            return original(
+                [
+                    sys.executable,
+                    "-c",
+                    "import sys; sys.stdout.write(" + repr(CAPTURED_MASKED_TIMERS[unit]) + ")",
+                ],
+                **options,
+            )
+
+        monkeypatch.setattr(subprocess, "Popen", controlled)
+>       assert runtime._inspection_system_show(unit) == {
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "Id": unit,
+            "LoadState": "masked",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "UnitFileState": "masked",
+            "MainPID": "0",
+        }
+
+tests/unit/test_cockpit_host_profile.py:495:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts/container-service.py:305: in _inspection_system_show
+    _inspection_refuse()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _inspection_refuse():
+        message = "read-only Cockpit inspection refused"
+>       raise ValueError(message)
+E       ValueError: read-only Cockpit inspection refused
+
+scripts/container-service.py:95: ValueError
+_ test_captured_timer_rows_preserve_guarded_profile_and_original_guard_pid_proof _
+
+host = namespace(deployment=namespace(source=PosixPath('/tmp/pytest-of-tyler/pytest-1282/test_captured_timer_rows_prese0/sour...282/test_captured_timer_rows_prese0/opt/current'), manager_reader=<function _inspection_system_show at 0x7f5d3f4022a0>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5d3f5f2580>
+
+    def test_captured_timer_rows_preserve_guarded_profile_and_original_guard_pid_proof(
+        host, monkeypatch
+    ):
+        original = subprocess.Popen
+        calls = []
+
+        def controlled(argv, **options):
+            unit = argv[3]
+            calls.append(argv)
+            body = CAPTURED_MASKED_TIMERS.get(unit)
+            if body is None:
+                body = "".join(f"{key}={value}\n" for key, value in host.units[unit].items())
+            return original(
+                [sys.executable, "-c", "import sys; sys.stdout.write(" + repr(body) + ")"], **options
+            )
+
+        monkeypatch.setattr(subprocess, "Popen", controlled)
+        monkeypatch.setattr(runtime, "_inspection_system_show", host.manager_reader)
+        result = runtime.inspect_cockpit()
+>       assert result["state"] == "guarded", result
+E       AssertionError: {'schema_version': 1, 'state': 'unknown', 'reason': 'facts-unavailable'}
+E       assert 'unknown' == 'guarded'
+E
+E         - guarded
+E         + unknown
+
+tests/unit/test_cockpit_host_profile.py:525: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_cockpit_host_profile.py::test_system_manager_reader_has_closed_argv_clean_environment_and_bounded_output
+FAILED tests/unit/test_cockpit_host_profile.py::test_captured_masked_timer_output_without_pid_is_a_complete_readonly_fact[hfcache-sync.timer]
+FAILED tests/unit/test_cockpit_host_profile.py::test_captured_masked_timer_output_without_pid_is_a_complete_readonly_fact[hfcache-verify.timer]
+FAILED tests/unit/test_cockpit_host_profile.py::test_captured_timer_rows_preserve_guarded_profile_and_original_guard_pid_proof
+4 failed, 70 deselected in 3.83s

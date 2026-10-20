@@ -1,0 +1,5 @@
+Earlier cpr-008-framing-green.json is retained unchanged as a historical snapshot.
+Its executed decoder prefix is exactly 4e155e19633187bac07bbde1a3f05e4d0148919c196f7f1313e10f7ab4b545c4.
+Its full guard_source_sha256 fe70e6f69a0476411f3a79e74fe40209c348a1d0f38409b879f5c78a108780e1 was collected at artifact-publication time while the receiver source was changing; it is NOT an executed whole-source pin.
+The distinct final-green artifact records final frozen source 5b64be973d436ed983ea0eeac5415f7b2110a9a7c56947288fe2669c17251684 and directly observed prefix da8419974a347399a40735caac32af5e8328268dbdbca9cff60e1648a0467244.
+Both probes passed3/3 exact synthetic byte comparisons and privileged bridge liveness; neither was full application/runtime acceptance.

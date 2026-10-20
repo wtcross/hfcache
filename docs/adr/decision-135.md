@@ -1,7 +1,7 @@
 # Separate manual REST jobs from guarded host observers
 
 - Decision identity: 135.
-- Status: Accepted; implementation and acceptance evidence required.
+- Status: Accepted; source and temporary fixture acceptance passed. Fixed-manager inspection is qualified below; disposable and installed acceptance remain separate.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -83,3 +83,13 @@ read tools. [Invariant register](../invariants.md#cockpit-boundary),
 and [system interface](../../cockpit/src/api/systemd.ts) define the affected
 boundaries. Regression and required gate evidence accompany the implementation;
 current-source disposable Cockpit/PAM and installed acceptance remain separate.
+
+## Unit-specific manager properties (2026-10-20)
+
+Real systemd timer properties omit `MainPID`. Inspect only the five common fixed
+timer properties (`Id`, `LoadState`, `ActiveState`, `SubState`, `UnitFileState`)
+for the two exact allowed timers. Services and the guard additionally require
+their real numeric `MainPID`; missing service PID facts remain unavailable.
+Normalize a known timer's internal PID to zero only after that exact field set
+is validated. This does not infer service permissions from a missing property,
+relax guard identity or change the strict public inspection response schema.

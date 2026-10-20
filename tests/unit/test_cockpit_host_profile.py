@@ -23,6 +23,19 @@ assert SPEC.loader is not None
 runtime = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(runtime)
 
+# Exact stdout captured from the owned disposable guest, 2026-10-20. Timers
+# have no process MainPID; services and the independent guard retain that proof.
+CAPTURED_MASKED_TIMERS = {
+    "hfcache-sync.timer": (
+        "Id=hfcache-sync.timer\nLoadState=masked\nActiveState=inactive\n"
+        "SubState=dead\nUnitFileState=masked\n"
+    ),
+    "hfcache-verify.timer": (
+        "Id=hfcache-verify.timer\nLoadState=masked\nActiveState=inactive\n"
+        "SubState=dead\nUnitFileState=masked\n"
+    ),
+}
+
 
 @pytest.fixture
 def host(deployment, monkeypatch):
@@ -68,7 +81,7 @@ def host(deployment, monkeypatch):
             "ActiveState": "inactive",
             "SubState": "dead",
             "UnitFileState": "masked",
-            "MainPID": "0",
+            **({} if name in CAPTURED_MASKED_TIMERS else {"MainPID": "0"}),
         }
         for name in runtime.INSPECTION_UNITS
     }
@@ -81,10 +94,13 @@ def host(deployment, monkeypatch):
         "MainPID": "1234",
     }
 
+    manager_reader = runtime._inspection_system_show
+
     def show(unit):
         calls.append(unit)
         assert unit in units
-        return units[unit].copy()
+        # Match the parser's internal normalization, not invented timer stdout.
+        return units[unit].copy() | ({"MainPID": "0"} if unit in CAPTURED_MASKED_TIMERS else {})
 
     monkeypatch.setattr(runtime, "_inspection_system_show", show)
 
@@ -104,6 +120,7 @@ def host(deployment, monkeypatch):
         calls=calls,
         permissions=permissions,
         selector=selector,
+        manager_reader=manager_reader,
     )
 
 
@@ -423,7 +440,7 @@ def test_system_manager_reader_has_closed_argv_clean_environment_and_bounded_out
         calls.append((argv, options))
         body = (
             "Id=hfcache-sync.timer\nLoadState=loaded\nActiveState=inactive\n"
-            "SubState=dead\nUnitFileState=linked\nMainPID=0\n"
+            "SubState=dead\nUnitFileState=linked\n"
         )
         return original(
             [sys.executable, "-c", "import sys; sys.stdout.write(" + repr(body) + ")"], **options
@@ -434,6 +451,7 @@ def test_system_manager_reader_has_closed_argv_clean_environment_and_bounded_out
     monkeypatch.setattr(subprocess, "Popen", controlled)
     facts = runtime._inspection_system_show("hfcache-sync.timer")
     assert facts["UnitFileState"] == "linked"
+    assert facts["MainPID"] == "0"
     argv, options = calls[0]
     assert argv == [
         "/usr/bin/systemctl",
@@ -441,7 +459,7 @@ def test_system_manager_reader_has_closed_argv_clean_environment_and_bounded_out
         "show",
         "hfcache-sync.timer",
         "--no-pager",
-        "--property=Id,LoadState,ActiveState,SubState,UnitFileState,MainPID",
+        "--property=Id,LoadState,ActiveState,SubState,UnitFileState",
     ]
     assert options["env"] == {
         "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
@@ -455,6 +473,117 @@ def test_system_manager_reader_has_closed_argv_clean_environment_and_bounded_out
     with pytest.raises(ValueError, match="read-only Cockpit inspection refused"):
         runtime._inspection_system_show("hfcache.target")
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize("unit", tuple(CAPTURED_MASKED_TIMERS))
+def test_captured_masked_timer_output_without_pid_is_a_complete_readonly_fact(monkeypatch, unit):
+    original = subprocess.Popen
+    calls = []
+
+    def controlled(argv, **options):
+        calls.append(argv)
+        return original(
+            [
+                sys.executable,
+                "-c",
+                "import sys; sys.stdout.write(" + repr(CAPTURED_MASKED_TIMERS[unit]) + ")",
+            ],
+            **options,
+        )
+
+    monkeypatch.setattr(subprocess, "Popen", controlled)
+    assert runtime._inspection_system_show(unit) == {
+        "Id": unit,
+        "LoadState": "masked",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "UnitFileState": "masked",
+        "MainPID": "0",
+    }
+    assert calls[0][-1] == "--property=Id,LoadState,ActiveState,SubState,UnitFileState"
+
+
+def test_captured_timer_rows_preserve_guarded_profile_and_original_guard_pid_proof(
+    host, monkeypatch
+):
+    original = subprocess.Popen
+    calls = []
+
+    def controlled(argv, **options):
+        unit = argv[3]
+        calls.append(argv)
+        body = CAPTURED_MASKED_TIMERS.get(unit)
+        if body is None:
+            body = "".join(f"{key}={value}\n" for key, value in host.units[unit].items())
+        return original(
+            [sys.executable, "-c", "import sys; sys.stdout.write(" + repr(body) + ")"], **options
+        )
+
+    monkeypatch.setattr(subprocess, "Popen", controlled)
+    monkeypatch.setattr(runtime, "_inspection_system_show", host.manager_reader)
+    result = runtime.inspect_cockpit()
+    assert result["state"] == "guarded", result
+    assert result["facts"]["guard"] == "held"
+    assert result["permissions"]["archive"] is False
+    assert result["permissions"]["schedule"] is False
+    assert result["permissions"]["observer"] is False
+    for argv in calls:
+        assert ("MainPID" not in argv[-1]) is (argv[3] in CAPTURED_MASKED_TIMERS)
+
+
+@pytest.mark.parametrize(
+    "unit", ["hfcache-sync.service", "hfcache-verify.service", runtime.INSPECTION_GUARD]
+)
+def test_service_and_guard_without_real_main_pid_remain_unavailable(monkeypatch, unit):
+    original = subprocess.Popen
+    body = (
+        f"Id={unit}\nLoadState=masked\nActiveState=inactive\nSubState=dead\nUnitFileState=masked\n"
+    )
+
+    def controlled(_argv, **options):
+        return original(
+            [sys.executable, "-c", "import sys; sys.stdout.write(" + repr(body) + ")"], **options
+        )
+
+    monkeypatch.setattr(subprocess, "Popen", controlled)
+    with pytest.raises(ValueError, match="read-only Cockpit inspection refused"):
+        runtime._inspection_system_show(unit)
+
+
+@pytest.mark.parametrize("change", ["extra-pid", "unknown", "duplicate", "missing", "wrong-id"])
+def test_timer_specific_fact_shape_stays_closed(monkeypatch, change):
+    original = subprocess.Popen
+    unit = "hfcache-sync.timer"
+    body = CAPTURED_MASKED_TIMERS[unit]
+    if change == "extra-pid":
+        body += "MainPID=1234\n"
+    elif change == "unknown":
+        body += "Unknown=synthetic\n"
+    elif change == "duplicate":
+        body += "ActiveState=active\n"
+    elif change == "missing":
+        body = body.replace("ActiveState=inactive\n", "")
+    else:
+        body = body.replace(unit, "arbitrary.timer")
+
+    def controlled(_argv, **options):
+        return original(
+            [sys.executable, "-c", "import sys; sys.stdout.write(" + repr(body) + ")"], **options
+        )
+
+    monkeypatch.setattr(subprocess, "Popen", controlled)
+    with pytest.raises(ValueError, match="read-only Cockpit inspection refused"):
+        runtime._inspection_system_show(unit)
+
+
+@pytest.mark.parametrize("unit", ["arbitrary.timer", "hfcache-sync.service.timer"])
+def test_timer_suffix_never_extends_the_exact_inspection_unit_allowlist(monkeypatch, unit):
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("Unlisted timer attempted a system manager query")
+
+    monkeypatch.setattr(subprocess, "Popen", forbidden)
+    with pytest.raises(ValueError, match="read-only Cockpit inspection refused"):
+        runtime._inspection_system_show(unit)
 
 
 @pytest.mark.parametrize(

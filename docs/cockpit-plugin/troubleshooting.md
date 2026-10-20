@@ -104,6 +104,23 @@ lookup/wait. A synchronous validation has no operation receipt. Actual installed
 trigger diagnosis still requires checking the exact browser/helper/profile/image
 identities in an authorized environment; changing error text alone proves no fix.
 
+Older guarded configuration code sent NUL-delimited documents through a Cockpit
+text channel. Independent read-only tests with Cockpit368 reproduced a real
+bridge disconnect for that input, including privileged channels. The repaired
+guard sends bounded canonical ASCII base64 frames and validates both exact UTF-8
+documents before file or lock effects. This identifies a reproducible transport
+defect, without establishing the cause on another installed host. Verify the
+actual browser source/checksum and selected helper/profile before an authorized
+installed test. Preserve any earlier uncertain attempt; another Validate click
+is not a diagnostic read.
+
+Installed confirmation must keep systemd's stdout on a pipe. Redirecting it
+straight into the root confirmation file can produce an enforcing PID1 `init_t`
+write denial on an `etc_t` file before a client unit starts. The repaired guard
+uses a bounded local privileged collector and exact byte postchecks. Preserve
+an already installed file, backup and failed confirmation; do not relabel files,
+weaken SELinux or repeat installation to resolve that observation.
+
 ## The page closed, timed out or stopped observing a sync
 
 Accepted server work may continue. Preserve the validated key and operation ID

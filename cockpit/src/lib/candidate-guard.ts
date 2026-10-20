@@ -82,6 +82,51 @@ fail() {
     exit 1
 }
 if [[ "$action" == inspect ]]; then exec 2>/dev/null; fi
+utf8_text() {
+    local valid=$'^([\\x01-\\x7f]|[\\xc2-\\xdf][\\x80-\\xbf]|\\xe0[\\xa0-\\xbf][\\x80-\\xbf]|[\\xe1-\\xec][\\x80-\\xbf][\\x80-\\xbf]|\\xed[\\x80-\\x9f][\\x80-\\xbf]|[\\xee-\\xef][\\x80-\\xbf][\\x80-\\xbf]|\\xf0[\\x90-\\xbf][\\x80-\\xbf][\\x80-\\xbf]|[\\xf1-\\xf3][\\x80-\\xbf][\\x80-\\xbf][\\x80-\\xbf]|\\xf4[\\x80-\\x8f][\\x80-\\xbf][\\x80-\\xbf])*$'
+    [[ "$1" =~ $valid ]]
+}
+if [[ "$action" != read ]]; then
+    # Cockpit's text channel cannot transport NUL. Decode two canonical bounded
+    # ASCII lines entirely in memory before even inspecting/creating the lock.
+    # A bounded reader adds its success sentinel. Reading through a pipe without
+    # -n permits buffered I/O; check EOF separately to reject embedded wire NUL.
+    {
+        IFS= read -r -d '' wire || fail
+        if IFS= read -r -d '' -n 1 extra; then fail; fi
+        [[ -z "$extra" ]] || fail
+    } < <(head --bytes=2796211 && printf '\\0')
+    wait "$!" || fail
+    (( \${#wire} <= 2796210 )) || fail
+    # Line reads avoid quadratic glob matching on a maximum-size frame.
+    {
+        IFS= read -r encoded_proposed || fail
+        IFS= read -r encoded_original || fail
+        if IFS= read -r -n 1 extra; then fail; fi
+        [[ -z "$extra" ]] || fail
+    } < <(printf '%s' "$wire")
+    wait "$!" || fail
+    decode_frame() {
+        local encoded=$2 decoded canonical
+        (( \${#encoded} <= 1398104 )) || fail
+        # The bounded encoded line can decode to at most 1 MiB plus two bytes.
+        IFS= read -r -d '' decoded < <(
+            printf '%s' "$encoded" | base64 --decode && printf '\\0'
+        ) || fail
+        wait "$!" || fail
+        (( \${#decoded} <= 1048576 )) || fail
+        # This also rejects invalid padding, decoded NUL and truncated decodes,
+        # while preserving every trailing newline in the original UTF-8 bytes.
+        canonical=$(printf '%s' "$decoded" | base64 --wrap=0) || fail
+        [[ "$canonical" == "$encoded" ]] || fail
+        utf8_text "$decoded" || fail
+        printf -v "$1" '%s' "$decoded"
+    }
+    decode_frame proposed "$encoded_proposed"
+    [[ -n "$proposed" ]] || fail
+    decode_frame original "$encoded_original"
+    unset wire encoded_proposed encoded_original
+fi
 [[ -d "$directory" && ! -L "$directory" ]] || fail
 [[ $(stat -c '%u' -- "$directory") == "$owner" ]] || fail
 mode=$(stat -c '%a' -- "$directory")
@@ -115,18 +160,6 @@ if [[ "$action" == read ]]; then
 fi
 if [[ "$action" == inspect ]]; then
     # This branch creates no lock, comparison files, backup or other artifacts.
-    # POSIX byte ranges validate UTF-8 without another interpreter/dependency.
-    utf8_text() {
-        local valid=$'^([\\x01-\\x7f]|[\\xc2-\\xdf][\\x80-\\xbf]|\\xe0[\\xa0-\\xbf][\\x80-\\xbf]|[\\xe1-\\xec][\\x80-\\xbf][\\x80-\\xbf]|\\xed[\\x80-\\x9f][\\x80-\\xbf]|[\\xee-\\xef][\\x80-\\xbf][\\x80-\\xbf]|\\xf0[\\x90-\\xbf][\\x80-\\xbf][\\x80-\\xbf]|[\\xf1-\\xf3][\\x80-\\xbf][\\x80-\\xbf][\\x80-\\xbf]|\\xf4[\\x80-\\x8f][\\x80-\\xbf][\\x80-\\xbf])*$'
-        [[ "$1" =~ $valid ]]
-    }
-    IFS= read -r -d '' -n 1048577 proposed || fail
-    (( \${#proposed} > 0 && \${#proposed} <= 1048576 )) || fail
-    IFS= read -r -d '' -n 1048577 original || fail
-    (( \${#original} <= 1048576 )) || fail
-    if IFS= read -r -d '' -n 1 extra; then fail; fi
-    [[ -z "$extra" ]] || fail
-    utf8_text "$proposed" && utf8_text "$original" || fail
     [[ -r "$directory" && -x "$directory" ]] || fail
     inspect_file() {
         file_state=unknown observed=
@@ -176,11 +209,6 @@ cleanup() {
     return 0
 }
 trap cleanup EXIT
-IFS= read -r -d '' -n 1048577 proposed || fail
-(( \${#proposed} > 0 && \${#proposed} <= 1048576 )) || fail
-IFS= read -r -d '' -n 1048577 original || fail
-(( \${#original} <= 1048576 )) || fail
-if IFS= read -r -d '' -n 1 extra; then fail; fi
 expected_candidate=$(mktemp "$directory/.candidate-input.XXXXXX")
 expected_base=$(mktemp "$directory/.installed-input.XXXXXX")
 printf '%s' "$proposed" > "$expected_candidate"
@@ -190,8 +218,18 @@ cmp -s -- "$installed" "$expected_base" || fail
 case "$action" in
 confirm)
     confirmation=$(mktemp "$directory/.confirmation.XXXXXX")
-    if (ulimit -f 4096; "$@" > "$confirmation"); then status=0; else status=$?; fi
-    case "$status" in 0|10|20|30|40|50) ;; *) fail ;; esac
+    # PID1 may write a pipe, never this root-owned configuration-directory file.
+    # Bound only the local collector. Capture both statuses before any other
+    # command so a collector refusal cannot release plausible partial output or
+    # replace the launcher's original status when collection succeeded.
+    if "$@" | (ulimit -f 4096 || exit "$?"; exec cat > "$confirmation"); then
+        status=0
+    else
+        statuses=("\${PIPESTATUS[@]}")
+        (( statuses[1] == 0 )) || exit "\${statuses[1]}"
+        status=\${statuses[0]}
+    fi
+    case "$status" in 0|10|20|30|40|50) ;; *) exit "$status" ;; esac
     (( $(stat -c '%s' -- "$confirmation") <= 4194304 )) || fail
     regular "$installed"
     cmp -s -- "$installed" "$expected_base" || fail
@@ -236,6 +274,14 @@ guard|install|remove)
 esac
 `;
 
+function encodeFrame(value: string): string {
+    const bytes = new TextEncoder().encode(value);
+    let binary = '';
+    for (let offset = 0; offset < bytes.length; offset += 8192)
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+    return btoa(binary);
+}
+
 function invocation(
     action: 'read' | 'inspect' | 'write' | 'guard' | 'install' | 'remove' | 'confirm',
     guard: CandidateGuard | null,
@@ -260,7 +306,10 @@ function invocation(
     return {
         argv: ['bash', '-ec', SCRIPT, 'hfcache-configuration', action, paths.installed,
             paths.candidate, paths.backup, paths.lock, String(owner), group, ...argv],
-        input: guard === null ? '' : guard.candidateContent + '\0' + guard.installedContent + '\0',
+        input: guard === null
+            ? ''
+            : encodeFrame(guard.candidateContent) + '\n' +
+            encodeFrame(guard.installedContent) + '\n',
     };
 }
 

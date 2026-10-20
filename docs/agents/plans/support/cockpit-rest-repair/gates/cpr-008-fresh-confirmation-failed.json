@@ -1,0 +1,105 @@
+{
+  "fixture": "real disposable Cockpit/PAM browser",
+  "state": "failed",
+  "fixture_id": "cpr008-framed-61853348c277414282d483fc7e37bc2e",
+  "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+  "source_dirty": true,
+  "helper_sha256": "3e0a00ed1082c5be4bcc38572d083b0abc16b0a0e37d43be81bddbf925fe560b",
+  "patch_sha256": "1490442bdc01107eda1f471f2a6870994131515b210957bc6e85b38cf5ea5f21",
+  "closure_sha256": "28ebe8f7bc9da8edc13abbdddfa504906ee4f5ebc9ef6595f478f2c7d70476b7",
+  "bundle_sha256": "42204a6cbecc05a279f7c0b04129f68b35d22a775256c87981f9e94e2cc3d8be",
+  "artifact_index_sha256": "19fc08305819e4ee3655be411f0da87bf2a2d849756dd1f7366961a2a8e6778c",
+  "image": "sha256:a6dac03ffceb85636e0884876ba796ba81ef2559caa7ec897293444cbda0ee7b",
+  "checks": [
+    {
+      "name": "real Cockpit PAM login",
+      "passed": true
+    },
+    {
+      "name": "real unprivileged Cockpit bridge and guest identity",
+      "passed": true
+    },
+    {
+      "name": "real Cockpit administrative bridge authentication",
+      "ok": true,
+      "prompts": 2,
+      "phase": "current-confirmed",
+      "current": "sudo",
+      "passed": true
+    },
+    {
+      "name": "real protected guarded profile identity and narrow explicit permissions",
+      "passed": true
+    },
+    {
+      "name": "actual fixed systemd/rootless client authenticated authority",
+      "passed": true
+    },
+    {
+      "name": "fresh fixture candidate-only mode; no job or old operation import",
+      "passed": true,
+      "operation_submission_executed": false
+    },
+    {
+      "name": "fresh independent initial base and newly pinned original lock proof",
+      "passed": true,
+      "installed_sha256": "5b516990c19c157e8059408740b9c77d06710f66b0a9e97b3f06d360d429b6e6",
+      "lock_device": 64515,
+      "lock_inode": 75519490
+    },
+    {
+      "name": "actual guarded candidate write and fixed-launcher API validation",
+      "passed": true,
+      "candidate_bytes": 434,
+      "candidate_sha256": "adc1768ba0d3b9a2cb2e75c100487cd6600df73056be349fd492f48ed90b93dd",
+      "proposed_text_differs_from_installed": true,
+      "installed": false
+    },
+    {
+      "name": "safe live failure projection before browser close; future attempts only",
+      "facts": [
+        {
+          "stage": null,
+          "category": null,
+          "problem": null,
+          "exit_status": null,
+          "exit_signal": null,
+          "codes": []
+        },
+        {
+          "stage": null,
+          "category": null,
+          "problem": null,
+          "exit_status": null,
+          "exit_signal": null,
+          "codes": []
+        },
+        {
+          "stage": "installed-confirm",
+          "category": "process",
+          "problem": null,
+          "exit_status": null,
+          "exit_signal": null,
+          "codes": []
+        },
+        {
+          "stage": null,
+          "category": null,
+          "problem": null,
+          "exit_status": null,
+          "exit_signal": null,
+          "codes": []
+        }
+      ],
+      "validate_visible": true,
+      "validate_effectively_disabled": true,
+      "install_ready": false,
+      "administrative_warning": false,
+      "host_permissions_warning": false,
+      "candidate_uncertain": false,
+      "installation_uncertain": false
+    }
+  ],
+  "code": "fresh-exact-installed-confirmation",
+  "acceptance": "V54 remains unpassed; no controlled boundary substitutes for this check."
+}

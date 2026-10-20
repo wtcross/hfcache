@@ -70,6 +70,27 @@ export function envelope(command: string, marker: string): string {
     }) + '\n';
 }
 
+export function decodeGuardedInput(value: string): readonly [string, string] {
+    invariant(typeof value === 'string' && value.length <= 2796210 &&
+              /^[A-Za-z0-9+/=\n]*$/.test(value),
+              'Guarded stdin must be bounded NUL-free ASCII base64 framing');
+    const frames = value.split('\n');
+    invariant(frames.length === 3 && frames[2] === '',
+              'Guarded stdin must contain exactly two LF-terminated frames');
+    const documents = frames.slice(0, 2).map((frame, index) => {
+        invariant(frame.length <= 1398104 && frame.length % 4 === 0,
+                  'Guarded frame exceeds its document encoding bound');
+        const binary = atob(frame);
+        invariant(btoa(binary) === frame, 'Guarded frame must use canonical base64');
+        const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+        invariant(bytes.length <= MAX_CANDIDATE_BYTES, 'Guarded decoded document exceeds 1 MiB');
+        const document = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+        validateCandidateText(document, index === 1);
+        return document;
+    });
+    return [documents[0], documents[1]];
+}
+
 export class ProcessBoundary {
     private static sequence = 0;
     readonly argv: string[];
@@ -168,15 +189,9 @@ export class ProcessBoundary {
                 invariant(this.action !== 'cli' && this.action !== 'profile', 'Read-only helper and direct CLI accept no host-write input');
                 invariant(this.capturedInput === null && typeof value === 'string',
                           'Guarded stdin must be captured exactly once');
-                // Two separately bounded documents plus their NUL framing. No
-                // candidate bytes become argv, commands, storage or host I/O.
-                invariant(new TextEncoder().encode(value).length <= 2 * MAX_CANDIDATE_BYTES + 2,
-                          'Guarded stdin exceeds the two-document bound');
-                const documents = value.split('\0');
-                invariant(documents.length === 3 && documents[2] === '',
-                          'Guarded stdin must contain exactly two NUL-terminated documents');
-                validateCandidateText(documents[0]);
-                validateCandidateText(documents[1], true);
+                // A real Cockpit text channel rejects wire NUL. Enforce the
+                // exact canonical transport and independently decode its bytes.
+                decodeGuardedInput(value);
                 this.capturedInput = value;
                 return this.handle;
             },

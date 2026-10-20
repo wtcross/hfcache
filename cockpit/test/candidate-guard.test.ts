@@ -46,6 +46,7 @@ function fixture() {
     const response = join(root, 'response');
     writeFileSync(response, '{"fixture":"API response"}\n');
     writeFileSync(join(bin, 'systemd-run'), '#!/usr/bin/env bash\n' +
+        'if [[ "$HFCACHE_TEST_REQUIRE_STDOUT_PIPE" == 1 && ! -p /proc/self/fd/1 ]]; then exit 91; fi\n' +
         'printf called > "$HFCACHE_TEST_CALLED"\n' +
         'printf \'%s\\0\' "$@" > "$HFCACHE_TEST_ARGUMENTS"\n' +
         'if [[ -n "$HFCACHE_TEST_ENTERED" ]]; then\n' +
@@ -53,7 +54,7 @@ function fixture() {
         '  for ((i=0; i<250; i++)); do [[ -f "$HFCACHE_TEST_RELEASE" ]] && break; sleep .02; done\n' +
         '  [[ -f "$HFCACHE_TEST_RELEASE" ]] || exit 99\n' +
         'fi\n' +
-        'cat "$HFCACHE_TEST_RESPONSE"\n', { mode: 0o700 });
+        'cat "$HFCACHE_TEST_RESPONSE"\nexit "$HFCACHE_TEST_STATUS"\n', { mode: 0o700 });
     const env = {
         ...process.env,
         PATH: bin + delimiter + process.env.PATH,
@@ -61,6 +62,8 @@ function fixture() {
         HFCACHE_TEST_ARGUMENTS: argumentsPath,
         HFCACHE_TEST_RESPONSE: response,
         HFCACHE_TEST_CHANGED_PATH: '',
+        HFCACHE_TEST_REQUIRE_STDOUT_PIPE: '',
+        HFCACHE_TEST_STATUS: '0',
     };
     const run = (invocation: GuardedInvocation) => spawnSync(invocation.argv[0], invocation.argv.slice(1), {
         input: invocation.input, encoding: 'utf8', env, timeout: 10000, maxBuffer: 4 * 1024 * 1024,
@@ -86,11 +89,132 @@ function fixture() {
 
 test('fixed production helper keeps content in stdin and imports no arbitrary command/path option', () => {
     const invocation = guardCandidateInvocation(['systemd-run', '--', 'fixed-cli'], GUARD);
-    assert.equal(invocation.input, CONTENT + '\0' + BASE + '\0');
+    assert.equal(invocation.input, Buffer.from(CONTENT).toString('base64') + '\n' +
+        Buffer.from(BASE).toString('base64') + '\n');
     assert.ok(!invocation.argv.some(argument => argument.includes(CONTENT) || argument.includes(BASE)));
     for (const path of Object.values(CONFIGURATION_PATHS))
         assert.ok(invocation.argv.includes(path));
     assert.throws(() => guardCandidateInvocation(['sh', '-c', 'untrusted'], GUARD));
+});
+
+test('every guarded action transports exact bounded bytes through a NUL-free Cockpit text channel', () => {
+    const guard = { candidateContent: '# λ😀\n\n\n', installedContent: '# π\r\n\n' };
+    const expected = Buffer.from(guard.candidateContent).toString('base64') + '\n' +
+        Buffer.from(guard.installedContent).toString('base64') + '\n';
+    for (const invocation of [
+        ...(['write', 'install', 'remove'] as const).map(action => candidateMutationInvocation(action, guard)),
+        guardCandidateInvocation(['systemd-run', '--', 'fixed-cli'], guard),
+        inspectCandidateInvocation(guard),
+        guardInstalledInvocation(hfcacheArgv(['config', 'validate']), guard.candidateContent),
+    ]) {
+        assert.equal(invocation.input.includes('\0'), false);
+        assert.match(invocation.input, /^[A-Za-z0-9+/=\n]*$/);
+        assert.equal(invocation.input, invocation.argv.includes('confirm')
+            ? Buffer.from(guard.candidateContent).toString('base64') + '\n' +
+                Buffer.from(guard.candidateContent).toString('base64') + '\n'
+            : expected);
+    }
+});
+
+test('malformed transport frames refuse before lock creation, filesystem changes or CLI execution', () => {
+    const encode = (value: string) => Buffer.from(value).toString('base64');
+    const valid = encode(CONTENT) + '\n' + encode(BASE) + '\n';
+    const frames = [
+        '', CONTENT + '\0' + BASE + '\0', valid.slice(0, -1), valid + '\n', valid + 'extra',
+        '\n' + encode(BASE) + '\n', '!\n' + encode(BASE) + '\n',
+        'YR==\n' + encode(BASE) + '\n', // noncanonical pad bits
+        Buffer.from([0xff]).toString('base64') + '\n' + encode(BASE) + '\n',
+        encode('x\0y') + '\n' + encode(BASE) + '\n',
+        encode('x'.repeat(MAX_CANDIDATE_BYTES + 1)) + '\n' + encode(BASE) + '\n',
+        'x'.repeat(1398105) + '\n' + encode(BASE) + '\n',
+    ];
+    for (const action of ['write', 'install', 'remove', 'guard', 'confirm', 'inspect'] as const) {
+        const files = fixture();
+        try {
+            const invocation = action === 'guard'
+                ? files.cli()
+                : action === 'confirm'
+                    ? guardInstalledInvocation(hfcacheArgv(['config', 'validate']), CONTENT, files.identity)
+                    : action === 'inspect'
+                        ? inspectCandidateInvocation(GUARD, files.identity)
+                        : candidateMutationInvocation(action, GUARD, files.identity);
+            const original = readdirSync(files.root).sort();
+            for (const input of frames) {
+                const result = files.run({ ...invocation, input });
+                if (action === 'inspect') {
+                    assert.equal(result.status, 0, result.stderr);
+                    assert.deepEqual(JSON.parse(result.stdout), {
+                        candidate: 'unknown',
+                        installedBase: 'unknown',
+                        installedCandidate: 'unknown',
+                        backupBase: 'unknown',
+                    });
+                } else {
+                    assert.notEqual(result.status, 0);
+                }
+                assert.deepEqual(readdirSync(files.root).sort(), original, action);
+                assert.equal(readFileSync(files.paths.installed, 'utf8'), BASE);
+                assert.equal(existsSync(files.called), false);
+            }
+        } finally {
+            files.close();
+        }
+    }
+});
+
+test('failed wire reader, decoder or canonical encoder cannot authorize filesystem effects', () => {
+    for (const phase of ['read', 'read-sentinel', 'decode', 'decode-sentinel', 'encode']) {
+        const files = fixture();
+        try {
+            const executable = phase.startsWith('read') ? 'head' : 'base64';
+            const arguments_ = phase.startsWith('decode') ? '--decode' : '--wrap=0';
+            writeFileSync(join(files.bin, executable), '#!/usr/bin/env bash\n' +
+                '/usr/bin/' + executable + ' "$@"\n' +
+                (phase.endsWith('sentinel') ? 'printf \'\\0\'\n' : '') +
+                (phase.startsWith('read') ? 'exit 31\n' : '[[ "$1" != "' + arguments_ + '" ]] || exit 31\n'),
+                          { mode: 0o700 });
+            const before = readdirSync(files.root).sort();
+            const result = files.write();
+            assert.notEqual(result.status, 0);
+            assert.deepEqual(readdirSync(files.root).sort(), before);
+            assert.equal(readFileSync(files.paths.installed, 'utf8'), BASE);
+            assert.equal(existsSync(files.called), false);
+        } finally {
+            files.close();
+        }
+    }
+});
+
+test('two maximum-size UTF-8 documents preserve exact bytes at the complete wire bound', () => {
+    const files = fixture();
+    try {
+        const guard = {
+            candidateContent: 'λ'.repeat(MAX_CANDIDATE_BYTES / 2),
+            installedContent: 'x'.repeat(MAX_CANDIDATE_BYTES),
+        };
+        writeFileSync(files.paths.installed, guard.installedContent, { mode: 0o640 });
+        const invocation = candidateMutationInvocation('write', guard, files.identity);
+        assert.equal(invocation.input.length, 2796210);
+        const result = files.run(invocation);
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(readFileSync(files.paths.candidate, 'utf8'), guard.candidateContent);
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), guard.installedContent);
+        assert.equal(existsSync(files.called), false);
+        const before = readdirSync(files.root).sort();
+        const inode = statSync(files.paths.lock).ino;
+        for (const tail of ['x', 'x'.repeat(4096)]) {
+            const overflow = files.run({ ...invocation, input: invocation.input + tail });
+            assert.equal(overflow.error, undefined);
+            assert.notEqual(overflow.status, 0);
+            assert.deepEqual(readdirSync(files.root).sort(), before);
+            assert.equal(statSync(files.paths.lock).ino, inode);
+            assert.equal(readFileSync(files.paths.candidate, 'utf8'), guard.candidateContent);
+            assert.equal(readFileSync(files.paths.installed, 'utf8'), guard.installedContent);
+            assert.equal(existsSync(files.called), false);
+        }
+    } finally {
+        files.close();
+    }
 });
 
 test('bounded UTF-8 framing rejects NUL, lone surrogates and byte overflow before spawn', () => {
@@ -98,6 +222,45 @@ test('bounded UTF-8 framing rejects NUL, lone surrogates and byte overflow befor
         assert.throws(() => validateCandidateText(value));
     validateCandidateText('λ\n'.repeat(100));
     validateCandidateText('a'.repeat(MAX_CANDIDATE_BYTES));
+});
+
+test('installed confirmation passes a pipe to the manager and preserves every classified CLI exit', () => {
+    const files = fixture();
+    try {
+        assert.equal(files.write().status, 0);
+        assert.equal(files.run(candidateMutationInvocation('install', GUARD, files.identity)).status, 0);
+        const lock = statSync(files.paths.lock).ino;
+        files.env.HFCACHE_TEST_REQUIRE_STDOUT_PIPE = '1';
+        const invocation = guardInstalledInvocation(hfcacheArgv(['config', 'validate']), CONTENT, files.identity);
+        for (const status of [0, 10, 20, 30, 40, 50]) {
+            files.env.HFCACHE_TEST_STATUS = String(status);
+            const result = files.run(invocation);
+            assert.equal(result.status, status, result.stderr);
+            assert.equal(result.stdout, readFileSync(files.root + '/response', 'utf8'));
+            assert.equal(statSync(files.paths.lock).ino, lock);
+            assert.equal(readFileSync(files.paths.installed, 'utf8'), CONTENT);
+            assert.equal(readFileSync(files.paths.backup, 'utf8'), BASE);
+            assert.ok(!readdirSync(files.root).some(name => /^\.(candidate-input|installed-input|confirmation)\./.test(name)));
+        }
+        for (const status of [1, 2, 126, 127, 137]) {
+            files.env.HFCACHE_TEST_STATUS = String(status);
+            const result = files.run(invocation);
+            assert.equal(result.status, status);
+            assert.equal(result.stdout, '');
+        }
+        files.env.HFCACHE_TEST_STATUS = '0';
+        // Even a collector that emits a complete plausible result then fails
+        // with a domain-like exit must not release its spool.
+        writeFileSync(join(files.bin, 'cat'), '#!/usr/bin/env bash\n/usr/bin/cat "$@"\nexit 30\n', { mode: 0o700 });
+        const collectorFailure = files.run(invocation);
+        assert.equal(collectorFailure.status, 30);
+        assert.equal(collectorFailure.stdout, '');
+        assert.equal(statSync(files.paths.lock).ino, lock);
+        assert.equal(readFileSync(files.paths.installed, 'utf8'), CONTENT);
+        assert.equal(readFileSync(files.paths.backup, 'utf8'), BASE);
+    } finally {
+        files.close();
+    }
 });
 
 test('installed read is exact and bounded under the persistent lock', () => {

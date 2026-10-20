@@ -1,0 +1,43 @@
+Actual helper/test copied unchanged except reverting the two preservation-only fixes to their observed previous source behavior; repository source untouched during run.
+Command: rtk proxy node --test <owned temporary>/runtime-bidi.test.ts
+Exit: 1
+✖ retained runtime profile survives startup failure (3255.192778ms)
+✖ retained runtime profile survives default close (169.643101ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6786.782234
+
+✖ failing tests:
+
+test at ../../../../tmp/hfcache-cpr008-bidi-baseline-Bj5Kzp/runtime-bidi.test.ts:36:5
+✖ retained runtime profile survives startup failure (3255.192778ms)
+  Error: ENOENT: no such file or directory, open '/tmp/hfcache-cpr008-bidi-XX1gIL/original-operation.json'
+      at async open (node:internal/fs/promises:640:25)
+      at async readFile (node:internal/fs/promises:1290:14)
+      at async TestContext.<anonymous> (file:///tmp/hfcache-cpr008-bidi-baseline-Bj5Kzp/runtime-bidi.test.ts:62:26)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/tmp/hfcache-cpr008-bidi-XX1gIL/original-operation.json'
+  }
+
+test at ../../../../tmp/hfcache-cpr008-bidi-baseline-Bj5Kzp/runtime-bidi.test.ts:36:5
+✖ retained runtime profile survives default close (169.643101ms)
+  Error: ENOENT: no such file or directory, open '/tmp/hfcache-cpr008-bidi-l0mYVv/original-operation.json'
+      at async open (node:internal/fs/promises:640:25)
+      at async readFile (node:internal/fs/promises:1290:14)
+      at async TestContext.<anonymous> (file:///tmp/hfcache-cpr008-bidi-baseline-Bj5Kzp/runtime-bidi.test.ts:62:26)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/tmp/hfcache-cpr008-bidi-l0mYVv/original-operation.json'
+  }

@@ -1,0 +1,31 @@
+PRE-CONFIRMATION-PIPE-FIX SNAPSHOT: this passed gate predates the actual
+PID1/SELinux confirmation defect and its subsequent source repair. It is not
+final acceptance for the later pipe correction or V54. Preserve its exact results.
+
+CPR-008 final source gate (2026-10-20)
+
+Command: rtk proxy bash -c 'scripts/check.sh --require-cockpit > /tmp/hfcache-cpr008-final-gate.log 2>&1'
+Observed exit0. Python5299passed/52deselected in769.60s; actual locked base,
+server and server+MCP wheel installations passed. Actual frontend frozen install,
+ESLint/stylelint/types,569unit tests0failure/0skip,109mounted Firefox cases,
+fresh production build passed. The10installed-wheel CLI/socket cases were
+explicitly run separately under -m build; default deselection is not their proof.
+
+Log SHA256:9e01c94fb1c94d1ebc75281570b4e910c47aedf813e2c24a038e5f3a92fd6a4f
+Mounted result:cpr-008-final-mounted.json
+Mounted JSON SHA256:50b0a488d8ed0866fa56f19418031f6d02375e1ad43413ef0ae872ff309ff2de
+Mounted bundle SHA256:0d33c86bd39e01a0eabaf4c685aa3af453dba4b94da38765eb98f811b33f2ea9
+Production JS SHA256:42204a6cbecc05a279f7c0b04129f68b35d22a775256c87981f9e94e2cc3d8be
+Production gzip SHA256:36c73944618d9d67305fbcbcded7371632910d35f956583455e18ea4a74d4e51
+Browser input SHA256:a10fd317b670f6a881093ef9805770b3560c8ca7f8f2c3d225b667a990440d7f
+Browser provenance:parent41d818e13c1f4860a286f24ba91bd0f384b09172,dirtytrue;
+actual output equals fourth guest's pinned served artifact. This is not a clean
+final committed release, production installation or original symptom acceptance.
+
+Final manual driver9701a1d62d97533d44f1fed10bf555267ed5c3ffcd486ed1f28c9e30e8dbec6a
+mtime04:52:11 precedes applicable frontend checks and final04:56:55 build.
+Additional root repetition ESLint/global tsc/runtime-bidi4/4 passed0 after path
+correction. Human documentation alignment187documents/19helpers passed separately.
+Required genuine fourth-guest candidate/interruption acceptance is recorded
+independently; this gate alone does not acceptV54. Final plan extended and
+explicit make gates remain CPR-009, as specified by the matrix.

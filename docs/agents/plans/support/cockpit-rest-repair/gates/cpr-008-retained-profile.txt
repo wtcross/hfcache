@@ -1,0 +1,68 @@
+CPR-008 manual-driver retained-profile preservation regression
+2026-10-20; no guest, production, real browser or external network action.
+
+Independent read-only review found that startFirefox(existingProfile) reused
+private original-operation recovery state but its startup catch called close()
+with default preserveProfile=false. A failed reopen could delete that retained
+profile. The default close() after a successful reopen had the same unsafe
+cleanup behavior. Root authorized both minimal preservation repairs and tests.
+
+Baseline contributor saved the startup catch fix:
+  await close(existingProfile !== undefined)
+This contributor additionally changed the close parameter default to:
+  preserveProfile = existingProfile !== undefined
+Existing profiles are preserved automatically on failed startup and default close.
+Fresh owned profiles keep the earlier explicit success/failure cleanup behavior.
+The async classic-script evaluation wrapper and private existing-profile checks
+are unchanged. No product application code, API, operation or cancellation changed.
+
+Permanent tests: cockpit/test/runtime-bidi.test.ts, two cases.
+They execute the actual runtime-bidi module and real cleanup/filesystem against
+new owned private temporary profiles containing a synthetic original-handle
+marker. Only child-process/protocol boundaries are controlled: a real owned Node
+child exits17 during startup, or emits the bounded fixture endpoint and is closed
+after a controlled successful session. No Firefox is launched and no socket is
+connected. These are source/recovery-preservation regressions, not BiDi/Firefox/
+PAM acceptance; actual about:blank and guest evidence belongs to separate records.
+
+Observed direct RED before the default-close repair:
+  rtk proxy node --test test/runtime-bidi.test.ts
+  cwd cockpit; exit1,1passed/1failed,0skipped,6308.802493ms.
+  Startup preservation (already fixed by the baseline contributor) passed;
+  default close removed the actual marker and readFile failed ENOENT.
+
+Observed both-old-paths RED:
+  rtk proxy node --test <owned temporary>/runtime-bidi.test.ts
+  Exact current helper/test copies were used, reverting only the two known
+  preservation fixes in that temporary helper. Repository source was not reverted.
+  Exit1,0passed/2failed,0skipped,6786.782234ms. Both failures were actual ENOENT
+  because original cleanup deleted the marker/profile, not a modeled predicate.
+  Exact output: cpr-008-retained-profile-red.txt.
+
+Observed GREEN:
+  rtk proxy node --test test/runtime-bidi.test.ts
+  cwd cockpit; exit0,2passed/0failed/0skipped,6672.671498ms.
+  Both actual retained markers survive byte-for-byte, followed by explicit test
+  fixture teardown only. Exact output: cpr-008-retained-profile-green.txt.
+
+Static validation:
+  rtk proxy ./node_modules/.bin/eslint test/runtime-bidi.mjs test/runtime-bidi.test.ts
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+  Both cwd cockpit; exit0, no errors.
+  rtk git diff --check
+  Exit0.
+
+Frozen files SHA256:
+  runtime-bidi.mjs:
+    73a981f3eb21f23de05e80584b9f3a8060dbb14451b0112a6cba6b2b03e67117
+  runtime-bidi.test.ts:
+    b46c15995fbf322ff9c99785729ca608d2756e906157bec9ab556d9efa0713ff
+  Root and driver contributor notified of source/test freeze before frontend gate.
+
+Follow-up read-only review confirms fresh successful lookup presentation replaces
+the prior terminal view, then original failed-domain wait presentation replaces
+the lookup view; pre-send key, operation ID, complete captured scope and exact
+terminal identity are rechecked after each. The original exclusive submission
+barrier remains; no whole-harness resubmission or uncertain candidate cleanup is
+introduced. Natural holder-expiry evidence is required before the sole explicit
+read-only inspection. Actual runtime execution remains separately recorded.

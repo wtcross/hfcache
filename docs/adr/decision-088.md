@@ -38,3 +38,14 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [cockpit/test/command.test.ts](../../cockpit/test/command.test.ts).
+
+## Frontend-required acceptance qualification (2026-10-20)
+
+The default gate retains its loud toolchain skip for backend-only development.
+An explicit `--require-cockpit` mode fails before backend checks when plugin
+sources, pnpm or make are unavailable; it cannot turn a skipped frontend
+stage into acceptance. It composes with the extended wheel gate. Toolchain pins,
+frozen installation and actual mounted-browser execution (including its Firefox
+prerequisite) remain mandatory for
+plugin acceptance. This qualifies gate invocation without adding a runtime or
+test dependency or changing the build/runtime separation.

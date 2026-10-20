@@ -1,0 +1,79 @@
+CPR-008 disposable masked-timer inspection conformance repair
+2026-10-20; parent authorized source/helper tests only, no guest/host action.
+
+Actual evidence revalidated:
+  .local-fixtures/cpr-runtime/cpr008/evidence/timer-fields-defect.json
+  SHA256 a70d46c041901e63e3e19b0d5df77168ba21e1552fb6e034266cf276ece9550c
+  Provisioner captured the actual new disposable guest's systemctl --system show
+  for hfcache-sync.timer and hfcache-verify.timer. Both exit0, empty stderr, and
+  stdout exactly five fields: Id=<exact timer>, LoadState=masked,
+  ActiveState=inactive, SubState=dead, UnitFileState=masked. The old helper asked
+  for MainPID as a sixth property and then required it, but real timer output
+  omitted that service-process property. The actual host profile therefore
+  returned facts-unavailable; no application workload was started as a substitute.
+
+  The two persistent CAPTURED_MASKED_TIMERS strings in
+  tests/unit/test_cockpit_host_profile.py were compared directly with the captured
+  JSON stdout and match byte-for-byte. A Python comparison using the existing
+  test module asserted both captures exit0 and stderr_empty; exit0 confirmed.
+
+Product correction:
+  scripts/container-service.py _inspection_system_show requests and requires
+  exactly Id,LoadState,ActiveState,SubState,UnitFileState for the two exact allowed
+  timers. Only after strict parse does it normalize MainPID='0' internally.
+  Services and the independent guard still request and strictly require their
+  genuine MainPID. No suffix matching, new allowed unit/path/argument, permission,
+  launcher route, wire field, dependency or host mutation is added. An extra
+  timer PID, unknown/missing/duplicate field or wrong Id is refused; an arbitrary
+  '.timer' name is refused before spawning. Archive/schedule/observer remain
+  denied in the captured guarded fixture; timer state does not imply permission.
+
+  Updated older synthetic timer assumptions to contain five raw fields and to
+  describe internal normalized PID explicitly. The protected whole-profile test
+  executes the actual parser against captured timer stdout and service/guard
+  six-field fixture stdout, preserving the original kernel lock/PID proof.
+
+Observed RED before product change:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cockpit_host_profile.py -k 'captured_masked_timer or captured_timer_rows or system_manager_reader_has_closed'
+  Exit1;4failed/70deselected in3.83s. Both exact captured timer outputs were
+  refused; existing strict-manager test with real timer shape failed; complete
+  protected profile returned unknown instead of guarded. Exact output:
+    cpr-008-timer-facts-red.txt
+
+Observed GREEN after correction:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cockpit_host_profile.py
+  Exit0;74passed, zero skipped in11.79s. Includes service/guard missing PID refusal,
+  exact timer-only argv, duplicate/missing/unknown/wrong-ID/extra-PID refusal,
+  nonallowlisted timer suffix rejection, existing descriptor/policy/index/guard/
+  mount/selector drift and deadline safety. Exact output:
+    cpr-008-timer-facts-green.txt
+
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cockpit_host_profile.py tests/unit/test_container_runtime.py tests/unit/test_container_release_installer.py
+  Exit0;253passed, zero skipped in20.72s, including existing immutable artifact
+  installation/bindings/launcher/role behavior. Exact output:
+    cpr-008-timer-container-green.txt
+
+Static checks:
+  rtk proxy uv run --locked --extra server --extra mcp ruff format scripts/container-service.py tests/unit/test_cockpit_host_profile.py
+  Exit0;two files unchanged.
+  rtk proxy uv run --locked --extra server --extra mcp ruff check scripts/container-service.py tests/unit/test_cockpit_host_profile.py
+  Exit0;all checks passed.
+  rtk proxy uv run --locked --extra server --extra mcp pyrefly check
+  Exit0;zero errors (11 existing suppressions,63 existing warnings not shown).
+  rtk git diff --check
+  Exit0.
+
+Frozen corrected helper SHA256:
+  3e0a00ed1082c5be4bcc38572d083b0abc16b0a0e37d43be81bddbf925fe560b
+  rtk sha256sum scripts/container-service.py
+  Source freeze and hash delivered to parent/provisioner. The previously selected
+  immutable guest artifact was not edited. The parent owns ADR135/contracts/
+  invariants and selection of a separately verifiable new immutable artifact.
+
+Limits of this evidence:
+  Actual captured runtime facts establish this defect; synthetic parser/profile
+  regressions prove the source correction. They do not prove corrected installed
+  artifact/PAM/bridge acceptance until that separate layer executes. This newly
+  reproduced host-profile failure is not claimed as the cause of the original
+  installed candidate-validation 'reconnected' symptom. No production/NAS/
+  credentials/host inspection or mutations were performed for this source repair.

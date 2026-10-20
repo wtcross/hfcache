@@ -1,7 +1,7 @@
 # Preserve Cockpit failure evidence and original operation identity
 
 - Decision identity: 134.
-- Status: Amended; boundary, candidate reconciliation and scoped recovery implemented; [decision 135](decision-135.md) replaces manual service starts, [decision 136](decision-136.md) replaces direct report reads and [decision 137](decision-137.md) validates read presentation and separate deployment identities. Disposable and installed acceptance remain separate.
+- Status: Amended; boundary, candidate reconciliation and scoped recovery implemented; [decision 135](decision-135.md) replaces manual service starts, [decision 136](decision-136.md) replaces direct report reads, [decision 137](decision-137.md) validates read presentation and separate deployment identities, and [decision 138](decision-138.md) repairs guarded stdin framing; [decision 139](decision-139.md) preserves confinement during exact installed confirmation. Disposable and installed acceptance remain separate.
 - Date: 2026-10-19.
 
 ## Context and decision

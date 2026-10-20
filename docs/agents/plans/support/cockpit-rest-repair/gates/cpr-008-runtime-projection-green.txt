@@ -1,0 +1,12 @@
+✔ retained runtime profile survives startup failure (3116.323088ms)
+✔ retained runtime profile survives default close (140.204576ms)
+✔ runtime failure projection preserves classified facts across template evaluation (9.839506ms)
+✔ runtime failure projection withholds unknown problem and arbitrary prose (4.865405ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6435.865052

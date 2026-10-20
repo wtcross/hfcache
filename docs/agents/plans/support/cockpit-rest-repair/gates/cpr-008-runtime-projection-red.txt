@@ -1,0 +1,31 @@
+✖ runtime failure projection preserves classified facts across template evaluation (15.606746ms)
+✔ runtime failure projection withholds unknown problem and arbitrary prose (8.766644ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 215.897557
+
+✖ failing tests:
+
+test at cockpit/test/runtime-bidi.test.ts:89:1
+✖ runtime failure projection preserves classified facts across template evaluation (15.606746ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + null
+  - 'reconnected'
+
+      at TestContext.<anonymous> (file:///home/tyler/Projects/hfcache/cockpit/test/runtime-bidi.test.ts:94:12)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'reconnected',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

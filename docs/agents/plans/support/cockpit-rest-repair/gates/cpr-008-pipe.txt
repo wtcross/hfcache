@@ -1,0 +1,53 @@
+CPR-008 accepted source and disposable gate (2026-10-20)
+
+Command: rtk proxy scripts/check.sh --require-cockpit
+Actual execution redirected to /tmp/hfcache-cpr008-pipe-gate.log; exit0.
+Python5299passed/52deselected in772.44s; three locked wheel profiles passed.
+Actual frontend frozen install, lint/style/types,570unit0fail0skip,109mounted,
+fresh production build passed. Log SHA256:88ab84c12ae2b5fbf41525a1865c899f0fbb18a326323dd4ca8f481a9fd5202a
+Mounted:cpr-008-pipe-mounted.json; bundle:b9692855d5cec8e1b3e13f228531f465aa60ff6e09f60ecc31b85e3c370336c9
+Production JS490e60045d3542e890d9c8ee3b809b8122d7ce7213f9f415774416988ca7903e
+Gzip2c15678047140e19f94f7dde41c9c4dd9f667b85c6f16ae299f3f740bb04929e
+Public input96fa3c7f220fddd342b9405df4d7532299289b2207a1376b5283e4f33ff7eaf7
+Precommit/source fixture provenance41d818e13c1f4860a286f24ba91bd0f384b09172/dirtytrue;
+selected physical helper source closure is separately pinned. No clean final
+release or production parity claim. Final plan explicit make/extended gate is009.
+
+Actual installed wheel10/10, compatibility300/300, earlier source/components and
+all guarded FS/FD cases are recorded separately. Confirmation FIFO regression
+observed RED1fail before root stdout repair (old redirect) then full68/68 passes
+51.346s with lint/types. CLI0/10/20/30/40/50 preserved; unexpected1/2/126/127/137
+preserved withoutstdout; collector complete-output-then30 also withholds stdout.
+Original lock, predecessor, exact bytes, outputbound and postchecks remain.
+
+Native command: CPR_RUNTIME_BROWSER_MODE=fresh-pipe-candidate-only
+CPR_RUNTIME_BROWSER_INTERRUPTION=1
+CPR_RUNTIME_BROWSER_MANIFEST=/home/tyler/Projects/hfcache/.local-fixtures/cpr-runtime/cpr008-pipe/browser-manifest.json
+rtk proxy node cockpit/test/runtime-browser.mjs
+Exit0;12/12 actual checks; coordinator exit0. See cpr-008-pipe-browser.json,
+cpr-008-pipe-physical.json and runtime-008.md for physical pins and boundaries.
+Genuine PAM/admin, source/profile/secret confinement, exact candidate434bytes,
+installation+APIconfirmation+backup/originalrootlock proof, prearranged35s holder,
+actual waitingwriter/realStop, reauth, explicitread-onlyinspection pass. Original
+candidate-write/bridge/terminated remains visible; Validate staysdisabled.
+No replay, install orcleanup after uncertainty; candidateabsent, installed/backup
+exact, root/domainlocks/masks/NFSro/SELinux preserved; bothstores.lockonly,0jobs.
+Bounded PID1 scan: 255rows/319586bytes, complete; no independent wirePOST
+counter. Native first candidate-validation1/installed-validation2 includes the
+initial fixed installed read and successful confirmation, not a second install.
+Final enforcing audit has zero AVCs. No production/registry/push/merge/tag/NAS.
+
+Original post-disconnect lookup/wait is distinct third-fixture evidence, never
+imported into the fifthfixture or claimed as a new native running job/sizing/full
+sync/verify reconnect. Those lifecycles have mounted/actual installed-UDS proof.
+Preserve all earlier guests, known terminal original receipt/result, unknown third
+candidate attempt and unconfirmed fourthinstallation. Source rollback or a fresh
+fixture pass cannot settle their history or the original installed host symptom.
+
+Final metadata checks after completion/selector update: locked documentation
+alignment188human documents/19helpers passed; docs-alignment plus historical
+catalog-final-lifecycle45/45 passed10.99s; gitdiff--check0. No source changed
+after the accepted strict gate.
+Captured projection/timer RED log excerpts normalize trailing whitespace for
+version control; original commands, failures and separately recorded raw-log
+evidence remain unchanged.

@@ -1,0 +1,1 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"working-tree","bundle_sha256":"f365585edaf3f451bcab6929ee2afe050e1b9088d3eb65c4b8820f0fda430808","state":"passed","tests":[{"name":"V09/V14 Configuration keeps every guarded action in exact NUL-free Unicode frames","passed":true}]}

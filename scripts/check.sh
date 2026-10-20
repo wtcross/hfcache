@@ -11,17 +11,20 @@
 # Usage:
 #   scripts/check.sh              # the §8.4 gate
 #   scripts/check.sh --with-build # additionally build and smoke-test the wheel
+#   scripts/check.sh --require-cockpit # fail if frontend checks cannot execute
 #
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 WITH_BUILD=0
+REQUIRE_COCKPIT=0
 for arg in "$@"; do
   case "$arg" in
     --with-build) WITH_BUILD=1 ;;
+    --require-cockpit) REQUIRE_COCKPIT=1 ;;
     -h | --help)
-      sed -n '3,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      sed -n '3,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -30,6 +33,25 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+find_pnpm() {
+  PNPM_BIN="$(command -v pnpm || true)"
+  if [[ -z $PNPM_BIN && -x "${PNPM_HOME:-$HOME/.local/share/pnpm}/bin/pnpm" ]]; then
+    PNPM_BIN="${PNPM_HOME:-$HOME/.local/share/pnpm}/bin/pnpm"
+  fi
+}
+
+require_cockpit() {
+  find_pnpm
+  if [[ ! -d cockpit || -z $PNPM_BIN ]] || ! command -v make > /dev/null 2>&1; then
+    printf 'Cockpit gate required: cockpit/ sources, pnpm and make must be available; see docs/development.md\n' >&2
+    exit 69
+  fi
+}
+
+if [[ $REQUIRE_COCKPIT -eq 1 ]]; then
+  require_cockpit
+fi
 
 if ! command -v uv > /dev/null 2>&1; then
   printf 'uv is not on PATH; see README.md\n' >&2
@@ -72,15 +94,18 @@ uv run --locked --extra server --extra mcp python scripts/check-installations.py
 # The skip is loud so a green gate on a toolchain-less host cannot be mistaken
 # for plugin coverage; a CPT package lands only from a host where this stage
 # ran (decision 88).
-PNPM_BIN="$(command -v pnpm || true)"
-if [[ -z $PNPM_BIN && -x "${PNPM_HOME:-$HOME/.local/share/pnpm}/bin/pnpm" ]]; then
-  PNPM_BIN="${PNPM_HOME:-$HOME/.local/share/pnpm}/bin/pnpm"
-fi
-if [[ -d cockpit && -n $PNPM_BIN ]] && command -v make > /dev/null 2>&1; then
+if [[ $REQUIRE_COCKPIT -eq 1 ]]; then
+  require_cockpit
   step 'cockpit plugin gate'
   make -C cockpit check PNPM="$PNPM_BIN"
-elif [[ -d cockpit ]]; then
-  printf '\nNOTE: cockpit/ exists but pnpm or make is missing — plugin gate SKIPPED (docs/cockpit.md §8)\n' >&2
+else
+  find_pnpm
+  if [[ -d cockpit && -n $PNPM_BIN ]] && command -v make > /dev/null 2>&1; then
+    step 'cockpit plugin gate'
+    make -C cockpit check PNPM="$PNPM_BIN"
+  elif [[ -d cockpit ]]; then
+    printf '\nNOTE: cockpit/ exists but pnpm or make is missing — plugin gate SKIPPED (docs/cockpit.md §8)\n' >&2
+  fi
 fi
 
 if [[ $WITH_BUILD -eq 1 ]]; then

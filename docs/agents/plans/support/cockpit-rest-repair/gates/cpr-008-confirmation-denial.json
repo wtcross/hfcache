@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "fixture_id": "cpr008-framed-61853348c277414282d483fc7e37bc2e",
+  "state": "reproduced; installation unconfirmed",
+  "native_browser_artifact": "cpr-008-fresh-confirmation-failed.json",
+  "physical": {
+    "fixture_id": "cpr008-framed-61853348c277414282d483fc7e37bc2e",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "state": "ready",
+    "lock_device": 64515,
+    "lock_inode": 75519490,
+    "lock_uid": 0,
+    "lock_mode": "0600",
+    "original_lock_unchanged": true,
+    "installed_sha256": "adc1768ba0d3b9a2cb2e75c100487cd6600df73056be349fd492f48ed90b93dd",
+    "backup_sha256": "5b516990c19c157e8059408740b9c77d06710f66b0a9e97b3f06d360d429b6e6",
+    "installed_inode": 75497662,
+    "backup_inode": 75497729,
+    "installed_metadata": {
+      "sha256": "adc1768ba0d3b9a2cb2e75c100487cd6600df73056be349fd492f48ed90b93dd",
+      "inode": 75497662,
+      "device": 64515,
+      "bytes": 434,
+      "uid": 0,
+      "gid": 981,
+      "mode": "0640",
+      "selinux": "unconfined_u:object_r:etc_t:s0"
+    },
+    "backup_metadata": {
+      "sha256": "5b516990c19c157e8059408740b9c77d06710f66b0a9e97b3f06d360d429b6e6",
+      "inode": 75497729,
+      "device": 64515,
+      "bytes": 141,
+      "uid": 0,
+      "gid": 981,
+      "mode": "0640",
+      "selinux": "unconfined_u:object_r:etc_t:s0"
+    },
+    "candidate_state": "absent",
+    "candidate_sha256": null,
+    "domain_guard_unchanged": true,
+    "legacy_masks_unchanged": 8,
+    "nfs_readonly": true,
+    "selinux_enforcing": true,
+    "job_receipts": 0
+  },
+  "audit": {
+    "read_only": true,
+    "audit_bytes": 506622,
+    "bounded_tail_bytes": 506622,
+    "avc_denials": [
+      {
+        "comm": "systemd",
+        "scontext": "system_u:system_r:init_t:s0",
+        "tcontext": "unconfined_u:object_r:etc_t:s0",
+        "tclass": "file",
+        "permissive": "0",
+        "pid": "1",
+        "permissions": [
+          "write"
+        ]
+      }
+    ],
+    "selinux_enforcing": true,
+    "configuration_names": [
+      ".configuration.lock",
+      "client.toml",
+      "cockpit-policy.json",
+      "config.toml",
+      "config.toml.bak",
+      "containers",
+      "credentials"
+    ]
+  },
+  "fixed_client_launches": {
+    "fixture_id": "cpr008-framed-61853348c277414282d483fc7e37bc2e",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "read_only": true,
+    "bounded_scan_complete": true,
+    "raw_started_rows": 286,
+    "bounded_bytes": 359064,
+    "records": [
+      {
+        "unit": "run-p6618-i6619.service",
+        "category": "version",
+        "timestamp_guest_microseconds": "1792486049198517",
+        "message_sha256": "58e2b14ae9b2c00ab2a65f282351637a6cb5d1d3f9faeeb845ef62033a9ee6f2",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p6662-i6663.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792486052603343",
+        "message_sha256": "5c183af677286f1e2e03a3a988fe7eb310a6fc71662c59c207196c0962b21273",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p6696-i6697.service",
+        "category": "installed-validation",
+        "timestamp_guest_microseconds": "1792486055538609",
+        "message_sha256": "5d89823076072673f824dd58ec71e3843cc3d4061c6dcfd798a7dbe4b4f63a0b",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p22416-i22417.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792493542004256",
+        "message_sha256": "98b32d17e06a98ff15424bf4fd809cc7fa683e3ef6b9e806fe58d7c936f4b026",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p22418-i22419.service",
+        "category": "version",
+        "timestamp_guest_microseconds": "1792493542013174",
+        "message_sha256": "47ce6a11efb4ee8ccc4a925ca03ed2e2db3a3315070bc746f63b382cbb6378ee",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p22419-i22420.service",
+        "category": "status",
+        "timestamp_guest_microseconds": "1792493542137311",
+        "message_sha256": "4fceffa3390995cd6443c3e69bf966d8a286ddbce36cdce3f729384f9b09103a",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p22605-i22606.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792493550748312",
+        "message_sha256": "e45080ad70c9cd8c85681a54fe7a7362e8aaa02f1614ff273b043ca3e298b5f0",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p22712-i22713.service",
+        "category": "candidate-validation",
+        "timestamp_guest_microseconds": "1792493554384406",
+        "message_sha256": "d7b318daa7ee834af6e95512cae6ead2f542b2e359afc48248a63c86abc7aacf",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p22793-i22794.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792493558752719",
+        "message_sha256": "61530701d4cfc73231c5ecee3edb2847b19509f76480a431562160f3410ed205",
+        "has_idempotency_key_option": false
+      }
+    ],
+    "counts": {
+      "candidate-validation": 1,
+      "client-describe": 4,
+      "installed-validation": 1,
+      "status": 1,
+      "version": 2
+    },
+    "operation_store_names": [
+      ".lock"
+    ],
+    "worker_operation_store_names": [
+      ".lock"
+    ],
+    "wire_post_count_claimed": false
+  },
+  "no_install_replay": true,
+  "no_rollback_or_cleanup": true,
+  "bridge_interruption_holder_started": false,
+  "limits": "This proves actual disposable PID1 stdout-file denial. It does not prove the original installed host cause or acknowledge this installation."
+}

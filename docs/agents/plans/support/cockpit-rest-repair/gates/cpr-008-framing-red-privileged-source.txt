@@ -1,0 +1,43 @@
+import { readFile } from 'node:fs/promises';
+import { connect } from 'node:tls';
+import { createHash } from 'node:crypto';
+import { startFirefox, deadline } from '/home/tyler/Projects/hfcache/cockpit/test/runtime-bidi.mjs';
+import { authenticate } from '/home/tyler/Projects/hfcache/cockpit/test/runtime-browser.mjs';
+const root='/home/tyler/Projects/hfcache/.local-fixtures/cpr-runtime/cpr008-fixed';
+const identity=JSON.parse(await readFile(root+'/browser-manifest.json','utf8'));
+const certSocket=connect({host:'127.0.0.1',port:19056,rejectUnauthorized:false});
+await deadline(new Promise((resolve,reject)=>{certSocket.once('secureConnect',resolve);certSocket.once('error',reject)}),5000,'tls');
+if(createHash('sha256').update(certSocket.getPeerCertificate().raw).digest('hex')!==identity.tls_sha256)throw Error('tls-pin');
+certSocket.destroy();
+let password=(await readFile(identity.password_file,'utf8')).replace(/\r?\n$/,'');
+let phase='firefox';
+const b=await startFirefox();
+try {
+ phase='navigate-login';
+ await b.send('browsingContext.navigate',{context:b.context,url:identity.cockpit_url+'/',wait:'complete'});
+ const wait=async query=>{for(let i=0;i<300;i++){if(await b.evaluate(b.context,'JSON.stringify(Boolean('+query+'))'))return;await new Promise(r=>setTimeout(r,200))}throw Error('wait')};
+ await wait("document.querySelector('#login-user-input')?.getClientRects().length && document.querySelector('#login-password-input')?.getClientRects().length && !document.querySelector('#login-button')?.disabled");
+ await b.evaluate(b.context,`JSON.stringify((()=>{document.querySelector('#login-user-input').value='cprtester';document.querySelector('#login-password-input').value=${JSON.stringify(password)};document.querySelector('#login-button').click();return true})())`);
+ await wait("!document.querySelector('#login-password-input') || !document.querySelector('#login-password-input').getClientRects().length");
+ await b.send('browsingContext.navigate',{context:b.context,url:identity.cockpit_url+'/cockpit/@localhost/hfcache/index.html',wait:'complete'});
+ await wait('window.cockpit&&document.querySelector("#app")');
+ phase='marker';
+ const marker=await b.evaluate(b.context,`JSON.stringify(await new Promise(resolve=>window.cockpit.spawn(['/usr/bin/cat','/etc/cpr-runtime-identity.json'],{err:'ignore'}).then(output=>resolve(JSON.parse(output)),()=>resolve(null))))`);
+ if(marker?.fixture_id!==identity.fixture_id)throw Error('marker');
+ phase='authenticate';
+ const auth=await authenticate(b,b.context,password);password='';if(!auth.ok)throw Error('auth');
+ const results=[];
+ for(const [kind,privileged,payload] of [['ascii',true,'a|b|'],['nul',true,'a\0b\0']]){
+ phase='stdin-'+kind+'-'+(privileged?'privileged':'unprivileged');
+ const result=await b.evaluate(b.context,`JSON.stringify(await new Promise(resolve=>{
+  let finished=false; const finish=result=>{if(!finished){finished=true;clearTimeout(timer);resolve(result)}};
+  const p=window.cockpit.spawn(['/usr/bin/timeout','5','/usr/bin/od','-An','-tu1','-N16'],{${privileged?"superuser:'require',":''}err:'message'});
+  const timer=setTimeout(()=>finish({ok:false,deadline:true,state:p.state()}),12000);
+  try{p.input(${JSON.stringify(payload)});}catch{finish({ok:false,input_threw:true});return;}
+  p.then(output=>{if(typeof output!=='string'){finish({ok:false,output_type:typeof output});return;}const values=output.trim()?output.trim().split(/\\s+/).map(Number):[];finish(values.length<=16&&values.every(value=>Number.isInteger(value)&&value>=0&&value<=255)?{ok:true,bytes:values}:{ok:false,invalid_output:true})},error=>finish({ok:false,problem:typeof error?.problem==='string'?error.problem:null,exit_status:error?.exit_status??null}));
+ }))`);
+ const projected=result.ok?{kind,privileged,ok:true,length:result.bytes.length,nul_count:result.bytes.filter(v=>v===0).length,sha256:createHash('sha256').update(Buffer.from(result.bytes)).digest('hex')}:{kind,privileged,...result};
+ results.push(projected);console.log(JSON.stringify({fixture_id:identity.fixture_id,phase,diagnostic_api_requests:0,diagnostic_filesystem_writes:0,...projected}));
+ }
+ console.log(JSON.stringify({fixture_id:identity.fixture_id,synthetic_stdin_only:true,diagnostic_api_requests:0,diagnostic_filesystem_writes:0,results}));
+}catch(error){console.log(JSON.stringify({fixture_id:identity.fixture_id,phase,code:error.code||'probe-failed',diagnostic_api_requests:0,diagnostic_filesystem_writes:0}));process.exitCode=1}finally{password='';await b.close()}

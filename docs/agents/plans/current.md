@@ -4,8 +4,8 @@
 | --- | --- |
 | State | active |
 | Active plan | [Cockpit REST repair](2026-10-19-plan-cockpit-rest-repair.md) |
-| Next task | [CPR-008: cross-boundary and runtime acceptance](tasks/cpr-008-cross-boundary-regressions.md) |
-| Blockers | V54 unpassed: isolated fixed rootless launcher/authenticated UDS and candidate validation now work; real Cockpit/PAM reconnect and current-source artifact acceptance remain in support/cockpit-rest-repair/runtime-004.md. Original installed cause unproven. |
+| Next task | [CPR-009: release evidence and operator handoff](tasks/cpr-009-release-evidence-and-handoff.md) |
+| Blockers | No mandatory source/disposable blocker through CPR-008: strict gate5299Python/570unit/109mounted, installedCLI10 and real fifthguest12checks pass. Preserve all five isolated guests and prior unknown/unconfirmed attempts. CPR-009 final release/parity/extended+explicitmake/handoff still pending. Production parity/original installed symptom/NAS-workload acceptance remain separate and unauthorized. |
 | Last completed plan | [Tags and discovery](2026-10-19-plan-tags-and-discovery.md) |
 | Updated | 2026-10-20 |
 

@@ -24,6 +24,13 @@ builds the distribution and smoke-installs locked base, server and
 server-plus-MCP wheels. With pnpm and make it also runs the Cockpit frozen
 install, lint, tests and production build. A skipped Cockpit stage does not
 validate plugin changes. `--with-build` adds isolated wheel-install tests.
+Use `scripts/check.sh --require-cockpit` for plugin work and acceptance that needs
+frontend coverage. It refuses missing plugin sources, pnpm or make before
+running the backend checks, and never accepts a skipped frontend stage. Combine
+it with `--with-build` when both gates are required. Firefox remains mandatory
+for the executed frontend tests; its absence fails that stage. The default mode
+retains its loud toolchain skip for backend-only development; that result is not
+plugin proof.
 
 Application safety checks raise exceptions instead of relying on assertions.
 Keep durable-format golden fixtures and checkpoint-contract tests synchronized

@@ -1,0 +1,52 @@
+import { readFile } from 'node:fs/promises';
+import { connect } from 'node:tls';
+import { createHash } from 'node:crypto';
+import { startFirefox, deadline } from '/home/tyler/Projects/hfcache/cockpit/test/runtime-bidi.mjs';
+import { inspectCandidateInvocation } from '/home/tyler/Projects/hfcache/cockpit/src/lib/candidate-guard.ts';
+import { authenticate } from '/home/tyler/Projects/hfcache/cockpit/test/runtime-browser.mjs';
+const root='/home/tyler/Projects/hfcache/.local-fixtures/cpr-runtime/cpr008-fixed';
+const identity=JSON.parse(await readFile(root+'/browser-manifest.json','utf8'));
+const certSocket=connect({host:'127.0.0.1',port:19056,rejectUnauthorized:false});
+await deadline(new Promise((resolve,reject)=>{certSocket.once('secureConnect',resolve);certSocket.once('error',reject)}),5000,'tls');
+if(createHash('sha256').update(certSocket.getPeerCertificate().raw).digest('hex')!==identity.tls_sha256)throw Error('tls-pin');
+certSocket.destroy();
+let password=(await readFile(identity.password_file,'utf8')).replace(/\r?\n$/,'');
+let phase='firefox';
+const b=await startFirefox();
+try {
+ phase='navigate-login';
+ await b.send('browsingContext.navigate',{context:b.context,url:identity.cockpit_url+'/',wait:'complete'});
+ const wait=async query=>{for(let i=0;i<300;i++){if(await b.evaluate(b.context,'JSON.stringify(Boolean('+query+'))'))return;await new Promise(r=>setTimeout(r,200))}throw Error('wait')};
+ await wait("document.querySelector('#login-user-input')?.getClientRects().length && document.querySelector('#login-password-input')?.getClientRects().length && !document.querySelector('#login-button')?.disabled");
+ await b.evaluate(b.context,`JSON.stringify((()=>{document.querySelector('#login-user-input').value='cprtester';document.querySelector('#login-password-input').value=${JSON.stringify(password)};document.querySelector('#login-button').click();return true})())`);
+ await wait("!document.querySelector('#login-password-input') || !document.querySelector('#login-password-input').getClientRects().length");
+ await b.send('browsingContext.navigate',{context:b.context,url:identity.cockpit_url+'/cockpit/@localhost/hfcache/index.html',wait:'complete'});
+ await wait('window.cockpit&&document.querySelector("#app")');
+ phase='marker';
+ const marker=await b.evaluate(b.context,`JSON.stringify(await new Promise(resolve=>window.cockpit.spawn(['/usr/bin/cat','/etc/cpr-runtime-identity.json'],{err:'ignore'}).then(output=>resolve(JSON.parse(output)),()=>resolve(null))))`);
+ if(marker?.fixture_id!==identity.fixture_id)throw Error('marker');
+ phase='authenticate';
+ const auth=await authenticate(b,b.context,password);password='';if(!auth.ok)throw Error('auth');
+ const cases=[{candidate:'§7 café 🦊\n\n',installed:'installed α\n# final\n\n\n'},{candidate:'repeat 日本語 🦊\n\n\n',installed:''},{candidate:('line α 🦊\n').repeat(128)+'\n\n',installed:'base Ω\n\n'}];
+ const observations=[];
+ for(const [index,documents] of cases.entries()){
+ const invocation=inspectCandidateInvocation({candidateContent:documents.candidate,installedContent:documents.installed});
+ if(!/^[A-Za-z0-9+/=]*\n[A-Za-z0-9+/=]*\n$/.test(invocation.input)||invocation.input.includes('\0'))throw Error('not-ascii-framing');
+ const code=invocation.argv[2];
+ const cut=code.indexOf('[[ -d "$directory" && ! -L "$directory" ]] || fail');
+ const decoder=code.indexOf('base64 --decode');
+ if(cut<1||decoder<0||decoder>cut)throw Error('decoder-prefix-not-found');
+ const tail="\n candidate_sha=$(printf '%s' \"$proposed\" | /usr/bin/sha256sum); candidate_sha=${candidate_sha%% *}\n installed_sha=$(printf '%s' \"$original\" | /usr/bin/sha256sum); installed_sha=${installed_sha%% *}\n printf '{\"candidate_bytes\":%d,\"candidate_sha256\":\"%s\",\"installed_bytes\":%d,\"installed_sha256\":\"%s\"}\\n' \"${#proposed}\" \"$candidate_sha\" \"${#original}\" \"$installed_sha\"\n";
+ const originalArgv=[...invocation.argv];originalArgv[2]=code.slice(0,cut)+tail;
+ const argv=['/usr/bin/timeout','8',...originalArgv];
+ phase='actual-decoder-synthetic-utf8-'+index;
+ const actual=await b.evaluate(b.context,`JSON.stringify(await new Promise(resolve=>{const p=window.cockpit.spawn(${JSON.stringify(argv)},{superuser:'require',err:'message'});p.input(${JSON.stringify(invocation.input)});p.then(output=>{try{resolve(JSON.parse(output))}catch{resolve(null)}},error=>resolve({problem:error?.problem||null,exit_status:error?.exit_status??null}));}))`);
+ const expected={candidate_bytes:Buffer.byteLength(documents.candidate),candidate_sha256:createHash('sha256').update(documents.candidate).digest('hex'),installed_bytes:Buffer.byteLength(documents.installed),installed_sha256:createHash('sha256').update(documents.installed).digest('hex')};
+ if(JSON.stringify(actual)!==JSON.stringify(expected))throw Error('synthetic-exact-byte-mismatch');
+ const connected=await b.evaluate(b.context,`JSON.stringify(await new Promise(resolve=>window.cockpit.spawn(['/usr/bin/printf','bridge-still-connected'],{superuser:'require',err:'message'}).then(output=>resolve(output==='bridge-still-connected'),()=>resolve(false))))`);
+ if(connected!==true)throw Error('bridge-not-connected');
+ const observation={index,passed:true,...actual,wire_bytes:Buffer.byteLength(invocation.input),wire_nul_count:0,bridge_still_connected:true,product_decoder_prefix_sha256:createHash('sha256').update(code.slice(0,cut)).digest('hex')};observations.push(observation);
+ console.log(JSON.stringify({fixture_id:identity.fixture_id,phase,...observation}));
+ }
+ console.log(JSON.stringify({fixture_id:identity.fixture_id,state:'passed',observations,diagnostic_api_requests:0,diagnostic_filesystem_writes:0,locally_repaired_source_only:true,deployed_browser_unchanged:true,configuration_actions:0,candidate_replayed:false,job_resubmitted:false}));
+}catch(error){console.log(JSON.stringify({fixture_id:identity.fixture_id,phase,code:error.code||'probe-failed',diagnostic_api_requests:0,diagnostic_filesystem_writes:0}));process.exitCode=1}finally{password='';await b.close()}

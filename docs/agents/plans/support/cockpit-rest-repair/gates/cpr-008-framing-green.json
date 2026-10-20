@@ -1,0 +1,58 @@
+{
+  "fixture_id": "cpr008-9e6c9b6666ad43f09a886dae844866c2",
+  "state": "passed",
+  "observations": [
+    {
+      "index": 0,
+      "passed": true,
+      "candidate_bytes": 16,
+      "candidate_sha256": "745edb263e754d59fc331db75a371e9308aac44fb5c3e2f41d09ec5eb8451d2e",
+      "installed_bytes": 23,
+      "installed_sha256": "9f7cd90bac98b57f6fa1ec055072d142fad25e657cead41b0a717eefb379e45e",
+      "wire_bytes": 58,
+      "wire_nul_count": 0,
+      "bridge_still_connected": true,
+      "product_decoder_prefix_sha256": "4e155e19633187bac07bbde1a3f05e4d0148919c196f7f1313e10f7ab4b545c4"
+    },
+    {
+      "index": 1,
+      "passed": true,
+      "candidate_bytes": 24,
+      "candidate_sha256": "2d504f104918288d38ee678e01115bf9761f331bfb560c1279b90f6a43aeed2b",
+      "installed_bytes": 0,
+      "installed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wire_bytes": 34,
+      "wire_nul_count": 0,
+      "bridge_still_connected": true,
+      "product_decoder_prefix_sha256": "4e155e19633187bac07bbde1a3f05e4d0148919c196f7f1313e10f7ab4b545c4"
+    },
+    {
+      "index": 2,
+      "passed": true,
+      "candidate_bytes": 1666,
+      "candidate_sha256": "fda9da150a9fe47a48f0c1fd46c44b92be832eb28be3e3cae26c8c36ff4807eb",
+      "installed_bytes": 9,
+      "installed_sha256": "3063e514d42315725d8e22abad06bb364ad327eac2833f683c6c5a5162c24257",
+      "wire_bytes": 2238,
+      "wire_nul_count": 0,
+      "bridge_still_connected": true,
+      "product_decoder_prefix_sha256": "4e155e19633187bac07bbde1a3f05e4d0148919c196f7f1313e10f7ab4b545c4"
+    }
+  ],
+  "diagnostic_api_requests": 0,
+  "diagnostic_filesystem_writes": 0,
+  "locally_repaired_source_only": true,
+  "deployed_browser_unchanged": true,
+  "configuration_actions": 0,
+  "candidate_replayed": false,
+  "job_resubmitted": false,
+  "schema_version": 1,
+  "command": "rtk node /tmp/hfcache-cpr008-framing-green-probe.mjs > /tmp/hfcache-cpr008-framing-green-probe.json",
+  "source_sha256": "caa0b819d2d8aa6b3d7d3ea687fe41982dd68a741af35a15c9cda638a92d343d",
+  "guard_source_sha256": "fe70e6f69a0476411f3a79e74fe40209c348a1d0f38409b879f5c78a108780e1",
+  "node_version": "24.18.1",
+  "firefox_version": "140.13.0esr",
+  "guest_cockpit_version": "368",
+  "scope": "Actual repaired guard decoder prefix cut before its first filesystem check, followed only by fixed digest output. Three synthetic candidate/base pairs; UTF8 and trailing LF exact. No full guard/configuration/application action. Local repaired source, old immutable deployed application unchanged.",
+  "application_background_reads_excluded_from_diagnostic_counts": true
+}

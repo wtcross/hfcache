@@ -177,6 +177,30 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   durable/API/MCP authority or production/guest/NAS action. V54/current clean
   artifact and original installed cause remain unproven. Continue scoped CPR-008.
 
+- [x] CPR-008 Prove layered boundaries and repair actual runtime defects (2026-10-20,
+  this commit — [task](plans/tasks/cpr-008-cross-boundary-regressions.md)). Installed
+  wheel/private authenticated UDS10/10 matches all90Python source modules;
+  compatibility300/300, guarded shell/filesystem/FD68/68 and109mounted pass.
+  Actual masked timers lack MainPID; inspector now requests strict per-unit facts.
+  Native ASCII/NUL controls reproduce real privileged text-bridge disconnect;
+  canonical bounded ASCII frames decode exact UTF-8 before filesystem effects.
+  Actual enforcing PID1 stdout-file denial after installation is repaired with an
+  anonymous pipe and bounded local collector, preserving separate original exits
+  and withholding output on collection/postcheck failure. ADR138/139 and older
+  ADR88/92/122/134/135, affected CPs/INV006 and human contracts agree; no new
+  dependency or durable/API/MCP authority. Fifth independent isolated guest passes
+  all12 native PAM/rootless/secret/profile/config-install-confirm/interruption/
+  read-only reconciliation checks; original candidate-write/bridge/terminated
+  survives, Validate staysdisabled, no replay/install/cleanup after uncertainty.
+  Third-guest authenticated original-after-disconnect lookup/wait independently
+  preserves exact original result. Final strict gate5299Python/52deselected in
+  772.44s, three profiles, actual frontend lint/style/types/570unit0skip/109mounted/
+  build. [Accepted evidence](plans/support/cockpit-rest-repair/gates/cpr-008-pipe.txt).
+  Earlier failed snapshots, all five guests/locks/masks/credentials and unknown
+  thirdcandidate/unconfirmed fourthinstallation remain preserved; no production,
+  NAS, registry, push/merge/tag. Original installed symptom remains unproven.
+  Continue only CPR-009 release/parity/extended+explicitmake/operator handoff.
+
 ## Tags and discovery (2026-10-19)
 
 - [x] CAT-001 Activate the feature plan and establish technical contracts
@@ -2701,6 +2725,27 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     locks, credentials, receipts, unknown operations and NAS/workload holds remain.
     No production or guest change occurred here; item25 retains the original
     installed-symptom uncertainty. No unrelated historical backlog is activated.
+
+29. **Source/disposable acceptance and retained fixture uncertainty (CPR-008,
+    2026-10-20):** source and actual installed-wheel/private-UDS plus native
+    disposable acceptance pass; required final release/parity/extended gates remain
+    CPR-009. Actual timer facts, NUL text transport and enforcing confirmation
+    stdout routing have source fixes and fail-before/pass-after evidence. This
+    proves no production artifact parity or original installed symptom. Five
+    isolated local guests remain held/read-only with their original identities.
+    Preserve thirdguest original key65bcfd39-478b-4418-9180-45bb2a196f82,
+    operation457a424efb7be3cd24c1d6b12f6e9825 and exact durable terminal result;
+    its unknown candidate attempt and fourthguest unconfirmed installation remain
+    separately unresolved. Fifthguest confirmed installation precedes a separate
+    interrupted write; captured cause/draft/profile and original root/domainlocks
+    remain. Do not clear storage, discard files, reinstall, roll back, drain,
+    power off or remove evidence automatically in response to uncertainty.
+    [Runtime008](plans/support/cockpit-rest-repair/runtime-008.md) and prior runtime
+    records pin all fixture ownership and safe later explicit teardown prerequisites.
+    Production installation/NAS/guards/credentials remain untouched. A later
+    authorized rollout needs a fresh clean artifact/version and exact browser,
+    source, launcher/profile/index/image/running-payload verification; existing
+    package0.2.1 alone is not parity. Retain all previous production holds.
 
 ## Operator decisions needed
 
@@ -5455,6 +5500,26 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      from selected release and authenticated API facts; no version/health/selected
      binding proves writability or a running payload. No transport/capability/
      credential/runtime dependency or deployment authority is added.
+
+138. **Keep guarded configuration stdin safe for the real text bridge**
+     (2026-10-20, CPR-008). [Decision 138](../adr/decision-138.md) records
+     independent native privileged/unprivileged NUL-triggered disconnects and
+     selects bounded canonical two-line ASCII base64 framing. Decode exact
+     complete UTF-8 before filesystem/lock effects; retain all original byte,
+     path, privilege, backup and uncertainty guards. Binary output conversion
+     would broaden the repair unnecessarily. No runtime dependency or replay
+     authority is added. Source and fresh disposable acceptance
+     pass; original installed cause is unproven.
+
+139. **Keep PID1 confirmation output on a pipe** (2026-10-20, CPR-008).
+     [Decision139](../adr/decision-139.md) records the actual enforcing
+     init_t→etc_t stdout denial after an exact disposable installation. A bounded
+     local privileged collector owns the spool; independent immediate pipeline
+     statuses withhold all output on collection failure and preserve original
+     launcher statuses otherwise. Original root lock, exact postchecks, backup,
+     fixed API-only launcher and SELinux remain. No relabel/policy/dependency/
+     replay/rollback or cleanup authority is added. Source/fresh runtime acceptance
+     passes; preserve the fourth guest's unconfirmed installation.
 
 ## Documentation and script alignment
 

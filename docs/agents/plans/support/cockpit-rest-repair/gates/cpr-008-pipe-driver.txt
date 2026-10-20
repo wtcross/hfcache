@@ -1,0 +1,32 @@
+CPR-008 fifth-fixture manual-driver source validation, 2026-10-20.
+No runtime action or browser invocation was executed by this source package.
+
+Driver: cockpit/test/runtime-browser.mjs
+SHA256: 659be14f87144d6c36b11271298c243d73272d73e583d1033f9a2d97482cc0e2
+
+Explicit mode fresh-pipe-candidate-only selects ONLY:
+.local-fixtures/cpr-runtime/cpr008-pipe
+https://127.0.0.1:19058
+cpr-pipe.local
+fixture ID cpr008-pipe- plus exactly 32 lowercase hexadecimal digits.
+Historical fourth fresh-candidate-only mappings remain unchanged.
+The existing eleven-field initial proof, fresh nonce and exclusive sent markers,
+no-old-handle/no-job branch, install/confirmation/interrupt/inspection protocol
+and profile preservation are shared unchanged. Legacy continuation flags and
+old manifest/password paths are refused by the fresh-mode preflight.
+
+Observed source checks:
+rtk pnpm --dir cockpit exec eslint --fix test/runtime-browser.mjs
+Result exit 0, no warnings/errors.
+rtk pnpm --dir cockpit exec tsc --noEmit
+Result exit 0.
+rtk node --test cockpit/test/runtime-bidi.test.ts
+Result exit 0,4 passed / 0 failed / 0 skipped, 6307.706819 ms.
+rtk node --check cockpit/test/runtime-browser.mjs
+Result exit 0.
+rtk git diff --check
+Result exit 0.
+
+This is driver/static evidence only. The existing fourth unconfirmed installation,
+backup, original locks, markers and profile remain untouched; no candidate replay,
+installation, cleanup, rollback, guard/SELinux change or job follows this check.

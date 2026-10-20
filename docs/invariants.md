@@ -692,11 +692,18 @@ payload parity. No server capability or execution authority is added.
   bytes before/after API validation under the root config flock, including tags
   excluded from policy identity. A retained root config flock and exact candidate/base
   bytes guard the pipeline; incompatible/unknown authority blocks plugin install.
+  Guarded stdin uses two bounded canonical ASCII base64 lines on the Cockpit
+  text channel. Decode and validate exact UTF-8 documents before filesystem/lock
+  effects; malformed frames never create a lock or comparison artifact
+  ([decision 138](adr/decision-138.md)).
   Preserve original failed Envelopes and stage causes. Capture draft/base before
   transmission in application memory; uncertain write/install blocks another
   write/install/discard. Read-only inspection creates no files and requires the
   original lock; explicit matching revalidation skips writes. Uncertain install
   needs exact installed/backup proof, explicit confirmation and acknowledgement;
+  confirmation gives PID1 a pipe and uses a bounded local collector, withholding
+  all output on collection/postcheck failure and preserving original launcher
+  status ([decision 139](adr/decision-139.md));
   remount/reload cannot silently reset it. Preview, install, confirmation and
   acknowledgement require the captured authority and administrative session to
   remain current. Retain the predecessor and `0640 root:hfcache` ownership/mode.
@@ -705,6 +712,9 @@ payload parity. No server capability or execution authority is added.
 - **`CP-13`, `CP-14`** — Never weaken host hardening. The plugin ships static
   files; Node tooling is build-time only, adds no Python runtime dependency,
   and generated bundles/node_modules are never committed.
+  Frontend-required gates refuse unavailable sources/tools; a skipped frontend
+  stage never supplies plugin acceptance. Executed browser and real disposable
+  Cockpit/PAM evidence remain separate test layers.
 
 Contract: [Cockpit rules and pipelines](cockpit.md#1-rules).
 Enforcement: [CLI/unit API](../cockpit/src/api/hfcache.ts),

@@ -1,0 +1,127 @@
+CPR-008 installed-wheel/private-socket and compatibility evidence
+2026-10-20; source reviewed baseline 41d818e13c1f4860a286f24ba91bd0f384b09172.
+
+Scope and boundary:
+  New tests/installed_cli.py and tests/unit/test_cli_installed_socket.py implement
+  the actual installed-wheel layer. The module is explicitly build-marked per
+  test conventions and was explicitly executed; default deselection is not claimed
+  as installed coverage. This layer changes no hfcache package source or durable
+  format. A later helper-only runtime conformance repair is recorded separately
+  in cpr-008-timer-facts.txt; it does not change these installed package bytes.
+  Initial fixture construction assumed more than 100 package modules; actual
+  inspection showed 90. Replaced that arbitrary assertion with exact equality of
+  every source module path and every packaged Python path, plus byte equality of
+  source, wheel and installed module. This was a harness correction, not a product
+  regression and is not presented as behavioral RED evidence.
+
+  The fixture builds a current wheel with uv build --offline --wheel, exports
+  locked base dependencies with --locked --offline --no-dev --no-emit-project,
+  creates an owned temporary venv with uv venv --offline, installs the locked
+  closure with uv pip sync --offline, and installs the wheel with --offline
+  --no-deps. It proves the console script's exact installed interpreter/import
+  entry, resolves the imported package inside that environment, and checks every
+  packaged Python byte against source and wheel. All invocations run outside the
+  checkout, with deliberately hostile source PYTHONPATH ignored by Python -I,
+  executing the actual installed console script through runpy.run_path.
+
+  A child audit hook refuses the fixture archive, repository src, /srv/hfcache,
+  /etc/hfcache and non-fixture socket connections. This establishes fixture-path
+  isolation for these executions; it is not an OS sandbox against arbitrary path
+  aliases or hostile native code. The real API/uvicorn listener uses a private
+  temporary Unix socket, synthetic distinct credentials, the existing deterministic
+  synthetic Hub backend and a synthetic verifier. No production credentials,
+  production path, Hub HTTP, registry, host unit, NAS or live archive is used.
+  Temporary archive creation uses existing application's fixture initialization,
+  never an installed/live archive. This is not Cockpit/PAM/systemd/rootless proof.
+
+Observed installed module commands/results:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -m build tests/unit/test_cli_installed_socket.py -x -q
+  Exit 0; initial nine cases passed in 22.37s.
+
+  rtk proxy uv run --locked --extra server --extra mcp pytest -m build tests/unit/test_cli_installed_socket.py -q
+  Exit 0; ten cases passed in 25.86s after adding mismatching authority pin and
+  stronger candidate/tag/read failure vectors.
+
+  rtk proxy uv run --locked --extra server --extra mcp pytest -m build tests/unit/test_cli_installed_socket.py -k conditional -q
+  Exit 0; one passed, nine deselected in 7.87s. Original candidate key deliberately
+  starts '-' and is transmitted as --idempotency-key=KEY; lookup preserves it
+  after the literal '--' delimiter.
+
+  rtk proxy uv run --locked --extra server --extra mcp pytest -m build tests/unit/test_cli_installed_socket.py -q
+  Final exit 0; ten passed, no skipped cases, 31.80s, after explicit receipt and
+  lookup identity assertions. Full output: cpr-008-installed-wheel-green.txt.
+
+  Covered real installed executions:
+  - Exact Unicode/escaped/trailing-newline candidate bytes appear in the actual
+    POST body; valid and failed validation retain the server's exact Envelope.
+    Tag-only changes preserve the technical fingerprint; raw candidate errors
+    do not echo rejected TOML. No sizing job exists after validation alone.
+  - A candidate smaller than 1 MiB expands beyond the 1 MiB JSON request bound:
+    actual server 413/HFAPI006 and request correlation survive unchanged. Empty,
+    invalid UTF-8 and larger-than-1-MiB files fail before any HTTP request.
+  - Wrong credential HFAPI001, unsafe credential-source HFAPI003, reader capability
+    refusal HFAPI018 and mismatching original authority pin HFAPI017 retain their
+    actual classification, create no operation, and issue no POST. No key/receipt
+    is invented for synchronous validation or preflight refusal.
+  - Explicit conditional sizing uses one original leading-option key, one actual
+    POST, one receipt and its exact terminal result. The response receipt's UUID,
+    fingerprint and operation ID are checked. Authenticated lookup and wait use
+    the original pin/handles and issue no second POST. Receipt/result JSON bytes
+    are unchanged after observation, and contain neither raw candidate nor key.
+  - Full sync and full verify each produce one genuine durable failed operation
+    (30 and 40) from deterministic synthetic backends. Exact terminal Envelopes,
+    independent domain run IDs, original receipt/key, failed wait exit and one
+    submission are preserved through authenticated lookup/wait.
+  - Reader run inventory follows two explicit bounded pages and cursor without
+    POST; detail preserves the original report and historical fingerprint while
+    metadata identifies the current policy. Missing HFARG004 and corrupt HFVER007
+    retain actual request correlation, failed exit and no success metadata line.
+
+Final physical artifact evidence (from owned venv identity.json):
+  wheel SHA256:
+    578fd699e5873ffdada5d1af4b3eddfe00772667ee1616badea31e0a1518392d
+  Ordered Python module name/NUL/content/NUL SHA256, source=wheel=installed:
+    dc3b90cf2037ddce3f9079f6d4e337b3279a4042cf81cbdc52a394e6b75f2679
+  Matched Python modules: 90; exact module-path set equality verified.
+  Installed console script SHA256 (includes this temporary venv's shebang):
+    50f86328134f587f706aa6d0b36b80d4ea349cb03bea12cca6416b5e30c3a07c
+  Exported locked base requirements file SHA256 (includes export command header):
+    78da4cff45ee2e5e8002b4534d397644e877cb6ec10c8864b0ee5d2617880571
+  Actual Python 3.14.6; uv 0.11.32 x86_64-unknown-linux-gnu.
+  API framework FastAPI 0.143.3; uvicorn 0.54.0; HTTPX 0.28.1; HTTPCore 1.0.9.
+  Both isolated_entrypoint and cwd_outside_checkout were true.
+
+V58 existing compatibility suites (actual commands/results):
+  rtk proxy uv run --locked --extra server --extra mcp pytest tests/unit/test_models.py tests/unit/test_operations.py tests/unit/test_api_candidates.py tests/unit/test_api_candidates_adversarial.py tests/unit/test_tags.py tests/unit/test_catalog_lifecycle.py -q
+  Exit 0; 300 passed in 19.53s, no skips. Includes every durable format golden's
+  byte-stable serialization/round-trip, receipt/result immutability and startup
+  no-replay, canonical candidate and original body identity, tag-only curation
+  versus policy identity, exact conflicting candidate keys, and catalog/publication
+  compatibility. No schema or publication contract changed in this package.
+
+  rtk proxy node --test test/candidate-guard.test.ts
+  cwd cockpit; exit 0; 63 passed, zero failed/skipped, duration 8976.390015ms.
+  Runs the actual guarded shell against owned temporary paths and fixture owner/
+  group, checking exact Unicode/newlines/tags, write/install/confirm, predecessor
+  backup, original flock inode/serialization, unsafe/changed file preservation,
+  lost-ack read-only inspection and original authority pin. Its systemd-run boundary
+  is a controlled stub, so this is real filesystem/helper proof rather than PAM,
+  actual root:hfcache ownership, SELinux, installed manager or NAS acceptance.
+
+  rtk git diff 41d818e -- src/hfcache tests/fixtures/schemas tests/fixtures/tags.json
+  Exit 0; no differences. Product code and durable/tag fixture bytes unchanged.
+
+Final scoped/static checks:
+  rtk proxy uv run --locked --extra server --extra mcp ruff format --check tests/installed_cli.py tests/unit/test_cli_installed_socket.py
+  Exit 0; two files already formatted.
+  rtk proxy uv run --locked --extra server --extra mcp ruff check tests/installed_cli.py tests/unit/test_cli_installed_socket.py
+  Exit 0; all checks passed.
+  rtk proxy uv run --locked --extra server --extra mcp pyrefly check
+  Exit 0; zero errors (11 existing suppressions, 63 existing warnings not shown).
+  rtk git diff --check
+  Exit 0.
+
+Source/disposable boundaries remain distinct. Mounted React, real privilege bridge,
+real rootless and original installed symptom evidence belong to their respective
+recorded acceptance layers. These ten installed CLI cases and V58 compatibility
+checks do not clear those runtime/operator blockers or authorize deployment.

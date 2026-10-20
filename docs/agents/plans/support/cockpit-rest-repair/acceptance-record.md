@@ -4,7 +4,10 @@
 unpassed until their actual evidence is recorded. Source investigation is not
 installed or disposable runtime acceptance.
 
-## Source and environment identity
+## Activation baseline identity
+
+This table preserves the activation/early-fixture evidence; it is not the current
+corrected artifact identity. Current package and third-guest facts follow it.
 
 | Item | Actual evidence |
 | --- | --- |
@@ -18,11 +21,50 @@ installed or disposable runtime acceptance.
 | Fixture location and no-live-archive proof | Repository-only Node fixture uses injected process/ports and synthetic strings; no host/archive commands |
 | Original reported failure stage/problem | Unverified |
 
+## Committed baseline and retained third-fixture identity
+
+| Item | Actual evidence |
+| --- | --- |
+| Repository | Branch `fix/cockpit-rest-api-alignment`, committed packages through `41d818e13c1f4860a286f24ba91bd0f384b09172`, current CPR-008 working changes; no fabricated clean final-source identity |
+| Application/CLI wheel | Python package bytes unchanged from41d; wheel SHA256 `578fd699e5873ffdada5d1af4b3eddfe00772667ee1616badea31e0a1518392d`, all90module paths/bytes equal source/wheel/installed; [installed evidence](gates/cpr-008-cli.txt) |
+| Third guest and physical release | `cpr008-9e6c9b6666ad43f09a886dae844866c2`, source41d plus only reviewed helper patch, dirty=true; selected0.2.1 index SHA256 `a647abe437092b738175aad12b3f0650f1ce794d18667564657d232ad2790717`; [exact isolated provenance](runtime-006.md) |
+| Host helper/patch/closure | Helper SHA256 `3e0a00ed1082c5be4bcc38572d083b0abc16b0a0e37d43be81bddbf925fe560b`; patch SHA256 `de72e26c1c0fc86ef33fad385af9bdab9c4a1e85d827e1c8000b3a793468ba3d`; canonical source files map SHA256 `28ebe8f7bc9da8edc13abbdddfa504906ee4f5ebc9ef6595f478f2c7d70476b7` |
+| Runtime application image | `sha256:a6dac03ffceb85636e0884876ba796ba81ef2559caa7ec897293444cbda0ee7b`; unchanged exact app/dependency closure; third guest only |
+| Served production browser | Decompressed JS SHA256 `da4a031bad73ed3ba1394096783c1b9c7ce14b6bedd915d2b9c390c6746e8b80`; embedded source41d/dirtytrue/public-input SHA256 `f08227a330ffd2a4df0d1f1d05ca143bf7497dd103bf69cb59553026cbead648` |
+| Current runtime profile | Original guest guard held, guest-only fresh NFS4.2 read-only, SELinux Enforcing, control/configuration permitted; archive/Hub/schedule/observer denied. Actual launcher/authenticated UDS reads pass. Native PAM login and genuine privilege authentication pass; complete operation/interruption acceptance remains V54 pending |
+| Separate execution layers | Pure/actual mounted React with controlled ports; actual installed wheel/private authenticated UDS; actual isolated KVM/Cockpit/systemd/rootless with no host shares, default/NAS route or production credential. Layer claims are qualified individually; production original symptom remains unverified |
+
+## Accepted current disposable artifact (fifth fixture)
+
+| Item | Actual accepted evidence |
+| --- | --- |
+| Repository | CPR-008 this commit on fix/cockpit-rest-api-alignment; prior committed41d818e and truthful dirty source snapshot, never a clean release claim |
+| Guest / isolation | cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4; QEMU1773207/start396308915/UID1000, local0700fixture, restricted network/no default/DNS/NAS/host shares; [runtime008](runtime-008.md) |
+| Selected artifact | Base41d818e plus exact product patch88458c1987140890a8f5cf40303516f89b0846f0eb4e3083394c52219dd6f66f; selected0.2.1 indexef85e569767863271f86d00bf7a355e64bcec5a5f9ed2af6a66a19574daf872a |
+| Browser | Served/gate JS490e60045d3542e890d9c8ee3b809b8122d7ce7213f9f415774416988ca7903e, gzip2c15678047140e19f94f7dde41c9c4dd9f667b85c6f16ae299f3f740bb04929e; embedded parent41d/dirtytrue/input96fa3c7f220fddd342b9405df4d7532299289b2207a1376b5283e4f33ff7eaf7 |
+| Physical source | Guard82e4d9cbd6d9de60c4495a2bfda5dadbd483be3f20f2d9f96b0e1bfe0b15fc78; helper3e0a00ed1082c5be4bcc38572d083b0abc16b0a0e37d43be81bddbf925fe560b; protected17file map28ebe8f7bc9da8edc13abbdddfa504906ee4f5ebc9ef6595f478f2c7d70476b7 |
+| App / API | Unchanged exact Python/wheel578fd699…8392d and appimagea6dac03f…ee7b; APIinstance d92522e0dcf244e88ff642dc22f90fe9; reader/class/profile/endpoint metadata and secret confinement remain separately checked |
+| Archive / guards | New guest-only UUID0891c8e0-0214-4246-9b7f-8b90c1ed4340; NFSro/originaldomain27:1969/guard6142/masks8/Enforcing preserved. Original rootconfiglock64515:75518786 retained |
+| Native result |12/12 checks pass, exact confirmed434-byte installation/predecessor then separate interruptedwrite: candidate-write/bridge/terminated remains, explicit inspection matchesinstalledbase, candidateabsent and Validatedisabled. Zerojobs/no replay/install/cleanup afteruncertainty; [native](gates/cpr-008-pipe-browser.json), [physical/audit](gates/cpr-008-pipe-physical.json) |
+| History / limits | All earlier guests/receipts/rootlocks/unknownthirdcandidate/unconfirmedfourthinstall preserved. Original job lookup/wait after disconnect is distinct thirdguest evidence; native running sizing/fullsync/fullverify is not inferred from fifth. Original installed symptom and clean production parity remain unproven |
+
 ## Work packages
 
 Each task owns its status/evidence; link it here without duplicating mutable status.
 For each completed package record its real commit and test/gate artifact reference.
 An uncommitted result says `<CPR-ID>, this commit`, never a made-up hash.
+
+| Package | Actual commit / evidence |
+| --- | --- |
+| CPR-001 | b40b443; [gate](gates/cpr-001.txt) |
+| CPR-002 | 92f19b5; [gate](gates/cpr-002.txt) |
+| CPR-003 | 65b12d9; [task](../../tasks/cpr-003-candidate-validation-pipeline.md) |
+| CPR-004 | ca034e3; [registry](gates/cpr-004-registry.txt) |
+| CPR-005 | 896003d; [boundaries](gates/cpr-005-boundaries.txt) |
+| CPR-006 | f0a35c2; [gate](gates/cpr-006.txt) |
+| CPR-007 | 41d818e; [gate](gates/cpr-007.txt) |
+| CPR-008 | this commit; [accepted gate/native layers](gates/cpr-008-pipe.txt) |
+| CPR-009 | pending; final release/parity/extended+explicitmake/handoff |
 
 ## Validation evidence
 
@@ -63,7 +105,7 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V25 | Source pass: actual same-origin iframe location.reload restores handles into a fresh module registry without replay. Corrupt/oversized/unknown-field records fail closed; external storage changes are preserved. A well-shaped stored terminal summary is unverified until authenticated original observation confirms it; forged/mismatched summaries cannot silently unlock a submission, and missing history remains unresolved. Pure behavioral regressions observed red then green; mounted final evidence below. |
 | V26 | Source pass: pure host/profile/endpoint/class/archive/unknown UUID drift refuses saved recovery; restart alone can retain matching authority. Mounted changed authority disables stale Apply and installed acknowledgement. Real CLI same-process scope mismatch refuses before POST or handle GET. |
 | V27 | Source pass: actual dry-run → Apply confirmation/double-click → process failure with applied=null leaves Apply disabled, across tab remount; original lookup/wait only. Apply consumes preview before asynchronous work and freshly compares the original scope. |
-| V28 | Source pass: mounted call-site matrix covers all existing keyed page submissions and strict fixed argv/key identity; synchronous validation, estimate and reads create no registry records. Full manual service paths remain the explicit CP-04 exception until CPR-005. |
+| V28 | Source pass: mounted call-site matrix covers all keyed page submissions and strict fixed argv/key identity; synchronous validation, estimate and reads create no registry records. CPR-005 replaces the earlier full-manual service exception with keyed REST jobs; four additional CPR-008 mounted lifecycle cases preserve both original full-job identities through tabs and reload. |
 | V29 | Source pass: authentic HFAPI013/015/018/019/020 preserve original handles and nonterminal state in registry/runner tests; no new key, cancellation or recovery. Missing terminal identities refuse apparent success. |
 | V30 | Source pass: pure missing/unavailable lookup retains handles; actual separate CLI process over private UDS preserves HFAPI013 and performs zero POSTs. UI explicitly states missing history does not prove nonexecution. |
 | V31 | Source pass: registry/runner cases retain exact terminal exit 0/10/20/30/40/50, partial/busy classifications and safe summaries; 202/missing receipt identity never grants success. Actual result bodies remain only in application memory, never restored Apply readiness. |
@@ -87,13 +129,13 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V49 | Source pass: fresh host/session ownership before reads, old callback rejection, failed-refresh clearing, queued-action and opening-modal origins, and actual Configuration remount preserving a newer explicit inspection while clearing stale generations. Both current-store authority invalidation directions have4exact-effect regressions. Exact component baseline26semantic failures; final104mounted pass. [Owner](gates/cpr-007-owner.txt), [components](gates/cpr-007-components.txt). |
 | V50 | Source pass: strict four-field advisory build provenance and mounted diagnostics separate browser source/dirty/input digest, protected selected source/index/image, and fresh authenticated endpoint/profile/class/archive/instance. Missing/malformed/mismatched/stale facts remain explicit, with no native fallback or writability claim. Build14tests, FIFO/ancestor RED/GREEN and independent100safe refusals/0private opens/0FDleak. [Evidence](gates/cpr-007-build-info.txt). |
 | V51 | Source pass: earlier bounded failures/registry/profile/report/journal secret defenses retained. CLI human read/Doctor presentation applies existing registered-credential redaction; JSON terminals preserve safe original Envelopes before success-only formatting. Closed read schemas withhold unknown/nested fields and malformed diagnostic values. Build hashing never reads environment/private inputs or follows a symlinked ancestor. [CLI](gates/cpr-007-cli.txt), [components](gates/cpr-007-components.txt), [build](gates/cpr-007-build-info.txt). Real secret delivery remains V54. |
-| V52 | Partial: actual CLI process over temporary authenticated UDS covers client metadata, writer/reader/wrong credentials, original lookup, exact failed Envelopes and scope mismatch with zero POSTs; CPR-005 adds real full-sync/private-verifier boundaries and CPR-006 adds actual report pages/detail/refusals with client archive/config denied. Candidate/build-wheel completeness audit remains CPR-008; no mock is substituted for missing cases. |
-| V53 | Source/component portion passes104actual mounted React/adapter/hook/runner cases with controlled external Cockpit boundaries, including uncertain Apply/tab/reload, candidate stages, reports and current-read readiness. [Final package gate](gates/cpr-007-gate-mounted.json), [baseline/current attribution](gates/cpr-007-components.txt). These are explicitly not real PAM; final completeness review remains CPR-008 and physical chain V54. |
-| V54 | UNPASSED: isolated guest now passes real systemd/rootless fixed-client authenticated UDS and guarded candidate validation after the exact empty-placeholder prerequisite correction. Failed starts remain evidence. [Current handoff](runtime-004.md) pins the older source/image and unchanged guard/NFS-ro/masks. Current-source immutable artifact plus real Cockpit/PAM reconnect acceptance remain required; original installed symptom is unproven. |
+| V52 | Installed-wheel layer passes10actual CLI/private authenticated UDS cases: all90Python module paths/bytes equal source/wheel/installed, isolated installed console outside checkout, candidate validation/exact escaped413/auth/pin refusals, original keyed sizing and no-second-POST lookup/wait, full-job failed terminals, report pages/detail/corruption/request identity. Earlier source-only socket evidence retained. Wheel SHA256578fd699e5873ffdada5d1af4b3eddfe00772667ee1616badea31e0a1518392d. [Actual commands and artifact identities](gates/cpr-008-cli.txt). Not PAM proof. |
+| V53 | Source/component completeness passes109actual mounted React/adapter/hook/runner cases; four added manual Sync/Verify cases cover genuine Application tab unmount and fresh-module reload, preserving one original keyed process with no replacement. Prior uncertain Apply, candidate stages, report and host/session freshness coverage retained. [Review/commands](gates/cpr-008-component-review.txt), [bounded component result](gates/cpr-008-mounted.json). New exact41d framing regression fails before and passes after the repair; all guarded adapter wires preserve Unicode/trailing newlines using canonical NUL-free text. [Framing components](gates/cpr-008-framing-components.txt). Controlled external Cockpit ports are explicitly not real PAM; physical chain remains V54. |
+| V54 | PASS scoped native layers: actual timer/MainPID, NUL-text disconnect and enforcing PID1 stdout-file denial reproduced and narrowly repaired. Native final receiver3/3 and original authenticated lookup/wait after disconnect pass on retained thirdfixture without replacement. Independent fifthfixture12/12 proves native PAM/admin/fixed-rootless/auth/profile/secret isolation, exact candidate434bytes/install/confirmation/backup/rootlock and separate real bridge interruption/reauth/read-onlyinspection preserving candidate-write/bridge/terminated and Validate-disabled. Exact final domain/rootlocks/masks/NFSro/Enforcing/0jobs and zeroAVCs; no replay/install/cleanup afteruncertainty. [Native](gates/cpr-008-pipe-browser.json), [physical](gates/cpr-008-pipe-physical.json), [identities/procedure](runtime-008.md), [accepted gate](gates/cpr-008-pipe.txt). Earlier unknownthirdcandidate/unconfirmedfourthinstallation preserved. No native running sizing/fullsync/fullverify bridge claim or original installed-cause claim; separate mounted/installed-UDS coverage is explicit. |
 | V55 | Not executed; owning repair and regression pending. |
-| V56 | Not executed; owning repair and regression pending. |
+| V56 | Source gate wiring passes10isolated control tests, including removal immediately after final successful tool discovery: --require-cockpit refuses absent sources/pnpm/make, composes with --with-build and invokes the required frontend directly rather than accepting a skip. Default backend-only loud skip remains explicitly unaccepted. With safe help tests53passed. These controlled tool fixtures are not frontend acceptance; final strict full gate exits0 with actual570unit/109mounted and three wheel profiles. [Accepted gate](gates/cpr-008-pipe.txt). [RED/GREEN evidence](gates/cpr-008-gate-wiring.txt). |
 | V57 | Not executed; owning repair and regression pending. |
-| V58 | Not executed; owning repair and regression pending. |
+| V58 | Compatibility source/owned-fixture pass:300existing model/golden/operation/candidate/tag/catalog cases and63earlier actual guarded temporary-filesystem cases. Framing and confirmation repair expands this to68real shell/filesystem/FD/status cases, including full2796210-byte wire and complete-output-then-codec-failure refusal; [actual commands/results](gates/cpr-008-framing-host.txt). Exact module bytes in installed wheel match source; hfcache Python package/durable/tag fixtures unchanged from41d818e. The separately pinned host helper has the recorded timer-facts repair. Real filesystem tests use fixture ownership and a controlled manager boundary, separate from real root:hfcache/SELinux V54. [Evidence](gates/cpr-008-cli.txt). |
 | V59 | Not executed; owning repair and regression pending. |
 | V60 | Not executed; owning repair and regression pending. |
 
@@ -101,21 +143,21 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 
 | Gate | Command / result / evidence |
 | --- | --- |
-| Package repository gate | CPR-007 final `rtk proxy scripts/check.sh` exit0:5276passed/42deselected, three wheel profiles, actual frontend lint/style/types/561unit/104mounted/build. Earlier failed/transitional and accepted gates remain. [Evidence](gates/cpr-007.txt) |
-| Explicit frontend gate | CPR-006 `rtk proxy make -C cockpit check` exit0:495unit/70mounted/lint/style/types/build before the detail latch; final full gate executes the same check and passes495unit/71mounted including that repair. Final-plan explicit gate remains required. [Evidence](gates/cpr-006.txt) |
+| Package repository gate | CPR-008 final `rtk proxy scripts/check.sh --require-cockpit` exit0:5299passed/52deselected in772.44s, three wheel profiles, actual frontend lint/style/types/570unit/109mounted/build. [Accepted evidence](gates/cpr-008-pipe.txt). Prior CPR-007 final `rtk proxy scripts/check.sh` exit0:5276passed/42deselected, three wheel profiles, actual frontend lint/style/types/561unit/104mounted/build. Earlier failed/transitional and accepted gates remain. [Evidence](gates/cpr-007.txt) |
+| Explicit frontend gate | CPR-008 `rtk proxy make -C cockpit check` exit0:561unit/108mounted/lint/style/types/build; raw /tmp/hfcache-cpr008-make.log. Final-plan explicit gate remains required after source freeze. Prior accepted package evidence retained. |
 | Extended final gate | Pending — scripts/check.sh --with-build |
 | Component/lifecycle regressions | CPR-002: 12 mounted cases passed in actual Firefox; [bounded results](gates/cpr-002-mounted.json). No real PAM/API claims |
-| Actual CLI / private Unix socket | CPR-004 metadata/authentication/original lookup and transport ownership pass actual separate-process/private-UDS cases; candidate/job/report acceptance remains CPR-008 |
-| Actual disposable Cockpit / PAM / rootless chain | Pending; provisioned isolated environment required |
+| Actual CLI / private Unix socket | CPR-008 installed-wheel10/10 pass, exact90module source/wheel/installed equality; candidate/job/report/auth/refusal/identity coverage plus prior source socket evidence. [Evidence](gates/cpr-008-cli.txt) |
+| Actual disposable Cockpit / PAM / rootless chain | PASSED12/12actual fifthfixture plus separate third original recovery; exact code/artifact/profile/secret and original guard facts pinned. [Native](gates/cpr-008-pipe-browser.json), [physical](gates/cpr-008-pipe-physical.json), [procedure](runtime-008.md). No production claim |
 | Documentation, schema and CLI parity | Pending |
-| Existing durable/operation compatibility | Pending |
+| Existing durable/operation compatibility | CPR-008 existing compatibility300/300 and guarded-filesystem63/63 pass; package/durable/tag fixture bytes unchanged. [Commands and qualifications](gates/cpr-008-cli.txt) |
 
 ## Separate acceptance decisions
 
 | Milestone | Evidence / disposition |
 | --- | --- |
-| Source remediation and mandatory automated gates | Not accepted |
-| Actual disposable runtime chain | Not accepted |
+| Source remediation and mandatory automated gates | Accepted through CPR-008; CPR-009 final release/parity/extended+explicitmake still pending |
+| Actual disposable runtime chain | Accepted scoped V54 with qualified distinct fixtures/layers; original installed symptom remains unproven |
 | Installed production artifact parity | Not inspected; separate authorization required |
 | Original installed candidate symptom resolved | Not demonstrated |
 | Existing NAS/workload holds cleared | Not requested; remain in force |
@@ -330,7 +372,7 @@ No new dependency/durable format/API route/MCP capability or production/guest/NA
 action. V54/current-source artifact and original installed symptom stay unproven;
 continue CPR-007 with the plan active and prior restrictions/evidence retained.
 
-CPR-007, this commit (2026-10-20): V46–51 source acceptance with original coded
+CPR-007 commit `41d818e` (2026-10-20): V46–51 source acceptance with original coded
 failures, strict honest read states and fresh host/session/authority readiness.
 Exact reviewed component source26behavioral failures, repaired104mounted passes;
 actual CLI/reader/writer/manual/report/socket focus142passes. Build FIFO/ancestor

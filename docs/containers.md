@@ -220,6 +220,11 @@ has `load`, `active` and `unit_file`. Load is `loaded`, `masked` or `not-found`;
 active is `active`, `inactive` or `failed`. Unit-file states are `enabled`,
 `enabled-runtime`, `disabled`, `static`, `linked`, `linked-runtime`, `masked`,
 `masked-runtime` or `not-found`.
+The fixed manager read requests the five common properties for the two allowed
+timers; systemd does not expose `MainPID` for timers. Services and the guard still
+require their numeric `MainPID`. A known timer's internal zero PID is a parser
+normalization, never evidence that a service or guard is inactive. Unknown or
+missing required fields remain unavailable; the public facts schema is unchanged.
 
 An unavailable result has exactly `schema_version=1`, `state=unknown` and a
 `reason`: `privilege-required`, `policy-missing`, `policy-invalid`,

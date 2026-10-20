@@ -1,0 +1,39 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_required_frontend_cannot_skip_after_final_successful_tool_discovery ___
+
+tmp_path = PosixPath('/tmp/pytest-of-tyler/pytest-1279/test_required_frontend_cannot_0')
+
+    def test_required_frontend_cannot_skip_after_final_successful_tool_discovery(tmp_path):
+        script, environment, calls = gate_fixture(tmp_path)
+        bootstrap = tmp_path / "controlled-final-discovery.bash"
+        # Control only the file-removal ordering: the final discovery returns its
+        # genuine successful result immediately after its owned fake make vanishes.
+        bootstrap.write_text(
+            "make_probes=0\n"
+            "command() {\n"
+            '  if [[ "$1" == -v && "${2:-}" == make ]]; then\n'
+            '    if builtin command "$@"; then\n'
+            "      make_probes=$((make_probes+1))\n"
+            "      if [[ $make_probes == 2 ]]; then\n"
+            '        /usr/bin/rm -- "$GATE_FIXTURE_MAKE"\n'
+            "      fi\n"
+            "      return 0\n"
+            "    fi\n"
+            "    return 1\n"
+            "  fi\n"
+            '  builtin command "$@"\n'
+            "}\n"
+        )
+        environment["BASH_ENV"] = str(bootstrap)
+        environment["GATE_FIXTURE_MAKE"] = str(Path(environment["PATH"]) / "make")
+        result = invoke_gate(script, environment, "--require-cockpit")
+>       assert result.returncode != 0, "A successful preflight cannot authorize a later skipped stage"
+E       AssertionError: A successful preflight cannot authorize a later skipped stage
+E       assert 0 != 0
+E        +  where 0 = CompletedProcess(args=['/usr/bin/bash', '/tmp/pytest-of-tyler/pytest-1279/test_required_frontend_cannot_0/fixture/scri...d\x1b[0m\n', stderr='\nNOTE: cockpit/ exists but pnpm or make is missing — plugin gate SKIPPED (docs/cockpit.md §8)\n').returncode
+
+tests/unit/test_check_frontend_gate.py:129: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_check_frontend_gate.py::test_required_frontend_cannot_skip_after_final_successful_tool_discovery
+1 failed, 9 deselected in 0.41s

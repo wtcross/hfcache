@@ -93,3 +93,10 @@ and direct-execution implications above; see [decision 122](decision-122.md).
 The retained native example only resets obsolete scheduled-client Hub imports;
 it provisions no credentials. Current scheduled and Cockpit clients use API-only
 authority, with profile-specific delivery in the server and Cockpit contracts.
+
+## Pipe-only confirmation amendment (2026-10-20)
+
+[Decision139](decision-139.md) applies the historical stdout pipe requirement
+to exact installed confirmation after reproducing an enforcing PID1 file-write
+denial. Current API-only credentials and the fixed rootless launcher remain
+those of decisions122/127; the earlier encrypted Hub-import design is not revived.

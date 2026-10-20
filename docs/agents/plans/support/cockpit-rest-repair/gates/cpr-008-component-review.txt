@@ -1,0 +1,56 @@
+CPR-008 layered source/component review, 2026-10-20
+Reviewed source baseline: 41d818e13c1f4860a286f24ba91bd0f384b09172.
+This review is not installed/PAM/runtime acceptance and does not amend V54.
+
+V01-V05: failure.test.ts loops every declared stage and rejects arbitrary prose;
+runner.test.ts preserves exact negative Envelopes, process facts, independent
+late handles, strict terminal/UTF8 bounds and callback failure ordering.
+V06-V08: connection/hook and mounted actual unit/configuration/profile tests
+cover bounded GET retries, zero mutation retry, privilege/session transitions,
+late valid supersession separately from an actual reconnected rejection.
+V09-V21: config-pipeline/candidate-guard and mounted Configuration cases cover
+each assessment/preview/install/confirmation boundary, negative data={}, escaped
+body-limit refusal, exact bytes, unsafe filesystem states, original lock inode,
+lost write/install acknowledgement, explicit inspection and preserved causes.
+V22-V34: registry/authority/runner tests plus actual Application mounted cases
+cover pre-send durable key, hostile/quota storage, scoped original lookup/wait,
+Apply after uncertainty, reload, terminal re-verification and conflicting notices.
+V35-V40: actual manual Sync/Verify, detach, scheduled observer separation, all
+denied controls and direct adapter bypasses, immutable command capture, profile
+generation, calendar validation and partial schedule mutation/remount recovery.
+V41-V45: actual REST report UI uses one bounded page, serialized detail reads,
+strict identity metadata, stale read invalidation, independent bounded journal;
+static production scan forbids the retired direct archive file reader.
+V46-V51: strict status/version/estimate/inventory/Doctor parsers and mounted
+surfaces retain original failures and only validated partials; fresh evidence,
+host/session action/confirmation origins, separate advisory build identities,
+closed schema/redaction and no healthy/empty fallback are covered.
+V52: actual installed-wheel/private UDS cases are a separate test layer owned by
+the CLI contributor. Existing source/component fakes are not credited here.
+V53: actual React/hook/API/runner code is mounted in owned Firefox with controlled
+documented Cockpit ports, not source predicates or a model of the component.
+
+Concrete additional lifecycle coverage: full manual Sync and Verify previously
+had direct detach tests, but no direct actual Application tab-unmount and
+fresh-module reload tests. Four cases now exercise the real controls and original
+registry across those lifetimes, asserting exactly one original keyed process,
+late original result retention or restored uncertainty, and zero replacements.
+These are completeness additions; no unobserved baseline defect is claimed.
+
+The first focused run of the new tab case timed out because its fixture clicked
+the tab before React committed Application. Waiting for the actual tab control
+fixed only that fixture ordering. No application source change was made.
+Observed focused command:
+rtk env CPR_BROWSER_TEST_FILTER='V24/V' node cockpit/test/browser.mjs
+Result: exit0, 6passed/0failed (four new cases plus two existing lifecycle cases).
+Bundle SHA256: 34e5efd2c90924d8e74fab3d5356f79d2a284f47aa20a3762e7bc3d7d5acd154.
+Whole command: rtk node cockpit/test/browser.mjs
+Result: exit0, 108passed/0failed, same bundle SHA256; valid complete JSON retained
+in cpr-008-mounted.json. No real PAM/API/shell is claimed by that artifact.
+rtk pnpm -C cockpit exec eslint test/runtime-bidi.mjs test/runtime-browser.mjs test/browser.fixture.tsx --fix
+rtk pnpm -C cockpit exec tsc --noEmit
+Both exit0. Runtime driver is manual-only; absent fixture returns69 as documented.
+
+Required real Cockpit/PAM, actual fixed launcher/rootless authentication and
+interruption/recovery remain separately environment-gated. No component pass
+substitutes for V54, no original installed-cause claim follows from source tests.

@@ -415,7 +415,14 @@ loaded installed-base bytes while holding it; refuse changed content rather than
 borrow earlier validation/preview. Hold the lock through that command and its
 atomic changes. Each candidate/base document is at most 1 MiB of complete UTF-8
 without NUL. Payloads travel as bounded inert stdin, never shell interpolation or
-generic executable/path input. Retain the lock inode. The config directory is
+generic executable/path input. Cockpit's text channel carries exactly two
+canonical base64 lines, each followed by LF: candidate, then installed base.
+Each encoded line is at most 1,398,104 ASCII bytes; the complete wire frame is
+at most 2,796,210 bytes. The fixed guard rejects wire NUL, extra/truncated frames,
+noncanonical encoding, decoded NUL, invalid UTF-8 and byte overflow before any
+filesystem or lock action. Decode in memory and preserve all trailing newlines;
+encoding adds no configuration authority. Raw NUL framing can disconnect the
+real text bridge ([decision 138](adr/decision-138.md)). Retain the lock inode. The config directory is
 root-owned and not group/world writable; installed/candidate/backup files must be
 root-owned `0640 root:hfcache`, regular, single-link and not symlinks. The retained
 lock is root-owned `0600`, regular, single-link and inode-checked after flock.
@@ -449,7 +456,10 @@ The pipeline, in order (`CP-11`):
    and after API validation, without requiring the consumed candidate pathname.
    Withhold the bounded CLI response until byte postchecks pass and require
    successful completion of this confirmation process. Equal policy fingerprints
-   alone never establish tag/document equality. Only then display
+   alone never establish tag/document equality. PID1 receives an anonymous stdout
+   pipe; a bounded local privileged collector writes the confirmation spool.
+   Collector failure withholds stdout, while successful collection preserves the
+   original launcher status ([decision 139](adr/decision-139.md)). Only then display
    success. Failed confirmation reports installed state as unconfirmed, preserves
    evidence and never claims the old file remains or silently rolls back.
    Install/confirmation errors remove readiness and require reloading the installed
@@ -535,6 +545,10 @@ fresh isolated profile and owned loopback fixtures. Missing Firefox fails this
 frontend gate; it is a development test prerequisite, not a shipped dependency. A loud skip on a
 host without that toolchain is not plugin validation. Changes to this surface
 require an actually executed plugin gate. See [development](development.md).
+For plugin acceptance, invoke `scripts/check.sh --require-cockpit`; missing plugin
+sources, pnpm or make fail its preflight instead of reaching a skip.
+The option composes with `--with-build`. An executed gate still verifies the
+committed toolchain pins and runs the actual mounted browser tests.
 
 ## 9. Testing
 

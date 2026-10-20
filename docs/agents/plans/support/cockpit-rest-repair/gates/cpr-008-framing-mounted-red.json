@@ -1,0 +1,2 @@
+{"fixture":"actual mounted React with controlled Cockpit boundaries","real_pam":false,"real_api_or_shell":false,"source_ref":"41d818e13c1f4860a286f24ba91bd0f384b09172","bundle_sha256":"8a722343a0a3dbdbd9544fe5e2a28c777cb66a3d206c3b785e59915e678e4e4f","state":"failed","tests":[{"name":"V09/V14 Configuration keeps every guarded action in exact NUL-free Unicode frames","passed":false,"message":"Actual host write lost canonical exact candidate/base frames"}]}
+{"bounded_browser_log":"/tmp/hfcache-cpr-mounted-4nHKhK/firefox-tail.log"}

@@ -37,7 +37,7 @@ import { CONFIGURATION_PATHS } from '../src/lib/candidate-guard';
 import { MAX_OPERATION_STORAGE_BYTES, OPERATION_STORAGE_KEY } from '../src/lib/operation-registry';
 import type { OperationRecord } from '../src/lib/operation-registry';
 import {
-    bridgeFailure, BusRequest, controlledCockpit, DEFAULT_CLIENT_METADATA, DEFAULT_HOST_PROFILE, FileBoundary, invariant, ProcessBoundary,
+    bridgeFailure, BusRequest, controlledCockpit, decodeGuardedInput, DEFAULT_CLIENT_METADATA, DEFAULT_HOST_PROFILE, FileBoundary, invariant, ProcessBoundary,
 } from './cockpit-fixture';
 
 window.cprFixture = controlledCockpit;
@@ -237,6 +237,21 @@ const CONFIG_BASE = 'schema_version=1\n[[repositories]]\nid="org/model"\ntype="m
 const CONFIG_DRAFT = CONFIG_BASE.replace('tags=["base"]', 'tags=["coding"]');
 const FINGERPRINT = 'a'.repeat(64);
 
+async function canonicalGuardWire(candidate: string, installed: string): Promise<string> {
+    // FileReader supplies an independent browser UTF-8/base64 implementation.
+    const encode = (document: string) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            invariant(typeof reader.result === 'string', 'Expected a browser data URL');
+            resolve(reader.result.slice(reader.result.indexOf(',') + 1));
+        };
+        reader.onerror = () => reject(new Error('Unable to encode the controlled document'));
+        reader.readAsDataURL(new Blob([document]));
+    });
+    const frames = await Promise.all([encode(candidate), encode(installed)]);
+    return frames.join('\n') + '\n';
+}
+
 function configEnvelope(data: Record<string, unknown>, exit = 0, code = 'HFAPI003'): Envelope {
     return {
         schema_version: 1,
@@ -428,7 +443,7 @@ async function beginValidation(draft = CONFIG_DRAFT, withRecovery = false): Prom
     invariant(validate && !validate.disabled, 'Actual validation control is unavailable');
     validate.click();
     const write = await guardedProcess(start, 'write');
-    invariant(write.input === draft + '\0' + CONFIG_BASE + '\0', 'Actual host write lost exact captured candidate/base bytes');
+    invariant(write.input === await canonicalGuardWire(draft, CONFIG_BASE), 'Actual host write lost canonical exact candidate/base frames');
     write.rawSuccess();
     const validation = await guardedProcess(start + 1, 'guard');
     invariant(validation.clientArgv?.slice(-2).join(' ') === 'config validate', 'Actual candidate validation must use the fixed CLI');
@@ -1234,6 +1249,61 @@ async function run(): Promise<void> {
         invariant(boundary.processes.slice(start).filter(item => item.key !== null).length === 1, 'Detach replayed the original job');
     });
 
+    for (const mode of ['sync', 'verify'] as const) {
+        const tab = mode === 'sync' ? 'Sync' : 'Verification';
+        const runLabel = mode === 'sync' ? 'Run full sync' : 'Run full verification';
+        const confirmLabel = mode === 'sync' ? 'Start full sync' : 'Start full verification';
+        await test('V24/V35/V36 actual ' + mode + ' tab unmount retains the original pending manual operation', async () => {
+            await readHostProfile();
+            mount(<Application />);
+            (await until(() => button(tab), 'actual application manual tab')).click();
+            const start = boundary.processes.length;
+            (await until(() => readyButton(runLabel), 'fresh manual action before tab unmount')).click();
+            (await until(() => button(confirmLabel), 'manual action confirmation before tab unmount')).click();
+            const process = await keyedProcess(start);
+            invariant(process.command.join(' ') === (mode === 'sync' ? 'sync' : 'verify --full'), 'Manual action changed its command');
+            invariant(process.key !== null, 'Manual tab action has no original key');
+            const key = process.key;
+            process.emit('Idempotency key: ' + key + '\nOperation: ' + process.operationId + '\n');
+            button('Overview')?.click();
+            await until(() => button(runLabel) === null, 'actual manual tab component unmount');
+            invariant(originalSection(key)?.textContent?.includes(process.operationId), 'Tab unmount lost original manual handles');
+            process.succeed(mode === 'sync' ? 'sync' : 'verify --full', 'manual-tab-terminal-' + mode);
+            await until(() => originalSection(key)?.textContent?.includes('manual-tab-terminal-' + mode) === true,
+                        'late original result above the unmounted tab');
+            button(tab)?.click();
+            await until(() => button(runLabel), 'manual tab remount');
+            invariant(boundary.processes.slice(start).filter(item => item.key !== null).length === 1, 'Manual tab remount submitted a replacement');
+            invariant(retainedRecord(key).state === 'terminal', 'Unmount replaced the original terminal manual state');
+        });
+        await test('V24/V25/V35/V36 actual ' + mode + ' reload retains original uncertainty without replacement', async () => {
+            await withFreshStorage(async () => {
+                const frame = await frameApplication('cpr-manual-reload-' + mode);
+                invariant(frame.contentDocument && frame.contentWindow, 'Owned manual reload module is inaccessible');
+                button(tab, frame.contentDocument)?.click();
+                (await until(() => readyButton(runLabel, frame.contentDocument!), 'manual action before reload')).click();
+                (await until(() => button(confirmLabel, frame.contentDocument!), 'manual confirmation before reload')).click();
+                const first = frame.contentWindow.cprFixture;
+                const process = await keyedProcess(0, first);
+                invariant(process.key !== null, 'Manual reload action has no original key');
+                const key = process.key;
+                process.emit('Idempotency key: ' + key + '\nOperation: ' + process.operationId + '\n');
+                process.fail();
+                await until(() => originalSection(key, frame.contentDocument!)?.textContent?.includes('uncertain') === true,
+                            'manual original uncertainty before reload');
+                frame.contentWindow.location.reload();
+                await until(() => frame.contentWindow?.cprProbeReady === true && frame.contentWindow.cprFixture !== first,
+                            'real reload with fresh manual application module');
+                invariant(frame.contentDocument && frame.contentWindow, 'Reloaded manual application is inaccessible');
+                await until(() => originalSection(key, frame.contentDocument!), 'manual handles restored after reload');
+                button(tab, frame.contentDocument)?.click();
+                await until(() => button(runLabel, frame.contentDocument!)?.disabled === true,
+                            'restored manual uncertainty blocks replacement');
+                invariant(frame.contentWindow.cprFixture.processes.every(item => item.key === null), 'Manual reload replayed a job');
+            });
+        });
+    }
+
     await test('V40 scheduled observer journals and stopping remain separate from an active manual REST operation', async () => {
         await readHostProfile();
         const start = boundary.processes.length;
@@ -1663,15 +1733,54 @@ async function run(): Promise<void> {
         const { session, start } = await readyConfiguration();
         button('Install validated candidate')?.click();
         const install = await guardedProcess(start + 2, 'install');
-        invariant(install.input === CONFIG_DRAFT + '\0' + CONFIG_BASE + '\0', 'Installation lost exact tag-only bytes');
+        invariant(install.input === await canonicalGuardWire(CONFIG_DRAFT, CONFIG_BASE), 'Installation lost canonical exact tag-only frames');
         install.rawSuccess();
         const confirmation = await guardedProcess(start + 3, 'confirm');
-        invariant(confirmation.input === CONFIG_DRAFT + '\0' + CONFIG_DRAFT + '\0', 'Confirmation did not bind exact expected installed bytes');
+        invariant(confirmation.input === await canonicalGuardWire(CONFIG_DRAFT, CONFIG_DRAFT), 'Confirmation did not bind canonical exact installed frames');
         confirmation.succeedEnvelope(configEnvelope({ config_fingerprint: FINGERPRINT }));
         await until(() => text().includes('Installed and re-validated'), 'actual confirmed installation result');
         invariant(session.snapshot().installedText === CONFIG_DRAFT, 'Confirmed installed document was not retained exactly');
         invariant(boundary.processes.slice(start).every(process => !process.clientArgv?.includes('plan')),
                   'Tag-only candidate created an unnecessary sizing job');
+    });
+
+    await test('V09/V14 Configuration keeps every guarded action in exact NUL-free Unicode frames', async () => {
+        const draft = CONFIG_DRAFT + '# exact Ω 🚀 browser bytes \\literal\n\n';
+        const { session, start, validation } = await beginValidation(draft);
+        validation.succeedEnvelope(assessment());
+        await until(() => button('Install validated candidate'), 'Unicode candidate readiness');
+        button('Inspect captured configuration')?.click();
+        const inspection = await guardedProcess(start + 2, 'inspect');
+        inspection.rawSuccess(JSON.stringify({
+            candidate: 'matching', installedBase: 'matching', installedCandidate: 'changed', backupBase: 'absent',
+        }));
+        await until(() => session.snapshot().inspection?.candidate === 'matching' && session.snapshot().phase === 'idle',
+                    'explicit Unicode candidate inspection');
+        button('Discard candidate')?.click();
+        (await guardedProcess(start + 3, 'remove')).rawSuccess();
+        (await until(() => readyButton('Validate candidate'), 'known Unicode candidate discard')).click();
+        (await guardedProcess(start + 4, 'write')).rawSuccess();
+        (await guardedProcess(start + 5, 'guard')).succeedEnvelope(assessment());
+        (await until(() => readyButton('Install validated candidate'), 'deliberate Unicode re-preparation')).click();
+        (await guardedProcess(start + 6, 'install')).rawSuccess();
+        const confirmation = await guardedProcess(start + 7, 'confirm');
+        confirmation.succeedEnvelope(configEnvelope({ config_fingerprint: FINGERPRINT }));
+        await until(() => text().includes('Installed and re-validated'), 'Unicode installation confirmation');
+        invariant(session.snapshot().installedText === draft, 'Guarded actions changed captured Unicode or trailing newlines');
+        const expected = await canonicalGuardWire(draft, CONFIG_BASE);
+        const confirmed = await canonicalGuardWire(draft, draft);
+        const guarded = boundary.processes.slice(start);
+        invariant(guarded.length === 8 && ['write', 'guard', 'inspect', 'remove', 'install', 'confirm']
+                .every(action => guarded.some(process => process.action === action)),
+                  'Mounted regression did not exercise every guarded action');
+        for (const process of guarded) {
+            invariant(process.input !== null && process.input === (process.action === 'confirm' ? confirmed : expected),
+                      'An actual guarded adapter sent a noncanonical or changed document frame');
+            const decoded = decodeGuardedInput(process.input);
+            invariant(!process.input.includes('\0') && /^[A-Za-z0-9+/=\n]+$/.test(process.input) &&
+                      decoded[0] === draft && decoded[1] === (process.action === 'confirm' ? draft : CONFIG_BASE),
+                      'Actual text-channel framing lost exact UTF-8 or contained wire NUL');
+        }
     });
 
     await test('V09/V18 Configuration retains validation and original preview notices after bridge loss', async () => {

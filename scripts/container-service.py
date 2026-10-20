@@ -244,13 +244,17 @@ def _inspection_verifier(selected, rows, index):
 def _inspection_system_show(unit):  # noqa: PLR0912 - bounded fixed-manager process and strict result validation
     if unit not in {*INSPECTION_UNITS, INSPECTION_GUARD}:
         _inspection_refuse()
+    timer = unit in {"hfcache-sync.timer", "hfcache-verify.timer"}
+    properties = ["Id", "LoadState", "ActiveState", "SubState", "UnitFileState"]
+    if not timer:
+        properties.append("MainPID")
     argv = [
         "/usr/bin/systemctl",
         "--system",
         "show",
         unit,
         "--no-pager",
-        "--property=Id,LoadState,ActiveState,SubState,UnitFileState,MainPID",
+        "--property=" + ",".join(properties),
     ]
     environment = {
         "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
@@ -298,11 +302,12 @@ def _inspection_system_show(unit):  # noqa: PLR0912 - bounded fixed-manager proc
         if not separator or key in fields:
             _inspection_refuse()
         fields[key] = value
-    if (
-        set(fields) != {"Id", "LoadState", "ActiveState", "SubState", "UnitFileState", "MainPID"}
-        or fields["Id"] != unit
-    ):
+    if set(fields) != set(properties) or fields["Id"] != unit:
         _inspection_refuse()
+    # Timers expose scheduling state, not a process. Only these exact timers use
+    # an internal zero; services and the independent guard require real MainPID.
+    if timer:
+        fields["MainPID"] = "0"
     if (
         fields["LoadState"] not in {"loaded", "masked", "not-found"}
         or fields["ActiveState"] not in {"active", "inactive", "failed"}

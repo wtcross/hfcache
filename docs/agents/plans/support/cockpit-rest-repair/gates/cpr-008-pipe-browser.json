@@ -1,0 +1,106 @@
+{
+  "fixture": "real disposable Cockpit/PAM browser",
+  "state": "passed",
+  "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+  "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+  "source_dirty": true,
+  "helper_sha256": "3e0a00ed1082c5be4bcc38572d083b0abc16b0a0e37d43be81bddbf925fe560b",
+  "patch_sha256": "88458c1987140890a8f5cf40303516f89b0846f0eb4e3083394c52219dd6f66f",
+  "closure_sha256": "28ebe8f7bc9da8edc13abbdddfa504906ee4f5ebc9ef6595f478f2c7d70476b7",
+  "bundle_sha256": "490e60045d3542e890d9c8ee3b809b8122d7ce7213f9f415774416988ca7903e",
+  "artifact_index_sha256": "ef85e569767863271f86d00bf7a355e64bcec5a5f9ed2af6a66a19574daf872a",
+  "image": "sha256:a6dac03ffceb85636e0884876ba796ba81ef2559caa7ec897293444cbda0ee7b",
+  "firefox": "140.13.0",
+  "fresh_candidate_only": true,
+  "fresh_pipe_candidate_only": true,
+  "operation_submission_executed": false,
+  "continuation_original_only": false,
+  "known_prewrite_continuation": false,
+  "interruption_executed": true,
+  "independent_wire_post_counter": false,
+  "fixed_client_launch_counts_require_provisioner_evidence": true,
+  "checks": [
+    {
+      "name": "real Cockpit PAM login",
+      "passed": true
+    },
+    {
+      "name": "real unprivileged Cockpit bridge and guest identity",
+      "passed": true
+    },
+    {
+      "name": "real Cockpit administrative bridge authentication",
+      "ok": true,
+      "prompts": 2,
+      "phase": "current-confirmed",
+      "current": "sudo",
+      "passed": true
+    },
+    {
+      "name": "real protected guarded profile identity and narrow explicit permissions",
+      "passed": true
+    },
+    {
+      "name": "actual fixed systemd/rootless client authenticated authority",
+      "passed": true
+    },
+    {
+      "name": "fresh fixture candidate-only mode; no job or old operation import",
+      "passed": true,
+      "operation_submission_executed": false
+    },
+    {
+      "name": "fresh independent initial base and newly pinned original lock proof",
+      "passed": true,
+      "installed_sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+      "lock_device": 64515,
+      "lock_inode": 75518786
+    },
+    {
+      "name": "actual guarded candidate write and fixed-launcher API validation",
+      "passed": true,
+      "candidate_bytes": 434,
+      "candidate_sha256": "9abd2c165937e3d24b27a538cf91d4d2809b3d5594739da50cccbcfc947a9c96",
+      "proposed_text_differs_from_installed": true,
+      "installed": false
+    },
+    {
+      "name": "actual guarded install, exact API confirmation and independent installed/backup proof",
+      "passed": true,
+      "installed_sha256": "9abd2c165937e3d24b27a538cf91d4d2809b3d5594739da50cccbcfc947a9c96",
+      "backup_sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+      "fingerprint": "788806d1b0a74f0902510a7f436f87d9b73c49fc0dccd40edcac8dd0da66a33d"
+    },
+    {
+      "name": "independent final filesystem, original guard/lock, masks, SELinux and zero-job proof",
+      "passed": true,
+      "installed_sha256": "9abd2c165937e3d24b27a538cf91d4d2809b3d5594739da50cccbcfc947a9c96",
+      "backup_sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+      "candidate_state": "absent",
+      "candidate_sha256": null,
+      "job_receipts": 0
+    },
+    {
+      "name": "real privileged bridge interruption and explicit read-only reconciliation",
+      "passed": true,
+      "stage": "candidate-write",
+      "category": "bridge",
+      "problem": "terminated",
+      "exit_status": null,
+      "exit_signal": null,
+      "uncertain": true,
+      "candidate": "absent",
+      "installedBase": "matching",
+      "causeRetained": true,
+      "ordinaryValidateDisabled": true,
+      "replayed": false,
+      "installation_after_uncertainty": false,
+      "cleanup_after_uncertainty": false
+    },
+    {
+      "name": "fresh fixture has no operation submission or imported old handles; original observation is separate third-fixture evidence",
+      "passed": true
+    }
+  ],
+  "preserved": "Known installation was confirmed before the separate uncertain write; its draft, cause and evidence remain retained."
+}

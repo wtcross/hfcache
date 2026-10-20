@@ -1,0 +1,90 @@
+CPR-008 explicit frontend-required gate wiring
+
+Actual source baseline: 41d818e13c1f4860a286f24ba91bd0f384b09172.
+Contract first: development/Cockpit/script reference and existing decision088 qualification preserve build/runtime separation and default backend-only loud skip; explicit --require-cockpit refuses unavailable frontend prerequisites. INV006 and CP02/03/08/11/13/14 reviewed. No new architectural decision, runtime/test dependency, production operation or browser API authority is added.
+
+Persistent unit test: tests/unit/test_check_frontend_gate.py. Isolated copies of the actual script run with controlled fake uv/pnpm/make and owned temporary directories to verify gate control flow ONLY; these are explicitly not frontend execution or PAM acceptance. Missing source/pnpm/make, both standalone and combined with --with-build, must exit69 before any backend/tool invocation. Removing make after backend build must fail the final preflight rather than skip. Available tool fixtures prove make receives the discovered pnpm and the extended wheel marker still executes; default backend mode retains its loud unaccepted skip. Ambient shell initialization is removed and PNPM_HOME points to an owned absent fixture path; HOME is untouched.
+
+RED before implementation:
+rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_check_frontend_gate.py
+8failed/1passed in4.24s, exit1: --require-cockpit was unknown(exit64), so no strict acceptance mode existed. This demonstrates the new required gate behavior, not a product runtime repair.
+
+GREEN after implementation:
+same command =>9passed in2.95s, exit0.
+rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_check_frontend_gate.py tests/unit/test_script_help.py
+=>52passed in5.21s, exit0; help remains before installed/runtime operations.
+rtk proxy uv run --locked --extra server --extra mcp ruff check tests/unit/test_check_frontend_gate.py
+=>all checks passed.
+rtk proxy bash -n scripts/check.sh =>exit0.
+rtk proxy uv run --locked --extra server --extra mcp python scripts/check-docs.py
+=>186human documents/19helpers, exit0.
+rtk git diff --check =>exit0.
+
+The actual full package gate must invoke scripts/check.sh --require-cockpit with the real pinned toolchain/Firefox and record actual frontend counts. These isolated control fixtures cannot substitute for it. Firefox remains required by the executed frontend tests and fails that stage when absent. Final --with-build/explicit make and real disposable Cockpit/PAM remain separate required acceptance.
+
+Independent review: final-discovery window (2026-10-20)
+
+The shared optional condition after the strict final preflight left a concrete
+ordering gap: if owned fixture make or cockpit/ disappeared immediately after
+the final successful tool discovery, strict mode could still accept a skipped
+stage. An exact-script temporary-fixture probe controlled that ordering by
+wrapping command -v make through an explicitly owned BASH_ENV, returning its
+genuine successful discovery result immediately after removing only fixture make
+or renaming fixture cockpit/. Old source: missing make returned0 with SKIPPED and
+all-checks-passed; missing source returned0 silently with all-checks-passed. Neither
+executed make. This is gate-control evidence, never actual frontend execution.
+
+Persistent regression added:
+  test_required_frontend_cannot_skip_after_final_successful_tool_discovery
+It controls the final make discovery/removal only, retains all earlier checks,
+and refuses success/skip. Ambient BASH_ENV is still removed by the general fixture;
+this one case explicitly supplies its owned ordering hook. No host tool is removed.
+
+Observed RED before correction:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_check_frontend_gate.py -k final_successful_tool_discovery
+  Exit1; 1failed/9deselected in0.41s. Assertion failed because required mode
+  returned0 and printed SKIPPED/all-checks-passed. Exact output:
+    cpr-008-gate-final-window-red.txt
+
+Correction: required mode now preflights then invokes the frontend step and make
+directly under set -e. Optional discovery/conditional/skip exists exclusively in
+the default branch. A disappearance after strict preflight therefore fails the
+actual make invocation rather than entering a successful skip path. Existing
+early prerequisite checks and help-before-toolchain behavior are unchanged.
+
+Observed GREEN after correction:
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_check_frontend_gate.py
+  Exit0; 10passed in0.58s.
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_check_frontend_gate.py tests/unit/test_script_help.py
+  Exit0; 53passed in3.07s. Exact output:
+    cpr-008-gate-final-window-green.txt
+  rtk proxy uv run --locked --extra server --extra mcp ruff format tests/unit/test_check_frontend_gate.py
+  Exit0; one file unchanged.
+  rtk proxy uv run --locked --extra server --extra mcp ruff check tests/unit/test_check_frontend_gate.py
+  Exit0; all checks passed.
+  rtk proxy bash -n scripts/check.sh
+  Exit0.
+  rtk proxy uv run --locked --extra server --extra mcp python scripts/check-docs.py
+  Exit0;186human documents/19helpers.
+  rtk git diff --check
+  Exit0.
+
+The already-running strict gate preceded this correction and is transitional
+evidence. Final package acceptance must run again after all source/runtime-driver
+changes freeze, with real pnpm/make/Firefox and actual frontend counts.
+
+Transitional real full gate, not final corrected-source acceptance:
+rtk proxy bash -c 'scripts/check.sh --require-cockpit > /tmp/hfcache-cpr008-gate.log 2>&1'
+Exit0:5285Python passed/52deselected in750.94s, allthree locked wheel profiles, actual frontend lint/style/types/561unit/108mounted/build. Log retained as /tmp/hfcache-cpr008-transitional-gate.log SHA256ace214f33152c51f698a973db0f7c822c7c331385cdb6b9f4c4df72fb527ada3; component artifact cpr-008-transitional-mounted.json, bundle34e5efd2c90924d8e74fab3d5356f79d2a284f47aa20a3762e7bc3d7d5acd154. This run began before the final-discovery gate correction and actual timer/MainPID conformance repair; it cannot be final package acceptance. A fresh full strict gate after source freeze remains required.
+
+Second real strict full gate, after final-discovery and timer repair:
+rtk proxy bash -c 'scripts/check.sh --require-cockpit > /tmp/hfcache-cpr008-gate.log 2>&1'
+Observed exit0:5299Python passed/52deselected in774.57s; allthree locked wheel installation profiles, actual frontend lint/style/types/561unit/108mounted/build, zero frontend failures/skips. Raw log preserved as /tmp/hfcache-cpr008-before-driver-freeze-gate.log SHA256c811e960c47e642b213e0d23e9450ec458d194553c017e7ec42fb7b84c65ee86. Bounded mounted artifact cpr-008-before-driver-freeze-mounted.json SHA2564086bdef055773bb7c3d9ed89db3a2a4496dd0fc602c64db609e4959d12e93ae, bundle34e5efd2c90924d8e74fab3d5356f79d2a284f47aa20a3762e7bc3d7d5acd154. ProductionJS SHA256da4a031bad73ed3ba1394096783c1b9c7ce14b6bedd915d2b9c390c6746e8b80 exactly matches the third guest's served corrected fixture build. Manual runtime-driver freshness/async-evaluation corrections occurred after this run's frontend lint started; this is passed product-source/gate evidence, not final corrected-driver acceptance. A final strict full gate after driver freeze is required before the work-package commit.
+
+Separate actual frontend gate:
+rtk proxy bash -c 'make -C cockpit check > /tmp/hfcache-cpr008-make.log 2>&1'
+Observed exit0:561unit/108mounted/lint/style/types/build, zero frontend failures/skips. Raw log SHA256e3add45f4b9fb244551ff58e1fa880b691ba02929a708c23f554bb5b2212d30a. This also preceded the final manual driver changes and is not final-plan release acceptance.
+
+Third real strict full gate, before post-barrier native continuation correction:
+rtk proxy bash -c 'scripts/check.sh --require-cockpit > /tmp/hfcache-cpr008-gate.log 2>&1'
+Observed exit0:5299Python passed/52deselected in696.15s, allthree locked wheel profiles, actual frontend lint/style/types/563unit/108mounted/build, zero frontend skips/failures. This includes the two actual retained-profile cleanup regressions and latest valid-success/fresh-observation driver source as read by its frontend stage. Rawlog /tmp/hfcache-cpr008-before-continuation-gate.log SHA256f5805009d260072ba818f03a246af86bf74487efd0c9b08cf7e40ca1ea976cc5; bounded components cpr-008-before-continuation-mounted.json; bundle34e5efd2c90924d8e74fab3d5356f79d2a284f47aa20a3762e7bc3d7d5acd154. ProductionJS remains da4a031bad73ed3ba1394096783c1b9c7ce14b6bedd915d2b9c390c6746e8b80, exact served guest match. The native driver's greedy DOM textContent extraction subsequently failed its original-key comparison after one actual successful preview; no second submission is allowed. Correcting that test-only extraction and adding a read-only-original/candidate-only continuation requires a final gate after the corrected driver freezes. This passed gate is retained rather than relabeled final runtime acceptance.

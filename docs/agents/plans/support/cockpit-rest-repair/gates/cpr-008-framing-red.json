@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "fixture_id": "cpr008-9e6c9b6666ad43f09a886dae844866c2",
+  "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+  "source_dirty": true,
+  "guest_cockpit_version": "368",
+  "node_version": "24.18.1",
+  "firefox_version": "140.13.0esr",
+  "layer": "real native Cockpit/PAM/privileged bridge; synthetic read-only stdin process",
+  "state": "reproduced",
+  "privileged_independent": [
+    {
+      "kind": "ascii",
+      "privileged": true,
+      "ok": true,
+      "length": 4,
+      "nul_count": 0,
+      "sha256": "8609ff598817d3680360cee50279d3bb873d41288ad63a8469188b62ab9eac13"
+    },
+    {
+      "kind": "nul",
+      "privileged": true,
+      "ok": false,
+      "problem": "disconnected",
+      "exit_status": null
+    }
+  ],
+  "unprivileged_independent": [
+    {
+      "kind": "ascii",
+      "privileged": false,
+      "ok": true,
+      "length": 4,
+      "nul_count": 0,
+      "sha256": "8609ff598817d3680360cee50279d3bb873d41288ad63a8469188b62ab9eac13"
+    },
+    {
+      "kind": "nul",
+      "privileged": false,
+      "ok": false,
+      "problem": "disconnected",
+      "exit_status": null
+    }
+  ],
+  "confounded_after_unprivileged_disconnection": [
+    {
+      "kind": "ascii",
+      "privileged": true,
+      "ok": false,
+      "deadline": true,
+      "state": "pending"
+    },
+    {
+      "kind": "nul",
+      "privileged": true,
+      "ok": false,
+      "deadline": true,
+      "state": "pending"
+    }
+  ],
+  "diagnostic_api_requests": 0,
+  "diagnostic_filesystem_writes": 0,
+  "application_background_reads_excluded_from_diagnostic_counts": true,
+  "candidate_replayed": false,
+  "job_resubmitted": false,
+  "limits": "The original timed-out Validate did not retain a live stage error. This independent exact-framing reproduction identifies a real text-channel defect; it does not establish the original installed host cause. Privileged cases after the first session disconnected are explicitly confounded; the separate privileged session starts fresh.",
+  "commands": [
+    "rtk node /tmp/hfcache-cpr008-stdin-probe.mjs > /tmp/hfcache-cpr008-stdin-matrix-probe.json",
+    "rtk node /tmp/hfcache-cpr008-stdin-privileged-probe.mjs > /tmp/hfcache-cpr008-stdin-privileged-probe.json"
+  ],
+  "source_sha256": {
+    "hfcache-cpr008-stdin-probe.mjs": "d8b00e8fb926006ef30e5e4eff1f1054b3354e209990bb80b3dd0c302caec078",
+    "hfcache-cpr008-stdin-privileged-probe.mjs": "6c29b00717076d185678d99fbb1b3ff601f1270df9f77bb22ad1c88c53baa5a3"
+  }
+}

@@ -1,0 +1,27 @@
+CPR-008 guarded configuration text transport (2026-10-20)
+
+Scope: exact captured UTF-8 bytes on actual Cockpit text spawn; no new API,
+privilege, archive or replay authority. Native RED/GREEN is recorded separately.
+
+RED command (before source repair):
+cd cockpit && node --experimental-strip-types --test --test-name-pattern="every guarded action|malformed transport frames|fixed production helper" test/candidate-guard.test.ts
+Exit1: three regression failures: old NUL wire, each guarded action NUL input,
+and malformed input created .configuration.lock before input refusal.
+
+Final command:
+cd cockpit && pnpm exec eslint --fix src/lib/candidate-guard.ts test/candidate-guard.test.ts && pnpm exec tsc --noEmit && node --test test/candidate-guard.test.ts
+Exit0:67/67,0skipped,55.269629418s. Actual shell/filesystem tests use owned
+current-UID temporary paths, stub only the downstream systemd-run launcher;
+these are not native PAM proof. Preserve root/lock/byte/mode/fsync guards.
+New coverage: all six input consumers canonical ASCII/NUL-free, malformed and
+truncated/extra/noncanonical/decoded-NUL/invalid-UTF8/overflow frames have no
+filesystem/CLI effects; reader/decoder/reencoder complete-output-then-failure
+cannot authorize effects; two full1MiB documents preserve every byte at exact
+2796210-byte wire bound. An additional exact-bound-plus-one/4096-tail test
+passes1/1 in14.163s, refusing overflow without changing files/lock inode or
+executing the downstream CLI. Earlier draft's quadratic Bash glob splitting timed out
+at the bound; line reads correct that defect rather than raising test timeout.
+Bounded buffered producers and decoders must exit successfully before effects.
+
+Product guard SHA256:5b64be973d436ed983ea0eeac5415f7b2110a9a7c56947288fe2669c17251684
+Final full package gate and fresh disposable candidate/bridge acceptance pending.

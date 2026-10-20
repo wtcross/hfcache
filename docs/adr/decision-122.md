@@ -2,7 +2,7 @@
 
 - Decision identity: 122.
 
-- Status: Amended; see [decision 133](decision-133.md), [decision 135](decision-135.md), [decision 136](decision-136.md), [decision 137](decision-137.md) and the amendments below.
+- Status: Amended; see [decision 133](decision-133.md), [decision 135](decision-135.md), [decision 136](decision-136.md), [decision 137](decision-137.md), [decision 138](decision-138.md), [decision 139](decision-139.md) and the amendments below.
 - Date: 2026-10-18.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 

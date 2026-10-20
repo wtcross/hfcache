@@ -234,3 +234,15 @@ files and clear the selector; do not select old backlog.
   froze the live selector inactive after CAT-016. The baseline package may correct
   that regression to inspect CAT-016's committed selector, preserving historical
   completion while permitting this authorized plan. No product scope expansion.
+
+## Source and disposable checkpoint (2026-10-20)
+
+CPR-001–008 are completed with task-owned evidence. The final source gate executes
+570frontend unit/109mounted tests plus5299Python and three installation profiles.
+Installed-wheel/private-UDS10cases and actual fifthguest12native checks pass.
+Actual timer-field, NUL text framing and enforcing PID1 stdout-file defects were
+reproduced and repaired, preserving SELinux, original locks, strict Envelopes and
+no-replay behavior. ADR138/139 record the latter two choices; earlier failed
+fixtures and unknown/unconfirmed executions remain preserved. No original
+production cause or installed symptom resolution is claimed. Continue only
+CPR-009; keep this plan active until its final gates and handoff pass.

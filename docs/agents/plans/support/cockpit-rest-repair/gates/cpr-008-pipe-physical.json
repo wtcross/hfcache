@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+  "state": "passed",
+  "initial": {
+    "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "state": "ready",
+    "artifact_index_sha256": "ef85e569767863271f86d00bf7a355e64bcec5a5f9ed2af6a66a19574daf872a",
+    "archive_id": "0891c8e0-0214-4246-9b7f-8b90c1ed4340",
+    "installed_sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+    "installed_inode": 75518700,
+    "installed_device": 64515,
+    "candidate": "absent",
+    "backup": "absent",
+    "configuration_lock": "absent"
+  },
+  "candidate": {
+    "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "state": "ready",
+    "lock_device": 64515,
+    "lock_inode": 75518786,
+    "lock_uid": 0,
+    "lock_mode": "0600",
+    "original_lock_unchanged": true,
+    "installed_sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+    "candidate_sha256": "9abd2c165937e3d24b27a538cf91d4d2809b3d5594739da50cccbcfc947a9c96",
+    "candidate_bytes": 434,
+    "candidate_inode": 75497663,
+    "nonce": "7d5f654a-73e5-4b21-87a4-969a5d50371f"
+  },
+  "installed": {
+    "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "state": "ready",
+    "lock_device": 64515,
+    "lock_inode": 75518786,
+    "lock_uid": 0,
+    "lock_mode": "0600",
+    "original_lock_unchanged": true,
+    "installed_sha256": "9abd2c165937e3d24b27a538cf91d4d2809b3d5594739da50cccbcfc947a9c96",
+    "backup_sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+    "installed_inode": 75497663,
+    "backup_inode": 75498178,
+    "installed_metadata": {
+      "sha256": "9abd2c165937e3d24b27a538cf91d4d2809b3d5594739da50cccbcfc947a9c96",
+      "inode": 75497663,
+      "device": 64515,
+      "bytes": 434,
+      "uid": 0,
+      "gid": 981,
+      "mode": "0640",
+      "selinux": "unconfined_u:object_r:etc_t:s0"
+    },
+    "backup_metadata": {
+      "sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+      "inode": 75498178,
+      "device": 64515,
+      "bytes": 141,
+      "uid": 0,
+      "gid": 981,
+      "mode": "0640",
+      "selinux": "unconfined_u:object_r:etc_t:s0"
+    },
+    "candidate": "absent",
+    "nonce": "7d5f654a-73e5-4b21-87a4-969a5d50371f"
+  },
+  "waiter": {
+    "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "state": "ready",
+    "writer_pid": 8126,
+    "writer_starttime": "49024",
+    "holder_pid": 8022,
+    "lock_device": 64515,
+    "lock_inode": 75518786,
+    "waiter_line": "1: -> FLOCK  ADVISORY  WRITE 8126 fc:03:75518786 0 EOF",
+    "holder_seconds_remaining": 29.367,
+    "nonce": "7d5f654a-73e5-4b21-87a4-969a5d50371f"
+  },
+  "holder_expired": {
+    "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "state": "ready",
+    "holder_pid": 8022,
+    "holder_starttime": "48457",
+    "holder_natural_expiry": true,
+    "lock_device": 64515,
+    "lock_inode": 75518786,
+    "domain_guard_unchanged": true,
+    "read_only_observation": true,
+    "nonce": "7d5f654a-73e5-4b21-87a4-969a5d50371f"
+  },
+  "final": {
+    "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "state": "ready",
+    "lock_device": 64515,
+    "lock_inode": 75518786,
+    "lock_uid": 0,
+    "lock_mode": "0600",
+    "original_lock_unchanged": true,
+    "installed_sha256": "9abd2c165937e3d24b27a538cf91d4d2809b3d5594739da50cccbcfc947a9c96",
+    "backup_sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+    "installed_inode": 75497663,
+    "backup_inode": 75498178,
+    "installed_metadata": {
+      "sha256": "9abd2c165937e3d24b27a538cf91d4d2809b3d5594739da50cccbcfc947a9c96",
+      "inode": 75497663,
+      "device": 64515,
+      "bytes": 434,
+      "uid": 0,
+      "gid": 981,
+      "mode": "0640",
+      "selinux": "unconfined_u:object_r:etc_t:s0"
+    },
+    "backup_metadata": {
+      "sha256": "d0f5f11f638e0270db004523f09fbb381b412955ba24cb2aec6b7717786ac970",
+      "inode": 75498178,
+      "device": 64515,
+      "bytes": 141,
+      "uid": 0,
+      "gid": 981,
+      "mode": "0640",
+      "selinux": "unconfined_u:object_r:etc_t:s0"
+    },
+    "candidate_state": "absent",
+    "candidate_sha256": null,
+    "domain_guard_unchanged": true,
+    "legacy_masks_unchanged": 8,
+    "nfs_readonly": true,
+    "selinux_enforcing": true,
+    "job_receipts": 0,
+    "nonce": "7d5f654a-73e5-4b21-87a4-969a5d50371f"
+  },
+  "client_launches": {
+    "fixture_id": "cpr008-pipe-d901b229bbca4eaf8a0520dbb91505b4",
+    "source_commit": "41d818e13c1f4860a286f24ba91bd0f384b09172",
+    "read_only": true,
+    "bounded_scan_complete": true,
+    "raw_started_rows": 255,
+    "bounded_bytes": 319586,
+    "records": [
+      {
+        "unit": "run-p6394-i6395.service",
+        "category": "version",
+        "timestamp_guest_microseconds": "1792494786582833",
+        "message_sha256": "bdd7b8c6b3b85b6e01d3dd3ba2d2619eff1b170669e21a995ac68bdab5d5235a",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p6443-i6444.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792494790564957",
+        "message_sha256": "ca51675a1cf1236bfc3c3a102a1c8152446784c525037fbcdd61f2628cd55aef",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p6477-i6478.service",
+        "category": "installed-validation",
+        "timestamp_guest_microseconds": "1792494794800575",
+        "message_sha256": "fd1305cba76001b916e2823cb99d8f30439ac8c5317785a8c38a0d500f679fc9",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p7391-i7392.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792495008913818",
+        "message_sha256": "f2a99d3f484aad814108628915f3fb2665b344ae0940bf0c2ff520d409b821b4",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p7393-i7394.service",
+        "category": "version",
+        "timestamp_guest_microseconds": "1792495009005902",
+        "message_sha256": "8b0ba8e4871ffd319250ba53128a300c4a11afda4e2cee0985b7b550b7f7dff2",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p7395-i7396.service",
+        "category": "status",
+        "timestamp_guest_microseconds": "1792495009103514",
+        "message_sha256": "4ef70e309d0c2891c0251906b3c12344f472073da7f93e6cce6c8299008b6d77",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p7581-i7582.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792495019912349",
+        "message_sha256": "5c7e594659459b240bd94460cc34a229e2dc037a14c7f27404c1522a72a66e4a",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p7692-i7693.service",
+        "category": "candidate-validation",
+        "timestamp_guest_microseconds": "1792495024754363",
+        "message_sha256": "2830b2f0cb1aa833aa8252b0a338c02888033734ddbedfbf355846c47d33ce08",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p7777-i7778.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792495030817215",
+        "message_sha256": "cda87b6632879cbe32e3e79d9a4669fb7724e0ddefdbb3acc6c8cc2925b9f786",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p7901-i7902.service",
+        "category": "installed-validation",
+        "timestamp_guest_microseconds": "1792495038706118",
+        "message_sha256": "174540ef0ab4b02a6aee454ffd599f41fb68e9171dc1492d6b120cfe1c2d196a",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p8028-i8029.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792495045165802",
+        "message_sha256": "3a04b0504dfedf5a48ae8ac9a5cffd8b6dce22861f5e71a7cd8bfe4f82fc48aa",
+        "has_idempotency_key_option": false
+      },
+      {
+        "unit": "run-p8168-i8169.service",
+        "category": "client-describe",
+        "timestamp_guest_microseconds": "1792495051669322",
+        "message_sha256": "1ec471a7e24b28603e791d226e073024eb9f3e10698bbaabe9a7160e3f569392",
+        "has_idempotency_key_option": false
+      }
+    ],
+    "counts": {
+      "candidate-validation": 1,
+      "client-describe": 6,
+      "installed-validation": 2,
+      "status": 1,
+      "version": 2
+    },
+    "operation_store_names": [
+      ".lock"
+    ],
+    "worker_operation_store_names": [
+      ".lock"
+    ],
+    "wire_post_count_claimed": false
+  },
+  "audit": {
+    "read_only": true,
+    "audit_bytes": 472910,
+    "bounded_tail_bytes": 472910,
+    "avc_denials": [],
+    "selinux_enforcing": true,
+    "configuration_names": [
+      ".configuration.lock",
+      "client.toml",
+      "cockpit-policy.json",
+      "config.toml",
+      "config.toml.bak",
+      "containers",
+      "credentials"
+    ]
+  },
+  "independent_wire_post_counter": false,
+  "no_cleanup_after_uncertainty": true
+}

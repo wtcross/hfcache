@@ -1,0 +1,56 @@
+CPR-008 controlled component framing evidence (2026-10-20)
+
+Scope: actual React components, shared state, API adapters and runner in owned
+Firefox profiles, with controlled Cockpit external ports. No guest, PAM, API,
+shell helper, archive or production inspection occurs in these tests. Native
+text-channel ASCII/NUL evidence is recorded separately by the runtime owner.
+
+The boundary now independently requires two canonical LF-terminated ASCII
+base64 frames, total <=2796210 bytes, each decoded document <=1048576 bytes,
+strict UTF-8 and no NUL. UTF-8 decoding preserves a leading BOM. Expected wire
+bytes use browser Blob/FileReader rather than the product's encoder.
+
+RED, exact preceding source with current strict fixture:
+  cd cockpit
+  rtk env CPR_BROWSER_TEST_FILTER='NUL-free Unicode' node test/browser.mjs 41d818e13c1f4860a286f24ba91bd0f384b09172
+  exit 1; 1 test failed: Actual host write lost canonical exact candidate/base frames.
+  bundle SHA256: 8a722343a0a3dbdbd9544fe5e2a28c777cb66a3d206c3b785e59915e678e4e4f
+  artifact: cpr-008-framing-mounted-red.json
+
+GREEN, repaired working-tree transport:
+  rtk env CPR_BROWSER_TEST_FILTER='NUL-free Unicode' node test/browser.mjs
+  exit 0; 1 passed, 0 failed.
+  artifact: cpr-008-framing-mounted-focused-green.json
+  rtk node test/browser.mjs
+  exit 0; 109 passed, 0 failed.
+  bundle SHA256: 21727b19155c131299bf46874d8abefa953779a1ec9bbba1e806b044e5b720bd
+  artifact: cpr-008-framing-mounted-green.json
+
+The new mounted case exercises actual write, validation, explicit inspection,
+known-state discard, deliberate preparation, install and confirmation. Every
+guarded stdin is checked against exact Unicode/backslash/trailing-newline bytes,
+and contains no wire NUL. Other mounted guarded calls share the strict boundary.
+
+Additional actual checks:
+  rtk node --test test/config.test.ts test/config-pipeline.test.ts test/configuration-authority-effect.test.ts
+  exit 0; 142 passed, 0 failed, 0 skipped.
+  artifact: cpr-008-framing-components-green.txt
+  rtk pnpm exec eslint test/cockpit-fixture.ts test/browser.fixture.tsx
+  exit 0.
+  rtk pnpm exec tsc --noEmit
+  exit 0.
+  rtk git diff --check
+  exit 0.
+
+Independent decoder review confirmed parse/decode/UTF-8/canonical checks precede
+filesystem/lock effects. Explicit reencoder process failure is refused. A local
+stdin-only Bash probe found the buffered wire reader also needs explicit producer
+status: a producer emitting a valid frame plus NUL then exiting 31 yielded group
+read status 0, while immediate wait "$!" yielded 31. The product owner was
+notified; this probe touched no files or application state. Subsequent read-only
+review confirmed explicit waits after wire-reader, line-reader and decoder
+producers, plus separate sentinel-then-failure cases in the owner's host tests.
+Their execution results belong to the host-test owner's evidence.
+
+Mounted artifacts describe their actual build snapshots. Required final gate and
+native repaired-runtime acceptance remain separate, after final source freeze.
