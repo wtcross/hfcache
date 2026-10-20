@@ -27,6 +27,28 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Guarded Cockpit repair release (2026-10-20)
+
+- [x] REL-015 Prepare0.2.2 release source (2026-10-20, this commit —
+  [plan](plans/2026-10-20-plan-cockpit-rest-rollout.md),
+  [task](plans/tasks/rel-015-cockpit-rest-release-source.md)). Latest user explicitly
+  authorizes merge/main pushes then local deployment. Main fast-forward/bothrefs
+  verified atcdc35a4 before host preparation; all9repair commits preserved.
+  Newversion0.2.2 is unused locally/onbothremotes/inprotectedstage; metadata and
+  uvlock change projectversiononly,94lockedpackages unchanged. README/changelog
+  include CATdiscovery andCPR plus observed0.2.1rollback limits, no deployedclaim.
+  Strict extended gate under actual empty read-only NAS shadow exits0:5299Python/
+  52deselected in702.67s,3lockedprofiles,actualfrontend570unit0skip/110mounted/
+  lint/style/types/build, then16build-marked in44.59s. Invocation135107101a114644b8c9ba063138cef7,
+  runtime15min13.696s; first launch refusal preserved, no invented symptom cause.
+  Docs188human/19helpers/diff pass. Reviewed parent invariants/ADRs/agentINV011;
+  no runtime/dependency/durable/architecture change. Original authenticated
+  Timestral result is now failed/HFMNT010/exit20, observed without replay/guardrelease.
+  Production0.2.1/config/candidate/backup/locks/masks/NASro/secrets unchanged.
+  [Evidence](plans/support/cockpit-rest-rollout/acceptance-record.md).
+  NextOPS023 uses exact clean committed source, protectedbackup/actualdrain and
+  original-lock handoff, fresh installed acceptance and required local deployed tag.
+
 ## Cockpit REST repair (2026-10-19)
 
 - [x] CPR-001 Freeze baseline and activate corrective contracts (2026-10-19,
@@ -2786,6 +2808,21 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     push to both remotes; commit first, push only fix/cockpit-rest-api-alignment
     without tags/force, verify both refs, report actual outcomes after execution.
     No merge, tag, registry, production inspection/deployment or live workload.
+
+31. **Authorized merged-source local replacement (REL-015,2026-10-20):**
+    new explicit user merge/main-push/deploy instruction supersedes earlier no-host
+    authority for the selected rollout only. Main already merged/pushed atcdc35a4;
+    clean committed0.2.2 source follows this green package. Original0.2.1 remains
+    installed and immutable; fresh original-key lookup/wait proves Timestral failed
+    naturallyHFMNT010/exit20, not cancellation. Preserve its terminalresult and all
+    stores/handles/unknown files, candidate/backup/config/domainlocks, original
+    guard809950/NASro/masks/disabled calendars/secret classes. OPS023 requires
+    protectedbackup, actual non-killing API→worker drain/emptycgroups, reviewed
+    guard→installer flock→READYguard handoff, both-manager reload/effectivebindings,
+    fresh exact images/publicplugin/policy and installed peer/auth/isolation checks.
+    Keep NAS/workload/other-host restrictions. Local deployed tag only after actual
+    acceptance; branch pushes do not authorize unrelated or remote tag publication.
+    No registry, automatic replay/rollback/cleanup or historical backlog activation.
 
 ## Operator decisions needed
 

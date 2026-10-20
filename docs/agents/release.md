@@ -25,13 +25,16 @@ only to a separately selected supported native profile. Native tools positively
 validate source/current/target layout and refuse container/mixed/unknown releases.
 Their dry-run is static intent, not acceptance. No implementation task grants
 release/deployment authority. Earlier permission for final feature-branch pushes
-belonged to a historical documentation task and does not carry forward. Current
-instructions authorize scoped source work and isolated validation, plus explicitly
-requested final green implementation-branch pushes to Forgejo and GitHub after
-commit. Push only that branch, preserving incremental commits, without tags or
-force. No merge, tag, deployment, registry operation, production change or live/NAS
-workload is authorized.
-The operational procedures below require a separately authorized release window.
+belonged to a historical documentation task and does not carry forward. Later
+2026-10-20 user instructions explicitly authorize merging the repair to main, pushing main to Forgejo/GitHub, then replacing this host's existing guarded
+rootless deployment. The main fast-forward and both pushes at cdc35a4 are complete.
+Prepare a new immutable0.2.2 candidate from clean committed source, preserve the
+old0.2.1 deployment/backup and all original locks/state/guards, and record actual
+local acceptance before the required local deployed tag. Do not infer remote tag
+publication, registry operations, NAS writes/workloads, other-host changes, guard
+release for execution, schedule enablement or forced cleanup. This newer scoped
+maintenance instruction supplies the release window; historical authority below
+remains history, and every existing drain/hardening/archive gate still applies.
 
 ## Historical data-preserving local release scope (OPS-014, 2026-10-18)
 

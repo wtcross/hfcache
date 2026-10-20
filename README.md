@@ -71,21 +71,25 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
-The package version is **0.2.1**. The recorded local deployment uses pinned UBI
-images and a worker-created private listener with readiness before API startup.
-Its annotated `v0.2.1` identifies deployment commit `156506f`; deployed application
-source is `4088994`. The archive remains read-only, legacy writers masked and
-verification scheduling disabled. Offline fixtures do not establish live NAS or
-other-host acceptance. See [recorded deployment scope](docs/deployment-status.md)
-and [release notes](CHANGELOG.md), including the private-worker connection
-limitation that returns on rollback to 0.2.0.
+The source package is the **0.2.2 release candidate**. Its clean release build,
+local deployment acceptance and annotated release tag are pending. This candidate
+combines configured tags and evidence-backed discovery with Cockpit error handling,
+original-operation recovery, guarded configuration validation/confirmation, manual
+REST jobs and report/read views.
 
-Newer source repairs Cockpit error handling, original-operation recovery,
-configuration validation/confirmation, manual REST jobs and report/read views.
+The recorded local deployment remains **0.2.1**, using pinned UBI images and a
+worker-created private listener with readiness before API startup. Its annotated
+`v0.2.1` identifies deployment commit `156506f`; deployed application source is
+`4088994`. The archive remains read-only, legacy writers masked and verification
+scheduling disabled. See [recorded deployment scope](docs/deployment-status.md)
+and [release notes](CHANGELOG.md), including guarded rollback requirements and the
+private-worker connection limitation that returns on rollback to 0.2.0.
+
 Installed-wheel/private-socket tests and isolated Cockpit/PAM/rootless acceptance
-passed, including bridge interruption and guarded exact configuration installation.
-These repairs have not changed the recorded deployment; verification of the original installed symptom and live
-NAS/workload acceptance remain separate.
+passed for the repair source, including bridge interruption and exact guarded
+configuration installation. That evidence does not establish the candidate's
+installed artifact identities or resolve the original installed symptom. Live
+NAS/workload and other-host acceptance remain separate.
 
 ## Repository layout
 

@@ -155,3 +155,20 @@ Actual installed API-container PROBE/notify/TLS/drain in
 [OPS-018](plans/tasks/ops-018-container-worker-rollout.md) closes connection
 hold 22 for clean 0.2.1 UBI artifacts. Every NAS-ro/guard/writer-mask/state/hardening
 boundary remains; no NAS I/O/job or other-host/remote action is authorized.
+
+## Later local replacement authorization (2026-10-20)
+
+The user subsequently explicitly requests merge to main and pushes to both remotes,
+then deployment on this host in place of the existing release. This narrowly
+supersedes earlier no-host-operation language for the reviewed local replacement;
+it does not renew NAS workload or other-host authority. The completed repair is
+merged/published atcdc35a4; a separate active rollout plan prepares immutable0.2.2,
+while selected0.2.1 remains the observed running deployment until actual switch.
+Keep NASro, original independent guard/locks, masks, disabled calendars, stores,
+handles, candidate/backup and secret separation. Back up required configuration
+locally/private before effects; no automatic replay/rollback/cleanup after uncertainty.
+Only root makes protected host changes, only after exact actual-executor drain and
+original-lock handoff; builders/gates run as login user with NAS shadowed. No image
+registry, forced termination, live/NAS workload, archive init or security weakening.
+The required deployed local tag follows actual acceptance and stays local unless
+publication is separately authorized. Completed plans/history remain unchanged.

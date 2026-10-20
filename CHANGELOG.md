@@ -4,7 +4,12 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
-## Unreleased
+## 0.2.2 — release candidate, deployment pending
+
+This candidate combines the changes below since deployed source `4088994`.
+The recorded local installation remains 0.2.1. Clean release artifacts, installed
+acceptance and an annotated `v0.2.2` tag are pending; source and disposable test
+results do not establish deployment or clear existing NAS/workload holds.
 
 - Cockpit preserves classified bridge, launcher, API and domain failures, plus
   original operation keys and IDs across tab changes and interrupted observation.
@@ -24,22 +29,25 @@ rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
   end-of-message write from closing a valid response's socket prematurely.
 - Installed-wheel/private-socket and actual isolated Cockpit/PAM/rootless checks
   passed, including exact configuration installation/confirmation and read-only
-  reconciliation after bridge interruption. These source repairs do not change
-  application metadata 0.2.1, deploy or tag a release, clear workload holds or
-  prove the original installed symptom fixed.
+  reconciliation after bridge interruption. These repair-source checks do not
+  prove the new candidate installed or the original installed symptom fixed.
 - Optional normalized configuration tags, Cockpit authoring and current versus
   last-observed provenance are separate from operational policy and immutable
   publication/integrity identity.
 - Local search, facets, exact catalog detail and variant pages share bounded
   REST, base-client/CLI and five additional read-only MCP tools. Technical
   predicates match one supported complete primary variant; unknown coverage
-  remains explicit. Static GGUF/AWQ/GPTQ and dataset declarations execute no code.
+  remains explicit. MCP now exposes fourteen read-only tools. Static
+  GGUF/AWQ/GPTQ and dataset declarations execute no code.
 - Sync/repair capture and writer-only keyed offline refresh store independently
   atomic supplemental records. Reads never fetch, open model payloads or refresh.
 - Old durable evidence stays byte-compatible. New tags, directory and refresh
   kinds have observed target-specific compatibility limits; retain backup/state/
   handles and actual executor drain. See [discovery rollback](docs/discovery.md#guarded-rollback-and-backup).
-  This source feature has not been deployed or release-tagged.
+  In particular, the deployed 0.2.1 binary refuses explicit configuration tags
+  and its strict client refuses new refresh routes. Preserve a target-compatible
+  configuration and compatible observation of retained new operation kinds;
+  rollback never authorizes deleting supplemental metadata or receipts.
 
 ## 0.2.1 — 2026-10-18, local release with workload holds
 
