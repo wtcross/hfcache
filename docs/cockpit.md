@@ -59,9 +59,40 @@ write/install evidence and use only guarded exact-content read reconciliation.
 Keep operation handles outside unmounted tabs. Capture a validated original key
 before transmission; store only bounded nonsecret, authority-scoped session
 recovery metadata. Unresolved submission or Apply blocks another submission.
+Before starting any keyed client process, record the generated original key in a
+bounded validated session registry outside Tabs, then pass it with the existing
+global CLI option. Storage failure/corruption or any unresolved operation on the
+same host refuses another submission. Keep at most 32 records in 64 KiB, evicting
+only terminal metadata; unresolved records cannot be evicted to make room.
+Retain only safe action/route, key/ID, timestamps, state and validated
+host/fixed-client-profile/endpoint/credential-class/archive scope metadata; never
+TOML, tokens, raw logs, arbitrary argv or response bodies. Explicit client authority
+metadata derives from validated management settings and authenticated read
+responses, not a browser-selected endpoint. Unknown/changed authority cannot
+resume saved observations or silently rebind an unresolved record.
+
+The fixed client exposes `client describe`, an authenticated read-only seven-field
+metadata Envelope. It supplies public fingerprints, endpoint, credential class,
+archive UUID (possibly unconfirmed) and diagnostic server instance identity.
+Every submission and original-handle lookup refreshes this evidence; the actual
+CLI invocation compares the original `--expected-client-scope` fingerprint using
+its own freshly authenticated settings/capability/version observations before
+POST or handle GET. The option compares authority; it never selects a target or
+credential. Server restart alone does not change an otherwise identical scope.
+Unknown archive UUID blocks jobs and saved recovery. Plain validation remains a
+synchronous read and creates no operation record.
+
 Recover through authenticated lookup/wait of the original operation; missing
 history does not prove nonexecution. No replay, cancel or cleanup follows an
 uncertain response.
+Restored summaries are metadata, never terminal result bodies, configuration
+proposals or Apply readiness. A restored terminal summary is unverified: only
+authenticated original observation can confirm it and unblock another submission.
+Missing history keeps that uncertainty; valid-looking browser metadata alone
+cannot resolve an operation. The root recovery panel survives tab unmounts.
+Browser-session storage may disappear when the session ends; keep the displayed
+original handles for operator review. A quota failure after transmission retains
+the known key/ID in application memory and visibly blocks further submissions.
 
 Manual full REST jobs and REST report browsing require the explicit, separately
 implemented amendments to CP-04 and CP-01/09. Until those amendments and adapters

@@ -49,6 +49,41 @@ not execution. Keep the displayed idempotency key and operation ID: use
 reconnect. Timeout, missing history and interrupted execution are distinct
 classified uncertainty; never submit a new key or run recovery automatically.
 
+**Original operations** stays above the tabs. For keyed commands submitted through
+the page's API client, it records the original key in this browser tab's session
+storage before starting the submit process. Tab changes and reloads preserve
+validated records; closing the browser session or clearing storage can lose them.
+An unresolved record blocks another keyed submission on that host. Use **Look up
+original key**, then **Observe original operation** when its ID is known. These
+controls authenticate and observe the original work; neither resubmits nor cancels
+it. Missing or expired history preserves uncertainty and the original handles.
+After reload, retained terminal summaries are unverified metadata. Observe the
+original authenticated result before another submission; a stored success label
+alone cannot resolve uncertainty or restore Apply readiness.
+
+Recovery records are limited to 32 records and 64 KiB of safe metadata: action,
+key/ID, authority scope and a terminal summary. They contain no tokens, raw
+configuration, request bodies or logs. Corrupt, unavailable or full storage blocks
+submissions. Unresolved records are never evicted; only conclusive terminal
+summaries can leave storage when capacity requires room. If a later storage write
+fails, retain the identities still displayed in memory before closing the page.
+
+The authority display comes from authenticated `client describe`, not a browser
+endpoint setting. It shows the selected profile fingerprint, endpoint, credential
+class, archive UUID and current server instance. An unconfirmed UUID stays
+unconfirmed and blocks job submission and saved observation. A changed host,
+profile, endpoint, credential class or archive identity blocks following old
+handles. The client rechecks the expected authority in the same process before
+submission or lookup/wait. A server restart alone does not replace an original
+operation's identity when its validated authority still matches.
+
+Copy recovery commands from **Original operations** on the recorded host. They
+use the fixed rootless launcher, service identity, selected client settings/socket
+and `--expected-client-scope`; quoted handles follow `--`, so a leading `-` or `~`
+remains argument data. Do not replace a failed lookup with a new submission key.
+The installed full-service controls above remain separate from this page's keyed
+client registry.
+
 Progress is bounded sequenced operation information, not invented checkpoint or
 byte completion. A strict terminal Envelope determines the outcome. The page
 retains validated recovery handles independently of dropped display lines and
@@ -146,7 +181,8 @@ installed-authority compatibility. Compatible planning/installed validation use
 the daemon's authorized Hub source; the transient client receives only the named
 API credential `hfcache.api`. Install/rotate Hub credentials through the operator
 runbook, never through this page. Candidate planning can contact the Hub and
-creates receipt history; validation itself resolves no credential or receipt. API credentials are separate and never enter
+creates receipt history; candidate syntax validation resolves no Hub credential
+and creates no receipt. API credentials are separate and never enter
 browser state or command arguments.
 
 - **Form mode** renders the schema: repository rows (id, type, revision —
@@ -205,6 +241,10 @@ cleans up. A full page reload does not adopt a pre-existing candidate by its nam
 A fresh installed-file read alone cannot resolve uncertainty.
 Loading the editor itself takes the root config flock and checks bounded no-follow
 file access and ownership/mode; it never reads a credential source.
+Candidate readiness, confirmation and acknowledgement also require the captured
+client authority and administrative session to remain current. A changed or
+unavailable authority invalidates readiness while preserving the draft, original
+preview handle and uncertainty; it does not adopt a result from another endpoint.
 
 New policy affects future admissions. Existing operations retain their admitted
 snapshot/fingerprint; stale queued mutations refuse safely under the server lock.
@@ -262,9 +302,14 @@ authority for what a run did; the journal says what happened along the way.
 run** first: previews read archive metadata and persist API receipt/event/result
 history. They remain subject to access/acceptance restrictions and grant no later
 apply authority. **Apply** stays disabled until a dry run in this
-session came back clean; it still resolves fresh locked domain proof, and its confirmation states the operation's own
+session came back clean under the same current client authority and connection;
+it still resolves fresh locked domain proof, and its confirmation states the operation's own
 guarantee — a failed prune leaves more data rather than less; recovery is
 idempotent, never guesses, and never deletes data it cannot explain.
+Confirming Apply consumes that preview synchronously. A submit/observation error
+blocks a second Apply even when no applied Envelope arrived and the old dry run
+was successful. Preserve the original record and observe it before another
+deliberate submission; switching tabs does not clear this registry restriction.
 Blocked recovery states render with their `HFTXN` codes; they stop every
 mutating command until resolved.
 

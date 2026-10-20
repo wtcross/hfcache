@@ -29,7 +29,7 @@ import {
     confirmInstalledCandidate, inspectCandidate, installCandidate, planCandidate, readInstalledConfig, removeCandidate,
     validateCandidate, writeCandidate,
 } from './api/config';
-import { EnvelopeAlert, Loading, QueryError, Sha } from './components';
+import { EnvelopeAlert, Loading, QueryError, RecoveryHandles, Sha } from './components';
 import {
     ConfigDocument, extractFieldPath, FieldSpec, getField, GLOBAL_FIELDS, parseConfig,
     RepositoryEntry, serializeConfig, setField, validateRevisionReference,
@@ -37,6 +37,11 @@ import {
 } from './lib/config';
 import { validateCandidateText } from './lib/candidate-guard';
 import { connectionSnapshot } from './api/connection';
+import { readClientAuthority } from './api/hfcache';
+import { currentOperationHost, operationRegistry, operationViews, submissionBlocked } from './api/operations';
+import { OperationAuthorityError } from './lib/operation-authority';
+import { sameOperationScope } from './lib/operation-registry';
+import type { OperationScope } from './lib/operation-registry';
 import { ConfigurationSession, configurationSession, ConfigurationState } from './lib/configuration-session';
 import {
     ConfigurationEvidence, ConfigurationPipelineError, ConfigurationPorts, confirmConfiguration,
@@ -44,7 +49,7 @@ import {
     prepareConfiguration, UNCONFIRMED_INSTALLATION,
 } from './lib/config-pipeline';
 import { classifyEnvelope, Envelope } from './lib/envelope';
-import { useConnection } from './hooks';
+import { useConnection, useOperations } from './hooks';
 import { formatBytes, shortSha } from './lib/format';
 
 type FieldErrors = Record<string, string>;
@@ -315,13 +320,13 @@ const PlanPreview = ({ envelope }: { envelope: Envelope }) => {
     );
 };
 
-const ports: ConfigurationPorts = {
+const ports = (scope: Readonly<OperationScope>): ConfigurationPorts => ({
     write: writeCandidate,
-    validate: validateCandidate,
-    preview: planCandidate,
+    validate: guard => validateCandidate(guard, scope.archiveId === null ? undefined : scope.authorityFingerprint),
+    preview: (selectors, guard, notice) => planCandidate(selectors, guard, notice, scope),
     install: installCandidate,
-    confirm: confirmInstalledCandidate,
-};
+    confirm: expected => confirmInstalledCandidate(expected, scope.authorityFingerprint),
+});
 
 function sessionBusy(state: ConfigurationState): boolean {
     return state.loading || ['checking', 'installing', 'confirming', 'inspecting', 'discarding'].includes(state.phase);
@@ -367,14 +372,25 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
         fingerprint, pipelineError, preparation, diskGuard, connectionChanged,
     } = state;
     const connection = useConnection();
+    const operations = useOperations();
     const unconfirmed = state.uncertainty === 'install';
     const busy = sessionBusy(state);
-    const fresh = connection.administrative && state.generation === connection.generation;
+    const currentAuthority = operations.views.authority.scope;
+    const authorityFresh = operations.views.authority.generation === connection.generation && currentAuthority !== null &&
+        state.authority !== null && sameOperationScope(state.authority, currentAuthority);
+    const fresh = connection.administrative && state.generation === connection.generation && authorityFresh;
     const inspectionFresh = connection.administrative && state.inspectedGeneration === connection.generation;
     const stagedMatches = inspectionFresh && state.inspection?.candidate === 'matching' &&
         state.inspection.installedBase === 'matching';
     const installedMatches = inspectionFresh && state.inspection?.installedCandidate === 'matching' &&
         state.inspection.backupBase === 'matching';
+    const authorityIsCurrent = (scope: Readonly<OperationScope> | null): boolean => {
+        const latest = operationViews().authority;
+        const active = connectionSnapshot();
+        return scope !== null && active.administrative && latest.generation === active.generation &&
+            !latest.loading && latest.error === null && latest.scope !== null &&
+            scope.host === currentOperationHost() && sameOperationScope(scope, latest.scope);
+    };
     const setMode = (value: 'form' | 'text') => session.patch({ mode: value });
     const setDocument = (value: ConfigDocument) => session.patch({ document: value });
     const setPipelineError = () => session.patch({ localError: 'Fix the document before changing editing mode.' });
@@ -394,11 +410,29 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
                 connectionChanged: true,
                 inspection: null,
                 inspectedGeneration: null,
+                confirmed: false,
                 ...(previous.phase === 'ready' ? { phase: 'idle' } : {}),
                 ...(previous.diskGuard && previous.uncertainty === null ? { uncertainty: 'candidate' } : {})
             });
         }
     }, [connection.generation, session]);
+
+    useEffect(() => {
+        const current = session.snapshot();
+        const recovered = operations.registry.records.find(record => record.key === current.previewKey);
+        if (current.previewUncertain && recovered?.state === 'terminal')
+            session.patch({ previewUncertain: false });
+        const authority = operations.views.authority;
+        const matches = connection.administrative && authority.generation === connection.generation &&
+            !authority.loading && authority.error === null && authority.scope !== null && current.authority !== null &&
+            current.authority.host === currentOperationHost() && sameOperationScope(current.authority, authority.scope);
+        if (!matches && (current.phase === 'ready' || current.confirmed))
+            session.patch({
+                ...(current.phase === 'ready' ? { phase: 'idle', preparation: null } : {}),
+                confirmed: false,
+                connectionChanged: true,
+            });
+    }, [operations.registry.records, operations.views.authority, connection.administrative, connection.generation, session]);
 
     useEffect(() => {
         if (session.snapshot().initialized)
@@ -430,6 +464,8 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
     const onEvidence = (event: ConfigurationEvidence) => {
         const current = session.snapshot();
         const update: Partial<typeof current> = { evidence: [...current.evidence, event].slice(-32) };
+        if (event.status === 'notice' && event.notice.kind === 'key')
+            update.previewKey = event.notice.key;
         if (event.status === 'result') {
             if (event.stage === 'candidate-validate') {
                 update.validation = event.envelope;
@@ -462,7 +498,7 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
                 : writeUncertain || failure instanceof PreparationSuperseded
                     ? 'candidate'
                     : current.uncertainty,
-            previewUncertain: current.previewUncertain || pipeline?.stage === 'candidate-preview',
+            previewUncertain: current.previewUncertain || (pipeline?.stage === 'candidate-preview' && current.previewKey !== null),
             inspection: null,
             inspectedGeneration: null,
             confirmed: false
@@ -471,7 +507,7 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
     const check = (reuse = false) => {
         const current = session.snapshot();
         if (sessionBusy(current) || !connectionSnapshot().administrative || current.installedText === null ||
-            current.uncertainty === 'install' || current.previewUncertain)
+            current.uncertainty === 'install' || current.previewUncertain || (!reuse && submissionBlocked()))
             return;
         if (reuse
             ? !stagedMatches || current.inspectedGeneration !== connectionSnapshot().generation ||
@@ -497,6 +533,12 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
         const isCurrent = () => session.snapshot().draftRevision === capturedRevision &&
             connectionSnapshot().generation === capturedGeneration && connectionSnapshot().administrative;
         // Retain exact bytes BEFORE transmission; a lost write acknowledgement does not lose ownership evidence.
+        const recovered = reuse && current.previewKey
+            ? operations.views.records.get(current.previewKey)?.envelope
+            : null;
+        const originalPreview = reuse && current.previewKey
+            ? operationRegistry.snapshot().records.find(record => record.key === current.previewKey)
+            : null;
         session.patch({
             diskGuard: guard,
             guardRevision: capturedRevision,
@@ -518,26 +560,55 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
             connectionChanged: false,
             confirmed: false
         });
-        prepareConfiguration(guard, ports, isCurrent, { skipWrite: reuse, onEvidence }).then(prepared => {
+        let confirmedScope: Readonly<OperationScope> | null = null;
+        const flow = async () => {
+            const scope = await readClientAuthority();
+            confirmedScope = scope;
+            if (reuse && current.previewKey && (!originalPreview || originalPreview.state !== 'terminal' || !recovered || !current.authority ||
+                !sameOperationScope(originalPreview.scope, scope) || !sameOperationScope(current.authority, scope)))
+                throw new OperationAuthorityError('changed');
+            session.patch({ authority: scope, previewKey: originalPreview?.key ?? null });
+            const scopedPorts = ports(scope);
+            return prepareConfiguration(guard, recovered
+                ? { ...scopedPorts, preview: async () => recovered }
+                : scopedPorts, isCurrent, { skipWrite: reuse, onEvidence });
+        };
+        flow().then(prepared => {
             if (!isCurrent()) {
                 failed(new PreparationSuperseded());
                 return;
             }
             session.patch({
-                preparation: prepared,
-                proposal: prepared.proposal,
-                phase: prepared.proposal === null ? 'idle' : 'ready'
+                preparation: confirmedScope?.archiveId === null && prepared.proposal !== null
+                    ? { ...prepared, proposal: null, blocked: 'authority' }
+                    : prepared,
+                proposal: confirmedScope?.archiveId === null ? null : prepared.proposal,
+                phase: confirmedScope?.archiveId === null || prepared.proposal === null ? 'idle' : 'ready'
             });
         })
-                .catch(failure => failed(failure));
+                .catch(failure => {
+                    if (!reuse && !session.snapshot().evidence.some(event => event.stage === 'candidate-write' && event.status === 'started'))
+                        session.patch({ phase: 'idle', diskGuard: null, pipelineError: failure as Error });
+                    else {
+                        failed(failure);
+                        if (reuse)
+                            session.patch({
+                                pipelineError: current.pipelineError ?? failure as Error,
+                                reconciliationError: failure as Error,
+                                uncertainty: current.uncertainty ?? 'candidate'
+                            });
+                    }
+                });
     };
     const install = () => {
         const current = session.snapshot();
         const proposal = current.proposal;
         if (!proposal || current.phase !== 'ready' || !connectionSnapshot().administrative ||
-            current.generation !== connectionSnapshot().generation || current.uncertainty !== null)
+            current.generation !== connectionSnapshot().generation || current.uncertainty !== null || submissionBlocked())
             return;
         const generation = connectionSnapshot().generation;
+        if (!current.authority || current.authority.archiveId === null)
+            return;
         session.patch({
             phase: 'installing',
             pipelineError: null,
@@ -545,11 +616,19 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
             inspectedGeneration: null,
             confirmed: false
         });
-        installConfiguration(proposal, ports, {
-            onEvidence,
-            isCurrent: () =>
-                connectionSnapshot().administrative && connectionSnapshot().generation === generation
-        }).then(confirmed => {
+        let transmitted = false;
+        const flow = async () => {
+            const scope = await readClientAuthority();
+            if (!current.authority || !sameOperationScope(current.authority, scope))
+                throw new OperationAuthorityError('changed');
+            transmitted = true;
+            return installConfiguration(proposal, ports(scope), {
+                onEvidence,
+                isCurrent: () =>
+                    connectionSnapshot().administrative && connectionSnapshot().generation === generation
+            });
+        };
+        flow().then(confirmed => {
             session.patch({
                 fingerprint: confirmed.fingerprint,
                 confirmation: confirmed.envelope,
@@ -561,7 +640,17 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
                 installedText: proposal.guard.candidateContent
             });
         })
-                .catch(failure => failed(failure, true));
+                .catch(failure => {
+                    if (transmitted) failed(failure, true);
+                    else session.patch({
+                        phase: 'idle',
+                        preparation: null,
+                        pipelineError: failure as Error,
+                        uncertainty: 'candidate',
+                        inspection: null,
+                        inspectedGeneration: null
+                    });
+                });
     };
     const inspect = () => {
         const current = session.snapshot();
@@ -592,12 +681,22 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
             !connectionSnapshot().administrative || !current.proposal || current.uncertainty !== 'install')
             return;
         const generation = connectionSnapshot().generation;
+        if (!current.authority)
+            return;
         session.patch({ phase: 'confirming', reconciliationError: null });
-        confirmConfiguration(current.proposal, ports, {
-            onEvidence,
-            isCurrent: () =>
-                connectionSnapshot().administrative && connectionSnapshot().generation === generation
-        }).then(result => {
+        const originalAuthority = current.authority;
+        const proposal = current.proposal;
+        const confirmation = async () => {
+            const scope = await readClientAuthority();
+            if (!sameOperationScope(originalAuthority, scope) || !authorityIsCurrent(originalAuthority) ||
+                connectionSnapshot().generation !== generation)
+                throw new OperationAuthorityError('changed');
+            return confirmConfiguration(proposal, ports(originalAuthority), {
+                onEvidence,
+                isCurrent: () => authorityIsCurrent(originalAuthority) && connectionSnapshot().generation === generation
+            });
+        };
+        confirmation().then(result => {
             session.patch({
                 phase: 'idle',
                 confirmed: true,
@@ -610,6 +709,7 @@ export const Configuration = ({ session = configurationSession }: { session?: Co
     const acknowledge = () => {
         const current = session.snapshot();
         if (!current.confirmed || !current.diskGuard || !installedMatches ||
+            !authorityIsCurrent(current.authority) ||
             current.inspection?.installedCandidate !== 'matching' || current.inspection.backupBase !== 'matching' || sessionBusy(current) ||
             current.inspectedGeneration !== connectionSnapshot().generation || !connectionSnapshot().administrative)
             return;
@@ -752,7 +852,7 @@ variant="link" isDisabled={!connection.administrative}
                                         <FlexItem>
                                             <Button
                                                 variant="primary"
-                                                isDisabled={busy || !connection.administrative || diskGuard !== null || state.uncertainty !== null}
+                                                isDisabled={busy || operations.blocked || !connection.administrative || diskGuard !== null || state.uncertainty !== null}
                                                 onClick={() => check()}
                                             >
                                                 Validate candidate
@@ -823,13 +923,20 @@ isDisabled={busy || state.previewUncertain || state.guardRevision !== state.draf
                                         {installedMatches && unconfirmed && state.proposal &&
                                             <Button isDisabled={busy} onClick={confirm}>Confirm captured installation</Button>}
                                         {state.confirmed && installedMatches && unconfirmed &&
-                                            <Button isDisabled={busy} onClick={acknowledge}>Acknowledge confirmed installation</Button>}
+                                            <Button isDisabled={busy || !authorityFresh} onClick={acknowledge}>Acknowledge confirmed installation</Button>}
                                     </StackItem>}
                                 {state.previewUncertain &&
                                     <StackItem>
                                         <Alert variant="warning" isInline title="Sizing observation is uncertain">
                                             Preserve its original operation handles and observe that operation before another sizing submission.
                                         </Alert>
+                                    </StackItem>}
+                                {state.previewKey &&
+                                    <StackItem>
+                                        <RecoveryHandles
+evidence={{ idempotencyKey: state.previewKey, workMayContinue: state.previewUncertain }}
+                                            expectedClientScope={state.authority?.authorityFingerprint}
+                                        />
                                     </StackItem>}
                                 {state.evidence.length > 0 &&
                                     <StackItem>

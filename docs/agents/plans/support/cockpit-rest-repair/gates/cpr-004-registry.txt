@@ -1,0 +1,172 @@
+CPR-004 bounded registry / independent runner identity evidence (2026-10-19)
+
+Pure and controlled-browser boundary work only. No production service, archive,
+NAS, authentication bypass, API POST, process cancellation, or deployment used.
+
+Core files:
+  cockpit/src/lib/operation-registry.ts
+  cockpit/test/operation-registry.test.ts
+  cockpit/src/lib/runner.ts
+  cockpit/test/runner.test.ts
+
+Runner behavioral RED/GREEN (cwd repository):
+  rtk proxy node --input-type=module -
+Inline probe loaded git show 65b12d9:cockpit/src/lib/runner.ts into an owned
+temporary directory, resolving its unchanged pure dependencies from the current
+library. The same injected, nonexecuting process assertions ran on old/current:
+  V22 expected pre-send key survives failure before any CLI notice.
+  V24 independent identity callback still receives key/ID after display abort.
+  V32 a late differing operation ID refuses apparent terminal success.
+  V31 success without required original receipt identities is refused.
+Observed: CPR-003 failed all 4 assertions; working tree failed 0/4. Probe exited
+0; all owned temporary files were removed. No missing-interface build failure
+was substituted for a behavioral failure.
+
+Late identity preservation RED/GREEN (cwd cockpit):
+  rtk proxy node --test --test-name-pattern='late new ID' test/operation-registry.test.ts
+Observed RED: 1 failed, exit 1 before correction. A late ID changed an already
+terminal admission refusal to accepted and erased its summary.
+Observed GREEN: 1 passed, exit 0. The contradiction now retains the original
+terminal summary and original null ID, marks conflict, and blocks another action.
+
+Final core GREEN (cwd cockpit):
+  rtk proxy node --test --test-reporter=dot test/operation-registry.test.ts test/runner.test.ts
+Observed: 102 successful test dots; exit 0, no failures/skips.
+  rtk proxy ./node_modules/.bin/eslint src/lib/operation-registry.ts test/operation-registry.test.ts src/lib/runner.ts test/runner.test.ts test/cockpit-fixture.ts test/browser.mjs
+Observed: exit 0, no diagnostics.
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+Observed: exit 0, no diagnostics.
+
+Coverage includes V22-34/V51: before-transmission persistence, before-notice
+interruption, immutable snapshots and reload, unavailable/changed/corrupt storage,
+strict bounded safe records, unconfirmed/changed authority and preserved original
+handles, same-host repeat guards, authentic terminal classifications, missing
+history, conflicting identities, leading-option keys, and independent identity
+capture despite abort/display failure/progress bounds. No raw argv, TOML, token,
+diagnostic prose, response body or arbitrary error message is persisted.
+
+Capacity is at most 32 records / 64 KiB. New prepares reserve 512 bytes per
+unresolved record for later identity/summary growth. Only the oldest conclusively
+terminal records may be evicted, and only when a new prepare needs capacity;
+unresolved/conflicted records are never evicted. Storage changed after startup is
+preserved rather than overwritten. Newly learned identities remain in memory if
+persistence fails, and new submissions are blocked.
+
+The controlled browser boundary now records every invocation (invocations), with
+separate metadataProcesses and legacy nonmetadata processes indices. Fixed
+launcher/profile/socket/service identity and guarded script/stdin rules remain
+validated. Authenticated client description is simulated with seven safe fields;
+metadata can be automatic, manually controlled, failed or changed by the fixture.
+This is not actual CLI/Unix-socket or Cockpit/PAM/rootless runtime acceptance.
+Those layers and the full package gate are recorded independently by the owner.
+
+Keyed UI guards in the same CPR-004 package:
+Doctor (both modes), selected sync (including its confirmation portal), and
+revision verification now subscribe to the global unresolved-operation guard.
+Handlers recheck current submission/admin state, use a synchronous local guard
+against repeated clicks, and revalidate nonempty safe selection/revision input.
+Selected sync uses only a successful current status result. The existing full
+sync/full verification service controls and estimate/version/status reads remain
+unchanged for their separately scoped work. activity.tsx was reviewed and has no
+keyed submission call or button; its journal observation needed no change.
+  rtk proxy ./node_modules/.bin/eslint --fix src/sync.tsx src/verify.tsx src/dashboard.tsx src/activity.tsx test/cockpit-fixture.ts
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+  rtk git diff --check
+Observed: each exited 0. Meaningful rendered lifecycle/action regressions belong
+to the mounted browser cases, rather than duplicate pure copies of UI predicates.
+The fixed confirmation fixture now also permits the validated authority pin,
+while retaining its exact installed validation command/no candidate/no job key.
+
+Fixed launcher original-handle RED/GREEN (repository root):
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_script_help.py -k 'client_wrapper_forwards_original_handle or fixed_client_launcher_forwards_original_handle'
+Observed RED before either launcher change: 4 failed / 4 passed, exit 1. Both
+the Bash wrapper and the Python rootless launcher treated positional --help/-h
+after the CLI's -- delimiter as local help, losing the original lookup request.
+The same hermetic tests also retained leading-dash and literal-tilde handles.
+Both launchers now stop only their help scan at the first literal --; the fixed
+exec target, client role and every original argument remain unchanged.
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_script_help.py
+Observed GREEN: 43 passed, exit 0, including static help before -- and forwarding
+after --. Bash exec is intercepted by a test-only function; Python profile read
+is stubbed and os.execv captured. Neither installed helper nor Podman is started,
+and no production profile, credential, archive or mount is inspected.
+  rtk proxy uv run --locked ruff check scripts/container-service.py tests/unit/test_script_help.py
+  rtk proxy bash -n scripts/hfcache-client
+  rtk git diff --check
+Observed: exit 0 for each. Ruff formatting was applied to the test file.
+
+Already observed identity-conflict RED/GREEN (cwd cockpit):
+  rtk proxy node --test --test-name-pattern='already observed identity conflict' test/operation-registry.test.ts
+Observed RED: 1 failed, exit 1. After an independently observed wrong operation
+ID, complete() incorrectly threw an authority-change error despite identical
+authenticated scope. The regression covers both absent and previously retained
+terminal summaries, preserving the original accepted operation ID in both cases.
+The completion boundary now checks actual scope separately and returns an
+already-conflicted record unchanged. It binds no incoming outcome and writes no
+replacement metadata; genuine changed scope still throws the scope refusal.
+This lets the API retain its exact terminal Envelope alongside an identity
+conflict rather than replacing the classification with a fake authority error.
+  rtk proxy node --test --test-reporter=dot test/operation-registry.test.ts test/runner.test.ts
+Observed GREEN: 103 successful test dots, exit 0, no failures/skips.
+  rtk proxy ./node_modules/.bin/eslint src/lib/operation-registry.ts test/operation-registry.test.ts
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+  rtk git diff --check
+Observed: exit 0 for each after the test indentation correction.
+
+Restored terminal metadata RED/GREEN (cwd cockpit):
+  rtk proxy node --test --test-name-pattern='saved terminal metadata|valid forged terminal|missing history retains' test/operation-registry.test.ts
+Observed RED: 3 failed, exit 1. Saved genuine and forged-but-valid terminal
+summaries each cleared hasUnresolved after reload; a saved terminal summary also
+prevented missing-history observation from retaining an unresolved state.
+Restoration now demotes every terminal record to unverified, preserving original
+key/ID and safe summary without a startup write or runtime request. Observing,
+uncertain, missing and unavailable states may retain this untrusted metadata;
+another reload still blocks submission. Fresh matching authenticated terminal
+values resolve the record, independent of JSON field order. Contradictory fresh
+terminal evidence marks conflict without replacing prior handles/metadata. A
+missing/expired lookup never resolves the record. Capacity eviction continues
+to require authenticated terminal state; unverified records remain protected.
+  rtk proxy node --test --test-reporter=dot test/operation-registry.test.ts test/runner.test.ts
+Observed GREEN: 106 successful test dots, exit 0, no failures/skips.
+  rtk proxy ./node_modules/.bin/eslint src/lib/operation-registry.ts test/operation-registry.test.ts
+  rtk proxy ./node_modules/.bin/tsc --noEmit
+Observed: exit 0 for both, no diagnostics. Mounted fresh-module RED/GREEN is
+recorded separately by the component-test owner; no actual host runtime used.
+
+Actual full-gate Unix response failure diagnosis and RED/GREEN:
+The first final full gate failed test_unix_http.py's original truncated response
+case: 1 failed / 5098 passed / 42 deselected. Its actual classification was
+ReadError during initial response headers, not ReadTimeout. The product/test
+files were unchanged at that point. A focused file rerun initially passed all18,
+so investigation continued rather than claiming a flaky test or weakening it.
+Read-only repetition of the exact original truncated case in a private temporary
+Unix-socket fixture observed 98 pass / 2 ReadError in100 attempts; instrumented
+200 attempts observed185 pass / 15 ReadError. Immediate error inspection showed
+OSError9 (Bad file descriptor) before any response headers, with descriptor
+already -1 on entry to read(). Its close stack originated in write(). Further
+instrumentation captured an h11 empty EndOfMessage write (buffer length0) causing
+BrokenPipeError32 after the server had already sent and closed its response.
+Our stream closed the descriptor; HTTPCore suppressed the WriteError so it could
+read the existing response, then encountered EBADF. Installed locked HTTPCore's
+standard SyncStream.write explicitly treats an empty buffer as a no-op.
+
+The new deterministic real Unix-socket tests synchronize the original empty
+EndOfMessage write after the fixture has sent and fully closed its response.
+They assert the actual complete body or the original RemoteProtocolError for a
+truncated body, plus descriptor closure/count; no production launcher is used.
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_unix_http.py -k empty_request_body
+Observed RED before source change: both cases failed with ReadError, exit1.
+UnixStream.write now returns without touching the socket for an empty buffer,
+matching the upstream stream contract. Nonempty I/O error closure remains
+unchanged; the original complete/early-close/truncated/timeout fixtures and their
+assertions remain unchanged. No retry, replay or error reclassification added.
+  rtk proxy uv run --locked --extra server --extra mcp pytest -q tests/unit/test_unix_http.py
+Observed GREEN:20 passed, exit0. Read-only repetition of the original truncated
+case after the fix observed200/200 passed, exit0, including its strict original
+RemoteProtocolError assertion and50ms timeout.
+  rtk proxy uv run --locked ruff check src/hfcache/unix_http.py tests/unit/test_unix_http.py
+  rtk proxy uv run --locked ruff format --check src/hfcache/unix_http.py tests/unit/test_unix_http.py
+  rtk git diff --check
+Observed: exit0 for each. This proves the reproduced local Unix transport defect
+is repaired; it does not establish the cause of the original installed Cockpit
+reconnected symptom. Separate runtime and full-gate acceptance remain required.

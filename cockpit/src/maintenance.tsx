@@ -6,7 +6,7 @@
  * and repair as the one explicit republish (decision 89).
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
 import { Card, CardBody, CardTitle } from "@patternfly/react-core/dist/esm/components/Card/index.js";
@@ -22,7 +22,11 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useObservationSignal, useOperationHandles, useConnection } from './hooks';
+import { useObservationSignal, useOperationHandles, useConnection, useOperations } from './hooks';
+import { operationRegistry, submissionBlocked } from './api/operations';
+import { connectionSnapshot } from './api/connection';
+import { sameOperationScope } from './lib/operation-registry';
+import type { OperationScope } from './lib/operation-registry';
 import { parseSelector, SelectorError } from './lib/command';
 import { classifyEnvelope, Envelope } from './lib/envelope';
 import { appendDisplayLine } from './lib/stream';
@@ -40,19 +44,42 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     const [confirming, setConfirming] = useState(false);
     const observationSignal = useObservationSignal();
     const connection = useConnection();
+    const operations = useOperations();
+    const submitted = useRef(false);
+    const consumed = useRef(false);
+    const dryRunKey = useRef<string | null>(null);
+    const [dryRunScope, setDryRunScope] = useState<Readonly<OperationScope> | null>(null);
+    const [dryRunGeneration, setDryRunGeneration] = useState<number | null>(null);
 
     const run = (apply: boolean) => {
-        if (!connection.administrative)
+        if (!connection.administrative || submitted.current || submissionBlocked() ||
+            (apply && (consumed.current || error !== null || dryRun === null || !dryRunScope ||
+                dryRunGeneration !== connectionSnapshot().generation || classifyEnvelope(dryRun) !== 'success')))
             return;
+        submitted.current = true;
+        if (apply)
+            consumed.current = true;
         const signal = observationSignal();
+        const generation = connectionSnapshot().generation;
         setConfirming(false);
         setBusy(true);
         setError(null);
         if (apply)
             setApplied(null);
-        else
+        else {
             setDryRun(null);
-        runHfcache([command, apply ? '--apply' : '--dry-run'], { signal })
+            setDryRunScope(null);
+            setDryRunGeneration(null);
+            dryRunKey.current = null;
+        }
+        runHfcache([command, apply ? '--apply' : '--dry-run'], {
+            signal,
+            ...(apply && dryRunScope ? { requiredScope: dryRunScope } : {}),
+            onNotice: notice => {
+                if (!apply && notice.kind === 'key')
+                    dryRunKey.current = notice.key;
+            },
+        })
                 .then(envelope => {
                     if (signal.aborted)
                         return;
@@ -61,13 +88,24 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
                     } else {
                         setDryRun(envelope);
                         setApplied(null);
+                        consumed.current = false;
+                        const original = operationRegistry.snapshot().records.find(record => record.key === dryRunKey.current);
+                        setDryRunScope(original?.scope ?? null);
+                        setDryRunGeneration(generation);
                     }
                 }, failure => { if (!signal.aborted) setError(failure as Error); })
-                .finally(() => { if (!signal.aborted) setBusy(false); });
+                .finally(() => {
+                    submitted.current = false;
+                    if (!signal.aborted) setBusy(false);
+                });
     };
 
-    const uncertain = [dryRun, applied].some(result => result !== null && classifyEnvelope(result) === 'observation');
-    const canApply = !uncertain && dryRun !== null && classifyEnvelope(dryRun) === 'success';
+    const uncertain = operations.blocked || error !== null ||
+        [dryRun, applied].some(result => result !== null && classifyEnvelope(result) === 'observation');
+    const previewFresh = dryRunGeneration === connection.generation && dryRunScope !== null &&
+        operations.views.authority.generation === connection.generation && operations.views.authority.scope !== null &&
+        sameOperationScope(dryRunScope, operations.views.authority.scope);
+    const canApply = !uncertain && previewFresh && !consumed.current && applied === null && dryRun !== null && classifyEnvelope(dryRun) === 'success';
 
     return (
         <Card>
@@ -123,7 +161,7 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
                     <ModalHeader title={`Apply ${command}`} />
                     <ModalBody>{applyWarning}</ModalBody>
                     <ModalFooter>
-                        <Button variant="danger" isDisabled={!connection.administrative || busy} onClick={() => run(true)}>{`Run ${command} --apply`}</Button>
+                        <Button variant="danger" isDisabled={!connection.administrative || busy || !canApply} onClick={() => run(true)}>{`Run ${command} --apply`}</Button>
                         <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
                     </ModalFooter>
                 </Modal>
@@ -142,6 +180,8 @@ const RepairCard = () => {
     const [error, setError] = useState<Error | null>(null);
     const observationSignal = useObservationSignal();
     const connection = useConnection();
+    const operations = useOperations();
+    const submitted = useRef(false);
     const { handles, reset: resetHandles, onNotice } = useOperationHandles();
 
     let validationError: string | null = null;
@@ -156,8 +196,13 @@ const RepairCard = () => {
     }
 
     const run = () => {
-        if (!connection.administrative)
+        if (!connectionSnapshot().administrative || submitted.current || submissionBlocked())
             return;
+        try {
+            if (parseSelector(selectorText).sha === undefined)
+                return;
+        } catch { return }
+        submitted.current = true;
         const signal = observationSignal();
         setConfirming(false);
         setRunning(true);
@@ -175,10 +220,13 @@ const RepairCard = () => {
         })
                 .then(envelope => { if (!signal.aborted) setResult(envelope); },
                       failure => { if (!signal.aborted) setError(failure as Error); })
-                .finally(() => { if (!signal.aborted) setRunning(false); });
+                .finally(() => {
+                    submitted.current = false;
+                    if (!signal.aborted) setRunning(false);
+                });
     };
 
-    const uncertain = (result !== null && classifyEnvelope(result) === 'observation') ||
+    const uncertain = operations.blocked || (result !== null && classifyEnvelope(result) === 'observation') ||
         (error !== null && (handles.idempotencyKey !== undefined || handles.operationId !== undefined));
 
     return (
@@ -255,7 +303,7 @@ const RepairCard = () => {
                         considering recovery. The executor holds the single archive lock.
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="danger" isDisabled={!connection.administrative || running} onClick={run}>Start repair</Button>
+                        <Button variant="danger" isDisabled={!connection.administrative || running || uncertain || validationError !== null || selectorText === ''} onClick={run}>Start repair</Button>
                         <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
                     </ModalFooter>
                 </Modal>

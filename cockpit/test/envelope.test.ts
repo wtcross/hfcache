@@ -173,11 +173,17 @@ test('valid option-like keys remain positional data in reconnect commands', () =
             idempotency_key: '--help', operation_id: 'a'.repeat(32),
         }
     })));
+    const fixed = 'sudo systemd-run --quiet --wait --pipe --collect --property=User=hfcache ' +
+        '--property=Group=hfcache --property=UMask=0027 --property=MemoryHigh=4G -- ' +
+        '/usr/local/libexec/hfcache-client --client-config /etc/hfcache/client.toml ' +
+        '--api-socket /run/hfcache/api/api.sock --json';
     assert.deepEqual(operationCommands(evidence), {
-        lookup: "hfcache --json operations lookup -- '--help'",
-        wait: `hfcache --json operations wait -- ${'a'.repeat(32)}`,
+        lookup: fixed + " operations lookup -- '--help'",
+        wait: fixed + ` operations wait -- '${'a'.repeat(32)}'`,
     });
+    assert.equal(operationCommands(evidence, 'b'.repeat(64)).lookup,
+                 fixed + ` --expected-client-scope ${'b'.repeat(64)} operations lookup -- '--help'`);
     assert.deepEqual(operationCommands({ idempotencyKey: 'x; command', workMayContinue: false }), {});
     assert.equal(operationCommands({ idempotencyKey: '~root', workMayContinue: false }).lookup,
-                 "hfcache --json operations lookup -- '~root'");
+                 fixed + " operations lookup -- '~root'");
 });

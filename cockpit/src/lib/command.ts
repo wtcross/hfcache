@@ -14,7 +14,17 @@ export const SERVICE_IDENTITY = 'hfcache';
  * rootless client and its API-only mounted secret. The transient unit retains
  * the service identity; image, engine arguments and credentials stay outside
  * the page. A candidate is explicit local content for CLI upload. */
-export function hfcacheArgv(command: string[], options?: { config?: string }): string[] {
+export interface ClientCommandOptions {
+    config?: string;
+    idempotencyKey?: string;
+    expectedClientScope?: string;
+}
+
+export function hfcacheArgv(command: string[], options?: ClientCommandOptions): string[] {
+    if (options?.idempotencyKey !== undefined && !/^[A-Za-z0-9._~+-]{1,128}$/.test(options.idempotencyKey))
+        throw new Error('Invalid original operation key');
+    if (options?.expectedClientScope !== undefined && !/^[0-9a-f]{64}$/.test(options.expectedClientScope))
+        throw new Error('Invalid expected client authority');
     return [
         'systemd-run', '--quiet', '--wait', '--pipe', '--collect',
         `--property=User=${SERVICE_IDENTITY}`,
@@ -26,6 +36,8 @@ export function hfcacheArgv(command: string[], options?: { config?: string }): s
         '--client-config', HFCACHE_CLIENT_CONFIG,
         '--api-socket', HFCACHE_API_SOCKET,
         '--json',
+        ...(options?.idempotencyKey === undefined ? [] : ['--idempotency-key', options.idempotencyKey]),
+        ...(options?.expectedClientScope === undefined ? [] : ['--expected-client-scope', options.expectedClientScope]),
         ...(options?.config === undefined ? [] : ['--config', options.config]),
         ...command,
     ];

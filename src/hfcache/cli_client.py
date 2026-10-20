@@ -2,6 +2,7 @@
 
 import math
 import os
+import re
 import stat
 from typing import TYPE_CHECKING, Any
 
@@ -9,10 +10,12 @@ from hfcache.client import ApiClient
 from hfcache.client_config import resolve_client_config
 from hfcache.client_errors import (
     ClientConnectionError,
+    ClientMetadataError,
     ClientProtocolError,
     UncertainSubmission,
     retain_operation,
 )
+from hfcache.client_metadata import describe_client
 from hfcache.client_models import JOB_ROUTES
 from hfcache.errors import CodedError, ConfigurationError, HfcacheError, Problem
 from hfcache.identity import RepositoryIdentity, parse_selector
@@ -29,13 +32,29 @@ if TYPE_CHECKING:
 
 _MAX_CANDIDATE_BYTES = 1048576
 _MAX_WAIT_SECONDS = 86400
+_CLIENT_SCOPE = re.compile(r"[a-f0-9]{64}")
 
 
 def check_job_options(
-    options: GlobalOptions, *, submitting: bool = False, observing: bool = False
+    options: GlobalOptions,
+    *,
+    submitting: bool = False,
+    observing: bool = False,
+    scope_read: bool = False,
 ) -> None:
     """Reject job flags on reads/local commands before opening settings or credentials."""
     timeout = options.wait_timeout
+    scope = options.expected_client_scope
+    if scope is not None and (
+        not isinstance(scope, str)
+        or _CLIENT_SCOPE.fullmatch(scope) is None
+        or not (submitting or observing or scope_read)
+    ):
+        message = (
+            "--expected-client-scope requires a 64-hex authority pin "
+            "and remote validation, a job or operation observation"
+        )
+        raise ConfigurationError.single(message, code="HFARG002")
     if timeout is not None and (
         isinstance(timeout, bool)
         or not isinstance(timeout, int | float)
@@ -74,7 +93,24 @@ def connect(options: GlobalOptions, *, candidate: bool = False) -> ApiClient:
         api_socket=options.api_socket,
         api_token_file=options.api_token_file,
     )
-    return ApiClient(settings)
+    client = ApiClient(settings)
+    if options.expected_client_scope is not None:
+        try:
+            metadata = describe_client(client, options.client_config_path)
+            if not isinstance(metadata, dict):
+                raise ClientMetadataError(metadata)
+            if (
+                metadata["archive_id"] is None
+                or metadata["authority_fingerprint"] != options.expected_client_scope
+            ):
+                message = (
+                    "Selected API client authority does not match the expected known archive scope"
+                )
+                raise ConfigurationError.single(message, code="HFAPI017")
+        except HfcacheError:
+            client.close()
+            raise
+    return client
 
 
 def candidate_content(path: Path) -> str:

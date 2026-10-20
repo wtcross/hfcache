@@ -103,8 +103,16 @@ evidence without replaying host or API mutations. Raw rejection diagnostics are
 withheld. The [candidate reconciliation amendment](decision-134.md#implemented-candidate-reconciliation)
 retains original stage evidence, uses read-only exact inspection and requires
 explicit confirmation/acknowledgement after uncertain installation. Persistent
-operation recovery remains separate required work; no installed acceptance
-follows from these tests.
+operation recovery is now implemented by the
+[scoped registry amendment](decision-134.md#implemented-scoped-operation-recovery):
+persist the original key before transmission, scope saved handles to authenticated
+client authority, and compare that authority in the same CLI process before
+submission/lookup/wait. Unknown archive identity, stale preview/confirmation and
+corrupt or unavailable recovery storage fail closed. Only bounded nonsecret
+metadata survives tab/reload; no request/configuration bodies, tokens or logs are
+stored. Lookup/wait follows the original identity without replay or cancellation.
+No installed acceptance follows from these tests, and the full-service and
+direct-report exceptions remain current.
 
 
 ### Negative confirmation evidence (2026-10-19)

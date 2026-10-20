@@ -6,7 +6,7 @@
  * per-repository state table, doctor on demand, and version.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
 import { Card, CardBody, CardTitle } from "@patternfly/react-core/dist/esm/components/Card/index.js";
@@ -19,10 +19,12 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 import { ListingTable } from 'cockpit-components-table';
 
 import { runHfcache } from './api/hfcache';
+import { connectionSnapshot } from './api/connection';
+import { submissionBlocked } from './api/operations';
 import {
     EnabledLabel, EnvelopeAlert, IssueRows, Loading, QueryError, Sha, UnmanagedLabel, VerificationLabel,
 } from './components';
-import { useHfcache } from './hooks';
+import { useHfcache, useConnection, useOperations } from './hooks';
 import { Envelope } from './lib/envelope';
 import { formatBytes, formatHours, formatTimestamp, shortSha } from './lib/format';
 
@@ -215,17 +217,23 @@ const DOCTOR_COLORS: Record<string, 'green' | 'red' | 'grey'> = {
 };
 
 const DoctorCard = () => {
+    const connection = useConnection();
+    const operations = useOperations();
     const [running, setRunning] = useState(false);
     const [result, setResult] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
+    const submitted = useRef(false);
 
     const run = (readOnly: boolean) => {
+        if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative)
+            return;
+        submitted.current = true;
         setRunning(true);
         setError(null);
         const command = readOnly ? ['doctor', '--read-only'] : ['doctor'];
         runHfcache(command)
                 .then(envelope => setResult(envelope), failure => setError(failure as Error))
-                .finally(() => setRunning(false));
+                .finally(() => { submitted.current = false; setRunning(false) });
     };
 
     const checks = ((result?.data as { checks?: DoctorCheck[] } | undefined)?.checks) ?? [];
@@ -236,12 +244,12 @@ const DoctorCard = () => {
             <CardBody>
                 <Flex>
                     <FlexItem>
-                        <Button variant="secondary" isDisabled={running} onClick={() => run(true)}>
+                        <Button variant="secondary" isDisabled={running || operations.blocked || !connection.administrative} onClick={() => run(true)}>
                             Run checks (read-only)
                         </Button>
                     </FlexItem>
                     <FlexItem>
-                        <Button variant="secondary" isDisabled={running} onClick={() => run(false)}>
+                        <Button variant="secondary" isDisabled={running || operations.blocked || !connection.administrative} onClick={() => run(false)}>
                             Run full checks (write probes)
                         </Button>
                     </FlexItem>

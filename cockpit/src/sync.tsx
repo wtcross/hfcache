@@ -7,7 +7,7 @@
  * lifetime distinct from accepted execution (ADR122).
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { Alert } from "@patternfly/react-core/dist/esm/components/Alert/index.js";
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
@@ -26,11 +26,13 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 import { UnitActivity } from './activity';
 import { ScheduleEditor } from './schedule';
 import { runHfcacheStreaming } from './api/hfcache';
+import { connectionSnapshot } from './api/connection';
+import { submissionBlocked } from './api/operations';
 import { startUnit, stopUnit, SYNC_SERVICE, SYNC_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useHfcache, useObservationSignal, useOperationHandles, useUnitPoll, useConnection } from './hooks';
+import { useHfcache, useObservationSignal, useOperationHandles, useUnitPoll, useConnection, useOperations } from './hooks';
 import { classifyEnvelope, Envelope } from './lib/envelope';
-import { formatSelector } from './lib/command';
+import { formatSelector, parseSelector } from './lib/command';
 import { formatTimestamp } from './lib/format';
 import { appendDisplayLine } from './lib/stream';
 
@@ -198,6 +200,8 @@ interface StatusRepositoryLite {
 
 const SelectorSync = () => {
     const status = useHfcache(['status']);
+    const connection = useConnection();
+    const operations = useOperations();
     const [selected, setSelected] = useState<Record<string, boolean>>({});
     const [confirming, setConfirming] = useState(false);
     const [running, setRunning] = useState(false);
@@ -206,14 +210,33 @@ const SelectorSync = () => {
     const [error, setError] = useState<Error | null>(null);
     const { handles, reset: resetHandles, onNotice } = useOperationHandles();
     const observationSignal = useObservationSignal();
+    const submitted = useRef(false);
 
-    const repositories = (((status.envelope?.data ?? {}) as { repositories?: StatusRepositoryLite[] })
-            .repositories ?? []).filter(repository => repository.managed && repository.enabled);
+    const statusReady = !status.loading && status.error === null && status.envelope?.exit_code === 0;
+    const observed = ((status.envelope?.data ?? {}) as { repositories?: StatusRepositoryLite[] }).repositories;
+    const repositories = (statusReady && Array.isArray(observed) ? observed : []).filter(repository => {
+        if (!repository || repository.managed !== true || repository.enabled !== true)
+            return false;
+        try {
+            parseSelector(formatSelector({ type: repository.repository_type, id: repository.repository_id }));
+            return true;
+        } catch { return false }
+    });
     const selectors = repositories
             .map(repository => formatSelector({ type: repository.repository_type, id: repository.repository_id }))
             .filter(selector => selected[selector] === true);
 
     const run = () => {
+        if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative ||
+            !statusReady || selectors.length === 0)
+            return;
+        try {
+            for (const value of selectors) {
+                if (parseSelector(value).sha !== undefined)
+                    return;
+            }
+        } catch { return }
+        submitted.current = true;
         const signal = observationSignal();
         setConfirming(false);
         setRunning(true);
@@ -231,7 +254,10 @@ const SelectorSync = () => {
                           if (!signal.aborted)
                               setError(failure as Error);
                       })
-                .finally(() => { if (!signal.aborted) setRunning(false); });
+                .finally(() => {
+                    submitted.current = false;
+                    if (!signal.aborted) setRunning(false);
+                });
     };
 
     const uncertain = (result !== null && classifyEnvelope(result) === 'observation') ||
@@ -265,7 +291,8 @@ const SelectorSync = () => {
                     <StackItem>
                         <Button
                             variant="secondary"
-                            isDisabled={running || uncertain || selectors.length === 0}
+                            isDisabled={running || uncertain || operations.blocked || !connection.administrative ||
+                                !statusReady || selectors.length === 0}
                             onClick={() => setConfirming(true)}
                         >
                             Sync selected ({selectors.length})
@@ -297,6 +324,7 @@ const SelectorSync = () => {
                 <ConfirmModal
                     title={`Sync ${selectors.length} selected`}
                     confirmLabel="Start selector sync"
+                    disabled={running || uncertain || operations.blocked || !statusReady || selectors.length === 0}
                     isOpen={confirming}
                     onClose={() => setConfirming(false)}
                     onConfirm={run}

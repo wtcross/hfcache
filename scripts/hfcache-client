@@ -2,6 +2,10 @@
 # Decision127: fixed rootless API client; arguments follow the image boundary.
 set -euo pipefail
 for argument in "$@"; do
+  # Operation handles after the CLI delimiter are data, including --help/-h.
+  if [[ ${argument} == -- ]]; then
+    break
+  fi
   if [[ ${argument} == --help || ${argument} == -h ]]; then
   cat <<'HELP'
 Usage: /usr/local/libexec/hfcache-client CLI_ARGS...

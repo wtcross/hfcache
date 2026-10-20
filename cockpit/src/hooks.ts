@@ -14,9 +14,16 @@ import {
 } from './api/systemd';
 import { Envelope, OperationEvidence } from './lib/envelope';
 import { OperationNotice } from './lib/events';
+import { operationRegistry, operationViews, subscribeOperationViews, submissionBlocked } from './api/operations';
 
 export function useConnection() {
     return useSyncExternalStore(subscribeConnection, connectionSnapshot);
+}
+
+export function useOperations() {
+    const registry = useSyncExternalStore(operationRegistry.subscribe, operationRegistry.snapshot);
+    const views = useSyncExternalStore(subscribeOperationViews, operationViews);
+    return { registry, views, blocked: submissionBlocked() };
 }
 
 export interface EnvelopeQuery {

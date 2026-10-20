@@ -100,6 +100,47 @@ HFAPI020 lost-ack uncertainty preserve handles. Never submit a new key or run
 recovery merely because an observer stopped. For actual executor termination,
 follow [server drain and supervised recovery](../recovery.md#preserve-four-kinds-of-authority).
 
+Use **Original operations**, which remains outside tab lifetime and restores safe
+records from this browser tab's session storage after reload. Look up the saved
+key, then observe its original ID. The copied commands retain the fixed launcher,
+service identity, client settings/socket and expected authority pin; quoted keys
+follow `--`. Never paste a key into a new submission or interpret a leading `-`
+or `~` as a command option or shell expansion.
+
+## Original operations reports unavailable storage or changed authority
+
+Session recovery accepts at most 32 records and 64 KiB of strictly validated
+metadata. Missing browser access, quota/write failure, corruption or an unresolved
+record blocks additional keyed submissions. Preserve displayed keys/IDs and the
+original storage evidence. Clearing storage is not evidence that execution ended.
+Unresolved records are not evicted to make room; conclusive terminal summaries
+may be evicted only when capacity requires room for another submission.
+After reload, even a well-shaped terminal summary is unverified. Confirm the
+original authenticated result before another submission. A contradictory result
+or unavailable/expired history preserves the record for review; changing its
+stored state to success does not establish execution outcome.
+
+Refresh client authority through the fixed authenticated client. `client describe`
+reports only allowlisted nonsecret metadata; a metadata/credential-literal
+collision refuses with `HFAPI017` rather than publishing a damaged authority pin.
+A failed capabilities/version request retains its original classified Envelope.
+An unconfirmed archive UUID stays null and blocks submission/saved observation.
+Changed host/profile/endpoint/credential class/archive identity blocks following
+the old handle through the new authority. Preserve both identities for review;
+do not edit saved metadata to force a match. The same-process
+`--expected-client-scope` check refuses a changed target before the requested
+submission or lookup/wait. No endpoint is selected from browser storage.
+
+## A successful maintenance dry run no longer enables Apply
+
+Apply requires that preview's authority and administrative connection to remain
+current. Refreshing authority or reconnecting can invalidate old readiness.
+After an Apply submit/observation error, the preview stays consumed even if no
+applied Envelope arrived. Use the original-operation controls to resolve the
+original work; another click, tab change or missing-history response is not
+permission for another POST. Configuration confirmation and acknowledgement also
+refuse stale or changed authority while retaining the original draft and failure.
+
 ## Candidate validity succeeds but install stays disabled
 
 Syntax validity is separate from installed-authority compatibility and preview
@@ -183,3 +224,10 @@ the document. Exact candidate/base checks and installed confirmation refuse that
 conflict. Reload the installed document and validate the intended draft again;
 never retry an uncertain install automatically or overwrite the other editor's
 labels. The retained backup and configuration lock remain evidence.
+
+Source/component checks, disposable runtime checks and installed-host diagnosis
+are separate evidence. The isolated launcher fixture's successful version and
+candidate validation used an older immutable application artifact; they do not
+validate newer authority/recovery code or prove the original installed
+`reconnected` cause. Actual Cockpit/PAM/session acceptance and guarded deployment
+verification still require their recorded environment and artifact prerequisites.

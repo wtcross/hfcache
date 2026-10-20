@@ -66,6 +66,10 @@ class UnixStream(httpcore.NetworkStream):
             raise
 
     def write(self, buffer: bytes, timeout: float | None = None) -> None:
+        # h11 may emit an empty EndOfMessage after the peer has responded.
+        # Like HTTPCore's standard stream, preserve that response for reading.
+        if not buffer:
+            return
         try:
             self.channel.settimeout(timeout)
             self.channel.sendall(buffer)

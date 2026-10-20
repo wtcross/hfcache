@@ -11,7 +11,7 @@ installed or disposable runtime acceptance.
 | Implementation branch / commit | `fix/cockpit-rest-api-alignment`; reviewed HEAD `dcc2c562b52304541d0cb85d20fc046072038e79` |
 | Browser build checksum / source | Baseline production JS (decompressed index.js.gz) SHA256 `b414e92f01a316ffec9a45528fa676899ee842b0c44526599e30be90d15026f0`; source dcc2c562 |
 | Application / CLI source | Same reviewed baseline; no source drift at activation |
-| Physical launcher and rendered profile identity | Production not inspected. Isolated guest exact installer/bindings and failed-start evidence in [runtime-003](runtime-003.md); authenticated launcher acceptance still pending |
+| Physical launcher and rendered profile identity | Production not inspected. Isolated older-artifact guest now passes authenticated fixed launcher/UDS and candidate validation; exact bindings and limitations in [runtime-004](runtime-004.md). Current-source real Cockpit/PAM acceptance remains required |
 | Rootless image digest | Guest untagged immutable application `sha256:21cd4a2027cde144133d302d5abb803ddb1670b56a47b90c127e981be402258c`; exact wheel/closure and Caddy identities in runtime-003. V54 not passed |
 | Cockpit / systemd / Podman versions | Disposable guest Cockpit368/systemd257-34/Podman6.1.0; host parity limits in runtime-setup. Source pin 47108e2f8ecac3cd71fb3372193dd0f9c0fba7b3 |
 | Node / pnpm / Python / uv versions | v24.18.1 / 11.18.0 / 3.14.6 / 0.11.32 |
@@ -53,22 +53,22 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V15 | Source pass for local UTF-8/NUL/1MiB bounds, no truncation and preserved HFAPI006 refusal. Mounted bounded escaped candidate exceeds 1MiB after JSON encoding and receives an injected classified CLI refusal; it makes no actual HTTP413 request. Candidate-specific real CLI/socket boundary remains V52; generic server body-limit regressions remain in the default suite. |
 | V16 | Source pass: 62 real guarded-filesystem tests cover mode/link/symlink/FIFO, original-lock serialization, concurrent changed base and exact bytes. Mounted sizing followed by draft edit loses readiness. [Evidence](gates/cpr-003-components.txt). |
 | V17 | Source pass: matching/absent/changed/unknown inspection creates no files/lock/backup. Mounted lost-write failure survives unmount/remount and matching explicit revalidation sends zero additional writes. Baseline helper overwrite/inode regressions observed red, current green. |
-| V18 | Partial: preview receipt callback/retained bounded key/ID and validation-before-preview evidence pass. Uncertain preview blocks further sizing/discard; scoped durable registry and authenticated lookup/wait remain CPR-004. |
+| V18 | Source pass: registry retains the pre-send original preview key independently of display/tab lifetime. Mounted actual Application recovers the original key/ID, waits for its terminal sizing result, then exact captured-candidate revalidation sends zero second sizing POSTs or writes. Changed draft/base/authority or missing original result cannot restore readiness. CPR-004 mounted/registry artifacts below; real bridge remains V54. |
 | V19 | Source pass: actual temporary helper preserves predecessor after rename; mounted lost install acknowledgement retains exact guard/cause and requires inspection, explicit confirm, acknowledgement. Zero reinstall/rollback/cleanup. Real interrupted Cockpit process remains V54. |
 | V20 | Source pass: runner and guarded helper reject apparent successful stdout after failed process/postcheck. Mounted actual adapter preserves failed confirmation Envelope separately from boundary failure; neither grants success. Same focused artifacts as V09/V16. |
 | V21 | Source pass: different preexisting candidate is preserved; exact matching reuse retains inode. Unsafe/changed/unknown ownership blocks repeat write/install/discard, and full reload cannot adopt a file by name. Real temporary filesystem and mounted cases pass. |
-| V22 | Not executed; owning repair and regression pending. |
-| V23 | Not executed; owning repair and regression pending. |
-| V24 | Not executed; owning repair and regression pending. |
-| V25 | Not executed; owning repair and regression pending. |
-| V26 | Not executed; owning repair and regression pending. |
-| V27 | Not executed; owning repair and regression pending. |
-| V28 | Not executed; owning repair and regression pending. |
-| V29 | Not executed; owning repair and regression pending. |
-| V30 | Not executed; owning repair and regression pending. |
-| V31 | Not executed; owning repair and regression pending. |
-| V32 | Not executed; owning repair and regression pending. |
-| V33 | Not executed; owning repair and regression pending. |
+| V22 | Source pass: registry synchronously persists the exact key before the raw adapter starts; controlled before-first-notice failure retains it. Runner behavioral probe fails all four expectations against 65b12d9 and passes current code. [Core evidence](gates/cpr-004-registry.txt). |
+| V23 | Source pass: pure inaccessible/mid-session quota/capacity cases and actual Firefox sessionStorage QuotaExceededError refuse submission; no fallback or fake cancellation. Strict allowlist stores no bodies/TOML/logs. Registered credential collisions in public hashes/UUID/instance/substring produced 11 red failures before suppression, then 11 green. Remaining all-read-surface audit belongs to V51/CPR-007. |
+| V24 | Source pass: mounted actual Application Maintenance → Apply before-notice failure → Overview → Maintenance unmount/remount preserves original handles, blocks Apply, then explicit original lookup/wait sends zero further submissions. See [component artifact](gates/cpr-004-mounted.json). |
+| V25 | Source pass: actual same-origin iframe location.reload restores handles into a fresh module registry without replay. Corrupt/oversized/unknown-field records fail closed; external storage changes are preserved. A well-shaped stored terminal summary is unverified until authenticated original observation confirms it; forged/mismatched summaries cannot silently unlock a submission, and missing history remains unresolved. Pure behavioral regressions observed red then green; mounted final evidence below. |
+| V26 | Source pass: pure host/profile/endpoint/class/archive/unknown UUID drift refuses saved recovery; restart alone can retain matching authority. Mounted changed authority disables stale Apply and installed acknowledgement. Real CLI same-process scope mismatch refuses before POST or handle GET. |
+| V27 | Source pass: actual dry-run → Apply confirmation/double-click → process failure with applied=null leaves Apply disabled, across tab remount; original lookup/wait only. Apply consumes preview before asynchronous work and freshly compares the original scope. |
+| V28 | Source pass: mounted call-site matrix covers all existing keyed page submissions and strict fixed argv/key identity; synchronous validation, estimate and reads create no registry records. Full manual service paths remain the explicit CP-04 exception until CPR-005. |
+| V29 | Source pass: authentic HFAPI013/015/018/019/020 preserve original handles and nonterminal state in registry/runner tests; no new key, cancellation or recovery. Missing terminal identities refuse apparent success. |
+| V30 | Source pass: pure missing/unavailable lookup retains handles; actual separate CLI process over private UDS preserves HFAPI013 and performs zero POSTs. UI explicitly states missing history does not prove nonexecution. |
+| V31 | Source pass: registry/runner cases retain exact terminal exit 0/10/20/30/40/50, partial/busy classifications and safe summaries; 202/missing receipt identity never grants success. Actual result bodies remain only in application memory, never restored Apply readiness. |
+| V32 | Source pass: independent notice collection survives flood/abort/callback errors; mismatched key/ID fails closed without overwriting original identity or prior summary. Mounted explicit wait with one wrong ID and valid success stdout fails before the original-observer identity callback fix. Final current suite evidence below. |
+| V33 | Source pass: fixed rootless transient argv and copied commands carry original scope, quoted handles and positional --. Real repository Bash and Python launcher hops formerly intercepted --help/-h handles after --: four behavioral red failures; 72 focused tests green after repair, including leading-dash/tilde exact forwarding. Exec is intercepted hermetically; no installed runtime claim. |
 | V34 | `runner.test.ts` page closure, callback failure, late handles and abort tests pass without process-close/cancellation capability. D-Bus channel disposal does not stop application execution. |
 | V35 | Not executed; owning repair and regression pending. |
 | V36 | Not executed; owning repair and regression pending. |
@@ -87,9 +87,9 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V49 | Shared read/unit hooks now remove stale healthy evidence and reject old generations; mounted regressions pass. Per-surface full read rendering audit remains CPR-007. |
 | V50 | Not executed; owning repair and regression pending. |
 | V51 | Failure/runner and mounted QueryError synthetic secret tests pass; only safe validated problem/status/signal/handle fields retained. Registry/storage and all read surfaces remain CPR-004/007 scope. |
-| V52 | Not executed; owning repair and regression pending. |
+| V52 | Partial: actual CLI process over temporary authenticated UDS covers client metadata, writer/reader/wrong credentials, original lookup, exact failed Envelopes and scope mismatch with zero POSTs. Candidate/job/report boundary acceptance remains CPR-008; this is not a mock substitution for those cases. |
 | V53 | Not executed; owning repair and regression pending. |
-| V54 | UNPASSED: guest provisioned with isolated NFS-ro, original held lock, exact images/bindings and synthetic credentials. Actual OCI start refused before payload startup on an empty credential placeholder. [Exact state/unblock condition](runtime-003.md#current-handoff). No API/socket/PAM pass; original installed symptom remains unproven. |
+| V54 | UNPASSED: isolated guest now passes real systemd/rootless fixed-client authenticated UDS and guarded candidate validation after the exact empty-placeholder prerequisite correction. Failed starts remain evidence. [Current handoff](runtime-004.md) pins the older source/image and unchanged guard/NFS-ro/masks. Current-source immutable artifact plus real Cockpit/PAM reconnect acceptance remain required; original installed symptom is unproven. |
 | V55 | Not executed; owning repair and regression pending. |
 | V56 | Not executed; owning repair and regression pending. |
 | V57 | Not executed; owning repair and regression pending. |
@@ -105,7 +105,7 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | Explicit frontend gate | CPR-002 `rtk make -C cockpit check` exit 0; current full gate confirms 221 unit + 12 mounted cases, lint/style/types/build |
 | Extended final gate | Pending — scripts/check.sh --with-build |
 | Component/lifecycle regressions | CPR-002: 12 mounted cases passed in actual Firefox; [bounded results](gates/cpr-002-mounted.json). No real PAM/API claims |
-| Actual CLI / private Unix socket | Pending |
+| Actual CLI / private Unix socket | CPR-004 metadata/authentication/original lookup and transport ownership pass actual separate-process/private-UDS cases; candidate/job/report acceptance remains CPR-008 |
 | Actual disposable Cockpit / PAM / rootless chain | Pending; provisioned isolated environment required |
 | Documentation, schema and CLI parity | Pending |
 | Existing durable/operation compatibility | Pending |
@@ -241,7 +241,7 @@ fixture prerequisites do not establish the original installed trigger. Required
 real-runtime acceptance remains unpassed; no mock result substitutes for it.
 
 
-CPR-003, this commit: `scripts/check.sh` exit0,5008 Python passed/42 deselected
+CPR-003 commit `65b12d9`: `scripts/check.sh` exit0,5008 Python passed/42 deselected
 in787.38s, all three locked wheel profiles, actual frontend lint/style/types,
 327 unit tests +30 mounted Firefox cases and production build. Separate
 `make -C cockpit check` exit0. [Gate summary](gates/cpr-003.txt) and
@@ -250,3 +250,38 @@ in787.38s, all three locked wheel profiles, actual frontend lint/style/types,
 Runtime fixture setup is retained and qualified separately in runtime-003;
 V52/V54 and final extended acceptance remain required, never inferred from these
 source tests. Next package CPR-004; plan remains active.
+
+CPR-004, this commit (2026-10-20): final `scripts/check.sh` exit0,5101 Python
+passed/42 deselected in606.10s, all three locked wheel profiles; actual frontend
+lint/style/types,412 unit/47 mounted Firefox cases and production build. Explicit
+`make -C cockpit check` exit0. [Gate record](gates/cpr-004.txt),
+[component red/green](gates/cpr-004-components.txt), [core/launcher/socket evidence](gates/cpr-004-registry.txt).
+Production JS SHA256 `b2debb788704a6c7abbd1ebf95bdf03b58a14fc3d56bae5fd461bb631c5c311e`;
+mounted bundle `800abfa840e0b86f74fe4d12aedbc1440f06b509ba84fa15024eb511fcaca2dd`.
+Real CLI/private UDS authentication, narrow metadata and original key lookup are
+partial V52 evidence, not the remaining candidate/job/report acceptance.
+
+Original pre-send keys and late identities survive tab/reload/abort. Storage is
+bounded and untrusted: restored terminal summaries cannot resolve uncertainty
+without original authenticated observation. Actual quota, malformed storage,
+uncertain Apply, scope drift, original sizing recovery, contradictory wait notices
+and failed captured revalidation have meaningful mounted regressions. Failed
+revalidation retains the original candidate-write/reconnected cause alongside the
+new classified refusal; no automatic write/install/cleanup or second sizing.
+
+The second full gate failed1/5098 with actual Unix ReadError. Repetition identified
+empty EndOfMessage sendall -> BrokenPipe -> premature descriptor close -> EBADF,
+not a timeout or an excuse to relax the fixture. Matching the locked backend's
+empty-write no-op passes two deterministic real-UDS regressions, all20 transport
+tests and200/200 unchanged original-case repetitions. The final gate includes this
+repair and the corrected fixed launcher delimiter semantics. Earlier failed/red
+evidence remains. No inference about the installed Cockpit trigger follows.
+
+CP02/08/10/11, INV006 and ADR119/122/134 reviewed/amended, including index and human
+CLI/client/Cockpit usage/troubleshooting docs. No dependency, archive schema, API
+route or authority expansion. CP04 service and CP09 report exceptions remain for
+CPR-005/006. [Runtime-004](runtime-004.md) now proves older-artifact real rootless
+launcher/UDS/candidate validation while retaining original guard/masks/locks and
+failed starts. Current-source real Cockpit/PAM/reconnect remains V54 unpassed,
+with a second isolated immutable fixture recommended. Production/NAS untouched;
+original installed symptom unresolved. Continue CPR-005; plan remains active.

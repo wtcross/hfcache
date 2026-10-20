@@ -20,6 +20,9 @@ import {
 } from './lib/envelope';
 import { WARNING_GUIDANCE } from './lib/warnings';
 import { normalizeFailure } from './lib/failure';
+import { OperationRegistryError } from './lib/operation-registry';
+import { OperationAuthorityError } from './lib/operation-authority';
+import { HfcacheSpawnError } from './lib/runner';
 
 type AlertVariant = 'success' | 'info' | 'warning' | 'danger';
 
@@ -85,6 +88,16 @@ export const EnvelopeAlert = ({ envelope }: { envelope: Envelope }) => {
 
 /* A lost/malformed response cannot establish whether accepted work stopped. */
 export const QueryError = ({ error }: { error: Error }) => {
+    if (error instanceof OperationRegistryError)
+        return <Alert variant="warning" isInline title="Original operation recovery requires attention">{error.message}</Alert>;
+    if (error instanceof OperationAuthorityError) {
+        return (
+            <>
+                {error.envelope && <EnvelopeAlert envelope={error.envelope} />}
+                <Alert variant="warning" isInline title={error.message} />
+            </>
+        );
+    }
     const failure = normalizeFailure(error);
     const evidence = readOperationEvidence({
         idempotency_key: failure.idempotencyKey,
@@ -100,33 +113,36 @@ export const QueryError = ({ error }: { error: Error }) => {
         observation: 'Operation observation interrupted',
     }[failure.category];
     return (
-        <Alert variant="danger" isInline title={`${failure.stage}: ${category}`}>
-            <p>{failure.message}</p>
-            {failure.problem !== undefined && <p>Host problem: <code>{failure.problem}</code></p>}
-            {failure.exitStatus !== undefined && <p>Process exit status: {failure.exitStatus}</p>}
-            {failure.exitSignal !== undefined && <p>Process exit signal: {failure.exitSignal}</p>}
-            {failure.hostMutationUncertain &&
+        <>
+            {error instanceof HfcacheSpawnError && error.envelope && <EnvelopeAlert envelope={error.envelope} />}
+            <Alert variant="danger" isInline title={`${failure.stage}: ${category}`}>
+                <p>{failure.message}</p>
+                {failure.problem !== undefined && <p>Host problem: <code>{failure.problem}</code></p>}
+                {failure.exitStatus !== undefined && <p>Process exit status: {failure.exitStatus}</p>}
+                {failure.exitSignal !== undefined && <p>Process exit signal: {failure.exitSignal}</p>}
+                {failure.hostMutationUncertain &&
                 <p>The host change may have completed. Preserve its evidence and reconcile the
                     fixed configuration or unit state before another deliberate change.
                 </p>}
-            {failure.workMayContinue &&
+                {failure.workMayContinue &&
                 <p>Server execution is uncertain. Preserve the original handles and use authenticated
                     lookup and observation before submitting again.
                 </p>}
-            <RecoveryHandles evidence={evidence} />
-        </Alert>
+                <RecoveryHandles evidence={evidence} />
+            </Alert>
+        </>
     );
 };
 
-export const RecoveryHandles = ({ evidence }: { evidence: OperationEvidence }) => (
+export const RecoveryHandles = ({ evidence, expectedClientScope }: { evidence: OperationEvidence; expectedClientScope?: string | undefined }) => (
     <>
         {evidence.idempotencyKey !== undefined &&
             <p>Original key: <code>{evidence.idempotencyKey}</code><br />
-                <code>{operationCommands(evidence).lookup}</code>
+                <code>{operationCommands(evidence, expectedClientScope).lookup}</code>
             </p>}
         {evidence.operationId !== undefined &&
             <p>Operation: <code>{evidence.operationId}</code><br />
-                <code>{operationCommands(evidence).wait}</code>
+                <code>{operationCommands(evidence, expectedClientScope).wait}</code>
             </p>}
     </>
 );

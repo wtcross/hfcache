@@ -16,6 +16,7 @@ import {
 } from '../lib/candidate-guard';
 import { OperationNotice } from '../lib/events';
 import { normalizeFailure } from '../lib/failure';
+import type { OperationScope } from '../lib/operation-registry';
 import { runHfcache } from './hfcache';
 import { hostCall } from './connection';
 
@@ -45,18 +46,23 @@ export function writeCandidate(guard: CandidateGuard): Promise<void> {
 }
 
 /* §6 step 2: exactly the validation every mutating command performs. */
-export function validateCandidate(guard: CandidateGuard): Promise<Envelope> {
-    return runHfcache(['config', 'validate'], { config: CANDIDATE_PATH, candidateGuard: guard });
+export function validateCandidate(guard: CandidateGuard, expectedClientScope?: string): Promise<Envelope> {
+    return runHfcache(['config', 'validate'], {
+        config: CANDIDATE_PATH,
+        candidateGuard: guard,
+        ...(expectedClientScope === undefined ? {} : { expectedClientScope })
+    });
 }
 
 /* §6 step 3: the API sizing job holds the config flock and binds exact bytes.
  * It creates an operation receipt while remaining archive-lock-free. */
 export function planCandidate(selectors: string[], guard: CandidateGuard,
-    onNotice?: (notice: OperationNotice) => void): Promise<Envelope> {
+    onNotice?: (notice: OperationNotice) => void, requiredScope?: Readonly<OperationScope>): Promise<Envelope> {
     return runHfcache(['plan', ...selectors], {
         config: CANDIDATE_PATH,
         candidateGuard: guard,
-        ...(onNotice === undefined ? {} : { onNotice })
+        ...(onNotice === undefined ? {} : { onNotice }),
+        ...(requiredScope === undefined ? {} : { requiredScope })
     });
 }
 
@@ -99,6 +105,9 @@ export function removeCandidate(guard: CandidateGuard): Promise<void> {
     return mutate('remove', guard);
 }
 
-export function confirmInstalledCandidate(expected: string): Promise<Envelope> {
-    return runHfcache(['config', 'validate'], { confirmInstalledContent: expected });
+export function confirmInstalledCandidate(expected: string, expectedClientScope?: string): Promise<Envelope> {
+    return runHfcache(['config', 'validate'], {
+        confirmInstalledContent: expected,
+        ...(expectedClientScope === undefined ? {} : { expectedClientScope })
+    });
 }

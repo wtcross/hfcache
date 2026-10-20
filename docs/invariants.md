@@ -531,6 +531,11 @@ route enforcement from installed host acceptance.
   Client-only no-confirm
   init refusal uses local metadata plus successful inspection evidence; failed
   inspection remains exact server evidence. See [decision 120](adr/decision-120.md).
+  Authenticated client-authority presentation preserves exact failed server
+  Envelopes rather than renaming their command/result. Successful metadata uses
+  a strict nonsecret allowlist; derived hashes/identifiers that collide with a
+  registered credential refuse safely before output. A local authority comparison
+  cannot replace domain result identity or turn unknown archive UUID into proof.
 - **`INV-007` — Verification reports evidence without rewriting it.** Verify
   the complete path set, sizes, and local SHA-256 bytes; an integrity finding
   exits `40`, preserves content/expectations, and never performs repair or
@@ -612,7 +617,7 @@ acceptance evidence; it is an example consumer, not an application dependency.
 
 [Decision 134](adr/decision-134.md) requires stage-aware error preservation,
 close-aware read recovery and authority-scoped operation handles outside tab
-lifetimes. These requirements expose current conformance gaps; the existing
+lifetimes. These boundaries are implemented in source; the existing
 CP-04 service and CP-01/09 report exceptions below remain current until their
 explicit adapter amendments. No new workload or deployment authority follows.
 
@@ -627,15 +632,32 @@ explicit adapter amendments. No new workload or deployment authority follows.
   exception/stderr contents. Close/privilege transitions invalidate connections
   and stale UI evidence; bounded read retries never replay mutations. See
   [presentation and connection rules](cockpit.md#4-envelope-and-error-handling).
+  Validated original key/ID collection is independent of display truncation or
+  abort. Terminal result identities and classified failures remain distinct from
+  bridge/process failure and missing or expired observation history.
 - **`CP-03`, `CP-04`, `CP-10`** — Mutation needs administrative Cockpit access,
   while CLI work runs as the service identity in a transient unit, never root.
   Full sync/verification use their installed services. Respect the single
   writer lock; report busy without bypassing it.
+  Page-keyed jobs persist an original key before their submit process starts and
+  preserve it across tab/reload. An unresolved record blocks additional keyed
+  submissions on that host. Uncertain maintenance Apply cannot reuse an old
+  successful dry run; Apply consumes its preview before asynchronous work.
 - **`CP-05`–`CP-08`** — Schedule controls affect only the sync timer; never
   manipulate `hfcache.target`, enable the verify timer, or expose archive init.
   The page never reads credentials or accepts tokens; the fixed launcher mounts its
   API-only `hfcache.api` credential inside the fixed rootless client, never Hub
   authority or browser/environment/argument bearers (decision 122).
+  Recovery storage contains only validated nonsecret scoped metadata, bounded to
+  32 records/64 KiB; corrupt, unavailable or full storage blocks submissions.
+  Unresolved records are never evicted. Authenticated metadata binds the trusted
+  host, selected profile/endpoint, credential class and confirmed archive UUID;
+  unknown/changed authority blocks saved observation. The same CLI process
+  compares its expected authority before submission or original-key lookup/wait.
+  Restored terminal summaries remain unverified until authenticated observation;
+  valid-looking stored metadata cannot unblock another submission on its own.
+  Browser storage cannot select an endpoint, replay a POST, cancel work or replace
+  an original key merely because history is missing.
 - **`CP-11`, `CP-12`** — Config installs follow candidate → successful CLI
   validation → required successful preview → atomic install → exact installed
   content and operational fingerprint confirmation. Required preview success
@@ -649,7 +671,10 @@ explicit adapter amendments. No new workload or deployment authority follows.
   write/install/discard. Read-only inspection creates no files and requires the
   original lock; explicit matching revalidation skips writes. Uncertain install
   needs exact installed/backup proof, explicit confirmation and acknowledgement;
-  remount/reload cannot silently reset it. Retain the predecessor and `0640 root:hfcache` ownership/mode. Timer changes use validated calendar drop-ins,
+  remount/reload cannot silently reset it. Preview, install, confirmation and
+  acknowledgement require the captured authority and administrative session to
+  remain current. Retain the predecessor and `0640 root:hfcache` ownership/mode.
+  Timer changes use validated calendar drop-ins,
   never edit shipped units.
 - **`CP-13`, `CP-14`** — Never weaken host hardening. The plugin ships static
   files; Node tooling is build-time only, adds no Python runtime dependency,
@@ -663,7 +688,10 @@ Enforcement: [CLI/unit API](../cockpit/src/api/hfcache.ts),
 Cockpit API integration enforcement: [bounded observation runner](../cockpit/src/lib/runner.ts),
 [UTF-8 framing](../cockpit/src/lib/stream.ts),
 [validated notices](../cockpit/src/lib/events.ts),
-[terminal classification](../cockpit/src/lib/envelope.ts) and
+[terminal classification](../cockpit/src/lib/envelope.ts),
+[scoped registry](../cockpit/src/lib/operation-registry.ts),
+[authenticated recovery](../cockpit/src/api/operations.ts),
+[client authority metadata](../src/hfcache/client_metadata.py) and
 [unit/action allowlist](../cockpit/src/lib/systemd.ts), decision
 [122](adr/decision-122.md). The browser can stop only sync observation, start
 installed sync/verify clients and control the sync timer; actual API/worker/socket/
@@ -828,6 +856,8 @@ separate protected verifier only after REST acceptance. independent REST client'
   independent REST client client enforcement: [strict settings/sources](../src/hfcache/client_config.py),
   [typed wire models](../src/hfcache/client_models.py) and
   [synchronous transport/observation](../src/hfcache/client.py);
+  owned Unix streams make empty writes a no-op, preserving already-sent responses
+  while retaining descriptor cleanup for actual nonempty I/O failures (decision119).
   [decision 118](adr/decision-118.md), [client contract](api-client.md).
   Evidence: [core client tests](../tests/unit/test_api_client.py),
   [config/source tests](../tests/unit/test_client_config.py),

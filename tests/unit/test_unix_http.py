@@ -200,3 +200,62 @@ def test_real_unix_response_stream_releases_pool_and_connection(tmp_path, mode):
                 release.set()
         if mode != "truncated":
             assert disconnected.is_set()
+
+
+@pytest.mark.parametrize("truncated", [False, True])
+def test_empty_request_body_does_not_discard_an_already_sent_unix_response(
+    tmp_path, monkeypatch, truncated
+):
+    path = tmp_path / "api.sock"
+    peer_closed = Event()
+    original_write = UnixStream.write
+    streams = []
+
+    def write_after_peer_closes(self, buffer, timeout=None):
+        if not buffer:
+            assert peer_closed.wait(5)
+            streams.append(self)
+        original_write(self, buffer, timeout)
+
+    monkeypatch.setattr(UnixStream, "write", write_after_peer_closes)
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
+        listener.bind(str(path))
+        listener.listen(1)
+        listener.settimeout(5)
+
+        def server():
+            channel, _ = listener.accept()
+            with channel:
+                channel.settimeout(5)
+                request = b""
+                while b"\r\n\r\n" not in request:
+                    part = channel.recv(4096)
+                    assert part
+                    request += part
+                length = 30 if truncated else 3
+                channel.sendall(
+                    f"HTTP/1.1 200 OK\r\nContent-Length: {length}\r\n\r\n".encode() + b"abc"
+                )
+            peer_closed.set()
+
+        before = _descriptors()
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            work = executor.submit(server)
+            try:
+                with (
+                    create_http_client(unix_socket=path) as client,
+                    client.stream("GET", "http://localhost/", timeout=5) as response,
+                ):
+                    assert response.status_code == 200
+                    chunks = response.iter_bytes()
+                    assert next(chunks) == b"abc"
+                    if truncated:
+                        with pytest.raises(httpx.RemoteProtocolError):
+                            next(chunks)
+                    else:
+                        assert list(chunks) == []
+            finally:
+                work.result(timeout=5)
+        assert streams
+        assert all(stream.channel.fileno() == -1 for stream in streams)
+        assert _descriptors() == before

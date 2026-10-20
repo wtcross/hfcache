@@ -325,7 +325,11 @@ def drain(profile, role):
 
 
 def main():
-    if any(argument in {"--help", "-h"} for argument in sys.argv[1:]):
+    # Preserve original operation handles after the CLI end-of-options marker.
+    help_arguments = sys.argv[1:]
+    if "--" in help_arguments:
+        help_arguments = help_arguments[: help_arguments.index("--")]
+    if any(argument in {"--help", "-h"} for argument in help_arguments):
         print(
             "Usage: /usr/local/libexec/hfcache-container-service "
             "api|worker|caddy|client CLI_ARGS...|stop api|worker|caddy\n"

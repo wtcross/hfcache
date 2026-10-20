@@ -184,7 +184,7 @@ status and current-contract links before applying a historical choice.
 | 116 | [Admit typed command routes without widening server authority](decision-116.md) |
 | 117 | [Revalidate explicit maintenance authority at execution](decision-117.md) |
 | 118 | [Observe one API authority without replaying uncertain submissions](decision-118.md) |
-| 119 | [Preserve server read identity and separate candidate validity from authority](decision-119.md) |
+| 119 | [Preserve server read identity and separate candidate validity from authority](decision-119.md), [empty Unix writes amendment](decision-119.md#empty-unix-writes-amendment-2026-10-20) |
 | 120 | [Separate command execution from resumable CLI observation](decision-120.md) |
 | 121 | [Activate one server and retain scheduled observation without replay](decision-121.md) |
 | 122 | [Preserve Cockpit authority through the API client and guarded candidates](decision-122.md), [Preserve Cockpit failure evidence and original operation identity](decision-134.md) |

@@ -87,6 +87,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   effects. CPR-004 follows; required real-runtime and final gates remain pending.
 
 
+- [x] CPR-004 Retain original scoped operations and block uncertain resubmission
+  (2026-10-20, this commit — [task](plans/tasks/cpr-004-operation-recovery-and-replay-guards.md)).
+  Application registry persists keys before transmission, independently retains
+  IDs across detached/tab/reload views and offers authenticated original lookup/
+  wait only. Bounded32-record/64KiB storage refuses corruption/quota/capacity;
+  restored terminal summaries stay unverified until original authenticated result
+  confirmation. No raw TOML/log/body/credential storage or replacement key.
+  Fresh seven-field client authority and same-process compare-only pin prevent
+  changed/unknown target observation. Uncertain Apply consumes its preview and
+  cannot reuse stale success; candidate recovery sends no second sizing/write,
+  keeps original errors and invalidates stale authority acknowledgement.
+  Both fixed launcher hops preserve option-like handles after --. Full gate
+  reproduced a real empty Unix write/BrokenPipe/premature-close/EBADF defect;
+  matching the locked backend's no-op preserves the received response. Actual
+  deterministic red/green plus200/200 original-case repeats passed; existing
+  transport fixture and timeouts unchanged. Initial gate5088passed; corrected
+  finalgate5101passed/42deselected606.10s, three locked wheel profiles, actual
+  frontend lint/style/types,412 unit/47 mounted cases/build. Explicit frontend
+  gate passed. Failed gate1/5098 and earlier red evidence retained. CP02/08/10/11,
+  INV006, ADR119/122/134 reviewed/amended with index/CLI/client/operator docs.
+  No dependency, archive format, REST route, credential or guard authority change.
+  [Evidence](plans/support/cockpit-rest-repair/gates/cpr-004.txt).
+  Older isolated fixture now passes actual rootless launcher/UDS/candidate
+  validation; current-source real Cockpit/PAM/reconnect and original installed
+  cause remain unproven, no production/NAS effects. CPR-005 follows; CP04/09
+  service/report exceptions remain until their explicit packages.
+
 ## Tags and discovery (2026-10-19)
 
 - [x] CAT-001 Activate the feature plan and establish technical contracts
@@ -2556,6 +2583,20 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     changed here: preserve its exact handles and do not resubmit or release its
     guard based on this implementation. No push, deployment or host action was
     performed or authorized; implementation completion selects no old backlog.
+
+25. **Cockpit repair disposable fixture and installed uncertainty (CPR-004,
+    2026-10-19):** the active repair plan retains original operation identities
+    and failed-stage evidence; source tests never establish the original installed
+    `reconnected` cause. The owned isolated KVM guest now passes actual fixed
+    rootless launcher/authenticated UDS and guarded candidate validation.
+    [Exact runtime handoff](plans/support/cockpit-rest-repair/runtime-004.md)
+    records original lock/masks/NFS-ro, retained failed starts and synthetic
+    credentials. Its immutable artifact is older source92f19b5, so current-source
+    Cockpit/PAM/reconnect acceptance still requires a new pinned fixture artifact.
+    Production installation/configuration/services/NAS were untouched. Preserve
+    the guest's candidate, predecessor expectations and original evidence; no
+    cleanup/reinstall or pending-operation replay follows uncertainty. Existing
+    item23 operation, NAS/workload holds and separate deployment authority remain.
 
 ## Operator decisions needed
 
@@ -5268,6 +5309,15 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      replay, browser secrets and local fallback. Existing full-service/report
      exceptions remain until their explicit replacement packages. Source/runtime/
      installed acceptance remain separate; all deployment holds survive.
+
+     Implemented amendment (2026-10-20, CPR-004): bounded pre-send scoped recovery,
+     authenticated client metadata/same-process authority comparison and restored
+     terminal-summary verification implement [ADR134](../adr/decision-134.md).
+     Original errors/results/handles survive later observation contradictions.
+     A reproduced empty-write Unix adapter defect now follows the locked backend
+     no-op contract; [ADR119](../adr/decision-119.md) records actual socket proof.
+     Existing credentials/guards/holds, full-service/report exceptions and separate
+     current-runtime/installed acceptance remain. No production cause is invented.
 
 
 ## Documentation and script alignment

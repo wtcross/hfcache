@@ -1,0 +1,86 @@
+CPR-004 verification evidence (2026-10-19/20)
+
+Source: CPR-004, this commit, following 65b12d9 on
+fix/cockpit-rest-api-alignment. All tests use owned temporary fixtures, synthetic
+credentials and controlled Cockpit ports; actual CLI subprocess/UDS cases are
+identified separately. No production installation/credential/NAS access.
+
+Focused commands (repository cwd):
+  rtk proxy node --test --test-reporter=dot cockpit/test/candidate-guard.test.ts cockpit/test/command.test.ts cockpit/test/envelope.test.ts
+Observed: 87 passed, exit0. Real temporary guarded filesystem confirms exact
+bytes/backup/lock, authority-pin forwarding and no fake confirmation job key.
+
+  rtk proxy uv run --locked --extra server --extra mcp pytest tests/unit/test_cli_client_describe.py tests/unit/test_client_metadata_redaction.py tests/unit/test_script_help.py tests/unit/test_container_service.py -q
+Observed: 152 passed in11.53s, exit0. Includes actual separate CLI process over
+private UDS, authentication and original-key GET, no POST/archive effects.
+Other cases use controlled HTTPX or intercepted exec, not a real installed chain.
+
+  rtk proxy node --test --test-reporter=dot cockpit/test/operation-registry.test.ts cockpit/test/runner.test.ts
+Contributor final observed: 106 passed, exit0. Registry, independent notice capture,
+identity conflict, bounded persistence, scope/history and exact terminal exits.
+See cpr-004-registry.txt for behavioral red/green details and launcher failures.
+
+  rtk node cockpit/test/browser.mjs
+Contributor final observed: 47/47 passed, exit0; cpr-004-mounted.json.
+See cpr-004-components.txt and cpr-004-observer-red.jsonl for actual mounted
+Application lifecycle/reload/quota/uncertain Apply/candidate recovery and red/green
+authority acknowledgement/conflicting original-wait regressions.
+
+Public derived metadata credential collisions: 11 failed before the final
+allowlist check; then 11 passed, and combined describe/redaction80 passed5.89s.
+No credential value, source name/path, input TOML, raw log or result body enters
+the successful metadata or browser session registry.
+
+First full command: rtk proxy scripts/check.sh
+Observed exit0: 5088 passed/42 deselected in707.28s; three locked wheel profiles;
+actual Cockpit lint/style/types, 409 unit tests (0fail/skip),45 mounted Firefox
+cases and production build. Full log /tmp/hfcache-cpr004-gate.log.
+Eleven launcher regressions were added after pytest collection, so a final full
+run is required. First retry stopped at Ruff E501 on expanded help text; fixed
+line wrapping before restarting. No failed/partial run is counted as acceptance.
+
+Second complete command: rtk proxy scripts/check.sh
+Observed exit1: 1failed/5098passed/42deselected in673.08s. Actual truncated Unix
+response fixture raised ReadError during headers rather than its intended body
+RemoteProtocolError; focused unchanged file18passed4.09s. This is not established
+as a timeout, and a timeout increase alone would not explain it. Exact log:
+/tmp/hfcache-cpr004-final-gate.log. Frontend was not reached in this failed run.
+The owned check.sh coordinator alone was briefly paused while its pytest child
+continued and late frontend regressions were fixed, then resumed. No application
+observer/worker/guest process was stopped. Latest focused frontend106core/47mounted
+are green, including unverified restored summaries and original revalidation cause.
+Investigation proved empty h11 EndOfMessage write -> BrokenPipe32 -> premature
+stream close -> EBADF9 -> ReadError. This was a product defect, not an established
+timeout or an excuse to loosen the fixture. Minimal empty-write no-op matches
+locked HTTPCore1.0.9. Two deterministic real-UDS regressions failed before, then
+all20 transport tests passed; unchanged original truncated case200/200 green
+versus98/100 and185/200 before. Original timeouts and close fixture unchanged.
+See cpr-004-registry.txt for actual commands and instrumentation facts.
+
+Explicit current frontend: rtk proxy make -C cockpit check
+Observed exit0: lint/style/types,412 unit/47 mounted cases,production build.
+Log /tmp/hfcache-cpr004-frontend.log.
+
+Final complete gate: rtk proxy scripts/check.sh
+Observed exit0:5101passed/42deselected in606.10s; three locked wheel installation
+profiles; actual frontend lint/style/types,412 unit/47 mounted cases (0fail/skip)
+and production build. Full log /tmp/hfcache-cpr004-accepted-gate.log SHA256:
+fc6b29adf0906f7f367f280ca7186355998517bca24478ece6ae045e8ebf6038
+Explicit frontend log SHA256:
+bf43a4d0011d33cdfbe22f25eec78e1d4a3d71d1d14803e9dca5f1372a1080d0
+
+Production JS (decompressed) SHA256 at first full gate:
+a9f5b487ec1ad66deaf95de97c054105db734b59c4ee781d72b9fd303e5d23ad
+Current production JS (decompressed) SHA256 after explicit frontend gate:
+b2debb788704a6c7abbd1ebf95bdf03b58a14fc3d56bae5fd461bb631c5c311e
+Final47 mounted JSON SHA256:
+a30a9f2ab5872656e62949243f632f62fcaeece97d0c7293b42dad39eef56774
+
+CP02/08/10/11, INV006, ADR122/134 reviewed/amended with usage/troubleshooting,
+CLI/client and Cockpit contracts. CP04 full services and CP09 report filesystem
+exception remain until005/006. No application dependency, API route, archive
+schema or workload/credential/guard authority changed. Both launcher hops retain
+fixed executable/role/profile behavior while honoring positional end-of-options.
+Real older-artifact guest launcher/UDS/candidate evidence is runtime-004.md;
+required current-source Cockpit/PAM proof and original installed cause remain
+unpassed. These source gates never substitute for that runtime acceptance.

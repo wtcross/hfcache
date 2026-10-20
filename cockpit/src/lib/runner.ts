@@ -7,9 +7,12 @@ import { EnvelopeSchemaError, parseEnvelope } from './envelope.ts';
 import type { Envelope } from './envelope.ts';
 import { interpretOperationLine } from './events.ts';
 import type { OperationNotice } from './events.ts';
+import type { OperationIdentity } from './operation-registry.ts';
 import { BoundaryError } from './failure.ts';
 import type { FailureContext, FailureReason, FailureStage } from './failure.ts';
 import { BoundedLineDecoder, TerminalCollector } from './stream.ts';
+
+export type { OperationIdentity } from './operation-registry.ts';
 
 export interface StreamProcess extends PromiseLike<unknown> {
     stream(callback: (chunk: string) => void): unknown;
@@ -22,17 +25,22 @@ export interface ObservationOptions {
     signal?: AbortSignal;
     onLine?: (line: string) => void;
     onNotice?: (notice: OperationNotice) => void;
+    expectedKey?: string;
+    onIdentity?: (notice: OperationIdentity) => void;
 }
 
 /* Missing/malformed/oversized result is an observation failure. Handles remain
  * useful even if every earlier progress line has fallen out of the tail. */
 export class HfcacheSpawnError extends BoundaryError {
     readonly stderr: string;
+    readonly identityConflict: boolean;
+    readonly envelope: Envelope | null;
 
     /* Keep the old constructor shape for consumers, but never retain arbitrary
      * supplied messages/stderr. New callers provide fixed context and cause. */
     constructor(_message: string, _stderr: string, key?: string, operationId?: string,
-        context: FailureContext = {}, failure?: unknown) {
+        context: FailureContext = {}, failure?: unknown,
+        evidence: { identityConflict?: boolean; envelope?: Envelope | null } = {}) {
         super(failure ?? (_message === 'reconnected' ? { problem: 'reconnected' } : failure), {
             ...context,
             ...(key === undefined ? {} : { idempotencyKey: key }),
@@ -40,6 +48,8 @@ export class HfcacheSpawnError extends BoundaryError {
         });
         this.name = 'HfcacheSpawnError';
         this.stderr = this.safeDiagnostics.join('\n');
+        this.identityConflict = evidence.identityConflict === true;
+        this.envelope = evidence.envelope ?? null;
     }
 }
 
@@ -50,8 +60,11 @@ export async function runSpawned(
 ): Promise<Envelope> {
     const lines = new BoundedLineDecoder();
     const terminal = new TerminalCollector();
-    let key: string | undefined;
+    let key: string | undefined = options.expectedKey;
     let operationId: string | undefined;
+    let keyObserved = false;
+    let identityConflict = false;
+    let identityObserverFailed = false;
     let displayFailed = false;
     const display = (callback: (() => void) | undefined): void => {
         if (callback === undefined || displayFailed || options.signal?.aborted)
@@ -65,12 +78,26 @@ export async function runSpawned(
     const inspect = (line: string): void => {
         // Every bounded line is inspected before per-chunk display suppression.
         const notice = interpretOperationLine(line);
-        if (notice?.kind === 'key' && key === undefined) {
-            key = notice.key;
-            display(() => options.onNotice?.(notice));
-        } else if (notice?.kind === 'operation' && operationId === undefined) {
-            operationId = notice.operationId;
-            display(() => options.onNotice?.(notice));
+        if (notice?.kind === 'key' || notice?.kind === 'operation') {
+            if (notice.kind === 'key') {
+                if (key !== undefined && key !== notice.key)
+                    identityConflict = true;
+                if (key === undefined)
+                    key = notice.key;
+                if (!keyObserved)
+                    display(() => options.onNotice?.(notice));
+                keyObserved = true;
+            } else {
+                if (operationId !== undefined && operationId !== notice.operationId)
+                    identityConflict = true;
+                if (operationId === undefined && !identityConflict) {
+                    operationId = notice.operationId;
+                    display(() => options.onNotice?.(notice));
+                }
+            }
+            // Persistence/identity observation is independent of display and
+            // receives duplicates/conflicts even after AbortSignal or UI errors.
+            try { options.onIdentity?.(notice) } catch { identityObserverFailed = true }
         }
     };
     const emit = (complete: string[]): void => {
@@ -86,6 +113,9 @@ export async function runSpawned(
     };
     let failure: unknown = null;
     let failed = false;
+    if (options.expectedKey !== undefined && !/^[A-Za-z0-9._~+-]{1,128}$/.test(options.expectedKey))
+        throw new HfcacheSpawnError('', '', undefined, undefined,
+                                    { stage: options.stage ?? 'operation-observe', reason: 'invalid-envelope' });
     try {
         const proc = spawn(argv);
         proc.stream(chunk => {
@@ -107,11 +137,19 @@ export async function runSpawned(
         failed = true;
     }
     emit(lines.finish(inspect));
-    const observationError = (reason: FailureReason): HfcacheSpawnError =>
+    const observationError = (reason: FailureReason, envelope: Envelope | null = null): HfcacheSpawnError =>
         new HfcacheSpawnError('', '', key, operationId, {
             stage: options.stage ?? (requireSuccessfulProcess ? 'installed-confirm' : 'api-read'),
             reason,
-        }, failure);
+        }, failure, { identityConflict: identityConflict || identityObserverFailed, envelope });
+    let parsed: Envelope | null = null;
+    if (!terminal.overflow && terminal.text().trim() !== '') {
+        try { parsed = parseEnvelope(terminal.text()) } catch { /* Existing strict framing below classifies it. */ }
+    }
+    if (options.expectedKey !== undefined && parsed?.exit_code === 0 && (!keyObserved || operationId === undefined))
+        identityConflict = true;
+    if (identityConflict || identityObserverFailed)
+        throw observationError('invalid-envelope', parsed);
     // A negative result cannot confirm installation, but its original API/domain
     // classification remains useful. Successful confirmation still requires every
     // guarded byte postcheck and successful process completion (CP-11).

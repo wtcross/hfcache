@@ -51,6 +51,7 @@ hfcache --client-config /etc/hfcache/client.toml --json status
 | `--detach` | off | Return separately identified admission after a keyed job's 202 rather than waiting for its terminal result |
 | `--idempotency-key KEY` | generated before POST | Deliberate same-route/body retry using an existing nonsecret key; no automatic new-key replay |
 | `--wait-timeout SECONDS` | client `wait_timeout` | Finite total observation budget for a submitted job or `operations wait`, not server cancellation or its queue/lock deadline |
+| `--expected-client-scope SHA256` | none | Compare-only 64 lowercase hex authority pin before a keyed job, remote `config validate` or `operations lookup/show/wait`; grants no routing, credential or execution authority |
 
 Job-only flags are refused on non-submitting reads/bootstrap; `operations wait`
 accepts the wait budget and its own `--after` cursor, while show/lookup submit
@@ -109,6 +110,7 @@ goes further and refuses a repository that remains configured (`AD-20`).
 | `quarantine` | yes with `--apply` | Remove explicitly selected, proven redundant recovered staging |
 | `repair` | yes | Reconstruct and republish a damaged known revision |
 | `version` | no | Local or explicit server application/dependency versions |
+| `client describe` | no | Validated nonsecret selected client authority through authenticated capability/version reads |
 | `operations show`, `operations lookup`, `operations wait` | no | Authenticated observation of existing receipts/results; never submission |
 
 Keyed sync/plan/diagnostic/verification/maintenance jobs write private operation
@@ -116,6 +118,53 @@ receipts even when the archive-effects column says no. Planning and both doctor
 modes contact the Hub. Metadata reads, synchronous validation, initialization
 inspection and verification estimates submit no job. Local exceptions and
 remote execution are described above; apply always retains writer-side guards.
+
+### `client describe`
+
+```text
+hfcache [CLIENT OPTIONS] client describe
+```
+
+This fixed read-only command authenticates to the selected API and requests only
+capabilities and version. It creates no operation, reads no client archive or
+Hub credential, and exposes no credential file/name/bytes or full settings.
+Its successful standard Envelope has command `client describe` and exactly the
+metadata fields listed in §4.1. `endpoint` is the canonical selected `unix:`
+socket or validated HTTPS URL; an already supported loopback HTTP endpoint is
+also represented accurately. Userinfo, query strings and fragments are refused
+by client configuration validation. No browser-supplied endpoint is introduced.
+
+`profile_fingerprint` is SHA-256 of canonical sorted compact JSON containing
+metadata schema version, canonical endpoint, selected absolute client-settings
+path (the default when none was selected), expected archive UUID or null,
+authenticated REST credential class, and selected CA-file path or null. These
+allowlisted settings distinguish client authority without exposing settings/CA
+paths or hashing a whole configuration or any credential source. Actual archive UUID
+comes from the validated version response wrapper, or is null when unavailable;
+`instance_id` and credential class come from validated authenticated capabilities.
+`authority_fingerprint` is SHA-256 of canonical sorted compact JSON containing
+`metadata_schema_version`, `profile_fingerprint`, `endpoint`, `credential_class`
+and `archive_id`; it excludes `instance_id` so a restart serving the same known
+archive can be observed. A caller can supply this fingerprint as the global
+`--expected-client-scope` before a keyed submission, remote `config validate`, or
+operations lookup/show/wait.
+That invocation validates the actual resolved authority using its own same client
+before sending the original key/ID or POST. A mismatch or unknown archive UUID
+is `HFAPI017` before any target request. A failed metadata response retains its
+original Envelope. Other reads, local commands and `client describe` refuse
+this option before settings/credential access. Lookup/show still reject an
+explicit wait timeout. The pin compares authority; it adds no routing selector,
+capability, automatic lookup or replay.
+Remote installed/candidate validation stays synchronous, with no idempotency key
+or job receipt; `config validate --local` refuses the pin before policy or
+credential access.
+This metadata describes the selected client authority, not the container image
+or Cockpit host; callers must scope those separately.
+
+Job flags and legacy policy/Hub-token options are refused before opening settings
+or credentials. Nonzero API Envelopes retain their original command, problems,
+identity and classification; transport/authentication/protocol errors retain the
+existing client codes. A missing UUID never becomes an inferred archive identity.
 
 ### `serve`
 
@@ -575,6 +624,10 @@ only the caller's credential-class namespace. Credential rotation preserves that
 coarse namespace; switching classes does not. Missing/expired HFAPI013 history
 does not prove nonexecution.
 
+Keep the positional `--` before a copied key. Both fixed rootless launcher hops
+honor that delimiter: `--help`/`-h` after it are literal lookup keys, while help
+before it remains static and requires no installed profile or credentials.
+
 `wait` observes bounded sanitized sequenced events, status and result under one
 absolute finite deadline. `--after N` resumes event observation after that sequence;
 retention gaps are explicit, never invented events. Event observation omits a
@@ -721,6 +774,7 @@ Serialization follows the same deterministic rules as durable files
 | `quarantine` | Explicit transaction cleanup plans and applied results; published content and original journals remain unchanged |
 | `repair` | Transaction ID, old and new publication IDs, verification result, grace expiry |
 | `version` | `application`, `python`, `huggingface_hub`, `transfer_backend` |
+| `client describe` | Exactly `metadata_schema_version=1`, `profile_fingerprint` and `authority_fingerprint` (64 lowercase hex each), canonical `endpoint`, authenticated `credential_class` (`rest-reader` or `rest-writer`), `archive_id` (canonical UUID or null), `instance_id` (32 lowercase hex) |
 | `operations show`, `operations lookup` | `operation`: validated metadata receipt, without internal digests or raw key; command remains the server metadata command |
 
 ## 5. Error and warning taxonomy

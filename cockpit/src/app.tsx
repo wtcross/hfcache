@@ -19,6 +19,7 @@ import { Maintenance } from './maintenance';
 import { RunReports } from './reports';
 import { SyncOperations } from './sync';
 import { Verification } from './verify';
+import { OriginalOperations } from './operations';
 
 const AdministrativeControls = ({ children }: { children: React.ReactNode }) => {
     const connection = useConnection();
@@ -41,6 +42,7 @@ export const Application = () => {
                         Enable administrative access in Cockpit. Existing operation observation
                         and host changes remain uncertain until reconciled; no action is repeated.
                     </Alert>}
+                <OriginalOperations />
                 <Tabs
                     activeKey={activeTab}
                     onSelect={(_event, eventKey) => setActiveTab(eventKey)}

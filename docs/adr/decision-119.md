@@ -2,7 +2,7 @@
 
 - Decision identity: 119.
 
-- Status: Amended; see decision 133 and the amendments referenced below.
+- Status: Amended; see decisions 133/134 and the amendments referenced below.
 - Date: 2026-10-18.
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
@@ -80,3 +80,17 @@ independent-atomic adjunct exception and protected read capabilities. Existing
 archive, candidate-byte, whole-archive authorization and registered MCP boundaries
 remain in force until corresponding additive implementation is accepted. Tags do
 not change operational policy identity or grant installation/write authority.
+
+## Empty Unix writes amendment (2026-10-20)
+
+Repeated actual Unix-socket tests exposed an empty h11 end-of-message write after
+the peer had sent and closed its response. `sendall(b'')` could raise BrokenPipe;
+the owned adapter closed the descriptor before HTTPCore's deliberate response
+read after a write error, yielding EBADF/ReadError instead of the received response.
+The locked upstream synchronous backend explicitly makes empty writes a no-op.
+The owned adapter now follows that contract, preserving cleanup for nonempty
+I/O errors. A deterministic real socket regression and repeated existing truncated
+response tests establish the repair; no framing/pool internals, dependency update,
+fallback or request replay is added. [Decision134](decision-134.md) records the
+Cockpit integration scope. This observed client defect does not identify the
+original installed bridge/session trigger.

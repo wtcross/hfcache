@@ -10,6 +10,22 @@ import {
 import { hfcacheArgv } from '../src/lib/command';
 import type { Envelope } from '../src/lib/envelope';
 
+export const DEFAULT_CLIENT_METADATA = Object.freeze({
+    metadata_schema_version: 1,
+    profile_fingerprint: 'a'.repeat(64),
+    authority_fingerprint: 'c'.repeat(64),
+    endpoint: 'unix:/run/hfcache/api/api.sock',
+    credential_class: 'rest-writer',
+    archive_id: '12345678-1234-1234-1234-123456789abc',
+    instance_id: 'b'.repeat(32),
+});
+
+export function metadataEnvelope(changes: Record<string, unknown> = {}): Envelope {
+    const result = JSON.parse(envelope('client describe', 'metadata')) as Envelope;
+    result.data = { ...DEFAULT_CLIENT_METADATA, ...changes };
+    return result;
+}
+
 export function invariant(condition: unknown, description: string): asserts condition {
     if (!condition)
         throw new Error(description);
@@ -37,9 +53,14 @@ export function envelope(command: string, marker: string): string {
 }
 
 export class ProcessBoundary {
+    private static sequence = 0;
     readonly argv: string[];
     readonly action: 'cli' | 'read' | 'inspect' | 'write' | 'install' | 'remove' | 'guard' | 'confirm';
     readonly clientArgv: string[] | null;
+    readonly command: readonly string[];
+    readonly key: string | null;
+    readonly clientScope: string | null;
+    readonly operationId: string;
     readonly handle: Promise<string> & {
         stream: (callback: (chunk: string) => void) => unknown;
         input: (value: string) => unknown;
@@ -71,18 +92,16 @@ export class ProcessBoundary {
             invariant(client || argv.length === expected.length, 'Host-only guard must contain no command tail');
             this.clientArgv = client ? argv.slice(expected.length) : null;
             if (this.clientArgv !== null) {
-                validateClientArgv(this.clientArgv);
+                const parsed = validateClientArgv(this.clientArgv);
                 if (action === 'confirm') {
-                    const confirmation = hfcacheArgv(['config', 'validate']);
-                    invariant(this.clientArgv.length === confirmation.length &&
-                              confirmation.every((argument, index) => argument === this.clientArgv?.[index]),
+                    invariant(parsed.command.join(' ') === 'config validate' && parsed.config === null &&
+                              parsed.key === null,
                               'Installed confirmation must retain its fixed installed validation command');
                 } else {
-                    const prefix = hfcacheArgv([], { config: CONFIGURATION_PATHS.candidate });
-                    invariant(prefix.every((argument, index) => argument === this.clientArgv?.[index]),
+                    invariant(parsed.config === CONFIGURATION_PATHS.candidate,
                               'Candidate CLI must select only the fixed candidate path');
-                    const command = this.clientArgv.slice(prefix.length);
-                    invariant(command[0] === 'plan' || command.join(' ') === 'config validate',
+                    invariant(parsed.command[0] === 'plan' ||
+                              (parsed.command.join(' ') === 'config validate' && parsed.key === null),
                               'Only candidate validation and sizing may use the guard');
                 }
             }
@@ -95,6 +114,11 @@ export class ProcessBoundary {
             invariant(options.superuser === 'require' && options.err === 'out',
                       'Actual adapter must retain privileged merged-stream observation');
         }
+        const parsed = this.clientArgv === null ? null : validateClientArgv(this.clientArgv);
+        this.command = Object.freeze(parsed?.command ?? []);
+        this.key = parsed?.key ?? null;
+        this.clientScope = parsed?.clientScope ?? null;
+        this.operationId = (++ProcessBoundary.sequence).toString(16).padStart(32, '0');
         const completion = new Promise<string>((resolve, reject) => {
             this.resolve = resolve;
             this.reject = reject;
@@ -125,7 +149,8 @@ export class ProcessBoundary {
     }
 
     succeed(command: string, marker: string): void {
-        this.emit(envelope(command, marker));
+        this.receipts();
+        this.emit(envelope(this.resultCommand(command), marker));
         this.resolve('');
     }
 
@@ -135,6 +160,7 @@ export class ProcessBoundary {
 
     succeedEnvelope(result: Envelope): void {
         invariant(result.exit_code === 0, 'Successful result helper requires a successful Envelope');
+        this.receipts();
         this.emit(JSON.stringify(result) + '\n');
         this.resolve('');
     }
@@ -150,13 +176,56 @@ export class ProcessBoundary {
     fail(error = bridgeFailure()): void {
         this.reject(error);
     }
+
+    private receipts(): void {
+        if (this.key !== null)
+            this.emit(`Idempotency key: ${this.key}\nOperation: ${this.operationId}\n`);
+    }
+
+    private resultCommand(command: string): string {
+        if ((command === 'prune' || command === 'recover') && this.command[0] === command)
+            return command + (this.command.includes('--apply') ? ' --apply' : ' --dry-run');
+        if (command === 'verify' && this.command[0] === 'verify') {
+            const mode = ['--full', '--revision', '--new', '--estimate'].find(option => this.command.includes(option));
+            return command + (mode ? ' ' + mode : '');
+        }
+        return command;
+    }
 }
 
-function validateClientArgv(argv: string[]): void {
+function validateClientArgv(argv: string[]): {
+    command: string[]; key: string | null; clientScope: string | null; config: string | null;
+} {
     const fixed = hfcacheArgv([]);
     invariant(fixed.every((argument, index) => argument === argv[index]),
               'Actual adapter must retain the exact fixed launcher, profile, socket and service identity');
     invariant(argv.length > fixed.length, 'Actual client command must be explicit');
+    let index = fixed.length;
+    let key: string | null = null;
+    let clientScope: string | null = null;
+    let config: string | null = null;
+    if (argv[index] === '--idempotency-key') {
+        key = argv[index + 1];
+        invariant(typeof key === 'string' && /^[A-Za-z0-9._~+-]{1,128}$/.test(key),
+                  'Original keyed submission must contain only a bounded safe key');
+        index += 2;
+    }
+    if (argv[index] === '--expected-client-scope') {
+        clientScope = argv[index + 1];
+        invariant(typeof clientScope === 'string' && /^[0-9a-f]{64}$/.test(clientScope),
+                  'Original authority comparison must contain only a safe fingerprint');
+        index += 2;
+    }
+    if (argv[index] === '--config') {
+        config = argv[index + 1];
+        invariant(config === CONFIGURATION_PATHS.candidate, 'Only the fixed guarded candidate path is permitted');
+        index += 2;
+    }
+    const command = argv.slice(index);
+    invariant(command.length > 0 && !command.some(argument =>
+        ['--idempotency-key', '--expected-client-scope', '--config'].includes(argument)),
+              'Client globals must occur exactly once before the explicit command');
+    return { command, key, clientScope, config };
 }
 
 export class BusRequest {
@@ -262,16 +331,36 @@ export class FileBoundary {
 }
 
 export class CockpitBoundary {
+    readonly transport = { host: 'cpr-initial' };
+    // Every actual process remains observable. The legacy nonmetadata index
+    // supports existing stage assertions; descriptions have their own index.
+    readonly invocations: ProcessBoundary[] = [];
     readonly processes: ProcessBoundary[] = [];
+    readonly metadataProcesses: ProcessBoundary[] = [];
+    metadataMode: 'automatic' | 'manual' | 'failure' = 'automatic';
+    metadata: Record<string, unknown> = { ...DEFAULT_CLIENT_METADATA };
     readonly buses: BusBoundary[] = [];
     readonly files: FileBoundary[] = [];
     readonly superuser = new SuperuserBoundary();
 
     spawn(argv: string[], options: Record<string, unknown>): ProcessBoundary['handle'] {
         const process = new ProcessBoundary(argv, options);
-        this.processes.push(process);
-        if (!this.superuser.allowed)
+        this.invocations.push(process);
+        const metadata = process.command.join(' ') === 'client describe';
+        (metadata ? this.metadataProcesses : this.processes).push(process);
+        if (!this.superuser.allowed) {
             queueMicrotask(() => process.fail(bridgeFailure('access-denied')));
+        } else if (metadata && this.metadataMode !== 'manual') {
+            queueMicrotask(() => {
+                if (this.metadataMode === 'failure')
+                    process.fail();
+                else {
+                    const result = metadataEnvelope();
+                    result.data = { ...this.metadata };
+                    process.succeedEnvelope(result);
+                }
+            });
+        }
         return process.handle;
     }
 

@@ -7,7 +7,7 @@
  * displayed and never enabled from here (CP-06).
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
 import { Card, CardBody, CardTitle } from "@patternfly/react-core/dist/esm/components/Card/index.js";
@@ -27,9 +27,11 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 
 import { UnitActivity } from './activity';
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
+import { connectionSnapshot } from './api/connection';
+import { submissionBlocked } from './api/operations';
 import { startUnit, VERIFY_SERVICE, VERIFY_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useObservationSignal, useOperationHandles, useUnitPoll, useConnection } from './hooks';
+import { useObservationSignal, useOperationHandles, useUnitPoll, useConnection, useOperations } from './hooks';
 import { parseSelector, SelectorError } from './lib/command';
 import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatBytes, formatDuration, formatTimestamp } from './lib/format';
@@ -188,6 +190,8 @@ const FullVerifyCard = () => {
 };
 
 const RevisionVerifyCard = () => {
+    const connection = useConnection();
+    const operations = useOperations();
     const [selectorText, setSelectorText] = useState('');
     const [running, setRunning] = useState(false);
     const [feed, setFeed] = useState<string[]>([]);
@@ -195,6 +199,7 @@ const RevisionVerifyCard = () => {
     const [error, setError] = useState<Error | null>(null);
     const observationSignal = useObservationSignal();
     const { handles, reset: resetHandles, onNotice } = useOperationHandles();
+    const submitted = useRef(false);
 
     let validationError: string | null = null;
     if (selectorText !== '') {
@@ -208,6 +213,13 @@ const RevisionVerifyCard = () => {
     }
 
     const run = () => {
+        if (submitted.current || running || submissionBlocked() || !connectionSnapshot().administrative || selectorText === '')
+            return;
+        try {
+            if (parseSelector(selectorText).sha === undefined)
+                return;
+        } catch { return }
+        submitted.current = true;
         const signal = observationSignal();
         setRunning(true);
         setFeed([]);
@@ -221,7 +233,10 @@ const RevisionVerifyCard = () => {
         })
                 .then(envelope => { if (!signal.aborted) setResult(envelope); },
                       failure => { if (!signal.aborted) setError(failure as Error); })
-                .finally(() => { if (!signal.aborted) setRunning(false); });
+                .finally(() => {
+                    submitted.current = false;
+                    if (!signal.aborted) setRunning(false);
+                });
     };
 
     const uncertain = (result !== null && classifyEnvelope(result) === 'observation') ||
@@ -254,7 +269,8 @@ const RevisionVerifyCard = () => {
                     <StackItem>
                         <Button
                             variant="secondary"
-                            isDisabled={running || uncertain || selectorText === '' || validationError !== null}
+                            isDisabled={running || uncertain || operations.blocked || !connection.administrative ||
+                                selectorText === '' || validationError !== null}
                             onClick={run}
                         >
                             Run verify --revision

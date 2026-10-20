@@ -1,6 +1,27 @@
 """Client failures preserve transport uncertainty without inventing domain results."""
 
+from typing import TYPE_CHECKING
+
 from hfcache.errors import ConfigurationError, ExitCode, HfcacheError, Problem, SafetyError
+
+if TYPE_CHECKING:
+    from hfcache.reporting import Envelope
+
+
+class ClientMetadataError(HfcacheError):
+    """Retain an exact failed metadata Envelope before any scoped target request."""
+
+    def __init__(self, envelope: Envelope) -> None:
+        self.envelope = envelope
+        self.exit_code = ExitCode(envelope.exit_code)
+        super().__init__(
+            [
+                Problem(
+                    item.code, item.message, repository=item.repository, context=dict(item.context)
+                )
+                for item in envelope.errors
+            ]
+        )
 
 
 class ClientProtocolError(ConfigurationError):

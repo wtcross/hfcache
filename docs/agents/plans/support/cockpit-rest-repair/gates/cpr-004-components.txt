@@ -1,0 +1,132 @@
+CPR-004 CLI/client and mounted-component evidence (2026-10-19/20 session)
+
+Repository: /home/tyler/Projects/hfcache
+No production inspection, credential, application installation, archive/NAS
+access, deployment or service change was performed by these investigations.
+
+CLI/client RED (cwd repository):
+  rtk uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_client_describe.py -k returns_only
+Observed before implementing client describe: 2 failed, 7 deselected; exit 1.
+Both authentic reader/writer metadata cases failed because no client command
+existed (the CLI returned usage exit 2). This identified a missing presentation
+surface, not an installed Cockpit/PAM diagnosis.
+
+CLI/client GREEN (cwd repository):
+  rtk uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_client_describe.py tests/unit/test_cli_operation_helpers.py tests/unit/test_cli_api_writes.py tests/unit/test_client_config.py
+Observed: 179 passed; exit 0. This preceded the four additional remote synchronous
+validation pin cases and final derived-metadata redaction follow-up.
+  rtk uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli.py tests/unit/test_cli_api_reads.py tests/unit/test_api_client_sockets.py
+Observed: 42 passed; exit 0.
+  rtk uv run --locked --extra server --extra mcp pytest -q tests/unit/test_cli_client_describe.py tests/unit/test_cli_api_reads.py
+Observed after allowing compare-only pins for remote configuration validation:
+98 passed; exit 0 (69 new describe/pin cases plus 29 existing API-read cases).
+The final registered-literal collision follow-up has separate contributor/gate
+evidence; the full repository gate must include that final source as well.
+
+The real Unix-socket cases start only a disposable API lifespan under pytest's
+owned temporary directory and invoke the actual CLI in a separate isolated
+Python process. Synthetic reader/writer bearers authenticate; an incorrect
+bearer returns HFAPI001. The exact observed routes are authenticated capability
+and version GETs, plus an explicitly requested original-key GET for the writer
+case. A wrong authority pin refuses before sending that key. A matching pin
+queries the same key, returning the original missing-history HFAPI013/exit 20.
+There are zero POSTs, operation receipts or archive-directory creations.
+HTTPX-boundary cases cover a single original keyed POST after a matching pin,
+zero target requests for changed endpoint/settings/credential/archive/unknown
+authority, exact failed metadata Envelopes, malformed/forbidden flags before
+settings access, null archive identity, safe endpoint canonicalization, and
+remote synchronous validation without job keys. These are not rootless-launcher
+or PAM acceptance; those remain separate disposable-runtime requirements.
+
+Mounted RED (cwd cockpit): rtk node test/browser.mjs
+Observed before the stale acknowledgement correction: 44 tests, 43 pass, 1 fail;
+exit 1. The actual Configuration case confirmed a captured uncertain install,
+refreshed a changed API client authority, then found acknowledgement still ready.
+Bundle SHA-256:
+f2bc28b8cffe9be31ca6bdc4e1f9370cb052f32af53986c6a59d1bf914391ccc
+
+Mounted observer RED (cwd cockpit):
+  rtk node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-004-observer-red.jsonl
+The owner explicitly authorized temporarily removing only observeOriginal's
+onIdentity callback. It was restored in a finally block immediately after the
+baseline bundle was built/run; no temporary source omission remains.
+Observed: 45 tests, 44 pass, 1 fail; exit 1. Sole failure: explicit original wait
+received a different operation-ID notice and valid successful terminal stdout,
+then incorrectly became terminal success. The JSONL retains bounded test output.
+Bundle SHA-256:
+cb30129a938ac9e9f53b4f2122396d3dd9dd2b2e4884d772badae1f8cb92509b
+
+Captured-revalidation RED follow-up (2026-10-20; cwd cockpit):
+  rtk node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-004-revalidation-red.jsonl
+The owner explicitly authorized temporarily omitting only the new captured-
+revalidation catch preservation patch. A finally block restored it immediately
+after the baseline run; no temporary source omission remains.
+Observed: 46 tests, 45 pass, 1 fail; exit 1. Sole failure: after an actual lost
+candidate-write acknowledgement and exact read-only inspection, a classified
+HFAPI003 metadata refusal during explicit revalidation replaced the original
+candidate-write/reconnected failure. Bundle SHA-256:
+c6b7aad95e7a19c8d489c84a1fc152a878ca6e0b06ac698abd6d3dd0dc56d130
+
+Restored-terminal RED follow-up (2026-10-20; cwd cockpit):
+  rtk node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-004-restored-terminal-red.jsonl
+The baseline bundle was captured before the core restoration correction; no
+core source was temporarily changed. Observed: 47 tests, 46 pass, 1 fail; exit 1.
+The new case first reloaded a genuine recorded terminal summary in a fresh
+Application module and found another submission enabled before authenticated
+confirmation of the original result. Its later forged-summary branch was not
+reached in this RED run. Bundle SHA-256:
+f7fd24199cd94e3facf1de38ee9c36d55360a02d84a76b3723f507e175ae01f3
+
+Mounted GREEN (cwd cockpit):
+  rtk node test/browser.mjs > ../docs/agents/plans/support/cockpit-rest-repair/gates/cpr-004-mounted.json
+Observed after the acknowledgement, identity-conflict and captured-revalidation
+failure-preservation and restored-terminal corrections: 47 tests, 47 pass;
+exit 0. The bounded JSON records every test and bundle hash:
+800abfa840e0b86f74fe4d12aedbc1440f06b509ba84fa15024eb511fcaca2dd
+
+The owned Firefox profile mounts actual Application/Tabs, Configuration,
+Maintenance, OriginalOperations, hooks, adapters, runner and registry. Only
+external Cockpit process/D-Bus/file/privilege ports are controlled. It performs
+no real PAM authentication, API request or host command. The original thirty
+regressions remain green. New V18/V22-V34 cases exercise pre-notice durable keys;
+actual maintenance Dry run/Apply confirmation and double-click protection;
+uncertain Apply across real unmountOnExit tab changes; explicit original-key
+lookup and original-ID wait; missing history; fresh scope drift; authentic failed
+metadata Envelopes; original candidate sizing recovery through inspection and
+fresh validation with no second write/plan; maintenance preview scope binding;
+acknowledgement invalidation; Doctor, valid selected-sync and valid revision
+verification controls blocked while unkeyed estimation stays available; fourteen
+keyed adapter call shapes; and zero fake jobs for synchronous reads/validation.
+The captured-revalidation follow-up asserts that the original write-error object,
+candidate-write stage and reconnected problem remain alongside the new failed
+metadata Envelope, with candidate uncertainty and the exact guard/draft retained.
+Only the original write and explicit inspection run: zero extra write, candidate
+validation, sizing, installation or cleanup processes are started.
+
+Same-origin owned iframes create fresh application modules. An actual location
+reload restores the original uncertain key from sessionStorage, starts zero
+keyed processes and keeps a new submission blocked. Corrupt/unknown-schema/
+oversized stored records are retained as evidence and cannot authorize work.
+The restored-terminal case reloads both a genuine terminal record and an
+uncertain record edited into a plausible successful terminal summary. Both
+fresh Applications block new submission until explicit original-key lookup
+and original-ID wait. An exact authenticated summary resolves the genuine
+record; a different authenticated result conflicts with the forged summary,
+retains the original handles and keeps submission blocked. Neither recovery
+starts a keyed process.
+The quota case uses actual Firefox sessionStorage: owned padding, bounded at
+16 MiB, reaches QuotaExceededError. A fresh real Application then refuses a job
+before its process because it cannot durably prepare the record. All owned
+padding/iframes are removed and the prior storage text restored. No production
+registry reset or mocked quota exception is used.
+
+Focused GREEN:
+  (cwd cockpit) rtk pnpm exec eslint test/browser.fixture.tsx
+  (cwd cockpit) rtk pnpm exec tsc --noEmit
+  (cwd repository) rtk uv run --locked ruff check src/hfcache/client_metadata.py src/hfcache/client_errors.py src/hfcache/cli_client.py src/hfcache/cli.py tests/unit/test_cli_client_describe.py
+  (cwd repository) rtk uv run --locked pyrefly check
+Observed: all exit 0. Final frontend checks follow the 47-case source; Python
+checks preceded the separately checked derived-metadata redaction follow-up.
+
+These focused checks do not substitute for scripts/check.sh, its executed
+Cockpit gate, or required disposable Cockpit/PAM/systemd/rootless acceptance.

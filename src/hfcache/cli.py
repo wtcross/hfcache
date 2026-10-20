@@ -18,6 +18,8 @@ from hfcache import cli_client
 from hfcache.catalog_display import catalog_rows
 from hfcache.catalog_query_models import CatalogQuery
 from hfcache.client_catalog import collect_catalog
+from hfcache.client_errors import ClientMetadataError
+from hfcache.client_metadata import describe_client
 from hfcache.config import load_config
 from hfcache.credentials import resolve_token
 from hfcache.errors import (
@@ -105,6 +107,7 @@ class GlobalOptions:
     detach: bool = False
     idempotency_key: str | None = None
     wait_timeout: float | None = None
+    expected_client_scope: str | None = None
 
 
 def utc_now() -> str:
@@ -176,6 +179,9 @@ def _report_failure(
     before it refused — `archive init` describes the target it would not touch,
     so the same output answers both "why did it stop" and "what is there now".
     """
+    if isinstance(error, ClientMetadataError):
+        _show_result(ctx, error.envelope)
+        raise typer.Exit(int(error.exit_code))
     evidence = dict(data or {})
     key = getattr(error, "key", None)
     operation_id = getattr(error, "operation_id", None)
@@ -269,12 +275,36 @@ operations_app = typer.Typer(
 )
 app.add_typer(operations_app)
 
+client_app = typer.Typer(
+    name="client", help="Describe the selected authenticated API authority.", no_args_is_help=True
+)
+app.add_typer(client_app)
+
+
+@client_app.command("describe")
+def client_describe(ctx: typer.Context) -> None:
+    """Read bounded nonsecret authority metadata; never submit or inspect an archive."""
+    started_at = utc_now()
+    options = _options(ctx)
+    try:
+        cli_client.check_job_options(options)
+        with cli_client.connect(options) as client:
+            result = describe_client(client, options.client_config_path)
+    except HfcacheError as error:
+        _report_failure(ctx, "client describe", started_at, error)
+    if isinstance(result, Envelope):
+        _show_result(ctx, result)
+    elif options.json_output:
+        emit_envelope("client describe", result, started_at=started_at)
+    elif not options.quiet:
+        _echo_pairs(result)
+
 
 def _operation_metadata(ctx: typer.Context, identity: str, *, lookup: bool) -> None:
     started_at = utc_now()
     command = "operations lookup" if lookup else "operations show"
     try:
-        cli_client.check_job_options(_options(ctx))
+        cli_client.check_job_options(_options(ctx), scope_read=True)
         with cli_client.connect(_options(ctx)) as client:
             client.require_capabilities("read", "operations", "operation_history")
             response = (
@@ -456,6 +486,17 @@ def main(
         float | None,
         typer.Option("--wait-timeout", metavar="SECONDS", help="Observation deadline."),
     ] = None,
+    expected_client_scope: Annotated[
+        str | None,
+        typer.Option(
+            "--expected-client-scope",
+            metavar="SHA256",
+            help=(
+                "Compare authenticated client authority before remote validation, "
+                "a job or operation observation."
+            ),
+        ),
+    ] = None,
 ) -> None:
     """Options accepted before the command."""
     # Before any command runs, so a failure inside argument handling is still
@@ -480,6 +521,7 @@ def main(
         detach=detach,
         idempotency_key=idempotency_key,
         wait_timeout=wait_timeout,
+        expected_client_scope=expected_client_scope,
     )
 
 
@@ -585,7 +627,7 @@ def config_validate(
     started_at = utc_now()
     options = _options(ctx)
     try:
-        cli_client.check_job_options(options)
+        cli_client.check_job_options(options, scope_read=not local)
     except HfcacheError as error:
         _report_failure(ctx, "config validate", started_at, error)
     if not local:

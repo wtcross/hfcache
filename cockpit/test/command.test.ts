@@ -44,6 +44,17 @@ test('a candidate configuration replaces the installed path (contract §6)', () 
     assert.ok(!argv.includes('/etc/hfcache/config.toml'));
 });
 
+test('original keys and client authority pins remain separate global CLI arguments', () => {
+    const pin = 'b'.repeat(64);
+    const argv = hfcacheArgv(['prune', '--apply'], { idempotencyKey: '~original-key', expectedClientScope: pin });
+    assert.deepEqual(argv.slice(-6), ['--idempotency-key', '~original-key', '--expected-client-scope', pin, 'prune', '--apply']);
+    assert.ok(argv.includes('--property=User=hfcache'));
+    assert.ok(!argv.some(value => value.includes('token')));
+    for (const idempotencyKey of ['', 'x;command', 'x\ncommand', 'x'.repeat(129)])
+        assert.throws(() => hfcacheArgv(['sync'], { idempotencyKey }), /Invalid original operation key/);
+    assert.throws(() => hfcacheArgv(['sync'], { expectedClientScope: 'https://unexpected' }), /Invalid expected client authority/);
+});
+
 test('selectors round-trip', () => {
     for (const text of ['model:org/name', 'dataset:org/data.set', `model:org/name@${SHA}`]) {
         assert.equal(formatSelector(parseSelector(text)), text);

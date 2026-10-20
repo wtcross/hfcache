@@ -4,6 +4,7 @@ import { test } from 'node:test';
 
 import type { Envelope } from '../src/lib/envelope.ts';
 import type { OperationNotice } from '../src/lib/events.ts';
+import type { OperationIdentity } from '../src/lib/operation-registry.ts';
 import { FAILURE_STAGES } from '../src/lib/failure.ts';
 import { HfcacheSpawnError, runSpawned } from '../src/lib/runner.ts';
 import type { StreamProcess } from '../src/lib/runner.ts';
@@ -269,4 +270,162 @@ test('failed installed validation Envelope remains classified evidence after non
     refused.command = 'config validate';
     assert.deepEqual(await runSpawned(['fixed-confirmation'], () =>
         process([JSON.stringify(refused)], true), {}, true), refused);
+});
+
+test('V22 expected pre-send key survives a bridge failure before the first CLI notice', async () => {
+    let spawned = 0;
+    await assert.rejects(runSpawned(['fixed-client'], () => {
+        spawned += 1;
+        return rejectedProcess([], { problem: 'reconnected' });
+    }, { expectedKey: 'persisted-before-send', stage: 'operation-observe' }), error => {
+        assert.ok(error instanceof HfcacheSpawnError);
+        assert.equal(error.idempotencyKey, 'persisted-before-send');
+        assert.equal(error.operationId, undefined);
+        assert.equal(error.problem, 'reconnected');
+        assert.equal(error.workMayContinue, true);
+        return true;
+    });
+    assert.equal(spawned, 1);
+});
+
+test('V22/V31 keyed job success requires both matching key and accepted operation identity', async () => {
+    for (const prefix of ['', 'Idempotency key: stable-key\n', `Operation: ${ID}\n`]) {
+        await assert.rejects(runSpawned(['fixed-client'], () => process([prefix, JSON.stringify(envelope())]),
+                                        { expectedKey: 'stable-key' }), error => {
+            assert.ok(error instanceof HfcacheSpawnError);
+            assert.equal(error.idempotencyKey, 'stable-key');
+            assert.equal(error.identityConflict, true);
+            assert.equal(error.category, 'protocol');
+            return true;
+        });
+    }
+});
+
+test('V31 keyed pre-admission failed Envelope remains exact without invented receipt notices', async () => {
+    const refused = envelope(10, 'HFAPI003');
+    assert.deepEqual(await runSpawned(['fixed-client'], () => process([JSON.stringify(refused)], true),
+                                      { expectedKey: 'stable-key' }), refused);
+});
+
+test('V24/V34 identity observation remains attached after display throws or aborts', async () => {
+    for (const aborted of [false, true]) {
+        const controller = new AbortController();
+        const identities: OperationIdentity[] = [];
+        let displays = 0;
+        let closes = 0;
+        if (aborted) controller.abort();
+        const original = Object.assign(process(['[1] running: safe\n', handles, JSON.stringify(envelope())]), {
+            close: () => { closes += 1 },
+        });
+        assert.deepEqual(await runSpawned(['fixed-client'], () => original, {
+            expectedKey: 'stable-key',
+            signal: controller.signal,
+            onIdentity: notice => identities.push(notice),
+            onLine: () => { displays += 1; throw new Error('detached view') },
+        }), envelope());
+        assert.deepEqual(identities, [{ kind: 'key', key: 'stable-key' }, { kind: 'operation', operationId: ID }]);
+        assert.equal(displays, aborted ? 0 : 1);
+        assert.equal(closes, 0);
+    }
+});
+
+test('V32 every validated duplicate identity is observed independently without changing the original job', async () => {
+    const identities: OperationIdentity[] = [];
+    assert.deepEqual(await runSpawned(['fixed-client'], () => process([handles, handles, JSON.stringify(envelope())]), {
+        expectedKey: 'stable-key', onIdentity: notice => identities.push(notice),
+    }), envelope());
+    assert.equal(identities.length, 4);
+    assert.deepEqual(identities.slice(0, 2), identities.slice(2));
+});
+
+for (const conflicting of ['Idempotency key: different-key\n', `Operation: ${'f'.repeat(32)}\n`]) {
+    test('V32 late conflicting key/ID fails closed and preserves original handles', async () => {
+        const identities: OperationIdentity[] = [];
+        await assert.rejects(runSpawned(['fixed-client'], () => process([handles, conflicting, JSON.stringify(envelope())]), {
+            expectedKey: 'stable-key', onIdentity: notice => identities.push(notice),
+        }), error => {
+            assert.ok(error instanceof HfcacheSpawnError);
+            assert.equal(error.idempotencyKey, 'stable-key');
+            assert.equal(error.operationId, ID);
+            assert.equal(error.identityConflict, true);
+            assert.deepEqual(error.envelope, envelope());
+            return true;
+        });
+        assert.equal(identities.length, 3);
+    });
+}
+
+test('V32 a first mismatched key cannot attach its operation ID to the original expected key', async () => {
+    const foreign = `Idempotency key: different-key\nOperation: ${ID}\n`;
+    await assert.rejects(runSpawned(['fixed-client'], () => process([foreign, JSON.stringify(envelope())]),
+                                    { expectedKey: 'stable-key' }), error => {
+        assert.ok(error instanceof HfcacheSpawnError);
+        assert.equal(error.idempotencyKey, 'stable-key');
+        assert.equal(error.operationId, undefined);
+        assert.equal(error.identityConflict, true);
+        return true;
+    });
+});
+
+test('V32 combined identity conflict and failed process preserves the original classified cause and failed Envelope', async () => {
+    const refused = envelope(20, 'HFMNT010');
+    await assert.rejects(runSpawned(['fixed-client'], () => rejectedProcess([
+        handles, 'Idempotency key: different-key\n', JSON.stringify(refused),
+    ], { problem: 'reconnected', exit_status: 17 }), { expectedKey: 'stable-key' }), error => {
+        assert.ok(error instanceof HfcacheSpawnError);
+        assert.equal(error.category, 'bridge');
+        assert.equal(error.problem, 'reconnected');
+        assert.equal(error.exitStatus, 17);
+        assert.equal(error.identityConflict, true);
+        assert.deepEqual(error.envelope, refused);
+        assert.equal(error.operationId, ID);
+        return true;
+    });
+});
+
+test('V23/V34 identity callback failure never interrupts later identity capture or closes the process', async () => {
+    const identities: OperationIdentity[] = [];
+    let closes = 0;
+    const original = Object.assign(process([handles, JSON.stringify(envelope())]), { close: () => { closes += 1 } });
+    await assert.rejects(runSpawned(['fixed-client'], () => original, {
+        expectedKey: 'stable-key',
+        onIdentity: notice => {
+            identities.push(notice);
+            if (notice.kind === 'key') throw new Error('recovery persistence unavailable');
+        },
+    }), error => {
+        assert.ok(error instanceof HfcacheSpawnError);
+        assert.equal(error.operationId, ID);
+        assert.equal(error.identityConflict, true);
+        return true;
+    });
+    assert.equal(identities.length, 2);
+    assert.equal(closes, 0);
+});
+
+test('V22 unsafe expected key refuses before process creation without echoing its contents', async () => {
+    let spawned = 0;
+    await assert.rejects(runSpawned(['fixed-client'], () => { spawned += 1; return process([]) }, {
+        expectedKey: 'SYNTHETIC_SECRET\ninvalid',
+    }), error => {
+        assert.ok(error instanceof HfcacheSpawnError);
+        assert.ok(!JSON.stringify(error).includes('SYNTHETIC_SECRET'));
+        assert.ok(!error.message.includes('SYNTHETIC_SECRET'));
+        return true;
+    });
+    assert.equal(spawned, 0);
+});
+
+test('V32 bounded display progress cannot evict identity capture or hide a late conflicting ID', async () => {
+    const progress = '[1] running: safe\n'.repeat(10000);
+    let identities = 0;
+    await assert.rejects(runSpawned(['fixed-client'], () => process([
+        handles + progress + `Operation: ${'f'.repeat(32)}\n` + JSON.stringify(envelope()),
+    ]), { expectedKey: 'stable-key', onIdentity: () => { identities += 1 } }), error => {
+        assert.ok(error instanceof HfcacheSpawnError);
+        assert.equal(error.identityConflict, true);
+        assert.equal(error.operationId, ID);
+        return true;
+    });
+    assert.equal(identities, 3);
 });

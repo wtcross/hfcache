@@ -62,7 +62,7 @@ async function main() {
                     contents: 'import { controlledCockpit } from ' + JSON.stringify(join(cockpit, 'test/cockpit-fixture.ts')) + ';' +
                     (args.path === 'superuser'
                         ? 'export const superuser = controlledCockpit.superuser;'
-                        : 'export default { gettext: value => value, assert: value => { if (!value) throw new Error("Controlled Cockpit assertion failed"); }, spawn: (...args) => controlledCockpit.spawn(...args), dbus: (...args) => controlledCockpit.dbus(...args), file: (...args) => controlledCockpit.file(...args) };'),
+                        : 'export default { transport: controlledCockpit.transport, gettext: value => value, assert: value => { if (!value) throw new Error("Controlled Cockpit assertion failed"); }, spawn: (...args) => controlledCockpit.spawn(...args), dbus: (...args) => controlledCockpit.dbus(...args), file: (...args) => controlledCockpit.file(...args) };'),
                     loader: 'js',
                     resolveDir: cockpit,
                 }));
@@ -87,7 +87,8 @@ async function main() {
     /** @type {Promise<BrowserResult>} */
     const delivered = new Promise(resolve => { deliver = resolve });
     const server = createServer((request, response) => {
-        if (request.method === 'GET' && request.url === '/') {
+        const pathname = new URL(request.url ?? '/', 'http://fixture.invalid').pathname;
+        if (request.method === 'GET' && pathname === '/') {
             response.setHeader('Content-Type', 'text/html; charset=utf-8');
             response.end('<!doctype html><meta charset="utf-8"><title>Owned mounted hfcache tests</title>' +
             '<div id="fixture"></div><script>window.cprResultPath=' + JSON.stringify(resultPath) +

@@ -224,7 +224,7 @@ def test_help_precedes_profile_locks_and_workloads(monkeypatch, capsys, script, 
     assert "usage:" in capsys.readouterr().out.lower()
 
 
-@pytest.mark.parametrize("arguments", [["--help"], ["status", "--help"]])
+@pytest.mark.parametrize("arguments", [["--help"], ["-h"], ["status", "--help"]])
 def test_container_client_wrapper_help_needs_no_installed_launcher(arguments):
     result = subprocess.run(
         ["bash", str(ROOT / "scripts/hfcache-client"), *arguments],
@@ -237,7 +237,50 @@ def test_container_client_wrapper_help_needs_no_installed_launcher(arguments):
     assert "hfcache.api" in result.stdout
 
 
-def test_fixed_client_role_help_needs_no_profile(monkeypatch):
+@pytest.mark.parametrize("handle", ["--help", "-h", "-original_key", "~original_key"])
+def test_client_wrapper_forwards_original_handle_after_delimiter(tmp_path, handle):
+    capture = tmp_path / "exec-arguments"
+    arguments = [
+        "--expected-client-scope",
+        "a" * 64,
+        "operations",
+        "lookup",
+        "--",
+        handle,
+    ]
+    environment = {**os.environ, "HFCACHE_TEST_EXEC_CAPTURE": str(capture)}
+    for name in ("BASH_ENV", "ENV", "SHELLOPTS", "BASHOPTS", "CDPATH"):
+        environment.pop(name, None)
+    # The actual repository script runs, but its fixed exec is intercepted by a
+    # Bash function. No installed launcher, container, profile or archive opens.
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            'exec() { printf "%s\\0" "$@" > "$HFCACHE_TEST_EXEC_CAPTURE"; exit 73; }; source "$@"',
+            "hfcache-wrapper-test",
+            str(ROOT / "scripts/hfcache-client"),
+            *arguments,
+        ],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert result.returncode == 73, (result.stdout, result.stderr)
+    assert capture.read_bytes().split(b"\0") == [
+        b"/usr/local/libexec/hfcache-container-service",
+        b"client",
+        *(argument.encode() for argument in arguments),
+        b"",
+    ]
+    assert result.stdout == ""
+
+
+@pytest.mark.parametrize("arguments", [["--help"], ["status", "--help"], ["-h", "--", "key"]])
+def test_fixed_client_role_help_needs_no_profile(monkeypatch, arguments):
     module = runpy.run_path(str(ROOT / "scripts/container-service.py"))
     main = module["main"]
 
@@ -245,8 +288,50 @@ def test_fixed_client_role_help_needs_no_profile(monkeypatch):
         pytest.fail("client help attempted installed profile access")
 
     monkeypatch.setitem(main.__globals__, "load_profile", forbidden)
-    monkeypatch.setattr(sys, "argv", ["container-service.py", "client", "status", "--help"])
+    monkeypatch.setattr(sys, "argv", ["container-service.py", "client", *arguments])
     assert main() == 0
+
+
+@pytest.mark.parametrize("handle", ["--help", "-h", "-original_key", "~original_key"])
+def test_fixed_client_launcher_forwards_original_handle_after_delimiter(monkeypatch, handle):
+    module = runpy.run_path(str(ROOT / "scripts/container-service.py"))
+    main = module["main"]
+    image = "sha256:" + "b" * 64
+    arguments = [
+        "--expected-client-scope",
+        "a" * 64,
+        "operations",
+        "lookup",
+        "--",
+        handle,
+    ]
+    executions = []
+
+    class Executed(BaseException):
+        """Stop at the actual fixed process boundary without starting it."""
+
+    def capture_exec(executable, argv):
+        executions.append((executable, argv))
+        raise Executed
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("client forwarding attempted a workload or installed profile read")
+
+    monkeypatch.setitem(main.__globals__, "load_profile", lambda: {"app_image": image})
+    monkeypatch.setitem(main.__globals__, "archive_readonly", forbidden)
+    monkeypatch.setitem(main.__globals__, "prepare_start", forbidden)
+    monkeypatch.setattr(subprocess, "run", forbidden)
+    monkeypatch.setattr(os, "execv", capture_exec)
+    monkeypatch.setattr(sys, "argv", ["container-service.py", "client", *arguments])
+    with pytest.raises(Executed):
+        main()
+    assert len(executions) == 1
+    executable, argv = executions[0]
+    assert executable == "/usr/bin/podman"
+    assert argv[:2] == ["/usr/bin/podman", "--remote=false"]
+    assert argv[-len(arguments) - 2 :] == [image, "/opt/hfcache/.venv/bin/hfcache", *arguments]
+    assert "--network=none" in argv
+    assert "/srv/hfcache:/srv/hfcache:ro" not in argv
 
 
 @pytest.mark.parametrize("argument", ["--dry-run", "--engine", "unknown"])

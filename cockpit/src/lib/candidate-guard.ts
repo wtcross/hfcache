@@ -295,7 +295,7 @@ export function candidateMutationInvocation(
 export function guardInstalledInvocation(
     argv: string[], expected: string, fixture?: ConfigurationFixture,
 ): GuardedInvocation {
-    if (argv[0] !== 'systemd-run' || argv.includes('--config') ||
+    if (argv[0] !== 'systemd-run' || argv.includes('--config') || argv.includes('--idempotency-key') ||
         argv.slice(-2).join(' ') !== 'config validate')
         throw new Error('Installed confirmation requires the fixed installed validation adapter');
     return invocation('confirm', { candidateContent: expected, installedContent: expected }, argv, fixture);

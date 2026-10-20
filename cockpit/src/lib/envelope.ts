@@ -6,6 +6,8 @@
  * under node:test as well as in the browser bundle.
  */
 
+import { hfcacheArgv } from './command.ts';
+
 export const ENVELOPE_SCHEMA_VERSION = 1;
 
 export interface EnvelopeIssue {
@@ -145,15 +147,18 @@ export function readOperationEvidence(value: unknown): OperationEvidence {
     return evidence;
 }
 
-export function operationCommands(evidence: OperationEvidence): { lookup?: string; wait?: string } {
+export function operationCommands(evidence: OperationEvidence,
+    expectedClientScope?: string): { lookup?: string; wait?: string } {
     const valid = readOperationEvidence({
         idempotency_key: evidence.idempotencyKey, operation_id: evidence.operationId,
     });
     const commands: { lookup?: string; wait?: string } = {};
+    const fixed = hfcacheArgv([], expectedClientScope === undefined ? {} : { expectedClientScope });
+    const prefix = 'sudo ' + fixed.join(' ') + ' operations ';
     if (valid.idempotencyKey !== undefined)
-        commands.lookup = `hfcache --json operations lookup -- '${valid.idempotencyKey}'`;
+        commands.lookup = prefix + `lookup -- '${valid.idempotencyKey}'`;
     if (valid.operationId !== undefined)
-        commands.wait = `hfcache --json operations wait -- ${valid.operationId}`;
+        commands.wait = prefix + `wait -- '${valid.operationId}'`;
     return commands;
 }
 

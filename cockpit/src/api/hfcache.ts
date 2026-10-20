@@ -10,9 +10,12 @@
 import cockpit from 'cockpit';
 
 import { assertSession, captureSession } from './connection';
+import { keyedAction, observeOriginal, readOperationAuthority, submitOperation } from './operations';
 import type { FailureStage } from '../lib/failure';
 
 import { hfcacheArgv } from '../lib/command';
+import type { ClientCommandOptions } from '../lib/command';
+import type { OperationScope } from '../lib/operation-registry';
 import { guardCandidateInvocation, guardInstalledInvocation, CandidateGuard } from '../lib/candidate-guard';
 import { Envelope } from '../lib/envelope';
 import { HfcacheSpawnError, ObservationOptions, runSpawned } from '../lib/runner';
@@ -20,6 +23,8 @@ import { HfcacheSpawnError, ObservationOptions, runSpawned } from '../lib/runner
 export { HfcacheSpawnError };
 
 export interface RunOptions extends ObservationOptions {
+    requiredScope?: Readonly<OperationScope>;
+    expectedClientScope?: string;
     /* Validate or plan against a candidate file instead of the installed
      * configuration (docs/cockpit.md §6). */
     config?: string;
@@ -27,7 +32,7 @@ export interface RunOptions extends ObservationOptions {
     confirmInstalledContent?: string;
 }
 
-export async function runHfcache(command: string[], options: RunOptions = {}): Promise<Envelope> {
+async function observeHfcache(command: string[], options: RunOptions & ClientCommandOptions = {}): Promise<Envelope> {
     const stage: FailureStage = options.stage ?? (
         options.confirmInstalledContent !== undefined
             ? 'installed-confirm'
@@ -66,6 +71,15 @@ export async function runHfcache(command: string[], options: RunOptions = {}): P
         assertSession(generation, stage, true);
     return envelope;
 }
+
+export function runHfcache(command: string[], options: RunOptions = {}): Promise<Envelope> {
+    const action = keyedAction(command, options.config !== undefined);
+    return action === null ? observeHfcache(command, options) : submitOperation(command, options, action, observeHfcache);
+}
+
+export const readClientAuthority = () => readOperationAuthority(observeHfcache);
+export const lookupOriginalOperation = (key: string) => observeOriginal(key, 'lookup', observeHfcache);
+export const waitOriginalOperation = (key: string) => observeOriginal(key, 'wait', observeHfcache);
 
 export type StreamRunOptions = RunOptions;
 

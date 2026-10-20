@@ -110,6 +110,10 @@ records the observed missing-socket leak and supported-interface rationale.
 [`unix_http`](../src/hfcache/unix_http.py) owns descriptor creation/connect and
 stream cleanup; [failure-path tests](../tests/unit/test_unix_http.py) retain
 exception tracebacks while checking that failures release descriptors.
+Zero-length writes perform no socket I/O, matching the locked backend contract.
+An empty HTTP end-of-message write must not close a connection before its already
+received response can be read. Actual nonempty I/O failures retain owned cleanup;
+no retry, replay or classification shortcut is introduced.
 
 Negotiate API/envelope compatibility and needed capabilities explicitly. Preserve
 request IDs as request correlation, operation IDs as admission identity and domain
@@ -232,6 +236,7 @@ there is no local archive fallback or automatic daemon start.
 | --- | --- |
 | help; `version` | Local, configuration/server independent |
 | `version --server` | Authenticated server version, exact server Envelope |
+| `client describe` | Narrow selected-authority metadata from authenticated capabilities/version reads; no new API route or submission |
 | `status [selectors]` | API pages reconstructed completely |
 | `list [selectors] [--type] [--revisions]` | API inventory plus exact revision rows when requested; consistent join or visible refusal |
 | `archive init --inspect` | Configured writer inspection, no required client root; optional root only checks returned authority |
@@ -253,6 +258,37 @@ request/observer IDs never replace domain evidence. Joined/paged data retains th
 first appropriate server Envelope's invocation metadata. Human output keeps the
 same supported shapes and warning behavior. A 202 receipt is never rendered as
 a completed result; plan/read-only diagnostics await their terminal Envelope.
+
+`client describe` creates its own successful standard Envelope with command
+`client describe`, metadata schema version 1, a 64-hex profile fingerprint,
+canonical endpoint, authenticated REST credential class, validated archive UUID
+or null, API instance ID, and a 64-hex `authority_fingerprint`. Its only requests
+are existing `GET /capabilities`
+and `GET /version`. A nonzero response Envelope remains the original server
+Envelope. Protocol/authentication/transport failures retain existing codes.
+The profile fingerprint hashes canonical allowlisted resolved authority settings:
+endpoint, selected absolute settings path, expected archive UUID, credential
+class, selected CA-file path and metadata schema version. It excludes bearer/Hub
+tokens, token paths/names, whole settings, timing and workload options. The JSON
+does not expose settings/CA paths. Canonical endpoint representation retains the
+supported verified HTTPS or loopback HTTP URL, or `unix:` plus the selected
+absolute socket. It adds no routing selector. Unknown archive identity stays
+null. A Cockpit registry must additionally bind its fixed launcher and target
+host; this client does not discover host/container deployment identity.
+
+`authority_fingerprint` hashes canonical sorted compact JSON of metadata schema
+version, profile fingerprint, endpoint, REST credential class and archive UUID.
+It omits instance ID to permit observation after a restart of the same known
+archive. The compare-only global `--expected-client-scope SHA256` is optional for
+keyed jobs, remote installed/candidate configuration validation, and operations
+lookup/show/wait. It revalidates the actual resolved
+metadata in that target invocation's same API client before a POST or any handle
+lookup/wait request. Mismatch or an unknown archive UUID refuses with `HFAPI017`;
+failed metadata Envelopes remain exact. It grants no authority or routing and
+never triggers replay or cancellation. Other commands reject it before opening
+settings/credentials. Local configuration validation still rejects the pin;
+remote validation gains no idempotency key, receipt or execution lane. Lookup/show
+still reject explicit wait-timeout options.
 
 The CLI's aggregate result is finite too: accumulated rows must fit the
 configured response budget or fail visibly. It never silently truncates inventory.

@@ -364,6 +364,22 @@ test('installed confirmation compares exact tags under lock after candidate rena
     } finally { files.close() }
 });
 
+test('installed confirmation forwards the original authority pin without admitting a fake job key', () => {
+    const files = fixture();
+    try {
+        const pin = 'a'.repeat(64);
+        const argv = hfcacheArgv(['config', 'validate'], { expectedClientScope: pin });
+        const result = files.run(guardInstalledInvocation(argv, BASE, files.identity));
+        assert.equal(result.status, 0, result.stderr);
+        const forwarded = readFileSync(files.argumentsPath, 'utf8').split('\0');
+        assert.equal(forwarded[forwarded.indexOf('--expected-client-scope') + 1], pin);
+        rmSync(files.called);
+        assert.throws(() => guardInstalledInvocation(
+            hfcacheArgv(['config', 'validate'], { expectedClientScope: pin, idempotencyKey: 'not-a-job' }), BASE, files.identity));
+        assert.equal(existsSync(files.called), false);
+    } finally { files.close() }
+});
+
 test('changed installed tags during confirmation withhold a plausible terminal response', async () => {
     const files = fixture();
     let child: ReturnType<typeof spawn> | null = null;

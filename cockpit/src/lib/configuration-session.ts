@@ -6,6 +6,7 @@ import type { ConfigDocument } from './config.ts';
 import type { CandidateGuard, CandidateInspection } from './candidate-guard.ts';
 import type { CandidatePreparation, CandidateProposal, ConfigurationEvidence } from './config-pipeline.ts';
 import type { Envelope } from './envelope.ts';
+import type { OperationScope } from './operation-registry.ts';
 
 export interface ConfigurationState {
     initialized: boolean;
@@ -29,6 +30,8 @@ export interface ConfigurationState {
     diskGuard: Readonly<CandidateGuard> | null;
     uncertainty: 'candidate' | 'install' | null;
     previewUncertain: boolean;
+    previewKey: string | null;
+    authority: Readonly<OperationScope> | null;
     inspection: CandidateInspection | null;
     inspectedGeneration: number | null;
     confirmed: boolean;
@@ -62,6 +65,8 @@ export function createConfigurationSession() {
         diskGuard: null,
         uncertainty: null,
         previewUncertain: false,
+        previewKey: null,
+        authority: null,
         inspection: null,
         inspectedGeneration: null,
         confirmed: false,
