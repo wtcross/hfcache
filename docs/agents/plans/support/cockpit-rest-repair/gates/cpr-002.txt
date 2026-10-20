@@ -1,0 +1,24 @@
+Command: rtk proxy scripts/check.sh
+Exit: 0
+==> uv lock --check
+==> uv sync --locked --extra server --extra mcp
+==> ruff format --check
+==> ruff check
+==> pyrefly check
+==> documentation alignment
+documentation alignment passed: 183 human documents; 19 helpers
+==> pytest
+=============== 5008 passed, 42 deselected in 656.48s (0:10:56) ================
+==> uv build
+==> locked base, server and server-plus-MCP wheel installations
+locked base wheel installation/import/help/version passed
+locked server wheel installation/import/help/version passed
+locked server+mcp wheel installation/import/help/version passed
+==> cockpit plugin gate
+ℹ tests 221
+ℹ pass 221
+ℹ fail 0
+ℹ skipped 0
+22:47:30: Build finished in 1233 ms
+all checks passed
+Full log SHA256: 799652cd5743b6eae19338db08fe6ba1e630b8cf263f9de3bec865302a88936f

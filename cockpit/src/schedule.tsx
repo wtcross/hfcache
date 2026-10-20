@@ -25,6 +25,9 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 import { checkCalendar, readDropIn, removeDropIn, writeDropIn } from './api/schedule';
 import { daemonReload, restartUnit, SYNC_TIMER, unitState } from './api/systemd';
 import { QueryError } from './components';
+import { useConnection } from './hooks';
+import { assertSession, captureSession, connectionSnapshot } from './api/connection';
+import { normalizeFailure } from './lib/failure';
 import { CalendarCheck, parseDropIn } from './lib/schedule';
 
 const Item = ({ term, children }: { term: string; children: React.ReactNode }) => (
@@ -35,6 +38,7 @@ const Item = ({ term, children }: { term: string; children: React.ReactNode }) =
 );
 
 export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
+    const connection = useConnection();
     const [current, setCurrent] = useState<string | null>(null);
     const [onCalendar, setOnCalendar] = useState('');
     const [delay, setDelay] = useState('');
@@ -43,19 +47,46 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
     const [confirming, setConfirming] = useState<'apply' | 'reset' | null>(null);
     const [busy, setBusy] = useState(false);
     const [actionError, setActionError] = useState<Error | null>(null);
+    const [readError, setReadError] = useState<Error | null>(null);
+    const [readRevision, setReadRevision] = useState(0);
+    const [observedOrigin, setObservedOrigin] = useState('');
+    const readOrigin = JSON.stringify([connection.generation, connection.administrative, readRevision]);
+    const fresh = connection.administrative && observedOrigin === readOrigin;
 
     const load = useCallback(() => {
-        readDropIn().then(content => {
-            setCurrent(content);
-            if (content !== null) {
-                const parsed = parseDropIn(content);
-                setOnCalendar(parsed.onCalendar ?? '');
-                setDelay(parsed.randomizedDelaySec ?? '');
-            }
-        }, () => setCurrent(null));
+        setReadRevision(value => value + 1);
     }, []);
 
-    useEffect(load, [load]);
+    useEffect(() => {
+        let cancelled = false;
+        setCurrent(null);
+        setObservedOrigin('');
+        setReadError(null);
+        if (connection.administrative) {
+            const generation = connection.generation;
+            readDropIn().then(content => {
+                if (cancelled || generation !== connectionSnapshot().generation)
+                    return;
+                setCurrent(content);
+                if (content !== null) {
+                    const parsed = parseDropIn(content);
+                    setOnCalendar(parsed.onCalendar ?? '');
+                    setDelay(parsed.randomizedDelaySec ?? '');
+                }
+                setObservedOrigin(readOrigin);
+            }, failure => {
+                if (!cancelled && generation === connectionSnapshot().generation)
+                    setReadError(normalizeFailure(failure, { stage: 'schedule-read' }));
+            });
+        }
+        return () => {
+            cancelled = true;
+        };
+    }, [connection.generation, connection.administrative, readOrigin]);
+    useEffect(() => {
+        setChecked(null);
+        setConfirming(null);
+    }, [connection.generation]);
 
     const check = () => {
         setChecked(null);
@@ -65,17 +96,25 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
     };
 
     const applySchedule = async (write: boolean) => {
+        const generation = captureSession('schedule-write');
         if (write)
             await writeDropIn(onCalendar, delay === '' ? null : delay);
         else
             await removeDropIn();
+        assertSession(generation, 'schedule-write', true);
         await daemonReload();
+        assertSession(generation, 'schedule-write', true);
         const state = await unitState(SYNC_TIMER);
+        assertSession(generation, 'schedule-write', true);
         if (state.activeState === 'active')
             await restartUnit(SYNC_TIMER);
     };
 
+    const uncertain = actionError !== null && normalizeFailure(actionError).hostMutationUncertain;
+
     const act = (write: boolean) => {
+        if (!fresh || uncertain || busy)
+            return;
         setConfirming(null);
         setBusy(true);
         setActionError(null);
@@ -101,9 +140,11 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                                 <code>Persistent=true</code>
                             </Item>
                             <Item term="Override">
-                                {current === null
-                                    ? 'none — the shipped schedule is in effect'
-                                    : 'managed drop-in active (50-cockpit.conf)'}
+                                {!fresh
+                                    ? 'unavailable — obtain a fresh schedule read before changing it'
+                                    : current === null
+                                        ? 'none — the shipped schedule is in effect'
+                                        : 'managed drop-in active (50-cockpit.conf)'}
                             </Item>
                             <Item term="Semantics">
                                 Persistent replays an elapse missed while the host was down; an
@@ -112,6 +153,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                             </Item>
                         </DescriptionList>
                     </StackItem>
+                    {readError !== null && <StackItem><QueryError error={readError} /></StackItem>}
                     <StackItem>
                         <Flex>
                             <FlexItem grow={{ default: 'grow' }}>
@@ -138,7 +180,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                             <FlexItem>
                                 <Button
                                     variant="secondary"
-                                    isDisabled={onCalendar === '' || busy}
+                                    isDisabled={onCalendar === '' || busy || !fresh}
                                     onClick={check}
                                 >
                                     Check calendar
@@ -147,7 +189,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                             <FlexItem>
                                 <Button
                                     variant="primary"
-                                    isDisabled={checked === null || busy}
+                                    isDisabled={checked === null || busy || uncertain || !fresh}
                                     onClick={() => setConfirming('apply')}
                                 >
                                     Apply override
@@ -156,7 +198,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                             <FlexItem>
                                 <Button
                                     variant="link"
-                                    isDisabled={current === null || busy}
+                                    isDisabled={current === null || busy || uncertain || !fresh}
                                     onClick={() => setConfirming('reset')}
                                 >
                                     Reset to shipped schedule
@@ -192,7 +234,7 @@ export const ScheduleEditor = ({ onApplied }: { onApplied: () => void }) => {
                         fires one run immediately on restart.
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="primary" onClick={() => act(confirming === 'apply')}>
+                        <Button variant="primary" isDisabled={busy || uncertain || !fresh} onClick={() => act(confirming === 'apply')}>
                             {confirming === 'apply' ? 'Write drop-in and apply' : 'Remove drop-in and apply'}
                         </Button>
                         <Button variant="link" onClick={() => setConfirming(null)}>Cancel</Button>

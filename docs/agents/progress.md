@@ -45,6 +45,24 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   NAS impact; no host mutation, service outage or archive access performed.
   Isolated KVM fixture prerequisites identified; installed cause remains unresolved.
 
+- [x] CPR-002 Preserve bridge evidence and own read connections (2026-10-19,
+  this commit — [task](plans/tasks/cpr-002-bridge-errors-and-reconnect.md)).
+  Known safe stage/problem/process fields and exact failed Envelopes survive;
+  untrusted rejection prose/diagnostics are withheld. Finite close-aware D-Bus
+  reads, sequential polls, old-generation rejection and privilege gates prevent
+  stale readiness or mutation replay. Schedule reads/portal actions have mounted
+  regressions; negative confirmation retains original classification while
+  apparent success still needs successful postchecks. Full gate: 5008 passed/
+  42 deselected, three wheel profiles, actual frontend lint/style/types, 221 unit
+  +12 mounted Firefox cases and build. Explicit frontend gate passed. Reviewed
+  CP-01–14/INV-006 and decisions122/127/133/134; no application dependency/schema/
+  REST authority change. [Evidence](plans/support/cockpit-rest-repair/acceptance-record.md).
+  Authorized local KVM prep added twelve signed development RPMs and boots an
+  isolated guest with synthetic credentials/no default route; production app,
+  guards, credentials, mounts and NAS untouched. [Runtime record](plans/support/cockpit-rest-repair/runtime-setup.md).
+  Guest application/PAM chain and original installed cause remain unproven;
+  higher candidate preservation/reconciliation and operation registry follow.
+
 
 ## Tags and discovery (2026-10-19)
 

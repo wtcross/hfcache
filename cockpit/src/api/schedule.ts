@@ -8,21 +8,33 @@
 
 import cockpit from 'cockpit';
 
+import { hostCall } from './connection';
+
 import { CalendarCheck, DROPIN_NAME, parseCalendarCheck, renderDropIn } from '../lib/schedule';
 
 const DROPIN_DIR = '/etc/systemd/system/hfcache-sync.timer.d';
 export const DROPIN_PATH = `${DROPIN_DIR}/${DROPIN_NAME}`;
 
 export function readDropIn(): Promise<string | null> {
-    return cockpit.file(DROPIN_PATH, { superuser: 'try' }).read();
+    return hostCall('schedule-read', false, async () => {
+        const file = cockpit.file(DROPIN_PATH, { superuser: 'try' });
+        try {
+            const content = await file.read();
+            if (content !== null && new TextEncoder().encode(content).length > 65536)
+                throw new Error('Schedule content exceeds its bound');
+            return content;
+        } finally {
+            file.close();
+        }
+    });
 }
 
 /* Unprivileged and read-only: the validation the contract requires before
- * any write. A failure rejects with systemd-analyze's own message. */
+ * any write. Failure retains safe process facts without raw stderr. */
 export async function checkCalendar(expression: string): Promise<CalendarCheck> {
-    const output = await cockpit.spawn(
+    const output = await hostCall('schedule-validate', false, () => cockpit.spawn(
         ['systemd-analyze', 'calendar', '--iterations=1', expression],
-        { err: 'message' });
+        { err: 'message' }));
     return parseCalendarCheck(output);
 }
 
@@ -34,9 +46,11 @@ export async function writeDropIn(onCalendar: string, randomizedDelaySec: string
         'cat > "$tmp"\n' +
         'chmod 0644 "$tmp"\n' +
         `mv -f "$tmp" ${DROPIN_PATH}\n`;
-    const proc = cockpit.spawn(['bash', '-ec', script], { superuser: 'require', err: 'message' });
-    proc.input(content);
-    await proc;
+    await hostCall('schedule-write', true, async () => {
+        const proc = cockpit.spawn(['bash', '-ec', script], { superuser: 'require', err: 'message' });
+        proc.input(content);
+        await proc;
+    });
 }
 
 /* Removing the drop-in is "reset to the shipped schedule"; the directory
@@ -45,5 +59,6 @@ export async function removeDropIn(): Promise<void> {
     const script =
         `rm -f ${DROPIN_PATH}\n` +
         `rmdir ${DROPIN_DIR} 2>/dev/null || true\n`;
-    await cockpit.spawn(['bash', '-ec', script], { superuser: 'require', err: 'message' });
+    await hostCall('schedule-write', true, () =>
+        cockpit.spawn(['bash', '-ec', script], { superuser: 'require', err: 'message' }));
 }

@@ -14,6 +14,7 @@ import {
     CandidateGuard, candidateMutationInvocation, CONFIGURATION_PATHS, readInstalledInvocation,
 } from '../lib/candidate-guard';
 import { runHfcache } from './hfcache';
+import { hostCall } from './connection';
 
 export const CONFIG_PATH = CONFIGURATION_PATHS.installed;
 export const CANDIDATE_PATH = CONFIGURATION_PATHS.candidate;
@@ -21,14 +22,17 @@ export const BACKUP_PATH = CONFIGURATION_PATHS.backup;
 
 async function mutate(action: 'write' | 'install' | 'remove', guard: CandidateGuard): Promise<void> {
     const invocation = candidateMutationInvocation(action, guard);
-    const proc = cockpit.spawn(invocation.argv, { superuser: 'require', err: 'message' });
-    proc.input(invocation.input);
-    await proc;
+    await hostCall(action === 'install' ? 'install' : 'candidate-write', true, async () => {
+        const proc = cockpit.spawn(invocation.argv, { superuser: 'require', err: 'message' });
+        proc.input(invocation.input);
+        await proc;
+    });
 }
 
 export async function readInstalledConfig(): Promise<string> {
     const invocation = readInstalledInvocation();
-    return cockpit.spawn(invocation.argv, { superuser: 'require', err: 'message' });
+    return hostCall('installed-read', false, () =>
+        cockpit.spawn(invocation.argv, { superuser: 'require', err: 'message' }));
 }
 
 /* §6 step 1: the candidate lands beside the target — same directory, so the

@@ -28,7 +28,7 @@ import { ScheduleEditor } from './schedule';
 import { runHfcacheStreaming } from './api/hfcache';
 import { startUnit, stopUnit, SYNC_SERVICE, SYNC_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useHfcache, useObservationSignal, useOperationHandles, useUnitPoll } from './hooks';
+import { useHfcache, useObservationSignal, useOperationHandles, useUnitPoll, useConnection } from './hooks';
 import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatSelector } from './lib/command';
 import { formatTimestamp } from './lib/format';
@@ -41,23 +41,27 @@ const Item = ({ term, children }: { term: string; children: React.ReactNode }) =
     </DescriptionListGroup>
 );
 
-const ConfirmModal = ({ title, confirmLabel, isOpen, onClose, onConfirm, children }: {
+const ConfirmModal = ({ title, confirmLabel, isOpen, onClose, onConfirm, children, disabled = false }: {
     title: string;
     confirmLabel: string;
     isOpen: boolean;
+    disabled?: boolean;
     onClose: () => void;
     onConfirm: () => void;
     children: React.ReactNode;
-}) => (
-    <Modal isOpen={isOpen} onClose={onClose} variant="small" aria-label={title}>
-        <ModalHeader title={title} />
-        <ModalBody>{children}</ModalBody>
-        <ModalFooter>
-            <Button variant="primary" onClick={onConfirm}>{confirmLabel}</Button>
-            <Button variant="link" onClick={onClose}>Cancel</Button>
-        </ModalFooter>
-    </Modal>
-);
+}) => {
+    const connection = useConnection();
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} variant="small" aria-label={title}>
+            <ModalHeader title={title} />
+            <ModalBody>{children}</ModalBody>
+            <ModalFooter>
+                <Button variant="primary" isDisabled={disabled || !connection.administrative} onClick={onConfirm}>{confirmLabel}</Button>
+                <Button variant="link" onClick={onClose}>Cancel</Button>
+            </ModalFooter>
+        </Modal>
+    );
+};
 
 const ACTIVE_STATES = ['active', 'activating', 'reloading', 'deactivating'];
 
@@ -68,6 +72,8 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
     const [actionError, setActionError] = useState<Error | null>(null);
 
     const running = ACTIVE_STATES.includes(service.state?.activeState ?? '');
+    const serviceAvailable = service.state !== null && service.state.activeState !== 'unknown';
+    const timerAvailable = timer.state !== null && timer.state.activeState !== 'unknown';
     const timerActive = ACTIVE_STATES.includes(timer.state?.activeState ?? '');
 
     const act = (action: Promise<unknown>, observerStopped?: boolean) => {
@@ -89,6 +95,8 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
             <CardBody>
                 <Stack hasGutter>
                     {actionError !== null && <StackItem><QueryError error={actionError} /></StackItem>}
+                    {service.error !== null && <StackItem><QueryError error={service.error} /></StackItem>}
+                    {timer.error !== null && <StackItem><QueryError error={timer.error} /></StackItem>}
                     <StackItem>
                         <DescriptionList isHorizontal isCompact>
                             <Item term="hfcache-sync.service">
@@ -100,7 +108,7 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                             </Item>
                             <Item term="hfcache-sync.timer">
                                 <Label isCompact color={timerActive ? 'green' : 'orange'}>
-                                    {timerActive ? 'scheduled' : 'paused'}
+                                    {!timerAvailable ? 'unavailable' : timerActive ? 'scheduled' : 'paused'}
                                 </Label>
                                 {' '}{timer.state?.unitFileState ?? '…'};
                                 next {formatTimestamp(timer.timer?.nextElapse?.toISOString())},
@@ -113,7 +121,7 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                             <FlexItem>
                                 <Button
                                     variant="primary"
-                                    isDisabled={running}
+                                    isDisabled={running || !serviceAvailable}
                                     onClick={() => setConfirming('start')}
                                 >
                                     Start / resume full sync
@@ -122,16 +130,16 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                             <FlexItem>
                                 <Button
                                     variant="danger"
-                                    isDisabled={!running}
+                                    isDisabled={!running || !serviceAvailable}
                                     onClick={() => setConfirming('stop')}
                                 >
                                     Stop observing full sync
                                 </Button>
                             </FlexItem>
                             <FlexItem>
-                                {timerActive &&
+                                {timerAvailable && timerActive &&
                                     <Button variant="secondary" onClick={() => setConfirming('pause')}>Pause schedule</Button>}
-                                {!timerActive &&
+                                {timerAvailable && !timerActive &&
                                     <Button variant="secondary" onClick={() => act(startUnit(SYNC_TIMER))}>Resume schedule</Button>}
                             </FlexItem>
                         </Flex>
@@ -142,9 +150,10 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                 <ConfirmModal
                     title="Start a full sync"
                     confirmLabel="Start hfcache-sync.service"
+                    disabled={!serviceAvailable}
                     isOpen={confirming === 'start'}
                     onClose={() => setConfirming(null)}
-                    onConfirm={() => act(startUnit(SYNC_SERVICE), false)}
+                    onConfirm={() => { if (serviceAvailable) act(startUnit(SYNC_SERVICE), false); }}
                 >
                     Starts the installed API client used by the 02:00 timer. It resumes a
                     retained operation, or submits one sync when no pending handle exists.
@@ -153,9 +162,10 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                 <ConfirmModal
                     title="Stop observing the full sync"
                     confirmLabel="Stop observer"
+                    disabled={!serviceAvailable}
                     isOpen={confirming === 'stop'}
                     onClose={() => setConfirming(null)}
-                    onConfirm={() => act(stopUnit(SYNC_SERVICE), true)}
+                    onConfirm={() => { if (serviceAvailable) act(stopUnit(SYNC_SERVICE), true); }}
                 >
                     Stops hfcache-sync.service, the API observer. Accepted server work may
                     continue. Its pending handle is retained; starting the service again
@@ -165,9 +175,10 @@ const SyncControls = ({ onObserverState }: { onObserverState: (stopped: boolean)
                 <ConfirmModal
                     title="Pause the schedule"
                     confirmLabel="Stop hfcache-sync.timer"
+                    disabled={!timerAvailable}
                     isOpen={confirming === 'pause'}
                     onClose={() => setConfirming(null)}
-                    onConfirm={() => act(stopUnit(SYNC_TIMER))}
+                    onConfirm={() => { if (timerAvailable) act(stopUnit(SYNC_TIMER)); }}
                 >
                     Stops the timer only — the mount and hfcache.target are untouched (CP-05).
                     Resume from here; a Persistent timer whose calendar elapsed while stopped

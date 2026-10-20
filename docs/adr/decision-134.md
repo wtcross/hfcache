@@ -43,3 +43,18 @@ No new runtime dependency, release, production inspection or deployment is appro
   [candidate pipeline](../../cockpit/src/lib/config-pipeline.ts),
   [polling and handles](../../cockpit/src/hooks.ts) establish the source boundaries.
   Regression evidence must accompany the corresponding implementations.
+
+## Implemented boundary and connection behavior
+
+The [failure model](../../cockpit/src/lib/failure.ts) retains only known bounded
+problem/process/stage fields, preserving original classifications through safe
+rewrapping. Unknown values and raw diagnostic prose are withheld, including from
+activity feeds. Exact terminal Envelopes remain independent and authoritative.
+The [owned connection](../../cockpit/src/lib/connection.ts) and
+[application session](../../cockpit/src/api/connection.ts) dispose close/privilege
+listeners, bound read reconnection and reject stale results without mutation replay.
+[Mounted component tests](../../cockpit/test/browser.fixture.tsx) fail against the
+reviewed source and exercise actual hooks/adapters in an isolated Firefox profile.
+This implements the boundary/lifecycle portion of the contract, not complete
+candidate reconciliation or operation persistence, and proves no installed PAM
+or launcher cause. No new runtime dependency or host restriction changes.

@@ -95,3 +95,21 @@ operation handles outside tab lifetimes. Current implementation gaps are not
 installed proof. The full-service and direct-report exceptions remain until
 explicit amendments with tested replacements. Fixed rootless credentials, exact
 config guards and all guarded workload/deployment restrictions remain unchanged.
+
+The implemented [bounded presentation](decision-134.md#implemented-boundary-and-connection-behavior)
+retains original safe stage/problem/process facts and exact failed terminal
+Envelopes. Read reconnection is finite; session transitions invalidate stale
+evidence without replaying host or API mutations. Raw rejection diagnostics are
+withheld. Higher-level candidate reconciliation and persistent operation recovery
+remain separate required work; no installed acceptance follows from these tests.
+
+
+### Negative confirmation evidence (2026-10-19)
+
+The successful-completion requirement above governs accepting installation as
+confirmed. A valid nonzero confirmation Envelope is retained as original failed
+request/domain evidence even when the process exits nonzero. It grants no
+installation success or readiness. Apparent success with failed process/postcheck
+still refuses; missing/malformed output still preserves uncertainty. The guarded
+helper emits results only after exact byte postchecks. This clarifies classification
+without weakening exact-content or successful-confirmation requirements.

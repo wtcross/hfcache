@@ -29,7 +29,7 @@ import { UnitActivity } from './activity';
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
 import { startUnit, VERIFY_SERVICE, VERIFY_TIMER } from './api/systemd';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useObservationSignal, useOperationHandles, useUnitPoll } from './hooks';
+import { useObservationSignal, useOperationHandles, useUnitPoll, useConnection } from './hooks';
 import { parseSelector, SelectorError } from './lib/command';
 import { classifyEnvelope, Envelope } from './lib/envelope';
 import { formatBytes, formatDuration, formatTimestamp } from './lib/format';
@@ -111,6 +111,7 @@ const EstimateCard = () => {
 const ACTIVE_STATES = ['active', 'activating', 'reloading', 'deactivating'];
 
 const FullVerifyCard = () => {
+    const connection = useConnection();
     const service = useUnitPoll(VERIFY_SERVICE);
     const [confirming, setConfirming] = useState(false);
     const [actionError, setActionError] = useState<Error | null>(null);
@@ -118,6 +119,8 @@ const FullVerifyCard = () => {
     const running = ACTIVE_STATES.includes(service.state?.activeState ?? '');
 
     const start = () => {
+        if (service.state === null || !connection.administrative)
+            return;
         setConfirming(false);
         setActionError(null);
         startUnit(VERIFY_SERVICE)
@@ -136,6 +139,7 @@ const FullVerifyCard = () => {
                         may be corrupt: findings are never repaired from here (AD-13).
                     </StackItem>
                     {actionError !== null && <StackItem><QueryError error={actionError} /></StackItem>}
+                    {service.error !== null && <StackItem><QueryError error={service.error} /></StackItem>}
                     <StackItem>
                         <Flex>
                             <FlexItem>
@@ -148,7 +152,7 @@ const FullVerifyCard = () => {
                             <FlexItem>
                                 <Button
                                     variant="primary"
-                                    isDisabled={running}
+                                    isDisabled={running || service.state === null || !connection.administrative}
                                     onClick={() => setConfirming(true)}
                                 >
                                     Run full verification
@@ -174,7 +178,7 @@ const FullVerifyCard = () => {
                         storage maintenance (HFWRN010).
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="primary" onClick={start}>Start hfcache-verify.service</Button>
+                        <Button variant="primary" isDisabled={service.state === null || !connection.administrative} onClick={start}>Start hfcache-verify.service</Button>
                         <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
                     </ModalFooter>
                 </Modal>

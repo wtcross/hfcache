@@ -125,6 +125,8 @@ const context = await esbuild.context({
     loader: { ".js": "jsx" },
     minify: production,
     nodePaths,
+    // TypeScript uses our narrow declaration; runtime uses the pinned helper.
+    alias: { superuser: path.resolve('pkg/lib/superuser.js') },
     outdir,
     metafile: true,
     target: ['es2020'],

@@ -72,6 +72,24 @@ contract, preserving enforcement.
 The plugin refuses malformed, unknown-version or oversized terminal output and
 retains bounded diagnostics/validated handles instead of inventing success.
 
+## A host action reports `reconnected`
+
+The error identifies the interrupted stage and validated Cockpit problem/process
+facts. `reconnected` indicates a bridge/session transition, not an established
+API crash. Distinguish it from a launcher/process start failure, a classified
+HFAPI failure Envelope and a failed domain result. Unknown rejection prose and raw
+host stderr are withheld to avoid disclosing credentials or configuration.
+
+Read connections are recreated with a finite retry budget. Failed polls clear
+healthy-looking evidence, and administrative changes disable dependent controls
+until fresh reads. The page does not repeat a unit change, schedule write,
+candidate pipeline or job. After an interrupted host write/install, preserve the
+candidate/base/backup and use guarded read-only comparison before another change.
+After an uncertain job, preserve its original key/ID and use authenticated
+lookup/wait. A synchronous validation has no operation receipt. Actual installed
+trigger diagnosis still requires checking the exact browser/helper/profile/image
+identities in an authorized environment; changing error text alone proves no fix.
+
 ## The page closed, timed out or stopped observing a sync
 
 Accepted server work may continue. Preserve the validated key and operation ID

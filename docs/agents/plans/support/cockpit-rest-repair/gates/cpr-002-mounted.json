@@ -1,0 +1,58 @@
+{
+  "fixture": "actual mounted React with controlled Cockpit boundaries",
+  "real_pam": false,
+  "real_api_or_shell": false,
+  "source_ref": "working-tree",
+  "bundle_sha256": "7035da6ff4f658ae22c4952e787de4dcc5c065438c9ce7b2ab4eecfd79b26758",
+  "state": "passed",
+  "tests": [
+    {
+      "name": "V01/V51 QueryError retains candidate bridge stage without raw secret disclosure",
+      "passed": true
+    },
+    {
+      "name": "V49 useHfcache clears prior healthy evidence on refresh and failure",
+      "passed": true
+    },
+    {
+      "name": "V07 old useHfcache generations cannot overwrite a newer result",
+      "passed": true
+    },
+    {
+      "name": "V07/V49 useUnitPoll clears healthy state and reports unavailable property reads",
+      "passed": true
+    },
+    {
+      "name": "V07 prior unit generations cannot mix state with a later unit",
+      "passed": true
+    },
+    {
+      "name": "V06/V08 a failed unit mutation is observed once and never replayed",
+      "passed": true
+    },
+    {
+      "name": "V06 pending D-Bus reads retry through a fresh client with a finite budget",
+      "passed": true
+    },
+    {
+      "name": "V06 a closed cached D-Bus client is disposed and replaced for reads",
+      "passed": true
+    },
+    {
+      "name": "V08 privilege/session changes invalidate prior read evidence before reconnect",
+      "passed": true
+    },
+    {
+      "name": "V08/V49 ScheduleEditor requires a fresh read after privilege changes and exposes failed reads",
+      "passed": true
+    },
+    {
+      "name": "V07/V49 a late schedule read cannot restore prior-session Reset authority",
+      "passed": true
+    },
+    {
+      "name": "V08 a maintenance confirmation portal disables its action after privilege loss",
+      "passed": true
+    }
+  ]
+}

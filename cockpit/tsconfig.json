@@ -7,7 +7,7 @@
         "noUncheckedSideEffectImports": false,
         "jsx": "react",
         "lib": ["dom", "es2020"],
-        "paths": { "*": ["./pkg/lib/*"] },
+        "paths": { "superuser": ["./src/superuser.d.ts"], "*": ["./pkg/lib/*"] },
         "moduleResolution": "bundler",
         "noEmit": true,
         "skipLibCheck": true,

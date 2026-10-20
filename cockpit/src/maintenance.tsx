@@ -22,7 +22,7 @@ import { Stack, StackItem } from "@patternfly/react-core/dist/esm/layouts/Stack/
 
 import { runHfcache, runHfcacheStreaming } from './api/hfcache';
 import { DataSummary, EnvelopeAlert, Loading, QueryError, RecoveryHandles } from './components';
-import { useObservationSignal, useOperationHandles } from './hooks';
+import { useObservationSignal, useOperationHandles, useConnection } from './hooks';
 import { parseSelector, SelectorError } from './lib/command';
 import { classifyEnvelope, Envelope } from './lib/envelope';
 import { appendDisplayLine } from './lib/stream';
@@ -39,8 +39,11 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
     const [error, setError] = useState<Error | null>(null);
     const [confirming, setConfirming] = useState(false);
     const observationSignal = useObservationSignal();
+    const connection = useConnection();
 
     const run = (apply: boolean) => {
+        if (!connection.administrative)
+            return;
         const signal = observationSignal();
         setConfirming(false);
         setBusy(true);
@@ -75,14 +78,14 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
                     <StackItem>
                         <Flex>
                             <FlexItem>
-                                <Button variant="secondary" isDisabled={busy || uncertain} onClick={() => run(false)}>
+                                <Button variant="secondary" isDisabled={busy || uncertain || !connection.administrative} onClick={() => run(false)}>
                                     Dry run
                                 </Button>
                             </FlexItem>
                             <FlexItem>
                                 <Button
                                     variant="danger"
-                                    isDisabled={busy || !canApply}
+                                    isDisabled={busy || !canApply || !connection.administrative}
                                     onClick={() => setConfirming(true)}
                                 >
                                     Apply
@@ -120,7 +123,7 @@ const DryRunApplyCard = ({ title, command, intro, applyWarning }: {
                     <ModalHeader title={`Apply ${command}`} />
                     <ModalBody>{applyWarning}</ModalBody>
                     <ModalFooter>
-                        <Button variant="danger" onClick={() => run(true)}>{`Run ${command} --apply`}</Button>
+                        <Button variant="danger" isDisabled={!connection.administrative || busy} onClick={() => run(true)}>{`Run ${command} --apply`}</Button>
                         <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
                     </ModalFooter>
                 </Modal>
@@ -138,6 +141,7 @@ const RepairCard = () => {
     const [result, setResult] = useState<Envelope | null>(null);
     const [error, setError] = useState<Error | null>(null);
     const observationSignal = useObservationSignal();
+    const connection = useConnection();
     const { handles, reset: resetHandles, onNotice } = useOperationHandles();
 
     let validationError: string | null = null;
@@ -152,6 +156,8 @@ const RepairCard = () => {
     }
 
     const run = () => {
+        if (!connection.administrative)
+            return;
         const signal = observationSignal();
         setConfirming(false);
         setRunning(true);
@@ -211,7 +217,7 @@ const RepairCard = () => {
                     <StackItem>
                         <Button
                             variant="danger"
-                            isDisabled={running || uncertain || selectorText === '' || validationError !== null}
+                            isDisabled={running || uncertain || !connection.administrative || selectorText === '' || validationError !== null}
                             onClick={() => setConfirming(true)}
                         >
                             Repair…
@@ -249,7 +255,7 @@ const RepairCard = () => {
                         considering recovery. The executor holds the single archive lock.
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="danger" onClick={run}>Start repair</Button>
+                        <Button variant="danger" isDisabled={!connection.administrative || running} onClick={run}>Start repair</Button>
                         <Button variant="link" onClick={() => setConfirming(false)}>Cancel</Button>
                     </ModalFooter>
                 </Modal>

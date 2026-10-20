@@ -41,6 +41,7 @@ import {
     prepareConfiguration, UNCONFIRMED_INSTALLATION,
 } from './lib/config-pipeline';
 import { Envelope } from './lib/envelope';
+import { useConnection } from './hooks';
 import { formatBytes, shortSha } from './lib/format';
 
 type FieldErrors = Record<string, string>;
@@ -329,6 +330,22 @@ export const Configuration = () => {
     const [diskGuard, setDiskGuard] = useState<CandidateGuard | null>(null);
     const [unconfirmed, setUnconfirmed] = useState(false);
     const revision = useRef(0);
+    const connection = useConnection();
+    const previousConnection = useRef(connection.generation);
+    const [connectionChanged, setConnectionChanged] = useState(false);
+
+    useEffect(() => {
+        if (previousConnection.current !== connection.generation) {
+            previousConnection.current = connection.generation;
+            revision.current += 1;
+            setPreparation(null);
+            setConnectionChanged(true);
+            if (phase === 'installing')
+                setUnconfirmed(true);
+            else
+                setPhase('idle');
+        }
+    }, [connection.generation, phase]);
 
     const load = useCallback(() => {
         setLoadError(null);
@@ -387,6 +404,7 @@ export const Configuration = () => {
             return;
         revision.current += 1;
         const capturedRevision = revision.current;
+        setConnectionChanged(false);
         setPhase('checking');
         setPreparation(null);
         setValidation(null);
@@ -467,6 +485,13 @@ export const Configuration = () => {
 
     return (
         <Stack hasGutter>
+            {connectionChanged &&
+                <StackItem>
+                    <Alert variant="warning" isInline title="Connection changed; installation readiness was invalidated">
+                        The draft and existing failure evidence are retained. Reconcile any
+                        interrupted host change before explicitly preparing another candidate.
+                    </Alert>
+                </StackItem>}
             {loadError !== null && <StackItem><QueryError error={loadError} /></StackItem>}
             {installedText === null && loadError === null && <StackItem><Loading /></StackItem>}
             {installedText !== null &&

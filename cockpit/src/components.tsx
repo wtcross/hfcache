@@ -19,6 +19,7 @@ import {
     operationCommands, operationEvidence, readOperationEvidence, ResultKind,
 } from './lib/envelope';
 import { WARNING_GUIDANCE } from './lib/warnings';
+import { normalizeFailure } from './lib/failure';
 
 type AlertVariant = 'success' | 'info' | 'warning' | 'danger';
 
@@ -84,20 +85,34 @@ export const EnvelopeAlert = ({ envelope }: { envelope: Envelope }) => {
 
 /* A lost/malformed response cannot establish whether accepted work stopped. */
 export const QueryError = ({ error }: { error: Error }) => {
-    const retained = error as Error & {
-        idempotencyKey?: unknown; operationId?: unknown; workMayContinue?: unknown;
-    };
+    const failure = normalizeFailure(error);
     const evidence = readOperationEvidence({
-        idempotency_key: retained.idempotencyKey,
-        operation_id: retained.operationId,
-        work_may_continue: retained.workMayContinue
+        idempotency_key: failure.idempotencyKey,
+        operation_id: failure.operationId,
+        work_may_continue: failure.workMayContinue
     });
+    const category = {
+        access: 'Administrative access is required',
+        bridge: 'Host connection interrupted',
+        launcher: 'Client launcher could not start',
+        process: 'Host process failed',
+        protocol: 'Client output could not be validated',
+        observation: 'Operation observation interrupted',
+    }[failure.category];
     return (
-        <Alert variant="danger" isInline title="hfcache response could not be observed">
-            <p>{error.message}</p>
-            <p>A missing response does not cancel accepted server work. Use retained handles
-                before submitting again; stopping an observer does not prove recovery is safe.
-            </p>
+        <Alert variant="danger" isInline title={`${failure.stage}: ${category}`}>
+            <p>{failure.message}</p>
+            {failure.problem !== undefined && <p>Host problem: <code>{failure.problem}</code></p>}
+            {failure.exitStatus !== undefined && <p>Process exit status: {failure.exitStatus}</p>}
+            {failure.exitSignal !== undefined && <p>Process exit signal: {failure.exitSignal}</p>}
+            {failure.hostMutationUncertain &&
+                <p>The host change may have completed. Preserve its evidence and reconcile the
+                    fixed configuration or unit state before another deliberate change.
+                </p>}
+            {failure.workMayContinue &&
+                <p>Server execution is uncertain. Preserve the original handles and use authenticated
+                    lookup and observation before submitting again.
+                </p>}
             <RecoveryHandles evidence={evidence} />
         </Alert>
     );

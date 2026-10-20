@@ -17,7 +17,7 @@
         "typecheck": "tsc --noEmit",
         "stylelint": "stylelint src/*.{css,scss}",
         "stylelint:fix": "stylelint --fix src/*.{css,scss}",
-        "test": "node --test test/*.test.ts"
+        "test": "node --test test/*.test.ts && node test/browser.mjs"
     },
     "dependencies": {
         "@patternfly/patternfly": "6.1.0",

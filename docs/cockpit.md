@@ -194,11 +194,36 @@ Exit codes map to UI states, not to a generic error toast:
 The envelope is emitted even on failure, so the plugin never diagnoses by
 parsing human text (`CP-02`). `warnings[]` and `errors[]` render with their
 stable codes; the codes are the join key to the runbook guidance the UI
-carries. Bounded stderr is available for diagnostics. Only documented strictly validated
+carries. Raw host stderr and rejection prose are withheld from browser display.
+Only documented strictly validated
 progress/recovery notices are interpreted for display/reconnection; domain
 outcomes still require the terminal Envelope. HFAPI013/015/019/020 or
 `data.work_may_continue=true` render as uncertain observation with retained handles,
 never a claim of cancellation, nonexecution or automatic recovery authority.
+
+Host-boundary failures use a bounded presentation model, separate from backend
+HFAPI/domain codes. Preserve the known stage, allowlisted Cockpit `problem`,
+validated process exit status/signal and original safe handles for both Error
+instances and plain rejection objects. An unrecognized problem is identified as
+unknown with its contents withheld. Do not invoke getters or stringify exceptions,
+expose raw stderr, or infer API failure from `reconnected`. A valid nonzero terminal
+Envelope remains the exact classified result even when its process rejects.
+Successful installed confirmation additionally requires successful process/
+postchecks and an unchanged administrative session. A valid negative confirmation
+Envelope remains original failure evidence; it cannot confirm installation. Pre-transmission privilege refusal does not
+invent a host change or job receipt; lost host-change acknowledgement remains
+uncertain. Synchronous validation has no operation receipt.
+
+D-Bus connections belong to the application lifetime. Close and supported
+`superuser.changed`/`reconnect` transitions dispose listeners and invalidate the
+cached client. A read makes at most two attempts with one 100 ms delay; each D-Bus
+call has a 5 s timeout. Polls run sequentially, scheduling their next interval after
+completion. Failed refreshes expose unavailable state and discard prior healthy
+evidence. Old generations cannot restore it or enable controls. Privilege changes
+invalidate candidate readiness while retaining the draft and existing failure
+evidence. Mutations and entire candidate pipelines are never retried by connection
+recovery. Multi-stage schedule changes stop at a session transition; they never
+repeat writes or claim that a missing acknowledgement means nothing changed.
 
 These CLI stderr forms alone become typed operation notices, after the 8 KiB
 UTF-8 line bound and control-character checks. They are separate from journal
@@ -212,7 +237,9 @@ logfmt and never a terminal result:
 | `Event history gap; retained events start at N` | Positive safe-integer retained sequence, not invented missing events |
 | `Accepted work may continue; reconnect using the retained handles` | Observation-continuation notice, never a domain outcome |
 
-Reject malformed notices; unknown lines remain bounded diagnostics. Keep validated
+Reject malformed notices; unrecognized lines and terminal bodies are withheld
+from activity display. Only validated notices/progress and fixed truncation
+markers render; terminal collection remains independent. Keep validated
 key/ID independently of log eviction. Reconnect commands keep handles as arguments,
 not executable text, use `--` before positional values and quote copied keys so
 even valid leading `-`/`~` characters remain data. Display
@@ -385,7 +412,10 @@ independent of the Python release. A development symlink under
 `~/.local/share/cockpit/hfcache` shadows the installed copy for that user.
 
 `scripts/check.sh` runs frozen install, ESLint, Stylelint, TypeScript, unit tests
-and production build when the plugin toolchain is available. A loud skip on a
+and production build when the plugin toolchain is available. The plugin test
+command also runs mounted React lifecycle tests in `/usr/bin/firefox`, using a
+fresh isolated profile and owned loopback fixtures. Missing Firefox fails this
+frontend gate; it is a development test prerequisite, not a shipped dependency. A loud skip on a
 host without that toolchain is not plugin validation. Changes to this surface
 require an actually executed plugin gate. See [development](development.md).
 
@@ -395,6 +425,10 @@ Plain modules test strict Envelopes, taxonomy/exit mapping, selectors, bounded
 streams/recovery handles, fixed command/manager allowlists, calendar expressions,
 TOML mapping and exact candidate/base/flock/confirmation behavior. Injected
 process/filesystem adapters use disposable state, not installed units or NAS.
+Mounted Firefox tests execute actual React components, hooks, error rendering and
+API adapters with controlled Cockpit process/D-Bus/privilege boundaries. They cover
+closed-client recovery, stale generations and session transitions. They do not
+provide real Cockpit/PAM, rootless launcher or API acceptance.
 Browser/PAM, privileged bridge, actual secret delivery, deployed candidate install,
 SELinux/NFS and real drain/rollback require a separately authorized environment.
 Repository tests do not assert that acceptance. The writer/archive is not a
@@ -405,7 +439,7 @@ corruption or browser-test fixture.
 - Consumer/NAS administration, exports, snapshots, quotas or scrubs.
 - Archive initialization, verification-calendar enablement or credential entry.
 - Multiple writers/hosts or arbitrary executable/unit/tool dispatch.
-- A translated catalog or bundled browser integration-test environment.
+- A translated catalog or bundled Cockpit/PAM/virtual-machine test environment.
 
 ## Deployment boundary
 

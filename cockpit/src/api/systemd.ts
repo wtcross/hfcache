@@ -7,15 +7,14 @@
  * this module rather than trusted to every call site.
  */
 
-import cockpit from 'cockpit';
-
 import { assertOperable } from '../lib/systemd';
+import { normalizeFailure } from '../lib/failure';
+import { hostCall, systemConnection } from './connection';
 
 export {
     ForbiddenUnitError, HFCACHE_TARGET, SYNC_SERVICE, SYNC_TIMER, VERIFY_SERVICE, VERIFY_TIMER,
 } from '../lib/systemd';
 
-const BUS = 'org.freedesktop.systemd1';
 const MANAGER_PATH = '/org/freedesktop/systemd1';
 const MANAGER = 'org.freedesktop.systemd1.Manager';
 const PROPERTIES = 'org.freedesktop.DBus.Properties';
@@ -23,55 +22,58 @@ const UNIT = 'org.freedesktop.systemd1.Unit';
 const TIMER = 'org.freedesktop.systemd1.Timer';
 const SERVICE = 'org.freedesktop.systemd1.Service';
 
-let cachedClient: cockpit.DBusClient | null = null;
-
-function client(): cockpit.DBusClient {
-    cachedClient ??= cockpit.dbus(BUS, { bus: 'system', superuser: 'try' });
-    return cachedClient;
+function mutate(method: string, arguments_: unknown[]): Promise<unknown[]> {
+    return hostCall('unit-mutation', true, () => systemConnection.mutate(client =>
+        client.call(MANAGER_PATH, MANAGER, method, arguments_, { timeout: 5000 })));
 }
 
 export function startUnit(name: string): Promise<unknown[]> {
     assertOperable(name, 'start');
-    return client().call(MANAGER_PATH, MANAGER, 'StartUnit', [name, 'replace']);
+    return mutate('StartUnit', [name, 'replace']);
 }
 
 export function stopUnit(name: string): Promise<unknown[]> {
     assertOperable(name, 'stop');
-    return client().call(MANAGER_PATH, MANAGER, 'StopUnit', [name, 'replace']);
+    return mutate('StopUnit', [name, 'replace']);
 }
 
 export function restartUnit(name: string): Promise<unknown[]> {
     assertOperable(name, 'restart');
-    return client().call(MANAGER_PATH, MANAGER, 'RestartUnit', [name, 'replace']);
+    return mutate('RestartUnit', [name, 'replace']);
 }
 
 export function daemonReload(): Promise<unknown[]> {
-    return client().call(MANAGER_PATH, MANAGER, 'Reload', []);
+    return mutate('Reload', []);
 }
 
 export async function enableUnit(name: string): Promise<void> {
     assertOperable(name, 'enable');
-    await client().call(MANAGER_PATH, MANAGER, 'EnableUnitFiles', [[name], false, true]);
+    await mutate('EnableUnitFiles', [[name], false, true]);
     await daemonReload();
 }
 
 export async function disableUnit(name: string): Promise<void> {
     assertOperable(name, 'disable');
-    await client().call(MANAGER_PATH, MANAGER, 'DisableUnitFiles', [[name], false]);
+    await mutate('DisableUnitFiles', [[name], false]);
     await daemonReload();
-}
-
-async function unitPath(name: string): Promise<string> {
-    const [path] = await client().call(MANAGER_PATH, MANAGER, 'LoadUnit', [name]);
-    return path as string;
 }
 
 type VariantMap = Record<string, { v: unknown } | undefined>;
 
 async function properties(name: string, iface: string): Promise<VariantMap> {
-    const path = await unitPath(name);
-    const [props] = await client().call(path, PROPERTIES, 'GetAll', [iface]);
-    return props as VariantMap;
+    try {
+        return await systemConnection.read(async client => {
+            const [path] = await client.call(MANAGER_PATH, MANAGER, 'LoadUnit', [name], { timeout: 5000 });
+            if (typeof path !== 'string' || !path.startsWith('/org/freedesktop/systemd1/unit/'))
+                throw new Error('Invalid unit path');
+            const [props] = await client.call(path, PROPERTIES, 'GetAll', [iface], { timeout: 5000 });
+            if (typeof props !== 'object' || props === null || Array.isArray(props))
+                throw new Error('Invalid unit properties');
+            return props as VariantMap;
+        });
+    } catch (error) {
+        throw normalizeFailure(error, { stage: 'unit-read' });
+    }
 }
 
 export interface UnitState {

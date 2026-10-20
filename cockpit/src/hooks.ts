@@ -4,14 +4,20 @@
  * React glue over the invocation layer.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { runHfcache } from './api/hfcache';
+import { connectionSnapshot, subscribeConnection } from './api/connection';
+import { normalizeFailure } from './lib/failure';
 import {
     ServiceResult, serviceResult, TimerState, timerState, UnitState, unitState,
 } from './api/systemd';
 import { Envelope, OperationEvidence } from './lib/envelope';
 import { OperationNotice } from './lib/events';
+
+export function useConnection() {
+    return useSyncExternalStore(subscribeConnection, connectionSnapshot);
+}
 
 export interface EnvelopeQuery {
     envelope: Envelope | null;
@@ -57,20 +63,28 @@ export function useHfcache(command: string[]): EnvelopeQuery {
     const [loading, setLoading] = useState(true);
     const [generation, setGeneration] = useState(0);
     const key = JSON.stringify(command);
+    const connection = useConnection();
+    const origin = JSON.stringify([key, generation, connection]);
+    const [observedOrigin, setObservedOrigin] = useState('');
 
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
+        setEnvelope(null);
+        setError(null);
         runHfcache(JSON.parse(key) as string[])
                 .then(result => {
                     if (!cancelled) {
+                        setObservedOrigin(origin);
                         setEnvelope(result);
                         setError(null);
                     }
                 })
                 .catch(failure => {
-                    if (!cancelled)
-                        setError(failure as Error);
+                    if (!cancelled) {
+                        setObservedOrigin(origin);
+                        setError(normalizeFailure(failure));
+                    }
                 })
                 .finally(() => {
                     if (!cancelled)
@@ -79,16 +93,24 @@ export function useHfcache(command: string[]): EnvelopeQuery {
         return () => {
             cancelled = true;
         };
-    }, [key, generation]);
+    }, [key, generation, connection, origin]);
 
     const refresh = useCallback(() => setGeneration(value => value + 1), []);
-    return { envelope, error, loading, refresh };
+    const fresh = observedOrigin === origin;
+    return {
+        envelope: fresh ? envelope : null,
+        error: fresh ? error : null,
+        loading: loading || !fresh,
+        refresh
+    };
 }
 
 export interface UnitQuery {
     state: UnitState | null;
     timer: TimerState | null;
     result: ServiceResult | null;
+    error: Error | null;
+    loading: boolean;
     refresh: () => void;
 }
 
@@ -101,34 +123,63 @@ export function useUnitPoll(name: string, intervalMs = 5000): UnitQuery {
     const [result, setResult] = useState<ServiceResult | null>(null);
     const [generation, setGeneration] = useState(0);
 
+    const [error, setError] = useState<Error | null>(null);
+    const [loading, setLoading] = useState(true);
+    const connection = useConnection();
+    const origin = JSON.stringify([name, intervalMs, generation, connection]);
+    const [observedOrigin, setObservedOrigin] = useState('');
+    const latestOrigin = useRef(origin);
+    latestOrigin.current = origin;
+
     useEffect(() => {
         let cancelled = false;
-        const poll = () => {
-            unitState(name).then(value => {
-                if (!cancelled)
+        let handle: ReturnType<typeof setTimeout> | undefined;
+        const poll = async () => {
+            // A close invalidates rendered evidence immediately. Its next read
+            // uses this finite loop, avoiding a reconnect/render retry storm.
+            const observedConnection = connectionSnapshot();
+            setLoading(true);
+            setState(null);
+            setTimer(null);
+            setResult(null);
+            try {
+                const value = await unitState(name);
+                const timerValue = name.endsWith('.timer') ? await timerState(name) : null;
+                const resultValue = name.endsWith('.service') ? await serviceResult(name) : null;
+                if (!cancelled && observedConnection === connectionSnapshot()) {
+                    setObservedOrigin(latestOrigin.current);
                     setState(value);
-            }, () => undefined);
-            if (name.endsWith('.timer')) {
-                timerState(name).then(value => {
-                    if (!cancelled)
-                        setTimer(value);
-                }, () => undefined);
-            }
-            if (name.endsWith('.service')) {
-                serviceResult(name).then(value => {
-                    if (!cancelled)
-                        setResult(value);
-                }, () => undefined);
+                    setTimer(timerValue);
+                    setResult(resultValue);
+                    setError(null);
+                }
+            } catch (failure) {
+                if (!cancelled) {
+                    setObservedOrigin(latestOrigin.current);
+                    setError(normalizeFailure(failure, { stage: 'unit-read' }));
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                    handle = setTimeout(() => { poll() }, intervalMs);
+                }
             }
         };
         poll();
-        const handle = window.setInterval(poll, intervalMs);
         return () => {
             cancelled = true;
-            window.clearInterval(handle);
+            clearTimeout(handle);
         };
-    }, [name, intervalMs, generation]);
+    }, [name, intervalMs, generation, connection.administrative]);
 
     const refresh = useCallback(() => setGeneration(value => value + 1), []);
-    return { state, timer, result, refresh };
+    const fresh = observedOrigin === origin;
+    return {
+        state: fresh ? state : null,
+        timer: fresh ? timer : null,
+        result: fresh ? result : null,
+        error: fresh ? error : null,
+        loading: loading || !fresh,
+        refresh
+    };
 }

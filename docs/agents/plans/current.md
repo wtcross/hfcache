@@ -4,8 +4,8 @@
 | --- | --- |
 | State | active |
 | Active plan | [Cockpit REST repair](2026-10-19-plan-cockpit-rest-repair.md) |
-| Next task | [CPR-002: bridge errors and reconnect](tasks/cpr-002-bridge-errors-and-reconnect.md) |
-| Blockers | Independent local KVM guest not yet provisioned (QEMU/image/offline fixtures required); no installed symptom proof. |
+| Next task | [CPR-003: candidate validation pipeline](tasks/cpr-003-candidate-validation-pipeline.md) |
+| Blockers | V54 guest boot/SSH provisioned; isolated application/PAM/launcher fixture and original installed symptom proof still pending. |
 | Last completed plan | [Tags and discovery](2026-10-19-plan-tags-and-discovery.md) |
 | Updated | 2026-10-19 |
 

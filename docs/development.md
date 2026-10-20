@@ -141,3 +141,12 @@ base/server/MCP dependency closure in uv's offline cache. Installed package byte
 are compared with the selected old sources before behavior is tested. Synthetic
 mount tables and temporary state establish only offline behavior; no archive
 initialization command, real mount, service, credential or Hub workload is used.
+
+
+The Cockpit test command includes actual mounted React tests in
+`/usr/bin/firefox` with fresh temporary profiles and owned loopback fixtures.
+Firefox must be present for an executed frontend gate; absence fails rather than
+silently skipping those tests. The fixtures control Cockpit's process/D-Bus and
+privilege event boundaries, never access the installed archive or credentials,
+and add no shipped browser dependency. Real Cockpit/PAM/systemd/rootless acceptance
+requires a separately provisioned isolated environment and remains distinct.

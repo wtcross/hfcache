@@ -7,7 +7,9 @@ import { EnvelopeSchemaError, parseEnvelope } from './envelope.ts';
 import type { Envelope } from './envelope.ts';
 import { interpretOperationLine } from './events.ts';
 import type { OperationNotice } from './events.ts';
-import { BoundedLineDecoder, DiagnosticTail, TerminalCollector } from './stream.ts';
+import { BoundaryError } from './failure.ts';
+import type { FailureContext, FailureReason, FailureStage } from './failure.ts';
+import { BoundedLineDecoder, TerminalCollector } from './stream.ts';
 
 export interface StreamProcess extends PromiseLike<unknown> {
     stream(callback: (chunk: string) => void): unknown;
@@ -16,6 +18,7 @@ export interface StreamProcess extends PromiseLike<unknown> {
 export type Spawn = (argv: string[]) => StreamProcess;
 
 export interface ObservationOptions {
+    stage?: FailureStage;
     signal?: AbortSignal;
     onLine?: (line: string) => void;
     onNotice?: (notice: OperationNotice) => void;
@@ -23,18 +26,20 @@ export interface ObservationOptions {
 
 /* Missing/malformed/oversized result is an observation failure. Handles remain
  * useful even if every earlier progress line has fallen out of the tail. */
-export class HfcacheSpawnError extends Error {
+export class HfcacheSpawnError extends BoundaryError {
     readonly stderr: string;
-    readonly idempotencyKey: string | undefined;
-    readonly operationId: string | undefined;
-    readonly workMayContinue: boolean;
 
-    constructor(message: string, stderr: string, key?: string, operationId?: string) {
-        super(message);
-        this.stderr = stderr;
-        this.idempotencyKey = key;
-        this.operationId = operationId;
-        this.workMayContinue = key !== undefined || operationId !== undefined;
+    /* Keep the old constructor shape for consumers, but never retain arbitrary
+     * supplied messages/stderr. New callers provide fixed context and cause. */
+    constructor(_message: string, _stderr: string, key?: string, operationId?: string,
+        context: FailureContext = {}, failure?: unknown) {
+        super(failure ?? (_message === 'reconnected' ? { problem: 'reconnected' } : failure), {
+            ...context,
+            ...(key === undefined ? {} : { idempotencyKey: key }),
+            ...(operationId === undefined ? {} : { operationId }),
+        });
+        this.name = 'HfcacheSpawnError';
+        this.stderr = this.safeDiagnostics.join('\n');
     }
 }
 
@@ -44,7 +49,6 @@ export async function runSpawned(
     argv: string[], spawn: Spawn, options: ObservationOptions = {}, requireSuccessfulProcess = false,
 ): Promise<Envelope> {
     const lines = new BoundedLineDecoder();
-    const diagnostics = new DiagnosticTail();
     const terminal = new TerminalCollector();
     let key: string | undefined;
     let operationId: string | undefined;
@@ -71,18 +75,21 @@ export async function runSpawned(
     };
     const emit = (complete: string[]): void => {
         for (const line of complete) {
-            display(() => options.onLine?.(line));
             const notice = interpretOperationLine(line);
+            // Only validated protocol records enter browser logs. Arbitrary
+            // stderr and terminal bodies remain outside presentation callbacks.
+            if (notice !== null)
+                display(() => options.onLine?.(line));
             if (notice !== null && notice.kind !== 'key' && notice.kind !== 'operation')
                 display(() => options.onNotice?.(notice));
         }
     };
     let failure: unknown = null;
+    let failed = false;
     try {
         const proc = spawn(argv);
         proc.stream(chunk => {
             terminal.push(chunk);
-            diagnostics.push(chunk);
             const dropped = lines.droppedLines;
             emit(lines.push(chunk, inspect));
             if (lines.droppedLines > dropped)
@@ -93,29 +100,40 @@ export async function runSpawned(
         } catch (error) {
             // Domain nonzero exit is carried by the exact terminal Envelope.
             failure = error;
+            failed = true;
         }
     } catch (error) {
         failure = error;
+        failed = true;
     }
     emit(lines.finish(inspect));
-    const stderr = diagnostics.text();
-    // Installed confirmation also owns byte postchecks after the CLI completes (CP-11).
-    if (requireSuccessfulProcess && failure !== null)
-        throw new HfcacheSpawnError('Installed confirmation did not complete successfully; reload and validate again', stderr, key, operationId);
-    if (terminal.overflow)
-        throw new HfcacheSpawnError('Terminal result exceeds the observation limit; accepted work may continue', stderr, key, operationId);
-    if (terminal.text().trim() === '') {
-        const reason = failure instanceof Error ? failure.message : 'hfcache produced no terminal envelope';
-        // Spawn diagnostics are bounded too, and never interpreted as outcomes.
-        const bounded = new DiagnosticTail();
-        bounded.push(reason);
-        throw new HfcacheSpawnError(bounded.text(), stderr, key, operationId);
+    const observationError = (reason: FailureReason): HfcacheSpawnError =>
+        new HfcacheSpawnError('', '', key, operationId, {
+            stage: options.stage ?? (requireSuccessfulProcess ? 'installed-confirm' : 'api-read'),
+            reason,
+        }, failure);
+    // A negative result cannot confirm installation, but its original API/domain
+    // classification remains useful. Successful confirmation still requires every
+    // guarded byte postcheck and successful process completion (CP-11).
+    if (requireSuccessfulProcess && failed) {
+        if (!terminal.overflow) {
+            try {
+                const refused = parseEnvelope(terminal.text());
+                if (refused.exit_code !== 0)
+                    return refused;
+            } catch { /* Missing or invalid terminal output proves no result. */ }
+        }
+        throw observationError('process-postcheck');
     }
+    if (terminal.overflow)
+        throw observationError('terminal-overflow');
+    if (terminal.text().trim() === '')
+        throw observationError('no-envelope');
     try {
         return parseEnvelope(terminal.text());
     } catch (error) {
         if (error instanceof EnvelopeSchemaError)
-            throw new HfcacheSpawnError('This terminal Envelope schema is unsupported; update the plugin to match the deployed hfcache. Accepted work may continue', stderr, key, operationId);
-        throw new HfcacheSpawnError('No valid terminal Envelope was observed; accepted work may continue', stderr, key, operationId);
+            throw observationError('unsupported-schema');
+        throw observationError('invalid-envelope');
     }
 }

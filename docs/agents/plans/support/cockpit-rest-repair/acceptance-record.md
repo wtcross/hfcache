@@ -36,14 +36,14 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 
 | Case | Evidence / command / result |
 | --- | --- |
-| V01 | Not executed; owning repair and regression pending. |
-| V02 | Not executed; owning repair and regression pending. |
-| V03 | Not executed; owning repair and regression pending. |
-| V04 | Not executed; owning repair and regression pending. |
-| V05 | Not executed; owning repair and regression pending. |
-| V06 | Not executed; owning repair and regression pending. |
-| V07 | Not executed; owning repair and regression pending. |
-| V08 | Not executed; owning repair and regression pending. |
+| V01 | Boundary normalization/runner and mounted QueryError pass all known stages; exact baseline loses problem/stage. `rtk node --test cockpit/test/failure.test.ts cockpit/test/runner.test.ts`; `rtk node cockpit/test/browser.mjs`. Higher pipeline-stage retention/reconciliation remains partial until CPR-003. |
+| V02 | `cockpit/test/failure.test.ts`: Error/plain objects, malformed values, unknown problem contents, getter/proxy defenses, bounded validated fields; focused 24 passed. No arbitrary rejection prose retained. |
+| V03 | `runner.test.ts` launcher/process/access facts and `failure.test.ts` finite status/signals distinguish categories without raw stderr. Mounted API adapter remains fixed. Actual real launcher cause remains pending isolated runtime. |
+| V04 | `runner.test.ts` exact nonzero HFAPI/domain Envelopes survive rejected process; installed-confirmation postcheck remains stricter. Focused runner/failure/stream/container selection passed. |
+| V05 | Existing runner/stream UTF-8/line/terminal bounds plus late handle/abort/callback regressions passed. Raw terminal bodies/unknown diagnostics withheld from browser activity. |
+| V06 | `connection.test.ts` close/listener/retry/disposal cases and mounted D-Bus tests pass; at most two read attempts/one delay; no mutation replay. Real PAM/runtime layer remains V54. |
+| V07 | Mounted real hooks reject prior read/unit generations and clear healthy evidence on refresh/failure; sequential polls. Exact baseline mounted stale-clear cases fail. |
+| V08 | Mounted privilege/reconnect invalidation and pure mutation-generation tests pass. Portal actions individually gated. Higher Configuration pipeline phase/evidence tests remain CPR-003; actual PAM layer remains V54. |
 | V09 | Not executed; owning repair and regression pending. |
 | V10 | Not executed; owning repair and regression pending. |
 | V11 | Not executed; owning repair and regression pending. |
@@ -69,7 +69,7 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V31 | Not executed; owning repair and regression pending. |
 | V32 | Not executed; owning repair and regression pending. |
 | V33 | Not executed; owning repair and regression pending. |
-| V34 | Not executed; owning repair and regression pending. |
+| V34 | `runner.test.ts` page closure, callback failure, late handles and abort tests pass without process-close/cancellation capability. D-Bus channel disposal does not stop application execution. |
 | V35 | Not executed; owning repair and regression pending. |
 | V36 | Not executed; owning repair and regression pending. |
 | V37 | Not executed; owning repair and regression pending. |
@@ -84,9 +84,9 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | V46 | Not executed; owning repair and regression pending. |
 | V47 | Not executed; owning repair and regression pending. |
 | V48 | Not executed; owning repair and regression pending. |
-| V49 | Not executed; owning repair and regression pending. |
+| V49 | Shared read/unit hooks now remove stale healthy evidence and reject old generations; mounted regressions pass. Per-surface full read rendering audit remains CPR-007. |
 | V50 | Not executed; owning repair and regression pending. |
-| V51 | Not executed; owning repair and regression pending. |
+| V51 | Failure/runner and mounted QueryError synthetic secret tests pass; only safe validated problem/status/signal/handle fields retained. Registry/storage and all read surfaces remain CPR-004/007 scope. |
 | V52 | Not executed; owning repair and regression pending. |
 | V53 | Not executed; owning repair and regression pending. |
 | V54 | UNPASSED: local development now authorized. Provision isolated local KVM guest with QEMU, verified guest image, offline RPM/image inputs, synthetic protected credentials and no live/NAS archive; then execute exact bridge/launcher chain. Missing prerequisites are not a mocked pass. |
@@ -102,9 +102,9 @@ V01/V11/V24/V27 baseline defects observed; repaired expectations remain unpassed
 | Gate | Command / result / evidence |
 | --- | --- |
 | Package repository gate | CPR-001: `rtk proxy scripts/check.sh` exit 0; 5008 passed/42 deselected, three wheel profiles, actual frontend lint/types/170 tests/build. [Evidence](gates/cpr-001.txt) |
-| Explicit frontend gate | Pending — make -C cockpit check |
+| Explicit frontend gate | CPR-002 `rtk make -C cockpit check` exit 0; current full gate confirms 221 unit + 12 mounted cases, lint/style/types/build |
 | Extended final gate | Pending — scripts/check.sh --with-build |
-| Component/lifecycle regressions | Pending |
+| Component/lifecycle regressions | CPR-002: 12 mounted cases passed in actual Firefox; [bounded results](gates/cpr-002-mounted.json). No real PAM/API claims |
 | Actual CLI / private Unix socket | Pending |
 | Actual disposable Cockpit / PAM / rootless chain | Pending; provisioned isolated environment required |
 | Documentation, schema and CLI parity | Pending |
@@ -177,10 +177,48 @@ credential, host configuration, NAS or live archive was accessed. No sandbox was
 weakened. The private temporary browser profile is retained as fixture evidence.
 
 
-CPR-001, this commit: full retry passed (5008 Python tests, 42 deselected,
+CPR-001 commit `b40b443`: full retry passed (5008 Python tests, 42 deselected,
 593.55s; all three locked wheel installation profiles; actual Cockpit lint,
 stylelint, typecheck, 170 tests with 0 failures/skips and production build).
 [Gate summary](gates/cpr-001.txt). This records baseline coverage, not repaired
 V01–V60 acceptance. Baseline source remains unchanged except the historical
 selector regression test correction. Mounted reproduction and pure investigation
 commands both exited 0; documentation alignment passed (183 documents/19 helpers).
+
+
+CPR-002 mounted fail-before evidence:
+`rtk node cockpit/test/browser.mjs dcc2c562b52304541d0cb85d20fc046072038e79`
+exit 1, 3 passed/6 failed (lost bridge problem, stale read/unit evidence, closed
+cached client, finite pending read recovery, privilege invalidation). Working tree
+mounted harness: 9 passed/exit 0 before final schedule regression additions.
+These are actual React roots/hooks/adapters with controlled Cockpit boundaries,
+not real PAM/API/host commands. Existing old-generation/no-replay cases already
+passed baseline and are retained. Full gate and final expanded counts pending.
+
+
+Final CPR-002 additions: expanded mounted browser harness failed before schedule
+freshness fix (10/12 passed, 2 failed) and passed all 12 afterward. Actual mounted
+Maintenance modal portal privilege loss produced zero Apply calls. Runner negative
+confirmation regression failed before fix, then exact HFAPI003 Envelope preserved;
+apparent successful stdout with failed process still rejects. Focused runner/
+failure/connection suite: 63 passed, exit 0.
+
+Local runtime preparation reached boot/SSH, then paused; see
+[runtime-setup](runtime-setup.md). Actual twelve signed prerequisite RPM additions,
+zero upgrades/removals. Isolated guest has no default/NAS route or host directory
+binds; no production configuration/secret/application change. V54 is still unpassed,
+not blocked on user approval. Next prerequisites: guest-local application fixture,
+synthetic REST sources, real bridge/launcher/browser exercises and exact identities.
+
+
+CPR-002, this commit: `rtk proxy scripts/check.sh` exit 0: 5008 Python passed,
+42 deselected in 656.48s; all three locked wheel profiles; actual Cockpit frozen
+install, lint/style/types, 221 unit tests (0 failures/skips), 12 mounted Firefox
+cases, production build. [Gate summary](gates/cpr-002.txt),
+[bounded mounted results](gates/cpr-002-mounted.json). Explicit frontend gate also
+exited 0. Documentation alignment: 183 documents/19 helpers. No application
+runtime dependency, archive format, new REST route or credential boundary change.
+Successful confirmation remains stricter; failed confirmation retains classified
+negative evidence. CP-01–14, INV-006, decisions122/127/133/134 reviewed and current.
+
+Production JS (decompressed index.js.gz) SHA256 at CPR-002: `b6995b709b0be8f63b97b81d908986bb85f94680c9d4783fd4b6af174f6628f0`.

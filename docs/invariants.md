@@ -623,6 +623,10 @@ explicit adapter amendments. No new workload or deployment authority follows.
   output. Separately validated bounded progress/safety notices may render and
   reconnect, never grant domain authority or invent outcome/checkpoints/percentages
   (decision [122](adr/decision-122.md)).
+  Boundary errors retain validated stage/problem/process facts, withholding raw
+  exception/stderr contents. Close/privilege transitions invalidate connections
+  and stale UI evidence; bounded read retries never replay mutations. See
+  [presentation and connection rules](cockpit.md#4-envelope-and-error-handling).
 - **`CP-03`, `CP-04`, `CP-10`** — Mutation needs administrative Cockpit access,
   while CLI work runs as the service identity in a transient unit, never root.
   Full sync/verification use their installed services. Respect the single
