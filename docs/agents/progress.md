@@ -27,6 +27,25 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Cockpit REST repair (2026-10-19)
+
+- [x] CPR-001 Freeze baseline and activate corrective contracts (2026-10-19,
+  this commit — [plan](plans/2026-10-19-plan-cockpit-rest-repair.md),
+  [task](plans/tasks/cpr-001-baseline-and-contracts.md)). HEAD matched reviewed
+  dcc2c562; no competing plan or CPR collisions. Pure and mounted Firefox
+  investigations reproduced error replacement, uncertain Apply and local-handle
+  lifetime defects without claiming real PAM/API acceptance. Decision134 adopts
+  bounded stage/identity-preserving repair contracts; CP-04/09 exceptions remain
+  pending explicit replacements. Historical CAT selector test now verifies the
+  completion commit rather than freezing today's selector. Initial gate 1 failed/
+  5007 passed; focused correction 2 passed; full retry 5008 passed/42 deselected,
+  three locked wheel profiles, actual Cockpit lint/style/types/170 tests/build.
+  [Evidence](plans/support/cockpit-rest-repair/acceptance-record.md). Local-host
+  development authority now permits necessary backed-up/restored changes without
+  NAS impact; no host mutation, service outage or archive access performed.
+  Isolated KVM fixture prerequisites identified; installed cause remains unresolved.
+
+
 ## Tags and discovery (2026-10-19)
 
 - [x] CAT-001 Activate the feature plan and establish technical contracts
@@ -5199,6 +5218,15 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      catalog predicates/hashes; exact lifecycle and actual old-target behavior
      constrain rollback without evidence deletion. Original wrappers, policy and
      durable evidence remain unchanged. Offline acceptance grants no deployment.
+
+
+134. **Preserve Cockpit failure evidence and original operation identity**
+     (2026-10-19, CPR-001). [Decision 134](../adr/decision-134.md) adopts typed
+     bridge/process/stage evidence, finite read recovery and scoped original
+     handles outside tab lifetimes. Reject generic error replacement, pipeline
+     replay, browser secrets and local fallback. Existing full-service/report
+     exceptions remain until their explicit replacement packages. Source/runtime/
+     installed acceptance remain separate; all deployment holds survive.
 
 
 ## Documentation and script alignment

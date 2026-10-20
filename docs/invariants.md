@@ -610,6 +610,12 @@ acceptance evidence; it is an example consumer, not an application dependency.
 
 ## Cockpit boundary
 
+[Decision 134](adr/decision-134.md) requires stage-aware error preservation,
+close-aware read recovery and authority-scoped operation handles outside tab
+lifetimes. These requirements expose current conformance gaps; the existing
+CP-04 service and CP-01/09 report exceptions below remain current until their
+explicit adapter amendments. No new workload or deployment authority follows.
+
 - **`CP-01`, `CP-02`, `CP-09`** — The plugin uses installed CLI JSON envelopes
   and systemd, never reimplements archive logic or writes archive files. The
   sole direct archive-read exception is run-report browsing as the service
@@ -623,8 +629,8 @@ acceptance evidence; it is an example consumer, not an application dependency.
   writer lock; report busy without bypassing it.
 - **`CP-05`–`CP-08`** — Schedule controls affect only the sync timer; never
   manipulate `hfcache.target`, enable the verify timer, or expose archive init.
-  The page never reads credentials or accepts tokens; systemd imports its
-  API-only `hfcache.api` credential directly into spawned CLI work, never Hub
+  The page never reads credentials or accepts tokens; the fixed launcher mounts its
+  API-only `hfcache.api` credential inside the fixed rootless client, never Hub
   authority or browser/environment/argument bearers (decision 122).
 - **`CP-11`, `CP-12`** — Config installs follow candidate → successful CLI
   validation → required successful preview → atomic install → exact installed

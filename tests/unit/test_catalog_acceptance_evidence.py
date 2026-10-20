@@ -74,9 +74,26 @@ def test_predecessor_commits_and_plan_selector_preserve_the_execution_record():
     selector = (PLAN_ROOT / "current.md").read_text()
     if "| Status | complete |" in final_task:
         assert "| Status | complete |" in plan
-        assert "| State | inactive |" in selector
-        assert "| Next task | None |" in selector
-        assert "| Last completed plan | [Tags and discovery]" in selector
+        # INV-011: completion clears the selector in that package, without
+        # preventing a later authorized plan from selecting new work.
+        final_commits = subprocess.run(
+            ["git", "log", "--format=%H", "--grep=^CAT-016: "],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.splitlines()
+        assert len(final_commits) == 1
+        completed_selector = subprocess.run(
+            ["git", "show", f"{final_commits[0]}:docs/agents/plans/current.md"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        assert "| State | inactive |" in completed_selector
+        assert "| Next task | None |" in completed_selector
+        assert "| Last completed plan | [Tags and discovery]" in completed_selector
     else:
         assert "| Status | in_progress |" in final_task
         assert "| Status | active |" in plan

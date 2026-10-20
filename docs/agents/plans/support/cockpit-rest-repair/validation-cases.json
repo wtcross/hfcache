@@ -1,0 +1,487 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "dcc2c562b52304541d0cb85d20fc046072038e79",
+  "evidence_state": "planned_not_run",
+  "cases": [
+    {
+      "id": "V01",
+      "area": "Bridge and process failures",
+      "owner": "CPR-002",
+      "input": "Error(\"reconnected\") with no Envelope at each known stage",
+      "expected": "Preserve problem/stage and show contextual recovery; no invented daemon diagnosis or automatic repeat.",
+      "evidence": null
+    },
+    {
+      "id": "V02",
+      "area": "Bridge and process failures",
+      "owner": "CPR-002",
+      "input": "Plain rejection object, unknown problem, missing message",
+      "expected": "Safe normalized error with bounded fields; no undefined toast, unsafe interpolation or fabricated exit.",
+      "evidence": null
+    },
+    {
+      "id": "V03",
+      "area": "Bridge and process failures",
+      "owner": "CPR-002",
+      "input": "Missing launcher, failed systemd/Podman start, exit signal",
+      "expected": "Distinguish launcher/process/bridge facts from API and domain failures; keep safe diagnostics.",
+      "evidence": null
+    },
+    {
+      "id": "V04",
+      "area": "Bridge and process failures",
+      "owner": "CPR-002",
+      "input": "Nonzero process exit with valid failed terminal Envelope",
+      "expected": "Render exact command/errors/exit/identity; do not replace with generic spawn failure.",
+      "evidence": null
+    },
+    {
+      "id": "V05",
+      "area": "Bridge and process failures",
+      "owner": "CPR-002",
+      "input": "Split Unicode, oversized line/terminal, late notices and callback exceptions",
+      "expected": "Existing bounds, independent handles and strict terminal authority survive; no server cancellation.",
+      "evidence": null
+    },
+    {
+      "id": "V06",
+      "area": "Connection lifecycle",
+      "owner": "CPR-002",
+      "input": "Cached D-Bus closes then reads resume",
+      "expected": "Dispose old listeners and recreate a valid client; read retries finite; no unit mutation replay.",
+      "evidence": null
+    },
+    {
+      "id": "V07",
+      "area": "Connection lifecycle",
+      "owner": "CPR-002",
+      "input": "Poll failure, delayed old result, overlapping refreshes",
+      "expected": "Unavailable/stale state is visible; old generations cannot re-enable controls.",
+      "evidence": null
+    },
+    {
+      "id": "V08",
+      "area": "Connection lifecycle",
+      "owner": "CPR-002",
+      "input": "Administrative privilege/session changes during a pipeline",
+      "expected": "Dependent actions disabled; preserved uncertain state; reconnect never repeats the whole pipeline.",
+      "evidence": null
+    },
+    {
+      "id": "V09",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Valid compatible candidate requiring no sizing",
+      "expected": "Validation evidence retained, exact content/base checked and install proposal created only from strict valid evidence.",
+      "evidence": null
+    },
+    {
+      "id": "V10",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Invalid TOML/schema/field candidate assessment",
+      "expected": "Negative assessment and original HFCFG/location errors visible; no plan/install.",
+      "evidence": null
+    },
+    {
+      "id": "V11",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "HFAPI003/017/018/019 or other valid failed Envelope with data={} ",
+      "expected": "Original API/client refusal visible, not mislabeled assessment-schema incompatibility; no readiness.",
+      "evidence": null
+    },
+    {
+      "id": "V12",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Reader credential cannot validate candidate; auth/capability refusal",
+      "expected": "Writer requirement retained; no local validation/Hub-credential/anonymous fallback.",
+      "evidence": null
+    },
+    {
+      "id": "V13",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Authority incompatible or unknown; installed policy invalid",
+      "expected": "Syntax validity remains distinct; preview/install blocked with manual authority guidance.",
+      "evidence": null
+    },
+    {
+      "id": "V14",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Tag-only different content with same operational fingerprint",
+      "expected": "Exact bytes before/after confirmation still required; fingerprint alone cannot confirm installation.",
+      "evidence": null
+    },
+    {
+      "id": "V15",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Empty, invalid Unicode/NUL, >1 MiB or JSON-escaped server-413 candidate",
+      "expected": "Bounds/refusals remain visible; no silent truncation, echo or successful proposal.",
+      "evidence": null
+    },
+    {
+      "id": "V16",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Concurrent editor changes candidate/base; unsafe symlink/link/mode",
+      "expected": "Existing root-lock/exact-content/safe-file checks refuse; no relaxed permissions or lock replacement.",
+      "evidence": null
+    },
+    {
+      "id": "V17",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Write completes but acknowledgement is lost",
+      "expected": "Guarded read-only reconciliation distinguishes expected/absent/changed/unknown; no blind overwrite or cleanup.",
+      "evidence": null
+    },
+    {
+      "id": "V18",
+      "area": "Candidate pipeline",
+      "owner": "CPR-004",
+      "input": "Sizing accepted or acknowledgement lost, then tab/reconnect/timeout",
+      "expected": "Original key/ID retained and lookup/wait available; old sizing result cannot authorize edited content.",
+      "evidence": null
+    },
+    {
+      "id": "V19",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Install rename succeeds but acknowledgement is lost",
+      "expected": "Unconfirmed state and predecessor retained; exact installed-content reconciliation; no automatic reinstall/rollback.",
+      "evidence": null
+    },
+    {
+      "id": "V20",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Confirmation stdout looks successful but process/postcheck fails",
+      "expected": "No success; retain stage/cause; exact content and successful postcheck requirements preserved.",
+      "evidence": null
+    },
+    {
+      "id": "V21",
+      "area": "Candidate pipeline",
+      "owner": "CPR-003",
+      "input": "Failure/discard after ownership or base is no longer provable",
+      "expected": "Preserve unknown candidate/backup; only explicit exact-guarded cleanup is possible.",
+      "evidence": null
+    },
+    {
+      "id": "V22",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Channel lost before first CLI key notice",
+      "expected": "Original key already persisted before spawn/send; recover without generating another key.",
+      "evidence": null
+    },
+    {
+      "id": "V23",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Storage full/unavailable, session ended, or sensitive sentinel in inputs/logs",
+      "expected": "Missing promised session recovery is explicit; session end never implies job cancellation; no token/TOML/raw-log persistence or disclosure.",
+      "evidence": null
+    },
+    {
+      "id": "V24",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Real tab unmountOnExit while job runs",
+      "expected": "Registry survives outside tab; recovered UI observes original job and issues zero new POSTs.",
+      "evidence": null
+    },
+    {
+      "id": "V25",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Full reload; corrupted/oversized/unknown-schema stored records",
+      "expected": "Valid handles restore safely; unsafe records cannot become commands or silently enable new submission.",
+      "evidence": null
+    },
+    {
+      "id": "V26",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Host/endpoint/profile/credential-class/archive scope changes",
+      "expected": "No automatic lookup/wait or replay against the new authority; original unresolved record retained.",
+      "evidence": null
+    },
+    {
+      "id": "V27",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Successful maintenance dry run, Apply spawn failure with retained key, busy cleared",
+      "expected": "Apply remains blocked by error/registry uncertainty even with applied=null and old successful dry run.",
+      "evidence": null
+    },
+    {
+      "id": "V28",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "All keyed non-streaming actions: plans, doctor, dry runs and applies",
+      "expected": "Every call captures key before send and ID on acceptance; synchronous reads/validation do not invent jobs.",
+      "evidence": null
+    },
+    {
+      "id": "V29",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Observation timeout / HFAPI013/015/019/020",
+      "expected": "Exact original handles and uncertainty survive; no automatic recovery/cancel or additional POST.",
+      "evidence": null
+    },
+    {
+      "id": "V30",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Lookup/history expired or absent after uncertain transmission",
+      "expected": "Missing history is not proof of nonexecution; old record preserved and operator decision explicit.",
+      "evidence": null
+    },
+    {
+      "id": "V31",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Terminal domain exits 0/10/20/30/40/50, busy and partial outcomes",
+      "expected": "Exact classifications/partial data preserved; 202 or stopped observer never becomes terminal success.",
+      "evidence": null
+    },
+    {
+      "id": "V32",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Mismatched emitted key/ID, progress flood and event gap",
+      "expected": "Fail closed on identity inconsistency; bounds do not evict independently retained handles.",
+      "evidence": null
+    },
+    {
+      "id": "V33",
+      "area": "Operation registry",
+      "owner": "CPR-004",
+      "input": "Lookup/wait UI and copied keys beginning with - or ~",
+      "expected": "Same fixed launcher/profile/identity; safe quoted data and --; no arbitrary shell/URL/credential input.",
+      "evidence": null
+    },
+    {
+      "id": "V34",
+      "area": "Operation registry",
+      "owner": "CPR-002",
+      "input": "Page close, abort, stop-observing or display callback failure",
+      "expected": "No process-close cancellation shortcut, actual worker/API stop, lock deletion or implied safe recovery.",
+      "evidence": null
+    },
+    {
+      "id": "V35",
+      "area": "Operations and host controls",
+      "owner": "CPR-005",
+      "input": "Manual full sync in explicit permitted disposable profile",
+      "expected": "Existing CLI sync/POST /syncs with one key and original receipt; no legacy service-start dependency.",
+      "evidence": null
+    },
+    {
+      "id": "V36",
+      "area": "Operations and host controls",
+      "owner": "CPR-005",
+      "input": "Manual full verify in explicit permitted disposable profile",
+      "expected": "Existing verify --full / mode=full job; private offline executor and exact terminal result preserved.",
+      "evidence": null
+    },
+    {
+      "id": "V37",
+      "area": "Operations and host controls",
+      "owner": "CPR-005",
+      "input": "Selected guarded read-only profile for every archive-effecting control",
+      "expected": "Prohibited actions disabled with reason at adapter and UI; no guard/mask changes or alternate submission bypass.",
+      "evidence": null
+    },
+    {
+      "id": "V38",
+      "area": "Operations and host controls",
+      "owner": "CPR-005",
+      "input": "Unknown/mixed/drifted profile or missing guard facts",
+      "expected": "Unavailability, not inferred permission; browser cannot select an unrestricted profile.",
+      "evidence": null
+    },
+    {
+      "id": "V39",
+      "area": "Operations and host controls",
+      "owner": "CPR-005",
+      "input": "Schedule edits with masked/unknown units; malicious/invalid calendar",
+      "expected": "Refuse before drop-in writes where unavailable; validated fixed system manager only, no verify-timer enable or target action.",
+      "evidence": null
+    },
+    {
+      "id": "V40",
+      "area": "Operations and host controls",
+      "owner": "CPR-005",
+      "input": "Scheduled observer and manual REST operation coexist in fixture",
+      "expected": "Host observer state is labeled separately; stopping it does not cancel manual/server work or create another job.",
+      "evidence": null
+    },
+    {
+      "id": "V41",
+      "area": "REST reports",
+      "owner": "CPR-006",
+      "input": "Empty inventory, multiple report pages and exact detail",
+      "expected": "Bounded documented CLI/UI paging, correct run identity and Envelope shape; no fake empty-success fallback.",
+      "evidence": null
+    },
+    {
+      "id": "V42",
+      "area": "REST reports",
+      "owner": "CPR-006",
+      "input": "Missing/malformed/oversized report, wrong UUID/run ID and stale cursor",
+      "expected": "Classified visible refusal; no mixed pages, silent truncation or substitution of a newer report.",
+      "evidence": null
+    },
+    {
+      "id": "V43",
+      "area": "REST reports",
+      "owner": "CPR-006",
+      "input": "Client archive unavailable; static check of production report adapter",
+      "expected": "Reports still use REST; no runuser/ls/cat read under /srv/hfcache/runs remains.",
+      "evidence": null
+    },
+    {
+      "id": "V44",
+      "area": "REST reports",
+      "owner": "CPR-006",
+      "input": "Path traversal, invalid run ID, leading option, arbitrary URL/method",
+      "expected": "Narrow fixed read command rejects before filesystem/HTTP side effects; no general proxy.",
+      "evidence": null
+    },
+    {
+      "id": "V45",
+      "area": "Host journals",
+      "owner": "CPR-006",
+      "input": "Large journal, unavailable journal and timeout",
+      "expected": "Explicit line/byte/time caps and truncation; report UI still works and journal never decides outcome.",
+      "evidence": null
+    },
+    {
+      "id": "V46",
+      "area": "Read rendering",
+      "owner": "CPR-007",
+      "input": "Server VersionCard gets valid failed Envelope",
+      "expected": "Stable code/message visible; correct existing version --server request retained.",
+      "evidence": null
+    },
+    {
+      "id": "V47",
+      "area": "Read rendering",
+      "owner": "CPR-007",
+      "input": "EstimateCard gets valid failed Envelope",
+      "expected": "Failure alert instead of dashes/zero/successful-looking estimate; no verification confidence.",
+      "evidence": null
+    },
+    {
+      "id": "V48",
+      "area": "Read rendering",
+      "owner": "CPR-007",
+      "input": "Status/list/report success, partial failure, failed Envelope and malformed success",
+      "expected": "Each shape rendered honestly; only validated success fields used; current working domain error handling preserved.",
+      "evidence": null
+    },
+    {
+      "id": "V49",
+      "area": "Read rendering",
+      "owner": "CPR-007",
+      "input": "Refresh fails after healthy/ready prior observation",
+      "expected": "Absent or explicitly stale data; old evidence cannot authorize actions or overwrite newer generation.",
+      "evidence": null
+    },
+    {
+      "id": "V50",
+      "area": "Profile diagnostics",
+      "owner": "CPR-007",
+      "input": "Native default differs from explicit rootless socket/profile overlay",
+      "expected": "Actual selected profile shown; no mistaken socket repair, native binary/import assumption or automatic endpoint fallback.",
+      "evidence": null
+    },
+    {
+      "id": "V51",
+      "area": "Security",
+      "owner": "CPR-007",
+      "input": "Synthetic API/Hub/MCP secrets in failures, input and retained data",
+      "expected": "No browser/argv/environment/storage disclosure, no cross-interface credential reuse or arbitrary trusted-helper input.",
+      "evidence": null
+    },
+    {
+      "id": "V52",
+      "area": "Boundary tests",
+      "owner": "CPR-008",
+      "input": "Actual installed CLI over temporary Unix socket with real failed/success Envelopes",
+      "expected": "Process/output/auth/candidate/job/report behavior proved beyond pure response stubs; zero live archive access.",
+      "evidence": null
+    },
+    {
+      "id": "V53",
+      "area": "Boundary tests",
+      "owner": "CPR-008",
+      "input": "Mounted React UI with realistic Cockpit promise/stream/close ordering",
+      "expected": "Original failure flows reproduced and corrected; no fake pass from bypassing the adapter or component lifecycle.",
+      "evidence": null
+    },
+    {
+      "id": "V54",
+      "area": "Boundary tests",
+      "owner": "CPR-008",
+      "input": "Real disposable Cockpit/PAM/systemd/rootless launcher chain",
+      "expected": "Actual identities/profile/secret delivery and reconnect behavior recorded; no NAS/live credentials; absence is a blocker, not a pass.",
+      "evidence": null
+    },
+    {
+      "id": "V55",
+      "area": "Release evidence",
+      "owner": "CPR-009",
+      "input": "Browser bundle, launcher/profile, image and server intentionally skewed",
+      "expected": "Mismatch/unavailable diagnostics and reviewed update handoff; package version alone never proves parity.",
+      "evidence": null
+    },
+    {
+      "id": "V56",
+      "area": "Gates",
+      "owner": "CPR-008",
+      "input": "pnpm/make/toolchain unavailable or frontend stage skipped",
+      "expected": "Plan acceptance fails or blocks explicitly; backend-green result cannot be recorded as Cockpit coverage.",
+      "evidence": null
+    },
+    {
+      "id": "V57",
+      "area": "Documentation and parity",
+      "owner": "CPR-009",
+      "input": "New runs CLI help/route/output mappings and old MCP/read interfaces",
+      "expected": "Docs/gates agree; no invented REST install/cancel/schedule endpoint or expanded MCP authority.",
+      "evidence": null
+    },
+    {
+      "id": "V58",
+      "area": "Compatibility",
+      "owner": "CPR-008",
+      "input": "Existing durable fixtures, candidate/tag exactness and operation history",
+      "expected": "No unrelated schema/publication changes; old receipt/result/backup evidence remains preserved.",
+      "evidence": null
+    },
+    {
+      "id": "V59",
+      "area": "Final gate",
+      "owner": "CPR-009",
+      "input": "Locked base/server/server+MCP installs, frontend build and extended gate",
+      "expected": "Actual commands/counts/exits recorded; scripts/check.sh --with-build and make -C cockpit check executed.",
+      "evidence": null
+    },
+    {
+      "id": "V60",
+      "area": "Handoff",
+      "owner": "CPR-009",
+      "input": "Plan closeout vs deployment and original-host symptom acceptance",
+      "expected": "Source/disposable/installed/NAS gates distinct; no unauthorized install/push/tag/init/live workload or erased blocker.",
+      "evidence": null
+    }
+  ]
+}

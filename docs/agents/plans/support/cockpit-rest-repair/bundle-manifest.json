@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "bundle": "hfcache-cockpit-rest-repair-plan",
+  "created": "2026-10-19",
+  "timezone": "America/New_York",
+  "baseline_repository": "wtcross/hfcache",
+  "baseline_commit": "dcc2c562b52304541d0cb85d20fc046072038e79",
+  "plan_status": "draft",
+  "implementation_authorized": false,
+  "tracker_included": false,
+  "application_patches_included": false,
+  "payload_file_count": 20,
+  "manifest_excluded_from_payload_hashes": true,
+  "files": [
+    {
+      "path": "docs/agents/plans/2026-10-19-plan-cockpit-rest-repair.md",
+      "bytes": 13691,
+      "sha256": "5efb1bfac8dac96145e28acec875cda2438ca4879b26ab37687c9d4679b1e27b"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/START-HERE.md",
+      "bytes": 3040,
+      "sha256": "7ca797b226464f0dc3eb70862b757bcf7f4941a685243ad093e0a4c8ae9a4b67"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/acceptance-record.md",
+      "bytes": 3383,
+      "sha256": "8f9c817c5b05967472001dc56f157523bc4ef64bde14aab13c528e3a9683ca87"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/audit.md",
+      "bytes": 20109,
+      "sha256": "2bac18949589ed96fd71d8d45eb29ad7a618f1a40d5740eab5054eaa402194a4"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/design.md",
+      "bytes": 14384,
+      "sha256": "fa10e7c88abdb940a1d499a7fedfd995637b85647ce174e3b5a0719e838eff42"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/diagnosis-runbook.md",
+      "bytes": 7531,
+      "sha256": "68d49ea3411ed742823c9dcb186f3267a902836ac3818d0d3496d15ce880e2a5"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/implementation-prompt.md",
+      "bytes": 3269,
+      "sha256": "5ae39fc501bcbef346649b47fdc227602e1f0b523fd1c9f7fa73415b6874aca8"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/source-review.md",
+      "bytes": 10147,
+      "sha256": "93e388e8844244649cca8c072e113d26809a18ee121efcaedb52ffaae9e69a5a"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/surface-map.md",
+      "bytes": 5334,
+      "sha256": "1ff0ad9b2252095594d7dab6e9d7da3cf68cd89dd91f70671aeed70660de5f97"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/validation-cases.json",
+      "bytes": 19304,
+      "sha256": "98e5e85079e1f8363c131dfeb182133d56e75a6c41ce9f6e0506796822933125"
+    },
+    {
+      "path": "docs/agents/plans/support/cockpit-rest-repair/validation-matrix.md",
+      "bytes": 14941,
+      "sha256": "dbde4e60cfde30cca9ebf545b20bbd74fa787296b06d91aae6c2d93d43457620"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-001-baseline-and-contracts.md",
+      "bytes": 5049,
+      "sha256": "a072b86f1186656f3f83da6dc038a9e7fe1846508425db801b609836adc579ab"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-002-bridge-errors-and-reconnect.md",
+      "bytes": 4669,
+      "sha256": "226e3581bb7d992914af564221ebfc1b6ee31d04cd17986f930d3bb1f6f9661c"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-003-candidate-validation-pipeline.md",
+      "bytes": 4874,
+      "sha256": "d628fbcdffc36798e6474d329e6f57cf5a375aa9ce0d9719173ffba7117f9581"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-004-operation-recovery-and-replay-guards.md",
+      "bytes": 4754,
+      "sha256": "138c64e13b1600a7781bd87f97acb0e3e9809426a51e69c1ff9530afd737bc8a"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-005-rest-operations-and-host-controls.md",
+      "bytes": 4753,
+      "sha256": "2aabf89278d8b68135a8b073d65c1574ae3a95c4ae25379998c27fd24a30a472"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-006-rest-run-reports.md",
+      "bytes": 4407,
+      "sha256": "2044cbb9511b4f3c9ed0322e80edd9cd9fe7228cd24e9fb9f61b123ce6364e1d"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-007-read-results-and-diagnostics.md",
+      "bytes": 4557,
+      "sha256": "19d3f8dd850aeaf92647dca164dfa9f5c3bc6ebf8fdaaa671db2866f6879b274"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-008-cross-boundary-regressions.md",
+      "bytes": 5051,
+      "sha256": "7857deedd199ad19e2cc3f372b36c16d20b689e89368d9dfe77d1c91668ca8d4"
+    },
+    {
+      "path": "docs/agents/plans/tasks/cpr-009-release-evidence-and-handoff.md",
+      "bytes": 4938,
+      "sha256": "9d63796ad509967ff9ce65e26c97cd9ab412503c53a64e420794d93597cc68fa"
+    }
+  ]
+}

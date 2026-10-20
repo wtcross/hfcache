@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "fixture": "CPR-001 actual mounted baseline investigation",
+  "reviewed_baseline": "dcc2c562b52304541d0cb85d20fc046072038e79",
+  "browser": "/usr/bin/firefox",
+  "bundle_sha256": "200e5a3e27059b1f8064e7bce96890729cce00334cdf8b32c2afc9a26ec8e6f7",
+  "process_profile_directory": "/tmp/hfcache-cpr-browser-EPLa71",
+  "isolation": {
+    "owned_profile": true,
+    "loopback_only_fixture": true,
+    "cockpit_process_boundary_controlled": true,
+    "real_pam": false
+  },
+  "result": {
+    "state": "observed",
+    "realPamAcceptance": false,
+    "realApiOrShellCalls": false,
+    "processCalls": [
+      "prune --dry-run",
+      "prune --apply",
+      "config validate"
+    ],
+    "observations": [
+      {
+        "finding": "F01",
+        "evidenceLayer": "actual mounted QueryError and real validation adapter/runner; controlled Cockpit process",
+        "interruptedCommand": "config validate",
+        "inputProblem": "reconnected",
+        "retainedProblem": null,
+        "retainedStage": null,
+        "literalMessageVisible": true,
+        "genericObservationTitleVisible": true,
+        "genericAcceptedWorkWarningVisible": true
+      },
+      {
+        "finding": "F05",
+        "evidenceLayer": "actual mounted Maintenance and real adapter/runner; controlled Cockpit process",
+        "dryRunSucceeded": true,
+        "originalKeyVisible": true,
+        "originalOperationVisible": true,
+        "applyEnabledAfterUncertainFailure": true,
+        "applySubmissions": 1
+      },
+      {
+        "finding": "F04",
+        "evidenceLayer": "actual Maintenance root unmount/remount; not real Application tab acceptance",
+        "originalHandleVisibleAfterRemount": false,
+        "noAutomaticSubmissionOnRemount": true
+      }
+    ]
+  }
+}

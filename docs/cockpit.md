@@ -39,6 +39,38 @@ cannot render success. Preserve atomic backup/install, service identity and
 `0640 root:hfcache`. New policy changes future admissions, never an admitted
 snapshot; the server refuses stale queued mutations.
 
+## Integration repair requirements
+
+The following requirements amend the presentation and recovery contract. Existing
+implementation gaps require correction before source acceptance; they do not
+establish installed browser/PAM acceptance. See [decision 134](adr/decision-134.md).
+
+Preserve classified terminal Envelopes independently of bridge/process errors.
+Missing terminal output must retain validated Cockpit problem, process status or
+signal, interrupted stage and original operation handles. Never diagnose an API
+crash from the word `reconnected`. General failed validation Envelopes remain
+original request failures; they need not contain a candidate assessment.
+
+Read connections must recover finitely after close, reject stale generations and
+mark failed refreshes unavailable. Connection recovery never repeats a host write,
+unit mutation, candidate pipeline or job submission. Retain uncertain candidate
+write/install evidence and use only guarded exact-content read reconciliation.
+
+Keep operation handles outside unmounted tabs. Capture a validated original key
+before transmission; store only bounded nonsecret, authority-scoped session
+recovery metadata. Unresolved submission or Apply blocks another submission.
+Recover through authenticated lookup/wait of the original operation; missing
+history does not prove nonexecution. No replay, cancel or cleanup follows an
+uncertain response.
+
+Manual full REST jobs and REST report browsing require the explicit, separately
+implemented amendments to CP-04 and CP-01/09. Until those amendments and adapters
+land, the existing service controls and report exception below describe current
+implementation. Neither amendment permits workloads on guarded/unknown profiles,
+changes to host guards or schedules during source implementation, or a
+user-manager fallback. All failed read
+Envelopes must render their codes before success-only fields are accessed.
+
 ## 1. Rules
 
 | ID | Rule |

@@ -86,3 +86,12 @@ process completion before accepting its Envelope. The operational hash
 continues to exclude tags, so it cannot substitute for document equality. This
 strengthens the existing exact-content guard rather than adding curation or
 full-config hashes to old validation wrappers. See [configuration editing](../cockpit.md#6-configuration-editing).
+
+## Presentation and recovery amendment (2026-10-19)
+
+[Decision 134](decision-134.md) requires preservation of classified errors,
+finite read-connection recovery, stage-aware candidate reconciliation and scoped
+operation handles outside tab lifetimes. Current implementation gaps are not
+installed proof. The full-service and direct-report exceptions remain until
+explicit amendments with tested replacements. Fixed rootless credentials, exact
+config guards and all guarded workload/deployment restrictions remain unchanged.

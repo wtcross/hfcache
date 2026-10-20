@@ -1,0 +1,6 @@
+{"fixture":"CPR-001 offline baseline investigation","reviewedBaseline":"dcc2c562b52304541d0cb85d20fc046072038e79"}
+{"finding":"F01","input":"Error","message":"reconnected","problem":null,"exit_status":null,"exit_signal":null,"workMayContinue":false}
+{"finding":"F01","input":"plain object","message":"hfcache produced no terminal envelope","problem":null,"exit_status":null,"exit_signal":null,"workMayContinue":false}
+{"finding":"F02","message":"Configuration validation evidence is incompatible; update the CLI and plugin","calls":["write","validate"],"originalCode":"HFAPI003"}
+{"finding":"F05","evidenceLayer":"exact baseline predicate only; no mounted component","caughtErrorRetainsKey":true,"caughtErrorRetainsOperation":true,"uncertain":false,"canApply":true}
+{"finding":"F04","evidenceLayer":"source checks only; no mounted component lifecycle","tabsMountOnEnter":true,"tabsUnmountOnExit":true,"handlesAreHookLocalState":true,"applyPredicateMatchesBaseline":true}
