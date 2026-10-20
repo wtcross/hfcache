@@ -826,6 +826,19 @@ four-field identity: source commit, working-copy state and public build-input
 digest. It is an advisory build snapshot, separate from the actual bundle
 checksum, protected release index, API identity and all durable archive records.
 
+The [browser wire registry](adr/decision-145.md) is a separate generated build
+contract, not a new durable archive version. It reuses public models and precise
+projections of the current serializers; stable REST/CLI/MCP bytes are unchanged.
+Its audited IR preserves numeric bounds as decimal strings, explicit nullable
+unions, required serialized fields, tuple bounds and named semantic checks.
+Unsupported schema features or changed unaudited validators fail regeneration.
+Generated declarations alone do not validate input: reconstructing runtime
+decoders check unknown network data before presentation. Raw integer tokens are
+checked before numeric conversion; values outside JavaScript's safe range refuse
+without rounding. A domain failure retains its original Envelope and only
+separately validated partial payloads. The [API boundary](api.md#browser-wire-boundary)
+defines byte/work limits and distinct unavailable/failed/malformed states.
+
 ## 12. Recovery report
 
 Path: `runs/<YYYYMMDD>T<HHMMSS>Z-<run-id>.json`, written by `recover --apply`.

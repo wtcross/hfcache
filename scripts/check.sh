@@ -12,7 +12,7 @@
 #   scripts/check.sh              # the §8.4 gate
 #   scripts/check.sh --with-build # additionally build and smoke-test the wheel
 #   scripts/check.sh --require-cockpit # fail if frontend checks cannot execute
-#   scripts/check.sh --require-web # require the strict web workspace and browser smoke
+#   scripts/check.sh --require-web # strict web, generated contracts and real API read fixture
 #
 set -euo pipefail
 
@@ -31,7 +31,7 @@ for arg in "$@"; do
         'Usage: scripts/check.sh [--with-build] [--require-cockpit] [--require-web]' \
         '  --with-build       additionally smoke-test the installed wheel' \
         '  --require-cockpit  refuse missing Cockpit sources or tools' \
-        '  --require-web      require frozen web checks and preliminary browser smoke' \
+        '  --require-web      require frozen web/contracts, preliminary browser smoke and real API read fixture' \
         '  -h, --help         show this help without running checks' \
         'See docs/development.md for provisioning and acceptance limits.'
       exit 0
@@ -60,9 +60,18 @@ require_cockpit() {
 
 require_web() {
   find_pnpm
-  if [[ ! -f web/package.json || ! -f web/pnpm-lock.yaml || ! -f web/tsconfig.json || -z $PNPM_BIN ]] \
-    || ! command -v node > /dev/null 2>&1; then
-    printf 'Web gate required: web/package.json, pnpm-lock.yaml, tsconfig.json, node and pnpm must be available; see docs/development.md\n' >&2
+  local required
+  for required in web/package.json web/pnpm-lock.yaml web/tsconfig.json \
+    web/src/wire/contracts.json web/src/wire/generated.ts web/src/wire/unicode-data.json \
+    web/scripts/generate-wire.ts \
+    scripts/export-web-contracts.py scripts/check-web-read-fixture.py; do
+    if [[ ! -f $required ]]; then
+      printf 'Web gate required: missing %s; see docs/development.md\n' "$required" >&2
+      exit 69
+    fi
+  done
+  if [[ -z $PNPM_BIN ]] || ! command -v node > /dev/null 2>&1; then
+    printf 'Web gate required: node and pnpm must be available; see docs/development.md\n' >&2
     exit 69
   fi
 }
@@ -88,6 +97,11 @@ uv lock --check
 
 step 'uv sync --locked --extra server --extra mcp'
 uv sync --locked --extra server --extra mcp
+
+if [[ $REQUIRE_WEB -eq 1 ]]; then
+  step 'authoritative browser contract export drift'
+  uv run --locked --extra server --extra mcp python scripts/export-web-contracts.py --check
+fi
 
 step 'ruff format --check'
 uv run --locked --extra server --extra mcp ruff format --check .
@@ -133,10 +147,12 @@ if [[ $REQUIRE_WEB -eq 1 ]]; then
   require_web
   step 'web frozen install'
   "$PNPM_BIN" --dir web install --frozen-lockfile
-  for web_check in lint typecheck test:strict-fixtures test:unit test:component build test:browser; do
+  for web_check in check:wire lint typecheck test:strict-fixtures test:unit test:component build test:browser; do
     step "web $web_check"
     "$PNPM_BIN" --dir web run "$web_check"
   done
+  step 'real API React read fixture'
+  uv run --locked --extra server --extra mcp python scripts/check-web-read-fixture.py
 elif [[ -d web ]]; then
   printf '\nNOTE: web/ exists but its gate is OMITTED; use --require-web. This run does not establish web UI acceptance (docs/development.md).\n' >&2
 fi

@@ -4,7 +4,7 @@
 | --- | --- |
 | State | active |
 | Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
-| Next task | [WEB-003 — typed wire contracts](tasks/web-003-typed-wire-contracts.md) |
+| Next task | [WEB-004 — Basic administrator and permissions](tasks/web-004-basic-auth-and-permissions.md) |
 | Blockers | None for the next task. Chromium is provisioned for preliminary local testing; the full three-engine/Caddy/installed dependency closure still needs proof in its owning tasks. Production browser/NAS/workload holds remain separate. |
 | Last completed plan | [Cockpit repair local rollout](2026-10-20-plan-cockpit-rest-rollout.md) |
 | Updated | 2026-10-20 |
@@ -28,6 +28,15 @@ and authentication remain unimplemented. All 95 feature cases remain pending.
 An extra whitespace check found a generator-added trailing notice separator
 after the unpublished commit. Its narrow correction passes the complete strict
 gate again; that same work-package commit is amended before advancing.
+
+WEB-003 completes authoritative route/mode projections, generated reconstructing
+decoders, bounded exact numeric/Unicode validation and a same-origin client.
+Its strict gate passes 5452 Python, retained 572/110 Cockpit, 2718 web unit/2744
+combined component, two shell and 14 real-API React browser tests with no required
+skip. Coverage is 95.85% lines/92.94% branches. This read fixture remains temporary
+until WEB-005 and proves no Caddy/Basic/installed behavior. All 95 feature cases
+remain pending. Next is WEB-004; known baseline prefix/header issues are recorded
+for WEB-005's routing acceptance.
 
 Scope permits source changes and owned local/disposable tests only. No merge,
 push, tag, production deployment/Caddy reload, service/timer/credential/guard

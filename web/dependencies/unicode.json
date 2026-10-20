@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "name": "Unicode Character Database",
+  "version": "16.0.0",
+  "license": "Unicode-3.0",
+  "source": "https://www.unicode.org/Public/16.0.0/ucd/",
+  "derivation": "Pinned Python 3.14.6 unicodedata, str.casefold and str.isprintable",
+  "tables_sha256": "c615ef0f65133fb3791ef9d8bf0acb816edabc0e40335e0240bd96b76e73171a",
+  "license_sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+  "use": "production-data"
+}

@@ -13,6 +13,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 WEB_CHECKS = (
+    "check:wire",
     "lint",
     "typecheck",
     "test:strict-fixtures",
@@ -21,7 +22,16 @@ WEB_CHECKS = (
     "build",
     "test:browser",
 )
-WEB_FILES = ("package.json", "pnpm-lock.yaml", "tsconfig.json")
+WEB_FILES = (
+    "package.json",
+    "pnpm-lock.yaml",
+    "tsconfig.json",
+    "src/wire/contracts.json",
+    "src/wire/generated.ts",
+    "src/wire/unicode-data.json",
+    "scripts/generate-wire.ts",
+)
+WEB_HELPERS = ("export-web-contracts.py", "check-web-read-fixture.py")
 
 
 def web_gate_fixture(tmp_path, *, missing=None, cockpit=False):
@@ -30,11 +40,15 @@ def web_gate_fixture(tmp_path, *, missing=None, cockpit=False):
     scripts.mkdir(parents=True)
     script = scripts / "check.sh"
     shutil.copyfile(ROOT / "scripts/check.sh", script)
+    for name in WEB_HELPERS:
+        if missing != name:
+            (scripts / name).write_text("fixture\n")
     if missing != "web":
         web = repository / "web"
         web.mkdir()
         for name in WEB_FILES:
             if missing != name:
+                (web / name).parent.mkdir(parents=True, exist_ok=True)
                 (web / name).write_text("fixture\n")
     if cockpit:
         (repository / "cockpit").mkdir()
@@ -53,6 +67,11 @@ def web_gate_fixture(tmp_path, *, missing=None, cockpit=False):
             'if [ "${0##*/}" = uv ] && [ "$1" = build ] '
             '&& [ -n "${GATE_FIXTURE_REMOVE:-}" ]; then\n'
             '  /usr/bin/rm -- "$GATE_FIXTURE_REMOVE"\n'
+            "fi\n"
+            'if [ "${0##*/}" = uv ]; then\n'
+            "  for arg do\n"
+            '    if [ "$arg" = "${GATE_FIXTURE_FAIL_HELPER:-}" ]; then exit 23; fi\n'
+            "  done\n"
             "fi\n"
             'if [ "${0##*/}" = pnpm ]; then\n'
             '  if [ "${3:-}" = install ] && [ "${GATE_FIXTURE_FAIL:-}" = install ]; then\n'
@@ -87,7 +106,7 @@ def invoke(script, environment, *arguments):
     )
 
 
-@pytest.mark.parametrize("missing", ["web", *WEB_FILES, "node", "pnpm"])
+@pytest.mark.parametrize("missing", ["web", *WEB_FILES, *WEB_HELPERS, "node", "pnpm"])
 @pytest.mark.parametrize("extended", [False, True])
 def test_required_web_missing_prerequisite_refuses_before_backend(tmp_path, missing, extended):
     script, environment, calls = web_gate_fixture(tmp_path, missing=missing)
@@ -118,6 +137,10 @@ def test_required_web_preserves_backend_cockpit_and_extended_build_order(tmp_pat
         for call in invocations[:cockpit_index]
     )
     assert cockpit_index < first_web_index < len(invocations) - 1
+    export = next(i for i, call in enumerate(invocations) if "export-web-contracts.py" in call)
+    assert invocations[export].endswith("|python|scripts/export-web-contracts.py|--check")
+    assert export < cockpit_index
+    assert invocations[-2].endswith("|python|scripts/check-web-read-fixture.py")
     assert invocations[-1].endswith("|pytest|-m|build")
     assert "OMITTED" not in result.stderr + result.stdout
     assert "SKIPPED" not in result.stderr + result.stdout
@@ -140,14 +163,31 @@ def test_each_required_web_failure_stops_without_success_or_later_stages(tmp_pat
     assert not any(call.endswith("|pytest|-m|build") for call in invocations)
 
 
-@pytest.mark.parametrize("removed", ["package.json", "node", "pnpm"])
+@pytest.mark.parametrize("stage", WEB_HELPERS)
+def test_required_contract_and_real_api_fixture_failure_stops_gate(tmp_path, stage):
+    script, environment, calls = web_gate_fixture(tmp_path)
+    environment["GATE_FIXTURE_FAIL_HELPER"] = "scripts/" + stage
+    result = invoke(script, environment, "--require-web", "--with-build")
+    assert result.returncode == 23, result.stderr
+    invocations = calls.read_text().splitlines()
+    assert "scripts/" + stage in invocations[-1]
+    assert "all checks passed" not in result.stdout
+    assert not any(call.endswith("|pytest|-m|build") for call in invocations)
+    if stage == "export-web-contracts.py":
+        assert not any(call.startswith("pnpm|") for call in invocations)
+
+
+@pytest.mark.parametrize(
+    "removed", ["package.json", "src/wire/generated.ts", *WEB_HELPERS, "node", "pnpm"]
+)
 def test_required_web_rechecks_late_source_and_tool_disappearance(tmp_path, removed):
     script, environment, calls = web_gate_fixture(tmp_path)
-    target = (
-        script.parent.parent / "web" / removed
-        if removed in WEB_FILES
-        else Path(environment["PATH"]) / removed
-    )
+    if removed in WEB_HELPERS:
+        target = script.parent / removed
+    elif removed in WEB_FILES:
+        target = script.parent.parent / "web" / removed
+    else:
+        target = Path(environment["PATH"]) / removed
     environment["GATE_FIXTURE_REMOVE"] = str(target)
     result = invoke(script, environment, "--require-web")
     assert result.returncode == 69, result.stderr

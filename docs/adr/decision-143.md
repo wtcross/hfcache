@@ -4,6 +4,9 @@
 - Status: Accepted; initial workspace and preliminary gate implemented. Typed wire, release artifact and installed functional conformance remain pending.
 - Date: 2026-10-20.
 
+Typed browser contracts are refined by [decision 145](decision-145.md); release
+artifact and installed functional conformance remain independently required.
+
 ## Context and decision
 
 Build the replacement UI in `web/` using React and strict TypeScript, with

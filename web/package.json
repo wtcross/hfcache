@@ -10,6 +10,8 @@
     "pnpm": "11.18.0"
   },
   "scripts": {
+    "generate:wire": "node scripts/generate-wire.ts --write",
+    "check:wire": "node scripts/generate-wire.ts --check",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",

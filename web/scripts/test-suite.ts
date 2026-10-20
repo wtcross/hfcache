@@ -20,7 +20,12 @@ if (
     const report = join(evidence, "report.json");
     console.log(`Retaining test evidence in ${evidence}.`);
     const options =
-        arguments_[0] === "unit" ? ["--project", "unit"] : ["--coverage"];
+        arguments_[0] === "unit"
+            ? ["--project", "unit"]
+            : [
+                  "--coverage",
+                  `--coverage.reportsDirectory=${join(evidence, "coverage")}`,
+              ];
     const result = spawnSync(
         process.execPath,
         [

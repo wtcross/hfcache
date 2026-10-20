@@ -120,6 +120,30 @@ function noticesFor(packages: PackageLicense[]): string {
             );
         notices += `\n--- ${dependency.name}@${dependency.version} (${dependency.license}) ---\nSource: ${dependency.source}\n\n${readFileSync(join(directory, filename), "utf8")}\n`;
     }
+    const unicode: unknown = JSON.parse(
+        readFileSync(join(root, "dependencies/unicode.json"), "utf8"),
+    );
+    const unicodeLicense = readFileSync(
+        join(root, "dependencies/UNICODE-LICENSE.txt"),
+    );
+    const unicodeTables = readFileSync(
+        join(root, "src/wire/unicode-data.json"),
+    );
+    if (
+        !record(unicode) ||
+        unicode.schema_version !== 1 ||
+        unicode.name !== "Unicode Character Database" ||
+        unicode.version !== "16.0.0" ||
+        unicode.license !== "Unicode-3.0" ||
+        unicode.use !== "production-data" ||
+        unicode.source !== "https://www.unicode.org/Public/16.0.0/ucd/" ||
+        unicode.license_sha256 !==
+            createHash("sha256").update(unicodeLicense).digest("hex") ||
+        unicode.tables_sha256 !==
+            createHash("sha256").update(unicodeTables).digest("hex")
+    )
+        throw new Error("Unreviewed Unicode data or license identity.");
+    notices += `\n--- Unicode Character Database 16.0.0 (Unicode-3.0) ---\nSource: https://www.unicode.org/Public/16.0.0/ucd/\nDerived from the pinned Python Unicode authority for exact path collision checks.\n\n${unicodeLicense.toString("utf8")}\n`;
     // Remove our final separator when the upstream license already ends in LF.
     return notices.endsWith("\n\n") ? notices.slice(0, -1) : notices;
 }
@@ -192,8 +216,14 @@ if (arguments_.length === 0) {
             "Production notices do not match the complete audited dependency closure.",
         );
     console.log(
-        `License inventory and production notices match frozen lock: ${String(packages.length)} packages.`,
+        `License inventory and production notices match frozen lock: ${String(packages.length)} packages; pinned Unicode16 data/license verified.`,
     );
+} else if (arguments_.length === 1 && arguments_[0] === "--refresh-notices") {
+    const packages = validateInventory(
+        JSON.parse(readFileSync(inventory, "utf8")),
+    );
+    writeFileSync(join(root, "THIRD_PARTY_NOTICES.txt"), noticesFor(packages));
+    console.log("Regenerated production package and Unicode notices offline.");
 } else if (arguments_.length === 1 && arguments_[0] === "--refresh") {
     const packages: {
         name: string;
@@ -267,6 +297,8 @@ if (arguments_.length === 0) {
         `Audited ${String(packages.length)} exact locked packages, including optional platforms; retained bundled license texts.`,
     );
 } else {
-    console.error("Usage: node scripts/licenses.ts [--refresh]");
+    console.error(
+        "Usage: node scripts/licenses.ts [--refresh|--refresh-notices]",
+    );
     process.exitCode = 2;
 }

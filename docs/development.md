@@ -86,6 +86,11 @@ registry for exact locked versions, including optional packages for other
 platforms, and retains actual bundled license texts. Review the resulting
 inventory and notices. `pnpm --dir web run licenses` checks their frozen-lock
 binding offline; the production build also performs that check.
+Generated Unicode data has its own [reviewed source record](../web/dependencies/unicode.json)
+and [Unicode license](../web/dependencies/UNICODE-LICENSE.txt), separate from the
+npm package inventory. `pnpm --dir web exec node scripts/licenses.ts --refresh-notices`
+rebuilds notices offline from already reviewed package/data inputs; it does not
+refresh the registry inventory or approve changed Unicode data.
 
 Provision dependencies explicitly before running offline validation. From the
 repository root, run frozen installation twice to check that the resolved lock
@@ -112,11 +117,14 @@ Run individual stages with:
 ```bash
 pnpm --dir web run lint
 pnpm --dir web run typecheck
+uv run --locked --extra server --extra mcp python scripts/export-web-contracts.py --check
+pnpm --dir web run check:wire
 pnpm --dir web run test:strict-fixtures
 pnpm --dir web run test:unit
 pnpm --dir web run test:component
 pnpm --dir web run build
 pnpm --dir web run test:browser
+uv run --locked --extra server --extra mcp python scripts/check-web-read-fixture.py
 scripts/check.sh --require-web --require-cockpit
 ```
 
@@ -134,6 +142,8 @@ per test. A timeout fails even if the child leaves a positive report and exits
 zero. Each run retains its evidence under `web/.artifacts/unit-*/`,
 `component-*/` or `browser-*/`; retain failed reports and screenshots when
 investigating a later passing run.
+Component coverage is retained in each run's `component-*/coverage/` directory,
+so a later run cannot overwrite its coverage evidence.
 
 `test:browser` exercises the production-built shell and keyboard navigation in
 the pinned Chromium on an owned loopback fixture, including desktop/mobile axe
@@ -146,6 +156,77 @@ Missing browser prerequisites fail rather than skip. This preliminary smoke does
 not replace the later Chromium, Firefox and WebKit workflows through real Caddy
 and installed native/rootless services. See [UI availability](web-ui/README.md)
 for the current user-facing status.
+
+### Generated browser contracts
+
+The browser's wire boundary is generated from the Python public models and the
+precise [route registry](../src/hfcache/wire_registry.py), including payloads
+that the generic OpenAPI Envelope cannot describe. The
+[exporter](../scripts/export-web-contracts.py) reads code/models only; it never
+starts the application, loads installed policy or accesses an archive. Its
+schema IR is committed at `web/src/wire/contracts.json`; the exporter also writes
+its sibling `unicode-data.json`. The TypeScript generator produces
+`web/src/wire/generated.ts`. Check mode is the default and writes nothing.
+
+After deliberately changing an authoritative DTO or an audited semantic rule,
+regenerate explicitly, review both diffs and run the independent wire tests:
+
+```bash
+uv run --locked --extra server --extra mcp python scripts/export-web-contracts.py --write
+pnpm --dir web run generate:wire
+uv run --locked --extra server --extra mcp python scripts/export-web-contracts.py --check
+pnpm --dir web run check:wire
+pnpm --dir web run test:unit
+pnpm --dir web run test:component
+```
+
+Unknown schema constructs, validators and serializers refuse export. Reviewing a
+new semantic hook includes its TypeScript implementation and independent negative
+fixtures; updating a hash alone is insufficient. Outputs require serialized
+fields rather than fill Python defaults. Inputs preserve omission versus null.
+Array bounds are checked against authoritative tuple fields, and numeric bounds
+remain decimal strings until checked. The runtime reconstructs typed values from
+unknown input and checks named semantic/cross-response rules. It never asserts
+that arbitrary JSON is a domain payload.
+
+Native JSON reviver source context is a browser prerequisite. Exact raw integer
+tokens are checked before Number conversion; unsupported source context, duplicate
+decoded keys, malformed UTF-8, lone surrogates, excessive work or unsafe integers
+produce a classified protocol failure. The [API reference](api.md#browser-wire-boundary)
+lists the independent browser byte/work ceilings. Do not add a rounded-number or
+unchecked JSON.parse fallback to support an older engine.
+
+Path collision rules use the pinned Python Unicode 16 authority, even when an
+engine carries a newer Unicode release. The [pure table exporter](../src/hfcache/wire_unicode.py)
+and browser NFC/full-casefold implementation retain the archive's exact rules.
+Python printability uses pinned exclusion ranges too, so newer engine assignments
+cannot broaden compatibility-only request validation.
+Official Unicode normalization and full/common casefold vectors are preserved
+byte-for-byte in compressed fixtures under `tests/fixtures/unicode16/`, with
+source URLs, hashes and licensing. Their tests run offline. The generated JSON
+artifacts keep their canonical exporter format rather than Prettier formatting;
+source checking and regeneration drift still apply. Updating Python's Unicode
+version requires explicit table/semantic/license review and conformance tests.
+
+The [real API read fixture](../scripts/check-web-read-fixture.py) compiles a
+test-only entry importing the actual React component/client, starts the real
+application on an owned loopback socket and runs sandboxed Chromium. It uses only
+generated private credentials and synthetic local state. Version, capabilities,
+status and genuine failed inspection/API-problem responses cross the real service
+boundary. A labelled post-service corruption fault checks unknown-schema handling;
+that negative fault does not replace the real-route positives. The fixture
+retains unique logs, source/artifact identities and browser reports under
+`.scratch/`; it observes exact browser/API shutdown. A caller-supplied workspace
+must be a new owned descendant of `.scratch/`. Missing prerequisites or uncertain
+drain fail. No dependencies download during validation.
+
+The required web gate runs Python export drift before backend validation, checks
+TypeScript generation after frozen install and runs the real read fixture after
+the preliminary built-shell smoke. This fixture uses temporary test routing
+before normal authenticated static serving. It establishes the wire/presentation
+boundary only; it does not replace same-Caddy/TLS, Basic or installed native/
+rootless acceptance. The [troubleshooting guide](web-ui/troubleshooting.md)
+explains the visible read states.
 
 ## Offline tests
 

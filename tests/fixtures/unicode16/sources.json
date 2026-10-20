@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "bytes": 2798671,
+      "path": "tests/fixtures/unicode16/NormalizationTest.txt.gz",
+      "sha256": "d811971453e7075e1ad56fb1b301eece5aa80757b81f6156e74a1bfb3ae5ceb1",
+      "source": "https://www.unicode.org/Public/16.0.0/ucd/NormalizationTest.txt",
+      "stored_sha256": "1fc776ff3a16e983efbc7d4ad8e87c378b953d9fe9d2bc8c6329981bb560ada3"
+    },
+    {
+      "bytes": 86092,
+      "path": "tests/fixtures/unicode16/CaseFolding.txt.gz",
+      "sha256": "6f1f9c588eb4a5c718d9e8f93b782685e5c7fec872cf05e8e6878053599e09bb",
+      "source": "https://www.unicode.org/Public/16.0.0/ucd/CaseFolding.txt",
+      "stored_sha256": "e2ceaf0461b2a14b6e5be0558ec17fd9f225b63a372a665260b894237b7e917e"
+    },
+    {
+      "bytes": 1995,
+      "path": "web/dependencies/UNICODE-LICENSE.txt",
+      "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+      "source": "https://www.unicode.org/license.txt",
+      "stored_sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+    }
+  ],
+  "license": "Unicode-3.0",
+  "schema_version": 1,
+  "unicode_version": "16.0.0"
+}

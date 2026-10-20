@@ -1,5 +1,8 @@
 # hfcache web interface
 
+For read errors, see [troubleshooting](troubleshooting.md), including the
+difference between a failed domain read and unavailable or unsupported evidence.
+
 The standalone web interface is under development and is not yet available in a
 release. Continue using the [existing Cockpit interface](../cockpit-plugin/README.md)
 for installed systems. Creating these guides does not change an installed

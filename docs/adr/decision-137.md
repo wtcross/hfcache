@@ -4,6 +4,9 @@
 - Status: Accepted; source implementation and automated acceptance passed. Real disposable and installed acceptance remain separate.
 - Date: 2026-10-20.
 
+The replacement browser's generated wire boundary is refined by
+[decision 145](decision-145.md); existing Cockpit behavior remains supported.
+
 ## Context and decision
 
 Valid failed CLI Envelopes resolve as values. Several Cockpit cards still assume

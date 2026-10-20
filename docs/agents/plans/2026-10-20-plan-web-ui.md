@@ -140,3 +140,15 @@ Completion requires:
   real failure-retention and timeout proofs pass. No Caddy/API/installed feature
   acceptance is inferred; all 95 feature cases remain pending. Next is WEB-003's
   precise wire boundary. Scope, task order and production restrictions are unchanged.
+- 2026-10-20: [WEB-003](tasks/web-003-typed-wire-contracts.md) completes precise
+  source-audited route/mode contracts, reconstructing TypeScript decoders, bounded
+  pre-conversion numeric and pinned Unicode16 validation, explicit same-origin
+  transport and classified failure/no-replay behavior. Independent original-model
+  and malformed-wire corpora, component coverage and 14 actual React/API browser
+  checks pass in the complete strict gate, preserving backend/Cockpit/install
+  regressions. Decision145/INV021 and human references align. The permitted
+  temporary source fixture does not prove Caddy/Basic/installed or platform
+  behavior; all95 feature cases remain pending. Exact future config/card/host
+  DTOs enter the registry with their implementing endpoints, as recorded in the
+  task. Baseline prefix header/redirect defects discovered read-only are retained
+  for WEB-005, not silently redefined. Next is WEB-004; production limits hold.

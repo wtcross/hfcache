@@ -1,0 +1,131 @@
+[
+  {
+    "case_id": "read-version-null-identities",
+    "definition": "ClientRead",
+    "value": {
+      "schema_version": 1,
+      "request_id": "11111111111111111111111111111111",
+      "archive_id": null,
+      "config_fingerprint": null,
+      "envelope": {
+        "schema_version": 1,
+        "command": "version",
+        "run_id": "33333333333333333333333333333333",
+        "started_at": "2026-10-20T12:00:00.000001Z",
+        "completed_at": "2026-10-20T12:00:00.000002Z",
+        "outcome": "success",
+        "exit_code": 0,
+        "data": {
+          "application": "0.0-independent-fixture",
+          "python": "3.14-fixture",
+          "huggingface_hub": "0.0-fixture",
+          "transfer_backend": "http"
+        },
+        "warnings": [],
+        "errors": []
+      },
+      "next_cursor": null
+    }
+  },
+  {
+    "case_id": "reader-false-capabilities",
+    "definition": "Capabilities",
+    "value": {
+      "api_version": 1,
+      "credential_class": "rest-reader",
+      "capabilities": [
+        "read"
+      ],
+      "instance_id": "44444444444444444444444444444444",
+      "reads": true,
+      "operations": true,
+      "operation_history": true,
+      "mcp": false,
+      "maintenance_enabled": false,
+      "max_page_size": 1000
+    }
+  },
+  {
+    "case_id": "catalog-zero-counts",
+    "definition": "CatalogSearchPayload",
+    "value": {
+      "schema_version": 1,
+      "catalog_identity": "5555555555555555555555555555555555555555555555555555555555555555",
+      "coverage": {
+        "repositories": 0,
+        "tags_known": 0,
+        "tags_unknown": 0,
+        "publications": 0,
+        "usable": 0,
+        "partial": 0,
+        "unsupported": 0,
+        "failed": 0,
+        "missing": 0,
+        "technical_required": false,
+        "incomplete": false
+      },
+      "total_matches": 0,
+      "entries": []
+    }
+  },
+  {
+    "case_id": "configured-disabled-not-unmanaged",
+    "definition": "CatalogEntry",
+    "value": {
+      "repository_type": "model",
+      "repository_id": "independent/example",
+      "tags": [],
+      "tag_origin": "configured",
+      "tag_observed_at": null,
+      "curation_fingerprint": null,
+      "configured": true,
+      "enabled": false,
+      "archived": false,
+      "matching_variant_count": 0,
+      "representative_variant": null,
+      "dataset_formats": []
+    }
+  },
+  {
+    "case_id": "complete-zero-byte-variant",
+    "definition": "ModelVariant",
+    "value": {
+      "variant_id": "6666666666666666666666666666666666666666666666666666666666666666",
+      "format": "gguf",
+      "encoding": null,
+      "quantization": null,
+      "quantization_method": null,
+      "bits": null,
+      "group_size": null,
+      "role": "primary",
+      "members": [
+        {
+          "path": "model.gguf",
+          "size_bytes": 0
+        }
+      ],
+      "total_bytes": 0,
+      "completeness": "complete",
+      "evidence": "filename",
+      "source_paths": [
+        "model.gguf"
+      ],
+      "diagnostics": []
+    }
+  },
+  {
+    "case_id": "exact-publication-reference",
+    "definition": "Reference",
+    "value": {
+      "schema_version": 1,
+      "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+      "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+      "publication_generation": 1,
+      "repository_type": "model",
+      "repository_id": "organization/model-name",
+      "tree": "repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+      "manifest": "manifests/models/organization/model-name/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27.json",
+      "updated_at": "2026-10-20T12:00:00.000001Z"
+    }
+  }
+]

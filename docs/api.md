@@ -395,6 +395,52 @@ authentication and protocol failures exit 10; unavailable/uncertain observation
 exits 20. Exact terminal domain results retain their own exits. See the complete
 [CLI error taxonomy](cli.md#5-error-and-warning-taxonomy).
 
+### Browser wire boundary
+
+The browser contract registry selects precise payloads by HTTP method, route and
+request mode. It preserves the existing ReadResponse, capabilities, acceptance,
+operation and domain Envelope shapes. Identical command names do not imply
+identical data: repository inventory differs from revision inventory, and
+installed configuration validation differs from literal-candidate validation.
+Stored operation results are interpreted using their original receipt route and
+domain command. The private receipt store is not a public payload.
+
+Generated runtime decoders reconstruct validated values from unknown input.
+Serialized response fields must be present; browser decoding does not fill server
+defaults. Explicit null, false, zero and omission retain their separate meanings.
+Unsupported versions, forbidden fields, inconsistent identities or unaudited
+schema/semantic changes refuse. See [schema compatibility](schemas.md#11-validation-summary)
+and [contract development](development.md#generated-browser-contracts).
+
+A browser read distinguishes a validated success, failed domain Envelope, HTTP
+ApiProblem, protocol failure, transport failure and aborted observation. An HTTP
+200 failed Envelope retains its original command, identity, errors and exit
+classification. Validated partial failure data is informational; malformed or
+unavailable data never becomes an empty inventory, zero capacity or readiness.
+Unrecognized diagnostic codes remain text when their enclosing data validates;
+raw rejected bodies and exception text are withheld.
+
+The browser collects decoded response bytes under its own hard ceilings:
+16 MiB for ordinary responses, 64 MiB for artifact reads, JSON depth 32,
+1,000,000 value tokens and 100,000 aggregate object keys. These client ceilings
+are independent of server configuration. Duplicate decoded keys, invalid UTF-8,
+lone surrogates and unsupported numeric source context refuse. Integer tokens
+must have integer syntax and fit both their field bounds and JavaScript's safe
+integer range before conversion; an oversized count is unavailable rather than
+rounded. Timestamp microseconds and exact publication identity are preserved.
+Manifest path collisions use the pinned Python Unicode 16 NFC-then-full-casefold
+rule, including canonical-equivalent spellings and full case expansions. The
+browser does not substitute its engine's Unicode version or compatibility
+normalization. Manifest Unicode processing has a shared 8,000,000-step ceiling;
+exhaustion refuses the read rather than dropping files or collision checks.
+
+Named client methods construct only same-origin registered routes under the
+validated public prefix. Reads accept AbortSignal and bounded bodies. POST paths
+are separate, use the required request metadata and never retry automatically.
+Validated operation links cannot redirect to another origin, prefix or operation.
+Query identities contain authenticated authority, archive and exact publication
+scope; passwords and bearer values never belong in query keys or browser state.
+
 ## Reconnect after lost acknowledgement
 
 1. Retain the original key, route, configured authority and credential class.

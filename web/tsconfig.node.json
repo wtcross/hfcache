@@ -2,13 +2,16 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "lib": ["ES2023", "DOM"],
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": [
     "scripts/*.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "playwright.config.ts",
-    "test/browser/*.ts"
+    "test/browser/*.ts",
+    "test/*.unit.test.ts",
+    "test/read-api/*.ts",
+    "test/read-api/*.tsx"
   ]
 }

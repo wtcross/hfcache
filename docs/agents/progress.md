@@ -29,6 +29,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-003 Validate generated browser wire contracts (2026-10-20,
+  this commit — [task](plans/tasks/web-003-typed-wire-contracts.md)).
+  Pure original-model projections and audited IR select118 exact definitions,
+  42route/modes and17original operation-result rows without changing stable
+  server/CLI/MCP wires. Reconstruct unknown JSON with required fields, strict
+  semantics and raw numeric lexemes checked before conversion. Pinned Python16
+  normalization/full casefold/printability avoids browser Unicode17 differences;
+  all official19965NFC/1557fold vectors and1.1Mprintability points pass. Named
+  same-origin read/POST paths retain exact identities, classified failures,
+  partial evidence, original keys and no replay; backward receipt observations
+  refuse. Original271positive/2000Python-rejected cases and independent literals/
+  adversaries verify the boundary. Temporary built React crosses actual API on
+  both prefixes; genuine domain/503/401 and labelled schema fault display safely.
+  Required `scripts/check.sh --require-web --require-cockpit` exits0:5452Python,
+  52opt-in deselected in706.13s; three locked installs;572unit/110mountedFirefox;
+  2718webunit/2744combined, coverage95.85line/92.94branch/93.93function;2shell and
+  14realAPIChromium tests, zero requiredskip/retry. Exact owned sixPIDs/listeners/
+  pools drain;79source hashes unchanged. Gate SHA`0beabaea...`, collection
+  `f0e2e73e...`; task records complete source/artifact/report hashes and failures.
+  ADR145/INV021 and ADR137/143 amendments, API/schema/development/scripts and
+  human troubleshooting/navigation align;197human/21helpers pass. Relevant
+  invariant/ADR/FW review complete, no runtime dependency or durable format
+  change. Baseline Unicode-ack/double-leading MCP-prefix defects are recorded for
+  WEB005, with no server change here. All95feature cases remain pending; no
+  Caddy/Basic/installed/native/rootless/NAS/production or retirement claim.
+  Selector advances WEB004, handoff33 preserves original state/unknown guests.
+
 - [x] WEB-002 Add strict React workspace and required gates (2026-10-20,
   this commit — [task](plans/tasks/web-002-strict-frontend-and-gates.md)).
   React/Vite strict TypeScript shell provides four accessible disconnected
@@ -2972,6 +2999,18 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     files/stores/handles, five earlier guests and unknown attempts; no cleanup,
     replay, deployment or remote publication follows this source commit.
 
+    **WEB-003 amendment (2026-10-20):** precise generated wire/client boundaries
+    and the required temporary actual API/React fixture pass the full strict
+    source gate. Every owned final browser/API process and listener drains;
+    failures and original evidence remain. This establishes no Basic/shared-Caddy/
+    installed native/rootless/NAS acceptance, and all95feature cases remain
+    pending. Current next task is WEB-004. Its read-only prerequisite survey pins
+    an available three-engine image but has downloaded no layers or touched any
+    engine/guest/trust store. Known existing prefix header/redirect issues must
+    be reconciled in WEB-005. Production0.2.2, original candidates/backups/locks/
+    stores/handles/credentials/guards and all five unrelated guests are unchanged.
+    No deployment, cleanup, replay, remote publication or plugin uninstall follows.
+
 ## Operator decisions needed
 
 1. **Which repositories the archive is ultimately for** (raised 2026-07-24, during
@@ -5803,6 +5842,21 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      pass before source/package removal. Preserve generic helpers, LGPL notices,
      safety tests and history. Production plugin uninstall/rollout remains a
      separate authorization; no existing source/package has been retired.
+
+145. **Derive precise browser contracts and preserve numeric source before decoding**
+     (2026-10-20, WEB-003). [Decision 145](../adr/decision-145.md) selects pure
+     route/mode projections, audited schema IR and reconstructing TypeScript
+     decoders without changing stable REST/CLI/MCP wires. Unknown schema features
+     and unaudited hooks fail generation. Native reviver source context, bounded
+     duplicate-key/Unicode scanning and pre-conversion BigInt checks avoid rounded
+     integer evidence without a runtime parser dependency. Explicit same-origin
+     read/mutation paths preserve classified domain failure and original handles;
+     unsafe or unavailable data never becomes readiness. The temporary real-API
+     React fixture is required source evidence, separate from future Caddy/Basic/
+     installed acceptance. Source implementation and the complete strict gate now
+     pass; exact Unicode16 tables, original-authority differential corpora and
+     real HTTP/React fixtures supplement generation. No new runtime dependency,
+     server wire or durable-format change follows from this browser boundary.
 
 ## Documentation and script alignment
 

@@ -5,5 +5,7 @@ coverage
 .cache
 .artifacts
 dependencies/licenses.json
+src/wire/contracts.json
+src/wire/unicode-data.json
 dependencies/THIRD_PARTY_NOTICES.txt
 test/strict-fixtures

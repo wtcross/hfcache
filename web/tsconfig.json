@@ -4,6 +4,7 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -19,5 +20,5 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "test/*.ts", "test/*.tsx"]
+  "include": ["src", "test/*.component.test.tsx", "test/setup.ts"]
 }

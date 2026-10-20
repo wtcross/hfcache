@@ -1186,6 +1186,20 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   Unproved rootless schedule/observer bindings deny; supported native positive
   behavior requires real isolated proof. Helper/API source and conformance tests
   remain pending.
+- **`INV-021` — Browser domain evidence is precisely decoded before use.**
+  Mechanically derive route/mode payload types and reconstructing decoders from
+  audited Python authorities. Require serialized fields, reject unknown versions
+  and forbidden keys, preserve omitted/null/false/zero distinctions and fail
+  generation on unsupported schema or unaudited semantic changes. Bound UTF-8,
+  nesting and work; reject duplicate decoded keys and invalid Unicode. Validate
+  original numeric source and safe integer bounds before conversion or display.
+  Domain failure, validated partial evidence, API problem, malformed protocol,
+  transport failure and unavailable observation remain distinct; none creates
+  fabricated empty/healthy data or action readiness. Named same-origin requests
+  retain configured prefixes, validated links, auth/archive/publication scope and
+  original operation identity. No redirects or automatic mutation retries.
+  [Decision 145](adr/decision-145.md) defines this independent browser boundary;
+  it changes no server wire format, archive authority or CLI/MCP authentication.
 
 Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-and-current-availability),
 [API](api.md#web-ui-and-administration-design),
