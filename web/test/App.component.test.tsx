@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { App } from "../src/App";
 import { mountApplication } from "../src/mount";
+import { inertUiDocument, uiBootstrapFixture } from "./ui-fixtures";
 
 test("unconnected Library reports unavailable facts without fictional measurements or API requests", () => {
     const fetch = vi.spyOn(globalThis, "fetch");
@@ -78,18 +79,17 @@ test("mobile navigation is explicitly labelled and closes on navigation or histo
 });
 
 test("the mount boundary validates deployment metadata and supports owned cleanup", async () => {
-    expect(() => mountApplication(document)).toThrow("container");
+    const bootstrap = uiBootstrapFixture();
+    expect(() => mountApplication(document, bootstrap)).toThrow("container");
     const container = document.createElement("div");
     container.id = "root";
     document.body.append(container);
-    expect(() => mountApplication(document)).toThrow("deployment base");
-    const meta = document.createElement("meta");
-    meta.name = "hfcache-ui-base";
-    meta.content = "/ui/";
-    document.head.append(meta);
+    expect(() => mountApplication(document, bootstrap)).toThrow();
+    container.remove();
+    inertUiDocument(document);
     let unmount = () => {};
     act(() => {
-        unmount = mountApplication(document);
+        unmount = mountApplication(document, bootstrap);
     });
     await waitFor(() => {
         expect(
@@ -97,5 +97,5 @@ test("the mount boundary validates deployment metadata and supports owned cleanu
         ).toBeInTheDocument();
     });
     act(unmount);
-    expect(container).toBeEmptyDOMElement();
+    expect(document.getElementById("root")).toBeEmptyDOMElement();
 });

@@ -52,6 +52,7 @@ from hfcache.http_transport import create_http_client
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, parse_run_id
 from hfcache.redaction import redact_text
 from hfcache.taxonomy import classify
+from hfcache.url_paths import uri_path
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -505,7 +506,7 @@ class ApiClient:
             or accepted.links.status != expected
             or accepted.links.result != expected + "/result"
             or accepted.links.events != expected + "/events"
-            or headers.get_list("location") != [expected]
+            or headers.get_list("location") != [uri_path(expected)]
         ):
             raise UncertainSubmission(retained, path)
         try:

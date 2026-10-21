@@ -456,6 +456,21 @@ fingerprint/domain-result identity. Unavailable/unsafe status preserves active
 evidence and disables execution across restarts; it cannot erase the barrier by
 marking an unreachable worker interrupted. Reader metadata remains available.
 
+Socket-file ownership and the listener's kernel peer UID are separate checks.
+With native system-manager activation, the node belongs to the configured
+service account, while `SO_PEERCRED` identifies the root manager that created
+the listener. Configure `verification.expected_peer_uid = 0` and set
+`verification.expected_socket_owner_uid` to that installation's measured service
+UID. Accepting inherited FD3 does not change the creator's credentials or make
+the manager the actual worker. The worker still validates its own socket
+ownership and the connecting API's identity. Omission of the owner setting
+preserves the previous rule: owner equals the resolved expected peer UID;
+omitting both settings uses the API's effective UID. Rootless worker-created
+listeners retain their existing equal owner/peer identity. Both checks remain
+mandatory, with no alternate UID or listener fallback. See
+[decision 148](adr/decision-148.md) and
+[private client settings](server.md#private-verifier-client-settings).
+
 These process/protocol checks do not enforce OS egress restrictions or identify
 arbitrary unknown secrets. scheduled observation packages socket activation, service identities,
 credential-source masking and `IPAddressDeny=any`; actual cgroup/credential/
@@ -844,6 +859,12 @@ and proven local via bounded fixed /proc/self/mountinfo before parent traversal
 or bind. Unknown/network mounts refuse without realpath or NAS stat; a bad
 startup socket path cannot authorize archive/NAS filesystem access.
 
+[Decision 148](adr/decision-148.md) separates the native client's expected
+filesystem owner from its expected kernel peer. It changes neither native
+listener creation nor rootless listener ownership, permissions or confinement.
+An owner/peer mismatch refuses the original connection; it never authorizes
+chown, a replacement acceptor or an in-process verifier.
+
 Only worker private-directory access becomes writable; API mounts it read-only.
 Network=none, native AF_UNIX-only seccomp, no secrets/source-store masks, read-only
 root, empty caps, NNP, UID/cgroup limits and the shared archive lock remain.
@@ -975,11 +996,13 @@ authority and does not recognize unknown arbitrary secrets.
 
 ## Browser administration design
 
-This is the accepted replacement UI serving/administration security design;
-those controls are not yet implemented or established by tests. The optional
-Basic authentication boundary is implemented separately above, preserving bearer
-REST, separate read-only MCP, Cockpit confinement and recorded deployment limits. Do not
-enable future UI/helper settings based on this design alone. See decisions
+Optional Basic authentication and bounded authenticated application assets are
+implemented in unreleased source under the boundaries below. Actual installed
+conformance remains separately required; source availability does not enable a
+running release. Host/configuration and card controls retain their separate
+implementation/acceptance requirements. Preserve bearer REST, separate read-only
+MCP, Cockpit confinement and recorded deployment limits. Do not enable unsupported
+settings or host effects based on design or a Basic grant alone. See decisions
 [140](adr/decision-140.md), [141](adr/decision-141.md),
 [142](adr/decision-142.md), [143](adr/decision-143.md),
 [UI status](web-ui/README.md) and [server bounds](server.md#web-ui-design-and-current-availability).
@@ -991,6 +1014,25 @@ endpoint, second frontend listener, global edge Basic requirement or hidden bear
 translation. Caddy receives no management hash, archive mount or privileged helper.
 Configured paths/prefixes and actual transport establish authority; forwarded
 headers, browser storage and request-selected URLs do not.
+
+[Decision147](adr/decision-147.md) makes all enabled UI resources Basic-only and
+fixes protected capture before operation admission: no-follow descriptor/linked
+identity, protected ancestors, bounded rich mount aliases without archive I/O,
+strict canonical indexed members and actual installed version/wire identity.
+The service serves immutable captured bytes with a separate finite send budget;
+it never reopens a checked path for a request. Unknown/network asset filesystems,
+unindexed members, unsupported MIME, symlinks and special files refuse startup.
+The sole text/plain exception is the fixed notices file, never arbitrary text or
+payload serving. Every partial-startup/shutdown path closes exact owned resources.
+
+Strict bootstrap exposes configured archive identity without claiming a sentinel,
+health or permission probe. Inert DOM and real bootstrap/compiled-source equality
+plus platform cryptographic checks precede trusted browser state. Entry/module
+failure retains script-free recovery; release changes require explicit reload
+and retain drafts/original handles. No handcrafted browser hash implementation,
+synthetic successful bootstrap, external asset or credential-storage fallback is
+introduced. All UI HEAD/error responses are bodyless; cache permissions are
+selected only from authenticated validated resources, never reflected headers.
 
 The independent Basic provider verifies one protected Argon2id record under
 finite header/credential/concurrency/failure budgets before domain work. It

@@ -201,8 +201,21 @@ def check_peer(connection: socket.socket, expected_uid: int) -> None:
         raise unavailable()
 
 
-def connect_private(path: Path, *, expected_uid: int, timeout_seconds: float) -> socket.socket:
+def connect_private(
+    path: Path,
+    *,
+    expected_uid: int,
+    timeout_seconds: float,
+    expected_socket_owner_uid: int | None = None,
+) -> socket.socket:
     """Connect through a pinned protected parent, then prove the kernel peer."""
+    if expected_socket_owner_uid is not None and (
+        type(expected_socket_owner_uid) is not int or expected_socket_owner_uid < 0
+    ):
+        raise unavailable()
+    # Decision148: an inherited listener's kernel creator and file owner differ.
+    # Omission retains the original equal-owner/peer rule for direct callers too.
+    owner_uid = expected_uid if expected_socket_owner_uid is None else expected_socket_owner_uid
     parent = -1
     connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     try:
@@ -213,7 +226,7 @@ def connect_private(path: Path, *, expected_uid: int, timeout_seconds: float) ->
             directory.st_uid not in {0, os.geteuid()}
             or stat.S_IMODE(directory.st_mode) & 0o022
             or not stat.S_ISSOCK(info.st_mode)
-            or info.st_uid != expected_uid
+            or info.st_uid != owner_uid
             or stat.S_IMODE(info.st_mode) not in {0o600, 0o660}
         ):
             raise unavailable()
@@ -253,6 +266,7 @@ class VerificationClient:
         path: Path,
         *,
         expected_uid: int | None = None,
+        expected_socket_owner_uid: int | None = None,
         timeout_seconds: float = 5.0,
         poll_seconds: float = 0.2,
         max_frame_bytes: int = MAX_FRAME_BYTES,
@@ -267,10 +281,17 @@ class VerificationClient:
             or not 0 < poll_seconds <= _MAX_TIMEOUT
             or not _MIN_FRAME_LIMIT <= max_frame_bytes <= MAX_FRAME_BYTES
             or (expected_uid is not None and (type(expected_uid) is not int or expected_uid < 0))
+            or (
+                expected_socket_owner_uid is not None
+                and (type(expected_socket_owner_uid) is not int or expected_socket_owner_uid < 0)
+            )
         ):
             raise unavailable()
         self.path = path
         self.expected_uid = os.geteuid() if expected_uid is None else expected_uid
+        self.expected_socket_owner_uid = (
+            self.expected_uid if expected_socket_owner_uid is None else expected_socket_owner_uid
+        )
         self.timeout_seconds, self.poll_seconds = timeout_seconds, poll_seconds
         self.max_frame_bytes = max_frame_bytes
         self.progress = progress
@@ -279,7 +300,10 @@ class VerificationClient:
     def exchange(self, request: WorkerRequest) -> WorkerReply:
         try:
             with connect_private(
-                self.path, expected_uid=self.expected_uid, timeout_seconds=self.timeout_seconds
+                self.path,
+                expected_uid=self.expected_uid,
+                expected_socket_owner_uid=self.expected_socket_owner_uid,
+                timeout_seconds=self.timeout_seconds,
             ) as connection:
                 send_frame(connection, request, self.max_frame_bytes)
                 reply = WorkerReply.model_validate(receive_frame(connection, self.max_frame_bytes))

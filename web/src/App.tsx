@@ -10,8 +10,25 @@ import {
     workspacePath,
 } from "./navigation";
 import type { Workspace } from "./navigation";
+import type { UiAdminPermission, UiBootstrap } from "./wire/generated";
 
-function WorkspaceContent({ workspace }: { workspace: Workspace }) {
+const permissionLabels: Readonly<
+    Record<UiAdminPermission["capability"], string>
+> = {
+    "config-read": "View configuration",
+    "config-write": "Edit configuration",
+    "host-read": "View host status",
+    "observer-stop": "Stop observation",
+    "schedule-write": "Change schedules",
+};
+
+function WorkspaceContent({
+    workspace,
+    authenticated,
+}: {
+    workspace: Workspace;
+    authenticated: boolean;
+}) {
     switch (workspace) {
         case "library":
             return (
@@ -21,7 +38,11 @@ function WorkspaceContent({ workspace }: { workspace: Workspace }) {
                             <span className="empty-mark" aria-hidden="true">
                                 ▦
                             </span>
-                            <h3>Connect an archive to explore your library</h3>
+                            <h3>
+                                {authenticated
+                                    ? "Library data has not been loaded"
+                                    : "Connect an archive to explore your library"}
+                            </h3>
                             <p>
                                 Published models and datasets will appear here
                                 with their exact revision and publication
@@ -78,7 +99,7 @@ function WorkspaceContent({ workspace }: { workspace: Workspace }) {
                         <p>
                             Verification, retention and recovery use guarded
                             server workflows. No maintenance action is available
-                            in this preview.
+                            yet.
                         </p>
                     </div>
                 </Panel>
@@ -93,8 +114,8 @@ function WorkspaceContent({ workspace }: { workspace: Workspace }) {
                         <h3>Deployment authority has not been observed</h3>
                         <p>
                             Configuration changes require exact installed
-                            content and protected host permission. This preview
-                            has no authentication or host connection.
+                            content and protected host permission. Host controls
+                            are not available in this interface yet.
                         </p>
                     </div>
                 </Panel>
@@ -102,12 +123,24 @@ function WorkspaceContent({ workspace }: { workspace: Workspace }) {
     }
 }
 
-export function App({ basePath }: { basePath: string }) {
+export function App({
+    basePath,
+    bootstrap,
+    onCheckRelease,
+}: {
+    basePath: string;
+    bootstrap?: UiBootstrap;
+    onCheckRelease?: () => Promise<boolean>;
+}) {
     const base = validateBasePath(basePath);
     const [pathname, setPathname] = useState(window.location.pathname);
     const [navigationOpen, setNavigationOpen] = useState(false);
     const main = useRef<HTMLElement>(null);
     const initial = useRef(true);
+    const [updateRequired, setUpdateRequired] = useState(false);
+    const [versionCheck, setVersionCheck] = useState<
+        "idle" | "checking" | "unavailable"
+    >("idle");
     const route = resolveRoute(pathname, base);
     const workspace = route.kind === "workspace" ? route.workspace : null;
     const title =
@@ -121,6 +154,16 @@ export function App({ basePath }: { basePath: string }) {
         window.addEventListener("popstate", observeLocation);
         return () => {
             window.removeEventListener("popstate", observeLocation);
+        };
+    }, []);
+    useEffect(() => {
+        const refuseChunk = (event: Event) => {
+            event.preventDefault();
+            setUpdateRequired(true);
+        };
+        window.addEventListener("vite:preloadError", refuseChunk);
+        return () => {
+            window.removeEventListener("vite:preloadError", refuseChunk);
         };
     }, []);
 
@@ -137,6 +180,16 @@ export function App({ basePath }: { basePath: string }) {
         window.history.pushState(null, "", path);
         setPathname(path);
         setNavigationOpen(false);
+    }
+    async function checkInterfaceVersion(): Promise<void> {
+        if (onCheckRelease === undefined) return;
+        setVersionCheck("checking");
+        try {
+            if (await onCheckRelease()) setUpdateRequired(true);
+            setVersionCheck("idle");
+        } catch {
+            setVersionCheck("unavailable");
+        }
     }
 
     return (
@@ -156,8 +209,15 @@ export function App({ basePath }: { basePath: string }) {
                         ▤
                     </span>
                     <div>
-                        <strong>Archive not connected</strong>
-                        <span>Awaiting trusted archive identity</span>
+                        <strong>
+                            {bootstrap === undefined
+                                ? "Archive not connected"
+                                : "Configured archive"}
+                        </strong>
+                        <span>
+                            {bootstrap?.configured_archive_id ??
+                                "Awaiting trusted archive identity"}
+                        </span>
                     </div>
                 </div>
                 <p className="nav-label">Workspace</p>
@@ -193,10 +253,15 @@ export function App({ basePath }: { basePath: string }) {
             </aside>
             <div className="main-column">
                 <div className="preview-banner">
-                    <strong>Development preview</strong>
+                    <strong>
+                        {bootstrap === undefined
+                            ? "Development preview"
+                            : "Administrator session"}
+                    </strong>
                     <span>
-                        Archive data and authenticated actions are not
-                        connected.
+                        {bootstrap === undefined
+                            ? "Archive data and authenticated actions are not connected."
+                            : `Signed in as ${bootstrap.user.display_name}. Archive health has not been loaded.`}
                     </span>
                 </div>
                 <header className="topbar">
@@ -220,10 +285,33 @@ export function App({ basePath }: { basePath: string }) {
                     </div>
                     <span className="connection-state">
                         <span aria-hidden="true" />
-                        Not connected
+                        {bootstrap === undefined
+                            ? "Not connected"
+                            : "Authenticated"}
                     </span>
                 </header>
                 <main id="main-content" ref={main} tabIndex={-1}>
+                    {bootstrap !== undefined &&
+                        onCheckRelease !== undefined && (
+                            <div>
+                                <button
+                                    type="button"
+                                    disabled={versionCheck === "checking"}
+                                    onClick={() => {
+                                        void checkInterfaceVersion();
+                                    }}
+                                >
+                                    Check interface version
+                                </button>
+                                {versionCheck === "unavailable" && (
+                                    <p role="status">
+                                        The interface version could not be
+                                        checked. Existing operation handles are
+                                        preserved.
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     <div className="page-heading">
                         <span className="eyebrow">Your archive workspace</span>
                         <h1>{title}</h1>
@@ -234,10 +322,63 @@ export function App({ basePath }: { basePath: string }) {
                         </p>
                     </div>
                     <Notice>
-                        <strong>Archive information is unavailable.</strong>{" "}
-                        This source preview makes no API requests and submits no
-                        operations.
+                        <strong>
+                            {bootstrap === undefined
+                                ? "Archive information is unavailable."
+                                : "Configured identity loaded."}
+                        </strong>{" "}
+                        {bootstrap === undefined
+                            ? "This source preview makes no API requests and submits no operations."
+                            : "Archive health and repository data have not been requested. No operation has been submitted."}
                     </Notice>
+                    {updateRequired && (
+                        <Notice>
+                            <strong>Interface update required.</strong> Reload
+                            when ready. Original operation handles and unsaved
+                            work must be preserved.
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    window.location.reload();
+                                }}
+                            >
+                                Reload interface
+                            </button>
+                        </Notice>
+                    )}
+                    {workspace === "administration" &&
+                        bootstrap !== undefined && (
+                            <Panel title="Administrator permissions">
+                                <ul>
+                                    {bootstrap.user.admin_permissions.map(
+                                        (permission) => (
+                                            <li key={permission.capability}>
+                                                <button
+                                                    type="button"
+                                                    disabled={
+                                                        !permission.effective
+                                                    }
+                                                >
+                                                    {
+                                                        permissionLabels[
+                                                            permission
+                                                                .capability
+                                                        ]
+                                                    }
+                                                </button>{" "}
+                                                {permission.reason ===
+                                                "feature_unavailable"
+                                                    ? "This feature is not available in this deployment."
+                                                    : permission.reason ===
+                                                        "not_granted"
+                                                      ? "Permission is not granted."
+                                                      : "Available."}
+                                            </li>
+                                        ),
+                                    )}
+                                </ul>
+                            </Panel>
+                        )}
                     {workspace === null ? (
                         <Panel title="Choose a workspace">
                             <p>
@@ -254,12 +395,15 @@ export function App({ basePath }: { basePath: string }) {
                             </a>
                         </Panel>
                     ) : (
-                        <WorkspaceContent workspace={workspace} />
+                        <WorkspaceContent
+                            workspace={workspace}
+                            authenticated={bootstrap !== undefined}
+                        />
                     )}
                     <footer className="page-footer">
                         Published content remains separate from management
-                        actions. No repository facts are inferred from an
-                        unconnected view.
+                        actions. Repository information is shown only after it
+                        is loaded and validated.
                     </footer>
                 </main>
             </div>

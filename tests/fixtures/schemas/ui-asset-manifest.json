@@ -1,0 +1,56 @@
+{
+  "build": {
+    "application_version": "0.2.2",
+    "licenses_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "notices_sha256": "e921aec2bc0e928199d9589a9d3d8c1b841304ffa67cba17fafd7cd4c7a16ab6",
+    "pnpm_lock_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "rest_api_schema_version": 1,
+    "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_dirty": true,
+    "source_snapshot_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "toolchain": {
+      "node": "24.18.1",
+      "pnpm": "11.18.0",
+      "typescript": "6.0.3",
+      "vite": "8.3.4"
+    },
+    "toolchain_sha256": "3e32946e5658f85022f956da102a251778d6c5e942d05ba98bedbea5de8b3f45",
+    "ui_contract_version": 1,
+    "wire_source_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "entrypoint": "index.html",
+  "kind": "hfcache_web_assets",
+  "members": [
+    {
+      "bytes": 30,
+      "mime": "text/plain",
+      "path": "THIRD_PARTY_NOTICES.txt",
+      "sha256": "e921aec2bc0e928199d9589a9d3d8c1b841304ffa67cba17fafd7cd4c7a16ab6"
+    },
+    {
+      "bytes": 11,
+      "mime": "text/javascript",
+      "path": "assets/app-12345678.js",
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "bytes": 591,
+      "mime": "text/html",
+      "path": "index.html",
+      "sha256": "290c1854a37f24737f822899878c4d7e5d21dd15679e937568a91c61555f49c7"
+    },
+    {
+      "bytes": 3,
+      "mime": "application/json",
+      "path": "licenses.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    }
+  ],
+  "meta_identity": {
+    "asset_fingerprint": "__HFCACHE_UI_FINGERPRINT_V1__",
+    "bootstrap_path": "__HFCACHE_UI_BOOTSTRAP_V1__",
+    "ui_base": "__HFCACHE_UI_BASE_V1__",
+    "ui_contract": "__HFCACHE_UI_CONTRACT_V1__"
+  },
+  "schema_version": 1
+}

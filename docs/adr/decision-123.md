@@ -1,6 +1,7 @@
 # Keep public prefixes separate from native Unix REST paths
 
 - Decision identity: 123.
+- Asset/bootstrap refinement: [decision147](decision-147.md).
 
 - MCP transport amendment: [decision 124](decision-124.md).
 - Status: Amended; current scope includes the amendments referenced below.
@@ -57,3 +58,7 @@ Recorded installed scope and remaining acceptance are described in
 
 [Decision 140](decision-140.md) amends this record for the accepted
 replacement design. Accepted UI prefix design extends future recognized paths without trusting forwarded headers or weakening corroborated native Unix exceptions; current REST/MCP behavior remains implemented authority.
+
+## Authenticated asset and bootstrap amendment (2026-10-20)
+
+[Decision147](decision-147.md) amends this record. This refinement extends the single trusted projection to /ui while preserving the corroborated native Unix exception. It explicitly rejects a configured leading double slash and URI-encodes Location using UTF-8 while retaining raw JSON operation links and original handles. Ordinary supported ASCII/native CLI behavior is byte-identical; new UI origin/prefix byte limits apply only when UI is enabled.

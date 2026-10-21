@@ -437,6 +437,20 @@ def build_contracts() -> dict[str, Any]:
     }
 
 
+def installed_source_digest() -> str:
+    """Compute the installed Python authority identity without frontend files.
+
+    Enabled UI startup calls this once. Full source/semantic auditing is retained;
+    neither the configured manifest nor a generated digest constant is trusted.
+    Optional transport applications and archive policy are never initialized.
+    """
+    digest = build_contracts()["source_digest"]
+    if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        message = "Invalid installed wire authority digest"
+        raise ValueError(message)
+    return digest
+
+
 def _audit_sources(exporter: Exporter) -> None:
     from importlib.util import find_spec  # noqa: PLC0415 - does not initialize application modules
 
@@ -461,6 +475,14 @@ def _audit_sources(exporter: Exporter) -> None:
         "catalog.response": ("hfcache.client_catalog", "hfcache.catalog_query_models"),
         "catalog.facet": ("hfcache.client_catalog", "hfcache.catalog_query_models"),
         "catalog.publication": ("hfcache.client", "hfcache.catalog_query_models"),
+        "ui.bootstrap": (
+            "hfcache.ui_models",
+            "hfcache.api.ui_serving",
+            "hfcache.url_paths",
+            "hfcache.server_config",
+            "hfcache.api.auth",
+        ),
+        "ui.html": ("hfcache.api.ui_assets", "hfcache.ui_models"),
     }
     for identifier, names in contexts.items():
         digest = hashlib.sha256(

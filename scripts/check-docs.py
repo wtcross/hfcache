@@ -65,6 +65,7 @@ HELP_MODES = {
     "check-installations.py": "python",
     "check-web-read-fixture.py": "python",
     "check-web-auth-fixture.py": "python",
+    "check-web-functional.py": "python",
     "check.sh": "bash",
     "consumer-serve-hfcache-model.sh": "bash",
     "container-service.py": "python",

@@ -145,6 +145,7 @@ See [response budgets](api.md#pagination-and-budgets).
 | --- | --- | --- |
 | `unix_socket` | `/run/hfcache/verification.sock` | Absolute normalized protected Unix-socket path |
 | `expected_peer_uid` | omitted | Nonnegative integer when set; omission uses the API process's effective UID |
+| `expected_socket_owner_uid` | omitted | Nonnegative integer when set; omission uses the resolved expected peer UID |
 | `timeout_seconds` | `5.0` | Finite number, greater than 0 and at most 60; each bounded control exchange |
 | `poll_seconds` | `0.2` | Finite number, greater than 0 and at most 60; exact operation observation interval |
 | `max_frame_bytes` | `16777216` | Integer `1024`–`16777216` |
@@ -154,6 +155,17 @@ values or worker-launch permissions. Omit `expected_peer_uid` to use the service
 UID; TOML has no null literal. The worker's separate store uses fixed default
 `OperationLimits`, independently of API receipt-limit overrides.
 Its state directory must be provisioned separately, never nested with API state.
+
+Socket ownership and kernel peer credentials are independently checked. For
+native system-manager activation, retain the original service-owned socket and
+configure `expected_peer_uid = 0` plus `expected_socket_owner_uid` equal to the
+actual service account's numeric UID. The root manager created the listener;
+its kernel credential is not the accepting worker's UID. Rootless worker-created
+listeners retain their existing equal owner/peer UID and can omit the new owner
+setting. Omission preserves the previous ownership rule for every configuration.
+Neither setting changes worker ownership validation, inode/mode/parent checks,
+API-client authentication, activation mode or execution permissions. See
+[decision 148](adr/decision-148.md).
 
 ### Archive-policy reload
 
@@ -337,7 +349,8 @@ actual HTTPS or configured `proxy_tls`, trusted actual peer and exactly one
 `X-Forwarded-Proto:https`. A caller header cannot assert TLS or Unix locality.
 Real native browser challenges/TLS and installed profile delivery require their
 own acceptance; source tests do not enable or deploy any service. Authenticated
-SPA/static serving remains a separate unimplemented boundary below.
+SPA/static serving is separately enabled and governed by the immutable asset
+boundary below.
 
 ## Metadata lifespan and request boundary
 
@@ -628,6 +641,20 @@ not descriptor order; IPv6 listeners must be IPv6-only. An optional
 malformed activation never falls back to fresh binding. No initialization or Hub
 request occurs on startup.
 
+For an owned foreground Unix socket, default SIGTERM on the main thread of a
+non-PID1 process is deferred through the complete listener cleanup scope. This
+scope arms only after exact socket device/inode and mode bookkeeping. Uvicorn
+still performs its normal graceful shutdown; when it restores and replays the
+signal, a private unwind keeps the original socket close, exact-inode unlink and
+pinned-parent close ahead of restoring the original handler and delivering the
+original SIGTERM. Further TERM during this cleanup does not interrupt it. The
+process retains signal termination rather than reporting success or a startup
+error. Custom/ignored handlers, non-main threads, PID1, TCP-only listeners and
+manager-owned activation keep their existing behavior. Pre-existing or replaced
+nodes remain untouched. This is no cleanup guarantee for SIGKILL or other forced
+process death; an unexplained remaining node still refuses a later startup.
+[Decision 149](adr/decision-149.md) records this narrow ownership rule.
+
 Raw Uvicorn access/error logging and ASGI tracing are disabled;
 `proxy_headers=False` prevents implicit forwarded-header trust. TLS setup never
 accepts plaintext first. `shutdown_timeout_seconds` bounds HTTP shutdown before
@@ -670,11 +697,13 @@ does not certify installed NAS, egress, SELinux or other-host operation.
 
 ## Web UI design and current availability
 
-The replacement browser serving, administration helper and asset release
-settings below are **accepted design, not implemented availability**. The
-optional Basic provider above is implemented independently; it does not serve
-the SPA or authorize host effects. Do not add future UI/helper settings to an
-installed server yet. The shipped Cockpit plugin remains supported.
+Unreleased source implements the optional Basic provider and authenticated
+application asset/bootstrap serving below. It remains disabled unless explicitly
+configured with a matching protected artifact. Guarded host administration and
+clean release packaging retain their separate implementation/acceptance
+requirements; a Basic grant alone authorizes no host effect. These source
+capabilities do not change an installed release or permit adding unsupported
+settings to its server. The shipped Cockpit plugin remains supported.
 [UI status](web-ui/README.md) and
 decisions [140](adr/decision-140.md), [141](adr/decision-141.md),
 [142](adr/decision-142.md), [143](adr/decision-143.md) describe the replacement
@@ -689,16 +718,32 @@ or global Basic gate. Do not add a second proxy/frontend server/public listener
 or deployed Node runtime. Preserve existing TLS secret delivery, discarded default
 logging, `admin off`, `auto_https off`, `persist_config off` and streaming.
 
-Future restart-only `web` configuration defaults disabled. Enabled UI requires an
-explicit immutable indexed asset root and matching manifest/release/contract
-identity; missing or mismatched assets fail startup. The root is physically and
-lexically disjoint from archive, credentials, policy and writable state. It is not
-a general operator/browser-selected static directory. Validate no-follow regular
-files and stable identity at startup, with at most 4096 indexed files, 64 MiB
-aggregate assets, 8 MiB per asset and 2 MiB manifest. Initial MIME allowlist is
-HTML, CSS, JavaScript, JSON, PNG, WebP and WOFF2; SVG, source maps, symlinks and
-special files are refused. Reads serve only bounded indexed members, with no
-per-request whole-bundle scan or hash.
+The restart-only `web` object is `{enabled, asset_root, manifest_sha256}`. It
+defaults disabled; disabled deployments open neither assets nor mount metadata.
+Enabled UI requires a Basic provider, explicit protected immutable asset root
+and exact canonical manifest SHA256. Missing, unsafe or incompatible assets
+refuse startup instead of disabling the UI. UI-enabled origin and public prefix
+are bounded to4096ASCII and1024UTF-8 bytes respectively; these ceilings do not
+restrict backend-only deployments. See the exact
+[capture/bootstrap contract](adr/decision-147.md).
+
+The root is physically and lexically disjoint from actual archive, policy,
+credentials/delivery directories, TLS material, writable state, instance lock
+and sockets. Protected owner/mode and no-follow descriptor checks apply to every
+ancestor and member. A finite rich mount snapshot detects bind aliases without
+opening/statting archive contents; unsupported proof refuses enabled UI. Asset
+mounts initially allow ext4, xfs, btrfs, tmpfs and overlay, never network or unknown
+filesystems. Credential delivery pseudo filesystems retain their existing rules.
+
+At startup capture at most4096 indexed regular single-link files,64MiB aggregate,
+8MiB per member and2MiB canonical manifest. Reject unindexed files, symlinks,
+special files, source maps and SVG. Permit HTML, CSS, JavaScript, JSON, PNG, WebP
+and WOFF2, plus `text/plain` only for fixed `THIRD_PARTY_NOTICES.txt`. Keep one
+root descriptor and immutable captured bytes, not4096 leaf descriptors or
+request-time filesystem reads. Two separately bounded rendered shell variants
+add at most16MiB; byte budgets do not promise process RSS. Capture precedes
+operation-store construction/reconciliation and runner admission; partial failure
+and cancellation close owned descriptors and drain exact active work.
 
 The public prefix comes only from validated deployment configuration. Recognized
 GET/HEAD UI routes alone receive shell fallback. Missing assets, wrong methods,
@@ -707,9 +752,31 @@ route state, including disabled UI. Build relative assets and a safely escaped
 deployment-derived base; never interpolate request headers into executable code.
 Bootstrap schema 1 contains only nonsecret paths, release/UI/server contract
 identity and effective subject/permission context, separately from the stable
-strict API capabilities object. Bootstrap/HTML/data are `no-store`; hashed assets
-may use bounded private caching. Release switching offers explicit reload while
-preserving unsaved drafts, uncertainty and original operation handles.
+strict API capabilities object. Its archive UUID comes from installed policy,
+not a sentinel read, health assessment, Hub or host probe. Derive expected wire
+identity from the actual installed Python authorities, not the manifest's claim.
+The browser validates inert DOM slots, bounded bootstrap, platform-crypto build
+coherence and compiled source/contract before mounting. Failed entry/bootstrap
+leaves a script-free reload explanation; no fake successful connection appears.
+
+Every UI path is Basic-only, including assets, errors and direct Unix access.
+Allowed navigation is `/ui/`, `/ui/library`, `/ui/operations`, `/ui/maintenance`
+and `/ui/administration`; future detail routes require explicit registration.
+The authenticated `/ui` alias redirects307 to the trusted encoded `/ui/`.
+Query/body misuse, missing JS/CSS, API typos, MCP errors and other methods never
+receive shell fallback. HEAD retains GET status/headers/length and sends no body,
+including authentication/error/saturation responses.
+
+All UI responses have exactly one nosniff, no-referrer, restrictive same-origin
+CSP and `Permissions-Policy: camera=(), microphone=(), geolocation=()`. No inline/
+eval/data/blob/CDN allowance or service worker is added. HTML/bootstrap/errors/
+aliases/notices/licenses are `no-store`. Only validated hashed members under
+`assets/` use `private, max-age=3600, immutable`; API responses keep existing
+no-store behavior. Bound successful body streams to16 active, no waiting queue,
+64KiB chunks and30s including response.start; small refusal sends are bounded too.
+HEAD needs no body-stream lease. Disconnect/error/cancellation releases each exact
+lease once. Release switching offers explicit reload while preserving drafts,
+uncertainty and original operation handles; it never reloads or replays silently.
 
 ### Basic provider and request admission
 

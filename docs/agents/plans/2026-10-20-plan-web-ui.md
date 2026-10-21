@@ -172,3 +172,36 @@ Completion requires:
   full feature cases remain pending. Next is WEB-005; no production/remote/NAS/
   retirement action is authorized or claimed. Shipped UI assets remain allocated
   to the existing pinned UBI10micro API image, without runtime Node.
+
+- 2026-10-21: Tyler explicitly requests a stopping point and pause. The selector
+  has no active plan/task; this plan resumes only on explicit user instruction,
+  beginning with incomplete, uncommitted [WEB-005](tasks/web-005-shared-caddy-spa-serving.md).
+  Preserve frozen host source14, guest source13/artifact4 provenance, all failed/
+  UNKNOWN records and conditional completion HOLDs. Only already-running gate14
+  and already-started read-only closure work may finish before stopping; their
+  final results are pending at this checkpoint. Common21 manifest/native20
+  provisioning pass without services started; rootless21 is uninstalled and all
+  common21 functional execution is unstarted. No further binding, provisioning,
+  preparation, tests or role starts follow this pause checkpoint.
+- 2026-10-21: The already-running final source gate14 finishes before the pause:
+  `scripts/check.sh --require-web --require-cockpit` exits0/reaped,6643Python and
+  all required wheel/Cockpit/web stages pass. Independent completion audit
+  `d80896c63f824cffb9ade963ed611481422bd5a346ef3c57538f311323b174d4`
+  confirms all1310 frozen hashes/modes unchanged and seven processes closed.
+  All already-running checks are finished. The plan remains paused; WEB-005 is
+  incomplete/uncommitted because installed all-six acceptance remains required.
+
+- 2026-10-21: Tyler explicitly resumes with “continue”. Reactivate this plan and
+  [WEB-005](tasks/web-005-shared-caddy-spa-serving.md), preserving the prior pause
+  and every failed/UNKNOWN record. Gate14 and its independent audit have completed
+  successfully on frozen host source14; installed acceptance remains incomplete.
+  Continue private common21 binding/review and fresh required all-six acceptance
+  with guest source13/artifact4 provenance unchanged. No successor task, feature
+  closure, production action or remote publication follows this resumption.
+
+- 2026-10-21: WEB-005 completes scoped shared-Caddy serving and the provider-neutral
+  installed harness after source14/gate14, original guest13/common21 all-six
+  monitor0/normal closure/audit and a separate exact compatibility receipt pass.
+  Preserve the prior pause and every failed/UNKNOWN/HOLD. Later ROUTE02/03/06
+  clauses, RELEASE03/WEB021 and full95 remain pending; next is WEB-006. No
+  production/NAS/remote/retirement authority changes.

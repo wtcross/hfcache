@@ -447,6 +447,11 @@ History: `synchronization` (`54e4671`), decision 94.
   container-proxied READY change no SELinux/seccomp/credential authority. Native
   FD3 activation stays strict. Recorded 0.2.1 installed peer connectivity is distinct from outstanding NAS
   workload acceptance; rollback to 0.2.0 retains its connection limitation.
+  [Decision 148](adr/decision-148.md) separates explicitly configured socket-node
+  ownership from the listener creator's kernel peer UID. Both exact checks remain
+  mandatory; omitted owner configuration preserves the previous resolved-peer
+  ownership rule. Native service-owned nodes and root-manager listener credentials
+  do not identify the actual accepting worker and grant no fallback authority.
   See [deployment status](deployment-status.md).
   Enforcement/evidence: [owned listener](../src/hfcache/verification_listener.py),
   [bootstrap](../src/hfcache/verification_worker.py) and
@@ -879,6 +884,17 @@ separate protected verifier only after REST acceptance. independent REST client'
   [paged completeness](../tests/unit/test_rest_pagination_gate.py) and
   [examples/docs/disabled imports](../tests/unit/test_rest_examples_gate.py),
   decision [123](adr/decision-123.md).
+  [Decision 149](adr/decision-149.md) retains exact foreground Unix socket
+  ownership through default-SIGTERM replay on the main thread of a non-PID1
+  process. Arm only after owned device/inode and mode bookkeeping; defer repeated
+  TERM through original socket close, exact-inode unlink and pinned-parent close,
+  then restore the original handler and signal termination. Custom/ignored
+  handlers, PID1, non-main threads, TCP-only and activated manager-owned paths are
+  unchanged. Unknown/replaced nodes and forced-death evidence stay preserved.
+  Enforcement/evidence: [listener scope](../src/hfcache/server.py),
+  [foreground signal tests](../tests/unit/test_server_signals.py),
+  [foreground bootstrap tests](../tests/unit/test_server_bootstrap.py) and
+  [activation lifetime tests](../tests/unit/test_server_activation.py).
 - **`INV-014` — Admission receipts do not resume domain execution.** Persist
   before runnable/202, bind principal/key/request, fail stale policies closed,
   retain ambiguous history, and never infer success or replay from missing
@@ -987,6 +1003,9 @@ separate protected verifier only after REST acceptance. independent REST client'
   has no HTTP-process execution path; [route tests](../tests/unit/test_api_commands.py)
   prove all three modes delegate and refuse unavailable private execution.
   These tests do not prove installed OS egress.
+  [Decision 148](adr/decision-148.md) permits an explicit expected socket owner
+  distinct from the exact expected kernel peer. It changes no worker UID, file
+  mode, named-FD3 requirement, caller peer check, isolation or execution policy.
   Native packaging/evidence: [worker service](../packaging/systemd/hfcache-verification.service),
   [private socket](../packaging/systemd/hfcache-verification.socket),
   [activation/bootstrap tests](../tests/unit/test_verification_worker_bootstrap.py)
@@ -1174,11 +1193,11 @@ and guarded validation, not deletion or a universal compatibility assumption.
 
 ## Replacement browser UI design
 
-The following are accepted requirements with explicit source/test conformance
-gaps. They do not establish installed behavior or retire the existing Cockpit
-boundary. Optional Basic preserves existing REST bearer and fourteen read-only
-MCP behavior; authenticated SPA/static serving and host administration remain
-unimplemented.
+The following are accepted requirements with explicit conformance boundaries.
+Optional Basic and authenticated SPA/static serving are implemented in unreleased
+source, preserving existing REST bearer and fourteen read-only MCP behavior.
+Host administration remains separately unimplemented; source availability alone
+does not establish installed behavior or retire the existing Cockpit boundary.
 See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
 [144](adr/decision-144.md); retirement remains proposed until parity is proved.
 
@@ -1196,6 +1215,12 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   verification/admission/CSRF/key ownership are implemented under decision146;
   mounted real-browser challenge, shared-Caddy serving and installed profile
   evidence remain separately required.
+  [Decision147](adr/decision-147.md) fixes Basic-only UI assets/aliases/errors,
+  protected captured bytes and mount-alias proof without archive target I/O,
+  actual installed wire/build bootstrap identity, exact UI-only history routes,
+  deduplicated headers/private hashed cache and bounded stream/disconnect lifetime.
+  Disabled UI performs no asset/mount read. No new runtime/frontend server or
+  Node dependency follows; source/installed conformance remains explicit.
 - **`INV-020` — Host administration has a separate narrow privileged boundary.**
   The API remains unprivileged with no broad writable host/control-socket access.
   Fixed peer-verified helper grammar plus explicit internal capability and
@@ -1223,6 +1248,11 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   original operation identity. No redirects or automatic mutation retries.
   [Decision 145](adr/decision-145.md) defines this independent browser boundary;
   it changes no server wire format, archive authority or CLI/MCP authentication.
+  Independent UI schema1 and context binding under decision147 use generated
+  structural semantics plus platform crypto before trusted bootstrap/mount.
+  Configured identity never substitutes for archive health. JSON operation links
+  retain raw identity; URI headers/navigation encode trusted complete paths.
+  Malformed acknowledgments still retain the original key without replay.
 
 Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-and-current-availability),
 [API](api.md#web-ui-and-administration-design),

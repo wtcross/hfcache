@@ -1283,8 +1283,10 @@ number alone does not establish compatibility.
 
 ## 18. Web UI and administration design records
 
-**Accepted design for §18.1–18.3; administrator record §18.4 is implemented in
-unreleased source.** Current archive durable formats above remain unchanged.
+**RepositoryCard §18.1 and private helper §18.2 remain accepted design. Static
+manifest/bootstrap §18.3 and administrator record §18.4 are implemented in
+unreleased source.** Current archive durable formats above remain unchanged;
+source implementation is not installed compatibility or release acceptance.
 The independent card/helper/static/bootstrap
 families below must each validate their own strict integer version, reject
 unknown fields/duplicate JSON keys/coercions, enforce bounds before allocation
@@ -1362,20 +1364,92 @@ acquiring API writer locks. No unknown outcome is evicted or cleaned to make roo
 
 ### 18.3 Web release manifest and UI bootstrap
 
-Static artifact manifest schema 1 binds source commit, UI contract version,
-toolchain and lock digests, license notices, and each canonical indexed member's
-path, bytes, SHA-256 and MIME. Bound 4096 members, 64 MiB aggregate, 8 MiB/member
-and 2 MiB manifest. Initial types are HTML, CSS, JavaScript, JSON, PNG, WebP and
-WOFF2. Reject SVG, source maps, unindexed members, symlinks and special files.
-Enabled missing/mismatched assets fail startup. The separately shipped artifact
-does not change Python wheel/reader runtime requirements.
+The artifact and bootstrap each have independent required schema 1, validated by
+strict frozen `Ui*` models. Every declared field is required, including explicit
+`null`; unknown fields, boolean/string version coercion and unsupported versions
+refuse. They use §1's canonical JSON serialization. Their
+[manifest golden](../tests/fixtures/schemas/ui-asset-manifest.json) and
+[bootstrap golden](../tests/fixtures/schemas/ui-bootstrap.json) are inert schema
+examples, not release artifacts or evidence of a connected archive.
 
-Authenticated bootstrap schema 1 carries safe subject/display, effective internal
-capabilities/reasons, confirmed archive and UI/server contract/release identity,
-and configuration-derived relative paths only. It is nonsecret and `no-store`,
-never a user-management API or a widening of strict `/capabilities`. Basic
-subject/audit bindings have a separate private version; old operation receipts
-retain public credential-class identity without retrospective human attribution.
+The release `manifest.json` has exactly these fields:
+
+| Field | Contract |
+| --- | --- |
+| `schema_version` / `kind` | Integer `1` / `hfcache_web_assets` |
+| `build` | Required build metadata described below |
+| `entrypoint` | `index.html` |
+| `meta_identity` | Exactly `ui_base`, `bootstrap_path`, `asset_fingerprint`, `ui_contract`, bound to `__HFCACHE_UI_BASE_V1__`, `__HFCACHE_UI_BOOTSTRAP_V1__`, `__HFCACHE_UI_FINGERPRINT_V1__`, `__HFCACHE_UI_CONTRACT_V1__` respectively |
+| `members` | At most4096 complete records, unique and sorted by `path`; required root members `index.html`, `licenses.json`, `THIRD_PARTY_NOTICES.txt` |
+
+Each member has exactly `path`, `bytes`, `sha256`, `mime`. Paths are canonical
+relative ASCII, at most 1024 bytes/eight components/255 bytes per component, with
+an alphanumeric first character and only alphanumeric, period, underscore or
+hyphen thereafter. Assets other than the three required root members belong
+under `assets/`. HTML is only `index.html`; plain text is only
+`THIRD_PARTY_NOTICES.txt`. Extension/MIME pairs are `.html`/`text/html`,
+`.css`/`text/css`, `.js`/`text/javascript`, `.json`/`application/json`,
+`.png`/`image/png`, `.webp`/`image/webp`, `.woff2`/`font/woff2` and that single
+`.txt`/`text/plain` exception. Reject SVG, source maps, unindexed entries,
+symlinks, hardlinked members and special files. Limits are 64 MiB aggregate,
+8 MiB/member and 2 MiB manifest; HTML is nonempty. The manifest's SHA-256 is its
+external fingerprint, never a recursive field inside itself.
+
+`build` contains exactly `application_version`, `source_commit` (actual 40-hex
+parent), `source_snapshot_sha256`, `source_dirty` (strict boolean),
+`ui_contract_version` and `rest_api_schema_version` (integer `1`),
+`wire_source_digest`, `pnpm_lock_sha256`, `toolchain`, `toolchain_sha256`,
+`licenses_sha256`, `notices_sha256`. All digests are lowercase SHA-256.
+`toolchain` has exactly `node`, `pnpm`, `typescript`, `vite`, each nonempty
+bounded printable ASCII. License and notice digests equal their member records.
+Platform cryptographic libraries independently verify toolchain/captured member
+bytes at build, startup and browser context boundaries; shape validation does
+not pretend to establish file contents. The source inventory is computed before
+bundling from actual consumed inputs; no generated self-hash is checked into
+source. The installed backend's authoritative wire digest must agree before
+assets are accepted. Enabled missing/mismatched assets fail startup. The separate
+asset artifact does not add React, Node or frontend requirements to reader wheels.
+
+`GET <effective-prefix>/ui/bootstrap.json` returns a plain object, outside the
+REST `Envelope` and strict `/capabilities` contract:
+
+| Field | Contract |
+| --- | --- |
+| `schema_version` / `kind` | Integer `1` / `hfcache_ui_bootstrap` |
+| `ui_contract_version` / `rest_api_schema_version` | Integer `1`, agreeing with `build.metadata` |
+| `wire_source_digest` | Installed backend authority, agreeing with `build.metadata` |
+| `instance_id` / `authority_epoch` | Same current 32-lowercase-hex process-lifespan identity |
+| `configured_archive_id` | Canonical UUID from installed configuration, with no sentinel/health probe |
+| `archive_identity_source` | `installed_policy` |
+| `config_fingerprint` | Explicit `null` until an implemented authoritative configuration feature supplies a versioned contract |
+| `configured_origin` | Canonical ASCII HTTPS origin, at most 4096bytes; no userinfo, path, query or fragment |
+| `paths` | Required `public_prefix`, `effective_prefix`, `ui_base`, `bootstrap`, `api_base`, `mcp_base` |
+| `user` | Safe exact subject/display and internal permission projection below |
+| `build` | Exactly `asset_manifest_sha256` and `metadata` (the manifest's build object) |
+
+Raw prefixes are canonical and at most 1024 UTF-8 bytes. The effective prefix equals
+the public prefix, or is empty for a native Unix request. `ui_base`, `bootstrap`,
+`api_base` and nonnull `mcp_base` are URI-encoded local paths to the fixed `/ui/`,
+`/ui/bootstrap.json`, `/api/v1`, `/mcp/` endpoints; `mcp_base` is `null` when that
+transport is unavailable. Never accept a foreign origin or infer paths from a
+request header. The browser enforces 32768 bytes, depth 16, 2048 tokens and 128 keys.
+
+`user` has exactly `subject`, `display_name` (equal to stable subject),
+`authentication_method`=`basic`, `credential_class`=`rest-writer`,
+`rest_capabilities`=`["read","write"]`, and `admin_permissions`. The latter
+contains five records sorted by capability: `config-read`, `config-write`,
+`host-read`, `observer-stop`, `schedule-write`. Each has exactly `capability`,
+`granted`, `effective`, `reason`; effective requires granted. The reason is
+`allowed` when effective, `feature_unavailable` when granted but unavailable,
+otherwise `not_granted`. An authentication grant alone does not implement a host
+or configuration feature. No password/hash, bearer, Hub source, executable
+request, live health claim or original operation key belongs in bootstrap.
+
+Bootstrap is authenticated and `no-store`; it adds no user-management API or
+receipt fields. Original operation receipts retain their strict public class
+identity and handles without retrospective human attribution. See
+[server serving/lifecycle](server.md), [API reference](api.md) and
+[artifact/bootstrap decision](adr/decision-147.md).
 
 ### 18.4 Protected administrator record schema 1
 

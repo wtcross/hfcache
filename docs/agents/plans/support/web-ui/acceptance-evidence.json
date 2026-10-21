@@ -1467,7 +1467,7 @@
     {
       "id": "AUTH-09",
       "owner": "WEB-005",
-      "status": "pending",
+      "status": "completed",
       "required_layers": [
         "unit",
         "integration",
@@ -1476,18 +1476,178 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_auth.py::test_auth_09"
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[loopback]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[tls]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[native]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[uncorroborated-unix]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[remote-http]"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_auth.py::test_auth_09"
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-/management]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/auth.spec.ts::AUTH-09"
+          "node_id": "web/test/functional-api/driver.mjs::native-ui-challenge"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::plaintext-refused"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::untrusted-certificate-refused"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "b5ca4cce41e9a8346f385a2f64b87293e4228c77568eff758730a5ef9b74a797",
+          "node_ids": [
+            "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[loopback]",
+            "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[tls]",
+            "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[native]",
+            "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[uncorroborated-unix]",
+            "tests/unit/test_web_basic_boundary.py::test_basic_transport_proof_uses_actual_scope_not_caller_headers[remote-http]"
+          ],
+          "observed_assertion": "Actual transport scope—not caller headers—governs Basic admission; real owned TLS/Unix sockets preserve Basic and distinct bearer classes. This source layer does not establish functional trust negatives; separate original common21 records below supply them. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "558bcef7c2ffb4f197d602cffb5889dbfb2a85d4780e6add31fb38bfffd901b7",
+          "node_ids": [
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[tls-/management]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-]",
+            "tests/unit/test_web_basic_sockets.py::test_actual_basic_and_bearer_classes_keep_old_wire_and_no_origin_reads[unix-/management]"
+          ],
+          "observed_assertion": "Actual transport scope—not caller headers—governs Basic admission; real owned TLS/Unix sockets preserve Basic and distinct bearer classes. This source layer does not establish functional trust negatives; separate original common21 records below supply them. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "integration",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::plaintext-refused",
+            "web/test/functional-api/driver.mjs::untrusted-certificate-refused"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "07827de2b2cbdfcf6207b854c52a94fb33d574fd2e3afbb68c6c1ca35b06bb6e",
+          "profile": "source13/common21 application /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='', generatione5418045eed543e4bce7fea1794bbf2d, APIinstance82a0d473b6014adca3bef30242de6288: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::plaintext-refused",
+            "web/test/functional-api/driver.mjs::untrusted-certificate-refused"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "b6f71a7392d3f6f1b984e2ecff1838697ff11fab9c1c17ce8bb1a800b6b0f681",
+          "profile": "source13/common21 application /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='/management', generation6b2f31567e41471aaf5ebfa0aa1d6157, APIinstance6ab3efbafe9747e498214cf2a3c73d32: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::plaintext-refused",
+            "web/test/functional-api/driver.mjs::untrusted-certificate-refused"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "912df06d7380e687ac3705ee9018925a989c0a6951efef0337e8aa1d7ea8d6f8",
+          "profile": "source13/common21 native /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='', generation098a9c019a5745d5bdc40703df446315, APIinstanceaa3d9bb515114777b659d5f948578a92: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::plaintext-refused",
+            "web/test/functional-api/driver.mjs::untrusted-certificate-refused"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "f3b97ea9ba0866d4fe45dcdf145fb3818ffb0c360da100db9d63d9babdba863a",
+          "profile": "source13/common21 native /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='/management', generation412ce26a52414990991ea32e89a0c084, APIinstance35d8701509f049dc8d3bfc5ab546bc14: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::plaintext-refused",
+            "web/test/functional-api/driver.mjs::untrusted-certificate-refused"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "36793a828ef26df292632bcbef582e023fc8c0d64b4e89c568e21c9a84e6da8d",
+          "profile": "source13/common21 rootless /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='', generationbaacb01a6fa9450e8ecf573bf9465add, APIinstance5aefe7b6db0545c99259b134c246cb05: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::plaintext-refused",
+            "web/test/functional-api/driver.mjs::untrusted-certificate-refused"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "ff1a436bcb54e30284602f7e4a8c75c6afef5598db40b51ce12603ebd48de712",
+          "profile": "source13/common21 rootless /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='/management', generation3f7162b99bdc4cacb05539a5e474e8c6, APIinstancea5d86a8216284a5aa01a2d61cb417e9f: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        }
+      ]
     },
     {
       "id": "AUTH-10",
@@ -1517,7 +1677,7 @@
     {
       "id": "ROUTE-01",
       "owner": "WEB-005",
-      "status": "pending",
+      "status": "completed",
       "required_layers": [
         "unit",
         "integration",
@@ -1526,23 +1686,158 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_route.py::test_route_01"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_enabled_namespace_is_basic_only_and_errors_never_inherit_asset_cache"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_route.py::test_route_01"
+          "node_id": "tests/unit/test_web_functional.py::test_seed_all_fourteen_tools_through_real_source_services"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/route.spec.ts::ROUTE-01"
+          "node_id": "web/test/functional-api/driver.mjs::native-ui-challenge"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::bearer-rest-with-browser"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::same-origin-network"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_enabled_namespace_is_basic_only_and_errors_never_inherit_asset_cache"
+          ],
+          "observed_assertion": "Original app namespace is Basic-only and current server service fixtures expose all fourteen MCP tools. This source layer does not substitute for same installed Caddy origin or actual live browser concurrency. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "aaadd5b923582f62523544c909faa7989c6b10e06b9a33550703eac1eb3dfcc8",
+          "node_ids": [
+            "tests/unit/test_web_functional.py::test_seed_all_fourteen_tools_through_real_source_services"
+          ],
+          "observed_assertion": "Original app namespace is Basic-only and current server service fixtures expose all fourteen MCP tools. This source layer does not substitute for same installed Caddy origin or actual live browser concurrency. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "integration",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::bearer-rest-with-browser",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser",
+            "web/test/functional-api/driver.mjs::same-origin-network"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "07827de2b2cbdfcf6207b854c52a94fb33d574fd2e3afbb68c6c1ca35b06bb6e",
+          "profile": "source13/common21 application /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='', generatione5418045eed543e4bce7fea1794bbf2d, APIinstance82a0d473b6014adca3bef30242de6288: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::bearer-rest-with-browser",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser",
+            "web/test/functional-api/driver.mjs::same-origin-network"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "b6f71a7392d3f6f1b984e2ecff1838697ff11fab9c1c17ce8bb1a800b6b0f681",
+          "profile": "source13/common21 application /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='/management', generation6b2f31567e41471aaf5ebfa0aa1d6157, APIinstance6ab3efbafe9747e498214cf2a3c73d32: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::bearer-rest-with-browser",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser",
+            "web/test/functional-api/driver.mjs::same-origin-network"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "912df06d7380e687ac3705ee9018925a989c0a6951efef0337e8aa1d7ea8d6f8",
+          "profile": "source13/common21 native /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='', generation098a9c019a5745d5bdc40703df446315, APIinstanceaa3d9bb515114777b659d5f948578a92: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::bearer-rest-with-browser",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser",
+            "web/test/functional-api/driver.mjs::same-origin-network"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "f3b97ea9ba0866d4fe45dcdf145fb3818ffb0c360da100db9d63d9babdba863a",
+          "profile": "source13/common21 native /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='/management', generation412ce26a52414990991ea32e89a0c084, APIinstance35d8701509f049dc8d3bfc5ab546bc14: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::bearer-rest-with-browser",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser",
+            "web/test/functional-api/driver.mjs::same-origin-network"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "36793a828ef26df292632bcbef582e023fc8c0d64b4e89c568e21c9a84e6da8d",
+          "profile": "source13/common21 rootless /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='', generationbaacb01a6fa9450e8ecf573bf9465add, APIinstance5aefe7b6db0545c99259b134c246cb05: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::bearer-rest-with-browser",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser",
+            "web/test/functional-api/driver.mjs::same-origin-network"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "ff1a436bcb54e30284602f7e4a8c75c6afef5598db40b51ce12603ebd48de712",
+          "profile": "source13/common21 rootless /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='/management', generation3f7162b99bdc4cacb05539a5e474e8c6, APIinstancea5d86a8216284a5aa01a2d61cb417e9f: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        }
+      ]
     },
     {
       "id": "ROUTE-02",
       "owner": "WEB-005",
-      "status": "pending",
+      "status": "in_progress",
       "required_layers": [
         "unit",
         "integration",
@@ -1551,23 +1846,208 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_route.py::test_route_02"
+          "node_id": "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[False--]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[False-/management-/management]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[False-/\\xe9quipe/\\u6a21\\u578b-/%C3%A9quipe/%E6%A8%A1%E5%9E%8B]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[True--]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[True-/management-/management]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[True-/\\xe9quipe/\\u6a21\\u578b-/%C3%A9quipe/%E6%A8%A1%E5%9E%8B]"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_route.py::test_route_02"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/ui]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/api/v1]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/mcp]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/\\u7ba1\\u7406'quoted]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/route.spec.ts::ROUTE-02"
+          "node_id": "web/test/functional-api/driver.mjs::native-ui-challenge"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::validated-bootstrap"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::native-prefix-projection"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::workspaces-deep-refresh"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "7195654afb5bfba15e34e6719d13816a7ff2c84235823a2cf8a0d685608c020b",
+          "node_ids": [
+            "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[False--]",
+            "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[False-/management-/management]",
+            "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[False-/\\xe9quipe/\\u6a21\\u578b-/%C3%A9quipe/%E6%A8%A1%E5%9E%8B]",
+            "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[True--]",
+            "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[True-/management-/management]",
+            "tests/unit/test_ui_models.py::test_paths_bind_raw_prefix_to_encoded_endpoints[True-/\\xe9quipe/\\u6a21\\u578b-/%C3%A9quipe/%E6%A8%A1%E5%9E%8B]"
+          ],
+          "observed_assertion": "Strict raw/encoded endpoint coherence and actual app bootstrap/navigation/alias/asset/header behavior cover empty, configured and Unicode prefixes. Pagination is outside these nodes. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/management]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/ui]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/api/v1]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/mcp]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/\\u7ba1\\u7406'quoted]"
+          ],
+          "observed_assertion": "Strict raw/encoded endpoint coherence and actual app bootstrap/navigation/alias/asset/header behavior cover empty, configured and Unicode prefixes. Pagination is outside these nodes. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "integration",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::validated-bootstrap",
+            "web/test/functional-api/driver.mjs::native-prefix-projection",
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "07827de2b2cbdfcf6207b854c52a94fb33d574fd2e3afbb68c6c1ca35b06bb6e",
+          "profile": "source13/common21 application /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='', generatione5418045eed543e4bce7fea1794bbf2d, APIinstance82a0d473b6014adca3bef30242de6288: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for real pagination and later data-linked navigation; preserve explicit future owner/work-package dependencies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::validated-bootstrap",
+            "web/test/functional-api/driver.mjs::native-prefix-projection",
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "b6f71a7392d3f6f1b984e2ecff1838697ff11fab9c1c17ce8bb1a800b6b0f681",
+          "profile": "source13/common21 application /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='/management', generation6b2f31567e41471aaf5ebfa0aa1d6157, APIinstance6ab3efbafe9747e498214cf2a3c73d32: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for real pagination and later data-linked navigation; preserve explicit future owner/work-package dependencies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::validated-bootstrap",
+            "web/test/functional-api/driver.mjs::native-prefix-projection",
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "912df06d7380e687ac3705ee9018925a989c0a6951efef0337e8aa1d7ea8d6f8",
+          "profile": "source13/common21 native /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='', generation098a9c019a5745d5bdc40703df446315, APIinstanceaa3d9bb515114777b659d5f948578a92: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for real pagination and later data-linked navigation; preserve explicit future owner/work-package dependencies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::validated-bootstrap",
+            "web/test/functional-api/driver.mjs::native-prefix-projection",
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "f3b97ea9ba0866d4fe45dcdf145fb3818ffb0c360da100db9d63d9babdba863a",
+          "profile": "source13/common21 native /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='/management', generation412ce26a52414990991ea32e89a0c084, APIinstance35d8701509f049dc8d3bfc5ab546bc14: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for real pagination and later data-linked navigation; preserve explicit future owner/work-package dependencies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::validated-bootstrap",
+            "web/test/functional-api/driver.mjs::native-prefix-projection",
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "36793a828ef26df292632bcbef582e023fc8c0d64b4e89c568e21c9a84e6da8d",
+          "profile": "source13/common21 rootless /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='', generationbaacb01a6fa9450e8ecf573bf9465add, APIinstance5aefe7b6db0545c99259b134c246cb05: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for real pagination and later data-linked navigation; preserve explicit future owner/work-package dependencies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::native-ui-challenge",
+            "web/test/functional-api/driver.mjs::validated-bootstrap",
+            "web/test/functional-api/driver.mjs::native-prefix-projection",
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "ff1a436bcb54e30284602f7e4a8c75c6afef5598db40b51ce12603ebd48de712",
+          "profile": "source13/common21 rootless /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='/management', generation3f7162b99bdc4cacb05539a5e474e8c6, APIinstancea5d86a8216284a5aa01a2d61cb417e9f: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for real pagination and later data-linked navigation; preserve explicit future owner/work-package dependencies."
+        }
+      ]
     },
     {
       "id": "ROUTE-03",
       "owner": "WEB-005",
-      "status": "pending",
+      "status": "in_progress",
       "required_layers": [
         "unit",
         "integration",
@@ -1575,24 +2055,168 @@
       ],
       "planned_tests": [
         {
-          "layer": "unit",
-          "node_id": "tests/unit/test_web_route.py::test_route_03"
+          "layer": "integration",
+          "node_id": "web/test/App.component.test.tsx::keyboard navigation selects all four workspaces and focuses their content"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_route.py::test_route_03"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/ui]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/api/v1]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/mcp]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/\\u7ba1\\u7406'quoted]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/route.spec.ts::ROUTE-03"
+          "node_id": "web/test/functional-api/driver.mjs::workspaces-deep-refresh"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::history-back-forward"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_route.py::test_route_03"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "d4e5c4202b1a0b16fc172f3ee8660fb924c5875ae7f2619c2a691075e15ebc7c",
+          "node_ids": [
+            "web/test/App.component.test.tsx::keyboard navigation selects all four workspaces and focuses their content"
+          ],
+          "observed_assertion": "Actual gate14 component report records the exact four-workspace keyboard navigation test passing. This establishes serving/navigation scaffolding; future publication detail behavior remains pending. This is the component-stage integration observation; exact detail-route unit/full behavior remains future WEB-013 scope.",
+          "layer": "integration",
+          "artifact_sha256": "41e12a6bef2a3ba77a8b22ff2e23273723b4d6469ad4488b3cbf171d52a739bc",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": "web/.artifacts/component-StAqqo/report.json"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/management]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/ui]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/api/v1]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/mcp]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/\\u7ba1\\u7406'quoted]"
+          ],
+          "observed_assertion": "Actual React keyboard navigation selects four workspaces/focuses content; original app resolves current shell navigation. Exact publication-detail routes/state are absent. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "integration",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh",
+            "web/test/functional-api/driver.mjs::history-back-forward"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "07827de2b2cbdfcf6207b854c52a94fb33d574fd2e3afbb68c6c1ca35b06bb6e",
+          "profile": "source13/common21 application /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='', generatione5418045eed543e4bce7fea1794bbf2d, APIinstance82a0d473b6014adca3bef30242de6288: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for exact publication detail routes/state in WEB013. Do not invent successful detail pages."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh",
+            "web/test/functional-api/driver.mjs::history-back-forward"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "b6f71a7392d3f6f1b984e2ecff1838697ff11fab9c1c17ce8bb1a800b6b0f681",
+          "profile": "source13/common21 application /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='/management', generation6b2f31567e41471aaf5ebfa0aa1d6157, APIinstance6ab3efbafe9747e498214cf2a3c73d32: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for exact publication detail routes/state in WEB013. Do not invent successful detail pages."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh",
+            "web/test/functional-api/driver.mjs::history-back-forward"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "912df06d7380e687ac3705ee9018925a989c0a6951efef0337e8aa1d7ea8d6f8",
+          "profile": "source13/common21 native /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='', generation098a9c019a5745d5bdc40703df446315, APIinstanceaa3d9bb515114777b659d5f948578a92: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for exact publication detail routes/state in WEB013. Do not invent successful detail pages."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh",
+            "web/test/functional-api/driver.mjs::history-back-forward"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "f3b97ea9ba0866d4fe45dcdf145fb3818ffb0c360da100db9d63d9babdba863a",
+          "profile": "source13/common21 native /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='/management', generation412ce26a52414990991ea32e89a0c084, APIinstance35d8701509f049dc8d3bfc5ab546bc14: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for exact publication detail routes/state in WEB013. Do not invent successful detail pages."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh",
+            "web/test/functional-api/driver.mjs::history-back-forward"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "36793a828ef26df292632bcbef582e023fc8c0d64b4e89c568e21c9a84e6da8d",
+          "profile": "source13/common21 rootless /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='', generationbaacb01a6fa9450e8ecf573bf9465add, APIinstance5aefe7b6db0545c99259b134c246cb05: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for exact publication detail routes/state in WEB013. Do not invent successful detail pages."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::workspaces-deep-refresh",
+            "web/test/functional-api/driver.mjs::history-back-forward"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "ff1a436bcb54e30284602f7e4a8c75c6afef5598db40b51ce12603ebd48de712",
+          "profile": "source13/common21 rootless /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='/management', generation3f7162b99bdc4cacb05539a5e474e8c6, APIinstancea5d86a8216284a5aa01a2d61cb417e9f: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for exact publication detail routes/state in WEB013. Do not invent successful detail pages."
+        }
+      ]
     },
     {
       "id": "ROUTE-04",
       "owner": "WEB-005",
-      "status": "pending",
+      "status": "completed",
       "required_layers": [
         "unit",
         "integration",
@@ -1601,23 +2225,203 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_route.py::test_route_04"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_enabled_namespace_is_basic_only_and_errors_never_inherit_asset_cache"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_route.py::test_route_04"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[GET-False]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[GET-True]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[HEAD-False]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[HEAD-True]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[POST-False]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[POST-True]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[PUT-False]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[PUT-True]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[DELETE-False]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[DELETE-True]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[OPTIONS-False]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[OPTIONS-True]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/route.spec.ts::ROUTE-04"
+          "node_id": "web/test/functional-api/driver.mjs::missing-assets-isolated"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::api-mcp-errors-not-html"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::unsafe-method-no-fallback"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_enabled_namespace_is_basic_only_and_errors_never_inherit_asset_cache"
+          ],
+          "observed_assertion": "Actual app UI namespace/error caching and UI-disabled GET/HEAD/POST/PUT/DELETE/OPTIONS compatibility preserve classified route/method errors; no functional browser inference. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[GET-False]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[GET-True]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[HEAD-False]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[HEAD-True]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[POST-False]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[POST-True]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[PUT-False]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[PUT-True]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[DELETE-False]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[DELETE-True]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[OPTIONS-False]",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract[OPTIONS-True]"
+          ],
+          "observed_assertion": "Actual app UI namespace/error caching and UI-disabled GET/HEAD/POST/PUT/DELETE/OPTIONS compatibility preserve classified route/method errors; no functional browser inference. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "integration",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::api-mcp-errors-not-html",
+            "web/test/functional-api/driver.mjs::unsafe-method-no-fallback"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "07827de2b2cbdfcf6207b854c52a94fb33d574fd2e3afbb68c6c1ca35b06bb6e",
+          "profile": "source13/common21 application /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='', generatione5418045eed543e4bce7fea1794bbf2d, APIinstance82a0d473b6014adca3bef30242de6288: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::api-mcp-errors-not-html",
+            "web/test/functional-api/driver.mjs::unsafe-method-no-fallback"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "b6f71a7392d3f6f1b984e2ecff1838697ff11fab9c1c17ce8bb1a800b6b0f681",
+          "profile": "source13/common21 application /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='/management', generation6b2f31567e41471aaf5ebfa0aa1d6157, APIinstance6ab3efbafe9747e498214cf2a3c73d32: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::api-mcp-errors-not-html",
+            "web/test/functional-api/driver.mjs::unsafe-method-no-fallback"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "912df06d7380e687ac3705ee9018925a989c0a6951efef0337e8aa1d7ea8d6f8",
+          "profile": "source13/common21 native /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='', generation098a9c019a5745d5bdc40703df446315, APIinstanceaa3d9bb515114777b659d5f948578a92: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::api-mcp-errors-not-html",
+            "web/test/functional-api/driver.mjs::unsafe-method-no-fallback"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "f3b97ea9ba0866d4fe45dcdf145fb3818ffb0c360da100db9d63d9babdba863a",
+          "profile": "source13/common21 native /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='/management', generation412ce26a52414990991ea32e89a0c084, APIinstance35d8701509f049dc8d3bfc5ab546bc14: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::api-mcp-errors-not-html",
+            "web/test/functional-api/driver.mjs::unsafe-method-no-fallback"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "36793a828ef26df292632bcbef582e023fc8c0d64b4e89c568e21c9a84e6da8d",
+          "profile": "source13/common21 rootless /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='', generationbaacb01a6fa9450e8ecf573bf9465add, APIinstance5aefe7b6db0545c99259b134c246cb05: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::api-mcp-errors-not-html",
+            "web/test/functional-api/driver.mjs::unsafe-method-no-fallback"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "ff1a436bcb54e30284602f7e4a8c75c6afef5598db40b51ce12603ebd48de712",
+          "profile": "source13/common21 rootless /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='/management', generation3f7162b99bdc4cacb05539a5e474e8c6, APIinstancea5d86a8216284a5aa01a2d61cb417e9f: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        }
+      ]
     },
     {
       "id": "ROUTE-05",
       "owner": "WEB-005",
-      "status": "pending",
+      "status": "completed",
       "required_layers": [
         "unit",
         "integration",
@@ -1626,23 +2430,179 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_route.py::test_route_05"
+          "node_id": "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[unknown]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[symlink]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[hardlink]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[fifo]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[writable]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[mutation]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[manifest]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[duplicate]"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_route.py::test_route_05"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_invalid_capture_precedes_store_construction_or_runner_admission"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/route.spec.ts::ROUTE-05"
+          "node_id": "web/test/functional-api/driver.mjs::missing-assets-isolated"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "8f042064618247a4d5b3a6de9a62c9258d035bd4b378a71a43a66c7dbb6400ff",
+          "node_ids": [
+            "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[unknown]",
+            "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[symlink]",
+            "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[hardlink]",
+            "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[fifo]",
+            "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[writable]",
+            "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[mutation]",
+            "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[manifest]",
+            "tests/unit/test_web_ui_assets.py::test_capture_refuses_actual_unknown_alias_special_or_changed_bytes[duplicate]"
+          ],
+          "observed_assertion": "Actual protected-capture filesystem negatives and invalid capture before original store/runner admission cover source safety. Installed startup refusals have separate original source10 provenance. Browser normalization is not raw encoded wire proof. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_invalid_capture_precedes_store_construction_or_runner_admission"
+          ],
+          "observed_assertion": "Actual protected-capture filesystem negatives and invalid capture before original store/runner admission cover source safety. Installed startup refusals have separate original source10 provenance. Browser normalization is not raw encoded wire proof. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "integration",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "07827de2b2cbdfcf6207b854c52a94fb33d574fd2e3afbb68c6c1ca35b06bb6e",
+          "profile": "source13/common21 application /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='', generatione5418045eed543e4bce7fea1794bbf2d, APIinstance82a0d473b6014adca3bef30242de6288: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. This browser missing-asset/encoded-wire observation combines with independent source14 filesystem/unit tests and the historical source10 four-case installed startup refusal; no browser-only filesystem claim."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "b6f71a7392d3f6f1b984e2ecff1838697ff11fab9c1c17ce8bb1a800b6b0f681",
+          "profile": "source13/common21 application /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='/management', generation6b2f31567e41471aaf5ebfa0aa1d6157, APIinstance6ab3efbafe9747e498214cf2a3c73d32: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. This browser missing-asset/encoded-wire observation combines with independent source14 filesystem/unit tests and the historical source10 four-case installed startup refusal; no browser-only filesystem claim."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "912df06d7380e687ac3705ee9018925a989c0a6951efef0337e8aa1d7ea8d6f8",
+          "profile": "source13/common21 native /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='', generation098a9c019a5745d5bdc40703df446315, APIinstanceaa3d9bb515114777b659d5f948578a92: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. This browser missing-asset/encoded-wire observation combines with independent source14 filesystem/unit tests and the historical source10 four-case installed startup refusal; no browser-only filesystem claim."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "f3b97ea9ba0866d4fe45dcdf145fb3818ffb0c360da100db9d63d9babdba863a",
+          "profile": "source13/common21 native /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='/management', generation412ce26a52414990991ea32e89a0c084, APIinstance35d8701509f049dc8d3bfc5ab546bc14: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. This browser missing-asset/encoded-wire observation combines with independent source14 filesystem/unit tests and the historical source10 four-case installed startup refusal; no browser-only filesystem claim."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "36793a828ef26df292632bcbef582e023fc8c0d64b4e89c568e21c9a84e6da8d",
+          "profile": "source13/common21 rootless /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='', generationbaacb01a6fa9450e8ecf573bf9465add, APIinstance5aefe7b6db0545c99259b134c246cb05: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. This browser missing-asset/encoded-wire observation combines with independent source14 filesystem/unit tests and the historical source10 four-case installed startup refusal; no browser-only filesystem claim."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::missing-assets-isolated"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "ff1a436bcb54e30284602f7e4a8c75c6afef5598db40b51ce12603ebd48de712",
+          "profile": "source13/common21 rootless /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='/management', generation3f7162b99bdc4cacb05539a5e474e8c6, APIinstancea5d86a8216284a5aa01a2d61cb417e9f: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. This browser missing-asset/encoded-wire observation combines with independent source14 filesystem/unit tests and the historical source10 four-case installed startup refusal; no browser-only filesystem claim."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "installed-startup-refusal-product4-v1.py::missing-assets[]",
+            "installed-startup-refusal-product4-v1.py::missing-assets[/management]",
+            "installed-startup-refusal-product4-v1.py::wrong-manifest[]",
+            "installed-startup-refusal-product4-v1.py::wrong-manifest[/management]"
+          ],
+          "command": "/opt/hfcache-web005/installed-env-v4/bin/python -I -B /opt/hfcache-web005/installed-startup-refusal-product4-v1.py --controller",
+          "exit_status": 0,
+          "source_sha256": "3c3c80aba0635e20a3779c3869fb2ed294003a313feb417040b6b922cf6e8fab",
+          "artifact_sha256": "c9a4f631afadeea36b10d2cb3489607eb15935eb3e2acecaac13a3fb316a068b",
+          "profile": "historical actual source10/artifact4 native installed refusal subset; unchanged101 package files through fresh compatibility483ed; never source13/14 execution relabel",
+          "evidence_locator": ".scratch/web-005-startup-refusal-product4-postverify-v1.json",
+          "observed_assertion": "All four actual missing-assets/wrong-manifest cases at both prefixes refuse before stores/admission; same FD/thread/task snapshots, locks reacquired, sockets absent, child positive exit before manager stop, five identities gone/four groups empty and11 seed/101 package/1310 source10 inputs preserved. Subset originally does not establish whole ROUTE05; combined current source14 physical safety tests and original common21 browser/Caddy observations cover the remaining serving clauses."
+        }
+      ]
     },
     {
       "id": "ROUTE-06",
       "owner": "WEB-005",
-      "status": "pending",
+      "status": "in_progress",
       "required_layers": [
         "unit",
         "integration",
@@ -1651,23 +2611,220 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_route.py::test_route_06"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_head_errors_preserve_get_status_headers_and_length_without_body"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_route.py::test_route_06"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/management]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/ui]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/api/v1]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/mcp]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/\\u7ba1\\u7406'quoted]"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/route.spec.ts::ROUTE-06"
+          "node_id": "web/test/functional-api/driver.mjs::same-origin-security-headers"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::missing-assets-isolated"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::static-abort-drain"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_streams.py::test_sixteen_stalled_headers_have_no_seventeenth_waiter_and_head_needs_no_slot"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_streams.py::test_absolute_send_deadline_retires_the_lease_and_both_owned_tasks[start]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_streams.py::test_absolute_send_deadline_retires_the_lease_and_both_owned_tasks[body]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_streams.py::test_actual_disconnect_send_failure_and_request_cancellation_release_once[disconnect]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_streams.py::test_actual_disconnect_send_failure_and_request_cancellation_release_once[oserror]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_streams.py::test_actual_disconnect_send_failure_and_request_cancellation_release_once[cancel]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_ui_streams.py::test_repeated_cancellation_holds_capacity_until_owned_observer_actually_finishes"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_head_errors_preserve_get_status_headers_and_length_without_body"
+          ],
+          "observed_assertion": "Actual HEAD/status/header/length and bootstrap/navigation/assets header checks cover implemented UI surfaces. Cards remain absent; source stream tests use an accelerated test deadline, not installed30s proof. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/management]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/ui]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/api/v1]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/mcp]",
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers[/\\u7ba1\\u7406'quoted]"
+          ],
+          "observed_assertion": "Actual HEAD/status/header/length and bootstrap/navigation/assets header checks cover implemented UI surfaces. Cards remain absent; source stream tests use an accelerated test deadline, not installed30s proof. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "integration",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "f23f436b3bba1f315061fb702eccaa43d96e6d6f1a2fc3c850c5272314213ea7",
+          "node_ids": [
+            "tests/unit/test_web_ui_streams.py::test_sixteen_stalled_headers_have_no_seventeenth_waiter_and_head_needs_no_slot",
+            "tests/unit/test_web_ui_streams.py::test_absolute_send_deadline_retires_the_lease_and_both_owned_tasks[start]",
+            "tests/unit/test_web_ui_streams.py::test_absolute_send_deadline_retires_the_lease_and_both_owned_tasks[body]",
+            "tests/unit/test_web_ui_streams.py::test_actual_disconnect_send_failure_and_request_cancellation_release_once[disconnect]",
+            "tests/unit/test_web_ui_streams.py::test_actual_disconnect_send_failure_and_request_cancellation_release_once[oserror]",
+            "tests/unit/test_web_ui_streams.py::test_actual_disconnect_send_failure_and_request_cancellation_release_once[cancel]",
+            "tests/unit/test_web_ui_streams.py::test_repeated_cancellation_holds_capacity_until_owned_observer_actually_finishes"
+          ],
+          "observed_assertion": "Sixteen active/no seventeenth waiter, HEAD without lease, absolute start/body send deadline, disconnect/error/cancel release and repeated-cancel observer ownership pass. Deadline is accelerated to0.02s in the test, explicitly not the actual installed30s proof. Gate records all7 file tests passing; separate collection supplies exact node names. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::same-origin-security-headers",
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::static-abort-drain"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "07827de2b2cbdfcf6207b854c52a94fb33d574fd2e3afbb68c6c1ca35b06bb6e",
+          "profile": "source13/common21 application /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='', generatione5418045eed543e4bce7fea1794bbf2d, APIinstance82a0d473b6014adca3bef30242de6288: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for later card responses. Preserve deliberate strict-UI versus legacy-API CSP compatibility and exact cache policies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::same-origin-security-headers",
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::static-abort-drain"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "b6f71a7392d3f6f1b984e2ecff1838697ff11fab9c1c17ce8bb1a800b6b0f681",
+          "profile": "source13/common21 application /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='/management', generation6b2f31567e41471aaf5ebfa0aa1d6157, APIinstance6ab3efbafe9747e498214cf2a3c73d32: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for later card responses. Preserve deliberate strict-UI versus legacy-API CSP compatibility and exact cache policies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::same-origin-security-headers",
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::static-abort-drain"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "912df06d7380e687ac3705ee9018925a989c0a6951efef0337e8aa1d7ea8d6f8",
+          "profile": "source13/common21 native /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='', generation098a9c019a5745d5bdc40703df446315, APIinstanceaa3d9bb515114777b659d5f948578a92: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for later card responses. Preserve deliberate strict-UI versus legacy-API CSP compatibility and exact cache policies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::same-origin-security-headers",
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::static-abort-drain"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "f3b97ea9ba0866d4fe45dcdf145fb3818ffb0c360da100db9d63d9babdba863a",
+          "profile": "source13/common21 native /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='/management', generation412ce26a52414990991ea32e89a0c084, APIinstance35d8701509f049dc8d3bfc5ab546bc14: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for later card responses. Preserve deliberate strict-UI versus legacy-API CSP compatibility and exact cache policies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::same-origin-security-headers",
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::static-abort-drain"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "36793a828ef26df292632bcbef582e023fc8c0d64b4e89c568e21c9a84e6da8d",
+          "profile": "source13/common21 rootless /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='', generationbaacb01a6fa9450e8ecf573bf9465add, APIinstance5aefe7b6db0545c99259b134c246cb05: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for later card responses. Preserve deliberate strict-UI versus legacy-API CSP compatibility and exact cache policies."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::same-origin-security-headers",
+            "web/test/functional-api/driver.mjs::missing-assets-isolated",
+            "web/test/functional-api/driver.mjs::static-abort-drain"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "ff1a436bcb54e30284602f7e4a8c75c6afef5598db40b51ce12603ebd48de712",
+          "profile": "source13/common21 rootless /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='/management', generation3f7162b99bdc4cacb05539a5e474e8c6, APIinstancea5d86a8216284a5aa01a2d61cb417e9f: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive. Only WEB-005 serving scaffolding clauses pass; Whole row stays pending for later card responses. Preserve deliberate strict-UI versus legacy-API CSP compatibility and exact cache policies."
+        }
+      ]
     },
     {
       "id": "ROUTE-07",
       "owner": "WEB-005",
-      "status": "pending",
+      "status": "completed",
       "required_layers": [
         "unit",
         "integration",
@@ -1676,18 +2833,415 @@
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_route.py::test_route_07"
+          "node_id": "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[capture]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[stream]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[hash-worker]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[pool-worker]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[operation]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[objects]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[completion-won]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[whole-body-submitted]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[outer-generic-error]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[early-deadline]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[no-disconnect]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-body]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-objects]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[missing-probe]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[leaked-task]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[unclassified-send-error]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-counter]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[schema1]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[missing-protocol]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[extra-protocol]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-send-function]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-source]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[changed-entry-source]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-class]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[outer-pid]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[boolean-pid]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[zero-pid]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[aliased-ticks]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-family]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-socket-type]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[negative-fd]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[boolean-pressure]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[unmeasured-pressure]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-cycle]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-transport]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[integer-flag]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[boolean-buffer]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[oversized-buffer]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-result]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[generic-error-beside-good-witness]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[timeout-deadline]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[unpaused-raised]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[instant-noop]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[already-disconnected]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[resumed-submission]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[invented-reconnection]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[within-send-reconnection]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-submission-count]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-final-submission]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-asgi-final]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[complete-before]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[missing-snapshot]"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[extra-snapshot]"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_route.py::test_route_07"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_cancelled_lifespan_waits_for_actual_ui_tasks_before_closing_capture"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/route.spec.ts::ROUTE-07"
+          "node_id": "web/test/functional-api/driver.mjs::static-abort-drain"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::same-origin-network"
+        },
+        {
+          "layer": "functional",
+          "node_id": "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser"
         }
       ],
-      "executions": []
+      "executions": [
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "aaadd5b923582f62523544c909faa7989c6b10e06b9a33550703eac1eb3dfcc8",
+          "node_ids": [
+            "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[capture]",
+            "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[stream]",
+            "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[hash-worker]",
+            "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[pool-worker]",
+            "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[operation]",
+            "tests/unit/test_web_functional.py::test_final_resource_proof_refuses_summary_drain_when_actual_resources_remain[objects]"
+          ],
+          "observed_assertion": "Adversarial proof-parser checks reject false final resource/backpressure evidence. Original ASGI lifespan cancellation waits for real UI task/lease completion and closes capture/pool/runner. This source layer alone does not establish installed kernel/manager/Caddy proof; separate original common21 records below supply it. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "aaadd5b923582f62523544c909faa7989c6b10e06b9a33550703eac1eb3dfcc8",
+          "node_ids": [
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[completion-won]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[whole-body-submitted]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[outer-generic-error]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[early-deadline]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[no-disconnect]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-body]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-objects]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[missing-probe]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[leaked-task]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[unclassified-send-error]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-counter]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[schema1]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[missing-protocol]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[extra-protocol]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-send-function]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-source]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[changed-entry-source]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-class]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[outer-pid]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[boolean-pid]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[zero-pid]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[aliased-ticks]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-family]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-socket-type]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[negative-fd]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[boolean-pressure]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[unmeasured-pressure]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-cycle]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[wrong-transport]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[integer-flag]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[boolean-buffer]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[oversized-buffer]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-result]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[generic-error-beside-good-witness]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[timeout-deadline]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[unpaused-raised]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[instant-noop]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[already-disconnected]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[resumed-submission]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[invented-reconnection]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[within-send-reconnection]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-submission-count]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-final-submission]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[false-asgi-final]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[complete-before]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[missing-snapshot]",
+            "tests/unit/test_web_functional.py::test_actual_transfer_facts_refuse_unproved_backpressure[extra-snapshot]"
+          ],
+          "observed_assertion": "Adversarial proof-parser checks reject false final resource/backpressure evidence. Original ASGI lifespan cancellation waits for real UI task/lease completion and closes capture/pool/runner. This source layer alone does not establish installed kernel/manager/Caddy proof; separate original common21 records below supply it. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "unit",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "source_sha256": "720e8ab19ec2ff008f4b80e35ed159c1f04c76d30a2a2b8e76f7d2082343999c",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_cancelled_lifespan_waits_for_actual_ui_tasks_before_closing_capture"
+          ],
+          "observed_assertion": "Cancellation of original app lifespan retains the capture while a real UI lease/two tasks remain, then closes task registry/capture/Basic provider/pool/runner after actual disconnect. This is not installed kernel/manager/role drain evidence. Actual gate14 default file-group execution passes; no Python JUnit is generated. Exact retained node names identify source tests and do not promote a whole feature case.",
+          "layer": "integration",
+          "artifact_sha256": "49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe",
+          "exit_status": 0,
+          "profile": "WEB-005 uncommitted source14 snapshot9257; parent24625fc; default-included source fixtures only; no installed acceptance",
+          "evidence_locator": ".scratch/web-005-fourteenth-strict-gate.log"
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::static-abort-drain",
+            "web/test/functional-api/driver.mjs::same-origin-network",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "07827de2b2cbdfcf6207b854c52a94fb33d574fd2e3afbb68c6c1ca35b06bb6e",
+          "profile": "source13/common21 application /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='', generatione5418045eed543e4bce7fea1794bbf2d, APIinstance82a0d473b6014adca3bef30242de6288: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::static-abort-drain",
+            "web/test/functional-api/driver.mjs::same-origin-network",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "b6f71a7392d3f6f1b984e2ecff1838697ff11fab9c1c17ce8bb1a800b6b0f681",
+          "profile": "source13/common21 application /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/application-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 application prefix='/management', generation6b2f31567e41471aaf5ebfa0aa1d6157, APIinstance6ab3efbafe9747e498214cf2a3c73d32: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::static-abort-drain",
+            "web/test/functional-api/driver.mjs::same-origin-network",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "912df06d7380e687ac3705ee9018925a989c0a6951efef0337e8aa1d7ea8d6f8",
+          "profile": "source13/common21 native /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='', generation098a9c019a5745d5bdc40703df446315, APIinstanceaa3d9bb515114777b659d5f948578a92: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::static-abort-drain",
+            "web/test/functional-api/driver.mjs::same-origin-network",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "f3b97ea9ba0866d4fe45dcdf145fb3818ffb0c360da100db9d63d9babdba863a",
+          "profile": "source13/common21 native /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/native-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 native prefix='/management', generation412ce26a52414990991ea32e89a0c084, APIinstance35d8701509f049dc8d3bfc5ab546bc14: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::static-abort-drain",
+            "web/test/functional-api/driver.mjs::same-origin-network",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "36793a828ef26df292632bcbef582e023fc8c0d64b4e89c568e21c9a84e6da8d",
+          "profile": "source13/common21 rootless /; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-root/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='', generationbaacb01a6fa9450e8ecf573bf9465add, APIinstance5aefe7b6db0545c99259b134c246cb05: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "web/test/functional-api/driver.mjs::static-abort-drain",
+            "web/test/functional-api/driver.mjs::same-origin-network",
+            "web/test/functional-api/driver.mjs::all-mcp-tools-with-browser"
+          ],
+          "command": "/home/webfixture/hfcache/.scratch/provisioning/installed-env-v12/bin/python -I -B /home/webfixture/hfcache/scripts/check-web-functional.py --profile all --manifest /home/webfixture/hfcache/.scratch/provisioning/web005-functional-manifest-v21-source13.json --workspace /home/webfixture/hfcache/.scratch/web-functional-common21-all-v1",
+          "exit_status": 0,
+          "source_sha256": "e3f958e07bef161f32508322a4d442412dcb338c8fe088d836286f71d77a00db",
+          "artifact_sha256": "ff1a436bcb54e30284602f7e4a8c75c6afef5598db40b51ce12603ebd48de712",
+          "profile": "source13/common21 rootless /management; Chromium/Firefox/WebKit; guest fixture web00483; no production",
+          "evidence_locator": "/home/webfixture/hfcache/.scratch/web-functional-common21-all-v1/rootless-prefixed/RESULT.json",
+          "observed_assertion": "Original common21/source13 rootless prefix='/management', generation3f7162b99bdc4cacb05539a5e474e8c6, APIinstancea5d86a8216284a5aa01a2d61cb417e9f: all three actual engines pass the named checks once, with trusted17/untrusted1 per engine; installed Python MCP SDK14 tools per generation, browser-active Node MCP14 tools and REST writer/reader classes per engine. Original normal ready/stopped/transfer records, exact confinement/drain and independent audit283e5818 are positive."
+        }
+      ]
     },
     {
       "id": "ROUTE-08",

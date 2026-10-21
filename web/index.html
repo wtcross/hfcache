@@ -3,13 +3,31 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="hfcache-ui-base" content="/ui/" />
+        <meta name="hfcache-ui-base" content="__HFCACHE_UI_BASE_V1__" />
+        <meta
+            name="hfcache-ui-bootstrap"
+            content="__HFCACHE_UI_BOOTSTRAP_V1__"
+        />
+        <meta
+            name="hfcache-ui-fingerprint"
+            content="__HFCACHE_UI_FINGERPRINT_V1__"
+        />
+        <meta name="hfcache-ui-contract" content="__HFCACHE_UI_CONTRACT_V1__" />
         <meta name="description" content="hfcache archive management" />
-        <base href="/ui/" />
+        <base href="__HFCACHE_UI_BASE_V1__" />
         <title>hfcache · Library</title>
     </head>
     <body>
-        <div id="root"></div>
+        <div id="root">
+            <main aria-label="Interface startup">
+                <h1>Starting hfcache</h1>
+                <p>
+                    The interface has not started. If it cannot load, reload the
+                    interface or contact your operator.
+                </p>
+                <a href="./">Reload interface</a>
+            </main>
+        </div>
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

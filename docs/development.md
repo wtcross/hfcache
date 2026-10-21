@@ -74,16 +74,21 @@ pnpm lock, TypeScript configuration, Node and pnpm. It checks the authoritative
 Python contract export after locked Python synchronization, then retains every
 backend and applicable Cockpit check above. Its web stage runs frozen
 installation, then `check:wire`, lint, types, deliberately
-invalid strictness fixtures, `test:auth-sandbox`, unit tests, component tests,
+invalid strictness fixtures, `test:auth-sandbox`, `test:functional-metadata`, unit tests, component tests,
 a production build and the preliminary real-browser smoke in that order.
 The real API React read fixture follows those checks.
 Any failed stage or missing required browser fails the gate. Backend-only mode
 prints an explicit web omission; that result does not validate the web interface.
 
-The installed application/platform functional runner is not available yet.
-`--with-web-functional` is currently an unknown argument and exits nonzero;
-the preliminary browser smoke does not establish Caddy, authentication, API,
-worker, helper or installed native/rootless acceptance.
+`--with-web-functional` implies `--require-web` and adds final installed
+application/platform acceptance after the source/build checks. Set
+`HFCACHE_WEB_FUNCTIONAL_MANIFEST` to the explicit absolute protected fixture
+manifest path; there is no ambient fixture discovery or credential environment
+input. The flag always runs all profiles with `--final`, requiring every
+acceptance case with no required skip or pending result. Missing provisioned
+prerequisites fail before the source gate. The preliminary browser smoke does
+not establish Caddy, authentication, API, worker, helper or installed
+native/rootless acceptance.
 
 Application safety checks raise exceptions instead of relying on assertions.
 Keep durable-format golden fixtures and checkpoint-contract tests synchronized
@@ -184,10 +189,13 @@ investigating a later passing run.
 Component coverage is retained in each run's `component-*/coverage/` directory,
 so a later run cannot overwrite its coverage evidence.
 
-`test:browser` exercises the production-built shell and keyboard navigation in
-the pinned Chromium on an owned loopback fixture, including desktop/mobile axe
-scans and semantic navigation checks. It retains an explicit
-development-preview status and makes no API, archive or credential request.
+`test:browser` exercises the production-built startup refusal and inert fallback
+in pinned Chromium on an owned loopback fixture, with desktop/mobile axe scans
+and a keyboard-accessible reload link. No successful bootstrap or connected
+domain values are fabricated: one route returns no bootstrap, and another
+deliberately lacks its main JavaScript chunk. Both must preserve useful HTML
+without mounting the authenticated application. There is no archive or
+credential request.
 The wrapper owns the sandboxed Chromium process and loopback listeners, closes
 them on success or failure and waits for the exact browser process to exit.
 Failed or timed-out cleanup fails the check; preserve its evidence for diagnosis.
@@ -267,6 +275,74 @@ boundary only; it does not replace same-Caddy/TLS, Basic or installed native/
 rootless acceptance. The [troubleshooting guide](web-ui/troubleshooting.md)
 explains the visible read states.
 
+### Installed shared-Caddy functional fixture
+
+Inspect the runtime-free interface with:
+
+```bash
+python -S scripts/check-web-functional.py --help
+```
+
+The runner accepts `--profile application|platform|all --manifest ABSOLUTE_JSON`
+and optional `--workspace NEW_OWNED_SCRATCH_DIR` and `--final`. Platform selects
+both native and rootless deployments. Each selected profile runs empty and
+`/management` prefixes in Chromium, Firefox and WebKit through real Caddy/TLS,
+one installed API over Unix and actual restricted workers. Node-side bearer
+REST/MCP compatibility requests run concurrently with the authenticated browser;
+page JavaScript receives no bearer or password. No route interception, TLS ignore,
+frontend server, dependency download or production binding is permitted.
+
+Provision an explicitly owned isolated guest before invocation. Its protected
+manifest binds the exact source/wheel/installed bytes, built artifact, guest
+boot, Caddy origin/configuration, private-CA trust, pinned browser/tool closure,
+fixed role launchers and confined image identities. The negative browser profile
+must refuse the same Caddy certificate before the trusted profile succeeds.
+Role proof must record actual PID/start identities, worker-origin denials,
+listener/peer facts, API lifecycle/pool/stream drains and exact browser/container
+termination. A process wrapper exiting or a released lock is insufficient.
+
+Rootless capability proof preserves raw engine inspection metadata. The pinned
+fixture may report literal `ALL` or its exact measured eleven-name expansion;
+it must not rewrite that list or accept arbitrary capability lists. The original
+create request still drops ALL with no capability addition, and the actual role
+process must have zero effective and bounding capabilities. All existing
+identity, namespace, seccomp, mount and lifecycle checks remain required. A
+validator correction needs new source/gate evidence and fresh installed runs;
+unchanged package or asset bytes retain their original build provenance.
+
+Caddy listener evidence preserves raw kernel family/address rows. Native paths
+remain on their configured IPv4 loopback origin. Within the rootless container,
+the private proof admits only TCP with optional UDP at either IPv4 wildcard
+`0.0.0.0:8443` or IPv6 wildcard `[::]:8443`, without mixing or normalizing families.
+Rows have closed fields/types and unique protocols/kernel inodes. This does not
+change the outer host's `127.0.0.1` publication, strict private-CA/IP TLS checks,
+Caddy configuration or existing isolation/drain requirements. Missing historical
+observations stay missing; proof-validator changes need fresh source/gate and
+installed acceptance while unchanged artifacts retain their build provenance.
+
+Static-stream checks distinguish three observations: an ASGI send call returning,
+the original HTTP protocol submitting bytes, and the client receiving bytes.
+A normal return after disconnect may submit nothing. The fixture must retain raw
+call outcomes, passively bind the original protocol state and independently
+observe client cancellation/deadline behavior; it must not alter send/receive or
+transport-write behavior to fit a counter. Real stalled sends and exact resource
+drains remain required alongside those observations.
+
+During feature development, invoke the runner directly without `--final` to run
+all currently implemented cases and retain an explicit pending-case list. That
+result is partial evidence. The final gate is:
+
+```bash
+HFCACHE_WEB_FUNCTIONAL_MANIFEST=/absolute/owned/fixture.json \
+  scripts/check.sh --require-web --with-build --with-web-functional
+```
+
+The final flag never accepts the partial mode. Unique reports and failed
+attempts remain under the selected owned workspace. Missing dependencies,
+malformed manifests, unknown resources, timeouts, unclosed roles and pending
+required cases fail honestly. Synthetic ordinary-file fixture metadata proves
+local behavior; it does not establish live NAS or production acceptance.
+
 ## Offline tests
 
 The default suite is hermetic and removes ambient Hub credentials. Inject a
@@ -335,6 +411,18 @@ unexplained AVCs, DNS/TLS/NFS/hash/Xet under hardening, and rollback. Inspect th
 actual verifier's no-IP and credential masks, actual API-container peer access,
 TLS/firewall and state-retaining drain. Repository tests cannot supply those
 observations. See [recorded deployment restrictions](deployment-status.md).
+
+Distinguish socket refusal from packet filtering when proving verifier network
+isolation. A bounded TCP timeout or missing errno alone proves neither denial
+nor a successful connection. Native acceptance binds the actual worker process,
+cgroup and network namespace to verified ingress/egress deny programs before
+and after fresh attempts, successful same-UID/same-namespace positive controls,
+and continuous listener observations with no accepted worker connection.
+Rootless acceptance pins the actual applied AF_UNIX-only seccomp policy and its
+configured denial errno, proves socket-family availability with the same image
+and kernel under the stock policy, and observes successful AF_UNIX creation in
+the restricted worker. Unknown outcomes, changed bindings or missing controls
+refuse acceptance; do not change isolation to make a probe pass.
 
 ## Examples and documentation
 

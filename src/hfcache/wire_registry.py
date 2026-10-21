@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, create_model
 
+from hfcache import ui_models
 from hfcache import wire_models as payloads
 from hfcache.catalog_query_models import (
     CatalogDetailPayload,
@@ -52,6 +53,14 @@ AUTHORITIES.update(
     if isinstance(value, type)
     and issubclass(value, BaseModel)
     and value.__module__ == payloads.__name__
+)
+AUTHORITIES.update(
+    (name, value)
+    for name, value in vars(ui_models).items()
+    if name.startswith("Ui")
+    and name != "UiModel"
+    and isinstance(value, type)
+    and issubclass(value, BaseModel)
 )
 
 
@@ -110,6 +119,17 @@ def _read(  # noqa: PLR0913 - fixed route declaration grammar
 
 
 READ_ROUTES = (
+    Route(
+        "ui_bootstrap",
+        "GET",
+        "/ui/bootstrap.json",
+        "default",
+        "ui_bootstrap",
+        (),
+        "UiBootstrap",
+        failure=(),
+        binding_ids=("ui.bootstrap",),
+    ),
     _read("version", "/version", "version", "VersionPayload"),
     _read("capabilities", "/capabilities", "capabilities", "Capabilities"),
     _read("health", "/health", "health", "HealthPayload"),

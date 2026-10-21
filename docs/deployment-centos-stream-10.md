@@ -25,11 +25,26 @@ records actual UID/network/mount/state/secret boundaries.
 ## Prerequisites and identities
 
 The unreleased replacement UI's [administrator provisioning guide](web-ui/deployment.md)
-describes its optional protected hash source, exact HTTPS origin and separate
-native/rootless delivery. Static assets belong in the existing pinned UBI 10 micro
-API image behind the same Caddy; no frontend image/server or runtime Node is
-introduced. These source requirements do not alter the installed release or
-authorize credential/service changes. Basic stays disabled when unconfigured.
+describes its optional protected hash source, exact HTTPS origin, explicit
+`[web]` asset selection and separate native/rootless delivery. Unreleased source
+now serves authenticated `/ui/` only when enabled with a matching protected
+artifact and manifest hash. Static assets belong in the existing pinned UBI 10
+micro API image behind the same existing Caddy and Unix upstream; no frontend
+image/server or runtime Node is introduced. Caddy must not acquire a global
+Basic gate or administrator record. These source requirements do not alter the
+installed release or authorize credential/service changes. Basic and web remain
+disabled when unconfigured; current release installers do not yet stage the new
+asset tree automatically.
+
+For a reviewed candidate, use a local immutable artifact disjoint from archive,
+configuration, credentials, state, sockets, locks and configured application TLS
+material, with root/service-owned nonwritable ancestors and no symlinks. The API
+validates identity and captures bytes before operation-store/runner admission;
+missing or changed enabled artifacts refuse startup. Replacement requires a
+drained restart. See the [shared-Caddy/prefix procedure](web-ui/deployment.md#keep-the-existing-caddy-boundary)
+and [startup troubleshooting](web-ui/troubleshooting.md#interface-startup-and-release-changes).
+An owned fixture result binds its exact source/wheel/assets/profile. Clean release
+packaging, migration, Cockpit retirement and production rollout remain separate.
 
 Provision the NAS dataset, exact-host writer export, disjoint read-only consumer
 export, quota, snapshots/replication/scrub and service identities first; see
@@ -219,9 +234,50 @@ Install/review the native API and verification service/socket pairs plus schedul
 client services/timers and target/mount integration. API activation requires the
 exact configured Unix/optional TCP listener set named `hfcache-api`; worker
 activation requires the named FD3 listener `hfcache-verification`. Peer identity
-comes from the service account or trusted explicit settings, never manager `%U`.
+and filesystem socket ownership are independently configured below, never
+inferred from manager `%U` or a universal numeric service UID.
 Disabling TCP requires both server policy and a socket drop-in resetting listeners
 consistently. One API application adopts all configured descriptors.
+
+### Native verifier identity
+
+The system manager creates the private listener, then passes it to the original
+unprivileged worker. The socket file remains owned by `SocketUser`; Linux kernel
+peer credentials identify the listener creator. In this native profile, configure
+both server settings deliberately:
+
+| Server setting | Required native value |
+| --- | --- |
+| `verification.expected_peer_uid` | `0`, the system manager's kernel peer UID |
+| `verification.expected_socket_owner_uid` | The measured numeric UID of the actual worker/`SocketUser` account |
+
+Inspect the effective service and socket units, including drop-ins, before
+choosing the owner. For the shipped `hfcache` account, the following are read-only
+checks; substitute the actual account and path when the reviewed units differ:
+
+```bash
+systemctl show hfcache-verification.service --property=User --property=Group --no-pager
+systemctl cat hfcache-verification.socket
+id -u hfcache
+stat -c 'socket owner UID=%u mode=%a' /run/hfcache/verification.sock
+```
+
+Use the numeric account result, and verify that the existing socket agrees.
+Setting only peer UID `0` while omitting the owner still expects a root-owned
+node: omission preserves the previous resolved-peer ownership rule. Do not
+change the node to root ownership, replace the acceptor or relax no-follow,
+mode, peer or SELinux checks to hide a mismatch. The original worker requires
+its own ownership of the manager-created node and its exact named FD3.
+
+These settings require a reviewed drained restart and a server version that
+supports the explicit owner field. They do not modify running configuration.
+Rootless worker-created listeners retain their existing equal owner/peer policy
+and can leave the new setting omitted. Require an actual connection from the
+API process to the original worker; a host-side probe or account lookup alone
+does not establish installed connectivity. See
+[client policy](server.md#private-verifier-client-settings),
+[private IPC security](security.md#confined-private-listener-ownership) and
+[decision 148](adr/decision-148.md).
 
 Existing archives must not be initialized again. Initialization is a separately
 confirmed writer operation behind a disabled-by-default initialization-only gate,
@@ -277,6 +333,7 @@ readers before switching. Preserve all independent compatibility domains:
 | API receipts and scheduled handles | Retain separate stores/handles and a compatible observer/reconciler; absent old commands/modules never prove nonexecution |
 | Tags and supplemental discovery | Old strict configs refuse even empty tags; old initialization inspection flags the optional namespace, while ordinary inventory can remain readable. Old client receipt allowlists refuse refresh kinds although generic stores preserve them. Require actual target validation, preserved backups/handles and a compatible observer; never delete evidence to force acceptance. See [observed compatibility](discovery.md#observed-pre-feature-compatibility). |
 | Optional MCP | Disable deliberately before server-only/pre-MCP startup; no automatic fallback or schema migration |
+| Explicit verifier socket owner | An older strict server rejects the new configuration key. Validate the intended target with a preserved compatible server configuration before selection; do not change socket ownership or discard operation state to force rollback. |
 | Rootless 0.2.0 | Recorded API-to-worker SELinux connection limitation returns; do not weaken policy to bypass it |
 
 Native switch refuses retained scheduled handles if target Python lacks

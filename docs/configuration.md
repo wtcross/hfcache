@@ -463,6 +463,24 @@ credentials have separate sources and authority. Independent client configuratio
 contains only connection/authentication settings and never grants archive access
 on the client host.
 
+The optional `[basic]` administrator and `[web]` artifact settings also belong
+only in this server configuration. `[web]` defaults to disabled. Enabling it
+requires Basic plus an explicit protected local `asset_root` and the lowercase
+SHA256 `manifest_sha256` of its canonical manifest. The captured artifact must
+match the installed application and wire authority; it cannot overlap archive,
+configuration, state, credential delivery, sockets, locks or configured TLS
+material. These settings are restart-only and do not select or install a release.
+See [web deployment](web-ui/deployment.md#select-a-matching-immutable-asset-artifact)
+for the complete procedure and limits. With web disabled, optional retained asset
+settings cause no asset or mount reads.
+
+`listener.root_path` refuses a leading `//`; the existing normalized-prefix rules
+otherwise remain. Enabled web additionally limits the prefix to 1,024 UTF-8 bytes
+and the Basic HTTPS origin to 4,096 bytes. Trusted redirect and acknowledgment
+Location headers encode accepted URL characters; operation links in JSON retain
+their original raw identity. This is not a configuration reload or a grant of
+new path support to an older client.
+
 Server transport and authentication are loaded at startup and change only after
 operator replacement and restart. Archive policy is loaded and validated afresh
 for each query or operation admission, yielding one immutable snapshot and its

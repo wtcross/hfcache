@@ -13,6 +13,11 @@ import {
 } from "./manifest-semantics";
 import { contextSemanticIds } from "../api/bindings";
 import { pythonIsPrintable } from "./unicode";
+import {
+    applyUiSemantic,
+    uiSemanticIds,
+    uiContextSemanticIds,
+} from "./ui-semantics";
 
 function check(condition: boolean): void {
     if (!condition) throw new WireError("semantic");
@@ -252,9 +257,15 @@ export const implementedSemanticIds: readonly string[] = [
     ...catalogSemanticIds,
     ...manifestSemanticIds,
     ...contextSemanticIds,
+    ...uiSemanticIds,
+    ...uiContextSemanticIds,
 ];
 
 export function applySemantic(id: string, value: unknown): void {
+    if (uiSemanticIds.includes(id)) {
+        applyUiSemantic(id, value);
+        return;
+    }
     if (catalogSemanticIds.includes(id)) {
         applyCatalogSemantic(id, value);
         return;

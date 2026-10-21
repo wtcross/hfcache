@@ -31,6 +31,7 @@ from hfcache.services.candidates import (
 from hfcache.services.commands import CommandServices, DoctorRequest, SelectionRequest
 from hfcache.services.context import ServiceResult
 from hfcache.services.queries import validate_config
+from hfcache.url_paths import uri_path
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -109,7 +110,7 @@ def _accepted(request: Request, admission: Admission, server: ServerConfig) -> R
         body,
         status_code=202,
         media_type="application/json",
-        headers={"Location": redact_text(location)},
+        headers={"Location": uri_path(redact_text(location))},
     )
 
 

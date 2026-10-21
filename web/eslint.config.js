@@ -18,7 +18,7 @@ export default tseslint.config(
     { ...js.configs.recommended, files: ["*.js"] },
     {
         ...js.configs.recommended,
-        files: ["test/auth-api/*.mjs"],
+        files: ["test/auth-api/*.mjs", "test/functional-api/*.mjs"],
         languageOptions: {
             globals: {
                 process: "readonly",
@@ -29,6 +29,10 @@ export default tseslint.config(
                 fetch: "readonly",
                 FormData: "readonly",
                 document: "readonly",
+                TextDecoder: "readonly",
+                localStorage: "readonly",
+                sessionStorage: "readonly",
+                console: "readonly",
             },
         },
     },

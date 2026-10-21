@@ -1,4 +1,6 @@
-/** Generated from source digest 98d30c358db72cc30bc8dc7c69193ae254f830c68a4451bfe04ef5212ca6a44c. Run generate:wire; do not edit. */
+/** Generated from source digest 10883335765763832f4e0aa564d5fcff1a0fcc20e41f245f16d70ce640c11be2. Run generate:wire; do not edit. */
+export const WIRE_SOURCE_DIGEST =
+    "10883335765763832f4e0aa564d5fcff1a0fcc20e41f245f16d70ce640c11be2";
 import {
     wireObject,
     wireRequestObject,
@@ -852,6 +854,101 @@ export type SourceObservation = {
 export type StatusPayload = {
     readonly ["archive"]: ReachableArchivePayload | UnreachableArchivePayload;
     readonly ["repositories"]: readonly RepositoryStatusPayload[];
+};
+export type UiAdminPermission = {
+    readonly ["capability"]:
+        | "config-read"
+        | "config-write"
+        | "host-read"
+        | "observer-stop"
+        | "schedule-write";
+    readonly ["granted"]: boolean;
+    readonly ["effective"]: boolean;
+    readonly ["reason"]: "allowed" | "not_granted" | "feature_unavailable";
+};
+export type UiAssetManifest = {
+    readonly ["schema_version"]: 1;
+    readonly ["kind"]: "hfcache_web_assets";
+    readonly ["build"]: UiBuildMetadata;
+    readonly ["entrypoint"]: "index.html";
+    readonly ["meta_identity"]: UiHtmlMetaIdentity;
+    readonly ["members"]: readonly UiAssetMember[];
+};
+export type UiAssetMember = {
+    readonly ["path"]: string;
+    readonly ["bytes"]: number;
+    readonly ["sha256"]: string;
+    readonly ["mime"]:
+        | "text/html"
+        | "text/css"
+        | "text/javascript"
+        | "application/json"
+        | "image/png"
+        | "image/webp"
+        | "font/woff2"
+        | "text/plain";
+};
+export type UiBootstrap = {
+    readonly ["schema_version"]: 1;
+    readonly ["kind"]: "hfcache_ui_bootstrap";
+    readonly ["ui_contract_version"]: 1;
+    readonly ["rest_api_schema_version"]: 1;
+    readonly ["wire_source_digest"]: string;
+    readonly ["instance_id"]: string;
+    readonly ["authority_epoch"]: string;
+    readonly ["configured_archive_id"]: string;
+    readonly ["archive_identity_source"]: "installed_policy";
+    readonly ["config_fingerprint"]: null;
+    readonly ["configured_origin"]: string;
+    readonly ["paths"]: UiPaths;
+    readonly ["user"]: UiUser;
+    readonly ["build"]: UiBuildIdentity;
+};
+export type UiBuildIdentity = {
+    readonly ["asset_manifest_sha256"]: string;
+    readonly ["metadata"]: UiBuildMetadata;
+};
+export type UiBuildMetadata = {
+    readonly ["application_version"]: string;
+    readonly ["source_commit"]: string;
+    readonly ["source_snapshot_sha256"]: string;
+    readonly ["source_dirty"]: boolean;
+    readonly ["ui_contract_version"]: 1;
+    readonly ["rest_api_schema_version"]: 1;
+    readonly ["wire_source_digest"]: string;
+    readonly ["pnpm_lock_sha256"]: string;
+    readonly ["toolchain"]: UiToolchain;
+    readonly ["toolchain_sha256"]: string;
+    readonly ["licenses_sha256"]: string;
+    readonly ["notices_sha256"]: string;
+};
+export type UiHtmlMetaIdentity = {
+    readonly ["ui_base"]: "__HFCACHE_UI_BASE_V1__";
+    readonly ["bootstrap_path"]: "__HFCACHE_UI_BOOTSTRAP_V1__";
+    readonly ["asset_fingerprint"]: "__HFCACHE_UI_FINGERPRINT_V1__";
+    readonly ["ui_contract"]: "__HFCACHE_UI_CONTRACT_V1__";
+};
+export type UiPaths = {
+    readonly ["public_prefix"]: string;
+    readonly ["effective_prefix"]: string;
+    readonly ["ui_base"]: string;
+    readonly ["bootstrap"]: string;
+    readonly ["api_base"]: string;
+    readonly ["mcp_base"]: string | null;
+};
+export type UiToolchain = {
+    readonly ["node"]: string;
+    readonly ["pnpm"]: string;
+    readonly ["typescript"]: string;
+    readonly ["vite"]: string;
+};
+export type UiUser = {
+    readonly ["subject"]: string;
+    readonly ["display_name"]: string;
+    readonly ["authentication_method"]: "basic";
+    readonly ["credential_class"]: "rest-writer";
+    readonly ["rest_capabilities"]: readonly ("read" | "write")[];
+    readonly ["admin_permissions"]: readonly UiAdminPermission[];
 };
 export type UnavailableHealthPayload = {
     readonly ["ready"]: true;
@@ -5341,6 +5438,412 @@ export function decodeStatusPayload(value: unknown): StatusPayload {
         });
     })(value);
 }
+export function decodeUiAdminPermission(value: unknown): UiAdminPermission {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "capability",
+                "granted",
+                "effective",
+                "reason",
+            ]);
+            return Object.freeze({
+                ["capability"]: wireUnion<
+                    | "config-read"
+                    | "config-write"
+                    | "host-read"
+                    | "observer-stop"
+                    | "schedule-write"
+                >(object["capability"], [
+                    (member: unknown) => wireLiteral(member, "config-read"),
+                    (member: unknown) => wireLiteral(member, "config-write"),
+                    (member: unknown) => wireLiteral(member, "host-read"),
+                    (member: unknown) => wireLiteral(member, "observer-stop"),
+                    (member: unknown) => wireLiteral(member, "schedule-write"),
+                ]),
+                ["granted"]: wireBoolean(object["granted"]),
+                ["effective"]: wireBoolean(object["effective"]),
+                ["reason"]: wireUnion<
+                    "allowed" | "not_granted" | "feature_unavailable"
+                >(object["reason"], [
+                    (member: unknown) => wireLiteral(member, "allowed"),
+                    (member: unknown) => wireLiteral(member, "not_granted"),
+                    (member: unknown) =>
+                        wireLiteral(member, "feature_unavailable"),
+                ]),
+            });
+        })(value),
+        ["hfcache.ui_models.UiAdminPermission._permission"],
+    );
+}
+export function decodeUiAssetManifest(value: unknown): UiAssetManifest {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "kind",
+                "build",
+                "entrypoint",
+                "meta_identity",
+                "members",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.ui_models._one"],
+                ),
+                ["kind"]: wireLiteral(object["kind"], "hfcache_web_assets"),
+                ["build"]: decodeUiBuildMetadata(object["build"]),
+                ["entrypoint"]: wireLiteral(object["entrypoint"], "index.html"),
+                ["meta_identity"]: decodeUiHtmlMetaIdentity(
+                    object["meta_identity"],
+                ),
+                ["members"]: wireArray(
+                    object["members"],
+                    (member: unknown) => decodeUiAssetMember(member),
+                    1,
+                    4096,
+                ),
+            });
+        })(value),
+        ["hfcache.ui_models.UiAssetManifest._members"],
+    );
+}
+export function decodeUiAssetMember(value: unknown): UiAssetMember {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "path",
+                "bytes",
+                "sha256",
+                "mime",
+            ]);
+            return Object.freeze({
+                ["path"]: checked(
+                    wireString(object["path"], null, null, null),
+                    ["hfcache.ui_models._asset_path"],
+                ),
+                ["bytes"]: wireInteger(object["bytes"], "0", "8388608"),
+                ["sha256"]: checked(
+                    wireString(object["sha256"], null, null, null),
+                    ["hfcache.models._parse_sha256"],
+                ),
+                ["mime"]: wireUnion<
+                    | "text/html"
+                    | "text/css"
+                    | "text/javascript"
+                    | "application/json"
+                    | "image/png"
+                    | "image/webp"
+                    | "font/woff2"
+                    | "text/plain"
+                >(object["mime"], [
+                    (member: unknown) => wireLiteral(member, "text/html"),
+                    (member: unknown) => wireLiteral(member, "text/css"),
+                    (member: unknown) => wireLiteral(member, "text/javascript"),
+                    (member: unknown) =>
+                        wireLiteral(member, "application/json"),
+                    (member: unknown) => wireLiteral(member, "image/png"),
+                    (member: unknown) => wireLiteral(member, "image/webp"),
+                    (member: unknown) => wireLiteral(member, "font/woff2"),
+                    (member: unknown) => wireLiteral(member, "text/plain"),
+                ]),
+            });
+        })(value),
+        ["hfcache.ui_models.UiAssetMember._member"],
+    );
+}
+export function decodeUiBootstrap(value: unknown): UiBootstrap {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "kind",
+                "ui_contract_version",
+                "rest_api_schema_version",
+                "wire_source_digest",
+                "instance_id",
+                "authority_epoch",
+                "configured_archive_id",
+                "archive_identity_source",
+                "config_fingerprint",
+                "configured_origin",
+                "paths",
+                "user",
+                "build",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.ui_models._one"],
+                ),
+                ["kind"]: wireLiteral(object["kind"], "hfcache_ui_bootstrap"),
+                ["ui_contract_version"]: checked(
+                    wireLiteral(object["ui_contract_version"], 1),
+                    ["hfcache.ui_models._one"],
+                ),
+                ["rest_api_schema_version"]: checked(
+                    wireLiteral(object["rest_api_schema_version"], 1),
+                    ["hfcache.ui_models._one"],
+                ),
+                ["wire_source_digest"]: checked(
+                    wireString(object["wire_source_digest"], null, null, null),
+                    ["hfcache.models._parse_sha256"],
+                ),
+                ["instance_id"]: checked(
+                    wireString(object["instance_id"], null, null, null),
+                    ["hfcache.ui_models._instance"],
+                ),
+                ["authority_epoch"]: checked(
+                    wireString(object["authority_epoch"], null, null, null),
+                    ["hfcache.ui_models._instance"],
+                ),
+                ["configured_archive_id"]: checked(
+                    wireString(
+                        object["configured_archive_id"],
+                        null,
+                        null,
+                        null,
+                    ),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["archive_identity_source"]: wireLiteral(
+                    object["archive_identity_source"],
+                    "installed_policy",
+                ),
+                ["config_fingerprint"]: wireNull(object["config_fingerprint"]),
+                ["configured_origin"]: checked(
+                    wireString(object["configured_origin"], null, null, null),
+                    ["hfcache.ui_models._origin"],
+                ),
+                ["paths"]: decodeUiPaths(object["paths"]),
+                ["user"]: decodeUiUser(object["user"]),
+                ["build"]: decodeUiBuildIdentity(object["build"]),
+            });
+        })(value),
+        ["hfcache.ui_models.UiBootstrap._bootstrap"],
+    );
+}
+export function decodeUiBuildIdentity(value: unknown): UiBuildIdentity {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["asset_manifest_sha256", "metadata"]);
+        return Object.freeze({
+            ["asset_manifest_sha256"]: checked(
+                wireString(object["asset_manifest_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["metadata"]: decodeUiBuildMetadata(object["metadata"]),
+        });
+    })(value);
+}
+export function decodeUiBuildMetadata(value: unknown): UiBuildMetadata {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "application_version",
+            "source_commit",
+            "source_snapshot_sha256",
+            "source_dirty",
+            "ui_contract_version",
+            "rest_api_schema_version",
+            "wire_source_digest",
+            "pnpm_lock_sha256",
+            "toolchain",
+            "toolchain_sha256",
+            "licenses_sha256",
+            "notices_sha256",
+        ]);
+        return Object.freeze({
+            ["application_version"]: checked(
+                wireString(object["application_version"], null, 128, null),
+                ["hfcache.ui_models._ascii"],
+            ),
+            ["source_commit"]: checked(
+                wireString(object["source_commit"], null, null, null),
+                ["hfcache.identity.parse_commit_sha"],
+            ),
+            ["source_snapshot_sha256"]: checked(
+                wireString(object["source_snapshot_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["source_dirty"]: wireBoolean(object["source_dirty"]),
+            ["ui_contract_version"]: checked(
+                wireLiteral(object["ui_contract_version"], 1),
+                ["hfcache.ui_models._one"],
+            ),
+            ["rest_api_schema_version"]: checked(
+                wireLiteral(object["rest_api_schema_version"], 1),
+                ["hfcache.ui_models._one"],
+            ),
+            ["wire_source_digest"]: checked(
+                wireString(object["wire_source_digest"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["pnpm_lock_sha256"]: checked(
+                wireString(object["pnpm_lock_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["toolchain"]: decodeUiToolchain(object["toolchain"]),
+            ["toolchain_sha256"]: checked(
+                wireString(object["toolchain_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["licenses_sha256"]: checked(
+                wireString(object["licenses_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["notices_sha256"]: checked(
+                wireString(object["notices_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+        });
+    })(value);
+}
+export function decodeUiHtmlMetaIdentity(value: unknown): UiHtmlMetaIdentity {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "ui_base",
+            "bootstrap_path",
+            "asset_fingerprint",
+            "ui_contract",
+        ]);
+        return Object.freeze({
+            ["ui_base"]: wireLiteral(
+                object["ui_base"],
+                "__HFCACHE_UI_BASE_V1__",
+            ),
+            ["bootstrap_path"]: wireLiteral(
+                object["bootstrap_path"],
+                "__HFCACHE_UI_BOOTSTRAP_V1__",
+            ),
+            ["asset_fingerprint"]: wireLiteral(
+                object["asset_fingerprint"],
+                "__HFCACHE_UI_FINGERPRINT_V1__",
+            ),
+            ["ui_contract"]: wireLiteral(
+                object["ui_contract"],
+                "__HFCACHE_UI_CONTRACT_V1__",
+            ),
+        });
+    })(value);
+}
+export function decodeUiPaths(value: unknown): UiPaths {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "public_prefix",
+                "effective_prefix",
+                "ui_base",
+                "bootstrap",
+                "api_base",
+                "mcp_base",
+            ]);
+            return Object.freeze({
+                ["public_prefix"]: checked(
+                    wireString(object["public_prefix"], null, null, null),
+                    ["hfcache.ui_models._prefix"],
+                ),
+                ["effective_prefix"]: checked(
+                    wireString(object["effective_prefix"], null, null, null),
+                    ["hfcache.ui_models._prefix"],
+                ),
+                ["ui_base"]: checked(
+                    wireString(object["ui_base"], null, 3076, null),
+                    ["hfcache.ui_models._ascii"],
+                ),
+                ["bootstrap"]: checked(
+                    wireString(object["bootstrap"], null, 3090, null),
+                    ["hfcache.ui_models._ascii"],
+                ),
+                ["api_base"]: checked(
+                    wireString(object["api_base"], null, 3079, null),
+                    ["hfcache.ui_models._ascii"],
+                ),
+                ["mcp_base"]: wireUnion<string | null>(object["mcp_base"], [
+                    (member: unknown) =>
+                        checked(wireString(member, null, 3077, null), [
+                            "hfcache.ui_models._ascii",
+                        ]),
+                    (member: unknown) => wireNull(member),
+                ]),
+            });
+        })(value),
+        ["hfcache.ui_models.UiPaths._paths"],
+    );
+}
+export function decodeUiToolchain(value: unknown): UiToolchain {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "node",
+            "pnpm",
+            "typescript",
+            "vite",
+        ]);
+        return Object.freeze({
+            ["node"]: checked(wireString(object["node"], null, 64, null), [
+                "hfcache.ui_models._ascii",
+            ]),
+            ["pnpm"]: checked(wireString(object["pnpm"], null, 64, null), [
+                "hfcache.ui_models._ascii",
+            ]),
+            ["typescript"]: checked(
+                wireString(object["typescript"], null, 64, null),
+                ["hfcache.ui_models._ascii"],
+            ),
+            ["vite"]: checked(wireString(object["vite"], null, 64, null), [
+                "hfcache.ui_models._ascii",
+            ]),
+        });
+    })(value);
+}
+export function decodeUiUser(value: unknown): UiUser {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "subject",
+                "display_name",
+                "authentication_method",
+                "credential_class",
+                "rest_capabilities",
+                "admin_permissions",
+            ]);
+            return Object.freeze({
+                ["subject"]: checked(
+                    wireString(object["subject"], null, null, null),
+                    ["hfcache.ui_models._subject"],
+                ),
+                ["display_name"]: checked(
+                    wireString(object["display_name"], null, null, null),
+                    ["hfcache.ui_models._subject"],
+                ),
+                ["authentication_method"]: wireLiteral(
+                    object["authentication_method"],
+                    "basic",
+                ),
+                ["credential_class"]: wireLiteral(
+                    object["credential_class"],
+                    "rest-writer",
+                ),
+                ["rest_capabilities"]: wireArray(
+                    object["rest_capabilities"],
+                    (member: unknown) =>
+                        wireUnion<"read" | "write">(member, [
+                            (member: unknown) => wireLiteral(member, "read"),
+                            (member: unknown) => wireLiteral(member, "write"),
+                        ]),
+                    2,
+                    2,
+                ),
+                ["admin_permissions"]: wireArray(
+                    object["admin_permissions"],
+                    (member: unknown) => decodeUiAdminPermission(member),
+                    5,
+                    5,
+                ),
+            });
+        })(value),
+        ["hfcache.ui_models.UiUser._user"],
+    );
+}
 export function decodeUnavailableHealthPayload(
     value: unknown,
 ): UnavailableHealthPayload {
@@ -6032,6 +6535,26 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeSourceObservation(value);
         case "StatusPayload":
             return decodeStatusPayload(value);
+        case "UiAdminPermission":
+            return decodeUiAdminPermission(value);
+        case "UiAssetManifest":
+            return decodeUiAssetManifest(value);
+        case "UiAssetMember":
+            return decodeUiAssetMember(value);
+        case "UiBootstrap":
+            return decodeUiBootstrap(value);
+        case "UiBuildIdentity":
+            return decodeUiBuildIdentity(value);
+        case "UiBuildMetadata":
+            return decodeUiBuildMetadata(value);
+        case "UiHtmlMetaIdentity":
+            return decodeUiHtmlMetaIdentity(value);
+        case "UiPaths":
+            return decodeUiPaths(value);
+        case "UiToolchain":
+            return decodeUiToolchain(value);
+        case "UiUser":
+            return decodeUiUser(value);
         case "UnavailableHealthPayload":
             return decodeUnavailableHealthPayload(value);
         case "UnreachableArchivePayload":
@@ -6057,6 +6580,31 @@ export function decodeNamed(name: string, value: unknown): unknown {
     }
 }
 export const routeContracts = {
+    ui_bootstrap_default: {
+        method: "GET",
+        path: "/ui/bootstrap.json",
+        commands: [],
+        bindingIds: ["ui.bootstrap"],
+        responseKind: "ui_bootstrap",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeUiBootstrap,
+        decodeFailure: (_value: unknown): never => {
+            void _value;
+            throw new WireError("schema");
+        },
+        decodeBody: wireNull,
+    },
     version_default: {
         method: "GET",
         path: "/api/v1/version",
@@ -8185,6 +8733,21 @@ export function decodeOriginalOperationPayload(
     throw new WireError("semantic");
 }
 export const routeDefinitions = [
+    {
+        binding_ids: ["ui.bootstrap"],
+        commands: [],
+        cursor: "none",
+        failure: [],
+        id: "ui_bootstrap",
+        method: "GET",
+        mode: "default",
+        path: "/ui/bootstrap.json",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "ui_bootstrap",
+        success: "UiBootstrap",
+    },
     {
         binding_ids: [],
         commands: ["version"],

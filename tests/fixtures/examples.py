@@ -67,6 +67,7 @@ from hfcache.reporting import (
     VerificationScope,
 )
 from hfcache.scheduled_client import ScheduledObservation
+from tests.fixtures.ui_examples import ui_asset_manifest, ui_bootstrap
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 SHA = "0123456789abcdef0123456789abcdef01234567"
@@ -629,6 +630,8 @@ def publication_observation() -> PublicationObservation:
 
 
 EXAMPLES = {
+    "ui-asset-manifest": ui_asset_manifest,
+    "ui-bootstrap": ui_bootstrap,
     "protected-administrator": protected_administrator,
     "repository-tag-snapshot": tag_snapshot,
     "publication-observation": publication_observation,

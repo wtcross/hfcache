@@ -1,119 +1,78 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-test("built shell supports keyboard workspaces, deep reload and exact not-found routes", async ({
+test("built main refuses unavailable bootstrap and preserves a keyboard reload", async ({
     page,
     baseURL,
 }) => {
     if (baseURL === undefined)
-        throw new Error("The owned loopback fixture is required.");
-    const failures: string[] = [];
-    await page.route("**/*", async (route) => {
-        if (
-            !route
-                .request()
-                .url()
-                .startsWith(baseURL + "/")
-        ) {
-            failures.push("Forbidden external request.");
-            await route.abort();
-        } else await route.continue();
-    });
-    page.on("pageerror", (error) => {
-        failures.push(error.message);
-    });
+        throw new Error("The owned loopback refusal fixture is required.");
+    const external: string[] = [],
+        bootstraps: string[] = [];
     page.on("request", (request) => {
         if (!request.url().startsWith(baseURL + "/"))
-            failures.push("Unexpected external request.");
+            external.push(request.url());
+        if (request.url().endsWith("/bootstrap.json"))
+            bootstraps.push(request.url());
     });
     await page.goto("/ui/");
     await expect(
-        page.getByRole("heading", { level: 1, name: "Library" }),
+        page.getByRole("heading", { level: 1, name: "Starting hfcache" }),
     ).toBeVisible();
-    await expect(page.getByText("Archive not connected")).toBeVisible();
-    await page.keyboard.press("Tab");
     await expect(
-        page.getByRole("link", { name: "Skip to content" }),
-    ).toBeFocused();
-    await page.keyboard.press("Enter");
-    await expect(page.getByRole("main")).toBeFocused();
-    for (const label of [
-        "Operations",
-        "Maintenance",
-        "Administration",
-        "Library",
-    ]) {
-        const link = page.getByRole("link", { name: label });
-        await page.goto("/ui/");
-        const tabCount =
-            ["Library", "Operations", "Maintenance", "Administration"].indexOf(
-                label,
-            ) + 2;
-        for (let step = 0; step < tabCount; step += 1)
-            await page.keyboard.press("Tab");
-        await expect(link).toBeVisible();
-        await expect(link).toBeFocused();
-        await page.keyboard.press("Enter");
-        await expect(
-            page.getByRole("heading", { level: 1, name: label }),
-        ).toBeVisible();
-        await expect(page.getByRole("main")).toBeFocused();
-        await expect(link).toHaveAttribute("aria-current", "page");
-        await page.reload();
-        await expect(
-            page.getByRole("heading", { level: 1, name: label }),
-        ).toBeVisible();
-    }
-    for (const path of [
-        "/ui/assets/missing.js",
-        "/api/v1/missing",
-        "/mcp/",
-        "/ui/assets/../index.html",
-    ]) {
-        const response = await page.request.get(path);
-        expect(response.status()).toBe(404);
-    }
+        page.getByText(
+            "The interface could not start. Reload the interface or contact your operator.",
+            { exact: true },
+        ),
+    ).toBeVisible();
+    await expect(
+        page.getByText("Administrator session", { exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByRole("navigation")).toHaveCount(0);
+    await page.keyboard.press("Tab");
+    const reload = page.getByRole("link", { name: "Reload interface" });
+    await expect(reload).toBeFocused();
+    await expect(reload).toHaveAttribute("href", "./");
+    expect(bootstraps).toEqual([baseURL + "/ui/bootstrap.json"]);
+    expect(external).toEqual([]);
     const accessibility = await new AxeBuilder({ page }).analyze();
     expect(
         accessibility.violations.filter(
-            (violation) =>
-                violation.impact === "serious" ||
-                violation.impact === "critical",
+            (item) => item.impact === "serious" || item.impact === "critical",
         ),
     ).toEqual([]);
-    expect(failures).toEqual([]);
 });
 
-test("built mobile shell reveals labelled navigation without horizontal overflow", async ({
+test("missing built main chunk preserves inert fallback on a narrow viewport", async ({
     page,
     baseURL,
 }) => {
     if (baseURL === undefined)
-        throw new Error("The owned loopback fixture is required.");
-    const external: string[] = [];
-    await page.route("**/*", async (route) => {
-        if (
-            !route
-                .request()
-                .url()
-                .startsWith(baseURL + "/")
-        ) {
-            external.push("Forbidden external request.");
-            await route.abort();
-        } else await route.continue();
+        throw new Error("The owned loopback refusal fixture is required.");
+    const missing: string[] = [],
+        bootstraps: string[] = [];
+    page.on("response", (response) => {
+        if (response.url().endsWith(".js") && response.status() === 404)
+            missing.push(response.url());
+    });
+    page.on("request", (request) => {
+        if (request.url().endsWith("/bootstrap.json"))
+            bootstraps.push(request.url());
     });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/ui/");
-    await expect(page.getByRole("navigation")).toBeHidden();
-    await page.getByRole("button", { name: "Open navigation" }).click();
-    await expect(page.getByRole("navigation")).toBeVisible();
-    await page.getByRole("link", { name: "Operations" }).click();
+    await page.goto("/missing-script/ui/");
     await expect(
-        page.getByRole("heading", { level: 1, name: "Operations" }),
+        page.getByRole("heading", { level: 1, name: "Starting hfcache" }),
     ).toBeVisible();
     await expect(
-        page.getByRole("button", { name: "Open navigation" }),
-    ).toHaveAttribute("aria-expanded", "false");
+        page.getByText(/The interface has not started\./),
+    ).toBeVisible();
+    await expect(
+        page.getByRole("link", { name: "Reload interface" }),
+    ).toBeVisible();
+    await expect(page.getByRole("navigation")).toHaveCount(0);
+    expect(missing).toHaveLength(1);
+    expect(bootstraps).toEqual([]);
     expect(
         await page.evaluate(
             () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -122,10 +81,7 @@ test("built mobile shell reveals labelled navigation without horizontal overflow
     const accessibility = await new AxeBuilder({ page }).analyze();
     expect(
         accessibility.violations.filter(
-            (violation) =>
-                violation.impact === "serious" ||
-                violation.impact === "critical",
+            (item) => item.impact === "serious" || item.impact === "critical",
         ),
     ).toEqual([]);
-    expect(external).toEqual([]);
 });

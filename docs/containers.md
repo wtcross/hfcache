@@ -370,6 +370,15 @@ this fixed directory, and Caddy has no `/etc/hfcache` bind. Keep the record insi
 that reviewed directory. No additional secret or source read is required when
 Basic is disabled. See [protected provisioning](web-ui/deployment.md). Actual
 installed role isolation remains a release-acceptance obligation.
+The optional `[web]` artifact is public release material rather than a secret,
+but only the API captures/serves it after administrator authentication. It must
+remain separate from policy/credential delivery, API writable state, archive,
+sockets and locks, including physical bind aliases. Mounting a credential
+directory inside an asset tree is refused. Protected asset ancestors must be
+root or the actual mapped API identity and not group/other writable; host numeric
+UID assumptions are insufficient. Keep the established read-only root filesystem,
+SELinux and role mounts intact. Caddy receives neither an asset bind nor the
+administrator record, and worker/client roles need no asset authority.
 For a newly provisioned fixture, OCI setup must be able to traverse an empty host
 placeholder before installing its inaccessible mask. Verify the exact directory
 is root-owned, empty and not a symlink before assigning the intended public
@@ -452,12 +461,24 @@ policy enforcement; unrelated errors never constitute passing isolation.
 
 ## UBI 10 image inputs
 
-The web UI replacement retains this image boundary: built static UI assets will
+The web UI replacement retains this image boundary: built static UI assets must
 ship inside the existing API image based on pinned UBI 10 micro, with no separate
-frontend image or runtime Node/package manager. This is a packaging requirement;
-release packaging must prove ancestry, installed asset identity and runtime
-contents before claiming release acceptance. Browser test tooling is unshipped
-and does not determine the application base.
+frontend image or runtime Node/package manager. Optional source serving now
+requires an explicit matching artifact directory and pinned manifest hash; it
+does not add an asset COPY step to the current release builder. Release packaging
+must still bind a clean source build to the independently verified backend wheel
+and prove ancestry, installed asset identity and runtime contents before claiming
+release acceptance. Dirty owned fixtures remain labeled as such. Browser test
+tooling is unshipped and does not determine the application base.
+
+The same Caddy process forwards UI, REST and MCP to the existing Unix API
+upstream. Application-owned authentication protects every enabled UI path,
+including assets and errors; no Caddy-wide Basic gate or static file server is
+introduced. The API captures bounded immutable bytes at startup and does no
+request-time asset pathname reads. Disabled web reads no asset/mount information.
+See [artifact selection and deployment](web-ui/deployment.md) for ownership,
+identity, prefix and stream limits. Source checks or direct-TLS authentication
+tests alone do not establish installed shared-Caddy/native/rootless acceptance.
 
 [Decision 129](adr/decision-129.md) supersedes Debian/Alpine candidate bases. Every
 FROM stage in app/Caddy builds uses pinned UBI 10 micro. Actual micro supplies

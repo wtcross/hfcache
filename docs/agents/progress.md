@@ -29,6 +29,27 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-005 Serve authenticated assets through existing Caddy (2026-10-21,
+  this commit — [task](plans/tasks/web-005-shared-caddy-spa-serving.md)).
+  Actual source14/gate14, guest13/common21 original all-six/monitor0, independent
+  audit283e5818 and fresh compatibility483ed653 pass. Three engines/both prefixes/
+  application+native+rootless yield306trusted+18untrusted checks/zero skip or retry;
+  all131PID/start pairs,40groups,18containers and26endpoints close. Source gate:
+  6643Python/3wheels/572+110Cockpit/2756+2805web/2preliminary+14realread,
+  95.61%line/92.83%branch;1310 hashes/modes unchanged. Artifact4 retains source10
+  provenance with101package/44UI/two-build verification. SDK14MCPtools per
+  generation, Node14MCPtools and two REST credential classes per engine are
+  separate actual observations; no14REST-SDK claim. ADR147/148/149 and human
+  guides align. AUTH09/ROUTE01/04/05/07 full clauses pass; later ROUTE02/03/06
+  clauses, RELEASE03/WEB021 and all other unproved95-case rows remain pending.
+  Supplemental metricsv1 refuses its helper1MiB JSON decode limit; fresh v2's
+  explicit16MiB duplicate-rejecting decoder exits0 (receipt73321b0c…e36d), with
+  no workload replay/product change. Preserve both attempts and their source.
+  Final bookkeeping checks pass78 focused tests,202human/24helper docs and
+  whitespace; all1310 frozen source hashes/modes remain exact.
+  Preserve every failed/UNKNOWN/HOLD and pause/resumption. No production/NAS/
+  cleanrelease/retirement/publication claim. Next is WEB-006.
+
 - [x] WEB-004 Add bounded Basic administrator authentication (2026-10-20,
   this commit — [task](plans/tasks/web-004-basic-auth-and-permissions.md)).
   Optional protected Argon2id provider, canonical schema1 provisioning, separate
@@ -3059,6 +3080,728 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     guards, original candidates/backups/locks/stores/handles and live Cockpit
     remain unchanged. No production rollout, replay, cleanup or publication follows.
 
+    **WEB-005 completed scoped handoff (2026-10-21):** original common21
+    all-six normal monitor0/audit283e5818 and fresh bridge483ed653 pass against
+    guest13/artifact4, while host14/gate14 remains separately measured. All
+    recorded owned resources close; earlier UNKNOWN/failed/HOLDs are preserved.
+    WEB-006 is next, with no implementation claimed here. Later publication/card/
+    pagination/clean-release/full95 and production/remote/NAS/retirement work
+    remain pending under their own tasks and authority. Preserve the original
+    guests/candidates/backups/locks/stores/handles; no replay or cleanup follows.
+
+    **WEB-005 common21 actual start (2026-10-21UTC):** rootless21 installer
+    `6f84e4a2…2ac8` exits0/reaped74788, control SHA256
+    `a1e011325e3836150519127bba9684ae199ce9667a177ea1531bbeca6ea02b57`;
+    original canonical all-profile invocation starts10:46:36.459287UTC,
+    caller60032/start5697770/UID1000/session40789. Log is
+    `.scratch/web-005-common21-all-functional-v1.log`, with manifest21
+    `050b4abb1e1f9813417e6f6705779d4678a38f4808ab40696f6edb9b0c5e8379`
+    and native20 control
+    `b53e6816570e0d846c78048186bb395c5b1eb4a959e0413dccbd24579051afb2`.
+    Final-bound installer source checks pass6/zero skips; runtime all-six outcomes,
+    monitor success, independent normal closure and new compatibility receipt
+    remain pending. Source14/gate14, guest13/artifact4 and prior failed/UNKNOWN/
+    HOLD records are unchanged. No task/case completion is claimed.
+
+    **WEB-005 explicit resumption (2026-10-21):** Tyler resumes with “continue”.
+    Reactivate the dated web plan/current selector at incomplete, uncommitted
+    WEB-005. Preserve the pause checkpoint below and all failed/UNKNOWN/HOLD
+    evidence. Reconciled gate14/audit SHA256
+    `d80896c63f824cffb9ade963ed611481422bd5a346ef3c57538f311323b174d4`
+    establishes frozen host source14 acceptance only; all1310 hashes/modes remain
+    unchanged. Continue common21 private binding/review and fresh original
+    all-six acceptance with guest source13/artifact4 provenance unchanged.
+    Rootless21 provisioning/runtime and independent normal closure remain pending;
+    no successor, feature acceptance, production effect or publication is claimed.
+    A new successful common21/runtime13-to-host14 compatibility receipt must be
+    separate from the old bridge's unfulfilled common20-success condition.
+
+    **WEB-005 user-requested pause (2026-10-21):** Tyler requests a stopping
+    point and pause. The dated web plan is paused and the selector has no active
+    plan/task; WEB-005 remains in progress, uncommitted and acceptance-blocked.
+    Host source14 is frozen; the already-running strict gate14 exits0/reaped at
+    10:40:34.430894UTC in1202.869seconds,6643Python/3locked wheel profiles,
+    572+110Cockpit,2756unit/2805combined web,2preliminary/14real-API read browser
+    checks, no required skips/retries. Log SHA256
+    `49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe`;
+    independent audit exits0/empty stderr and rechecks1310 hashes/modes plus
+    seven closed processes, receipt SHA256
+    `d80896c63f824cffb9ade963ed611481422bd5a346ef3c57538f311323b174d4`.
+    All already-running checks are finished; work stops. This source gate is no
+    installed all-six acceptance. Guest source13/artifact4 and common20's original
+    failure/UNKNOWN, physical closure and completion HOLDs remain unchanged.
+    Common21 manifest preparation exits0/reaped46066, SHA256
+    `050b4abb1e1f9813417e6f6705779d4678a38f4808ab40696f6edb9b0c5e8379`;
+    native20 provisioning exits0/reaped48477, control SHA256
+    `b53e6816570e0d846c78048186bb395c5b1eb4a959e0413dccbd24579051afb2`,
+    no services started. Rootless21 is uninstalled; all common21 functional
+    execution is unstarted. Last read-only thread projection exits0 (log SHA256
+    `3b2335291f1b3ec8816a8eb8e3a1ba762581e037760b2aa8a18716e943e47cff`)
+    confirms no Basic/browser work and zero final authentication threads, so the
+    mandatory final inventory is unavailable before browser execution; no fix or
+    acceptance follows. Resume only on user instruction, beginning at WEB-005:
+    reconcile final gate/audit, remaining proof preflight and private bindings,
+    then require fresh all-six normal results, independent audit and a new
+    common21/runtime13-to-host14 compatibility receipt. Preserve the old
+    `02acce42…` bridge's unfulfilled common20 condition. No further preparation,
+    tests, binding, provisioning, role starts, commit or publication now.
+
+    **WEB-005 in-progress amendment (2026-10-20):** authenticated immutable
+    assets, strict bootstrap/build identity and shared-Caddy fixture sources are
+    implemented locally; this package is uncommitted and has no full functional
+    acceptance. Decision148 now addresses an actual baseline native identity
+    conflict: service-owned socket inode and root-manager kernel listener peer
+    cannot share the old single configured UID. The new strict explicit owner
+    setting preserves exact legacy defaults and all independent checks; no unit
+    ownership, mode, worker identity or peer assertion is changed. Source8/gate7
+    and package2/assets2 remain retained historical evidence. Changed audited
+    source requires fresh wire/build identity, wheel/assets, source gate and
+    installed profiles before completion. Native9's safe nested trace identifies
+    original API worker-availability refusal; it establishes no Caddy/browser
+    acceptance. Rootless9 proves originalworker20 originates from absent live
+    NOTIFY_SOCKET, with exact Podman6.1 create-time source evidence. The new
+    immutable manager-context creation correction is only an old-source startup
+    prerequisite; it does not forward any full-feature acceptance. All original
+    failures/cleanup_unknown records remain. Four actual installed
+    missing-assets/wrong-manifest refusal cases pass with independent exact
+    resource/seed/101-package-file postverification; they prove no Caddy/browser
+    acceptance. All original failed attempts remain retained. The older native6
+    collector's timeout/success ambiguity is preserved honestly; its record proves
+    neither successful connects nor denial. The guarded64-byte-UAPI query3 now
+    proves live attached diagnostic programs' translated deny semantics, with all15
+    exact process identities and endpoints drained. Its independent postverification
+    and canonical program recheck remain under
+    `.scratch/web-005-bpf-query-run-5b357ecd52e246f88784c3ab899ca119/`.
+    This is diagnosis only: actual worker PID/filter/control/listener conjunction
+    and application/native/rootless shared-Caddy acceptance remain required.
+
+    A same-image/kernel stock-policy control positively creates/closes all three
+    socket families and drains all4 exact processes/2cgroups. Rootless8 then
+    records genuine policy-bound socket-stage errno38 denials and an AF_UNIX
+    positive in generation `c80aced9b2204132965c58e301ed394b`, but the retained
+    private worker final record confirms original exit20 (fixture assertion gives
+    container exit1). API returns without its required composite startup
+    assertion or ready proof; the individual `started`/retained-object states
+    were not separately measured and await diagnosis. Caddy/browser do not start. Supplemental checks find all4 exact PIDs gone and
+    4 cgroups empty, while the original `cleanup_unknown` result remains unchanged.
+    Bounded evidence is retained; startup diagnosis remains pending. No blanket errno/timeout
+    acceptance or replacement isolation is authorized.
+
+    The fifth frozen gate passed6281Python plus retained Cockpit/web/build/read
+    checks. The sixth gate fails six stale mapped-identity test fixtures after
+    6358Python passes; its log and superseded snapshot remain. Corrected source8
+    snapshot `ad444c4834446cd323cffa4e42a7d0fcf4a33b07636081065f386e57a1d49b63`
+    binds runner `aedfe5dc…`. Gate7 exits0 in1172.025s with6401Python/52default
+    deselections, retained572/110Cockpit,2756unit/2805combined web, two startup/
+    14real-API read checks and all3 locked wheel profiles. Independent actual
+    seven-report/seven-closed-process audit rechecks all1306source hashes and
+    documentation; no required skips/retries. Native8's actual-worker packet
+    conjunction independently passes unchanged canonical source8 validation in
+    the private owned guest; original worker exits0. API fails its composite
+    startup assertion before Caddy/browser. Supplemental exact20-process/four-
+    cgroup/MainPID0/endpoint drain passes, while original normal `cleanup_unknown`
+    remains. The earlier host recheck's private-directory refusal is retained;
+    no mode or validator was weakened. Startup diagnosis and the missing
+    shared-Caddy/browser/stream/platform acceptance remain required.
+    Task WEB-005 owns exact evidence and
+    remains blocked on actual application/native/rootless shared-Caddy/browser/
+    stream acceptance. No completion entry or95-case acceptance claim follows.
+    The canonical service recipe remains pinned UBI10micro, with no frontend
+    runtime server; fresh release runtime contents, tool absence, asset ownership
+    and size proof remain WEB-021 work. Production and the five unrelated guests,
+    original candidates/backups/locks/stores/handles and all prior limits remain
+    unchanged. No deployment, replay, cleanup or publication follows.
+
+    **Common20 identity diagnosis and supplemental closure (2026-10-21UTC):**
+    Original source13 ready validation isolates `role_evidence3151` →
+    `detailed_role_evidence2701` → `origin_probe2230`: schema2 worker origin
+    publishes four proc identity fields instead of its closed PID/start pair.
+    All actual role/container checks precede this refusal. Private collector9
+    SHA256 `9080bcabde88f274cda765b49086c33c1f6656669da1c25f0371db680d503872`
+    changes only that serialized pair; full process/status/before-after, policy,
+    denial and Caddy1 facts remain. Its18 source regressions/zero skips establish
+    no installed correction. Source14/runner/tests stay unchanged; common21 is
+    an inert fresh fixture draft pending preflight/pins/required all-six execution.
+    Supplemental closure exits0/reaped, log SHA256
+    `9f2b50d3fc1e54974d508f88f107336f444b77644debdc7cd924a415ecb80873`:
+    117 identities gone/30 empty groups/11 stopped containers/25 refused endpoints,
+    guest source13/all1310 unchanged, four original normal results with204 trusted+
+    12 untrusted checks/zero skips. Original UNKNOWN, unexecuted sixth generation
+    and HOLD/ineligible completion20 evidence remain unchanged.
+
+    **Common20 failed rootless start (2026-10-21UTC):**
+    Actual exit1/reaped caller53981/start5428085, valid monitor/wait/identity closure
+    and no monitor errors; host log SHA256
+    `aad40a0b8a99b7418823450ed7058f679cb63f5e533fab7bf3e6a66f2ff735ed`.
+    Four original normal application/native results precede rootless/root
+    `c92fbf827bfb431592d8b0ab49d76be5` failing before browser. Saved raw tcp6/udp6
+    listeners at `::`:8443 match the new family predicate; the canonical failure
+    stage/cause is not yet established and no controller diagnostic is observed.
+    Original cleanup_unknown remains and prefixed rootless is unexecuted. Both
+    conditional bundles retain original payloads/REVIEW/nulls under HOLD; completed-
+    only auditor stays unexecuted/ineligible. Source14/gate14 continues unchanged.
+    Diagnosis/physical closure remain pending, with no product defect/correction
+    or all-six acceptance inferred.
+
+    **Final host source14 freeze and gate14 start (2026-10-21UTC):**
+    Actual1310-file/nine-prose-update inventory SHA256
+    `7eb4c9b8d72b8a5f7ff42cd69920b7c1fac92080a2640817aa4966d501e84607`,
+    snapshot `9257e274732ade779c2134980b627d99a62051e7c8a510073d96e5e80b68fce9`.
+    Actual compatibility receipt
+    `02acce42c4229f8dff779207b276bf37787f628450678bf44e8408a6b07b0009`
+    verifies all1301 other sources/modes, package/wheel101, UI44/two builds and
+    functional/private proof bytes unchanged. Artifact4 stays source10; common20
+    runtime remains original source13 with unchanged guest/manifest/controls.
+    Gate14 starts10:20:31.561218UTC, PID2556677/start404657340/session19525.
+    Post-prose docs202human/24helpers and all six migration tests pass. Final
+    gate14 and original common20 all-six/monitor0/independent audit remain pending;
+    no failed/UNKNOWN evidence is promoted or relabelled.
+
+    **Source13 gate13 pass and prose-only host amendment (2026-10-21UTC):**
+    Gate13 exits0/reaped at10:17:17.765626UTC after1321.085seconds; audit SHA256
+    `9f4d2f457360f9d274a3604fe79bf9614e23fc83bd1e40a7860199e4f6b85377`
+    records6643 Python passed/52 default deselections, three wheel profiles,
+    Cockpit572+110, web2756unit/2805combined, two preliminary+14 real API-read
+    browser checks, coverage95.61%lines/92.83%branches and unchanged1310 hashes/modes.
+    Root applies the approved exact nine-document prose-only availability patch;
+    actual host file map matches
+    `9257e274732ade779c2134980b627d99a62051e7c8a510073d96e5e80b68fce9`,
+    all modes unchanged. Product/UI/runner/tests/builds/runtime policy do not
+    change. Final source14 inventory/gate/compatibility bridge remain pending.
+    Guest source13 stays untouched through common20's original audit; installed
+    functional evidence retains source13 provenance. All-six outcome/audit remain
+    pending, with all failed/unknown histories and HOLD drafts retained.
+
+    **Fresh common20 all-profile start (2026-10-21UTC):**
+    Actual start10:01:39.618671UTC, caller53981/start5428085/UID1000,
+    hostsession34205; `.scratch/web-005-common20-all-functional-v1.log` runs the
+    original `--profile all`. Manifest SHA256
+    `07eee47bf17f58dd581316155ffc8bbcc971fa263a04ed659466e13e8f7b1f5f`,
+    native19 control `9b6d4af75a5f820a6d1a02f7df0f2c594941aa78c986ce0389e39fbedcdce299`
+    and rootless20 control
+    `052efa80f4013118d0bbfa08dc338551a073f12a23da3eb6d87a87530fed708b`
+    follow actual provisioning0/reaped with no role starts during provisioning.
+    Preserve the unexecuted stale-destination template; its fresh corrected
+    successor targets20. Source13/gate13 remain unchanged. All-six normal results,
+    monitor0, independent audit and gate13 pass remain pending; common19 HOLD
+    drafts and original failed/unknown evidence are unchanged.
+
+    **Source13 freeze and gate13 start (2026-10-21UTC):**
+    Exact1310-file inventory SHA256
+    `645bbd0231905ae5eb599fa45111f96e9c6f2f4ed40c4796e8fe26b97100676b`,
+    snapshot `d3530149a4f79bf5c53147b6561eeb7446ded8017eee5293a5a3691ff6be92d3`,
+    independently matches all current hashes/modes and exactly five authorized
+    contract/validator/test paths. Actual host compatibility receipt SHA256
+    `ce02f9e5046171c7fad71640248429a4206434d73505d1ab1dc8ea4f7376ab6f`
+    verifies unchanged package101/UI44/two retained builds and keeps artifact4's
+    original source10 provenance. Reconciliation exits0/reaped session36859,
+    verifies all1310 files/five updates and preserves backups; no installed
+    functional acceptance follows. Gate13 actually starts09:55:16.680608UTC,
+    PID2535611/start404505852/session73676. Independent inventory/installer review
+    SHA256 `e0c1a364dd090d2ff5a87ea30fe10dbd2c88b1a4b83cba1c9faf3813dcc66738`
+    confirms scoped guarded reconciliation. Gate13 completion/fresh common20
+    all-six results/audit remain pending; completion drafts stay on HOLD.
+
+    **Source12 gate12 pass and common19 supplemental closure (2026-10-21UTC):**
+    Gate12 exits0/reaped at06:58:57.953317UTC after1255.446seconds:6561 Python
+    passed/52 default deselections, three locked wheel profiles, Cockpit572+110,
+    web2756unit/2805combined, two preliminary and14 real API-read browser checks.
+    Independent audit `.scratch/web-005-twelfth-gate-audit.json` SHA256
+    `aed3aa94455b802804357d854950523115f186bf4bc5c497a48c4a9f23828318`
+    rechecks all1310 hashes/modes, seven reports and seven closed processes.
+    Common19 supplemental read-only closure passes117 PID/start pairs gone,
+    30 cgroups empty,11 containers stopped/PID0 and25 endpoints refused; log
+    SHA256 `942dbaed6326ab252bbeed3cad4a805135501aaad2135cf5341faf1a63f8dc09`
+    revalidates four original normal results/204 trusted+12 untrusted checks,
+    zero skips and source/package/assets/tools/seed closure. Original failed
+    rootless cleanup_unknown and unexecuted sixth generation remain. Separate
+    retained TLS3 projection SHA256
+    `28b5b1b01288d2c6420f1f7434130bf8a4ec047a87d34772eac79825d46ac3df`
+    records both controlled arms' raw tcp6/udp6 listeners at `::`:8443; it cannot
+    reconstruct the failed generation's missing rows. Contract-first source13
+    documentation admits only closed raw family forms without changing product,
+    templates, native loopback, outer publication/TLS or isolation/drain checks.
+    Source13 freeze/gate13 and fresh common20 all-six acceptance remain pending;
+    conditional completion drafts stay on HOLD. Gate12 remains source12 history.
+
+    **Common19 rootless listener refusal (2026-10-21UTC):**
+    Actual exit1/reaped caller47665/start4171226; monitor wait/identity closure
+    and metadata are valid with no monitor errors. Host log SHA256
+    `e9276bfefe746dc024ad44d46f1ee9ce7324553257921f147a80d1c6cf4d5cd5`.
+    Four original normal application/native root+management results precede
+    rootless/root `88b3d4f54d3c4dab923fb4fbaf96c47e` refusing private `inspect:1828`
+    INET-listener evidence after preceding checks pass. Its three API HTTP events
+    establish no canonical ready/stopped/browser result; original cleanup_unknown
+    remains and prefixed rootless never runs. Exact INET rows were in memory only
+    before the assertion, so the failing operand is unmeasured. Retained facts,
+    partial closure and a new isolated control remain pending; no address/family
+    cause or correction is accepted. Source12/gate12 remain unchanged. Conditional
+    common19 drafts are on HOLD with original nulls intact; completion-only audit
+    stays unexecuted/ineligible. Fresh all-six acceptance remains required.
+
+    **Excluded-link repair and same-source gate12 start (2026-10-21UTC):**
+    Gate11 exits1 after6560 passed/one failed migration-link test; preserve failure
+    log SHA256 `9fa8304716fa08d310b71230d011e97f3fb2f992f89d4e3af56ccdf5cb8ff4a5`.
+    Three archived selector link targets are rebased to their original resolved
+    documents. Content/history remain, and exact original494-line bytes stay in
+    ignored scratch. Whole migration tests6/6, documentation202human/24helpers
+    and whitespace pass; `.scratch/web-005-selector-link-relocation-checks.json`
+    SHA256 `c6b671fb9c520deea845dd9c3500f8e73acee997806ca1711bb58969d3ea81f0`
+    rechecks all1310 source12 hashes/modes unchanged. Full gate12 actually starts
+    2026-10-21T06:38:02.507306UTC, PID2493278/start403322435, log
+    `.scratch/web-005-twelfth-strict-gate.log`. It and common19 continue independently;
+    gate completion and all-six acceptance remain pending.
+
+    **Common19 canonical all-profile start (2026-10-21UTC; pending):**
+    Actual start2026-10-21T06:32:11.020827Z, caller47665/start4171226/UID1000,
+    fresh `.scratch/web-functional-common19-all-v1`; log
+    `.scratch/web-005-common19-all-functional-v1.log`. Manifest SHA256
+    `e7c43df5c7ae01fd6c3fdc69176d2d78f1e3f56ac59d80dbf2f88d888c351e3f`
+    binds native control18 `b7926462dd7e61b7418a3e34eab23285ec82c79cd52aa11ae61f54b21387d8f7`
+    and rootless control19 `87cfe2c515c3577fb36c0363b232b14e7e01b3d16b054964069acecb12d58cb6`.
+    Source12/gate11 remain unchanged; normal all-six completion and independent
+    audit remain pending. No feature or task completion follows this start.
+    Preserve the original native18 installer's stale-runner-hash refusal and
+    separate read-only v1 projection UID refusal. Fresh v2 projection SHA256
+    `c57fb8f16debb38fbcdf4f3378bfa122fc19eba13c5da8c42371bc93170a278a`
+    confirms all seven planned destinations absent and five retained files'
+    hashes/modes unchanged. New immutable corrected native18-v2/rootless19-v2
+    provisioners then exit0 without starting roles. The actual inventory-map
+    regression covers the corrected runner guard; original failed/unknown
+    records remain unchanged.
+
+    **Source12 frozen/installed; gate11 running (2026-10-21UTC):**
+    All1310 source files install with the exact five authorized proof/docs
+    changes. Inventory SHA256
+    `086aff3c2d036208977fc908e3f342d0b645b955b01359d998055f1a8176ea54`,
+    snapshot `e857a8953e0606441dbad74e16fa601a2801af47d0cdcb3ae597942261ed6d13`.
+    Host artifact4 compatibility passes while preserving its source10 build;
+    package101/UI44 remain unchanged. Gate11 starts2026-10-21T06:18:02.528876UTC,
+    PID2480225/start403202437, and remains pending. Retained-role projection
+    SHA256 `34dad97408aada1606e9b4bcfb711a7c2dce4a0be085bea97ee9f744888f5e78`
+    confirms all three raw exact11-entry CapDrop lists, empty CapAdd and observed/
+    declared drop-ALL/no-add arguments. The strict raw-encoding/zero-capability
+    validator passes341 owner checks and87 independent selected checks without
+    skips. Earlier failures, source11/gate10 and original artifact4 provenance
+    remain retained; fresh fixtures and canonical all-six acceptance are pending.
+
+    The active selector is shortened to navigation; its former long checkpoint
+    has its content retained, with relative links adjusted, in the [task history](plans/tasks/web-005-shared-caddy-spa-serving.md#retained-selector-checkpoint-before-source12). No unique evidence is deleted.
+
+    **Common18 provisioning and rejected CLI attempt (2026-10-21UTC):**
+    Common18 native17/rootless18 provisioning exits0 with no role/container starts.
+    Its attempted `--profile rootless` invocation is rejected by the unchanged
+    canonical CLI, whose choices are application/platform/all: caller47202/
+    start4002124 exits2, wait/reap observed, before workspace or role creation.
+    Log `.scratch/web-005-common18-rootless-functional-v1.log` SHA256
+    `969324ee5160c9f925b35c46a54f26de03a69537bd55c12a190fcaec5269caf7`
+    retains this preflight failure. A literal CapDrop metadata predicate remains an
+    unconfirmed fixture-validation candidate awaiting actual retained-role fields;
+    no runtime failure or acceptance is inferred. Fresh canonical all-six acceptance
+    remains required; source11/gate10 stay frozen/unchanged.
+
+    **Common17 supplemental partial closure (2026-10-21UTC):**
+    Read-only partial17v2 exits0/reaped after the retained v1 diagnostic refusal:
+    102 recorded PID/start identities gone,22 cgroups empty, six stopped browser
+    containers/PID0 and20 endpoint refusals. The three original normal generations
+    revalidate153 trusted/9 untrusted browser checks with zero skips; all1310 source
+    files, two101-file package trees,183 tools and11-file seeds remain unchanged.
+    Log `.scratch/web-005-common17-partial-postverify-v2.log` SHA256
+    `370f1d19ef88d8006ec479f6964ca39fa259b79e318fc989f7c57d02cc056d90`
+    retains this supplemental closure. The failed generation's missing controller
+    owner pair and original cleanup_unknown remain explicit. Private packet2's
+    strict bounded task-absence proof passes19 local checks and19 independent
+    checks; fresh installed acceptance remains unperformed. Source11/gate10 remain
+    unchanged; no old failed result is promoted.
+
+    Common18 manifest-only preparation exits0/reaped74626, retaining all1310 source
+    bindings. Manifest SHA256
+    `f2c5456f8abf315d2fe18805b10e05e4ed4120dd5a7bf72c6df7ff2a7e25d8d9`
+    binds fresh fixture `83d58be5-1c18-4c74-aa6c-9f24226c308b`; no role starts in
+    preparation. This establishes no runtime acceptance; fresh canonical all-six
+    acceptance remains required.
+
+    **Common17 scoped native packet-helper refusal (2026-10-21UTC):**
+    Fresh read-only failed-status projection narrows common17 to three original
+    normal results (both application prefixes and native/root). The fourth,
+    native-prefixed generation `80731eb0c80b409492721f489621288b`, fails before
+    API/Caddy start in private packet helper `close_listeners:656`: the second
+    kernel/proc task-TID absence assertion follows successful thread join and the
+    first no-errors/not-alive/closed-descriptor assertions. Its saved packet marker
+    is exactly aborted evidence, never schema2 acceptance. Observed worker status
+    is failed/1 with MainPID0 and empty cgroup; canonical ready/stopped/browser are
+    absent and original cleanup_unknown remains. Both rootless generations never
+    run. Projection `.scratch/web-005-common17-failed-status-v2.log` SHA256
+    `77ff232579de0d5ce44368104cf82ae4332b856b8cbfb6ea90a5c9c6b671005f`
+    retains the exact controller frames. Partial closure audit and a narrowly bounded
+    private-helper proposal remain pending; no product cause or accepted fix is
+    established. Fresh all-six acceptance is still required; source11/gate10 remain
+    frozen/unchanged and completion drafts remain unapplied.
+
+    **Common17 failed monitor checkpoint (2026-10-21UTC, cause undetermined):**
+    Common17's actual monitor now exits1 and observes wait/reap of exact caller
+    42536/start3784257/UID1000. Metadata is valid, owned identity closed and monitor
+    error_classes empty; full acceptance is false. Completed host log
+    `.scratch/web-005-common17-functional-v1.log` SHA256
+    `e6981c14d8297b90bd1d50c136023c836de4be793da931cb83409ea681779024`
+    retains this failure. The final per-profile cause and cleanup evidence remain
+    undetermined at this checkpoint; a later read-only observer's packet-projection
+    schema refusal does not identify the feature failure. No SNI regression or
+    product cause is inferred. Completion/selector/ledger drafts remain unapplied,
+    and the completion-only all-six auditor remains unexecuted and ineligible for
+    this failed invocation. Source11/gate10/artifact4 stay frozen/unchanged;
+    required actual all-six acceptance remains unresolved pending read-only diagnosis.
+
+    **Fresh common17 start (2026-10-21UTC; all-six acceptance pending):**
+    Fresh common17 canonical `--profile all` starts2026-10-21T05:27:41.332912Z,
+    exact caller42536/start3784257/UID1000, recorded in
+    `.scratch/web-005-common17-functional-v1.log`. Manifest SHA256
+    `ee8a6bd314b8c946f0d4afb946d18c8fe3e460d42b6ab77d320c9452e30b979b`
+    binds native control16
+    `f302b019dcbb7415ac2e015054aed4c4a9f5396ef9fa1e39c7fdbd919c961963`
+    and rootless control17
+    `1cd57a60d9bc8fb98788678d47633a6e2b59e69dd3759c784f081b14bac8515e`.
+    Both immutable provisioning commands exit0/reap without starting roles.
+    The new rootless fixture template95ac1518…370e4 adds only fixed default SNI;
+    old templates/PKI/evidence remain. All six functional generations, original
+    monitor outcome and completion-only independent audit are pending at this start
+    checkpoint. Source11/gate10/artifact4 remain unchanged; no acceptance follows
+    from invocation or preparation, and common16's failure/unknown is not relabelled.
+
+    **Isolated TLS selection control v3 (2026-10-21UTC; fixture-only correction):**
+    The isolated two-arm TLS-selection control v3 now exits0 and is independently
+    observed closed. Baseline records three TLSV1_ALERT_INTERNAL_ERROR failures with
+    no HTTP response; the sole TLS change, fixed `default_sni 127.0.0.1`, records
+    three strict CA/IP-verified TLS1.3 HTTP200 responses with the expected fixed
+    control body and the same original leaf DER. Both containers stop normally with
+    exit0/PID0, eight retained arm identities are gone, four cgroups empty, controller
+    gone and loopback33334 refused; original PKI inputs remain unchanged. Observation
+    `.scratch/web-005-rootless-caddy-tls-selection-v3-observation.json` SHA256
+    `9ee7bde543fc47d00cb5918d62b36774175586c0c625cf289ae14d2a44d8f2b0`
+    binds summary SHA256
+    `b7a2332727896d89dbad13e1a34621b6dced2156a7822dffbdb91dfe3f1066dd`.
+    This confirms certificate-selection behavior in the isolated fixture, with no
+    API/worker or feature acceptance. The minimal fixture-only template correction
+    is approved under the existing architecture/TLS contract; fresh immutable
+    common17 bindings and actual all-six acceptance remain required. Common16's
+    original failure/unknown and v1/v2 diagnostic refusals remain preserved;
+    source11/gate10/artifact4 and canonical contracts are unchanged.
+
+    **Isolated TLS v2 pre-start refusal (2026-10-21UTC, no TLS attempt):**
+    TLS-selection diagnostic v2 also refuses before manager/process start or any
+    TLS attempt: actual Podman inspect expands `--cap-drop=ALL` into eleven named
+    default capabilities, while the diagnostic expects the literal list `[ALL]`.
+    Its sole baseline container remains retained in created state, not running/PID0;
+    no process/cgroup or treatment arm is started. The original diagnostic
+    `drained:false` classification remains. Read-only observation
+    `.scratch/web-005-rootless-caddy-tls-selection-v2-observation.json` SHA256
+    `e9281b2aa27ea6a690a1ebcb6d5f7c8334beeaee9dc6a25b655f6c51aeee48f7`
+    confirms the controller and six exact command identities gone after observed
+    waits, loopback33334 refusal and unchanged original TLS inputs. Preserve v2's
+    source/container/files. A fresh v3 is being prepared with the measured expanded
+    capability metadata plus actual live-kernel zero-capability checks; no SNI cause,
+    TLS positive or full acceptance is established. Source11/gate10 remain unchanged.
+
+    **Isolated TLS v1 prerequisite refusal (2026-10-21UTC, no arm starts):**
+    The isolated TLS-selection diagnostic v1 refuses before either arm starts:
+    its saved baseline adapter output has two actual TLS policies (explicit
+    SNI127.0.0.1 certificate selection plus an empty fallback), while the diagnostic
+    incorrectly requires one. Read-only prerequisite observation
+    `.scratch/web-005-rootless-caddy-tls-selection-v1-observation.json` SHA256
+    `240f40f030f04cb3c95d99c65471174523f1d59f396d8b6d96eb2f4272a43862`
+    confirms adapter exit0/observed wait, both recorded controller/adapter identities
+    gone, and all arm intents/CID indexes absent. Preserve installed v1 source and
+    partial diagnostic files; this is no TLS experiment or confirmed SNI cause.
+    An immutable v2 is being prepared to correct only the adapter-shape prerequisite.
+    Source11/gate10/artifact4 stay unchanged, and required all-six acceptance remains
+    unresolved.
+
+    **Common16 supplementary closure (2026-10-21UTC; original refusal retained):**
+    Common16 supplementary read-only closure subsequently passes without replaying
+    start/stop:116recorded outer PID/start identities are gone,30cgroups empty,
+    11containers stopped and23owned endpoints refuse. Original canonical revalidation
+    passes the four normal generations'204trusted/12untrusted browser checks with
+    no skips. Failed rootless's three roles exit0 and API/worker resources drain,
+    while its original missing canonical ready/stopped/browser and cleanup_unknown
+    remain unchanged; the sixth generation stays unexecuted. Partial audit v1 safely
+    refuses because the failed CLI publishes no SUMMARY; preserved v2 reads the
+    five actual RESULTs without writing a synthetic summary. Its log SHA256
+    `ddf25132795059bcb0b96f83d108980ee8c6bfc2efeb2711666c736252303775`
+    and summary SHA256
+    `5611f85ac9d2e0d708e9d652ec426f452b8ca58122707f2639f6ed9281af3b16`
+    retain source11/package/assets/tools/seed closure. TLS control remains unexecuted
+    at this checkpoint; no full acceptance or product cause/fix is established.
+    Source11/gate10 remain frozen/valid.
+
+    **Common16 rootless-readiness refusal (2026-10-21UTC, still in progress):**
+    Common16 exits1 and reaps caller35560/start3464488 with valid monitor metadata
+    and no monitor errors. Both application and both native prefix generations retain
+    original ready/stopped/browser/transfer evidence without cleanup_unknown.
+    The fifth, rootless/root generation `7c09bb81d59d421c80f104d616e270a8`,
+    starts the original API at innerPID1/start3570175 with one lifespan, available
+    verifier and two observed HTTP requests, then refuses HTTPS readiness:
+    bounded controller metadata records ValueError at native15 `probe_https:833`.
+    No rootless browser, canonical ready or stopped result is recorded; its original
+    `cleanup_unknown:true` remains. The sixth, rootless-prefixed generation never
+    runs. Read-only status11 log SHA256
+    `3643fb5ca40a9f0c6b753a969c8cfba89671b00c317d6e37572c12ea50f04b5d`
+    retains the failure. Rootless readiness diagnosis and required fresh all-six
+    acceptance remain unresolved; no product cause/fix is inferred. Source11/gate10
+    remain frozen/green. The completion-only all-six auditor must not run on this
+    failed invocation, and supplementary quiescence cannot relabel its unknown stop.
+
+    **Source11 gate10 completed (2026-10-21UTC; functional acceptance pending):**
+    Source11 gate10 completes2026-10-21T04:49:46.332190Z with exit0 in1301.44s.
+    The actual `scripts/check.sh --require-web --require-cockpit` run passes6475Python
+    (52default opt-in deselections), three locked wheel profiles,572Cockpit unit/
+    110mounted,2756web unit/2805combined,21sandbox/9functional metadata, two
+    preliminary browser and14real-API read checks. Required checks have no skips,
+    failures, flaky results or retries; web coverage is95.61%lines/92.83%branches.
+    Completed log SHA256
+    `fe1a0428155ab43e6154c0e8dafc8275dfac643a477973233b66ca5e16808763`
+    and independent `.scratch/web-005-tenth-gate-audit.json` SHA256
+    `7123f6932a787cb46b0477b53a261b710262822077860cd7afdcca6acb83f448`
+    bind the emitted reports, all1310unchanged source hashes/modes and seven exact
+    closed gate/API/browser identities. Docs alignment passes202human/24helpers.
+    This completes the source gate only: fresh common16 all-six installed
+    application/native/rootless acceptance and its completion audit remain pending.
+    Earlier failed/unknown attempts retain their original classifications.
+
+    **Common16 start (2026-10-21UTC, still in progress):**
+    Common16 canonical `--profile all` starts2026-10-21T04:34:23.635335Z,
+    exact caller35560/start3464488/UID1000, recorded in
+    `.scratch/web-005-common16-functional-v1.log`. Fresh manifest SHA256
+    `d6e91073b480b0f18f21cfe8828e94001f0e19613a79818aa277e975429af2bd`
+    binds native control15 `1720dac2ed5e74abfcaa8e7946d7840d88d6bfcfb139f023f1a03a44ef113b27`
+    and rootless control16 `d1df7a3bb8027aa90b87adb11e6850aab85f563c00b5276ecf351b686f17edb5`.
+    Both immutable provisioning commands exit0 and start no roles themselves;
+    reviewed exact producer12/13 and source11 parser55b089 are bound for this new
+    run. All application/native/rootless generations and the independent gate10
+    result are pending at this start checkpoint. No old failed result is substituted,
+    no acceptance is promoted, and all earlier unknowns remain preserved.
+
+    **Source11 installed prerequisites (2026-10-21UTC, still in progress):**
+    Source11 guest installation then exits0 with all1310files verified and original
+    bytes preserved in the fresh backup. Actual read-only foundation revalidation
+    also exits0: four package trees×101files, four asset trees×6members, four wheel
+    copies, source11 hashes/modes, probe label and preserved product3 bytes match.
+    Log SHA256`1d6d2371ac4b333b0d4a1e132fc9abf6c1698a1e202621d1bc78066880fd878d`;
+    independent host audit `.scratch/web-005-foundation4-source11-independent-audit.json`
+    SHA256`ed55fa5139a1ad7c758af7b6955513c08dbc7b2465eb53021b2bfc4748a7afb8`
+    checks exact bound source and receipt without another guest run. The new unchanged
+    producer12/13 sources pass52owner checks and20independent real-Unix/H11 checks;
+    accelerated unit cancellation is labelled supplemental, not the installed30s
+    proof. Gate10 and fresh all-six functional acceptance remain pending. No workload,
+    release or feature acceptance follows from these prerequisite checks.
+
+    **Source11/gate10 start (2026-10-21UTC, still in progress):**
+    Source11 freezes1310files with exactly five approved contract/parser/test changes:
+    inventory `.scratch/web-005-source-9v37kwww/source-inputs-v11.json` SHA256
+    `3358026beaad1aa0db536c1dcf41f5afdc1a20808bea556a80c41342888250f1`,
+    snapshot `285ca369f6a72965e0ed189f15cf3cd784ca3ddecc003228f1c81d8283906253`.
+    Gate10 starts2026-10-21T04:28:04.892257Z, exact hostPID2442635/start402542673,
+    with `scripts/check.sh --require-web --require-cockpit`; command metadata is
+    `.scratch/web-005-tenth-gate-command.json`. Its exit/counts and required fresh
+    all-six installed execution remain pending. No passing gate or feature result
+    is inferred from its start.
+
+    Final parser55b08962…/test6060008b… owner run passes256/0skip
+    (255file+one safe-help;47unrelated help deselected), independently corroborated
+    by255/0skip in15.53s. Exact owner report
+    `.scratch/web-005-proof2-parser-FROZEN.json` SHA256
+    `8aeb321b670413bd71468b06e59a623d460875f6644282d4d2d3d7ef0dff31a6`
+    and independent XML SHA256
+    `988b6d960c6e3b1bf09ee93060b22efd176e45f5cf3e7f738957e144c08fd380`
+    retain the distinct executions; they do not replace installed acceptance.
+    Actual host compatibility `.scratch/web-005-source11-artifact4-compatibility.json`
+    SHA256`eb7e0cf8f6d578e989d0459364ed5d5405b313d1f01f68026780b45148835f7b` rechecks1310source
+    hashes/modes,101wheel ZIP/package members,44UI inputs and both retained build
+    trees. Artifact4 wheel/UI/image keep their original source10 build provenance;
+    this is no rebuild or relabel. Guest source11/install/package revalidation,
+    new protected observers and all six application/native/rootless generations
+    remain required. All failed common14/15 records and original unknowns remain.
+
+    **Common15/proof2 correction (2026-10-21UTC, still in progress):**
+    Common15 exits1/reaps caller33965/start3227266 after only application/root
+    generation `0caa62a7b8914087abd4910cd1eb1e99`; the other five generations never
+    run. Both browser phases pass/drain; stopped role evidence and original generation
+    binding pass, while the retained result remains `cleanup_unknown`. All38 actual
+    accepted sockets measure8192. Three deadline probes record real CancelledError
+    near30.001s, incomplete131072/284996 bytes and final=false. Three cancellation
+    probes span2.006–2.008s and observe disconnect, but original H11 legally returns
+    all six ASGI awaits normally, including the final call. Those raw counters stay
+    unchanged; normal return does not prove protocol submission or client delivery.
+    Original transfer validation still refuses at line3473. Read-only diagnosis
+    `.scratch/web-005-common15-proof-diagnosis-v1.log` SHA256
+    `af9f3565000cd3bbaba68ef646f56038d6aa9cb0c85b98522a391032057c7ec6`
+    and observer log SHA256
+    `e028e5c652c6c10084a55cc6157a792a2d3683847a23bed952f5229dc1bd0bea`
+    preserve the actual failure; no old result is promoted.
+
+    The contract-first private transfer schema2 separates passive source-pinned
+    original-cycle submission/no-op states from raw ASGI and independent Node TLS/H2
+    zero-DATA/RST observations. It retains real deadline cancellation, incomplete
+    protocol submission/final=false, strict per-send exception rules and every
+    original drain, with no send/receive/scope/transport behavior override. Generic
+    network errors refuse the whole transfer. ADR147/INV013 already require actual
+    stalled-send/disconnect and bounded resource lifetime; no product behavior,
+    public wire, new dependency, invariant or ADR change follows. Only the approved
+    execution/testing/development documents and subsequent named runner/tests
+    supersede source10's freeze. All101 backend package files and44UI build inputs/
+    artifact4 remain unchanged. Fresh source11/gate10 and all six installed
+    profile/prefix generations remain required; gate9 retains its historical source10
+    scope. This is a proof-contract correction with implementation/acceptance pending.
+
+    **Common15 start (2026-10-21UTC, still in progress):**
+    Common15 canonical `--profile all` starts2026-10-21T03:54:51.413087Z,
+    exact caller33965/start3227266/UID1000. Manifest15 SHA256
+    `a7faab9d05ce56b473f9e62e42c134aba6e70fd1e59633889dcec121cd2c38b7`
+    binds native control14 `4e194fc49d962bc7738bea641b90b0730a1ed30fdadcde749d2f21f06607b7bf`
+    and rootless control15 `1059a90339d9e634cb51422dc0d620f121338c5f6d16259b8951520838db120c`;
+    both provisioning commands exit0 without starting roles. The owned raw AF_UNIX
+    control measures listener4096requested/8192effective but accepted socket212992,
+    explaining why the listener-only injection did not establish actual API pressure.
+    New fixture entrypoints10/11 measure and set each accepted socket before the
+    original H11 callback, retaining original ASGI send/receive and failure refusal.
+    Twenty-one focused checks and an independent21-check run pass without skips;
+    source evidence `.scratch/web-005-accepted-buffers-FROZEN.json` SHA256
+    `76f684bcc6faab71e31564511fdfc9a49da48dfa757e7613300b6f49eb260fd4`
+    retains exact sources and tests. Source10/gate9/artifact4 remain unchanged.
+    This records invocation start only; all six required generations, stream proof
+    and normal acceptance remain pending. Preserve common14's failed result and all
+    earlier unknowns; no case, feature or task is marked complete.
+
+    **Common14 failed transfer proof (2026-10-21UTC, still in progress):**
+    Common14 completes only the first application/root generation and exits1,
+    reaping caller31781/start3047342. All51trusted and3untrusted browser checks pass
+    with exact phase/container/init drain. Decision149's repaired foreground path
+    removes its own API socket; all ten original resource drains, canonical stopped
+    role evidence and ready/stopped generation binding pass. The later original
+    transfer validator refuses at `scripts/check-web-functional.py:3473`: all six
+    probes return their complete284996-byte body in under2ms, with final sends
+    complete and no incomplete/backpressured send. This does not prove the intended
+    client-abort or server-deadline behavior. The original failed result and
+    `cleanup_unknown` classification remain; the other five generations never run.
+    Bounded read-only diagnosis `.scratch/web-005-common14-proof-diagnosis-v2.log`
+    SHA256`05323846d7525cd6c33cc1b85f524d459f0abe66288ec63fe9eed25ee65715c5`
+    and summary `.scratch/web-005-common14-transfer-refusal-summary.json` SHA256
+    `8d968fdab795dc7875cab7ff7a3546cd2fd8648f86ca20ee39af6301835f7be2`
+    preserve the exact failed operands without weakening acceptance.
+    Fresh artifact4 missing-assets/wrong-manifest startup refusals independently
+    pass4required/4passed/0skip; postverify
+    `.scratch/web-005-startup-refusal-product4-postverify-v1.json` SHA256
+    `c9a4f631afadeea36b10d2cb3489607eb15935eb3e2acecaac13a3fb316a068b`
+    closes five exact identities/four cgroups and original FD/thread/task/socket/
+    lock/seed/101package/1310source identities. This remains a startup-refusal subset.
+    Source10/gate9/artifact4 stay unchanged and valid for their recorded scope. A
+    fresh fixture pressure diagnosis is pending; no full-feature or task acceptance
+    is promoted from this failed run.
+
+    **Gate9/common14 start (2026-10-21UTC, still in progress):**
+    Source10 ninth strict gate exits0 in1208.897s:6434Python/52default marker
+    deselections, all3locked wheel profiles,572Cockpit unit/110mounted,2756web unit/
+    2805combined, two preliminary startup and14real-API read checks. Required checks
+    have no skips/retries; all1310source hashes/modes remain unchanged. Log
+    `.scratch/web-005-ninth-strict-gate.log` SHA256
+    `4a7c676b896e5cc52482835cad9327dcd46bd26d5f5daa37adaca12b286ba987`;
+    independent `.scratch/web-005-ninth-gate-audit.json` SHA256
+    `9bb29e79e59031cd47ea8552fb66f848e94d5f1f28b9a29dc9735865bebf096d`.
+    This gate establishes source conformance, not installed shared-Caddy acceptance.
+    Common14 canonical `--profile all` starts2026-10-21T03:24:52.181808Z on the new
+    source10/artifact4 inputs, exact caller31781/start3047342/UID1000. Manifest SHA256
+    `3d35d0b0fbb589ab78fba4285143262589627020438a6fe8e8ec3d6df37b84f4`
+    binds native control13 `40d44efa…` and rootless control14 `179c4c69…`.
+    At this start checkpoint all six results were pending; the subsequent first-
+    generation refusal is recorded above, with no full case or task closure.
+
+    **Source10/artifact4 checkpoint (2026-10-21UTC):**
+    Source10/artifact4 checkpoint: all1310 frozen source files are installed and
+    verified in the owned guest, snapshot
+    `596943b73705ab123b6cb9191830e40a1418f491c371f554ac6f929a6f792953`.
+    The new445874-byte wheel
+    `83a3c29f23f1729f02c23d4a7aff57c2c8bd1795b3018e6c17723c80428babcd`
+    matches all101package sources. Two UI builds are byte-identical and equal to
+    artifact3, retaining manifest2ae0472d…. Artifact summary
+    `.scratch/web-005-artifacts-v4-2_lxvvpy/SUMMARY.json` SHA256
+    `3eecaaad0373a23ff43e5d86bf8b6543c56a34e79da5b9f0999a3125ff8dfc08`
+    and independent root review `.scratch/web-005-artifact4-root-review.json` SHA256
+    `fba3e0ae79b1a90605a9aa9683010b12b9bce3d7c1a09060648540843e9c097a`
+    bind the host builds. Gate9 was then running; no installed acceptance or functional
+    result is claimed. Preserve all historical source9/gate8/artifact3 evidence.
+
+    **Common13 result (2026-10-21UTC, WEB-005 remains in progress):**
+    Canonical all-profile caller28480/start2735755 exits1/reaps on unchanged
+    source9/product3/manifest7f6691de…. The first application/root generation
+    passes51trusted and3untrusted checks in all three engines, validates its report
+    and drains both browser phases. STOP has no stopped artifact: original
+    `cleanup_unknown` remains, with only the API-owned socket pathname still
+    present among measured resource predicates. Supplemental independent evidence
+    closes28exact identities/six cgroups and five endpoints refuse with errno111
+    (summary SHA256`f99cb53b53fd6bc71e1e5ff5551a361896ad0f106213d3cb79af76de10f2b8f5`).
+    An actual original-server control confirms default-SIGTERM replay after
+    lifespan shutdown terminates before owned-listener cleanup, retaining the
+    same inode. Decision149 records the narrow correction;10actual source
+    regressions pass without skips, while rebuilt installed acceptance remains
+    required. Fresh product3 missing-assets/wrong-manifest startup refusals
+    separately pass4/4/0skip in both prefixes (execution log SHA256
+    `dcbd243a3c2bf2e2f80c2517d758952e8f1d1161f6bdc3e07cfc0153c4445db5`).
+    Independent postverification closes five exact identities/four cgroups,
+    restores original FD/thread/default-executor/task snapshots and locks, and
+    rechecks all seed/101package/1308source9 hashes/modes (log SHA256
+    `c4b4ab8e3664aed88836d93973448c7fa5cf9216ac36c0723c6f031913359e0b`).
+    Source9/gate8/artifact3 remain historical evidence for their exact inputs.
+    Fresh source/wire/build identities, artifacts and complete source gate plus
+    required all-profile normal drain remain pending; every earlier failed/unknown
+    record is preserved.
+
+    **Source9 checkpoint (2026-10-21UTC, still WEB-005 in progress):**
+    Decision148 implementation passes6424Python and the full eighth strict
+    source gate in1192.728s, with independent1308hash/mode/seven-report/seven-
+    closed-process audit and no required skip/retry. Artifact3 wheelfff34031…
+    matches101source files; UI manifest2ae0472d… is reproducible across two
+    builds; new native/user installs and disposable UBI10micro image66cc4d36…
+    retain the exact new wire identity. Common11 actual first application/root
+    reaches verified Caddy HTTPS REST200, original API lifespan1/private worker
+    PROBE and actual confinement proofs, then refuses during fixture inspection
+    before browsers. Independent23-identity/four-cgroup/endpoint postverification
+    passes; original normal cleanup_unknown remains. Source diagnosis finds
+    literal Unix pathname matching conflicts with original directory-FD bind
+    spelling. A finite actual installed-listener control proves both aliases,
+    directory/socket/kernel-FD/peer identities, original context cleanup and exact
+    FD baseline restoration. Independent postverification closes root26965 and
+    child26966 and all owned sockets/kernel inodes; no signal or production
+    change. Common12/application subsequently reaches original API/worker
+    readiness, strict alias reconciliation, verified Caddy TLS and all14 installed
+    Python MCP SDK calls, then refuses before a browser/CID is established.
+    Independent24-identity/four-cgroup/endpoint postverification, alias/ready-body
+    binding,11 seed/101 package/1308 source9 hash checks pass (summary SHA256
+    `20084018fe8fcaed78d3d96e82cd44ede821b0a42af3036373965a482e7d0fb0`);
+    original cleanup_unknown/browser-phase uncertainty remain. A separate fresh
+    create-only diagnostic exits0/reaps in3.72464877s, with empty stderr/no errors
+    and no container process start/removal. It proves supported arguments, while
+    the original cause remains unknown; its guest SUMMARY SHA256 is
+    `cfa0915ff9afb53b10069645a618ede3865ff317c3c236dfcdff6a8149980b31`.
+    New rootless13 corrects only the fixture's109-byte direct socket probe and
+    passes90 combined/63 independent source checks. Native12/rootless13/common13
+    were then uninstalled and awaited exact bindings plus browser diagnosis; the
+    later common13 result appears above. Source9, artifact3 and the eighth green
+    gate are unchanged. Full functional/browser/
+    stream acceptance and WEB-005 commit remain blocked; every prior source,
+    artifact, failed/refused attempt and unknown
+    cleanup record stays preserved. No production rollout, NAS access or live
+    Cockpit retirement follows these prerequisite results.
+
+    A separate selected dirty image3 runtime audit exits0: UID981/Caps0/NNP1/
+    Seccomp2, read-only rootfs, network none and public gate only;101 package/six
+    asset hashes and wire identity match, with35 selected PATH tools/eight import
+    modules absent. The287201632-byte image retains its pinned203540950-byte
+    UBI10micro base ancestry. Independent four-identity/two-cgroup postverification
+    passes; stopped container evidence remains retained (JSON SHA256
+    `438d315f7a05fb793271c4c5e40262d8eec5341a2bf32652afe11318d271f3b9`).
+    The original receipt has no root-controller identity. Global filesystem
+    absence, fresh registry attestation, clean release and feature acceptance are
+    not established; WEB-021 remains the release packaging work package.
+
 ## Operator decisions needed
 
 1. **Which repositories the archive is ultimately for** (raised 2026-07-24, during
@@ -5922,6 +6665,51 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      UBI clarification retains shipped
      static UI assets in the existing pinned UBI 10 micro API image; separate
      browser test images remain unshipped tooling.
+
+147. **Capture bounded authenticated assets and bind startup to actual backend identity**
+     (2026-10-20, WEB-005). [Decision147](../adr/decision-147.md) fixes the optional
+     immutable UI artifact, strict independent bootstrap, Basic-only UI namespace,
+     exact fallback/cache/header/prefix rules and16-stream/30s finite send budget.
+     Captured bounded bytes avoid4096 retained leaf descriptors and request-time
+     pathname races; protected ancestry and rich mount identity reject aliases
+     without probing archive contents. Pure installed source digest plus prebundle
+     source identity and platform crypto avoid self-referential metadata or an
+     echo of untrusted build claims. Keep REST/MCP and raw JSON operation identity;
+     only leading-// rejection and encoded Location migrate globally. UI-only
+     prefix/origin ceilings leave backend-only configurations independent.
+     Application/platform functional profiles use actual shared-Caddy built UI,
+     installed Unix API and native/rootless roles; the final gate refuses any of
+     the95 scenarios pending or omitted. Implementation and conformance are in
+     progress, with continuous human docs and preserved production restrictions.
+
+148. **Distinguish private socket ownership from manager listener credentials**
+     (2026-10-20, WEB-005, this commit).
+     [Decision148](../adr/decision-148.md) records the actual native compatibility
+     conflict before implementation. The unchanged worker requires its own
+     filesystem UID, while Linux authenticates the root manager that listened
+     before namedFD3 handoff. Add one explicit strict socket-owner setting with
+     exact legacy omission behavior; preserve the separate exact kernel peer,
+     inode/parent/mode checks, original worker/caller validation and hardening.
+     No ownership workaround, OR-UID rule or acceptor-identity substitution is
+     accepted. Source8/gate7 remain retained green evidence for that snapshot;
+     new source pins, wire/build identity, wheel/assets and installed proofs must
+     supersede it before completion. No production setting or service changes.
+
+149. **Finish exact owned foreground listener cleanup before default signal replay**
+     (2026-10-20, WEB-005, this commit).
+     [Decision149](../adr/decision-149.md) addresses the actual original-server
+     control: lifespan shutdown completes, but default SIGTERM replay terminates
+     before the outer owned Unix listener cleanup, retaining the same node.
+     A private main-thread/non-PID1/default-TERM scope arms only after exact owned
+     identity/mode bookkeeping. Pending-once unwind keeps the original socket
+     close, exact-inode unlink and parent close ahead of restoring the original
+     handler and signal termination. Custom/ignored handlers, activation, PID1,
+     TCP-only and unknown/replaced nodes retain their existing semantics. Broad
+     handler changes, unlink guesses and success substitution were rejected.
+     Ten actual source regressions pass without skips after the retained baseline
+     failure. Rebuilt identities/artifacts and all-profile normal drain remain
+     required; source9/gate8/artifact3 stay historical, not invalidated
+     or discarded. No production effect follows this prerequisite correction.
 
 ## Documentation and script alignment
 

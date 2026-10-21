@@ -2,7 +2,7 @@
 
 - Decision identity: 128.
 
-- Status: Accepted; current profile is qualified by the recorded deployment scope.
+- Status: Accepted; rootless listener policy retained, with native client identity configuration amended by [decision 148](decision-148.md) and installed scope qualified below.
 - Date: 2026-10-18.
 
 
@@ -13,6 +13,11 @@ container could not connect to. Create the rootless private listener inside the
 worker's own confinement, without broadening SELinux policy, adding a host execution
 fallback or changing native activation. Keep native exact named-FD3 and rootless
 explicit --container-listener modes separate, with no implicit fallback.
+
+[Decision 148](decision-148.md) represents native filesystem ownership and the
+root listener creator's kernel credentials as separate client settings. Rootless
+worker-created listeners keep their equal owner/peer policy; this amendment
+grants no new creation context, permission or fallback.
 
 Direct Python PID1 audits inherited descriptors above stderr, LISTEN fields and
 known credential environment before NSS/shared resources. Reserve internal FD3,
@@ -55,5 +60,6 @@ NAS workloads and rollback0.2.0's limitation remain separate.
 - [unit readiness](../../tests/unit/test_systemd_units.py)
 - [proof/readiness refusal tests](../../tests/unit/test_container_runtime.py)
 - [Decision 129](decision-129.md)
+- [Decision 148](decision-148.md)
 
 See [deployment status](../deployment-status.md) for recorded scope and remaining acceptance.

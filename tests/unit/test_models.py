@@ -44,12 +44,15 @@ from hfcache.reporting import (
     VerificationCatalog,
     VerificationReport,
 )
+from hfcache.ui_models import UiAssetManifest, UiBootstrap
 from tests.fixtures import examples
 from tests.fixtures.examples import EXAMPLES, at
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "schemas"
 
 MODEL_FOR = {
+    "ui-asset-manifest": UiAssetManifest,
+    "ui-bootstrap": UiBootstrap,
     "protected-administrator": ProtectedAdministratorRecord,
     "repository-tag-snapshot": RepositoryTagSnapshot,
     "publication-observation": PublicationObservation,
@@ -98,10 +101,10 @@ def test_every_fixture_round_trips(name):
     raw = (FIXTURES / f"{name}.json").read_bytes()
 
     expected = EXAMPLES[name]()
-    if isinstance(expected, ProtectedAdministratorRecord):
-        # Private credentials carry independent required schema 1, not the
-        # archive-wide version preflight performed by models.load().
-        parsed = ProtectedAdministratorRecord.model_validate_json(raw)
+    if isinstance(expected, (ProtectedAdministratorRecord, UiAssetManifest, UiBootstrap)):
+        # Credential and UI formats each carry their own required schema 1,
+        # outside the archive-wide version preflight in models.load().
+        parsed = type(expected).model_validate_json(raw)
     elif isinstance(expected, CatalogRecord):
         parsed = parse_record(type(expected), raw)
     else:

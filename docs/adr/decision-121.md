@@ -2,10 +2,15 @@
 
 - Decision identity: 121.
 
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Accepted; activation policy retained, with client identity configuration amended by [decision 148](decision-148.md).
 - Date: 2026-10-18.
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
+Native socket-file ownership and listener-creator credentials are configured
+separately by [decision 148](decision-148.md); named FD3 and the original
+unprivileged worker remain unchanged.
+[Decision 149](decision-149.md) refines only owned foreground API socket cleanup
+before default-SIGTERM replay; activated manager-owned node lifetime is unchanged.
 
 
 ## Context, decision and rationale
@@ -65,6 +70,7 @@ remains available, then worker; a stopped observer is never executor termination
 - [Decision 127](decision-127.md)
 - [Decision 128](decision-128.md)
 - [Decision 132](decision-132.md)
+- [Decision 148](decision-148.md)
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).

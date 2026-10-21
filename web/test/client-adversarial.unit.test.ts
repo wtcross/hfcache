@@ -34,23 +34,20 @@ test("scope projection never retains a credential-like extra from a structurally
     expect(JSON.stringify(scope)).not.toContain("independent-private-marker");
 });
 
-test.each([
-    "",
-    "/management",
-    "/a.b_/with-2",
-    "//attacker.invalid",
-    "/管理/Σ",
-    "/a@b:42",
-])("configured public prefix is canonical and relative: %s", (publicPrefix) => {
-    const scope = createApiScope({ ...BASE, publicPrefix });
-    expect(scope.publicPrefix).toBe(publicPrefix);
-    expect(Object.isFrozen(scope)).toBe(true);
-});
+test.each(["", "/management", "/a.b_/with-2", "/管理/Σ", "/a@b:42"])(
+    "configured public prefix is canonical and relative: %s",
+    (publicPrefix) => {
+        const scope = createApiScope({ ...BASE, publicPrefix });
+        expect(scope.publicPrefix).toBe(publicPrefix);
+        expect(Object.isFrozen(scope)).toBe(true);
+    },
+);
 
 test.each([
     "/",
     "/management/",
     "///attacker.invalid",
+    "//attacker.invalid",
     "/a//b",
     "/../x",
     "/a/.",
@@ -237,26 +234,20 @@ test("a read uses exactly the fixed same-origin URL and safe fetch policy withou
     expect(options?.signal?.aborted).toBe(true);
 });
 
-test("a source-valid double-leading-slash prefix remains an inert same-origin path", async () => {
+test("the explicit prefix migration refuses protocol-relative configuration before transport", () => {
     const fetcher = vi
         .fn<typeof fetch>()
         .mockResolvedValue(jsonResponse(readWire("version", versionPayload)));
-    const scope = createApiScope({
-        ...BASE,
-        publicPrefix: "//attacker.invalid",
-        instanceId: null,
-        archiveId: null,
-        configFingerprint: null,
-    });
-    const client = createApiClient({ scope, fetcher });
-    expect((await client.readVersion()).kind).toBe("success");
-    expect(fetcher).toHaveBeenCalledOnce();
-    const [url] = fetcher.mock.calls[0] ?? [];
-    expect(url).toBeInstanceOf(URL);
-    if (!(url instanceof URL))
-        throw new Error("Fixed transport did not receive a URL.");
-    expect(url.origin).toBe(BASE.origin);
-    expect(url.pathname).toBe("//attacker.invalid/api/v1/version");
+    expect(() =>
+        createApiScope({
+            ...BASE,
+            publicPrefix: "//attacker.invalid",
+            instanceId: null,
+            archiveId: null,
+            configFingerprint: null,
+        }),
+    ).toThrow();
+    expect(fetcher).not.toHaveBeenCalled();
 });
 
 test.each([undefined, null, false, 0, "1", 1.0 + 1, 9007199254740992])(

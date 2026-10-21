@@ -3,6 +3,58 @@
 AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
         (
+            "hfcache.ui_models._ascii",
+            "86de5de588cbbf99cfcf076182bbbd8903947446e5487972cb9b35ce092c81d6",
+        ),
+        (
+            "hfcache.ui_models._one",
+            "f2e789b6310ee5a570e7a399d01806027cafbb69bf5177060b722b453f7afb5a",
+        ),
+        (
+            "hfcache.ui_models._prefix",
+            "48350de43a2114507e710219e8d3c6c16f308450f722a539e93c55c13e05ec4e",
+        ),
+        (
+            "hfcache.ui_models._origin",
+            "0f813e1429c8f3f3cc51913339e4e70f1ce70147debeb5d268845a644b6c30a2",
+        ),
+        (
+            "hfcache.ui_models._subject",
+            "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44",
+        ),
+        (
+            "hfcache.ui_models._instance",
+            "d9e79f8e8a163edade719422f5645311e6e9c37f5b26fa1fd1caa50d0f1737d9",
+        ),
+        (
+            "hfcache.ui_models._asset_path",
+            "4a7c1192ce50530c62c556bbf5e7a7ed1a7c846594f56a71c4ab88a0a6fded3c",
+        ),
+        (
+            "hfcache.ui_models.UiAssetMember._member",
+            "4b932c1228c4b47235ee23773c7364e0157eba07521332262e38d137d45ae950",
+        ),
+        (
+            "hfcache.ui_models.UiAssetManifest._members",
+            "36c8cde36716486fb019f29325858b42455ba6a49a37002e40233540f5391f4d",
+        ),
+        (
+            "hfcache.ui_models.UiPaths._paths",
+            "85750ccdedf6fee63abd3a8e287e4276b8f54da93163d1f432877adfcb971990",
+        ),
+        (
+            "hfcache.ui_models.UiAdminPermission._permission",
+            "a7120e9d18e2d04e4c902a4b4264b9be90327769397e99d8825a40b1259120dd",
+        ),
+        (
+            "hfcache.ui_models.UiUser._user",
+            "c0eb0131d42f9860cf3119f1a47e313f96ab6355529ba74ece847cdba3c2758b",
+        ),
+        (
+            "hfcache.ui_models.UiBootstrap._bootstrap",
+            "81b74a12497e074f981cea37677c081cc5e38ddbde3b05d6b68a4f35f37b7179",
+        ),
+        (
             "hfcache.api.command_models.CatalogRefreshSubmission.canonical",
             "8267cec4ab3f2c8106415d0ccb3855dbe4e556c7b97ba282ee44ef644025e91e",
         ),
@@ -292,9 +344,24 @@ AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins rema
 # Pin helpers, serializers and routing too; review any authority change explicitly.
 AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
+        ("hfcache.api.auth", "eec8243c530fa132d93f6167ad72ab9b72b3433c7e7e9343690a67d07f8e8653"),
+        (
+            "hfcache.server_config",
+            "7f3e03fa27f935907e3341e87ec8e391b1d832895c77913b05cd6d7888f130d3",
+        ),
+        (
+            "hfcache.api.ui_serving",
+            "7af357c6a31d521f3d9fac046a42e63122c94299d35d6b921eab8cfd7c7a969f",
+        ),
+        (
+            "hfcache.api.ui_assets",
+            "9f7c03d49e7a576f680144d50f6d406548dc89ef240d2d87c134fb5ef00524dc",
+        ),
+        ("hfcache.url_paths", "677d89801418c1e1691b890c25cbb3f5e90bfa142773cebd1ff3c33ec3f55fa8"),
+        ("hfcache.ui_models", "3b3b4b2181294ce5c2426d9fdb9227c5a0da8bdfac67d99a0dabe61783701956"),
         (
             "hfcache.api.app",
-            "6af9ee47963c2fc8b5719bb6791c5be1d104324dbb48f7d30cd04150fc7bfdc4",
+            "421f1d15b24c9d3b39d6d1c227f7acb734504581d806a640fe34c744895be594",
         ),
         (
             "hfcache.api.catalog",
@@ -310,7 +377,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.api.commands",
-            "d706056b3489e23fecd6710c6f1b28b31e860f32a6d7c8d30e96ce1dfd8daee7",
+            "468b34f32051da714773082cb016745e38ed3c3bb3825d7d54bce60acf1e32de",
         ),
         (
             "hfcache.api.maintenance",
@@ -338,7 +405,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.client",
-            "31338152170250b6d37fa5dbbb96e3e8e1c6402293f790103bb7e68db543c5cd",
+            "af1f4e295bf4d728f6d25d0c2d5cb7535df1ffe5324a6d0b52113cae1a1fd46f",
         ),
         (
             "hfcache.client_catalog",

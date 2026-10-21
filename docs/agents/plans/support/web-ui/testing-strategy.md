@@ -62,6 +62,29 @@ Generate test-only credentials and TLS certificates in mode-restricted workspace
 
 Isolation tests inspect actual processes/peer credentials and bind visibility, not only rendered command strings. Worker cannot read Basic/bearer/Hub credentials or contact IP networks; Caddy cannot read archive/policy/host-helper state; UI assets contain no secret values; API remains non-root. Do not erase failed containers/workspaces/uncertain operation evidence automatically. Cleanup owns only positively identified fixture resources and runs only after observed process termination; failed drain is a retained blocker.
 
+Retain actual rootless `cap_drop` inspection entries without normalization. Test
+both literal `ALL` and the exact unique11-name encoding in the
+[execution contract](execution-contract.md); reject missing, extra, duplicate,
+nonstring and arbitrary lists. Require the unchanged original create request to
+drop ALL with no capability addition and actual role `CapEff`/`CapBnd` zero;
+either metadata encoding with live nonzero capabilities must refuse. This is a
+private proof correction, not a weaker policy. New canonical validator bytes
+require a new source/gate and fresh installed all-six acceptance; old failed or
+unknown records remain unchanged.
+
+Caddy INET proof tests retain raw listener rows without normalization and cover
+both closed rootless families in the [execution contract](execution-contract.md):
+IPv4 `tcp` with optional `udp` at `0.0.0.0:8443`, or IPv6 `tcp6` with optional
+`udp6` at `[::]:8443`. Require TCP, at most two rows, exact closed row types/keys,
+unique protocols and positive unique kernel inodes. Reject mixed families,
+UDP-only, wrong addresses/ports, aliases, mapped addresses, booleans, unknown
+fields/protocols and duplicate/extra listeners. Application/native loopback rows
+and rootless outer `127.0.0.1` publication/strict TLS are unchanged. The proof must
+join actual socket FDs to the bound process/namespace and retain original normal
+drains; a corrected metadata predicate supplies no historical missing observation.
+New canonical proof bytes require a new source/gate and fresh installed all-six
+acceptance, even when packages, images and Caddy configuration are unchanged.
+
 ## 4. Core regression families
 
 **Authentication/routing:** native Basic browser challenge; valid and invalid credentials; missing/unusable hash; rate/concurrency bounds; wrong credential class; TLS/Origin/CSRF; repeated/malformed auth headers; direct Unix auth; spoofed proxy/user headers; unsupported methods; SPA versus API/MCP route precedence; deep links/assets/base prefixes; missing asset 404; no secret leakage; no HTML rewrite of API failures. Use the same Caddy endpoint for authenticated REST bearer and MCP tool calls while the browser is active.
@@ -77,6 +100,36 @@ Isolation tests inspect actual processes/peer credentials and bind visibility, n
 **Maintenance/host:** fresh preview/apply scope, exact-SHA repair, protected current and unmanaged-only purge, quarantine IDs, lock conflict, recovery unknown preservation, supported schedule calendar/reset/timer operation, verification timer read-only, no target stop, release-policy drift/unknown host helper, service manager mismatch, bounded logs and evidence separation.
 
 **Packaging/documentation:** asset/wheel/index matching, enabled UI missing assets refusal, base reader without Node, same app lifespan, immutable rootless assets, production prefix, real installed old CLI/MCP compatibility, durable-format downgrade refusal and preservation, no default production effects, protected deployment/rollback examples, operator procedures matching current labels and behavior.
+
+### Static stream interruption evidence
+
+Use [execution-proof schema2](execution-contract.md#static-streaming-execution-proof-schema2)
+for the private six-probe transfer inventory. Preserve raw ASGI normal-return and
+exception counters; they are not protocol-submission or client-delivery counters.
+Capture passive before/after states from the exact pinned original bound H11
+cycle/flow/transport, and independently derive submitted, disconnected-noop and
+raised outcomes. Join the original accepted-socket inode/buffer/source sidecar;
+never override send/receive/write/scope/body behavior to manufacture a failure.
+Inner API PID1 is valid when the independent namespace/host mapping proves it.
+
+Cancel proof needs a real paused/non-disconnected original await spanning the
+client's cancellation and ending disconnected/incomplete, plus original Node
+TLS/HTTP2 zero-DATA/RST and actual http.disconnect. Deadline proof separately
+needs actual CancelledError at>=29s in that paused original await, with the
+client holding>=35s. Both require incomplete protocol submission, final=false,
+zero before/after stream/task counts and all original role/browser drains.
+Generic network exceptions anywhere make the transfer unknown/refused. A later
+RST, instant pre-disconnected no-op or completed response cannot stand in for
+stalled-send proof. Actual normal ASGI returns remain normal returns.
+
+Exercise real original-cycle Unix transports, connected completion, paused
+disconnect, genuine cancellation and closed/socket reuse boundaries; cover
+wrong method/cycle/flow/protocol/source/identity, copied boolean numerics,
+missing/extra fields, result/counter disagreement and generic/early failures.
+Keep all failed schema1 reports unchanged. This corrects private evidence only;
+it changes no product behavior, declared resource bound or public wire format.
+New source/gate identities and all six installed profile/prefix generations are
+required before scoped serving acceptance; later feature clauses remain pending.
 
 ## 5. Browser, accessibility and performance gates
 

@@ -1,7 +1,8 @@
 # Serve an authenticated SPA through the existing application and Caddy
 
 - Decision identity: 140.
-- Status: Accepted design; implementation and installed conformance pending.
+- Asset/bootstrap refinement: [decision147](decision-147.md).
+- Status: Amended accepted design; complete replacement conformance pending.
 - Provider refinement: [decision146](decision-146.md) fixes the optional-server
   verifier, protected record, admission and legacy key-ownership contract.
 - Date: 2026-10-20.
@@ -98,3 +99,7 @@ See [server](../server.md#web-ui-design-and-current-availability),
 [security](../security.md#browser-administration-design),
 [web UI status](../web-ui/README.md), [host boundary](decision-141.md) and
 [asset/build separation](decision-143.md).
+
+## Authenticated asset and bootstrap amendment (2026-10-20)
+
+[Decision147](decision-147.md) amends this record. This refinement fixes the indexed manifest, protected captured bytes, strict bootstrap, complete Basic-only UI namespace, exact route fallback, headers/cache and finite streaming behavior. The same existing Caddy/TLS/Unix upstream remains the only public path; no global proxy authentication, public asset exception or frontend runtime is added. Accepted design is separate from executable conformance.

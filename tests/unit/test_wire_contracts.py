@@ -118,6 +118,12 @@ def test_every_actual_json_route_and_original_job_result_is_registered():
                 actual.add((node.func.attr.upper(), spelling(node.args[0])))
     # These authenticated documents deliberately have no domain payload decoder.
     actual -= {("GET", "/api/v1/docs"), ("GET", "/api/v1/openapi.json")}
+    # UI dispatch is deliberately add_api_route with a closed member switch;
+    # bootstrap alone is a plain typed JSON authority, never a fake Envelope.
+    source = Path("src/hfcache/api/app.py").read_text()
+    assert 'member == "bootstrap.json"' in source
+    assert '"/ui/{member:path}"' in source
+    actual.add(("GET", "/ui/bootstrap.json"))
     assert {(route.method, route.path) for route in ROUTES} == actual
     assert len({(route.method, route.path, route.mode) for route in ROUTES}) == len(ROUTES)
     jobs = {route.path for route in ROUTES if route.response_kind == "acceptance"}
@@ -362,11 +368,44 @@ class RejectOptional(importlib.abc.MetaPathFinder):
             raise RuntimeError('optional transport imported: '+fullname)
 sys.meta_path.insert(0, RejectOptional())
 import hfcache.wire_models, hfcache.wire_registry, hfcache.wire_schema
+from pathlib import Path
+root=Path.cwd()
+def no_frontend_or_authority_reads(event,args):
+    if event == 'open' and isinstance(args[0], (str,bytes)):
+        path=Path(args[0]).absolute()
+        forbidden=(root/'web',root/'docs',Path('/srv/hfcache'),Path('/etc/hfcache'))
+        if any(path.is_relative_to(base) for base in forbidden):
+            raise RuntimeError('forbidden frontend/policy/archive read')
+    if event in {'socket.connect','subprocess.Popen'}:
+        raise RuntimeError('unexpected external effect')
+sys.addaudithook(no_frontend_or_authority_reads)
+digest=hfcache.wire_schema.installed_source_digest()
+assert len(digest)==64 and all(c in '0123456789abcdef' for c in digest)
+assert digest == hfcache.wire_schema.build_contracts()['source_digest']
 assert 'hfcache.api.app' not in sys.modules
 assert not any(name.startswith(('fastapi','starlette','fastmcp')) for name in sys.modules)
 """
     result = subprocess.run([sys.executable, "-c", probe], capture_output=True, check=False)
     assert result.returncode == 0, result.stderr.decode()
+
+
+def test_installed_digest_refuses_invalid_internal_identity(monkeypatch):
+    monkeypatch.setattr(wire_schema, "build_contracts", lambda: {"source_digest": "invalid"})
+    with pytest.raises(ValueError, match="Invalid installed wire authority digest"):
+        wire_schema.installed_source_digest()
+
+
+def test_bootstrap_is_an_independent_closed_plain_response(contracts):
+    route = next(row for row in contracts["routes"] if row["id"] == "ui_bootstrap")
+    assert route["path"] == "/ui/bootstrap.json"
+    assert route["response_kind"] == "ui_bootstrap"
+    assert route["success"] == "UiBootstrap"
+    assert route["commands"] == ()
+    assert route["failure"] == ()
+    assert route["path_parameters"] == route["query_parameters"] == []
+    assert route["request_body"] is None
+    for name in ("UiAssetManifest", "UiBootstrap"):
+        assert all(field["required"] for field in contracts["definitions"][name]["fields"])
 
 
 def test_candidate_and_report_failure_shapes_remain_distinct_from_success(contracts):

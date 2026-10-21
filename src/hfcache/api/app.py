@@ -40,6 +40,15 @@ from hfcache.api.maintenance import install_maintenance_routes
 from hfcache.api.models import ApiProblem, OperationView, PageQuery, ReadResponse
 from hfcache.api.operations import OperationLimits, OperationReceipt, OperationStore
 from hfcache.api.runner import OperationRunner
+from hfcache.api.ui_assets import capture_assets
+from hfcache.api.ui_serving import (
+    STREAM_DEADLINE_SECONDS,
+    UI_CSP,
+    UI_PERMISSIONS,
+    UiResponse,
+    UiStreams,
+    bootstrap_bytes,
+)
 from hfcache.errors import (
     AuthenticationError,
     AuthorizationError,
@@ -54,11 +63,12 @@ from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, RunId
 from hfcache.logging import configure_daemon
 from hfcache.metadata import QueryBounds
 from hfcache.redaction import sanitize
-from hfcache.reporting import Envelope
+from hfcache.reporting import Envelope, RuntimeVersions
 from hfcache.server_config import InstalledPolicy, PolicySnapshot, ServerConfig
 from hfcache.services.catalog_queries import CatalogQueries
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.queries import LocalQueries, PublicationQuery, RepositoryQuery, query_version
+from hfcache.url_paths import uri_path
 from hfcache.verification_protocol import VerificationClient
 
 if TYPE_CHECKING:
@@ -266,6 +276,7 @@ class Boundary:
                 value == PREFIX
                 or value.startswith(PREFIX + "/")
                 or (value == "/mcp" or value.startswith("/mcp/"))
+                or (value == "/ui" or value.startswith("/ui/"))
             )
 
         prefixed = bool(public_root and path.startswith(public_root + "/"))
@@ -280,6 +291,10 @@ class Boundary:
         path, _ = self.project_path(scope)
         return self.server.mcp_enabled and (path == "/mcp" or path.startswith("/mcp/"))
 
+    def is_ui(self, scope: Scope) -> bool:
+        path, _ = self.project_path(scope)
+        return self.server.web.enabled and (path == "/ui" or path.startswith("/ui/"))
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:  # noqa: PLR0912, PLR0915 - one authenticated request/lease lifetime
         if scope["type"] != "http":
             if scope["type"] == "websocket":
@@ -290,24 +305,63 @@ class Boundary:
         context = ExecutionContext.new_request()
         state = scope.setdefault("state", {})
         state["execution_context"], state["metadata_leases"] = context, []
+        ui = self.is_ui(scope)
+        if ui:
+            state["ui_response_class"] = "ui_error"
         started = False
         mcp_lease = None
+        ui_deadline = None
 
         async def safe_send(message: Message) -> None:
-            nonlocal started
+            nonlocal started, ui_deadline
             if message["type"] == "http.response.start":
                 started = True
-                headers = list(message.get("headers", []))
+                protected = {
+                    b"x-request-id",
+                    b"cache-control",
+                    b"x-content-type-options",
+                    b"content-security-policy",
+                }
+                if ui:
+                    protected.update((b"referrer-policy", b"permissions-policy"))
+                headers = [
+                    (name, value)
+                    for name, value in message.get("headers", [])
+                    if name.lower() not in protected
+                ]
                 headers.extend(
                     (
                         (b"x-request-id", (context.request_id or "").encode()),
-                        (b"cache-control", b"no-store"),
+                        (
+                            b"cache-control",
+                            b"private, max-age=3600, immutable"
+                            if ui and state.get("ui_response_class") == "ui_asset_private"
+                            else b"no-store",
+                        ),
                         (b"x-content-type-options", b"nosniff"),
-                        (b"content-security-policy", b"frame-ancestors 'none'"),
+                        (
+                            b"content-security-policy",
+                            UI_CSP.encode() if ui else b"frame-ancestors 'none'",
+                        ),
                     )
                 )
+                if ui:
+                    headers.extend(
+                        (
+                            (b"referrer-policy", b"no-referrer"),
+                            (b"permissions-policy", UI_PERMISSIONS.encode()),
+                        )
+                    )
                 message = dict(message) | {"headers": headers}
-            await send(message)
+            if ui and message["type"] == "http.response.body" and scope["method"] == "HEAD":
+                message = dict(message) | {"body": b"", "more_body": False}
+            if ui:
+                if ui_deadline is None:
+                    ui_deadline = asyncio.get_running_loop().time() + STREAM_DEADLINE_SECONDS
+                async with asyncio.timeout_at(ui_deadline):
+                    await send(message)
+            else:
+                await send(message)
 
         with context.activate():
             try:
@@ -328,7 +382,9 @@ class Boundary:
                 if mcp and self.project_path(scope)[0] == "/mcp":
                     # A relative, trusted location preserves TLS and never reflects
                     # a caller Host, query, forwarding header or bearer value.
-                    response = RedirectResponse(scope["root_path"] + "/mcp/", status_code=307)
+                    response = RedirectResponse(
+                        uri_path(scope["root_path"] + "/mcp/"), status_code=307
+                    )
                     await response(scope, receive, safe_send)
                     return
 
@@ -344,16 +400,24 @@ class Boundary:
                 await self.app(scope, replay, safe_send)
             except AuthenticationError:
                 if not started:
+                    if ui:
+                        state["ui_response_class"] = "ui_error"
                     error = AuthenticationError(challenge=self.challenge(scope))
                     await _problem(context, error)(scope, receive, safe_send)
             except HfcacheError as exc:
                 if not started:
+                    if ui:
+                        state["ui_response_class"] = "ui_error"
                     await _problem(context, exc)(scope, receive, safe_send)
             except CodedError as exc:
                 if not started:
+                    if ui:
+                        state["ui_response_class"] = "ui_error"
                     await _problem(context, RequestError(code=exc.code))(scope, receive, safe_send)
             except Exception:  # noqa: BLE001 - outer transport boundary never returns raw tracebacks
                 if not started:
+                    if ui:
+                        state["ui_response_class"] = "ui_error"
                     error = SafetyError.single("unexpected API failure", code="HFAPI008")
                     await _problem(context, error)(scope, receive, safe_send)
             finally:
@@ -406,6 +470,8 @@ class Boundary:
         return body
 
     def challenge(self, scope: Scope) -> Literal["bearer", "basic", "both"]:
+        if self.is_ui(scope):
+            return "basic"
         if self.is_mcp(scope) or self.server.basic is None:
             return "bearer"
         values = [value for name, value in scope["headers"] if name.lower() == b"authorization"]
@@ -427,6 +493,10 @@ class Boundary:
             raise AuthenticationError
         authorization = values[0] if values else None
         mcp = self.is_mcp(scope)
+        if self.is_ui(scope) and (
+            authorization is None or authorization.partition(" ")[0].lower() != "basic"
+        ):
+            raise AuthenticationError
         if authorization is not None and authorization.partition(" ")[0].lower() == "basic":
             provider: BasicProvider | None = getattr(self.owner.state, "basic_provider", None)
             if mcp or self.server.basic is None or provider is None:
@@ -677,11 +747,15 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         )
 
     @asynccontextmanager
-    async def rest_lifespan(application: FastAPI) -> AsyncIterator[None]:  # noqa: PLR0915 - explicit partial-startup and owned-worker cleanup boundary
+    async def rest_lifespan(application: FastAPI) -> AsyncIterator[None]:  # noqa: PLR0912, PLR0915 - explicit partial-startup and owned-worker cleanup boundary
         with instance_lock(instance_lock_path or Path("/run/hfcache/api.lock")):
             configure_daemon(level=getattr(logging, server.log_level.upper()))
             basic = None
+            capture = None
+            ui_streams = None
             application.state.basic_provider = None
+            application.state.ui_capture = None
+            application.state.ui_streams = None
             try:
                 application.state.credentials = credentials or load_credentials(server)
                 basic = load_basic_provider(server.basic)
@@ -695,6 +769,23 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                 ):
                     message = "operation state and archive storage must not overlap"
                     raise ConfigurationError.single(message, code="HFCFG005")
+                if server.web.enabled:
+                    from hfcache.wire_schema import (  # noqa: PLC0415 - enabled UI startup only
+                        installed_source_digest,
+                    )
+
+                    capture = capture_assets(
+                        server,
+                        application.state.policy,
+                        state_root=state_root,
+                        instance_lock_path=instance_lock_path or Path("/run/hfcache/api.lock"),
+                        hub_token_file=hub_token_file,
+                        application_version=RuntimeVersions.measured().application,
+                        wire_source_digest=installed_source_digest(),
+                    )
+                    ui_streams = UiStreams()
+                    application.state.ui_capture = capture
+                    application.state.ui_streams = ui_streams
                 limits = server.limits
                 with operation_store or OperationStore(
                     server.state_directory,
@@ -726,6 +817,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                         application.state.verifier = verification_executor or VerificationClient(
                             settings.unix_socket,
                             expected_uid=settings.expected_peer_uid,
+                            expected_socket_owner_uid=settings.expected_socket_owner_uid,
                             timeout_seconds=settings.timeout_seconds,
                             poll_seconds=settings.poll_seconds,
                             max_frame_bytes=settings.max_frame_bytes,
@@ -751,6 +843,8 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                             runner.stop_admission()
                         yield
                     finally:
+                        if ui_streams is not None:
+                            ui_streams.stop_admission()
                         if basic is not None:
                             basic.stop_admission()
                         if runner is not None:
@@ -767,12 +861,23 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                         await _finish_owned(drain())
             finally:
                 try:
-                    if basic is not None:
-                        basic.stop_admission()
-                        await _finish_owned(basic.aclose())
+                    try:
+                        if ui_streams is not None:
+                            ui_streams.stop_admission()
+                            await _finish_owned(ui_streams.aclose())
+                    finally:
+                        if capture is not None:
+                            capture.close()
+                        application.state.ui_capture = None
+                        application.state.ui_streams = None
                 finally:
-                    application.state.basic_provider = None
-                    application.state.credentials = None
+                    try:
+                        if basic is not None:
+                            basic.stop_admission()
+                            await _finish_owned(basic.aclose())
+                    finally:
+                        application.state.basic_provider = None
+                        application.state.credentials = None
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
@@ -809,6 +914,48 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         },
     )
     app.add_middleware(Boundary, owner=app, server=server)
+
+    async def ui_resource(request: Request, member: str = "") -> Response:
+        _no_query(request)
+        capture = getattr(app.state, "ui_capture", None)
+        streams = getattr(app.state, "ui_streams", None)
+        if not server.web.enabled or capture is None or streams is None:
+            raise RequestError(code="HFAPI007", status_code=404)
+        if any(name.lower() == b"range" for name, _ in request.scope["headers"]):
+            raise RequestError
+        if request.url.path.endswith("/ui") and not member:
+            request.state.ui_response_class = "ui_document"
+            return RedirectResponse(uri_path(request.scope["root_path"] + "/ui/"), status_code=307)
+        prefix = request.scope["root_path"]
+        if member == "bootstrap.json":
+            body = bootstrap_bytes(
+                capture,
+                server,
+                app.state.policy,
+                request.state.principal,
+                instance_id=app.state.instance_id,
+                effective_prefix=prefix,
+            )
+            return UiResponse(body, mime="application/json", policy="ui_bootstrap", streams=streams)
+        if member in {"", "library", "operations", "maintenance", "administration"}:
+            return UiResponse(
+                capture.shells[prefix], mime="text/html", policy="ui_document", streams=streams
+            )
+        selected = capture.members.get(member)
+        if selected is None or member == "index.html":
+            raise RequestError(code="HFAPI007", status_code=404)
+        return UiResponse(
+            selected.body,
+            mime=selected.mime,
+            policy="ui_asset_private" if selected.private_cache else "ui_document",
+            streams=streams,
+        )
+
+    if server.web.enabled:
+        app.add_api_route("/ui", ui_resource, methods=["GET", "HEAD"], include_in_schema=False)
+        app.add_api_route(
+            "/ui/{member:path}", ui_resource, methods=["GET", "HEAD"], include_in_schema=False
+        )
 
     def catalog_queries(config: ApplicationConfig) -> CatalogQueries:
         limits = server.limits

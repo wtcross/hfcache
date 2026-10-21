@@ -13,6 +13,7 @@
 #   scripts/check.sh --with-build # additionally build and smoke-test the wheel
 #   scripts/check.sh --require-cockpit # fail if frontend checks cannot execute
 #   scripts/check.sh --require-web # strict web, generated contracts and real API read fixture
+#   scripts/check.sh --with-web-functional # final installed shared-Caddy acceptance
 #
 set -euo pipefail
 
@@ -21,17 +22,21 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 WITH_BUILD=0
 REQUIRE_COCKPIT=0
 REQUIRE_WEB=0
+WITH_WEB_FUNCTIONAL=0
 for arg in "$@"; do
   case "$arg" in
     --with-build) WITH_BUILD=1 ;;
     --require-cockpit) REQUIRE_COCKPIT=1 ;;
     --require-web) REQUIRE_WEB=1 ;;
+    --with-web-functional) WITH_WEB_FUNCTIONAL=1; REQUIRE_WEB=1 ;;
     -h | --help)
       printf '%s\n' \
-        'Usage: scripts/check.sh [--with-build] [--require-cockpit] [--require-web]' \
+        'Usage: scripts/check.sh [--with-build] [--require-cockpit] [--require-web] [--with-web-functional]' \
         '  --with-build       additionally smoke-test the installed wheel' \
         '  --require-cockpit  refuse missing Cockpit sources or tools' \
         '  --require-web      require frozen web/contracts, preliminary browser smoke and real API read fixture' \
+        '  --with-web-functional require all installed shared-Caddy functional cases in all profiles' \
+        '                       requires explicit HFCACHE_WEB_FUNCTIONAL_MANIFEST; implies --require-web' \
         '  -h, --help         show this help without running checks' \
         'See docs/development.md for provisioning and acceptance limits.'
       exit 0
@@ -65,6 +70,7 @@ require_web() {
     web/src/wire/contracts.json web/src/wire/generated.ts web/src/wire/unicode-data.json \
     web/scripts/generate-wire.ts \
     web/scripts/check-auth-sandbox-tests.ts web/test/auth-api/sandbox.test.mjs \
+    web/scripts/check-functional-driver-tests.ts web/test/functional-api/driver.test.mjs \
     web/test/auth-api/sandbox.mjs \
     scripts/export-web-contracts.py scripts/check-web-read-fixture.py; do
     if [[ ! -f $required ]]; then
@@ -83,6 +89,12 @@ if [[ $REQUIRE_COCKPIT -eq 1 ]]; then
 fi
 if [[ $REQUIRE_WEB -eq 1 ]]; then
   require_web
+fi
+if [[ $WITH_WEB_FUNCTIONAL -eq 1 ]]; then
+  if [[ -z ${HFCACHE_WEB_FUNCTIONAL_MANIFEST:-} || $HFCACHE_WEB_FUNCTIONAL_MANIFEST != /* || ! -f scripts/check-web-functional.py ]]; then
+    printf 'Web functional gate requires an explicit absolute HFCACHE_WEB_FUNCTIONAL_MANIFEST and scripts/check-web-functional.py; see docs/development.md\n' >&2
+    exit 69
+  fi
 fi
 
 if ! command -v uv > /dev/null 2>&1; then
@@ -149,7 +161,7 @@ if [[ $REQUIRE_WEB -eq 1 ]]; then
   require_web
   step 'web frozen install'
   "$PNPM_BIN" --dir web install --frozen-lockfile
-  for web_check in check:wire lint typecheck test:strict-fixtures test:auth-sandbox test:unit test:component build test:browser; do
+  for web_check in check:wire lint typecheck test:strict-fixtures test:auth-sandbox test:functional-metadata test:unit test:component build test:browser; do
     step "web $web_check"
     "$PNPM_BIN" --dir web run "$web_check"
   done
@@ -162,6 +174,12 @@ fi
 if [[ $WITH_BUILD -eq 1 ]]; then
   step 'wheel install smoke test'
   uv run --locked --extra server --extra mcp pytest -m build
+fi
+
+if [[ $WITH_WEB_FUNCTIONAL -eq 1 ]]; then
+  step 'final installed shared-Caddy web functional acceptance'
+  uv run --locked --extra server --extra mcp python scripts/check-web-functional.py \
+    --profile all --manifest "$HFCACHE_WEB_FUNCTIONAL_MANIFEST" --final
 fi
 
 printf '\n\033[1;32mall checks passed\033[0m\n'

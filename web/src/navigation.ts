@@ -1,4 +1,6 @@
 /** Presentation routes only; no endpoint, principal or archive authority (INV-019). */
+import { canonicalUiPrefix } from "./wire/ui-semantics";
+import { uriPath } from "./api/url-paths";
 export const WORKSPACES = [
     {
         id: "library",
@@ -52,16 +54,15 @@ export function isWorkspace(value: string): value is Workspace {
 }
 
 export function validateBasePath(value: unknown): string {
-    if (
-        typeof value !== "string" ||
-        value.length > 1024 ||
-        !value.startsWith("/") ||
-        !value.endsWith("/") ||
-        /[%?#\\\s\u0000-\u001f\u007f]/u.test(value) ||
-        value.includes("//") ||
-        value.split("/").some((part) => part === "." || part === "..")
-    )
+    try {
+        if (typeof value !== "string" || !value.endsWith("/ui/"))
+            throw new Error();
+        const prefix = decodeURIComponent(value.slice(0, -4));
+        canonicalUiPrefix(prefix);
+        if (uriPath(prefix + "/ui/") !== value) throw new Error();
+    } catch {
         throw new Error("The deployment base path is unavailable.");
+    }
     return value;
 }
 

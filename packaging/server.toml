@@ -44,6 +44,14 @@ tcp_port = 8787
 [verification]
 unix_socket = "/run/hfcache/verification.sock"
 # expected_peer_uid defaults to the API service's own UID.
+# expected_socket_owner_uid defaults to the resolved expected_peer_uid.
+# Native system-manager activation needs two explicit, independent identities:
+# expected_peer_uid = 0
+# Set expected_socket_owner_uid to the actual numeric worker/SocketUser UID,
+# measured with id -u for the effective account; do not copy another host's UID.
+# Do not change the service-owned socket to root ownership. Rootless worker-
+# created listeners retain equal owner/peer values and can omit the owner field.
+# See docs/deployment-centos-stream-10.md, Native verifier identity.
 timeout_seconds = 5.0
 poll_seconds = 0.2
 max_frame_bytes = 16777216

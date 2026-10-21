@@ -17,9 +17,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "test:strict-fixtures": "node scripts/check-strict-fixtures.ts",
     "test:auth-sandbox": "node scripts/check-auth-sandbox-tests.ts",
+    "test:functional-metadata": "node scripts/check-functional-driver-tests.ts",
     "test:unit": "node scripts/test-suite.ts unit",
     "test:component": "node scripts/test-suite.ts component",
-    "build": "vite build && node scripts/check-build.ts",
+    "build": "node scripts/build-artifact.ts",
     "test:browser": "node scripts/browser-smoke.ts",
     "licenses": "node scripts/licenses.ts"
   },

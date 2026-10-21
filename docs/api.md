@@ -504,10 +504,12 @@ POST. [Server lifecycle](server.md#restart-and-drain) governs actual executor dr
 
 ## Web UI and administration design
 
-The following routes and presentation schemas are accepted design for the
-replacement browser interface; **these additions are not implemented or available
-yet**. Optional Basic authentication above is implemented separately; it leaves
-the route matrix and current strict schemas unchanged.
+Optional Basic authentication and the indexed `/ui/` navigation/assets/bootstrap
+surface are implemented in unreleased source, preserving existing REST/MCP
+credential classes and strict public schemas. The host/configuration and card
+additions below remain accepted design until their separate implementation and
+acceptance. These source additions do not change an installed release or grant
+host authority.
 See [UI availability](web-ui/README.md), [authentication decision](adr/decision-140.md),
 [host/configuration decision](adr/decision-141.md) and
 [card decision](adr/decision-142.md). Each addition requires executable
@@ -526,13 +528,32 @@ configured public prefix before `/api/v1` or `/ui/`:
 | `POST /api/v1/host/sync-schedule/changes` | Explicit schedule administration capability plus protected supported-profile proof; keyed closed action `pause`, `resume`, `replace` or `reset`, with exact expected revision |
 | `POST /api/v1/host/sync-observer/stops` | Explicit observer administration capability plus policy; keyed fixed stop with exact expected invocation identity, never job cancellation |
 | `GET /api/v1/host/journal` | Explicit administration-read capability plus policy; fixed source, bounded page/cursor, redacted diagnostics rather than job outcomes |
-| `GET`/`HEAD /ui/` recognized navigation/assets and `GET /ui/bootstrap.json` | Application-owned authentication, fixed indexed non-archive assets and independent nonsecret UI bootstrap |
+| `GET`/`HEAD /ui/` recognized navigation/assets and `/ui/bootstrap.json` | Basic administrator only, fixed indexed non-archive assets and independent nonsecret UI bootstrap |
 
 Do not add duplicate models/datasets/dashboard/tag CRUD, generic payload/URL,
 schedule GET, arbitrary unit/terminal, cancellation, SSE or WebSocket routes.
 `host/status` includes the sync schedule and display-only verification timer facts.
 Rootless schedule/observer changes remain denied while fixed system-manager
 bindings are unproved; supported native positive paths still require acceptance.
+
+[Decision147](adr/decision-147.md) fixes the exact strict asset/bootstrap schema1,
+configured-policy archive identity, compiled build/source binding, route/HEAD/
+cache/header behavior and finite protected capture/send budgets. UI bootstrap is
+plain typed JSON, separate from the existing Envelope and `/capabilities` schemas;
+it grants no archive health or protected host authority. Every UI asset/alias/error
+is Basic-only while REST bearer and read-only MCP remain independent. Enabled UI
+requires the exact immutable manifest hash and actual installed version/wire
+identity before admission; disabled UI reads no asset or mount data.
+
+Public prefix migration rejects leading `//` explicitly. Operation JSON links
+retain raw canonical application spelling; only the single Location header is
+UTF-8 URI-encoded with the shared path encoder. Both client boundaries compare
+that exact encoded header separately from raw links, preserving original keys
+and uncertainty/no replay on malformed acknowledgments. Ordinary supported
+ASCII/native CLI behavior is byte-identical. Previously accepted Unicode or
+unsafe-ASCII server prefixes had invalid/inconsistent header behavior; no old
+CLI Unicode support is claimed. The new UI-specific prefix/origin size ceilings
+apply only to enabled UI, as documented in [server configuration](server.md).
 
 ### Managed configuration form
 

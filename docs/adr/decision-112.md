@@ -1,6 +1,7 @@
 # Separate server authority and verified bearer capabilities
 
 - Decision identity: 112.
+- Asset/bootstrap refinement: [decision147](decision-147.md).
 
 - MCP transport amendment: [decision 124](decision-124.md).
 - Basic provider implementation contract: [decision146](decision-146.md).
@@ -96,3 +97,19 @@ Recorded installed scope and remaining acceptance are described in
 
 [Decision 140](decision-140.md) amends this record for the accepted
 replacement design. Accepted Basic/internal-principal design preserves existing bearer classes and strict public schemas; the new provider and privileged capabilities are not implemented yet.
+
+## Authenticated asset and bootstrap amendment (2026-10-20)
+
+[Decision147](decision-147.md) amends this record. The optional restart-only web configuration and Basic-only UI namespace are fixed by this refinement. Disabled UI performs no asset/mount read; enabled UI requires protected indexed bytes and actual installed build/contract equality. Legacy REST bearer and separate MCP authority remain unchanged.
+
+## Source implementation clarification (2026-10-21)
+
+The earlier replacement-design amendment records its introduction-stage scope.
+Unreleased source now implements the bounded optional Basic provider and internal
+principal projection under [decision146](decision-146.md), plus explicitly enabled
+Basic-only indexed assets/bootstrap under [decision147](decision-147.md). Existing
+REST/MCP credential classes and strict public schemas remain unchanged. Internal
+grants alone still enable no protected host/configuration operation; that helper
+boundary and its acceptance remain separate. See the [server availability
+contract](../server.md#web-ui-design-and-current-availability). This clarification
+claims no installed release, production rollout or complete replacement conformance.

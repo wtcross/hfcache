@@ -1,4 +1,4 @@
-/** Preliminary owned-loopback built-shell smoke; no API/Caddy/host acceptance. */
+/** Built startup refusal/fallback only; no API/Caddy/host acceptance. */
 import { spawn } from "node:child_process";
 import type { BrowserServer } from "@playwright/test";
 import { createServer } from "node:http";
@@ -17,7 +17,7 @@ const options = process.argv.slice(2);
 if (options.length > 0) {
     if (options.length === 1 && options[0] === "--help")
         console.log(
-            "Usage: pnpm --dir web run test:browser\nRuns the built shell on an owned loopback fixture; requires separately provisioned Chromium.",
+            "Usage: pnpm --dir web run test:browser\nChecks the built startup refusal and missing-script fallback on an owned loopback fixture; requires separately provisioned Chromium. Connected UI acceptance requires the installed shared-Caddy functional runner.",
         );
     else {
         console.error("Unrecognized browser smoke argument.");
@@ -39,7 +39,21 @@ if (options.length > 0) {
         throw new Error(
             "Required Chromium is missing. Provision the pinned browser separately in web/.cache/ms-playwright; no test was skipped.",
         );
-    const index = readFileSync(join(root, "dist/index.html"));
+    const index = readFileSync(join(root, "dist/index.html"), "utf8");
+    // This fixture supplies no successful bootstrap or connected API values.
+    // Main must refuse startup; an absent main chunk must preserve inert HTML.
+    function refusalIndex(base: string): Buffer {
+        return Buffer.from(
+            index
+                .replaceAll("__HFCACHE_UI_BASE_V1__", base)
+                .replaceAll(
+                    "__HFCACHE_UI_BOOTSTRAP_V1__",
+                    base + "bootstrap.json",
+                )
+                .replaceAll("__HFCACHE_UI_FINGERPRINT_V1__", "0".repeat(64))
+                .replaceAll("__HFCACHE_UI_CONTRACT_V1__", "1"),
+        );
+    }
     const assets = new Map<string, Buffer>();
     for (const member of readdirSync(join(root, "dist/assets"), {
         withFileTypes: true,
@@ -50,21 +64,16 @@ if (options.length > 0) {
             readFileSync(join(root, "dist/assets", member.name)),
         );
     }
-    const navigation = new Set([
-        "/ui/",
-        "/ui/library",
-        "/ui/operations",
-        "/ui/maintenance",
-        "/ui/administration",
+    const indexes = new Map([
+        ["/ui/", refusalIndex("/ui/")],
+        ["/missing-script/ui/", refusalIndex("/missing-script/ui/")],
     ]);
     const server = createServer((request, response) => {
         const path = request.url;
         const body =
             path === undefined
                 ? undefined
-                : navigation.has(path)
-                  ? index
-                  : assets.get(path);
+                : (indexes.get(path) ?? assets.get(path));
         if (request.method !== "GET" || body === undefined) {
             response.writeHead(404);
             response.end();
@@ -204,7 +213,7 @@ if (options.length > 0) {
                 throw new Error("Browser report exceeds its bounds.");
             const parsed: unknown = JSON.parse(raw.toString("utf8"));
             console.log(
-                `Preliminary built-shell Chromium smoke: ${String(requirePassingBrowserReport(parsed))} passed; no skipped tests. No Caddy/API acceptance claimed.`,
+                `Built startup refusal/fallback Chromium checks: ${String(requirePassingBrowserReport(parsed))} passed; no skipped tests. No connected UI/Caddy/API acceptance claimed.`,
             );
         }
     } finally {

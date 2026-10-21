@@ -1526,6 +1526,51 @@ for every metadata request. No bulk file server, write/job route, new dependency
 MCP or production deployment is added. The daemon bootstrap has no success
 stdout Envelope; its classified startup failures retain normal JSON errors.
 
+[Decision 149](adr/decision-149.md) keeps exact foreground Unix ownership through
+main-thread default-SIGTERM replay in a non-PID1 process. After owned socket
+identity/mode bookkeeping, a private pending-once unwind encloses the original
+listener close/unlink/pinned-parent cleanup. Only afterward are the original
+handler and SIGTERM delivery restored. Graceful application joins, signal exit,
+custom/ignored handlers, PID1 and manager-owned activation retain their existing
+semantics. No forced-death cleanup or deletion of an unknown/replaced node is
+promised.
+
+### Authenticated web artifact amendment (2026-10-20)
+
+[Decision 147](adr/decision-147.md) adds an optional strict-TypeScript React SPA
+served by that same application lifespan, Unix upstream and existing Caddy TLS
+endpoint. The application authenticates the complete UI namespace with the
+[bounded administrator provider](adr/decision-146.md); REST bearer and read-only
+MCP retain their existing authentication. Caddy gains no global Basic gate,
+frontend service, public static exception, archive/policy mount or runtime Node.
+Shipped assets belong in the existing pinned UBI 10 micro API image.
+
+Enabled startup verifies a canonical independently versioned manifest and actual
+installed wire/build identity, captures at most 64 MiB of protected local indexed
+file bytes, and renders at most two bounded inert HTML variants. A retained root
+descriptor and bounded traversal replace request-time path reopening. Protected
+mount identities exclude archive, configuration, state, credentials and listeners
+without probing archive targets. Disabled UI performs no asset/mount-table I/O.
+Capture precedes operation-store construction/reconciliation and runner startup;
+shutdown stops admission and joins actual streams before releasing captured
+resources and the instance lock. UI sends have separate finite admission,
+chunk and absolute time bounds, independent of the metadata pool.
+
+Plain authenticated bootstrap exposes configured UUID, exact safe principal,
+explicit unavailable permissions and validated local paths/build identity. It
+makes no live archive-health claim. The browser validates bounded JSON, inert
+metadata and platform cryptographic build bindings before mounting. Missing
+bootstrap or main JavaScript preserves the inert reload page. Explicit version
+checks never reload automatically, discard operation handles or replay requests.
+Only recognized GET/HEAD navigation returns HTML; errors/assets/API/MCP retain
+their own contracts. [Schemas §18.3](schemas.md#183-web-release-manifest-and-ui-bootstrap),
+[API](api.md) and [server](server.md) define exact fields, limits and headers.
+
+Raw JSON operation links retain their identity while `Location` uses the single
+URI-path encoder. Reject leading double-slash prefixes globally; UI-only origin
+and prefix ceilings do not narrow backend-only configurations. No archive format,
+publication identity, job authority, host permission or no-replay rule changes.
+
 ### Durable admission and observation amendment (2026-10-17)
 
 [Decision 114](adr/decision-114.md) implements decision 109's bounded registry
@@ -1567,6 +1612,13 @@ fingerprint messages, owns complete verification persistence and retains exact
 outcomes in the existing independent local schema. The daemon never spawns a
 generic command or runs production verification in-process. Restart imports an
 exact terminal outcome or awaits an exact live worker without resubmission.
+The client's optional explicit socket-owner UID is separate from its exact
+kernel-peer UID ([decision 148](adr/decision-148.md)). Omission retains the legacy
+resolved-peer ownership rule. Native system-manager activation preserves the
+service-owned node, root listener-creator credential and unprivileged accepting
+worker as separate facts; rootless worker-created listeners retain their equal
+owner/peer identity. Parent, inode, mode, worker ownership and caller checks stay
+mandatory. No identity is inferred from a process label or substituted for another.
 Unsafe/unavailable status preserves active receipts and closes execution across
 restarts, while healthy metadata stays available; only trusted missing/interrupted
 evidence permits parent interruption. A private durable `running` label without

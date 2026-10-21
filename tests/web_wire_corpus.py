@@ -441,6 +441,8 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
         examples.purge_plan,
         examples.pruned_record,
         examples.verification_catalog,
+        examples.ui_asset_manifest,
+        examples.ui_bootstrap,
     ):
         model(factory())
     model(PrunedRevision(commit_sha=examples.OTHER_SHA, logical_bytes=0, publication_generation=1))
@@ -592,6 +594,7 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
 def covered_route_modes() -> set[tuple[str, str, str]]:
     """Source-known schema modes represented; this does not claim HTTP execution."""
     defaults = {
+        "ui_bootstrap",
         "version",
         "capabilities",
         "health",
@@ -662,6 +665,7 @@ def _original_models() -> dict[str, type[BaseModel]]:
         "hfcache.manifests",
         "hfcache.reporting",
         "hfcache.wire_models",
+        "hfcache.ui_models",
     ):
         for value in vars(import_module(module)).values():
             if isinstance(value, type) and issubclass(value, BaseModel):

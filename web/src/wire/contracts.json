@@ -9109,6 +9109,889 @@
       "kind": "object",
       "semantic_ids": []
     },
+    "UiAdminPermission": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "capability",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "config-read"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "config-write"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "host-read"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "observer-stop"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "schedule-write"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "granted",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "effective",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "reason",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "allowed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "not_granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "feature_unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.ui_models.UiAdminPermission._permission"
+      ]
+    },
+    "UiAssetManifest": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.ui_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "kind",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "hfcache_web_assets"
+          },
+          "required": true
+        },
+        {
+          "name": "build",
+          "node": {
+            "kind": "ref",
+            "name": "UiBuildMetadata",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "entrypoint",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "index.html"
+          },
+          "required": true
+        },
+        {
+          "name": "meta_identity",
+          "node": {
+            "kind": "ref",
+            "name": "UiHtmlMetaIdentity",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "members",
+          "node": {
+            "items": {
+              "kind": "ref",
+              "name": "UiAssetMember",
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 4096,
+            "min_items": 1,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.ui_models.UiAssetManifest._members"
+      ]
+    },
+    "UiAssetMember": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "path",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._asset_path"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "bytes",
+          "node": {
+            "kind": "integer",
+            "maximum": "8388608",
+            "minimum": "0",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "mime",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "text/html"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "text/css"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "text/javascript"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "application/json"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "image/png"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "image/webp"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "font/woff2"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "text/plain"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.ui_models.UiAssetMember._member"
+      ]
+    },
+    "UiBootstrap": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.ui_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "kind",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "hfcache_ui_bootstrap"
+          },
+          "required": true
+        },
+        {
+          "name": "ui_contract_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.ui_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "rest_api_schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.ui_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "wire_source_digest",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "instance_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._instance"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "authority_epoch",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._instance"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "configured_archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "archive_identity_source",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "installed_policy"
+          },
+          "required": true
+        },
+        {
+          "name": "config_fingerprint",
+          "node": {
+            "kind": "null",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "configured_origin",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._origin"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "paths",
+          "node": {
+            "kind": "ref",
+            "name": "UiPaths",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "user",
+          "node": {
+            "kind": "ref",
+            "name": "UiUser",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "build",
+          "node": {
+            "kind": "ref",
+            "name": "UiBuildIdentity",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.ui_models.UiBootstrap._bootstrap"
+      ]
+    },
+    "UiBuildIdentity": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "asset_manifest_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "metadata",
+          "node": {
+            "kind": "ref",
+            "name": "UiBuildMetadata",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "UiBuildMetadata": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "application_version",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 128,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._ascii"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "source_commit",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_commit_sha"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "source_snapshot_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "source_dirty",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "ui_contract_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.ui_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "rest_api_schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.ui_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "wire_source_digest",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "pnpm_lock_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "toolchain",
+          "node": {
+            "kind": "ref",
+            "name": "UiToolchain",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "toolchain_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "licenses_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "notices_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "UiHtmlMetaIdentity": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "ui_base",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "__HFCACHE_UI_BASE_V1__"
+          },
+          "required": true
+        },
+        {
+          "name": "bootstrap_path",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "__HFCACHE_UI_BOOTSTRAP_V1__"
+          },
+          "required": true
+        },
+        {
+          "name": "asset_fingerprint",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "__HFCACHE_UI_FINGERPRINT_V1__"
+          },
+          "required": true
+        },
+        {
+          "name": "ui_contract",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "__HFCACHE_UI_CONTRACT_V1__"
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "UiPaths": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "public_prefix",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._prefix"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "effective_prefix",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._prefix"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "ui_base",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 3076,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._ascii"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "bootstrap",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 3090,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._ascii"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "api_base",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 3079,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._ascii"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "mcp_base",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 3077,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.ui_models._ascii"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.ui_models.UiPaths._paths"
+      ]
+    },
+    "UiToolchain": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "node",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 64,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._ascii"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "pnpm",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 64,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._ascii"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "typescript",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 64,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._ascii"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "vite",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 64,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._ascii"
+            ]
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "UiUser": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "subject",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._subject"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "display_name",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.ui_models._subject"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "authentication_method",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "basic"
+          },
+          "required": true
+        },
+        {
+          "name": "credential_class",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "rest-writer"
+          },
+          "required": true
+        },
+        {
+          "name": "rest_capabilities",
+          "node": {
+            "items": {
+              "choices": [
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "read"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "write"
+                }
+              ],
+              "kind": "union",
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 2,
+            "min_items": 2,
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "admin_permissions",
+          "node": {
+            "items": {
+              "kind": "ref",
+              "name": "UiAdminPermission",
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 5,
+            "min_items": 5,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.ui_models.UiUser._user"
+      ]
+    },
     "UnavailableHealthPayload": {
       "extra": "forbid",
       "fields": [
@@ -10385,6 +11268,23 @@
     }
   ],
   "routes": [
+    {
+      "binding_ids": [
+        "ui.bootstrap"
+      ],
+      "commands": [],
+      "cursor": "none",
+      "failure": [],
+      "id": "ui_bootstrap",
+      "method": "GET",
+      "mode": "default",
+      "path": "/ui/bootstrap.json",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "ui_bootstrap",
+      "success": "UiBootstrap"
+    },
     {
       "binding_ids": [],
       "commands": [
@@ -12200,7 +13100,7 @@
   "semantics": {
     "api.problem.classification": {
       "phase": "context",
-      "source_hash": "739c79aab56bca375194ee04be5affadfd1a3ee7c373d474b944dbf291af684b"
+      "source_hash": "395578ca8279c5b57a2eebfdb292bef77f46d382f081218d1f7aecef23b062f6"
     },
     "catalog.facet": {
       "phase": "context",
@@ -12208,7 +13108,7 @@
     },
     "catalog.publication": {
       "phase": "context",
-      "source_hash": "e9670b37f1efae852144f9a18bedc38272f5a6d8faae7bccb2d64c87c3e33e9d"
+      "source_hash": "16f857c857d547e81ec1f1b51d9b9ab8ed7c28b20676c69dda6b407e8e381c60"
     },
     "catalog.response": {
       "phase": "context",
@@ -12470,17 +13370,69 @@
       "phase": "model",
       "source_hash": "41c8c1e16cae57181c365bb4e1b9660cbb51b559cc73600a8821629321f3bd44"
     },
+    "hfcache.ui_models.UiAdminPermission._permission": {
+      "phase": "model",
+      "source_hash": "a7120e9d18e2d04e4c902a4b4264b9be90327769397e99d8825a40b1259120dd"
+    },
+    "hfcache.ui_models.UiAssetManifest._members": {
+      "phase": "model",
+      "source_hash": "36c8cde36716486fb019f29325858b42455ba6a49a37002e40233540f5391f4d"
+    },
+    "hfcache.ui_models.UiAssetMember._member": {
+      "phase": "model",
+      "source_hash": "4b932c1228c4b47235ee23773c7364e0157eba07521332262e38d137d45ae950"
+    },
+    "hfcache.ui_models.UiBootstrap._bootstrap": {
+      "phase": "model",
+      "source_hash": "81b74a12497e074f981cea37677c081cc5e38ddbde3b05d6b68a4f35f37b7179"
+    },
+    "hfcache.ui_models.UiPaths._paths": {
+      "phase": "model",
+      "source_hash": "85750ccdedf6fee63abd3a8e287e4276b8f54da93163d1f432877adfcb971990"
+    },
+    "hfcache.ui_models.UiUser._user": {
+      "phase": "model",
+      "source_hash": "c0eb0131d42f9860cf3119f1a47e313f96ab6355529ba74ece847cdba3c2758b"
+    },
+    "hfcache.ui_models._ascii": {
+      "phase": "field",
+      "source_hash": "86de5de588cbbf99cfcf076182bbbd8903947446e5487972cb9b35ce092c81d6"
+    },
+    "hfcache.ui_models._asset_path": {
+      "phase": "field",
+      "source_hash": "4a7c1192ce50530c62c556bbf5e7a7ed1a7c846594f56a71c4ab88a0a6fded3c"
+    },
+    "hfcache.ui_models._instance": {
+      "phase": "field",
+      "source_hash": "d9e79f8e8a163edade719422f5645311e6e9c37f5b26fa1fd1caa50d0f1737d9"
+    },
+    "hfcache.ui_models._one": {
+      "phase": "field",
+      "source_hash": "f2e789b6310ee5a570e7a399d01806027cafbb69bf5177060b722b453f7afb5a"
+    },
+    "hfcache.ui_models._origin": {
+      "phase": "field",
+      "source_hash": "0f813e1429c8f3f3cc51913339e4e70f1ce70147debeb5d268845a644b6c30a2"
+    },
+    "hfcache.ui_models._prefix": {
+      "phase": "field",
+      "source_hash": "48350de43a2114507e710219e8d3c6c16f308450f722a539e93c55c13e05ec4e"
+    },
+    "hfcache.ui_models._subject": {
+      "phase": "field",
+      "source_hash": "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44"
+    },
     "operation.events": {
       "phase": "context",
-      "source_hash": "01a6d16b3cada09d212c2527fee77390e4af385ef6a1e015da9bbe0966ea1c49"
+      "source_hash": "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7"
     },
     "operation.identity": {
       "phase": "context",
-      "source_hash": "01a6d16b3cada09d212c2527fee77390e4af385ef6a1e015da9bbe0966ea1c49"
+      "source_hash": "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7"
     },
     "operation.result": {
       "phase": "context",
-      "source_hash": "01a6d16b3cada09d212c2527fee77390e4af385ef6a1e015da9bbe0966ea1c49"
+      "source_hash": "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7"
     },
     "publication.manifest": {
       "phase": "context",
@@ -12492,7 +13444,7 @@
     },
     "run.report": {
       "phase": "context",
-      "source_hash": "e1f3da24326bf0d1329aba53847c8411b8ccf3bdf3e25ba57ec2c1a0fd8a4dcf"
+      "source_hash": "2bf3d9b55a9f8183d894036ea6a5b2a6da358c2672cc8ca717bff2d5138d2b05"
     },
     "timestamp.serialized": {
       "phase": "field",
@@ -12501,7 +13453,15 @@
     "timestamp.wire": {
       "phase": "field",
       "source_hash": "9c8f078fa4fa1fdab83c0f307f933f69edda975604909fa846ec62fb0778cdf8"
+    },
+    "ui.bootstrap": {
+      "phase": "context",
+      "source_hash": "55e9ccdf08dbc98bb41e161034d5f4b72e4256691f570b57ba3226f5335e8dba"
+    },
+    "ui.html": {
+      "phase": "context",
+      "source_hash": "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61"
     }
   },
-  "source_digest": "98d30c358db72cc30bc8dc7c69193ae254f830c68a4451bfe04ef5212ca6a44c"
+  "source_digest": "10883335765763832f4e0aa564d5fcff1a0fcc20e41f245f16d70ce640c11be2"
 }

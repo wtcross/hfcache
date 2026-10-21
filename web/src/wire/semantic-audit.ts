@@ -1,26 +1,58 @@
 /** Reviewed Python semantic source pins. Deliberately NOT rewritten by code generation. */
 export const semanticSourceHashes: Readonly<Record<string, string>> =
     Object.freeze({
+        "ui.html":
+            "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61",
+        // Decision148 adds restart-only verifier identity configuration. Bootstrap
+        // paths, authenticated identity, DTOs and effective permissions are unchanged.
+        "ui.bootstrap":
+            "55e9ccdf08dbc98bb41e161034d5f4b72e4256691f570b57ba3226f5335e8dba",
+        "hfcache.ui_models._subject":
+            "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44",
+        "hfcache.ui_models._prefix":
+            "48350de43a2114507e710219e8d3c6c16f308450f722a539e93c55c13e05ec4e",
+        "hfcache.ui_models._origin":
+            "0f813e1429c8f3f3cc51913339e4e70f1ce70147debeb5d268845a644b6c30a2",
+        "hfcache.ui_models._one":
+            "f2e789b6310ee5a570e7a399d01806027cafbb69bf5177060b722b453f7afb5a",
+        "hfcache.ui_models._instance":
+            "d9e79f8e8a163edade719422f5645311e6e9c37f5b26fa1fd1caa50d0f1737d9",
+        "hfcache.ui_models._asset_path":
+            "4a7c1192ce50530c62c556bbf5e7a7ed1a7c846594f56a71c4ab88a0a6fded3c",
+        "hfcache.ui_models._ascii":
+            "86de5de588cbbf99cfcf076182bbbd8903947446e5487972cb9b35ce092c81d6",
+        "hfcache.ui_models.UiUser._user":
+            "c0eb0131d42f9860cf3119f1a47e313f96ab6355529ba74ece847cdba3c2758b",
+        "hfcache.ui_models.UiPaths._paths":
+            "85750ccdedf6fee63abd3a8e287e4276b8f54da93163d1f432877adfcb971990",
+        "hfcache.ui_models.UiBootstrap._bootstrap":
+            "81b74a12497e074f981cea37677c081cc5e38ddbde3b05d6b68a4f35f37b7179",
+        "hfcache.ui_models.UiAssetMember._member":
+            "4b932c1228c4b47235ee23773c7364e0157eba07521332262e38d137d45ae950",
+        "hfcache.ui_models.UiAssetManifest._members":
+            "36c8cde36716486fb019f29325858b42455ba6a49a37002e40233540f5391f4d",
+        "hfcache.ui_models.UiAdminPermission._permission":
+            "a7120e9d18e2d04e4c902a4b4264b9be90327769397e99d8825a40b1259120dd",
         "api.problem.classification":
-            "739c79aab56bca375194ee04be5affadfd1a3ee7c373d474b944dbf291af684b",
+            "395578ca8279c5b57a2eebfdb292bef77f46d382f081218d1f7aecef23b062f6",
         "catalog.facet":
             "f4a756a1d6b5b777c4d4397ac7d3fe01a565968f307ed1305b69059d74774417",
         "catalog.publication":
-            "e9670b37f1efae852144f9a18bedc38272f5a6d8faae7bccb2d64c87c3e33e9d",
+            "16f857c857d547e81ec1f1b51d9b9ab8ed7c28b20676c69dda6b407e8e381c60",
         "catalog.response":
             "f4a756a1d6b5b777c4d4397ac7d3fe01a565968f307ed1305b69059d74774417",
         "operation.events":
-            "01a6d16b3cada09d212c2527fee77390e4af385ef6a1e015da9bbe0966ea1c49",
+            "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7",
         "operation.identity":
-            "01a6d16b3cada09d212c2527fee77390e4af385ef6a1e015da9bbe0966ea1c49",
+            "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7",
         "operation.result":
-            "01a6d16b3cada09d212c2527fee77390e4af385ef6a1e015da9bbe0966ea1c49",
+            "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7",
         "publication.manifest":
             "8a8ccf6a8ea195bf782a510009abfc4f40591ae1698da00b0668f33ad61d0d6f",
         "publication.reference":
             "500115a0a5a9641952a25a50470e38b14543e68901d3ec2c57913bb898051635",
         "run.report":
-            "e1f3da24326bf0d1329aba53847c8411b8ccf3bdf3e25ba57ec2c1a0fd8a4dcf",
+            "2bf3d9b55a9f8183d894036ea6a5b2a6da358c2672cc8ca717bff2d5138d2b05",
         "hfcache.api.command_models.CatalogRefreshSubmission.canonical":
             "8267cec4ab3f2c8106415d0ccb3855dbe4e556c7b97ba282ee44ef644025e91e",
         "hfcache.api.command_models.PlanSubmission.explicit_candidate":

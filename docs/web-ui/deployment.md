@@ -1,9 +1,9 @@
-# Provision browser administrator access
+# Deploy the optional web interface
 
-This describes the unreleased optional authentication provider. Installed systems
-still use their recorded release and Cockpit. The application does not yet serve
-`/ui/`; authenticated static serving follows separately. Do not change a running
-installation merely to try the developer preview. See
+This describes optional authentication and immutable asset serving in unreleased
+source. Installed systems still use their recorded release and Cockpit. A source
+build does not install assets, select a release or enable `[web]`. Do not change a
+running installation merely to try the developer preview. See
 [current installed scope](../deployment-status.md) before planning a migration.
 
 The replacement uses one whole-archive human administrator. The browser handles
@@ -104,13 +104,101 @@ policy tree. No new secret is required when Basic is disabled. Release indexing,
 actual role isolation and installed native/rootless acceptance are completed by
 the packaging and platform tests before rollout.
 
+Native API startup also depends on the separate private verifier connection.
+The system manager's kernel peer UID and the worker-owned socket file are
+different identities. Configure peer UID `0` together with the measured numeric
+worker/socket-owner UID as described in
+[native verifier identity](../deployment-centos-stream-10.md#native-verifier-identity).
+Do not copy a numeric service UID from another machine or give this private
+connection a browser, Caddy or bearer credential. The rootless worker-created
+listener keeps its existing equal owner/peer settings. Administrator login and
+asset availability do not prove that verification execution is available.
+
+## Select a matching immutable asset artifact
+
+`[web]` belongs in the server TOML and is disabled by default. Enabling it
+requires the Basic provider plus both an explicit absolute asset directory and
+the lowercase SHA256 of that directory's canonical `manifest.json`:
+
+```toml
+[web]
+enabled = true
+asset_root = "/opt/hfcache/releases/RELEASE/ui"
+manifest_sha256 = "REPLACE_WITH_THE_REVIEWED_64_CHARACTER_LOWERCASE_MANIFEST_SHA256"
+```
+
+`RELEASE` and the digest are placeholders, not runnable values. Review a newly
+built artifact and its source inventory using the
+[locked workspace build](../development.md#web-workspace); `pnpm --dir web run build`
+writes `web/dist/manifest.json` and its indexed files. Node and pnpm belong only
+in the build/test environment. The API needs neither a frontend server nor a
+runtime package manager.
+
+The artifact must match the installed application's version and Python-derived
+wire authority. Keep its source commit, source snapshot, dirty flag, lock,
+toolchain, license inventory and notices with release evidence. A dirty local
+artifact can exercise an owned test fixture; it does not establish a clean
+release. Current release installers do not automatically stage this new asset
+tree. Clean release packaging, migration and Cockpit retirement remain separate
+work; do not describe an ad-hoc copy as an accepted production release.
+
+Use a protected local tree on ext4, xfs, btrfs, tmpfs or overlay. Every ancestor,
+directory and file must be owned by root or the effective API service identity
+and must not be group/other writable. Files must be regular, single-link files.
+Symlinks, unindexed files, changed bytes, ambiguous mount identity and unsupported
+filesystems refuse enabled startup. The artifact must be disjoint from archive,
+configuration, API state, credentials and their delivery directories, sockets,
+locks and configured application TLS material, including bind aliases. Do not
+put it under the archive or weaken directory ownership to resolve a refusal.
+
+The API verifies at most 4,096 indexed files, 4,096 directories and 8,193 total
+entries, to depth eight. Each member is at most 8 MiB; raw members total at most
+64 MiB, with a manifest at most 2 MiB. It captures approved bytes at startup,
+keeps one protected root descriptor and serves the captured release until the
+next authorized drained restart. Replacing files under a running process does
+not hot-update that process. Missing, altered or incompatible enabled assets
+refuse startup before operation-store construction or runner admission.
+
+## Keep the existing Caddy boundary
+
+The UI uses `/ui/` or the configured public prefix followed by `/ui/`, through
+the **same existing Caddy instance and Unix API upstream** as REST and MCP.
+Forward UI requests to that upstream with their Authorization header; Caddy does
+not read or serve the asset directory and receives no administrator record.
+Preserve the established TLS, Host/Origin, socket permissions and logging policy.
+Do not add a Caddy-wide Basic gate, frontend server, public listener or runtime
+Node. Do not enable Caddy administration or ACME as a test workaround.
+
+`listener.root_path` is empty or a normalized absolute prefix without a trailing
+slash. A leading `//` is refused. UI-enabled startup additionally bounds it to
+1,024 UTF-8 bytes and the configured canonical HTTPS origin to 4,096 bytes.
+Ordinary existing ASCII prefixes keep their acknowledgment and redirect bytes;
+accepted Unicode, quotes and angle brackets are encoded in Location headers.
+JSON operation links retain their original raw path identity. Use the supported
+updated client when selecting such a prefix; older clients do not acquire new
+Unicode-prefix support from a server upgrade.
+
+`/ui` redirects to `/ui/` after authentication. The four current workspace paths
+are exact document routes. Assets, unknown addresses and API/MCP errors never
+receive an HTML history fallback. All UI responses carry the restricted CSP,
+nosniff, no-referrer and disabled camera/microphone/geolocation policy. Documents,
+bootstrap and errors are no-store; only validated indexed hashed assets get a
+private one-hour immutable cache. `HEAD` preserves the corresponding status and
+length while sending no body. Range requests are refused.
+
+The API admits at most 16 active UI body streams with no waiting queue, sends
+chunks of at most 64 KiB and limits the entire send, including headers, to 30
+seconds. A full or draining UI service returns a classified unavailable response.
+These streams have separate capacity from metadata reads and password hashing.
+Shutdown stops admission, joins actual sends and releases the captured root
+before releasing the instance lock.
+
 ## Connect and rotate safely
 
-The final UI will use `/ui/` or the configured prefix followed by `/ui/`, through
-the same existing Caddy TLS endpoint and Unix API upstream as REST/MCP. Keep
-Basic verification in the application; do not add a Caddy-wide Basic gate,
-frontend server, public listener or Node runtime. Static assets will ship in the
-existing pinned UBI 10 micro API image. Caddy owns TLS credentials only.
+Release packaging must place built static assets in the existing pinned UBI 10
+micro API image, with no separate frontend image. Caddy owns TLS credentials only.
+An accepted native/rootless fixture is evidence for its recorded artifacts and
+profile, not permission to change the installed service.
 
 Use a browser that trusts the endpoint certificate. Do not bypass certificate
 warnings. The browser's native sign-in dialog asks for the provisioned username

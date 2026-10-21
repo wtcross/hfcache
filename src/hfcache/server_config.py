@@ -27,6 +27,8 @@ from hfcache.errors import ConfigurationError, Problem
 
 _CREDENTIAL_NAME = re.compile(r"[A-Za-z0-9._-]{1,64}")
 _HOST = re.compile(r"(?:[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?|\[[0-9a-fA-F:]+\])")
+_MAX_WEB_ORIGIN_BYTES = 4096
+_MAX_WEB_PREFIX_BYTES = 1024
 
 
 def _invalid(message: str) -> NoReturn:
@@ -189,6 +191,7 @@ class ListenerConfig(_Strict):
                 _invalid("trusted_proxies cannot trust every address")
         if self.root_path and (
             not self.root_path.startswith("/")
+            or self.root_path.startswith("//")
             or self.root_path.endswith("/")
             or str(PurePosixPath(self.root_path)) != self.root_path
             or ".." in PurePosixPath(self.root_path).parts
@@ -242,9 +245,29 @@ class ServerLimits(_Strict):
 class VerificationExecutorConfig(_Strict):
     unix_socket: AbsolutePath = Path("/run/hfcache/verification.sock")
     expected_peer_uid: int | None = Field(default=None, ge=0)
+    expected_socket_owner_uid: int | None = Field(default=None, ge=0)
     timeout_seconds: float = Field(default=5.0, gt=0, le=60, allow_inf_nan=False)
     poll_seconds: float = Field(default=0.2, gt=0, le=60, allow_inf_nan=False)
     max_frame_bytes: int = Field(default=16777216, ge=1024, le=16777216)
+
+
+class WebConfig(_Strict):
+    """Explicit restart-only immutable artifact; disabled settings perform no I/O."""
+
+    enabled: bool = False
+    asset_root: AbsolutePath | None = None
+    manifest_sha256: str | None = None
+
+    @model_validator(mode="after")
+    def indexed_artifact(self) -> Self:
+        if (
+            self.manifest_sha256 is not None
+            and re.fullmatch(r"[a-f0-9]{64}", self.manifest_sha256) is None
+        ):
+            _invalid("web manifest_sha256 must be one lowercase SHA256")
+        if self.enabled and (self.asset_root is None or self.manifest_sha256 is None):
+            _invalid("enabled web requires an explicit asset_root and manifest_sha256")
+        return self
 
 
 class ServerConfig(_Strict):
@@ -253,6 +276,7 @@ class ServerConfig(_Strict):
     state_directory: AbsolutePath = Path("/var/lib/hfcache/api")
     credentials: ServerCredentials
     basic: BasicConfig | None = None
+    web: WebConfig = Field(default_factory=WebConfig)
     listener: ListenerConfig = Field(default_factory=ListenerConfig)
     limits: ServerLimits = Field(default_factory=ServerLimits)
     verification: VerificationExecutorConfig = Field(default_factory=VerificationExecutorConfig)
@@ -277,6 +301,16 @@ class ServerConfig(_Strict):
                 item.lower() for item in self.listener.allowed_hosts
             }:
                 _invalid("Basic origin requires explicit matching listener Host and Origin policy")
+        return self
+
+    @model_validator(mode="after")
+    def web_policy(self) -> Self:
+        if self.web.enabled and (
+            self.basic is None
+            or len(self.basic.origin.encode("ascii")) > _MAX_WEB_ORIGIN_BYTES
+            or len(self.listener.root_path.encode("utf-8")) > _MAX_WEB_PREFIX_BYTES
+        ):
+            _invalid("enabled web requires Basic and bounded origin/prefix metadata")
         return self
 
 

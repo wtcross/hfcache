@@ -3,15 +3,25 @@
 For read errors, see [troubleshooting](troubleshooting.md), including the
 difference between a failed domain read and unavailable or unsupported evidence.
 
-The standalone web interface is under development and is not yet available in a
-release. Continue using the [existing Cockpit interface](../cockpit-plugin/README.md)
-for installed systems. Creating these guides does not change an installed
-service, enable a schedule, or grant archive write permission.
+The replacement interface is implemented in unreleased source and can be enabled
+explicitly with a matching protected asset release. Installed systems retain
+their recorded release and the [existing Cockpit interface](../cockpit-plugin/README.md).
+These guides do not install a release, enable a schedule or grant archive write
+permission.
 
-The developer preview now provides navigation between four workspaces. It shows
-**Development preview** and **Archive not connected**; it has no sign-in,
-archive connection or operational controls. The workspace descriptions below
-explain the intended workflows, which are still under development:
+When enabled, open `/ui/` on the existing HTTPS endpoint, or
+`/management/ui/` for an installation whose public prefix is `/management`.
+The browser's native sign-in dialog uses the separately provisioned administrator
+username and password. Follow the [operator deployment guide](deployment.md);
+the page never asks for a REST or Hub token. All interface documents and assets
+require administrator authentication. REST bearer and read-only MCP access remain
+separate on the same Caddy endpoint.
+
+After sign-in, **Administrator session** identifies the authenticated human.
+**Configured archive** shows the UUID from installed policy; it does not mean
+archive health, inventory or writability has been checked. The current interface
+provides navigation and permission explanations; repository views and operational
+controls are still under development:
 
 | Workspace | Intended workflow |
 | --- | --- |
@@ -20,22 +30,29 @@ explain the intended workflows, which are still under development:
 | Maintenance | Review the scope of existing retention, repair and recovery actions before any separate Apply action. |
 | Administration | Review configuration, tags, effective permissions and supported fixed host controls. |
 
-The planned entrypoint is `/ui/` behind the same Caddy HTTPS endpoint that serves
-REST and MCP. A deployment with public prefix `/management` will use
-`/management/ui/`. No additional frontend server or port is needed. These paths
-are reserved design targets; the current application does not serve them.
-Building or testing the preview does not make those routes available on an
-installed system. Developers can use the [workspace checks](../development.md#web-workspace)
-to exercise the preliminary shell locally.
+Use the sidebar or **Open navigation** on a narrow screen to change workspace.
+Direct links to Library, Operations, Maintenance and Administration survive a
+reload. Administration lists each permission with its current reason; the
+unimplemented host/configuration actions remain disabled. A grant alone does not
+make a feature available or remove a read-only guard.
 
-The optional server authentication provider now accepts a separately provisioned
-administrator; follow [protected provisioning](deployment.md) and
-[login troubleshooting](troubleshooting.md#administrator-login). UI asset serving
-and installed release acceptance are still pending. Browser access uses
-HTTP Basic authentication over verified HTTPS. The browser manages the password;
-the page will not ask for a REST or Hub token. Basic authentication has no reliable
-application logout. Signing in will not remove a read-only guard or enable a
-disabled host action. Existing REST and read-only MCP credentials remain separate.
+**Check interface version** performs a read, without reloading automatically or
+replaying an operation. If **Interface update required** appears, preserve
+original operation handles and unsaved work, then choose **Reload interface**
+when ready. If startup stops at **Starting hfcache**, the inert explanation and
+reload link remain available even when the application module could not load;
+see [startup troubleshooting](troubleshooting.md#interface-startup-and-release-changes).
+
+Browser access uses HTTP Basic over verified HTTPS. The browser manages the
+password and may cache it after a tab closes; Basic has no reliable application
+logout. Use a dedicated trusted browser profile and close that profile/session
+when finished. Never bypass a certificate warning.
+
+A source-only developer preview can still show **Development preview** and
+**Archive not connected**. That shell is not authenticated installed acceptance.
+Building or testing it does not enable routes on an installed system. Developers
+can use the [workspace checks](../development.md#web-workspace) to validate their
+local source and build.
 
 A publication identifies one immutable file tree by repository type, repository
 ID, full commit SHA and publication ID. Repairs can create a different publication

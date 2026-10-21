@@ -16,6 +16,8 @@ for (const [relative, exportName] of [
     ["catalog-semantics.ts", "catalogSemanticIds"],
     ["manifest-semantics.ts", "manifestSemanticIds"],
     ["../api/bindings.ts", "contextSemanticIds"],
+    ["ui-semantics.ts", "uiSemanticIds"],
+    ["ui-semantics.ts", "uiContextSemanticIds"],
 ]) {
     if (relative === undefined || exportName === undefined)
         throw new Error("Missing semantic registry.");
@@ -394,8 +396,13 @@ const routes = array(ir.routes).map((entry) => {
     name(route.mode);
     if (
         !["GET", "POST"].includes(string(route.method)) ||
-        !/^\/api\/v1\/[A-Za-z0-9_{}\/-]+$/u.test(string(route.path)) ||
-        !["read", "acceptance", "operation_result"].includes(
+        !(
+            /^\/api\/v1\/[A-Za-z0-9_{}\/-]+$/u.test(string(route.path)) ||
+            (route.path === "/ui/bootstrap.json" &&
+                route.response_kind === "ui_bootstrap" &&
+                route.method === "GET")
+        ) ||
+        !["read", "acceptance", "operation_result", "ui_bootstrap"].includes(
             string(route.response_kind),
         ) ||
         !["none", "opaque"].includes(string(route.cursor))
@@ -451,6 +458,7 @@ const resultRoutes = array(ir.operation_results).map((entry) => {
     return result;
 });
 let source = `/** Generated from source digest ${string(ir.source_digest)}. Run generate:wire; do not edit. */\n`;
+source += `export const WIRE_SOURCE_DIGEST = ${JSON.stringify(ir.source_digest)};\n`;
 source +=
     'import {wireObject,wireRequestObject,wireArray,wireString,wireInteger,wireNumber,wireBoolean,wireNull,wireLiteral,wireUnion,wireJsonValue} from "./runtime";\n';
 source +=

@@ -2,7 +2,7 @@
 
 - Decision identity: 115.
 
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Accepted; execution policy retained, with client identity configuration amended by [decision 148](decision-148.md).
 - Command-route integration: [decision 116](decision-116.md), command routes.
 - Activated-service/observer packaging: [decision 121](decision-121.md), scheduled observation.
 - Date: 2026-10-17.
@@ -60,6 +60,8 @@ outstanding NAS/domain/isolation acceptance; 0.2.0 rollback retains its limitati
 - [sync producer tests](../../tests/unit/test_synchronize.py)
 - [shared command lock tests](../../tests/unit/test_command_locking.py)
 - [Decision 128](decision-128.md)
+- [Decision 148](decision-148.md) separates filesystem socket ownership from the
+  inherited listener's kernel peer; it preserves this execution boundary.
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).

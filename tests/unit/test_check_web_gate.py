@@ -18,6 +18,7 @@ WEB_CHECKS = (
     "typecheck",
     "test:strict-fixtures",
     "test:auth-sandbox",
+    "test:functional-metadata",
     "test:unit",
     "test:component",
     "build",
@@ -32,6 +33,8 @@ WEB_FILES = (
     "src/wire/unicode-data.json",
     "scripts/generate-wire.ts",
     "scripts/check-auth-sandbox-tests.ts",
+    "scripts/check-functional-driver-tests.ts",
+    "test/functional-api/driver.test.mjs",
     "test/auth-api/sandbox.test.mjs",
     "test/auth-api/sandbox.mjs",
 )
@@ -47,6 +50,7 @@ def web_gate_fixture(tmp_path, *, missing=None, cockpit=False):
     for name in WEB_HELPERS:
         if missing != name:
             (scripts / name).write_text("fixture\n")
+    (scripts / "check-web-functional.py").write_text("fixture\n")
     if missing != "web":
         web = repository / "web"
         web.mkdir()
@@ -94,7 +98,14 @@ def web_gate_fixture(tmp_path, *, missing=None, cockpit=False):
         "PNPM_HOME": str(tmp_path / "absent-pnpm-home"),
         "GATE_FIXTURE_CALLS": str(calls),
     }
-    for name in ("BASH_ENV", "ENV", "SHELLOPTS", "BASHOPTS", "CDPATH"):
+    for name in (
+        "BASH_ENV",
+        "ENV",
+        "SHELLOPTS",
+        "BASHOPTS",
+        "CDPATH",
+        "HFCACHE_WEB_FUNCTIONAL_MANIFEST",
+    ):
         environment.pop(name, None)
     return script, environment, calls
 
@@ -245,10 +256,44 @@ def test_help_is_safe_even_without_web_prerequisites(tmp_path, help_flag):
     assert not calls.exists()
 
 
-def test_unimplemented_functional_flag_cannot_silently_claim_acceptance(tmp_path):
+@pytest.mark.parametrize("manifest", [None, "", "relative.json"])
+def test_functional_gate_requires_explicit_absolute_manifest_before_source_effects(
+    tmp_path, manifest
+):
     script, environment, calls = web_gate_fixture(tmp_path)
+    if manifest is not None:
+        environment["HFCACHE_WEB_FUNCTIONAL_MANIFEST"] = manifest
     result = invoke(script, environment, "--require-web", "--with-web-functional")
-    assert result.returncode == 64
-    assert "unknown argument: --with-web-functional" in result.stderr
+    assert result.returncode == 69
+    assert "explicit absolute HFCACHE_WEB_FUNCTIONAL_MANIFEST" in result.stderr
     assert "all checks passed" not in result.stdout
     assert not calls.exists()
+
+
+def test_final_functional_flag_implies_web_and_forces_all_profiles_and_final(tmp_path):
+    script, environment, calls = web_gate_fixture(tmp_path)
+    manifest = tmp_path / "owned fixture.json"
+    manifest.write_text("{}")
+    environment["HFCACHE_WEB_FUNCTIONAL_MANIFEST"] = str(manifest)
+    result = invoke(script, environment, "--with-build", "--with-web-functional")
+    assert result.returncode == 0, result.stderr
+    invocations = calls.read_text().splitlines()
+    assert invocations[-1] == (
+        "uv|run|--locked|--extra|server|--extra|mcp|python|scripts/check-web-functional.py"
+        f"|--profile|all|--manifest|{manifest}|--final"
+    )
+    assert invocations[-2].endswith("|pytest|-m|build")
+    assert [call for call in invocations if call.startswith("pnpm|")] == [
+        "pnpm|--dir|web|install|--frozen-lockfile",
+        *(f"pnpm|--dir|web|run|{check}" for check in WEB_CHECKS),
+    ]
+
+
+def test_final_functional_runner_failure_prevents_gate_success(tmp_path):
+    script, environment, calls = web_gate_fixture(tmp_path)
+    environment["HFCACHE_WEB_FUNCTIONAL_MANIFEST"] = str(tmp_path / "explicit.json")
+    environment["GATE_FIXTURE_FAIL_HELPER"] = "scripts/check-web-functional.py"
+    result = invoke(script, environment, "--with-web-functional")
+    assert result.returncode == 23
+    assert "--profile|all" in calls.read_text().splitlines()[-1]
+    assert "all checks passed" not in result.stdout

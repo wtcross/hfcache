@@ -24,9 +24,12 @@ import type {
     ReadResult,
 } from "./types";
 import { buildRequestInput, serializeRequestJson } from "./request";
+import { uriPath } from "./url-paths";
 
 type Decoder<T> = (value: unknown) => T;
 interface Contract<S, F> {
+    readonly responseKind:
+        "read" | "acceptance" | "operation_result" | "ui_bootstrap";
     readonly method: "GET" | "POST";
     readonly path: string;
     readonly commands: readonly string[];
@@ -261,6 +264,14 @@ export class ApiClient {
             controller.abort();
         }, this.timeoutMs);
         try {
+            switch (contract.responseKind) {
+                case "read":
+                case "operation_result":
+                    break;
+                case "acceptance":
+                case "ui_bootstrap":
+                    throw new WireError("schema");
+            }
             const url = this.url(contract, path, query);
             const headers = new Headers({ Accept: "application/json" });
             if (body !== undefined) {
@@ -670,6 +681,8 @@ export class ApiClient {
     ): Promise<SubmissionResult> {
         let retained: string, body: B, url: URL;
         try {
+            if (contract.responseKind !== "acceptance")
+                throw new WireError("schema");
             if (
                 requiredCapability === "write" &&
                 this.scope.credentialClass !== "rest-writer"
@@ -738,7 +751,7 @@ export class ApiClient {
                 acceptance.links.status !== status ||
                 acceptance.links.result !== status + "/result" ||
                 acceptance.links.events !== status + "/events" ||
-                response.headers.get("Location") !== status
+                response.headers.get("Location") !== uriPath(status)
             )
                 throw new WireError("semantic");
             this.remember(operation);

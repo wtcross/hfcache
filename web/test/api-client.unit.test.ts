@@ -227,6 +227,77 @@ function acceptance(path: string, change: object = {}) {
         ...change,
     };
 }
+test.each(["/management", "/管理", '/quote"<>'])(
+    "acknowledgment Location is URI-encoded while original JSON links remain raw at %s",
+    async (publicPrefix) => {
+        const status = publicPrefix + "/api/v1/operations/" + id;
+        const accepted = {
+            ...acceptance("/syncs"),
+            links: {
+                status,
+                result: status + "/result",
+                events: status + "/events",
+            },
+        };
+        const make = (location: string) => {
+            const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+                new Response(JSON.stringify(accepted), {
+                    status: 202,
+                    headers: {
+                        "Content-Type": "application/json",
+                        Location: location,
+                    },
+                }),
+            );
+            const api = createApiClient({
+                scope: createApiScope({
+                    origin: "https://archive.invalid",
+                    publicPrefix,
+                    authorityEpoch: "ack-test",
+                    subject: "administrator",
+                    credentialClass: "rest-writer",
+                    instanceId: null,
+                    archiveId: null,
+                    configFingerprint: null,
+                }),
+                fetcher,
+            });
+            return { api, fetcher };
+        };
+        const encoded =
+            publicPrefix === "/management"
+                ? status
+                : publicPrefix === "/管理"
+                  ? "/%E7%AE%A1%E7%90%86/api/v1/operations/" + id
+                  : "/quote%22%3C%3E/api/v1/operations/" + id;
+        const valid = make(encoded);
+        expect(
+            await valid.api.submitSync(
+                {},
+                { idempotencyKey: "original-exact" },
+            ),
+        ).toMatchObject({
+            kind: "accepted",
+            route: "/api/v1/syncs",
+            idempotencyKey: "original-exact",
+        });
+        expect(valid.fetcher).toHaveBeenCalledOnce();
+        if (publicPrefix !== "/management") {
+            const invalid = make("/wrong/api/v1/operations/" + id);
+            expect(
+                await invalid.api.submitSync(
+                    {},
+                    { idempotencyKey: "original-exact" },
+                ),
+            ).toMatchObject({
+                kind: "uncertain",
+                idempotencyKey: "original-exact",
+                route: "/api/v1/syncs",
+            });
+            expect(invalid.fetcher).toHaveBeenCalledOnce();
+        }
+    },
+);
 test.each(submits)(
     "named submission %s retains the original key and validates exact receipt links",
     async (path, invoke) => {

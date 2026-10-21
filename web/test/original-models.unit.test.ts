@@ -1,5 +1,7 @@
 /** Independent original Python serializers are the valid-wire oracle. */
 import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 import {
@@ -36,8 +38,24 @@ if (
     generated.error !== undefined ||
     generated.signal !== null ||
     generated.status !== 0
-)
-    throw new Error("Original Python serializer corpus failed.");
+) {
+    const artifacts = fileURLToPath(new URL("../.artifacts/", import.meta.url));
+    mkdirSync(artifacts, { recursive: true });
+    const evidence = mkdtempSync(join(artifacts, "source-corpus-failure-"));
+    writeFileSync(join(evidence, "stdout.json"), generated.stdout);
+    writeFileSync(join(evidence, "stderr.log"), generated.stderr);
+    writeFileSync(
+        join(evidence, "outcome.json"),
+        JSON.stringify({
+            status: generated.status,
+            signal: generated.signal,
+            error: generated.error?.message ?? null,
+        }),
+    );
+    throw new Error(
+        `Original Python serializer corpus failed; evidence retained at ${evidence}.`,
+    );
+}
 const sourceCorpus = wireObject(parseWireJson(generated.stdout), [
     "originals",
     "incorrect",
@@ -66,7 +84,7 @@ test.each(incorrect)(
 );
 test("every generated definition has an independently serialized source original", () => {
     // Exporter's separately audited coverage assertion owns the exact authority set.
-    expect(new Set(corpus.map((item) => item.definition)).size).toBe(118);
+    expect(new Set(corpus.map((item) => item.definition)).size).toBe(128);
 });
 test("route path/query schemas reconstruct explicit optional inputs and forbid extras", () => {
     for (const contract of Object.values(routeContracts)) {

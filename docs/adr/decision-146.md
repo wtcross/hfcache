@@ -1,9 +1,10 @@
 # Verify one protected administrator without widening legacy credential classes
 
 - Decision identity: 146.
-- Status: Accepted.
+- Asset/bootstrap refinement: [decision147](decision-147.md).
+- Status: Amended; bounded Basic is implemented, with UI-only serving refined below.
 - Date: 2026-10-20.
-- Introducing evidence: this commit; source and isolated acceptance are separate.
+- Introducing evidence: 24625fc; source and isolated acceptance are separate.
 
 ## Context and decision
 
@@ -116,3 +117,7 @@ INV-001/002/003/013/014/019 and FW-03/04. See
 [supported installations](https://cryptography.io/en/50.0.2/installation/),
 [release metadata](https://pypi.org/project/cryptography/50.0.2/) and
 [Basic authentication specification](https://www.rfc-editor.org/rfc/rfc7617).
+
+## Authenticated asset and bootstrap amendment (2026-10-20)
+
+[Decision147](decision-147.md) amends this record. This refinement makes every enabled UI route, asset, alias and error Basic-only while leaving REST Basic/bearer and MCP bearer policy separate. It does not change protected records, Argon2id/admission budgets, stable-subject key ownership, native browser credential handling or existing legacy public classes.

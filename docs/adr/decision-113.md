@@ -1,10 +1,12 @@
 # Serve bounded metadata through one authenticated lifespan
 
 - Decision identity: 113.
+- Asset/bootstrap refinement: [decision147](decision-147.md).
 
 - MCP transport amendment: [decision 124](decision-124.md).
 - Curated tool amendment: [decision 125](decision-125.md).
 - Independent bounded Basic verification: [decision146](decision-146.md).
+- Foreground default-SIGTERM cleanup ordering: [decision149](decision-149.md).
 - Status: Amended; current scope includes the amendments referenced below.
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.
@@ -64,3 +66,18 @@ Recorded installed scope and remaining acceptance are described in
 
 [Decision 140](decision-140.md) amends this record for the accepted
 replacement design. Accepted application-owned authenticated UI/static design retains this one lifespan and bounds; UI routing and assets are not implemented yet.
+
+## Authenticated asset and bootstrap amendment (2026-10-20)
+
+[Decision147](decision-147.md) amends this record. This refinement adds one bounded immutable static capture and a separate finite body-send admission budget to the existing lifespan. Capture precedes operation-store construction/reconciliation, and every partial failure or cancellation drains exact owned work before releasing root descriptors and the instance lock. REST/MCP pools and response identity remain separate.
+
+## Source implementation clarification (2026-10-21)
+
+The earlier replacement-design amendment records its introduction-stage scope.
+Unreleased source now implements authenticated indexed assets, bootstrap and
+recognized UI routing under [decision147](decision-147.md), composed with this
+same application lifespan and its original REST/MCP pools. The protected capture
+and finite stream budget do not add another application or worker. Actual
+installed/browser conformance and exact resource drain remain independently
+required; no release or production availability is claimed. See the
+[asset-serving contract](../server.md#authenticated-application-assets).

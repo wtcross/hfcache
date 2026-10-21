@@ -42,6 +42,7 @@ export function createApiScope(scope: ApiScope): ApiScope {
     if (
         scope.publicPrefix !== "" &&
         (!scope.publicPrefix.startsWith("/") ||
+            scope.publicPrefix.startsWith("//") ||
             scope.publicPrefix.endsWith("/") ||
             !pythonIsPrintable(scope.publicPrefix) ||
             /[ ?#\\%]/u.test(scope.publicPrefix) ||

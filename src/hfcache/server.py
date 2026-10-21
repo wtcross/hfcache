@@ -8,8 +8,10 @@ No listener is opened by importing this module (decision 113).
 import asyncio
 import logging
 import os
+import signal
 import socket
 import stat
+import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, cast
 
@@ -23,6 +25,7 @@ from hfcache.server_config import load_server_config
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
     from pathlib import Path
+    from types import FrameType
 
     from fastapi import FastAPI
     from starlette.types import Receive, Scope, Send
@@ -161,53 +164,103 @@ def listeners(policy: ListenerConfig) -> Iterator[list[socket.socket]]:
 
 
 @contextmanager
+def _foreground_termination() -> Iterator[Callable[[], None]]:
+    """Let an owned listener unwind before default SIGTERM takes effect.
+
+    Uvicorn restores and delivers the original signal after its lifespan joins.
+    A fatal default handler would otherwise bypass the enclosing socket cleanup.
+    Arm only after ownership is recorded; PID1 and existing handlers retain their
+    original behavior. A second TERM must not interrupt cleanup already underway.
+    """
+    armed = False
+    requested = False
+
+    def terminate(_number: int, _frame: FrameType | None) -> None:
+        nonlocal requested
+        if not requested:
+            requested = True
+            raise _ForegroundTermination
+
+    def arm() -> None:
+        nonlocal armed
+        if (
+            not armed
+            and os.getpid() != 1
+            and threading.current_thread() is threading.main_thread()
+            and signal.getsignal(signal.SIGTERM) == signal.SIG_DFL
+        ):
+            # Publish restoration ownership before installing the callback: the
+            # signal may arrive immediately after signal.signal changes it.
+            armed = True
+            signal.signal(signal.SIGTERM, terminate)
+
+    try:
+        try:
+            yield arm
+        except _ForegroundTermination:
+            if not requested:
+                raise
+    finally:
+        if armed:
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            if requested:
+                signal.raise_signal(signal.SIGTERM)
+
+
+class _ForegroundTermination(BaseException):
+    """Private signal unwind; never an API error or successful server result."""
+
+
+@contextmanager
 def _foreground_listeners(policy: ListenerConfig) -> Iterator[list[socket.socket]]:
     """Bind with pinned parents and clean only the exact inode created here."""
     opened: list[socket.socket] = []
     parent = None
     owned = None
     name = policy.unix_socket.name
-    try:
-        if policy.unix_address is not None:
-            parent = open_directory(policy.unix_socket.parent)
-            local = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            opened.append(local)
-            # Startup precedes workers. Prevent any world-connectable bind window.
-            previous = os.umask(0o177)
-            try:
-                local.bind(f"/proc/self/fd/{parent}/{name}")
-            finally:
-                os.umask(previous)
-            info = os.stat(name, dir_fd=parent, follow_symlinks=False)
-            owned = (info.st_dev, info.st_ino)
-            os.chmod(name, policy.socket_mode, dir_fd=parent, follow_symlinks=False)
-            local.setblocking(False)  # noqa: FBT003 - socket API has positional-only flag
-        if policy.tcp_address is not None:
-            host, port = policy.tcp_address
-            family = socket.AF_INET6 if ":" in host else socket.AF_INET
-            tcp = socket.socket(family, socket.SOCK_STREAM)
-            opened.append(tcp)
-            tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            if family == socket.AF_INET6:
-                tcp.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-            tcp.bind((host, port))
-            tcp.setblocking(False)  # noqa: FBT003 - socket API has positional-only flag
-        yield opened
-    finally:
-        for channel in opened:
-            channel.close()
-        if parent is not None:
-            try:
-                if owned is not None:
-                    try:
-                        info = os.stat(name, dir_fd=parent, follow_symlinks=False)
-                    except FileNotFoundError:
-                        pass
-                    else:
-                        if stat.S_ISSOCK(info.st_mode) and (info.st_dev, info.st_ino) == owned:
-                            os.unlink(name, dir_fd=parent)
-            finally:
-                os.close(parent)
+    with _foreground_termination() as arm:
+        try:
+            if policy.unix_address is not None:
+                parent = open_directory(policy.unix_socket.parent)
+                local = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                opened.append(local)
+                # Startup precedes workers. Prevent any world-connectable bind window.
+                previous = os.umask(0o177)
+                try:
+                    local.bind(f"/proc/self/fd/{parent}/{name}")
+                finally:
+                    os.umask(previous)
+                info = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                owned = (info.st_dev, info.st_ino)
+                os.chmod(name, policy.socket_mode, dir_fd=parent, follow_symlinks=False)
+                local.setblocking(False)  # noqa: FBT003 - socket API has positional-only flag
+                arm()
+            if policy.tcp_address is not None:
+                host, port = policy.tcp_address
+                family = socket.AF_INET6 if ":" in host else socket.AF_INET
+                tcp = socket.socket(family, socket.SOCK_STREAM)
+                opened.append(tcp)
+                tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                if family == socket.AF_INET6:
+                    tcp.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+                tcp.bind((host, port))
+                tcp.setblocking(False)  # noqa: FBT003 - socket API has positional-only flag
+            yield opened
+        finally:
+            for channel in opened:
+                channel.close()
+            if parent is not None:
+                try:
+                    if owned is not None:
+                        try:
+                            info = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                        except FileNotFoundError:
+                            pass
+                        else:
+                            if stat.S_ISSOCK(info.st_mode) and (info.st_dev, info.st_ino) == owned:
+                                os.unlink(name, dir_fd=parent)
+                finally:
+                    os.close(parent)
 
 
 class StartupErrors:

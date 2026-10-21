@@ -200,7 +200,8 @@ could submit to collide with the Basic namespace. Bearer key digests remain
 byte-identical. Private human attribution is separately
 versioned; old receipts are never retroactively attributed to a person. UI schema-1
 bootstrap exposes only safe subject/display, effective capabilities/reasons,
-archive and UI/server contract/build identity and configured relative paths.
+configured archive UUID (without claiming a live sentinel/health check),
+UI/server contract/build identity and configured relative paths.
 
 Unsafe Basic requests require one exact configured HTTPS Origin, JSON and
 `X-Hfcache-Request: 1`. No-Origin bearer compatibility remains. Basic never
@@ -211,10 +212,175 @@ No new Caddy instance/listener/file-server/global Basic gate is introduced.
 Static release manifest schema 1 pins source commit, contract version, lock and
 toolchain digests, licenses and each member's path/size/SHA256/MIME. Limits:
 4096 members, 64 MiB total, 8 MiB/member and 2 MiB manifest. Initial MIME allowlist:
-HTML, CSS, JavaScript, JSON, PNG, WebP and WOFF2. No SVG, source maps, unindexed
+HTML, CSS, JavaScript, JSON, PNG, WebP and WOFF2, with `text/plain` only for the
+required root `THIRD_PARTY_NOTICES.txt`. No SVG, source maps, unindexed
 members, symlinks or special files. Enabled missing/mismatched assets fail startup;
 disabled UI leaves backend-only installation independent. Validate immutable
-members once at startup, retain pinned descriptors/identity for bounded reads.
+members once at startup through protected no-follow descriptors and capture their
+immutable bytes under those bounds. Retain one root descriptor and a finite DFS
+stack while capturing; do not retain4096 member descriptors. No request path is
+reopened. The two rendered shell variants add at most16MiB and the manifest2MiB,
+for an82MiB retained byte-payload bound, not a process RSS claim. Mount identity
+mapping rejects archive/policy/state/credential/listener aliases without opening
+the archive. Streams have16 active slots/no queue,64KiB chunks and a30-second
+absolute send deadline including response headers; shutdown joins actual streams
+before releasing capture and the instance lock. Disabled UI performs no asset
+or mount-table I/O. See [decision147](../../../../adr/decision-147.md) for exact
+bootstrap/manifest/prefix/lifecycle authority and [schema18.3](../../../../schemas.md#183-web-release-manifest-and-ui-bootstrap).
+
+## Static streaming execution-proof schema2
+
+This is private fixture evidence, not an API, durable product format or change to
+the application. Preserve failed schema1 reports and their original counters;
+never upgrade them retrospectively. New required stalled-send/disconnect evidence
+uses exact integer `schema_version: 2`. A normal ASGI `send` await return records
+an application-call outcome. It establishes neither original protocol submission
+nor client delivery: the pinned original H11 implementation can return normally
+without writing after disconnect. Do not fabricate an error, change application
+behavior, or rename that normal return to obtain a passing test.
+
+The existing private JSONL file remains bounded to256 rows/1MiB; exactly six
+original Node request UUIDs join cancel/deadline probes in Chromium, Firefox and
+WebKit. Retain exact fixture/generation, original API instance/core-object
+identity, trusted phase/native Basic, selected indexed member/path/length and
+independent Node TLS/HTTP2 zero-window/zero-DATA/RST/session-close evidence.
+Concurrent bearer observations, zero before/after stream/task inventories and all
+original API/worker/listener/process/browser/container drains remain mandatory.
+No debug endpoint, submitted header, credential or response body is logged.
+
+The closed row retains these original fields and meanings:
+`schema_version`, `fixture_id`, `generation_id`, `phase`, `engine`, `actor`,
+`request_id`, `instance_id`, `object_ids`, `method`, `path`, `status`,
+`selected_body_bytes`, `started_ns`, `finished_ns`, `body_send_started`,
+`body_send_completed`, `body_bytes_started`, `body_bytes_completed`,
+`final_send_started`, `final_send_completed`, `disconnect_received`,
+`disconnect_ns`, `error_kind`, `streams_before`, `streams_after`, `body_sends`.
+Add exactly `protocol`, `protocol_body_send_submitted`,
+`protocol_body_bytes_submitted`, `protocol_final_send_submitted`. The first two
+submitted counters are nonnegative integers; the final flag is a boolean.
+`body_send_completed`/`body_bytes_completed` still count ASGI await calls that
+return normally, including disconnected no-ops. `final_send_completed` still
+records the final ASGI call's normal return. `error_kind` preserves the actual
+exception classification, including null when no exception occurs. Booleans are
+never integers; unknown/missing fields and inconsistent counters refuse.
+
+`body_sends` stays bounded to130 entries. Each entry retains exactly
+`sequence`, `bytes`, `more_body`, `started_ns`, `finished_ns`, `error_kind`, and
+adds exactly `protocol_before`, `protocol_after`, `protocol_result`. The result
+enum is `submitted|disconnected_noop|raised`, independently derived below.
+
+### Original protocol binding
+
+`protocol` has exactly `identity`, `cycle_id`, `scope_id`, `protocol_id`,
+`transport_id`, `send`, `protocol_class`, `socket`. IDs are positive integers
+from the actual objects, cached for one original ASGI invocation; they are not
+user tokens or a promise of unique IDs across garbage-collected requests.
+`identity` has exactly `pid` and `start_ticks` and equals the original API ready
+proof's **inner** identity: PID is an integer>=1 and start ticks a canonical
+positive decimal string. A rootless API PID1 is valid; independent original
+host PID/start, namespace and UID/GID mapping checks still apply, with host
+process PIDs>1. Never interpret an inner PID as a host PID.
+
+`send` has exactly `module`, `qualname`, `source_sha256`, fixed to
+`uvicorn.protocols.http.h11_impl`, `RequestResponseCycle.send`, and
+`a3154a6c2cfaaaebe19ac7aa255dfe9b6b7b490de1da95274c033aa093e8c322`.
+`protocol_class` has those same three keys, fixed to `__main__`,
+`install_accepted_buffer_pressure.<locals>.AcceptedBufferProtocol`, and the
+exact protected installed entrypoint's lower-case SHA256. Its digest must agree
+across all six rows and the independently read accepted-buffer sidecar.
+`socket` has exactly `descriptor`, `device`, `kernel_inode`, `family`, `type`,
+`send_buffer`: descriptor/device are nonnegative integers, kernel inode positive,
+family `unix`, type `stream`, and actual send buffer exactly8192.
+
+Before invoking the unchanged original application, prove incoming `send` is
+bound to the exact original `RequestResponseCycle.send` function and exact cycle
+type. The cycle's scope is the identical incoming GET scope. Cache the actual
+cycle, its exact flow object and transport. The transport's actual protocol is
+the installed accepted-buffer protocol, whose cycle/scope/transport are those
+same objects. The class inherits original H11 behavior except the existing
+accepted-socket `connection_made` measurement. Prove a live actual
+AF_UNIX/SOCK_STREAM FD, stable fstat kernel identity and effective SO_SNDBUF8192.
+The original startup wrapper passes arguments unchanged and proxy headers stay
+disabled. Unknown wrappers or a changed binding refuse; do not search arbitrary
+closures for a nearby cycle.
+
+The existing separate `accepted-buffers.jsonl` sidecar must independently join
+that socket device/inode/descriptor, API identity and class digest. Protected
+helper/role source records and actual sidecar bytes remain required audit
+inputs; a transfer row is not its own independent audit. After connection loss,
+the FD may be-1 and transport protocol null. Use cached proven identities; never
+reopen a reused FD. A non-null protocol must still be the cached protocol.
+Cycle/flow/transport object identity must remain unchanged before and after every
+call, including exceptional returns and pipelining.
+
+No application, send, receive, transport-write, message, scope or response-body
+behavior override is allowed. This proof adds passive observations around the
+original await only; the original accepted-socket pressure fixture remains.
+
+### Snapshots and independent derivation
+
+Each before/after snapshot has exactly `cycle_id`, `transport_id`, `disconnected`,
+`response_started`, `response_complete`, `write_paused`, `transport_closing`,
+`write_buffer_bytes`. IDs equal the initial binding. Flags are exact booleans
+read from the cached original cycle/flow/transport; buffer bytes is an integer
+0..1048576. Read before immediately before the unchanged await and after its
+normal return or in its original exception handler. Add no await, blocking I/O,
+drain, cancellation or event between snapshots and that call. Existing monotonic
+timestamps bracket the call. For body calls, headers have already made original
+`response_started` true and it must stay true; `response_complete` starts false.
+Any completed protocol response refuses a required incomplete-response proof.
+
+Derive every result and counter independently from the raw observations:
+
+- An actual exception yields `raised` and no successful submission for that call.
+  **Any** raised call accepted within the required proof must be an actual
+  CancelledError at a paused, non-disconnected, started/incomplete original-flow
+  await. Generic OSError, send_error, timeout or other exceptions anywhere make
+  the whole transfer unknown/refused, even if another send has a good witness.
+  An exception after possible write submission is unknown, not accepted proof.
+- A normal return with `after.disconnected=true` yields `disconnected_noop`,
+  incomplete response and no submission. A false-to-true disconnect transition
+  requires `before.write_paused=true`: the pinned original method has only its
+  initial flow-drain await and no await between its disconnected test, write and
+  return. An already-disconnected instant no-op proves no timed backpressure.
+- A normal return with `after.disconnected=false` yields `submitted`; before
+  must also be non-disconnected. For this original GET body path the pinned
+  method reaches its encoder/transport-write branch synchronously. This is
+  protocol/transport API submission, never client receipt or durable delivery.
+
+Submitted send count is the number of `submitted` entries; submitted bytes is
+exactly their byte sum; submitted final is whether any has `more_body=false`.
+Raw ASGI completion counters instead continue to count actual normal returns,
+including no-ops. A protocol response cannot become complete then incomplete;
+any true completion state refuses the required proof.
+Within the same cached cycle, `disconnected` never changes true-to-false,
+including between a preceding after-snapshot and the next before-snapshot.
+
+### Required interruption conjunctions
+
+Cancellation retains the original Node cancel/RST, zero DATA, UUID, actual
+`http.disconnect`, request duration1.5..10s and exact stream/task release. At
+least one same-cycle original await must last>=1.5s, begin started/incomplete,
+paused and non-disconnected, then end disconnected/incomplete. It must either
+return normally as `disconnected_noop` with null error, or raise the actual
+CancelledError. Subsequent instant no-ops alone are insufficient.
+
+Deadline retains the original Node hold>=35s with no client cancellation before
+the original30s API deadline, zero DATA, UUID, request duration29..36s and exact
+stream/task release. Require actual CancelledError raised by an original send
+that begins paused/non-disconnected/started/incomplete; its await lasts>=29s
+and the response remains incomplete. A normal no-op or long generic network
+failure cannot prove the deadline.
+
+Both cases require `0 <= protocol_body_bytes_submitted < selected_body_bytes`
+and `protocol_final_send_submitted=false`; a fully submitted/completed response
+refuses even with a later RST. Client receipt is independently observed, never
+inferred from either ASGI or protocol counters. Unit/adversarial cases must
+exercise real original-cycle Unix sends and all binding/type/counter/timing/
+closure refusals, including PID1 and incorrect outer-PID substitution. Fresh
+source identity/gates and actual installed application/native/rootless runs at
+both prefixes remain required; synthetic cases or old failed schema1 evidence
+cannot close the task or the95-case matrix.
 
 ## Cards
 
@@ -254,3 +420,65 @@ They establish no AUTH/ROUTE/CONFIG/CARD/host/UI functional acceptance.
 WEB-002 proves the preliminary shell in a real browser; WEB-004/005 introduce
 native challenge and real Caddy/installed API coverage, with later tasks extending
 that harness continuously. Required missing prerequisites block their task.
+
+Network-isolation evidence must distinguish actual outcomes rather than infer
+them from errno alone. A source audit found the original fixture encoded
+TimeoutError(errno=None) identically to connect success; neither inference is
+accepted from that old record. Preserve original failed evidence. Native packet
+filtering requires actual worker PID/start/cgroup/network-namespace binding,
+read-only before/after inspection of attached ingress/egress deny-program
+semantics, same-UID/same-namespace nonce controls against continuously owned
+listeners, explicit fresh worker outcomes and no accepted worker tuples.
+Rootless socket denial requires its exact applied protected policy/default
+errno, same-image/kernel stock-policy family availability and restricted-worker
+AF_UNIX success. A blanket timeout/ENOSYS allowance is forbidden. Version the
+closed execution-proof schema and independently validate the conjunction;
+do not weaken worker units, seccomp, SELinux or kernel settings. These are test
+evidence corrections, with no new production behavior or permission.
+
+Rootless container proof retains the raw observed `cap_drop` list and its order;
+never replace measured entries with `ALL`. The two allowed encodings are literal
+`["ALL"]`, or exactly11 unique strings comprising `CAP_CHOWN`,
+`CAP_DAC_OVERRIDE`, `CAP_FOWNER`, `CAP_FSETID`, `CAP_KILL`,
+`CAP_NET_BIND_SERVICE`, `CAP_SETFCAP`, `CAP_SETGID`, `CAP_SETPCAP`, `CAP_SETUID`
+and `CAP_SYS_CHROOT`, the measured expansion in the pinned owned Podman fixture.
+Order does not affect capability meaning; missing, extra, duplicate, nonstring
+or other entries refuse. This closed metadata equivalence never replaces the
+original observed create request for `--cap-drop=ALL`, no capability addition,
+and the original role process's actual zero `CapEff` and `CapBnd`. Keep the
+existing UID mapping, no-new-privileges, seccomp, read-only root, mount/network,
+manager ownership and normal drain checks. No capability or container policy is
+changed. Preserve earlier failures; changing the canonical proof validator needs
+a new source/gate identity and fresh required installed generations, even when
+the product package and UI inputs remain unchanged.
+
+Caddy listener proof retains the raw observed INET row values and order, with no
+family/address normalization. Require exactly one or two rows; every row has only
+`protocol`, `address`, `port` and `kernel_inode`, with string protocol/address,
+exact integer port and positive exact integer kernel inode (booleans refuse).
+Protocols and kernel inodes are unique. Application/native proof continues to
+require `tcp`, permits only optional `udp`, and binds every row to `127.0.0.1`
+at the configured origin port. Rootless proof permits only two closed alternatives:
+`tcp` with optional `udp`, every row `0.0.0.0:8443`; or `tcp6` with optional
+`udp6`, every row `[::]:8443`. Mixed families, UDP alone, aliases/mapped addresses,
+unknown fields/protocols, duplicates or extra listeners refuse. These wildcard
+addresses describe only the measured container network namespace: the unchanged
+outer host publication remains bound to `127.0.0.1`, with strict private-CA/IP
+TLS verification and all existing process/FD, namespace, isolation and normal
+resource-drain requirements. Retained controlled observations establish the
+closed encoding; missing rows from an earlier failed run remain missing. This
+corrects private proof metadata interpretation, with no product, template,
+publication, TLS or architectural-policy change. New canonical proof bytes need
+new source/gate evidence and fresh required installed generations; do not promote
+an earlier failed or unknown result.
+
+Actual native startup additionally exposes a baseline identity conflict: the
+manager-created listener has kernel peer UID0 while the unchanged worker-owned
+socket node has the service UID. Preserve both authorities and namedFD3 rather
+than modifying socket ownership or weakening a check. Decision148 adds explicit
+`verification.expected_socket_owner_uid`, defaulting to the existing resolved
+peer UID when omitted. WEB-005 includes this prerequisite compatibility amendment,
+its independent negative tests and actual installed native proof. Source8's green
+gate remains historical evidence; new source, audited transport/build inputs,
+wheel/assets and installed native/rootless profiles require fresh identity and
+gates before completion. No existing source or failed fixture is reset or hidden.

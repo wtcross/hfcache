@@ -1,7 +1,8 @@
 # Keep strict web assets separate from Python runtime and require real acceptance
 
 - Decision identity: 143.
-- Status: Accepted; initial workspace and preliminary gate implemented. Typed wire, release artifact and installed functional conformance remain pending.
+- Asset/bootstrap refinement: [decision147](decision-147.md).
+- Status: Amended; strict workspace, typed wire, Basic/indexed assets and functional-gate scaffolding are implemented in unreleased source. Complete replacement/release conformance remains separately required.
 - Date: 2026-10-20.
 
 Typed browser contracts are refined by [decision 145](decision-145.md); release
@@ -104,6 +105,11 @@ above in order. A missing tool/input/browser, failed stage or late disappearance
 fails. Default backend-only invocation explicitly omits web validation and cannot
 establish web acceptance. Help remains free of runtime/credential/archive access.
 
+### Historical workspace-stage scope (2026-10-20)
+
+The following records the initial shell-only stage; the dated source-implementation
+clarification below describes current unreleased tooling.
+
 Browser dependency provisioning is explicit and separate from execution.
 The initial `test:browser` uses a production-built shell in pinned Chromium on
 an owned loopback fixture, with a clear development/ disconnected status and no
@@ -137,3 +143,25 @@ See [server asset design](../server.md#web-ui-design-and-current-availability),
 [conditional retirement](decision-144.md). The initial accepted design remains
 the basis for the implementation amendments above; each implemented boundary
 requires its own executable evidence, and installed conformance remains pending.
+
+## Authenticated asset and bootstrap amendment (2026-10-20)
+
+[Decision147](decision-147.md) amends this record. This refinement fixes deterministic source/toolchain/license/member identity and a source digest computed from the actual installed backend. Prebundle compiled source identity avoids a circular manifest fingerprint. Native platform hashing validates context; final functional gating requires all95 scenarios through actual Caddy and installed native/rootless roles, while early profiles keep future cases pending. The UI ships inside the pinned UBI10micro API image without Node.
+
+## Source implementation clarification (2026-10-21)
+
+The preceding shell-stage unknown-option and pending-implementation statements
+remain historical. Unreleased source now includes precise wire contracts under
+[decision145](decision-145.md), bounded Basic under [decision146](decision-146.md)
+and deterministic indexed artifacts/bootstrap/static serving under
+[decision147](decision-147.md). The provider-neutral application/platform/all
+runner and `--with-web-functional` gate are implemented; their required installed
+inputs still fail closed. Early scoped runs report later cases pending; the final
+flag requires all95 scenarios and is not replaced by source or shell tests.
+
+This clarification changes no gate, artifact or runtime requirement. Dirty owned
+artifacts retain their actual build provenance. Clean release packaging,
+installed role/browser conformance, the remaining feature cases and conditional
+Cockpit retirement require their own evidence; no rollout follows. See the
+[functional development contract](../development.md#installed-shared-caddy-functional-fixture)
+and [recorded installed scope](../deployment-status.md).
