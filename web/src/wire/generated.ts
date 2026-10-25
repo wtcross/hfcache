@@ -1,6 +1,6 @@
-/** Generated from source digest 10883335765763832f4e0aa564d5fcff1a0fcc20e41f245f16d70ce640c11be2. Run generate:wire; do not edit. */
+/** Generated from source digest 891b5b45df6182c02b602a767eaa1446a1e91f554f68d87768f75db3938c3d03. Run generate:wire; do not edit. */
 export const WIRE_SOURCE_DIGEST =
-    "10883335765763832f4e0aa564d5fcff1a0fcc20e41f245f16d70ce640c11be2";
+    "891b5b45df6182c02b602a767eaa1446a1e91f554f68d87768f75db3938c3d03";
 import {
     wireObject,
     wireRequestObject,
@@ -288,6 +288,128 @@ export type HashReuse = {
     readonly ["publication_id"]: string;
 };
 export type HealthPayload = ReadyHealthPayload | UnavailableHealthPayload;
+export type HostBinding = {
+    readonly ["deployment_sha256"]: string;
+    readonly ["policy_sha256"]: string;
+    readonly ["release_version"]: string;
+    readonly ["source_commit"]: string;
+    readonly ["source_snapshot_sha256"]: string;
+    readonly ["source_dirty"]: boolean;
+    readonly ["archive_id"]: string;
+    readonly ["archive_root"]: "/srv/hfcache";
+};
+export type HostFacts = {
+    readonly ["guard"]: "held" | "absent" | "inactive";
+    readonly ["archive_mount"]:
+        "nfs-ro" | "nfs-rw" | "local-ro" | "local-rw" | "absent";
+    readonly ["units"]: {
+        readonly ["hfcache-sync.service"]: HostUnitState;
+        readonly ["hfcache-sync.timer"]: HostUnitState;
+        readonly ["hfcache-verify.service"]: HostUnitState;
+        readonly ["hfcache-verify.timer"]: HostUnitState;
+    };
+    readonly ["sync_schedule"]: HostSyncSchedule;
+};
+export type HostPermissionReasons = {
+    readonly ["archive"]:
+        | "granted"
+        | "policy-denied"
+        | "guard-held"
+        | "profile-unproved"
+        | "authority-unknown"
+        | "helper-unavailable";
+    readonly ["hub"]:
+        | "granted"
+        | "policy-denied"
+        | "guard-held"
+        | "profile-unproved"
+        | "authority-unknown"
+        | "helper-unavailable";
+    readonly ["control"]:
+        | "granted"
+        | "policy-denied"
+        | "guard-held"
+        | "profile-unproved"
+        | "authority-unknown"
+        | "helper-unavailable";
+    readonly ["schedule"]:
+        | "granted"
+        | "policy-denied"
+        | "guard-held"
+        | "profile-unproved"
+        | "authority-unknown"
+        | "helper-unavailable";
+    readonly ["configuration"]:
+        | "granted"
+        | "policy-denied"
+        | "guard-held"
+        | "profile-unproved"
+        | "authority-unknown"
+        | "helper-unavailable";
+    readonly ["observer"]:
+        | "granted"
+        | "policy-denied"
+        | "guard-held"
+        | "profile-unproved"
+        | "authority-unknown"
+        | "helper-unavailable";
+};
+export type HostPermissions = {
+    readonly ["archive"]: boolean;
+    readonly ["hub"]: boolean;
+    readonly ["control"]: boolean;
+    readonly ["schedule"]: boolean;
+    readonly ["configuration"]: boolean;
+    readonly ["observer"]: boolean;
+};
+export type HostStatus = {
+    readonly ["schema_version"]: 1;
+    readonly ["state"]: "supported" | "guarded" | "unknown" | "unavailable";
+    readonly ["reason"]:
+        | (
+              | "helper-disabled"
+              | "helper-unavailable"
+              | "helper-timeout"
+              | "helper-refused"
+              | "helper-busy"
+              | "policy-missing"
+              | "policy-invalid"
+              | "deployment-unverified"
+              | "facts-unavailable"
+              | "guard-unconfirmed"
+              | "key-missing"
+              | "key-invalid"
+              | "config-unavailable"
+          )
+        | null;
+    readonly ["profile"]: ("native" | "rootless") | null;
+    readonly ["binding"]: HostBinding | null;
+    readonly ["permissions"]: HostPermissions;
+    readonly ["permission_reasons"]: HostPermissionReasons;
+    readonly ["facts"]: HostFacts | null;
+};
+export type HostSyncSchedule = {
+    readonly ["state"]: "observed" | "unavailable";
+    readonly ["reason"]: ("profile-unproved" | "facts-unavailable") | null;
+    readonly ["revision"]: string | null;
+    readonly ["source"]: ("default" | "managed") | null;
+    readonly ["on_calendar"]: string | null;
+    readonly ["randomized_delay_sec"]: string | null;
+};
+export type HostUnitState = {
+    readonly ["load"]: "loaded" | "masked" | "not-found";
+    readonly ["active"]: "active" | "inactive" | "failed";
+    readonly ["unit_file"]:
+        | "enabled"
+        | "enabled-runtime"
+        | "disabled"
+        | "static"
+        | "linked"
+        | "linked-runtime"
+        | "masked"
+        | "masked-runtime"
+        | "not-found";
+};
 export type InitializationPayload = {
     readonly ["adopted_published"]: boolean;
     readonly ["archive_id"]: string;
@@ -2332,6 +2454,470 @@ export function decodeHealthPayload(value: unknown): HealthPayload {
         (member: unknown) => decodeReadyHealthPayload(member),
         (member: unknown) => decodeUnavailableHealthPayload(member),
     ]);
+}
+export function decodeHostBinding(value: unknown): HostBinding {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "deployment_sha256",
+            "policy_sha256",
+            "release_version",
+            "source_commit",
+            "source_snapshot_sha256",
+            "source_dirty",
+            "archive_id",
+            "archive_root",
+        ]);
+        return Object.freeze({
+            ["deployment_sha256"]: checked(
+                wireString(object["deployment_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["policy_sha256"]: checked(
+                wireString(object["policy_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["release_version"]: checked(
+                wireString(object["release_version"], null, 128, null),
+                ["hfcache.host_models._version"],
+            ),
+            ["source_commit"]: checked(
+                wireString(object["source_commit"], null, null, null),
+                ["hfcache.identity.parse_commit_sha"],
+            ),
+            ["source_snapshot_sha256"]: checked(
+                wireString(object["source_snapshot_sha256"], null, null, null),
+                ["hfcache.models._parse_sha256"],
+            ),
+            ["source_dirty"]: wireBoolean(object["source_dirty"]),
+            ["archive_id"]: checked(
+                wireString(object["archive_id"], null, null, null),
+                ["hfcache.models._parse_archive_id"],
+            ),
+            ["archive_root"]: wireLiteral(
+                object["archive_root"],
+                "/srv/hfcache",
+            ),
+        });
+    })(value);
+}
+export function decodeHostFacts(value: unknown): HostFacts {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "guard",
+                "archive_mount",
+                "units",
+                "sync_schedule",
+            ]);
+            return Object.freeze({
+                ["guard"]: wireUnion<"held" | "absent" | "inactive">(
+                    object["guard"],
+                    [
+                        (member: unknown) => wireLiteral(member, "held"),
+                        (member: unknown) => wireLiteral(member, "absent"),
+                        (member: unknown) => wireLiteral(member, "inactive"),
+                    ],
+                ),
+                ["archive_mount"]: wireUnion<
+                    "nfs-ro" | "nfs-rw" | "local-ro" | "local-rw" | "absent"
+                >(object["archive_mount"], [
+                    (member: unknown) => wireLiteral(member, "nfs-ro"),
+                    (member: unknown) => wireLiteral(member, "nfs-rw"),
+                    (member: unknown) => wireLiteral(member, "local-ro"),
+                    (member: unknown) => wireLiteral(member, "local-rw"),
+                    (member: unknown) => wireLiteral(member, "absent"),
+                ]),
+                ["units"]: ((input: unknown) => {
+                    const object = wireObject(input, [
+                        "hfcache-sync.service",
+                        "hfcache-sync.timer",
+                        "hfcache-verify.service",
+                        "hfcache-verify.timer",
+                    ]);
+                    return Object.freeze({
+                        ["hfcache-sync.service"]: decodeHostUnitState(
+                            object["hfcache-sync.service"],
+                        ),
+                        ["hfcache-sync.timer"]: decodeHostUnitState(
+                            object["hfcache-sync.timer"],
+                        ),
+                        ["hfcache-verify.service"]: decodeHostUnitState(
+                            object["hfcache-verify.service"],
+                        ),
+                        ["hfcache-verify.timer"]: decodeHostUnitState(
+                            object["hfcache-verify.timer"],
+                        ),
+                    });
+                })(object["units"]),
+                ["sync_schedule"]: decodeHostSyncSchedule(
+                    object["sync_schedule"],
+                ),
+            });
+        })(value),
+        ["hfcache.host_models.HostFacts.exact_units"],
+    );
+}
+export function decodeHostPermissionReasons(
+    value: unknown,
+): HostPermissionReasons {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "archive",
+            "hub",
+            "control",
+            "schedule",
+            "configuration",
+            "observer",
+        ]);
+        return Object.freeze({
+            ["archive"]: wireUnion<
+                | "granted"
+                | "policy-denied"
+                | "guard-held"
+                | "profile-unproved"
+                | "authority-unknown"
+                | "helper-unavailable"
+            >(object["archive"], [
+                (member: unknown) => wireLiteral(member, "granted"),
+                (member: unknown) => wireLiteral(member, "policy-denied"),
+                (member: unknown) => wireLiteral(member, "guard-held"),
+                (member: unknown) => wireLiteral(member, "profile-unproved"),
+                (member: unknown) => wireLiteral(member, "authority-unknown"),
+                (member: unknown) => wireLiteral(member, "helper-unavailable"),
+            ]),
+            ["hub"]: wireUnion<
+                | "granted"
+                | "policy-denied"
+                | "guard-held"
+                | "profile-unproved"
+                | "authority-unknown"
+                | "helper-unavailable"
+            >(object["hub"], [
+                (member: unknown) => wireLiteral(member, "granted"),
+                (member: unknown) => wireLiteral(member, "policy-denied"),
+                (member: unknown) => wireLiteral(member, "guard-held"),
+                (member: unknown) => wireLiteral(member, "profile-unproved"),
+                (member: unknown) => wireLiteral(member, "authority-unknown"),
+                (member: unknown) => wireLiteral(member, "helper-unavailable"),
+            ]),
+            ["control"]: wireUnion<
+                | "granted"
+                | "policy-denied"
+                | "guard-held"
+                | "profile-unproved"
+                | "authority-unknown"
+                | "helper-unavailable"
+            >(object["control"], [
+                (member: unknown) => wireLiteral(member, "granted"),
+                (member: unknown) => wireLiteral(member, "policy-denied"),
+                (member: unknown) => wireLiteral(member, "guard-held"),
+                (member: unknown) => wireLiteral(member, "profile-unproved"),
+                (member: unknown) => wireLiteral(member, "authority-unknown"),
+                (member: unknown) => wireLiteral(member, "helper-unavailable"),
+            ]),
+            ["schedule"]: wireUnion<
+                | "granted"
+                | "policy-denied"
+                | "guard-held"
+                | "profile-unproved"
+                | "authority-unknown"
+                | "helper-unavailable"
+            >(object["schedule"], [
+                (member: unknown) => wireLiteral(member, "granted"),
+                (member: unknown) => wireLiteral(member, "policy-denied"),
+                (member: unknown) => wireLiteral(member, "guard-held"),
+                (member: unknown) => wireLiteral(member, "profile-unproved"),
+                (member: unknown) => wireLiteral(member, "authority-unknown"),
+                (member: unknown) => wireLiteral(member, "helper-unavailable"),
+            ]),
+            ["configuration"]: wireUnion<
+                | "granted"
+                | "policy-denied"
+                | "guard-held"
+                | "profile-unproved"
+                | "authority-unknown"
+                | "helper-unavailable"
+            >(object["configuration"], [
+                (member: unknown) => wireLiteral(member, "granted"),
+                (member: unknown) => wireLiteral(member, "policy-denied"),
+                (member: unknown) => wireLiteral(member, "guard-held"),
+                (member: unknown) => wireLiteral(member, "profile-unproved"),
+                (member: unknown) => wireLiteral(member, "authority-unknown"),
+                (member: unknown) => wireLiteral(member, "helper-unavailable"),
+            ]),
+            ["observer"]: wireUnion<
+                | "granted"
+                | "policy-denied"
+                | "guard-held"
+                | "profile-unproved"
+                | "authority-unknown"
+                | "helper-unavailable"
+            >(object["observer"], [
+                (member: unknown) => wireLiteral(member, "granted"),
+                (member: unknown) => wireLiteral(member, "policy-denied"),
+                (member: unknown) => wireLiteral(member, "guard-held"),
+                (member: unknown) => wireLiteral(member, "profile-unproved"),
+                (member: unknown) => wireLiteral(member, "authority-unknown"),
+                (member: unknown) => wireLiteral(member, "helper-unavailable"),
+            ]),
+        });
+    })(value);
+}
+export function decodeHostPermissions(value: unknown): HostPermissions {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "archive",
+            "hub",
+            "control",
+            "schedule",
+            "configuration",
+            "observer",
+        ]);
+        return Object.freeze({
+            ["archive"]: wireBoolean(object["archive"]),
+            ["hub"]: wireBoolean(object["hub"]),
+            ["control"]: wireBoolean(object["control"]),
+            ["schedule"]: wireBoolean(object["schedule"]),
+            ["configuration"]: wireBoolean(object["configuration"]),
+            ["observer"]: wireBoolean(object["observer"]),
+        });
+    })(value);
+}
+export function decodeHostStatus(value: unknown): HostStatus {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "state",
+                "reason",
+                "profile",
+                "binding",
+                "permissions",
+                "permission_reasons",
+                "facts",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.host_models._one"],
+                ),
+                ["state"]: wireUnion<
+                    "supported" | "guarded" | "unknown" | "unavailable"
+                >(object["state"], [
+                    (member: unknown) => wireLiteral(member, "supported"),
+                    (member: unknown) => wireLiteral(member, "guarded"),
+                    (member: unknown) => wireLiteral(member, "unknown"),
+                    (member: unknown) => wireLiteral(member, "unavailable"),
+                ]),
+                ["reason"]: wireUnion<
+                    | (
+                          | "helper-disabled"
+                          | "helper-unavailable"
+                          | "helper-timeout"
+                          | "helper-refused"
+                          | "helper-busy"
+                          | "policy-missing"
+                          | "policy-invalid"
+                          | "deployment-unverified"
+                          | "facts-unavailable"
+                          | "guard-unconfirmed"
+                          | "key-missing"
+                          | "key-invalid"
+                          | "config-unavailable"
+                      )
+                    | null
+                >(object["reason"], [
+                    (member: unknown) =>
+                        wireUnion<
+                            | "helper-disabled"
+                            | "helper-unavailable"
+                            | "helper-timeout"
+                            | "helper-refused"
+                            | "helper-busy"
+                            | "policy-missing"
+                            | "policy-invalid"
+                            | "deployment-unverified"
+                            | "facts-unavailable"
+                            | "guard-unconfirmed"
+                            | "key-missing"
+                            | "key-invalid"
+                            | "config-unavailable"
+                        >(member, [
+                            (member: unknown) =>
+                                wireLiteral(member, "helper-disabled"),
+                            (member: unknown) =>
+                                wireLiteral(member, "helper-unavailable"),
+                            (member: unknown) =>
+                                wireLiteral(member, "helper-timeout"),
+                            (member: unknown) =>
+                                wireLiteral(member, "helper-refused"),
+                            (member: unknown) =>
+                                wireLiteral(member, "helper-busy"),
+                            (member: unknown) =>
+                                wireLiteral(member, "policy-missing"),
+                            (member: unknown) =>
+                                wireLiteral(member, "policy-invalid"),
+                            (member: unknown) =>
+                                wireLiteral(member, "deployment-unverified"),
+                            (member: unknown) =>
+                                wireLiteral(member, "facts-unavailable"),
+                            (member: unknown) =>
+                                wireLiteral(member, "guard-unconfirmed"),
+                            (member: unknown) =>
+                                wireLiteral(member, "key-missing"),
+                            (member: unknown) =>
+                                wireLiteral(member, "key-invalid"),
+                            (member: unknown) =>
+                                wireLiteral(member, "config-unavailable"),
+                        ]),
+                    (member: unknown) => wireNull(member),
+                ]),
+                ["profile"]: wireUnion<("native" | "rootless") | null>(
+                    object["profile"],
+                    [
+                        (member: unknown) =>
+                            wireUnion<"native" | "rootless">(member, [
+                                (member: unknown) =>
+                                    wireLiteral(member, "native"),
+                                (member: unknown) =>
+                                    wireLiteral(member, "rootless"),
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["binding"]: wireUnion<HostBinding | null>(object["binding"], [
+                    (member: unknown) => decodeHostBinding(member),
+                    (member: unknown) => wireNull(member),
+                ]),
+                ["permissions"]: decodeHostPermissions(object["permissions"]),
+                ["permission_reasons"]: decodeHostPermissionReasons(
+                    object["permission_reasons"],
+                ),
+                ["facts"]: wireUnion<HostFacts | null>(object["facts"], [
+                    (member: unknown) => decodeHostFacts(member),
+                    (member: unknown) => wireNull(member),
+                ]),
+            });
+        })(value),
+        ["hfcache.host_models.HostStatus.coherent_authority"],
+    );
+}
+export function decodeHostSyncSchedule(value: unknown): HostSyncSchedule {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "state",
+                "reason",
+                "revision",
+                "source",
+                "on_calendar",
+                "randomized_delay_sec",
+            ]);
+            return Object.freeze({
+                ["state"]: wireUnion<"observed" | "unavailable">(
+                    object["state"],
+                    [
+                        (member: unknown) => wireLiteral(member, "observed"),
+                        (member: unknown) => wireLiteral(member, "unavailable"),
+                    ],
+                ),
+                ["reason"]: wireUnion<
+                    ("profile-unproved" | "facts-unavailable") | null
+                >(object["reason"], [
+                    (member: unknown) =>
+                        wireUnion<"profile-unproved" | "facts-unavailable">(
+                            member,
+                            [
+                                (member: unknown) =>
+                                    wireLiteral(member, "profile-unproved"),
+                                (member: unknown) =>
+                                    wireLiteral(member, "facts-unavailable"),
+                            ],
+                        ),
+                    (member: unknown) => wireNull(member),
+                ]),
+                ["revision"]: wireUnion<string | null>(object["revision"], [
+                    (member: unknown) =>
+                        checked(wireString(member, null, null, null), [
+                            "hfcache.models._parse_sha256",
+                        ]),
+                    (member: unknown) => wireNull(member),
+                ]),
+                ["source"]: wireUnion<("default" | "managed") | null>(
+                    object["source"],
+                    [
+                        (member: unknown) =>
+                            wireUnion<"default" | "managed">(member, [
+                                (member: unknown) =>
+                                    wireLiteral(member, "default"),
+                                (member: unknown) =>
+                                    wireLiteral(member, "managed"),
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["on_calendar"]: wireUnion<string | null>(
+                    object["on_calendar"],
+                    [
+                        (member: unknown) => wireString(member, 1, 4096, null),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["randomized_delay_sec"]: wireUnion<string | null>(
+                    object["randomized_delay_sec"],
+                    [
+                        (member: unknown) => wireString(member, 1, 256, null),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+            });
+        })(value),
+        ["hfcache.host_models.HostSyncSchedule.complete_schedule"],
+    );
+}
+export function decodeHostUnitState(value: unknown): HostUnitState {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["load", "active", "unit_file"]);
+        return Object.freeze({
+            ["load"]: wireUnion<"loaded" | "masked" | "not-found">(
+                object["load"],
+                [
+                    (member: unknown) => wireLiteral(member, "loaded"),
+                    (member: unknown) => wireLiteral(member, "masked"),
+                    (member: unknown) => wireLiteral(member, "not-found"),
+                ],
+            ),
+            ["active"]: wireUnion<"active" | "inactive" | "failed">(
+                object["active"],
+                [
+                    (member: unknown) => wireLiteral(member, "active"),
+                    (member: unknown) => wireLiteral(member, "inactive"),
+                    (member: unknown) => wireLiteral(member, "failed"),
+                ],
+            ),
+            ["unit_file"]: wireUnion<
+                | "enabled"
+                | "enabled-runtime"
+                | "disabled"
+                | "static"
+                | "linked"
+                | "linked-runtime"
+                | "masked"
+                | "masked-runtime"
+                | "not-found"
+            >(object["unit_file"], [
+                (member: unknown) => wireLiteral(member, "enabled"),
+                (member: unknown) => wireLiteral(member, "enabled-runtime"),
+                (member: unknown) => wireLiteral(member, "disabled"),
+                (member: unknown) => wireLiteral(member, "static"),
+                (member: unknown) => wireLiteral(member, "linked"),
+                (member: unknown) => wireLiteral(member, "linked-runtime"),
+                (member: unknown) => wireLiteral(member, "masked"),
+                (member: unknown) => wireLiteral(member, "masked-runtime"),
+                (member: unknown) => wireLiteral(member, "not-found"),
+            ]),
+        });
+    })(value);
 }
 export function decodeInitializationPayload(
     value: unknown,
@@ -6385,6 +6971,20 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeHashReuse(value);
         case "HealthPayload":
             return decodeHealthPayload(value);
+        case "HostBinding":
+            return decodeHostBinding(value);
+        case "HostFacts":
+            return decodeHostFacts(value);
+        case "HostPermissionReasons":
+            return decodeHostPermissionReasons(value);
+        case "HostPermissions":
+            return decodeHostPermissions(value);
+        case "HostStatus":
+            return decodeHostStatus(value);
+        case "HostSyncSchedule":
+            return decodeHostSyncSchedule(value);
+        case "HostUnitState":
+            return decodeHostUnitState(value);
         case "InitializationPayload":
             return decodeInitializationPayload(value);
         case "InspectionPayload":
@@ -6670,6 +7270,29 @@ export const routeContracts = {
             })(value),
         repeated: [],
         decodeSuccess: decodeHealthPayload,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: wireNull,
+    },
+    host_status_default: {
+        method: "GET",
+        path: "/api/v1/host/status",
+        commands: ["host status"],
+        bindingIds: ["host.status"],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeHostStatus,
         decodeFailure: (value: unknown): EmptyPayload =>
             wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
         decodeBody: wireNull,
@@ -8792,6 +9415,21 @@ export const routeDefinitions = [
         request_body: null,
         response_kind: "read",
         success: "HealthPayload",
+    },
+    {
+        binding_ids: ["host.status"],
+        commands: ["host status"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "host_status",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/host/status",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "read",
+        success: "HostStatus",
     },
     {
         binding_ids: [],

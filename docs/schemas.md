@@ -1341,6 +1341,15 @@ payload or HTML representation is exposed. See [discovery](discovery.md#reposito
 
 ### 18.2 Private helper protocol and outcomes
 
+Protected `status` and config-base `config-read` are implemented in unreleased
+source. Other opcodes below remain reserved and denied. Protocol1 exact framing,
+kernel credentials/original peer pidfd, protected address binding, independent
+deployment/policy schemas and inspection budgets are specified in the
+[host contract](host-administration.md). The revision key is a separately
+provisioned fixed32-byte root-owned0600 file, never created by a read. Current
+`config-read` returns only `schema_version`, configured `archive_id` and opaque
+`base_revision`; it exposes neither raw configuration nor editable fields.
+
 Protocol schema 1 is length-prefixed UTF-8 JSON, at most 2 MiB per encoded frame,
 one request per connection, finite deadline and no descriptor passing. Request
 fields are `schema_version`, `request_id`, `operation`, strict operation-specific
@@ -1445,6 +1454,12 @@ otherwise `not_granted`. An authentication grant alone does not implement a host
 or configuration feature. No password/hash, bearer, Hub source, executable
 request, live health claim or original operation key belongs in bootstrap.
 
+The implemented host-status read makes `host-read` effective when its internal
+capability is granted. This means the endpoint is available, without contacting
+the helper at bootstrap. Its separately fetched typed status establishes current
+host permissions or an explicit unavailable observation. Configuration/schedule/
+observer workflows retain `feature_unavailable` until individually implemented.
+
 Bootstrap is authenticated and `no-store`; it adds no user-management API or
 receipt fields. Original operation receipts retain their strict public class
 identity and handles without retrospective human attribution. See
@@ -1490,3 +1505,91 @@ Existing operation receipts retain their exact strict class labels and schema.
 Basic subject ownership changes only the private original-key digest preimage;
 it adds no receipt field or historical attribution record. Keep original handles
 through rotation/restart and never replay to reconstruct missing history.
+
+### 18.5 Host status schema 1
+
+`HostStatus` is a strict frozen public observation with required integer
+`schema_version: 1`. Every field below is required, including explicit nulls;
+unknown keys, bool-as-version, coercions and unsupported versions refuse. The
+[golden example](../tests/fixtures/schemas/host-status.json) is illustrative data,
+not an installed deployment or a permission grant.
+
+| Field | Contract |
+| --- | --- |
+| `state` | `supported`, `guarded`, `unknown` or `unavailable` |
+| `reason` | Null for supported/guarded; otherwise a closed safe reason from the host model |
+| `profile` | `native` or `rootless` for known authority; otherwise null |
+| `binding` | Known authority has exact deployment/policy SHA256, bounded release version, source commit/snapshot/dirty, configured archive UUID and literal `/srv/hfcache`; otherwise null |
+| `permissions` | Exactly six strict booleans: archive, hub, control, schedule, configuration, observer |
+| `permission_reasons` | The same six keys, each `granted`, `policy-denied`, `guard-held`, `profile-unproved`, `authority-unknown` or `helper-unavailable` |
+| `facts` | Known authority has guard, archive_mount, units and sync_schedule; otherwise null |
+
+A true permission requires exactly `granted`; unknown/unavailable cannot contain
+any true permission or partial binding/facts. Rootless schedule and observer are
+always false. `guarded` is equivalent to a held original guard, which also denies
+archive actions. `absent` and `inactive` are distinct known guard observations.
+Archive mount is `nfs-ro`, `nfs-rw`, `local-ro`, `local-rw` or `absent`; local
+fixture evidence never proves live NAS acceptance.
+
+`units` contains exactly `hfcache-sync.service`, `hfcache-verify.service`,
+`hfcache-sync.timer`, `hfcache-verify.timer`. Each has required closed `load`,
+`active`, `unit_file` values. These are observations, never generic unit selectors.
+`sync_schedule` has exactly `state`, `reason`, `revision`, `source`, `on_calendar`,
+`randomized_delay_sec`. An `observed` schedule requires null reason, opaque HMAC
+SHA256 revision, source `default` or `managed`, and nonempty printable-ASCII
+calendar of at most4096 characters; optional delay is printable ASCII of
+length1..256. `unavailable` requires `profile-unproved` or `facts-unavailable` and
+null revision/source/calendar/delay. Verification scheduling remains display-only.
+
+The normal read wrapper binds the configured archive UUID and command `host status`.
+Permission/status observation grants no future action lease, validates no new
+calendar, and changes neither archive nor durable operation formats. Independent
+private policy/deployment/address records are specified in
+[protected host administration](host-administration.md).
+
+The new protected deployment index additionally requires
+`selinux_installation_sha256` and the fixed `helper_selinux_policy` source
+binding. Its independently installed schema1 SELinux receipt has exactly
+`schema_version`, `module`, `domain`, `kernel_policy_sha256` and `labels`.
+The module identifies the reviewed source and loaded module at provisioning;
+the twelve label roles contain fixed type names and no caller-selected paths.
+`engine_locks` has the one fixed type `hfcache_host_helper_engine_lock_t` for
+exactly the two existing rootless64B persistent image/layer locks, the fixed
+zero-byte stock runtime alive lock and the fixed64B runtime
+`/run/user/<protected host UID>/containers/overlay-layers/mountpoints.lock`.
+These four ordinary leaves share that role; no additional receipt role or
+caller-selected path is introduced.
+Runtime checks
+use fixed paths and no-follow inode/label metadata; the receipt adds no path
+selector or historical inode identity. Current inspection brackets inode/ancestor
+identity; it detects no prior otherwise-valid same-type replacement. Absent or
+wrong/default-type-recreated locks require independent root provisioning,
+including runtime lock recreation after reboot. The role is not a database
+`LibpodTmp` attestation; independent default-runtime/configuration/database-epoch
+proof and engine-account trust remain required. This role imposes no Podman or
+lock-path prerequisite on native-only use.
+The separate `engine_shared_memory` role requires only
+`hfcache_host_helper_engine_shm_t` for the one existing fixed UID-derived stock
+shared-memory segment. It accepts no path/size/lock-count selector or historical
+inode identity. Rootless metadata checks require ordinary single-link0600/82488B
+account-owned stock state and exact root:root01777 sticky `/dev/shm`; no other
+writable ancestry is accepted. Within each capture full metadata rejoins;
+command comparison excludes coordination timestamp changes while binding stable
+inode/label/principal/mode/link/size/ancestor identity. This attests no shared
+contents integrity. Recreation/reboot requires independent root provisioning;
+native-only use has no corresponding engine prerequisite.
+`application_config` covers only the shared read-only `config.toml` input;
+`configuration` retains the separate private helper authority type. The fixed
+`hub_home` and `hub_cache` roles cover writable Hub state, including the mounted
+`/var/cache/hfcache` parent and its descendants, with a distinct type that the
+helper cannot read. Immutable credential roles retain their separate type.
+The authenticated opt-in container path preserves these labels instead of
+recursively relabeling the two Hub mounts; root provisioning must prove actual
+existing and newly created leaf labels.
+The kernel digest and hidden-object labels attest root provisioning. Runtime
+checks separately require Enforcing, the exact helper domain and the visible
+fixed labels; they do not pretend to rehash the kernel policy or inspect through
+masked paths. See the [mandatory SELinux contract](host-administration.md#mandatory-selinux-isolation)
+for exact constants, bounds and required installed evidence. These are new
+helper-only records, with no change to existing archive/operation formats or
+public REST/MCP credential schemas.

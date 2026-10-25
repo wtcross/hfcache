@@ -1496,6 +1496,12 @@ credential values. Whole-archive authorization, AD-21 and immutable archive
 schemas retain their existing meaning. [Server](server.md) records every key
 and the current resource and deployment boundaries.
 
+[Decision152](adr/decision-152.md) accepts a narrow root:root0440 credential
+alternative with an exact read-only effective-UID ACL and descriptor-pinned
+ACL/metadata rechecks. Unreleased source implements this policy; installed
+application acceptance remains pending;
+ordinary protected files, credential classes and host authority remain unchanged.
+
 ### Unix client resource ownership (2026-10-18)
 
 [Decision 119](adr/decision-119.md) promotes already-locked HTTPCore 1.0.9 to a
@@ -1557,7 +1563,7 @@ resources and the instance lock. UI sends have separate finite admission,
 chunk and absolute time bounds, independent of the metadata pool.
 
 Plain authenticated bootstrap exposes configured UUID, exact safe principal,
-explicit unavailable permissions and validated local paths/build identity. It
+explicit capability/workflow availability and validated local paths/build identity. It
 makes no live archive-health claim. The browser validates bounded JSON, inert
 metadata and platform cryptographic build bindings before mounting. Missing
 bootstrap or main JavaScript preserves the inert reload page. Explicit version
@@ -1570,6 +1576,26 @@ Raw JSON operation links retain their identity while `Location` uses the single
 URI-path encoder. Reject leading double-slash prefixes globally; UI-only origin
 and prefix ceilings do not narrow backend-only configurations. No archive format,
 publication identity, job authority, host permission or no-replay rule changes.
+
+### Protected host-reader amendment (2026-10-21)
+
+[Decision150](adr/decision-150.md) supplies the separate fixed root reader from
+decision141. The online API remains unprivileged; only it receives the protected
+Unix address. No archive/Hub authority, manager/engine socket or generic dispatch
+is added. Actual native MainPID or rootless init TGID, original peer pidfd,
+per-fragment credentials, independent selected-release index/policy and pinned
+startup address all precede a bounded read. The fixed account observer uses only
+standard-library protected bootstrap copies and fixed read-only manager/engine
+queries. Unknown authority is an explicit all-false projection.
+
+Basic human archive/Hub/control requests require fresh category proof before
+admission and queue dispatch, outside metadata/store/domain locks. Existing
+bearer and read-only MCP semantics stand; operation observation needs no helper.
+Known pre-handoff denial fails the original receipt without executing or invoking
+worker reconciliation. Possible handoff retains original uncertainty/no-replay
+rules. Future configuration/schedule writes keep separate durable contracts and
+remain denied. [Host administration](host-administration.md) owns exact protocol,
+deployment/policy/address schemas, budgets and supported-profile obligations.
 
 ### Durable admission and observation amendment (2026-10-17)
 

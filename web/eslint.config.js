@@ -18,7 +18,11 @@ export default tseslint.config(
     { ...js.configs.recommended, files: ["*.js"] },
     {
         ...js.configs.recommended,
-        files: ["test/auth-api/*.mjs", "test/functional-api/*.mjs"],
+        files: [
+            "test/auth-api/*.mjs",
+            "test/functional-api/*.mjs",
+            "test/host-api/*.mjs",
+        ],
         languageOptions: {
             globals: {
                 process: "readonly",

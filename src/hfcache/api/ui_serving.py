@@ -187,8 +187,12 @@ def bootstrap_bytes(  # noqa: PLR0913 - independently sourced configured/build/p
             {
                 "capability": capability.value,
                 "granted": capability in principal.admin_capabilities,
-                "effective": False,
-                "reason": "feature_unavailable"
+                "effective": capability is AdminCapability.HOST_READ
+                and capability in principal.admin_capabilities,
+                "reason": "allowed"
+                if capability is AdminCapability.HOST_READ
+                and capability in principal.admin_capabilities
+                else "feature_unavailable"
                 if capability in principal.admin_capabilities
                 else "not_granted",
             }

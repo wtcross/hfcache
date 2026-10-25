@@ -19,6 +19,7 @@ from hfcache.api.operations import OperationEvent, OperationReceipt, ResultRefer
 from hfcache.catalog_models import CatalogRecord, PublicationObservation, RepositoryTagSnapshot
 from hfcache.catalog_storage import parse_record
 from hfcache.errors import ExitCode, HfcacheError, IntegrityError, SafetyError
+from hfcache.host_models import HostStatus
 from hfcache.manifests import FileProvenance, RevisionManifest
 from hfcache.models import (
     INDENT,
@@ -51,6 +52,7 @@ from tests.fixtures.examples import EXAMPLES, at
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "schemas"
 
 MODEL_FOR = {
+    "host-status": HostStatus,
     "ui-asset-manifest": UiAssetManifest,
     "ui-bootstrap": UiBootstrap,
     "protected-administrator": ProtectedAdministratorRecord,
@@ -101,7 +103,9 @@ def test_every_fixture_round_trips(name):
     raw = (FIXTURES / f"{name}.json").read_bytes()
 
     expected = EXAMPLES[name]()
-    if isinstance(expected, (ProtectedAdministratorRecord, UiAssetManifest, UiBootstrap)):
+    if isinstance(
+        expected, (ProtectedAdministratorRecord, UiAssetManifest, UiBootstrap, HostStatus)
+    ):
         # Credential and UI formats each carry their own required schema 1,
         # outside the archive-wide version preflight in models.load().
         parsed = type(expected).model_validate_json(raw)

@@ -78,6 +78,7 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GET /version` | default | version --server | R | synchronous | none | no | none | none |
 | `GET /capabilities` | default | SDK / HTTP | R | synchronous | none | no | none | none |
+| `GET /host/status` | default | browser / HTTP | internal host-read | synchronous protected helper read | none | no | none | none |
 | `POST /config/validate` | installed | config validate (installed) | R | synchronous | none | no | none | none |
 | `POST /config/validate` | candidate | --config PATH config validate | W | synchronous | none | no | none | none |
 | `GET /archive/inspection` | default | archive init --inspect | R | synchronous | none | no | none | none |
@@ -120,6 +121,36 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `GET /health` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /openapi.json` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /docs` | optional | SDK / HTTP | R | synchronous | none | no | none | none |
+
+Basic keyed jobs additionally require fresh protected host permissions at
+admission and immediately before dispatch. Archive jobs require `archive`, Hub
+sizing/diagnostics require `hub`, and maintenance previews require `control`;
+non-read-only diagnostics require both `hub` and `archive`. Archive initialization
+is denied for Basic. Unknown actions deny. Duplicate POSTs repeat these checks;
+original operation lookup/result reads remain available without them. Service
+bearers retain their existing behavior. See the exact
+[action matrix](host-administration.md#fresh-basic-admission-and-uncertainty).
+
+## Protected host status
+
+`GET /api/v1/host/status` accepts no query parameters and requires the internal
+`host-read` capability. Ordinary reader/writer and MCP bearers have no such grant.
+Successful authentication returns the ordinary read wrapper with command
+`host status`, `config_fingerprint: null`, and the strict `HostStatus` data object.
+Its configured archive UUID must match the outer response. The read neither
+scans archive contents nor acquires metadata/operation/configuration/archive
+locks. It creates no receipt and contacts no Hub service.
+
+The projection distinguishes `supported`, `guarded`, `unknown`, `unavailable`,
+six explicit effective permissions/reasons, selected release/policy/source
+binding and fixed system unit/timer/sync-schedule facts. Missing, unsafe, busy or
+timed-out helper proof returns typed unavailable data with every permission
+false. It never fabricates inactive services or archive health. For keyed Basic
+admission the same unavailable proof is `HFAPI022`/HTTP503/exit20; a known denial
+is `HFAPI002`/HTTP403/exit10. Accepted operations retain original handles and are
+not replayed after a failed observation. See
+[status schema](schemas.md#185-host-status-schema-1) and the
+[protected helper contract](host-administration.md).
 
 ## Metadata reads
 
@@ -430,7 +461,7 @@ redirecting or reflecting query text into Location.
 | 409 | Stale cursor/policy, conflicting key, unfinished result or classified read-integrity refusal |
 | 413 / 422 | Oversized / invalid strict request |
 | 429 | HFAPI021: independent Basic verification capacity or failure throttle; exit20 |
-| 503 | Capacity, draining or unavailable executor |
+| 503 | Capacity, draining or unavailable executor; HFAPI022 for unavailable protected host authority at Basic admission |
 | 500 | Sanitized unexpected failure |
 
 Read-integrity refusals retain their HFVER taxonomy/exit. Client configuration,

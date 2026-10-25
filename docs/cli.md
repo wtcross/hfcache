@@ -877,6 +877,7 @@ result and does not override a domain Envelope's application exit classification
 | `HFAPI019` | API connectivity or bounded observation cannot complete |
 | `HFAPI020` | Submission outcome is uncertain; retain the original key and do not replay under a new key |
 | `HFAPI021` | Basic authentication verification capacity or failure-window budget is exhausted; HTTP 429, no domain work is admitted |
+| `HFAPI022` | Fresh protected host authority is unavailable, unsafe, full or timed out; HTTP 503, no new Basic host-policy action is admitted |
 
 ### 5.3 Hub and synchronization — exit `30`
 

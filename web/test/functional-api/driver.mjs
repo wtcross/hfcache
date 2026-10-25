@@ -63,6 +63,22 @@ export function certificateRefusal(error) {
     );
 }
 
+export function certificateNavigationRefusal(
+    error,
+    failure,
+    expectedUrl,
+    response,
+) {
+    return (
+        response === null &&
+        error instanceof Error &&
+        failure?.url === expectedUrl &&
+        failure?.navigation === true &&
+        (certificateRefusal(error) ||
+            certificateRefusal({ message: failure.errorText }))
+    );
+}
+
 export function secretDiagnostic(error, credentials) {
     const diagnostic = safeDiagnostic(error, credentials);
     for (const token of Object.values(credentials?.tokens ?? {})) {
@@ -545,28 +561,73 @@ async function checkEngine(name, type, bindings, credentials, phase) {
             serviceWorkers: "block",
             viewport: { width: 1440, height: 1000 },
         });
+        page = await context.newPage();
+        page.setDefaultTimeout(10000);
+        page.setDefaultNavigationTimeout(15000);
+        // Settle WebKit's initial frame before the one external navigation.
+        // A cancelled startup navigation is never certificate-refusal evidence.
+        if (phase === "untrusted") await page.goto("about:blank");
         observer = nativeNetworkObserver({ trusted: bindings.origin });
         evidence.network_observation = observer.state;
         // No route/HAR/CDP interception: Playwright otherwise synthesizes Chromium
         // preflights. The positively owned guest network is separately confined.
         context.on("request", (request) => observer.observe(request.url()));
-        page = await context.newPage();
-        page.setDefaultTimeout(10000);
-        page.setDefaultNavigationTimeout(15000);
         const ui = bindings.prefix + "/ui/";
         if (phase === "untrusted") {
             await test("untrusted-certificate-refused", async () => {
+                const target = bindings.origin + ui;
+                const failedRequest = page
+                    .waitForEvent("requestfailed", {
+                        predicate: (request) =>
+                            request.isNavigationRequest() &&
+                            request.url() === target,
+                        timeout: 15000,
+                    })
+                    .then(
+                        (request) => ({
+                            url: request.url(),
+                            navigation: request.isNavigationRequest(),
+                            errorText: request.failure()?.errorText,
+                        }),
+                        () => null,
+                    );
                 let caught;
+                let response = null;
                 try {
-                    await page.goto(bindings.origin + ui);
+                    response = await page.goto(target);
                 } catch (error) {
                     caught = error;
                 }
-                evidence.certificate_diagnostic = secretDiagnostic(
+                const failure = await failedRequest;
+                evidence.certificate_navigation_diagnostic = secretDiagnostic(
                     caught ?? new Error("navigation-unexpectedly-succeeded"),
                     credentials,
                 );
-                assert.ok(caught && certificateRefusal(caught));
+                evidence.certificate_transport_diagnostic = failure
+                    ? secretDiagnostic(
+                          new Error(failure.errorText),
+                          credentials,
+                      )
+                    : null;
+                evidence.certificate_navigation_attempts = 1;
+                evidence.certificate_response_observed = response !== null;
+                evidence.certificate_error_source = certificateRefusal(caught)
+                    ? "navigation"
+                    : "requestfailed";
+                evidence.certificate_diagnostic = secretDiagnostic(
+                    certificateRefusal(caught)
+                        ? caught
+                        : new Error(failure?.errorText),
+                    credentials,
+                );
+                assert.ok(
+                    certificateNavigationRefusal(
+                        caught,
+                        failure,
+                        target,
+                        response,
+                    ),
+                );
                 evidence.certificate_refused = true;
             });
         } else {

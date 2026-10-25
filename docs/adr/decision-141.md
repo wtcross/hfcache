@@ -4,6 +4,14 @@
 - Status: Accepted design; implementation and installed conformance pending.
 - Date: 2026-10-20.
 
+## 2026-10-21 protected-reader amendment
+
+[Decision150](decision-150.md) specifies the fixed protected status/config-base
+reader and fresh Basic job proof. Configuration/schedule/observer writes retain
+this record's separate durable obligations and remain denied until implemented.
+The existing Cockpit boundary and historical evidence stand. Source availability
+and real installed native/rootless conformance are separate requirements.
+
 ## Context and decision
 
 Cockpit currently owns guarded configuration installation and fixed host controls

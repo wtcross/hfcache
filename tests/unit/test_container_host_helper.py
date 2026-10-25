@@ -1,0 +1,522 @@
+"""ADR150: API-only projected helper mount, protected host startup facts."""
+
+import copy
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+SCRIPT = Path(__file__).parents[2] / "scripts/container-service.py"
+SPEC = importlib.util.spec_from_file_location("container_host_helper", SCRIPT)
+assert SPEC is not None
+assert SPEC.loader is not None
+runtime = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(runtime)
+PROFILE = {
+    "schema_version": 1,
+    "service_uid": 983,
+    "service_gid": 983,
+    "app_image": "sha256:" + "a" * 64,
+    "caddy_image": "sha256:" + "b" * 64,
+}
+BOOT = "8ee81fa2-685b-435b-a312-c8f4195036d0"
+
+
+def encoded(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+
+
+def write(path, body, mode=0o644):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        path.chmod(0o600)
+    path.write_bytes(body)
+    path.chmod(mode)
+
+
+def digest(body):
+    return hashlib.sha256(body).hexdigest()
+
+
+@pytest.fixture
+def host(tmp_path, monkeypatch):
+    profile = PROFILE | {"service_uid": os.geteuid() or 983, "service_gid": os.getegid() or 983}
+    prefix = tmp_path / "opt"
+    selected = prefix / "releases/0.2.0"
+    configuration = selected / "rendered/server.toml"
+    write(
+        configuration,
+        f'[host_helper]\nenabled=true\nprofile="rootless"\napi_host_gid={profile["service_gid"]}\n'.encode(),
+    )
+    raw_runtime = encoded(profile)
+    write(selected / "rendered/runtime.json", raw_runtime)
+    write(selected / "artifact-index.json", b'{"schema_version":1,"files":{}}')
+    (prefix / "current").symlink_to("releases/0.2.0")
+    deployment = tmp_path / "etc/deployment.json"
+    value = {
+        "schema_version": 1,
+        "profile": "rootless",
+        "release": {"version": "0.2.0", "selector_target": "releases/0.2.0"},
+        "source": {},
+        "api_principal": {"host_uid": profile["service_uid"], "host_gid": profile["service_gid"]},
+        "bindings": {},
+        "authority_files": {},
+        "selinux_installation_sha256": "9" * 64,
+        "profile_evidence": {
+            "artifact_index_sha256": digest((selected / "artifact-index.json").read_bytes()),
+            "runtime_profile_sha256": digest(raw_runtime),
+            "app_image_sha256": "a" * 64,
+            "caddy_image_sha256": "b" * 64,
+        },
+    }
+    write(deployment, encoded(value))
+    parent = tmp_path / "run/api"
+    parent.mkdir(parents=True, mode=0o750)
+    parent.chmod(0o750)
+    if os.getegid() == 0:
+        os.chown(parent, os.geteuid(), int(profile["service_gid"]))
+    info = parent.stat()
+    binding = {
+        "schema_version": 1,
+        "boot_id": BOOT,
+        "helper_generation": "e" * 32,
+        "deployment_sha256": digest(deployment.read_bytes()),
+        "policy_sha256": "f" * 64,
+        "parent": {
+            "device": info.st_dev,
+            "inode": info.st_ino,
+            "uid": 0,
+            "gid": profile["service_gid"],
+            "mode": 0o750,
+        },
+        "helper": {"pid": 1234, "start_ticks": 999, "uid": 0, "gid": 0},
+    }
+    binding_file = parent / "binding.json"
+    write(binding_file, encoded(binding), 0o440)
+    if os.getegid() == 0:
+        os.chown(binding_file, os.geteuid(), int(profile["service_gid"]))
+    boot_file = tmp_path / "boot"
+    write(boot_file, (BOOT + "\n").encode(), 0o444)
+    for name, item in {
+        "HOST_HELPER_PREFIX": prefix,
+        "HOST_HELPER_DEPLOYMENT": deployment,
+        "HOST_HELPER_PARENT": parent,
+        "HOST_HELPER_BOOT": boot_file,
+        "HOST_HELPER_OWNER": os.geteuid(),
+        "RELEASE_ROOT": selected,
+        "PROFILE_DIRECTORY": selected / "rendered",
+    }.items():
+        monkeypatch.setattr(runtime, name, item)
+    return SimpleNamespace(
+        profile=profile,
+        prefix=prefix,
+        selected=selected,
+        configuration=configuration,
+        deployment=deployment,
+        index=value,
+        parent=parent,
+        binding=binding,
+        binding_file=binding_file,
+        boot=boot_file,
+    )
+
+
+def test_enabled_projection_uses_actual_host_group_and_projects_only_fixed_identity(host):
+    value = runtime.host_helper_projection(host.profile)
+    assert value == {
+        "schema_version": 1,
+        "profile": "rootless",
+        "deployment_sha256": digest(host.deployment.read_bytes()),
+        "boot_id": BOOT,
+        "parent": {
+            "device": host.parent.stat().st_dev,
+            "inode": host.parent.stat().st_ino,
+            "uid": 65534,
+            "gid": 981,
+            "mode": 488,
+        },
+        "peer": {"pid": 0, "uid": 65534, "gid": 65534},
+    }
+    argv = runtime.command(host.profile, "api", invocation_id="a" * 32, helper_projection=value)
+    assert f"{host.parent}:/run/hfcache-host-helper/api:ro" in argv
+    projected = next(
+        argument.split("=", 2)[2]
+        for argument in argv
+        if argument.startswith("--env=HFCACHE_HOST_HELPER_PARENT=")
+    )
+    assert projected == encoded(value).decode()
+    assert not any(
+        "host-helper" in argument and (":rw" in argument or ",z" in argument) for argument in argv
+    )
+
+
+def test_enabled_api_preserves_hub_inode_labels_and_only_changes_the_two_hub_bind_options(host):
+    """ADR150: Podman must retain separately installed Hub payload labels."""
+    projection = runtime.host_helper_projection(host.profile)
+    original = runtime.command(host.profile, "api", invocation_id="")
+    enabled = runtime.command(host.profile, "api", invocation_id="", helper_projection=projection)
+    for path in ("/var/lib/hfcache/hf-home", "/var/cache/hfcache"):
+        assert f"{path}:{path}:rw,z" in original
+        assert f"{path}:{path}:rw" in enabled
+        assert f"{path}:{path}:rw,z" not in enabled
+
+    # Every other command byte retains the original role's permissions. The
+    # only additional authority is the existing read-only helper projection.
+    expected = [
+        item.removesuffix(",z")
+        if item
+        in {
+            "/var/lib/hfcache/hf-home:/var/lib/hfcache/hf-home:rw,z",
+            "/var/cache/hfcache:/var/cache/hfcache:rw,z",
+        }
+        else item
+        for item in original
+    ]
+    projected = enabled.index(f"{host.parent}:/run/hfcache-host-helper/api:ro")
+    assert enabled[projected - 1] == "--volume"
+    assert enabled[projected + 1] == (
+        "--env=HFCACHE_HOST_HELPER_PARENT=" + encoded(projection).decode()
+    )
+    assert enabled[: projected - 1] + enabled[projected + 2 :] == expected
+
+
+@pytest.mark.parametrize(
+    "body", [b"# no helper\n", b"[host_helper]\nenabled=false\n", b"[host_helper]\n"]
+)
+def test_absent_or_disabled_helper_retains_original_api_hub_relabel_arguments(host, body):
+    write(host.configuration, body)
+    projection = runtime.host_helper_projection(host.profile)
+    assert projection is None
+    original = runtime.command(host.profile, "api", invocation_id="")
+    assert (
+        runtime.command(host.profile, "api", invocation_id="", helper_projection=projection)
+        == original
+    )
+    assert "/var/lib/hfcache/hf-home:/var/lib/hfcache/hf-home:rw,z" in original
+    assert "/var/cache/hfcache:/var/cache/hfcache:rw,z" in original
+
+
+@pytest.mark.parametrize("value", [None, True, 1, "", "9" * 63, "9" * 65, "G" * 64])
+def test_helper_startup_requires_exact_selinux_installation_digest_even_with_fresh_binding(
+    host, value
+):
+    host.index["selinux_installation_sha256"] = value
+    write(host.deployment, encoded(host.index))
+    host.binding["deployment_sha256"] = digest(host.deployment.read_bytes())
+    write(host.binding_file, encoded(host.binding), 0o440)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_projection(host.profile)
+
+
+def test_helper_startup_rejects_missing_selinux_receipt_binding_without_legacy_fallback(host):
+    del host.index["selinux_installation_sha256"]
+    write(host.deployment, encoded(host.index))
+    host.binding["deployment_sha256"] = digest(host.deployment.read_bytes())
+    write(host.binding_file, encoded(host.binding), 0o440)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_projection(host.profile)
+
+
+@pytest.mark.parametrize(
+    "body", [b"# no helper\n", b"[host_helper]\nenabled=false\n", b"[host_helper]\n"]
+)
+def test_disabled_mode_never_reads_deployment_parent_or_binding(host, monkeypatch, body):
+    write(host.configuration, body)
+    original = runtime._HelperProjectionRead.read
+    opened = []
+
+    def read(self, path, *args, **kwargs):
+        opened.append(path)
+        assert path == host.configuration
+        return original(self, path, *args, **kwargs)
+
+    monkeypatch.setattr(runtime._HelperProjectionRead, "read", read)
+    assert runtime.host_helper_projection(host.profile) is None
+    assert opened == [host.configuration]
+
+
+@pytest.mark.parametrize("role", ["worker", "caddy", "client"])
+def test_no_non_api_role_can_receive_helper_mount_or_environment(host, role):
+    projection = runtime.host_helper_projection(host.profile)
+    assert not any(
+        "host-helper" in argument or "HFCACHE_HOST_HELPER" in argument
+        for argument in runtime.command(host.profile, role)
+    )
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.command(host.profile, role, helper_projection=projection)
+
+
+def test_explicit_invocation_is_pure_and_never_changes_shared_environment(monkeypatch):
+    monkeypatch.setenv("INVOCATION_ID", "a" * 32)
+    assert "--env=INVOCATION_ID=" + "a" * 32 in runtime.command(PROFILE, "api")
+    assert "--env=INVOCATION_ID=" + "b" * 32 in runtime.command(
+        PROFILE, "api", invocation_id="b" * 32
+    )
+    assert not any(
+        "INVOCATION_ID" in argument
+        for argument in runtime.command(PROFILE, "api", invocation_id="")
+    )
+    assert os.environ["INVOCATION_ID"] == "a" * 32
+
+
+@pytest.mark.parametrize(
+    "change", ["enabled-type", "native", "group", "inactive-parameters", "explicit-hash"]
+)
+def test_optin_is_explicit_and_malformed_or_wrong_profile_never_falls_back(host, change):
+    body = host.configuration.read_text()
+    if change == "enabled-type":
+        body = body.replace("enabled=true", 'enabled="true"')
+    elif change == "native":
+        body = body.replace('profile="rootless"', 'profile="native"')
+    elif change == "group":
+        body = body.replace(f"api_host_gid={host.profile['service_gid']}", "api_host_gid=9999")
+    elif change == "inactive-parameters":
+        body = body.replace("enabled=true", "enabled=false")
+    else:
+        body += 'deployment_sha256="' + "0" * 64 + '"\n'
+    write(host.configuration, body.encode())
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_projection(host.profile)
+
+
+def test_optional_explicit_digest_is_checked_without_requiring_a_hash_cycle(host):
+    body = (
+        host.configuration.read_text()
+        + 'deployment_sha256="'
+        + digest(host.deployment.read_bytes())
+        + '"\n'
+    )
+    write(host.configuration, body.encode())
+    assert runtime.host_helper_projection(host.profile)["deployment_sha256"] == digest(
+        host.deployment.read_bytes()
+    )
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "deployment-digest",
+        "boot",
+        "parent-inode",
+        "parent-mode",
+        "parent-group",
+        "helper-user",
+        "profile",
+        "principal",
+        "runtime",
+        "image",
+        "index",
+        "selector",
+    ],
+)
+def test_each_protected_binding_join_is_required(host, change):  # noqa: PLR0912 - fixed independent joins
+    if change in {
+        "deployment-digest",
+        "boot",
+        "parent-inode",
+        "parent-mode",
+        "parent-group",
+        "helper-user",
+    }:
+        value = copy.deepcopy(host.binding)
+        if change == "deployment-digest":
+            value["deployment_sha256"] = "0" * 64
+        elif change == "boot":
+            value["boot_id"] = "00000000-0000-0000-0000-000000000001"
+        elif change == "parent-inode":
+            value["parent"]["inode"] += 1
+        elif change == "parent-mode":
+            value["parent"]["mode"] = 0o755
+        elif change == "parent-group":
+            value["parent"]["gid"] += 1
+        else:
+            value["helper"]["uid"] = 983
+        write(host.binding_file, encoded(value), 0o440)
+    elif change == "selector":
+        (host.prefix / "current").unlink()
+        (host.prefix / "current").symlink_to("releases/9.9.9")
+    else:
+        value = copy.deepcopy(host.index)
+        if change == "profile":
+            value["profile"] = "native"
+        elif change == "principal":
+            value["api_principal"]["host_uid"] += 1
+        elif change == "runtime":
+            value["profile_evidence"]["runtime_profile_sha256"] = "0" * 64
+        elif change == "index":
+            value["profile_evidence"]["artifact_index_sha256"] = "0" * 64
+        else:
+            value["profile_evidence"]["app_image_sha256"] = "c" * 64
+        write(host.deployment, encoded(value))
+        binding = host.binding | {"deployment_sha256": digest(host.deployment.read_bytes())}
+        write(host.binding_file, encoded(binding), 0o440)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_projection(host.profile)
+
+
+@pytest.mark.parametrize(
+    "kind", ["symlink", "hardlink", "writable", "oversize", "fifo", "parent-alias"]
+)
+def test_unsafe_protected_deployment_is_refused_without_creation_or_repair(host, kind):
+    path = host.deployment
+    if kind == "symlink":
+        other = path.with_name("target")
+        path.rename(other)
+        path.symlink_to(other)
+    elif kind == "hardlink":
+        os.link(path, path.with_name("second"))
+    elif kind == "writable":
+        path.chmod(0o666)
+    elif kind == "oversize":
+        path.write_bytes(b"x" * (1048576 + 1))
+    elif kind == "fifo":
+        path.unlink()
+        os.mkfifo(path)
+    else:
+        original = path.parent
+        moved = original.with_name("moved")
+        original.rename(moved)
+        original.symlink_to(moved)
+    with pytest.raises((ValueError, OSError)):
+        runtime.host_helper_projection(host.profile)
+
+
+def test_projection_command_does_no_filesystem_reads_and_accepts_no_arbitrary_paths(
+    host, monkeypatch
+):
+    projection = runtime.host_helper_projection(host.profile)
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("pure argv builder performed I/O")
+
+    monkeypatch.setattr(os, "open", forbidden)
+    assert runtime.command(host.profile, "api", helper_projection=projection)
+    bad = projection | {"socket": "/tmp/attacker.sock"}
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.command(host.profile, "api", helper_projection=bad)
+
+
+def test_enabled_missing_binding_is_not_a_silent_disabled_fallback(host):
+    host.binding_file.unlink()
+    with pytest.raises(FileNotFoundError):
+        runtime.host_helper_projection(host.profile)
+    assert not host.binding_file.exists()
+
+
+def test_shared_projection_constructor_is_pure_and_matches_protected_loader(host, monkeypatch):
+    expected = runtime.host_helper_projection(host.profile)
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("pure projection constructor performed I/O")
+
+    monkeypatch.setattr(os, "open", forbidden)
+    assert (
+        runtime.helper_parent_projection(
+            expected["deployment_sha256"],
+            BOOT,
+            expected["parent"]["device"],
+            expected["parent"]["inode"],
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "root-uid",
+        "wrong-gid",
+        "wrong-mode",
+        "bool-inode",
+        "peer-pid",
+        "extra-field",
+        "uppercase-hash",
+        "wrong-boot",
+    ],
+)
+def test_pure_command_rejects_unknown_or_forged_projection_shapes(host, kind):
+    projection = runtime.host_helper_projection(host.profile)
+    if kind == "root-uid":
+        projection["parent"]["uid"] = 0
+    elif kind == "wrong-gid":
+        projection["parent"]["gid"] = 983
+    elif kind == "wrong-mode":
+        projection["parent"]["mode"] = 0o755
+    elif kind == "bool-inode":
+        projection["parent"]["inode"] = True
+    elif kind == "peer-pid":
+        projection["peer"]["pid"] = 1234
+    elif kind == "extra-field":
+        projection["peer"]["path"] = "/tmp/attacker"
+    elif kind == "uppercase-hash":
+        projection["deployment_sha256"] = "A" * 64
+    else:
+        projection["boot_id"] = "not-a-boot-id"
+    with pytest.raises(ValueError, match=r"."):
+        runtime.command(host.profile, "api", helper_projection=projection)
+
+
+@pytest.mark.parametrize("role", ["api", "worker", "caddy", "client"])
+def test_main_only_api_loads_protected_projection_before_original_exec(host, monkeypatch, role):
+    calls = []
+    projection = runtime.host_helper_projection(host.profile)
+    monkeypatch.setattr(runtime, "load_profile", lambda: host.profile)
+    monkeypatch.setattr(runtime, "archive_readonly", lambda: None)
+    monkeypatch.setattr(runtime, "prepare_start", lambda *_args: None)
+
+    def project(profile):
+        assert profile == host.profile
+        calls.append("projection")
+        return projection
+
+    class Executed(BaseException):
+        pass
+
+    def execute(_program, argv):
+        calls.append(argv)
+        raise Executed
+
+    monkeypatch.setattr(runtime, "host_helper_projection", project)
+    monkeypatch.setattr(runtime.os, "execv", execute)
+    monkeypatch.setattr(runtime.sys, "argv", ["container-service", role])
+    with pytest.raises(Executed):
+        runtime.main()
+    if role == "api":
+        assert calls[0] == "projection"
+        assert any("HFCACHE_HOST_HELPER_PARENT" in value for value in calls[1])
+    else:
+        assert len(calls) == 1
+        assert not any("HFCACHE_HOST_HELPER_PARENT" in value for value in calls[0])
+
+
+def test_actual_concurrent_deployment_replacement_is_refused(host, monkeypatch):
+    original = os.read
+    changed = False
+
+    def concurrent(descriptor, maximum):
+        nonlocal changed
+        body = original(descriptor, maximum)
+        if not changed and b'"authority_files"' in body:
+            changed = True
+            host.deployment.unlink()
+            write(host.deployment, body)
+        return body
+
+    monkeypatch.setattr(os, "read", concurrent)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_projection(host.profile)
+    assert changed
+
+
+def test_failed_projection_read_drains_fds_and_preserves_unsafe_metadata(host):
+    host.deployment.chmod(0o666)
+    before = set(os.listdir("/proc/self/fd"))  # noqa: PTH208 - exact descriptor accounting
+    for _ in range(3):
+        with pytest.raises(ValueError, match="protected host helper projection refused"):
+            runtime.host_helper_projection(host.profile)
+    assert set(os.listdir("/proc/self/fd")) == before  # noqa: PTH208
+    assert host.deployment.stat().st_mode & 0o777 == 0o666

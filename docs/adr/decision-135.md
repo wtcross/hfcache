@@ -5,6 +5,14 @@
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-20.
 
+## 2026-10-21 protected-reader amendment
+
+[Decision150](decision-150.md) adds independent protected helper/category proof
+for replacement Basic admissions and dispatch, outside metadata/store/domain
+locks. Original bearer jobs, operation observation and fixed system-manager
+observer semantics stand. Rootless schedule/observer remain denied; no automatic
+migration of legacy grants or change to historical acceptance follows.
+
 ## Context and decision
 
 Manual full sync and verification currently start legacy system services even

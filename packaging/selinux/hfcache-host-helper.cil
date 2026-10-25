@@ -1,0 +1,244 @@
+; hfcache protected host reader policy, source policy version 1.
+; Install only by an explicit root provisioning action at priority 400.
+; The module name is hfcache_host_helper. No runtime read installs policy.
+; Supported target policy and enforcing role acceptance must be proved.
+; Do not use audit2allow or permissive fallback to fill missing permissions.
+
+(type hfcache_host_helper_t)
+(typeattributeset domain (hfcache_host_helper_t))
+(roletype system_r hfcache_host_helper_t)
+(type hfcache_host_helper_exec_t)
+(type hfcache_host_helper_code_t)
+(type hfcache_host_helper_conf_t)
+(type hfcache_host_helper_application_conf_t)
+(type hfcache_host_helper_hub_state_t)
+(type hfcache_host_helper_runtime_t)
+(type hfcache_host_helper_secret_t)
+(type hfcache_host_helper_engine_lock_t)
+(type hfcache_host_helper_engine_shm_t)
+(type hfcache_archive_t)
+(typeattributeset file_type (hfcache_host_helper_exec_t hfcache_host_helper_code_t hfcache_host_helper_conf_t hfcache_host_helper_application_conf_t hfcache_host_helper_hub_state_t hfcache_host_helper_runtime_t hfcache_host_helper_secret_t hfcache_host_helper_engine_lock_t hfcache_host_helper_engine_shm_t hfcache_archive_t))
+(typeattributeset exec_type (hfcache_host_helper_exec_t))
+
+; Enter once from the system manager and stay confined across all children.
+(allow init_t hfcache_host_helper_t (process (transition)))
+(allow init_t hfcache_host_helper_t (process2 (nnp_transition)))
+(allow init_t hfcache_host_helper_exec_t (file (getattr open read execute)))
+; Fixed manager-opened StandardOutput append channel; no payload read grant.
+(allow init_t hfcache_host_helper_runtime_t (file (open append)))
+; The trusted system manager must install the existing inaccessible-directory masks.
+; mounton permits attaching the mask, not helper access to the underlying objects.
+; These are type permissions; the protected unit fixes each mask target.
+(allow init_t hfcache_host_helper_secret_t (dir (mounton)))
+(allow init_t hfcache_host_helper_hub_state_t (dir (mounton)))
+(allow init_t hfcache_archive_t (dir (mounton)))
+; Trusted native service setup precedes the application exec/domain.
+; Preserve Hub/secret labels: manager metadata setup and credential delivery only.
+; These type-wide rights do not authorize any helper access.
+(allow init_t hfcache_host_helper_hub_state_t (dir (setattr)))
+(allow init_t hfcache_host_helper_secret_t (file (read open)))
+; The existing writable runtime bind is also installed before helper exec.
+(allow init_t hfcache_host_helper_runtime_t (dir (mounton)))
+(typetransition init_t hfcache_host_helper_exec_t process hfcache_host_helper_t)
+(allow hfcache_host_helper_t hfcache_host_helper_exec_t (file (entrypoint getattr open read execute execute_no_trans map)))
+
+; Host account switching and namespace-local setup are distinct classes.
+(allow hfcache_host_helper_t self (capability (setuid setgid)))
+; Non-initial namespace-owner metadata mediation; no initial SYS_PTRACE bit.
+(allow hfcache_host_helper_t self (cap_userns (sys_admin setpcap sys_ptrace dac_read_search)))
+(neverallow hfcache_host_helper_t self (cap_userns (dac_override)))
+(allow hfcache_host_helper_t self (process (fork sigchld sigkill getcap setcap getsched getattr)))
+(allow hfcache_host_helper_t self (fd (use)))
+(allow hfcache_host_helper_t init_t (fd (use)))
+(allow hfcache_host_helper_t init_t (unix_stream_socket (getattr read write getopt setopt shutdown)))
+(allow hfcache_host_helper_t self (fifo_file (getattr read write ioctl)))
+(allow hfcache_host_helper_t null_device_t (chr_file (getattr open read write)))
+(allow hfcache_host_helper_t self (dir (getattr search open read)))
+(allow hfcache_host_helper_t self (file (getattr open read)))
+(allow hfcache_host_helper_t self (lnk_file (getattr read)))
+(allow hfcache_host_helper_t self (unix_stream_socket (create bind listen accept connect read write getattr getopt setopt shutdown)))
+(allow hfcache_host_helper_t self (unix_dgram_socket (create connect read write getattr getopt setopt shutdown)))
+
+; Protected reader authority is separate from secret-bearing objects.
+(allow hfcache_host_helper_t hfcache_host_helper_code_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t hfcache_host_helper_code_t (file (getattr open read map)))
+(allow hfcache_host_helper_t hfcache_host_helper_conf_t (file (getattr open read)))
+(allow hfcache_host_helper_t hfcache_host_helper_application_conf_t (file (getattr open read)))
+(allow hfcache_host_helper_t hfcache_host_helper_runtime_t (dir (getattr search open read write add_name remove_name create setattr)))
+(allow hfcache_host_helper_t hfcache_host_helper_runtime_t (file (getattr open read write append create setattr unlink lock)))
+(allow hfcache_host_helper_t hfcache_host_helper_runtime_t (sock_file (getattr open read write create setattr unlink)))
+
+; System code and nonsecret configuration needed by Python/libc/fixed tools.
+(allow hfcache_host_helper_t usr_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t usr_t (file (getattr open read map execute execute_no_trans)))
+(allow hfcache_host_helper_t bin_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t bin_t (file (getattr open read map execute execute_no_trans)))
+(allow hfcache_host_helper_t lib_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t lib_t (file (getattr open read map execute execute_no_trans)))
+(allow hfcache_host_helper_t ld_so_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t ld_so_t (file (getattr open read map execute execute_no_trans)))
+(allow hfcache_host_helper_t ld_so_cache_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t ld_so_cache_t (file (getattr open read map)))
+(allow hfcache_host_helper_t etc_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t etc_t (file (getattr open read map)))
+(allow hfcache_host_helper_t passwd_file_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t passwd_file_t (file (getattr open read map)))
+(allow hfcache_host_helper_t locale_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t locale_t (file (getattr open read map)))
+(allow hfcache_host_helper_t systemd_unit_file_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t systemd_unit_file_t (file (getattr open read map)))
+; Fixed indexed unit symlinks require nofollow stat and exact target-text reads.
+(allow hfcache_host_helper_t systemd_unit_file_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t container_config_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t container_config_t (file (getattr open read map)))
+
+; Only these fixed executable classes may execute without a domain transition.
+; Global engine initialization stats conmon; it does not execute it for inspect.
+(allow hfcache_host_helper_t conmon_exec_t (file (getattr)))
+(allow hfcache_host_helper_t systemd_systemctl_exec_t (file (getattr open read map execute execute_no_trans)))
+(allow hfcache_host_helper_t container_runtime_exec_t (file (getattr open read map execute execute_no_trans)))
+
+; Local state paths are already bounded by protected source and systemd masks.
+(allow hfcache_host_helper_t root_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t var_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t var_lib_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t var_run_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t home_root_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t user_home_dir_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t user_home_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t container_var_lib_t (dir (getattr search open read)))
+; Existing stock overlay directories need traversal/stat and fixed tempdirs listing.
+(allow hfcache_host_helper_t container_ro_file_t (dir (getattr search open read)))
+; The fixed overlay flag uses this type; read access also covers image files.
+(allow hfcache_host_helper_t container_ro_file_t (file (getattr open read)))
+; Only independently labeled existing fixed storage-lock inodes are writable.
+(allow hfcache_host_helper_t hfcache_host_helper_engine_lock_t (file (getattr open read write lock)))
+(allow container_runtime_t hfcache_host_helper_engine_lock_t (file (getattr open read write lock)))
+; Independently labeled existing fixed stock SHM coordination segment only.
+; These are whole-type rights, including shared mutex writes; not path/byte-range MAC.
+; Keep map separate from ordinary lock files and never grant blanket tmpfs access.
+(allow hfcache_host_helper_t hfcache_host_helper_engine_shm_t (file (getattr open read write map)))
+(allow container_runtime_t hfcache_host_helper_engine_shm_t (file (getattr open read write map)))
+(neverallow hfcache_host_helper_t hfcache_host_helper_engine_shm_t (file (append create setattr unlink rename link execute execute_no_trans entrypoint)))
+(allow hfcache_host_helper_t container_var_run_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t tmp_t (dir (getattr search open read)))
+; Stock fixed libpod runtime initialization unconditionally chmods 01700.
+; Type permission is not a path selector; protected code fixes the target.
+(allow hfcache_host_helper_t user_tmp_t (dir (getattr search open read setattr)))
+; Stock keeper PID record: readonly metadata, never a temporary-file API.
+(allow hfcache_host_helper_t user_tmp_t (file (getattr open read)))
+; Existing fixed rootless network-state directory recognition; no network setup.
+(allow hfcache_host_helper_t ifconfig_var_run_t (dir (getattr)))
+(allow hfcache_host_helper_t var_lib_t (file (getattr open read lock)))
+(allow hfcache_host_helper_t var_run_t (file (getattr open read lock)))
+(allow hfcache_host_helper_t user_home_t (file (getattr open read lock)))
+(allow hfcache_host_helper_t container_var_lib_t (file (getattr open read lock)))
+(allow hfcache_host_helper_t container_var_run_t (file (getattr open read lock)))
+(allow hfcache_host_helper_t container_var_lib_t (dir (write add_name remove_name create setattr)))
+(allow hfcache_host_helper_t container_var_lib_t (file (write create setattr unlink)))
+(allow hfcache_host_helper_t container_var_run_t (dir (write add_name remove_name create setattr)))
+(allow hfcache_host_helper_t container_var_run_t (file (write create setattr unlink)))
+
+; Fixed kernel/manager metadata, never archive payload or secret objects.
+(allow hfcache_host_helper_t nsfs_t (file (getattr open read ioctl)))
+(allow hfcache_host_helper_t init_var_run_t (dir (getattr search)))
+(allow hfcache_host_helper_t init_var_run_t (sock_file (getattr read write)))
+(allow hfcache_host_helper_t system_dbusd_var_run_t (dir (getattr search)))
+(allow hfcache_host_helper_t system_dbusd_var_run_t (sock_file (getattr read write)))
+(allow hfcache_host_helper_t syslogd_var_run_t (sock_file (getattr read write)))
+(allow hfcache_host_helper_t session_dbusd_tmp_t (sock_file (getattr open read write)))
+(allow hfcache_host_helper_t proc_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t proc_t (file (getattr open read)))
+(allow hfcache_host_helper_t proc_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t proc_net_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t proc_net_t (file (getattr open read)))
+(allow hfcache_host_helper_t proc_net_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t sysctl_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t sysctl_t (file (getattr open read)))
+(allow hfcache_host_helper_t sysctl_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t sysctl_kernel_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t sysctl_kernel_t (file (getattr open read)))
+(allow hfcache_host_helper_t sysctl_kernel_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t sysfs_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t sysfs_t (file (getattr open read)))
+(allow hfcache_host_helper_t sysfs_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t cgroup_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t cgroup_t (file (getattr open read)))
+(allow hfcache_host_helper_t cgroup_t (lnk_file (getattr read)))
+; Fixed local engine startup statfs observes the cgroup superblock mode.
+(allow hfcache_host_helper_t cgroup_t (filesystem (getattr)))
+; Existing overlay graph-root backing-filesystem identification is metadata only.
+(allow hfcache_host_helper_t fs_t (filesystem (getattr)))
+(allow hfcache_host_helper_t security_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t security_t (file (getattr open read)))
+(allow hfcache_host_helper_t security_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t init_t (process (getattr)))
+(allow hfcache_host_helper_t init_t (file (getattr open read)))
+(allow hfcache_host_helper_t init_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t init_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t unconfined_t (process (getattr)))
+(allow hfcache_host_helper_t unconfined_t (file (getattr open read)))
+(allow hfcache_host_helper_t unconfined_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t unconfined_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t unconfined_service_t (process (getattr)))
+(allow hfcache_host_helper_t unconfined_service_t (file (getattr open read)))
+(allow hfcache_host_helper_t unconfined_service_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t unconfined_service_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t container_t (process (getattr)))
+(allow hfcache_host_helper_t container_t (file (getattr open read)))
+(allow hfcache_host_helper_t container_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t container_t (lnk_file (getattr read)))
+(allow hfcache_host_helper_t container_runtime_t (process (getattr)))
+(allow hfcache_host_helper_t container_runtime_t (file (getattr open read)))
+(allow hfcache_host_helper_t container_runtime_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t container_runtime_t (lnk_file (getattr read)))
+; Fixed system-manager metadata only; no manager control rights.
+(allow hfcache_host_helper_t init_t (system (status)))
+(allow hfcache_host_helper_t systemd_unit_file_t (service (status)))
+(allow hfcache_host_helper_t init_t (unix_stream_socket (connectto)))
+(allow hfcache_host_helper_t init_t (dbus (send_msg)))
+(allow hfcache_host_helper_t unconfined_t (unix_stream_socket (connectto)))
+(allow hfcache_host_helper_t unconfined_t (dbus (send_msg)))
+; Stock role-specific service-account session broker; fixed metadata transport only.
+(allow hfcache_host_helper_t unconfined_dbusd_t (unix_stream_socket (connectto)))
+(allow hfcache_host_helper_t unconfined_dbusd_t (dbus (send_msg)))
+(allow hfcache_host_helper_t system_dbusd_t (unix_stream_socket (connectto)))
+(allow hfcache_host_helper_t system_dbusd_t (dbus (send_msg)))
+(allow hfcache_host_helper_t init_t (unix_dgram_socket (sendto)))
+; The measured fixed manager notify socket carries the kernel_t SID.
+(allow hfcache_host_helper_t kernel_t (unix_dgram_socket (sendto)))
+(allow hfcache_host_helper_t var_run_t (sock_file (getattr read write)))
+(allow hfcache_host_helper_t container_var_run_t (sock_file (getattr read write)))
+
+; Fixed shared config is read-only; mutable Hub state stays helper-denied.
+(allow container_t hfcache_host_helper_application_conf_t (file (getattr open read)))
+(allow container_t hfcache_host_helper_hub_state_t (dir (getattr search open read write add_name remove_name create setattr rmdir)))
+(allow container_t hfcache_host_helper_hub_state_t (file (getattr open read write append create setattr unlink rename link lock map)))
+(allow container_t hfcache_host_helper_hub_state_t (lnk_file (getattr read create setattr unlink rename)))
+
+; Existing container roles need only their legitimate read-only mounted inputs.
+; This never adds helper access and does not select or create a mount.
+(allow container_t hfcache_archive_t (dir (getattr search open read)))
+(allow container_t hfcache_archive_t (file (getattr open read map)))
+(allow container_t hfcache_host_helper_secret_t (dir (getattr search)))
+(allow container_t hfcache_host_helper_secret_t (file (getattr open read map)))
+(allow container_t hfcache_host_helper_runtime_t (dir (getattr search)))
+(allow container_t hfcache_host_helper_runtime_t (file (getattr open read)))
+(allow container_t hfcache_host_helper_runtime_t (sock_file (getattr open read write)))
+(allow container_t hfcache_host_helper_t (unix_stream_socket (connectto)))
+
+; A merged policy granting these would fail validation, not silently weaken.
+(neverallow hfcache_host_helper_t hfcache_archive_t (file (read open map execute)))
+(neverallow hfcache_host_helper_t nfs_t (file (read open map execute)))
+(neverallow hfcache_host_helper_t hfcache_host_helper_secret_t (file (read open map execute)))
+(neverallow hfcache_host_helper_t hfcache_host_helper_hub_state_t (file (read open map execute)))
+(neverallow hfcache_host_helper_t domain (process (transition dyntransition setexec)))
+(neverallow hfcache_host_helper_t domain (process (ptrace)))
+(neverallow hfcache_host_helper_t self (capability (sys_admin sys_ptrace dac_override dac_read_search setpcap sys_module sys_rawio)))
+(neverallow hfcache_host_helper_t security_t (security (load_policy setenforce setbool)))
+
+; Image payloads and image directories must remain immutable to the helper.
+(neverallow hfcache_host_helper_t container_ro_file_t (file (write append create setattr unlink rename link)))
+(neverallow hfcache_host_helper_t container_ro_file_t (dir (write add_name remove_name create setattr rmdir rename)))
+; Lock labels grant coordination only, never replacement, creation or execution.
+(neverallow hfcache_host_helper_t hfcache_host_helper_engine_lock_t (file (append create setattr unlink rename link map execute)))

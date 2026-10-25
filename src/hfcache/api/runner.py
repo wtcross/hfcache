@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from hfcache.api.auth import Principal
 
 Execute = Callable[[PolicySnapshot, ExecutionContext], ServiceResult | Envelope]
+Authorize = Callable[[PolicySnapshot], None]
 Monitor = Callable[[], Envelope]
 Reconcile = Callable[[OperationReceipt], Envelope | Monitor | None]
 _ACTIVE_STATES = frozenset({"queued", "waiting_lock", "running"})
@@ -43,6 +44,7 @@ class _Work:
     delegated: bool = False
     requires_lock: bool = True
     monitor: Monitor | None = None
+    authorize: Authorize | None = None
 
 
 class OperationRunner:
@@ -150,6 +152,7 @@ class OperationRunner:
         delegated: bool = False,
         requires_lock: bool = True,
         context: ExecutionContext | None = None,
+        authorize: Authorize | None = None,
     ) -> Admission:
         def validate_budget(value: float) -> float:
             if (
@@ -214,6 +217,7 @@ class OperationRunner:
                 nonblocking=budgets[0] == 0,
                 delegated=delegated,
                 requires_lock=requires_lock,
+                authorize=authorize,
             )
             self._queue.append(work)
             if self._active_id is None:
@@ -302,34 +306,12 @@ class OperationRunner:
             if work.monitor is not None:
                 self._complete(identifier, work.monitor())
                 return
+            if not self._authorize(work):
+                return
             try:
-                if (
-                    not work.nonblocking
-                    and work.deadline is not None
-                    and self.monotonic() >= work.deadline
-                ):
-                    raise OperationError(
-                        code="HFAPI015",
-                        status_code=409,
-                        message="Operation waiting budget expired before execution",
-                    )
                 if work.execute is None or work.snapshot is None:
                     raise OperationError
-                control = CommandLockControl(
-                    deadline=work.deadline,
-                    revalidate=lambda: self._validate_policy(work),
-                    waiting=lambda: self._waiting(identifier),
-                    acquired=lambda: self.mark_running(identifier, work.context.run_id),
-                    nonblocking=work.nonblocking,
-                    allow_lock=not work.delegated,
-                    clock=self.monotonic,
-                )
-                if work.delegated:
-                    self._validate_policy(work)
-                    self._waiting(identifier)
-                elif not work.requires_lock:
-                    self._validate_policy(work)
-                    self.mark_running(identifier, work.context.run_id)
+                control = self._control(work)
                 with scoped_command_lock(control):
                     outcome = work.execute(work.snapshot, work.context)
                 envelope = (
@@ -367,6 +349,56 @@ class OperationRunner:
             # Persistence failure cannot rewrite a completed domain outcome into
             # a different failed envelope; the loop preserves interruption instead.
             self._complete(identifier, envelope)
+
+    def _authorize(self, work: _Work) -> bool:
+        if work.authorize is None:
+            return True
+        # A fresh Basic refusal proves no handoff occurred. Keep it outside
+        # delegated reconciliation and every domain/store lock (decision150).
+        try:
+            self._check_deadline(work)
+            if work.snapshot is None:
+                raise OperationError
+            work.authorize(work.snapshot)
+            self._validate_policy(work)
+            self._check_deadline(work)
+        except HfcacheError as error:
+            envelope = ServiceResult(
+                work.command, {}, errors=error.problems, exit_code=int(error.exit_code)
+            ).envelope(work.context)
+            self._complete(work.receipt.operation_id, envelope)
+            return False
+        return True
+
+    def _control(self, work: _Work) -> CommandLockControl:
+        identifier = work.receipt.operation_id
+        if work.authorize is None:
+            self._check_deadline(work)
+        control = CommandLockControl(
+            deadline=work.deadline,
+            revalidate=lambda: self._validate_policy(work),
+            waiting=lambda: self._waiting(identifier),
+            acquired=lambda: self.mark_running(identifier, work.context.run_id),
+            nonblocking=work.nonblocking,
+            allow_lock=not work.delegated,
+            clock=self.monotonic,
+        )
+        if work.delegated:
+            if work.authorize is None:
+                self._validate_policy(work)
+            self._waiting(identifier)
+        elif not work.requires_lock:
+            self._validate_policy(work)
+            self.mark_running(identifier, work.context.run_id)
+        return control
+
+    def _check_deadline(self, work: _Work) -> None:
+        if not work.nonblocking and work.deadline is not None and self.monotonic() >= work.deadline:
+            raise OperationError(
+                code="HFAPI015",
+                status_code=409,
+                message="Operation waiting budget expired before execution",
+            )
 
     def _loop(self) -> None:
         while True:

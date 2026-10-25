@@ -12,6 +12,7 @@ import {
     manifestSemanticIds,
 } from "./manifest-semantics";
 import { contextSemanticIds } from "../api/bindings";
+import { applyHostSemantic, hostSemanticIds } from "./host-semantics";
 import { pythonIsPrintable } from "./unicode";
 import {
     applyUiSemantic,
@@ -259,9 +260,14 @@ export const implementedSemanticIds: readonly string[] = [
     ...contextSemanticIds,
     ...uiSemanticIds,
     ...uiContextSemanticIds,
+    ...hostSemanticIds,
 ];
 
 export function applySemantic(id: string, value: unknown): void {
+    if (hostSemanticIds.includes(id)) {
+        applyHostSemantic(id, value);
+        return;
+    }
     if (uiSemanticIds.includes(id)) {
         applyUiSemantic(id, value);
         return;

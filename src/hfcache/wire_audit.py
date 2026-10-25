@@ -3,6 +3,26 @@
 AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
         (
+            "hfcache.host_models._one",
+            "1d11ba34ed85c9fc4aa8dc1845e754553d678d0b508763c833b5974af09ad6e1",
+        ),
+        (
+            "hfcache.host_models._version",
+            "e5ba79a6975ba18491e7ed8d72aaeb2445a34adf948a1a0c2d90dca51ccdb3cf",
+        ),
+        (
+            "hfcache.host_models.HostSyncSchedule.complete_schedule",
+            "7ad9bfe057a16b68d07557eb09687ccff25179190f30bf345c5a5c53a5c22af4",
+        ),
+        (
+            "hfcache.host_models.HostFacts.exact_units",
+            "d280a89abfc916207efcf37147e3074df65c96f6e3a6e2f07e76e7653d9cea5d",
+        ),
+        (
+            "hfcache.host_models.HostStatus.coherent_authority",
+            "c6e092f62f021e238bfd75b09ac62d36affc686020e03875f5a65fabc1d5fe4e",
+        ),
+        (
             "hfcache.ui_models._ascii",
             "86de5de588cbbf99cfcf076182bbbd8903947446e5487972cb9b35ce092c81d6",
         ),
@@ -344,14 +364,19 @@ AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins rema
 # Pin helpers, serializers and routing too; review any authority change explicitly.
 AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
+        ("hfcache.host_models", "772422b367739f3b54320ec3bc1a6550af64ad92d2265e85e22ce606517f6159"),
+        (
+            "hfcache.api.host_status",
+            "9413873de216ea6e7f318a98aaf7792c07eabf36c3a16c617e5b42dffa562880",
+        ),
         ("hfcache.api.auth", "eec8243c530fa132d93f6167ad72ab9b72b3433c7e7e9343690a67d07f8e8653"),
         (
             "hfcache.server_config",
-            "7f3e03fa27f935907e3341e87ec8e391b1d832895c77913b05cd6d7888f130d3",
+            "03b175fac84f892d053b7953e7c78d0c5ed23ed5b237356104998902d4a1cc96",
         ),
         (
             "hfcache.api.ui_serving",
-            "7af357c6a31d521f3d9fac046a42e63122c94299d35d6b921eab8cfd7c7a969f",
+            "1403f9d285841ed5f41410de8973ca5c8102a805d3a9a87726d1ddf8eafa0eab",
         ),
         (
             "hfcache.api.ui_assets",
@@ -361,7 +386,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ("hfcache.ui_models", "3b3b4b2181294ce5c2426d9fdb9227c5a0da8bdfac67d99a0dabe61783701956"),
         (
             "hfcache.api.app",
-            "421f1d15b24c9d3b39d6d1c227f7acb734504581d806a640fe34c744895be594",
+            "e5a905e7b3f8aab227c313101cd12d5baff21991f37b5727a540508f79b19b3d",
         ),
         (
             "hfcache.api.catalog",
@@ -369,7 +394,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.api.catalog_refresh",
-            "192ad8d9e776d32ae968bca047b6983c134b42280cb9b2a2db9f4f34ed1726f3",
+            "8a84aef9c0cd5d4eb77304ef3669f35c5509b75b862f801d3d40960a56abc5e8",
         ),
         (
             "hfcache.api.command_models",
@@ -377,11 +402,11 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.api.commands",
-            "468b34f32051da714773082cb016745e38ed3c3bb3825d7d54bce60acf1e32de",
+            "7e73e1314ca46d5c5a2ff53a5e14501111f5586b40d8ca152feefe2c877dea41",
         ),
         (
             "hfcache.api.maintenance",
-            "efc52058a07015de1380eb7ceb1bc3e0ae7ccdeaeb8b6f95f003a6d52368b681",
+            "76004c28da0dcd9344a2bd15e09661d8eddacf6a8a4304ba83e1dc31928c748c",
         ),
         (
             "hfcache.api.maintenance_models",
@@ -421,7 +446,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.errors",
-            "0217b03ef218a5ec96a73bff3769de5a005c943cf6699187039c38f60450967e",
+            "ea381bf6874dfd1de7f946d6790b1e9d2ea2d70fca9d7143b752c42f7c6ba9fe",
         ),
         (
             "hfcache.identity",
@@ -489,7 +514,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.taxonomy",
-            "1594b0233172f06c6be5c83d9b3bce25475fa0aefc8a045b877873b528491aee",
+            "065e2eeaae1e0cbd174d1be8e9ba9600ab95b942b94eb300ba99fde9ebf6304e",
         ),
         (
             "hfcache.verification",

@@ -7,6 +7,14 @@
 - Date: 2026-10-18.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
+## 2026-10-21 protected-reader amendment
+
+[Decision150](decision-150.md) defines the replacement's protected Unix reader,
+independent policy/index/address and fresh Basic action proof. Legacy Cockpit
+transport and guarded candidate installation remain unchanged. Configuration
+writes retain original locks, previews, predecessor/confirmation and no-replay
+requirements; status or a policy bit alone does not implement installation.
+
 
 ## Context, decision and rationale
 

@@ -53,6 +53,7 @@ function client(fetcher: typeof fetch, writer = true, timeoutMs = 1000) {
 type ReadInvocation = (api: ApiClient) => Promise<{ readonly kind: string }>;
 const reads: readonly (readonly [string, ReadInvocation])[] = [
     ["/health", (api) => api.readHealth()],
+    ["/host/status", (api) => api.hostStatus()],
     ["/repositories", (api) => api.readRepositories()],
     ["/repositories/revisions", (api) => api.readRevisions()],
     ["/verification/estimate", (api) => api.readVerificationEstimate()],

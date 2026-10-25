@@ -20,6 +20,7 @@ from hfcache.catalog_query_models import (
 )
 from hfcache.catalog_refresh_models import CatalogRefreshResult
 from hfcache.client_models import Acceptance, Capabilities, ClientEvents, ClientProblem, ClientRead
+from hfcache.host_models import HostStatus
 from hfcache.reporting import RunReport, VerificationReport
 
 
@@ -36,6 +37,7 @@ AUTHORITIES: dict[str, Any] = {
     "Acceptance": Acceptance,
     "ApiProblem": ClientProblem,
     "Capabilities": Capabilities,
+    "HostStatus": HostStatus,
     "ClientEvents": ClientEvents,
     "HealthPayload": payloads.ReadyHealthPayload | payloads.UnavailableHealthPayload,
     "CatalogSearchPayload": CatalogSearchPayload,
@@ -133,6 +135,7 @@ READ_ROUTES = (
     _read("version", "/version", "version", "VersionPayload"),
     _read("capabilities", "/capabilities", "capabilities", "Capabilities"),
     _read("health", "/health", "health", "HealthPayload"),
+    _read("host_status", "/host/status", "host status", "HostStatus", bindings=("host.status",)),
     _read(
         "inspection",
         "/archive/inspection",

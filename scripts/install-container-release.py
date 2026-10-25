@@ -14,6 +14,7 @@ import os
 import re
 import stat
 import subprocess
+import tomllib
 from pathlib import Path, PurePosixPath
 
 REPOSITORY = Path(__file__).resolve().parents[1]
@@ -61,6 +62,18 @@ _LOCAL_FS = {"xfs", "ext4", "ext3", "ext2", "btrfs", "tmpfs", "overlay"}
 _MAX_ARTIFACT = 16777216
 _MAX_MANIFEST = 1048576
 _MAX_SOURCE_FILES = 1000
+_HOST_HELPER_INPUT = "packaging/containers/host-helper.toml"
+_MAX_HOST_HELPER_INPUT = 4096
+_HOST_HELPER_COPIES = frozenset(
+    {
+        "host-helper/host-helper.py",
+        "host-helper/hfcache-host-helper.service",
+        "host-helper/host_policy.py",
+        "host-helper/host_protocol.py",
+        "host-helper/host_peer.py",
+        "host-helper/hfcache-host-helper.cil",
+    }
+)
 _MOUNT_FIELDS = 6
 _MOUNT_TRAILING_FIELDS = 3
 _LOCK_MODE = 0o600
@@ -336,6 +349,25 @@ def _template_names(release):
     )
 
 
+def _host_helper_enabled(source, release):
+    """Require the complete captured closure before any enabled staging effects."""
+    if _HOST_HELPER_INPUT not in release["files"]:
+        return False
+    options = tomllib.loads(
+        read_file(source / _HOST_HELPER_INPUT, maximum=_MAX_HOST_HELPER_INPUT).decode("utf-8")
+    )
+    if (
+        set(options) != {"schema_version", "enabled"}
+        or type(options["schema_version"]) is not int
+        or options["schema_version"] != 1
+        or type(options["enabled"]) is not bool
+    ):
+        refuse("unknown host helper build input")
+    if options["enabled"] and not _HOST_HELPER_COPIES.issubset(release["files"]):
+        refuse("incomplete captured host helper closure")
+    return options["enabled"]
+
+
 def _rendered(source, release, base):
     output = {}
     for name in _template_names(release):
@@ -355,6 +387,13 @@ def _rendered(source, release, base):
         if target in output or target in _DERIVED:
             refuse("colliding rendered artifact")
         output[target] = body.encode()
+    if _host_helper_enabled(source, release):
+        if "host_helper" in tomllib.loads(output["server.toml"].decode("utf-8")):
+            refuse("ambiguous host helper server configuration")
+        output["server.toml"] += (
+            '\n[host_helper]\nenabled = true\nprofile = "rootless"\n'
+            f"api_host_gid = {release['service_gid']}\n"
+        ).encode("ascii")
     output["runtime.json"] = encoded(
         {
             key: release[key]
@@ -467,6 +506,7 @@ def _verify_stage(destination):
 def stage(source, release, default_seccomp):
     source = local(source)
     manifest(release)
+    _host_helper_enabled(source, release)
     destination = local(PREFIX / "releases" / release["version"])
     staging = local(PREFIX / "releases" / (".container-stage-" + release["version"]))
     parent = _parent(staging, protected=True)

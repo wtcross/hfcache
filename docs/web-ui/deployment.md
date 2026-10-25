@@ -99,6 +99,11 @@ rootless service identity mapped to the API's UID 981. Host UID 981 is not
 automatically that identity. Verify the effective owner inside the API. Keep the
 parent directory private to its intended identities. Worker/client containers
 mask this fixed credentials directory; Caddy does not mount `/etc/hfcache`.
+
+The API needs search access through the credential's parent directories and
+read access to the protected file. The loader does not list or read directory
+contents. Keep the protected labels and directory permissions; do not grant
+directory-read access merely to make administrator loading succeed.
 Keep records inside this reviewed directory rather than elsewhere in the shared
 policy tree. No new secret is required when Basic is disabled. Release indexing,
 actual role isolation and installed native/rootless acceptance are completed by
@@ -192,6 +197,238 @@ seconds. A full or draining UI service returns a classified unavailable response
 These streams have separate capacity from metadata reads and password hashing.
 Shutdown stops admission, joins actual sends and releases the captured root
 before releasing the instance lock.
+
+## Install the protected host reader
+
+This is a separate, explicitly authorized host installation. Do not infer that
+enabling browser login installs a helper or grants a policy category. Start with
+an accepted immutable release and measured API host UID/GID. Preserve the existing
+guard, masks, disabled calendars, original locks, stores and pending handles.
+Drain actual executors before replacing release bindings. Do not change NAS
+contents or SELinux/systemd hardening to establish helper support.
+
+For upgrades, staging or switching a native/rootless release does not refresh
+these fixed host bootstrap copies. Drain the API and original helper/inspector
+cohort first. Before installing any replacement, identify the reviewed predecessor
+files and preserve their bytes, original inodes, ownership/modes and full SELinux
+contexts in a protected rollback location. A byte copy alone does not preserve an
+original inode. Retain unexpected files and refuse changes until they are reviewed;
+never overwrite unknown evidence. Only then install the reviewed bootstrap copies
+matching the selected release, before running the index preparer.
+
+Verify the new files' required `hfcache_host_helper_exec_t` and
+`hfcache_host_helper_code_t` types before publication and preparation. Read the
+actual full contexts: do not infer a file's SELinux User component from the helper
+process domain. Keep the independently installed CIL/module/kernel receipt and
+permission policy under separate review. A code refresh neither reloads policy nor
+changes the six permission booleans or the existing key.
+
+1. Install the selected release's `scripts/host-helper.py` as the ordinary
+   root-owned0755 `/usr/local/libexec/hfcache-host-helper`. Install its
+   `host_protocol.py`, `host_policy.py`, `host_peer.py` and selected
+   `packaging/selinux/hfcache-host-helper.cil` as root-owned0644 ordinary files
+   under root-owned0755 `/usr/local/lib/hfcache-host-helper`. The modules are
+   protected host Python3.12 standard-library copies, distinct from API code;
+   the CIL is independently bound policy authority. Rootless staging captures
+   all six helper files in its manifest before indexing, including the CIL.
+   Install the exact selected `hfcache-host-helper.service` as an ordinary
+   root-owned0644 system unit. Rootless staged copies live under `host-helper/`;
+   native copies come from `src/hfcache/`, `scripts/` and `packaging/systemd/`.
+   The reviewed managed entry must preserve only ambient SETUID within the
+   SETUID/SETGID ceiling, then clear all ambient/inheritable bits before threads
+   or children. Verify actual steady root sets; a unit ceiling alone is not
+   proof. Its fixed engine child may enter only the proved existing USER
+   namespace. At fixed API-container exec, retain only namespace-local
+   DAC_READ_SEARCH and SYS_ADMIN in effective/permitted/bounding sets (bits2+21,
+   mask0x200004), empty inheritable/ambient sets and securebits0xCE.
+   [Decision151](../adr/decision-151.md) supersedes only the SYS_ADMIN-only rule.
+   Prove both protected ID maps: read/search DAC bypass covers all reachable
+   mapped-UID-and-GID inodes, not one metadata path; it grants no write or
+   regular-file execute bypass and does not replace SELinux. Grant no initial-
+   USER DAC/SYS_ADMIN. SELinux must never authorize DAC_OVERRIDE; its bit must
+   be absent at verified steady/fixed-exec boundaries. Do not change chmod/ACLs or
+   payload/secret label access. Prove the retained masked MNT belongs to initial
+   USER and actual MNT-entry/unshare, archive/Hub/IP and required inode/FD-alias
+   denials under the revised bits. It never
+   joins MNT/PID/NET. Keep the host
+   observer's original masked MNT, NoNewPrivileges, AF_UNIX and secret/archive
+   masks. Follow the [exact contract](../host-administration.md#managed-startup-and-fixed-engine-observation)
+   rather than adding capabilities or forwarding arbitrary environment.
+2. Explicitly install the reviewed CIL under module name
+   `hfcache_host_helper` at priority400, preserving any unknown existing module.
+   Use an exact-byte staging basename `hfcache_host_helper.cil` for module
+   installation; the fixed installed authority copy retains its hyphenated name.
+   Require Enforcing and the exact first-exec domain; no permissive or
+   unconfined fallback is valid. Install the selected tmpfiles fragment as
+   `/etc/tmpfiles.d/hfcache-host-helper.conf`, with the measured API group.
+   Provision the fixed labels in the
+   [mandatory SELinux contract](../host-administration.md#mandatory-selinux-isolation).
+   Runtime fcontext `/run/hfcache-host-helper(/.*)?` must be
+   `hfcache_host_helper_runtime_t`, including the API subtree. After exact owned
+   processes/socket work has drained, inspect any earlier owned
+   `/run/hfcache-host-helper/api(/.*)?` rule using `container_file_t` and replace
+   that reviewed obsolete rule explicitly. Do not leave an overlapping old rule
+   winning at the API path or remove an unknown rule. Apply tmpfiles and restore
+   the expected labels on this fixed runtime subtree.
+   Preserve protected systemd symlinks and their `systemd_unit_file_t` label.
+   The reviewed helper policy must permit only `getattr`/`read` on that type's
+   `lnk_file` class so the fixed verifier can validate exact indexed targets.
+   A policy change requires a fresh protected installation receipt and both
+   deployment/index and permission-policy bindings before restarting the helper.
+   Use the shared application-config type only for `/etc/hfcache/config.toml`;
+   keep helper policy/index/key/receipt leaves on their private type. Label Hub
+   home and the entire `/var/cache/hfcache` root/subtree with the separate
+   helper-denied writable Hub-state type. Enabled API helper mounts preserve
+   those labels without `:z`; verify both existing and newly created leaf labels
+   across actual original application operations and restart. No directory-only
+   assertion replaces that proof. Verify original relevant
+   payload/secret inode labels, then write the independent protected installation
+   receipt before preparing the index. Keep Enforcing. No production archive
+   relabel, recursive user-home relabel, `:z` mount flag, allow-all policy or
+   label-disable setting is part of this procedure.
+   For rootless use, after genuine stock engine/image preparation, independently
+   pin and label only the existing `overlay-images/images.lock` and
+   `overlay-layers/layers.lock` leaves under the fixed graphroot, plus
+   `/run/user/<protected host UID>/libpod/tmp/alive.lck` and
+   `/run/user/<protected host UID>/containers/overlay-layers/mountpoints.lock`, with
+   `hfcache_host_helper_engine_lock_t`. Require single-link ordinary0644
+   service-account-owned files of64B/64B/0B/64B, held-descriptor labeling and
+   fixed-path rejoin. Repeat independent provisioning of both runtime locks after reboot
+   or recreation and genuine stock engine prewarming. Establish the current
+   default temporary-directory/configuration/database epoch independently; the
+   fixed-path guard does not authenticate database overrides, and `--tmpdir`
+   alone does not prevent them. Nondefault state is unsupported.
+   Persistent contexts name exactly these four leaves; do not relabel image payloads
+   or grant image-type writes. Absent or wrong/default-type-recreated locks
+   require fresh root provisioning and refuse reads meanwhile. The type-only
+   receipt is not a historical inode pin; current inspection checks bracket
+   changes, not prior otherwise-valid same-type replacements. Include the closed `engine_locks`
+   receipt role. Native-only installation has no engine/lock prerequisite.
+   Independently provision the separate `engine_shared_memory` role and
+   `hfcache_host_helper_engine_shm_t` label on only the existing
+   `/dev/shm/libpod_rootless_lock_<protected host UID>` stock2048-lock segment:
+   ordinary, single-link, account-owned0600/82488B. Label through its held FD and
+   rejoin the fixed path; require exact root:root01777 sticky `/dev/shm`. Repeat
+   provisioning after reboot/recreation and genuine stock prewarming. A fixed
+   context rule alone does not label a new object. No generic tmpfs relabel,
+   creation, engine-backend replacement or ordinary-lock mapping is permitted.
+   Include all twelve closed receipt roles. Shared mutex writes are allowed
+   coordination; stable identity/label comparison excludes command-wide timestamp
+   changes and establishes no content integrity or historical inode identity.
+3. Prepare a deployment-index proposal using the selected read-only
+   `prepare-host-helper.py` tool and the genuine build receipt's commit, snapshot
+   and dirty/clean assertion. Review its measured files, modes, principal and
+   profile evidence. Layout or a version string does not prove source identity.
+   Install the reviewed index as root:root0644 at the fixed
+   `/etc/hfcache/host-helper-deployment.json`; all ancestors must be protected
+   local directories. The [schema contract](../host-administration.md) requires
+   exact native package leaves/interpreter or original rootless stage plus all
+   execution bindings. Index preparation grants nothing and starts no service.
+4. Provision `/etc/hfcache/host-helper-policy.json` independently as a single-link
+   root:root0600 regular file. Set its `deployment_sha256` to SHA256 of the exact
+   reviewed index bytes and provide all six explicit permission booleans.
+   On first provisioning, begin with all false; a reviewed configuration-only
+   host may set only `configuration` true. For an upgrade or rollback to a target
+   with host-reader support, retain the existing reviewed six values while
+   rebinding `deployment_sha256` to the exact reviewed target index. Changing a
+   permission requires separate authorization. Never infer grants from absent
+   guards or migrate the existing Cockpit policy automatically. Only on first
+   provisioning, independently create a fresh32-byte random
+   `/etc/hfcache/host-helper.key`, root:root0600, using exclusive creation and
+   durable write/parent sync. Upgrades and rollbacks preserve the existing key.
+   A missing or unsafe key is an operator prerequisite, never something a read
+   repairs.
+5. Enable the helper configuration only in the reviewed selected profile.
+   Native server TOML uses `[host_helper]`, `enabled=true`, `profile="native"`
+   and the measured `api_host_gid`, with fixed archive policy path. Rootless
+   staging uses the [captured opt-in input](../containers.md), preserving its
+   original indexed renderer. Omit the optional deployment SHA from indexed
+   templates; the helper's independent boot binding supplies it without a hash
+   cycle. Never patch an already indexed rendered server file.
+6. Reload/install only within the separately authorized deployment procedure,
+   start the helper and observe actual READY before starting/restarting the API.
+   API startup pins the protected address parent and deployment. Rootless uses
+   only the fixed launcher's API-only read-only directory projection. The client
+   traverses with search-only `O_PATH` handles; do not grant directory-read access
+   to work around an older client's `O_RDONLY` refusal. Caddy,
+   verifier and clients receive neither mount nor attestation. Do not give the
+   API root, a manager/engine socket or writable `/etc`.
+7. Through the existing trusted Caddy endpoint, sign in and open Administration.
+   Verify the measured deployment/policy, explicit permission reasons and fixed
+   unit/schedule observations. Test new actions only within their separately
+   authorized scope. A successful status is not archive health or a write test.
+   Actual native/rootless UID maps, peer identity and isolation must pass before
+   calling that installation supported.
+
+The host reader additionally requires the separately installed, enforcing
+`hfcache_host_helper_t` SELinux policy from first exec, inherited by every helper
+child. Install the exact selected CIL and fixed object labels, then independently
+record the actual loaded module/kernel-policy and label facts in root-owned
+`/etc/hfcache/host-helper-selinux.json`; the neutral index pins that receipt.
+Archive/Hub/credential/container-secret object types must deny helper reads through
+aliases as well as direct paths. Retain all masks, capability/namespace limits and
+NoNewPrivileges. No policy/label installation or permission grant occurs on a
+status read. Unsupported or stale policy/labels refuse. See the
+[mandatory SELinux contract](../host-administration.md#mandatory-selinux-isolation).
+The selected policy must also allow the trusted system manager to attach the
+fixed inaccessible-directory masks and existing writable runtime bind: only
+`init_t` directory `mounton` on the custom secret, Hub-state, archive and runtime
+types. Keep every bind and label; a namespace setup denial is not a reason to
+remove a mask/bind or grant the helper mount or additional runtime rights. Prove
+the actual managed exec reaches the required confined domain after setup.
+Owned nonsecret alias-denial and full installed API/helper proof remain required;
+earlier source/INFO checks alone do not close this requirement.
+
+The fixed rootless network-state directory must already exist under the proved
+stock runroot. Its `ifconfig_var_run_t` directory `getattr` permission lets
+shared command initialization recognize it; it does not authorize directory
+creation, relabeling, enumeration or network setup. Keep the original state and
+configuration rather than modifying them to bypass an unavailable read.
+
+Rootless engine inspection initially supports only the measured Podman6.1 stock
+storage configuration described in the
+[engine configuration contract](../host-administration.md). It verifies the
+stock main file and both exact RPM vendor drop-in bundles afresh, preserving
+the original overlay/`nodev` configuration and skipping only private-mount
+housekeeping. Each vendor directory must contain exactly its pinned leaf with
+protected metadata and stable bounded capture; the other seven applicable
+configuration/override paths remain absent. Missing/empty vendor bundles,
+additional entries or changed inputs produce unavailable status until explicitly
+supported. Keep those inputs and report the unsupported revision; do not delete
+overrides, replace stock files, change the storage driver or widen mount
+permissions to pass a check.
+
+The helper service in initial USER has only account-switch capabilities for
+its fixed read-only observer. Only the separate engine child's proved USER
+namespace has the retained DAC_READ_SEARCH and SYS_ADMIN execution bits;
+their mapped-inode scope and ancillary syscall limits follow
+[decision151](../adr/decision-151.md). The service has
+AF_UNIX socket authority, a writable owned runtime directory and the
+fixed account's local Podman inspection state. It masks archive payloads, Hub
+home/cache and credential/secret stores. These restrictions do not widen other
+roles. There is no API-selected host path, unit, command or manager.
+
+Normal helper restart replaces only its owned socket/binding leaves in the same
+pinned parent. Stale or substituted nodes are preserved and refuse startup:
+inspect their original process/boot/inode evidence before any separately
+authorized remediation. Never unlink them simply because a timeout occurred.
+Replacing the parent, changing the index or rebooting requires a reviewed API
+restart. Keep old indexes, keys, bindings and original operation handles through
+rollback review; do not remove unknown records to force an older binary to start.
+
+A selector rollback alone does not restore `/usr/local` bootstrap copies. If the
+predecessor supports the protected host reader, preserve the current copies and
+original inodes before restoring its reviewed matching copies and required labels.
+Prepare/review the matching deployment index and independent policy binding before
+restarting its helper/API. Retain the reviewed six permission values and original
+key; any permission change requires separate authorization.
+
+If the target predates host-reader support, keep the helper stopped and restore a
+preserved server configuration accepted by that target. Do not force unsupported
+`host_helper` settings or manufacture bootstrap/index support for an older binary.
+Retain the helper files, installation receipt, permission policy, key and original
+operation evidence for review. In either case, review CIL/module/kernel-policy
+compatibility separately; never rewind policy or regenerate a key automatically.
 
 ## Connect and rotate safely
 

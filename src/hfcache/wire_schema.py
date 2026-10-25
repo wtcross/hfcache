@@ -46,6 +46,7 @@ _KEYWORDS = frozenset(
         "minLength",
         "minimum",
         "properties",
+        "propertyNames",
         "required",
         "title",
         "type",
@@ -125,7 +126,7 @@ def check_json_schema(node: object) -> None:
         elif key == "anyOf":
             for child in value:
                 check_json_schema(child)
-        elif key in {"items", "additionalProperties"} and isinstance(value, dict):
+        elif key in {"items", "additionalProperties", "propertyNames"} and isinstance(value, dict):
             check_json_schema(value)
 
 
@@ -350,6 +351,33 @@ class Exporter:
                 "max_nodes": 100000,
                 "semantic_ids": [],
             }
+        if kind == "dict" and path == "HostFacts.units":
+            # This finite-key mapping is also constrained by exact_units. Lower
+            # only that reviewed combination to four required object fields;
+            # there is no generic dictionary or permissive JSON fallback.
+            keys = schema["keys_schema"]
+            expected = {
+                "hfcache-sync.service",
+                "hfcache-verify.service",
+                "hfcache-sync.timer",
+                "hfcache-verify.timer",
+            }
+            if keys.get("type") != "literal" or set(keys.get("expected", ())) != expected:
+                message = "Host unit keys changed; review finite mapping lowering"
+                raise ValueError(message)
+            return {
+                "kind": "object",
+                "fields": [
+                    {
+                        "name": name,
+                        "node": self.node(schema["values_schema"], path=path + "." + name),
+                        "required": True,
+                    }
+                    for name in sorted(expected)
+                ],
+                "extra": "forbid",
+                "semantic_ids": [],
+            }
         if kind == "lax-or-strict" and "json_schema" in schema.get("strict_schema", {}):
             # Pydantic's standard pathlib adapter; custom input grammar remains audited.
             strict = schema["strict_schema"]["json_schema"]
@@ -475,6 +503,7 @@ def _audit_sources(exporter: Exporter) -> None:
         "catalog.response": ("hfcache.client_catalog", "hfcache.catalog_query_models"),
         "catalog.facet": ("hfcache.client_catalog", "hfcache.catalog_query_models"),
         "catalog.publication": ("hfcache.client", "hfcache.catalog_query_models"),
+        "host.status": ("hfcache.host_models", "hfcache.api.host_status"),
         "ui.bootstrap": (
             "hfcache.ui_models",
             "hfcache.api.ui_serving",

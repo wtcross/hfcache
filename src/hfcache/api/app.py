@@ -35,6 +35,7 @@ from hfcache.api.basic import load_basic_provider
 from hfcache.api.catalog import install_catalog_routes
 from hfcache.api.catalog_refresh import install_catalog_refresh_route
 from hfcache.api.commands import install_command_routes
+from hfcache.api.host_status import HostHelper, install_host_status_route, open_host_helper
 from hfcache.api.lifecycle import MetadataPool, instance_lock
 from hfcache.api.maintenance import install_maintenance_routes
 from hfcache.api.models import ApiProblem, OperationView, PageQuery, ReadResponse
@@ -55,6 +56,7 @@ from hfcache.errors import (
     CodedError,
     ConfigurationError,
     HfcacheError,
+    HostAdministrationUnavailableError,
     OperationError,
     RequestError,
     SafetyError,
@@ -731,6 +733,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
     operation_store: OperationStore | None = None,
     verification_executor: VerificationDelegate | None = None,
     hub_token_file: Path | None = None,
+    host_helper: HostHelper | None = None,
 ) -> FastAPI:
     """Create routes only; lifespan owns all filesystem/startup effects."""
 
@@ -756,12 +759,16 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
             application.state.basic_provider = None
             application.state.ui_capture = None
             application.state.ui_streams = None
+            owned_helper = None
+            application.state.host_helper = None
             try:
                 application.state.credentials = credentials or load_credentials(server)
                 basic = load_basic_provider(server.basic)
                 application.state.basic_provider = basic
                 application.state.policy = policy or InstalledPolicy.open(server)
                 application.state.hub_token_file = hub_token_file
+                owned_helper = host_helper or open_host_helper(server)
+                application.state.host_helper = owned_helper
                 state_root = operation_store.root if operation_store else server.state_directory
                 archive_root = application.state.policy.root
                 if state_root.is_relative_to(archive_root) or archive_root.is_relative_to(
@@ -878,6 +885,14 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                     finally:
                         application.state.basic_provider = None
                         application.state.credentials = None
+                        if owned_helper is not None:
+
+                            async def close_helper() -> None:
+                                if not await asyncio.to_thread(owned_helper.close):
+                                    raise HostAdministrationUnavailableError
+
+                            await _finish_owned(close_helper())
+                            application.state.host_helper = None
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
@@ -1144,6 +1159,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         return await lease.future
 
     install_catalog_routes(app, execute_catalog)
+    install_host_status_route(app, render)
 
     @app.get(PREFIX + "/version", response_model=ReadResponse)
     async def version(request: Request) -> Response:

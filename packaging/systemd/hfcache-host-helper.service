@@ -1,0 +1,50 @@
+# Protected administrative reads; decision150. No archive/Hub authority.
+# Provision the independent policy/index/key and protected bootstrap copies first.
+[Unit]
+Description=hfcache protected host administration reader
+Documentation=file:///opt/hfcache/current/docs/host-administration.md
+After=local-fs.target
+PartOf=hfcache.target
+
+[Service]
+Type=notify
+NotifyAccess=main
+User=root
+Group=root
+SELinuxContext=system_u:system_r:hfcache_host_helper_t:s0
+UMask=0027
+ExecStart=/usr/local/libexec/hfcache-host-helper serve
+TimeoutStartSec=30
+# A deadline is not proof that a kernel metadata read drained.
+TimeoutStopSec=infinity
+KillMode=mixed
+RuntimeDirectory=hfcache-host-helper
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+Environment=PYTHONDONTWRITEBYTECODE=1
+UnsetEnvironment=HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN CREDENTIALS_DIRECTORY HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN
+NoNewPrivileges=true
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID
+# Preserve SETUID through manager startup; the fixed entry clears all I/A.
+AmbientCapabilities=CAP_SETUID
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ReadOnlyPaths=/home /root
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+# Only the separate fixed engine child may enter its verified existing USER ns.
+RestrictNamespaces=user
+LockPersonality=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+InaccessiblePaths=-/srv/hfcache -/run/credentials -/run/secrets -/etc/credstore -/etc/credstore.encrypted -/etc/hfcache/credentials -/var/lib/hfcache/hf-home -/var/cache/hfcache -/var/lib/hfcache/.local/share/containers/storage/secrets
+ReadWritePaths=/run/hfcache-host-helper -/run/user -/var/lib/hfcache/.local/share/containers
+
+[Install]
+WantedBy=hfcache.target

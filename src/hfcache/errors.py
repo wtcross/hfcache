@@ -234,6 +234,15 @@ class AuthenticationCapacityError(SafetyError):
         super().__init__([Problem("HFAPI021", "Authentication work is temporarily unavailable")])
 
 
+class HostAdministrationUnavailableError(SafetyError):
+    """Fresh host authority is unavailable; no effect was admitted (HFAPI022)."""
+
+    status_code = 503
+
+    def __init__(self) -> None:
+        super().__init__([Problem("HFAPI022", "Protected host authority is unavailable")])
+
+
 class OperationError(SafetyError):
     """Preserved control-plane uncertainty, never evidence of nonexecution."""
 

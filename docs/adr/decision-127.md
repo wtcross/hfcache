@@ -6,6 +6,14 @@
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-18.
 
+## 2026-10-21 protected-reader amendment
+
+[Decision150](decision-150.md) adds an explicit opt-in API-only read-only helper
+parent projection from independently verified host launcher facts. Other roles
+receive neither mount nor attestation; no generic volume/engine selector, default
+grant or runtime-schema widening follows. Original nine rootless stage/execution
+bindings, keep-id confinement, actual drain and historical acceptance stand.
+
 
 ## Context, decision and rationale
 

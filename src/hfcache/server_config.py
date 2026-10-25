@@ -270,6 +270,31 @@ class WebConfig(_Strict):
         return self
 
 
+class HostHelperConfig(_Strict):
+    """Explicit fixed helper opt-in; no caller-selected socket or authority source."""
+
+    enabled: bool = False
+    profile: Literal["native", "rootless"] | None = None
+    deployment_sha256: str | None = None
+    api_host_gid: int | None = Field(default=None, ge=1, le=4294967294)
+
+    @model_validator(mode="after")
+    def explicit_binding(self) -> Self:
+        values = (self.profile, self.api_host_gid)
+        if self.enabled and any(value is None for value in values):
+            _invalid("enabled host helper requires explicit profile and host group")
+        if not self.enabled and (
+            any(value is not None for value in values) or self.deployment_sha256 is not None
+        ):
+            _invalid("disabled host helper accepts no inactive authority parameters")
+        if (
+            self.deployment_sha256 is not None
+            and re.fullmatch(r"[a-f0-9]{64}", self.deployment_sha256) is None
+        ):
+            _invalid("host helper deployment hash must be one lowercase SHA256")
+        return self
+
+
 class ServerConfig(_Strict):
     schema_version: Annotated[Literal[1], BeforeValidator(_schema)]
     archive_config: AbsolutePath = Path("/etc/hfcache/config.toml")
@@ -277,6 +302,7 @@ class ServerConfig(_Strict):
     credentials: ServerCredentials
     basic: BasicConfig | None = None
     web: WebConfig = Field(default_factory=WebConfig)
+    host_helper: HostHelperConfig = Field(default_factory=HostHelperConfig)
     listener: ListenerConfig = Field(default_factory=ListenerConfig)
     limits: ServerLimits = Field(default_factory=ServerLimits)
     verification: VerificationExecutorConfig = Field(default_factory=VerificationExecutorConfig)
@@ -284,6 +310,12 @@ class ServerConfig(_Strict):
     interactive_docs: bool = False
     mcp_enabled: bool = False
     log_level: Literal["debug", "info", "warning", "error"] = "info"
+
+    @model_validator(mode="after")
+    def fixed_host_configuration(self) -> Self:
+        if self.host_helper.enabled and self.archive_config != Path("/etc/hfcache/config.toml"):
+            _invalid("host helper requires the fixed installed archive configuration")
+        return self
 
     @model_validator(mode="after")
     def mcp_requires_credential(self) -> Self:

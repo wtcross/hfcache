@@ -74,7 +74,7 @@ test("original Python-serialized models roundtrip and independent incorrect wire
         page.getByRole("heading", { name: "Original model roundtrip" }),
     ).toBeVisible();
     await expect(page.getByRole("status")).toHaveText(
-        "Original Python models validated: 297. Independent incorrect wires refused: 4.",
+        "Original Python models validated: 308. Independent incorrect wires refused: 4.",
     );
 });
 

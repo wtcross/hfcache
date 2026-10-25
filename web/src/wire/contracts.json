@@ -2805,6 +2805,1022 @@
       "kind": "union",
       "semantic_ids": []
     },
+    "HostBinding": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "deployment_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "policy_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "release_version",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 128,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.host_models._version"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "source_commit",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_commit_sha"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "source_snapshot_sha256",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "source_dirty",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "archive_root",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "/srv/hfcache"
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "HostFacts": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "guard",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "absent"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "inactive"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "archive_mount",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "nfs-ro"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "nfs-rw"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "local-ro"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "local-rw"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "absent"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "units",
+          "node": {
+            "extra": "forbid",
+            "fields": [
+              {
+                "name": "hfcache-sync.service",
+                "node": {
+                  "kind": "ref",
+                  "name": "HostUnitState",
+                  "semantic_ids": []
+                },
+                "required": true
+              },
+              {
+                "name": "hfcache-sync.timer",
+                "node": {
+                  "kind": "ref",
+                  "name": "HostUnitState",
+                  "semantic_ids": []
+                },
+                "required": true
+              },
+              {
+                "name": "hfcache-verify.service",
+                "node": {
+                  "kind": "ref",
+                  "name": "HostUnitState",
+                  "semantic_ids": []
+                },
+                "required": true
+              },
+              {
+                "name": "hfcache-verify.timer",
+                "node": {
+                  "kind": "ref",
+                  "name": "HostUnitState",
+                  "semantic_ids": []
+                },
+                "required": true
+              }
+            ],
+            "kind": "object",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "sync_schedule",
+          "node": {
+            "kind": "ref",
+            "name": "HostSyncSchedule",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_models.HostFacts.exact_units"
+      ]
+    },
+    "HostPermissionReasons": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "archive",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "policy-denied"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guard-held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "profile-unproved"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "authority-unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "helper-unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "hub",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "policy-denied"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guard-held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "profile-unproved"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "authority-unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "helper-unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "control",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "policy-denied"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guard-held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "profile-unproved"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "authority-unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "helper-unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "schedule",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "policy-denied"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guard-held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "profile-unproved"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "authority-unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "helper-unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "configuration",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "policy-denied"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guard-held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "profile-unproved"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "authority-unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "helper-unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "observer",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "policy-denied"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guard-held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "profile-unproved"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "authority-unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "helper-unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "HostPermissions": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "archive",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "hub",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "control",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "schedule",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "configuration",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "observer",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "HostStatus": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.host_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "supported"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guarded"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "reason",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "helper-disabled"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "helper-unavailable"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "helper-timeout"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "helper-refused"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "helper-busy"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "policy-missing"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "policy-invalid"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "deployment-unverified"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "facts-unavailable"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "guard-unconfirmed"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "key-missing"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "key-invalid"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "config-unavailable"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "profile",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "native"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "rootless"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "binding",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "HostBinding",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "permissions",
+          "node": {
+            "kind": "ref",
+            "name": "HostPermissions",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "permission_reasons",
+          "node": {
+            "kind": "ref",
+            "name": "HostPermissionReasons",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "facts",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "HostFacts",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_models.HostStatus.coherent_authority"
+      ]
+    },
+    "HostSyncSchedule": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "observed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "reason",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "profile-unproved"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "facts-unavailable"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "revision",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.models._parse_sha256"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "source",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "default"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "managed"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "on_calendar",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 4096,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "randomized_delay_sec",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 256,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_models.HostSyncSchedule.complete_schedule"
+      ]
+    },
+    "HostUnitState": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "load",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "loaded"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "masked"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "not-found"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "active",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "active"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "inactive"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "failed"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "unit_file",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "enabled"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "enabled-runtime"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "disabled"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "static"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "linked"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "linked-runtime"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "masked"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "masked-runtime"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "not-found"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
     "InitializationPayload": {
       "extra": "forbid",
       "fields": [
@@ -11343,6 +12359,27 @@
       "success": "HealthPayload"
     },
     {
+      "binding_ids": [
+        "host.status"
+      ],
+      "commands": [
+        "host status"
+      ],
+      "cursor": "none",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "host_status",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/host/status",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "read",
+      "success": "HostStatus"
+    },
+    {
       "binding_ids": [],
       "commands": [
         "archive init"
@@ -13100,7 +14137,7 @@
   "semantics": {
     "api.problem.classification": {
       "phase": "context",
-      "source_hash": "395578ca8279c5b57a2eebfdb292bef77f46d382f081218d1f7aecef23b062f6"
+      "source_hash": "309cd7071a070ee8ec6cc19d1ca2e22c0f47019bdc8d3526d20e27615d78eed4"
     },
     "catalog.facet": {
       "phase": "context",
@@ -13270,6 +14307,26 @@
       "phase": "field",
       "source_hash": "8a95f84d23ca140512060e32ae755ef71c9b82ff322a5019d43c20623401087b"
     },
+    "hfcache.host_models.HostFacts.exact_units": {
+      "phase": "model",
+      "source_hash": "d280a89abfc916207efcf37147e3074df65c96f6e3a6e2f07e76e7653d9cea5d"
+    },
+    "hfcache.host_models.HostStatus.coherent_authority": {
+      "phase": "model",
+      "source_hash": "c6e092f62f021e238bfd75b09ac62d36affc686020e03875f5a65fabc1d5fe4e"
+    },
+    "hfcache.host_models.HostSyncSchedule.complete_schedule": {
+      "phase": "model",
+      "source_hash": "7ad9bfe057a16b68d07557eb09687ccff25179190f30bf345c5a5c53a5c22af4"
+    },
+    "hfcache.host_models._one": {
+      "phase": "field",
+      "source_hash": "1d11ba34ed85c9fc4aa8dc1845e754553d678d0b508763c833b5974af09ad6e1"
+    },
+    "hfcache.host_models._version": {
+      "phase": "field",
+      "source_hash": "e5ba79a6975ba18491e7ed8d72aaeb2445a34adf948a1a0c2d90dca51ccdb3cf"
+    },
     "hfcache.identity.parse_commit_sha": {
       "phase": "field",
       "source_hash": "d50d469c3a4ad60a5f7fa5cf2ce3faf3d3b744ad43b6ce763c27de8217370073"
@@ -13422,6 +14479,10 @@
       "phase": "field",
       "source_hash": "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44"
     },
+    "host.status": {
+      "phase": "context",
+      "source_hash": "1948d56757a403c06863478fa0dd356ea753a37d647f3fa81c47576eb75d01e3"
+    },
     "operation.events": {
       "phase": "context",
       "source_hash": "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7"
@@ -13456,12 +14517,12 @@
     },
     "ui.bootstrap": {
       "phase": "context",
-      "source_hash": "55e9ccdf08dbc98bb41e161034d5f4b72e4256691f570b57ba3226f5335e8dba"
+      "source_hash": "94fd8174d679cc92681ac25c6f3e4e29b3dfd406030dda58623b0e49c50c0863"
     },
     "ui.html": {
       "phase": "context",
       "source_hash": "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61"
     }
   },
-  "source_digest": "10883335765763832f4e0aa564d5fcff1a0fcc20e41f245f16d70ce640c11be2"
+  "source_digest": "891b5b45df6182c02b602a767eaa1446a1e91f554f68d87768f75db3938c3d03"
 }

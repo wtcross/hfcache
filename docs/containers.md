@@ -419,6 +419,91 @@ libpod cgroup or activation state may be ignored. Previous native/container
 releases and all retained state remain; no force cleanup or implicit migration.
 Staging and selection require explicit operator authorization and quiescence.
 
+### Optional host reader input
+
+The fixed optional source file `packaging/containers/host-helper.toml` enables
+the replacement host reader without editing a rendered release. If present,
+include its exact digest in `container-release.json`'s existing `files` map; it
+is then copied and indexed like every other authenticated input. Its complete
+TOML shape is `schema_version = 1` and `enabled = true` or `false`, with no other
+keys and at most 4 KiB. An unlisted file is not an input. An absent or false
+input preserves the original rendered `server.toml` bytes.
+
+True appends exactly a rootless `[host_helper]` configuration with `enabled =
+true`, `profile = "rootless"` and `api_host_gid` from the manifest's existing
+service group. Existing helper configuration in the server template refuses
+this opt-in instead of introducing a second authority. No deployment digest is
+embedded: the fixed protected helper startup binding supplies it after the
+independent index is provisioned. This avoids an index hashing its own digest.
+The original runtime schema 1, manifest keys, stage verification and nine
+execution bindings remain intact. This input enables the endpoint dependency;
+only the independent six-category policy can grant actions. Helper paths are
+mounted read-only into the API alone, with no unprivileged relabel option;
+worker, Caddy and client roles receive no helper mount or projection.
+
+When the validated API helper projection is present, only its existing
+`/var/lib/hfcache/hf-home` and `/var/cache/hfcache` binds omit shared `:z`
+relabeling. Preserve their fixed writable mount scope, the separately provisioned
+Hub-state type, and original/default and other-role argv. The application
+`config.toml` leaf has its own shared read-only type; private helper authority
+types remain unreadable to containers. Prove actual config reads, Hub-state
+operations and new leaf labels under Enforcing before support is accepted.
+Native opt-in uses its separately protected server configuration. The host helper's
+managed entry clears temporary ambient/inheritable startup state before any
+observer. Its separate engine child enters only the proved existing USER
+namespace and at fixed API-container exec retains only namespace-local
+DAC_READ_SEARCH and SYS_ADMIN in effective/permitted/bounding sets (bits2+21,
+mask0x200004), with empty inheritable/ambient sets and securebits0xCE.
+[Decision151](adr/decision-151.md) supersedes the earlier SYS_ADMIN-only rule
+after mapped-ID layer metadata traversal failed. Read/search DAC bypass covers
+all reachable mapped-UID-and-GID inodes, not one path; it grants no write or
+regular-file execute bypass and never replaces SELinux. It never enters the
+engine MNT namespace. Retain the original masked MNT and prove its initial-USER
+ownership and actual MNT-entry/unshare, archive/Hub/IP and required inode/FD-alias
+denials. The host observer keeps its initial USER and masked MNT view; no
+initial-USER SYS_ADMIN or DAC capability is granted. SELinux never authorizes
+DAC_OVERRIDE; require its bit absent at verified steady/fixed-exec boundaries.
+Neither opt-in nor a successful diagnostic grants a category or establishes
+installed support. See the [host reader contract](host-administration.md) and
+[decision150](adr/decision-150.md).
+
+The host reader additionally requires the separately installed, enforcing
+`hfcache_host_helper_t` SELinux policy from first exec, inherited by every helper
+child. Install the exact selected CIL and fixed object labels, then independently
+record the actual loaded module/kernel-policy and label facts in root-owned
+`/etc/hfcache/host-helper-selinux.json`; the neutral index pins that receipt.
+Archive/Hub/credential/container-secret object types must deny helper reads through
+aliases as well as direct paths. Retain all masks, capability/namespace limits and
+NoNewPrivileges. No policy/label installation or permission grant occurs on a
+status read. Unsupported or stale policy/labels refuse. See the
+[mandatory SELinux contract](host-administration.md#mandatory-selinux-isolation).
+Owned nonsecret alias-denial and full installed API/helper proof remain required;
+earlier source/INFO checks alone do not close this requirement.
+
+### Read-only helper index preparation
+
+Install the reviewed root-protected helper bootstrap copies before running
+`scripts/prepare-host-helper.py`. It accepts only `--profile native` or
+`--profile rootless`, a genuine measured `--source-commit` and
+`--source-snapshot`, and an explicit `--source-dirty` or `--source-clean`.
+These source assertions must come from the build receipt; layout, a version
+string or a dirty checkout does not establish a clean commit. The tool reads
+the fixed `/opt/hfcache/current` selection, actual ordinary protected evidence
+and fixed execution bindings, then prints a proposed neutral deployment index.
+It performs no installation, policy/key generation, service activation,
+configuration/credential/archive read or automatic permission grant.
+
+Native preparation includes every actual installed application leaf, including
+existing bytecode, the installed entry point, fixed unit/helper copies and the
+actual pinned interpreter bytes. Compile application bytecode during the build
+before freezing this inventory, keep the installed package root protected, and
+prevent later cache creation from silently changing its declared leaves.
+Rootless preparation retains the original stage/rendering and nine-binding
+checks. Both branches share the finite protected-reader budget. A proposal is
+not conformance: review the index and independent policy, install them through
+an explicitly authorized protected operation, then require the helper's full
+fresh inspection and deployment acceptance evidence.
+
 Before activation, verify the public release directories are root-owned,
 service-readable/searchable and not group/world writable (normally `0755`). A
 restrictive inherited staging umask can make otherwise valid indexed files

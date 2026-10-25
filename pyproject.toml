@@ -66,6 +66,16 @@ line-length = 100
 src = ["src", "tests"]
 # target-version is inferred from project.requires-python.
 
+# The protected host helper runs under the host standard-library Python3.12.
+# Keep its captured bootstrap modules and independent client syntax compatible.
+[tool.ruff.per-file-target-version]
+"scripts/host-helper.py" = "py312"
+"scripts/prepare-host-helper.py" = "py312"
+"src/hfcache/host_protocol.py" = "py312"
+"src/hfcache/host_policy.py" = "py312"
+"src/hfcache/host_peer.py" = "py312"
+"src/hfcache/host_helper_client.py" = "py312"
+
 [tool.ruff.lint]
 select = [
     "A",     # flake8-builtins

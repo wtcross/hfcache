@@ -215,15 +215,22 @@ test("bootstrap body bounds, strict schema, and absent WebCrypto fail closed", a
         ),
     ).rejects.toThrow("unsupported_engine");
 });
-test("authenticated shell distinguishes configured identity from archive health and permission availability", () => {
+test("authenticated shell distinguishes configured identity from archive health and permission availability", async () => {
+    vi.stubGlobal(
+        "location",
+        new URL(bootstrap.configured_origin + "/ui/administration"),
+    );
     window.history.replaceState(null, "", "/ui/administration");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response("{}", { status: 503 }),
+    );
     render(<App basePath="/ui/" bootstrap={bootstrap} />);
     expect(screen.getByText("Configured archive")).toBeInTheDocument();
     expect(
         screen.getByText(bootstrap.configured_archive_id),
     ).toBeInTheDocument();
     expect(screen.getByText(/Signed in as administrator/)).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(screen.getAllByRole("status")[0]).toHaveTextContent(
         "Archive health and repository data have not been requested.",
     );
     for (const name of [
@@ -233,7 +240,12 @@ test("authenticated shell distinguishes configured identity from archive health 
         "Stop observation",
         "Change schedules",
     ])
-        expect(screen.getByRole("button", { name })).toBeDisabled();
+        expect(screen.getByText(name)).toBeInTheDocument();
+    expect(
+        screen.getByRole("heading", { name: "Host administration" }),
+    ).toBeInTheDocument();
+    await screen.findByRole("alert");
+    vi.unstubAllGlobals();
 });
 test("lazy chunk failure shows a user-controlled update state without navigation or replay", () => {
     render(<App basePath="/ui/" bootstrap={bootstrap} />);

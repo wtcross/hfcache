@@ -11,6 +11,7 @@ from hfcache.api.command_models import (
     CatalogRefreshSubmission,
 )
 from hfcache.api.commands import PREFIX, admit_command, command_service, offload_command
+from hfcache.api.host_authorization import authorize_request, required_actions
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -27,6 +28,7 @@ def install_catalog_refresh_route(app: FastAPI, server: ServerConfig) -> None:
     @app.post(ROUTE, response_model=AcceptanceResponse, status_code=202)
     async def refresh(request: Request, body: CatalogRefreshSubmission) -> Response:
         require_capability(request.state.principal, Capability.WRITE)
+        authorization = await authorize_request(request, required_actions(ROUTE, body))
         intent = body.service_request()
         return await offload_command(
             request,
@@ -37,6 +39,7 @@ def install_catalog_refresh_route(app: FastAPI, server: ServerConfig) -> None:
                 route=ROUTE,
                 command="catalog refresh",
                 requires_lock=True,
+                authorization=authorization,
                 execute=lambda snapshot, context: command_service(
                     request,
                     snapshot,

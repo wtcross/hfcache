@@ -292,6 +292,18 @@ REST/MCP compatibility requests run concurrently with the authenticated browser;
 page JavaScript receives no bearer or password. No route interception, TLS ignore,
 frontend server, dependency download or production binding is permitted.
 
+For host acceptance, navigate the built UI first, then issue one explicit
+same-origin status GET inside that browser page. Read its status, headers and
+JSON body together in the page execution context. This avoids a later browser
+protocol body lookup across navigation; eager response-event capture alone does
+not prevent Chromium's `Network.getResponseBody` failure. Keep the UI's rendered
+host-state and permission-reason assertions, the passive network observer,
+native Basic credential cache and normal TLS verification. This deliberate read
+does not retry a failed read or replay an operation. A failed capture ends the
+invocation and retains its original evidence. Check API problem exit codes
+against the CLI taxonomy: a known `HFAPI002` denial is HTTP403/exit10, while
+unavailable protected authority is `HFAPI022`/HTTP503/exit20.
+
 Provision an explicitly owned isolated guest before invocation. Its protected
 manifest binds the exact source/wheel/installed bytes, built artifact, guest
 boot, Caddy origin/configuration, private-CA trust, pinned browser/tool closure,
@@ -342,6 +354,35 @@ attempts remain under the selected owned workspace. Missing dependencies,
 malformed manifests, unknown resources, timeouts, unclosed roles and pending
 required cases fail honestly. Synthetic ordinary-file fixture metadata proves
 local behavior; it does not establish live NAS or production acceptance.
+
+### Protected host-reader validation
+
+Run the focused protocol/client/policy/peer/daemon/API boundary tests while
+changing the fixed helper:
+
+```bash
+uv run --locked --extra server --extra mcp pytest \
+  tests/unit/test_host_protocol.py tests/unit/test_host_helper_client.py \
+  tests/unit/test_host_policy.py tests/unit/test_host_peer.py \
+  tests/unit/test_host_daemon.py tests/unit/test_host_models.py \
+  tests/unit/test_host_status.py tests/unit/test_host_authorization.py \
+  tests/unit/test_host_action_routes.py tests/unit/test_container_host_helper.py
+```
+
+These establish local framing/original-pidfd/descriptor ownership, strict models,
+bounded inspection and policy/admission/lifecycle behavior. Simulated root
+metadata and manager/container outputs are labeled source fixtures. They cannot
+establish installed native/rootless identity, SELinux, read-only mount projection,
+actual UID/GID maps or Caddy/built-UI behavior. The isolated installed fixture must
+use genuine fixed `/opt/hfcache/current` profile bindings and actual managers,
+engine and installed bytes. A relocated layout or copied proof is insufficient.
+Retain every failed attempt and actual process/cgroup/container drain evidence.
+Each fresh WEB006 guest may use its own source-number and32-hex identity.
+Its root-owned marker still binds the exact fixture UUID, repository,
+guest identity and current boot; earlier guest histories are not prerequisites.
+Required missing kernel/runtime/browser support is a blocker, never a skip or a
+reason to weaken hardening. The final strict gate still requires all implemented
+cases and the separate final acceptance set.
 
 ## Offline tests
 

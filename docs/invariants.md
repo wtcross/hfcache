@@ -357,7 +357,14 @@ History: `synchronization` (`54e4671`), decision 94.
   grants. Authentication source evidence is separate from installed acceptance.
   The shipped Cockpit rootless launcher mounts API-only Podman `hfcache.api`
   inside its finite client; no host ImportCredential applies. Native named
-  systemd credentials remain a separate supported source. Hub authority stays
+  systemd credentials remain a separate supported source.
+  [Decision152](adr/decision-152.md) accepts one root:root0440 alternative with
+  the exact read-only five-entry effective-UID ACL, descriptor-pinned ACL and
+  metadata rechecks, and no added source discovery or permission grant;
+  parent traversal uses no-follow `O_PATH` directory handles without directory
+  reads or listings; the credential leaf retains its readable checked descriptor.
+  unreleased source implements this policy; installed application acceptance
+  remains pending. Hub authority stays
   daemon-side and the page never handles a bearer.
   A reader resolves only its selected protected API file/named systemd source;
   no Hub/netrc/ambient token or anonymous fallback after source failure.
@@ -1196,7 +1203,12 @@ and guarded validation, not deletion or a universal compatibility assumption.
 The following are accepted requirements with explicit conformance boundaries.
 Optional Basic and authenticated SPA/static serving are implemented in unreleased
 source, preserving existing REST bearer and fourteen read-only MCP behavior.
-Host administration remains separately unimplemented; source availability alone
+Protected host status and fresh Basic job proof are being implemented under
+[decision150](adr/decision-150.md); configuration/host writes remain separate.
+The API pins helper-address directories with no-follow `O_PATH` handles, requiring
+search access without directory reads or listings; binding-leaf and peer guards
+remain mandatory.
+Source availability alone
 does not establish installed behavior or retire the existing Cockpit boundary.
 See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
 [144](adr/decision-144.md); retirement remains proposed until parity is proved.
@@ -1222,6 +1234,54 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   Disabled UI performs no asset/mount read. No new runtime/frontend server or
   Node dependency follows; source/installed conformance remains explicit.
 - **`INV-020` — Host administration has a separate narrow privileged boundary.**
+  Mandatory SELinux Enforcing and exact `hfcache_host_helper_t` confinement apply
+  from first exec to all helper children. Distinct archive/Hub/credential/secret
+  object types deny payload reads through direct paths and aliases. Actual
+  enforcing proof in all helper phases is required; masks and fixed trusted
+  code alone are insufficient. No permissive fallback,
+  domain escape, policy administration or relabel permission follows. Bind the
+  selected CIL and independent root installation receipt; root policy/label
+  changes require fresh receipt/index and restart. Preserve existing capability,
+  namespace and credential restrictions; this adds no category grant.
+  Fixed unit-link validation permits only `systemd_unit_file_t:lnk_file`
+  `getattr`/`read`, with root ownership, stable metadata and exact indexed target
+  checks. This type-wide metadata/follow grant adds no link mutation or target-file permission.
+  Only the trusted system manager gains directory `mounton` on the custom
+  secret, Hub-state, archive and runtime types to install the existing fixed
+  inaccessible masks and writable runtime bind before helper exec. The helper
+  gains no mount or additional object right; retain labels, masks and existing
+  runtime permissions and prove actual enforcing startup.
+  Fixed existing rootless network-state directory recognition permits only
+  `ifconfig_var_run_t` directory `getattr`; no new search/enumeration, mutation,
+  file access, network authority or namespace entry follows.
+  Only the application config leaf shares a read-only type with containers;
+  private helper authority stays private. Mutable Hub home and the entire cache
+  root use a separate helper-denied state type. Validated rootless helper opt-in
+  removes relabeling from only those two API binds, preserving default/other-role
+  argv. Prove persistent contexts and original/new leaf labels across application
+  operations and restart; neither directory labels nor source tests suffice.
+  Image payload/JSON files and image directories remain helper-mutation-denied.
+  Only the two independently provisioned existing rootless64B image/layer locks
+  and the fixed stock runtime alive/mountpoints locks of0B/64B use the separate
+  engine-lock type with bounded coordination rights. The mountpoints path is only
+  `/run/user/<protected host UID>/containers/overlay-layers/mountpoints.lock`;
+  it introduces no generic temporary-file writes or new label role. Reboot/recreation requires fresh root
+  provisioning. The fixed alive path does not authenticate database overrides;
+  default runtime/configuration/database-epoch proof and engine-account trust
+  remain prerequisites, with nondefault state unsupported. Fresh
+  fixed-path no-follow metadata/label checks bracket the engine read; absence,
+  wrong/default-recreated labels or changes during inspection refuse. The
+  type-only receipt supplies no historical inode pin for prior same-type swaps. No image-type
+  write grant, lock creation/cleanup authority or native engine prerequisite
+  follows. Lock-record updates are allowed effects, not a no-writes claim.
+  Shared engine mutex coordination has a distinct twelfth type-only role and
+  label for only the existing fixed stock2048-lock0600/82488B segment. Mapping
+  stays denied for ordinary lock files. Exact root:root01777 sticky `/dev/shm`
+  is the sole writable ancestor exception. Full intra-capture metadata joins
+  remain strict; across the command allow coordination timestamp changes while
+  binding stable inode/label/principal/size/mode/link/ancestor identity. No content
+  integrity, historical inode pin, automatic recreation/labeling or native engine
+  prerequisite follows. Fresh root provisioning after reboot/recreation is required.
   The API remains unprivileged with no broad writable host/control-socket access.
   Fixed peer-verified helper grammar plus explicit internal capability and
   protected host policy authorize only guarded config and existing fixed schedule/
@@ -1232,8 +1292,63 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   changes, target stops, new scheduler or automatic replay/rollback/cleanup.
   Durable private outcome evidence and original handles survive interruptions.
   Unproved rootless schedule/observer bindings deny; supported native positive
-  behavior requires real isolated proof. Helper/API source and conformance tests
-  remain pending.
+  behavior requires real isolated proof. [Decision150](adr/decision-150.md) fixes
+  protected root-owned index/policy/key/address, original SO_PEERPIDFD and every
+  fragment's kernel credentials, API-only rootless RO parent attestation, eight
+  unqueued exchanges and aggregate bounded inspection.
+  Each directory/authority table retains a1024-entry limit; cumulative charged
+  file/metadata work, including child work and rechecks, is limited to4096
+  operations and64MiB within15 seconds. The rootless API init's
+  cgroup ends in its complete inspected CID's libpod scope or that scope's one
+  fixed `container` child; retain the exact path and refuse arbitrary descendants
+  or CID-prefix matches. Cgroup membership never replaces the other peer proofs.
+  Fixed rootless manager reads use the indexed account's session bus,
+  with a closed environment forcing that transport instead of the private
+  user-manager socket. Bus responses never replace the independent
+  manager/process/container and original socket-pidfd checks. The stock
+  `unconfined_dbusd_t` session-broker variant receives only type-wide
+  `unix_stream_socket connectto` and `dbus send_msg` from the helper domain.
+  The message permission covers the broker's driver/fallback authorization;
+  it is not restricted by SELinux to a path, UID, unit, method or read-only
+  operation. The protected indexed UID/bus address, closed metadata argv,
+  strict parser and independent peer/manager/process/container checks retain
+  the application boundary. This compatibility rule changes no helper
+  application operation or closed dispatch grammar. No reverse message,
+  service-acquisition, file, ioctl, capability, transition or archive/secret
+  permission is added; require fresh installed proof.
+  Both admission and queue
+  dispatch require fresh Basic proof outside metadata/store/domain locks; original
+  observations and bearer/MCP rules remain unchanged. Managed startup preserves
+  only bounded ambient SETUID, then clears all ambient/inheritable bits before
+  threads or children; steady root effective/permitted/bounding sets contain
+  only SETUID/SETGID. A separate fixed engine child may enter only the verified
+  service account's USER namespace, never MNT/PID/NET. At fixed read-only
+  API-container exec, only DAC_READ_SEARCH and SYS_ADMIN remain in that USER
+  namespace's effective/permitted/bounding sets (bits2+21, mask0x200004);
+  inheritable/ambient are empty with locked securebits0xCE.
+  [Decision151](adr/decision-151.md) supersedes only the former SYS_ADMIN-only
+  engine rule. Read/search DAC bypass covers reachable inodes whose UID and GID
+  both map, not just fixed metadata paths; it grants no write or regular-file
+  execute bypass and does not replace MAC checks. No initial-USER DAC capability
+  is granted. SELinux never authorizes DAC_OVERRIDE; its bit must be absent at
+  verified steady/fixed-exec boundaries. Prove the unchanged masked MNT belongs to initial USER and
+  actual MNT/zero-flag entry, MNT unshare, archive/Hub/IP access are refused.
+  The original observer keeps its initial USER and masked MNT namespaces.
+  Its fixed cross-USER keeper read may require SELinux `cap_userns sys_ptrace`
+  mediation of the kernel's namespace-owner authority; no initial-USER SYS_PTRACE
+  capability bit is added. That class permission is not a READ/path selector.
+  Mandatory helper-to-domain `process ptrace` neverallow preserves new
+  attachment-class denial, not universal memory secrecy: read-gated proc
+  environment access is a separate case. Fixed credential-file delivery and
+  actual API/worker/Caddy/helper environment-hygiene proof must exclude secret
+  values. Actual owned attachment-class memory-read and archive-inode/FD denial
+  remain required, separately from source proof. These
+  are controlled execution observations, not lifetime capability guarantees
+  across arbitrary further USER transitions. No host capability outside that
+  ceiling, generic selector or new module authority follows. Source and isolated
+  installed conformance must be recorded separately; future write grammar
+  remains denied until implemented
+  and accepted.
 - **`INV-021` — Browser domain evidence is precisely decoded before use.**
   Mechanically derive route/mode payload types and reconstructing decoders from
   audited Python authorities. Require serialized fields, reject unknown versions

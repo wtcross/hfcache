@@ -44,8 +44,11 @@ export function uiBootstrapFixture(): UiBootstrap {
                         return {
                             capability,
                             granted: true,
-                            effective: false,
-                            reason: "feature_unavailable",
+                            effective: capability === "host-read",
+                            reason:
+                                capability === "host-read"
+                                    ? "allowed"
+                                    : "feature_unavailable",
                         };
                     default:
                         throw new Error("Unknown fixture permission.");

@@ -1,0 +1,66 @@
+{
+  "binding": {
+    "archive_id": "01234567-89ab-cdef-0123-456789abcdef",
+    "archive_root": "/srv/hfcache",
+    "deployment_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "policy_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "release_version": "0.2.2",
+    "source_commit": "cccccccccccccccccccccccccccccccccccccccc",
+    "source_dirty": true,
+    "source_snapshot_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "facts": {
+    "archive_mount": "local-ro",
+    "guard": "absent",
+    "sync_schedule": {
+      "on_calendar": null,
+      "randomized_delay_sec": null,
+      "reason": "profile-unproved",
+      "revision": null,
+      "source": null,
+      "state": "unavailable"
+    },
+    "units": {
+      "hfcache-sync.service": {
+        "active": "inactive",
+        "load": "masked",
+        "unit_file": "masked"
+      },
+      "hfcache-sync.timer": {
+        "active": "inactive",
+        "load": "masked",
+        "unit_file": "masked"
+      },
+      "hfcache-verify.service": {
+        "active": "inactive",
+        "load": "masked",
+        "unit_file": "masked"
+      },
+      "hfcache-verify.timer": {
+        "active": "inactive",
+        "load": "masked",
+        "unit_file": "masked"
+      }
+    }
+  },
+  "permission_reasons": {
+    "archive": "policy-denied",
+    "configuration": "granted",
+    "control": "policy-denied",
+    "hub": "policy-denied",
+    "observer": "profile-unproved",
+    "schedule": "profile-unproved"
+  },
+  "permissions": {
+    "archive": false,
+    "configuration": true,
+    "control": false,
+    "hub": false,
+    "observer": false,
+    "schedule": false
+  },
+  "profile": "rootless",
+  "reason": null,
+  "schema_version": 1,
+  "state": "supported"
+}

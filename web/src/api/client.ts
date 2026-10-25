@@ -320,7 +320,9 @@ export class ApiClient {
                 result,
                 historical,
                 nullable,
-                nullable || contract.path === "/api/v1/operations",
+                nullable ||
+                    contract.path === "/api/v1/operations" ||
+                    contract.path === "/api/v1/host/status",
             );
             if (!contract.commands.includes(result.envelope.command))
                 throw new WireError("semantic");
@@ -407,6 +409,14 @@ export class ApiClient {
     }
     readHealth(options: ReadOptions = {}) {
         return this.read(wire.routeContracts.health_default, {}, {}, options);
+    }
+    hostStatus(options: ReadOptions = {}) {
+        return this.read(
+            wire.routeContracts.host_status_default,
+            {},
+            {},
+            options,
+        );
     }
     readArchiveInspection(options: ReadOptions = {}) {
         return this.read(

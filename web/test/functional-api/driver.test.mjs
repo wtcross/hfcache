@@ -7,6 +7,7 @@ import { createServer, connect, constants as http2Constants } from "node:http2";
 import { once } from "node:events";
 import {
     certificateRefusal,
+    certificateNavigationRefusal,
     secretDiagnostic,
     assertUiHeaders,
     protocolMessage,
@@ -174,9 +175,38 @@ test("specific certificate signatures are distinct from arbitrary network failur
         "net::ERR_CONNECTION_RESET",
         "Navigation interrupted",
         "certificate unavailable",
+        "Operation was cancelled; maybe frame was detached?",
     ]) {
         assert.equal(certificateRefusal(new Error(message)), false);
     }
+});
+
+test("certificate refusal requires the exact failed navigation and no HTTP response", () => {
+    const target = "https://127.0.0.1:19443/ui/";
+    const cancelled = new Error(
+        "Operation was cancelled; maybe frame was detached?",
+    );
+    const failure = {
+        url: target,
+        navigation: true,
+        errorText: "Unacceptable TLS certificate",
+    };
+    assert.equal(
+        certificateNavigationRefusal(cancelled, failure, target, null),
+        true,
+    );
+    for (const [error, observed, response] of [
+        [cancelled, { ...failure, errorText: "Operation was cancelled" }, null],
+        [cancelled, { ...failure, url: target + "other" }, null],
+        [cancelled, { ...failure, navigation: false }, null],
+        [undefined, failure, null],
+        [cancelled, null, null],
+        [cancelled, failure, { status: 401 }],
+    ])
+        assert.equal(
+            certificateNavigationRefusal(error, observed, target, response),
+            false,
+        );
 });
 
 test("credentials and all token forms are scrubbed before bounded diagnostic retention", () => {

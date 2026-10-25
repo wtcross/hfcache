@@ -93,9 +93,44 @@ def test_python_array_and_integer_bounds_survive_the_export(contracts):
     assert count["minimum"] == "0"
 
 
+def test_host_status_is_fixed_read_with_closed_required_unit_projection(contracts):
+    route = next(route for route in contracts["routes"] if route["id"] == "host_status")
+    assert (route["method"], route["path"], route["commands"], route["success"]) == (
+        "GET",
+        "/api/v1/host/status",
+        ("host status",),
+        "HostStatus",
+    )
+    assert route["binding_ids"] == ("host.status",)
+    node = next(
+        field["node"]
+        for field in contracts["definitions"]["HostFacts"]["fields"]
+        if field["name"] == "units"
+    )
+    assert node["kind"] == "object"
+    assert node["extra"] == "forbid"
+    assert {field["name"] for field in node["fields"]} == {
+        "hfcache-sync.service",
+        "hfcache-sync.timer",
+        "hfcache-verify.service",
+        "hfcache-verify.timer",
+    }
+    assert all(field["required"] for field in node["fields"])
+
+
+def test_host_finite_mapping_lowering_refuses_changed_unit_allowlist():
+    node = {
+        "type": "dict",
+        "keys_schema": {"type": "literal", "expected": ["other.service"]},
+        "values_schema": {"type": "str"},
+    }
+    with pytest.raises(ValueError, match="Host unit keys changed"):
+        Exporter().node(node, path="HostFacts.units")
+
+
 def test_every_actual_json_route_and_original_job_result_is_registered():
     actual = set()
-    for module in ("app", "catalog", "commands", "maintenance", "catalog_refresh"):
+    for module in ("app", "catalog", "commands", "maintenance", "catalog_refresh", "host_status"):
         tree = ast.parse(Path(f"src/hfcache/api/{module}.py").read_text())
         prefix = "/api/v1/catalog" if module == "catalog" else "/api/v1"
 

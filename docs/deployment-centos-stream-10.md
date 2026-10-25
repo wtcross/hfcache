@@ -284,6 +284,79 @@ confirmed writer operation behind a disabled-by-default initialization-only gate
 with installed root/UUID equality and known-layout proof. Startup, missing sentinel,
 health and recovery never initialize. See [CLI initialization](cli.md#archive-init).
 
+## Protected administrative reader
+
+The optional [host reader](host-administration.md) has a separate root system
+service and independent index/policy/key provisioning. Follow the
+[operator installation procedure](web-ui/deployment.md#install-the-protected-host-reader)
+for exact protected bootstrap copies, native/rootless binding differences,
+SELinux runtime-parent labeling and helper-before-API startup. Source availability
+does not enable it in the recorded deployment or authorize a host change.
+
+The host reader additionally requires the separately installed, enforcing
+`hfcache_host_helper_t` SELinux policy from first exec, inherited by every helper
+child. Install the exact selected CIL and fixed object labels, then independently
+record the actual loaded module/kernel-policy and label facts in root-owned
+`/etc/hfcache/host-helper-selinux.json`; the neutral index pins that receipt.
+Archive/Hub/credential/container-secret object types must deny helper reads through
+aliases as well as direct paths. Retain all masks, capability/namespace limits and
+NoNewPrivileges. No policy/label installation or permission grant occurs on a
+status read. Unsupported or stale policy/labels refuse. See the
+[mandatory SELinux contract](host-administration.md#mandatory-selinux-isolation).
+Rootless preparation also labels only the two existing fixed64B persistent image/
+layer locks, the zero-byte fixed stock runtime alive lock and fixed64B
+`/run/user/<protected host UID>/containers/overlay-layers/mountpoints.lock` with
+the separate engine-lock type after descriptor-bound metadata proof. Reboot or
+recreation of either runtime lock requires fresh root provisioning after genuine
+stock prewarming. The four ordinary leaves share one existing role and acquire
+no new type permissions or generic temporary-file write authority.
+Independent default-runtime/configuration/database-epoch proof is required;
+the fixed-path guard does not authenticate `LibpodTmp` database overrides. Preserve image-type mutation denials and refuse absent or
+wrong/default-type-recreated locks until reprovisioning. The type-only receipt
+does not attest historical inode identity; do not relabel the storage tree or create locks on a
+read. The fixed receipt's `engine_locks` role introduces no path selector or
+Podman prerequisite for native-only use. See the exact operator procedure.
+The distinct `engine_shared_memory` role also needs independent fixed-inode
+provisioning after stock prewarm: only the existing account-owned single-link
+0600/82488B stock2048-lock segment at its UID-derived `/dev/shm` name. Exact
+root:root01777 sticky `/dev/shm` is the sole writable ancestor exception. Keep
+ordinary-lock mapping denied; shared mutex coordination alone receives read/
+write/map on its separate type. Reboot/recreation requires fresh root labeling,
+with no automatic object creation or generic tmpfs grant. Full intra-capture
+joins and stable command-wide identity/label checks do not claim unchanged shared
+contents or timestamps. The receipt has twelve roles and no path selector or
+historical inode pin; native-only use acquires no engine prerequisite.
+Owned nonsecret alias-denial and full installed API/helper proof remain required;
+earlier source/INFO checks alone do not close this requirement.
+
+Only the API receives `/run/hfcache-host-helper/api` and only the actual indexed
+API process may exchange fixed reads. Caddy/verifier/client have no mount or
+administrative capability. Rootless launch uses measured keep-id projection,
+never an assumed host UID981. The helper cannot read archive payloads, Hub
+secrets or credential stores or create IP sockets. A missing/unsafe helper makes
+status unavailable and new Basic jobs denied; original observation stays usable.
+The exact selected helper unit and entry must implement the
+[startup capability and engine-observer contract](host-administration.md#managed-startup-and-fixed-engine-observation).
+Only bounded ambient SETUID is carried into the managed entry; it must clear
+all ambient/inheritable bits before threads or children. Its separate fixed
+engine child enters the proved existing USER only. At fixed read-only API
+container exec it retains only namespace-local DAC_READ_SEARCH and SYS_ADMIN
+in effective/permitted/bounding sets (bits2+21, mask0x200004), with empty
+inheritable/ambient sets and securebits0xCE. [Decision151](adr/decision-151.md)
+supersedes the SYS_ADMIN-only successor to the capless proposal. Read/search
+DAC bypass covers all reachable inodes with mapped UID and GID, not only fixed
+metadata; it grants no write or regular-file execute bypass and does not replace
+SELinux. Add no initial-USER DAC/SYS_ADMIN; SELinux must never authorize
+DAC_OVERRIDE and its bit must be absent at verified steady/fixed-exec boundaries. Use
+no chmod, ACL or payload/secret label-access workaround. Prove the masked MNT's
+initial-USER owner and actual MNT unshare/entry, archive/Hub/IP and required
+inode/FD-alias denials under the revised bits. Never join MNT/PID/NET; keep the
+original host observer's initial USER and masked MNT view. Do not
+substitute a broader unit, ambient grant or command selector to make inspection
+pass. Prototype/source tests do not establish installed helper/API support.
+The existing UBI10 micro API image serves the UI, REST and MCP through the same
+Caddy; there is no frontend image/server or runtime Node installation.
+
 ## Upgrade and drain
 
 Stage beside the retained predecessor and verify compatible policy/artifacts before
@@ -298,13 +371,19 @@ archive/sentinel identity, config backup and actual executors.
    ends observation and retains handles.
 3. Drain the verifier and prove actual processes/cgroups/activation ended. Check
    both rootless managers and libpod payloads, or the complete native service/socket
-   set. Unknown accounting/status is refusal, not quiescence.
+   set. If the protected host reader is enabled, also stop it and prove its
+   original helper/inspector cohort drained before replacing fixed bootstrap
+   bindings. Unknown accounting/status is refusal, not quiescence.
 4. Prove no orphan common-lock holder using the original noncreating flock and
    retain it through selection. Never unlink any lock inode or use a free flock
    as sole execution proof. Preserve malformed/uncertain evidence.
 5. Select only the matching native/container profile using its installer. Reload
    required managers; verify effective units/drop-ins, helpers/profile/image identity
-   and retained-state compatibility together.
+   and retained-state compatibility together. For an enabled host reader,
+   explicitly refresh/revalidate the selected release's fixed protected bootstrap
+   copies, then prepare/review its index and independent policy binding before
+   helper/API startup. The release installers do not perform this bootstrap step;
+   follow the [protected host-reader procedure](web-ui/deployment.md#install-the-protected-host-reader).
 6. Reopen compatible services only under the accepted profile/guard. Reconcile exact
    receipts, verify local listener/readiness/auth/identity and deliberate observation
    before any separately authorized workload or schedule restoration.
@@ -333,6 +412,7 @@ readers before switching. Preserve all independent compatibility domains:
 | API receipts and scheduled handles | Retain separate stores/handles and a compatible observer/reconciler; absent old commands/modules never prove nonexecution |
 | Tags and supplemental discovery | Old strict configs refuse even empty tags; old initialization inspection flags the optional namespace, while ordinary inventory can remain readable. Old client receipt allowlists refuse refresh kinds although generic stores preserve them. Require actual target validation, preserved backups/handles and a compatible observer; never delete evidence to force acceptance. See [observed compatibility](discovery.md#observed-pre-feature-compatibility). |
 | Optional MCP | Disable deliberately before server-only/pre-MCP startup; no automatic fallback or schema migration |
+| Protected host reader | For a predecessor with host-reader support, preserve current bootstrap inodes before restoring matching copies/labels and the reviewed release/index/policy binding; retain the original key and six explicit permission values. For a pre-helper target, restore a preserved target-compatible server configuration and keep the helper stopped while retaining its files, policy, receipt, key and evidence. Review SELinux policy compatibility separately; a selector rollback alone is insufficient. |
 | Explicit verifier socket owner | An older strict server rejects the new configuration key. Validate the intended target with a preserved compatible server configuration before selection; do not change socket ownership or discard operation state to force rollback. |
 | Rootless 0.2.0 | Recorded API-to-worker SELinux connection limitation returns; do not weaken policy to bypass it |
 

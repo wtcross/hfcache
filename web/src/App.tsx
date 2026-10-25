@@ -11,6 +11,7 @@ import {
 } from "./navigation";
 import type { Workspace } from "./navigation";
 import type { UiAdminPermission, UiBootstrap } from "./wire/generated";
+import { HostAdministration } from "./components/HostStatusPanel";
 
 const permissionLabels: Readonly<
     Record<UiAdminPermission["capability"], string>
@@ -25,9 +26,11 @@ const permissionLabels: Readonly<
 function WorkspaceContent({
     workspace,
     authenticated,
+    host,
 }: {
     workspace: Workspace;
     authenticated: boolean;
+    host: UiBootstrap | null;
 }) {
     switch (workspace) {
         case "library":
@@ -105,6 +108,7 @@ function WorkspaceContent({
                 </Panel>
             );
         case "administration":
+            if (host !== null) return <HostAdministration bootstrap={host} />;
             return (
                 <Panel title="Configuration and host permissions">
                     <div className="empty-state">
@@ -143,6 +147,14 @@ export function App({
     >("idle");
     const route = resolveRoute(pathname, base);
     const workspace = route.kind === "workspace" ? route.workspace : null;
+    const host =
+        bootstrap !== undefined &&
+        bootstrap.user.admin_permissions.some(
+            (permission) =>
+                permission.capability === "host-read" && permission.effective,
+        )
+            ? bootstrap
+            : null;
     const title =
         workspace === null ? "Page unavailable" : workspaceLabel(workspace);
 
@@ -353,19 +365,14 @@ export function App({
                                     {bootstrap.user.admin_permissions.map(
                                         (permission) => (
                                             <li key={permission.capability}>
-                                                <button
-                                                    type="button"
-                                                    disabled={
-                                                        !permission.effective
-                                                    }
-                                                >
+                                                <span>
                                                     {
                                                         permissionLabels[
                                                             permission
                                                                 .capability
                                                         ]
                                                     }
-                                                </button>{" "}
+                                                </span>{" "}
                                                 {permission.reason ===
                                                 "feature_unavailable"
                                                     ? "This feature is not available in this deployment."
@@ -398,6 +405,7 @@ export function App({
                         <WorkspaceContent
                             workspace={workspace}
                             authenticated={bootstrap !== undefined}
+                            host={host}
                         />
                     )}
                     <footer className="page-footer">

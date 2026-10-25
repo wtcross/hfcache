@@ -1,6 +1,7 @@
 # Verify one protected administrator without widening legacy credential classes
 
 - Decision identity: 146.
+- Protected ACL refinement: [decision152](decision-152.md).
 - Asset/bootstrap refinement: [decision147](decision-147.md).
 - Status: Amended; bounded Basic is implemented, with UI-only serving refined below.
 - Date: 2026-10-20.
@@ -121,3 +122,12 @@ INV-001/002/003/013/014/019 and FW-03/04. See
 ## Authenticated asset and bootstrap amendment (2026-10-20)
 
 [Decision147](decision-147.md) amends this record. This refinement makes every enabled UI route, asset, alias and error Basic-only while leaving REST Basic/bearer and MCP bearer policy separate. It does not change protected records, Argon2id/admission budgets, stable-subject key ownership, native browser credential handling or existing legacy public classes.
+
+## Exact protected ACL amendment (2026-10-22)
+
+[Decision152](decision-152.md) accepts only a canonical root:root0440
+read-only effective-UID access ACL as an alternative to the ordinary
+readable-group membership check. It preserves explicit sources and every
+other credential/identity/lifetime rule, with descriptor ACL and metadata
+rechecks. Unreleased source implements this policy; installed application acceptance
+remains pending.

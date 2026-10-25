@@ -475,6 +475,49 @@ main:focus {
         font-size: 10px;
     }
 }
+.host-binding,
+.host-permissions {
+    display: grid;
+    gap: 14px;
+    margin: 24px 0;
+}
+.host-binding > div,
+.host-permissions > div {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5eaf1;
+}
+.host-binding dt,
+.host-permissions dt {
+    color: #425876;
+    font-size: 12px;
+    font-weight: 600;
+}
+.host-binding dd,
+.host-permissions dd {
+    margin: 5px 0 0;
+    overflow-wrap: anywhere;
+}
+.host-unit-table {
+    overflow-x: auto;
+    margin: 24px 0;
+}
+.host-unit-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+}
+.host-unit-table caption {
+    color: #425876;
+    text-align: left;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.host-unit-table th,
+.host-unit-table td {
+    padding: 10px 12px 10px 0;
+    border-bottom: 1px solid #e5eaf1;
+}
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

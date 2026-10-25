@@ -27,6 +27,17 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
         "none",
     ),
     (
+        "GET /host/status",
+        "default",
+        "browser / HTTP",
+        "internal host-read",
+        "synchronous protected helper read",
+        "none",
+        "no",
+        "none",
+        "none",
+    ),
+    (
         "POST /config/validate",
         "installed",
         "config validate (installed)",

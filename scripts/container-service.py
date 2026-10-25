@@ -14,7 +14,10 @@ import stat
 import subprocess
 import sys
 import time
+import tomllib
+import uuid
 from pathlib import Path, PurePosixPath
+from typing import Any
 
 RELEASE_ROOT = Path(__file__).resolve().parents[1]
 PROFILE_DIRECTORY = RELEASE_ROOT / "rendered"
@@ -26,6 +29,16 @@ NAMES = {"api": "hfcache-api", "worker": "hfcache-verification", "caddy": "hfcac
 IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
 MAX_PROFILE_BYTES = 16384
 MIN_MOUNT_FIELDS = 6
+HOST_HELPER_PREFIX = Path("/opt/hfcache")
+HOST_HELPER_DEPLOYMENT = Path("/etc/hfcache/host-helper-deployment.json")
+HOST_HELPER_PARENT = Path("/run/hfcache-host-helper/api")
+HOST_HELPER_BOOT = Path("/proc/sys/kernel/random/boot_id")
+HOST_HELPER_OWNER = 0
+HOST_HELPER_MAX_INDEX = 1048576
+HOST_HELPER_MAX_BINDING = 4096
+HOST_HELPER_PARENT_MODE = 0o750
+HOST_HELPER_BINDING_MODE = 0o440
+HOST_HELPER_OVERFLOW = 65534
 
 # ADR135: this inspection is separate from every container/service role. These
 # paths are fixed host policy/accounting, never caller-selected routing.
@@ -228,7 +241,10 @@ def _inspection_verifier(selected, rows, index):
     body = _inspection_read(selected / name, rows, maximum=_INSPECTION_MAX_ARTIFACT)
     if hashlib.sha256(body).hexdigest() != digest:
         _inspection_refuse()
-    namespace = {"__file__": str(selected / name), "__name__": "hfcache_inspection_verifier"}
+    namespace: dict[str, Any] = {
+        "__file__": str(selected / name),
+        "__name__": "hfcache_inspection_verifier",
+    }
     # Fixed reviewed installer code is bundled release evidence, never browser
     # text or a selected executable. Captured bytes avoid a second path read.
     exec(compile(body, str(selected / name), "exec"), namespace)  # noqa: S102
@@ -579,10 +595,335 @@ def volume(source, target=None, *, writable=False, shared=False):
     return ["--volume", f"{source}:{target or source}:{options}"]
 
 
-def command(profile, role, arguments=()):  # noqa: PLR0912, PLR0915 - one closed role/mount allowlist
+def _helper_need(value):
+    if not value:
+        msg = "protected host helper projection refused"
+        raise ValueError(msg)
+
+
+def _helper_object(value, keys):
+    _helper_need(type(value) is dict and set(value) == set(keys))
+    return value
+
+
+def _helper_digest(value):
+    _helper_need(type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value))
+    return value
+
+
+def _helper_uuid(value):
+    _helper_need(type(value) is str and str(uuid.UUID(value)) == value)
+    return value
+
+
+def _helper_projection(value):
+    _helper_object(
+        value, {"schema_version", "profile", "deployment_sha256", "boot_id", "parent", "peer"}
+    )
+    _helper_need(type(value["schema_version"]) is int and value["schema_version"] == 1)
+    _helper_need(value["profile"] == "rootless")
+    _helper_digest(value["deployment_sha256"])
+    _helper_uuid(value["boot_id"])
+    parent = _helper_object(value["parent"], {"device", "inode", "uid", "gid", "mode"})
+    _helper_need(all(type(number) is int for number in parent.values()))
+    _helper_need(parent["device"] > 0 and parent["inode"] > 0)
+    _helper_need(
+        (parent["uid"], parent["gid"], parent["mode"])
+        == (HOST_HELPER_OVERFLOW, CONTAINER_UID, HOST_HELPER_PARENT_MODE)
+    )
+    peer = _helper_object(value["peer"], {"pid", "uid", "gid"})
+    _helper_need(all(type(number) is int for number in peer.values()))
+    _helper_need(peer == {"pid": 0, "uid": HOST_HELPER_OVERFLOW, "gid": HOST_HELPER_OVERFLOW})
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def helper_parent_projection(deployment_sha256, boot_id, device, inode):
+    """Pure fixed projection; arguments must come from protected host captures."""
+    projection = {
+        "schema_version": 1,
+        "profile": "rootless",
+        "deployment_sha256": deployment_sha256,
+        "boot_id": boot_id,
+        "parent": {
+            "device": device,
+            "inode": inode,
+            "uid": HOST_HELPER_OVERFLOW,
+            "gid": CONTAINER_UID,
+            "mode": HOST_HELPER_PARENT_MODE,
+        },
+        "peer": {"pid": 0, "uid": HOST_HELPER_OVERFLOW, "gid": HOST_HELPER_OVERFLOW},
+    }
+    _helper_projection(projection)
+    return projection
+
+
+class _HelperProjectionRead:
+    """A few fixed no-follow reads; never imports application or policy code."""
+
+    def __init__(self):
+        self.parents = {}
+        self.leaves = {}
+
+    def parent(self, path):
+        _helper_need(path.is_absolute() and ".." not in path.parts)
+        descriptor = os.open("/", os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+        current = Path("/")
+        try:
+            for part in (*path.parent.parts[1:], None):
+                info = os.fstat(descriptor)
+                _helper_need(
+                    info.st_uid in {0, HOST_HELPER_OWNER}
+                    and (
+                        not info.st_mode & 0o022
+                        or (info.st_uid == 0 and info.st_mode & stat.S_ISVTX)
+                    )
+                )
+                identity = (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid)
+                _helper_need(current not in self.parents or self.parents[current] == identity)
+                self.parents[current] = identity
+                if part is not None:
+                    child = os.open(
+                        part,
+                        os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                        dir_fd=descriptor,
+                    )
+                    os.close(descriptor)
+                    descriptor = child
+                    current /= part
+            return descriptor  # noqa: TRY300 - transfer this pinned descriptor only on success
+        except BaseException:
+            os.close(descriptor)
+            raise
+
+    def read(self, path, maximum, *, mode=None, gid=None, virtual=False):
+        _helper_need(not virtual or path == HOST_HELPER_BOOT)
+        parent = self.parent(path)
+        descriptor = -1
+        try:
+            descriptor = os.open(
+                path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent
+            )
+            before = os.fstat(descriptor)
+            _helper_need(
+                stat.S_ISREG(before.st_mode)
+                and before.st_uid == HOST_HELPER_OWNER
+                and before.st_nlink == 1
+            )
+            _helper_need(not before.st_mode & 0o022 and 0 <= before.st_size <= maximum)
+            _helper_need(mode is None or stat.S_IMODE(before.st_mode) == mode)
+            _helper_need(gid is None or before.st_gid == gid)
+            body = bytearray()
+            while len(body) <= maximum:
+                part = os.read(descriptor, min(65536, maximum + 1 - len(body)))
+                if not part:
+                    break
+                body.extend(part)
+            after = os.fstat(descriptor)
+            linked = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+            identity = tuple(getattr(before, name) for name in _INSPECTION_METADATA)
+            _helper_need(len(body) <= maximum and (virtual or len(body) == before.st_size))
+            _helper_need(
+                identity
+                == tuple(getattr(after, name) for name in _INSPECTION_METADATA)
+                == tuple(getattr(linked, name) for name in _INSPECTION_METADATA)
+            )
+            _helper_need(path not in self.leaves or self.leaves[path] == identity)
+            self.leaves[path] = identity
+            return bytes(body)
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+            os.close(parent)
+
+    def revalidate(self):
+        for path, expected in self.parents.items():
+            info = path.lstat()
+            _helper_need(
+                (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid) == expected
+            )
+        for path, expected in self.leaves.items():
+            _helper_need(
+                tuple(getattr(path.lstat(), name) for name in _INSPECTION_METADATA) == expected
+            )
+
+
+def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected startup authority join
+    """Only main's API branch calls this explicit fixed helper opt-in loader."""
+    capture = _HelperProjectionRead()
+    configuration = tomllib.loads(
+        capture.read(PROFILE_DIRECTORY / "server.toml", MAX_PROFILE_BYTES).decode("utf-8")
+    )
+    helper = configuration.get("host_helper")
+    if helper is None:
+        return None
+    _helper_need(type(helper) is dict and type(helper.get("enabled", False)) is bool)
+    if not helper.get("enabled", False):
+        _helper_need(set(helper) <= {"enabled"})
+        return None
+    _helper_need(
+        set(helper)
+        in (
+            {"enabled", "profile", "api_host_gid"},
+            {"enabled", "profile", "api_host_gid", "deployment_sha256"},
+        )
+    )
+    _helper_need(
+        helper["profile"] == "rootless"
+        and type(helper["api_host_gid"]) is int
+        and helper["api_host_gid"] == profile["service_gid"]
+    )
+    raw = capture.read(
+        HOST_HELPER_DEPLOYMENT, HOST_HELPER_MAX_INDEX, mode=0o644, gid=HOST_HELPER_OWNER
+    )
+    deployment = _helper_object(
+        _inspection_json(raw),
+        {
+            "schema_version",
+            "profile",
+            "release",
+            "source",
+            "api_principal",
+            "bindings",
+            "authority_files",
+            "profile_evidence",
+            "selinux_installation_sha256",
+        },
+    )
+    _helper_need(
+        type(deployment["schema_version"]) is int
+        and deployment["schema_version"] == 1
+        and deployment["profile"] == "rootless"
+    )
+    _helper_digest(deployment["selinux_installation_sha256"])
+    release = _helper_object(deployment["release"], {"version", "selector_target"})
+    _helper_need(
+        type(release["version"]) is str
+        and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", release["version"])
+    )
+    _helper_need(release["selector_target"] == "releases/" + release["version"])
+    _helper_need(HOST_HELPER_PREFIX / release["selector_target"] == RELEASE_ROOT)
+    selector = HOST_HELPER_PREFIX / "current"
+    selector_parent = capture.parent(selector)
+    try:
+        before = os.stat(selector.name, dir_fd=selector_parent, follow_symlinks=False)
+        _helper_need(stat.S_ISLNK(before.st_mode) and before.st_uid == HOST_HELPER_OWNER)
+        _helper_need(
+            os.readlink(selector.name, dir_fd=selector_parent) == release["selector_target"]
+        )
+        selector_identity = tuple(getattr(before, name) for name in _INSPECTION_METADATA)
+        after = os.stat(selector.name, dir_fd=selector_parent, follow_symlinks=False)
+        _helper_need(
+            tuple(getattr(after, name) for name in _INSPECTION_METADATA) == selector_identity
+        )
+    finally:
+        os.close(selector_parent)
+    principal = _helper_object(deployment["api_principal"], {"host_uid", "host_gid"})
+    _helper_need(all(type(value) is int for value in principal.values()))
+    _helper_need(
+        principal == {"host_uid": profile["service_uid"], "host_gid": profile["service_gid"]}
+    )
+    evidence = _helper_object(
+        deployment["profile_evidence"],
+        {
+            "artifact_index_sha256",
+            "runtime_profile_sha256",
+            "app_image_sha256",
+            "caddy_image_sha256",
+        },
+    )
+    for value in evidence.values():
+        _helper_digest(value)
+    runtime = capture.read(PROFILE_DIRECTORY / "runtime.json", MAX_PROFILE_BYTES)
+    _helper_need(
+        _inspection_json(runtime) == profile
+        and hashlib.sha256(runtime).hexdigest() == evidence["runtime_profile_sha256"]
+    )
+    _helper_need(
+        hashlib.sha256(
+            capture.read(RELEASE_ROOT / "artifact-index.json", HOST_HELPER_MAX_INDEX)
+        ).hexdigest()
+        == evidence["artifact_index_sha256"]
+    )
+    _helper_need(
+        profile["app_image"] == "sha256:" + evidence["app_image_sha256"]
+        and profile["caddy_image"] == "sha256:" + evidence["caddy_image_sha256"]
+    )
+    parent_fd = capture.parent(HOST_HELPER_PARENT / "binding.json")
+    try:
+        parent = os.fstat(parent_fd)
+        _helper_need(
+            parent.st_uid == HOST_HELPER_OWNER
+            and parent.st_gid == profile["service_gid"]
+            and stat.S_IMODE(parent.st_mode) == HOST_HELPER_PARENT_MODE
+        )
+    finally:
+        os.close(parent_fd)
+    binding = _helper_object(
+        _inspection_json(
+            capture.read(
+                HOST_HELPER_PARENT / "binding.json",
+                HOST_HELPER_MAX_BINDING,
+                mode=HOST_HELPER_BINDING_MODE,
+                gid=profile["service_gid"],
+            )
+        ),
+        {
+            "schema_version",
+            "boot_id",
+            "helper_generation",
+            "deployment_sha256",
+            "policy_sha256",
+            "parent",
+            "helper",
+        },
+    )
+    _helper_need(type(binding["schema_version"]) is int and binding["schema_version"] == 1)
+    deployment_sha256 = hashlib.sha256(raw).hexdigest()
+    _helper_need(binding["deployment_sha256"] == deployment_sha256)
+    if "deployment_sha256" in helper:
+        _helper_need(_helper_digest(helper["deployment_sha256"]) == deployment_sha256)
+    _helper_digest(binding["policy_sha256"])
+    _helper_need(
+        type(binding["helper_generation"]) is str
+        and re.fullmatch(r"[0-9a-f]{32}", binding["helper_generation"])
+    )
+    boot_id = _helper_uuid(capture.read(HOST_HELPER_BOOT, 64, virtual=True).decode("ascii").strip())
+    _helper_need(binding["boot_id"] == boot_id)
+    identity = _helper_object(binding["parent"], {"device", "inode", "uid", "gid", "mode"})
+    _helper_need(all(type(number) is int for number in identity.values()))
+    _helper_need(
+        identity
+        == {
+            "device": parent.st_dev,
+            "inode": parent.st_ino,
+            "uid": 0,
+            "gid": profile["service_gid"],
+            "mode": HOST_HELPER_PARENT_MODE,
+        }
+    )
+    process = _helper_object(binding["helper"], {"pid", "start_ticks", "uid", "gid"})
+    _helper_need(
+        all(type(number) is int for number in process.values())
+        and process["pid"] > 1
+        and process["start_ticks"] > 0
+        and process["uid"] == process["gid"] == 0
+    )
+    capture.revalidate()
+    _helper_need(
+        tuple(getattr(selector.lstat(), name) for name in _INSPECTION_METADATA) == selector_identity
+        and selector.readlink().as_posix() == release["selector_target"]
+    )
+    return helper_parent_projection(deployment_sha256, boot_id, parent.st_dev, parent.st_ino)
+
+
+def command(profile, role, arguments=(), *, invocation_id=None, helper_projection=None):  # noqa: PLR0912, PLR0915 - one closed role/mount allowlist
     if role not in {*NAMES, "client"} or (role != "client" and arguments):
         msg = "unknown fixed container role"
         raise ValueError(msg)
+    projected_environment = ""
+    if helper_projection is not None:
+        _helper_need(role == "api")
+        projected_environment = _helper_projection(helper_projection)
     argv = [
         *ENGINE,
         "run",
@@ -607,7 +948,8 @@ def command(profile, role, arguments=()):  # noqa: PLR0912, PLR0915 - one closed
         argv += ["--name", NAMES[role]]
         argv += ["--network=none" if role == "worker" else "--network=pasta"]
     argv += ["--cgroup-conf=memory.high=" + ("536870912" if role == "caddy" else "4294967296")]
-    invocation = os.environ.get("INVOCATION_ID", "")
+    invocation = os.environ.get("INVOCATION_ID", "") if invocation_id is None else invocation_id
+    _helper_need(type(invocation) is str)
     if role in {"api", "worker"} and re.fullmatch(r"[0-9a-f]{32}", invocation):
         # Nonsecret actual-unit evidence, never a submitted caller/timer claim.
         argv += ["--env=INVOCATION_ID=" + invocation]
@@ -635,10 +977,14 @@ def command(profile, role, arguments=()):  # noqa: PLR0912, PLR0915 - one closed
     if role in {"api", "worker"}:
         argv += volume("/run/hfcache/verification", writable=role == "worker", shared=True)
     if role == "api":
+        if helper_projection is not None:
+            argv += volume(HOST_HELPER_PARENT, "/run/hfcache-host-helper/api")
+            argv += ["--env=HFCACHE_HOST_HELPER_PARENT=" + projected_environment]
         argv += volume("/run/hfcache/api.lock", writable=True, shared=True)
         argv += volume("/var/lib/hfcache/api", writable=True, shared=True)
-        argv += volume("/var/lib/hfcache/hf-home", writable=True, shared=True)
-        argv += volume("/var/cache/hfcache", writable=True, shared=True)
+        # ADR150: the enabled helper's Hub payload labels must survive Podman.
+        argv += volume("/var/lib/hfcache/hf-home", writable=True, shared=helper_projection is None)
+        argv += volume("/var/cache/hfcache", writable=True, shared=helper_projection is None)
         argv += [
             "--env=HF_HOME=/var/lib/hfcache/hf-home",
             "--env=HF_XET_CACHE=/var/cache/hfcache/xet",
@@ -835,7 +1181,14 @@ def main():
             drain(profile, sys.argv[2])
             return 0
         role = sys.argv[1] if len(sys.argv) > 1 else ""
-        argv = command(profile, role, sys.argv[2:])
+        projection = host_helper_projection(profile) if role == "api" else None
+        argv = command(
+            profile,
+            role,
+            sys.argv[2:],
+            invocation_id=os.environ.get("INVOCATION_ID", ""),
+            helper_projection=projection,
+        )
         if role in {"api", "worker"}:
             archive_readonly()
         if role != "client":

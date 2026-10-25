@@ -32,7 +32,7 @@ Environment=HF_HOME=/var/lib/hfcache/verification-hf-home
 Environment=HF_XET_CACHE=/var/cache/hfcache-verification/xet
 UnsetEnvironment=HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN CREDENTIALS_DIRECTORY HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN
 # Same-UID services must not expose other units' or cached Hub credentials.
-InaccessiblePaths=-/run/credentials -/etc/credstore -/etc/credstore.encrypted -/etc/hfcache/credentials -/var/lib/hfcache/hf-home
+InaccessiblePaths=-/run/credentials -/etc/credstore -/etc/credstore.encrypted -/etc/hfcache/credentials -/var/lib/hfcache/hf-home -/run/hfcache-host-helper
 IPAddressDeny=any
 NoNewPrivileges=true
 PrivateTmp=true

@@ -27,6 +27,39 @@ from tests.unit.test_systemd_units import CLIENTS, PACKAGING, TOKEN_ENV, fields
 ROTATED = "rotated-mcp-reader-" + "Z" * 48
 
 
+class ForbiddenHostHelper:
+    def __init__(self):
+        self.closes = 0
+
+    def status(self):
+        pytest.fail("REST or MCP bearer reached the internal host helper")
+
+    async def async_status(self):
+        pytest.fail("REST or MCP bearer reached the internal host helper")
+
+    def close(self, *, timeout=24):
+        self.closes += 1
+        return True
+
+
+def assert_rest_role_outcome(method, path, token, outcome):
+    status, payload, received, _ = outcome
+    if method == "POST":
+        writer_only = path.removeprefix("/api/v1") in WRITER_POSTS
+        denied = token == READER and writer_only
+        assert status == (403 if denied else 422), (path, payload)
+        assert received == (0 if denied else 1)
+    elif path == "/api/v1/host/status":
+        # Optional MCP cannot promote either REST role to the internal Basic
+        # host-read capability or touch its IPC. GET framing remains unchanged.
+        assert status == 403, (path, payload)
+        assert json.loads(payload)["code"] == "HFAPI002"
+        assert received == 1
+    else:
+        assert status not in {401, 403, 405}, (path, payload)
+    assert token not in payload
+
+
 def settings(server, tmp_path, *, enabled):
     token_file = tmp_path / "mcp-reader.token"
     token_file.write_text(MCP, encoding="ascii")
@@ -61,7 +94,8 @@ def test_every_rest_role_and_real_command_remains_identical_with_optional_mcp(
 ):
     base, layout, hub, lock = configured
     server = settings(base, tmp_path, enabled=enabled)
-    app = create_app(server, instance_lock_path=lock)
+    helper = ForbiddenHostHelper()
+    app = create_app(server, instance_lock_path=lock, host_helper=helper)
 
     async def exercise():
         async with (
@@ -72,6 +106,7 @@ def test_every_rest_role_and_real_command_remains_identical_with_optional_mcp(
                 trust_env=False,
             ) as client,
         ):
+            before_security_checks = snapshot(layout.root)
             for method, path in ROUTES:
                 status, payload, received, _ = await raw_request(
                     app, method, concrete(path), (f"Bearer {MCP}".encode(),), body=b"malformed"
@@ -79,22 +114,16 @@ def test_every_rest_role_and_real_command_remains_identical_with_optional_mcp(
                 assert status == 401, (method, path, payload)
                 assert received == 0
                 for token in (READER, WRITER):
-                    status, payload, received, _ = await raw_request(
+                    outcome = await raw_request(
                         app,
                         method,
                         concrete(path),
                         (f"Bearer {token}".encode(),),
                         body=b"{" if method == "POST" else b"",
                     )
-                    if method == "POST":
-                        writer_only = path.removeprefix("/api/v1") in WRITER_POSTS
-                        denied = token == READER and writer_only
-                        assert status == (403 if denied else 422), (path, payload)
-                        assert received == (0 if denied else 1)
-                    else:
-                        assert status not in {401, 403, 405}, (path, payload)
-                    assert token not in payload
+                    assert_rest_role_outcome(method, path, token, outcome)
             assert app.state.operations.list() == ()
+            assert snapshot(layout.root) == before_security_checks
             capabilities = await client.get("/api/v1/capabilities", headers=READER_HEADERS)
             assert capabilities.status_code == 200
             body = ClientRead.model_validate(capabilities.json())
@@ -127,6 +156,7 @@ def test_every_rest_role_and_real_command_remains_identical_with_optional_mcp(
             assert len(history) == 2
             assert {row["state"] for row in history} == {"succeeded"}
         assert app.state.credentials is None
+        assert helper.closes == 1
 
     asyncio.run(exercise())
 

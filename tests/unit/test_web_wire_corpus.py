@@ -28,6 +28,7 @@ def original_models():
         "hfcache.catalog_query_models",
         "hfcache.catalog_refresh_models",
         "hfcache.client_models",
+        "hfcache.host_models",
         "hfcache.models",
         "hfcache.manifests",
         "hfcache.reporting",
@@ -44,15 +45,42 @@ def original_models():
 
 
 def test_original_serializer_corpus_covers_every_public_named_definition(corpus):
-    assert len(corpus) == 291
+    assert len(corpus) == 302
     assert len({entry["case_id"] for entry in corpus}) == len(corpus)
     names = {entry["definition"] for entry in corpus}
-    assert len(names) == 128
+    assert len(names) == 135
     assert names == build_contracts()["definitions"].keys()
     assert names.isdisjoint({"OperationReceipt", "ResultReference", "TransactionJournal"})
     for entry in corpus:
         assert entry.keys() == {"case_id", "definition", "value"}
         assert json.loads(json.dumps(entry["value"], allow_nan=False)) == entry["value"]
+
+
+def test_host_models_keep_original_authorities_and_real_nested_unit_examples(
+    corpus, original_models
+):
+    host_names = {
+        "HostBinding",
+        "HostPermissions",
+        "HostPermissionReasons",
+        "HostUnitState",
+        "HostSyncSchedule",
+        "HostFacts",
+        "HostStatus",
+    }
+    assert host_names <= {entry["definition"] for entry in corpus}
+    for name in host_names:
+        assert original_models[name].__module__ == "hfcache.host_models"
+        assert original_models[name].__name__ == name
+    facts = next(entry["value"] for entry in corpus if entry["definition"] == "HostFacts")
+    assert facts["units"].keys() == {
+        "hfcache-sync.service",
+        "hfcache-verify.service",
+        "hfcache-sync.timer",
+        "hfcache-verify.timer",
+    }
+    unit_examples = [entry["value"] for entry in corpus if entry["definition"] == "HostUnitState"]
+    assert all(unit in unit_examples for unit in facts["units"].values())
 
 
 def test_every_serialized_example_still_validates_with_its_original_python_authority(
@@ -75,7 +103,7 @@ def test_every_serialized_example_still_validates_with_its_original_python_autho
 
 def test_mode_fixture_inventory_and_original_canonical_request_bodies_are_complete():
     modes = web_wire_corpus.covered_route_modes()
-    assert len(modes) == 43
+    assert len(modes) == 44
     assert modes == {(route.method, route.path, route.mode) for route in ROUTES}
     bodies = web_wire_corpus.request_samples()
     for name, model in request_authorities().items():
@@ -110,7 +138,7 @@ def test_factory_needs_no_network_or_archive_initialization_and_cleans_its_tree(
     monkeypatch.setattr(socket.socket, "connect", forbidden)
     monkeypatch.setattr(socket.socket, "connect_ex", forbidden)
     monkeypatch.setattr(socket, "create_connection", forbidden)
-    assert len(web_wire_corpus.serialized_corpus()) == 291
+    assert len(web_wire_corpus.serialized_corpus()) == 302
     assert len(created) == 1
     assert not any(tmp_path.iterdir())
 

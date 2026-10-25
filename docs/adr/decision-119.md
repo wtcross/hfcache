@@ -7,6 +7,14 @@
 - Date: 2026-10-18.
 API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
 
+## 2026-10-21 protected-reader amendment
+
+[Decision150](decision-150.md) binds protected host status to the configured
+archive UUID and independent selected deployment. Status is neither archive
+health nor candidate/install authority. New Basic admission proof does not
+widen bearer/MCP behavior, alter installed/candidate policy semantics or replace
+original operation observations with replay.
+
 
 ## Context, decision and rationale
 

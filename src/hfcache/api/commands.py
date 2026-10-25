@@ -17,6 +17,12 @@ from hfcache.api.command_models import (
     ValidationSubmission,
     VerificationSubmission,
 )
+from hfcache.api.host_authorization import (
+    ActionAuthorization,
+    authorize_request,
+    require_admission,
+    required_actions,
+)
 from hfcache.api.models import OperationView, ReadResponse
 from hfcache.credentials import resolve_token
 from hfcache.errors import HfcacheError, RequestError
@@ -143,12 +149,16 @@ def admit_command(  # noqa: PLR0913 - explicit trusted route execution policy
     requires_lock: bool,
     delegated: bool = False,
     prepare: Callable[[PolicySnapshot], None] | None = None,
+    authorization: ActionAuthorization | None = None,
 ) -> Response:
     """One durable keyed admission boundary shared by typed command adapters."""
     _no_query(request)
     key = _key(request)
+    require_admission(request, route, body, authorization)
 
     def budget(snapshot: PolicySnapshot) -> float:
+        if authorization is not None:
+            authorization.check_snapshot(snapshot)
         if prepare is not None:
             prepare(snapshot)
         return (
@@ -168,6 +178,7 @@ def admit_command(  # noqa: PLR0913 - explicit trusted route execution policy
         requires_lock=requires_lock,
         delegated=delegated,
         context=request.state.execution_context,
+        authorize=authorization.recheck if authorization is not None else None,
     )
     return _accepted(request, admitted, server)
 
@@ -179,6 +190,7 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
     @app.post(PREFIX + "/syncs", response_model=AcceptanceResponse, status_code=202)
     async def sync(request: Request, body: SyncSubmission) -> Response:
         require_capability(request.state.principal, Capability.WRITE)
+        authorization = await authorize_request(request, required_actions(PREFIX + "/syncs", body))
         return await offload_command(
             request,
             lambda: admit_command(
@@ -188,6 +200,7 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
                 route=PREFIX + "/syncs",
                 command="sync",
                 requires_lock=True,
+                authorization=authorization,
                 execute=lambda snapshot, context: command_service(
                     request, snapshot, context
                 ).synchronize(SelectionRequest(body.selectors)),
@@ -200,6 +213,7 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
             request.state.principal,
             Capability.WRITE if body.candidate is not None else Capability.READ,
         )
+        authorization = await authorize_request(request, required_actions(PREFIX + "/plans", body))
         prepared: list[CandidateAssessment | ServiceResult] = []
 
         def prepare(snapshot: PolicySnapshot) -> None:
@@ -234,6 +248,7 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
                 command="plan",
                 requires_lock=False,
                 prepare=prepare,
+                authorization=authorization,
                 execute=execute,
             ),
         )
@@ -242,6 +257,9 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
     async def diagnose(request: Request, body: DiagnosticsSubmission) -> Response:
         require_capability(
             request.state.principal, Capability.READ if body.read_only else Capability.WRITE
+        )
+        authorization = await authorize_request(
+            request, required_actions(PREFIX + "/diagnostics", body)
         )
         return await offload_command(
             request,
@@ -252,6 +270,7 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
                 route=PREFIX + "/diagnostics",
                 command="doctor",
                 requires_lock=not body.read_only,
+                authorization=authorization,
                 execute=lambda snapshot, context: command_service(
                     request, snapshot, context
                 ).diagnose(DoctorRequest(read_only=body.read_only)),
@@ -261,6 +280,9 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
     @app.post(PREFIX + "/verifications", response_model=AcceptanceResponse, status_code=202)
     async def verify(request: Request, body: VerificationSubmission) -> Response:
         require_capability(request.state.principal, Capability.WRITE)
+        authorization = await authorize_request(
+            request, required_actions(PREFIX + "/verifications", body)
+        )
         verification = body.service_request()
 
         def execute(snapshot: PolicySnapshot, context: ExecutionContext) -> Envelope:
@@ -283,6 +305,7 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
                 command=verification.command,
                 requires_lock=False,
                 delegated=True,
+                authorization=authorization,
                 execute=execute,
             ),
         )

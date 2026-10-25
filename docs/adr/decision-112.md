@@ -1,6 +1,7 @@
 # Separate server authority and verified bearer capabilities
 
 - Decision identity: 112.
+- Protected ACL refinement: [decision152](decision-152.md).
 - Asset/bootstrap refinement: [decision147](decision-147.md).
 
 - MCP transport amendment: [decision 124](decision-124.md).
@@ -113,3 +114,12 @@ grants alone still enable no protected host/configuration operation; that helper
 boundary and its acceptance remain separate. See the [server availability
 contract](../server.md#web-ui-design-and-current-availability). This clarification
 claims no installed release, production rollout or complete replacement conformance.
+
+## Exact protected ACL amendment (2026-10-22)
+
+[Decision152](decision-152.md) accepts only a canonical root:root0440
+read-only effective-UID access ACL as an alternative to the ordinary
+readable-group membership check. It preserves explicit sources and every
+other credential/identity/lifetime rule, with descriptor ACL and metadata
+rechecks. Unreleased source implements this policy; installed application acceptance
+remains pending.

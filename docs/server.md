@@ -197,14 +197,29 @@ in process arguments or configuration.
 
 [`read_protected_token`](../src/hfcache/api/auth.py) opens every path component
 relative to pinned directory descriptors and refuses symlinks. The credential
+directories are held with Linux `O_PATH` descriptors: the service needs search
+access to each parent, not permission to read or list the directory. Only the
+credential leaf is opened for reading. This preserves an independently confined
+credential directory without adding a directory-read permission.
+The credential
 must be a regular inode owned by root or the effective server user, with exactly
 one hardlink and mode `0400`, `0440`, `0600` or `0640`. Reads stay on the checked
 inode across pathname replacement; bounded reads and before/after descriptor
 metadata refuse content/ownership/mode changes to that inode. Group access
 must be provisioned deliberately for the service identity; world access and
 executable/writable-by-group modes refuse loading.
-For group-readable modes, the credential group must be the server's effective
-or supplementary group.
+For ordinary group-readable files, the credential group must be the server's
+effective or supplementary group. One alternative covers a root:root `0440`
+inode: its descriptor-read POSIX access ACL must be exactly owner-read, one
+named effective-UID read entry, owning-group-none, mask-read and other-none,
+without additional entries. Stat group bits here describe the ACL mask, not
+root-group read access. Require the canonical five-entry, 44-byte Linux version-2
+value. Missing, inaccessible, unsupported, malformed or different ACLs refuse
+this alternative. Compare the ACL before and after bounded content reading,
+then recheck all descriptor metadata. Authentication changes no permissions and
+copies no delivered credential. See [decision152](adr/decision-152.md).
+The unreleased source reader implements this policy; installed application
+acceptance remains a separate deployment check.
 
 Provision a high-entropy opaque token, alone in the file with at most one final
 LF. The token must have `32`–`4096` ASCII characters matching the RFC 6750 bearer
@@ -310,7 +325,9 @@ Basic projects as public `rest-writer` with the unchanged `read`/`write` array.
 Its separate immutable internal grants are `config-read`, `config-write`,
 `host-read`, `schedule-write`, `observer-stop`; ordinary bearer writer has none.
 These grants alone authorize no host effects or protected configuration install;
-the separate helper/policy boundary remains required and is not implemented here.
+the separate helper/policy boundary remains required. Protected status and fresh
+Basic job checks use the [host reader](host-administration.md); write operations
+remain separately unavailable.
 Basic never authenticates MCP. No new class, permission, subject or attribution
 field joins the stable capabilities response or old strict receipts.
 
@@ -789,6 +806,24 @@ all three browser engines require actual acceptance; no per-request Authorizatio
 injection or TLS bypass substitutes for it.
 
 ### Narrow administration helper
+
+`[host_helper]` is disabled by default and performs no endpoint/filesystem work
+when disabled. To opt in, set `enabled=true`, `profile="native"` or `"rootless"`
+and the measured positive `api_host_gid`. Optional `deployment_sha256` is an
+additional exact lowercase SHA256 pin. Enabled support requires the fixed
+`archive_config="/etc/hfcache/config.toml"`; inactive helper parameters and unknown
+fields refuse configuration. Native startup derives an omitted deployment pin
+only from the root-protected current-boot binding. Rootless startup derives it
+only from the fixed host launcher's independently verified parent attestation,
+never the socket's own claims. Indexed templates cannot contain their own hash.
+
+The application owns a separate bounded helper client, outside metadata and
+authentication executors. It admits eight active exchanges and no queued jobs,
+uses one absolute22-second deadline, closes its exact socket on cancellation,
+and retains capacity until the actual worker exits. Lifespan shutdown drains
+the owned client; uncertain drain is a classified failure, never successful
+closure. Login, bootstrap, static assets, ordinary metadata and original operation
+observation do not inspect the host helper.
 
 The unprivileged API connects only to an independently protected, peer-verified
 Unix protocol with fixed host/configuration operations. Caddy/verifier cannot

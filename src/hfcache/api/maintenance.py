@@ -8,6 +8,7 @@ from starlette.responses import Response  # noqa: TC002 - FastAPI resolves retur
 from hfcache.api.auth import Capability, require_capability
 from hfcache.api.command_models import AcceptanceResponse
 from hfcache.api.commands import PREFIX, admit_command, command_service, offload_command
+from hfcache.api.host_authorization import authorize_request, required_actions
 from hfcache.api.maintenance_models import (
     InitializationSubmission,  # noqa: TC001 - FastAPI resolves DTOs at runtime
     PruneSubmission,  # noqa: TC001 - FastAPI resolves DTOs at runtime
@@ -63,15 +64,18 @@ def install_maintenance_routes(app: FastAPI, server: ServerConfig) -> None:
         require_capability(
             request.state.principal, Capability.WRITE if mutates else Capability.READ
         )
+        route = request.scope["route"].path
+        authorization = await authorize_request(request, required_actions(route, body))
         return await offload_command(
             request,
             lambda: admit_command(
                 request,
                 body,
                 server,
-                route=request.scope["route"].path,
+                route=route,
                 command=command,
                 requires_lock=mutates,
+                authorization=authorization,
                 execute=lambda snapshot, context: execute(
                     command_service(request, snapshot, context)
                 ),

@@ -1,5 +1,21 @@
 # Troubleshoot browser access and web reads
 
+During isolated functional acceptance, a Playwright `Network.getResponseBody`
+error can describe lost test-tool response bytes after navigation. It does not
+establish an API outage or permission denial. Preserve the failed invocation,
+original process handles, CIDs and sanitized diagnostic. A tooling correction
+needs a fresh source gate and a new disposable fixture; do not replay the failed
+invocation, weaken TLS, rotate live credentials or restart production services
+because of this diagnostic. The host test reads its explicit status reply inside
+the browser page after navigation and still checks the real interface state.
+
+An untrusted-TLS test that reports WebKit navigation cancellation has not proved
+certificate refusal. Preserve that failed run. The test settles its initial blank
+page, then makes one HTTPS navigation and records the matching failed transport
+request. Acceptance requires a specific certificate error and no HTTP response;
+generic cancellation, timeout or connection failure remains a failure. A changed
+test tool needs a fresh gate and disposable fixture, without replaying the old run.
+
 ## Administrator login
 
 The optional administrator provider and authenticated asset routes are implemented
@@ -12,8 +28,8 @@ first. `/ui/` requires explicit enablement with matching immutable assets.
 | Repeated native sign-in dialog / HFAPI001 / HTTP 401 | The browser's cached pair or configured identity did not authenticate. Verify the intended HTTPS authority, username and reviewed credential delivery with the operator. Wrong username and wrong password deliberately have the same response. Do not share Authorization headers or substitute a bearer in the page. |
 | HFAPI021 / HTTP 429 | The two verification workers/eight waiting slots or the global failed-attempt budget are occupied. Wait for accepted verification work and the 60-second failure window; repeated retries increase load. Bearer observation of an original operation remains separate. |
 | HFAPI010 / HTTP 403 on a browser mutation | Verify the exact configured HTTPS Origin, JSON Content-Type and application request header. Foreign/missing/null Origins and simple forms are refused. Use the supported UI action; do not disable CSRF or widen allowlists. |
-| HFAPI002 / HTTP 403 | The authenticated principal lacks the required permission. Administrator login grants no protected host policy; inspect effective grants and the intended action without changing a guard. |
-| HFAPI003 during startup | The selected hash record is missing, unsafe, malformed or uses unsupported hash parameters. Inspect source path/owner/mode/record version without printing its contents. Restore the reviewed source or provision a new protected record; there is no credential-source fallback. |
+| HFAPI002 / HTTP 403 / exit 10 | The authenticated principal lacks the required permission. Administrator login grants no protected host policy; inspect effective grants and the intended action without changing a guard. |
+| HFAPI003 during startup | Any enabled REST/MCP bearer or Basic source may be missing, unsafe, changed or malformed; the generic code identifies neither file nor cause. Inspect the intended service's delivery namespace, path, owner, mode, group/ACL metadata and ancestor search access without printing credential contents or hashes. Basic records also require supported schema/hash parameters. The loader uses directory handles without reading or listing parent contents; preserve protected labels and permissions. Restore reviewed provisioning; there is no source fallback. |
 | HFAPI009 / unavailable during authentication | The authentication service is unavailable or draining. Keep original operation handles and investigate service readiness/drain; do not replay a mutation. |
 | Certificate warning | Stop and correct trust, certificate chain/SAN or endpoint selection. Do not bypass TLS. |
 | Old credentials remain after closing a tab | Basic authentication is browser-managed and has no reliable application logout. Close the dedicated profile/session; password rotation needs a new protected record and authorized drained restart. |
@@ -22,6 +38,97 @@ An administrator record's stable subject owns its original operation keys.
 Keeping the subject during password rotation preserves that namespace. Changing
 it separates the new identity; it never proves an old operation did not execute.
 Do not delete receipts or resend a lost action to regain visibility.
+
+Native systemd delivery can show a root-owned `0440` file while a named-user ACL
+grants only the service UID read access. Group mode bits alone do not identify
+its readers. The [credential contract](../server.md#credentials-and-capabilities)
+defines the exact shape and implementation status. Preserve the delivered file
+and inspect metadata in the intended service namespace; do not copy plaintext,
+widen permissions, change groups or disable confinement to make startup pass.
+An ordinary file with another readable group remains invalid.
+
+## Protected host status
+
+Keep the public `state`, `reason`, and `profile` from the original
+`/v1/host/status` response with its request identity. A successful confined
+`podman info` read does not prove that the helper’s fixed container inspection
+succeeded; runtime warnings can be nonfatal. Correlate refusals with the failed
+read and its result before changing provisioning. Do not grant service-start or
+broader filesystem access from warning text or audit messages alone.
+
+If rootless Administration shows unavailable while the API and helper are
+running, inspect the exact helper mount, startup attestation and parent metadata.
+The API needs directory search access, not a directory listing. An older client
+can fail on an `O_RDONLY` directory open under the intended search-only SELinux
+rules; corrected clients use no-follow `O_PATH` handles. Preserve the failed
+invocation and apply a reviewed release; do not widen labels, modes or policy.
+
+If transport checks pass, compare the original API init PID and full container
+ID with its recorded cgroup. Supported stock Podman can put that init in the
+`libpod-<CID>.scope/container` child. An older scope-only helper rejects this
+layout. A corrected helper recognizes only that exact child or its exact CID
+scope while retaining the other process and security checks. Preserve the
+original failed evidence and upgrade through the reviewed release procedure.
+
+If startup, Basic authentication and TLS succeed but rootless host status
+remains unavailable, preserve the original sanitized browser result and
+matching audit event identities. A helper-domain denial on the user
+manager's `systemd/private` socket can mean an older observer selected the
+private manager transport despite its explicit session-bus address. The
+reviewed observer sets `SYSTEMCTL_FORCE_BUS=1` in its closed environment
+for the indexed service account. Upgrade through the protected helper
+procedure; do not grant broad socket access or relabel the user runtime
+tree. An ordinary service-account systemctl query can compare manager
+metadata, but it does not test the helper's SELinux confinement or prove
+host authority.
+
+If the fixed session bus is selected, distinguish its socket-file label,
+peer-domain connection permission and message authorization. A matching
+helper-domain `unix_stream_socket connectto` denial to `unconfined_dbusd_t`
+identifies a connection refusal. After that boundary passes, an original
+Enforcing helper-to-broker `dbus send_msg` denial identifies the separate
+message boundary, including the broker's driver/fallback authorization. Use
+only the reviewed rules in the
+[isolation contract](../host-administration.md#mandatory-selinux-isolation).
+Check bounded original broker service-journal SELinux records as well as
+`USER_AVC`: without an audit-write channel the broker can log to stderr. Do not
+infer permission from absent audit records, or identify the client PID/method
+from the journal reporter alone. Keep existing endpoint labels, hardening,
+fixed indexed UID/address and closed metadata argv; do not add generic message
+dispatch, private-manager socket access or unrelated ioctl/certificate grants.
+A revised CIL needs fresh installation evidence and selected index binding
+before restart. Neither denial establishes a successful host-status result or
+proves later manager, container or peer checks.
+
+Administration distinguishes **supported**, **guarded**, **unknown** and
+**unavailable** host evidence. Unknown or unavailable is not an inactive service
+or a healthy/writable archive. Every effective permission is denied until the
+required proof is available. A missing guard grants nothing. Rootless schedule
+and observer permissions stay denied while their fixed bindings are unproved.
+
+`HFAPI022`/HTTP503 on a new keyed action means protected host proof could not be
+established; `HFAPI002`/HTTP403/exit10 means a known permission denial. Preserve
+any original receipt/key before troubleshooting and reconcile it read-only. Failed
+status never establishes that an accepted action did not run. Do not create a new
+key, change a guard or remove evidence as a retry strategy.
+
+Ask the host operator to check the exact selected release/index, independently
+provisioned policy/key and `hfcache-host-helper.service`. The service must become
+ready before the API pins its protected address. Restore reviewed ownership and
+bindings through the deployment procedure; do not open permissions, substitute a
+matching-UID socket, disable SELinux or expose a manager socket. Normal helper
+leaf replacement within the pinned parent supports refresh. Parent, boot or
+deployment identity changes require a reviewed API restart. See
+[administration](administration.md) and
+[helper deployment](deployment.md#install-the-protected-host-reader).
+
+If the helper exits20 before readiness, inspect its exact systemd invocation
+and matching audit events. A denied `getattr` on a `systemd_unit_file_t` symlink
+can prevent verification of an otherwise valid installed binding. Compare the
+fixed path, inode and literal indexed target before selecting the corrected
+reviewed policy. Preserve the symlink and its label. Unrelated audit events do
+not establish the failure cause; use the deployment procedure to refresh the
+receipt/index/policy together after a reviewed correction.
 
 ## Private verification service
 

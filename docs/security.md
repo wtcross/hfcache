@@ -353,7 +353,17 @@ systemd credentials; an unconfigured optional class grants nobody access. Every
 active source must load. optional MCP transport ignores the MCP source while disabled; enabled
 MCP requires it and the optional package. Descriptor-pinned no-follow reads validate inode
 type, owner, mode, group access, single hardlink, bounded content and stable
-metadata. The API token grammar rejects Hub-style `hf_` values. Exact opaque
+metadata. Directory traversal uses pinned Linux `O_PATH` handles with no-follow
+opens; it needs parent search access without reading or listing directories.
+The credential leaf still requires a readable checked descriptor. No directory
+permission or SELinux grant follows. The narrow root:root `0440` ACL form grants owner-read and one
+effective-UID read entry, no owning-group/other access and a read mask. Its exact
+five-entry version-2 value is checked through the pinned descriptor before and
+after content reading, with final metadata verification. All other ACL shapes
+refuse this alternative; ordinary group-authorized source policy remains.
+Authentication changes no ACL or permission. See
+[decision152](adr/decision-152.md). The unreleased source implements this
+policy; installed application acceptance remains pending. The API token grammar rejects Hub-style `hf_` values. Exact opaque
 values are registered for redaction; the registry keeps only fixed-size digests
 and constant-time comparisons over three slots. Distinct class values prevent
 cross-interface ambiguity. Bearer principals retain a nonsecret class label,
@@ -1068,6 +1078,225 @@ excluded. Preserve original config/archive locks, candidate/predecessor evidence
 and no-replay outcome records. Readiness/version/absence of a mask cannot grant
 permission. Rootless unproved schedule/observer bindings deny effects; supported
 native positive paths require isolated installed proof.
+
+[Decision150](adr/decision-150.md) fixes the protected reader in the
+[host administration contract](host-administration.md). Its root foreground
+service reads only fixed selected-release/configuration/policy evidence and owns
+one API-only Unix parent/socket/binding. It has no archive payload, Hub secret,
+credential-store or IP socket access. `CAP_SETUID`/`CAP_SETGID` serve only the fixed
+read-only observer running as the indexed API account; no process attachment,
+memory access, initial-USER SYS_PTRACE/DAC_READ_SEARCH, SELinux-authorized DAC_OVERRIDE,
+peer signaling, engine socket, broad API mount or generic subprocess is added.
+The observer inspects the fixed manager/container and kernel process facts.
+Its fixed entry logs only bounded operator failure metadata: the operation,
+builtin exception classes, integer errnos and protected-module function/line
+frames, including suppressed exception contexts. Exception text, filenames,
+argv, PIDs, payloads and local variables remain excluded. Observer stderr may
+reach the daemon journal; raw engine CLI stderr remains discarded. The
+[host administration contract](host-administration.md) fixes the record bounds.
+Managed startup requests only ambient SETUID within the existing SETUID/SETGID
+ceiling, then the fixed entry clears every ambient/inheritable bit before
+threads or children. Steady root effective/permitted/bounding sets contain
+exactly SETUID/SETGID. Delegated branches retain empty ambient/inheritable sets.
+
+Only the separate fixed engine child may enter the verified service account's
+existing USER namespace. The original host observer remains in initial USER
+and the helper's masked MNT; neither enters MNT, PID or NET. The engine child
+pins pause PID/start/liveness, namespace owner and exact protected mappings,
+then retains only namespace-local DAC_READ_SEARCH and SYS_ADMIN in effective/
+permitted/bounding sets at fixed API-container exec (bits2+21, mask0x200004);
+inheritable/ambient are empty. Lock NOROOT false, NO_SETUID_FIXUP true and
+NO_CAP_AMBIENT_RAISE true (securebits0xCE). [Decision151](adr/decision-151.md)
+replaces only the earlier SYS_ADMIN-only engine rule. The read/search bit
+bypasses DAC directory read/search and regular-file read for all reachable
+inodes whose mount-transformed UID and GID both map into that USER, not merely
+one metadata path. It grants no write or regular-file execute bypass and does
+not bypass SELinux. No initial-USER DAC capability, chmod/ACL workaround or
+payload/secret label-access expansion is permitted. Its conditional file-handle
+and empty-path link consequences are bounded in the
+[host contract](host-administration.md#mapped-inode-read-and-search-amendment-2026-10-21).
+Mandatory Enforcing SELinux `hfcache_host_helper_t` confinement starts at first
+exec and is inherited by all helper children. Separately typed archive/NFS,
+Hub and credential/secret objects deny reads even through proc-root aliases.
+Direct masks alone proved insufficient in an owned nonsecret pre-entry probe;
+no actual credential alias was probed. The source/installed CIL, loaded-module
+receipt and fixed label roles are independent protected authority. No unconfined
+fallback, domain escape, policy administration or relabelling is allowed. Root
+policy/label changes require fresh installation evidence and restart; the receipt
+is not a per-exchange hash of the entire kernel policy. See the
+[mandatory isolation contract](host-administration.md#mandatory-selinux-isolation).
+
+Rootless fixed manager reads select the independently indexed account's
+existing session bus through a closed environment and
+`SYSTEMCTL_FORCE_BUS=1`. Explicit DBUS_SESSION_BUS_ADDRESS alone does not
+override systemctl's private-manager transport. Keep the fixed read-only
+argv and all indexed-manager, live process/container and original API
+socket-pidfd checks. Bus data is not independent process authority. No
+private socket exposure, broad user_tmp_t socket permission, relabel or
+ambient-address fallback is authorized by this transport selection.
+The stock `unconfined_dbusd_t` session-broker variant additionally needs only
+`unix_stream_socket connectto` and `dbus send_msg` from `hfcache_host_helper_t`.
+The broker authorizes its driver/fallback destination before method dispatch.
+Both rights are type-wide IPC authority; MAC does not limit them to a socket
+path, UID, unit, method or read-only request. The protected indexed UID/address,
+closed metadata argv, strict parser and independent manager/process/container/
+original socket-pidfd proofs retain the application boundary. No generic
+message dispatch, reverse message, service acquisition, file/ioctl, capability
+or transition permission is added. Keep archive/Hub/credential payload denials
+and require fresh policy-receipt/index/restart evidence plus installed enforcing
+acceptance. Broker journal denials may replace `USER_AVC` when its audit channel
+is unavailable; absence of audit records alone proves no message authorization.
+
+The fixed manager reads require `init_t:system status` when systemd has no
+unit-file access context, and `systemd_unit_file_t:service status` when the unit
+fragment carries that file type. These are type-wide metadata authorizations,
+not unit-name or property-name restrictions. Systemctl requests
+[all unit properties](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/shared/bus-map-properties.c#L228-L240)
+and applies its
+[selected-output filter afterward](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/systemctl/systemctl-show.c#L2256-L2265).
+The protected fixed argv and strict output parser supply the closed application
+surface. Permit no additional manager control, reload, start/stop, unit-file
+mutation, capability or domain transition. Systemd's
+[status access check](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/core/selinux-access.c#L224-L265)
+uses the unit-file context when known and its own context otherwise. A denied
+manager read must be diagnosed from `USER_AVC` as well as kernel `AVC` records;
+an unrelated ioctl or certificate lookup denial does not justify a grant.
+
+For helper mask/bind attachment, the trusted system manager separately has only
+directory `mounton` on the
+custom secret, Hub-state, archive and runtime types so it can install the fixed
+`InaccessiblePaths` masks and existing `ReadWritePaths` runtime bind before
+helper exec. This type-wide manager permission grants the helper no additional
+mount or object access. Preserve every mask/bind, denied payload type and
+existing helper runtime right; successful policy compilation alone is not proof
+that managed startup or installed isolation works.
+
+The same trusted `init_t` manager needs directory `setattr` on the custom
+Hub-state type for native `CacheDirectory` mode/ownership setup, and file `read`/`open`
+on the custom secret type for credential delivery before application exec. These
+are type-wide rights, covering all directories of that Hub-state type and all
+files of the secret type, including container-secret files; they are not restricted
+to one cache or TLS key. Protected units and root provisioning supply the fixed
+paths. The module adds neither further manager directory search/open or file getattr rights nor
+file write/create, relabel, service-control or capability permission. Existing
+target-policy manager permissions remain separate. Preserve all helper payload
+neverallows, typed cache/credential sources, masks and hardening. Original-executor
+and credential-child attribution must be established from actual inode and
+lineage evidence; unrelated helper ioctl/certificate AVCs justify no grant.
+Enforcing native startup and actual helper inode denials remain mandatory.
+
+The fixed existing rootless network-state directory additionally needs only
+`ifconfig_var_run_t` directory `getattr` during shared command initialization.
+This type-wide metadata permission adds no traversal/enumeration, directory
+mutation, file access or network authority; preserve stock path/configuration
+proof and all capability, namespace and payload restrictions.
+
+Only the application configuration leaf shares a read-only type with containers;
+private helper policy/index/key/receipt labels do not become container-readable.
+Mutable Hub home and the entire cache root use a separate helper-denied state
+type, with legitimate application state operations. Credential/container-secret
+inputs remain read-only. Validated helper opt-in preserves these Hub labels by
+omitting `:z` from only those two existing API binds; default and other-role
+arguments remain unchanged. Fixed persistent contexts and actual original/new
+leaf-label proof across operations and restart are required. No generic relabel
+or mount selector is introduced.
+
+The stock backend may stat/read image files and enumerate image directories
+carrying `container_ro_file_t`; the file grant is exactly `getattr`, `open` and
+`read`. Fixed layer metadata reload stats `overlay-layers/layers.json` before
+reading its content. This is type-wide metadata/content exposure, with no
+image-content or filename confidentiality claim. Helper image-file/directory mutation is
+compile-denied. Only the two independently labeled existing64B persistent image/
+layer locks, the fixed zero-byte `/run/user/<protected host UID>/libpod/tmp/alive.lck`,
+and fixed64B `/run/user/<protected host UID>/containers/overlay-layers/mountpoints.lock`
+use the separate engine-lock type with file read/write/lock coordination. No parent creation, replacement, relabeling or generic write
+selector follows. Fresh fixed-path inode/label checks bracket rootless reads;
+absent or wrong/default-type-recreated locks refuse until root reprovisioning.
+The type-only receipt does not detect prior otherwise-valid same-type swaps;
+current fixed-path inode/ancestor changes are checked during inspection. Both runtime
+locks require fresh independent root provisioning after reboot/recreation. The guard
+does not authenticate database `LibpodTmp` or guarantee every override refuses;
+root must establish the default runtime/configuration/database epoch, and engine
+account/state trust remains explicit. Nondefault temporary state is unsupported.
+Native-only use
+requires no Podman state. Actual credential/archive/Hub labels and role hygiene
+remain mandatory; a secret or image payload mislabeled as an allowed lock is
+outside the supported boundary. Lock-record updates are allowed metadata effects.
+
+The stock2048-lock shared-memory segment has a separate `engine_shared_memory`
+role/type, with helper and legitimate engine file getattr/open/read/write/map
+rights only. The existing ordinary single-link account-owned0600/82488B object
+must be independently labeled at its fixed UID-derived `/dev/shm` name; mapping
+ordinary lock files remains denied. The sole writable ancestor exception is exact
+root:root01777 sticky `/dev/shm`. No generic tmpfs, object creation/replacement,
+relabeling, execution or parent mutation follows. Missing, default-type or
+recreated segments, including after reboot, need fresh root provisioning after
+stock prewarming. Metadata-only O_PATH checks strictly rejoin each capture;
+command comparison binds stable inode/label/principal/mode/size/link/ancestor
+identity while excluding timestamps changed by legitimate shared mutex writes.
+The grant covers whole shared coordination state, with no contents-integrity or
+historical-inode claim and no native engine prerequisite. Default database-epoch
+and engine-account trust limits remain; denied secret/payload objects must never
+carry an allowed coordination type.
+
+The existing keeper's cross-USER metadata check may require SELinux
+`cap_userns sys_ptrace` mediation of the kernel's parent-owner authority. This
+changes no initial-USER capability bit, and the class permission itself is not
+restricted to a pathname or read operation. Fixed source still validates the
+keeper/account/maps/PID/start/namespace. A mandatory helper-to-domain
+`process ptrace` neverallow prevents a merged policy from granting attachment
+permission; enable that compile check and cover actual target task types. New
+proc-memory opens require attachment mode. Same-TGID introspection and memory
+FDs authorized elsewhere are separate cases: fixed child launches close
+unrelated FDs and the protocol refuses descriptor transfer. This does not claim
+general daemon-startup FD sanitation; verify the actual managed launch's declared
+channels. The initial-USER SYS_PTRACE prohibition, resolved
+payload inode denials, masks and capability sets remain unchanged. Actual owned
+attachment-class memory-read and archive-inode/FD denial proofs are required;
+source classification alone establishes neither.
+
+Read-mode access to `/proc/PID/environ` remains separate: the kernel then reads
+target address-space bytes without an attachment-class check. This policy does
+not promise universal process-memory secrecy. Supported API, worker, Caddy and
+helper processes must deliver authentication/Hub secrets through fixed
+credential files and keep secret values out of environments/argv. Require source
+and actual private environment-hygiene proof for all four roles, plus an owned
+public environment-sentinel observation. Never publish raw environment values;
+resolved payload inode labels do not protect a secret copied into proc-visible
+memory.
+
+The earlier capless engine proposal failed stock Podman's effective-SYS_ADMIN
+setup/storage gates; its SYS_ADMIN-only successor failed traversal of a
+mapped-subordinate-ID-owned0700 layer directory. Both reasons remain recorded
+in decisions150 and151. Before USER entry, prove with NS_GET_USERNS that the
+retained masked MNT belongs to initial USER; recheck its identity and actual MNT
+unshare, typed/zero-flag MNT entry and archive/Hub/IP denials. Repeat the applicable
+owned nonsecret inode/FD-alias and attachment-class process denials under the
+new retained bits; earlier results or kernel permission queries cannot replace
+actual proof. Exact two-bit execution observations do not prove lifetime
+exactness after arbitrary further USER transitions. No host capability outside the daemon's
+SETUID/SETGID ceiling, shipped info selector, effect opcode or unconfined
+fallback is introduced. NoNewPrivileges, seccomp, AF_UNIX and all credential/archive masks
+remain required; source/prototype success cannot replace installed acceptance.
+
+The original socket peer pidfd and credentials on every data-bearing fragment
+bind native MainPID or actual rootless container init TGID, not the Podman
+launcher, copied process attributes, an exec child or claimed username. API
+startup independently pins the protected address parent through no-follow
+`O_PATH` directory handles; directory data and listings are unnecessary. Binding
+leaves retain readable opens and all metadata/content checks. Rootless overflow
+credentials are accepted only with exact measured read-only parent projection
+and launcher attestation. Parent/index/boot drift refuses. Reserve at most eight
+unqueued exchanges and retain slots through actual worker exit; timeout cannot
+assert a stalled local read drained.
+
+The six-category policy and revision key require independent explicit operator
+provisioning. No legacy grant is migrated automatically. Basic action admission
+and queue dispatch recheck fresh proof outside application/domain locks; bearer
+and MCP behavior and original recovery handles remain unchanged. A failed
+observation neither cancels accepted work nor permits another submission. The
+helper write grammar remains denied until its guarded outcome contract is
+implemented. Source tests do not establish SELinux/namespace/container acceptance.
 
 Cards are untrusted derived presentation, separately bound to exact retained
 publication and immutable manifest/source identity. Writer-only bounded source

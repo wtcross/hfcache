@@ -66,8 +66,13 @@ WRITER_POSTS = (
     "/repairs",
     "/archive/initializations",
 )
-ROUTES = tuple(("GET", PREFIX + path) for path in READ_PATHS) + tuple(
-    ("POST", PREFIX + path) for path in (*READER_POSTS, *WRITER_POSTS)
+# A REST reader/writer has no internal Basic administrative capability. Keep
+# this inventory separate so route-complete role tests cannot silently promote it.
+ADMIN_READ_PATHS = ("/host/status",)
+ROUTES = (
+    tuple(("GET", PREFIX + path) for path in READ_PATHS)
+    + tuple(("GET", PREFIX + path) for path in ADMIN_READ_PATHS)
+    + tuple(("POST", PREFIX + path) for path in (*READER_POSTS, *WRITER_POSTS))
 )
 
 
@@ -171,7 +176,7 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
     if not docs_enabled:
         expected.remove(("GET", PREFIX + "/docs"))
     assert actual == expected
-    assert len(actual) == (39 if docs_enabled else 38)
+    assert len(actual) == (40 if docs_enabled else 39)
     documented = {
         (row[0].split(" ", 1)[0], PREFIX + row[0].split(" ", 1)[1])
         for row in matrix_rows()
@@ -271,12 +276,63 @@ def test_reader_writer_roles_cover_all_routes_without_admission_or_hub_access(co
                         refused = token == READER and path.removeprefix(PREFIX) in WRITER_POSTS
                         assert status == (403 if refused else 422), (token, path, payload)
                         assert received == (0 if refused else 1), (token, path)
+                    elif path.removeprefix(PREFIX) in ADMIN_READ_PATHS:
+                        assert status == 403, (path, payload)
+                        assert json.loads(payload)["code"] == "HFAPI002"
+                        assert received == 1  # Existing GET framing validates an empty body.
                     else:
                         assert status not in {401, 403, 405}, (path, payload)
                     assert all(value not in payload for value in (WRITER, READER, MCP))
             assert app.state.operations.list() == ()
 
     asyncio.run(exercise())
+    assert not archive.exists()
+
+
+@pytest.mark.parametrize("token", [READER, WRITER])
+@pytest.mark.parametrize(("body", "expected"), [(b"", 403), (OPAQUE.encode(), 422)])
+def test_host_status_never_promotes_rest_bearers_or_calls_the_helper(
+    configured, token, body, expected
+):
+    server, archive, lock = configured
+    calls = []
+
+    class ForbiddenHelper:
+        def status(self):
+            pytest.fail("REST bearer reached protected host helper")
+
+        async def async_status(self):
+            pytest.fail("REST bearer reached protected host helper")
+
+        def close(self, *, timeout=24):
+            calls.append(timeout)
+            return True
+
+    app = create_app(server, instance_lock_path=lock, host_helper=ForbiddenHelper())
+
+    async def exercise():
+        async with app.router.lifespan_context(app):
+            status, payload, received, _ = await raw_request(
+                app,
+                "GET",
+                PREFIX + "/host/status",
+                (f"Bearer {token}".encode(),),
+                body=body,
+            )
+            assert status == expected
+            assert json.loads(payload)["code"] == ("HFAPI002" if expected == 403 else "HFAPI006")
+            assert received == 1
+            assert all(value not in payload for value in (WRITER, READER, MCP, OPAQUE))
+            assert app.state.operations.list() == ()
+            assert app.state.pool.inflight == 0
+            assert app.state.runner.active_operation_id is None
+            original, _, _, _ = await raw_request(
+                app, "GET", PREFIX + "/version", (f"Bearer {token}".encode(),)
+            )
+            assert original == 200
+
+    asyncio.run(exercise())
+    assert len(calls) == 1
     assert not archive.exists()
 
 

@@ -28,7 +28,7 @@ controls are still under development:
 | Library | Find configured and archived models or datasets, inspect exact publications and distinguish metadata coverage from integrity evidence. |
 | Operations | Submit supported jobs and observe their original operation handles, including after a connection interruption. |
 | Maintenance | Review the scope of existing retention, repair and recovery actions before any separate Apply action. |
-| Administration | Review configuration, tags, effective permissions and supported fixed host controls. |
+| Administration | Read [protected host status and permission reasons](administration.md); configuration, tags and fixed controls retain their individual availability requirements. |
 
 Use the sidebar or **Open navigation** on a narrow screen to change workspace.
 Direct links to Library, Operations, Maintenance and Administration survive a

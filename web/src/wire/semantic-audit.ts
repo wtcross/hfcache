@@ -1,12 +1,24 @@
 /** Reviewed Python semantic source pins. Deliberately NOT rewritten by code generation. */
 export const semanticSourceHashes: Readonly<Record<string, string>> =
     Object.freeze({
+        "hfcache.host_models.HostFacts.exact_units":
+            "d280a89abfc916207efcf37147e3074df65c96f6e3a6e2f07e76e7653d9cea5d",
+        "hfcache.host_models.HostStatus.coherent_authority":
+            "c6e092f62f021e238bfd75b09ac62d36affc686020e03875f5a65fabc1d5fe4e",
+        "hfcache.host_models.HostSyncSchedule.complete_schedule":
+            "7ad9bfe057a16b68d07557eb09687ccff25179190f30bf345c5a5c53a5c22af4",
+        "hfcache.host_models._one":
+            "1d11ba34ed85c9fc4aa8dc1845e754553d678d0b508763c833b5974af09ad6e1",
+        "hfcache.host_models._version":
+            "e5ba79a6975ba18491e7ed8d72aaeb2445a34adf948a1a0c2d90dca51ccdb3cf",
+        "host.status":
+            "1948d56757a403c06863478fa0dd356ea753a37d647f3fa81c47576eb75d01e3",
         "ui.html":
             "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61",
-        // Decision148 adds restart-only verifier identity configuration. Bootstrap
-        // paths, authenticated identity, DTOs and effective permissions are unchanged.
+        // Decision150 exposes host status reads to granted administrators. Bootstrap
+        // advertises that fixed read without consulting the helper or archive.
         "ui.bootstrap":
-            "55e9ccdf08dbc98bb41e161034d5f4b72e4256691f570b57ba3226f5335e8dba",
+            "94fd8174d679cc92681ac25c6f3e4e29b3dfd406030dda58623b0e49c50c0863",
         "hfcache.ui_models._subject":
             "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44",
         "hfcache.ui_models._prefix":
@@ -34,7 +46,7 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
         "hfcache.ui_models.UiAdminPermission._permission":
             "a7120e9d18e2d04e4c902a4b4264b9be90327769397e99d8825a40b1259120dd",
         "api.problem.classification":
-            "395578ca8279c5b57a2eebfdb292bef77f46d382f081218d1f7aecef23b062f6",
+            "309cd7071a070ee8ec6cc19d1ca2e22c0f47019bdc8d3526d20e27615d78eed4",
         "catalog.facet":
             "f4a756a1d6b5b777c4d4397ac7d3fe01a565968f307ed1305b69059d74774417",
         "catalog.publication":

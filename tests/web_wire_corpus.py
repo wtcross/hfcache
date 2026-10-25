@@ -430,6 +430,9 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
         elif isinstance(value, (list, tuple)):
             for item in value:
                 model(item)
+        elif isinstance(value, dict):
+            for item in value.values():
+                model(item)
 
     for factory in (
         examples.manifest,
@@ -443,6 +446,7 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
         examples.verification_catalog,
         examples.ui_asset_manifest,
         examples.ui_bootstrap,
+        examples.host_status,
     ):
         model(factory())
     model(PrunedRevision(commit_sha=examples.OTHER_SHA, logical_bytes=0, publication_generation=1))
@@ -598,6 +602,7 @@ def covered_route_modes() -> set[tuple[str, str, str]]:
         "version",
         "capabilities",
         "health",
+        "host_status",
         "inspection",
         "status",
         "repositories",
@@ -666,6 +671,7 @@ def _original_models() -> dict[str, type[BaseModel]]:
         "hfcache.reporting",
         "hfcache.wire_models",
         "hfcache.ui_models",
+        "hfcache.host_models",
     ):
         for value in vars(import_module(module)).values():
             if isinstance(value, type) and issubclass(value, BaseModel):

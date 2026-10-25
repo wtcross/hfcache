@@ -5,6 +5,14 @@
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-20.
 
+## 2026-10-21 protected-reader amendment
+
+[Decision150](decision-150.md) implements only protected host/config-base reads;
+future configuration writes must retain exact guarded confirmation and durable
+uncertainty from this record. No collector, live plugin or installed confirmation
+path is removed. Original candidates, backups and operation handles remain
+evidence; helper availability never proves an uncertain apply did not occur.
+
 ## Context and decision
 
 An actual disposable Cockpit installation wrote and validated its candidate,

@@ -61,10 +61,10 @@ def test_actual_bootstrap_navigation_alias_assets_and_exact_headers(prefix):
                 assert payload["config_fingerprint"] is None
                 assert payload["paths"]["effective_prefix"] == prefix
                 assert payload["paths"]["ui_base"] == uri_path(prefix + "/ui/")
-                assert all(
-                    not item["effective"] and item["reason"] == "feature_unavailable"
-                    for item in payload["user"]["admin_permissions"]
-                )
+                for item in payload["user"]["admin_permissions"]:
+                    available = item["capability"] == "host-read"
+                    assert item["effective"] is available
+                    assert item["reason"] == ("allowed" if available else "feature_unavailable")
                 assert not profile.policy.root.exists()
                 for path in (
                     "/ui/",

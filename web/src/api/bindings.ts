@@ -38,6 +38,7 @@ export const contextSemanticIds: readonly string[] = [
     "catalog.facet",
     "catalog.publication",
     "catalog.response",
+    "host.status",
     "operation.events",
     "operation.identity",
     "operation.result",
@@ -71,6 +72,7 @@ const apiSafety = new Set([
     "HFAPI019",
     "HFAPI020",
     "HFAPI021",
+    "HFAPI022",
 ]);
 export function validateApiProblem(problem: ClientProblem): void {
     // Families remain extensible; an individual known-code enum would reject valid future diagnostics.
@@ -118,6 +120,15 @@ export function applyBindings(
     for (const id of ids) {
         const payload = response.envelope.data;
         switch (id) {
+            case "host.status": {
+                if (response.envelope.exit_code !== 0) break;
+                const binding = payload.binding;
+                check(
+                    binding === null ||
+                        record(binding).archive_id === response.archive_id,
+                );
+                break;
+            }
             case "catalog.response":
             case "catalog.facet":
             case "catalog.publication":

@@ -5,6 +5,13 @@
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-20.
 
+## 2026-10-21 protected-reader amendment
+
+[Decision150](decision-150.md) uses bounded binary Unix framing only for the new
+independent helper. It does not change or retire this record's repaired Cockpit
+text bridge, original candidate/configuration transport or historical evidence.
+Future helper writes retain guarded exact-byte and uncertainty requirements.
+
 ## Context and decision
 
 Independent read-only native Cockpit sessions reproduce a bridge interruption:

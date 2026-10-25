@@ -70,12 +70,34 @@ def parameter_values(
 def test_manifest_has_exactly_all_36_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
     assert len(PARITY) == len(PARITY_REFERENCE) == 36
-    assert len(REFERENCE) == len(rows) == 44
+    assert len(REFERENCE) == len(rows) == 45
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
     assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
     assert rows == REFERENCE
-    assert len({row[:2] for row in rows}) == 44
+    assert len({row[:2] for row in rows}) == 45
     assert all(len(row) == 9 for row in rows)
+
+
+def test_host_status_has_separate_basic_authority_without_expanding_cli_parity():
+    row = next(row for row in matrix_rows() if row[0] == "GET /host/status")
+    assert row == (
+        "GET /host/status",
+        "default",
+        "browser / HTTP",
+        "internal host-read",
+        "synchronous protected helper read",
+        "none",
+        "no",
+        "none",
+        "none",
+    )
+    assert all(row[:2] not in routes for routes in PARITY_REFERENCE.values())
+    evidence_function(
+        Evidence(
+            "test_rest_security_gate",
+            "test_host_status_never_promotes_rest_bearers_or_calls_the_helper",
+        )
+    )
 
 
 @pytest.mark.parametrize("mode", PARITY, ids=lambda mode: mode.cli_mode)
