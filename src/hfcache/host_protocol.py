@@ -16,7 +16,7 @@ import select
 import socket
 import struct
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -34,6 +34,7 @@ INSPECTION_SECONDS = 15.0
 WRITE_SECONDS = 2.0
 CLIENT_SECONDS = 22.0
 MAX_EXCHANGES = 8
+MAX_MANAGED_EDITS = 256
 SO_PEERPIDFD = 77
 SCM_PIDFD = 4
 _HEADER = struct.Struct("!I")
@@ -60,10 +61,11 @@ _REASONS = frozenset(
         "facts-unavailable",
         "operation-denied",
         "config-unavailable",
+        "config-conflict",
         "internal-unavailable",
     }
 )
-_OPERATIONS = frozenset({"status", "config-read"})
+_OPERATIONS = frozenset({"status", "config-read", "config-prepare"})
 # Linux limits one SCM_RIGHTS message to253 FDs. Leave room for credentials,
 # all such FDs and an unexpected pidfd; MSG_CTRUNC still always refuses.
 _ANCILLARY_BYTES = socket.CMSG_SPACE(_CREDENTIALS.size) + socket.CMSG_SPACE(254 * 4)
@@ -211,6 +213,7 @@ def encode_object(value: dict[str, object]) -> bytes:
 class HostRequest:
     request_id: str
     operation: str
+    body: dict[str, object] = field(default_factory=dict)
 
     @classmethod
     def parse(cls, value: dict[str, object]) -> HostRequest:
@@ -219,15 +222,26 @@ class HostRequest:
         request_id, operation = value["request_id"], value["operation"]
         _need(type(request_id) is str and _HEX32.fullmatch(request_id) is not None)
         _need(type(operation) is str and operation in _OPERATIONS)
-        _need(type(value["body"]) is dict and not value["body"])
-        return cls(cast("str", request_id), cast("str", operation))
+        body = value["body"]
+        _need(type(body) is dict)
+        body = cast("dict[str, object]", body)
+        if operation == "config-prepare":
+            _need(set(body) == {"base_revision", "edits"})
+            _need(
+                type(body["base_revision"]) is str
+                and re.fullmatch(r"[0-9a-f]{64}", body["base_revision"])
+            )
+            _need(type(body["edits"]) is list and len(body["edits"]) <= MAX_MANAGED_EDITS)
+        else:
+            _need(not body)
+        return cls(cast("str", request_id), cast("str", operation), cast("dict[str, object]", body))
 
     def wire(self) -> dict[str, object]:
         result: dict[str, object] = {
             "schema_version": 1,
             "request_id": self.request_id,
             "operation": self.operation,
-            "body": {},
+            "body": self.body,
         }
         self.parse(result)
         return result

@@ -1283,8 +1283,9 @@ number alone does not establish compatibility.
 
 ## 18. Web UI and administration design records
 
-**RepositoryCard §18.1 and private helper §18.2 remain accepted design. Static
-manifest/bootstrap §18.3 and administrator record §18.4 are implemented in
+**RepositoryCard §18.1 and private helper write outcomes remain accepted design.
+Protected status/read-only reconstruction §18.2, static manifest/bootstrap §18.3,
+administrator record §18.4 and managed projections §18.5 are implemented in
 unreleased source.** Current archive durable formats above remain unchanged;
 source implementation is not installed compatibility or release acceptance.
 The independent card/helper/static/bootstrap
@@ -1341,14 +1342,24 @@ payload or HTML representation is exposed. See [discovery](discovery.md#reposito
 
 ### 18.2 Private helper protocol and outcomes
 
-Protected `status` and config-base `config-read` are implemented in unreleased
-source. Other opcodes below remain reserved and denied. Protocol1 exact framing,
+Protected `status`, editable `config-read` and read-only `config-prepare` are
+implemented in unreleased source. Other opcodes remain reserved and denied. Protocol1 exact framing,
 kernel credentials/original peer pidfd, protected address binding, independent
 deployment/policy schemas and inspection budgets are specified in the
 [host contract](host-administration.md). The revision key is a separately
 provisioned fixed32-byte root-owned0600 file, never created by a read. Current
-`config-read` returns only `schema_version`, configured `archive_id` and opaque
-`base_revision`; it exposes neither raw configuration nor editable fields.
+`config-read` returns the strict nonsecret editable projection described below
+with its configured `archive_id` and opaque full-byte `base_revision`.
+`config-prepare` is also implemented as read-only reconstruction: its body is
+exactly `{base_revision,edits}`; its private response is `{schema_version,
+archive_id,base_revision,candidate_revision,candidate,editable,required_selectors}`.
+Candidate text stays private to the API/helper exchange and never enters public
+responses or generic receipts. `candidate_revision` is a domain-separated HMAC
+over the exact base identity and reconstructed bytes. Stale bases yield the closed
+`config-conflict` denial; unknown/mixed/coercive edits refuse. Other opcodes remain
+reserved. Non-persisting preparation uses pinned capture and bracketed exact
+revalidation; persistent staging/application retains the original configuration
+lock. See [decision153](adr/decision-153.md).
 
 Protocol schema 1 is length-prefixed UTF-8 JSON, at most 2 MiB per encoded frame,
 one request per connection, finite deadline and no descriptor passing. Request
@@ -1593,3 +1604,24 @@ masked paths. See the [mandatory SELinux contract](host-administration.md#mandat
 for exact constants, bounds and required installed evidence. These are new
 helper-only records, with no change to existing archive/operation formats or
 public REST/MCP credential schemas.
+
+### 18.5 Managed configuration projections schema 1
+
+These public DTOs are independent of legacy literal/installed validation and plan
+payloads. Every field is required, versions are integer1, unknown/coercive fields
+refuse, and identities use existing archive/selector grammars.
+
+| Projection | Required fields |
+| --- | --- |
+| Configuration read | `schema_version`, `archive_id`, opaque `base_revision`, `editable`, `editable_fields`, `protected_fields` |
+| Managed validation | `schema_version`, `archive_id`, opaque `base_revision`, opaque `candidate_revision`, exact `required_selectors`, `valid=true` |
+| Managed assessment | `schema_version`, `archive_id`, opaque `base_revision`, opaque `candidate_revision`, exact `required_selectors`, `complete`, nullable `sizing` |
+
+Editable configuration has eleven settings under the existing storage/sync/
+verification/repair tables plus complete repository configurations; protected
+fields never appear as replacement placeholders. Fixed field metadata has safe
+names/descriptions only. Empty scope requires null sizing. Nonempty complete
+assessment requires exactly all derived enabled repositories, available upstream
+state, resolved immutable SHAs and all numeric sizing facts. Partial/refused sizing
+cannot be a complete preview. Public projections contain no candidate text or
+secret-dependent full-document hash. See [managed API](api.md#managed-configuration-read-and-assessment-responses).

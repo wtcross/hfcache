@@ -161,7 +161,7 @@ def configure(selected, profile, monkeypatch, tmp_path, *, deployment=None):
         (
             'schema_version = 1\n[storage]\narchive_root = "/srv/hfcache"\n'
             f'archive_id = "{ARCHIVE_ID}"\n'
-            '[hub]\ntoken = "unit-secret-never-export"\n'
+            '# unit-secret-never-export\n[hub]\ncredential_name = "unit-hidden-source"\n'
         ).encode(),
         0o640,
     )
@@ -351,15 +351,23 @@ def test_shared_configuration_does_not_share_private_helper_authority_label(
         assert (private, "hfcache_host_helper_application_conf_t") not in captured
 
 
-def test_config_read_is_only_archive_and_opaque_revision_with_same_budget(native):
+def test_config_read_is_editable_and_opaque_revision_from_same_capture(native):
     snapshot = policy.inspect_authority()
     before = snapshot.budget.files
     result = policy.read_config_base(snapshot)
-    assert result == {
-        "schema_version": 1,
-        "archive_id": ARCHIVE_ID,
-        "base_revision": snapshot.base_revision,
+    assert set(result) == {
+        "schema_version",
+        "archive_id",
+        "base_revision",
+        "editable",
+        "editable_fields",
+        "protected_fields",
     }
+    assert result["schema_version"] == 1
+    assert result["archive_id"] == ARCHIVE_ID
+    assert result["base_revision"] == snapshot.base_revision
+    assert result["editable_fields"] == list(policy.EDITABLE_FIELDS)
+    assert "unit-hidden-source" not in json.dumps(result)
     assert len(result["base_revision"]) == 64
     assert result["base_revision"] != digest(native.config.read_bytes())
     assert snapshot.budget.files > before

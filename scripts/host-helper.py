@@ -485,6 +485,8 @@ class HostDaemon:
                     return authority.status()
                 if request.operation == "config-read":
                     return self.policy.read_config_base(authority)
+                if request.operation == "config-prepare":
+                    return self.policy.prepare_configuration(authority, request.body)
                 raise self.protocol.HostProtocolError(_OPERATION_DENIED)  # noqa: TRY301 - closed dispatch boundary
 
             with connection:
@@ -492,9 +494,13 @@ class HostDaemon:
                     try:
                         body = exchange.dispatch(dispatch)
                     except self.policy.InspectionError as error:
-                        if error.reason != _OPERATION_DENIED:
+                        if error.reason not in {
+                            _OPERATION_DENIED,
+                            "config-conflict",
+                            "invalid-request",
+                        }:
                             raise
-                        exchange.respond(outcome="denied", body={}, reason=_OPERATION_DENIED)
+                        exchange.respond(outcome="denied", body={}, reason=error.reason)
                     else:
                         exchange.respond(outcome="ok", body=body)
         except Exception:  # noqa: BLE001 - refused/unknown input closes; never echo external errors

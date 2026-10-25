@@ -32,9 +32,11 @@ requires exact response identity and final EOF and never retries automatically.
 
 Request keys are exactly `schema_version`, `request_id`, `operation`, `body`.
 Version is integer1, never a boolean; request_id is32 lowercase hexadecimal
-characters. Only `status` and `config-read` are implemented, both with exact
-empty-object body. Unknown keys, versions and operations refuse. The reserved
-future operations `config-prepare`, `config-apply`, `outcome-read`,
+characters. Implemented `status` and `config-read` have exact empty-object body.
+Read-only `config-prepare` accepts exactly `{base_revision,edits}`, using the
+closed managed edit grammar and bounds in the [API contract](api.md#managed-configuration-form).
+Unknown keys, versions and operations refuse. The reserved future operations
+`config-apply`, `outcome-read`,
 `schedule-validate`, `schedule-change`, `observer-stop`, `journal-read` confer
 no authority and remain denied. No descriptor passing is supported.
 
@@ -44,7 +46,7 @@ Response keys are exactly `schema_version`, `request_id`, `operation`, `outcome`
 reason. Other outcomes carry `{}` and a fixed reason from `peer-refused`,
 `invalid-request`, `busy`, `timeout`, `policy-missing`, `policy-invalid`,
 `deployment-unverified`, `facts-unavailable`, `operation-denied`,
-`config-unavailable`, `internal-unavailable`. Malformed unauthenticated input
+`config-unavailable`, `config-conflict`, `internal-unavailable`. Malformed unauthenticated input
 may be closed without a response; never echo it or raw exceptions.
 
 Decoding rejects duplicate keys, nonfinite numbers, invalid Unicode, nonobject
@@ -771,6 +773,19 @@ revalidation. A known denial returns `operation-denied`, never revision data.
 Return only approved editable fields and opaque exact-byte binding, with no Hub,
 listener, secret, credential-path or arbitrary document projection. No read
 creates a configuration lock, candidate, backup or outcome record.
+
+Read-only managed preparation compares the opaque full-byte base against the
+same captured configuration, preserves protected fields and reconstructs exact
+canonical TOML privately. It creates no persistent staging/outcome and uses
+bracketed descriptor/byte/metadata revalidation without creating or taking a
+configuration lock. The original lock remains mandatory for later persistent
+staging and installation. Unknown removal targets, duplicate touches, unsupported
+settings, coercions and byte/frame expansion refuse. Candidate text is at most1MiB;
+the complete private reply is independently at most2MiB. The API alone receives
+this text for independent strict validation; public results contain only an opaque
+candidate revision, safe editable projection and server-derived required scope.
+Neither revision is a secret-dependent raw configuration hash. See
+[decision153](adr/decision-153.md). All other host/installation opcodes stay denied.
 
 A current-boot root-owned runtime binding in the fixed helper parent records
 its boot/generation, deployment/policy hashes, parent dev/inode/owner/group/mode

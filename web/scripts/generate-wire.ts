@@ -19,6 +19,7 @@ for (const [relative, exportName] of [
     ["ui-semantics.ts", "uiSemanticIds"],
     ["ui-semantics.ts", "uiContextSemanticIds"],
     ["host-semantics.ts", "hostSemanticIds"],
+    ["config-semantics.ts", "configSemanticIds"],
 ]) {
     if (relative === undefined || exportName === undefined)
         throw new Error("Missing semantic registry.");

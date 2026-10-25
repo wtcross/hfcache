@@ -90,6 +90,7 @@ export function validateApiProblem(problem: ClientProblem): void {
 }
 
 export interface RequestBinding {
+    readonly managedBaseRevision?: string;
     readonly repositoryType?: "model" | "dataset";
     readonly repositoryId?: string;
     readonly commitSha?: string;

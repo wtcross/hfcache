@@ -30,6 +30,7 @@ from hfcache.host_protocol import (
     PeerCredentials,
     client_exchange,
     decode_object,
+    encode_object,
     remaining,
 )
 
@@ -53,6 +54,12 @@ _INVALID = "invalid-request"
 _BINDING_MODE = 0o440
 _SOCKET_MODE = 0o660
 _DIRECTORY_MODE = 0o750
+
+
+def _managed_body(body: dict[str, object]) -> dict[str, object]:
+    """Freeze bounded caller data before reserving or queueing a worker."""
+    request = HostRequest("0" * 32, "config-prepare", body)
+    return HostRequest.parse(decode_object(encode_object(request.wire()))).body
 
 
 def _need(condition: object) -> None:
@@ -407,10 +414,12 @@ class HostHelperClient:
             self._jobs.discard(job)
             self._condition.notify_all()
 
-    def _execute(self, job: _Job, operation: str) -> dict[str, object]:
+    def _execute(
+        self, job: _Job, operation: str, body: dict[str, object] | None = None
+    ) -> dict[str, object]:
         peer: LivePeer | None = None
         try:
-            request = HostRequest(secrets.token_hex(16), operation)
+            request = HostRequest(secrets.token_hex(16), operation, body or {})
             connection, peer, credentials = self.binding.connect(
                 deadline=job.deadline, own_socket=job.own_socket
             )
@@ -439,10 +448,16 @@ class HostHelperClient:
     def config_read(self) -> dict[str, object]:
         return self._execute(self._reserve(), "config-read")
 
-    async def _async(self, operation: str) -> dict[str, object]:
+    def config_prepare(self, body: dict[str, object]) -> dict[str, object]:
+        incoming = _managed_body(body)
+        return self._execute(self._reserve(), "config-prepare", incoming)
+
+    async def _async(
+        self, operation: str, body: dict[str, object] | None = None
+    ) -> dict[str, object]:
         job = self._reserve()
         try:
-            submitted = self._executor.submit(self._execute, job, operation)
+            submitted = self._executor.submit(self._execute, job, operation, body)
         except RuntimeError:
             self._release(job)
             raise HostProtocolError(_UNAVAILABLE) from None
@@ -463,6 +478,9 @@ class HostHelperClient:
 
     async def async_config_read(self) -> dict[str, object]:
         return await self._async("config-read")
+
+    async def async_config_prepare(self, body: dict[str, object]) -> dict[str, object]:
+        return await self._async("config-prepare", _managed_body(body))
 
     def close(self, *, timeout: float = 24.0) -> bool:
         """Stop admission, close owned sockets, and report actual joined workers."""

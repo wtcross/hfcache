@@ -25,16 +25,19 @@ from pydantic import ValidationError
 from starlette.exceptions import HTTPException
 
 from hfcache.api.auth import (
+    AdminCapability,
     AuthenticationMethod,
     Capability,
     CredentialRegistry,
     load_credentials,
+    require_admin_capability,
     require_capability,
 )
 from hfcache.api.basic import load_basic_provider
 from hfcache.api.catalog import install_catalog_routes
 from hfcache.api.catalog_refresh import install_catalog_refresh_route
 from hfcache.api.commands import install_command_routes
+from hfcache.api.configuration import install_configuration_route
 from hfcache.api.host_status import HostHelper, install_host_status_route, open_host_helper
 from hfcache.api.lifecycle import MetadataPool, instance_lock
 from hfcache.api.maintenance import install_maintenance_routes
@@ -465,6 +468,10 @@ class Boundary:
             return None
         submitted = _parse_object(body)
         scope["state"]["json_body"] = submitted
+        if "managed" in submitted and path in {PREFIX + "/plans", PREFIX + "/config/validate"}:
+            # Classify the closed request form before expensive typed validation,
+            # preserving old installed/literal authority and error ordering.
+            require_admin_capability(principal, AdminCapability.CONFIG_WRITE)
         if "candidate" in submitted or (
             path == PREFIX + "/diagnostics" and submitted.get("read_only") is not True
         ):
@@ -1160,6 +1167,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
 
     install_catalog_routes(app, execute_catalog)
     install_host_status_route(app, render)
+    install_configuration_route(app, render)
 
     @app.get(PREFIX + "/version", response_model=ReadResponse)
     async def version(request: Request) -> Response:

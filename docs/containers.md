@@ -659,3 +659,18 @@ closes the listener connection limitation for 0.2.1; rollback to 0.2.0 retains i
 The independent guard, NAS read-only mount and writer masks remain. No general
 NAS workload, NFS interruption or other-host acceptance follows from these checks.
 See [deployment status](deployment-status.md) for outstanding acceptance.
+
+### Managed configuration reads and previews
+
+The API-only helper connection also supports editable configuration reads and
+read-only managed reconstruction. No additional host mount, manager/engine
+socket, capability, writable root or container environment authority is needed.
+Caddy and worker remain excluded. Private candidate text is independently bounded
+and never becomes a public operation payload. The existing shared API/UI image
+continues to use pinned UBI10 micro without a frontend runtime.
+
+Managed previews preserve the configured Hub/credential authority and use existing
+API networking only when the helper-derived repository scope is nonempty and
+explicit Hub permission is freshly proved. An empty scope contacts no Hub.
+Preparation and sizing cannot install configuration. See the [API contract](api.md#managed-configuration-read-and-assessment-responses)
+and [configuration guide](web-ui/configuration-and-tags.md).

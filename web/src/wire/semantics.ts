@@ -13,6 +13,7 @@ import {
 } from "./manifest-semantics";
 import { contextSemanticIds } from "../api/bindings";
 import { applyHostSemantic, hostSemanticIds } from "./host-semantics";
+import { applyConfigSemantic, configSemanticIds } from "./config-semantics";
 import { pythonIsPrintable } from "./unicode";
 import {
     applyUiSemantic,
@@ -261,9 +262,14 @@ export const implementedSemanticIds: readonly string[] = [
     ...uiSemanticIds,
     ...uiContextSemanticIds,
     ...hostSemanticIds,
+    ...configSemanticIds,
 ];
 
 export function applySemantic(id: string, value: unknown): void {
+    if (configSemanticIds.includes(id)) {
+        applyConfigSemantic(id, value);
+        return;
+    }
     if (hostSemanticIds.includes(id)) {
         applyHostSemantic(id, value);
         return;
@@ -520,9 +526,15 @@ export function applySemantic(id: string, value: unknown): void {
             ordered(strings(record(value).selectors ?? []), true);
             return;
         case "hfcache.api.command_models.PlanSubmission.explicit_candidate":
-        case "hfcache.api.command_models.ValidationSubmission.explicit_candidate":
-            check(record(value).candidate !== null);
+        case "hfcache.api.command_models.ValidationSubmission.explicit_candidate": {
+            const row = record(value);
+            check(row.candidate !== null && row.managed !== null);
+            if (row.managed !== undefined) {
+                check(row.candidate === undefined);
+                check(list(row.selectors ?? []).length === 0);
+            }
             return;
+        }
         case "hfcache.api.command_models.VerificationSubmission.scope": {
             const data = record(value),
                 revision = data.revision ?? null,

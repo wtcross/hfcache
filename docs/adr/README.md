@@ -21,6 +21,7 @@ provide technical evidence, not a claim of installed-host acceptance.
 
 | Area | Start here | Related implementation decisions |
 | --- | --- | --- |
+| Managed configuration | [Configuration read and preview](../api.md#managed-configuration-read-and-assessment-responses) | [Private bounded reconstruction from exact installed bytes](decision-153.md), [Guarded helper application](decision-141.md) |
 | Protected credential ACLs | [Server credential sources](../server.md#credentials-and-capabilities) | [Validate the exact read-only service ACL on a protected credential](decision-152.md) |
 | Complete snapshots and observations | [AD-01 — Archive complete snapshots at resolved immutable commits](ad-01.md), [AD-02 — Begin with the latest observed revision without backfill](ad-02.md), [AD-03 — Retain revisions observed by scheduled runs](ad-03.md) | [The repository-relative path grammar is published](decision-014.md), [Collision folding is deliberately stricter than any one filesystem](decision-015.md) |
 | Storage, publication, and hashing | [AD-09 — Keep the canonical Hub download cache on the archive dataset](ad-09.md), [AD-10 — Publish immutable ordinary-file trees for consumers](ad-10.md), [AD-11 — Use hardlink publication by default and require explicit copy mode](ad-11.md), [AD-18 — Prove archived bytes by local SHA-256 and exact object identity](ad-18.md) | [A reference's paths are relative to `published/`, every other artifact's are archive-relative](decision-013.md), [A hardlink carries same-operation content evidence only with exact object identity](decision-093.md) |
@@ -216,6 +217,7 @@ status and current-contract links before applying a historical choice.
 | 147 | [Serve a bounded authenticated UI artifact with an independent bootstrap](decision-147.md) — accepted |
 | 148 | [Configure socket ownership separately from inherited listener credentials](decision-148.md) |
 | 149 | [Finish owned foreground socket cleanup before replaying default SIGTERM](decision-149.md) |
-| 150 | [Authenticate a fixed host reader independently of the online API](decision-150.md) — fixed unit-link metadata checks; amended by151 only for engine capability retention; installed conformance pending |
-| 151 | [Retain mapped-inode read and search only inside the verified engine USER namespace](decision-151.md) — accepted design; implementation and installed conformance pending |
-| 152 | [Validate the exact read-only service ACL on a protected credential](decision-152.md) — source implemented; installed application acceptance pending |
+| 150 | [Authenticate a fixed host reader independently of the online API](decision-150.md) — fixed protected reader; owned native/rootless conformance; amended by151 for engine capability retention and153 for managed reads |
+| 151 | [Retain mapped-inode read and search only inside the verified engine USER namespace](decision-151.md) — implemented; owned native/rootless conformance |
+| 152 | [Validate the exact read-only service ACL on a protected credential](decision-152.md) — implemented; owned native/rootless conformance |
+| 153 | [Reconstruct bounded managed configuration privately from exact installed bytes](decision-153.md) — accepted design |

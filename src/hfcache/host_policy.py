@@ -1653,11 +1653,416 @@ def revalidate(snapshot: AuthoritySnapshot) -> None:
 
 
 def read_config_base(snapshot: AuthoritySnapshot) -> dict[str, Any]:
-    """006 returns identity/revision only; editable projection belongs to007."""
+    """CONFIG-01: projection and opaque revision describe the same private capture."""
     revalidate(snapshot)
     _need(snapshot.status()["permissions"]["configuration"], "operation-denied")
-    return {
+    document = parse_configuration(snapshot._inspection.config_body)  # noqa: SLF001 - same captured bytes
+    result = {
         "schema_version": 1,
         "archive_id": snapshot.archive_id,
         "base_revision": snapshot.base_revision,
+        "editable": editable_configuration(document),
+        "editable_fields": list(EDITABLE_FIELDS),
+        "protected_fields": [
+            {"field": name, "description": description} for name, description in PROTECTED_FIELDS
+        ],
     }
+    _configuration_reply_limit(result, "config-read")
+    revalidate(snapshot)
+    return result
+
+
+# Decision153 intentionally keeps this closed schema in the stdlib bootstrap.
+# Parity tests compare its grammar/defaults with the application models.
+MAX_CONFIGURATION_BYTES = 1048576
+MAX_CONFIGURATION_EDITS = 256
+MAX_CONFIGURATION_REPLY = 2 * 1048576
+_CONFIG_SEGMENT_LENGTH = 96
+_CONFIG_ID_SEGMENTS = 2
+_CONFIG_ID_MINIMUM = 3
+_CONFIG_ID_MAXIMUM = 193
+_CONFIG_REVISION_LENGTH = 255
+_CONFIG_TAGS = 64
+_CONFIG_TAG_LENGTH = 128
+_SURROGATE_MINIMUM = 0xD800
+_SURROGATE_MAXIMUM = 0xDFFF
+EDITABLE_FIELDS = (
+    "storage.publication_mode",
+    "storage.minimum_free_space_gib",
+    "storage.minimum_free_space_percent",
+    "storage.maximum_revisions",
+    "sync.max_workers",
+    "sync.lock_wait_seconds",
+    "sync.continue_on_repository_error",
+    "sync.dependency_policy",
+    "sync.stale_staging_age_hours",
+    "verification.lock_wait_seconds",
+    "repair.retired_instance_grace_hours",
+    "repositories",
+)
+PROTECTED_FIELDS = (
+    ("storage.archive_root", "Archive root is fixed by installed deployment authority."),
+    ("storage.archive_id", "Archive identity is fixed by installed deployment authority."),
+    ("hub", "Hub endpoint and credential authority are preserved privately."),
+    ("verification.algorithm", "The verification algorithm is fixed."),
+    ("verification.hash_new_content", "Hashing new content is required."),
+    ("server", "Server policy and credentials are managed outside archive configuration."),
+)
+_CONFIG_DEFAULTS = {
+    "hub": {
+        "endpoint": "https://huggingface.co",
+        "expected_account": "",
+        "token_mode": "optional",
+        "credential_name": "hf-token",
+    },
+    "storage": {
+        "archive_root": None,
+        "archive_id": None,
+        "publication_mode": "hardlink",
+        "minimum_free_space_gib": 100,
+        "minimum_free_space_percent": 10,
+        "maximum_revisions": 3,
+    },
+    "sync": {
+        "max_workers": 4,
+        "lock_wait_seconds": 3600,
+        "continue_on_repository_error": True,
+        "dependency_policy": "warn",
+        "stale_staging_age_hours": 24,
+    },
+    "verification": {"algorithm": "sha256", "hash_new_content": True, "lock_wait_seconds": 86400},
+    "repair": {"retired_instance_grace_hours": 168},
+}
+_CONFIG_REPOSITORY_DEFAULTS = {
+    "id": None,
+    "type": None,
+    "revision": "main",
+    "enabled": True,
+    "tags": [],
+    "declared_dependencies": [],
+}
+_ASCII_LOWER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
+_CONFIGURATION_INVALID = "invalid-request"
+
+
+def _config_need(value: object) -> None:
+    _need(value, _CONFIGURATION_INVALID)
+
+
+def _configuration_table(value: object, defaults: dict[str, Any]) -> dict[str, Any]:
+    _config_need(type(value) is dict and set(value) <= set(defaults))  # type: ignore[arg-type]
+    return {**defaults, **value}  # type: ignore[dict-item]
+
+
+def _config_integer(value: object, lower: int, upper: int) -> None:
+    _config_need(type(value) is int and lower <= value <= upper)  # type: ignore[operator]
+
+
+def _config_choice(value: object, choices: tuple[str, ...]) -> None:
+    _config_need(type(value) is str and value in choices)
+
+
+def _configuration_repository_id(value: object) -> str:
+    _config_need(type(value) is str and _CONFIG_ID_MINIMUM <= len(value) <= _CONFIG_ID_MAXIMUM)  # type: ignore[arg-type]
+    segments = value.split("/")  # type: ignore[union-attr]
+    _config_need(len(segments) == _CONFIG_ID_SEGMENTS)
+    _config_need(
+        all(
+            1 <= len(part) <= _CONFIG_SEGMENT_LENGTH
+            and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", part)
+            for part in segments
+        )
+    )
+    return value  # type: ignore[return-value]
+
+
+def _configuration_revision(value: object) -> None:
+    _config_need(type(value) is str and 1 <= len(value) <= _CONFIG_REVISION_LENGTH)  # type: ignore[arg-type]
+    _config_need(re.fullmatch(r"[A-Za-z0-9._/-]+", value) is not None)  # type: ignore[arg-type]
+    _config_need(not value.startswith(("-", "/")) and not value.endswith(("/", ".lock")))  # type: ignore[union-attr]
+    _config_need("//" not in value and ".." not in value)  # type: ignore[operator]
+    _config_need(re.fullmatch(r"[0-9a-fA-F]{4,39}", value) is None)  # type: ignore[arg-type]
+    if re.fullmatch(r"[0-9a-fA-F]{40}", value):  # type: ignore[arg-type]
+        _config_need(re.fullmatch(r"[0-9a-f]{40}", value) is not None)  # type: ignore[arg-type]
+
+
+def _configuration_repository(value: object) -> dict[str, Any]:
+    row = _configuration_table(value, _CONFIG_REPOSITORY_DEFAULTS)
+    _configuration_repository_id(row["id"])
+    _config_choice(row["type"], ("model", "dataset"))
+    _configuration_revision(row["revision"])
+    _config_need(type(row["enabled"]) is bool)
+    tags = row["tags"]
+    _config_need(type(tags) is list and len(tags) <= _CONFIG_TAGS)
+    normalized = set()
+    for raw in tags:
+        _config_need(type(raw) is str and len(raw) <= _CONFIG_TAG_LENGTH)
+        tag = raw.strip(" ").translate(_ASCII_LOWER)
+        _config_need(re.fullmatch(r"[a-z0-9][a-z0-9._:/-]{0,63}", tag) is not None)
+        normalized.add(tag)
+    row["tags"] = sorted(normalized)
+    dependencies = row["declared_dependencies"]
+    _config_need(type(dependencies) is list)
+    row["declared_dependencies"] = [_configuration_repository_id(item) for item in dependencies]
+    _config_need(len(set(row["declared_dependencies"])) == len(dependencies))
+    return row
+
+
+def _configuration_values(document: dict[str, Any]) -> None:
+    hub, storage = document["hub"], document["storage"]
+    endpoint = hub["endpoint"]
+    _config_need(type(endpoint) is str and endpoint.startswith("https://"))
+    remainder = endpoint.removeprefix("https://")
+    _config_need(
+        remainder and not remainder.endswith("/") and "/" not in remainder and "?" not in remainder
+    )
+    account = hub["expected_account"]
+    _config_need(
+        type(account) is str
+        and (not account or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,95}", account))
+    )
+    _config_choice(hub["token_mode"], ("disabled", "optional", "required"))
+    credential = hub["credential_name"]
+    _config_need(
+        type(credential) is str
+        and credential not in {".", ".."}
+        and re.fullmatch(r"[A-Za-z0-9._-]{1,64}", credential)
+    )
+    root = storage["archive_root"]
+    _config_need(type(root) is str)
+    path = PurePosixPath(root)
+    _config_need(path.is_absolute() and str(path) == root and not ({".", ".."} & set(path.parts)))
+    archive = storage["archive_id"]
+    _config_need(type(archive) is str and str(uuid.UUID(archive)) == archive)
+    _config_choice(storage["publication_mode"], ("hardlink", "copy"))
+    _config_integer(storage["minimum_free_space_gib"], 0, 1048576)
+    _config_integer(storage["minimum_free_space_percent"], 0, 100)
+    _config_need(
+        type(storage["maximum_revisions"]) is int and storage["maximum_revisions"] in {3, 5}
+    )
+    sync = document["sync"]
+    _config_integer(sync["max_workers"], 1, 32)
+    _config_integer(sync["lock_wait_seconds"], 0, 86400)
+    _config_need(type(sync["continue_on_repository_error"]) is bool)
+    _config_choice(sync["dependency_policy"], ("warn",))
+    _config_integer(sync["stale_staging_age_hours"], 1, 8760)
+    verification = document["verification"]
+    _config_choice(verification["algorithm"], ("sha256",))
+    _config_need(
+        type(verification["hash_new_content"]) is bool and verification["hash_new_content"]
+    )
+    _config_integer(verification["lock_wait_seconds"], 0, 604800)
+    _config_integer(document["repair"]["retired_instance_grace_hours"], 168, 8760)
+
+
+def parse_configuration(body: bytes) -> dict[str, Any]:
+    """Validate the entire finite schema before projecting or reconstructing it."""
+    _need(type(body) is bytes and 0 < len(body) <= MAX_CONFIGURATION_BYTES, "config-unavailable")
+    try:
+        mapping = tomllib.loads(body.decode("utf-8"))
+        _config_need(set(mapping) <= {"schema_version", "repositories", *_CONFIG_DEFAULTS})
+        _config_need(type(mapping.get("schema_version")) is int and mapping["schema_version"] == 1)
+        document: dict[str, Any] = {"schema_version": 1}
+        for table, defaults in _CONFIG_DEFAULTS.items():
+            document[table] = _configuration_table(mapping.get(table, {}), defaults)
+        _configuration_values(document)
+        repositories = mapping.get("repositories", [])
+        _config_need(type(repositories) is list)
+        document["repositories"] = [_configuration_repository(row) for row in repositories]
+        keys = [(row["type"], row["id"]) for row in document["repositories"]]
+        _config_need(len(set(keys)) == len(keys))
+    except (InspectionError, ValueError, UnicodeError, TypeError, RecursionError):
+        reason = "config-unavailable"
+        raise InspectionError(reason) from None
+    return document
+
+
+def editable_configuration(document: dict[str, Any]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for table in ("storage", "sync", "verification", "repair"):
+        result[table] = {
+            path.split(".")[1]: document[table][path.split(".")[1]]
+            for path in EDITABLE_FIELDS
+            if path.startswith(table + ".")
+        }
+    result["repositories"] = [
+        {
+            **row,
+            "tags": list(row["tags"]),
+            "declared_dependencies": list(row["declared_dependencies"]),
+        }
+        for row in document["repositories"]
+    ]
+    return result
+
+
+class _ConfigurationWriter:
+    """A charged writer for this schema only, not a generic TOML serializer."""
+
+    def __init__(self) -> None:
+        self.parts: list[bytes] = []
+        self.size = 0
+
+    def append(self, text: str) -> None:
+        _config_need(len(text) <= MAX_CONFIGURATION_BYTES - self.size)
+        count = 0
+        for char in text:
+            number = ord(char)
+            _config_need(not _SURROGATE_MINIMUM <= number <= _SURROGATE_MAXIMUM)
+            count += len(char.encode("utf-8"))
+        _config_need(count <= MAX_CONFIGURATION_BYTES - self.size)
+        self.size += count
+        self.parts.append(text.encode("utf-8"))
+
+    def string(self, value: str) -> None:
+        self.append('"')
+        start = 0
+        for index, char in enumerate(value):
+            if char in {'"', "\\"} or ord(char) < ASCII_MIN or ord(char) == ASCII_MAX + 1:
+                self.append(value[start:index])
+                self.append(
+                    "\\" + char if char in {'"', "\\"} else "\\u" + format(ord(char), "04x")
+                )
+                start = index + 1
+        self.append(value[start:])
+        self.append('"')
+
+    def value(self, *, value: str | bool | int | list[str]) -> None:
+        if type(value) is str:
+            self.string(value)
+        elif type(value) is bool:
+            self.append("true" if value else "false")
+        elif type(value) is int:
+            self.append(str(value))
+        elif type(value) is list:
+            self.append("[")
+            for index, item in enumerate(value):
+                _config_need(type(item) is str)
+                if index:
+                    self.append(", ")
+                self.string(item)
+            self.append("]")
+        else:
+            raise InspectionError(_CONFIGURATION_INVALID)
+
+
+def render_configuration(document: dict[str, Any]) -> bytes:
+    writer = _ConfigurationWriter()
+    writer.append("schema_version = 1\n")
+    for table, defaults in _CONFIG_DEFAULTS.items():
+        writer.append("\n[" + table + "]\n")
+        for key in defaults:
+            writer.append(key + " = ")
+            writer.value(value=document[table][key])
+            writer.append("\n")
+    for repository in document["repositories"]:
+        writer.append("\n[[repositories]]\n")
+        for key in _CONFIG_REPOSITORY_DEFAULTS:
+            writer.append(key + " = ")
+            writer.value(value=repository[key])
+            writer.append("\n")
+    return b"".join(writer.parts)
+
+
+def _managed_edits(document: dict[str, Any], managed: object) -> tuple[dict[str, Any], list[str]]:
+    _config_need(type(managed) is dict and set(managed) == {"base_revision", "edits"})  # type: ignore[arg-type]
+    edits = managed["edits"]  # type: ignore[index]
+    _config_need(type(edits) is list and len(edits) <= MAX_CONFIGURATION_EDITS)
+    repositories = {(row["type"], row["id"]): row for row in document["repositories"]}
+    before = dict(repositories)
+    touched = set()
+    settings = False
+    for edit in edits:
+        _config_need(type(edit) is dict and type(edit.get("kind")) is str)
+        kind = edit["kind"]
+        row: dict[str, Any] = {}
+        if kind == "settings-replace":
+            _config_need(set(edit) == {"kind", "settings"} and not settings)
+            settings = True
+            replacement = edit["settings"]
+            _config_need(
+                type(replacement) is dict
+                and replacement
+                and set(replacement) <= {"storage", "sync", "verification", "repair"}
+            )
+            for table, values in replacement.items():
+                allowed = {
+                    path.split(".")[1] for path in EDITABLE_FIELDS if path.startswith(table + ".")
+                }
+                _config_need(type(values) is dict and values and set(values) <= allowed)
+                document[table].update(values)
+            continue
+        if kind == "repository-upsert":
+            _config_need(set(edit) == {"kind", "repository"})
+            row = _configuration_repository(edit["repository"])
+            key = (row["type"], row["id"])
+        else:
+            _config_need(
+                kind == "repository-remove"
+                and set(edit) == {"kind", "repository_type", "repository_id"}
+            )
+            _config_choice(edit["repository_type"], ("model", "dataset"))
+            key = (edit["repository_type"], _configuration_repository_id(edit["repository_id"]))
+        _config_need(key not in touched)
+        touched.add(key)
+        if kind == "repository-upsert":
+            repositories[key] = row
+        else:
+            _config_need(key in repositories)
+            del repositories[key]
+    _configuration_values(document)
+    document["repositories"] = list(repositories.values())
+    selectors = sorted(
+        kind + ":" + identifier
+        for (kind, identifier), row in repositories.items()
+        if row["enabled"]
+        and (
+            (kind, identifier) not in before
+            or not before[kind, identifier]["enabled"]
+            or before[kind, identifier]["revision"] != row["revision"]
+        )
+    )
+    return document, selectors
+
+
+def _configuration_reply_limit(value: dict[str, Any], operation: str) -> None:
+    size = 0
+    encoder = json.JSONEncoder(ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+    frame = {
+        "schema_version": 1,
+        "request_id": "0" * 32,
+        "operation": operation,
+        "outcome": "ok",
+        "body": value,
+        "reason": None,
+    }
+    for piece in encoder.iterencode(frame):
+        size += len(piece.encode("utf-8"))
+        _config_need(size <= MAX_CONFIGURATION_REPLY)
+
+
+def prepare_configuration(snapshot: AuthoritySnapshot, managed: object) -> dict[str, Any]:
+    """CONFIG-02/03: exact non-installing reconstruction under the original HMAC base."""
+    revalidate(snapshot)
+    _need(snapshot.status()["permissions"]["configuration"], "operation-denied")
+    _config_need(type(managed) is dict and set(managed) == {"base_revision", "edits"})  # type: ignore[arg-type]
+    base = managed["base_revision"]  # type: ignore[index]
+    _config_need(type(base) is str and HEX.fullmatch(base))
+    _need(hmac.compare_digest(base, snapshot.base_revision), "config-conflict")
+    document = parse_configuration(snapshot._inspection.config_body)  # noqa: SLF001 - no second capture
+    document, selectors = _managed_edits(document, managed)
+    candidate = render_configuration(document)
+    result = {
+        "schema_version": 1,
+        "archive_id": snapshot.archive_id,
+        "base_revision": snapshot.base_revision,
+        "candidate_revision": snapshot._inspection.revision(  # noqa: SLF001 - original protected key
+            b"host-config-candidate-v1", base.encode("ascii"), candidate
+        ),
+        "candidate": candidate.decode("utf-8"),
+        "editable": editable_configuration(document),
+        "required_selectors": selectors,
+    }
+    _configuration_reply_limit(result, "config-prepare")
+    revalidate(snapshot)
+    return result

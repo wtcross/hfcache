@@ -130,7 +130,15 @@ def test_host_finite_mapping_lowering_refuses_changed_unit_allowlist():
 
 def test_every_actual_json_route_and_original_job_result_is_registered():
     actual = set()
-    for module in ("app", "catalog", "commands", "maintenance", "catalog_refresh", "host_status"):
+    for module in (
+        "app",
+        "catalog",
+        "commands",
+        "maintenance",
+        "catalog_refresh",
+        "host_status",
+        "configuration",
+    ):
         tree = ast.parse(Path(f"src/hfcache/api/{module}.py").read_text())
         prefix = "/api/v1/catalog" if module == "catalog" else "/api/v1"
 

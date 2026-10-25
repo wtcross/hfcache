@@ -1,6 +1,6 @@
-/** Generated from source digest 891b5b45df6182c02b602a767eaa1446a1e91f554f68d87768f75db3938c3d03. Run generate:wire; do not edit. */
+/** Generated from source digest bf6497a458d0ba1db7de4ba542477c17e2b306a95c19b67203e44443f55e0ecc. Run generate:wire; do not edit. */
 export const WIRE_SOURCE_DIGEST =
-    "891b5b45df6182c02b602a767eaa1446a1e91f554f68d87768f75db3938c3d03";
+    "bf6497a458d0ba1db7de4ba542477c17e2b306a95c19b67203e44443f55e0ecc";
 import {
     wireObject,
     wireRequestObject,
@@ -196,6 +196,14 @@ export type ClientRead = {
     readonly ["envelope"]: Envelope;
     readonly ["next_cursor"]: string | null;
 };
+export type ConfigRead = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["base_revision"]: string;
+    readonly ["editable"]: EditableConfig;
+    readonly ["editable_fields"]: readonly string[];
+    readonly ["protected_fields"]: readonly ProtectedField[];
+};
 export type DependencyObservation = {
     readonly ["confidence"]: "high" | "medium" | "low";
     readonly ["declared"]: boolean;
@@ -212,6 +220,30 @@ export type DiagnosticCheckPayload = {
 export type DiagnosticsPayload = {
     readonly ["checks"]: readonly DiagnosticCheckPayload[];
 };
+export type EditableConfig = {
+    readonly ["storage"]: EditableStorage;
+    readonly ["sync"]: EditableSync;
+    readonly ["verification"]: EditableVerification;
+    readonly ["repair"]: EditableRepair;
+    readonly ["repositories"]: readonly RepositoryConfig[];
+};
+export type EditableRepair = {
+    readonly ["retired_instance_grace_hours"]: number;
+};
+export type EditableStorage = {
+    readonly ["publication_mode"]: "hardlink" | "copy";
+    readonly ["minimum_free_space_gib"]: number;
+    readonly ["minimum_free_space_percent"]: number;
+    readonly ["maximum_revisions"]: number;
+};
+export type EditableSync = {
+    readonly ["max_workers"]: number;
+    readonly ["lock_wait_seconds"]: number;
+    readonly ["continue_on_repository_error"]: boolean;
+    readonly ["dependency_policy"]: "warn";
+    readonly ["stale_staging_age_hours"]: number;
+};
+export type EditableVerification = { readonly ["lock_wait_seconds"]: number };
 export type EmptyPayload = Readonly<Record<string, never>>;
 export type Envelope = {
     readonly ["command"]: string;
@@ -438,6 +470,23 @@ export type InstalledValidationPayload = {
     readonly ["repositories"]: number;
     readonly ["token_source"]: string;
 };
+export type ManagedAssessment = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["base_revision"]: string;
+    readonly ["candidate_revision"]: string;
+    readonly ["required_selectors"]: readonly string[];
+    readonly ["complete"]: boolean;
+    readonly ["sizing"]: PlanPayload | null;
+};
+export type ManagedValidation = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["base_revision"]: string;
+    readonly ["candidate_revision"]: string;
+    readonly ["required_selectors"]: readonly string[];
+    readonly ["valid"]: true;
+};
 export type ManifestPayload = {
     readonly ["manifest"]: RevisionManifest;
     readonly ["tree_base"]: "archive-root/";
@@ -484,6 +533,7 @@ export type OperationsPayload = {
 export type PlanPayload = {
     readonly ["repositories"]: readonly PlannedRepositoryPayload[];
 };
+export type PlanResultPayload = PlanPayload | ManagedAssessment;
 export type PlannedRepositoryPayload = {
     readonly ["enabled"]: boolean;
     readonly ["estimated_new_bytes"]: number | null;
@@ -503,6 +553,10 @@ export type PlannedRepositoryPayload = {
         | "refused"
         | "unresolvable"
         | "unreachable";
+};
+export type ProtectedField = {
+    readonly ["field"]: string;
+    readonly ["description"]: string;
 };
 export type PrunePayload = {
     readonly ["plans"]: readonly PrunePlan[];
@@ -732,6 +786,14 @@ export type ReportPayload = {
 export type RepositoriesPayload = {
     readonly ["repositories"]: readonly RepositoryPayload[];
 };
+export type RepositoryConfig = {
+    readonly ["id"]: string;
+    readonly ["type"]: "model" | "dataset";
+    readonly ["revision"]: string;
+    readonly ["enabled"]: boolean;
+    readonly ["tags"]: readonly string[];
+    readonly ["declared_dependencies"]: readonly string[];
+};
 export type RepositoryPayload = {
     readonly ["current_commit_sha"]: string | null;
     readonly ["current_publication_id"]: string | null;
@@ -821,6 +883,21 @@ export type RequestLiteralCandidatePlan = {
     readonly ["candidate"]: string;
 };
 export type RequestLiteralCandidateValidation = RequestCandidatePayload;
+export type RequestManagedEditRequest = {
+    readonly ["base_revision"]: string;
+    readonly ["edits"]: readonly (
+        | RequestRepositoryUpsert
+        | RequestRepositoryRemove
+        | RequestSettingsReplace
+    )[];
+};
+export type RequestManagedPlanRequest = {
+    readonly ["managed"]: RequestManagedEditRequest;
+    readonly ["selectors"]?: readonly string[];
+};
+export type RequestManagedValidationRequest = {
+    readonly ["managed"]: RequestManagedEditRequest;
+};
 export type RequestNewVerification = {
     readonly ["mode"]: "new";
     readonly ["revision"]?: null;
@@ -829,6 +906,7 @@ export type RequestNewVerification = {
 export type RequestPlanSubmission = {
     readonly ["selectors"]?: readonly string[];
     readonly ["candidate"]?: string | null;
+    readonly ["managed"]?: RequestManagedEditRequest | null;
 };
 export type RequestProbeDiagnostics = { readonly ["read_only"]: false };
 export type RequestPruneSubmission = {
@@ -843,20 +921,67 @@ export type RequestQuarantineSubmission = {
 };
 export type RequestReadOnlyDiagnostics = { readonly ["read_only"]: true };
 export type RequestRecoverySubmission = Readonly<Record<string, never>>;
+export type RequestRepairReplacement = {
+    readonly ["retired_instance_grace_hours"]?: number | null;
+};
 export type RequestRepairSubmission = {
     readonly ["revision"]: string;
     readonly ["reason"]?: string;
+};
+export type RequestRepositoryConfig = {
+    readonly ["id"]: string;
+    readonly ["type"]: "model" | "dataset";
+    readonly ["revision"]?: string;
+    readonly ["enabled"]?: boolean;
+    readonly ["tags"]?: readonly string[];
+    readonly ["declared_dependencies"]?: readonly string[];
+};
+export type RequestRepositoryRemove = {
+    readonly ["kind"]: "repository-remove";
+    readonly ["repository_type"]: "model" | "dataset";
+    readonly ["repository_id"]: string;
+};
+export type RequestRepositoryUpsert = {
+    readonly ["kind"]: "repository-upsert";
+    readonly ["repository"]: RequestRepositoryConfig;
 };
 export type RequestRevisionVerification = {
     readonly ["mode"]: "revision";
     readonly ["revision"]: string;
     readonly ["run_id"]?: null;
 };
+export type RequestSettingsReplace = {
+    readonly ["kind"]: "settings-replace";
+    readonly ["settings"]: RequestSettingsReplacement;
+};
+export type RequestSettingsReplacement = {
+    readonly ["storage"]?: RequestStorageReplacement | null;
+    readonly ["sync"]?: RequestSyncReplacement | null;
+    readonly ["verification"]?: RequestVerificationReplacement | null;
+    readonly ["repair"]?: RequestRepairReplacement | null;
+};
+export type RequestStorageReplacement = {
+    readonly ["publication_mode"]?: ("hardlink" | "copy") | null;
+    readonly ["minimum_free_space_gib"]?: number | null;
+    readonly ["minimum_free_space_percent"]?: number | null;
+    readonly ["maximum_revisions"]?: number | null;
+};
+export type RequestSyncReplacement = {
+    readonly ["max_workers"]?: number | null;
+    readonly ["lock_wait_seconds"]?: number | null;
+    readonly ["continue_on_repository_error"]?: boolean | null;
+    readonly ["dependency_policy"]?: "warn" | null;
+    readonly ["stale_staging_age_hours"]?: number | null;
+};
 export type RequestSyncSubmission = {
     readonly ["selectors"]?: readonly string[];
 };
 export type RequestValidationSubmission = {
     readonly ["candidate"]?: string | null;
+    readonly ["managed"]?: RequestManagedEditRequest | null;
+};
+export type RequestVerificationReplacement = {
+    readonly ["lock_wait_seconds"]?: number | null;
 };
 export type RequestVerificationSubmission = {
     readonly ["mode"]: "new" | "full" | "revision";
@@ -2033,6 +2158,48 @@ export function decodeClientRead(value: unknown): ClientRead {
         ],
     );
 }
+export function decodeConfigRead(value: unknown): ConfigRead {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "base_revision",
+                "editable",
+                "editable_fields",
+                "protected_fields",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.config_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["base_revision"]: checked(
+                    wireString(object["base_revision"], null, null, null),
+                    ["hfcache.config_models._revision"],
+                ),
+                ["editable"]: decodeEditableConfig(object["editable"]),
+                ["editable_fields"]: wireArray(
+                    object["editable_fields"],
+                    (member: unknown) => wireString(member, null, null, null),
+                    null,
+                    null,
+                ),
+                ["protected_fields"]: wireArray(
+                    object["protected_fields"],
+                    (member: unknown) => decodeProtectedField(member),
+                    null,
+                    null,
+                ),
+            });
+        })(value),
+        ["hfcache.config_models.ConfigRead.fixed_fields"],
+    );
+}
 export function decodeDependencyObservation(
     value: unknown,
 ): DependencyObservation {
@@ -2103,6 +2270,124 @@ export function decodeDiagnosticsPayload(value: unknown): DiagnosticsPayload {
                 (member: unknown) => decodeDiagnosticCheckPayload(member),
                 null,
                 null,
+            ),
+        });
+    })(value);
+}
+export function decodeEditableConfig(value: unknown): EditableConfig {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "storage",
+                "sync",
+                "verification",
+                "repair",
+                "repositories",
+            ]);
+            return Object.freeze({
+                ["storage"]: decodeEditableStorage(object["storage"]),
+                ["sync"]: decodeEditableSync(object["sync"]),
+                ["verification"]: decodeEditableVerification(
+                    object["verification"],
+                ),
+                ["repair"]: decodeEditableRepair(object["repair"]),
+                ["repositories"]: wireArray(
+                    object["repositories"],
+                    (member: unknown) => decodeRepositoryConfig(member),
+                    null,
+                    null,
+                ),
+            });
+        })(value),
+        ["hfcache.config_models.EditableConfig.unique_repositories"],
+    );
+}
+export function decodeEditableRepair(value: unknown): EditableRepair {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["retired_instance_grace_hours"]);
+        return Object.freeze({
+            ["retired_instance_grace_hours"]: wireInteger(
+                object["retired_instance_grace_hours"],
+                "168",
+                "8760",
+            ),
+        });
+    })(value);
+}
+export function decodeEditableStorage(value: unknown): EditableStorage {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "publication_mode",
+            "minimum_free_space_gib",
+            "minimum_free_space_percent",
+            "maximum_revisions",
+        ]);
+        return Object.freeze({
+            ["publication_mode"]: wireUnion<"hardlink" | "copy">(
+                object["publication_mode"],
+                [
+                    (member: unknown) => wireLiteral(member, "hardlink"),
+                    (member: unknown) => wireLiteral(member, "copy"),
+                ],
+            ),
+            ["minimum_free_space_gib"]: wireInteger(
+                object["minimum_free_space_gib"],
+                "0",
+                "1048576",
+            ),
+            ["minimum_free_space_percent"]: wireInteger(
+                object["minimum_free_space_percent"],
+                "0",
+                "100",
+            ),
+            ["maximum_revisions"]: checked(
+                wireInteger(object["maximum_revisions"], null, null),
+                ["hfcache.config_models._retention"],
+            ),
+        });
+    })(value);
+}
+export function decodeEditableSync(value: unknown): EditableSync {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "max_workers",
+            "lock_wait_seconds",
+            "continue_on_repository_error",
+            "dependency_policy",
+            "stale_staging_age_hours",
+        ]);
+        return Object.freeze({
+            ["max_workers"]: wireInteger(object["max_workers"], "1", "32"),
+            ["lock_wait_seconds"]: wireInteger(
+                object["lock_wait_seconds"],
+                "0",
+                "86400",
+            ),
+            ["continue_on_repository_error"]: wireBoolean(
+                object["continue_on_repository_error"],
+            ),
+            ["dependency_policy"]: wireLiteral(
+                object["dependency_policy"],
+                "warn",
+            ),
+            ["stale_staging_age_hours"]: wireInteger(
+                object["stale_staging_age_hours"],
+                "1",
+                "8760",
+            ),
+        });
+    })(value);
+}
+export function decodeEditableVerification(
+    value: unknown,
+): EditableVerification {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["lock_wait_seconds"]);
+        return Object.freeze({
+            ["lock_wait_seconds"]: wireInteger(
+                object["lock_wait_seconds"],
+                "0",
+                "604800",
             ),
         });
     })(value);
@@ -3068,6 +3353,100 @@ export function decodeInstalledValidationPayload(
         });
     })(value);
 }
+export function decodeManagedAssessment(value: unknown): ManagedAssessment {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "base_revision",
+                "candidate_revision",
+                "required_selectors",
+                "complete",
+                "sizing",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.config_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["base_revision"]: checked(
+                    wireString(object["base_revision"], null, null, null),
+                    ["hfcache.config_models._revision"],
+                ),
+                ["candidate_revision"]: checked(
+                    wireString(object["candidate_revision"], null, null, null),
+                    ["hfcache.config_models._revision"],
+                ),
+                ["required_selectors"]: wireArray(
+                    object["required_selectors"],
+                    (member: unknown) =>
+                        checked(wireString(member, null, null, null), [
+                            "hfcache.config_models._whole_selector",
+                        ]),
+                    null,
+                    256,
+                ),
+                ["complete"]: wireBoolean(object["complete"]),
+                ["sizing"]: wireUnion<PlanPayload | null>(object["sizing"], [
+                    (member: unknown) => decodePlanPayload(member),
+                    (member: unknown) => wireNull(member),
+                ]),
+            });
+        })(value),
+        ["hfcache.config_models.ManagedAssessment.complete_scope"],
+    );
+}
+export function decodeManagedValidation(value: unknown): ManagedValidation {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "base_revision",
+                "candidate_revision",
+                "required_selectors",
+                "valid",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.config_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["base_revision"]: checked(
+                    wireString(object["base_revision"], null, null, null),
+                    ["hfcache.config_models._revision"],
+                ),
+                ["candidate_revision"]: checked(
+                    wireString(object["candidate_revision"], null, null, null),
+                    ["hfcache.config_models._revision"],
+                ),
+                ["required_selectors"]: wireArray(
+                    object["required_selectors"],
+                    (member: unknown) =>
+                        checked(wireString(member, null, null, null), [
+                            "hfcache.config_models._whole_selector",
+                        ]),
+                    null,
+                    256,
+                ),
+                ["valid"]: wireLiteral(object["valid"], true),
+            });
+        })(value),
+        [
+            "hfcache.config_models.ManagedValidation.strict_valid",
+            "hfcache.config_models.ManagedValidation.unique_scope",
+        ],
+    );
+}
 export function decodeManifestPayload(value: unknown): ManifestPayload {
     return ((input: unknown) => {
         const object = wireObject(input, ["manifest", "tree_base"]);
@@ -3337,6 +3716,12 @@ export function decodePlanPayload(value: unknown): PlanPayload {
         });
     })(value);
 }
+export function decodePlanResultPayload(value: unknown): PlanResultPayload {
+    return wireUnion<PlanPayload | ManagedAssessment>(value, [
+        (member: unknown) => decodePlanPayload(member),
+        (member: unknown) => decodeManagedAssessment(member),
+    ]);
+}
 export function decodePlannedRepositoryPayload(
     value: unknown,
 ): PlannedRepositoryPayload {
@@ -3434,6 +3819,23 @@ export function decodePlannedRepositoryPayload(
             ]),
         });
     })(value);
+}
+export function decodeProtectedField(value: unknown): ProtectedField {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, ["field", "description"]);
+            return Object.freeze({
+                ["field"]: wireString(object["field"], null, null, null),
+                ["description"]: wireString(
+                    object["description"],
+                    null,
+                    null,
+                    null,
+                ),
+            });
+        })(value),
+        ["hfcache.config_models.ProtectedField.fixed_description"],
+    );
 }
 export function decodePrunePayload(value: unknown): PrunePayload {
     return ((input: unknown) => {
@@ -4546,6 +4948,54 @@ export function decodeRepositoriesPayload(value: unknown): RepositoriesPayload {
         });
     })(value);
 }
+export function decodeRepositoryConfig(value: unknown): RepositoryConfig {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "id",
+                "type",
+                "revision",
+                "enabled",
+                "tags",
+                "declared_dependencies",
+            ]);
+            return Object.freeze({
+                ["id"]: checked(wireString(object["id"], null, null, null), [
+                    "hfcache.identity.parse_repository_id",
+                ]),
+                ["type"]: wireUnion<"model" | "dataset">(object["type"], [
+                    (member: unknown) => wireLiteral(member, "model"),
+                    (member: unknown) => wireLiteral(member, "dataset"),
+                ]),
+                ["revision"]: checked(
+                    wireString(object["revision"], null, null, null),
+                    ["hfcache.identity.parse_revision"],
+                ),
+                ["enabled"]: wireBoolean(object["enabled"]),
+                ["tags"]: checked(
+                    wireArray(
+                        object["tags"],
+                        (member: unknown) =>
+                            wireString(member, null, null, null),
+                        null,
+                        64,
+                    ),
+                    ["hfcache.tags.normalize_tags"],
+                ),
+                ["declared_dependencies"]: wireArray(
+                    object["declared_dependencies"],
+                    (member: unknown) =>
+                        checked(wireString(member, null, null, null), [
+                            "hfcache.identity.parse_repository_id",
+                        ]),
+                    null,
+                    null,
+                ),
+            });
+        })(value),
+        ["hfcache.config.RepositoryConfig._check"],
+    );
+}
 export function decodeRepositoryPayload(value: unknown): RepositoryPayload {
     return ((input: unknown) => {
         const object = wireObject(input, [
@@ -5059,16 +5509,78 @@ export function decodeRequestLiteralCandidatePlan(
                 ),
             });
         })(value),
-        [
-            "hfcache.api.command_models.SyncSubmission.canonical",
-            "hfcache.api.command_models.PlanSubmission.explicit_candidate",
-        ],
+        ["hfcache.api.command_models.SyncSubmission.canonical"],
     );
 }
 export function decodeRequestLiteralCandidateValidation(
     value: unknown,
 ): RequestLiteralCandidateValidation {
     return decodeRequestCandidatePayload(value);
+}
+export function decodeRequestManagedEditRequest(
+    value: unknown,
+): RequestManagedEditRequest {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, ["base_revision", "edits"]);
+            return Object.freeze({
+                ["base_revision"]: checked(
+                    wireString(object["base_revision"], null, null, null),
+                    ["hfcache.config_models._revision"],
+                ),
+                ["edits"]: wireArray(
+                    object["edits"],
+                    (member: unknown) =>
+                        wireUnion<
+                            | RequestRepositoryUpsert
+                            | RequestRepositoryRemove
+                            | RequestSettingsReplace
+                        >(member, [
+                            (member: unknown) =>
+                                decodeRequestRepositoryUpsert(member),
+                            (member: unknown) =>
+                                decodeRequestRepositoryRemove(member),
+                            (member: unknown) =>
+                                decodeRequestSettingsReplace(member),
+                        ]),
+                    null,
+                    256,
+                ),
+            });
+        })(value),
+        ["hfcache.config_models.ManagedEditRequest.unique_edits"],
+    );
+}
+export function decodeRequestManagedPlanRequest(
+    value: unknown,
+): RequestManagedPlanRequest {
+    return ((input: unknown) => {
+        const object = wireRequestObject(input, ["managed"], ["selectors"]);
+        return Object.freeze({
+            ["managed"]: decodeRequestManagedEditRequest(object["managed"]),
+            ...(Object.hasOwn(object, "selectors")
+                ? {
+                      ["selectors"]: wireArray(
+                          object["selectors"],
+                          (member: unknown) =>
+                              wireString(member, null, null, null),
+                          null,
+                          0,
+                      ),
+                  }
+                : {}),
+        });
+    })(value);
+}
+export function decodeRequestManagedValidationRequest(
+    value: unknown,
+): RequestManagedValidationRequest {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["managed"]);
+        return Object.freeze({
+            ["managed"]: decodeRequestManagedEditRequest(object["managed"]),
+        });
+    })(value);
 }
 export function decodeRequestNewVerification(
     value: unknown,
@@ -5113,7 +5625,7 @@ export function decodeRequestPlanSubmission(
             const object = wireRequestObject(
                 input,
                 [],
-                ["selectors", "candidate"],
+                ["selectors", "candidate", "managed"],
             );
             return Object.freeze({
                 ...(Object.hasOwn(object, "selectors")
@@ -5144,6 +5656,21 @@ export function decodeRequestPlanSubmission(
                                   (member: unknown) => wireNull(member),
                               ],
                           ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "managed")
+                    ? {
+                          ["managed"]:
+                              wireUnion<RequestManagedEditRequest | null>(
+                                  object["managed"],
+                                  [
+                                      (member: unknown) =>
+                                          decodeRequestManagedEditRequest(
+                                              member,
+                                          ),
+                                      (member: unknown) => wireNull(member),
+                                  ],
+                              ),
                       }
                     : {}),
             });
@@ -5264,6 +5791,33 @@ export function decodeRequestRecoverySubmission(
         return Object.freeze({});
     })(value);
 }
+export function decodeRequestRepairReplacement(
+    value: unknown,
+): RequestRepairReplacement {
+    return checked(
+        ((input: unknown) => {
+            const object = wireRequestObject(
+                input,
+                [],
+                ["retired_instance_grace_hours"],
+            );
+            return Object.freeze({
+                ...(Object.hasOwn(object, "retired_instance_grace_hours")
+                    ? {
+                          ["retired_instance_grace_hours"]: wireUnion<
+                              number | null
+                          >(object["retired_instance_grace_hours"], [
+                              (member: unknown) =>
+                                  wireInteger(member, "168", "8760"),
+                              (member: unknown) => wireNull(member),
+                          ]),
+                      }
+                    : {}),
+            });
+        })(value),
+        ["hfcache.config_models.SettingsTable.nonempty"],
+    );
+}
 export function decodeRequestRepairSubmission(
     value: unknown,
 ): RequestRepairSubmission {
@@ -5287,6 +5841,104 @@ export function decodeRequestRepairSubmission(
         ["hfcache.api.maintenance_models.RepairSubmission.scope"],
     );
 }
+export function decodeRequestRepositoryConfig(
+    value: unknown,
+): RequestRepositoryConfig {
+    return checked(
+        ((input: unknown) => {
+            const object = wireRequestObject(
+                input,
+                ["id", "type"],
+                ["revision", "enabled", "tags", "declared_dependencies"],
+            );
+            return Object.freeze({
+                ["id"]: checked(wireString(object["id"], null, null, null), [
+                    "hfcache.identity.parse_repository_id",
+                ]),
+                ["type"]: wireUnion<"model" | "dataset">(object["type"], [
+                    (member: unknown) => wireLiteral(member, "model"),
+                    (member: unknown) => wireLiteral(member, "dataset"),
+                ]),
+                ...(Object.hasOwn(object, "revision")
+                    ? {
+                          ["revision"]: checked(
+                              wireString(object["revision"], null, null, null),
+                              ["hfcache.identity.parse_revision"],
+                          ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "enabled")
+                    ? { ["enabled"]: wireBoolean(object["enabled"]) }
+                    : {}),
+                ...(Object.hasOwn(object, "tags")
+                    ? {
+                          ["tags"]: checked(
+                              wireArray(
+                                  object["tags"],
+                                  (member: unknown) =>
+                                      wireString(member, null, null, null),
+                                  null,
+                                  64,
+                              ),
+                              ["hfcache.tags.normalize_tags"],
+                          ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "declared_dependencies")
+                    ? {
+                          ["declared_dependencies"]: wireArray(
+                              object["declared_dependencies"],
+                              (member: unknown) =>
+                                  checked(
+                                      wireString(member, null, null, null),
+                                      ["hfcache.identity.parse_repository_id"],
+                                  ),
+                              null,
+                              null,
+                          ),
+                      }
+                    : {}),
+            });
+        })(value),
+        ["hfcache.config.RepositoryConfig._check"],
+    );
+}
+export function decodeRequestRepositoryRemove(
+    value: unknown,
+): RequestRepositoryRemove {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "kind",
+            "repository_type",
+            "repository_id",
+        ]);
+        return Object.freeze({
+            ["kind"]: wireLiteral(object["kind"], "repository-remove"),
+            ["repository_type"]: wireUnion<"model" | "dataset">(
+                object["repository_type"],
+                [
+                    (member: unknown) => wireLiteral(member, "model"),
+                    (member: unknown) => wireLiteral(member, "dataset"),
+                ],
+            ),
+            ["repository_id"]: checked(
+                wireString(object["repository_id"], null, null, null),
+                ["hfcache.identity.parse_repository_id"],
+            ),
+        });
+    })(value);
+}
+export function decodeRequestRepositoryUpsert(
+    value: unknown,
+): RequestRepositoryUpsert {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["kind", "repository"]);
+        return Object.freeze({
+            ["kind"]: wireLiteral(object["kind"], "repository-upsert"),
+            ["repository"]: decodeRequestRepositoryConfig(object["repository"]),
+        });
+    })(value);
+}
 export function decodeRequestRevisionVerification(
     value: unknown,
 ): RequestRevisionVerification {
@@ -5306,6 +5958,244 @@ export function decodeRequestRevisionVerification(
             });
         })(value),
         ["hfcache.api.command_models.VerificationSubmission.scope"],
+    );
+}
+export function decodeRequestSettingsReplace(
+    value: unknown,
+): RequestSettingsReplace {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["kind", "settings"]);
+        return Object.freeze({
+            ["kind"]: wireLiteral(object["kind"], "settings-replace"),
+            ["settings"]: decodeRequestSettingsReplacement(object["settings"]),
+        });
+    })(value);
+}
+export function decodeRequestSettingsReplacement(
+    value: unknown,
+): RequestSettingsReplacement {
+    return checked(
+        ((input: unknown) => {
+            const object = wireRequestObject(
+                input,
+                [],
+                ["storage", "sync", "verification", "repair"],
+            );
+            return Object.freeze({
+                ...(Object.hasOwn(object, "storage")
+                    ? {
+                          ["storage"]:
+                              wireUnion<RequestStorageReplacement | null>(
+                                  object["storage"],
+                                  [
+                                      (member: unknown) =>
+                                          decodeRequestStorageReplacement(
+                                              member,
+                                          ),
+                                      (member: unknown) => wireNull(member),
+                                  ],
+                              ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "sync")
+                    ? {
+                          ["sync"]: wireUnion<RequestSyncReplacement | null>(
+                              object["sync"],
+                              [
+                                  (member: unknown) =>
+                                      decodeRequestSyncReplacement(member),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "verification")
+                    ? {
+                          ["verification"]:
+                              wireUnion<RequestVerificationReplacement | null>(
+                                  object["verification"],
+                                  [
+                                      (member: unknown) =>
+                                          decodeRequestVerificationReplacement(
+                                              member,
+                                          ),
+                                      (member: unknown) => wireNull(member),
+                                  ],
+                              ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "repair")
+                    ? {
+                          ["repair"]:
+                              wireUnion<RequestRepairReplacement | null>(
+                                  object["repair"],
+                                  [
+                                      (member: unknown) =>
+                                          decodeRequestRepairReplacement(
+                                              member,
+                                          ),
+                                      (member: unknown) => wireNull(member),
+                                  ],
+                              ),
+                      }
+                    : {}),
+            });
+        })(value),
+        ["hfcache.config_models.SettingsTable.nonempty"],
+    );
+}
+export function decodeRequestStorageReplacement(
+    value: unknown,
+): RequestStorageReplacement {
+    return checked(
+        ((input: unknown) => {
+            const object = wireRequestObject(
+                input,
+                [],
+                [
+                    "publication_mode",
+                    "minimum_free_space_gib",
+                    "minimum_free_space_percent",
+                    "maximum_revisions",
+                ],
+            );
+            return Object.freeze({
+                ...(Object.hasOwn(object, "publication_mode")
+                    ? {
+                          ["publication_mode"]: wireUnion<
+                              ("hardlink" | "copy") | null
+                          >(object["publication_mode"], [
+                              (member: unknown) =>
+                                  wireUnion<"hardlink" | "copy">(member, [
+                                      (member: unknown) =>
+                                          wireLiteral(member, "hardlink"),
+                                      (member: unknown) =>
+                                          wireLiteral(member, "copy"),
+                                  ]),
+                              (member: unknown) => wireNull(member),
+                          ]),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "minimum_free_space_gib")
+                    ? {
+                          ["minimum_free_space_gib"]: wireUnion<number | null>(
+                              object["minimum_free_space_gib"],
+                              [
+                                  (member: unknown) =>
+                                      wireInteger(member, "0", "1048576"),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "minimum_free_space_percent")
+                    ? {
+                          ["minimum_free_space_percent"]: wireUnion<
+                              number | null
+                          >(object["minimum_free_space_percent"], [
+                              (member: unknown) =>
+                                  wireInteger(member, "0", "100"),
+                              (member: unknown) => wireNull(member),
+                          ]),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "maximum_revisions")
+                    ? {
+                          ["maximum_revisions"]: wireUnion<number | null>(
+                              object["maximum_revisions"],
+                              [
+                                  (member: unknown) =>
+                                      checked(wireInteger(member, null, null), [
+                                          "hfcache.config_models._retention",
+                                      ]),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+            });
+        })(value),
+        ["hfcache.config_models.SettingsTable.nonempty"],
+    );
+}
+export function decodeRequestSyncReplacement(
+    value: unknown,
+): RequestSyncReplacement {
+    return checked(
+        ((input: unknown) => {
+            const object = wireRequestObject(
+                input,
+                [],
+                [
+                    "max_workers",
+                    "lock_wait_seconds",
+                    "continue_on_repository_error",
+                    "dependency_policy",
+                    "stale_staging_age_hours",
+                ],
+            );
+            return Object.freeze({
+                ...(Object.hasOwn(object, "max_workers")
+                    ? {
+                          ["max_workers"]: wireUnion<number | null>(
+                              object["max_workers"],
+                              [
+                                  (member: unknown) =>
+                                      wireInteger(member, "1", "32"),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "lock_wait_seconds")
+                    ? {
+                          ["lock_wait_seconds"]: wireUnion<number | null>(
+                              object["lock_wait_seconds"],
+                              [
+                                  (member: unknown) =>
+                                      wireInteger(member, "0", "86400"),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "continue_on_repository_error")
+                    ? {
+                          ["continue_on_repository_error"]: wireUnion<
+                              boolean | null
+                          >(object["continue_on_repository_error"], [
+                              (member: unknown) => wireBoolean(member),
+                              (member: unknown) => wireNull(member),
+                          ]),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "dependency_policy")
+                    ? {
+                          ["dependency_policy"]: wireUnion<"warn" | null>(
+                              object["dependency_policy"],
+                              [
+                                  (member: unknown) =>
+                                      wireLiteral(member, "warn"),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "stale_staging_age_hours")
+                    ? {
+                          ["stale_staging_age_hours"]: wireUnion<number | null>(
+                              object["stale_staging_age_hours"],
+                              [
+                                  (member: unknown) =>
+                                      wireInteger(member, "1", "8760"),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+            });
+        })(value),
+        ["hfcache.config_models.SettingsTable.nonempty"],
     );
 }
 export function decodeRequestSyncSubmission(
@@ -5338,7 +6228,11 @@ export function decodeRequestValidationSubmission(
 ): RequestValidationSubmission {
     return checked(
         ((input: unknown) => {
-            const object = wireRequestObject(input, [], ["candidate"]);
+            const object = wireRequestObject(
+                input,
+                [],
+                ["candidate", "managed"],
+            );
             return Object.freeze({
                 ...(Object.hasOwn(object, "candidate")
                     ? {
@@ -5357,9 +6251,48 @@ export function decodeRequestValidationSubmission(
                           ),
                       }
                     : {}),
+                ...(Object.hasOwn(object, "managed")
+                    ? {
+                          ["managed"]:
+                              wireUnion<RequestManagedEditRequest | null>(
+                                  object["managed"],
+                                  [
+                                      (member: unknown) =>
+                                          decodeRequestManagedEditRequest(
+                                              member,
+                                          ),
+                                      (member: unknown) => wireNull(member),
+                                  ],
+                              ),
+                      }
+                    : {}),
             });
         })(value),
         ["hfcache.api.command_models.ValidationSubmission.explicit_candidate"],
+    );
+}
+export function decodeRequestVerificationReplacement(
+    value: unknown,
+): RequestVerificationReplacement {
+    return checked(
+        ((input: unknown) => {
+            const object = wireRequestObject(input, [], ["lock_wait_seconds"]);
+            return Object.freeze({
+                ...(Object.hasOwn(object, "lock_wait_seconds")
+                    ? {
+                          ["lock_wait_seconds"]: wireUnion<number | null>(
+                              object["lock_wait_seconds"],
+                              [
+                                  (member: unknown) =>
+                                      wireInteger(member, "0", "604800"),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+            });
+        })(value),
+        ["hfcache.config_models.SettingsTable.nonempty"],
     );
 }
 export function decodeRequestVerificationSubmission(
@@ -6945,12 +7878,24 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeClientProblem(value);
         case "ClientRead":
             return decodeClientRead(value);
+        case "ConfigRead":
+            return decodeConfigRead(value);
         case "DependencyObservation":
             return decodeDependencyObservation(value);
         case "DiagnosticCheckPayload":
             return decodeDiagnosticCheckPayload(value);
         case "DiagnosticsPayload":
             return decodeDiagnosticsPayload(value);
+        case "EditableConfig":
+            return decodeEditableConfig(value);
+        case "EditableRepair":
+            return decodeEditableRepair(value);
+        case "EditableStorage":
+            return decodeEditableStorage(value);
+        case "EditableSync":
+            return decodeEditableSync(value);
+        case "EditableVerification":
+            return decodeEditableVerification(value);
         case "EmptyPayload":
             return decodeEmptyPayload(value);
         case "Envelope":
@@ -6991,6 +7936,10 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeInspectionPayload(value);
         case "InstalledValidationPayload":
             return decodeInstalledValidationPayload(value);
+        case "ManagedAssessment":
+            return decodeManagedAssessment(value);
+        case "ManagedValidation":
+            return decodeManagedValidation(value);
         case "ManifestPayload":
             return decodeManifestPayload(value);
         case "ModelVariant":
@@ -7005,8 +7954,12 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeOperationsPayload(value);
         case "PlanPayload":
             return decodePlanPayload(value);
+        case "PlanResultPayload":
+            return decodePlanResultPayload(value);
         case "PlannedRepositoryPayload":
             return decodePlannedRepositoryPayload(value);
+        case "ProtectedField":
+            return decodeProtectedField(value);
         case "PrunePayload":
             return decodePrunePayload(value);
         case "PrunePlan":
@@ -7061,6 +8014,8 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeReportPayload(value);
         case "RepositoriesPayload":
             return decodeRepositoriesPayload(value);
+        case "RepositoryConfig":
+            return decodeRepositoryConfig(value);
         case "RepositoryPayload":
             return decodeRepositoryPayload(value);
         case "RepositoryRefresh":
@@ -7089,6 +8044,12 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeRequestLiteralCandidatePlan(value);
         case "RequestLiteralCandidateValidation":
             return decodeRequestLiteralCandidateValidation(value);
+        case "RequestManagedEditRequest":
+            return decodeRequestManagedEditRequest(value);
+        case "RequestManagedPlanRequest":
+            return decodeRequestManagedPlanRequest(value);
+        case "RequestManagedValidationRequest":
+            return decodeRequestManagedValidationRequest(value);
         case "RequestNewVerification":
             return decodeRequestNewVerification(value);
         case "RequestPlanSubmission":
@@ -7105,14 +8066,32 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeRequestReadOnlyDiagnostics(value);
         case "RequestRecoverySubmission":
             return decodeRequestRecoverySubmission(value);
+        case "RequestRepairReplacement":
+            return decodeRequestRepairReplacement(value);
         case "RequestRepairSubmission":
             return decodeRequestRepairSubmission(value);
+        case "RequestRepositoryConfig":
+            return decodeRequestRepositoryConfig(value);
+        case "RequestRepositoryRemove":
+            return decodeRequestRepositoryRemove(value);
+        case "RequestRepositoryUpsert":
+            return decodeRequestRepositoryUpsert(value);
         case "RequestRevisionVerification":
             return decodeRequestRevisionVerification(value);
+        case "RequestSettingsReplace":
+            return decodeRequestSettingsReplace(value);
+        case "RequestSettingsReplacement":
+            return decodeRequestSettingsReplacement(value);
+        case "RequestStorageReplacement":
+            return decodeRequestStorageReplacement(value);
+        case "RequestSyncReplacement":
+            return decodeRequestSyncReplacement(value);
         case "RequestSyncSubmission":
             return decodeRequestSyncSubmission(value);
         case "RequestValidationSubmission":
             return decodeRequestValidationSubmission(value);
+        case "RequestVerificationReplacement":
+            return decodeRequestVerificationReplacement(value);
         case "RequestVerificationSubmission":
             return decodeRequestVerificationSubmission(value);
         case "RevisionManifest":
@@ -7293,6 +8272,29 @@ export const routeContracts = {
             })(value),
         repeated: [],
         decodeSuccess: decodeHostStatus,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: wireNull,
+    },
+    config_read_default: {
+        method: "GET",
+        path: "/api/v1/config",
+        commands: ["config read"],
+        bindingIds: [],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeConfigRead,
         decodeFailure: (value: unknown): EmptyPayload =>
             wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
         decodeBody: wireNull,
@@ -8677,6 +9679,31 @@ export const routeContracts = {
         },
         decodeBody: decodeRequestLiteralCandidatePlan,
     },
+    plan_managed: {
+        method: "POST",
+        path: "/api/v1/plans",
+        commands: ["plan"],
+        bindingIds: [],
+        responseKind: "acceptance",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeAcceptance,
+        decodeFailure: (_value: unknown): never => {
+            void _value;
+            throw new WireError("schema");
+        },
+        decodeBody: decodeRequestManagedPlanRequest,
+    },
     diagnostics_read_only: {
         method: "POST",
         path: "/api/v1/diagnostics",
@@ -9125,10 +10152,33 @@ export const routeContracts = {
             ]),
         decodeBody: decodeRequestLiteralCandidateValidation,
     },
+    config_validate_managed: {
+        method: "POST",
+        path: "/api/v1/config/validate",
+        commands: ["config validate"],
+        bindingIds: [],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeManagedValidation,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: decodeRequestManagedValidationRequest,
+    },
 } as const;
 export type OperationSuccess =
     | RunResultPayload
-    | PlanPayload
+    | PlanResultPayload
     | DiagnosticsPayload
     | VerificationResultPayload
     | PrunePayload
@@ -9142,7 +10192,7 @@ export type OperationSuccess =
 export type OperationFailure =
     | RunResultPayload
     | EmptyPayload
-    | PlanPayload
+    | PlanResultPayload
     | DiagnosticsPayload
     | VerificationResultPayload
     | VerificationReport
@@ -9178,12 +10228,12 @@ export function decodeOriginalOperationPayload(
             : decodeRunResultPayload(value);
     if (origin === "/api/v1/plans" && ["plan"].includes(command))
         return failed
-            ? ((value: unknown): PlanPayload | EmptyPayload =>
-                  wireUnion<PlanPayload | EmptyPayload>(value, [
-                      decodePlanPayload,
+            ? ((value: unknown): PlanResultPayload | EmptyPayload =>
+                  wireUnion<PlanResultPayload | EmptyPayload>(value, [
+                      decodePlanResultPayload,
                       decodeEmptyPayload,
                   ]))(value)
-            : decodePlanPayload(value);
+            : decodePlanResultPayload(value);
     if (origin === "/api/v1/diagnostics" && ["doctor"].includes(command))
         return failed
             ? ((value: unknown): DiagnosticsPayload | EmptyPayload =>
@@ -9430,6 +10480,21 @@ export const routeDefinitions = [
         request_body: null,
         response_kind: "read",
         success: "HostStatus",
+    },
+    {
+        binding_ids: [],
+        commands: ["config read"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "config_read",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/config",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "read",
+        success: "ConfigRead",
     },
     {
         binding_ids: [],
@@ -10670,6 +11735,21 @@ export const routeDefinitions = [
     },
     {
         binding_ids: [],
+        commands: ["plan"],
+        cursor: "none",
+        failure: [],
+        id: "plan",
+        method: "POST",
+        mode: "managed",
+        path: "/api/v1/plans",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: "RequestManagedPlanRequest",
+        response_kind: "acceptance",
+        success: "Acceptance",
+    },
+    {
+        binding_ids: [],
         commands: ["doctor"],
         cursor: "none",
         failure: [],
@@ -10938,6 +12018,21 @@ export const routeDefinitions = [
         response_kind: "read",
         success: "CandidateValidPayload",
     },
+    {
+        binding_ids: [],
+        commands: ["config validate"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "config_validate",
+        method: "POST",
+        mode: "managed",
+        path: "/api/v1/config/validate",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: "RequestManagedValidationRequest",
+        response_kind: "read",
+        success: "ManagedValidation",
+    },
 ] as const;
 export const operationResultDefinitions = [
     {
@@ -10950,9 +12045,9 @@ export const operationResultDefinitions = [
     {
         binding_ids: ["operation.result"],
         commands: ["plan"],
-        failure: ["PlanPayload", "EmptyPayload"],
+        failure: ["PlanResultPayload", "EmptyPayload"],
         origin_path: "/api/v1/plans",
-        success: "PlanPayload",
+        success: "PlanResultPayload",
     },
     {
         binding_ids: ["operation.result"],

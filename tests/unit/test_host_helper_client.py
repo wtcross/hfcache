@@ -50,7 +50,7 @@ class UnixTestBinding(client_module.EndpointBinding):
 
 
 @contextmanager
-def unix_service(tmp_path, *, release=None, reply=None):
+def unix_service(tmp_path, *, release=None, reply=None, received=None):
     listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     protocol.configure_listener(listener)
     path = tmp_path / "test-only.sock"
@@ -70,7 +70,12 @@ def unix_service(tmp_path, *, release=None, reply=None):
                 ) as exchange:
                     if release is not None:
                         release.wait(2)
-                    exchange.dispatch(lambda *_: None)
+
+                    def dispatch(request, *_):
+                        if received is not None:
+                            received.append(request)
+
+                    exchange.dispatch(dispatch)
                     exchange.respond(outcome="ok", body=reply or {"status": "observed"})
             except (protocol.HostProtocolError, OSError) as error:
                 errors.append(type(error).__name__)

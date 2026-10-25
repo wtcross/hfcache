@@ -7,6 +7,9 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_valida
 from hfcache.api.models import (
     OperationView,  # noqa: TC001 - Pydantic resolves nested DTOs at runtime
 )
+from hfcache.config_models import (
+    ManagedEditRequest,  # noqa: TC001 - Pydantic resolves nested DTOs at runtime
+)
 from hfcache.errors import ConfigurationError
 from hfcache.identity import parse_selector
 from hfcache.models import RunIdField, as_tuple
@@ -89,16 +92,26 @@ class CatalogRefreshSubmission(CommandModel):
 
 class PlanSubmission(SyncSubmission):
     candidate: CandidateText | None = None
+    managed: ManagedEditRequest | None = None
 
     @model_validator(mode="after")
     def explicit_candidate(self) -> Self:
         if "candidate" in self.model_fields_set and self.candidate is None:
             message = "candidate must contain TOML text when supplied"
             raise ValueError(message)
+        if "managed" in self.model_fields_set and self.managed is None:
+            message = "managed must contain an edit request when supplied"
+            raise ValueError(message)
+        if self.managed is not None and (self.candidate is not None or self.selectors):
+            message = "managed plans cannot supply a literal candidate or repository selectors"
+            raise ValueError(message)
         return self
 
     def canonical_body(self) -> dict[str, Any]:
+        if self.managed is not None:
+            return {"managed": self.managed.model_dump(mode="json", exclude_none=True)}
         body = super().canonical_body()
+        body.pop("managed")
         # Omission predates this optional field (decision 119). Other request
         # nulls, particularly verification scope, keep their established digest.
         if self.candidate is None:
@@ -150,13 +163,27 @@ class CandidatePayload(CommandModel):
 
 class ValidationSubmission(CommandModel):
     candidate: CandidateText | None = None
+    managed: ManagedEditRequest | None = None
 
     @model_validator(mode="after")
     def explicit_candidate(self) -> Self:
         if "candidate" in self.model_fields_set and self.candidate is None:
             message = "candidate must contain TOML text when supplied"
             raise ValueError(message)
+        if "managed" in self.model_fields_set and self.managed is None:
+            message = "managed must contain an edit request when supplied"
+            raise ValueError(message)
+        if self.managed is not None and self.candidate is not None:
+            message = "managed validation cannot supply a literal candidate"
+            raise ValueError(message)
         return self
+
+    def canonical_body(self) -> dict[str, Any]:
+        if self.managed is not None:
+            return {"managed": self.managed.model_dump(mode="json", exclude_none=True)}
+        body = super().canonical_body()
+        body.pop("managed")
+        return body
 
 
 class OperationLinks(CommandModel):

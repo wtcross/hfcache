@@ -3,6 +3,70 @@
 AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
         (
+            "hfcache.config._as_tuple",
+            "1c5fe03e7949188afd2c4cc310603969c9e724c2ed5b4c01d4e8984ad8cfc90a",
+        ),
+        (
+            "hfcache.tags.normalize_tags",
+            "ccf770587ce91abd2e0bb2a9ce48fb6bcf27e6a1b91b8c1419a5d9ded6f32c7b",
+        ),
+        (
+            "hfcache.identity.parse_revision",
+            "c048b90175b03a65e672a3525950f1c43fb368bfefb2c46ab24e2ea27d89a1c5",
+        ),
+        (
+            "hfcache.config.RepositoryConfig._check",
+            "56addf978960b1337ac92d481d352329621b801b0eeeb062e1b981287d7b2e73",
+        ),
+        (
+            "hfcache.config_models.ManagedAssessment.complete_scope",
+            "bc6621f06f4375ce1686ff904fba36e52967945699fa1dc421d337319b249218",
+        ),
+        (
+            "hfcache.config_models.ManagedValidation.unique_scope",
+            "9d73196a8174dfd2fe49ff90cb32e747592cefac110fed0a0506e9b23f97f8d8",
+        ),
+        (
+            "hfcache.config_models.ManagedValidation.strict_valid",
+            "14e34c0adb395b80ee45acdf72782f1091be212c2d002e88b1eeab8e6f583c9c",
+        ),
+        (
+            "hfcache.config_models.ConfigRead.fixed_fields",
+            "ba7b294f0ebbcb569464dcc9c39d1bc8f0cbc5438a4a52685586d806fbe7d0ae",
+        ),
+        (
+            "hfcache.config_models.ProtectedField.fixed_description",
+            "386803b58738ef4a0b3225d830daa56b442ba8a2177dd28dbafa5e6f5bda6e38",
+        ),
+        (
+            "hfcache.config_models.ManagedEditRequest.unique_edits",
+            "ffb185ae022ae59815536b1deff2285f9880d8a21db14c9816e084dafb835ae9",
+        ),
+        (
+            "hfcache.config_models.SettingsTable.nonempty",
+            "76664daa21a87b7d0397e739a5c90514a0ae2468cec4069d5393377c264d9493",
+        ),
+        (
+            "hfcache.config_models.EditableConfig.unique_repositories",
+            "9a4fb553afb109e53be76258b8dbd4b5e668a1e90e240bd278245b5d3575d97d",
+        ),
+        (
+            "hfcache.config_models._retention",
+            "755ee42c0748631481217df6250c968f7adc296a30386e698aa5c8eea4d0a79a",
+        ),
+        (
+            "hfcache.config_models._whole_selector",
+            "f429f9cb8a716fb531f4bc117c65647f1128a19f91eaf8ad85004442de9174d6",
+        ),
+        (
+            "hfcache.config_models._revision",
+            "50111956fc33a8878e963731e0fa278ad350cfea3ae6c2a6234d6f80fc81bdeb",
+        ),
+        (
+            "hfcache.config_models._one",
+            "ce570a84b4fc67947d7905c8e8bc93c847fb587d1518ebc823cf1dd692a3e10b",
+        ),
+        (
             "hfcache.host_models._one",
             "1d11ba34ed85c9fc4aa8dc1845e754553d678d0b508763c833b5974af09ad6e1",
         ),
@@ -80,7 +144,7 @@ AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins rema
         ),
         (
             "hfcache.api.command_models.PlanSubmission.explicit_candidate",
-            "ecae525d772f930f13cf4c83597f87e16fb97dac4b627f0ba23382ee930e9dde",
+            "bd05c316a3da6610b8d97afd28b1646ec71d2ddbb1119b0ce0a106fe8c1d8195",
         ),
         (
             "hfcache.api.command_models.SyncSubmission.canonical",
@@ -88,7 +152,7 @@ AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins rema
         ),
         (
             "hfcache.api.command_models.ValidationSubmission.explicit_candidate",
-            "ecae525d772f930f13cf4c83597f87e16fb97dac4b627f0ba23382ee930e9dde",
+            "9493ad38963d1ca07202b19da73d1b08c7ec587579318b79850d74ce75990e9d",
         ),
         (
             "hfcache.api.command_models.VerificationSubmission.scope",
@@ -364,6 +428,14 @@ AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins rema
 # Pin helpers, serializers and routing too; review any authority change explicitly.
 AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
+        (
+            "hfcache.api.configuration",
+            "fa1673a7750a46e4af298ef2f62251e990c188812ffa809a8da0453a55d90d8c",
+        ),
+        (
+            "hfcache.config_models",
+            "006c9e7b17d488e54b662ac5a9c43397ecadaf82aba5f9c3470b1ac8e499f0f2",
+        ),
         ("hfcache.host_models", "772422b367739f3b54320ec3bc1a6550af64ad92d2265e85e22ce606517f6159"),
         (
             "hfcache.api.host_status",
@@ -386,7 +458,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ("hfcache.ui_models", "3b3b4b2181294ce5c2426d9fdb9227c5a0da8bdfac67d99a0dabe61783701956"),
         (
             "hfcache.api.app",
-            "e5a905e7b3f8aab227c313101cd12d5baff21991f37b5727a540508f79b19b3d",
+            "307f4346799bdaf8cf9abb7d97f971d348c1974947dbd7f956367cbc41ae322d",
         ),
         (
             "hfcache.api.catalog",
@@ -398,11 +470,11 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.api.command_models",
-            "40c8f9528870a022a71f98e109450be89d7684173e33fcca235e0b9df0e1833a",
+            "c8f64958b52a3d0d1f7be1569d44dd70e78213e786f210a082b90219ad995d1c",
         ),
         (
             "hfcache.api.commands",
-            "7e73e1314ca46d5c5a2ff53a5e14501111f5586b40d8ca152feefe2c877dea41",
+            "f513c3f39542b9440e35d1d658b8ec07358991bdf4b750a6bf8eeaa85b8d3158",
         ),
         (
             "hfcache.api.maintenance",

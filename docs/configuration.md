@@ -591,6 +591,35 @@ manual operator guidance. API-only clients never receive Hub authority. See
 and [decision 119](adr/decision-119.md)
 and [candidate wire contract](api.md#candidate-content-and-installed-authority).
 
+### Managed configuration reads and previews
+
+The protected configuration API exposes only the supported settings and complete
+repository entries, including tags and declared dependencies. It preserves the
+six authority fields above server-side and provides descriptions instead of
+their protected values. Verification algorithm/required hashing and the schema
+are also protected; server/runtime configuration remains a separate domain.
+Read/managed preparation require explicit administration authority and independently
+provisioned host policy. Ordinary REST writer authority alone is insufficient.
+
+The opaque `base_revision` binds the complete installed bytes. Unlike the
+operational fingerprint, it changes for tags, comments and formatting. Managed
+validation/planning compares a fresh base, reconstructs a bounded private
+candidate and returns its opaque `candidate_revision`. Reconstruction preserves
+protected values but intentionally discards comments and formatting in favor of
+canonical TOML. It never returns a raw document or secret-dependent document hash.
+Read and preparation create no configuration lock, candidate, backup or outcome
+file; planning retains its ordinary operation receipt and assessment.
+
+Repository upsert replaces a complete entry: omitted `revision`, `enabled`,
+`tags` and `declared_dependencies` reset to their ordinary defaults. A settings
+replacement changes only supplied supported fields. Managed previews derive the
+required newly added/enabled/retargeted enabled scope on the server; empty scope
+still gets an explicit assessment without Hub contact. Validation and preview
+never install configuration. Configuration Apply remains unimplemented. Follow
+the [configuration and tags guide](web-ui/configuration-and-tags.md) for the eleven
+settings, exact edit forms, normalization, stale conflicts and original-handle
+recovery, and the [API contract](api.md#managed-configuration-form) for wire details.
+
 ## 13. Independent reader/client configuration
 
 [Client configuration](api-client.md) is a separate strict schema-1 TOML domain,

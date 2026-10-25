@@ -45,6 +45,7 @@ from hfcache.client_models import (
     ClientRead,
 )
 from hfcache.config import ApplicationConfig, RepositoryConfig
+from hfcache.config_models import ManagedEditRequest
 from hfcache.errors import Problem
 from hfcache.hashing import ObjectIdentity
 from hfcache.identity import CommitSha, PublicationId, RunId, TransactionId
@@ -96,6 +97,12 @@ def request_samples() -> dict[str, dict[str, Any]]:
         "LiteralCandidatePlan": {"candidate": candidate, "selectors": [selector]},
         "InstalledValidation": {},
         "LiteralCandidateValidation": {"candidate": candidate},
+        "ManagedValidationRequest": {
+            "managed": managed_request().model_dump(mode="json", exclude_none=True)
+        },
+        "ManagedPlanRequest": {
+            "managed": managed_request().model_dump(mode="json", exclude_none=True)
+        },
         "ReadOnlyDiagnostics": {"read_only": True},
         "ProbeDiagnostics": {"read_only": False},
         "NewVerification": {"mode": "new", "run_id": examples.RUN},
@@ -109,12 +116,47 @@ def request_samples() -> dict[str, dict[str, Any]]:
             message = "request authority is not an original command model"
             raise TypeError(message)
         body = parsed.canonical_body()
+        if name in {"ManagedValidationRequest", "ManagedPlanRequest"}:
+            body = parsed.model_dump(mode="json", exclude_none=True)
         if name == "ValidationSubmission":
             # client.validate_installed sends {}, never explicit candidate:null.
             body = {}
         result["Request" + name] = body
         result["Request" + type(parsed).__name__] = body
     return result
+
+
+def managed_request() -> ManagedEditRequest:
+    """Hand-authored edit vocabulary exercises every strict nested request table."""
+    return ManagedEditRequest.model_validate(
+        {
+            "base_revision": "a" * 64,
+            "edits": [
+                {
+                    "kind": "repository-upsert",
+                    "repository": {
+                        "id": examples.REPOSITORY_ID,
+                        "type": "model",
+                        "tags": ["coding"],
+                    },
+                },
+                {
+                    "kind": "repository-remove",
+                    "repository_type": "dataset",
+                    "repository_id": "organization/removed",
+                },
+                {
+                    "kind": "settings-replace",
+                    "settings": {
+                        "storage": {"maximum_revisions": 5},
+                        "sync": {"max_workers": 2},
+                        "verification": {"lock_wait_seconds": 0},
+                        "repair": {"retired_instance_grace_hours": 168},
+                    },
+                },
+            ],
+        }
+    )
 
 
 def _operation(route: str = "/api/v1/syncs") -> ClientOperation:
@@ -447,6 +489,9 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
         examples.ui_asset_manifest,
         examples.ui_bootstrap,
         examples.host_status,
+        examples.configuration_read,
+        examples.managed_validation,
+        examples.managed_assessment,
     ):
         model(factory())
     model(PrunedRevision(commit_sha=examples.OTHER_SHA, logical_bytes=0, publication_generation=1))
@@ -523,6 +568,7 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
         payloads = _source_payloads(Path(temporary))
         payloads["OperationPayload"] = {"operation": operation.model_dump(mode="json")}
         payloads["OperationsPayload"] = {"operations": [operation.model_dump(mode="json")]}
+        payloads["PlanResultPayload"] = payloads["PlanPayload"]
         for name, value in payloads.items():
             decoded = validate_payload(name, value)
             add(name, value)
@@ -545,6 +591,18 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
         )
     for name, value in request_samples().items():
         add(name, value)
+
+    def request_model(value):
+        if isinstance(value, BaseModel):
+            add("Request" + type(value).__name__, value.model_dump(mode="json", exclude_none=True))
+            for field in type(value).model_fields:
+                request_model(getattr(value, field))
+        elif isinstance(value, (list, tuple)):
+            for item in value:
+                request_model(item)
+
+    request_model(managed_request())
+    add("PlanResultPayload", examples.managed_assessment().model_dump(mode="json"))
     for name, report in (
         ("RunResultPayload", examples.run_report()),
         ("VerificationResultPayload", examples.verification_report()),
@@ -603,6 +661,7 @@ def covered_route_modes() -> set[tuple[str, str, str]]:
         "capabilities",
         "health",
         "host_status",
+        "config_read",
         "inspection",
         "status",
         "repositories",
@@ -637,8 +696,10 @@ def covered_route_modes() -> set[tuple[str, str, str]]:
         ("operation_result", "by_original_operation"),
         ("plan", "installed"),
         ("plan", "literal_candidate"),
+        ("plan", "managed"),
         ("config_validate", "installed"),
         ("config_validate", "literal_candidate"),
+        ("config_validate", "managed"),
         ("diagnostics", "read_only"),
         ("diagnostics", "probe"),
         ("verification", "new"),
@@ -672,10 +733,13 @@ def _original_models() -> dict[str, type[BaseModel]]:
         "hfcache.wire_models",
         "hfcache.ui_models",
         "hfcache.host_models",
+        "hfcache.config_models",
+        "hfcache.config",
     ):
         for value in vars(import_module(module)).values():
             if isinstance(value, type) and issubclass(value, BaseModel):
                 result[value.__name__] = value
+                result["Request" + value.__name__] = value
     for name, model in request_authorities().items():
         result["Request" + name] = model
         result["Request" + model.__name__] = model

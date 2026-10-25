@@ -24,6 +24,13 @@ from hfcache.catalog_models import (
     VariantMember,
     variant_identity,
 )
+from hfcache.config_models import (
+    EDITABLE_FIELDS,
+    PROTECTED_FIELDS,
+    ConfigRead,
+    ManagedAssessment,
+    ManagedValidation,
+)
 from hfcache.manifests import (
     DependencyObservation,
     FileEntry,
@@ -627,6 +634,63 @@ def publication_observation() -> PublicationObservation:
             ),
         ),
         variants=(variant,),
+    )
+
+
+def configuration_read() -> ConfigRead:
+    """Independent nonsecret schema1 example, never an installed configuration."""
+    return ConfigRead.model_validate(
+        {
+            "schema_version": 1,
+            "archive_id": ARCHIVE_ID,
+            "base_revision": "a" * 64,
+            "editable": {
+                "storage": {
+                    "publication_mode": "hardlink",
+                    "minimum_free_space_gib": 100,
+                    "minimum_free_space_percent": 10,
+                    "maximum_revisions": 3,
+                },
+                "sync": {
+                    "max_workers": 4,
+                    "lock_wait_seconds": 3600,
+                    "continue_on_repository_error": True,
+                    "dependency_policy": "warn",
+                    "stale_staging_age_hours": 24,
+                },
+                "verification": {"lock_wait_seconds": 86400},
+                "repair": {"retired_instance_grace_hours": 168},
+                "repositories": [{"type": "model", "id": REPOSITORY_ID, "tags": ["coding"]}],
+            },
+            "editable_fields": EDITABLE_FIELDS,
+            "protected_fields": [
+                {"field": field, "description": description}
+                for field, description in PROTECTED_FIELDS
+            ],
+        }
+    )
+
+
+def managed_validation() -> ManagedValidation:
+    return ManagedValidation(
+        schema_version=1,
+        archive_id=ARCHIVE_ID,
+        base_revision="a" * 64,
+        candidate_revision="b" * 64,
+        required_selectors=(),
+        valid=True,
+    )
+
+
+def managed_assessment() -> ManagedAssessment:
+    return ManagedAssessment(
+        schema_version=1,
+        archive_id=ARCHIVE_ID,
+        base_revision="a" * 64,
+        candidate_revision="b" * 64,
+        required_selectors=(),
+        complete=True,
+        sizing=None,
     )
 
 

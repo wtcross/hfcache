@@ -4,6 +4,15 @@
 - Status: Accepted design; implementation and installed conformance pending.
 - Date: 2026-10-20.
 
+## Read-only managed reconstruction amendment
+
+[Decision153](decision-153.md) specifies full-byte-bound editable reads and
+non-persisting managed validation/preview. That read-only reconstruction uses
+descriptor-pinned capture and bracketed exact revalidation without taking or
+creating a configuration lock. Persistent preparation and installation retain
+this record's original-lock requirements. No installation or automatic replay
+follows from a successful preview.
+
 ## 2026-10-21 protected-reader amendment
 
 [Decision150](decision-150.md) specifies the fixed protected status/config-base

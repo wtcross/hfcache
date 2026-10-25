@@ -209,6 +209,12 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
 
     @app.post(PREFIX + "/plans", response_model=AcceptanceResponse, status_code=202)
     async def plan(request: Request, body: PlanSubmission) -> Response:
+        if body.managed is not None:
+            from hfcache.api.configuration import (  # noqa: PLC0415 - avoids shared helper cycle
+                managed_plan,
+            )
+
+            return await managed_plan(request, body, server)
         require_capability(
             request.state.principal,
             Capability.WRITE if body.candidate is not None else Capability.READ,
@@ -312,6 +318,12 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
 
     @app.post(PREFIX + "/config/validate", response_model=ReadResponse)
     async def installed_validation(request: Request, body: ValidationSubmission) -> Response:
+        if body.managed is not None:
+            from hfcache.api.configuration import (  # noqa: PLC0415 - avoids shared helper cycle
+                managed_validation,
+            )
+
+            return await managed_validation(request, body, render)
         _no_query(request)
         require_capability(
             request.state.principal,

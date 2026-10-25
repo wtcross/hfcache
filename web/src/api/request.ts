@@ -3,6 +3,7 @@ import { canonicalHex, repositorySegments } from "./identity";
 import { codePointLength, parseWireJson, WireError } from "../wire/json";
 import { isRecord } from "../wire/runtime";
 import { compareCodePoints } from "../wire/semantics";
+import { normalizeManagedTags } from "../wire/config-semantics";
 
 /** Validate ordinary caller values before JSON.stringify can normalize them. */
 export function serializeRequestJson(value: unknown): string {
@@ -127,6 +128,35 @@ export function buildRequestInput(route: string, value: unknown): unknown {
     const text = serializeRequestJson(value);
     const raw = parseWireJson(text);
     if (!isRecord(raw)) throw new WireError("schema");
+    if (
+        ["/api/v1/plans", "/api/v1/config/validate"].includes(route) &&
+        isRecord(raw.managed) &&
+        Array.isArray(raw.managed.edits)
+    ) {
+        const edits: readonly unknown[] = raw.managed.edits;
+        return {
+            ...raw,
+            managed: {
+                ...raw.managed,
+                edits: edits.map((edit) => {
+                    if (
+                        !isRecord(edit) ||
+                        edit.kind !== "repository-upsert" ||
+                        !isRecord(edit.repository) ||
+                        !Object.hasOwn(edit.repository, "tags")
+                    )
+                        return edit;
+                    return {
+                        ...edit,
+                        repository: {
+                            ...edit.repository,
+                            tags: normalizeManagedTags(edit.repository.tags),
+                        },
+                    };
+                }),
+            },
+        };
+    }
     if (Object.hasOwn(raw, "selectors") && Array.isArray(raw.selectors)) {
         const strip = ["/api/v1/syncs", "/api/v1/plans"].includes(route);
         const selectors: readonly unknown[] = raw.selectors;

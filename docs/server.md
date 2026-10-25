@@ -835,8 +835,10 @@ permissions, guard/mask and expected object revision/invocation at execution.
 Unavailable/unsafe proof yields a classified denial, never fallback.
 
 Keep the original persistent configuration lock, candidate and predecessor backup.
-Read creates no missing files. Prepare exact bytes briefly under that lock, release
-it for validation/Hub preview, then reacquire/recheck for backup/install/confirmation.
+Read-only managed reconstruction creates no missing files and uses a pinned
+capture with bracketed exact byte/metadata revalidation; no lock is held during
+validation/Hub preview. Persistent staging and backup/install/confirmation retain
+the original configuration lock and require fresh exact base comparison.
 Never nest operation-store/admission locks around helper calls; the helper cannot
 acquire those locks or the archive flock. Private outcome evidence and original
 key/ID support read-only reconciliation after interruption, never mutation replay.
@@ -844,3 +846,22 @@ Rootless schedule/observer permissions remain denied until their actual bindings
 are proved; same-named user units are not substitutes. Native positive controls
 must be accepted on an isolated supported profile. See the [API design](api.md#web-ui-and-administration-design)
 and [private record design](schemas.md#18-web-ui-and-administration-design-records).
+
+### Managed configuration read and preview
+
+The API uses the same protected helper client for fixed `config-read` and
+non-installing `config-prepare`. GET `/api/v1/config` requires the internal
+configuration-read grant; managed validation/plans require configuration-write.
+Both also require fresh independent configuration permission. Service writer
+bearers receive no such grant. The private helper response may carry one bounded
+candidate to the API for independent validation; it is never returned to the
+browser or stored in generic operations. Private encoded frames remain bounded
+at2MiB even when raw TOML fits1MiB.
+
+Nonempty server-derived preview scope additionally requires explicit Hub
+permission and complete existing-service sizing. Empty-scope assessments contact
+no Hub and retain the explicit successful operation needed by later application.
+The API does not hold admission/store locks across helper calls or Hub work.
+Queue execution rechecks full-byte base, opaque candidate identity and all six
+protected authority fields. Comments and tags invalidate base identity even when
+operational fingerprints remain unchanged. See [API contracts](api.md#managed-configuration-read-and-assessment-responses).

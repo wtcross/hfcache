@@ -6,9 +6,9 @@ public receipt route and command; they never select a replay target (INV-013).
 
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, BeforeValidator, Field, create_model
 
 from hfcache import ui_models
 from hfcache import wire_models as payloads
@@ -20,6 +20,7 @@ from hfcache.catalog_query_models import (
 )
 from hfcache.catalog_refresh_models import CatalogRefreshResult
 from hfcache.client_models import Acceptance, Capabilities, ClientEvents, ClientProblem, ClientRead
+from hfcache.config_models import ConfigRead, ManagedAssessment, ManagedValidation
 from hfcache.host_models import HostStatus
 from hfcache.reporting import RunReport, VerificationReport
 
@@ -38,6 +39,10 @@ AUTHORITIES: dict[str, Any] = {
     "ApiProblem": ClientProblem,
     "Capabilities": Capabilities,
     "HostStatus": HostStatus,
+    "ConfigRead": ConfigRead,
+    "ManagedValidation": ManagedValidation,
+    "ManagedAssessment": ManagedAssessment,
+    "PlanResultPayload": payloads.PlanPayload | ManagedAssessment,
     "ClientEvents": ClientEvents,
     "HealthPayload": payloads.ReadyHealthPayload | payloads.UnavailableHealthPayload,
     "CatalogSearchPayload": CatalogSearchPayload,
@@ -136,6 +141,7 @@ READ_ROUTES = (
     _read("capabilities", "/capabilities", "capabilities", "Capabilities"),
     _read("health", "/health", "health", "HealthPayload"),
     _read("host_status", "/host/status", "host status", "HostStatus", bindings=("host.status",)),
+    _read("config_read", "/config", "config read", "ConfigRead"),
     _read(
         "inspection",
         "/archive/inspection",
@@ -292,11 +298,24 @@ def request_authorities() -> dict[str, type[BaseModel]]:
     result["InstalledPlan"] = result["SyncSubmission"]
     result["LiteralCandidatePlan"] = create_model(
         "LiteralCandidatePlan",
-        __base__=result["PlanSubmission"],
+        __base__=result["SyncSubmission"],
         candidate=(commands.CandidateText, ...),
     )
     result["InstalledValidation"] = commands.InstalledValidationSubmission
     result["LiteralCandidateValidation"] = commands.CandidatePayload
+    result["ManagedValidationRequest"] = create_model(
+        "ManagedValidationRequest",
+        __base__=commands.CommandModel,
+        managed=(commands.ManagedEditRequest, ...),
+    )
+    result["ManagedPlanRequest"] = create_model(
+        "ManagedPlanRequest",
+        __base__=result["ManagedValidationRequest"],
+        selectors=(
+            Annotated[tuple[str, ...], BeforeValidator(payloads.as_tuple), Field(max_length=0)],
+            (),
+        ),
+    )
     for name, read_only in (
         ("ReadOnlyDiagnostics", Literal[True]),
         ("ProbeDiagnostics", Literal[False]),
@@ -325,7 +344,7 @@ def request_authorities() -> dict[str, type[BaseModel]]:
 
 _JOBS = (
     ("sync", "/syncs", "sync", "SyncSubmission", "RunResultPayload", ("RunResultPayload",)),
-    ("plan", "/plans", "plan", "PlanSubmission", "PlanPayload", ("PlanPayload",)),
+    ("plan", "/plans", "plan", "PlanSubmission", "PlanResultPayload", ("PlanResultPayload",)),
     (
         "diagnostics",
         "/diagnostics",
@@ -402,7 +421,7 @@ def job_routes() -> tuple[Route, ...]:
     result = []
     for name, path, command, request, _, _ in _JOBS:
         modes = {
-            "plan": ("installed", "literal_candidate"),
+            "plan": ("installed", "literal_candidate", "managed"),
             "diagnostics": ("read_only", "probe"),
             "verification": ("new", "full", "revision"),
         }.get(name, ("default",))
@@ -411,6 +430,7 @@ def job_routes() -> tuple[Route, ...]:
             mode_request = {
                 ("plan", "installed"): "InstalledPlan",
                 ("plan", "literal_candidate"): "LiteralCandidatePlan",
+                ("plan", "managed"): "ManagedPlanRequest",
                 ("diagnostics", "read_only"): "ReadOnlyDiagnostics",
                 ("diagnostics", "probe"): "ProbeDiagnostics",
                 ("verification", "new"): "NewVerification",
@@ -457,6 +477,16 @@ ROUTES = (
             "CandidateValidPayload",
             ("CandidateInvalidPayload",),
             request_body="LiteralCandidateValidation",
+        ),
+        Route(
+            "config_validate",
+            "POST",
+            PREFIX + "/config/validate",
+            "managed",
+            "read",
+            ("config validate",),
+            "ManagedValidation",
+            request_body="ManagedValidationRequest",
         ),
     )
 )

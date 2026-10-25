@@ -29,6 +29,8 @@ def original_models():
         "hfcache.catalog_refresh_models",
         "hfcache.client_models",
         "hfcache.host_models",
+        "hfcache.config_models",
+        "hfcache.config",
         "hfcache.models",
         "hfcache.manifests",
         "hfcache.reporting",
@@ -38,6 +40,7 @@ def original_models():
         for value in vars(import_module(module)).values():
             if isinstance(value, type) and issubclass(value, BaseModel):
                 models[value.__name__] = value
+                models["Request" + value.__name__] = value
     for name, model in request_authorities().items():
         models["Request" + name] = model
         models["Request" + model.__name__] = model
@@ -45,10 +48,10 @@ def original_models():
 
 
 def test_original_serializer_corpus_covers_every_public_named_definition(corpus):
-    assert len(corpus) == 302
+    assert len(corpus) == 336
     assert len({entry["case_id"] for entry in corpus}) == len(corpus)
     names = {entry["definition"] for entry in corpus}
-    assert len(names) == 135
+    assert len(names) == 158
     assert names == build_contracts()["definitions"].keys()
     assert names.isdisjoint({"OperationReceipt", "ResultReference", "TransactionJournal"})
     for entry in corpus:
@@ -103,7 +106,7 @@ def test_every_serialized_example_still_validates_with_its_original_python_autho
 
 def test_mode_fixture_inventory_and_original_canonical_request_bodies_are_complete():
     modes = web_wire_corpus.covered_route_modes()
-    assert len(modes) == 44
+    assert len(modes) == 47
     assert modes == {(route.method, route.path, route.mode) for route in ROUTES}
     bodies = web_wire_corpus.request_samples()
     for name, model in request_authorities().items():
@@ -138,7 +141,7 @@ def test_factory_needs_no_network_or_archive_initialization_and_cleans_its_tree(
     monkeypatch.setattr(socket.socket, "connect", forbidden)
     monkeypatch.setattr(socket.socket, "connect_ex", forbidden)
     monkeypatch.setattr(socket, "create_connection", forbidden)
-    assert len(web_wire_corpus.serialized_corpus()) == 302
+    assert len(web_wire_corpus.serialized_corpus()) == 336
     assert len(created) == 1
     assert not any(tmp_path.iterdir())
 

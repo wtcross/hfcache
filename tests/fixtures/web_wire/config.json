@@ -1,0 +1,135 @@
+{
+  "assessment": {
+    "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+    "base_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "candidate_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "complete": true,
+    "required_selectors": [],
+    "schema_version": 1,
+    "sizing": null
+  },
+  "read": {
+    "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+    "base_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "editable": {
+      "repair": {
+        "retired_instance_grace_hours": 168
+      },
+      "repositories": [
+        {
+          "declared_dependencies": [],
+          "enabled": true,
+          "id": "organization/model-name",
+          "revision": "main",
+          "tags": ["coding"],
+          "type": "model"
+        }
+      ],
+      "storage": {
+        "maximum_revisions": 3,
+        "minimum_free_space_gib": 100,
+        "minimum_free_space_percent": 10,
+        "publication_mode": "hardlink"
+      },
+      "sync": {
+        "continue_on_repository_error": true,
+        "dependency_policy": "warn",
+        "lock_wait_seconds": 3600,
+        "max_workers": 4,
+        "stale_staging_age_hours": 24
+      },
+      "verification": {
+        "lock_wait_seconds": 86400
+      }
+    },
+    "editable_fields": [
+      "storage.publication_mode",
+      "storage.minimum_free_space_gib",
+      "storage.minimum_free_space_percent",
+      "storage.maximum_revisions",
+      "sync.max_workers",
+      "sync.lock_wait_seconds",
+      "sync.continue_on_repository_error",
+      "sync.dependency_policy",
+      "sync.stale_staging_age_hours",
+      "verification.lock_wait_seconds",
+      "repair.retired_instance_grace_hours",
+      "repositories"
+    ],
+    "protected_fields": [
+      {
+        "description": "Archive root is fixed by installed deployment authority.",
+        "field": "storage.archive_root"
+      },
+      {
+        "description": "Archive identity is fixed by installed deployment authority.",
+        "field": "storage.archive_id"
+      },
+      {
+        "description": "Hub endpoint and credential authority are preserved privately.",
+        "field": "hub"
+      },
+      {
+        "description": "The verification algorithm is fixed.",
+        "field": "verification.algorithm"
+      },
+      {
+        "description": "Hashing new content is required.",
+        "field": "verification.hash_new_content"
+      },
+      {
+        "description": "Server policy and credentials are managed outside archive configuration.",
+        "field": "server"
+      }
+    ],
+    "schema_version": 1
+  },
+  "request": {
+    "managed": {
+      "base_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "edits": [
+        {
+          "kind": "repository-upsert",
+          "repository": {
+            "declared_dependencies": [],
+            "enabled": true,
+            "id": "organization/model-name",
+            "revision": "main",
+            "tags": ["coding"],
+            "type": "model"
+          }
+        },
+        {
+          "kind": "repository-remove",
+          "repository_id": "organization/removed",
+          "repository_type": "dataset"
+        },
+        {
+          "kind": "settings-replace",
+          "settings": {
+            "repair": {
+              "retired_instance_grace_hours": 168
+            },
+            "storage": {
+              "maximum_revisions": 5
+            },
+            "sync": {
+              "max_workers": 2
+            },
+            "verification": {
+              "lock_wait_seconds": 0
+            }
+          }
+        }
+      ]
+    }
+  },
+  "validation": {
+    "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+    "base_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "candidate_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "required_selectors": [],
+    "schema_version": 1,
+    "valid": true
+  }
+}

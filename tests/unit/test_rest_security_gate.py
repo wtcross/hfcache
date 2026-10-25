@@ -68,7 +68,7 @@ WRITER_POSTS = (
 )
 # A REST reader/writer has no internal Basic administrative capability. Keep
 # this inventory separate so route-complete role tests cannot silently promote it.
-ADMIN_READ_PATHS = ("/host/status",)
+ADMIN_READ_PATHS = ("/host/status", "/config")
 ROUTES = (
     tuple(("GET", PREFIX + path) for path in READ_PATHS)
     + tuple(("GET", PREFIX + path) for path in ADMIN_READ_PATHS)
@@ -176,7 +176,7 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
     if not docs_enabled:
         expected.remove(("GET", PREFIX + "/docs"))
     assert actual == expected
-    assert len(actual) == (40 if docs_enabled else 39)
+    assert len(actual) == (41 if docs_enabled else 40)
     documented = {
         (row[0].split(" ", 1)[0], PREFIX + row[0].split(" ", 1)[1])
         for row in matrix_rows()

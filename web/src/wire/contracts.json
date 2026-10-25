@@ -1817,6 +1817,93 @@
         "hfcache.client_models.ClientRead.coherent_envelope"
       ]
     },
+    "ConfigRead": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.config_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "base_revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.config_models._revision"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "editable",
+          "node": {
+            "kind": "ref",
+            "name": "EditableConfig",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "editable_fields",
+          "node": {
+            "items": {
+              "kind": "string",
+              "max_codepoints": null,
+              "min_codepoints": null,
+              "pattern": null,
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": null,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "protected_fields",
+          "node": {
+            "items": {
+              "kind": "ref",
+              "name": "ProtectedField",
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": null,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.ConfigRead.fixed_fields"
+      ]
+    },
     "DependencyObservation": {
       "extra": "forbid",
       "fields": [
@@ -1968,6 +2055,213 @@
             "kind": "array",
             "max_items": null,
             "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "EditableConfig": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "storage",
+          "node": {
+            "kind": "ref",
+            "name": "EditableStorage",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "sync",
+          "node": {
+            "kind": "ref",
+            "name": "EditableSync",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "verification",
+          "node": {
+            "kind": "ref",
+            "name": "EditableVerification",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "repair",
+          "node": {
+            "kind": "ref",
+            "name": "EditableRepair",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "repositories",
+          "node": {
+            "items": {
+              "kind": "ref",
+              "name": "RepositoryConfig",
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": null,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.EditableConfig.unique_repositories"
+      ]
+    },
+    "EditableRepair": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "retired_instance_grace_hours",
+          "node": {
+            "kind": "integer",
+            "maximum": "8760",
+            "minimum": "168",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "EditableStorage": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "publication_mode",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "hardlink"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "copy"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "minimum_free_space_gib",
+          "node": {
+            "kind": "integer",
+            "maximum": "1048576",
+            "minimum": "0",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "minimum_free_space_percent",
+          "node": {
+            "kind": "integer",
+            "maximum": "100",
+            "minimum": "0",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "maximum_revisions",
+          "node": {
+            "kind": "integer",
+            "maximum": null,
+            "minimum": null,
+            "semantic_ids": [
+              "hfcache.config_models._retention"
+            ]
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "EditableSync": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "max_workers",
+          "node": {
+            "kind": "integer",
+            "maximum": "32",
+            "minimum": "1",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "lock_wait_seconds",
+          "node": {
+            "kind": "integer",
+            "maximum": "86400",
+            "minimum": "0",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "continue_on_repository_error",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "dependency_policy",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "warn"
+          },
+          "required": true
+        },
+        {
+          "name": "stale_staging_age_hours",
+          "node": {
+            "kind": "integer",
+            "maximum": "8760",
+            "minimum": "1",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "EditableVerification": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "lock_wait_seconds",
+          "node": {
+            "kind": "integer",
+            "maximum": "604800",
+            "minimum": "0",
             "semantic_ids": []
           },
           "required": true
@@ -4132,6 +4426,199 @@
       "kind": "object",
       "semantic_ids": []
     },
+    "ManagedAssessment": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.config_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "base_revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.config_models._revision"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "candidate_revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.config_models._revision"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "required_selectors",
+          "node": {
+            "items": {
+              "kind": "string",
+              "max_codepoints": null,
+              "min_codepoints": null,
+              "pattern": null,
+              "semantic_ids": [
+                "hfcache.config_models._whole_selector"
+              ]
+            },
+            "kind": "array",
+            "max_items": 256,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "complete",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "sizing",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "PlanPayload",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.ManagedAssessment.complete_scope"
+      ]
+    },
+    "ManagedValidation": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.config_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "base_revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.config_models._revision"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "candidate_revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.config_models._revision"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "required_selectors",
+          "node": {
+            "items": {
+              "kind": "string",
+              "max_codepoints": null,
+              "min_codepoints": null,
+              "pattern": null,
+              "semantic_ids": [
+                "hfcache.config_models._whole_selector"
+              ]
+            },
+            "kind": "array",
+            "max_items": 256,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "valid",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": true
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.ManagedValidation.strict_valid",
+        "hfcache.config_models.ManagedValidation.unique_scope"
+      ]
+    },
     "ManifestPayload": {
       "extra": "forbid",
       "fields": [
@@ -4752,6 +5239,22 @@
       "kind": "object",
       "semantic_ids": []
     },
+    "PlanResultPayload": {
+      "choices": [
+        {
+          "kind": "ref",
+          "name": "PlanPayload",
+          "semantic_ids": []
+        },
+        {
+          "kind": "ref",
+          "name": "ManagedAssessment",
+          "semantic_ids": []
+        }
+      ],
+      "kind": "union",
+      "semantic_ids": []
+    },
     "PlannedRepositoryPayload": {
       "extra": "forbid",
       "fields": [
@@ -4980,6 +5483,37 @@
       ],
       "kind": "object",
       "semantic_ids": []
+    },
+    "ProtectedField": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "field",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "description",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.ProtectedField.fixed_description"
+      ]
     },
     "PrunePayload": {
       "extra": "forbid",
@@ -7395,6 +7929,107 @@
       "kind": "object",
       "semantic_ids": []
     },
+    "RepositoryConfig": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_repository_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "type",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "model"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "dataset"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_revision"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "enabled",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "tags",
+          "node": {
+            "items": {
+              "kind": "string",
+              "max_codepoints": null,
+              "min_codepoints": null,
+              "pattern": null,
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 64,
+            "min_items": null,
+            "semantic_ids": [
+              "hfcache.tags.normalize_tags"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "declared_dependencies",
+          "node": {
+            "items": {
+              "kind": "string",
+              "max_codepoints": null,
+              "min_codepoints": null,
+              "pattern": null,
+              "semantic_ids": [
+                "hfcache.identity.parse_repository_id"
+              ]
+            },
+            "kind": "array",
+            "max_items": null,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config.RepositoryConfig._check"
+      ]
+    },
     "RepositoryPayload": {
       "extra": "forbid",
       "fields": [
@@ -8382,13 +9017,114 @@
       ],
       "kind": "object",
       "semantic_ids": [
-        "hfcache.api.command_models.SyncSubmission.canonical",
-        "hfcache.api.command_models.PlanSubmission.explicit_candidate"
+        "hfcache.api.command_models.SyncSubmission.canonical"
       ]
     },
     "RequestLiteralCandidateValidation": {
       "kind": "ref",
       "name": "RequestCandidatePayload",
+      "semantic_ids": []
+    },
+    "RequestManagedEditRequest": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "base_revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.config_models._revision"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "edits",
+          "node": {
+            "items": {
+              "choices": [
+                {
+                  "kind": "ref",
+                  "name": "RequestRepositoryUpsert",
+                  "semantic_ids": []
+                },
+                {
+                  "kind": "ref",
+                  "name": "RequestRepositoryRemove",
+                  "semantic_ids": []
+                },
+                {
+                  "kind": "ref",
+                  "name": "RequestSettingsReplace",
+                  "semantic_ids": []
+                }
+              ],
+              "kind": "union",
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 256,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.ManagedEditRequest.unique_edits"
+      ]
+    },
+    "RequestManagedPlanRequest": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "managed",
+          "node": {
+            "kind": "ref",
+            "name": "RequestManagedEditRequest",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "selectors",
+          "node": {
+            "items": {
+              "kind": "string",
+              "max_codepoints": null,
+              "min_codepoints": null,
+              "pattern": null,
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 0,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": false
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "RequestManagedValidationRequest": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "managed",
+          "node": {
+            "kind": "ref",
+            "name": "RequestManagedEditRequest",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
       "semantic_ids": []
     },
     "RequestNewVerification": {
@@ -8474,6 +9210,25 @@
                 "semantic_ids": [
                   "hfcache.api.command_models._candidate_text"
                 ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "managed",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "RequestManagedEditRequest",
+                "semantic_ids": []
               },
               {
                 "kind": "null",
@@ -8622,6 +9377,35 @@
       "kind": "object",
       "semantic_ids": []
     },
+    "RequestRepairReplacement": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "retired_instance_grace_hours",
+          "node": {
+            "choices": [
+              {
+                "kind": "integer",
+                "maximum": "8760",
+                "minimum": "168",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.SettingsTable.nonempty"
+      ]
+    },
     "RequestRepairSubmission": {
       "extra": "forbid",
       "fields": [
@@ -8652,6 +9436,181 @@
       "semantic_ids": [
         "hfcache.api.maintenance_models.RepairSubmission.scope"
       ]
+    },
+    "RequestRepositoryConfig": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_repository_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "type",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "model"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "dataset"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_revision"
+            ]
+          },
+          "required": false
+        },
+        {
+          "name": "enabled",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "tags",
+          "node": {
+            "items": {
+              "kind": "string",
+              "max_codepoints": null,
+              "min_codepoints": null,
+              "pattern": null,
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 64,
+            "min_items": null,
+            "semantic_ids": [
+              "hfcache.tags.normalize_tags"
+            ]
+          },
+          "required": false
+        },
+        {
+          "name": "declared_dependencies",
+          "node": {
+            "items": {
+              "kind": "string",
+              "max_codepoints": null,
+              "min_codepoints": null,
+              "pattern": null,
+              "semantic_ids": [
+                "hfcache.identity.parse_repository_id"
+              ]
+            },
+            "kind": "array",
+            "max_items": null,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": false
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config.RepositoryConfig._check"
+      ]
+    },
+    "RequestRepositoryRemove": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "kind",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "repository-remove"
+          },
+          "required": true
+        },
+        {
+          "name": "repository_type",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "model"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "dataset"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "repository_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_repository_id"
+            ]
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "RequestRepositoryUpsert": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "kind",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "repository-upsert"
+          },
+          "required": true
+        },
+        {
+          "name": "repository",
+          "node": {
+            "kind": "ref",
+            "name": "RequestRepositoryConfig",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
     },
     "RequestRevisionVerification": {
       "extra": "forbid",
@@ -8688,6 +9647,323 @@
       "kind": "object",
       "semantic_ids": [
         "hfcache.api.command_models.VerificationSubmission.scope"
+      ]
+    },
+    "RequestSettingsReplace": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "kind",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "settings-replace"
+          },
+          "required": true
+        },
+        {
+          "name": "settings",
+          "node": {
+            "kind": "ref",
+            "name": "RequestSettingsReplacement",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "RequestSettingsReplacement": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "storage",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "RequestStorageReplacement",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "sync",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "RequestSyncReplacement",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "verification",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "RequestVerificationReplacement",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "repair",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "RequestRepairReplacement",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.SettingsTable.nonempty"
+      ]
+    },
+    "RequestStorageReplacement": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "publication_mode",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "hardlink"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "copy"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "minimum_free_space_gib",
+          "node": {
+            "choices": [
+              {
+                "kind": "integer",
+                "maximum": "1048576",
+                "minimum": "0",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "minimum_free_space_percent",
+          "node": {
+            "choices": [
+              {
+                "kind": "integer",
+                "maximum": "100",
+                "minimum": "0",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "maximum_revisions",
+          "node": {
+            "choices": [
+              {
+                "kind": "integer",
+                "maximum": null,
+                "minimum": null,
+                "semantic_ids": [
+                  "hfcache.config_models._retention"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.SettingsTable.nonempty"
+      ]
+    },
+    "RequestSyncReplacement": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "max_workers",
+          "node": {
+            "choices": [
+              {
+                "kind": "integer",
+                "maximum": "32",
+                "minimum": "1",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "lock_wait_seconds",
+          "node": {
+            "choices": [
+              {
+                "kind": "integer",
+                "maximum": "86400",
+                "minimum": "0",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "continue_on_repository_error",
+          "node": {
+            "choices": [
+              {
+                "kind": "boolean",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "dependency_policy",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "warn"
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "stale_staging_age_hours",
+          "node": {
+            "choices": [
+              {
+                "kind": "integer",
+                "maximum": "8760",
+                "minimum": "1",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.SettingsTable.nonempty"
       ]
     },
     "RequestSyncSubmission": {
@@ -8743,11 +10019,59 @@
             "semantic_ids": []
           },
           "required": false
+        },
+        {
+          "name": "managed",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "RequestManagedEditRequest",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
         }
       ],
       "kind": "object",
       "semantic_ids": [
         "hfcache.api.command_models.ValidationSubmission.explicit_candidate"
+      ]
+    },
+    "RequestVerificationReplacement": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "lock_wait_seconds",
+          "node": {
+            "choices": [
+              {
+                "kind": "integer",
+                "maximum": "604800",
+                "minimum": "0",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.config_models.SettingsTable.nonempty"
       ]
     },
     "RequestVerificationSubmission": {
@@ -12069,11 +13393,11 @@
         "plan"
       ],
       "failure": [
-        "PlanPayload",
+        "PlanResultPayload",
         "EmptyPayload"
       ],
       "origin_path": "/api/v1/plans",
-      "success": "PlanPayload"
+      "success": "PlanResultPayload"
     },
     {
       "binding_ids": [
@@ -12378,6 +13702,25 @@
       "request_body": null,
       "response_kind": "read",
       "success": "HostStatus"
+    },
+    {
+      "binding_ids": [],
+      "commands": [
+        "config read"
+      ],
+      "cursor": "none",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "config_read",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/config",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "read",
+      "success": "ConfigRead"
     },
     {
       "binding_ids": [],
@@ -13825,6 +15168,23 @@
     {
       "binding_ids": [],
       "commands": [
+        "plan"
+      ],
+      "cursor": "none",
+      "failure": [],
+      "id": "plan",
+      "method": "POST",
+      "mode": "managed",
+      "path": "/api/v1/plans",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": "RequestManagedPlanRequest",
+      "response_kind": "acceptance",
+      "success": "Acceptance"
+    },
+    {
+      "binding_ids": [],
+      "commands": [
         "doctor"
       ],
       "cursor": "none",
@@ -14131,6 +15491,25 @@
       "request_body": "RequestLiteralCandidateValidation",
       "response_kind": "read",
       "success": "CandidateValidPayload"
+    },
+    {
+      "binding_ids": [],
+      "commands": [
+        "config validate"
+      ],
+      "cursor": "none",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "config_validate",
+      "method": "POST",
+      "mode": "managed",
+      "path": "/api/v1/config/validate",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": "RequestManagedValidationRequest",
+      "response_kind": "read",
+      "success": "ManagedValidation"
     }
   ],
   "schema_version": 1,
@@ -14157,7 +15536,7 @@
     },
     "hfcache.api.command_models.PlanSubmission.explicit_candidate": {
       "phase": "model",
-      "source_hash": "ecae525d772f930f13cf4c83597f87e16fb97dac4b627f0ba23382ee930e9dde"
+      "source_hash": "bd05c316a3da6610b8d97afd28b1646ec71d2ddbb1119b0ce0a106fe8c1d8195"
     },
     "hfcache.api.command_models.SyncSubmission.canonical": {
       "phase": "model",
@@ -14165,7 +15544,7 @@
     },
     "hfcache.api.command_models.ValidationSubmission.explicit_candidate": {
       "phase": "model",
-      "source_hash": "ecae525d772f930f13cf4c83597f87e16fb97dac4b627f0ba23382ee930e9dde"
+      "source_hash": "9493ad38963d1ca07202b19da73d1b08c7ec587579318b79850d74ce75990e9d"
     },
     "hfcache.api.command_models.VerificationSubmission.scope": {
       "phase": "model",
@@ -14303,9 +15682,61 @@
       "phase": "field",
       "source_hash": "f9d584b9215192e3ac6ddc5f07356e67ff6863322af66e93dd59e39e3716859b"
     },
+    "hfcache.config.RepositoryConfig._check": {
+      "phase": "model",
+      "source_hash": "56addf978960b1337ac92d481d352329621b801b0eeeb062e1b981287d7b2e73"
+    },
     "hfcache.config._parse_archive_id": {
       "phase": "field",
       "source_hash": "8a95f84d23ca140512060e32ae755ef71c9b82ff322a5019d43c20623401087b"
+    },
+    "hfcache.config_models.ConfigRead.fixed_fields": {
+      "phase": "model",
+      "source_hash": "ba7b294f0ebbcb569464dcc9c39d1bc8f0cbc5438a4a52685586d806fbe7d0ae"
+    },
+    "hfcache.config_models.EditableConfig.unique_repositories": {
+      "phase": "model",
+      "source_hash": "9a4fb553afb109e53be76258b8dbd4b5e668a1e90e240bd278245b5d3575d97d"
+    },
+    "hfcache.config_models.ManagedAssessment.complete_scope": {
+      "phase": "model",
+      "source_hash": "bc6621f06f4375ce1686ff904fba36e52967945699fa1dc421d337319b249218"
+    },
+    "hfcache.config_models.ManagedEditRequest.unique_edits": {
+      "phase": "model",
+      "source_hash": "ffb185ae022ae59815536b1deff2285f9880d8a21db14c9816e084dafb835ae9"
+    },
+    "hfcache.config_models.ManagedValidation.strict_valid": {
+      "phase": "model",
+      "source_hash": "14e34c0adb395b80ee45acdf72782f1091be212c2d002e88b1eeab8e6f583c9c"
+    },
+    "hfcache.config_models.ManagedValidation.unique_scope": {
+      "phase": "model",
+      "source_hash": "9d73196a8174dfd2fe49ff90cb32e747592cefac110fed0a0506e9b23f97f8d8"
+    },
+    "hfcache.config_models.ProtectedField.fixed_description": {
+      "phase": "model",
+      "source_hash": "386803b58738ef4a0b3225d830daa56b442ba8a2177dd28dbafa5e6f5bda6e38"
+    },
+    "hfcache.config_models.SettingsTable.nonempty": {
+      "phase": "model",
+      "source_hash": "76664daa21a87b7d0397e739a5c90514a0ae2468cec4069d5393377c264d9493"
+    },
+    "hfcache.config_models._one": {
+      "phase": "field",
+      "source_hash": "ce570a84b4fc67947d7905c8e8bc93c847fb587d1518ebc823cf1dd692a3e10b"
+    },
+    "hfcache.config_models._retention": {
+      "phase": "field",
+      "source_hash": "755ee42c0748631481217df6250c968f7adc296a30386e698aa5c8eea4d0a79a"
+    },
+    "hfcache.config_models._revision": {
+      "phase": "field",
+      "source_hash": "50111956fc33a8878e963731e0fa278ad350cfea3ae6c2a6234d6f80fc81bdeb"
+    },
+    "hfcache.config_models._whole_selector": {
+      "phase": "field",
+      "source_hash": "f429f9cb8a716fb531f4bc117c65647f1128a19f91eaf8ad85004442de9174d6"
     },
     "hfcache.host_models.HostFacts.exact_units": {
       "phase": "model",
@@ -14342,6 +15773,10 @@
     "hfcache.identity.parse_repository_type": {
       "phase": "field",
       "source_hash": "784722131dbaadfee31e489630c18bb0590587934a3ff87fc7c8d9da5b0af4b8"
+    },
+    "hfcache.identity.parse_revision": {
+      "phase": "field",
+      "source_hash": "c048b90175b03a65e672a3525950f1c43fb368bfefb2c46ab24e2ea27d89a1c5"
     },
     "hfcache.identity.parse_run_id": {
       "phase": "field",
@@ -14426,6 +15861,10 @@
     "hfcache.reporting.VerificationReport._check": {
       "phase": "model",
       "source_hash": "41c8c1e16cae57181c365bb4e1b9660cbb51b559cc73600a8821629321f3bd44"
+    },
+    "hfcache.tags.normalize_tags": {
+      "phase": "field",
+      "source_hash": "ccf770587ce91abd2e0bb2a9ce48fb6bcf27e6a1b91b8c1419a5d9ded6f32c7b"
     },
     "hfcache.ui_models.UiAdminPermission._permission": {
       "phase": "model",
@@ -14524,5 +15963,5 @@
       "source_hash": "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61"
     }
   },
-  "source_digest": "891b5b45df6182c02b602a767eaa1446a1e91f554f68d87768f75db3938c3d03"
+  "source_digest": "bf6497a458d0ba1db7de4ba542477c17e2b306a95c19b67203e44443f55e0ecc"
 }

@@ -1,6 +1,36 @@
 /** Reviewed Python semantic source pins. Deliberately NOT rewritten by code generation. */
 export const semanticSourceHashes: Readonly<Record<string, string>> =
     Object.freeze({
+        "hfcache.config_models.ManagedEditRequest.unique_edits":
+            "ffb185ae022ae59815536b1deff2285f9880d8a21db14c9816e084dafb835ae9",
+        "hfcache.config_models.SettingsTable.nonempty":
+            "76664daa21a87b7d0397e739a5c90514a0ae2468cec4069d5393377c264d9493",
+        "hfcache.config_models.ManagedValidation.unique_scope":
+            "9d73196a8174dfd2fe49ff90cb32e747592cefac110fed0a0506e9b23f97f8d8",
+        "hfcache.config_models.ManagedValidation.strict_valid":
+            "14e34c0adb395b80ee45acdf72782f1091be212c2d002e88b1eeab8e6f583c9c",
+        "hfcache.config_models.ManagedAssessment.complete_scope":
+            "bc6621f06f4375ce1686ff904fba36e52967945699fa1dc421d337319b249218",
+        "hfcache.config_models._whole_selector":
+            "f429f9cb8a716fb531f4bc117c65647f1128a19f91eaf8ad85004442de9174d6",
+        "hfcache.config_models.ConfigRead.fixed_fields":
+            "ba7b294f0ebbcb569464dcc9c39d1bc8f0cbc5438a4a52685586d806fbe7d0ae",
+        "hfcache.config_models.ProtectedField.fixed_description":
+            "386803b58738ef4a0b3225d830daa56b442ba8a2177dd28dbafa5e6f5bda6e38",
+        "hfcache.config_models.EditableConfig.unique_repositories":
+            "9a4fb553afb109e53be76258b8dbd4b5e668a1e90e240bd278245b5d3575d97d",
+        "hfcache.config.RepositoryConfig._check":
+            "56addf978960b1337ac92d481d352329621b801b0eeeb062e1b981287d7b2e73",
+        "hfcache.tags.normalize_tags":
+            "ccf770587ce91abd2e0bb2a9ce48fb6bcf27e6a1b91b8c1419a5d9ded6f32c7b",
+        "hfcache.identity.parse_revision":
+            "c048b90175b03a65e672a3525950f1c43fb368bfefb2c46ab24e2ea27d89a1c5",
+        "hfcache.config_models._retention":
+            "755ee42c0748631481217df6250c968f7adc296a30386e698aa5c8eea4d0a79a",
+        "hfcache.config_models._revision":
+            "50111956fc33a8878e963731e0fa278ad350cfea3ae6c2a6234d6f80fc81bdeb",
+        "hfcache.config_models._one":
+            "ce570a84b4fc67947d7905c8e8bc93c847fb587d1518ebc823cf1dd692a3e10b",
         "hfcache.host_models.HostFacts.exact_units":
             "d280a89abfc916207efcf37147e3074df65c96f6e3a6e2f07e76e7653d9cea5d",
         "hfcache.host_models.HostStatus.coherent_authority":
@@ -68,11 +98,11 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
         "hfcache.api.command_models.CatalogRefreshSubmission.canonical":
             "8267cec4ab3f2c8106415d0ccb3855dbe4e556c7b97ba282ee44ef644025e91e",
         "hfcache.api.command_models.PlanSubmission.explicit_candidate":
-            "ecae525d772f930f13cf4c83597f87e16fb97dac4b627f0ba23382ee930e9dde",
+            "bd05c316a3da6610b8d97afd28b1646ec71d2ddbb1119b0ce0a106fe8c1d8195",
         "hfcache.api.command_models.SyncSubmission.canonical":
             "18592356d27c9c93bbf1554697ad144018e620b580d02246d2a0a53fd437757e",
         "hfcache.api.command_models.ValidationSubmission.explicit_candidate":
-            "ecae525d772f930f13cf4c83597f87e16fb97dac4b627f0ba23382ee930e9dde",
+            "9493ad38963d1ca07202b19da73d1b08c7ec587579318b79850d74ce75990e9d",
         "hfcache.api.command_models.VerificationSubmission.scope":
             "30a91e9b3734c75e41905aacf706bac0cf8515dbcc22b388a397706b68f59941",
         "hfcache.api.command_models._candidate_text":

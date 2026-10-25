@@ -35,6 +35,8 @@ _KEYWORDS = frozenset(
         "$ref",
         "additionalProperties",
         "anyOf",
+        "oneOf",
+        "discriminator",
         "const",
         "default",
         "description",
@@ -96,6 +98,8 @@ _CORE_KEYS = frozenset(
         "info_arg",
         "return_schema",
         "when_used",
+        "discriminator",
+        "from_attributes",
         "serialization_alias",
         "validation_alias",
         "serialization_exclude",
@@ -123,9 +127,19 @@ def check_json_schema(node: object) -> None:
         if key in {"$defs", "properties"}:
             for child in value.values():
                 check_json_schema(child)
-        elif key == "anyOf":
+        elif key in {"anyOf", "oneOf"}:
             for child in value:
                 check_json_schema(child)
+        elif key == "discriminator":
+            if (
+                not isinstance(value, dict)
+                or set(value) != {"propertyName", "mapping"}
+                or value["propertyName"] != "kind"
+                or not isinstance(value["mapping"], dict)
+                or any(not isinstance(target, str) for target in value["mapping"].values())
+            ):
+                message = "Only the fixed managed-edit kind discriminator is audited"
+                raise ValueError(message)
         elif key in {"items", "additionalProperties", "propertyNames"} and isinstance(value, dict):
             check_json_schema(value)
 
@@ -162,6 +176,7 @@ class Exporter:
             self.sources[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
         if identity in {
             "hfcache.models.as_tuple",
+            "hfcache.config._as_tuple",
             "hfcache.models.format_timestamp",
             "pydantic._internal._validators.max_length_validator",
             "pydantic._internal._validators.min_length_validator",
@@ -274,6 +289,19 @@ class Exporter:
                     }
                 )
             return {"kind": "object", "fields": fields, "extra": "forbid", "semantic_ids": []}
+        if kind == "tagged-union":
+            if schema["discriminator"] != "kind" or set(schema["choices"]) != {
+                "repository-upsert",
+                "repository-remove",
+                "settings-replace",
+            }:
+                message = "Only the closed managed-edit union is audited"
+                raise ValueError(message)
+            return {
+                "kind": "union",
+                "choices": [self.node(choice, path=path) for choice in schema["choices"].values()],
+                "semantic_ids": [],
+            }
         if kind in {"nullable", "union"}:
             choices = (
                 [schema["schema"], {"type": "none"}] if kind == "nullable" else schema["choices"]

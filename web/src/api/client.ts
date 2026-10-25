@@ -340,6 +340,17 @@ export class ApiClient {
                     payload.archive.archive_id !== result.archive_id
                 )
                     throw new WireError("semantic");
+                if (
+                    (contract.path === "/api/v1/config" ||
+                        "candidate_revision" in payload) &&
+                    payload.archive_id !== result.archive_id
+                )
+                    throw new WireError("semantic");
+                if (
+                    context.managedBaseRevision !== undefined &&
+                    payload.base_revision !== context.managedBaseRevision
+                )
+                    throw new WireError("semantic");
                 if ("operation" in payload)
                     this.remember(
                         wire.decodeClientOperation(
@@ -413,6 +424,14 @@ export class ApiClient {
     hostStatus(options: ReadOptions = {}) {
         return this.read(
             wire.routeContracts.host_status_default,
+            {},
+            {},
+            options,
+        );
+    }
+    readConfiguration(options: ReadOptions = {}) {
+        return this.read(
+            wire.routeContracts.config_read_default,
             {},
             {},
             options,
@@ -681,6 +700,24 @@ export class ApiClient {
         const body = contract.decodeBody(canonicalInput(candidate));
         return this.read(contract, {}, {}, options, {}, false, body);
     }
+    validateManagedConfiguration(
+        request: wire.RequestManagedValidationRequest,
+        options: ReadOptions = {},
+    ) {
+        const contract = wire.routeContracts.config_validate_managed;
+        const body = contract.decodeBody(
+            buildRequestInput(contract.path, request),
+        );
+        return this.read(
+            contract,
+            {},
+            {},
+            options,
+            { managedBaseRevision: body.managed.base_revision },
+            false,
+            body,
+        );
+    }
     private async submit<B>(
         contract: Contract<wire.Acceptance, never> & {
             readonly decodeBody: Decoder<B>;
@@ -817,6 +854,13 @@ export class ApiClient {
             request,
             options,
         );
+    }
+    /** Server-side configuration administration is still required independently. */
+    submitManagedPlan(
+        request: wire.RequestManagedPlanRequest,
+        options: SubmissionOptions,
+    ) {
+        return this.submit(wire.routeContracts.plan_managed, request, options);
     }
     submitReadOnlyDiagnostics(
         request: wire.RequestReadOnlyDiagnostics,

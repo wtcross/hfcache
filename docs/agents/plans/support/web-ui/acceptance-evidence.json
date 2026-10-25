@@ -4004,21 +4004,106 @@
       "status": "pending"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_host_policy.py::test_config_read_is_editable_and_opaque_revision_from_same_capture",
+            "tests/unit/test_host_managed_config.py::test_prepare_preserves_hidden_fields_exact_base_and_creates_no_files",
+            "tests/unit/test_config_models.py::test_read_projection_refuses_any_protected_value"
+          ],
+          "observed_assertion": "Permission-gated, nonsecret, same-capture full-byte revision; reads/preparation create no files and preserve protected values. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_managed_configuration.py::test_configuration_read_and_empty_scope_preview_never_install",
+            "tests/unit/test_api_managed_configuration.py::test_old_writer_never_gains_configuration_admin",
+            "tests/unit/test_api_managed_configuration.py::test_configuration_permission_refusal_precedes_private_reads"
+          ],
+          "observed_assertion": "Permission-gated, nonsecret, same-capture full-byte revision; reads/preparation create no files and preserve protected values. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "2ce03eaf5bc80f805df85b01aecf54a1c0c490202bc9d44f7553cd2ecbd104f9",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile native",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/native5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::safe-installed-config-projection",
+            ".scratch/web-007-config-browser-driver.mjs::old-bearer-cannot-read-or-prepare-config",
+            ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts"
+          ],
+          "observed_assertion": "All three browsers read the real protected installed projection, exact fixed field descriptions and opaque base; old bearer requests refuse403. Built assets/bootstrap match the installed API and original configured archive. Actual457.793s pass, all36 cases/3engines, zero required skips/internal retries. Original app/browser processes,cgroups,endpoints and input closure pass; native credential inode preservation follows. Earlier failed cohorts remain false and retained. Rootless acceptance remains pending.",
+          "profile": "Owned CentOS10 guest; native immutable test release0.2.4; package metadata projection only; actual installed code/wheel bytes audited. Built UI d3671135; existing shared Caddy trusted TLS; Chromium156.0.8078.4/Firefox157.0/WebKit27.2; SELinux Enforcing. Actual fixture source a7271f16 retains its declared unit/test/metadata deltas.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "93f5a4390e9b951fdccce560a9241cd38e59de68126fdb079e95d8e50f121c58",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile rootless",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/rootless5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::safe-installed-config-projection",
+            ".scratch/web-007-config-browser-driver.mjs::old-bearer-cannot-read-or-prepare-config",
+            ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts"
+          ],
+          "observed_assertion": "All three browsers read the real protected installed projection, exact fixed field descriptions and opaque base; old bearer requests refuse403. Built assets/bootstrap match the installed API and original configured archive. Actual493.939s pass, all36 cases/3engines, zero required skips/internal retries. Exact original API/worker/Caddy/helper/browser process,cgroup,container,endpoint and input closure pass. Final2.726s retirement proves exact-six-secret-ID opaque backup/sync/nonforce removal and four alias inode preservation, original five infrastructure pairs and key/CIL/receipt/unit/kernel unchanged. Owned Hub stops with metadata/HEAD counters and zero payload bytes; no real Hub-account/NAS/production acceptance inferred. Earlier failed outcomes remain false and retained.",
+          "profile": "Owned CentOS10 guest; rootless immutable deployment0.2.5 with package0.2.4 metadata projection; original mapped API peer/manager and Enforcing confinement. Built UI d3671135; existing Caddy trusted TLS; all3 pinned browsers. Rootless optional test Hub token source; actual source a7271f16; unchanged stock pasta with isolated-guest route and QEMU restrict=on.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        }
+      ],
       "id": "CONFIG-01",
       "owner": "WEB-007",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_01"
+          "node_id": "tests/unit/test_host_policy.py::test_config_read_is_editable_and_opaque_revision_from_same_capture"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_host_managed_config.py::test_prepare_preserves_hidden_fields_exact_base_and_creates_no_files"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_config_models.py::test_read_projection_refuses_any_protected_value"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_01"
+          "node_id": "tests/unit/test_api_managed_configuration.py::test_configuration_read_and_empty_scope_preview_never_install"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_managed_configuration.py::test_old_writer_never_gains_configuration_admin"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_managed_configuration.py::test_configuration_permission_refusal_precedes_private_reads"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-01"
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::safe-installed-config-projection"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::old-bearer-cannot-read-or-prepare-config"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts"
         }
       ],
       "required_layers": [
@@ -4026,24 +4111,121 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_host_managed_config.py::test_closed_renderer_defaults_metadata_and_independent_application_roundtrip",
+            "tests/unit/test_host_managed_config.py::test_closed_edits_reject_unknown_coercive_protected_and_duplicate_inputs",
+            "tests/unit/test_host_managed_config.py::test_renderer_checks_utf8_and_escape_expansion_before_joining"
+          ],
+          "observed_assertion": "Deterministic, bounded private reconstruction; strict edit grammar rejects unknown/coercive/protected fields and paths. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_host_managed_config.py::test_real_unix_prepare_dispatch_and_stale_conflict_are_typed",
+            "tests/unit/test_host_managed_config.py::test_sync_async_client_prepare_and_request_copy_use_real_unix",
+            "tests/unit/test_api_managed_configuration.py::test_nonempty_scope_needs_hub_grant_and_keeps_protected_values_private"
+          ],
+          "observed_assertion": "Deterministic, bounded private reconstruction; strict edit grammar rejects unknown/coercive/protected fields and paths. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "2ce03eaf5bc80f805df85b01aecf54a1c0c490202bc9d44f7553cd2ecbd104f9",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile native",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/native5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::valid-managed-normalization-exact-candidate",
+            ".scratch/web-007-config-browser-driver.mjs::invalid-managed-authority-and-null-refused",
+            ".scratch/web-007-config-browser-driver.mjs::complete-disabled-upsert-empty-assessment",
+            ".scratch/web-007-config-browser-driver.mjs::settings-only-empty-assessment",
+            ".scratch/web-007-config-browser-driver.mjs::model-dataset-real-Hub-exact-sizing"
+          ],
+          "observed_assertion": "Normalization produces equal exact candidate HMACs; protected/null edits refuse422; disabled/tag/settings/empty scope assessments stay explicit and non-installing. Real model+dataset Hub metadata/dry-run produces exact SHA,1file/13logical+new bytes and hardlink publication cost0. Actual457.793s pass, all36 cases/3engines, zero required skips/internal retries. Original app/browser processes,cgroups,endpoints and input closure pass; native credential inode preservation follows. Earlier failed cohorts remain false and retained. Rootless acceptance remains pending.",
+          "profile": "Owned CentOS10 guest; native immutable test release0.2.4; package metadata projection only; actual installed code/wheel bytes audited. Built UI d3671135; existing shared Caddy trusted TLS; Chromium156.0.8078.4/Firefox157.0/WebKit27.2; SELinux Enforcing. Actual fixture source a7271f16 retains its declared unit/test/metadata deltas.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "93f5a4390e9b951fdccce560a9241cd38e59de68126fdb079e95d8e50f121c58",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile rootless",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/rootless5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::valid-managed-normalization-exact-candidate",
+            ".scratch/web-007-config-browser-driver.mjs::invalid-managed-authority-and-null-refused",
+            ".scratch/web-007-config-browser-driver.mjs::complete-disabled-upsert-empty-assessment",
+            ".scratch/web-007-config-browser-driver.mjs::settings-only-empty-assessment",
+            ".scratch/web-007-config-browser-driver.mjs::model-dataset-real-Hub-exact-sizing"
+          ],
+          "observed_assertion": "Normalization produces equal exact candidate HMACs; protected/null edits refuse422; disabled/tag/settings/empty scope assessments stay explicit and non-installing. Real model+dataset Hub metadata/dry-run produces exact SHA,1file/13logical+new bytes and hardlink publication cost0. Actual493.939s pass, all36 cases/3engines, zero required skips/internal retries. Exact original API/worker/Caddy/helper/browser process,cgroup,container,endpoint and input closure pass. Final2.726s retirement proves exact-six-secret-ID opaque backup/sync/nonforce removal and four alias inode preservation, original five infrastructure pairs and key/CIL/receipt/unit/kernel unchanged. Owned Hub stops with metadata/HEAD counters and zero payload bytes; no real Hub-account/NAS/production acceptance inferred. Earlier failed outcomes remain false and retained.",
+          "profile": "Owned CentOS10 guest; rootless immutable deployment0.2.5 with package0.2.4 metadata projection; original mapped API peer/manager and Enforcing confinement. Built UI d3671135; existing Caddy trusted TLS; all3 pinned browsers. Rootless optional test Hub token source; actual source a7271f16; unchanged stock pasta with isolated-guest route and QEMU restrict=on.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        }
+      ],
       "id": "CONFIG-02",
       "owner": "WEB-007",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_02"
+          "node_id": "tests/unit/test_host_managed_config.py::test_closed_renderer_defaults_metadata_and_independent_application_roundtrip"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_host_managed_config.py::test_closed_edits_reject_unknown_coercive_protected_and_duplicate_inputs"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_host_managed_config.py::test_renderer_checks_utf8_and_escape_expansion_before_joining"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_02"
+          "node_id": "tests/unit/test_host_managed_config.py::test_real_unix_prepare_dispatch_and_stale_conflict_are_typed"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_host_managed_config.py::test_sync_async_client_prepare_and_request_copy_use_real_unix"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_managed_configuration.py::test_nonempty_scope_needs_hub_grant_and_keeps_protected_values_private"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-02"
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::valid-managed-normalization-exact-candidate"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::invalid-managed-authority-and-null-refused"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::complete-disabled-upsert-empty-assessment"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::settings-only-empty-assessment"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::model-dataset-real-Hub-exact-sizing"
         }
       ],
       "required_layers": [
@@ -4051,24 +4233,93 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_host_managed_config.py::test_comments_and_tags_invalidate_base_without_changing_operational_fingerprint"
+          ],
+          "observed_assertion": "Tag/comment-only byte changes invalidate the opaque base while operational fingerprint stays unchanged; stale and queued editors refuse. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_managed_configuration.py::test_comment_only_base_change_conflicts_without_policy_change",
+            "tests/unit/test_api_managed_configuration.py::test_queued_preview_rechecks_full_base_and_original_handle_survives",
+            "tests/unit/test_api_candidates.py::test_tag_only_candidates_keep_policy_identity_but_conflict_under_same_key"
+          ],
+          "observed_assertion": "Tag/comment-only byte changes invalidate the opaque base while operational fingerprint stays unchanged; stale and queued editors refuse. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "2ce03eaf5bc80f805df85b01aecf54a1c0c490202bc9d44f7553cd2ecbd104f9",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile native",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/native5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::tag-only-empty-assessment",
+            ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts"
+          ],
+          "observed_assertion": "Each browser observes a distinct external tags-only atomic edit, changed opaque base, unchanged operational fingerprint and stale409. The original predecessor inode/bytes/context remain in private fixture race evidence. Actual457.793s pass, all36 cases/3engines, zero required skips/internal retries. Original app/browser processes,cgroups,endpoints and input closure pass; native credential inode preservation follows. Earlier failed cohorts remain false and retained. Rootless acceptance remains pending.",
+          "profile": "Owned CentOS10 guest; native immutable test release0.2.4; package metadata projection only; actual installed code/wheel bytes audited. Built UI d3671135; existing shared Caddy trusted TLS; Chromium156.0.8078.4/Firefox157.0/WebKit27.2; SELinux Enforcing. Actual fixture source a7271f16 retains its declared unit/test/metadata deltas.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "93f5a4390e9b951fdccce560a9241cd38e59de68126fdb079e95d8e50f121c58",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile rootless",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/rootless5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::tag-only-empty-assessment",
+            ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts"
+          ],
+          "observed_assertion": "Each browser observes a distinct external tags-only atomic edit, changed opaque base, unchanged operational fingerprint and stale409. The original predecessor inode/bytes/context remain in private fixture race evidence. Actual493.939s pass, all36 cases/3engines, zero required skips/internal retries. Exact original API/worker/Caddy/helper/browser process,cgroup,container,endpoint and input closure pass. Final2.726s retirement proves exact-six-secret-ID opaque backup/sync/nonforce removal and four alias inode preservation, original five infrastructure pairs and key/CIL/receipt/unit/kernel unchanged. Owned Hub stops with metadata/HEAD counters and zero payload bytes; no real Hub-account/NAS/production acceptance inferred. Earlier failed outcomes remain false and retained.",
+          "profile": "Owned CentOS10 guest; rootless immutable deployment0.2.5 with package0.2.4 metadata projection; original mapped API peer/manager and Enforcing confinement. Built UI d3671135; existing Caddy trusted TLS; all3 pinned browsers. Rootless optional test Hub token source; actual source a7271f16; unchanged stock pasta with isolated-guest route and QEMU restrict=on.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        }
+      ],
       "id": "CONFIG-03",
       "owner": "WEB-007",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_03"
+          "node_id": "tests/unit/test_host_managed_config.py::test_comments_and_tags_invalidate_base_without_changing_operational_fingerprint"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_03"
+          "node_id": "tests/unit/test_api_managed_configuration.py::test_comment_only_base_change_conflicts_without_policy_change"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_managed_configuration.py::test_queued_preview_rechecks_full_base_and_original_handle_survives"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_candidates.py::test_tag_only_candidates_keep_policy_identity_but_conflict_under_same_key"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-03"
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::tag-only-empty-assessment"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts"
         }
       ],
       "required_layers": [
@@ -4076,24 +4327,104 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_command_models.py::test_candidate_cannot_change_any_installed_authority_field",
+            "tests/unit/test_config_models.py::test_edit_union_rejects_unknown_coercive_null_and_authority_forms"
+          ],
+          "observed_assertion": "Invalid syntax remains distinct from valid incompatible authority; all six protected authority fields refuse installation/redirection. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_candidates_adversarial.py::test_valid_incompatible_candidate_is_assessed_without_credentials",
+            "tests/unit/test_api_candidates_adversarial.py::test_candidate_plan_refuses_authority_before_credentials_or_hub",
+            "tests/unit/test_api_candidates_adversarial.py::test_malformed_candidate_preserves_configuration_problems"
+          ],
+          "observed_assertion": "Invalid syntax remains distinct from valid incompatible authority; all six protected authority fields refuse installation/redirection. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "2ce03eaf5bc80f805df85b01aecf54a1c0c490202bc9d44f7553cd2ecbd104f9",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile native",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/native5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::invalid-managed-authority-and-null-refused",
+            ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts",
+            ".scratch/web-007-config-runner.py::legacy_cases"
+          ],
+          "observed_assertion": "Legacy literal invalid syntax is distinct from valid incompatible UUID authority; incompatible plans return original terminal HFAPI007 without redirecting authority. Managed protected/null edits refuse and previews do not install. Actual457.793s pass, all36 cases/3engines, zero required skips/internal retries. Original app/browser processes,cgroups,endpoints and input closure pass; native credential inode preservation follows. Earlier failed cohorts remain false and retained. Rootless acceptance remains pending.",
+          "profile": "Owned CentOS10 guest; native immutable test release0.2.4; package metadata projection only; actual installed code/wheel bytes audited. Built UI d3671135; existing shared Caddy trusted TLS; Chromium156.0.8078.4/Firefox157.0/WebKit27.2; SELinux Enforcing. Actual fixture source a7271f16 retains its declared unit/test/metadata deltas.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "93f5a4390e9b951fdccce560a9241cd38e59de68126fdb079e95d8e50f121c58",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile rootless",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/rootless5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::invalid-managed-authority-and-null-refused",
+            ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts",
+            ".scratch/web-007-config-runner.py::legacy_cases"
+          ],
+          "observed_assertion": "Legacy literal invalid syntax is distinct from valid incompatible UUID authority; incompatible plans return original terminal HFAPI007 without redirecting authority. Managed protected/null edits refuse and previews do not install. Actual493.939s pass, all36 cases/3engines, zero required skips/internal retries. Exact original API/worker/Caddy/helper/browser process,cgroup,container,endpoint and input closure pass. Final2.726s retirement proves exact-six-secret-ID opaque backup/sync/nonforce removal and four alias inode preservation, original five infrastructure pairs and key/CIL/receipt/unit/kernel unchanged. Owned Hub stops with metadata/HEAD counters and zero payload bytes; no real Hub-account/NAS/production acceptance inferred. Earlier failed outcomes remain false and retained.",
+          "profile": "Owned CentOS10 guest; rootless immutable deployment0.2.5 with package0.2.4 metadata projection; original mapped API peer/manager and Enforcing confinement. Built UI d3671135; existing Caddy trusted TLS; all3 pinned browsers. Rootless optional test Hub token source; actual source a7271f16; unchanged stock pasta with isolated-guest route and QEMU restrict=on.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        }
+      ],
       "id": "CONFIG-04",
       "owner": "WEB-007",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_04"
+          "node_id": "tests/unit/test_command_models.py::test_candidate_cannot_change_any_installed_authority_field"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_config_models.py::test_edit_union_rejects_unknown_coercive_null_and_authority_forms"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_04"
+          "node_id": "tests/unit/test_api_candidates_adversarial.py::test_valid_incompatible_candidate_is_assessed_without_credentials"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_candidates_adversarial.py::test_candidate_plan_refuses_authority_before_credentials_or_hub"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_candidates_adversarial.py::test_malformed_candidate_preserves_configuration_problems"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-04"
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::invalid-managed-authority-and-null-refused"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-runner.py::legacy_cases"
         }
       ],
       "required_layers": [
@@ -4101,24 +4432,98 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_config_models.py::test_legacy_canonical_bodies_are_exact_and_managed_sparse_values_remain_omitted",
+            "tests/unit/test_api_candidates.py::test_new_optional_plan_field_preserves_old_canonical_identity_and_verification_nulls"
+          ],
+          "observed_assertion": "Existing installed/literal CLI contracts, sizing selection and capability requirements remain; preview never installs. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "8d7469cd049534c91556933bdda7bfb322d160e62ad833aa620ab51101b5bc2e",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate.log",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_cli_api_reads.py::test_candidate_cli_sends_content_and_preserves_validation_compatibility",
+            "tests/unit/test_cli_api_reads.py::test_compatible_candidate_plan_cli_preserves_selection_and_never_downloads",
+            "tests/unit/test_api_candidates_adversarial.py::test_candidate_presence_requires_writer_before_shape_or_syntax"
+          ],
+          "observed_assertion": "Existing installed/literal CLI contracts, sizing selection and capability requirements remain; preview never installs. All selected named source tests pass in the full 7982-test suite; 52 opt-in live/NFS/build deselections are unrelated to these required tests. Installed functional acceptance remains pending.",
+          "profile": "WEB-007, this commit; parent 9af58cb; frozen 1372-file source snapshot. Owned offline model/helper and actual ASGI/CLI/Unix fixtures; independent upstream adapters where stated, no installed/Hub/MAC acceptance inferred.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "2ce03eaf5bc80f805df85b01aecf54a1c0c490202bc9d44f7553cd2ecbd104f9",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile native",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/native5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts",
+            ".scratch/web-007-config-runner.py::legacy_cases"
+          ],
+          "observed_assertion": "Real Caddy accepts existing reader installed validation and writer literal forms, refuses reader literal jobs, preserves three original plan IDs/results/lookup and performs no install. CLI behavior is separately covered by the source integration nodes; no installed guest CLI invocation is claimed. Actual457.793s pass, all36 cases/3engines, zero required skips/internal retries. Original app/browser processes,cgroups,endpoints and input closure pass; native credential inode preservation follows. Earlier failed cohorts remain false and retained. Rootless acceptance remains pending.",
+          "profile": "Owned CentOS10 guest; native immutable test release0.2.4; package metadata projection only; actual installed code/wheel bytes audited. Built UI d3671135; existing shared Caddy trusted TLS; Chromium156.0.8078.4/Firefox157.0/WebKit27.2; SELinux Enforcing. Actual fixture source a7271f16 retains its declared unit/test/metadata deltas.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        },
+        {
+          "artifact_sha256": "93f5a4390e9b951fdccce560a9241cd38e59de68126fdb079e95d8e50f121c58",
+          "command": "sudo -n -- /opt/hfcache/releases/0.2.4/.venv/bin/python -I -B /home/webfixture/hfcache-web007/.scratch/provisioning/config-runner.py --profile rootless",
+          "evidence_locator": "/var/tmp/web-007-validation-yc95plp8/rootless5-SUMMARY.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts",
+            ".scratch/web-007-config-runner.py::legacy_cases"
+          ],
+          "observed_assertion": "Real Caddy accepts existing reader installed validation and writer literal forms, refuses reader literal jobs, preserves three original plan IDs/results/lookup and performs no install. CLI behavior is separately covered by the source integration nodes; no installed guest CLI invocation is claimed. Actual493.939s pass, all36 cases/3engines, zero required skips/internal retries. Exact original API/worker/Caddy/helper/browser process,cgroup,container,endpoint and input closure pass. Final2.726s retirement proves exact-six-secret-ID opaque backup/sync/nonforce removal and four alias inode preservation, original five infrastructure pairs and key/CIL/receipt/unit/kernel unchanged. Owned Hub stops with metadata/HEAD counters and zero payload bytes; no real Hub-account/NAS/production acceptance inferred. Earlier failed outcomes remain false and retained.",
+          "profile": "Owned CentOS10 guest; rootless immutable deployment0.2.5 with package0.2.4 metadata projection; original mapped API peer/manager and Enforcing confinement. Built UI d3671135; existing Caddy trusted TLS; all3 pinned browsers. Rootless optional test Hub token source; actual source a7271f16; unchanged stock pasta with isolated-guest route and QEMU restrict=on.",
+          "source_sha256": "0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b"
+        }
+      ],
       "id": "CONFIG-05",
       "owner": "WEB-007",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_05"
+          "node_id": "tests/unit/test_config_models.py::test_legacy_canonical_bodies_are_exact_and_managed_sparse_values_remain_omitted"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_api_candidates.py::test_new_optional_plan_field_preserves_old_canonical_identity_and_verification_nulls"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_05"
+          "node_id": "tests/unit/test_cli_api_reads.py::test_candidate_cli_sends_content_and_preserves_validation_compatibility"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_cli_api_reads.py::test_compatible_candidate_plan_cli_preserves_selection_and_never_downloads"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_candidates_adversarial.py::test_candidate_presence_requires_writer_before_shape_or_syntax"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-05"
+          "node_id": ".scratch/web-007-config-browser-driver.mjs::preview-never-installs-and-tag-race-conflicts"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-007-config-runner.py::legacy_cases"
         }
       ],
       "required_layers": [
@@ -4126,7 +4531,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

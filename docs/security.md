@@ -1314,3 +1314,26 @@ actual Caddy/TLS plus installed isolated native/rootless profiles in Chromium,
 Firefox and WebKit. Mocks, skipped required tests or source-only namespace claims
 cannot establish the replaced host/authentication boundary. Production deployment,
 live archive/guard changes and Cockpit uninstall remain separate operator actions.
+
+## Managed configuration confidentiality and concurrency
+
+The configuration administrator receives only the supported editable projection
+and fixed protected-field descriptions. Full base/candidate identities use the
+independently provisioned domain-separated HMAC key; do not expose raw full-byte
+hashes, redaction replacement documents, credential fields or raw TOML. The fixed
+private helper reconstructs candidates from fresh captured bytes, preserving all
+protected authority. It has no Hub access, browser-selected path or new effect
+operation. Candidate text may cross only that protected API/helper connection for
+independent validation, never generic receipts/events/public results.
+
+Configuration read and managed validation/preview require explicit internal
+administrative grants and fresh independent configuration permission. A managed
+request's presence is classified before expensive typed validation; ordinary
+writer bearer authority cannot reach preparation, including malformed forms.
+Nonempty derived scope additionally requires Hub permission before work. Empty
+scope remains an explicit successful no-Hub assessment. Queue waiting does not
+freeze permission or full-byte base: both are rechecked before sizing. Full-byte
+CAS includes tags/comments even when the operational fingerprint is unchanged.
+Read-only reconstruction creates no lock/staging/outcome; guarded installation
+retains the original configuration lock and durable no-replay obligations. See
+[managed reconstruction](adr/decision-153.md) and the [operator guide](web-ui/configuration-and-tags.md).

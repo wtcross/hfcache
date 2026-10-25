@@ -29,6 +29,34 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-007 Expose safe configuration and exact managed previews (2026-10-25,
+  this commit — [task](plans/tasks/web-007-configuration-read-and-preview.md)).
+  Protected configuration read provides complete editable values and opaque
+  same-capture base identity. Closed bounded stdlib reconstruction preserves
+  protected authority privately; strict managed validation/plans derive exact
+  scope and retain old literal/installed canonical contracts. Empty assessments
+  need no Hub; queued execution rechecks full bytes. Public schemas/158-definition
+  browser IR exclude raw candidates; original operation lookup never replays.
+  ADR153/INV001/002/018/020/021 and relevant earlier ADRs/contracts align; human
+  configuration/tag guide, API/schema/server/security/host/container/script
+  references and navigation accompany implementation. No runtime dependency or
+  archive durable-format change. Strict gate passes1,366.734s:7,982 Python/52
+  unrelated opt-in deselections, all locked wheel profiles,572 Cockpit unit/
+  110 mounted Firefox,2,826 web unit/2,886 combined component, both shell tests
+  and14 real-API browser checks. Web coverage95.11line/92.52branch/92.26function;
+  focused new API coverage90. Native457.793s/rootless493.939s each pass36 cases
+  across three browsers, zero required skips/internal retries, through built UI,
+  real existing Caddy and installed API/helper. Actual Hub SHA/sizing, tag-only
+  stale409, protected fields, old bearer/literal contracts and original-key
+  partial-ack recovery pass. Final2.726s drain/retirement preserves original
+  generations, exact-six-ID opaque backup and four credential aliases; original
+  five infrastructure pairs/key/CIL/receipt/helper unit/kernel remain unchanged.
+  All earlier fixture/gate failures remain false and retained. Image runtime
+  audits110 package/six UI bytes; shared API/UI stays pinned UBI10 micro without
+  Node/package managers. CONFIG01–05 complete, selector advances WEB008. Apply/
+  crash reconciliation remains next; no production/NAS/live Cockpit/rollout/
+  merge/push/tag action. Task records exact hashes, profiles and evidence scope.
+
 - [x] WEB-006 Add guarded host status and administration boundary (2026-10-25,
   this commit — [task](plans/tasks/web-006-guarded-host-adapter.md)).
   Fixed protected read-only helper/peer/policy and fresh Basic action admission
@@ -2623,6 +2651,25 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-007 checkpoint (2026-10-25, this commit): WEB001–007 complete on
+`feat/web-ui`; resume WEB-008 through the current selector. Strict source gate
+and both installed native/rootless configuration suites pass. CONFIG01–05 are
+complete. Task007 records the72 browser cases, real Hub/metadata proof, original
+operations and retained failures. No Apply or crash-reconciliation surface yet.
+
+Owned test guest remains drained with five original infrastructure processes,
+all application/helper/Caddy/browser/Hub roles stopped and exact owned test
+credentials retired/preserved. Native0.2.4/rootless0.2.5 test releases retain
+older0.2.2–3; package version0.2.4 is disclosed fixture metadata, not a release.
+The guest's normal route remains behind positively verified QEMU `restrict=on`;
+no external connectivity is enabled. Rootless uses optional test Hub credentials;
+native's original passing disabled-token profile stays distinct. The shared
+production recipe remains pinned UBI10 micro; the private test-CA image is
+unshipped. Preserve both original summaries/operation stores and private
+predecessors. Production0.2.2, NAS-ro/independent guard, masks/calendars, real
+credentials and live Cockpit remain untouched. No merge/push/tag/deployment is
+authorized by this implementation plan. Earlier checkpoints below are history.
 
 Latest WEB-006 checkpoint252: native32 ordinary normal/postrun/preservation pass; original rootless38 failed and is fully backed up/retired/preserved. Original-window manager/kernel/USER metadata records enforcing boundary refusals, with no original client/method/fatal-path cause or new grant inferred. Source25/gate25 remain valid; all4cases and rootless/dedicated acceptance remain pending. See task006 for exact receipts; no production/NAS/live Cockpit action.
 
@@ -12229,3 +12276,12 @@ Checkpoint252: failed rootless38 original metadata ACTUALLY PASSES0.895367s (396
 ### Application development continuation (2026-10-25)
 
 2026-10-25 development continuation: source25 capture, gate, artifacts and original outcomes remain retained. Native32 acceptance passed; rootless38 failed and is drained, retired and preserved. The corrected INFO diagnostic succeeds under existing confinement; it does not establish full container-inspection acceptance. Following the user instruction to cut orchestration overhead and refocus application development, source25 is unfrozen for targeted application diagnostics and the rootless fix. Use existing fixtures and concise test evidence; required source/native/rootless/isolation/fault gates remain mandatory before WEB006 completion. All four cases remain pending. No production, NAS, merge, push, tag or rollout actions.
+
+153. **Reconstruct bounded managed configuration privately from exact installed
+     bytes** (2026-10-25, WEB-007, this commit).
+     [Decision153](../adr/decision-153.md) uses the existing protected HMAC key,
+     same-capture projection, closed stdlib TOML renderer and non-installing
+     managed assessment. No runtime dependency or new lock is created by reads;
+     persistent staging/install still require the original configuration guard.
+     Full-byte base and exact server-derived scope are checked before Hub work.
+     Existing literal/installed clients and original operation observation remain.

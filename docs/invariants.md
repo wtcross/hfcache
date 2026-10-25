@@ -338,8 +338,11 @@ History: `synchronization` (`54e4671`), decision 94.
   (decisions 116/119). Valid incompatible syntax remains valid; unavailable installed
   policy gives unknown compatibility, never permission to plan. See
   [configuration §1–§2, §6](configuration.md#1-validation-rules-that-apply-to-every-field).
-  [Decision 141](adr/decision-141.md) accepts a future managed-edit/guarded-helper
-  form preserving these exact-byte/authority rules; its API is not implemented.
+  [Decision153](adr/decision-153.md) adds nonsecret managed configuration reads,
+  full-byte HMAC concurrency and privately reconstructed exact validation/preview.
+  Hidden authority is preserved; empty scope is an explicit no-Hub assessment.
+  Installation retains [decision141](adr/decision-141.md)'s separate original-lock,
+  durable outcome and no-replay requirements.
 - **`INV-002` — Credentials have only explicit sources and never become
   evidence.** Accept only an explicit token file or systemd credential, with
   the documented precedence and file validation. Disable ambient discovery;
@@ -363,8 +366,8 @@ History: `synchronization` (`54e4671`), decision 94.
   metadata rechecks, and no added source discovery or permission grant;
   parent traversal uses no-follow `O_PATH` directory handles without directory
   reads or listings; the credential leaf retains its readable checked descriptor.
-  unreleased source implements this policy; installed application acceptance
-  remains pending. Hub authority stays
+  Unreleased source implements this policy with owned native/rootless
+  application conformance evidence. Production rollout remains separate. Hub authority stays
   daemon-side and the page never handles a bearer.
   A reader resolves only its selected protected API file/named systemd source;
   no Hub/netrc/ambient token or anonymous fallback after source failure.

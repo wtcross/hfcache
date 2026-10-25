@@ -18,7 +18,13 @@ from tests.unit.test_api_operations import READER, READER_HEADERS, WRITER, WRITE
 from tests.unit.test_mcp_tools import MCP, snapshot
 from tests.unit.test_mcp_tools import archive as archive  # noqa: PLC0414 - shared fixture
 from tests.unit.test_mcp_transport import INITIALIZE
-from tests.unit.test_rest_security_gate import ROUTES, WRITER_POSTS, concrete, raw_request
+from tests.unit.test_rest_security_gate import (
+    ADMIN_READ_PATHS,
+    ROUTES,
+    WRITER_POSTS,
+    concrete,
+    raw_request,
+)
 from tests.unit.test_server_bootstrap import isolate_logging  # noqa: F401 - autouse fixture
 from tests.unit.test_server_bootstrap import policy as socket_policy  # noqa: F401 - fixture
 from tests.unit.test_synchronize import MODEL
@@ -49,9 +55,9 @@ def assert_rest_role_outcome(method, path, token, outcome):
         denied = token == READER and writer_only
         assert status == (403 if denied else 422), (path, payload)
         assert received == (0 if denied else 1)
-    elif path == "/api/v1/host/status":
+    elif path.removeprefix("/api/v1") in ADMIN_READ_PATHS:
         # Optional MCP cannot promote either REST role to the internal Basic
-        # host-read capability or touch its IPC. GET framing remains unchanged.
+        # configuration/host grants or touch their IPC. GET framing stays unchanged.
         assert status == 403, (path, payload)
         assert json.loads(payload)["code"] == "HFAPI002"
         assert received == 1

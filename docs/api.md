@@ -79,14 +79,17 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `GET /version` | default | version --server | R | synchronous | none | no | none | none |
 | `GET /capabilities` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /host/status` | default | browser / HTTP | internal host-read | synchronous protected helper read | none | no | none | none |
+| `GET /config` | default | browser / HTTP | internal config-read | synchronous protected helper read | none | no | none | none |
 | `POST /config/validate` | installed | config validate (installed) | R | synchronous | none | no | none | none |
 | `POST /config/validate` | candidate | --config PATH config validate | W | synchronous | none | no | none | none |
+| `POST /config/validate` | managed | browser / HTTP | internal config-write | synchronous | none | no | none | none |
 | `GET /archive/inspection` | default | archive init --inspect | R | synchronous | none | no | none | none |
 | `POST /archive/initializations` | default | archive init --confirm | W + initialization gate | keyed job | archive | no | initial layout/sentinel | receipt, events and result |
 | `POST /diagnostics` | read_only=true | doctor --read-only | R | keyed job | none | yes | none | receipt, events and result |
 | `POST /diagnostics` | read_only=false | doctor (probes) | W | keyed job | archive | yes | temporary health probes | receipt, events and result |
 | `POST /plans` | installed | plan (installed) | R | keyed job | none | yes | none | receipt, events and result |
 | `POST /plans` | candidate | --config PATH plan | W | keyed job | none | yes | none | receipt, events and result |
+| `POST /plans` | managed | browser / HTTP | internal config-write + derived Hub permission | keyed job | none | derived scope | none | receipt, events and result |
 | `POST /syncs` | default | sync | W | keyed job | archive | yes | journals/cache/publication/catalog/report | receipt, events and result |
 | `GET /catalog/search` | default | search | R | synchronous | none | no | none | none |
 | `GET /catalog/facets` | default | tags | R | synchronous | none | no | none | none |
@@ -537,9 +540,10 @@ POST. [Server lifecycle](server.md#restart-and-drain) governs actual executor dr
 
 Optional Basic authentication and the indexed `/ui/` navigation/assets/bootstrap
 surface are implemented in unreleased source, preserving existing REST/MCP
-credential classes and strict public schemas. The host/configuration and card
-additions below remain accepted design until their separate implementation and
-acceptance. These source additions do not change an installed release or grant
+credential classes and strict public schemas. Protected host status and managed
+configuration read/validation/preview are also implemented in unreleased source.
+Configuration application, other host controls and cards below retain their
+separate design and acceptance obligations. These source additions do not change an installed release or grant
 host authority.
 See [UI availability](web-ui/README.md), [authentication decision](adr/decision-140.md),
 [host/configuration decision](adr/decision-141.md) and
@@ -645,6 +649,47 @@ Unknown existing candidate/backup evidence refuses application and is preserved.
 A known predecessor backup tied to a confirmed helper outcome may be superseded
 only after a durable per-operation private copy preserves it; replacing the fixed
 backup never deletes uncertain or unexplained history.
+
+### Managed configuration read and assessment responses
+
+GET `/config` has no query/body parameters and requires configuration-read
+administration plus independently provisioned configuration permission. It returns
+an ordinary authenticated read wrapper whose command is `config read`; `data` is
+independent schema1 with `archive_id`, `base_revision`, `editable`,
+`editable_fields` and `protected_fields`. `editable` has complete repositories
+and only the eleven supported settings, with defaults materialized. Metadata lists
+fixed editable paths and protected `{field,description}` entries without values.
+No raw TOML, Hub/credential values or full-document hash is returned.
+
+Managed validation requires configuration-write administration and configuration
+permission. Its `config validate` data is independent schema1 with `archive_id`,
+`base_revision`, `candidate_revision`, `required_selectors` and `valid=true`.
+Malformed edits refuse as requests; legacy literal syntax/authority results keep
+their existing shapes. `candidate_revision` is a domain-separated opaque HMAC,
+not a content hash. Upsert is a complete repository replacement with the existing
+defaults; remove requires a configured identity. No edit can replace protected
+fields. Canonical TOML reconstruction discards comments/formatting, uses fixed
+ordering/escaped strings and obeys the1MiB whole-document limit. Full original
+bytes, including comments/tags, determine base identity.
+
+A managed plan still returns202 with the existing original operation handle.
+Its terminal `plan` data is independent schema1 with those same bound identities,
+`required_selectors`, `complete` and nullable `sizing` (the existing strict plan
+projection). Empty scope succeeds with `complete=true,sizing=null` and no Hub
+permission/contact. Nonempty scope requires fresh explicit Hub permission and
+all required repositories completely sized; missing/failed sizing never yields
+complete acceptance. The runner rechecks the full-byte base and all protected
+authority after queue waiting, before any Hub access. Generic records contain no
+raw base/candidate. A stale base yields `HFAPI007` conflict, including a classified
+failed original operation if the change occurred after admission.
+
+Read-only preparation uses one descriptor-pinned capture and bracketed exact
+revalidation, creating no lock/candidate/backup/outcome. Persistent staging and
+installation still require the original configuration lock. A duplicate POST may
+refuse after base/policy changes; retain its original key/ID and read observation
+routes instead of submitting another preview. Validation and planning install
+nothing. See [managed reconstruction](adr/decision-153.md) and the
+[configuration guide](web-ui/configuration-and-tags.md).
 
 ### New presentation and host bounds
 
