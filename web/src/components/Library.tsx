@@ -5,7 +5,7 @@ import {
     useState,
     useSyncExternalStore,
 } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent } from "react";
 import { Notice, Panel } from "../primitives";
 import {
     libraryFragment,
@@ -22,6 +22,14 @@ import type {
 } from "../library/library-state";
 import type { LibraryRow } from "../library/joins";
 import type { CatalogCoverage } from "../wire/generated";
+import { repositoryFragment, repositoryPath } from "../repository/routes";
+import type { RepositoryTarget, RepositoryView } from "../repository/routes";
+
+export type RepositoryNavigation = (
+    event: MouseEvent<HTMLAnchorElement>,
+    target: RepositoryTarget,
+    view: RepositoryView,
+) => void;
 
 function count(value: number): string {
     return value.toLocaleString("en-US");
@@ -111,14 +119,23 @@ function Row({
     row,
     selected,
     toggle,
+    basePath,
+    onOpenRepository,
 }: {
     row: LibraryRow;
     selected: boolean;
     toggle: () => void;
+    basePath: string;
+    onOpenRepository: RepositoryNavigation | undefined;
 }) {
     const entry = row.entry,
         variant = entry.representative_variant?.variant;
     const parts = entry.repository_id.split("/");
+    const target = {
+        repositoryType: entry.repository_type,
+        repositoryId: entry.repository_id,
+    };
+    const currentView: RepositoryView = { pair: null, tab: "overview" };
     return (
         <tr>
             <td>
@@ -139,7 +156,23 @@ function Row({
                     </span>
                     <div>
                         <span className="library-muted">{parts[0]}</span>
-                        <strong>{parts[1]}</strong>
+                        <strong>
+                            <a
+                                href={
+                                    repositoryPath(target, basePath) +
+                                    repositoryFragment(currentView)
+                                }
+                                onClick={(event) => {
+                                    onOpenRepository?.(
+                                        event,
+                                        target,
+                                        currentView,
+                                    );
+                                }}
+                            >
+                                {parts[1]}
+                            </a>
+                        </strong>
                         <small>
                             {entry.repository_type === "model"
                                 ? "Model"
@@ -231,6 +264,38 @@ function Row({
                                     Matching evidence may describe a retained
                                     publication.
                                 </small>
+                                <a
+                                    href={
+                                        repositoryPath(target, basePath) +
+                                        repositoryFragment({
+                                            pair: {
+                                                commitSha:
+                                                    entry.representative_variant
+                                                        .commit_sha,
+                                                publicationId:
+                                                    entry.representative_variant
+                                                        .publication_id,
+                                            },
+                                            tab: "details",
+                                        })
+                                    }
+                                    onClick={(event) => {
+                                        const representative =
+                                            entry.representative_variant;
+                                        if (representative !== null)
+                                            onOpenRepository?.(event, target, {
+                                                pair: {
+                                                    commitSha:
+                                                        representative.commit_sha,
+                                                    publicationId:
+                                                        representative.publication_id,
+                                                },
+                                                tab: "details",
+                                            });
+                                    }}
+                                >
+                                    Inspect matching publication
+                                </a>
                             </details>
                         )}
                     </>
@@ -306,7 +371,15 @@ function Row({
     );
 }
 
-export function Library({ store }: { store: LibraryStore }) {
+export function Library({
+    store,
+    basePath = "/ui/",
+    onOpenRepository,
+}: {
+    store: LibraryStore;
+    basePath?: string;
+    onOpenRepository?: RepositoryNavigation;
+}) {
     const state = useSyncExternalStore(store.subscribe, store.snapshot);
     const form = useRef<HTMLFormElement>(null);
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -966,6 +1039,10 @@ export function Library({ store }: { store: LibraryStore }) {
                                                         toggle={() => {
                                                             toggle(row.key);
                                                         }}
+                                                        basePath={basePath}
+                                                        onOpenRepository={
+                                                            onOpenRepository
+                                                        }
                                                     />
                                                 ))}
                                             </tbody>

@@ -1,6 +1,7 @@
 """Read projections, cursor stability, streaming and metadata isolation (API-006)."""
 
 import asyncio
+import hashlib
 import json
 import threading
 from datetime import timedelta
@@ -84,6 +85,53 @@ def publish(policy):
     write_model(repository.current_ref, examples.reference())
     write_model(repository.revision_ref(request.commit_sha), examples.reference())
     return queries
+
+
+@pytest.mark.parametrize(
+    ("limit", "status", "code"),
+    [("max_artifact_bytes", 503, "HFAPI005"), ("max_response_bytes", 200, None)],
+)
+def test_exact_manifest_artifact_budget_and_separate_stream_bound(configured, limit, status, code):
+    """WEB013 whole-artifact limits remain real API refusals despite local UI paging."""
+    data, policy, _, lock = configured
+    queries = publish(policy)
+    source = queries.layout.repository(examples.reference().identity).manifest(
+        CommitSha(examples.SHA), PublicationId(examples.PUBLICATION)
+    )
+    before = source.stat()
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    assert source.stat().st_size > 1024
+    data["limits"] = {limit: 1024}
+    app = create_app(validate_server_config_mapping(data), instance_lock_path=lock)
+    path = (
+        "/api/v1/repositories/model/"
+        + examples.REPOSITORY_ID
+        + f"/manifests/{examples.SHA}/{examples.PUBLICATION}"
+    )
+
+    async def read(client):
+        response = await client.get(path)
+        assert response.status_code == status
+        if code is None:
+            # Whole manifests use the separately pre-counted artifact stream bound.
+            assert len(response.content) > 1024
+            assert response.json()["envelope"]["data"][
+                "manifest"
+            ] == examples.manifest().model_dump(mode="json")
+        else:
+            assert response.json()["code"] == code
+            assert "envelope" not in response.json()
+        assert not app.state.operations.list()
+
+    asyncio.run(client_context(app, read))
+    after = source.stat()
+    assert (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) == (
+        after.st_dev,
+        after.st_ino,
+        after.st_size,
+        after.st_mtime_ns,
+    )
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == digest
 
 
 def test_factory_has_no_io_and_lifespan_never_initializes_archive(configured):

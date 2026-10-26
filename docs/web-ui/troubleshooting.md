@@ -168,7 +168,7 @@ through an authorized drained restart and actual API-to-worker validation.
 | **Interface update required** | A loaded chunk failed or an explicit version check observed a changed artifact. Preserve original operation handles and unsaved work, then reload when ready. The interface never reloads or replays an action automatically. |
 | API instance changed with the same compatible release | Explicitly reconnect to fresh authenticated context, retaining original handles. A new instance invalidates cached reads; it does not create a new operation or prove completion. Changed subject/archive/authority requires its own compatible scope, without silent rebinding. |
 | **The interface version could not be checked** | The bounded bootstrap read did not produce a matching supported result. Keep the current operation handles. Investigate the selected release and connection; failure does not prove an operation stopped. |
-| Missing `.js`/`.css` or an unknown workspace returns JSON 404 | Only indexed assets and exact supported workspace routes are served. The API deliberately does not substitute HTML for a missing module or unrelated route. Compare the selected artifact/prefix; do not add a global history fallback in Caddy. |
+| Missing `.js`/`.css` or an unknown navigation path returns JSON 404 | Only indexed assets, exact workspaces and validated type-aware repository routes are served. The API deliberately does not substitute HTML for a missing module or unrelated route. Compare the selected artifact/prefix; do not add a global history fallback in Caddy. |
 | HTTP 503 / HFAPI009 while loading an asset | Static admission is full or draining. At most 16 UI bodies are active with no queue; each send has a 30-second deadline. Wait for the current requests or investigate an authorized service drain. Metadata and authentication use separate capacity. |
 | Administration shows disabled actions | A known grant does not make an unimplemented or host-denied feature effective. The displayed reason is authoritative for that scope; signing in does not clear a guard, enable schedules or permit archive writes. |
 
@@ -196,8 +196,9 @@ Use the authorized [upgrade and drain procedure](../deployment-centos-stream-10.
 ## Read results
 
 Check [interface availability](README.md) before using this guide. The shared
-query, Library and original-operation observation state is available in unreleased source;
-repository details and full job forms remain under development. Installed production
+query, Library, repository details and original-operation observation state are
+available in unreleased source; README rendering and full job forms remain
+separate work. Installed production
 services retain their recorded releases. A read result describes observed information, never
 permission to modify an archive or proof that an accepted job has finished.
 
@@ -278,3 +279,25 @@ An authentication, protocol or transport error follows the [read-result
 classification](#read-results). Stale evidence is not current health or capacity.
 Do not initialize an archive, weaken authentication or replay an operation to make
 a Library read succeed.
+
+## Repository details
+
+Follow [repository details](repository-details.md) for exact selection, evidence
+classes and consumer locator bases. These reads neither recover a publication nor
+start verification or refresh work.
+
+| Problem | Meaning and safe next step |
+| --- | --- |
+| Exact publication unavailable / HTTP404 | The selected pair is not retained, including after prune, purge or same-SHA repair. Keep its full SHA and publication ID. Select current explicitly only if you intend to inspect different content; there is no latest fallback. |
+| Current changed while an older publication is selected | The selected retained pair remains the publication-panel identity. Compare current separately or choose it explicitly. Do not attach its sizes, card or integrity to the older tree. |
+| Manifest/files available but technical or card panel refuses | Authoritative metadata and supplemental evidence are separate. Preserve the classified panel error; malformed or unsafe adjuncts must not be repaired by a GET. Missing observations do not erase a valid manifest. |
+| Manifest digest unavailable | Its exact card-read provenance was unavailable or refused. Do not hash browser-formatted or HTTP JSON and call that the immutable manifest-file digest. |
+| Whole manifest too large / unsafe integer / HFAPI005 / HTTP413 | Local file-table paging does not reduce the whole-artifact read. Keep the explicit refusal and use existing bounded metadata/consumer procedures; never accept rounded sizes or a truncated manifest. |
+| Integrity is unverified despite complete technical metadata | Observations and publication-time checks do not establish fresh offline verification. Use exact selected-publication evidence and the separately authorized verification workflow. |
+| Invalid detail bookmark | Correct the type/namespace/name path and optional complete SHA/publication pair. Only six fixed tabs and bounded fragment fields are supported; query strings and arbitrary paths remain refused. |
+| Activity has no matching loaded report | Its history is explicitly bounded and archive-wide. Absence from loaded history is not proof that no work occurred. Preserve original operation handles and use the recovery workflow if observing existing work. |
+
+Reconnect invalidates old private evidence even if the new session has the same
+subject or archive. A failed or superseded read cannot establish a new selection's
+contents. Do not delete metadata or weaken authentication to make a detail page
+appear available.

@@ -182,3 +182,16 @@ The [Library guide](../web-ui/library.md) documents the read workflow. Exact car
 reads are implemented separately; repository details, README rendering and edit/
 job forms are not implied by Library availability. Existing record schemas,
 refresh counts, writer guards, MCP tools and immutable archive authority remain.
+
+## Exact-publication detail composition amendment (2026-10-26)
+
+WEB013 composes existing bounded reference, manifest, catalog/variant, card and
+revision/history reads into type-aware repository detail pages. Resolve current
+separately and retain the selected exact pair/generation across all publication
+panels. Repair at the same SHA does not authorize adopting a different publication;
+vanished retained identity remains unavailable. Missing or refused supplemental
+evidence leaves independently valid manifest/inventory useful, without increasing
+verification confidence. Model/dataset declarations retain source, status and
+coverage; loaded archive history is not a complete repository audit. This adds no
+writer, Hub, payload-serving or new durable-record authority. See the
+[detail guide](../web-ui/repository-details.md). README rendering remains WEB014.

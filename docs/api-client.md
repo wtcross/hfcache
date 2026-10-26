@@ -621,3 +621,22 @@ joins use validated type/ID/authority; logical sizes use the exact publication
 pair. Changed current references cannot silently reattribute an older variant's
 bytes or integrity. The inherited browser response/retention limits only lower
 server and route ceilings; a smaller page does not guarantee the whole scan fits.
+
+### Browser exact-publication details
+
+[Repository details](web-ui/repository-details.md) resolve current as a separate
+reference read, then bind each publication panel to the full type/ID/SHA/
+publication tuple and matching generation. Stable repository routes retain a
+complete pair and closed tab selection in bounded fragments. The typed client
+already exposes exact manifests, catalog detail/variants and card reads; no new
+REST endpoint or request-selected authority is introduced. Same-SHA repairs and
+vanished retained pairs cannot redirect a selected read to current.
+
+Session/selection changes invalidate superseded handles; old arrivals never join
+the new identity. Supplemental failure does not erase independently validated
+manifest/revision evidence. REST manifests remain whole artifacts with locally
+paged file tables and explicit artifact/number/budget refusal. The manifest-file
+digest comes only from available existing exact card provenance, not browser
+reserialization. Revision confidence joins by exact publication; current status,
+API health and metadata completeness cannot substitute. Activity shows only
+bounded loaded archive history, without claiming a complete repository audit.

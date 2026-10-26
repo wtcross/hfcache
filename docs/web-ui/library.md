@@ -3,9 +3,9 @@
 The Library in unreleased source reads the existing local catalog and inventory
 APIs through the authenticated HTTPS interface. It does not search the live Hub,
 download content, refresh observations or change configuration. Check
-[interface availability](README.md) before using an installed release. Repository
-detail pages, README display, tag editing and job forms remain separate work;
-the current table does not offer those actions.
+[interface availability](README.md) before using an installed release.
+[Repository details](repository-details.md) provide exact-publication evidence;
+README display, tag editing and full job forms remain separate work.
 
 The [desktop Library screenshot](images/library-desktop.png) and
 [mobile Library screenshot](images/library-mobile.png) show the actual built

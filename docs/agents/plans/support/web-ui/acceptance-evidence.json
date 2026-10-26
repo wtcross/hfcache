@@ -6775,21 +6775,181 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "947388991ca4cddc2be77d20b50924393cc41558c54f7c8a8db7b0550d327922",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/repository-routes.unit.test.ts::model and dataset with the same ID are different canonical identities",
+            "web/test/repository-routes.unit.test.ts::old retained and repaired instances with the same SHA remain separate",
+            "web/test/repository-state.unit.test.ts::constructor sends no GET; current resolves once and pins the exact overview, with no hidden tabs or report reads",
+            "web/test/repository-state.unit.test.ts::refresh revalidates the selected SHA reference and never relabels a retained orphan as current after repair",
+            "web/test/repository-state.unit.test.ts::a new tab revalidates one selected reference before fetching publication-derived data, with no reads per render",
+            "web/test/repository-state.unit.test.ts::continuation and report actions stop before their next GET when the selected reference no longer qualifies",
+            "web/test/repository-state.unit.test.ts::same-spelling model/dataset route switch fences a delayed original manifest and derived requests",
+            "web/test/RepositoryDetail.component.test.tsx::current resolves once, pins exact URL and never changes selection when current later moves",
+            "web/test/RepositoryDetail.component.test.tsx::explicit missing selection is unavailable and never adopts latest",
+            "web/test/RepositoryDetail.component.test.tsx::a same-SHA repair replacement cannot authorize an old bookmarked publication",
+            "web/test/RepositoryDetail.component.test.tsx::selection changes fence a late old manifest and every later panel remains exact",
+            "web/test/RepositoryDetail.component.test.tsx::a cached ready remount rejects an invalid bookmark without revealing or rewriting old selection",
+            "web/test/RepositoryDetail.component.test.tsx::a mounted old target cannot rewrite or read a different pathname on browser history",
+            "web/test/RepositoryDetail.component.test.tsx::selected offline, ingestion and newer current confidence remain distinct"
+          ],
+          "observed_assertion": "Pure paths keep model/dataset and same-SHA repaired publications distinct. Real typed-client store and mounted component tests pin current once, fence late responses, rejoin selected SHA retention on reads/remount, keep current confidence separate, and refuse unavailable exact pairs without latest fallback.",
+          "profile": "Frozen WEB013 final source; real typed client/controller/query store and mounted React views with independent scripted HTTP boundary fixtures; installed evidence is separate.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        },
+        {
+          "artifact_sha256": "947388991ca4cddc2be77d20b50924393cc41558c54f7c8a8db7b0550d327922",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_repository_routes.py::test_recognized_repository_routes_share_authenticated_captured_shell_without_archive",
+            "tests/unit/test_web_repository_routes.py::test_repository_route_refusals_do_not_expand_spa_fallback_or_disclose_membership",
+            "tests/unit/test_web_repository_routes.py::test_repository_shell_requires_original_canonical_raw_path_proof",
+            "tests/unit/test_api_catalog.py::test_exact_detail_and_full_variant_pages_do_not_fall_back",
+            "tests/unit/test_catalog_queries.py::test_orphan_metadata_never_resurrects_inventory"
+          ],
+          "observed_assertion": "Real ASGI shell tests admit only canonical authenticated type-aware paths without archive membership checks; real catalog APIs return exact-pair detail/variant pages and404 for a different requested publication. Existing query test proves orphan metadata cannot resurrect retained inventory.",
+          "profile": "Real in-process ASGI/application/catalog query services over owned temporary metadata; strict models, exact retention and bounded whole-artifact reads. This is not installed platform, upstream Hub or NAS acceptance.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        },
+        {
+          "artifact_sha256": "832e54ddad479863c614676e7f470dab7711250d5231f89b0ca726c2c170d9bc",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web013-inputs-v2/web-013-run-owned-functional-v2.py --log /var/tmp/web-013-validation-20o27efw/functional2.log",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/functional2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-013-detail-browser.mjs::unqualified-current-resolves-and-pins",
+            ".scratch/web-013-detail-browser.mjs::exact-bookmark-reload-and-file-paging",
+            ".scratch/web-013-detail-browser.mjs::current-transition-does-not-change-selection",
+            ".scratch/web-013-detail-browser.mjs::explicit-current-and-old-retained-selection",
+            ".scratch/web-013-detail-browser.mjs::same-sha-repair-never-adopts-replacement",
+            ".scratch/web-013-detail-browser.mjs::explicit-replacement-is-a-distinct-publication",
+            ".scratch/web-013-detail-browser.mjs::pruned-reference-does-not-resurrect-orphan",
+            ".scratch/web-013-detail-browser.mjs::invalid-fragment-no-metadata-get"
+          ],
+          "observed_assertion": "PASS309.282s; actual cohort815f7e14d7e149f99a4645a4ef97ebb4;39 one-attempt cases,13 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Trusted same-origin GET counts chromium162, firefox155, webkit171/0POST, passive256-bound observer without interception or overflow. All10 owned reference/corruption transitions complete; all other archive/configuration full9 and bytes remain unchanged, operation-store count0. API has only lo in its private network namespace; original browser/API/Caddy roles drain normally, cleanup_unknownfalse. Current resolves once to a durable exact bookmark. Actual current movement, same-SHA repair and prune never donate a new publication to the old selection. Retained predecessor manifest200 is insufficient when strict reference/card/catalog membership has vanished; the view stays explicitly unavailable without latest fallback. Retained setup1: case6702e6e4ff7c46cea4067b4d2ea5c30b failed4.558s/exit1 before API/Caddy/browser roles started; the private fixture variant loop shadowed repository_id with unknown, and the actual RevisionManifest validator refused it. Original false flags and no-start evidence remain in /var/tmp/web-013-validation-20o27efw/functional1.log and /var/tmp/web-013-validation-20o27efw/functional1-setup-diagnostic.log (SHA256 3b5d8ae056838aca21c24fe38144057079834abc9346cf7aa423c206090a055c). Corrected private fixture687899c2 ran in a fresh cohort; product bytes were unchanged.",
+          "profile": "Built production UI/actual typed client through trusted-TLS Caddy and installed native0.2.22 read API over strict owned synthetic metadata; LOCAL_NFS_METADATA_SIMULATION, not native-platform/NAS/production acceptance. Historical RunReport is synthetic, not an actual ingestion or mutation job. Fixture metadata projects canonical0.2.2 to0.2.22 only in the build copy; all1431 frozen source inputs match. Parent dfb706c64f545a3d18bf2435cb4b4235175f9cb6; UI manifest f344ad2564d744ab9c49bef7ad9485f8ddd95f366808e52872e820f49cbfaa5b; wheel 637e32f1153d538e893a828d0493dbca18fbab48b6f360a9eba3dc07935ea01e; stock image sha256:4e04c3d197e1d2f9096ddc8c7c9ca623296ce6138c4419d26f9148d9030758a5; source proof /var/tmp/web-013-validation-20o27efw/artifact-source-proof.json SHA256 425873f10c70c3933a8cfab4371597d448445107d48d0e453790b8060a9554bb. Private coordinator5a9053eb/fixture687899c2/driverd1cb6f20.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        }
+      ],
       "id": "CATALOG-06",
       "owner": "WEB-013",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_catalog.py::test_catalog_06"
+          "node_id": "web/test/repository-routes.unit.test.ts::model and dataset with the same ID are different canonical identities"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-routes.unit.test.ts::old retained and repaired instances with the same SHA remain separate"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::constructor sends no GET; current resolves once and pins the exact overview, with no hidden tabs or report reads"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::refresh revalidates the selected SHA reference and never relabels a retained orphan as current after repair"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::a new tab revalidates one selected reference before fetching publication-derived data, with no reads per render"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::continuation and report actions stop before their next GET when the selected reference no longer qualifies"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::same-spelling model/dataset route switch fences a delayed original manifest and derived requests"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::current resolves once, pins exact URL and never changes selection when current later moves"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::explicit missing selection is unavailable and never adopts latest"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::a same-SHA repair replacement cannot authorize an old bookmarked publication"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::selection changes fence a late old manifest and every later panel remains exact"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::a cached ready remount rejects an invalid bookmark without revealing or rewriting old selection"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::a mounted old target cannot rewrite or read a different pathname on browser history"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::selected offline, ingestion and newer current confidence remain distinct"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_catalog.py::test_catalog_06"
+          "node_id": "tests/unit/test_web_repository_routes.py::test_recognized_repository_routes_share_authenticated_captured_shell_without_archive"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_repository_routes.py::test_repository_route_refusals_do_not_expand_spa_fallback_or_disclose_membership"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_repository_routes.py::test_repository_shell_requires_original_canonical_raw_path_proof"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_exact_detail_and_full_variant_pages_do_not_fall_back"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_orphan_metadata_never_resurrects_inventory"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-06"
+          "node_id": ".scratch/web-013-detail-browser.mjs::unqualified-current-resolves-and-pins"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::exact-bookmark-reload-and-file-paging"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::current-transition-does-not-change-selection"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::explicit-current-and-old-retained-selection"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::same-sha-repair-never-adopts-replacement"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::explicit-replacement-is-a-distinct-publication"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::pruned-reference-does-not-resurrect-orphan"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::invalid-fragment-no-metadata-get"
         }
       ],
       "required_layers": [
@@ -6797,24 +6957,129 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "947388991ca4cddc2be77d20b50924393cc41558c54f7c8a8db7b0550d327922",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/RepositoryDetail.component.test.tsx::dataset declarations remain static and no model variants request or model field is invented",
+            "web/test/RepositoryDetail.component.test.tsx::model details retain primary, adapter and incomplete declarations without inventing unknown bits",
+            "web/test/RepositoryDetail.component.test.tsx::metadata markup remains plain text and never constructs an active element",
+            "web/test/RepositoryDetail.component.test.tsx::selected offline, ingestion and newer current confidence remain distinct",
+            "web/test/RepositoryDetail.component.test.tsx::activity observes explicitly loaded history and reports without inventing mutation or complete audit",
+            "web/test/RepositoryDetail.component.test.tsx::large valid reports page diagnostics locally and qualify only the exact repository and generation",
+            "web/test/repository-state.unit.test.ts::tabs load lazily, files use the whole manifest without invented paging, dataset details never request model variants",
+            "web/test/repository-state.unit.test.ts::current integrity cannot donate confidence to another selected pair or generation",
+            "web/test/repository-state.unit.test.ts::a compatible card is the sole digest source; conflicting supplemental generation is withheld",
+            "web/test/repository-state.unit.test.ts::loaded activity is one global ID page; reports require an explicitly loaded ID and no report is prefetched"
+          ],
+          "observed_assertion": "Model roles/completeness and unknown bits/bytes stay inspectable; dataset configs/features/splits/formats remain static and send no model-variant request. Current inventory, selected offline verification, ingestion verification and metadata status stay separate. Real report read fixtures remain generation-qualified and diagnostics render25 at a time.",
+          "profile": "Frozen WEB013 final source; real typed client/controller/query store and mounted React views with independent scripted HTTP boundary fixtures; installed evidence is separate.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        },
+        {
+          "artifact_sha256": "947388991ca4cddc2be77d20b50924393cc41558c54f7c8a8db7b0550d327922",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_queries.py::test_noneligible_candidates_remain_inspectable_but_never_positive",
+            "tests/unit/test_catalog_queries.py::test_incomplete_parent_and_unknown_extractors_are_truthful",
+            "tests/unit/test_catalog_queries.py::test_model_variants_refuse_dataset_identity_and_unknown_format_stays_unknown",
+            "tests/unit/test_api_catalog.py::test_catalog_routes_share_strict_wrappers_and_original_capabilities"
+          ],
+          "observed_assertion": "Existing catalog queries expose noneligible variants for inspection without making positive matches, refuse model variants for dataset identity, and preserve incomplete/unknown extractors. Real catalog route responses use strict public wrappers.",
+          "profile": "Real in-process ASGI/application/catalog query services over owned temporary metadata; strict models, exact retention and bounded whole-artifact reads. This is not installed platform, upstream Hub or NAS acceptance.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        },
+        {
+          "artifact_sha256": "832e54ddad479863c614676e7f470dab7711250d5231f89b0ca726c2c170d9bc",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web013-inputs-v2/web-013-run-owned-functional-v2.py --log /var/tmp/web-013-validation-20o27efw/functional2.log",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/functional2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-013-detail-browser.mjs::model-six-tabs-attributed-evidence",
+            ".scratch/web-013-detail-browser.mjs::dataset-six-tabs-static-declarations"
+          ],
+          "observed_assertion": "PASS309.282s; actual cohort815f7e14d7e149f99a4645a4ef97ebb4;39 one-attempt cases,13 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Trusted same-origin GET counts chromium162, firefox155, webkit171/0POST, passive256-bound observer without interception or overflow. All10 owned reference/corruption transitions complete; all other archive/configuration full9 and bytes remain unchanged, operation-store count0. API has only lo in its private network namespace; original browser/API/Caddy roles drain normally, cleanup_unknownfalse. Both types expose all six appropriate tabs with exact generation and attributed source SHA. Model primary/adapter/auxiliary/unknown roles and completeness remain inspectable; dataset configurations/features/splits/formats remain static without model requests or row/hardware inference. Synthetic history remains explicitly loaded, with selected-generation qualification distinct from current and ingestion evidence. Retained setup1: case6702e6e4ff7c46cea4067b4d2ea5c30b failed4.558s/exit1 before API/Caddy/browser roles started; the private fixture variant loop shadowed repository_id with unknown, and the actual RevisionManifest validator refused it. Original false flags and no-start evidence remain in /var/tmp/web-013-validation-20o27efw/functional1.log and /var/tmp/web-013-validation-20o27efw/functional1-setup-diagnostic.log (SHA256 3b5d8ae056838aca21c24fe38144057079834abc9346cf7aa423c206090a055c). Corrected private fixture687899c2 ran in a fresh cohort; product bytes were unchanged.",
+          "profile": "Built production UI/actual typed client through trusted-TLS Caddy and installed native0.2.22 read API over strict owned synthetic metadata; LOCAL_NFS_METADATA_SIMULATION, not native-platform/NAS/production acceptance. Historical RunReport is synthetic, not an actual ingestion or mutation job. Fixture metadata projects canonical0.2.2 to0.2.22 only in the build copy; all1431 frozen source inputs match. Parent dfb706c64f545a3d18bf2435cb4b4235175f9cb6; UI manifest f344ad2564d744ab9c49bef7ad9485f8ddd95f366808e52872e820f49cbfaa5b; wheel 637e32f1153d538e893a828d0493dbca18fbab48b6f360a9eba3dc07935ea01e; stock image sha256:4e04c3d197e1d2f9096ddc8c7c9ca623296ce6138c4419d26f9148d9030758a5; source proof /var/tmp/web-013-validation-20o27efw/artifact-source-proof.json SHA256 425873f10c70c3933a8cfab4371597d448445107d48d0e453790b8060a9554bb. Private coordinator5a9053eb/fixture687899c2/driverd1cb6f20.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        }
+      ],
       "id": "CATALOG-07",
       "owner": "WEB-013",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_catalog.py::test_catalog_07"
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::dataset declarations remain static and no model variants request or model field is invented"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::model details retain primary, adapter and incomplete declarations without inventing unknown bits"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::metadata markup remains plain text and never constructs an active element"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::selected offline, ingestion and newer current confidence remain distinct"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::activity observes explicitly loaded history and reports without inventing mutation or complete audit"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::large valid reports page diagnostics locally and qualify only the exact repository and generation"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::tabs load lazily, files use the whole manifest without invented paging, dataset details never request model variants"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::current integrity cannot donate confidence to another selected pair or generation"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::a compatible card is the sole digest source; conflicting supplemental generation is withheld"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::loaded activity is one global ID page; reports require an explicitly loaded ID and no report is prefetched"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_catalog.py::test_catalog_07"
+          "node_id": "tests/unit/test_catalog_queries.py::test_noneligible_candidates_remain_inspectable_but_never_positive"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_incomplete_parent_and_unknown_extractors_are_truthful"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_model_variants_refuse_dataset_identity_and_unknown_format_stays_unknown"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_catalog_routes_share_strict_wrappers_and_original_capabilities"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-07"
+          "node_id": ".scratch/web-013-detail-browser.mjs::model-six-tabs-attributed-evidence"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::dataset-six-tabs-static-declarations"
         }
       ],
       "required_layers": [
@@ -6822,24 +7087,149 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "947388991ca4cddc2be77d20b50924393cc41558c54f7c8a8db7b0550d327922",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/RepositoryDetail.component.test.tsx::files are locally paged from one whole artifact and copied tree bases are explicit",
+            "web/test/RepositoryDetail.component.test.tsx::a wrong consumer locator base is refused before file inventory or copy readiness",
+            "web/test/RepositoryDetail.component.test.tsx::a failed supplemental source does not erase authoritative files and does not execute markup",
+            "web/test/RepositoryDetail.component.test.tsx::clipboard denial is visible without claiming a copied locator or exposing raw diagnostics",
+            "web/test/RepositoryDetail.component.test.tsx::keyboard tabs rove focus and selection with Home End and wrapping arrows",
+            "web/test/RepositoryDetail.component.test.tsx::unmount aborts a pending manifest without late catalog, card or variant reads",
+            "web/test/repository-state.unit.test.ts::missing/corrupt supplemental detail and card do not erase authoritative manifest inventory",
+            "web/test/repository-state.unit.test.ts::a compatible card is the sole digest source; conflicting supplemental generation is withheld",
+            "web/test/repository-state.unit.test.ts::tabs load lazily, files use the whole manifest without invented paging, dataset details never request model variants",
+            "web/test/repository-state.unit.test.ts::cursor cycles and32-page histories stop without a hidden continuation"
+          ],
+          "observed_assertion": "Whole manifests are locally paged25 files without new manifest GETs; archive-root and published-relative copies use distinct validated sources. Wrong locator bases refuse before inventory/copy readiness. Missing/corrupt supplemental sources do not erase an authoritative retained manifest. Tab keyboard focus, clipboard refusal, late-unmount fencing and finite view bounds have mounted real-controller coverage.",
+          "profile": "Frozen WEB013 final source; real typed client/controller/query store and mounted React views with independent scripted HTTP boundary fixtures; installed evidence is separate.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        },
+        {
+          "artifact_sha256": "947388991ca4cddc2be77d20b50924393cc41558c54f7c8a8db7b0550d327922",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_reads.py::test_exact_manifest_artifact_budget_and_separate_stream_bound",
+            "tests/unit/test_api_reads.py::test_exact_namespace_name_refs_manifests_and_report_run_identity",
+            "tests/unit/test_api_catalog.py::test_reads_are_off_thread_and_cannot_write_resolve_credentials_or_open_payload",
+            "tests/unit/test_api_catalog.py::test_catalog_full_scan_and_wire_refusal_are_classified",
+            "tests/unit/test_api_catalog.py::test_catalog_encoded_wrapper_cannot_exceed_response_budget",
+            "tests/unit/test_catalog_queries.py::test_missing_vs_corrupt_selected_records_and_full_scan_bounds"
+          ],
+          "observed_assertion": "Real ASGI manifest tests separately prove artifact-limit503/HFAPI005 versus successful whole-artifact stream when only the smaller generic response cap is set. Existing real catalog ASGI/query tests prove scan/wire/encoded-response bounds, classified corrupt/missing observations, off-thread reads and no writer/network/credential capability.",
+          "profile": "Real in-process ASGI/application/catalog query services over owned temporary metadata; strict models, exact retention and bounded whole-artifact reads. This is not installed platform, upstream Hub or NAS acceptance.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        },
+        {
+          "artifact_sha256": "832e54ddad479863c614676e7f470dab7711250d5231f89b0ca726c2c170d9bc",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web013-inputs-v2/web-013-run-owned-functional-v2.py --log /var/tmp/web-013-validation-20o27efw/functional2.log",
+          "evidence_locator": "/var/tmp/web-013-validation-20o27efw/functional2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-013-detail-browser.mjs::missing-observation-keeps-manifest",
+            ".scratch/web-013-detail-browser.mjs::corrupt-observation-keeps-manifest",
+            ".scratch/web-013-detail-browser.mjs::exact-bookmark-reload-and-file-paging",
+            ".scratch/web-013-detail-browser.mjs::keyboard-mobile-consumer-locators"
+          ],
+          "observed_assertion": "PASS309.282s; actual cohort815f7e14d7e149f99a4645a4ef97ebb4;39 one-attempt cases,13 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Trusted same-origin GET counts chromium162, firefox155, webkit171/0POST, passive256-bound observer without interception or overflow. All10 owned reference/corruption transitions complete; all other archive/configuration full9 and bytes remain unchanged, operation-store count0. API has only lo in its private network namespace; original browser/API/Caddy roles drain normally, cleanup_unknownfalse. Whole manifests use local25-file pages without extra manifest GETs. Archive-root and published-relative locator bases, exact digest sources and keyboard/mobile controls remain explicit. Missing or corrupt supplemental metadata does not erase retained authoritative file inventory; no payload download or serving endpoint is added. Retained setup1: case6702e6e4ff7c46cea4067b4d2ea5c30b failed4.558s/exit1 before API/Caddy/browser roles started; the private fixture variant loop shadowed repository_id with unknown, and the actual RevisionManifest validator refused it. Original false flags and no-start evidence remain in /var/tmp/web-013-validation-20o27efw/functional1.log and /var/tmp/web-013-validation-20o27efw/functional1-setup-diagnostic.log (SHA256 3b5d8ae056838aca21c24fe38144057079834abc9346cf7aa423c206090a055c). Corrected private fixture687899c2 ran in a fresh cohort; product bytes were unchanged.",
+          "profile": "Built production UI/actual typed client through trusted-TLS Caddy and installed native0.2.22 read API over strict owned synthetic metadata; LOCAL_NFS_METADATA_SIMULATION, not native-platform/NAS/production acceptance. Historical RunReport is synthetic, not an actual ingestion or mutation job. Fixture metadata projects canonical0.2.2 to0.2.22 only in the build copy; all1431 frozen source inputs match. Parent dfb706c64f545a3d18bf2435cb4b4235175f9cb6; UI manifest f344ad2564d744ab9c49bef7ad9485f8ddd95f366808e52872e820f49cbfaa5b; wheel 637e32f1153d538e893a828d0493dbca18fbab48b6f360a9eba3dc07935ea01e; stock image sha256:4e04c3d197e1d2f9096ddc8c7c9ca623296ce6138c4419d26f9148d9030758a5; source proof /var/tmp/web-013-validation-20o27efw/artifact-source-proof.json SHA256 425873f10c70c3933a8cfab4371597d448445107d48d0e453790b8060a9554bb. Private coordinator5a9053eb/fixture687899c2/driverd1cb6f20.",
+          "source_sha256": "0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d"
+        }
+      ],
       "id": "CATALOG-08",
       "owner": "WEB-013",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_catalog.py::test_catalog_08"
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::files are locally paged from one whole artifact and copied tree bases are explicit"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::a wrong consumer locator base is refused before file inventory or copy readiness"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::a failed supplemental source does not erase authoritative files and does not execute markup"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::clipboard denial is visible without claiming a copied locator or exposing raw diagnostics"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::keyboard tabs rove focus and selection with Home End and wrapping arrows"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/RepositoryDetail.component.test.tsx::unmount aborts a pending manifest without late catalog, card or variant reads"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::missing/corrupt supplemental detail and card do not erase authoritative manifest inventory"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::a compatible card is the sole digest source; conflicting supplemental generation is withheld"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::tabs load lazily, files use the whole manifest without invented paging, dataset details never request model variants"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/repository-state.unit.test.ts::cursor cycles and32-page histories stop without a hidden continuation"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_catalog.py::test_catalog_08"
+          "node_id": "tests/unit/test_api_reads.py::test_exact_manifest_artifact_budget_and_separate_stream_bound"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_reads.py::test_exact_namespace_name_refs_manifests_and_report_run_identity"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_reads_are_off_thread_and_cannot_write_resolve_credentials_or_open_payload"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_catalog_full_scan_and_wire_refusal_are_classified"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_catalog_encoded_wrapper_cannot_exceed_response_budget"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_missing_vs_corrupt_selected_records_and_full_scan_bounds"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-08"
+          "node_id": ".scratch/web-013-detail-browser.mjs::missing-observation-keeps-manifest"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::corrupt-observation-keeps-manifest"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::exact-bookmark-reload-and-file-paging"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-013-detail-browser.mjs::keyboard-mobile-consumer-locators"
         }
       ],
       "required_layers": [
@@ -6847,7 +7237,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

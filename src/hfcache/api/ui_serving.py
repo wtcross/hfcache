@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING
 from starlette.responses import Response
 
 from hfcache.api.auth import AdminCapability, AuthenticationMethod, CredentialClass
-from hfcache.errors import SafetyError
+from hfcache.errors import CodedError, SafetyError
+from hfcache.identity import SEGMENT_MAXIMUM_LENGTH, RepositoryIdentity
 from hfcache.models import dump
 from hfcache.ui_models import (
     UiAdminPermission,
@@ -37,6 +38,26 @@ UI_CSP = (
     "frame-ancestors 'none'; form-action 'none'; worker-src 'none'"
 )
 UI_PERMISSIONS = "camera=(), microphone=(), geolocation=()"
+
+
+def is_repository_navigation(member: str, *, raw_path: object, effective_prefix: str) -> bool:
+    """Recognize one presentation route, without reading archive membership.
+
+    Compare the original path as well as validated decoded segments: an encoded
+    separator must not turn into an additional trusted route segment.
+    """
+    maximum = len("repositories/dataset/") + 2 * SEGMENT_MAXIMUM_LENGTH + 1
+    if len(member) > maximum:
+        return False
+    parts = member.split("/")
+    if len(parts) != 4 or parts[0] != "repositories":  # noqa: PLR2004 - fixed route grammar
+        return False
+    try:
+        RepositoryIdentity.of(parts[1], f"{parts[2]}/{parts[3]}")
+    except CodedError:
+        return False
+    expected = uri_path(effective_prefix + "/ui/" + member).encode("ascii")
+    return raw_path == expected
 
 
 def unavailable() -> SafetyError:

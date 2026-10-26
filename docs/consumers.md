@@ -112,6 +112,12 @@ artifact bytes nor replaces independent complete-path/size/SHA-256 verification.
 The [API contract](api.md#metadata-reads) defines wire
 fields, pagination, limits and authenticated report streams.
 
+The [browser repository detail guide](web-ui/repository-details.md) explains
+exact-publication selection, evidence and labelled copyable locators. A copied
+locator is not an HTTP payload URL or proof of complete local verification.
+Keep its selected SHA/publication identity and stated base; the independent copy
+helper still performs its own one-reference copy attempt and complete checks.
+
 ## 3. Copying a revision
 
 ### Preparing a revisioned model store

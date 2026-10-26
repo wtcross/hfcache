@@ -13,8 +13,10 @@ The unreleased [browser Library](web-ui/library.md) presents these existing loca
 reads, with explicit configured/archived/all and current/retained scopes. Its
 default repository scope is `all`, sent explicitly rather than changing the
 API's `archived` default. Search, paging and loading more facets never submit
-refresh or other jobs. Repository detail and README rendering remain separate
-interface work.
+refresh or other jobs. [Repository details](web-ui/repository-details.md) pin
+derived panels to an exact retained publication and preserve authoritative
+inventory when supplemental metadata is unavailable. README rendering remains
+separate interface work.
 
 ## Repository card design
 

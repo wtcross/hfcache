@@ -17,7 +17,12 @@ import {
 } from "./components/HostStatusPanel";
 import { OperationRecovery } from "./components/OperationRecovery";
 import { Library } from "./components/Library";
+import type { RepositoryNavigation } from "./components/Library";
 import type { LibraryStore } from "./library/library-state";
+import { RepositoryDetail } from "./components/RepositoryDetail";
+import type { RepositoryStore } from "./repository/repository-state";
+import { repositoryFragment, repositoryPath } from "./repository/routes";
+import type { RepositoryTarget } from "./repository/routes";
 import type {
     SessionController,
     SessionSnapshot,
@@ -40,6 +45,10 @@ function WorkspaceContent({
     controller,
     session,
     library,
+    repository,
+    repositoryTarget,
+    basePath,
+    onOpenRepository,
 }: {
     workspace: Workspace;
     authenticated: boolean;
@@ -47,10 +56,37 @@ function WorkspaceContent({
     controller?: SessionController;
     session?: SessionSnapshot;
     library?: LibraryStore;
+    repository?: RepositoryStore;
+    repositoryTarget?: RepositoryTarget;
+    basePath: string;
+    onOpenRepository: RepositoryNavigation;
 }) {
     switch (workspace) {
         case "library":
-            if (library !== undefined) return <Library store={library} />;
+            if (repositoryTarget !== undefined) {
+                return repository === undefined ? (
+                    <Panel title="Repository details unavailable">
+                        <p>
+                            Connect the authenticated archive to inspect this
+                            repository.
+                        </p>
+                    </Panel>
+                ) : (
+                    <RepositoryDetail
+                        store={repository}
+                        target={repositoryTarget}
+                        basePath={basePath}
+                    />
+                );
+            }
+            if (library !== undefined)
+                return (
+                    <Library
+                        store={library}
+                        basePath={basePath}
+                        onOpenRepository={onOpenRepository}
+                    />
+                );
             return (
                 <div className="workspace-grid">
                     <Panel title="Your repository library">
@@ -161,6 +197,7 @@ export function App({
     session,
     library,
     libraryBookmark,
+    repository,
 }: {
     basePath: string;
     bootstrap?: UiBootstrap;
@@ -169,6 +206,7 @@ export function App({
     session?: SessionSnapshot;
     library?: LibraryStore;
     libraryBookmark?: string;
+    repository?: RepositoryStore;
 }) {
     const base = validateBasePath(basePath);
     const [pathname, setPathname] = useState(window.location.pathname);
@@ -180,7 +218,12 @@ export function App({
         "idle" | "checking" | "unavailable"
     >("idle");
     const route = resolveRoute(pathname, base);
-    const workspace = route.kind === "workspace" ? route.workspace : null;
+    const workspace =
+        route.kind === "workspace"
+            ? route.workspace
+            : route.kind === "repository"
+              ? "library"
+              : null;
     const host =
         bootstrap !== undefined &&
         bootstrap.user.admin_permissions.some(
@@ -190,7 +233,13 @@ export function App({
             ? bootstrap
             : null;
     const title =
-        workspace === null ? "Page unavailable" : workspaceLabel(workspace);
+        route.kind === "repository"
+            ? route.target.repositoryType === "model"
+                ? "Model details"
+                : "Dataset details"
+            : workspace === null
+              ? "Page unavailable"
+              : workspaceLabel(workspace);
 
     useEffect(() => {
         const observeLocation = () => {
@@ -229,6 +278,14 @@ export function App({
         setPathname(window.location.pathname);
         setNavigationOpen(false);
     }
+    const navigateRepository: RepositoryNavigation = (event, target, view) => {
+        if (!isPlainNavigation(event)) return;
+        event.preventDefault();
+        const path = repositoryPath(target, base);
+        window.history.pushState(null, "", path + repositoryFragment(view));
+        setPathname(path);
+        setNavigationOpen(false);
+    };
     async function checkInterfaceVersion(): Promise<void> {
         if (onCheckRelease === undefined) return;
         setVersionCheck("checking");
@@ -406,9 +463,12 @@ export function App({
                         <span className="eyebrow">Your archive workspace</span>
                         <h1>{title}</h1>
                         <p>
-                            {WORKSPACES.find((item) => item.id === workspace)
-                                ?.description ??
-                                "This address does not identify an available workspace."}
+                            {route.kind === "repository"
+                                ? "Inspect one exact publication, its attributed metadata and independent integrity evidence."
+                                : (WORKSPACES.find(
+                                      (item) => item.id === workspace,
+                                  )?.description ??
+                                  "This address does not identify an available workspace.")}
                         </p>
                     </div>
                     <Notice>
@@ -492,6 +552,14 @@ export function App({
                                 : { controller })}
                             {...(session === undefined ? {} : { session })}
                             {...(library === undefined ? {} : { library })}
+                            {...(repository === undefined
+                                ? {}
+                                : { repository })}
+                            {...(route.kind === "repository"
+                                ? { repositoryTarget: route.target }
+                                : {})}
+                            basePath={base}
+                            onOpenRepository={navigateRepository}
                         />
                     )}
                     <footer className="page-footer">

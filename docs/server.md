@@ -779,7 +779,13 @@ leaves a script-free reload explanation; no fake successful connection appears.
 
 Every UI path is Basic-only, including assets, errors and direct Unix access.
 Allowed navigation is `/ui/`, `/ui/library`, `/ui/operations`, `/ui/maintenance`
-and `/ui/administration`; future detail routes require explicit registration.
+and `/ui/administration`, plus the explicitly recognized repository path
+`/ui/repositories/{model|dataset}/{namespace}/{name}`. Repository components use
+the existing identity grammar, without extra segments, traversal or encoded
+separators. A bounded browser fragment selects an optional paired full lowercase
+`commit_sha`/`publication_id` and a fixed tab; it never chooses an endpoint or
+authority. Repository shell query strings remain refused. Unknown paths receive
+the existing authenticated typed404, without arbitrary SPA fallback.
 The authenticated `/ui` alias redirects307 to the trusted encoded `/ui/`.
 Query/body misuse, missing JS/CSS, API typos, MCP errors and other methods never
 receive shell fallback. HEAD retains GET status/headers/length and sends no body,

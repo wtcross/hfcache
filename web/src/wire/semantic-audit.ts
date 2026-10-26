@@ -55,8 +55,10 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
             "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61",
         // Decision150 exposes host status reads to granted administrators. Bootstrap
         // advertises that fixed read without consulting the helper or archive.
+        // WEB013 registers strict repository presentation routes in the reviewed
+        // server context; bootstrap JSON, permissions and decoder rules are unchanged.
         "ui.bootstrap":
-            "94fd8174d679cc92681ac25c6f3e4e29b3dfd406030dda58623b0e49c50c0863",
+            "158e9d751611099539927f0ff4d6afdf5b6bf2ed8b0b76504d07b7d35f57cd31",
         "hfcache.ui_models._subject":
             "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44",
         "hfcache.ui_models._prefix":

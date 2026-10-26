@@ -29,6 +29,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-013 Implement exact-publication model and dataset detail pages
+  (2026-10-26, this commit — [task](plans/tasks/web-013-publication-detail-pages.md)).
+  Typed repository routes and exact SHA/publication fragments drive six tabs,
+  attributed model/dataset declarations, provenance/coverage, bounded files,
+  labelled locators, retained revisions, integrity and loaded report history.
+  Every derived read rejoins the selected SHA reference/generation; surviving
+  repair/prune manifests never restore membership or adopt current implicitly.
+  Route/auth/stale-response and keyboard-focus regressions pass. Strict gate1
+  passes1608.747s:8591backend/52unrelated opt-in deselections,581Cockpit unit/
+  110mountedFirefox,3372web unit/3496combined component,95.93%line coverage,
+  locked wheel profiles/build/startup/read-API checks and zero required skips.
+  All1431 source hashes/modes remain exact at0331b882….
+  Thirty-nine one-attempt installed browser cases pass309.282s,13 each Chromium,
+  Firefox and WebKit;162/155/171 trusted GETs,0POST, no interception/overflow.
+  All10 owned metadata transitions, source/full9 preservation, configuration,
+  operation0 and original-role drain pass. This is real Caddy/installed API
+  with explicit local NFS-metadata simulation, not NAS/platform acceptance.
+  Failed fixture setup1 is retained; corrected source runs a fresh cohort with
+  the same product bytes. Human detail guide, three actual synthetic screenshots,
+  navigation and living contracts align214/27; final78 regressions pass9.27s.
+  INV018/021 and ADR133/145/147
+  reviewed/amended; no runtime dependency or endpoint is added. Image4e04c3d1
+  has verified UBI10micro ancestry/no runtime Node;114 installed modules match
+  fixture0.2.22, canonical0.2.2 unchanged. CATALOG06–08 complete; WEB-014 next.
+  Evidence: /var/tmp/web-013-validation-20o27efw/. No production/NAS/live Cockpit,
+  rollout, merge, push or tag action.
+
 - [x] WEB-012 Implement the bounded model and dataset Library
   (2026-10-26, this commit — [task](plans/tasks/web-012-library-and-discovery.md)).
   Existing typed catalog/inventory/status/revision reads now drive scoped ID/tag
@@ -2783,6 +2810,22 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-013 checkpoint (2026-10-26, this commit): WEB001–013 complete on
+feat/web-ui; continue WEB-014 through the current selector. Repository details,
+human guide and actual synthetic screenshots pass strict gate1 and39 installed
+three-browser cases. [Task013](plans/tasks/web-013-publication-detail-pages.md)
+records exact source/artifacts, actual case mappings and the retained failed
+fixture setup. Source0331b882…/1431 inputs matches the tested wheel/UI; image
+4e04c3d1 has verified pinned UBI10micro ancestry and no runtime Node. Standalone
+owned0.2.22 under /opt/hfcache-web013-runtime changes no release selector; original
+browser/API/Caddy roles are normally stopped,10 explicit fixture transitions
+preserve all other metadata/source identities and bytes, configuration remains
+unchanged and operation count is0. The five infrastructure pairs remain original.
+This is explicit local NFS-metadata simulation, separate from later full native/
+rootless platform, parity, compatibility and final acceptance. Production0.2.2,
+credentials/calendars/guards and live Cockpit remain untouched. No merge, push,
+tag, rollout or live plugin removal is authorized.
 
 Latest WEB-012 checkpoint (2026-10-26, this commit): WEB001–012 complete on
 feat/web-ui; continue WEB-013 through the current selector. The Library and human
@@ -12537,3 +12580,13 @@ publication joins preserve configuration-backed tag provenance and keep scoped
 coverage, current inventory and retained technical evidence distinct. The dated
 ADR133/145 and INV018/021 amendments record this read composition; no endpoint,
 runtime dependency or new authority is introduced.
+
+2026-10-26 WEB-013 implementation refinement of decisions133/145/147: stable
+typed detail routes and bounded exact-pair/tab fragments remain presentation,
+not API origin or file selectors. Fresh selected-reference membership and full
+generation joins precede derived reads; the legacy manifest endpoint may still
+serve a preserved predecessor without restoring retained membership. Finite
+collection/local artifact pages, attributed declarations, qualified history and
+labelled consumer bases preserve independent integrity and metadata evidence.
+INV018/021 and dated ADR133/145/147 amendments record this composition; no new
+endpoint, runtime dependency, global authentication gate or authority is added.

@@ -1052,6 +1052,18 @@ synthetic successful bootstrap, external asset or credential-storage fallback is
 introduced. All UI HEAD/error responses are bodyless; cache permissions are
 selected only from authenticated validated resources, never reflected headers.
 
+Repository navigation recognizes only the validated type/namespace/name path
+under `/ui/repositories/`, in addition to the fixed workspaces. Unknown routes,
+extra segments, traversal and encoded separators do not receive a shell. Queries
+remain refused. The bounded fragment accepts only an optional complete lowercase
+SHA/publication pair and a closed detail-tab name; it grants no path, endpoint or
+origin selection. Current resolution is separate from pinned publication reads.
+Late responses, same-SHA repair and vanished selected publications cannot silently
+substitute newer evidence. Supplemental failures leave independently valid
+manifest/inventory evidence distinct. Logical sizes, observation completeness,
+README source digests and API health are not fresh publication verification.
+See [detail procedures](web-ui/repository-details.md).
+
 The independent Basic provider verifies one protected Argon2id record under
 finite header/credential/concurrency/failure budgets before domain work. It
 produces an internal stable subject and explicit capabilities, with separate

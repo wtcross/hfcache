@@ -142,3 +142,22 @@ stale-continuation resets and explicit limit failures replace hidden all-page
 collection; existing response/retention limits are not enlarged. This is read
 composition, with no new wire schema, endpoint, dependency or writer capability.
 See [Library procedures](../web-ui/library.md) and [catalog semantics](../discovery.md#queries-coverage-and-pages).
+
+## Exact-publication detail composition amendment (2026-10-26)
+
+Detail routes and bounded paired SHA/publication fragments are presentation
+identity, never endpoint or authority input. Current reference resolution is
+separate; derived panels join only the selected exact publication/generation and
+authenticated scope. Selection/auth changes retire superseded requests, and late
+old responses cannot supply a new identity's card, variants, size or confidence.
+Same-SHA repair and missing retained identity never authorize latest fallback.
+The selected full-SHA reference gates retained membership independently of
+optional adjuncts; an accessible preserved predecessor manifest is insufficient.
+
+REST manifests remain whole bounded artifacts with explicit numeric/byte refusal
+and local file-table paging. Available manifest-file digests come from the
+existing exact card boundary, never a browser JSON reserialization. Integrity
+uses exact revision evidence independently of metadata completeness or readiness;
+Activity retains limited loaded-history provenance. Existing wire schemas,
+response/retention ceilings and read-only authority remain unchanged. See
+[detail procedures](../web-ui/repository-details.md).

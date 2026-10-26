@@ -205,6 +205,29 @@ retained declarations, not a fresh integrity check. Entire scoped coverage and
 `HFWRN011` qualify known matches, including zero. See [predicate and provenance
 semantics](discovery.md#queries-coverage-and-pages).
 
+The [browser detail page](web-ui/repository-details.md) resolves current separately
+and then supplies the selected exact pair to publication panels. The recognized
+shell path is `/ui/repositories/{model|dataset}/{namespace}/{name}`, with the
+configured public prefix. Its browser fragment admits only paired lowercase
+`commit_sha` (40hex)/`publication_id` (32hex) and
+`tab=overview|details|files|revisions|integrity|activity`; both identity fields or
+neither are required. The fragment is bounded to8192UTF-8 bytes and rejects
+duplicates/unknown fields. Shell queries, malformed identity paths and arbitrary
+SPA fallback remain refused. No REST endpoint or permission is added.
+
+The browser also validates that the full-SHA retained reference still names the
+selected publication/generation. The existing manifest endpoint can read a
+preserved repair predecessor; manifest existence alone cannot establish current
+retained membership. This browser join does not narrow that established REST
+behavior or make optional catalog/card availability the membership authority.
+
+REST manifests remain complete bounded artifacts; they do not acquire file-table
+`limit`/`cursor` parameters. The browser pages accepted file metadata locally and
+refuses an oversized artifact explicitly. A manifest-file digest is available
+from the existing exact card read, including `not_captured`; it must not be
+invented by hashing reserialized HTTP JSON. Missing supplemental detail does not
+erase independently validated authoritative inventory or manifest evidence.
+
 The API version and exact capabilities object remain unchanged: existing `reads`
 covers these additive reads. New catalog schemas are independently versioned and
 advertised in OpenAPI; adding a capability field would break strict existing

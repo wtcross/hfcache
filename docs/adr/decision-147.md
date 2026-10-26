@@ -370,8 +370,12 @@ path encoder to MCP slash redirect and UI alias; no Host/query reflection.
 
 GET/HEAD `/ui` is an authenticated307 to the trusted encoded `/ui/` (no query).
 GET/HEAD `/ui/` and the current exact workspace paths library, operations,
-maintenance and administration receive rendered index.html. Future detail routes
-must be explicitly registered by their owning feature. Unknown UI routes receive
+maintenance and administration receive rendered index.html. WEB013 also explicitly
+recognizes `/ui/repositories/{model|dataset}/{namespace}/{name}` using the existing
+repository component grammar. No additional segments, traversal or encoded
+separators are accepted. The browser-only bounded fragment chooses a paired full
+SHA/publication and one closed detail tab; it cannot choose request authority or
+an arbitrary path. Query strings remain refused. Unknown UI routes receive
 a typed404, not a successful catch-all shell. Indexed assets receive exact bytes.
 Missing .js/.css, unknown/unindexed files, API typos, MCP errors, non-GET/HEAD and
 traversal never receive HTML fallback. A GET/HEAD with a body or unexpected query

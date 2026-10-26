@@ -1144,6 +1144,12 @@ image/worker/TLS fixture records and clean immutable artifact identities.
   Separately read current inventory cannot lend size/integrity to another exact
   publication; logical byte counts cannot become physical disk usage or hardware
   suitability. Filtering and paging confer no writer/Hub capability.
+  Repository details resolve current separately, then pin derived panels to the
+  full selected SHA/publication and generation. Same-SHA repair is a new instance;
+  unavailable exact identity never falls back. Missing supplemental evidence
+  cannot erase independent authoritative manifest/inventory. Loaded history is
+  not a complete repository audit, and copied consumer locators retain their
+  declared base without becoming HTTP payload-serving paths.
   **Independent card capture:** [decision 142](adr/decision-142.md)
   adds independent schema-1 `RepositoryCard` records in `published/metadata/cards/`
   under the same lock/atomic/preservation guards. Only writer capture may read
@@ -1404,6 +1410,10 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   pages and enrichment remain finite; stale or contradictory pages cannot become
   successful empty data. Joins use validated authority/type/ID and exact
   publication pairs rather than row positions or a presumed global snapshot.
+  Recognized type-aware detail routes accept only bounded paired publication/tab
+  fragments. Selection changes invalidate late old responses. Whole manifest
+  reads retain existing byte/integer bounds despite locally paged file tables;
+  manifest-file digests are never invented from reserialized HTTP JSON.
 
 Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-and-current-availability),
 [API](api.md#web-ui-and-administration-design),

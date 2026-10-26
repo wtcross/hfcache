@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-012 (this commit); WEB-013 is next |
+| Latest completed package | WEB-013 (this commit); WEB-014 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3730,3 +3730,16 @@ fix and production-mount regressions pass. OPS01–05 complete; continue WEB-012
 Shared API/UI image remains pinned UBI10 micro without runtime Node. Full Library,
 job forms, later host/cross-browser/platform acceptance and production rollout
 remain separate tasks; no production/NAS/live Cockpit/publication action occurs.
+
+2026-10-26: WEB-013 completes exact-publication model/dataset detail pages.
+Strict gate1 passes1608.747s (8591 backend tests and required web/Cockpit checks),
+with all1431 frozen hashes/modes unchanged. Thirty-nine one-attempt installed
+Caddy/API cases pass309.282s across all three engines, including actual Library
+navigation, six tabs, current/repair/prune pinning, useful manifests during
+supplemental failure and bounded keyboard/mobile locator use. CATALOG06–08
+complete; human guide/actual synthetic screenshots and living contracts align.
+The first private fixture setup failure is retained, with corrected source in a
+fresh successful cohort and no product rebuild. Shared image4e04c3d1 retains
+actual pinned UBI10micro ancestry and verified no-runtime-Node/tooling. Continue
+WEB-014; production rollout, NAS and final platform/parity acceptance remain
+separate. No production/NAS/live Cockpit or publication action occurred.

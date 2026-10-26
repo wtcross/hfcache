@@ -52,6 +52,7 @@ from hfcache.api.ui_serving import (
     UiResponse,
     UiStreams,
     bootstrap_bytes,
+    is_repository_navigation,
 )
 from hfcache.card_models import RepositoryCardRead
 from hfcache.catalog_models import MAXIMUM_CARD_RECORD_BYTES
@@ -964,7 +965,11 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                 effective_prefix=prefix,
             )
             return UiResponse(body, mime="application/json", policy="ui_bootstrap", streams=streams)
-        if member in {"", "library", "operations", "maintenance", "administration"}:
+        if member in {"", "library", "operations", "maintenance", "administration"} or (
+            is_repository_navigation(
+                member, raw_path=request.scope.get("raw_path"), effective_prefix=prefix
+            )
+        ):
             return UiResponse(
                 capture.shells[prefix], mime="text/html", policy="ui_document", streams=streams
             )

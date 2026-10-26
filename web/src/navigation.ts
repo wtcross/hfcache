@@ -1,6 +1,8 @@
 /** Presentation routes only; no endpoint, principal or archive authority (INV-019). */
 import { canonicalUiPrefix } from "./wire/ui-semantics";
 import { uriPath } from "./api/url-paths";
+import { parseRepositoryRoute } from "./repository/routes";
+import type { RepositoryTarget } from "./repository/routes";
 export const WORKSPACES = [
     {
         id: "library",
@@ -31,7 +33,9 @@ export const WORKSPACES = [
 
 export type Workspace = (typeof WORKSPACES)[number]["id"];
 export type Route =
-    { kind: "workspace"; workspace: Workspace } | { kind: "not-found" };
+    | { kind: "workspace"; workspace: Workspace }
+    | { kind: "repository"; target: RepositoryTarget }
+    | { kind: "not-found" };
 
 export function isPlainNavigation(event: {
     button: number;
@@ -70,9 +74,11 @@ export function resolveRoute(pathname: string, basePath: string): Route {
     if (!pathname.startsWith(basePath)) return { kind: "not-found" };
     const path = pathname.slice(basePath.length);
     if (path === "") return { kind: "workspace", workspace: "library" };
-    return isWorkspace(path)
-        ? { kind: "workspace", workspace: path }
-        : { kind: "not-found" };
+    if (isWorkspace(path)) return { kind: "workspace", workspace: path };
+    const target = parseRepositoryRoute(pathname, basePath);
+    return target === null
+        ? { kind: "not-found" }
+        : { kind: "repository", target };
 }
 
 export function workspacePath(workspace: Workspace, basePath: string): string {
