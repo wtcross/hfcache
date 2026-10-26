@@ -165,3 +165,12 @@ installed role/browser conformance, the remaining feature cases and conditional
 Cockpit retirement require their own evidence; no rollout follows. See the
 [functional development contract](../development.md#installed-shared-caddy-functional-fixture)
 and [recorded installed scope](../deployment-status.md).
+
+## Bounded Markdown asset dependency amendment (2026-10-26)
+
+[Decision155](decision-155.md) records the material correctness rationale for
+react-markdown 10.1.0, remark-gfm 4.0.1 and rehype-sanitize 6.0.0 as bundled browser
+assets, with an explicitly provisioned frozen license-audited closure. No Python
+runtime dependency, runtime Node, remote plugin or asset fetching follows. The
+existing immutable build/source/license identity and installed acceptance
+requirements remain unchanged; the decision is not execution evidence.

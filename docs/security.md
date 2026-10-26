@@ -1352,8 +1352,9 @@ implemented. Source tests do not establish SELinux/namespace/container acceptanc
 Cards are untrusted derived presentation, separately bound to exact retained
 publication and immutable manifest/source identity. Writer-only bounded source
 SHA comparison checks the copied README alone and never raises integrity
-confidence. Capture and exact metadata-only reads are implemented in unreleased source; their inert Markdown is
-not an HTML response or an available card view. Registered/recognized secrets
+confidence. Capture and exact metadata-only reads are implemented in unreleased
+source; their inert Markdown is not an HTML response. Browser formatting has
+its separate closed policy under [decision155](adr/decision-155.md). Registered/recognized secrets
 anywhere in the source withhold the whole presentation; non-present records retain no body or
 presentation digest. Safe link text stays inert, Markdown images become fixed
 placeholders, and raw HTML/MDX outside supported code is unsupported. Absent README is
@@ -1370,12 +1371,23 @@ the smaller configured bound or2MiB before headers. Present-body validation and
 redaction must not emit changed Markdown with an old digest; the typed browser
 client verifies the actual UTF-8 digest and exact request binding before exposure.
 
-The later renderer must use React allowlists and bounded inert
+The renderer must use React allowlists and bounded inert
 Markdown, disabling HTML/MDX/SVG/scripts/iframes/forms/handlers/unsafe protocols,
 code execution and automatic images/fonts. Safe relative links use pinned
 upstream identity; external links use `noopener noreferrer`; heading IDs prevent
 DOM clobbering. Any source toggle exposes sanitized presentation only. These
-render controls do not become available through card GET.
+render controls do not become available through card GET. Before synchronous
+parsing, input is limited to 64 KiB with finite line, nesting, delimiter, heading,
+fence, code and table bounds; the AST walk additionally limits nodes/depth.
+Refusal is local and does not truncate into full-content success. Closed custom
+components admit no arbitrary source props. Relative/root-relative/fragment links
+resolve within the selected immutable upstream repository; dot segments cannot
+escape it or navigate the management origin. Absolute management-origin links
+also become inert instead of API/application navigation. External navigation adds
+`no-referrer` as well as opener isolation. The exact sanitized source remains
+escaped text under the existing 1 MiB body ceiling. Capture already omitted front
+matter; display does not strip verified leading rules or alter the digest.
+No runtime plugin, highlighter or asset request is granted by GFM support.
 
 Conformance requires adversarial unit/integration cases and built-UI tests through
 actual Caddy/TLS plus installed isolated native/rootless profiles in Chromium,

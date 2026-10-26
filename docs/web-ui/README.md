@@ -22,7 +22,8 @@ After sign-in, **Administrator session** identifies the authenticated human.
 archive health, inventory or writability has been checked. The current interface
 provides the [Library](library.md), permission explanations and
 [original-operation observation and recovery](operations.md), with
-[exact-publication repository details](repository-details.md). README rendering,
+[exact-publication repository details](repository-details.md). The bounded
+[README view](readme-cards.md) provides formatted and sanitized-source display;
 tag editing and full job forms remain separate work:
 
 | Workspace | Intended workflow |
@@ -72,7 +73,8 @@ at the same SHA. Current configuration tags describe operator curation; they do
 not prove publication membership or verification. [README capture](readme-cards.md)
 now retains bounded, sanitized upstream presentation in unreleased source through
 the existing writer workflow. Its exact read API is available in that source;
-browser display remains under development. The API adds no card view or external media.
+the interface adds a bounded Rendered README and Sanitized source
+view in Overview. Check the release before using it. Neither view loads external media.
 
 Until the replacement passes its installed compatibility and functional checks,
 Cockpit remains shipped. Production migration and rollback require separate

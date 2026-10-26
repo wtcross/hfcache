@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { Notice, Panel } from "../primitives";
+import { ReadmeCard } from "../readme/ReadmeCard";
 import {
     parseRepositoryFragment,
     repositoryFragment,
@@ -110,9 +111,11 @@ function ReadState<T>({
                     : "alert"
             }
         >
-            {page.phase === "loading" || page.phase === "idle"
+            {page.phase === "loading"
                 ? `Loading bounded ${name}.`
-                : `${name} is unavailable or could not be validated.`}
+                : page.phase === "idle"
+                  ? `${name} has not been loaded for this tab.`
+                  : `${name} is unavailable or could not be validated.`}
             {code === undefined ? "" : ` Diagnostic code: ${code}.`}
         </p>
     );
@@ -934,106 +937,132 @@ export function RepositoryDetail({
         switch (tab) {
             case "overview":
                 return (
-                    <Panel title="Attributed upstream declarations">
-                        {catalog === null ? (
-                            <ReadState
-                                page={state.catalog}
-                                name="Technical metadata"
-                            />
-                        ) : (
-                            <Declarations
-                                observations={observations}
-                                identity={identity}
-                            />
-                        )}
-                        <Notice>
-                            Upstream declarations and publication ingestion are
-                            separate from current offline verification. Unknown
-                            specifications remain unknown.
-                        </Notice>
-                        <details>
-                            <summary>Publication provenance</summary>
-                            <dl className="repository-facts">
-                                <Fact name="Upstream endpoint">
-                                    {manifest.hub_endpoint}
-                                </Fact>
-                                <Fact name="First observed">
-                                    {manifest.first_observed_at}
-                                </Fact>
-                                <Fact name="Download started">
-                                    {manifest.download_started_at}
-                                </Fact>
-                                <Fact name="Download completed">
-                                    {manifest.download_completed_at}
-                                </Fact>
-                                <Fact name="Ingestion verified">
-                                    {manifest.verified_at}
-                                </Fact>
-                                <Fact name="Publishing application">
-                                    {manifest.application_version}
-                                </Fact>
-                                <Fact name="Publishing Python">
-                                    {manifest.python_version}
-                                </Fact>
-                                <Fact name="Publishing Hub client">
-                                    {manifest.huggingface_hub_version}
-                                </Fact>
-                            </dl>
-                        </details>
-                        {manifest.dependencies.length > 0 && (
-                            <details>
-                                <summary>
-                                    Declared dependencies (
-                                    {number(manifest.dependencies.length)})
-                                </summary>
-                                <p>
-                                    These are captured metadata observations.
-                                    Dependencies are not automatically
-                                    downloaded or executed.
-                                </p>
-                                <LocalCollection
-                                    items={manifest.dependencies}
+                    <>
+                        {selected !== null &&
+                            (card === null ? (
+                                <Panel title="Archived README">
+                                    <ReadState
+                                        page={state.card}
+                                        name="Archived README"
+                                    />
+                                </Panel>
+                            ) : (
+                                <ReadmeCard
+                                    key={
+                                        identity +
+                                        ":" +
+                                        (card.presentation_sha256 ?? card.state)
+                                    }
+                                    card={card}
+                                    identity={selected}
+                                    publicationGeneration={
+                                        manifest.publication_generation
+                                    }
+                                />
+                            ))}
+                        <Panel title="Attributed upstream declarations">
+                            {catalog === null ? (
+                                <ReadState
+                                    page={state.catalog}
+                                    name="Technical metadata"
+                                />
+                            ) : (
+                                <Declarations
+                                    observations={observations}
                                     identity={identity}
-                                    name="dependencies"
-                                    render={(visible) => (
-                                        <dl className="repository-facts">
-                                            {visible.map(
-                                                (dependency, index) => (
-                                                    <Fact
-                                                        key={index}
-                                                        name={
-                                                            dependency.detected_id
-                                                        }
-                                                    >
-                                                        {dependency.declared
-                                                            ? "Explicitly declared"
-                                                            : "Detected declaration"}{" "}
-                                                        ·{" "}
-                                                        {dependency.confidence}{" "}
-                                                        confidence ·{" "}
-                                                        {dependency.managed
-                                                            ? "Configured dependency"
-                                                            : "Outside current managed scope"}
-                                                        <small>
-                                                            <code>
-                                                                {
-                                                                    dependency.source_file
-                                                                }
-                                                            </code>{" "}
+                                />
+                            )}
+                            <Notice>
+                                Upstream declarations and publication ingestion
+                                are separate from current offline verification.
+                                Unknown specifications remain unknown.
+                            </Notice>
+                            <details>
+                                <summary>Publication provenance</summary>
+                                <dl className="repository-facts">
+                                    <Fact name="Upstream endpoint">
+                                        {manifest.hub_endpoint}
+                                    </Fact>
+                                    <Fact name="First observed">
+                                        {manifest.first_observed_at}
+                                    </Fact>
+                                    <Fact name="Download started">
+                                        {manifest.download_started_at}
+                                    </Fact>
+                                    <Fact name="Download completed">
+                                        {manifest.download_completed_at}
+                                    </Fact>
+                                    <Fact name="Ingestion verified">
+                                        {manifest.verified_at}
+                                    </Fact>
+                                    <Fact name="Publishing application">
+                                        {manifest.application_version}
+                                    </Fact>
+                                    <Fact name="Publishing Python">
+                                        {manifest.python_version}
+                                    </Fact>
+                                    <Fact name="Publishing Hub client">
+                                        {manifest.huggingface_hub_version}
+                                    </Fact>
+                                </dl>
+                            </details>
+                            {manifest.dependencies.length > 0 && (
+                                <details>
+                                    <summary>
+                                        Declared dependencies (
+                                        {number(manifest.dependencies.length)})
+                                    </summary>
+                                    <p>
+                                        These are captured metadata
+                                        observations. Dependencies are not
+                                        automatically downloaded or executed.
+                                    </p>
+                                    <LocalCollection
+                                        items={manifest.dependencies}
+                                        identity={identity}
+                                        name="dependencies"
+                                        render={(visible) => (
+                                            <dl className="repository-facts">
+                                                {visible.map(
+                                                    (dependency, index) => (
+                                                        <Fact
+                                                            key={index}
+                                                            name={
+                                                                dependency.detected_id
+                                                            }
+                                                        >
+                                                            {dependency.declared
+                                                                ? "Explicitly declared"
+                                                                : "Detected declaration"}{" "}
                                                             ·{" "}
                                                             {
-                                                                dependency.source_field
-                                                            }
-                                                        </small>
-                                                    </Fact>
-                                                ),
-                                            )}
-                                        </dl>
-                                    )}
-                                />
-                            </details>
-                        )}
-                    </Panel>
+                                                                dependency.confidence
+                                                            }{" "}
+                                                            confidence ·{" "}
+                                                            {dependency.managed
+                                                                ? "Configured dependency"
+                                                                : "Outside current managed scope"}
+                                                            <small>
+                                                                <code>
+                                                                    {
+                                                                        dependency.source_file
+                                                                    }
+                                                                </code>{" "}
+                                                                ·{" "}
+                                                                {
+                                                                    dependency.source_field
+                                                                }
+                                                            </small>
+                                                        </Fact>
+                                                    ),
+                                                )}
+                                            </dl>
+                                        )}
+                                    />
+                                </details>
+                            )}
+                        </Panel>
+                    </>
                 );
             case "details":
                 if (target.repositoryType === "dataset")

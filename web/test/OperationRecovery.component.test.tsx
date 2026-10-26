@@ -134,9 +134,8 @@ test("stopping observation aborts GET and preserves the imported handle without 
 });
 test("legacy bearer-key reference is preserved separately and cannot be converted by the Basic session", async () => {
     const { controller, fetcher } = mount();
-    await userEvent.selectOptions(
-        screen.getByRole("combobox", { name: "Handle type" }),
-        "legacy-key",
+    await userEvent.click(
+        screen.getByRole("radio", { name: "Legacy Cockpit key reference" }),
     );
     await userEvent.type(
         screen.getByRole("textbox", { name: "Original handle" }),
@@ -162,6 +161,76 @@ test("legacy bearer-key reference is preserved separately and cannot be converte
             credentialClass: "rest-writer",
         },
     });
+    expect(fetcher).not.toHaveBeenCalled();
+});
+test("native radio groups support keyboard mode changes while preserving typed and saved original handles", async () => {
+    const { controller, fetcher } = mount();
+    await importId();
+    const saved = controller.snapshot().registry.records[0];
+    const original = screen.getByRole("textbox", { name: "Original handle" });
+    const user = userEvent.setup();
+    await user.type(original, "legacy-reader-key");
+    const handleChoices = screen.getByRole("group", { name: "Handle type" });
+    const idChoice = within(handleChoices).getByRole("radio", {
+        name: "Original operation ID",
+    });
+    expect(idChoice).toBeChecked();
+    idChoice.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(
+        within(handleChoices).getByRole("radio", {
+            name: "Original key for this Basic user",
+        }),
+    ).toBeChecked();
+    expect(
+        screen.queryByRole("group", { name: "Original credential class" }),
+    ).not.toBeInTheDocument();
+    await user.keyboard("{ArrowRight}");
+    const legacyChoice = within(handleChoices).getByRole("radio", {
+        name: "Legacy Cockpit key reference",
+    });
+    expect(legacyChoice).toBeChecked();
+    expect(legacyChoice).toHaveFocus();
+    const credentials = screen.getByRole("group", {
+        name: "Original credential class",
+    });
+    const writer = within(credentials).getByRole("radio", {
+        name: "REST writer",
+    });
+    expect(writer).toBeChecked();
+    writer.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(
+        within(credentials).getByRole("radio", { name: "REST reader" }),
+    ).toBeChecked();
+    expect(legacyChoice).toBeChecked();
+    expect(original).toHaveValue("legacy-reader-key");
+    expect(controller.snapshot().registry.records[0]).toEqual(saved);
+    await user.click(
+        within(handleChoices).getByRole("radio", {
+            name: "Original key for this Basic user",
+        }),
+    );
+    expect(
+        screen.queryByRole("group", { name: "Original credential class" }),
+    ).not.toBeInTheDocument();
+    await user.click(legacyChoice);
+    expect(screen.getByRole("radio", { name: "REST reader" })).toBeChecked();
+    await user.click(
+        screen.getByRole("button", { name: "Save original handle" }),
+    );
+    expect(controller.snapshot().registry.records).toHaveLength(2);
+    expect(controller.snapshot().registry.records[0]).toEqual(saved);
+    expect(controller.snapshot().registry.records[1]?.handles).toEqual({
+        kind: "imported",
+        operationId: null,
+        legacyKey: {
+            value: "legacy-reader-key",
+            credentialClass: "rest-reader",
+        },
+    });
+    expect(original).toHaveValue("");
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
 });
 test("unavailable storage is visible and no manual handle or request is fabricated", async () => {

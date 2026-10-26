@@ -197,8 +197,8 @@ Use the authorized [upgrade and drain procedure](../deployment-centos-stream-10.
 
 Check [interface availability](README.md) before using this guide. The shared
 query, Library, repository details and original-operation observation state are
-available in unreleased source; README rendering and full job forms remain
-separate work. Installed production
+available in unreleased source, including bounded README rendering; full job
+forms remain separate work. Installed production
 services retain their recorded releases. A read result describes observed information, never
 permission to modify an archive or proof that an accepted job has finished.
 
@@ -301,3 +301,19 @@ Reconnect invalidates old private evidence even if the new session has the same
 subject or archive. A failed or superseded read cannot establish a new selection's
 contents. Do not delete metadata or weaken authentication to make a detail page
 appear available.
+
+## Archived README display
+
+Check the selected SHA/publication pair and capture state in Overview. A missing
+capture differs from a captured absent README; unsafe, unsupported, oversize or
+failed capture has no body. Reopening the view never captures data. Use the
+[explicit writer refresh](readme-cards.md#refresh-existing-publications) only with
+authority for a deliberately new operation, retaining its original key/handle.
+
+If formatted rendering refuses its smaller work budget, **Sanitized source**
+can still show the verified derivative within the existing card limit. It is not
+the original README and cannot restore withheld unsafe text. A card failure is
+local; other tabs and operation recovery remain usable. A pruned or repaired-away
+selection stays unavailable rather than switching to current. Media placeholders
+and blocked link targets are expected safety behavior; do not disable CSP, add
+a proxy or loosen capture rules to make upstream HTML or images appear.

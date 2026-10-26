@@ -539,6 +539,17 @@ test("explicit missing selection is unavailable and never adopts latest", async 
 test("files are locally paged from one whole artifact and copied tree bases are explicit", async () => {
     const fixture = setup(repositoryFragment({ pair: first, tab: "files" }));
     await fixture.loaded();
+    expect(
+        screen.getByText("Metadata coverage has not been loaded for this tab."),
+    ).toBeInTheDocument();
+    expect(
+        screen.queryByText("Loading bounded Metadata coverage."),
+    ).not.toBeInTheDocument();
+    expect(
+        fixture.seen.filter((url) =>
+            url.pathname.includes("/catalog/repositories/"),
+        ),
+    ).toHaveLength(0);
     expect(screen.getByText("file-00.txt")).toBeInTheDocument();
     expect(screen.queryByText("file-25.txt")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Next files" }));

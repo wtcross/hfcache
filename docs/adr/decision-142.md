@@ -1,7 +1,7 @@
 # Capture publication-bound inert README presentation records
 
 - Decision identity: 142.
-- Status: Accepted; writer capture and exact card reads implemented in unreleased source; rendering pending.
+- Status: Accepted; writer capture, exact card reads and bounded browser rendering implemented in unreleased source; installed rendering acceptance remains required.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -137,3 +137,13 @@ and bounded lease/drain behavior. Browser rendering and source-toggle UX remain
 later work with the original inert rendering requirements; the JSON API does
 not make those views available. Source implementation alone is not installed
 acceptance or production deployment.
+
+## Bounded renderer amendment (2026-10-26)
+
+[Decision155](decision-155.md) fixes the exact bundled Markdown/GFM/sanitizer
+selection, closed element/URL/ID rules and finite pre-parse/AST budgets. Rendering
+uses verified sanitized presentation only; it does not strip front matter again,
+change bytes under the digest, fetch assets or broaden card GET. A valid large
+card may offer Sanitized source while formatted rendering refuses locally.
+Implementation and actual three-browser conformance are recorded with WEB014;
+this amendment alone claims no passing acceptance or deployment.

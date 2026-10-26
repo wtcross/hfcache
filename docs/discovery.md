@@ -15,8 +15,7 @@ default repository scope is `all`, sent explicitly rather than changing the
 API's `archived` default. Search, paging and loading more facets never submit
 refresh or other jobs. [Repository details](web-ui/repository-details.md) pin
 derived panels to an exact retained publication and preserve authoritative
-inventory when supplemental metadata is unavailable. README rendering remains
-separate interface work.
+inventory when supplemental metadata is unavailable. The interface adds [bounded README display](web-ui/readme-cards.md#read-a-card-in-repository-details).
 
 ## Repository card design
 
@@ -29,7 +28,8 @@ plural `models`/`datasets` grammar. It does not widen old observations/manifests
 change publication or verification confidence, or make leftover records authority.
 See [decision 142](adr/decision-142.md) and [UI availability](web-ui/README.md).
 The [README guide](web-ui/readme-cards.md) describes refresh and exact reads.
-Browser rendering remains later work; API availability does not add a card view.
+Browser rendering has its separate [decision155](adr/decision-155.md) policy and
+acceptance requirements; API availability alone does not establish browser safety.
 
 Joined writer-owned sync/repair and existing `technical=true` offline refresh
 capture only root manifest-listed `README.md` through no-follow ordinary-file
@@ -82,14 +82,17 @@ are errors. The original metadata lease covers encoding/send/disconnect; GET
 acquires no writer lock and creates no files. See the
 [read projection](schemas.md#card-read-projection-schema-1).
 
-The planned renderer uses bounded inert React Markdown/GFM with a reviewed
+The browser rendering contract uses bounded inert React Markdown/GFM with a reviewed
 allowlist; no raw HTML/MDX, SVG, scripts, iframes, forms, handlers, unsafe protocols,
 remote plugins, code execution or automatic external images/fonts. External assets are
 placeholders, never an arbitrary image proxy. Safe relative links resolve to
 pinned upstream repository/commit; external links use `noopener noreferrer`.
 Prefix heading IDs against DOM clobbering. A source toggle shows labelled sanitized
-presentation only. These are required controls; source and installed/browser
-conformance evidence remains separate from capture.
+presentation only. Pre-parse 64 KiB admission and the finite structural/AST limits
+in [decision155](adr/decision-155.md) may refuse formatting while preserving exact
+sanitized source under its existing 1 MiB bound. Capture already omitted front matter;
+rendering cannot strip or rewrite verified bytes under the old digest. These are
+required controls; source and installed/browser conformance remain separate from capture.
 
 ## Operator tags
 

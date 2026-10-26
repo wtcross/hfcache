@@ -1,8 +1,14 @@
 /** Explicit registry audit provisioning; ordinary verification remains offline. */
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import {
+    readFileSync,
+    writeFileSync,
+    mkdirSync,
+    existsSync,
+    realpathSync,
+} from "node:fs";
 import { fileURLToPath } from "node:url";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { createRequire } from "node:module";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -30,12 +36,33 @@ if (
     throw new Error("Invalid bounded lockfile inventory.");
 const browser = new Set<string>();
 const runtimePaths = new Map<string, string>();
+const installedRoot = realpathSync(join(root, "node_modules"));
+function packageMetadata(parent: string, name: string): string {
+    if (!/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/u.test(name))
+        throw new Error("Invalid production package name.");
+    // ESM packages may deliberately omit package.json from their exports.
+    // Node's own resolution search roots still identify the installed package
+    // without importing or executing its entrypoint, including type-only deps.
+    const roots = createRequire(parent).resolve.paths(name);
+    if (roots === null || roots.length > 64)
+        throw new Error("Unbounded production package resolution.");
+    for (const directory of roots) {
+        const candidate = join(directory, name, "package.json");
+        if (existsSync(candidate)) {
+            const installed = realpathSync(candidate);
+            if (!installed.startsWith(installedRoot + sep))
+                throw new Error("Ambient production package is forbidden.");
+            return installed;
+        }
+    }
+    throw new Error(`Production package metadata missing: ${name}.`);
+}
 function runtimeClosure(parent: string, name: string) {
-    const path = createRequire(parent).resolve(name + "/package.json");
+    const path = packageMetadata(parent, name);
     const metadata: unknown = JSON.parse(readFileSync(path, "utf8"));
     if (
         !record(metadata) ||
-        typeof metadata.name !== "string" ||
+        metadata.name !== name ||
         typeof metadata.version !== "string"
     )
         throw new Error("Invalid runtime package identity.");
@@ -50,8 +77,6 @@ function runtimeClosure(parent: string, name: string) {
             runtimeClosure(path, dependency);
     }
 }
-runtimeClosure(join(root, "package.json"), "react");
-runtimeClosure(join(root, "package.json"), "react-dom");
 const directData: unknown = JSON.parse(
     readFileSync(join(root, "package.json"), "utf8"),
 );
@@ -61,6 +86,10 @@ if (
     !record(directData.devDependencies)
 )
     throw new Error("Invalid package declaration.");
+for (const name of Object.keys(directData.dependencies))
+    runtimeClosure(join(root, "package.json"), name);
+if ([...browser].some((name) => !names.includes(name)))
+    throw new Error("Production closure is absent from the frozen lock.");
 const direct = new Set<string>();
 for (const declaration of [
     directData.dependencies,
@@ -94,11 +123,18 @@ type PackageLicense = {
 };
 function noticesFor(packages: PackageLicense[]): string {
     let notices =
-        "hfcache web assets: third-party notices\n\nThe production dependency closure contains the following MIT-licensed packages; some modules may be optimized out of the static bundle.\nBuild/test dependencies and all optional-platform packages are inventoried separately in dependencies/licenses.json.\nA local operation-recovery module is adapted from the hfcache Cockpit implementation under LGPL-2.1-or-later; its notice and full license follow. No Cockpit runtime or bridge is used.\n";
+        "hfcache web assets: third-party notices\n\nThe production dependency closure contains the following packages under MIT or ISC licenses; some modules may be optimized out of the static bundle.\nBuild/test dependencies and all optional-platform packages are inventoried separately in dependencies/licenses.json.\nA local operation-recovery module is adapted from the hfcache Cockpit implementation under LGPL-2.1-or-later; its notice and full license follow. No Cockpit runtime or bridge is used.\n";
     for (const dependency of packages.filter(
         (item) => item.use === "production-dependency-closure",
     )) {
-        if (dependency.license !== "MIT")
+        if (
+            dependency.license !== "MIT" &&
+            !(
+                dependency.name === "@ungap/structured-clone" &&
+                dependency.version === "1.4.0" &&
+                dependency.license === "ISC"
+            )
+        )
             throw new Error(
                 "Production license requires explicit notice review.",
             );
@@ -113,6 +149,8 @@ function noticesFor(packages: PackageLicense[]): string {
             "LICENSE.md",
             "LICENSE.txt",
             "license",
+            "license.md",
+            "license.txt",
         ].find((name) => existsSync(join(directory, name)));
         if (filename === undefined)
             throw new Error(

@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-013 (this commit); WEB-014 is next |
+| Latest completed package | WEB-014 (this commit); WEB-015 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3743,3 +3743,14 @@ fresh successful cohort and no product rebuild. Shared image4e04c3d1 retains
 actual pinned UBI10micro ancestry and verified no-runtime-Node/tooling. Continue
 WEB-014; production rollout, NAS and final platform/parity acceptance remain
 separate. No production/NAS/live Cockpit or publication action occurred.
+
+
+2026-10-26: WEB-014 completes bounded inert archived README rendering. Strict
+gate4 passes1465.321s on unchanged4b336cd3…/1441 inputs; all36 installed
+three-engine cases pass235.043s with90 zero-CSP checkpoints and0POST. Matching
+UBI10micro image/no runtime Node, exact source/provenance, capture refusals and
+Recovery radio compatibility are proven. CARD10–12 and human guides/screenshots
+are complete; original withdrawn/interrupted/failed/diagnostic evidence remains.
+[Task014](tasks/web-014-safe-markdown-rendering.md) owns exact evidence. Next is
+WEB-015; production rollout, NAS, full platform/parity and final acceptance remain
+separate. No merge, push, tag, rollout or live Cockpit removal.

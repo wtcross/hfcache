@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 import { Notice, Panel } from "../primitives";
 import type { RecoveryRecord } from "../state/operation-registry";
@@ -219,6 +219,7 @@ export function OperationRecovery({
     readonly controller: SessionController;
     readonly session: SessionSnapshot;
 }) {
+    const choiceId = useId();
     const [kind, setKind] = useState<"id" | "basic-key" | "legacy-key">("id");
     const [value, setValue] = useState("");
     const [legacyClass, setLegacyClass] = useState<
@@ -290,29 +291,47 @@ export function OperationRecovery({
             </Panel>
             <Panel title="Import original handle">
                 <form onSubmit={importHandle} className="recovery-import">
-                    <label>
-                        Handle type
-                        <select
-                            value={kind}
-                            onChange={(event) => {
-                                setKind(
-                                    event.target.value === "basic-key"
-                                        ? "basic-key"
-                                        : event.target.value === "legacy-key"
-                                          ? "legacy-key"
-                                          : "id",
-                                );
-                            }}
-                        >
-                            <option value="id">Original operation ID</option>
-                            <option value="basic-key">
+                    <fieldset className="recovery-choice-fieldset">
+                        <legend>Handle type</legend>
+                        <div className="recovery-choice-options">
+                            <label>
+                                <input
+                                    type="radio"
+                                    name={choiceId + "-handle-type"}
+                                    value="id"
+                                    checked={kind === "id"}
+                                    onChange={() => {
+                                        setKind("id");
+                                    }}
+                                />
+                                Original operation ID
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name={choiceId + "-handle-type"}
+                                    value="basic-key"
+                                    checked={kind === "basic-key"}
+                                    onChange={() => {
+                                        setKind("basic-key");
+                                    }}
+                                />
                                 Original key for this Basic user
-                            </option>
-                            <option value="legacy-key">
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name={choiceId + "-handle-type"}
+                                    value="legacy-key"
+                                    checked={kind === "legacy-key"}
+                                    onChange={() => {
+                                        setKind("legacy-key");
+                                    }}
+                                />
                                 Legacy Cockpit key reference
-                            </option>
-                        </select>
-                    </label>
+                            </label>
+                        </div>
+                    </fieldset>
                     <label>
                         Original handle
                         <input
@@ -327,22 +346,35 @@ export function OperationRecovery({
                         />
                     </label>
                     {kind === "legacy-key" && (
-                        <label>
-                            Original credential class
-                            <select
-                                value={legacyClass}
-                                onChange={(event) => {
-                                    setLegacyClass(
-                                        event.target.value === "rest-reader"
-                                            ? "rest-reader"
-                                            : "rest-writer",
-                                    );
-                                }}
-                            >
-                                <option value="rest-writer">REST writer</option>
-                                <option value="rest-reader">REST reader</option>
-                            </select>
-                        </label>
+                        <fieldset className="recovery-choice-fieldset">
+                            <legend>Original credential class</legend>
+                            <div className="recovery-choice-options">
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name={choiceId + "-credential-class"}
+                                        value="rest-writer"
+                                        checked={legacyClass === "rest-writer"}
+                                        onChange={() => {
+                                            setLegacyClass("rest-writer");
+                                        }}
+                                    />
+                                    REST writer
+                                </label>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name={choiceId + "-credential-class"}
+                                        value="rest-reader"
+                                        checked={legacyClass === "rest-reader"}
+                                        onChange={() => {
+                                            setLegacyClass("rest-reader");
+                                        }}
+                                    />
+                                    REST reader
+                                </label>
+                            </div>
+                        </fieldset>
                     )}
                     <p>
                         {kind === "id"

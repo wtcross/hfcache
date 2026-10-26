@@ -1414,6 +1414,14 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   fragments. Selection changes invalidate late old responses. Whole manifest
   reads retain existing byte/integer bounds despite locally paged file tables;
   manifest-file digests are never invented from reserialized HTTP JSON.
+  Verified README presentation retains exact source/digest identity in the
+  Sanitized source view. Closed lazy React Markdown/GFM formatting adds finite
+  pre-parse and AST bounds, disables active content and automatic assets, and
+  resolves safe links only against pinned upstream identity. Source-derived IDs
+  cannot clobber application navigation; formatting refusal stays local. Capture
+  omission is not repeated against legitimate sanitized leading rules. See
+  [decision155](adr/decision-155.md); card API availability alone proves no DOM
+  or installed-browser conformance.
 
 Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-and-current-availability),
 [API](api.md#web-ui-and-administration-design),

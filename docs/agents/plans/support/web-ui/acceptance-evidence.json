@@ -6050,21 +6050,151 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "54ed64abb387c53b10ef9ce76add2f4e30691744a81a7bbf21abc295e617b7cb",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/readme-policy.unit.test.ts::malformed identities and extra authority fields cannot redirect or generate IDs",
+            "web/test/readme-policy.unit.test.ts::%s are refused without returning an active destination",
+            "web/test/readme-policy.unit.test.ts::trusted current-page origin refuses management navigation including host and default-port aliases",
+            "web/test/readme-policy.unit.test.ts::an invalid supplied management context fails closed for external and relative links",
+            "web/test/ReadmeCard.component.test.tsx::HTML, MDX, SVG, forms and attribute injections cannot construct active elements or navigation IDs",
+            "web/test/ReadmeCard.component.test.tsx::absolute management API and UI links are withheld while external navigation remains explicit",
+            "web/test/ReadmeCard.component.test.tsx::unsafe target %s cannot become an application or executable link",
+            "web/test/ReadmeCard.component.test.tsx::identity, generation, unknown versions/states and over-boundary source refuse the entire card body",
+            "web/test/ReadmeCard.component.test.tsx::selection changes reset local presentation state and never retain another publication's source",
+            "web/test/card-wire.unit.test.ts::synchronous reconstruction does not claim crypto verification; actual typed read refuses tamper",
+            "web/test/card-wire.unit.test.ts::request binding refuses mixed provenance %j"
+          ],
+          "observed_assertion": "Direct hostile renderer props deliberately cover a broader adversarial space than reachable PRESENT capture. The pure policy refuses encoded/control/entity/ambiguous targets and actual-origin aliases; component tests inspect real React DOM with inert HTML/MDX/forms/SVG and closed attributes. Typed-client fixtures test actual reconstruction/native digest verification over scripted HTTP responses, not an installed API.",
+          "profile": "Frozen WEB014 source; actual React DOM/pure policies and native typed-client crypto over independent scripted HTTP fixtures; not installed evidence.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        },
+        {
+          "artifact_sha256": "54ed64abb387c53b10ef9ce76add2f4e30691744a81a7bbf21abc295e617b7cb",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_cards.py::test_nonpresent_classifications_never_retain_source",
+            "tests/unit/test_catalog_cards.py::test_credentials_anywhere_withhold_whole_body_before_omissions",
+            "tests/unit/test_repository_cards.py::test_matching_digest_does_not_authorize_unsafe_new_or_existing_presentation",
+            "tests/unit/test_card_reads.py::test_authenticated_get_returns_flat_projection_and_security_headers",
+            "tests/unit/test_card_reads.py::test_invalid_adjunct_is_classified_without_fallback_or_private_values"
+          ],
+          "observed_assertion": "Real SourceAccess capture withholds unsafe/unsupported/secret bodies; actual guarded filesystem storage refuses an unsafe PRESENT body even with matching SHA. Real ASGI card reads return exact classified authenticated JSON/headers and preserve corrupt state without fallback. These boundaries compose; they are not one fabricated end-to-end service adapter.",
+          "profile": "Actual SourceAccess/guarded filesystem storage and real in-process ASGI metadata API over owned temporary files. Distinct from installed browser/NAS evidence.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        },
+        {
+          "artifact_sha256": "a02db2f96d02ea509831a850db5c9dba1a681e20af9df616d33ff8374b844d2a",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web014-source3-inputs/web-014-run-owned-functional-source3.py --log /var/tmp/web-014-validation-xowemz0k/functional4.log",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/functional4-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-014-readme-browser.mjs::model-inert-rendered-dom",
+            ".scratch/web-014-readme-browser.mjs::unsafe-capture",
+            ".scratch/web-014-readme-browser.mjs::unsupported-capture",
+            ".scratch/web-014-readme-browser.mjs::failed-capture",
+            ".scratch/web-014-readme-browser.mjs::unavailable-no-fallback"
+          ],
+          "observed_assertion": "PASS 235.043s; actual cohort 0da118a0a6b04af0b38c209fbb81967b;36 one-attempt cases,12 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Trusted same-origin GET counts chromium:158, firefox:146, webkit:158;0 POST, passive256-bound observer without interception/overflow; no dialog, popup, page error or CSP violation. All30 ordered per-case/screenshot checkpoints per engine retain zero CSP. Only Chromium captures3 supplemental documentation images with allow/initial; FF/WK explicitly do not invoke the image API, while all required cases execute. Original browser/API/Caddy roles drain normally; cleanup_unknownfalse. Real capture and guarded writer produced all11 toy cases; all archive/configuration full9 and source bytes remain unchanged across reads, operation-store count0, code canary absent. Actual DOM contains no active raw HTML/MDX/SVG/forms/media or executable attributes. Hostile fenced code is literal; real unsafe-scheme/secret and unsupported source captures withhold bodies. The same-origin application URL is inert, and unavailable identity never falls forward. Source1 gate was withdrawn for the indented-code policy defect: exit2/442.408s, 3095 partial backend passes, not acceptance; retained /var/tmp/web-014-validation-xowemz0k/gate1/strict-gate-result.json and /var/tmp/web-014-validation-xowemz0k/gate1/strict-gate.log SHA256 44db5b3c407d1b09796a2953ce68a4c5a360cf7129c8cbee917cc9e42e91b432. Old0.2.24 artifact/prefix remains unused; no source1 API/Caddy/browser roles started. First functional setup remains failed: caseb90163295e9e48a2972f866ac98002db exit1/3.803s, private CLI NameError before API/Caddy/browser roles; original_services{}, passedfalse/cleanup_unknownfalse preserved in /var/tmp/web-014-validation-xowemz0k/functional1-observed-failure.json SHA256 ba7a39fb234e98c6a983ea79c551b7ed230d31b26b2da36e035d7edc1547b52b and /var/tmp/web-014-validation-xowemz0k/functional1-setup-diagnostic.log SHA256 8518d51831bbc08a7ee54b082c7d0e64318dbd2d1c4e161fecf95feeab3465a5. Only ignored fixture main invocation moved after all helpers; fresh functional2 used v3 private paths, unchanged product/artifacts. Functional2 remains failed: caseff7efa535a9f440d9e668e726d4d1d26 exit1/217.711s, 35/36 cases; the final WebKit case rejected3 inline style-element and1 inline style-attribute CSP events, despite all browser exits0 and normal original role drainage. Original false flags/report retained at /var/tmp/web-014-validation-xowemz0k/functional2-evidence.json SHA256 f7d9f91a2ae04893e0a54b4cf8861e04fd9dea6ce447549a5ad979b6e0fc2a66. Pinned Playwright WebKit screenshot synchronization inserts inline style; attribute attribution remains unconfirmed. Fresh v4 tools capture only supplemental Chrome images without excluding any required case/CSP event/interval; no CSP or product limit was relaxed. Functional3 remains failed: casea2a45104d9594965a9e7e22aae846468 exit1/222.557s, 35/36 cases; one WebKit style-attribute CSP event occurred after Operations navigation with no image API invoked, normal roles drained. Retained /var/tmp/web-014-validation-xowemz0k/functional3-evidence.json SHA256 1b5199c1847cffe5af1ec703c8ca979f4fafacbe46ce6b020d9295916d994999. Historical source2 gate2 was green1614.226s, but does not qualify the changed source3 UI. Separate diagnostic-only actual WebKit collections59.146s/70.113s isolated native select creation; radio/checkbox type assignment added no CSP. These are not feature acceptance. Source3 changes only recovery control presentation to native radio groups, preserving original-handle state/API authority. No CSP exception/filter or required functional case was introduced. Source3 gate3 was interrupted: observed outer exit143, runner413292 and descendants gone, Python85% with no final strict result; cause unproven, not acceptance. Retained /var/tmp/web-014-validation-xowemz0k/gate3/observed-interruption.json SHA256 0fa77e62f04290af10a954d7e11281305c0e435cfcf1d0600a3c84d0e0ce2b9f; log SHA256 6391a42bbcd2d73f60eae02766c6351c66bb7db5aaffb43720b5cd61302b1d5b. Identical required full gate4 qualifies the unchanged source.",
+          "profile": "Built production UI/actual typed client through trusted Caddy/installed native0.2.24 API; actual SourceAccess/CatalogWriter captures over owned LOCAL_NFS_METADATA_SIMULATION, not NAS/ingestion/extractor/new-platform/production acceptance. API has only private lo. No forged unsafe PRESENT card, patched production limit or service/business response. Parent 14ca753053d09a0bbae7222b6982f14655366bbe; UI manifest 2cdd822c89e672497c3b7dcc31c4b2e447d3fa3bc958879b84c1ea1b82b11540; wheel 11dbffd1b0499e3239bab80ed6cef371a5cb0aac69a3546ecde1ea0d0bea79af; stock image sha256:8b7a960893331bc1c7660b4439d652a2aa662abc547b0e3abaa570469f9025f7; source proof /var/tmp/web-014-validation-xowemz0k/artifact-source-proof-source3.json SHA256 176a82a004dcbaa37ffdc14b5eea581d203f571c384c4ec4ea9ff01430e9fe33; fixture5c016e2e/browserc82f9aaf/coordinator95185c57.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        }
+      ],
       "id": "CARD-10",
       "owner": "WEB-014",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_10"
+          "node_id": "web/test/readme-policy.unit.test.ts::malformed identities and extra authority fields cannot redirect or generate IDs"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::%s are refused without returning an active destination"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::trusted current-page origin refuses management navigation including host and default-port aliases"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::an invalid supplied management context fails closed for external and relative links"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::HTML, MDX, SVG, forms and attribute injections cannot construct active elements or navigation IDs"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::absolute management API and UI links are withheld while external navigation remains explicit"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::unsafe target %s cannot become an application or executable link"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::identity, generation, unknown versions/states and over-boundary source refuse the entire card body"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::selection changes reset local presentation state and never retain another publication's source"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/card-wire.unit.test.ts::synchronous reconstruction does not claim crypto verification; actual typed read refuses tamper"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/card-wire.unit.test.ts::request binding refuses mixed provenance %j"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_10"
+          "node_id": "tests/unit/test_catalog_cards.py::test_nonpresent_classifications_never_retain_source"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_cards.py::test_credentials_anywhere_withhold_whole_body_before_omissions"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_repository_cards.py::test_matching_digest_does_not_authorize_unsafe_new_or_existing_presentation"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_authenticated_get_returns_flat_projection_and_security_headers"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_invalid_adjunct_is_classified_without_fallback_or_private_values"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-10"
+          "node_id": ".scratch/web-014-readme-browser.mjs::model-inert-rendered-dom"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::unsafe-capture"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::unsupported-capture"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::failed-capture"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::unavailable-no-fallback"
         }
       ],
       "required_layers": [
@@ -6072,24 +6202,129 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "54ed64abb387c53b10ef9ce76add2f4e30691744a81a7bbf21abc295e617b7cb",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/readme-policy.unit.test.ts::invalid or oversized destinations return null without raw errors",
+            "web/test/readme-policy.unit.test.ts::model/dataset relative and root-relative paths have distinct upstream roots",
+            "web/test/readme-policy.unit.test.ts::fragments and management-looking queries cannot become application links",
+            "web/test/readme-policy.unit.test.ts::dot normalization never crosses the selected repository root",
+            "web/test/readme-policy.unit.test.ts::explicit HTTP(S) with a host is navigation only, including normalized case",
+            "web/test/readme-policy.unit.test.ts::trusted current-page origin refuses management navigation including host and default-port aliases",
+            "web/test/ReadmeCard.component.test.tsx::%s relative, fragment and HTTP links navigate only with closed external attributes",
+            "web/test/ReadmeCard.component.test.tsx::media are placeholders and GFM task checkboxes are inert content",
+            "web/test/ReadmeCard.component.test.tsx::generated footnotes never bind the management fragment or accept source-controlled identifiers"
+          ],
+          "observed_assertion": "Pinned model/dataset blob roots, root/fragment/query/dot rules and actual-origin aliases are independently expected. DOM tests assert explicit target/rel/referrer policy, inert media/task placeholders and safe footnote behavior without source attributes or IDs.",
+          "profile": "Frozen WEB014 source; actual React DOM/pure policies and native typed-client crypto over independent scripted HTTP fixtures; not installed evidence.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        },
+        {
+          "artifact_sha256": "54ed64abb387c53b10ef9ce76add2f4e30691744a81a7bbf21abc295e617b7cb",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_cards.py::test_exact_card_provenance_safe_links_and_immutable_evidence",
+            "tests/unit/test_catalog_cards.py::test_asset_placeholder_cannot_activate_adjacent_link_syntax",
+            "tests/unit/test_card_reads.py::test_real_card_get_has_only_metadata_capability_and_no_capture_network_or_lock",
+            "tests/unit/test_card_reads.py::test_authenticated_get_returns_flat_projection_and_security_headers"
+          ],
+          "observed_assertion": "Real exact-manifest capture retains safe inert link source and escaped media placeholders without fetching. Actual ASGI GET instrumentation exposes only allowed metadata capabilities, with payload/network/credential/lock attempts forbidden and security headers checked.",
+          "profile": "Actual SourceAccess/guarded filesystem storage and real in-process ASGI metadata API over owned temporary files. Distinct from installed browser/NAS evidence.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        },
+        {
+          "artifact_sha256": "a02db2f96d02ea509831a850db5c9dba1a681e20af9df616d33ff8374b844d2a",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web014-source3-inputs/web-014-run-owned-functional-source3.py --log /var/tmp/web-014-validation-xowemz0k/functional4.log",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/functional4-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-014-readme-browser.mjs::model-inert-rendered-dom",
+            ".scratch/web-014-readme-browser.mjs::dataset-pinned-links",
+            ".scratch/web-014-readme-browser.mjs::keyboard-mobile-and-navigation"
+          ],
+          "observed_assertion": "PASS 235.043s; actual cohort 0da118a0a6b04af0b38c209fbb81967b;36 one-attempt cases,12 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Trusted same-origin GET counts chromium:158, firefox:146, webkit:158;0 POST, passive256-bound observer without interception/overflow; no dialog, popup, page error or CSP violation. All30 ordered per-case/screenshot checkpoints per engine retain zero CSP. Only Chromium captures3 supplemental documentation images with allow/initial; FF/WK explicitly do not invoke the image API, while all required cases execute. Original browser/API/Caddy roles drain normally; cleanup_unknownfalse. Real capture and guarded writer produced all11 toy cases; all archive/configuration full9 and source bytes remain unchanged across reads, operation-store count0, code canary absent. Model/dataset relative, repository-root and fragment links bind exact immutable upstream SHA/type, with noopener/noreferrer/no-referrer. Media are placeholders; no automatic external resource or management request occurs. Captured source is not a URL proxy. Source1 gate was withdrawn for the indented-code policy defect: exit2/442.408s, 3095 partial backend passes, not acceptance; retained /var/tmp/web-014-validation-xowemz0k/gate1/strict-gate-result.json and /var/tmp/web-014-validation-xowemz0k/gate1/strict-gate.log SHA256 44db5b3c407d1b09796a2953ce68a4c5a360cf7129c8cbee917cc9e42e91b432. Old0.2.24 artifact/prefix remains unused; no source1 API/Caddy/browser roles started. First functional setup remains failed: caseb90163295e9e48a2972f866ac98002db exit1/3.803s, private CLI NameError before API/Caddy/browser roles; original_services{}, passedfalse/cleanup_unknownfalse preserved in /var/tmp/web-014-validation-xowemz0k/functional1-observed-failure.json SHA256 ba7a39fb234e98c6a983ea79c551b7ed230d31b26b2da36e035d7edc1547b52b and /var/tmp/web-014-validation-xowemz0k/functional1-setup-diagnostic.log SHA256 8518d51831bbc08a7ee54b082c7d0e64318dbd2d1c4e161fecf95feeab3465a5. Only ignored fixture main invocation moved after all helpers; fresh functional2 used v3 private paths, unchanged product/artifacts. Functional2 remains failed: caseff7efa535a9f440d9e668e726d4d1d26 exit1/217.711s, 35/36 cases; the final WebKit case rejected3 inline style-element and1 inline style-attribute CSP events, despite all browser exits0 and normal original role drainage. Original false flags/report retained at /var/tmp/web-014-validation-xowemz0k/functional2-evidence.json SHA256 f7d9f91a2ae04893e0a54b4cf8861e04fd9dea6ce447549a5ad979b6e0fc2a66. Pinned Playwright WebKit screenshot synchronization inserts inline style; attribute attribution remains unconfirmed. Fresh v4 tools capture only supplemental Chrome images without excluding any required case/CSP event/interval; no CSP or product limit was relaxed. Functional3 remains failed: casea2a45104d9594965a9e7e22aae846468 exit1/222.557s, 35/36 cases; one WebKit style-attribute CSP event occurred after Operations navigation with no image API invoked, normal roles drained. Retained /var/tmp/web-014-validation-xowemz0k/functional3-evidence.json SHA256 1b5199c1847cffe5af1ec703c8ca979f4fafacbe46ce6b020d9295916d994999. Historical source2 gate2 was green1614.226s, but does not qualify the changed source3 UI. Separate diagnostic-only actual WebKit collections59.146s/70.113s isolated native select creation; radio/checkbox type assignment added no CSP. These are not feature acceptance. Source3 changes only recovery control presentation to native radio groups, preserving original-handle state/API authority. No CSP exception/filter or required functional case was introduced. Source3 gate3 was interrupted: observed outer exit143, runner413292 and descendants gone, Python85% with no final strict result; cause unproven, not acceptance. Retained /var/tmp/web-014-validation-xowemz0k/gate3/observed-interruption.json SHA256 0fa77e62f04290af10a954d7e11281305c0e435cfcf1d0600a3c84d0e0ce2b9f; log SHA256 6391a42bbcd2d73f60eae02766c6351c66bb7db5aaffb43720b5cd61302b1d5b. Identical required full gate4 qualifies the unchanged source.",
+          "profile": "Built production UI/actual typed client through trusted Caddy/installed native0.2.24 API; actual SourceAccess/CatalogWriter captures over owned LOCAL_NFS_METADATA_SIMULATION, not NAS/ingestion/extractor/new-platform/production acceptance. API has only private lo. No forged unsafe PRESENT card, patched production limit or service/business response. Parent 14ca753053d09a0bbae7222b6982f14655366bbe; UI manifest 2cdd822c89e672497c3b7dcc31c4b2e447d3fa3bc958879b84c1ea1b82b11540; wheel 11dbffd1b0499e3239bab80ed6cef371a5cb0aac69a3546ecde1ea0d0bea79af; stock image sha256:8b7a960893331bc1c7660b4439d652a2aa662abc547b0e3abaa570469f9025f7; source proof /var/tmp/web-014-validation-xowemz0k/artifact-source-proof-source3.json SHA256 176a82a004dcbaa37ffdc14b5eea581d203f571c384c4ec4ea9ff01430e9fe33; fixture5c016e2e/browserc82f9aaf/coordinator95185c57.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        }
+      ],
       "id": "CARD-11",
       "owner": "WEB-014",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_11"
+          "node_id": "web/test/readme-policy.unit.test.ts::invalid or oversized destinations return null without raw errors"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::model/dataset relative and root-relative paths have distinct upstream roots"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::fragments and management-looking queries cannot become application links"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::dot normalization never crosses the selected repository root"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::explicit HTTP(S) with a host is navigation only, including normalized case"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::trusted current-page origin refuses management navigation including host and default-port aliases"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::%s relative, fragment and HTTP links navigate only with closed external attributes"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::media are placeholders and GFM task checkboxes are inert content"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::generated footnotes never bind the management fragment or accept source-controlled identifiers"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_11"
+          "node_id": "tests/unit/test_catalog_cards.py::test_exact_card_provenance_safe_links_and_immutable_evidence"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_cards.py::test_asset_placeholder_cannot_activate_adjacent_link_syntax"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_real_card_get_has_only_metadata_capability_and_no_capture_network_or_lock"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_authenticated_get_returns_flat_projection_and_security_headers"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-11"
+          "node_id": ".scratch/web-014-readme-browser.mjs::model-inert-rendered-dom"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::dataset-pinned-links"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::keyboard-mobile-and-navigation"
         }
       ],
       "required_layers": [
@@ -6097,24 +6332,299 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "54ed64abb387c53b10ef9ce76add2f4e30691744a81a7bbf21abc295e617b7cb",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/OperationRecovery.component.test.tsx::native radio groups support keyboard mode changes while preserving typed and saved original handles",
+            "web/test/ReadmeCard.component.test.tsx::a code block at the exact UTF-8 boundary renders without truncation",
+            "web/test/ReadmeCard.component.test.tsx::the actual parsed code node independently enforces the byte bound if lexical admission misses it",
+            "web/test/ReadmeCard.component.test.tsx::adjacent indented fence-looking chunks cannot reset the code-block limit or hide sanitized source",
+            "web/test/readme-policy.unit.test.ts::a genuine nonindented fence separates bounded indented code blocks",
+            "web/test/readme-policy.unit.test.ts::four-space and tabbed fence-looking closers remain counted content of an actual fence",
+            "web/test/readme-policy.unit.test.ts::adjacent indented fence-looking chunks are charged as one code block before parsing",
+            "web/test/readme-policy.unit.test.ts::ordinary prose, a leading horizontal rule, fenced literals and Unicode are admitted without changing bytes",
+            "web/test/readme-policy.unit.test.ts::64KiB measures UTF8 rather than JavaScript string units",
+            "web/test/readme-policy.unit.test.ts::invalid UTF16 is refused before replacement encoding can claim verified content",
+            "web/test/readme-policy.unit.test.ts::2048 lines include the final empty line and CRLF is one boundary",
+            "web/test/readme-policy.unit.test.ts::a line has at most4096 Unicode characters, independent of byte length",
+            "web/test/readme-policy.unit.test.ts::nested quotes, minimal list indentation and bracket work stop at8",
+            "web/test/readme-policy.unit.test.ts::4096 structural delimiters are bounded globally across individually short lines",
+            "web/test/readme-policy.unit.test.ts::headings and fence blocks share a finite128-block admission budget",
+            "web/test/readme-policy.unit.test.ts::16KiB code blocks do not inherit the larger overall input allowance",
+            "web/test/readme-policy.unit.test.ts::256 potential table cells count header and padded missing columns before parsing",
+            "web/test/readme-policy.unit.test.ts::adversarial admission remains measured and finite without a promise timeout",
+            "web/test/readme-policy.unit.test.ts::prefix contains only validated identity and is collision-safe across type/repository/pair",
+            "web/test/readme-policy.unit.test.ts::identity accessors are rejected without consulting attacker code",
+            "web/test/ReadmeCard.component.test.tsx::sanitized source is exact escaped presentation text, including leading separators and omitted-image escaping",
+            "web/test/ReadmeCard.component.test.tsx::capture state %s remains explicit with no fictional source or parser action",
+            "web/test/ReadmeCard.component.test.tsx::format admission refuses a large valid presentation without truncating sanitized source or blocking recovery",
+            "web/test/ReadmeCard.component.test.tsx::post-parse node exhaustion stays within the local boundary and sanitized source controls still work",
+            "web/test/ReadmeCard.component.test.tsx::post-parse deep inline structure is refused without disabling the source control",
+            "web/test/ReadmeCard.component.test.tsx::table formatting stays bounded and available with accessible overflow",
+            "web/test/ReadmeCard.component.test.tsx::every supported heading uses its trusted ordinal rather than source text or attributes",
+            "web/test/ReadmeCard.component.test.tsx::a presentation exactly at the JSON string byte boundary stays available as untruncated escaped source",
+            "web/test/ReadmeCard.component.test.tsx::selection changes reset local presentation state and never retain another publication's source",
+            "web/test/card-wire.unit.test.ts::typed read verifies native SHA256 before exposing body %j",
+            "web/test/card-wire.unit.test.ts::UTF8 and JSON-string size boundaries %#",
+            "web/test/card-wire.unit.test.ts::missing secure-context crypto is a classified refusal, never unverified success",
+            "web/test/card-wire.unit.test.ts::late crypto completion cannot expose an aborted request"
+          ],
+          "observed_assertion": "Every fixed pre-parser boundary, invalid encoding, finite admission timing, trusted ID grammar and post-parser node/depth/table decisions has an actual source node. Source views preserve exact verified text, including legitimate leading horizontal rule and escaped placeholders, with no parser/HTML path. Component failures retain source and recovery controls; identity changes discard old source. Source2 additionally covers adjacent4-space/tab pseudo-fence accounting, true fence separation, exact code-byte boundary and an independent actual parsed-code16KiB backstop. Only the focused backstop component test deliberately bypasses pre-admission to exercise the real parser failure; installed fixtures and production limits are unchanged.",
+          "profile": "Frozen WEB014 source; actual React DOM/pure policies and native typed-client crypto over independent scripted HTTP fixtures; not installed evidence.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        },
+        {
+          "artifact_sha256": "54ed64abb387c53b10ef9ce76add2f4e30691744a81a7bbf21abc295e617b7cb",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_cards.py::test_source_limit_refuses_before_read_and_charges_attempt",
+            "tests/unit/test_catalog_cards.py::test_shared_read_and_work_budget_refusals_never_reset_for_cards",
+            "tests/unit/test_catalog_cards.py::test_captured_presentation_revalidates_without_removing_leading_horizontal_rule",
+            "tests/unit/test_card_reads.py::test_sanitization_race_refuses_changed_markdown_and_stale_digest",
+            "tests/unit/test_card_reads.py::test_card_encoding_expansion_refuses_before_success_headers",
+            "tests/unit/test_card_reads.py::test_configured_metadata_budget_is_not_bypassed_by_card_read",
+            "tests/unit/test_card_reads.py::test_card_metadata_lease_lives_through_slow_send_and_disconnect"
+          ],
+          "observed_assertion": "Actual SourceAccess and guarded metadata readers enforce source/aggregate budgets and unchanged presentation validation. Real ASGI response expansion/budget and slow-send/disconnect tests preserve the existing lease and refuse before success headers. Scripted typed-client cases independently cover native UTF8 digest and late-abort ownership.",
+          "profile": "Actual SourceAccess/guarded filesystem storage and real in-process ASGI metadata API over owned temporary files. Distinct from installed browser/NAS evidence.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        },
+        {
+          "artifact_sha256": "a02db2f96d02ea509831a850db5c9dba1a681e20af9df616d33ff8374b844d2a",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web014-source3-inputs/web-014-run-owned-functional-source3.py --log /var/tmp/web-014-validation-xowemz0k/functional4.log",
+          "evidence_locator": "/var/tmp/web-014-validation-xowemz0k/functional4-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-014-readme-browser.mjs::exact-sanitized-source",
+            ".scratch/web-014-readme-browser.mjs::absent-capture",
+            ".scratch/web-014-readme-browser.mjs::not-captured",
+            ".scratch/web-014-readme-browser.mjs::oversize-capture",
+            ".scratch/web-014-readme-browser.mjs::unsafe-capture",
+            ".scratch/web-014-readme-browser.mjs::unsupported-capture",
+            ".scratch/web-014-readme-browser.mjs::failed-capture",
+            ".scratch/web-014-readme-browser.mjs::render-limit-local-refusal",
+            ".scratch/web-014-readme-browser.mjs::unavailable-no-fallback",
+            ".scratch/web-014-readme-browser.mjs::keyboard-mobile-and-navigation"
+          ],
+          "observed_assertion": "PASS 235.043s; actual cohort 0da118a0a6b04af0b38c209fbb81967b;36 one-attempt cases,12 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Trusted same-origin GET counts chromium:158, firefox:146, webkit:158;0 POST, passive256-bound observer without interception/overflow; no dialog, popup, page error or CSP violation. All30 ordered per-case/screenshot checkpoints per engine retain zero CSP. Only Chromium captures3 supplemental documentation images with allow/initial; FF/WK explicitly do not invoke the image API, while all required cases execute. Original browser/API/Caddy roles drain normally; cleanup_unknownfalse. Real capture and guarded writer produced all11 toy cases; all archive/configuration full9 and source bytes remain unchanged across reads, operation-store count0, code canary absent. Sanitized source equals the real verified card text/digest, preserves the legitimate leading rule and cannot restore withheld secrets. Trusted heading IDs do not clobber app names. A genuinely PRESENT body over64KiB refuses formatting locally while exact source, keyboard/mobile controls and Operations navigation remain useful. Real radio keyboard mode/class changes preserve the unsaved original handle without Save/GET/POST; every non-present state remains explicit. Source1 gate was withdrawn for the indented-code policy defect: exit2/442.408s, 3095 partial backend passes, not acceptance; retained /var/tmp/web-014-validation-xowemz0k/gate1/strict-gate-result.json and /var/tmp/web-014-validation-xowemz0k/gate1/strict-gate.log SHA256 44db5b3c407d1b09796a2953ce68a4c5a360cf7129c8cbee917cc9e42e91b432. Old0.2.24 artifact/prefix remains unused; no source1 API/Caddy/browser roles started. First functional setup remains failed: caseb90163295e9e48a2972f866ac98002db exit1/3.803s, private CLI NameError before API/Caddy/browser roles; original_services{}, passedfalse/cleanup_unknownfalse preserved in /var/tmp/web-014-validation-xowemz0k/functional1-observed-failure.json SHA256 ba7a39fb234e98c6a983ea79c551b7ed230d31b26b2da36e035d7edc1547b52b and /var/tmp/web-014-validation-xowemz0k/functional1-setup-diagnostic.log SHA256 8518d51831bbc08a7ee54b082c7d0e64318dbd2d1c4e161fecf95feeab3465a5. Only ignored fixture main invocation moved after all helpers; fresh functional2 used v3 private paths, unchanged product/artifacts. Functional2 remains failed: caseff7efa535a9f440d9e668e726d4d1d26 exit1/217.711s, 35/36 cases; the final WebKit case rejected3 inline style-element and1 inline style-attribute CSP events, despite all browser exits0 and normal original role drainage. Original false flags/report retained at /var/tmp/web-014-validation-xowemz0k/functional2-evidence.json SHA256 f7d9f91a2ae04893e0a54b4cf8861e04fd9dea6ce447549a5ad979b6e0fc2a66. Pinned Playwright WebKit screenshot synchronization inserts inline style; attribute attribution remains unconfirmed. Fresh v4 tools capture only supplemental Chrome images without excluding any required case/CSP event/interval; no CSP or product limit was relaxed. Functional3 remains failed: casea2a45104d9594965a9e7e22aae846468 exit1/222.557s, 35/36 cases; one WebKit style-attribute CSP event occurred after Operations navigation with no image API invoked, normal roles drained. Retained /var/tmp/web-014-validation-xowemz0k/functional3-evidence.json SHA256 1b5199c1847cffe5af1ec703c8ca979f4fafacbe46ce6b020d9295916d994999. Historical source2 gate2 was green1614.226s, but does not qualify the changed source3 UI. Separate diagnostic-only actual WebKit collections59.146s/70.113s isolated native select creation; radio/checkbox type assignment added no CSP. These are not feature acceptance. Source3 changes only recovery control presentation to native radio groups, preserving original-handle state/API authority. No CSP exception/filter or required functional case was introduced. Source3 gate3 was interrupted: observed outer exit143, runner413292 and descendants gone, Python85% with no final strict result; cause unproven, not acceptance. Retained /var/tmp/web-014-validation-xowemz0k/gate3/observed-interruption.json SHA256 0fa77e62f04290af10a954d7e11281305c0e435cfcf1d0600a3c84d0e0ce2b9f; log SHA256 6391a42bbcd2d73f60eae02766c6351c66bb7db5aaffb43720b5cd61302b1d5b. Identical required full gate4 qualifies the unchanged source.",
+          "profile": "Built production UI/actual typed client through trusted Caddy/installed native0.2.24 API; actual SourceAccess/CatalogWriter captures over owned LOCAL_NFS_METADATA_SIMULATION, not NAS/ingestion/extractor/new-platform/production acceptance. API has only private lo. No forged unsafe PRESENT card, patched production limit or service/business response. Parent 14ca753053d09a0bbae7222b6982f14655366bbe; UI manifest 2cdd822c89e672497c3b7dcc31c4b2e447d3fa3bc958879b84c1ea1b82b11540; wheel 11dbffd1b0499e3239bab80ed6cef371a5cb0aac69a3546ecde1ea0d0bea79af; stock image sha256:8b7a960893331bc1c7660b4439d652a2aa662abc547b0e3abaa570469f9025f7; source proof /var/tmp/web-014-validation-xowemz0k/artifact-source-proof-source3.json SHA256 176a82a004dcbaa37ffdc14b5eea581d203f571c384c4ec4ea9ff01430e9fe33; fixture5c016e2e/browserc82f9aaf/coordinator95185c57.",
+          "source_sha256": "4b336cd30202a80445d7b3d4c0d47416048070c7c252710d1e1620d088247798"
+        }
+      ],
       "id": "CARD-12",
       "owner": "WEB-014",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_12"
+          "node_id": "web/test/OperationRecovery.component.test.tsx::native radio groups support keyboard mode changes while preserving typed and saved original handles"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::a code block at the exact UTF-8 boundary renders without truncation"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::the actual parsed code node independently enforces the byte bound if lexical admission misses it"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::adjacent indented fence-looking chunks cannot reset the code-block limit or hide sanitized source"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::a genuine nonindented fence separates bounded indented code blocks"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::four-space and tabbed fence-looking closers remain counted content of an actual fence"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::adjacent indented fence-looking chunks are charged as one code block before parsing"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::ordinary prose, a leading horizontal rule, fenced literals and Unicode are admitted without changing bytes"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::64KiB measures UTF8 rather than JavaScript string units"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::invalid UTF16 is refused before replacement encoding can claim verified content"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::2048 lines include the final empty line and CRLF is one boundary"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::a line has at most4096 Unicode characters, independent of byte length"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::nested quotes, minimal list indentation and bracket work stop at8"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::4096 structural delimiters are bounded globally across individually short lines"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::headings and fence blocks share a finite128-block admission budget"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::16KiB code blocks do not inherit the larger overall input allowance"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::256 potential table cells count header and padded missing columns before parsing"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::adversarial admission remains measured and finite without a promise timeout"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::prefix contains only validated identity and is collision-safe across type/repository/pair"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/readme-policy.unit.test.ts::identity accessors are rejected without consulting attacker code"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::sanitized source is exact escaped presentation text, including leading separators and omitted-image escaping"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::capture state %s remains explicit with no fictional source or parser action"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::format admission refuses a large valid presentation without truncating sanitized source or blocking recovery"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::post-parse node exhaustion stays within the local boundary and sanitized source controls still work"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::post-parse deep inline structure is refused without disabling the source control"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::table formatting stays bounded and available with accessible overflow"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::every supported heading uses its trusted ordinal rather than source text or attributes"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::a presentation exactly at the JSON string byte boundary stays available as untruncated escaped source"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ReadmeCard.component.test.tsx::selection changes reset local presentation state and never retain another publication's source"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/card-wire.unit.test.ts::typed read verifies native SHA256 before exposing body %j"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/card-wire.unit.test.ts::UTF8 and JSON-string size boundaries %#"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/card-wire.unit.test.ts::missing secure-context crypto is a classified refusal, never unverified success"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/card-wire.unit.test.ts::late crypto completion cannot expose an aborted request"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_12"
+          "node_id": "tests/unit/test_catalog_cards.py::test_source_limit_refuses_before_read_and_charges_attempt"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_cards.py::test_shared_read_and_work_budget_refusals_never_reset_for_cards"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_cards.py::test_captured_presentation_revalidates_without_removing_leading_horizontal_rule"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_sanitization_race_refuses_changed_markdown_and_stale_digest"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_card_encoding_expansion_refuses_before_success_headers"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_configured_metadata_budget_is_not_bypassed_by_card_read"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_card_metadata_lease_lives_through_slow_send_and_disconnect"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-12"
+          "node_id": ".scratch/web-014-readme-browser.mjs::exact-sanitized-source"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::absent-capture"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::not-captured"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::oversize-capture"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::unsafe-capture"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::unsupported-capture"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::failed-capture"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::render-limit-local-refusal"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::unavailable-no-fallback"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-014-readme-browser.mjs::keyboard-mobile-and-navigation"
         }
       ],
       "required_layers": [
@@ -6122,7 +6632,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [

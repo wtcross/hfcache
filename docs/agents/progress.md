@@ -29,6 +29,30 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-014 Render bounded inert archived README cards
+  (2026-10-26, this commit — [task](plans/tasks/web-014-safe-markdown-rendering.md)).
+  Closed lazy Markdown/GFM/sanitizer rendering shows exact sanitized source and
+  publication/digest provenance, inert media, immutable upstream navigation and
+  finite pre/post-parse work. Card errors stay local. Recovery radio choices
+  preserve original handles under WebKit's strict CSP. Strict gate4 passes
+  1465.321s:8591 backend/52 unrelated opt-in deselections,581 Cockpit unit/
+  110 mounted Firefox,3404 web unit/3561 combined component,96.01% line coverage;
+  all required format/lint/types/contracts/build/wheel/browser/read-API checks
+  pass with zero required skips. All1441 frozen source hashes/modes remain exact
+  at4b336cd3…. Thirty-six one-attempt real installed Caddy/API cases pass235.043s,
+  12 per Chromium/Firefox/WebKit,90 zero-CSP checkpoints,158/146/158 trusted GETs
+  and0POST; source/full9/configuration bytes and operation-store0 remain exact,
+  original roles drain normally. This is explicit local NFS-metadata simulation,
+  not NAS or full platform acceptance. Withdrawn gate1/interrupted gate3, failed
+  functional1–3 and diagnostic-only records remain preserved. Human README,
+  detail/Operations/troubleshooting guides and three actual synthetic screenshots
+  align215/27; final78 plan/docs regressions pass12.86s. INV021 and ADR142/143 reviewed/amended; new ADR155 and exact
+  MIT/ISC dependency notices record parser admission. Production audit has zero
+  advisories. Image8b7a9608 has pinned UBI10micro ancestry/no runtime Node;
+  installed114 modules match fixture0.2.24, canonical0.2.2 unchanged. CARD10–12
+  complete; WEB-015 next. Evidence: /var/tmp/web-014-validation-xowemz0k/.
+  No production/NAS/live Cockpit, rollout, merge, push or tag action.
+
 - [x] WEB-013 Implement exact-publication model and dataset detail pages
   (2026-10-26, this commit — [task](plans/tasks/web-013-publication-detail-pages.md)).
   Typed repository routes and exact SHA/publication fragments drive six tabs,
@@ -2810,6 +2834,21 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-014 checkpoint (2026-10-26, this commit): WEB001–014 complete on
+feat/web-ui; continue WEB-015 through the current selector. README rendering,
+exact source/provenance and human screenshots pass strict gate4 and36 installed
+three-browser cases with zero CSP events/POSTs. [Task014](plans/tasks/web-014-safe-markdown-rendering.md)
+records exact source/artifact identities, CARD10–12 mappings and retained failed,
+interrupted and diagnostic evidence. Frozen4b336cd3…/1441 inputs match installed
+source3 image8b7a9608/UI2cdd822c, pinned UBI10micro without Node. Standalone owned
+fixture0.2.24 under /opt/hfcache-web014-source3-runtime changes no release selector;
+all original browser/API/Caddy roles drained normally, configuration/source/full9
+bytes remain exact and operation count is0. Earlier prefixes/cohorts are retained.
+This is local NFS-metadata simulation, separate from later native/rootless platform,
+parity, compatibility and final acceptance. The five infrastructure pairs remain
+original; production0.2.2, guards/credentials/calendars/NAS and live Cockpit remain
+untouched. No merge, push, tag, rollout or live plugin removal is authorized.
 
 Latest WEB-013 checkpoint (2026-10-26, this commit): WEB001–013 complete on
 feat/web-ui; continue WEB-014 through the current selector. Repository details,
@@ -12590,3 +12629,14 @@ collection/local artifact pages, attributed declarations, qualified history and
 labelled consumer bases preserve independent integrity and metadata evidence.
 INV018/021 and dated ADR133/145/147 amendments record this composition; no new
 endpoint, runtime dependency, global authentication gate or authority is added.
+
+155. **Render archived Markdown through a bounded closed React pipeline**
+     (2026-10-26, WEB-014, this commit). [Decision155](../adr/decision-155.md)
+     selects pinned browser-only CommonMark/GFM/sanitizer dependencies, finite
+     pre-parse/AST work, closed React/URL/ID policy and exact sanitized-source
+     presentation. Raw HTML/MDX, automatic media and management-origin navigation
+     remain excluded. Actual dependency-closure/license checks, finite hostile
+     input regressions, full strict gate4 and36 installed browser cases pass.
+     The narrow Recovery radio correction preserves strict CSP and original
+     operation state after actual WebKit selector diagnostics; no event is
+     filtered and no CSP exception is introduced. See task014 and handoff.

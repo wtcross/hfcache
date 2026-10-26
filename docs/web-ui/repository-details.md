@@ -3,8 +3,8 @@
 Repository details combine the existing local metadata APIs through the
 authenticated HTTPS interface. Check [interface availability](README.md) before
 using an installed release. These reads do not contact the Hub, refresh metadata,
-transfer payload files or submit a job. README rendering, tag editing and full job
-forms remain separate work.
+transfer payload files or submit a job. The bounded [README view](readme-cards.md)
+is implemented in unreleased source; tag editing and full job forms remain separate work.
 
 ## Open a repository and pin its publication
 
@@ -48,7 +48,7 @@ investigating; do not replace them with latest merely to make the page load.
 
 | Tab | Evidence and limits |
 | --- | --- |
-| Overview | Repository/configuration facts, current or last-observed operator tags, attributed technical declarations, selected publication identity and available card/manifest provenance. Capture state is separate from README rendering. |
+| Overview | Repository/configuration facts, current or last-observed operator tags, attributed technical declarations, selected publication identity and available card/manifest provenance. The [README view](readme-cards.md#read-a-card-in-repository-details) distinguishes Rendered README, Sanitized source and non-present capture states. |
 | Variants, for models | Exposed format/encoding, role, method/scheme/bits/group size, member paths and logical bytes, completeness, evidence and diagnostics. A detail listing is broader than the Library's positive primary-variant match. |
 | Dataset details, for datasets | Static observed configs, splits, features and formats. These are declarations, without dataset loading, inferred row counts or model/GPU fields. |
 | Files & manifest | Bounded file metadata, declared size/SHA256/provenance, exact manifest identity and labelled consumer locators. It is not an HTTP payload browser. |

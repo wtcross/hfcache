@@ -108,6 +108,7 @@ server is an owned loopback fixture only.
 | --- | --- |
 | Node / pnpm | `24.18.1` / `11.18.0` |
 | React / React DOM | `18.3.1` |
+| React Markdown / remark-gfm / rehype-sanitize | `10.1.0` / `4.0.1` / `6.0.0` |
 | TypeScript | `6.0.3` |
 | Vite / React plugin | `8.3.4` / `6.1.2` |
 | ESLint / JavaScript rules / typescript-eslint | `10.13.0` / `10.0.1` / `8.63.0` |
@@ -117,7 +118,12 @@ server is an owned loopback fixture only.
 | axe Playwright integration / axe-core | `4.14.0` |
 | Prettier | `3.9.10` |
 
-The package manifest and lock contain the complete direct/transitive selection.
+[Decision155](adr/decision-155.md) records the bundled Markdown/GFM/sanitizer
+selection and its closed rendering/work policy. Provision and audit its exact
+closure explicitly before offline validation; source strings cannot request
+plugins or network-loaded dependencies. Markdown is lazy-loaded; deployment
+still needs no Node. The package manifest and lock contain the complete
+direct/transitive selection.
 The workspace enables strict engine and peer checks; incompatible Node/pnpm
 versions and unresolved peer requirements fail installation.
 Keep the [license inventory](../web/dependencies/licenses.json) and
@@ -128,7 +134,9 @@ The application-owned recovery registry is a local adaptation of the existing
 Cockpit registry under LGPL-2.1-or-later. Its reviewed local-source provenance
 and full LGPL text are included in the shipped notices; the workspace license
 is `(MIT AND LGPL-2.1-or-later)`. This adds no npm package, Cockpit bridge or
-Cockpit runtime dependency. The unchanged npm closure retains its own licenses.
+Cockpit runtime dependency. The npm closure retains reviewed package-specific
+licenses: MIT packages and the exact ISC-licensed `@ungap/structured-clone@1.4.0`
+are recorded with full texts in the inventory and shipped notices.
 After changing the lock, refresh the inventory explicitly with
 `pnpm --dir web exec node scripts/licenses.ts --refresh`. This contacts the
 registry for exact locked versions, including optional packages for other

@@ -222,3 +222,4 @@ status and current-contract links before applying a historical choice.
 | 152 | [Validate the exact read-only service ACL on a protected credential](decision-152.md) — implemented; owned native/rootless conformance |
 | 153 | [Reconstruct bounded managed configuration privately from exact installed bytes](decision-153.md) — accepted design |
 | 154 | [Install exact managed configuration once and observe durable host outcomes](decision-154.md) — accepted design; implementation acceptance pending |
+| 155 | [Render archived Markdown through a bounded closed React pipeline](decision-155.md) — accepted; implementation in progress |

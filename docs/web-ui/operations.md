@@ -28,6 +28,12 @@ a tab does not delete its saved recovery handles or cancel backend work.
 
 ## Import and observe
 
+**Handle type** presents three radio choices. Use Tab to focus the selected
+choice and arrow keys to change it. A legacy key also exposes **Original
+credential class** radio choices. Changing either choice preserves the typed
+handle; it performs no lookup or submission. Credential classes describe the
+original handle's namespace and do not grant authority.
+
 1. Confirm the intended HTTPS authority, public prefix, configured archive and
    administrator identity.
 2. In **Import original handle**, choose the handle type, enter its exact value

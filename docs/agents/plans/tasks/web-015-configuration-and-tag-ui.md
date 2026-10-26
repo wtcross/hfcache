@@ -58,3 +58,13 @@ Not executed; no acceptance is claimed by this draft. On completion, replace thi
 - Acceptance-case coverage and failure-injection outcomes, required gate output, coverage/budget measurements where relevant, and zero skipped required checks.
 - Human documentation created/updated and example/link validation; invariant/ADR review outcome and amendments or justified no-impact statement.
 - Link to completed progress entry, operator handoff, next-task/current-selector update, and any retained limitation. A required unresolved limitation keeps this task blocked rather than completed.
+
+## Browser-control compatibility input
+
+Prior renderer diagnostics prove that native `select` creation in the owned
+WebKit27.2 engine attempts inline style under the application CSP (diagnostic
+/var/tmp/web-014-validation-xowemz0k/csp-diagnostic1-evidence.json). Recovery
+choice groups are corrected with radios in the preceding package. Configuration
+and Library editing must use CSP-compatible choice controls and exercise actual
+CSP observations; review the five existing Library selectors during this scope.
+Do not relax CSP or manufacture permissions/readiness to accommodate a control.
