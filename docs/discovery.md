@@ -126,7 +126,12 @@ The unreleased [managed configuration API](web-ui/configuration-and-tags.md)
 supports guarded edits and exact-preview application while preserving protected
 fields and original outcomes. It introduces no separate tag store or tag CRUD
 endpoint. Library filtering itself neither edits tags nor installs configuration;
-the browser editor remains separate work.
+the structured browser editor opens the same managed workflow explicitly. Detail
+tag editing changes current configured curation independently of the selected
+publication; it never edits immutable manifests or historical snapshots.
+Unmanaged historical tags require explicit reconfiguration with a complete entry.
+A disable/remove application preserves archived bytes, and current tags become
+visible through subsequent existing reads without a catalog-refresh mutation.
 
 ## Durable supplemental records
 

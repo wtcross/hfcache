@@ -29,6 +29,30 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-015 Implement repository configuration and tag management
+  (2026-10-26, this commit — [task](plans/tasks/web-015-configuration-and-tag-ui.md)).
+  One exact-base RAM draft composes existing validation/preview/guarded Apply,
+  complete model/dataset entries, tags/settings, stale two-tab comparison and
+  explicit original-outcome recovery. Protected values stay private; independent
+  grants and strict CSRF/CSP/no-replay remain. Genuine-null configuration reads
+  and Firefox native POST Origin bugs have actual client regressions/fixes.
+  Strict gate3 PASS1645.369s on1457 exactbc1d0602… inputs:8597 backend/52 unrelated,
+  581 Cockpit unit/110 mounted,3496 web unit/3697 combined,95.84%line/91.04%branch,
+  all required checks/builds/wheel profiles and no required skips. Native0.2.30
+  wheel/UI/imagee6193e0b match source, pinned UBI10micro/no runtime Node.
+  Normal33 one-attempt cases PASS976.213s across three engines:24 original keyed
+  operations/12 confirmed applications, exact archive/full9/lock/predecessor and
+  protected history,66 zero-CSP checkpoints,543 trusted requests. Final3 Chromium
+  fault/recovery cases PASS84.722s: original91d3d99a… remains APIinterrupted,
+  hostinstalled_unconfirmed/pendingtrue after genuine confined helperexit91;
+  GET-only recovery never resubmits or clears evidence. All original roles drain,
+  baseline5 stays exact, original owned Hub normally stopped. Guide/three actual
+  screenshots align215/27. CONFIG-12 complete; all prior failed attempts retained.
+  Native ownedRO loopback NFS/synthetic publications are not new rootless UI,
+  live NAS or later platform acceptance. INV001/018/019/020/021 and
+  ADR133/145/153/154 reviewed/amended. WEB-016 next; no production/rollout/push/tag.
+  Evidence: /var/tmp/web-015-validation-a_bndq7a/.
+
 - [x] WEB-014 Render bounded inert archived README cards
   (2026-10-26, this commit — [task](plans/tasks/web-014-safe-markdown-rendering.md)).
   Closed lazy Markdown/GFM/sanitizer rendering shows exact sanitized source and
@@ -2834,6 +2858,25 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-015 checkpoint (2026-10-26, this commit): WEB001–015 complete on
+feat/web-ui; WEB-016 is next through the current selector. [Task015](plans/tasks/web-015-configuration-and-tag-ui.md)
+records gate3PASS1645.369s/sourcebc1d0602…/1457 and36 installed native cases
+(33 normal+3 single-fault recovery), matching .30 source/wheel/UI/UBI10micro image
+without runtime Node, and CONFIG-12 mappings. Original failed normal1–7 and build/
+fixture/diagnostic records remain retained. Normal workflow made12 confirmed
+applications without changing archived publication bytes; final original
+91d3d99acf3963769f18a2cc0f1d06dc is still APIinterrupted and protected
+installed_unconfirmed/pendingtrue. Observation did not retry, clear, roll back or
+rewrite it. All original browser/API/helper/Caddy roles and original Hub178593
+are normally stopped, five infrastructure pairs remain exact; known pending,
+configuration/candidate/backup/history/APIstore and lock/key evidence is preserved.
+Do not resume/replay that fixture application. This is genuine native UI/helper
+acceptance on owned read-only loopback NFS with synthetic publications, not new
+rootless UI, production/NAS ingestion or WEB022's platform matrix. Earlier WEB008
+rootless/core proof remains unchanged; later compatibility/parity/final acceptance
+are still required. Production0.2.2, writer guards, calendars, credentials, NAS and
+live Cockpit are untouched. No rollout, merge, push, tag or plugin removal.
 
 Latest WEB-014 checkpoint (2026-10-26, this commit): WEB001–014 complete on
 feat/web-ui; continue WEB-015 through the current selector. README rendering,
@@ -12640,3 +12683,17 @@ endpoint, runtime dependency, global authentication gate or authority is added.
      The narrow Recovery radio correction preserves strict CSP and original
      operation state after actual WebKit selector diagnostics; no event is
      filtered and no CSP exception is introduced. See task014 and handoff.
+
+
+2026-10-26 WEB-015 implementation refinement of decisions133/145/153/154:
+structured forms retain one RAM-only complete managed draft/full-byte base and
+reviewed intent; original-key host-outcome GET is separate from the immutable API
+receipt. Fresh authenticated confirmed/unchanged no-pending evidence may release
+only the current browser's precaution, never rewrite stored state or authorize
+replay. Route-specific null configuration-read fingerprints preserve exact
+wrapper/payload/archive/base joins. Actual Firefox Origin:null evidence requires
+same-origin browser JSON POST referrer policy; server Origin/CSRF validation,
+GET no-referrer and no-retry rules remain strict. Bounded CSP-compatible choices
+replace native selects without changing Library semantics or introducing a package.
+Dated ADR133/145/153/154 and INV001/018/019/020/021/living contracts record these
+implementation details; no new endpoint, dependency, grant or architecture decision.

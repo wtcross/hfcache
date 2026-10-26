@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { FormEvent, MouseEvent } from "react";
 import { Notice, Panel } from "../primitives";
+import { ChoiceControl } from "./ChoiceControl";
 import {
     libraryFragment,
     normalizeLibraryFilters,
@@ -121,12 +122,18 @@ function Row({
     toggle,
     basePath,
     onOpenRepository,
+    onEditConfiguration,
 }: {
     row: LibraryRow;
     selected: boolean;
     toggle: () => void;
     basePath: string;
     onOpenRepository: RepositoryNavigation | undefined;
+    onEditConfiguration:
+        | ((
+              intent: import("../configuration/configuration-state").ConfigurationIntent,
+          ) => void)
+        | undefined;
 }) {
     const entry = row.entry,
         variant = entry.representative_variant?.variant;
@@ -196,6 +203,21 @@ function Row({
                             entry.tag_observed_at !== null && (
                                 <small>Observed {entry.tag_observed_at}</small>
                             )}
+                        {onEditConfiguration !== undefined && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onEditConfiguration({
+                                        ...target,
+                                        historical: !entry.configured,
+                                    });
+                                }}
+                            >
+                                {entry.configured
+                                    ? "Edit tags"
+                                    : "Reconfigure repository"}
+                            </button>
+                        )}
                         <a
                             href={upstream(row)}
                             target="_blank"
@@ -375,10 +397,14 @@ export function Library({
     store,
     basePath = "/ui/",
     onOpenRepository,
+    onEditConfiguration,
 }: {
     store: LibraryStore;
     basePath?: string;
     onOpenRepository?: RepositoryNavigation;
+    onEditConfiguration?: (
+        intent: import("../configuration/configuration-state").ConfigurationIntent,
+    ) => void;
 }) {
     const state = useSyncExternalStore(store.subscribe, store.snapshot);
     const form = useRef<HTMLFormElement>(null);
@@ -701,29 +727,22 @@ export function Library({
                             autoComplete="off"
                         />
                     </label>
-                    <label>
-                        Repository scope
-                        <select
-                            value={filters.scope}
-                            onChange={(event) => {
-                                apply({
-                                    scope:
-                                        event.target.value === "archived"
-                                            ? "archived"
-                                            : event.target.value ===
-                                                "configured"
-                                              ? "configured"
-                                              : "all",
-                                });
-                            }}
-                        >
-                            <option value="all">
-                                All: archived and configured
-                            </option>
-                            <option value="archived">Archived</option>
-                            <option value="configured">Configured</option>
-                        </select>
-                    </label>
+                    <ChoiceControl
+                        key={"scope:" + String(state.authGeneration)}
+                        label="Repository scope"
+                        value={filters.scope}
+                        options={[
+                            {
+                                value: "all",
+                                label: "All: archived and configured",
+                            },
+                            { value: "archived", label: "Archived" },
+                            { value: "configured", label: "Configured" },
+                        ]}
+                        onChange={(scope) => {
+                            apply({ scope });
+                        }}
+                    />
                 </div>
                 <div
                     className="library-tabs"
@@ -748,48 +767,39 @@ export function Library({
                     ))}
                 </div>
                 <div className="library-filter-grid">
-                    <label>
-                        Publication scope
-                        <select
-                            value={filters.revision_scope}
-                            onChange={(event) => {
-                                apply({
-                                    revision_scope:
-                                        event.target.value === "retained"
-                                            ? "retained"
-                                            : "current",
-                                });
-                            }}
-                        >
-                            <option value="current">
-                                Current publications
-                            </option>
-                            <option value="retained">
-                                Retained publications
-                            </option>
-                        </select>
-                    </label>
-                    <label>
-                        Tag provenance
-                        <select
-                            value={filters.tag_source}
-                            onChange={(event) => {
-                                apply({
-                                    tag_source:
-                                        event.target.value === "current_only"
-                                            ? "current_only"
-                                            : "current_or_last_observed",
-                                });
-                            }}
-                        >
-                            <option value="current_or_last_observed">
-                                Current or last observed
-                            </option>
-                            <option value="current_only">
-                                Current configuration only
-                            </option>
-                        </select>
-                    </label>
+                    <ChoiceControl
+                        key={"publication:" + String(state.authGeneration)}
+                        label="Publication scope"
+                        value={filters.revision_scope}
+                        options={[
+                            { value: "current", label: "Current publications" },
+                            {
+                                value: "retained",
+                                label: "Retained publications",
+                            },
+                        ]}
+                        onChange={(revision_scope) => {
+                            apply({ revision_scope });
+                        }}
+                    />
+                    <ChoiceControl
+                        key={"provenance:" + String(state.authGeneration)}
+                        label="Tag provenance"
+                        value={filters.tag_source}
+                        options={[
+                            {
+                                value: "current_or_last_observed",
+                                label: "Current or last observed",
+                            },
+                            {
+                                value: "current_only",
+                                label: "Current configuration only",
+                            },
+                        ]}
+                        onChange={(tag_source) => {
+                            apply({ tag_source });
+                        }}
+                    />
                     <label>
                         Require all tags
                         <input
@@ -870,23 +880,20 @@ export function Library({
                             disabled={filters.type === "dataset"}
                         />
                     </label>
-                    <label>
-                        Rows per page
-                        <select
-                            value={filters.limit}
-                            onChange={(event) => {
-                                apply({ limit: Number(event.target.value) });
-                            }}
-                        >
-                            {[...new Set([25, 50, 100, filters.limit])]
-                                .sort((a, b) => a - b)
-                                .map((limit) => (
-                                    <option key={limit} value={limit}>
-                                        {limit}
-                                    </option>
-                                ))}
-                        </select>
-                    </label>
+                    <ChoiceControl
+                        key={"page-size:" + String(state.authGeneration)}
+                        label="Rows per page"
+                        value={filters.limit}
+                        options={[...new Set([25, 50, 100, filters.limit])]
+                            .sort((a, b) => a - b)
+                            .map((limit) => ({
+                                value: limit,
+                                label: String(limit),
+                            }))}
+                        onChange={(limit) => {
+                            apply({ limit });
+                        }}
+                    />
                 </div>
                 <p className="library-muted">
                     Text search is debounced. Apply tag and technical fields
@@ -1043,6 +1050,9 @@ export function Library({
                                                         onOpenRepository={
                                                             onOpenRepository
                                                         }
+                                                        onEditConfiguration={
+                                                            onEditConfiguration
+                                                        }
                                                     />
                                                 ))}
                                             </tbody>
@@ -1113,26 +1123,22 @@ export function Library({
                             Your configuration labels are separate from upstream
                             metadata. Historical labels remain attributed.
                         </p>
-                        <label>
-                            Facet selection group
-                            <select
-                                value={tagGroup}
-                                onChange={(event) => {
-                                    setTagGroup(
-                                        event.target.value === "tag_any"
-                                            ? "tag_any"
-                                            : "tag_all",
-                                    );
-                                }}
-                            >
-                                <option value="tag_all">
-                                    Require all selected tags
-                                </option>
-                                <option value="tag_any">
-                                    Match any selected tags
-                                </option>
-                            </select>
-                        </label>
+                        <ChoiceControl
+                            key={"tag-group:" + String(state.authGeneration)}
+                            label="Facet selection group"
+                            value={tagGroup}
+                            options={[
+                                {
+                                    value: "tag_all",
+                                    label: "Require all selected tags",
+                                },
+                                {
+                                    value: "tag_any",
+                                    label: "Match any selected tags",
+                                },
+                            ]}
+                            onChange={setTagGroup}
+                        />
                         {tagFacet === null ? (
                             <p>
                                 Tag suggestions are unavailable. Manual tag

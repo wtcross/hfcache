@@ -11,7 +11,12 @@ import {
     InterfaceUpdateRequiredError,
 } from "../bootstrap";
 import { decodeConfigApplicationOutcome } from "../wire/generated";
-import type { ClientOperation, UiBootstrap } from "../wire/generated";
+import type {
+    ClientOperation,
+    UiBootstrap,
+    RequestManagedValidationRequest,
+} from "../wire/generated";
+import type { ReadOptions } from "../api/types";
 import { parseWireJson, WireError } from "../wire/json";
 import { createAuthSession, sameAuthSession } from "./authority";
 import type { AuthorizedObservation, RecordId } from "./authority";
@@ -33,6 +38,10 @@ import { createQueryStore } from "./query-state";
 import {
     createReadCoordinator,
     createRetentionBudget,
+    encodedBytes,
+    READ_RESERVATION_BYTES,
+    SESSION_RESPONSE_BYTES,
+    StateCapacityError,
 } from "./retention-budget";
 import { createCrossTabAdvice } from "./cross-tab";
 
@@ -115,6 +124,18 @@ export interface SessionControllerOptions {
     /** Production supplies the same bounded, build-verified bootstrap loader used at mount. */
     readonly reconnect: () => Promise<UiBootstrap>;
 }
+export type ConfigurationOutcomeObservation =
+    | {
+          readonly kind: "outcome";
+          readonly receipt: ClientOperation;
+          readonly result: Awaited<
+              ReturnType<ApiClient["readConfigurationOutcome"]>
+          >;
+      }
+    | {
+          readonly kind: "lookup";
+          readonly result: Awaited<ReturnType<ApiClient["lookupOperation"]>>;
+      };
 
 export function resultCertainty(
     receipt: ClientOperation,
@@ -152,6 +173,9 @@ export function createSessionController(options: SessionControllerOptions) {
     const registry = createOperationRegistry({ storage: options.storage });
     const retention = createRetentionBudget();
     const reads = createReadCoordinator();
+    let privateSerial = 0;
+    const privateOwners = new Set<string>();
+    const controlledReads = new Set<AbortController>();
     let snapshot: SessionSnapshot;
     function publish() {
         if (batching || disposed) return;
@@ -265,6 +289,9 @@ export function createSessionController(options: SessionControllerOptions) {
         });
         observer.clearPrivate();
         queries.clearPrivate("authentication");
+        for (const controller of controlledReads) controller.abort();
+        for (const owner of privateOwners) retention.release(owner);
+        privateOwners.clear();
         registry.invalidateObservations();
         batching = false;
     }
@@ -315,6 +342,196 @@ export function createSessionController(options: SessionControllerOptions) {
         },
         get hostStatus() {
             return hostStatus;
+        },
+        /** RAM-only draft copies share the query/observer encoded retention budget. */
+        createPrivateSlot() {
+            const owner = "private-state:" + String(++privateSerial);
+            const generation = session.authGeneration;
+            return Object.freeze({
+                set(value: unknown): boolean {
+                    if (
+                        disposed ||
+                        connection !== "connected" ||
+                        generation !== session.authGeneration
+                    )
+                        return false;
+                    const bytes = encodedBytes(value);
+                    if (
+                        bytes > SESSION_RESPONSE_BYTES ||
+                        !retention.claim(owner, bytes)
+                    )
+                        return false;
+                    privateOwners.add(owner);
+                    return true;
+                },
+                clear() {
+                    retention.release(owner);
+                    privateOwners.delete(owner);
+                },
+            });
+        },
+        async validateConfiguration(
+            request: RequestManagedValidationRequest,
+            options: ReadOptions = {},
+        ) {
+            if (
+                disposed ||
+                connection !== "connected" ||
+                !bootstrap.user.admin_permissions.some(
+                    (permission) =>
+                        permission.capability === "config-write" &&
+                        permission.effective,
+                )
+            )
+                throw new OperationRegistryError("scope");
+            const generation = session.authGeneration;
+            const originalClient = client;
+            const controller = new AbortController();
+            const abort = () => {
+                controller.abort();
+            };
+            options.signal?.addEventListener("abort", abort, { once: true });
+            if (options.signal?.aborted === true) controller.abort();
+            controlledReads.add(controller);
+            const owner = "managed-validation";
+            try {
+                return await reads.run(owner, controller.signal, async () => {
+                    if (!retention.claim(owner, READ_RESERVATION_BYTES))
+                        throw new StateCapacityError();
+                    try {
+                        const result =
+                            await originalClient.validateManagedConfiguration(
+                                request,
+                                {
+                                    signal: controller.signal,
+                                    responseByteLimit: SESSION_RESPONSE_BYTES,
+                                },
+                            );
+                        if (
+                            generation !== session.authGeneration ||
+                            connection !== "connected"
+                        )
+                            return { kind: "aborted" } as const;
+                        if (
+                            result.kind === "api_problem" &&
+                            result.status === 401
+                        )
+                            unauthorized();
+                        return result;
+                    } finally {
+                        retention.release(owner);
+                    }
+                });
+            } finally {
+                options.signal?.removeEventListener("abort", abort);
+                controlledReads.delete(controller);
+            }
+        },
+        async observeConfigurationOutcome(
+            id: RecordId,
+            expected?: {
+                readonly baseRevision: string;
+                readonly candidateRevision: string;
+            },
+        ): Promise<ConfigurationOutcomeObservation> {
+            if (
+                disposed ||
+                connection !== "connected" ||
+                !bootstrap.user.admin_permissions.some(
+                    (permission) =>
+                        permission.capability === "config-read" &&
+                        permission.effective,
+                )
+            )
+                throw new OperationRegistryError("scope");
+            const record = registry
+                .snapshot()
+                .records.find((row) => row.recordId === id);
+            if (record?.handles.kind !== "basic-key")
+                throw new OperationRegistryError("namespace");
+            const originalKey = record.handles.key;
+            const originalClient = client;
+            const auth = registry.authorizeObservation(id, session, {
+                reconnect: true,
+            });
+            const controller = new AbortController();
+            controlledReads.add(controller);
+            const owner = "configuration-outcome:" + id;
+            try {
+                return await reads.run(owner, controller.signal, async () => {
+                    if (!retention.claim(owner, READ_RESERVATION_BYTES))
+                        throw new StateCapacityError();
+                    try {
+                        // Always prove the original subject/key association, also after restore.
+                        const lookup = await originalClient.lookupOperation(
+                            originalKey,
+                            {
+                                signal: controller.signal,
+                                responseByteLimit: SESSION_RESPONSE_BYTES,
+                            },
+                        );
+                        if (!current(auth))
+                            throw new OperationRegistryError("scope");
+                        if (lookup.kind !== "success") {
+                            if (
+                                lookup.kind === "api_problem" &&
+                                lookup.status === 401
+                            )
+                                unauthorized();
+                            return { kind: "lookup", result: lookup };
+                        }
+                        const receipt = lookup.payload.operation;
+                        if (receipt.route !== "/api/v1/config/applications")
+                            throw new WireError("semantic");
+                        registry.observed(auth, receipt);
+                        const proven = registry.authorizeObservation(
+                            id,
+                            session,
+                        );
+                        const result =
+                            await originalClient.readConfigurationOutcome(
+                                receipt.operation_id,
+                                originalKey,
+                                {
+                                    signal: controller.signal,
+                                    responseByteLimit: SESSION_RESPONSE_BYTES,
+                                },
+                            );
+                        if (!current(proven))
+                            throw new OperationRegistryError("scope");
+                        if (
+                            result.kind === "api_problem" &&
+                            result.status === 401
+                        )
+                            unauthorized();
+                        if (result.kind === "success") {
+                            if (
+                                expected !== undefined &&
+                                (result.payload.base_revision !==
+                                    expected.baseRevision ||
+                                    result.payload.candidate_revision !==
+                                        expected.candidateRevision)
+                            )
+                                throw new WireError("semantic");
+                            registry.configurationOutcome(
+                                proven,
+                                result.payload,
+                            );
+                            if (
+                                !result.payload.pending &&
+                                (result.payload.state === "confirmed" ||
+                                    result.payload.state === "unchanged")
+                            )
+                                queries.invalidate(() => true);
+                        }
+                        return { kind: "outcome", receipt, result };
+                    } finally {
+                        retention.release(owner);
+                    }
+                });
+            } finally {
+                controlledReads.delete(controller);
+            }
         },
         observer,
         importHandle(input: ManualImport): RecoveryRecord {
@@ -445,6 +662,9 @@ export function createSessionController(options: SessionControllerOptions) {
             disposed = true;
             observer.dispose();
             queries.dispose();
+            for (const controller of controlledReads) controller.abort();
+            for (const owner of privateOwners) retention.release(owner);
+            privateOwners.clear();
             unsubscribeRegistry();
             unsubscribeAdvice();
             advice.dispose();

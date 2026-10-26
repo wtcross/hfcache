@@ -5200,21 +5200,258 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "d8ab3c63fec427a884ee4c405826ad270d1f3e062d070c2ef35c0f0bf08b2e41",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-015-validation-a_bndq7a/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/configuration-draft.unit.test.ts::new model and dataset entries use complete explicit defaults without conflating their identities",
+            "web/test/configuration-draft.unit.test.ts::tag-only upserts retain revision, disabled state and declared dependencies while normalizing raw tags",
+            "web/test/configuration-draft.unit.test.ts::incomplete upserts refuse rather than resetting the parts a tag editor omitted",
+            "web/test/configuration-draft.unit.test.ts::protected values, extra tables, missing settings and nulls never enter a diff",
+            "web/test/configuration-draft.unit.test.ts::advanced JSON rejects duplicate keys, coercion and unknown protected values without reviewing them",
+            "web/test/configuration-state.unit.test.ts::every raw edit retires validation; late reply cannot restore readiness or overwrite the draft",
+            "web/test/configuration-state.unit.test.ts::fresh compare preserves exact original base and draft; only explicit reload replaces it",
+            "web/test/configuration-state.unit.test.ts::complete original preview grants one exact Apply; repeated clicks cannot produce another POST",
+            "web/test/configuration-state.unit.test.ts::a real failed preview result and failed receipt remain failure evidence, never Apply readiness",
+            "web/test/configuration-ports.unit.test.ts::read-only configuration authority uses exactly original-key lookup then outcome GET and never requires host/write grants",
+            "web/test/configuration-ports.unit.test.ts::confirmed effect proof disappears on restore and auth change; original-key lookup is required again",
+            "web/test/ConfigurationEditor.component.test.tsx::initial render is read-free, then the real projection exposes descriptors without protected-value inputs",
+            "web/test/ChoiceControl.component.test.tsx::arrows and Home/End explore locally, then Enter commits one actual typed option and restores focus",
+            "web/test/configuration-navigation.component.test.tsx::workspace navigation offers Stay or explicit discard and keeps original operations untouched",
+            "web/test/configuration-recovery.component.test.tsx::restored original application observes host %s separately from interrupted API, without write/host grants",
+            "web/test/configuration-read-contract.unit.test.ts::genuine config-read null fingerprint loads an empty editable draft under bootstrap fingerprint %s",
+            "web/test/request-origin.unit.test.ts::managed validation POST preserves native same-origin proof under prefix %s",
+            "web/test/request-origin.unit.test.ts::keyed managed plan POST keeps its original key and same-origin proof under prefix %s",
+            "web/test/request-origin.unit.test.ts::installed configuration GET retains no-referrer policy under prefix %s",
+            "web/test/request-origin.unit.test.ts::a CSRF refusal never falls back to another fetch policy or repeats either POST"
+          ],
+          "observed_assertion": "PASS1645.369s/source1457/drift[];3496web unit/3697combined,8597backend/52unrelated opt-in deselections,581Cockpit/110mounted,95.84line91.04branch, zero required skips. Complete entries/tags/settings/protected-field and bounded JSON rules, stale intent, invalidated readiness, original preview/application keys, independent grants, dirty navigation and separate receipt/host state are covered. Seven genuine-null read regressions and eight native-request policy regressions retain strict archive/identity/CSRF/no-retry checks.",
+          "profile": "Frozen WEB015 source3; actual pure draft/state, mounted React and typed client with controlled external HTTP/storage boundaries; not installed MAC/NAS proof.",
+          "source_sha256": "bc1d0602cbba4dbd9e3720607680f85ae0817aa34d6c0caf19e93ba678013c83"
+        },
+        {
+          "artifact_sha256": "d8ab3c63fec427a884ee4c405826ad270d1f3e062d070c2ef35c0f0bf08b2e41",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-015-validation-a_bndq7a/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_configuration_ui_availability_preserves_independent_explicit_grants",
+            "tests/unit/test_api_configuration_applications.py::test_apply_requires_exact_preview_and_duplicate_never_reprepares_changed_base",
+            "tests/unit/test_api_configuration_applications.py::test_invalid_preview_never_reaches_effect",
+            "tests/unit/test_api_configuration_applications.py::test_queued_apply_rechecks_before_transmission",
+            "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery",
+            "tests/unit/test_configuration_application_integration.py::test_original_key_never_retransmits_after_real_unix_loss_before_writer_intent"
+          ],
+          "observed_assertion": "Actual bootstrap grants remain independent, exact preview/ownership/base conflicts and queued drift refuse before transmission; duplicate original handles never prepare/retransmit changed intent. Real Unix writer tests install exact candidate and preserve predecessor/lock; lost acknowledgement, restart and loss before intent observe only original keys with no duplicate effect.",
+          "profile": "Real in-process API/runner/store and framed Unix configuration writer over owned local filesystem; explicit authority/SID adapters are not actual SELinux/NAS evidence.",
+          "source_sha256": "bc1d0602cbba4dbd9e3720607680f85ae0817aa34d6c0caf19e93ba678013c83"
+        },
+        {
+          "artifact_sha256": "601546118024fed11a270e07547ffb98e4677e6d1b7379ae329eae78992ae21d",
+          "command": "rtk proxy python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web015-source3-normal8-inputs/web-015-run-native-source3-normal7.py --log /var/tmp/web-015-validation-a_bndq7a/functional-normal8.log -- --descriptor /home/webfixture/web015-source3-normal8-inputs/functional-descriptor-normal8.json",
+          "evidence_locator": "/var/tmp/web-015-validation-a_bndq7a/functional-normal8-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-015-configuration-cases.mjs::installed-editable-draft-and-supported-json",
+            ".scratch/web-015-configuration-cases.mjs::add-model-and-dataset-reviewed-sizing",
+            ".scratch/web-015-configuration-cases.mjs::apply-additions-and-current-detail-tags",
+            ".scratch/web-015-configuration-cases.mjs::two-tab-tag-drafts",
+            ".scratch/web-015-configuration-cases.mjs::two-tab-tag-only-preview",
+            ".scratch/web-015-configuration-cases.mjs::apply-tags-and-preserve-stale-tab-intent",
+            ".scratch/web-015-configuration-cases.mjs::disable-and-global-settings-without-archive-effect-preview",
+            ".scratch/web-015-configuration-cases.mjs::apply-disable-with-retained-publications",
+            ".scratch/web-015-configuration-cases.mjs::remove-without-archive-effect-preview",
+            ".scratch/web-015-configuration-cases.mjs::apply-removal-and-retained-publications",
+            ".scratch/web-015-configuration-cases.mjs::explicit-reconfiguration-and-dirty-mobile-navigation"
+          ],
+          "observed_assertion": "PASS976.213s/geneb89c58685d248b6881836c5aff1092d;33one-attempt cases11each Chromium156.0.8078.4/Firefox157.0/WebKit27.2. Real forms add model/dataset/tags, validation/nonempty model+dataset sizing, reviewed Apply/explicit confirmation, genuine two-tab tag-only conflict, settings/disable/remove archive preservation, reconfiguration and dirty mobile navigation.24original keyed operations/12confirmed applications;543trusted requests507GET+36POST including12unkeyed validations, four contiguous256-bound buckets/engine, no interception/overflow;66zero-CSP checkpoints and no dialogs/popups/pageerrors. All archive/full9/SID/bytes, original lock/predecessor/history/protectedinputs preserved;10originalpairs gone/3emptycgroups/5refused endpoints/baseline5same/cleanup_unknownfalse. SameHub metadata/HEAD only/zero payload/rejections; exact native CA inherited/restored. RootREPORT SHAa0cadea6ea2f08348ca3c5924a7ef4540788f940fe1944cda07e4e70b09743b0. Original normal1\u20137, build/setup and diagnostic failures remain false at task015 failure-table locators; no partial outcome promoted or operation replayed.",
+          "profile": "Genuine built UI/shared trusted Caddy/indexed installed native0.2.30 API/helper on owned CentOS Enforcing; OWNED_READONLY_LOOPBACK_NFS with two strict synthetic publications; no fake business response, Hub payload/production/NAS/rootless-UI/platform acceptance.",
+          "source_sha256": "bc1d0602cbba4dbd9e3720607680f85ae0817aa34d6c0caf19e93ba678013c83"
+        },
+        {
+          "artifact_sha256": "f6bf09e3bf864a16fb6e5a819040976997aef7fa8820cf3f3d0154b518768f43",
+          "command": "rtk proxy python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web015-source3-normal8-inputs/web-015-run-uncertainty-source3-normal7.py --log /var/tmp/web-015-validation-a_bndq7a/functional-uncertainty1.log -- --descriptor /home/webfixture/web015-source3-normal8-inputs/functional-descriptor-uncertainty-source3c.json",
+          "evidence_locator": "/var/tmp/web-015-validation-a_bndq7a/functional-uncertainty1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-015-configuration-cases.mjs::original-application-uncertainty-preview",
+            ".scratch/web-015-configuration-cases.mjs::original-after-rename-application-checkpoint",
+            ".scratch/web-015-configuration-cases.mjs::original-after-rename-read-only-recovery"
+          ],
+          "observed_assertion": "PASS84.722s/gen17cc6b54fc7b46c4824e5d850ee3a675;3one-attempt cases/singleoriginalApply. Helperexit91 at exchange:after_rename yields original91d3d99acf3963769f18a2cc0f1d06dc APIinterrupted/hostinstalled_unconfirmed/pendingtrue. Explicit reload/original-key/ID recovery is GET-only: no Apply replay, rollback, pending clearance, receipt rewrite or false confirmation. All original pending/config/candidate/backup/history/APIstore full9+bytes remain unchanged through recovery;25originalpairs gone/cgroupsempty/endpointsrefused/inputs/baseline unchanged/cleanup_unknownfalse. REPORT SHAfe0accaad36704e94f0261bdc44dde2dd2e59a2b02e5ca7334dafc38157e24e3. Original owned Hub subsequently normally stopped/restored, known pending state retained.",
+          "profile": "Same genuine installed native/Caddy/helper profile; one Chromium single-Apply fixture checkpoint exits91 in the unchanged helper domain/hardening through an explicit fixture entry override. Not a repeated core crash matrix or new rootless/NAS acceptance.",
+          "source_sha256": "bc1d0602cbba4dbd9e3720607680f85ae0817aa34d6c0caf19e93ba678013c83"
+        }
+      ],
       "id": "CONFIG-12",
       "owner": "WEB-015",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_12"
+          "node_id": "web/test/configuration-draft.unit.test.ts::new model and dataset entries use complete explicit defaults without conflating their identities"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-draft.unit.test.ts::tag-only upserts retain revision, disabled state and declared dependencies while normalizing raw tags"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-draft.unit.test.ts::incomplete upserts refuse rather than resetting the parts a tag editor omitted"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-draft.unit.test.ts::protected values, extra tables, missing settings and nulls never enter a diff"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-draft.unit.test.ts::advanced JSON rejects duplicate keys, coercion and unknown protected values without reviewing them"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-state.unit.test.ts::every raw edit retires validation; late reply cannot restore readiness or overwrite the draft"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-state.unit.test.ts::fresh compare preserves exact original base and draft; only explicit reload replaces it"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-state.unit.test.ts::complete original preview grants one exact Apply; repeated clicks cannot produce another POST"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-state.unit.test.ts::a real failed preview result and failed receipt remain failure evidence, never Apply readiness"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-ports.unit.test.ts::read-only configuration authority uses exactly original-key lookup then outcome GET and never requires host/write grants"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-ports.unit.test.ts::confirmed effect proof disappears on restore and auth change; original-key lookup is required again"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ConfigurationEditor.component.test.tsx::initial render is read-free, then the real projection exposes descriptors without protected-value inputs"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/ChoiceControl.component.test.tsx::arrows and Home/End explore locally, then Enter commits one actual typed option and restores focus"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-navigation.component.test.tsx::workspace navigation offers Stay or explicit discard and keeps original operations untouched"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-recovery.component.test.tsx::restored original application observes host %s separately from interrupted API, without write/host grants"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/configuration-read-contract.unit.test.ts::genuine config-read null fingerprint loads an empty editable draft under bootstrap fingerprint %s"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/request-origin.unit.test.ts::managed validation POST preserves native same-origin proof under prefix %s"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/request-origin.unit.test.ts::keyed managed plan POST keeps its original key and same-origin proof under prefix %s"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/request-origin.unit.test.ts::installed configuration GET retains no-referrer policy under prefix %s"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/request-origin.unit.test.ts::a CSRF refusal never falls back to another fetch policy or repeats either POST"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_12"
+          "node_id": "tests/unit/test_web_ui_routes.py::test_configuration_ui_availability_preserves_independent_explicit_grants"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_configuration_applications.py::test_apply_requires_exact_preview_and_duplicate_never_reprepares_changed_base"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_configuration_applications.py::test_invalid_preview_never_reaches_effect"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_configuration_applications.py::test_queued_apply_rechecks_before_transmission"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_configuration_application_integration.py::test_original_key_never_retransmits_after_real_unix_loss_before_writer_intent"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-12"
+          "node_id": ".scratch/web-015-configuration-cases.mjs::installed-editable-draft-and-supported-json"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::add-model-and-dataset-reviewed-sizing"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::apply-additions-and-current-detail-tags"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::two-tab-tag-drafts"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::two-tab-tag-only-preview"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::apply-tags-and-preserve-stale-tab-intent"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::disable-and-global-settings-without-archive-effect-preview"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::apply-disable-with-retained-publications"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::remove-without-archive-effect-preview"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::apply-removal-and-retained-publications"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::explicit-reconfiguration-and-dirty-mobile-navigation"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::original-application-uncertainty-preview"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::original-after-rename-application-checkpoint"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-015-configuration-cases.mjs::original-after-rename-read-only-recovery"
         }
       ],
       "required_layers": [
@@ -5222,7 +5459,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [

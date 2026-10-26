@@ -141,3 +141,22 @@ discard evidence and could repeat an effect. Conservative refusal is deliberate.
 Unit fault tests, actual local helper/API integration, shared legacy guard tests
 and native/rootless installed Caddy/browser acceptance must establish conformance;
 this decision alone establishes none.
+
+## Browser application and recovery composition clarification (2026-10-26)
+
+The structured editor retains the original successful complete preview and uses
+a distinct original application key through the existing route-independent
+controller. An accepted receipt is not installed success. The explicit browser
+outcome action reads this operation with its original subject-scoped key and
+configuration-read authority; generic operation polling does not replace it.
+Fresh lookup and host-outcome evidence must bind the exact original application
+and archive. With a verified terminal API receipt, `pending=false` and state
+`confirmed` or `unchanged`, the browser may release only its current-session
+submission precaution. Unchanged is known no-install. This proof is RAM-only;
+stored recovery/receipt state is unchanged and reconnect requires fresh reads.
+Unknown/staged/installed-unconfirmed or pending effects cannot release that block.
+API interruption never clears `unknown` or `installed_unconfirmed` host effects,
+and an interrupted receipt is not rewritten when host history confirms install.
+No browser retry, rollback, marker removal or history cleanup is added. Drafts
+and bodies stay out of persisted recovery metadata. See the
+[configuration guide](../web-ui/configuration-and-tags.md).

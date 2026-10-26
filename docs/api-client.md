@@ -640,3 +640,20 @@ digest comes only from available existing exact card provenance, not browser
 reserialization. Revision confidence joins by exact publication; current status,
 API health and metadata completeness cannot substitute. Activity shows only
 bounded loaded archive history, without claiming a complete repository audit.
+
+### Browser managed configuration reads
+
+The configuration editor reads the existing `GET /api/v1/config` projection
+without an operational policy snapshot. Its outer `config_fingerprint` can be
+null; the typed browser client accepts that null on this route while still
+requiring the configured archive UUID and matching payload UUID. The exact
+`base_revision` binds later managed edits and previews. A client must not invent
+a fingerprint or substitute an operational fingerprint for that concurrency
+identity. See the [configuration procedures](web-ui/configuration-and-tags.md).
+
+Browser JSON POSTs use the `same-origin` request referrer policy so the browser
+preserves the exact Origin required by Basic CSRF validation. Requests still
+use same-origin mode, reject redirects and disable caching; GETs retain
+`no-referrer`. The response-wide `no-referrer` policy and external-link isolation
+remain in force. A client must not compensate by accepting a null Origin or
+retrying a refused submission. See [decision145](adr/decision-145.md).

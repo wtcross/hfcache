@@ -94,3 +94,15 @@ implementation; this design alone establishes no acceptance.
 legacy guard, durable private outcomes and original-handle read-only observation.
 It supersedes earlier assumptions of a wholly read-only helper for this fixed
 operation; all unrelated authority and original reasoning remain.
+
+## Structured editor composition clarification (2026-10-26)
+
+The browser composes these existing read/validate/preview contracts into one
+RAM-only editable draft, supported JSON view and local intent diff. It never
+receives protected values or serializes TOML. Complete repository entries and
+the eleven supported settings keep their existing defaults and strict bounds.
+Every edit or concurrent full-byte change invalidates validation and assessment;
+compare/reload/re-edit is explicit, with no silent tag merge or base-token swap.
+Configuration-read/write affordances use their respective grants and protected
+policy, without host-read as an extra gate. This adds no endpoint, schema,
+dependency or new authority. See [editing procedures](../web-ui/configuration-and-tags.md).

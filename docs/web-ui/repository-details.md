@@ -149,6 +149,18 @@ Copying a browser locator neither transfers files nor replaces that verification
 
 ## Interpret integrity and history conservatively
 
+Current configured tags can be changed with **Edit tags**, which opens the shared
+[Configuration and tags](configuration-and-tags.md) draft in Administration.
+Read installed configuration explicitly if needed, then choose **Edit requested
+repository** for that intent. Following the link does not automatically fetch or
+prefill configuration from a catalog row.
+This edits current operator intent even when an older publication is selected;
+it changes no immutable manifest or selected tree. Unmanaged **Last observed**
+tags are read-only. **Reconfigure repository** explicitly proposes a complete
+entry, with its intended revision, enabled state, tags and dependencies. Neither
+action directly mutates disk; both use the reviewed validation/preview/application
+pipeline. Removing or disabling that entry preserves archived publications.
+
 Ingestion verification in an immutable manifest describes its publication-time
 checks. Offline verification state comes from existing exact-publication
 verification evidence. A newer current publication's state cannot establish the

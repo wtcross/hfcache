@@ -103,8 +103,24 @@ registry cleanup.
 
 For configuration application, **unknown** and **installed_unconfirmed** remain
 separate host effects. A generic failed/interrupted API receipt cannot clear
-them. Use the [original configuration outcome](configuration-and-tags.md#observe-an-interrupted-application)
-and its original key; do not replay Apply, delete pending state or infer rollback.
+them. After **Observe original operation** establishes the original application's
+route and receipt, **Observe original configuration outcome** explicitly reads
+its protected history. It also works for a restored/imported original Basic key
+after the editable draft is gone. The editor labels its corresponding action
+**Observe original application outcome**. This read is separate from generic
+receipt polling and requires configuration-read authority under the original
+subject. An imported ID does not supply the missing original key. Use the
+[original configuration outcome](configuration-and-tags.md#observe-an-interrupted-application);
+do not replay Apply, delete pending state or infer rollback. Draft validation and
+preview readiness are not restored from saved recovery metadata.
+
+Only a fresh original-key lookup and matching protected outcome can establish
+current-session configuration knowledge: the exact original application/archive
+must match a verified terminal API receipt, with `pending=false` and state
+`confirmed` or `unchanged`. That RAM-only proof can release the browser's
+submission precaution; `unchanged` means no installation. The persisted record
+and generic receipt remain unchanged. Reload/reconnect clears the proof, so a
+saved terminal summary cannot release the precaution on its own.
 
 Cross-tab notices are advisory. They neither lock execution nor prove another
 tab's identity, result or authority. They cannot authorize a new POST, cancel

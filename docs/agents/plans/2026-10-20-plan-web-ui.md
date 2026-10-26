@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-014 (this commit); WEB-015 is next |
+| Latest completed package | WEB-015 (this commit); WEB-016 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3754,3 +3754,15 @@ are complete; original withdrawn/interrupted/failed/diagnostic evidence remains.
 [Task014](tasks/web-014-safe-markdown-rendering.md) owns exact evidence. Next is
 WEB-015; production rollout, NAS, full platform/parity and final acceptance remain
 separate. No merge, push, tag, rollout or live Cockpit removal.
+
+
+2026-10-26: WEB-015 completes structured configuration/tag workflows and original
+host-outcome recovery. Strict gate3 passes1645.369s on unchangedbc1d0602…/1457;
+33 installed three-engine normal cases pass976.213s with24 original operations/
+12 confirmed applications, then three original single-Apply fault/recovery cases
+pass84.722s. The original interrupted receipt/installed-unconfirmed pending host
+state is preserved, never replayed or promoted. CONFIG-12 and actual guide/screens
+are complete; all original roles/Hub drain normally. Task015 retains exact pins,
+all failed attempts, source3 Firefox-origin fix and scoped native owned-RO-NFS
+limits. Continue WEB-016; later platform/parity/rollback/final acceptance and
+production rollout remain separate. No production/NAS/live Cockpit/publication.

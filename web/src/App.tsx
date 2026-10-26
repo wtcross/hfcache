@@ -20,6 +20,11 @@ import { Library } from "./components/Library";
 import type { RepositoryNavigation } from "./components/Library";
 import type { LibraryStore } from "./library/library-state";
 import { RepositoryDetail } from "./components/RepositoryDetail";
+import { ConfigurationEditor } from "./components/ConfigurationEditor";
+import type {
+    ConfigurationStore,
+    ConfigurationIntent,
+} from "./configuration/configuration-state";
 import type { RepositoryStore } from "./repository/repository-state";
 import { repositoryFragment, repositoryPath } from "./repository/routes";
 import type { RepositoryTarget } from "./repository/routes";
@@ -49,6 +54,8 @@ function WorkspaceContent({
     repositoryTarget,
     basePath,
     onOpenRepository,
+    configuration,
+    onEditConfiguration,
 }: {
     workspace: Workspace;
     authenticated: boolean;
@@ -60,6 +67,8 @@ function WorkspaceContent({
     repositoryTarget?: RepositoryTarget;
     basePath: string;
     onOpenRepository: RepositoryNavigation;
+    configuration?: ConfigurationStore;
+    onEditConfiguration?: (intent: ConfigurationIntent) => void;
 }) {
     switch (workspace) {
         case "library":
@@ -76,6 +85,9 @@ function WorkspaceContent({
                         store={repository}
                         target={repositoryTarget}
                         basePath={basePath}
+                        {...(onEditConfiguration === undefined
+                            ? {}
+                            : { onEditConfiguration })}
                     />
                 );
             }
@@ -85,6 +97,9 @@ function WorkspaceContent({
                         store={library}
                         basePath={basePath}
                         onOpenRepository={onOpenRepository}
+                        {...(onEditConfiguration === undefined
+                            ? {}
+                            : { onEditConfiguration })}
                     />
                 );
             return (
@@ -134,6 +149,9 @@ function WorkspaceContent({
                     <OperationRecovery
                         controller={controller}
                         session={session}
+                        {...(configuration === undefined
+                            ? {}
+                            : { configuration })}
                     />
                 );
             return (
@@ -168,6 +186,17 @@ function WorkspaceContent({
                 </Panel>
             );
         case "administration":
+            if (configuration !== undefined)
+                return (
+                    <>
+                        <ConfigurationEditor store={configuration} />
+                        {host !== null && controller !== undefined && (
+                            <SessionHostAdministration
+                                controller={controller}
+                            />
+                        )}
+                    </>
+                );
             if (host !== null && controller !== undefined)
                 return <SessionHostAdministration controller={controller} />;
             if (host !== null) return <HostAdministration bootstrap={host} />;
@@ -198,6 +227,7 @@ export function App({
     library,
     libraryBookmark,
     repository,
+    configuration,
 }: {
     basePath: string;
     bootstrap?: UiBootstrap;
@@ -207,12 +237,23 @@ export function App({
     library?: LibraryStore;
     libraryBookmark?: string;
     repository?: RepositoryStore;
+    configuration?: ConfigurationStore;
 }) {
     const base = validateBasePath(basePath);
     const [pathname, setPathname] = useState(window.location.pathname);
     const [navigationOpen, setNavigationOpen] = useState(false);
     const main = useRef<HTMLElement>(null);
     const initial = useRef(true);
+    const acceptedLocation = useRef(
+        window.location.pathname + window.location.hash,
+    );
+    const [pendingNavigation, setPendingNavigation] = useState<{
+        path: string | null;
+        intent: ConfigurationIntent | null;
+    } | null>(null);
+    const stayButton = useRef<HTMLButtonElement>(null);
+    const leaveButton = useRef<HTMLButtonElement>(null);
+    const previousFocus = useRef<HTMLElement | null>(null);
     const [updateRequired, setUpdateRequired] = useState(false);
     const [versionCheck, setVersionCheck] = useState<
         "idle" | "checking" | "unavailable"
@@ -243,14 +284,39 @@ export function App({
 
     useEffect(() => {
         const observeLocation = () => {
+            const target = window.location.pathname + window.location.hash;
+            if (
+                configuration?.snapshot().dirty === true &&
+                target !== acceptedLocation.current
+            ) {
+                window.history.replaceState(null, "", acceptedLocation.current);
+                previousFocus.current =
+                    document.activeElement instanceof HTMLElement
+                        ? document.activeElement
+                        : null;
+                setPendingNavigation({ path: target, intent: null });
+                return;
+            }
+            acceptedLocation.current = target;
             setPathname(window.location.pathname);
             setNavigationOpen(false);
         };
         window.addEventListener("popstate", observeLocation);
+        window.addEventListener("hashchange", observeLocation);
+        const beforeUnload = (event: BeforeUnloadEvent) => {
+            if (configuration?.snapshot().dirty === true)
+                event.preventDefault();
+        };
+        window.addEventListener("beforeunload", beforeUnload);
         return () => {
             window.removeEventListener("popstate", observeLocation);
+            window.removeEventListener("hashchange", observeLocation);
+            window.removeEventListener("beforeunload", beforeUnload);
         };
-    }, []);
+    }, [configuration]);
+    useEffect(() => {
+        if (pendingNavigation !== null) stayButton.current?.focus();
+    }, [pendingNavigation]);
     useEffect(() => {
         const refuseChunk = (event: Event) => {
             event.preventDefault();
@@ -268,24 +334,60 @@ export function App({
         else main.current?.focus();
     }, [pathname, title]);
 
+    function performNavigation(
+        path: string | null,
+        intent: ConfigurationIntent | null = null,
+    ) {
+        if (path === null) {
+            window.location.reload();
+            return;
+        }
+        if (intent !== null) configuration?.setIntent(intent);
+        window.history.pushState(null, "", path);
+        acceptedLocation.current =
+            window.location.pathname + window.location.hash;
+        setPathname(window.location.pathname);
+        setNavigationOpen(false);
+    }
+    function requestNavigation(
+        path: string | null,
+        intent: ConfigurationIntent | null = null,
+    ) {
+        if (configuration?.snapshot().dirty === true) {
+            previousFocus.current =
+                document.activeElement instanceof HTMLElement
+                    ? document.activeElement
+                    : null;
+            setPendingNavigation({ path, intent });
+        } else performNavigation(path, intent);
+    }
     function navigate(event: MouseEvent<HTMLAnchorElement>, target: Workspace) {
         if (!isPlainNavigation(event)) return;
         event.preventDefault();
         const path =
             workspacePath(target, base) +
             (target === "library" ? (libraryBookmark ?? "") : "");
-        window.history.pushState(null, "", path);
-        setPathname(window.location.pathname);
-        setNavigationOpen(false);
+        requestNavigation(path);
     }
     const navigateRepository: RepositoryNavigation = (event, target, view) => {
         if (!isPlainNavigation(event)) return;
         event.preventDefault();
         const path = repositoryPath(target, base);
-        window.history.pushState(null, "", path + repositoryFragment(view));
-        setPathname(path);
-        setNavigationOpen(false);
+        requestNavigation(path + repositoryFragment(view));
     };
+    const canEditConfiguration =
+        configuration !== undefined &&
+        bootstrap !== undefined &&
+        ["config-read", "config-write"].every((capability) =>
+            bootstrap.user.admin_permissions.some(
+                (permission) =>
+                    permission.capability === capability &&
+                    permission.effective,
+            ),
+        );
+    function editConfiguration(intent: ConfigurationIntent) {
+        requestNavigation(workspacePath("administration", base), intent);
+    }
     async function checkInterfaceVersion(): Promise<void> {
         if (onCheckRelease === undefined) return;
         setVersionCheck("checking");
@@ -299,6 +401,62 @@ export function App({
 
     return (
         <div className="application">
+            {pendingNavigation !== null && (
+                <div className="draft-navigation-overlay">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="unsaved-draft-title"
+                        className="draft-navigation-dialog"
+                        onKeyDown={(event) => {
+                            if (event.key === "Escape") {
+                                event.preventDefault();
+                                setPendingNavigation(null);
+                                previousFocus.current?.focus();
+                            } else if (event.key === "Tab") {
+                                event.preventDefault();
+                                if (
+                                    document.activeElement ===
+                                    stayButton.current
+                                )
+                                    leaveButton.current?.focus();
+                                else stayButton.current?.focus();
+                            }
+                        }}
+                    >
+                        <h2 id="unsaved-draft-title">
+                            Unsaved configuration changes
+                        </h2>
+                        <p>
+                            Leaving discards the private configuration draft.
+                            Original operation handles remain available in
+                            Operations.
+                        </p>
+                        <button
+                            ref={stayButton}
+                            type="button"
+                            onClick={() => {
+                                setPendingNavigation(null);
+                                previousFocus.current?.focus();
+                            }}
+                        >
+                            Stay
+                        </button>
+                        <button
+                            ref={leaveButton}
+                            type="button"
+                            onClick={() => {
+                                const next = pendingNavigation;
+                                configuration?.discard();
+                                setPendingNavigation(null);
+                                performNavigation(next.path, next.intent);
+                            }}
+                        >
+                            Discard draft and leave
+                        </button>
+                    </div>
+                </div>
+            )}
             <a
                 className="skip-link"
                 href="#main-content"
@@ -492,7 +650,7 @@ export function App({
                             <button
                                 type="button"
                                 onClick={() => {
-                                    window.location.reload();
+                                    requestNavigation(null);
                                 }}
                             >
                                 Reload interface
@@ -560,6 +718,12 @@ export function App({
                                 : {})}
                             basePath={base}
                             onOpenRepository={navigateRepository}
+                            {...(configuration === undefined
+                                ? {}
+                                : { configuration })}
+                            {...(!canEditConfiguration
+                                ? {}
+                                : { onEditConfiguration: editConfiguration })}
                         />
                     )}
                     <footer className="page-footer">

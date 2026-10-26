@@ -313,7 +313,13 @@ function Declarations({
         </>
     );
 }
-function OperatorTags({ entry }: { entry: CatalogEntry | null }) {
+function OperatorTags({
+    entry,
+    onEdit,
+}: {
+    entry: CatalogEntry | null;
+    onEdit?: () => void;
+}) {
     return (
         <Panel title="Operator tags">
             {entry === null ? (
@@ -341,6 +347,13 @@ function OperatorTags({ entry }: { entry: CatalogEntry | null }) {
                         Operator labels are separate from upstream declarations.
                         Tags grant no access and establish no integrity.
                     </p>
+                    {onEdit !== undefined && (
+                        <button type="button" onClick={onEdit}>
+                            {entry.configured
+                                ? "Edit tags"
+                                : "Reconfigure repository"}
+                        </button>
+                    )}
                 </>
             )}
         </Panel>
@@ -626,10 +639,14 @@ export function RepositoryDetail({
     store,
     target,
     basePath,
+    onEditConfiguration,
 }: {
     store: RepositoryStore;
     target: RepositoryTarget;
     basePath: string;
+    onEditConfiguration?: (
+        intent: import("../configuration/configuration-state").ConfigurationIntent,
+    ) => void;
 }) {
     const state = useSyncExternalStore(store.subscribe, store.snapshot);
     const stableTarget = useMemo(
@@ -1799,7 +1816,20 @@ export function RepositoryDetail({
                                     </p>
                                 )}
                             </Panel>
-                            <OperatorTags entry={entry} />
+                            <OperatorTags
+                                entry={entry}
+                                {...(onEditConfiguration === undefined ||
+                                entry === null
+                                    ? {}
+                                    : {
+                                          onEdit: () => {
+                                              onEditConfiguration({
+                                                  ...target,
+                                                  historical: !entry.configured,
+                                              });
+                                          },
+                                      })}
+                            />
                             <Panel title="Metadata coverage">
                                 {catalog === null ? (
                                     <ReadState
@@ -1874,7 +1904,21 @@ export function RepositoryDetail({
             {manifest === null &&
                 sameTarget &&
                 ownerValidated &&
-                state.phase === "unpublished" && <OperatorTags entry={entry} />}
+                state.phase === "unpublished" && (
+                    <OperatorTags
+                        entry={entry}
+                        {...(onEditConfiguration === undefined || entry === null
+                            ? {}
+                            : {
+                                  onEdit: () => {
+                                      onEditConfiguration({
+                                          ...target,
+                                          historical: !entry.configured,
+                                      });
+                                  },
+                              })}
+                    />
+                )}
             <Notice>
                 Availability, supplemental metadata and exact-publication
                 integrity are different facts. This view transfers no archive

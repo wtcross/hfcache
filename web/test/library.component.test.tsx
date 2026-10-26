@@ -40,6 +40,14 @@ afterEach(() => {
     window.localStorage.clear();
     vi.unstubAllGlobals();
 });
+async function choose(label: string, option: string) {
+    await userEvent.click(
+        screen.getByRole("button", {
+            name: new RegExp("^" + label + ":", "u"),
+        }),
+    );
+    await userEvent.click(screen.getByRole("option", { name: option }));
+}
 function entries(url: URL): readonly CatalogEntry[] {
     const retained = url.searchParams.get("revision_scope") === "retained";
     const model: CatalogEntry = {
@@ -536,10 +544,7 @@ test("main pages stay finite and selected identities do not return after generat
     await userEvent.click(
         screen.getByRole("checkbox", { name: "Select loaded page" }),
     );
-    await userEvent.selectOptions(
-        screen.getByRole("combobox", { name: "Repository scope" }),
-        "archived",
-    );
+    await choose("Repository scope", "Archived");
     await fixture.loaded();
     expect(
         screen.getByRole("checkbox", { name: "Select loaded page" }),
@@ -646,8 +651,8 @@ test("popstate and hashchange restore filter controls without any shell query", 
         screen.getByRole("searchbox", { name: "Find repositories" }),
     ).toHaveValue("second");
     expect(
-        screen.getByRole("combobox", { name: "Repository scope" }),
-    ).toHaveValue("configured");
+        screen.getByRole("button", { name: "Repository scope: Configured" }),
+    ).toHaveAttribute("aria-expanded", "false");
     await act(async () => {
         window.history.replaceState(null, "", "/ui/library#type=model&q=back");
         window.dispatchEvent(new HashChangeEvent("hashchange"));
@@ -768,14 +773,11 @@ test("publication/provenance/page controls and facet groups preserve canonical l
     });
     await fixture.loaded();
     for (const [name, value] of [
-        ["Publication scope", "retained"],
-        ["Tag provenance", "current_only"],
+        ["Publication scope", "Retained publications"],
+        ["Tag provenance", "Current configuration only"],
         ["Rows per page", "50"],
     ]) {
-        await userEvent.selectOptions(
-            screen.getByRole("combobox", { name: name ?? "" }),
-            value ?? "",
-        );
+        await choose(name ?? "", value ?? "");
         await fixture.loaded();
     }
     expect(fixture.searches().at(-1)?.searchParams.get("revision_scope")).toBe(
@@ -785,10 +787,13 @@ test("publication/provenance/page controls and facet groups preserve canonical l
         "current_only",
     );
     expect(fixture.searches().at(-1)?.searchParams.get("limit")).toBe("50");
-    await userEvent.selectOptions(
-        screen.getByRole("combobox", { name: "Facet selection group" }),
-        "tag_any",
-    );
+    const requestsBeforeGroup = fixture.fetcher.mock.calls.length;
+    const filtersBeforeGroup = fixture.store.snapshot().filters;
+    const fragmentBeforeGroup = window.location.hash;
+    await choose("Facet selection group", "Match any selected tags");
+    expect(fixture.fetcher).toHaveBeenCalledTimes(requestsBeforeGroup);
+    expect(fixture.store.snapshot().filters).toEqual(filtersBeforeGroup);
+    expect(window.location.hash).toBe(fragmentBeforeGroup);
     await userEvent.click(screen.getByRole("checkbox", { name: /^gpu\s*1$/u }));
     await fixture.loaded();
     expect(fixture.searches().at(-1)?.searchParams.getAll("tag_any")).toEqual([
@@ -808,6 +813,66 @@ test("publication/provenance/page controls and facet groups preserve canonical l
         );
     });
 });
+test("choice exploration and reselect are read-free, preserving a custom bookmarked numeric page size", async () => {
+    const fixture = mount("#limit=7");
+    await fixture.loaded();
+    const user = userEvent.setup();
+    const requests = fixture.fetcher.mock.calls.length;
+    const searches = fixture.searches().length;
+    const generation = fixture.store.snapshot().generation;
+    const fragment = window.location.hash;
+    const trigger = screen.getByRole("button", { name: "Rows per page: 7" });
+    expect(fixture.searches().at(-1)?.searchParams.get("limit")).toBe("7");
+    trigger.focus();
+    await user.keyboard("{ArrowDown}{End}{Home}{Escape}");
+    expect(trigger).toHaveFocus();
+    expect(fixture.fetcher).toHaveBeenCalledTimes(requests);
+    expect(window.location.hash).toBe(fragment);
+    await choose("Rows per page", "7");
+    expect(fixture.fetcher).toHaveBeenCalledTimes(requests);
+    expect(fixture.store.snapshot().generation).toBe(generation);
+    expect(fixture.store.snapshot().filters.limit).toBe(7);
+    await choose("Rows per page", "25");
+    await fixture.loaded();
+    expect(fixture.searches()).toHaveLength(searches + 1);
+    expect(fixture.searches().at(-1)?.searchParams.get("limit")).toBe("25");
+    expect(fixture.searches().at(-1)?.searchParams.has("cursor")).toBe(false);
+    expect(
+        screen.getByRole("button", { name: "Rows per page: 25" }),
+    ).toBeInTheDocument();
+    expect(fixture.container.querySelector("select")).toBeNull();
+});
+
+test("an authentication generation change retires an open choice without carrying its active option into reconnect", async () => {
+    const fixture = mount();
+    await fixture.loaded();
+    const user = userEvent.setup();
+    const original = screen.getByRole("button", {
+        name: "Repository scope: All: archived and configured",
+    });
+    await user.click(original);
+    await user.keyboard("{End}");
+    const requests = fixture.fetcher.mock.calls.length;
+    await act(async () => {
+        fixture.controller.disconnect();
+        await Promise.resolve();
+    });
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(original).not.toBeInTheDocument();
+    expect(fixture.fetcher).toHaveBeenCalledTimes(requests);
+    await act(async () => {
+        await fixture.controller.reconnect();
+    });
+    await fixture.loaded();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(fixture.store.snapshot().filters.scope).toBe("all");
+    await choose("Repository scope", "Archived");
+    await fixture.loaded();
+    expect(fixture.searches().at(-1)?.searchParams.get("scope")).toBe(
+        "archived",
+    );
+});
+
 test("invalid numeric draft refuses without a new read or discarding valid evidence", async () => {
     const fixture = mount();
     await fixture.loaded();

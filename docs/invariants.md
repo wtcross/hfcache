@@ -346,6 +346,10 @@ History: `synchronization` (`54e4671`), decision 94.
   private predecessor/outcome evidence and exact installed confirmation. Unknown
   effects are observed through their original handles without replay, rollback
   or uncertain cleanup. The narrow host writer adds no archive/credential authority.
+  Structured browser editing keeps one RAM-only supported projection and exact-base
+  local intent diff. Every edit or stale base retires validation/preview readiness;
+  protected values and raw TOML never become browser replacement inputs. Existing
+  configuration-read/write grants stand independently of host-status read.
 - **`INV-002` — Credentials have only explicit sources and never become
   evidence.** Accept only an explicit token file or systemd credential, with
   the documented precedence and file validation. Disable ambient discovery;
@@ -1144,6 +1148,10 @@ image/worker/TLS fixture records and clean immutable artifact identities.
   Separately read current inventory cannot lend size/integrity to another exact
   publication; logical byte counts cannot become physical disk usage or hardware
   suitability. Filtering and paging confer no writer/Hub capability.
+  Explicit tag editing uses the existing complete-entry managed configuration
+  pipeline; it changes current curation, not a selected immutable publication.
+  Unmanaged historical tags remain read-only until explicit reconfiguration.
+  Configuration disable/removal never purges retained archive bytes.
   Repository details resolve current separately, then pin derived panels to the
   full selected SHA/publication and generation. Same-SHA repair is a new instance;
   unavailable exact identity never falls back. Missing supplemental evidence
@@ -1245,6 +1253,9 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   strict legacy capability/receipt credential-class schemas and bearer key
   identity. Unsafe Basic requires configured exact Origin, JSON and non-simple
   application header; cheap limits precede bounded password verification.
+  Browser JSON POSTs preserve Origin with same-origin request referrer policy;
+  null Origin remains refused. GETs, response policy and external links retain
+  no-referrer, with same-origin mode and refused redirects on API requests.
   Immutable indexed non-archive assets, strict route-specific fallback, controlled
   prefixes, no-store data and restrictive CSP preserve the management boundary.
   Bootstrap and UI permission context have independent schemas. Basic source
@@ -1405,6 +1416,17 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   finite concurrency/retry/time/cycle/event bounds and advisory cross-tab notices
   never manufacture outcomes or execution authority. API interruption cannot
   clear separate unknown protected configuration effects.
+  A reviewed configuration draft binds its exact base, managed edits and original
+  successful complete preview. Local intent review and synchronous validation
+  cannot substitute for that assessment or installed confirmation. Explicit
+  original-key-bound host outcome reads remain separate from generic receipt
+  polling; stale/conflicting drafts require deliberate compare/reload/re-edit,
+  never silent tag merging, automatic retransmission or stored draft restoration.
+  A fresh original-key lookup plus exact application/archive-bound protected
+  outcome may release only the current-session submission precaution when a
+  verified terminal API receipt and `pending=false` confirmed/unchanged result
+  establish known configuration effects. This RAM-only proof changes no saved
+  record/receipt and is cleared on reconnect; unchanged is not installation.
   Library filter fragments remain bounded under fixed shell routes and encode
   only supported API predicates, never request-selected authority. Main/facet
   pages and enrichment remain finite; stale or contradictory pages cannot become

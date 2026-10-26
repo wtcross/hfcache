@@ -321,7 +321,9 @@ export class ApiClient {
                 mode: "same-origin",
                 redirect: "error",
                 cache: "no-store",
-                referrerPolicy: "no-referrer",
+                // ADR145: preserve Origin for strict Basic CSRF on JSON POSTs.
+                referrerPolicy:
+                    contract.method === "POST" ? "same-origin" : "no-referrer",
                 signal: controller.signal,
                 ...(body === undefined ? {} : { body: JSON.stringify(body) }),
             });
@@ -359,6 +361,9 @@ export class ApiClient {
                 nullable,
                 nullable ||
                     configOutcome ||
+                    // ADR153: installed editable bytes bind base_revision;
+                    // this read does not capture an operational policy snapshot.
+                    contract.path === "/api/v1/config" ||
                     contract.path === "/api/v1/operations" ||
                     contract.path === "/api/v1/host/status",
             );
@@ -859,7 +864,8 @@ export class ApiClient {
                 mode: "same-origin",
                 redirect: "error",
                 cache: "no-store",
-                referrerPolicy: "no-referrer",
+                // ADR145: the controlled API origin receives mutation referrers.
+                referrerPolicy: "same-origin",
                 signal: controller.signal,
                 body: JSON.stringify(body),
             });

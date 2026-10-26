@@ -161,3 +161,35 @@ uses exact revision evidence independently of metadata completeness or readiness
 Activity retains limited loaded-history provenance. Existing wire schemas,
 response/retention ceilings and read-only authority remain unchanged. See
 [detail procedures](../web-ui/repository-details.md).
+
+## Structured managed-edit composition clarification (2026-10-26)
+
+The editor uses the existing generated editable projection, strict managed DTOs
+and original-operation controller. One RAM-only draft and local intent diff bind
+the exact full-byte base. Every edit invalidates validated/assessed readiness;
+Apply requires the unchanged draft and original successful complete preview.
+Supported JSON is the same editable schema, never arbitrary TOML or protected
+values. Existing configuration-read/write grants are composed independently of
+host-read, with no endpoint, dependency or server wire change. Explicit original
+host-outcome reads cannot clear uncertainty from a generic failed receipt. See
+[decisions153](decision-153.md) and [154](decision-154.md).
+
+An explicit fresh original-key lookup and protected outcome may provide RAM-only
+configuration knowledge for the exact application/archive. Only with a verified
+terminal API receipt, `pending=false` and `confirmed` or `unchanged` may this
+release the current-session submission precaution. It changes neither persisted
+recovery metadata nor the generic receipt; reconnect clears the proof. Unchanged
+is known no-install, not successful installation. Validation uses the existing
+bounded shared read/retention ownership and is non-installing despite using POST.
+
+## Preserve mutation Origin across browsers (2026-10-26)
+
+Actual installed Firefox validation returned403/HFAPI010 with `Origin: null`
+under the client's explicit `no-referrer` request policy, despite authenticated
+same-origin fetch metadata. JSON POSTs therefore use `same-origin` request
+referrer policy; GETs retain `no-referrer`. The closed API origin, same-origin
+mode, refused redirects, no-store and non-simple request header remain. The
+server still requires its exact configured Origin, including for validation.
+Response headers and external links remain `no-referrer`. Accepting null Origin
+would weaken the existing CSRF boundary; changing the request policy preserves
+that boundary without a new endpoint, permission, dependency or automatic retry.

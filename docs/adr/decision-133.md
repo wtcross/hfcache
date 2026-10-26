@@ -195,3 +195,16 @@ verification confidence. Model/dataset declarations retain source, status and
 coverage; loaded archive history is not a complete repository audit. This adds no
 writer, Hub, payload-serving or new durable-record authority. See the
 [detail guide](../web-ui/repository-details.md). README rendering remains WEB014.
+
+## Structured current-curation editing clarification (2026-10-26)
+
+The browser editor composes the managed configuration boundary of
+[decisions153](decision-153.md) and [154](decision-154.md); it adds no tag store,
+CRUD endpoint or publication writer. Current configured tags are editable through
+complete repository entries, including disabled entries. Last-observed unmanaged
+labels remain historical and read-only; reconfiguration explicitly creates current
+intent. A selected older publication does not select an older configuration to
+edit. Disable/removal changes intent while preserving retained archive bytes.
+Existing subsequent catalog reads reflect current curation without a refresh
+mutation or rewriting historical snapshots. See the
+[configuration guide](../web-ui/configuration-and-tags.md).

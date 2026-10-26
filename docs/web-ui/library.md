@@ -4,8 +4,10 @@ The Library in unreleased source reads the existing local catalog and inventory
 APIs through the authenticated HTTPS interface. It does not search the live Hub,
 download content, refresh observations or change configuration. Check
 [interface availability](README.md) before using an installed release.
-[Repository details](repository-details.md) provide exact-publication evidence;
-README display, tag editing and full job forms remain separate work.
+[Repository details](repository-details.md) provide exact-publication evidence
+and bounded README display. [Configuration and tag editing](configuration-and-tags.md)
+is a separate explicit workflow; filtering never stages an edit. Full job forms
+remain separate work.
 
 The [desktop Library screenshot](images/library-desktop.png) and
 [mobile Library screenshot](images/library-mobile.png) show the actual built
@@ -72,6 +74,15 @@ The default tag source includes current tags or last-observed tags as appropriat
 Current-only filtering excludes historical labels from tag predicates, search
 text and tag facets. It does not turn a historical observation into current
 curation or remove its provenance. Tags grant no access and prove no integrity.
+
+Use **Edit tags** on a configured repository's detail page to open the current
+configuration intent in Administration, not to rewrite the selected publication.
+Read installed configuration explicitly and choose **Edit requested repository**;
+navigation itself does not fetch or prefill configuration from catalog facts. For an unmanaged
+repository, historical tags remain read-only; **Reconfigure repository** opens an
+explicit complete configuration entry. Disabling or removing configuration does
+not remove archived rows. A later Library read reflects current tags and
+curation identity; it does not rewrite an earlier writer-observed snapshot.
 
 ## Combine technical filters
 

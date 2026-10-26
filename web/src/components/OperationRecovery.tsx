@@ -6,13 +6,91 @@ import type {
     SessionController,
     SessionSnapshot,
 } from "../state/session-controller";
+import type { ConfigurationStore } from "../configuration/configuration-state";
+
+function ConfigurationRecovery({
+    store,
+    record,
+}: {
+    store: ConfigurationStore;
+    record: RecoveryRecord;
+}) {
+    const state = useSyncExternalStore(store.subscribe, store.snapshot);
+    const outcome =
+        state.outcomeRecordId === record.recordId ? state.outcome : null;
+    return (
+        <section aria-label="Original configuration outcome">
+            <button
+                type="button"
+                disabled={!state.canRead || state.pending !== null}
+                onClick={() => {
+                    void store.observeOutcome(record.recordId);
+                }}
+            >
+                Observe original configuration outcome
+            </button>
+            <p>
+                This reads the original application key. Host confirmation is
+                separate from the API receipt; no application is submitted.
+            </p>
+            {outcome !== null && (
+                <>
+                    <p>Outcome read classification: {outcome.result.kind}.</p>
+                    {outcome.kind === "outcome" && (
+                        <p>
+                            Original API receipt state: {outcome.receipt.state}.
+                        </p>
+                    )}
+                    {outcome.kind === "outcome" &&
+                        outcome.result.kind === "success" && (
+                            <>
+                                <dl className="recovery-facts">
+                                    <dt>Protected host outcome</dt>
+                                    <dd>{outcome.result.payload.state}</dd>
+                                    <dt>Pending protected work</dt>
+                                    <dd>
+                                        {outcome.result.payload.pending
+                                            ? "Yes"
+                                            : "No"}
+                                    </dd>
+                                    <dt>Original application ID</dt>
+                                    <dd>
+                                        <code>
+                                            {
+                                                outcome.result.payload
+                                                    .operation_id
+                                            }
+                                        </code>
+                                    </dd>
+                                </dl>
+                                <p>
+                                    {!outcome.result.payload.pending &&
+                                    outcome.result.payload.state === "confirmed"
+                                        ? "Installed configuration confirmed. The original API receipt is unchanged."
+                                        : !outcome.result.payload.pending &&
+                                            outcome.result.payload.state ===
+                                                "unchanged"
+                                          ? "The application is known unchanged; installation of the requested edit is not confirmed."
+                                          : "Protected effects remain unresolved. Preserve original handles and evidence; do not repeat Apply."}
+                                </p>
+                            </>
+                        )}
+                </>
+            )}
+            {state.outcomeRecordId === record.recordId &&
+                state.notice !== null && <p role="status">{state.notice}</p>}
+        </section>
+    );
+}
 
 function RecoveryEntry({
     record,
     controller,
+    configuration,
 }: {
     readonly record: RecoveryRecord;
     readonly controller: SessionController;
+    readonly configuration: ConfigurationStore | undefined;
 }) {
     const observation = useSyncExternalStore(
         (listener) => controller.observer.subscribe(record.recordId, listener),
@@ -102,9 +180,10 @@ function RecoveryEntry({
             </dl>
             {record.state !== "terminal" && (
                 <p className="recovery-unknown">
-                    Outcome is unconfirmed until authenticated original
-                    observation establishes it. Do not repeat the operation to
-                    recover a missing response.
+                    Outcome is unconfirmed for the API receipt until
+                    authenticated original observation establishes it. Protected
+                    host effects are shown separately when available. Do not
+                    repeat the operation to recover a missing response.
                 </p>
             )}
             {record.terminal !== null && (
@@ -142,6 +221,14 @@ function RecoveryEntry({
                     Copy recovery handles
                 </button>
             </div>
+            {configuration !== undefined &&
+                record.handles.kind === "basic-key" &&
+                record.route === "/api/v1/config/applications" && (
+                    <ConfigurationRecovery
+                        store={configuration}
+                        record={record}
+                    />
+                )}
             <details>
                 <summary>Original recovery handles</summary>
                 <pre className="recovery-handles">{handles}</pre>
@@ -215,9 +302,11 @@ function RecoveryEntry({
 export function OperationRecovery({
     controller,
     session,
+    configuration,
 }: {
     readonly controller: SessionController;
     readonly session: SessionSnapshot;
+    readonly configuration?: ConfigurationStore;
 }) {
     const choiceId = useId();
     const [kind, setKind] = useState<"id" | "basic-key" | "legacy-key">("id");
@@ -285,6 +374,7 @@ export function OperationRecovery({
                             key={record.recordId}
                             record={record}
                             controller={controller}
+                            configuration={configuration}
                         />
                     ))
                 )}

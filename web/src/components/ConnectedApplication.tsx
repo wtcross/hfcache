@@ -5,6 +5,7 @@ import type { SessionController } from "../state/session-controller";
 import type { LibraryStore } from "../library/library-state";
 import { libraryFragment } from "../library/filters";
 import type { RepositoryStore } from "../repository/repository-state";
+import type { ConfigurationStore } from "../configuration/configuration-state";
 
 export function ConnectedApplication({
     controller,
@@ -12,12 +13,14 @@ export function ConnectedApplication({
     fetcher,
     library,
     repository,
+    configuration,
 }: {
     controller: SessionController;
     basePath: string;
     fetcher: typeof fetch;
     library: LibraryStore;
     repository: RepositoryStore;
+    configuration: ConfigurationStore;
 }) {
     const session = useSyncExternalStore(
         controller.subscribe,
@@ -27,6 +30,7 @@ export function ConnectedApplication({
         library.subscribe,
         library.snapshot,
     );
+    useSyncExternalStore(configuration.subscribe, configuration.snapshot);
     return (
         <App
             basePath={basePath}
@@ -35,6 +39,7 @@ export function ConnectedApplication({
             session={session}
             library={library}
             repository={repository}
+            configuration={configuration}
             libraryBookmark={libraryFragment(libraryState.filters)}
             onCheckRelease={() => checkRelease(session.bootstrap, fetcher)}
         />

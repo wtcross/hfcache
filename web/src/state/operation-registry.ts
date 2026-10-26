@@ -9,9 +9,13 @@ import type { ApiScope } from "../api/identity";
 import { canonicalArchiveId, canonicalHex } from "../api/identity";
 import {
     decodeClientOperation,
+    decodeConfigApplicationOutcome,
     operationResultDefinitions,
 } from "../wire/generated";
-import type { ClientOperation } from "../wire/generated";
+import type {
+    ClientOperation,
+    ConfigApplicationOutcome,
+} from "../wire/generated";
 import { numberSource, parseWireJson, WireError } from "../wire/json";
 import { isRecord, wireObject } from "../wire/runtime";
 import { timestampParts } from "../wire/semantics";
@@ -211,6 +215,10 @@ export interface OperationRegistry {
         summary: SafeTerminalSummary,
         certainty: "known" | "unknown-effects",
     ): RecoveryRecord;
+    configurationOutcome(
+        auth: AuthorizedObservation,
+        outcome: ConfigApplicationOutcome,
+    ): void;
     unknown(id: RecordId, reason: UnknownReason): RecoveryRecord;
     invalidateObservations(): void;
     canSubmit(session: AuthSession): boolean;
@@ -644,6 +652,7 @@ interface ObservationProof {
     readonly domainRunId: string | null;
     readonly keyVerified: boolean;
     readonly resolved: boolean;
+    readonly configurationKnown?: boolean;
 }
 
 export function createOperationRegistry(
@@ -823,8 +832,10 @@ export function createOperationRegistry(
             )
                 return false;
             return (
-                record.state !== "terminal" ||
-                proofFor(record.recordId, session)?.resolved !== true
+                proofFor(record.recordId, session)?.configurationKnown !==
+                    true &&
+                (record.state !== "terminal" ||
+                    proofFor(record.recordId, session)?.resolved !== true)
             );
         }
         // An unbound foreign key is only a reference. Once an ID has actually
@@ -1015,6 +1026,7 @@ export function createOperationRegistry(
             domainRunId: receipt.domain_run_id,
             keyVerified: record.handles.kind === "basic-key",
             resolved,
+            configurationKnown: previous?.configurationKnown === true,
         });
         return update(record, {
             handles: Object.freeze({
@@ -1264,6 +1276,33 @@ export function createOperationRegistry(
                 state: known ? "terminal" : "uncertain",
                 terminal: summary,
             });
+        },
+        configurationOutcome: (auth, input) => {
+            const { record, session } = authorized(auth);
+            const outcome = decodeConfigApplicationOutcome(
+                parseWireJson(JSON.stringify(input)),
+            );
+            const proof = proofFor(record.recordId, session);
+            if (
+                record.handles.kind !== "basic-key" ||
+                record.route !== "/api/v1/config/applications" ||
+                proof?.keyVerified !== true ||
+                outcome.operation_id !== proof.receipt.operation_id ||
+                outcome.archive_id !== session.scope.archiveId
+            )
+                throw new OperationRegistryError("observation");
+            // ADR154: fresh host evidence may settle effects of an interrupted
+            // API receipt. Keep that receipt and all stored handles unchanged.
+            const known =
+                ["succeeded", "failed", "interrupted"].includes(proof.state) &&
+                !outcome.pending &&
+                (outcome.state === "confirmed" ||
+                    outcome.state === "unchanged");
+            proofs.set(record.recordId, {
+                ...proof,
+                configurationKnown: known,
+            });
+            publish(snapshot.records, snapshot.storage, snapshot.error);
         },
         unknown: (id, reason) => {
             const record = find(id);

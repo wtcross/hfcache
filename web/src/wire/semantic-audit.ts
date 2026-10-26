@@ -58,7 +58,7 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
         // WEB013 registers strict repository presentation routes in the reviewed
         // server context; bootstrap JSON, permissions and decoder rules are unchanged.
         "ui.bootstrap":
-            "158e9d751611099539927f0ff4d6afdf5b6bf2ed8b0b76504d07b7d35f57cd31",
+            "3b98fea784b4814d37b05f4d2d6945a251d771b2336000d7afaa2b37e7a2f4cd",
         "hfcache.ui_models._subject":
             "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44",
         "hfcache.ui_models._prefix":

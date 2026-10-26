@@ -12,6 +12,7 @@ import { createSessionController } from "./state/session-controller";
 import type { OperationStorage } from "./state/operation-registry";
 import { createLibraryStore } from "./library/library-state";
 import { createRepositoryStore } from "./repository/repository-state";
+import { createConfigurationStore } from "./configuration/configuration-state";
 
 export async function startApplication(
     document: Document,
@@ -70,6 +71,7 @@ export function mountApplication(
     const root = createRoot(container);
     const library = createLibraryStore(controller);
     const repository = createRepositoryStore(controller);
+    const configuration = createConfigurationStore(controller);
     root.render(
         <ConnectedApplication
             basePath={basePath}
@@ -77,12 +79,14 @@ export function mountApplication(
             fetcher={fetcher}
             library={library}
             repository={repository}
+            configuration={configuration}
         />,
     );
     return () => {
         root.unmount();
         library.dispose();
         repository.dispose();
+        configuration.dispose();
         controller.dispose();
     };
 }

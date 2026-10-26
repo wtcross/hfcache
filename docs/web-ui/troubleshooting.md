@@ -280,6 +280,30 @@ classification](#read-results). Stale evidence is not current health or capacity
 Do not initialize an archive, weaken authentication or replay an operation to make
 a Library read succeed.
 
+## Configuration and tags
+
+Follow the [configuration workflow](configuration-and-tags.md). Preserve the
+original preview/application handles before reconnecting or discarding a draft.
+
+| Problem | Meaning and safe next step |
+| --- | --- |
+| Configuration read/write denied while host status is available, or the reverse | Grants are independent. Review the requested configuration capability and protected policy; host-read is not an extra configuration prerequisite. An ordinary REST writer bearer cannot grant it. |
+| Validation succeeded but Apply is unavailable | Validation does not size or assess an operation. Obtain the original successful complete preview for the unchanged reviewed draft and exact base. |
+| A form change disables readiness | Every edit invalidates prior validation/preview. Review and validate the new intent, then explicitly prepare a new preview. Do not reattach an old operation ID. |
+| Installed configuration changed / stale base / HTTP409 | Keep the draft. Compare the newly read editable projection with the original base and intended changes; reload/re-edit deliberately. Tag-only and formatting changes can conflict even when policy fingerprints match. |
+| Another tab changed recovery history | Keep memory-only handles and the dirty draft. Advisory notices cannot merge drafts or settle results; reload saved recovery history before a new submission. |
+| Sizing failed, incomplete or unavailable | Apply remains unavailable. Keep that original preview's diagnostic and handle; a transport failure or missing result does not authorize another POST with a new key. |
+| Tags appear only as Last observed | They are historical labels for an unmanaged retained repository. Reconfigure explicitly to create current intent; do not overwrite the snapshot as if it were configuration. |
+| Repository disabled/removed but still listed under Archived | Expected: configuration changes do not purge archived publications or immediately prune retained revisions. |
+| Interrupted/failed receipt with unknown or installed_unconfirmed outcome | Read the original protected application outcome with its original key. Preserve pending/history evidence; never infer rollback or retry Apply to find out. |
+| Supported JSON rejects a field | It accepts only the complete supported editable projection. No TOML, protected value, placeholder, path override or unknown field is accepted. Correct the draft without weakening server validation. |
+| Private outcome limit or pending marker blocks Apply | Preserve all original evidence for privileged operator review. The browser has no cleanup, rollback or quota-reset action. |
+
+The local intent diff is not a protected-file backup. Server reconstruction
+preserves protected values but canonicalizes comments and formatting. Never share
+draft JSON or raw configuration in diagnostics; safe codes and original handles
+are enough to identify the failed boundary.
+
 ## Repository details
 
 Follow [repository details](repository-details.md) for exact selection, evidence
@@ -317,3 +341,13 @@ local; other tabs and operation recovery remain usable. A pruned or repaired-awa
 selection stays unavailable rather than switching to current. Media placeholders
 and blocked link targets are expected safety behavior; do not disable CSP, add
 a proxy or loosen capture rules to make upstream HTML or images appear.
+
+## Validation or Apply rejected with HFAPI010
+
+Keep the draft and check that the browser's public origin matches the configured
+Basic origin. The current UI preserves that Origin on same-origin JSON POSTs;
+operators must serve the matching selected release's indexed assets. A stale
+client can fail validation in Firefox even when reads work. Preserve any original
+operation handle before reconnecting or reloading. Do not relax Origin checks,
+add a Caddy authentication gate or resubmit an uncertain Apply. See
+[configuration recovery](configuration-and-tags.md#observe-an-interrupted-application).

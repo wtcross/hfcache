@@ -1,6 +1,6 @@
-/** Generated from source digest b505e14106fa41f431f3da738995a8f1345a73f96dfd4fd74156f940d847f514. Run generate:wire; do not edit. */
+/** Generated from source digest 476acbbbb8fa88b010d8ae14244fe3b90fa4cc1f5972ef4b25f54328ea49b43b. Run generate:wire; do not edit. */
 export const WIRE_SOURCE_DIGEST =
-    "b505e14106fa41f431f3da738995a8f1345a73f96dfd4fd74156f940d847f514";
+    "476acbbbb8fa88b010d8ae14244fe3b90fa4cc1f5972ef4b25f54328ea49b43b";
 import {
     wireObject,
     wireRequestObject,

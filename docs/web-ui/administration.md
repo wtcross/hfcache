@@ -32,8 +32,16 @@ Open **Administration** to view **Host administration**. **Refresh host status**
 performs another bounded read; it never submits or retries an operation. Known
 permission refusals display **Denied** with their reason; missing authority
 displays **Unavailable**. **Allowed** describes the independently verified policy
-category. This interface currently provides status reads; no configuration or
-schedule mutation follows from displaying that category.
+category. Displaying it never submits a configuration or schedule mutation.
+
+The separate **Configuration and tags** panel composes the existing protected
+configuration read, managed validation, sizing preview and guarded application
+APIs. Its configuration-read/write grants and independent policy checks stand
+on their own; host-read is not an additional gate. A visible **Allowed** status
+does not bypass fresh request/execution checks. Follow the
+[configuration workflow](configuration-and-tags.md) for one in-memory draft,
+exact-base review and original-outcome recovery. Unimplemented schedule/observer
+controls remain disabled.
 
 ## Provision policy independently
 

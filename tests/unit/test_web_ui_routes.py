@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import json
 import os
 
 import httpx
@@ -11,7 +12,7 @@ from starlette.routing import Route
 from hfcache import wire_schema
 from hfcache.api import app as application_module
 from hfcache.api.app import create_app
-from hfcache.api.auth import CredentialClass, Principal
+from hfcache.api.auth import AdminCapability, AuthenticationMethod, CredentialClass, Principal
 from hfcache.api.ui_serving import UI_CSP, UiResponse, bootstrap_bytes
 from hfcache.errors import ConfigurationError, SafetyError
 from hfcache.logging import reset
@@ -32,6 +33,56 @@ def context_digest_and_logging(monkeypatch):
 
 def basic(profile):
     return "Basic " + base64.b64encode(b"human:" + profile.password).decode()
+
+
+@pytest.mark.parametrize(
+    "grants",
+    [
+        frozenset(),
+        frozenset({AdminCapability.CONFIG_READ}),
+        frozenset({AdminCapability.CONFIG_WRITE}),
+        frozenset({AdminCapability.CONFIG_READ, AdminCapability.CONFIG_WRITE}),
+        frozenset({AdminCapability.HOST_READ}),
+        frozenset(AdminCapability),
+    ],
+)
+def test_configuration_ui_availability_preserves_independent_explicit_grants(grants):
+    """INV019/020: shipped forms do not invent grants or require host-read."""
+    profile = make_profile()
+    app = create_app(profile.server, instance_lock_path=profile.lock)
+
+    async def exercise():
+        async with app.router.lifespan_context(app):
+            payload = json.loads(
+                bootstrap_bytes(
+                    app.state.ui_capture,
+                    profile.server,
+                    profile.policy,
+                    Principal(
+                        CredentialClass.REST_WRITER,
+                        authentication_method=AuthenticationMethod.BASIC,
+                        subject="owned-administrator",
+                        admin_capabilities=grants,
+                    ),
+                    instance_id=app.state.instance_id,
+                    effective_prefix="",
+                )
+            )
+            shipped = {"config-read", "config-write", "host-read"}
+            for item in payload["user"]["admin_permissions"]:
+                granted = AdminCapability(item["capability"]) in grants
+                assert item["granted"] is granted
+                assert item["effective"] is (granted and item["capability"] in shipped)
+                assert item["reason"] == (
+                    "not_granted"
+                    if not granted
+                    else "allowed"
+                    if item["capability"] in shipped
+                    else "feature_unavailable"
+                )
+            assert not profile.policy.root.exists()
+
+    asyncio.run(exercise())
 
 
 @pytest.mark.parametrize("prefix", ["", "/management", "/ui", "/api/v1", "/mcp", "/管理'quoted"])
@@ -62,7 +113,7 @@ def test_actual_bootstrap_navigation_alias_assets_and_exact_headers(prefix):
                 assert payload["paths"]["effective_prefix"] == prefix
                 assert payload["paths"]["ui_base"] == uri_path(prefix + "/ui/")
                 for item in payload["user"]["admin_permissions"]:
-                    available = item["capability"] == "host-read"
+                    available = item["capability"] in {"host-read", "config-read", "config-write"}
                     assert item["effective"] is available
                     assert item["reason"] == ("allowed" if available else "feature_unavailable")
                 assert not profile.policy.root.exists()

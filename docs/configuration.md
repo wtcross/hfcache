@@ -605,6 +605,12 @@ their protected values. Verification algorithm/required hashing and the schema
 are also protected; server/runtime configuration remains a separate domain.
 Read/managed preparation require explicit administration authority and independently
 provisioned host policy. Ordinary REST writer authority alone is insufficient.
+Configuration-read and configuration-write are independently activated browser
+affordances; host-status read is not another prerequisite. The structured editor
+keeps one RAM-only editable draft and reviewed local intent diff, never raw TOML
+or protected-value replacements. Every edit or stale full-byte base invalidates
+its validation and original-preview readiness. The supported JSON view is the
+same closed editable projection, not an arbitrary configuration replacement.
 
 The opaque `base_revision` binds the complete installed bytes. Unlike the
 operational fingerprint, it changes for tags, comments and formatting. Managed
@@ -630,7 +636,7 @@ root0600 `.configuration.pending` marker preserve interruption evidence; origina
 predecessor/backup inodes keep their0640 metadata within that private directory.
 Outcome reads never replay, repair, roll back or remove uncertainty. Follow
 the [configuration and tags guide](web-ui/configuration-and-tags.md) for the eleven
-settings, exact edit forms, normalization, stale conflicts and original-handle
+settings, structured forms, exact edits, normalization, stale conflicts and original-handle
 recovery, and the [API contract](api.md#managed-configuration-form) for wire details.
 
 ## 13. Independent reader/client configuration

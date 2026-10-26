@@ -329,6 +329,12 @@ These grants alone authorize no host effects or protected configuration install;
 the separate helper/policy boundary remains required. Protected status and fresh
 Basic job checks use the [host helper](host-administration.md); configuration
 application additionally requires its fixed guarded writer and matching preview.
+The UI advertises implemented configuration-read and configuration-write
+affordances from those respective grants; neither is gated by host-read. Each
+configuration request still enforces its own current capability and protected
+policy. The browser composes existing endpoints only: one editable draft, exact
+managed validation/preview/application and explicit original-outcome reads add
+no server endpoint, TOML upload or automatic retry.
 Basic never authenticates MCP. No new class, permission, subject or attribution
 field joins the stable capabilities response or old strict receipts.
 

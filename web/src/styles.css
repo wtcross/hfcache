@@ -1366,3 +1366,122 @@ main:focus {
     margin: 0;
     padding: 0;
 }
+
+.choice-control {
+    min-width: 0;
+    display: grid;
+    gap: 0.35rem;
+}
+.choice-control-label {
+    font-weight: 600;
+}
+.choice-control-trigger {
+    width: 100%;
+    text-align: left;
+    white-space: normal;
+}
+.choice-control-listbox {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem;
+    max-height: 14rem;
+    overflow: auto;
+    border: 1px solid #cbd5e5;
+    border-radius: 0.4rem;
+    background: #fff;
+}
+.choice-control-option {
+    padding: 0.5rem 0.65rem;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+.choice-control-option.is-active {
+    outline: 2px solid #4263eb;
+    outline-offset: -2px;
+}
+.choice-control-option.is-selected {
+    background: #edf1ff;
+    font-weight: 600;
+}
+.draft-navigation-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgb(15 23 42 / 55%);
+}
+.draft-navigation-dialog {
+    max-width: 32rem;
+    padding: 1.5rem;
+    border-radius: 0.6rem;
+    background: #fff;
+    box-shadow: 0 1rem 3rem rgb(15 23 42 / 25%);
+}
+.draft-navigation-dialog button {
+    margin: 0.5rem 0.5rem 0 0;
+}
+.configuration-editor {
+    min-width: 0;
+}
+.configuration-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+.configuration-form {
+    margin: 1rem 0;
+}
+.configuration-form > fieldset {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid #cbd5e5;
+}
+.configuration-form label {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+}
+.configuration-form textarea {
+    width: 100%;
+    min-height: 7rem;
+    resize: vertical;
+}
+.configuration-form textarea.configuration-json {
+    font-family: ui-monospace, monospace;
+    min-height: 20rem;
+}
+.configuration-entry,
+.configuration-diff {
+    border-top: 1px solid #e0e6ef;
+    padding: 1rem 0;
+}
+.configuration-diff pre {
+    max-height: 20rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.configuration-facts code {
+    overflow-wrap: anywhere;
+}
+.configuration-tag-suggestions {
+    max-height: 18rem;
+    overflow: auto;
+}
+.configuration-form label:has(input[type="checkbox"]),
+.configuration-form label:has(input[type="radio"]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.configuration-form input[type="checkbox"],
+.configuration-form input[type="radio"] {
+    width: auto;
+    flex: none;
+}

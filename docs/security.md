@@ -1106,6 +1106,24 @@ Session replacement/reconnect permanently clears and retires old handles;
 controllers recreate them against the current client. A retired handle cannot
 invoke an old loader, including when returned scope values are identical.
 
+Structured configuration editing keeps one RAM-only editable projection and
+exact-base local intent diff. It never persists drafts, TOML, protected values or
+preview bodies in recovery storage. Configuration-read/write capability and
+independent policy are checked separately from host-status read. Client-side
+readiness requires the unchanged validated draft and its original complete
+assessment; server execution remains authoritative. Every edit, stale base or
+session change retires that readiness. Cross-tab advice cannot merge edits,
+grant Apply or clear another tab's uncertain operation. Supported JSON is the
+closed editable projection, not a protected document or path-selection channel.
+Protected application outcome reads are explicit and original-key-bound; they
+never retransmit Apply or promote an interrupted generic receipt.
+Releasing a browser submission precaution requires a fresh verified original-key
+lookup, exact application/archive binding, a terminal verified API receipt and
+`pending=false` with `confirmed` or `unchanged`. This is RAM-only configuration
+knowledge, not an edited receipt or durable recovery flag; reconnect clears it.
+Unchanged means known no-install. No unknown/staged/installed-unconfirmed or
+pending outcome can use this exception.
+
 The shared32MiB retention budget measures encoded logical evidence, not exact
 heap/RSS. An8MiB observation-response limit only lowers existing route limits;
 finite concurrency, retries, cycles, time and event retention are specified in
@@ -1116,6 +1134,11 @@ clears separate unknown or installed-unconfirmed protected configuration effects
 Apply restrictive CSP with same-origin scripts/styles/connect, no inline
 executable scripts/eval, framing/plugins or card forms; `base-uri` permits only
 the controlled same-origin deployment base. Use `nosniff` and `no-referrer`.
+Browser JSON POSTs explicitly use the `same-origin` request referrer policy to
+preserve the exact Origin required by Basic CSRF validation. Their controlled
+same-origin URL, same-origin fetch mode and refused redirects prevent disclosure
+to another origin. GETs and external links retain `no-referrer`; the response
+policy stays unchanged. A null Origin remains a refusal, never a CSRF exception.
 No CDN fonts/scripts, service workers, offline archive-data cache or automatic
 external asset requests are permitted. HTML/bootstrap/API/card output is
 `no-store`; hashed static assets use private caching only. Release changes must
