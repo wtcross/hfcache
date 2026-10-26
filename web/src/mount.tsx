@@ -10,6 +10,7 @@ import {
 import type { CompiledIdentity } from "./bootstrap";
 import { createSessionController } from "./state/session-controller";
 import type { OperationStorage } from "./state/operation-registry";
+import { createLibraryStore } from "./library/library-state";
 
 export async function startApplication(
     document: Document,
@@ -66,15 +67,18 @@ export function mountApplication(
                 )),
     });
     const root = createRoot(container);
+    const library = createLibraryStore(controller);
     root.render(
         <ConnectedApplication
             basePath={basePath}
             controller={controller}
             fetcher={fetcher}
+            library={library}
         />,
     );
     return () => {
         root.unmount();
+        library.dispose();
         controller.dispose();
     };
 }

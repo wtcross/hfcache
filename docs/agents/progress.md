@@ -29,6 +29,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-012 Implement the bounded model and dataset Library
+  (2026-10-26, this commit — [task](plans/tasks/web-012-library-and-discovery.md)).
+  Existing typed catalog/inventory/status/revision reads now drive scoped ID/tag
+  search, normalized all/any tags, provenance, technical filters, finite pages,
+  bookmark fragments and loaded-row selection. Exact authority/type/ID/publication
+  joins keep current size/integrity separate from retained matching variants;
+  unknown coverage, failed reads and zero known matches stay distinct. Route/auth
+  changes fence late reads; no mutation, Hub request, endpoint or dependency is added.
+  Strict gate2 passes1442.837s:8581backend/52unrelated opt-in deselections,
+  581Cockpit unit/110mountedFirefox,3234web unit/3337combined component,
+  95.78%web line coverage and all strict/build/wheel/browser/read-API checks;
+  zero required skips. All1421 final source inputs remain exact at421e7f8c….
+  Forty-two one-attempt installed browser cases pass475.491s (14 per Chromium,
+  Firefox and WebKit),227 observed trusted GETs per engine and zero POSTs.
+  Archive full9/bytes, configuration and query summaries stay unchanged; original
+  roles drain normally. This is real Caddy/installed API with explicit local
+  NFS-metadata simulation, not full platform or NAS proof. Gate1 and functional1–6
+  failures remain recorded; the final source differs from the tested image only
+  by a corrected test Location mock, with runtime equality proved explicitly.
+  Human Library guide, actual synthetic screenshots and living navigation/contracts
+  align213/27; final78 plan/docs regressions pass14.07s and all frozen hashes/modes
+  remain exact. INV018/021 and ADR133/145 reviewed/amended, no new dependency.
+  Imagea0e509cc retains pinned UBI10micro/no Node;114 installed modules match
+  fixture0.2.20, canonical0.2.2 unchanged. CATALOG01–05 complete; WEB-013 next.
+  Evidence: /var/tmp/web-012-validation-aw9l6_l2/. No production/NAS/live Cockpit,
+  rollout, merge, push or tag action.
+
 - [x] WEB-011 Preserve original operation recovery across browser sessions
   (2026-10-26, this commit — [task](plans/tasks/web-011-query-and-operation-state.md)).
   One authenticated controller owns bounded queries, original-key persistence,
@@ -2756,6 +2783,22 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-012 checkpoint (2026-10-26, this commit): WEB001–012 complete on
+feat/web-ui; continue WEB-013 through the current selector. The Library and human
+guide pass strict gate2 and42 real installed Caddy/API cases across all three
+browsers. [Task012](plans/tasks/web-012-library-and-discovery.md) records exact
+source/artifacts, case mappings, actual screenshots and retained failed attempts.
+Final gate source421e7f8c… differs from installed source5b46b392… only by the
+test Location correction; runtime equality is proved. Shared imagea0e509cc is
+pinned UBI10micro without Node; standalone owned fixture0.2.20 resides under
+/opt/hfcache-web012-runtime without a release switch. Its browser/API/Caddy roles
+are normally stopped, archive/configuration bytes and identities are unchanged,
+and the original five infrastructure pairs remain. This application fixture uses
+explicit local NFS-metadata simulation; full native/rootless platform, parity,
+compatibility and final acceptance remain later tasks. Production0.2.2,
+credentials/calendars/guards and live Cockpit remain untouched. No merge, push,
+tag, rollout or live plugin removal is authorized.
 
 Latest WEB-011 checkpoint (2026-10-26, this commit): WEB001–011 complete on
 feat/web-ui; continue WEB-012 through the current selector. Strict source gate2,
@@ -12486,3 +12529,11 @@ original handles and retires old query loaders on authentication-generation
 changes. Shared encoded-data limits and native fetch receiver binding preserve
 the existing no-replay/wire contracts; they add no endpoint or runtime package.
 The dated amendments in ADR134/137/145 and INV021 record these scoped details.
+
+2026-10-26 WEB-012 implementation refinement of decisions133/145: Library filter
+fragments retain bookmarks without relaxing the authenticated shell's query
+refusal. Existing typed GETs, finite displayed pages and authority/type/ID/exact
+publication joins preserve configuration-backed tag provenance and keep scoped
+coverage, current inventory and retained technical evidence distinct. The dated
+ADR133/145 and INV018/021 amendments record this read composition; no endpoint,
+runtime dependency or new authority is introduced.

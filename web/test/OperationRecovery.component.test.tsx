@@ -32,10 +32,12 @@ function mount(
 ) {
     storage?.clear();
     const bootstrap = uiBootstrapFixture();
-    vi.stubGlobal(
-        "location",
-        new URL(bootstrap.configured_origin + "/ui/operations"),
-    );
+    const documentLocation = document.location;
+    const location = new URL(bootstrap.configured_origin + "/ui/operations");
+    Object.defineProperty(location, "pathname", {
+        get: () => documentLocation.pathname,
+    });
+    vi.stubGlobal("location", location);
     window.history.replaceState(null, "", "/ui/operations");
     const controller = createSessionController({
         bootstrap,

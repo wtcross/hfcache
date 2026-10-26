@@ -4,6 +4,7 @@ import { expect, test, vi } from "vitest";
 import { App } from "../src/App";
 import { mountApplication } from "../src/mount";
 import { inertUiDocument, uiBootstrapFixture } from "./ui-fixtures";
+import { jsonResponse, problemWire } from "./read-fixtures";
 
 test("unconnected Library reports unavailable facts without fictional measurements or API requests", () => {
     const fetch = vi.spyOn(globalThis, "fetch");
@@ -43,6 +44,25 @@ test("keyboard navigation selects all four workspaces and focuses their content"
         expect(screen.getByRole("main")).toHaveFocus();
         expect(document.title).toBe(`hfcache · ${label}`);
     }
+});
+
+test("Library navigation restores filter fragments and skip navigation preserves them", async () => {
+    window.history.replaceState(null, "", "/ui/operations");
+    const fragment = "#type=model&q=owner%2Frepo";
+    render(<App basePath="/ui/" libraryBookmark={fragment} />);
+    const library = screen.getByRole("link", { name: "Library" });
+    expect(library).toHaveAttribute("href", "/ui/library" + fragment);
+    await userEvent.click(library);
+    expect(
+        screen.getByRole("heading", { level: 1, name: "Library" }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/ui/library");
+    expect(window.location.hash).toBe(fragment);
+    await userEvent.click(
+        screen.getByRole("link", { name: "Skip to content" }),
+    );
+    expect(screen.getByRole("main")).toHaveFocus();
+    expect(window.location.hash).toBe(fragment);
 });
 
 test("unknown paths retain an explicit unavailable screen and a safe Library destination", async () => {
@@ -88,9 +108,12 @@ test("the mount boundary validates deployment metadata and supports owned cleanu
     expect(() => mountApplication(document, bootstrap)).toThrow();
     container.remove();
     inertUiDocument(document);
+    const fetcher = vi.fn<typeof fetch>(() =>
+        Promise.resolve(jsonResponse(problemWire("HFAPI019", 20), 503)),
+    );
     let unmount = () => {};
     act(() => {
-        unmount = mountApplication(document, bootstrap);
+        unmount = mountApplication(document, bootstrap, fetcher);
     });
     await waitFor(() => {
         expect(

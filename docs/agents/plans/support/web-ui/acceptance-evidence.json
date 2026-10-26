@@ -6125,21 +6125,111 @@
       "status": "pending"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web012-inputs/web-012-run-owned-functional.py --log /var/tmp/web-012-validation-aw9l6_l2/functional7.log",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/functional7-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-012-library-browser.mjs::built-ui-basic-bootstrap-and-scope",
+            ".scratch/web-012-library-browser.mjs::literal-id-and-distinct-type-identities",
+            ".scratch/web-012-library-browser.mjs::configured-disabled-and-unpublished"
+          ],
+          "observed_assertion": "PASS475.491s;42 one-attempt cases,14 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Real built Library displays 36 distinct repository identities with explicit scopes; a literal shared ID returns separate model/dataset rows. Configured scope reports33 repositories and archived scope34; disabled and unpublished rows remain distinct from archived publications. Each engine records227 trusted same-origin GETs/0POST with passive bounded origin observation and no overflow. Actual configuration/archive full9 identities and bytes plus query summaries remain unchanged; operation-store count0. Original browser/API/Caddy roles drain normally; cleanup_unknownfalse. Evidence SHA256 f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804; actual cohort36431c44687e46e49cf332da1eea61e9.",
+          "profile": "Built production Library/actual typed client through trusted-TLS Caddy and installed native0.2.20 read API, owned strict-model toy metadata; LOCAL_NFS_METADATA_SIMULATION, not native-platform/NAS/production acceptance. Additional actual same-origin GET oracle; no response interception/replacement. Source1 actual artifact:1421 frozen inputs, parent e0bedca; UI manifest e3d427ad9b0f6e8d5d4266439c82eb22390c0dd25a00cad9abce9174523fd258, wheel bf7c9dc67d988357b97068aeb318d9b8bbed89a3f9d612c6edb38f5a449a7776, stock image a0e509cc029a12f97f3f9067d708db3aa53b71ad58aafc47de6efa90228c144c. artifact-source-proof.json records only fixture project/lock version0.2.20 versus canonical0.2.2. Gate2 snapshot421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e differs only in OperationRecovery.component.test.tsx Location mock; artifact-gate2-source-proof.json SHA256 daaf7b0422c5892634996ac2b1e5dd67cae7ad525ab2c09bf3b7aa14972ae0d8 proves unchanged runtime inputs/no rebuild. Final strict gate2 and its unit/integration executions below pass against the test-only corrected source.",
+          "source_sha256": "5b46b3926d1fb622952cc26adcf2f60fc10ed3e39a4b6e19e6b5521084ab9ce7"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_query_models.py::test_query_normalizes_literal_text_tags_and_ascii_technical_names",
+            "web/test/library-filters.unit.test.ts::roundtrips only existing API filters and preserves literal Unicode spelling",
+            "web/test/library-filters.unit.test.ts::q bound is Unicode scalar values, without casefold or NFC expansion",
+            "web/test/library.component.test.tsx::search debounces to the last raw literal and unmount cancels a pending draft",
+            "web/test/library.component.test.tsx::publication/provenance/page controls and facet groups preserve canonical loaded selection",
+            "web/test/library-state.unit.test.ts::zero constructor reads, one bounded page plus explicit facets and keyed loaded-page supplements"
+          ],
+          "observed_assertion": "Existing type/repository/publication scopes and literal ID/tag queries roundtrip through supported keys. Search is finite and debounced; links carry fragments without shell queries or upstream reads.",
+          "profile": "Frozen WEB012 final source; real typed client/session store with explicitly scripted HTTP boundary fixtures and mounted React controls; installed browser evidence is separate.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_queries.py::test_configured_disabled_unpublished_and_same_id_different_type",
+            "tests/unit/test_catalog_queries.py::test_current_is_explicit_no_cross_revision_matching_or_retired_fallback",
+            "tests/unit/test_api_catalog.py::test_catalog_routes_share_strict_wrappers_and_original_capabilities",
+            "tests/unit/test_api_catalog.py::test_reads_are_off_thread_and_cannot_write_resolve_credentials_or_open_payload"
+          ],
+          "observed_assertion": "Existing type/repository/publication scopes and literal ID/tag queries roundtrip through supported keys. Search is finite and debounced; links carry fragments without shell queries or upstream reads.",
+          "profile": "Real catalog/query/ASGI application services over owned temporary archive metadata; actual strict models, curation cursors, status and immutable publication reads. Supported external storage/Hub fixtures are not installed/NAS/platform proof.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        }
+      ],
       "id": "CATALOG-01",
       "owner": "WEB-012",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_catalog.py::test_catalog_01"
+          "node_id": "tests/unit/test_catalog_query_models.py::test_query_normalizes_literal_text_tags_and_ascii_technical_names"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_catalog.py::test_catalog_01"
+          "node_id": "tests/unit/test_catalog_queries.py::test_configured_disabled_unpublished_and_same_id_different_type"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_current_is_explicit_no_cross_revision_matching_or_retired_fallback"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_catalog_routes_share_strict_wrappers_and_original_capabilities"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_reads_are_off_thread_and_cannot_write_resolve_credentials_or_open_payload"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-filters.unit.test.ts::roundtrips only existing API filters and preserves literal Unicode spelling"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-filters.unit.test.ts::q bound is Unicode scalar values, without casefold or NFC expansion"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::search debounces to the last raw literal and unmount cancels a pending draft"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::publication/provenance/page controls and facet groups preserve canonical loaded selection"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::zero constructor reads, one bounded page plus explicit facets and keyed loaded-page supplements"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-01"
+          "node_id": ".scratch/web-012-library-browser.mjs::built-ui-basic-bootstrap-and-scope"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::literal-id-and-distinct-type-identities"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::configured-disabled-and-unpublished"
         }
       ],
       "required_layers": [
@@ -6147,24 +6237,114 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web012-inputs/web-012-run-owned-functional.py --log /var/tmp/web-012-validation-aw9l6_l2/functional7.log",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/functional7-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-012-library-browser.mjs::literal-id-and-distinct-type-identities",
+            ".scratch/web-012-library-browser.mjs::all-any-tag-conjunction",
+            ".scratch/web-012-library-browser.mjs::last-observed-versus-current-tags"
+          ],
+          "observed_assertion": "PASS475.491s;42 one-attempt cases,14 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Normalized all-tags and any-tags remain conjunctive and yield one actual match. Two unmanaged historical-tag matches retain last-observed attribution; current-only yields0. A known empty current tag list overrides archived historical tags for the shared model ID. Each engine records227 trusted same-origin GETs/0POST with passive bounded origin observation and no overflow. Actual configuration/archive full9 identities and bytes plus query summaries remain unchanged; operation-store count0. Original browser/API/Caddy roles drain normally; cleanup_unknownfalse. Evidence SHA256 f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804; actual cohort36431c44687e46e49cf332da1eea61e9.",
+          "profile": "Built production Library/actual typed client through trusted-TLS Caddy and installed native0.2.20 read API, owned strict-model toy metadata; LOCAL_NFS_METADATA_SIMULATION, not native-platform/NAS/production acceptance. Additional actual same-origin GET oracle; no response interception/replacement. Source1 actual artifact:1421 frozen inputs, parent e0bedca; UI manifest e3d427ad9b0f6e8d5d4266439c82eb22390c0dd25a00cad9abce9174523fd258, wheel bf7c9dc67d988357b97068aeb318d9b8bbed89a3f9d612c6edb38f5a449a7776, stock image a0e509cc029a12f97f3f9067d708db3aa53b71ad58aafc47de6efa90228c144c. artifact-source-proof.json records only fixture project/lock version0.2.20 versus canonical0.2.2. Gate2 snapshot421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e differs only in OperationRecovery.component.test.tsx Location mock; artifact-gate2-source-proof.json SHA256 daaf7b0422c5892634996ac2b1e5dd67cae7ad525ab2c09bf3b7aa14972ae0d8 proves unchanged runtime inputs/no rebuild. Final strict gate2 and its unit/integration executions below pass against the test-only corrected source.",
+          "source_sha256": "5b46b3926d1fb622952cc26adcf2f60fc10ed3e39a4b6e19e6b5521084ab9ce7"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_query_models.py::test_entry_preserves_empty_current_disabled_and_unmanaged_unknown_states",
+            "web/test/library-filters.unit.test.ts::tag all and any remain separate conjunctive predicates",
+            "web/test/library-filters.unit.test.ts::bounds raw and encoded work, even where repeated tags normalize smaller",
+            "web/test/library-joins.unit.test.ts::unmanaged historical tags and dataset declarations stay independent",
+            "web/test/library-joins.unit.test.ts::configured unpublished with known empty tags is not a fictional zero-byte publication",
+            "web/test/library.component.test.tsx::tag and technical controls form one canonical conjunctive catalog query"
+          ],
+          "observed_assertion": "All/any normalized tag groups remain conjunctive. Current empty tags, disabled/unpublished configuration, unmanaged historical tags and unknown provenance stay distinct.",
+          "profile": "Frozen WEB012 final source; real typed client/session store with explicitly scripted HTTP boundary fixtures and mounted React controls; installed browser evidence is separate.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_queries.py::test_last_observed_tags_only_actual_snapshot_and_current_empty_overrides",
+            "tests/unit/test_catalog_queries.py::test_configured_disabled_unpublished_and_same_id_different_type",
+            "tests/unit/test_api_catalog.py::test_cursor_canonical_tag_sets_and_tag_only_staleness_keep_policy_hash",
+            "tests/unit/test_catalog_queries.py::test_secret_substitution_cannot_change_matching_facets_counts_or_catalog_identity"
+          ],
+          "observed_assertion": "All/any normalized tag groups remain conjunctive. Current empty tags, disabled/unpublished configuration, unmanaged historical tags and unknown provenance stay distinct.",
+          "profile": "Real catalog/query/ASGI application services over owned temporary archive metadata; actual strict models, curation cursors, status and immutable publication reads. Supported external storage/Hub fixtures are not installed/NAS/platform proof.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        }
+      ],
       "id": "CATALOG-02",
       "owner": "WEB-012",
       "planned_tests": [
         {
-          "layer": "unit",
-          "node_id": "tests/unit/test_web_catalog.py::test_catalog_02"
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_last_observed_tags_only_actual_snapshot_and_current_empty_overrides"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_catalog.py::test_catalog_02"
+          "node_id": "tests/unit/test_catalog_queries.py::test_configured_disabled_unpublished_and_same_id_different_type"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_query_models.py::test_entry_preserves_empty_current_disabled_and_unmanaged_unknown_states"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_cursor_canonical_tag_sets_and_tag_only_staleness_keep_policy_hash"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_secret_substitution_cannot_change_matching_facets_counts_or_catalog_identity"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-filters.unit.test.ts::tag all and any remain separate conjunctive predicates"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-filters.unit.test.ts::bounds raw and encoded work, even where repeated tags normalize smaller"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-joins.unit.test.ts::unmanaged historical tags and dataset declarations stay independent"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-joins.unit.test.ts::configured unpublished with known empty tags is not a fictional zero-byte publication"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::tag and technical controls form one canonical conjunctive catalog query"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-02"
+          "node_id": ".scratch/web-012-library-browser.mjs::literal-id-and-distinct-type-identities"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::all-any-tag-conjunction"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::last-observed-versus-current-tags"
         }
       ],
       "required_layers": [
@@ -6172,24 +6352,114 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web012-inputs/web-012-run-owned-functional.py --log /var/tmp/web-012-validation-aw9l6_l2/functional7.log",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/functional7-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-012-library-browser.mjs::same-variant-technical-conjunction",
+            ".scratch/web-012-library-browser.mjs::retained-variant-versus-current-pair",
+            ".scratch/web-012-library-browser.mjs::dataset-clears-model-predicates"
+          ],
+          "observed_assertion": "PASS475.491s;42 one-attempt cases,14 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). The Q8/8-bit and maximum-byte predicates require one eligible variant: a smaller Q4 variant cannot satisfy the Q8 byte limit. Retained Q8 and current Q4 publications retain different SHAs; current-only has no Q8 match. Switching to datasets clears model-only predicates, preserves csv format and shows static format declarations. Each engine records227 trusted same-origin GETs/0POST with passive bounded origin observation and no overflow. Actual configuration/archive full9 identities and bytes plus query summaries remain unchanged; operation-store count0. Original browser/API/Caddy roles drain normally; cleanup_unknownfalse. Evidence SHA256 f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804; actual cohort36431c44687e46e49cf332da1eea61e9.",
+          "profile": "Built production Library/actual typed client through trusted-TLS Caddy and installed native0.2.20 read API, owned strict-model toy metadata; LOCAL_NFS_METADATA_SIMULATION, not native-platform/NAS/production acceptance. Additional actual same-origin GET oracle; no response interception/replacement. Source1 actual artifact:1421 frozen inputs, parent e0bedca; UI manifest e3d427ad9b0f6e8d5d4266439c82eb22390c0dd25a00cad9abce9174523fd258, wheel bf7c9dc67d988357b97068aeb318d9b8bbed89a3f9d612c6edb38f5a449a7776, stock image a0e509cc029a12f97f3f9067d708db3aa53b71ad58aafc47de6efa90228c144c. artifact-source-proof.json records only fixture project/lock version0.2.20 versus canonical0.2.2. Gate2 snapshot421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e differs only in OperationRecovery.component.test.tsx Location mock; artifact-gate2-source-proof.json SHA256 daaf7b0422c5892634996ac2b1e5dd67cae7ad525ab2c09bf3b7aa14972ae0d8 proves unchanged runtime inputs/no rebuild. Final strict gate2 and its unit/integration executions below pass against the test-only corrected source.",
+          "source_sha256": "5b46b3926d1fb622952cc26adcf2f60fc10ed3e39a4b6e19e6b5521084ab9ce7"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_query_models.py::test_model_only_filters_select_models_and_reject_explicit_datasets",
+            "tests/unit/test_catalog_query_models.py::test_unknown_valid_technical_identifiers_are_accepted_without_semantic_guessing",
+            "web/test/library-filters.unit.test.ts::direct dataset/model predicates refuse; deliberate dataset switch clears and announces",
+            "web/test/library-joins.unit.test.ts::an exact retained representative stays distinct from inventory's current pair",
+            "web/test/library.component.test.tsx::dataset switch clears only model predicates, keeps format and announces the transition",
+            "web/test/library.component.test.tsx::tag and technical controls form one canonical conjunctive catalog query"
+          ],
+          "observed_assertion": "All technical predicates select one eligible complete primary variant in one publication. Dataset selection refuses/clears model-only predicates; retained matches stay separate from current bytes.",
+          "profile": "Frozen WEB012 final source; real typed client/session store with explicitly scripted HTTP boundary fixtures and mounted React controls; installed browser evidence is separate.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_queries.py::test_same_variant_conjunction_and_truthful_representative",
+            "tests/unit/test_catalog_queries.py::test_noneligible_candidates_remain_inspectable_but_never_positive",
+            "tests/unit/test_catalog_queries.py::test_incomplete_parent_and_unknown_extractors_are_truthful",
+            "tests/unit/test_catalog_queries.py::test_filtered_facets_count_repositories_from_only_matching_variants"
+          ],
+          "observed_assertion": "All technical predicates select one eligible complete primary variant in one publication. Dataset selection refuses/clears model-only predicates; retained matches stay separate from current bytes.",
+          "profile": "Real catalog/query/ASGI application services over owned temporary archive metadata; actual strict models, curation cursors, status and immutable publication reads. Supported external storage/Hub fixtures are not installed/NAS/platform proof.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        }
+      ],
       "id": "CATALOG-03",
       "owner": "WEB-012",
       "planned_tests": [
         {
-          "layer": "unit",
-          "node_id": "tests/unit/test_web_catalog.py::test_catalog_03"
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_same_variant_conjunction_and_truthful_representative"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_catalog.py::test_catalog_03"
+          "node_id": "tests/unit/test_catalog_queries.py::test_noneligible_candidates_remain_inspectable_but_never_positive"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_incomplete_parent_and_unknown_extractors_are_truthful"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_filtered_facets_count_repositories_from_only_matching_variants"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_query_models.py::test_model_only_filters_select_models_and_reject_explicit_datasets"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_query_models.py::test_unknown_valid_technical_identifiers_are_accepted_without_semantic_guessing"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-filters.unit.test.ts::direct dataset/model predicates refuse; deliberate dataset switch clears and announces"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-joins.unit.test.ts::an exact retained representative stays distinct from inventory's current pair"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::dataset switch clears only model predicates, keeps format and announces the transition"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::tag and technical controls form one canonical conjunctive catalog query"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-03"
+          "node_id": ".scratch/web-012-library-browser.mjs::same-variant-technical-conjunction"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::retained-variant-versus-current-pair"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::dataset-clears-model-predicates"
         }
       ],
       "required_layers": [
@@ -6197,24 +6467,119 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web012-inputs/web-012-run-owned-functional.py --log /var/tmp/web-012-validation-aw9l6_l2/functional7.log",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/functional7-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-012-library-browser.mjs::built-ui-basic-bootstrap-and-scope",
+            ".scratch/web-012-library-browser.mjs::unknown-coverage-zero-is-not-absence"
+          ],
+          "observed_assertion": "PASS475.491s;42 one-attempt cases,14 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Initial whole-scope coverage reports36 repositories/34 publications with explicit partial, unsupported, failed and missing metadata. A successful0-match query still reports incomplete coverage, one unknown-tag repository and two missing publications; the UI says no known matches rather than complete absence. Each engine records227 trusted same-origin GETs/0POST with passive bounded origin observation and no overflow. Actual configuration/archive full9 identities and bytes plus query summaries remain unchanged; operation-store count0. Original browser/API/Caddy roles drain normally; cleanup_unknownfalse. Evidence SHA256 f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804; actual cohort36431c44687e46e49cf332da1eea61e9.",
+          "profile": "Built production Library/actual typed client through trusted-TLS Caddy and installed native0.2.20 read API, owned strict-model toy metadata; LOCAL_NFS_METADATA_SIMULATION, not native-platform/NAS/production acceptance. Additional actual same-origin GET oracle; no response interception/replacement. Source1 actual artifact:1421 frozen inputs, parent e0bedca; UI manifest e3d427ad9b0f6e8d5d4266439c82eb22390c0dd25a00cad9abce9174523fd258, wheel bf7c9dc67d988357b97068aeb318d9b8bbed89a3f9d612c6edb38f5a449a7776, stock image a0e509cc029a12f97f3f9067d708db3aa53b71ad58aafc47de6efa90228c144c. artifact-source-proof.json records only fixture project/lock version0.2.20 versus canonical0.2.2. Gate2 snapshot421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e differs only in OperationRecovery.component.test.tsx Location mock; artifact-gate2-source-proof.json SHA256 daaf7b0422c5892634996ac2b1e5dd67cae7ad525ab2c09bf3b7aa14972ae0d8 proves unchanged runtime inputs/no rebuild. Final strict gate2 and its unit/integration executions below pass against the test-only corrected source.",
+          "source_sha256": "5b46b3926d1fb622952cc26adcf2f60fc10ed3e39a4b6e19e6b5521084ab9ce7"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_query_models.py::test_coverage_counts_partition_the_scoped_candidate_set",
+            "tests/unit/test_catalog_query_models.py::test_coverage_incompleteness_remains_explicit_core_policy",
+            "web/test/library-joins.unit.test.ts::no match stays no known match without rewriting incomplete whole-scope coverage",
+            "web/test/library-state.unit.test.ts::zero known matches preserves incomplete coverage=%s and never starts unscoped supplements",
+            "web/test/library-state.unit.test.ts::catalog HTTP%s failure remains classified, never no matches",
+            "web/test/library-state.unit.test.ts::malformed catalog page refuses instead of fabricating empty rows",
+            "web/test/library.component.test.tsx::zero known matches with incomplete coverage never claims complete absence",
+            "web/test/library.component.test.tsx::complete zero and disconnected states have different evidence labels"
+          ],
+          "observed_assertion": "Coverage describes the whole selected scope before matching. Incomplete zero known results remain qualified; malformed, domain, capacity and authentication failures never become empty success.",
+          "profile": "Frozen WEB012 final source; real typed client/session store with explicitly scripted HTTP boundary fixtures and mounted React controls; installed browser evidence is separate.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_queries.py::test_incomplete_parent_and_unknown_extractors_are_truthful",
+            "tests/unit/test_catalog_queries.py::test_page_counts_coverage_and_stale_visible_curation",
+            "tests/unit/test_api_catalog.py::test_catalog_full_scan_and_wire_refusal_are_classified",
+            "tests/unit/test_api_catalog.py::test_catalog_encoded_wrapper_cannot_exceed_response_budget"
+          ],
+          "observed_assertion": "Coverage describes the whole selected scope before matching. Incomplete zero known results remain qualified; malformed, domain, capacity and authentication failures never become empty success.",
+          "profile": "Real catalog/query/ASGI application services over owned temporary archive metadata; actual strict models, curation cursors, status and immutable publication reads. Supported external storage/Hub fixtures are not installed/NAS/platform proof.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        }
+      ],
       "id": "CATALOG-04",
       "owner": "WEB-012",
       "planned_tests": [
         {
-          "layer": "unit",
-          "node_id": "tests/unit/test_web_catalog.py::test_catalog_04"
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_incomplete_parent_and_unknown_extractors_are_truthful"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_catalog.py::test_catalog_04"
+          "node_id": "tests/unit/test_catalog_queries.py::test_page_counts_coverage_and_stale_visible_curation"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_query_models.py::test_coverage_counts_partition_the_scoped_candidate_set"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_query_models.py::test_coverage_incompleteness_remains_explicit_core_policy"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_catalog_full_scan_and_wire_refusal_are_classified"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_catalog_encoded_wrapper_cannot_exceed_response_budget"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-joins.unit.test.ts::no match stays no known match without rewriting incomplete whole-scope coverage"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::zero known matches preserves incomplete coverage=%s and never starts unscoped supplements"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::catalog HTTP%s failure remains classified, never no matches"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::malformed catalog page refuses instead of fabricating empty rows"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::zero known matches with incomplete coverage never claims complete absence"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::complete zero and disconnected states have different evidence labels"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-04"
+          "node_id": ".scratch/web-012-library-browser.mjs::built-ui-basic-bootstrap-and-scope"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::unknown-coverage-zero-is-not-absence"
         }
       ],
       "required_layers": [
@@ -6222,24 +6587,184 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804",
+          "command": "rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web012-inputs/web-012-run-owned-functional.py --log /var/tmp/web-012-validation-aw9l6_l2/functional7.log",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/functional7-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-012-library-browser.mjs::bounded-main-paging",
+            ".scratch/web-012-library-browser.mjs::retained-variant-versus-current-pair",
+            ".scratch/web-012-library-browser.mjs::explicit-bounded-facet-page",
+            ".scratch/web-012-library-browser.mjs::fragment-bookmark-reload-and-back",
+            ".scratch/web-012-library-browser.mjs::invalid-fragments-make-no-metadata-get",
+            ".scratch/web-012-library-browser.mjs::keyboard-mobile-and-selection"
+          ],
+          "observed_assertion": "PASS475.491s;42 one-attempt cases,14 per engine (Chromium156.0.8078.4, Firefox157.0, WebKit27.2). Main paging loads25 then11 rows from36 known matches; an explicit100-row page loads36. Tag facets replace25 values with the next12 of37 rather than append a hidden walk. Retained/current publication provenance stays distinct. Fragment reload/back restores filters; two invalid fragments issue0 metadata GETs. Keyboard selection names only loaded typed repository identities, with no horizontal page overflow at mobile width. Each engine records227 trusted same-origin GETs/0POST with passive bounded origin observation and no overflow. Actual configuration/archive full9 identities and bytes plus query summaries remain unchanged; operation-store count0. Original browser/API/Caddy roles drain normally; cleanup_unknownfalse. Evidence SHA256 f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804; actual cohort36431c44687e46e49cf332da1eea61e9.",
+          "profile": "Built production Library/actual typed client through trusted-TLS Caddy and installed native0.2.20 read API, owned strict-model toy metadata; LOCAL_NFS_METADATA_SIMULATION, not native-platform/NAS/production acceptance. Additional actual same-origin GET oracle; no response interception/replacement. Source1 actual artifact:1421 frozen inputs, parent e0bedca; UI manifest e3d427ad9b0f6e8d5d4266439c82eb22390c0dd25a00cad9abce9174523fd258, wheel bf7c9dc67d988357b97068aeb318d9b8bbed89a3f9d612c6edb38f5a449a7776, stock image a0e509cc029a12f97f3f9067d708db3aa53b71ad58aafc47de6efa90228c144c. artifact-source-proof.json records only fixture project/lock version0.2.20 versus canonical0.2.2. Gate2 snapshot421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e differs only in OperationRecovery.component.test.tsx Location mock; artifact-gate2-source-proof.json SHA256 daaf7b0422c5892634996ac2b1e5dd67cae7ad525ab2c09bf3b7aa14972ae0d8 proves unchanged runtime inputs/no rebuild. Final strict gate2 and its unit/integration executions below pass against the test-only corrected source.",
+          "source_sha256": "5b46b3926d1fb622952cc26adcf2f60fc10ed3e39a4b6e19e6b5521084ab9ce7"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_query_models.py::test_pages_cannot_duplicate_entries_to_inflate_known_matches",
+            "web/test/library-joins.unit.test.ts::same spelling across models and datasets joins by tuple despite source ordering",
+            "web/test/library-joins.unit.test.ts::wrapper authority must agree even if caller retained the same local scope",
+            "web/test/library-joins.unit.test.ts::same SHA but another publication cannot donate bytes to current",
+            "web/test/library-joins.unit.test.ts::a current ref movement or repair generation cannot attach old verification/size",
+            "web/test/library-state.unit.test.ts::curation409 resets whole walk once, a second refusal stays failed and visible",
+            "web/test/library-state.unit.test.ts::cursor history has a finite explicit boundary and duplicate cursor stops without another read",
+            "web/test/library-state.unit.test.ts::facet pagination replaces just its explicit page and a budget refusal does not restart the catalog",
+            "web/test/library-state.unit.test.ts::stale facet continuation restarts from actual first-page closures once",
+            "web/test/library-state.unit.test.ts::authentication clears aggregate rows synchronously and late old response cannot refill new session",
+            "web/test/library-state.unit.test.ts::pause before queued work performs no hidden request and interrupted enrichment leaves main stale for resume",
+            "web/test/library.component.test.tsx::main pages stay finite and selected identities do not return after generation changes",
+            "web/test/library.component.test.tsx::popstate and hashchange restore filter controls without any shell query",
+            "web/test/App.component.test.tsx::Library navigation restores filter fragments and skip navigation preserves them",
+            "web/test/library.component.test.tsx::unmount before queued location parsing performs no hidden GET",
+            "web/test/library.component.test.tsx::unmount after a filter read starts rejects its late continuation and enrichment reads"
+          ],
+          "observed_assertion": "Bounded cursor histories/facet pages stop or restart once on staleness. Type/ID/authority/exact-pair/generation joins prevent cross-row/current/repair mixing; selection, auth and route ownership fence stale responses.",
+          "profile": "Frozen WEB012 final source; real typed client/session store with explicitly scripted HTTP boundary fixtures and mounted React controls; installed browser evidence is separate.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        },
+        {
+          "artifact_sha256": "a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-012-validation-aw9l6_l2/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_queries.py::test_page_counts_coverage_and_stale_visible_curation",
+            "tests/unit/test_catalog_queries.py::test_cursor_binds_exact_scope_and_canonical_filters",
+            "tests/unit/test_api_catalog.py::test_cursor_canonical_tag_sets_and_tag_only_staleness_keep_policy_hash",
+            "tests/unit/test_catalog_queries.py::test_corrupt_later_repository_and_unsafe_namespace_refuse_even_with_one_row",
+            "tests/unit/test_api_catalog.py::test_catalog_search_rejects_unknown_repeated_or_coerced_parameters"
+          ],
+          "observed_assertion": "Bounded cursor histories/facet pages stop or restart once on staleness. Type/ID/authority/exact-pair/generation joins prevent cross-row/current/repair mixing; selection, auth and route ownership fence stale responses.",
+          "profile": "Real catalog/query/ASGI application services over owned temporary archive metadata; actual strict models, curation cursors, status and immutable publication reads. Supported external storage/Hub fixtures are not installed/NAS/platform proof.",
+          "source_sha256": "421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e"
+        }
+      ],
       "id": "CATALOG-05",
       "owner": "WEB-012",
       "planned_tests": [
         {
-          "layer": "unit",
-          "node_id": "tests/unit/test_web_catalog.py::test_catalog_05"
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_page_counts_coverage_and_stale_visible_curation"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_catalog.py::test_catalog_05"
+          "node_id": "tests/unit/test_catalog_queries.py::test_cursor_binds_exact_scope_and_canonical_filters"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_cursor_canonical_tag_sets_and_tag_only_staleness_keep_policy_hash"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_queries.py::test_corrupt_later_repository_and_unsafe_namespace_refuse_even_with_one_row"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_query_models.py::test_pages_cannot_duplicate_entries_to_inflate_known_matches"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog.py::test_catalog_search_rejects_unknown_repeated_or_coerced_parameters"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-joins.unit.test.ts::same spelling across models and datasets joins by tuple despite source ordering"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-joins.unit.test.ts::wrapper authority must agree even if caller retained the same local scope"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-joins.unit.test.ts::same SHA but another publication cannot donate bytes to current"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-joins.unit.test.ts::a current ref movement or repair generation cannot attach old verification/size"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::curation409 resets whole walk once, a second refusal stays failed and visible"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::cursor history has a finite explicit boundary and duplicate cursor stops without another read"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::facet pagination replaces just its explicit page and a budget refusal does not restart the catalog"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::stale facet continuation restarts from actual first-page closures once"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::authentication clears aggregate rows synchronously and late old response cannot refill new session"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library-state.unit.test.ts::pause before queued work performs no hidden request and interrupted enrichment leaves main stale for resume"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::main pages stay finite and selected identities do not return after generation changes"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::popstate and hashchange restore filter controls without any shell query"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/App.component.test.tsx::Library navigation restores filter fragments and skip navigation preserves them"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::unmount before queued location parsing performs no hidden GET"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/library.component.test.tsx::unmount after a filter read starts rejects its late continuation and enrichment reads"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/catalog.spec.ts::CATALOG-05"
+          "node_id": ".scratch/web-012-library-browser.mjs::bounded-main-paging"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::retained-variant-versus-current-pair"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::explicit-bounded-facet-page"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::fragment-bookmark-reload-and-back"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::invalid-fragments-make-no-metadata-get"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-012-library-browser.mjs::keyboard-mobile-and-selection"
         }
       ],
       "required_layers": [
@@ -6247,7 +6772,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

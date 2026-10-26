@@ -75,6 +75,15 @@ export type SubmissionResult =
       }
     | { readonly kind: "refused"; readonly reason: "schema" | "authority" };
 
+/** Views receive named GET methods; keyed commands stay behind the session controller. */
+export type ReadApiClient = Pick<
+    ApiClient,
+    | Extract<keyof ApiClient, `read${string}`>
+    | "scope"
+    | "lookupOperation"
+    | "hostStatus"
+>;
+
 const wrapperFields = [
     "schema_version",
     "request_id",

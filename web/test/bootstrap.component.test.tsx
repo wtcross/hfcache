@@ -8,6 +8,7 @@ import {
 import { App } from "../src/App";
 import { mountApplication, startApplication } from "../src/mount";
 import { inertUiDocument, uiBootstrapFixture } from "./ui-fixtures";
+import { jsonResponse, problemWire } from "./read-fixtures";
 
 afterEach(() => {
     vi.unstubAllGlobals();
@@ -30,13 +31,25 @@ test("only a reconstructed real bootstrap read can replace inert startup recover
     )
         throw new Error("Native test crypto missing.");
     vi.stubGlobal("crypto", platform.webcrypto);
-    const fetcher = vi.fn<typeof fetch>(() =>
-        Promise.resolve(
-            new Response(JSON.stringify(bootstrap), {
-                headers: { "content-type": "application/json" },
-            }),
-        ),
-    );
+    const fetcher = vi.fn<typeof fetch>((input) => {
+        const url =
+            input instanceof URL
+                ? input
+                : new URL(typeof input === "string" ? input : input.url);
+        return Promise.resolve(
+            url.pathname === "/ui/bootstrap.json"
+                ? jsonResponse(bootstrap)
+                : jsonResponse(problemWire("HFAPI019", 20), 503),
+        );
+    });
+    const bootstrapCalls = () =>
+        fetcher.mock.calls.filter(
+            ([input]) =>
+                (input instanceof URL
+                    ? input.pathname
+                    : new URL(typeof input === "string" ? input : input.url)
+                          .pathname) === "/ui/bootstrap.json",
+        );
     expect(
         screen.getByRole("link", { name: "Reload interface" }),
     ).toBeInTheDocument();
@@ -50,7 +63,8 @@ test("only a reconstructed real bootstrap read can replace inert startup recover
         );
     });
     expect(screen.getByText("Administrator session")).toBeInTheDocument();
-    expect(fetcher).toHaveBeenCalledExactlyOnceWith(
+    expect(bootstrapCalls()).toHaveLength(1);
+    expect(bootstrapCalls()[0]).toEqual([
         "https://archive.invalid/ui/bootstrap.json",
         expect.objectContaining({
             credentials: "same-origin",
@@ -58,11 +72,11 @@ test("only a reconstructed real bootstrap read can replace inert startup recover
             redirect: "error",
             method: "GET",
         }),
-    );
+    ]);
     await act(async () => {
         screen.getByRole("button", { name: "Check interface version" }).click();
         await waitFor(() => {
-            expect(fetcher).toHaveBeenCalledTimes(2);
+            expect(bootstrapCalls()).toHaveLength(2);
         });
     });
     await waitFor(() => {

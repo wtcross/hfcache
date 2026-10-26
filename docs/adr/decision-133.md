@@ -158,3 +158,27 @@ absent README remains normal. The bounded fresh README digest is source-copy
 provenance only and grants no verification confidence. Card API reads and display
 remain separate later work; old-format compatibility requires an actual target
 drill rather than inference from unchanged version numbers.
+
+## Browser Library presentation amendment (2026-10-26)
+
+The replacement Library presents the existing catalog, status and inventory reads
+without a new endpoint or execution capability. The UI explicitly defaults to
+repository scope `all`; the API's `archived` default is unchanged. Current versus
+retained publications and current versus last-observed tags remain separate
+sources. Literal ID/eligible-tag text is not README search or live Hub discovery.
+All/any tag groups combine with the other predicates through AND; every model
+technical predicate still matches one eligible variant in one publication.
+
+Known repository matches, whole scoped coverage, loaded table rows and loaded
+facet values retain their distinct meanings, including incomplete zero results.
+Separately fetched inventory is joined by validated authority/type/ID and exact
+publication pair, never list position or a presumed atomic global snapshot.
+Logical sizes cannot become physical storage or hardware-fit claims. Bounded
+fragment bookmarks preserve the existing query-free shell; API GETs retain
+their supported query grammar. Changed filters reset continuations, stale pages
+restart finitely and unsupported/incomplete responses remain explicit.
+
+The [Library guide](../web-ui/library.md) documents the read workflow. Exact card
+reads are implemented separately; repository details, README rendering and edit/
+job forms are not implied by Library availability. Existing record schemas,
+refresh counts, writer guards, MCP tools and immutable archive authority remain.

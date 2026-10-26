@@ -9,6 +9,13 @@ Existing inventory, immutable artifacts and the original nine MCP calls retain
 their behavior. Discovery never downloads, loads models, verifies payloads or
 installs configuration.
 
+The unreleased [browser Library](web-ui/library.md) presents these existing local
+reads, with explicit configured/archived/all and current/retained scopes. Its
+default repository scope is `all`, sent explicitly rather than changing the
+API's `archived` default. Search, paging and loading more facets never submit
+refresh or other jobs. Repository detail and README rendering remain separate
+interface work.
+
 ## Repository card design
 
 **Writer capture and exact card API reads are implemented in unreleased source.** Existing technical
@@ -110,10 +117,11 @@ canonical representation. A separate curation fingerprint hashes a schema-1
 canonical representation of all configured `(type, id, normalized tags)` entries,
 including empty and disabled entries, sorted by identity. Candidate installation
 continues to compare complete candidate and base bytes, never policy hashes alone.
-The current implementation has no remote configuration installation or tag-edit
-API. The [accepted UI administration design](api.md#web-ui-and-administration-design)
-adds guarded configuration installation only after implementation and acceptance;
-it introduces no separate tag store or tag CRUD endpoint.
+The unreleased [managed configuration API](web-ui/configuration-and-tags.md)
+supports guarded edits and exact-preview application while preserving protected
+fields and original outcomes. It introduces no separate tag store or tag CRUD
+endpoint. Library filtering itself neither edits tags nor installs configuration;
+the browser editor remains separate work.
 
 ## Durable supplemental records
 
@@ -472,6 +480,15 @@ instance regardless of the default current scope; both selectors are required.
 Queries share finite metadata budgets and a 32 MiB visible projection ceiling,
 including rows beyond the requested page. Oversized detail refuses rather than
 silently dropping observations.
+
+The Library preserves those server predicates and distinguishes scoped coverage,
+known matching repositories, loaded table rows and loaded facet values. Facet
+totals are not table totals. It joins separately read status/inventory by type/ID
+and authority, and byte facts by the complete SHA/publication pair; reads do not
+form an atomic global snapshot. A retained representative cannot borrow current
+publication size or integrity. Logical bytes are not physical disk use and cannot
+be summed into storage savings or hardware-fit claims. Bounded fragment filters
+are browser navigation only; actual API requests use the existing allowlist.
 
 ## Transport and refresh boundary
 

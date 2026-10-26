@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Web UI replacement](../2026-10-20-plan-web-ui.md) |
 | Phase | P3 |
 | Depends on | [WEB-011](web-011-query-and-operation-state.md) |
 | Branch | `feat/web-ui` |
-| Work-package commit | `WEB-012: <completed outcome>` |
+| Work-package commit | WEB-012, this commit |
 
 ## Read before implementation
 
@@ -47,14 +47,90 @@ The task also requires the existing `scripts/check.sh` gate plus strict applicab
 
 ## Execution notes and blockers
 
-Not started. Record exact source/files, material decisions, additional test cases and any blocker with an unblock condition here. Do not change a dependency's completed evidence. Split oversized work into new work packages rather than silently making several implementation commits for this ID. No production effects, force resets, remote pushes or historical authorization reuse.
+Completed2026-10-26 from WEB-011 `e0bedca`, one work package in this commit.
+The Library composes existing typed catalog/status/inventory/revision GETs under
+the shared authenticated controller. Bounded fragments preserve bookmarks while
+the authenticated shell retains its query refusal. One displayed page, explicit
+facet continuations, at most100 loaded selectors and32 cursor positions reuse
+the32MiB retained-data budget,8MiB read ceiling and two global read slots.
+No hidden full walk, mutation, Hub read, endpoint or runtime dependency was added.
+Current configuration/last-observed tags, unknown coverage and exact current versus
+matching retained publications remain separately attributed. Route/auth changes
+fence late reads and selection; dataset selection deliberately clears model-only
+predicates. Full detail/README/editing/job workflows retain their later tasks.
+
+Gate1 exposed an immutable Location mock in an existing recovery test; only that
+fixture was corrected to follow real browser history while preserving API origin.
+All8 recovery tests then passed. No runtime code changed after the first freeze.
+The first installed source has1421 frozen inputs at
+`5b46b3926d1fb622952cc26adcf2f60fc10ed3e39a4b6e19e6b5521084ab9ce7`;
+final gate2 has1421 inputs at
+`421e7f8cb7fbc2cfcfd003a8ee9a4f032d10b276172951cd7db79a2aa67d8f4e`.
+`artifact-gate2-source-proof.json` records the sole test-only difference and1420
+other exact matches. Actual screenshot links and plan/evidence bookkeeping are
+excluded from that runtime/test/contract freeze and checked again before commit.
+
+Failed functional1–6 remain retained. They exposed private-driver CDP response-body
+observation, a bootstrap response-shape mistake, select-label matching and missing
+Firefox test trust. Functional4 has no browser report and remains failed, never
+inferred as passing. The corrected driver uses an additional actual same-origin
+GET oracle rather than intercepting/replacing application responses. Existing
+Firefox certificate-install policy supplies the test CA with TLS verification and
+all sandbox controls enabled. All original owned cohorts drained; no operation
+was submitted or replayed. There is no unresolved WEB012 acceptance blocker.
 
 ## Completion evidence
 
-Not executed; no acceptance is claimed by this draft. On completion, replace this section with:
-
-- Date and exact source/artifact identities; for an uncommitted result use `WEB-012, this commit`, never a fabricated commit hash.
-- Actual unit/component/integration/functional commands, exit status, relevant test node IDs, test profile/browser and safe evidence locators; explicitly separate simulated storage, isolated platform, and unperformed production/NAS acceptance.
-- Acceptance-case coverage and failure-injection outcomes, required gate output, coverage/budget measurements where relevant, and zero skipped required checks.
-- Human documentation created/updated and example/link validation; invariant/ADR review outcome and amendments or justified no-impact statement.
-- Link to completed progress entry, operator handoff, next-task/current-selector update, and any retained limitation. A required unresolved limitation keeps this task blocked rather than completed.
+- **Strict gate:** `rtk proxy python3 -B .scratch/web-012-run-strict-gate.py --attempt 2`
+  executes `scripts/check.sh --require-web --require-cockpit`: exit0,1442.837s,
+  zero source drift.8581 backend tests pass (52 unrelated opt-in deselections),
+  581Cockpit unit and110 mounted Firefox cases,3234web unit and3337combined
+  component cases pass. Types/lint/format/contracts/strict fixtures, locked wheel
+  profiles, builds, two startup Chromium cases and real HTTP/API React reads pass;
+  zero required skips. Web coverage:94.55%statements,91.82%branches,
+  93.72%functions,95.78%lines. Local Library checks additionally passed103 unit
+  and19 component cases, including invalid filters, source drift, exact joins,
+  failed/empty/partial states, history and immediate unmount/no-hidden-read cases.
+- **Evidence root:** `/var/tmp/web-012-validation-aw9l6_l2/`; gate2 log SHA256
+  `a7743a3b4c4dfa0c1b772e138e19c2d9926fed1a99c9d6ac822b5d2de94f4dcc`;
+  gate2 result SHA256
+  `9d2cb2a6e7b2723cf3a0da6a383aa3682a02a99f7fac5b0dad3fb1084cd2fb44`.
+  CATALOG01–05 now map actual unit/component, real catalog/ASGI integration and
+  installed functional nodes in [the acceptance ledger](../support/web-ui/acceptance-evidence.json).
+- **Installed functional:** `rtk proxy python3 -B .scratch/web-008-call-guest.py --script /home/webfixture/web012-inputs/web-012-run-owned-functional.py --log /var/tmp/web-012-validation-aw9l6_l2/functional7.log`:
+  exit0,475.491s,42 one-attempt cases (14 each in Chromium156.0.8078.4,
+  Firefox157.0, WebKit27.2). Built UI → trusted real Caddy → installed native
+  fixture0.2.20 API exercises all scoped read workflows;227 observed trusted GETs
+  per engine, zero POSTs/interception/overflow. Same-variant counterexample,
+  current/retained exact pairs, all/any/current-only tags, unmanaged/unpublished,
+  coverage-zero qualification, main/facet pages, reload/back, invalid fragments,
+  keyboard selection and narrow-screen overflow pass. Full9 archive identities
+  and bytes, configuration and real query summaries stay unchanged; operation
+  count0. All original roles/descendants/cgroups/endpoints drain normally, with
+  five baseline infrastructure pairs unchanged. `functional7-evidence.json` SHA256
+  `f302ddbf9468ac79f301a8020d97547b33a680fbe0c34e39727f402f077f8804`;
+  guest cohort `36431c44687e46e49cf332da1eea61e9`.
+- **Artifacts:** `/var/tmp/web-012-artifacts-aw9l6_l2/stock.json` records stock
+  API/UI image `a0e509cc029a12f97f3f9067d708db3aa53b71ad58aafc47de6efa90228c144c`,
+  wheel SHA256 `bf7c9dc67d988357b97068aeb318d9b8bbed89a3f9d612c6edb38f5a449a7776`
+  and UI manifest SHA256
+  `e3d427ad9b0f6e8d5d4266439c82eb22390c0dd25a00cad9abce9174523fd258`.
+  Pinned UBI10micro ancestry, stock CA/foundation and actual absence of
+  Node/nodejs/npm/pnpm/yarn/corepack pass. All114 installed Python modules match
+  the wheel. Only copied project/lock fixture version fields project0.2.2 to0.2.20;
+  canonical version and real release selection are unchanged.
+- **Human contracts:** [Library guide](../../../web-ui/library.md), actual synthetic
+  desktop/mobile screenshots, navigation, troubleshooting, discovery/API-client
+  and development guidance accompany the feature. INV018/021 and ADR133/145
+  were reviewed and amended for scope/provenance, finite read composition and
+  exact identity; no new architectural authority or dependency was introduced.
+  Final documentation alignment passes213 human documents/27 helpers. The four
+  documentation/plan suites pass78 tests in14.07s; diff checks pass. All1421 frozen
+  file hashes/modes and the router symlink remain exact in
+  `precommit-source-preservation.json`. See the
+  [progress entry and operator handoff](../../progress.md).
+- **Scope:** real installed application/business reads use explicit owned local
+  NFS-metadata simulation, not NAS or full native/rootless platform acceptance.
+  Required later platform/parity/compatibility and final gates remain. No production,
+  credentials/guards/calendars, live Cockpit, merge/push/tag or rollout action.
+  Next: [WEB-013](web-013-publication-detail-pages.md).

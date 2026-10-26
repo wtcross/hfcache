@@ -585,3 +585,314 @@ main:focus {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
+.library {
+    min-width: 0;
+}
+.library button {
+    padding: 0.5rem 0.85rem;
+    background: #fff;
+    border: 1px solid #cbd5e5;
+    border-radius: 0.4rem;
+    color: #253c62;
+    cursor: pointer;
+}
+.library button:hover:not(:disabled) {
+    border-color: #315fe9;
+    background: #f2f5ff;
+}
+.library button:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+.library-toolbar,
+.library-selection,
+.library-pagination,
+.library-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin: 1rem 0;
+}
+.library-toolbar p {
+    margin: 0;
+    color: var(--muted);
+}
+.library-summaries {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+.library-summaries > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 1.15rem;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+}
+.library-summaries > div > span {
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.library-summaries strong {
+    font-size: 1.7rem;
+    line-height: 1.4;
+}
+.library small,
+.library-muted {
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+.library label {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.library input:not([type="checkbox"]),
+.library select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.3rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid #b9c6db;
+    border-radius: 0.4rem;
+    background: #fff;
+    color: #192335;
+    font: inherit;
+    font-weight: 400;
+}
+.library input:focus-visible,
+.library select:focus-visible,
+.library-table-scroll:focus-visible {
+    outline: 3px solid #86a5ff;
+    outline-offset: 3px;
+}
+.library input:disabled {
+    background: #edf0f5;
+}
+.library-search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 15rem;
+    gap: 1rem;
+    align-items: end;
+}
+.library-search input {
+    font-size: 1rem;
+}
+.library-tabs {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 0;
+}
+.library-tabs button {
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    color: var(--muted);
+}
+.library-tabs button[aria-pressed="true"] {
+    color: #244dc9;
+    border-color: #315fe9;
+}
+.library-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 0.8rem;
+}
+.library-filter-actions {
+    justify-content: flex-start;
+}
+.library-filter-actions button[type="submit"] {
+    background: #315fe9;
+    color: #fff;
+}
+.library-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 15.5rem;
+    gap: 1.25rem;
+    align-items: start;
+    margin: 1.5rem 0;
+}
+.library-content > div,
+.library-sidebar {
+    min-width: 0;
+}
+.library-sidebar {
+    display: grid;
+    gap: 1rem;
+}
+.library-results {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+.library-selection,
+.library-pagination {
+    padding: 0.8rem 1rem;
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+.library-pagination {
+    border-top: 1px solid var(--line);
+}
+.library-pagination button {
+    margin: 0.2rem;
+}
+.library-table-scroll {
+    max-width: 100%;
+    overflow: auto;
+}
+.library-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.8rem;
+}
+.library-table th,
+.library-table td {
+    padding: 1rem 0.8rem;
+    border-top: 1px solid #e5ebf4;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+.library-table thead th {
+    background: #f7f9fc;
+    color: #617087;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.library-table th[scope="row"] {
+    font-weight: 400;
+    min-width: 220px;
+}
+.library-table strong,
+.library-table small {
+    display: block;
+}
+.library-repository {
+    display: flex;
+    gap: 0.65rem;
+}
+.repository-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: #edf1ff;
+    color: #315fe9;
+    font-size: 1.3rem;
+}
+.repository-icon.dataset {
+    background: #e8f4ef;
+    color: #137e68;
+}
+.repository-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0.4rem 0;
+}
+.repository-tags span {
+    background: #edf1f8;
+    color: #344d73;
+    border: 1px solid #dfe7f5;
+    border-radius: 0.25rem;
+    padding: 0 0.3rem;
+    font-size: 0.7rem;
+}
+.archive-badge {
+    display: inline-block;
+    border-radius: 0.3rem;
+    padding: 0.1rem 0.4rem;
+    font-weight: 600;
+    background: #edf0f6;
+    color: #52647e;
+}
+.archive-badge.archived {
+    background: #e5f4ee;
+    color: #08735a;
+}
+.archive-badge.unmanaged {
+    background: #fff3df;
+    color: #805414;
+}
+.library-warning {
+    color: #805414;
+}
+.library-facet-tags {
+    display: grid;
+    gap: 0.6rem;
+    margin: 1rem 0;
+}
+.library-facet-tags label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    overflow-wrap: anywhere;
+    font-weight: 400;
+}
+.library-facet-tags small {
+    margin-left: auto;
+}
+.coverage-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+.coverage-facts dd {
+    margin: 0;
+    font-weight: 600;
+}
+.library-empty {
+    padding: 2rem;
+}
+.library-empty h2 {
+    margin-bottom: 1rem;
+}
+.library-selectors {
+    max-height: 16rem;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+@media (max-width: 1250px) {
+    .library-filter-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .library-content {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .library-sidebar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 650px) {
+    .library-summaries {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .library-search-row,
+    .library-filter-grid,
+    .library-sidebar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .library-tabs {
+        gap: 0.15rem;
+    }
+    .library-tabs button {
+        padding: 0.5rem;
+    }
+}

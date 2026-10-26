@@ -16,6 +16,8 @@ import {
     SessionHostAdministration,
 } from "./components/HostStatusPanel";
 import { OperationRecovery } from "./components/OperationRecovery";
+import { Library } from "./components/Library";
+import type { LibraryStore } from "./library/library-state";
 import type {
     SessionController,
     SessionSnapshot,
@@ -37,15 +39,18 @@ function WorkspaceContent({
     host,
     controller,
     session,
+    library,
 }: {
     workspace: Workspace;
     authenticated: boolean;
     host: UiBootstrap | null;
     controller?: SessionController;
     session?: SessionSnapshot;
+    library?: LibraryStore;
 }) {
     switch (workspace) {
         case "library":
+            if (library !== undefined) return <Library store={library} />;
             return (
                 <div className="workspace-grid">
                     <Panel title="Your repository library">
@@ -154,12 +159,16 @@ export function App({
     onCheckRelease,
     controller,
     session,
+    library,
+    libraryBookmark,
 }: {
     basePath: string;
     bootstrap?: UiBootstrap;
     onCheckRelease?: () => Promise<boolean>;
     controller?: SessionController;
     session?: SessionSnapshot;
+    library?: LibraryStore;
+    libraryBookmark?: string;
 }) {
     const base = validateBasePath(basePath);
     const [pathname, setPathname] = useState(window.location.pathname);
@@ -213,9 +222,11 @@ export function App({
     function navigate(event: MouseEvent<HTMLAnchorElement>, target: Workspace) {
         if (!isPlainNavigation(event)) return;
         event.preventDefault();
-        const path = workspacePath(target, base);
+        const path =
+            workspacePath(target, base) +
+            (target === "library" ? (libraryBookmark ?? "") : "");
         window.history.pushState(null, "", path);
-        setPathname(path);
+        setPathname(window.location.pathname);
         setNavigationOpen(false);
     }
     async function checkInterfaceVersion(): Promise<void> {
@@ -231,7 +242,15 @@ export function App({
 
     return (
         <div className="application">
-            <a className="skip-link" href="#main-content">
+            <a
+                className="skip-link"
+                href="#main-content"
+                onClick={(event) => {
+                    if (!isPlainNavigation(event)) return;
+                    event.preventDefault();
+                    main.current?.focus();
+                }}
+            >
                 Skip to content
             </a>
             <aside className={`sidebar${navigationOpen ? " is-open" : ""}`}>
@@ -262,7 +281,12 @@ export function App({
                     {WORKSPACES.map((item) => (
                         <a
                             key={item.id}
-                            href={workspacePath(item.id, base)}
+                            href={
+                                workspacePath(item.id, base) +
+                                (item.id === "library"
+                                    ? (libraryBookmark ?? "")
+                                    : "")
+                            }
                             aria-current={
                                 workspace === item.id ? "page" : undefined
                             }
@@ -467,6 +491,7 @@ export function App({
                                 ? {}
                                 : { controller })}
                             {...(session === undefined ? {} : { session })}
+                            {...(library === undefined ? {} : { library })}
                         />
                     )}
                     <footer className="page-footer">

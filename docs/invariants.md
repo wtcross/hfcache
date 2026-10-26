@@ -1138,6 +1138,12 @@ image/worker/TLS fixture records and clean immutable artifact identities.
   contact Hub or open payloads. Technical predicates bind one complete eligible
   variant in one publication; missing coverage stays unknown. Historical tags
   require backup. Inert metadata cannot resurrect pruned or purged content.
+  The browser Library preserves current/historical tag provenance, configured/
+  archived and current/retained scopes, and known matches versus whole scoped
+  coverage versus loaded extent. Incomplete zero matches never prove absence.
+  Separately read current inventory cannot lend size/integrity to another exact
+  publication; logical byte counts cannot become physical disk usage or hardware
+  suitability. Filtering and paging confer no writer/Hub capability.
   **Independent card capture:** [decision 142](adr/decision-142.md)
   adds independent schema-1 `RepositoryCard` records in `published/metadata/cards/`
   under the same lock/atomic/preservation guards. Only writer capture may read
@@ -1172,8 +1178,8 @@ Refresh enforcement: [typed offline service](../src/hfcache/catalog_refresh.py),
 [bounded ref inventory](../src/hfcache/catalog_inventory.py),
 [scope/failure fixtures](../tests/unit/test_catalog_refresh.py) and
 [keyed replay fixture](../tests/unit/test_catalog_refresh_replay.py).
-Remaining proposed query/transport interfaces require their own
-validation before support is declared. Offline evidence is not production acceptance.
+Query/transport and browser composition require their applicable independent
+validation. Offline evidence is not production acceptance.
 
 Query enforcement: [shared catalog reader](../src/hfcache/services/catalog_queries.py),
 [strict query/payload models](../src/hfcache/catalog_query_models.py) and
@@ -1393,6 +1399,11 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   finite concurrency/retry/time/cycle/event bounds and advisory cross-tab notices
   never manufacture outcomes or execution authority. API interruption cannot
   clear separate unknown protected configuration effects.
+  Library filter fragments remain bounded under fixed shell routes and encode
+  only supported API predicates, never request-selected authority. Main/facet
+  pages and enrichment remain finite; stale or contradictory pages cannot become
+  successful empty data. Joins use validated authority/type/ID and exact
+  publication pairs rather than row positions or a presumed global snapshot.
 
 Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-and-current-availability),
 [API](api.md#web-ui-and-administration-design),

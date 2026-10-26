@@ -1,6 +1,10 @@
 /** One authenticated application session, above routes; submissions are never replayed. */
 import { ApiClient } from "../api/client";
-import type { SubmissionOptions, SubmissionResult } from "../api/client";
+import type {
+    ReadApiClient,
+    SubmissionOptions,
+    SubmissionResult,
+} from "../api/client";
 import {
     bootstrapScope,
     releaseChanged,
@@ -306,6 +310,9 @@ export function createSessionController(options: SessionControllerOptions) {
             };
         },
         queries,
+        get apiReads(): ReadApiClient {
+            return client;
+        },
         get hostStatus() {
             return hostStatus;
         },

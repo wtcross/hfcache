@@ -123,3 +123,22 @@ The [session contract](../schemas.md#186-browser-recovery-metadata-schema-1) and
 [user guide](../web-ui/operations.md) refine the recovery design of
 [decision134](decision-134.md) and query semantics of [decision137](decision-137.md).
 No server DTO, receipt format, REST/MCP permission or execution authority changes.
+
+## Typed Library composition amendment (2026-10-26)
+
+The Library reuses the typed read client and session query ownership for bounded
+catalog pages, explicit facet pages and inventory/status enrichment. Keys retain
+normalized predicates and authority; joins retain repository type/ID and exact
+SHA/publication identity. A stale/malformed/inconsistent enrichment cannot
+silently reattribute newer current-publication size or integrity to an older
+retained catalog representative. Loaded extent, whole scoped coverage and known
+matches remain distinct, including zero under incomplete coverage.
+
+Browser navigation stores allowlisted filters in bounded fragments, because the
+existing shell refuses query strings. Fragments cannot choose another endpoint
+or authority. API requests keep their existing supported query keys, bounds and
+route semantics. Dataset selection clears model-only predicates visibly. Finite
+stale-continuation resets and explicit limit failures replace hidden all-page
+collection; existing response/retention limits are not enlarged. This is read
+composition, with no new wire schema, endpoint, dependency or writer capability.
+See [Library procedures](../web-ui/library.md) and [catalog semantics](../discovery.md#queries-coverage-and-pages).

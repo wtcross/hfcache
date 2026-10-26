@@ -20,20 +20,21 @@ separate on the same Caddy endpoint.
 After sign-in, **Administrator session** identifies the authenticated human.
 **Configured archive** shows the UUID from installed policy; it does not mean
 archive health, inventory or writability has been checked. The current interface
-provides navigation, permission explanations and
-[original-operation observation and recovery](operations.md). Repository views
-and full job forms are still under development:
+provides the [Library](library.md), permission explanations and
+[original-operation observation and recovery](operations.md). Full repository
+detail views and job forms are still under development:
 
 | Workspace | Intended workflow |
 | --- | --- |
-| Library | Find configured and archived models or datasets, inspect exact publications and distinguish metadata coverage from integrity evidence. |
+| Library | [Find configured and archived models or datasets](library.md) using local ID/tag and technical filters. Keep scope, loaded rows, coverage and current/historical provenance distinct. |
 | Operations | [Observe and recover original operation handles](operations.md), including after a connection interruption. Full job submission forms remain under development. |
 | Maintenance | Review the scope of existing retention, repair and recovery actions before any separate Apply action. |
 | Administration | Read [protected host status and permission reasons](administration.md); use the [configuration and tags API guide](configuration-and-tags.md) for installed intent, managed validation, exact previews and guarded application. |
 
 Use the sidebar or **Open navigation** on a narrow screen to change workspace.
 Direct links to Library, Operations, Maintenance and Administration survive a
-reload. Administration lists each permission with its current reason; the
+reload. Library filter bookmarks use bounded URL fragments after `#`, not shell
+query strings; filtering performs reads only. Administration lists each permission with its current reason; the
 unimplemented host controls remain disabled. Guarded configuration application
 is available through its separate API workflow and exact original preview. Configuration
 read/validate/preview API availability does not imply a browser editor. A grant

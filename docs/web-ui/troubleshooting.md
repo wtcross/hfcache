@@ -196,8 +196,8 @@ Use the authorized [upgrade and drain procedure](../deployment-centos-stream-10.
 ## Read results
 
 Check [interface availability](README.md) before using this guide. The shared
-query and original-operation observation state is available in unreleased source;
-repository views and full job forms remain under development. Installed production
+query, Library and original-operation observation state is available in unreleased source;
+repository details and full job forms remain under development. Installed production
 services retain their recorded releases. A read result describes observed information, never
 permission to modify an archive or proof that an accepted job has finished.
 
@@ -254,3 +254,27 @@ safe metadata. **Stop observing in this browser** does not cancel backend work.
 Only a provable fresh refusal before fetch can remove its own prepared record,
 and only after the removal persists. **Not submitted** is a local memory-only
 summary. It is never restored from storage or inferred from a missing receipt.
+
+## Library search and pages
+
+Follow the [Library guide](library.md) for scopes, tag provenance and same-variant
+filter semantics. Search and pagination never refresh metadata, query the Hub or
+submit a mutation.
+
+| Problem | Meaning and safe next step |
+| --- | --- |
+| Zero known matches with incomplete coverage / HFWRN011 | Some relevant labels or observations are unknown, partial, unsupported, failed or missing. Preserve that qualification; do not read zero as proof of absence. Narrow or change the intended scope, or ask the operator about a separately authorized offline refresh. |
+| Configured repository has no publication or size | Configuration is intent and includes disabled/unpublished entries. Do not invent an archived revision or count an unknown size as zero bytes. |
+| Last-observed tags differ from expected curation | The repository is unmanaged and those labels are historical writer evidence. Current-only filtering excludes them without turning them into current tags. |
+| Current publication differs from a retained match | Retained scope can match an older exact pair. Keep its technical facts separate from current inventory; do not mix current bytes/integrity with the older representative. |
+| Dataset selection clears quantization/bits/maximum variant bytes | These are model-only predicates. The change is deliberate and visible; dataset formats remain eligible filters. |
+| Stale page / HTTP409 | Relevant catalog state changed, possibly only tags. Discard the old continuation and follow the bounded restart. Repeated drift remains a visible refusal, not an endless background scan. |
+| HFAPI005, HTTP413 or browser capacity refusal | A scan, projection, response or shared retention bound was exceeded. Narrow the scope. Smaller pages alone do not reduce every whole-query budget; do not raise a limit to conceal missing evidence. |
+| Facet value is not shown | The facet may be paged. Check its loaded extent and use explicit Load more when offered; one loaded facet page is not the complete value set. |
+| Saved `/ui/library?...` fails on reload | The authenticated shell rejects query strings. Use a supported filter bookmark after `#`, preserving the installation's public prefix. |
+| Invalid or oversized filter bookmark | Unknown fields, duplicate scalar values and invalid bounds refuse visibly. Correct the filter input; rejected content must not become an arbitrary request or default empty table. |
+
+An authentication, protocol or transport error follows the [read-result
+classification](#read-results). Stale evidence is not current health or capacity.
+Do not initialize an archive, weaken authentication or replay an operation to make
+a Library read succeed.

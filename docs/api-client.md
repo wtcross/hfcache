@@ -587,3 +587,37 @@ a writer import. Missing
 or malformed acknowledgements retain the original key/route and uncertainty.
 Current capabilities and read wrappers remain unchanged; their existing reads,
 write and operations permissions cover the additive interfaces.
+
+### Browser Library reads
+
+The [Library guide](web-ui/library.md) describes the current read-only browser
+workflow. It uses the same typed catalog/status/inventory routes and shared
+authority-scoped query controller, with no duplicate aggregate endpoint or
+second fetch/cache implementation. The UI explicitly requests scope `all` by
+default; the catalog API default remains `archived`.
+
+Filter bookmarks use bounded URL fragments under the fixed Library shell route.
+The existing shell refuses query strings. Fragments select only supported
+catalog predicates and never choose a request authority or arbitrary route;
+actual GET query parameters retain the strict API grammar. Dataset selection
+clears model-only predicates. Search text preserves its original bounded Unicode
+spelling for authoritative literal case-folding.
+Browser fragment and encoded query ceilings are independently 8192 UTF-8 bytes.
+Fragments omit opaque cursors and allow only tag-all/tag-any repetition; malformed
+Unicode, controls and bidi override/isolate characters refuse. Page size defaults
+to 25 and the interface offers 25/50/100, below the API's own page maximum.
+Technical identifier normalization is ASCII-only, and browser numeric values
+must fit JavaScript's exact safe-integer range without raising the server ceiling.
+
+Main pages and facet pages remain independently bounded. The main walk retains
+at most 32 cursor positions; explicit facet continuation replaces its displayed
+page. Loaded-selector enrichment reads at most the first 100 revision records,
+without hidden continuation; unavailable pairs remain unknown. A stale cursor discards
+the old continuation with one visible first-page restart per refresh attempt;
+a second stale response remains failed. Malformed/contradictory pages
+and exhausted budgets remain refusals, never truncated successful collections.
+Known matches, scoped coverage and loaded extent remain separate. Inventory
+joins use validated type/ID/authority; logical sizes use the exact publication
+pair. Changed current references cannot silently reattribute an older variant's
+bytes or integrity. The inherited browser response/retention limits only lower
+server and route ceilings; a smaller page does not guarantee the whole scan fits.

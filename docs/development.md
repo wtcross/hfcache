@@ -248,6 +248,25 @@ produce a classified protocol failure. The [API reference](api.md#browser-wire-b
 lists the independent browser byte/work ceilings. Do not add a rounded-number or
 unchecked JSON.parse fallback to support an older engine.
 
+The Library composes these existing typed GETs through the shared query store.
+Its bounded filter fragments stay under the fixed shell route; only allowlisted
+catalog predicates enter API query strings. Preserve raw bounded Unicode search
+for server matching, exact repository type/ID joins, full publication-qualified
+size facts, complete coverage and explicit page/facet extent. An unavailable or
+stale join is not zero, a global total or permission to issue another request
+without a bound. Dataset changes must visibly clear model-only filters.
+
+Independent Library fixtures should exercise configured disabled/unpublished and
+unmanaged archived repositories, identical IDs across types, historical tags,
+same-variant conjunction, incomplete zero-known-match results, changed current
+pairs and curation-only stale cursors. Three-browser installed workflows must
+follow the [human guide](web-ui/library.md) through the real Caddy/API, including
+filter bookmarks and explicit paging, while retaining network/closure proof.
+Design-reference screenshots and synthetic fixture labels are illustrative;
+they are never measurements or installed acceptance by themselves. No hidden
+all-page collector, new endpoint, writer/Hub dispatch or runtime dependency is
+needed for this composition.
+
 Path collision rules use the pinned Python Unicode 16 authority, even when an
 engine carries a newer Unicode release. The [pure table exporter](../src/hfcache/wire_unicode.py)
 and browser NFC/full-casefold implementation retain the archive's exact rules.
