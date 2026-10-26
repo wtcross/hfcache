@@ -59,8 +59,10 @@ local source and build.
 A publication identifies one immutable file tree by repository type, repository
 ID, full commit SHA and publication ID. Repairs can create a different publication
 at the same SHA. Current configuration tags describe operator curation; they do
-not prove publication membership or verification. An archived README will be
-upstream-authored, bounded offline presentation data, with external media blocked.
+not prove publication membership or verification. [README capture](readme-cards.md)
+now retains bounded, sanitized upstream presentation in unreleased source through
+the existing writer workflow. Exact card reads and display remain under
+development; capture does not add a browser card view or permit external media.
 
 Until the replacement passes its installed compatibility and functional checks,
 Cockpit remains shipped. Production migration and rollback require separate

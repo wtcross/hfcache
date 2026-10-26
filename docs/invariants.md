@@ -1138,14 +1138,17 @@ image/worker/TLS fixture records and clean immutable artifact identities.
   contact Hub or open payloads. Technical predicates bind one complete eligible
   variant in one publication; missing coverage stays unknown. Historical tags
   require backup. Inert metadata cannot resurrect pruned or purged content.
-  **Accepted card extension; conformance pending:** [decision 142](adr/decision-142.md)
+  **Independent card capture:** [decision 142](adr/decision-142.md)
   adds independent schema-1 `RepositoryCard` records in `published/metadata/cards/`
   under the same lock/atomic/preservation guards. Only writer capture may read
   exact manifest-listed root README and perform its bounded source-copy digest
   check; it never changes publication verification confidence. Card reads open
   adjunct/authoritative metadata only, preserve exact retained identity and do
-  not fallback. This source/API extension is not implemented yet; existing
-  observations and their schemas remain unchanged. See [card contract](discovery.md#repository-card-design).
+  not fall back. Writer capture is implemented in unreleased source; its future
+  read API and renderer are separate. Existing observations, public refresh
+  fields/counts and their schemas remain unchanged. Non-present cards retain no
+  body; incomplete capture warns without undoing publication success. See
+  [card contract](discovery.md#repository-card-design).
 
 Contract: [discovery](discovery.md), [record schemas](schemas.md#17-supplemental-discovery-records),
 [decision 133](adr/decision-133.md). Record enforcement: [strict models](../src/hfcache/catalog_models.py),

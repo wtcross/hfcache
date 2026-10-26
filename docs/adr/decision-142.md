@@ -1,7 +1,7 @@
 # Capture publication-bound inert README presentation records
 
 - Decision identity: 142.
-- Status: Accepted design; implementation and conformance pending.
+- Status: Accepted; writer capture implemented in unreleased source; card API and rendering pending.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -81,3 +81,33 @@ See [schema](../schemas.md#181-repositorycard-schema-1),
 [security](../security.md#browser-administration-design),
 [web UI status](../web-ui/README.md). Introducing design is this commit;
 implementation evidence remains pending.
+
+## Writer capture amendment (2026-10-25)
+
+The preceding baseline and pending statements record the design's introduction.
+The independent card model, bounded no-follow source capture and atomic writer
+path are implemented in unreleased source. Joined sync/repair and existing
+`technical=true` refresh request card capture without adding an endpoint, flag
+or field to old strict results. Observation rows and counts retain their original
+meanings. Card failures use bounded `HFWRN011`; normal absent README does not
+warn. Card work cannot undo publication success or change integrity confidence.
+
+Capture checks the complete original source for registered/recognized secrets
+before omissions; a match withholds the whole presentation. Leading YAML front
+matter is omitted, Markdown images become fixed placeholders, and raw HTML/MDX
+outside supported code is unsupported. Ordinary safe Markdown links,
+relative/fragment targets and HTTP(S) URLs remain inert source for the later
+pinned renderer; capture never follows them. Ambiguous/unsafe syntax refuses
+rather than falling back to a looser parser. The detailed subset and independent
+source, UTF-8, JSON-string, whole-record and shared-work ceilings are recorded in
+the [capture guide](../web-ui/readme-cards.md) and
+[discovery contract](../discovery.md#repository-card-design).
+
+Each replacement revalidates exact retained publication/manifest/source identity
+and preserves unknown or unsafe prior state under the original supplemental
+writer/preflight/journal guards. It widens no old observation, manifest, reference
+or public refresh schema. Source implementation alone does not establish
+old-binary rollback or installed acceptance; the actual compatibility drill and
+functional evidence must be recorded before acceptance. Exact card API reads
+and React rendering remain separate later work, with all originally accepted
+identity, no-payload and inert-rendering controls still required.

@@ -1,5 +1,6 @@
 """Writer-only bounded static extraction, without loaders, network or payload scans."""
 
+import hashlib
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -119,6 +120,7 @@ class SourceAccess:
         budget: ExtractionBudget | None = None,
     ) -> None:
         self.budget = budget or ExtractionBudget()
+        self.layout = layout
         self.manifest = manifest
         repository = layout.repository(manifest.identity)
         self.tree = repository.instance(
@@ -159,6 +161,45 @@ class SourceAccess:
                 msg = "source_byte_limit"
                 raise ExtractionError(msg)
             return source.read(source.entry.size)
+
+    def read_card(self) -> bytes:
+        """ADR142: fresh root README digest, with the same no-follow inode throughout.
+
+        Declaration reads retain their original semantics. This one source-copy
+        check establishes card provenance, never publication verification.
+        """
+        with self.open("README.md") as source:
+            if source.entry.size > MAXIMUM_SOURCE_BYTES:
+                msg = "source_byte_limit"
+                raise ExtractionError(msg)
+            before = _source_identity(os.fstat(source.stream.fileno()))
+            raw = source.read(source.entry.size)
+            self.budget.step(len(raw))  # charge hashing before doing its work
+            digest = hashlib.sha256(raw).hexdigest()
+            after = _source_identity(os.fstat(source.stream.fileno()))
+            current = _source_identity(self.reader.stat(self.tree / "README.md"))
+            if before != after or before != current:
+                msg = "source_changed"
+                raise ExtractionError(msg)
+            if digest != source.entry.sha256:
+                msg = "source_digest_mismatch"
+                raise ExtractionError(msg)
+            return raw
+
+
+def _source_identity(info: os.stat_result) -> tuple[int, ...]:
+    """Full ordinary-file identity excluding read-induced atime changes."""
+    return (
+        info.st_dev,
+        info.st_ino,
+        info.st_mode,
+        info.st_uid,
+        info.st_gid,
+        info.st_nlink,
+        info.st_size,
+        info.st_mtime_ns,
+        info.st_ctime_ns,
+    )
 
 
 Status = Literal["complete", "partial", "unsupported", "failed"]

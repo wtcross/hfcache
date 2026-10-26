@@ -11,14 +11,17 @@ installs configuration.
 
 ## Repository card design
 
-**Accepted design; not yet implemented.** Existing technical observations contain
-declarations only, not renderable README bodies. A future independent
+**Writer capture is implemented in unreleased source.** Existing technical
+observations retain declarations; an independent
 [RepositoryCard schema 1](schemas.md#181-repositorycard-schema-1) extends the
 optional namespace with
 `cards/<type>/<namespace>/<name>/<sha>/<publication_id>.json`, using existing
 plural `models`/`datasets` grammar. It does not widen old observations/manifests,
 change publication or verification confidence, or make leftover records authority.
 See [decision 142](adr/decision-142.md) and [UI availability](web-ui/README.md).
+The [README capture guide](web-ui/readme-cards.md) describes the existing refresh
+workflow. Exact card API reads and browser rendering remain later work; this
+capture implementation adds neither a read endpoint nor a card view.
 
 Joined writer-owned sync/repair and existing `technical=true` offline refresh
 capture only root manifest-listed `README.md` through no-follow ordinary-file
@@ -28,8 +31,15 @@ source-copy check is not whole-publication verification and cannot update
 integrity confidence. No other payload hashing, live Hub fetch, arbitrary file
 selection or separate card-refresh route is authorized.
 
-Sanitize recognized secrets before retention. Sanitized Markdown's UTF-8 bytes
-and JSON-encoded string each fit 1 MiB; the entire canonical record fits 2 MiB.
+Registered or recognized secrets anywhere in the original source suppress the
+whole presentation, including secrets in omitted front matter or code. Capture
+retains an inert Markdown subset, omits leading YAML front matter, and replaces
+Markdown images with fixed placeholders. Raw HTML/MDX outside supported code
+and ambiguous or unsafe link syntax are unsupported; there is no looser parser.
+Ordinary safe Markdown links, relative/fragment targets and bare HTTP(S) URLs
+remain inert source, without fetching or resolving them during capture.
+Sanitized Markdown's UTF-8 bytes and JSON-encoded string each fit 1 MiB; the
+entire canonical record fits 2 MiB.
 Charge actual failed/source reads to the shared 64 MiB read ceiling, all parsing/
 suppression work to the eight-million-step ceiling, and all attempts/writes to
 the existing 4096-record/128 MiB serialized aggregate budgets. Byte expansion
@@ -39,26 +49,33 @@ writer/preflight/unfinished-journal guards. Unsupported/malformed existing state
 is preserved and refuses replacement.
 
 States distinguish present, absent README, unsupported, oversize, unsafe and
-failed capture. Missing adjunct is explicit read state `not_captured`. Non-success
-card states retain no Markdown/presentation digest and never undo valid archive
-publication success. Existing refresh request/result shape remains unchanged;
-bounded existing supplemental warning classifications expose incomplete capture.
+failed capture. Absent means the authoritative manifest lists no root README;
+it is normal and emits no card warning. Non-present states retain no Markdown or
+presentation digest and never undo valid archive publication success. Capture
+failure or incomplete presentation uses existing bounded `HFWRN011` warnings.
+Existing refresh request/result shapes remain unchanged: observation statuses
+and counts still describe structured observations, not card writes. A card
+warning makes refresh partial when an observation or tag snapshot was written;
+the existing no-write rule otherwise yields failed. A card write cannot inflate
+`observations_written`, `records_failed` or `technical_incomplete`.
 
-Authenticated exact card GET reads only adjunct plus authoritative metadata,
-using existing bounded reader/lease rules. It never opens payloads, resolves
-credentials, refreshes or contacts Hub. Retained noncurrent exact publications
+The planned authenticated exact card GET reads only adjunct plus authoritative
+metadata, using existing bounded reader/lease rules. It never opens payloads,
+resolves credentials, refreshes or contacts Hub. Retained noncurrent exact publications
 may be read only when current reference rules authorize them. Pruned, purged or
 repaired-away identity is 404 with no current-instance fallback. Invalid adjunct
-identity/schema/bounds is an error, never successful empty content.
+identity/schema/bounds is an error, never successful empty content. Its explicit
+`not_captured` state describes a missing adjunct, not a durable card record.
+This read projection is not implemented by writer capture.
 
-The renderer uses bounded inert React Markdown/GFM with a reviewed allowlist;
-no raw HTML/MDX, SVG, scripts, iframes, forms, handlers, unsafe protocols, remote
-plugins, code execution or automatic external images/fonts. External assets are
+The planned renderer uses bounded inert React Markdown/GFM with a reviewed
+allowlist; no raw HTML/MDX, SVG, scripts, iframes, forms, handlers, unsafe protocols,
+remote plugins, code execution or automatic external images/fonts. External assets are
 placeholders, never an arbitrary image proxy. Safe relative links resolve to
 pinned upstream repository/commit; external links use `noopener noreferrer`.
 Prefix heading IDs against DOM clobbering. A source toggle shows labelled sanitized
 presentation only. These are required controls; source and installed/browser
-conformance evidence remains pending.
+conformance evidence remains separate from capture.
 
 ## Operator tags
 
@@ -100,6 +117,7 @@ The approved extension is beneath `published/metadata/`:
 ```text
 tags/<type>/<namespace>/<name>.json
 observations/<type>/<namespace>/<name>/<sha>/<publication_id>.json
+cards/<type>/<namespace>/<name>/<sha>/<publication_id>.json
 ```
 
 Type path components use the existing plural `models`/`datasets` grammar. Only
@@ -116,9 +134,13 @@ bounded diagnostics. Sources must belong to the complete authoritative manifest.
 Observations are derived interpretations, never publication or integrity evidence.
 Existing manifests, references, verification confidence and trees stay unchanged.
 
-Both families require strict fields, bounded strings/collections, deterministic
-ordering and independently versioned atomic JSON. Unsupported, malformed or
-unsafe existing canonical records refuse replacement and remain preserved.
+`RepositoryCard` schema 1 binds its separate sanitized presentation or explicit
+non-present state to the exact publication and manifest. It never embeds a body
+inside a structured observation or rewrites immutable source files.
+
+All three families require strict fields, bounded strings/collections,
+deterministic ordering and independently versioned atomic JSON. Unsupported,
+malformed or unsafe existing canonical records refuse replacement and remain preserved.
 Selected corrupt records refuse reads; absence means missing coverage. Only
 temporary siblings named `<canonical-name>.tmp-<16 lowercase hex digits>` may
 be ignored; unknown siblings are refused. No aggregate on-disk index is
@@ -153,9 +175,11 @@ not fall back to stale tags; technical extraction can still proceed. Removal
 before capture creates no historical labels and leaves any prior snapshot intact.
 Present empty or disabled entries can replace their tag snapshots.
 
-Retained-SHA sync refreshes observations without a new download, publication ID
-or generation. Repair observes its exact replacement and preserves the retired
-instance's manifest and observation. Optional capture errors produce `HFWRN011`
+Retained-SHA sync refreshes observations and cards without a new download,
+publication ID or generation. Repair captures its exact replacement and preserves
+the retired instance's manifest and adjuncts. Observation and card writes are
+independent; a whole record from either can survive failure of the other.
+Optional capture errors produce `HFWRN011`
 and missing or failed coverage; they never roll back or reclassify valid
 publication integrity, swallow domain errors or change its successful exit code.
 Existing repository statuses retain their archive meaning; a newly published
@@ -199,19 +223,24 @@ a record while remaining incomplete technical coverage. Partial writes remain
 visible with exact publication identity and counts. No successful truncation,
 network, credential resolution, publication integrity hashing, configuration write
 or separate background work is permitted.
-The [accepted card design](#repository-card-design) narrowly allows a bounded
-README source-copy SHA-256 comparison during future technical capture; it grants
-no publication verification or confidence update and is not implemented yet.
+The [card capture contract](#repository-card-design) narrowly allows a bounded
+README source-copy SHA-256 comparison during technical capture; it grants no
+publication verification or confidence update. `technical=true` requests both
+structured observations and cards under the shared invocation limits, without
+adding a cards flag, endpoint or result field. Card warnings do not manufacture
+observation rows or alter the meaning of their existing counts and statuses.
 
 ## Static extraction and variants
 
 Only writer-owned post-publication work and explicit offline refresh may read
 payload metadata. Use exact manifest-listed ordinary files with no-follow access.
 Never execute code, loaders, YAML objects, model libraries or external URLs.
-Initial ceilings are 1 MiB per card/JSON file, 64 MiB actual metadata reads and
+Initial ceilings are 1 MiB per README/JSON source, 64 MiB actual metadata reads and
 4096 candidates per publication, structural depth 64 (JSON 32) and retained text
 64 KiB, preferring summaries of 2048 characters. Counts, skipped values, seeks,
 aliases and aggregate sync work must also be bounded before allocations.
+The structured declaration ceiling of 64 KiB remains unchanged; the independent
+card presentation has its own UTF-8, JSON-string and whole-record bounds above.
 
 The `static-1` declaration parser uses only the standard library. It accepts a
 root `README.md` front matter block and manifest-listed `config.json`,

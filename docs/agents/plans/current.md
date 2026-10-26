@@ -4,18 +4,17 @@
 | --- | --- |
 | State | active |
 | Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
-| Next task | [WEB-009 — Publication-pinned README capture](tasks/web-009-repository-card-capture.md) |
-| Branch / completed package | `feat/web-ui` / WEB-008 (this commit; parent `7a86fc2`) |
-| Blockers | None for WEB-009. WEB009–026 and final plan-wide acceptance remain. |
+| Next task | [WEB-010 — Exact-publication card read](tasks/web-010-repository-card-read-api.md) |
+| Branch / completed package | `feat/web-ui` / WEB-009 (this commit) |
+| Blockers | WEB010–026 and final plan-wide acceptance remain. No current prerequisite blocker. |
 | Last completed plan | [Cockpit repair local rollout](2026-10-20-plan-cockpit-rest-rollout.md) |
 | Updated | 2026-10-25 |
 
-WEB001–008 are complete. Guarded configuration application passes its strict
-source gate and125 installed browser cases across ordinary native/rootless
-workflows and representative crash/concurrency/policy/quota scenarios. CONFIG01–11
-are complete; original failed outcomes remain retained. The shared API/UI image
-remains pinned UBI10 micro without Node. Configuration editor UX is WEB-015.
+WEB001–009 are complete. Publication-pinned README capture passes the strict
+source gate and installed application refresh acceptance. CARD01–06 are complete;
+exact card read/rendering remain WEB-010/014. The shared API/UI image remains
+pinned UBI10 micro without runtime Node.
 
 No production/NAS/live Cockpit changes, rollout, merge, push or tag.
-Detailed evidence: [task008](tasks/web-008-atomic-configuration-application.md) and
+Detailed evidence: [task009](tasks/web-009-repository-card-capture.md) and
 [Operator handoff](../progress.md#operator-handoff).

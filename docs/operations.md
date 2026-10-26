@@ -334,3 +334,13 @@ observation. A lost acknowledgement retains the original key/ID; lookup that
 operation instead of issuing a new capture. Reads never refresh implicitly.
 Repair captures its replacement publication independently; prune/purge remove
 membership even when old metadata remains. See [rollback and backup](discovery.md#guarded-rollback-and-backup).
+
+The unreleased server also captures an independently versioned README record
+during joined sync/repair and technical refresh. `--tags-only` leaves it alone.
+Missing README is normal; unsafe, unsupported, oversized or failed capture
+retains a bounded warning without undoing publication. Refresh observation counts
+continue to describe structured observations, so review warnings even when those
+counts are complete. The bounded README source SHA check does not change
+verification confidence. Preserve unsupported records and failed-write evidence;
+never delete them to force replacement or rollback. See
+[README capture, refresh and limitations](web-ui/readme-cards.md).

@@ -10,17 +10,23 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
+from hfcache.catalog_cards import validate_card_presentation
+from hfcache.catalog_extractors import ExtractionBudget
 from hfcache.catalog_models import (
+    MAXIMUM_CARD_RECORD_BYTES,
+    MAXIMUM_CARD_SOURCE_BYTES,
     MAXIMUM_RECORD_BYTES,
     CatalogRecord,
     PublicationObservation,
+    RepositoryCard,
     RepositoryTagSnapshot,
 )
+from hfcache.catalog_parsing import ExtractionError
 from hfcache.errors import IntegrityError, SafetyError
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, TransactionId
 from hfcache.locking import require_archive_lock
 from hfcache.manifests import RevisionManifest
-from hfcache.metadata import MetadataReader, QueryBounds
+from hfcache.metadata import MetadataReader, QueryBounds, QueryLimitError
 from hfcache.models import (
     ArchiveSentinel,
     Reference,
@@ -100,7 +106,8 @@ def _json_structure(raw: bytes) -> None:
 
 def parse_record[RecordT: CatalogRecord](model: type[RecordT], raw: bytes) -> RecordT:
     """Reject ambiguous JSON locally, without widening or rewriting old evidence formats."""
-    if len(raw) > MAXIMUM_RECORD_BYTES:
+    maximum = MAXIMUM_CARD_RECORD_BYTES if model is RepositoryCard else MAXIMUM_RECORD_BYTES
+    if len(raw) > maximum:
         raise _invalid()
     _json_structure(raw)
     try:
@@ -125,7 +132,7 @@ def parse_record[RecordT: CatalogRecord](model: type[RecordT], raw: bytes) -> Re
         ):
             raise _invalid()
         record = model.model_validate(payload)
-        if record.to_payload() != payload or len(dump(record)) > MAXIMUM_RECORD_BYTES:
+        if record.to_payload() != payload or len(dump(record)) > maximum:
             raise _invalid()
     except (UnicodeError, ValueError, RecursionError, ValidationError) as exc:
         raise _invalid() from exc
@@ -150,7 +157,8 @@ def _optional[RecordT: CatalogRecord](
     path: Path, model: type[RecordT], reader: MetadataReader
 ) -> RecordT | None:
     try:
-        raw = reader.read(path, maximum_bytes=MAXIMUM_RECORD_BYTES)
+        maximum = MAXIMUM_CARD_RECORD_BYTES if model is RepositoryCard else MAXIMUM_RECORD_BYTES
+        raw = reader.read(path, maximum_bytes=maximum)
     except FileNotFoundError:
         return None
     except (OSError, ValueError) as exc:
@@ -274,10 +282,79 @@ def read_publication_observation(  # noqa: PLR0913 - exact publication and archi
     return record
 
 
+def _bind_card(
+    record: RepositoryCard,
+    layout: ArchiveLayout,
+    archive_id: str,
+    reader: MetadataReader,
+    card_budget: ExtractionBudget,
+) -> None:
+    identity = RepositoryIdentity.of(record.repository_type, record.repository_id)
+    sha, publication = CommitSha(record.commit_sha), PublicationId(record.publication_id)
+    manifest, digest = publication_binding(layout, identity, sha, publication, reader=reader)
+    if (
+        record.archive_id != archive_id
+        or record.manifest_digest != digest
+        or record.publication_generation != manifest.publication_generation
+        or record.manifest_path
+        != str(layout.archive_relative(layout.repository(identity).manifest(sha, publication)))
+    ):
+        raise _invalid()
+    source = next((entry for entry in manifest.files if entry.path == "README.md"), None)
+    if source is None:
+        if record.state != "absent":
+            raise _invalid()
+    elif (
+        record.state == "absent"
+        or record.expected_source_sha256 != source.sha256
+        or (record.state == "present" and source.size > MAXIMUM_CARD_SOURCE_BYTES)
+    ):
+        raise _invalid()
+    if record.state == "present":
+        # Structural/digest validation alone does not make foreign presentation safe.
+        if record.markdown is None:
+            raise _invalid()
+        try:
+            validate_card_presentation(record.markdown, card_budget)
+        except ExtractionError as exc:
+            if exc.reason == "work_limit":
+                msg = "Repository card presentation work budget exceeded"
+                raise QueryLimitError.single(msg, code="HFAPI005") from exc
+            raise _invalid() from exc
+
+
+def read_repository_card(  # noqa: PLR0913 - exact publication and archive identities
+    layout: ArchiveLayout,
+    identity: RepositoryIdentity,
+    sha: CommitSha,
+    publication: PublicationId,
+    archive_id: str,
+    *,
+    reader: MetadataReader | None = None,
+    card_budget: ExtractionBudget | None = None,
+) -> RepositoryCard | None:
+    """Read an exact retained adjunct; never open README or adopt orphan presentation."""
+    reader = reader or MetadataReader(layout.root, RECORD_BOUNDS)
+    card_budget = card_budget if card_budget is not None else ExtractionBudget()
+    # Missing adjuncts still do not grant authority to an absent/pruned publication.
+    publication_binding(layout, identity, sha, publication, reader=reader)
+    record = _optional(layout.repository(identity).card(sha, publication), RepositoryCard, reader)
+    if record is not None:
+        if (
+            record.repository_type,
+            record.repository_id,
+            record.commit_sha,
+            record.publication_id,
+        ) != (identity.type, identity.id, sha, publication):
+            raise _invalid()
+        _bind_card(record, layout, archive_id, reader, card_budget)
+    return record
+
+
 class CatalogWriter:
     """Caller-owned lock/preflight capability; each record is one independent atomic unit."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - original writer guards plus one shared extraction budget
         self,
         layout: ArchiveLayout,
         *,
@@ -285,8 +362,10 @@ class CatalogWriter:
         checks: tuple[Check, ...] | None = None,
         table: Sequence[MountEntry] | None = None,
         active_sync: TransactionJournal | None = None,
+        card_budget: ExtractionBudget | None = None,
     ) -> None:
         self._ownership = require_archive_lock()
+        self.card_budget = card_budget if card_budget is not None else ExtractionBudget()
         if layout.root != storage.archive_root:
             raise _invalid()
         checks = (
@@ -456,7 +535,7 @@ class CatalogWriter:
 
     def write(
         self,
-        record: RepositoryTagSnapshot | PublicationObservation,
+        record: RepositoryTagSnapshot | PublicationObservation | RepositoryCard,
         *,
         checkpoint: Callable[[str], None] | None = None,
     ) -> Path:
@@ -469,7 +548,7 @@ class CatalogWriter:
         if isinstance(record, RepositoryTagSnapshot):
             path = repository.tag_snapshot
             read_tag_snapshot(self.layout, identity, self.archive_id, reader=self.reader)
-        else:
+        elif isinstance(record, PublicationObservation):
             path = repository.observation(
                 CommitSha(record.commit_sha), PublicationId(record.publication_id)
             )
@@ -481,6 +560,20 @@ class CatalogWriter:
                 PublicationId(record.publication_id),
                 self.archive_id,
                 reader=self.reader,
+            )
+        else:
+            path = repository.card(
+                CommitSha(record.commit_sha), PublicationId(record.publication_id)
+            )
+            _bind_card(record, self.layout, self.archive_id, self.reader, self.card_budget)
+            read_repository_card(
+                self.layout,
+                identity,
+                CommitSha(record.commit_sha),
+                PublicationId(record.publication_id),
+                self.archive_id,
+                reader=self.reader,
+                card_budget=self.card_budget,
             )
         try:
             descriptor = self._parent(path)

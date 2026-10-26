@@ -338,6 +338,14 @@ class RepositoryLayout:
             / f"{_publication(publication_id)}.json"
         )
 
+    def card(self, commit_sha: CommitSha, publication_id: PublicationId) -> Path:
+        """A separately versioned README presentation for one exact publication (ADR142)."""
+        return (
+            self.archive.repository_cards.joinpath(*self._key)
+            / _sha(commit_sha)
+            / f"{_publication(publication_id)}.json"
+        )
+
     @property
     def manifests(self) -> Path:
         """`published/manifests/<type>/<org>/<repo>`."""
@@ -488,6 +496,10 @@ class ArchiveLayout:
     def publication_observations(self) -> Path:
         return self.metadata / "observations"
 
+    @property
+    def repository_cards(self) -> Path:
+        return self.metadata / "cards"
+
     def supplemental_entry_kind(self, path: Path) -> str | None:  # noqa: PLR0911, PLR0912 - explicit optional layout levels
         """Classify only approved names; no filesystem access or arbitrary tag paths."""
         type_depth, namespace_depth, repository_depth, sha_depth, record_depth = range(2, 7)
@@ -495,7 +507,7 @@ class ArchiveLayout:
             parts = path.relative_to(self.metadata).parts
             if not parts:
                 return "directory"
-            if parts[0] not in {"tags", "observations"}:
+            if parts[0] not in {"tags", "observations", "cards"}:
                 return None
             if len(parts) == 1:
                 return "directory"

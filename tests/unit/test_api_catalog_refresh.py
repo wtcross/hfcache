@@ -1,6 +1,7 @@
 """V39-40: keyed offline writes, lost observers, fresh lock scope and no replay."""
 
 import asyncio
+import hashlib
 import json
 import time
 from threading import Event
@@ -8,14 +9,17 @@ from threading import Event
 import httpx
 import pytest
 
+from hfcache import catalog_capture
 from hfcache.api.app import create_app
 from hfcache.api.auth import CredentialClass, Principal
 from hfcache.api.command_models import CatalogRefreshSubmission
 from hfcache.api.operations import OperationStore
+from hfcache.catalog_models import RepositoryCard
 from hfcache.catalog_refresh import CatalogRefreshResult
-from hfcache.catalog_storage import CatalogWriter, read_tag_snapshot
+from hfcache.catalog_storage import CatalogWriter, read_repository_card, read_tag_snapshot
 from hfcache.config import load_config
 from hfcache.hub import HubClient
+from hfcache.identity import CommitSha, PublicationId
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.server_config import InstalledPolicy
 from hfcache.services import commands
@@ -367,7 +371,8 @@ def test_technical_refresh_observes_exact_published_headers_without_other_archiv
     configured, monkeypatch
 ):
     server, layout, hub, _ = configured
-    hub.revisions[SHA_A] = {"model.gguf": gguf()[0]}
+    readme = b"# Archived README\n\nOffline refresh keeps exact publication identity.\n"
+    hub.revisions[SHA_A] = {"model.gguf": gguf()[0], "README.md": readme}
     outcome = CommandServices(
         load_config(server.archive_config), ExecutionContext.create()
     ).synchronize(SelectionRequest((MODEL.selector,)))
@@ -379,6 +384,9 @@ def test_technical_refresh_observes_exact_published_headers_without_other_archiv
         if not key.startswith("published/metadata/")
     }
     downloads = tuple(hub.downloads)
+    original_cards = list(layout.repository_cards.rglob("*.json"))
+    assert len(original_cards) == 1
+    original_card = json.loads(original_cards[0].read_bytes())
     no_external_capability(monkeypatch)
 
     async def action(client, app):
@@ -392,10 +400,97 @@ def test_technical_refresh_observes_exact_published_headers_without_other_archiv
         assert (
             result["data"]["repositories"][0]["publications"][0]["observation_status"] == "complete"
         )
+        publication = result["data"]["repositories"][0]["publications"][0]
+        captured = read_repository_card(
+            layout,
+            MODEL,
+            CommitSha(SHA_A),
+            PublicationId(publication["publication_id"]),
+            ARCHIVE_ID,
+        )
+        assert captured is not None
+        assert captured.state == "present"
+        assert captured.markdown == readme.decode()
+        assert captured.expected_source_sha256 == hashlib.sha256(readme).hexdigest()
+        assert captured.publication_id == original_card["publication_id"]
+        assert captured.to_payload()["captured_at"] >= original_card["captured_at"]
+        assert set(result["data"]["counts"]) == {
+            "repositories",
+            "snapshots_written",
+            "observations_written",
+            "records_failed",
+            "technical_incomplete",
+            "technical_skipped",
+        }
 
     asyncio.run(api.exercise(configured, action))
     assert layout.repository(MODEL).tag_snapshot.read_bytes() == original_snapshot
     assert tuple(hub.downloads) == downloads
+    assert {
+        key: value
+        for key, value in archive_files(layout).items()
+        if not key.startswith("published/metadata/")
+    } == authority
+
+
+@pytest.mark.parametrize("failure", ["capture", "write"])
+def test_card_only_failure_warns_without_reclassifying_structured_refresh(
+    configured, monkeypatch, failure
+):
+    server, layout, hub, _ = configured
+    hub.revisions[SHA_A] = {"model.gguf": gguf()[0]}
+    assert (
+        CommandServices(load_config(server.archive_config), ExecutionContext.create())
+        .synchronize(SelectionRequest((MODEL.selector,)))
+        .exit_code
+        == 0
+    )
+    paths = list(layout.repository_cards.rglob("*.json"))
+    assert len(paths) == 1
+    previous = paths[0].read_bytes()
+    authority = {
+        key: value
+        for key, value in archive_files(layout).items()
+        if not key.startswith("published/metadata/")
+    }
+    original_write = CatalogWriter.write
+
+    def fail_capture(*_args, **_kwargs):
+        msg = "private source diagnostic must not escape"
+        raise RuntimeError(msg)
+
+    def fail_write(self, record, **kwargs):
+        if isinstance(record, RepositoryCard):
+            msg = "private card storage diagnostic must not escape"
+            raise OSError(msg)
+        return original_write(self, record, **kwargs)
+
+    if failure == "capture":
+        monkeypatch.setattr(catalog_capture, "capture_repository_card", fail_capture)
+    else:
+        monkeypatch.setattr(CatalogWriter, "write", fail_write)
+    no_external_capability(monkeypatch)
+
+    async def action(client, app):
+        receipt = await api.submit(
+            client, ROUTE, {"selectors": [MODEL.selector], "tags": False}, "card-failure"
+        )
+        outcome = await api.result(client, receipt)
+        assert outcome["exit_code"] == 0
+        typed = CatalogRefreshResult.model_validate(outcome["data"])
+        assert typed.state == "partial"
+        assert typed.counts.observations_written == 1
+        assert typed.counts.records_failed == 0
+        assert typed.counts.technical_incomplete == 0
+        row = typed.repositories[0]
+        assert row.technical_status == "complete"
+        assert row.publications[0].observation_status == "complete"
+        assert row.warnings == ("HFWRN011",)
+        assert not row.errors
+        assert "private" not in json.dumps(outcome)
+
+    asyncio.run(api.exercise(configured, action))
+    assert paths[0].read_bytes() == previous
     assert {
         key: value
         for key, value in archive_files(layout).items()

@@ -93,10 +93,12 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
             "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d",
         "operation.result":
             "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d",
+        // WEB009 adds a separate card namespace; existing manifest/reference
+        // path construction and public validation behavior are unchanged.
         "publication.manifest":
-            "8a8ccf6a8ea195bf782a510009abfc4f40591ae1698da00b0668f33ad61d0d6f",
+            "18bb75cc7e5fceca74ebab614f6ea53b000ce1db8b15a2cf2f2efbd4cb3d853c",
         "publication.reference":
-            "500115a0a5a9641952a25a50470e38b14543e68901d3ec2c57913bb898051635",
+            "5bd218564e4be5f61303f9703fd9cad9778c07cd41b9be9a0e25abcbbbfdfbfc",
         "run.report":
             "2bf3d9b55a9f8183d894036ea6a5b2a6da358c2672cc8ca717bff2d5138d2b05",
         "hfcache.api.command_models.CatalogRefreshSubmission.canonical":

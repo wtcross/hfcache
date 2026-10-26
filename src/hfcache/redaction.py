@@ -6,7 +6,7 @@ arbitrary secrets. The registry is process-private and never serialized.
 """
 
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from threading import RLock
 from typing import Final
 
@@ -29,6 +29,8 @@ _SECRET_VALUE = re.compile(r"(?:hf_[A-Za-z0-9]{8,}|(?:bearer|basic)\s+\S+)", re.
 _SIGNED_URL = re.compile(
     r"https?://\S*[?&](?:x-amz-|x-goog-|sig=|signature=|token=)", re.IGNORECASE
 )
+_URL_TOKEN = re.compile(r"https?://\S*", re.IGNORECASE)
+_SIGNED_PARAMETER = re.compile(r"[?&](?:x-amz-|x-goog-|sig=|signature=|token=)", re.IGNORECASE)
 _registered: set[str] = set()
 _registry_lock = RLock()
 
@@ -46,6 +48,34 @@ def clear_registered_secrets() -> None:
     """Clear only at process teardown or between isolated tests, never per request."""
     with _registry_lock:
         _registered.clear()
+
+
+def contains_secret(value: str, *, charge: Callable[[int], None]) -> bool:
+    """ADR142: budget scans before work, without allocating a redacted source copy.
+
+    A card with any known credential withholds its entire presentation. The
+    callback can refuse before a registry-dependent scan or casefold allocation;
+    existing general-purpose redaction behavior remains unchanged.
+    """
+    folded: str | None = None
+    with _registry_lock:
+        for secret in _registered:
+            if folded is None:
+                charge(len(value))
+                folded = value.casefold()
+            charge(len(secret) + len(folded))
+            if secret.casefold() in folded:
+                return True
+    charge(len(value))
+    if _SECRET_VALUE.search(value):
+        return True
+    charge(2 * len(value))
+    # One non-overlapping URL-token pass avoids the legacy pattern's repeated
+    # greedy suffix searches on a long token containing many URL-like prefixes.
+    return any(
+        _SIGNED_PARAMETER.search(value, match.start(), match.end()) is not None
+        for match in _URL_TOKEN.finditer(value)
+    )
 
 
 def redact_text(value: str, *, folded_literals: bool = False) -> str:

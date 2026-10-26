@@ -5225,21 +5225,76 @@
       "status": "pending"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_cards.py::test_exact_card_provenance_safe_links_and_immutable_evidence",
+            "tests/unit/test_repository_cards.py::test_card_cannot_claim_unrelated_manifest_or_expected_source"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Exact model/dataset cards bind requested publication manifests after one actual technical refresh; real later catalog GET leaves every adjunct unchanged. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_lifecycle.py::test_joined_sync_and_repair_capture_exact_readme_without_changing_old_evidence",
+            "tests/unit/test_api_catalog_refresh.py::test_technical_refresh_observes_exact_published_headers_without_other_archive_writes"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Exact model/dataset cards bind requested publication manifests after one actual technical refresh; real later catalog GET leaves every adjunct unchanged. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "4eebd0d29731731ed6a7b86c1fa73d0022d629dcf58fc8632cb03f1d895ca373",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web009-inputs/web-009-run-owned-functional.py --log /var/tmp/web-009-validation-xv0sm3nn/functional-capture3.log",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/functional-capture3-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay",
+            ".scratch/web-009-capture-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS21.287s, case71c865837e274513a3fea29db1205edb. Exact model/dataset cards bind requested publication manifests after one actual technical refresh; real later catalog GET leaves every adjunct unchanged. One POST and original operationfded74737798e5474483fdae0e90acb5 is reobserved without replay. Normal browser/container/API/Caddy drain and original five infrastructure pairs unchanged. Earlier capture1 home-ExecStart refusal and capture2 Caddy syntax failure remain false; independent drain proof retained. Exact card GET/rendering are later tasks.",
+          "profile": "Owned application profile; built UI/shared real Caddy/trusted TLS/installed wheel0.2.12/actual API+operation runner; LOCAL_NFS_METADATA_SIMULATION is only the external storage mount-table/local-lock seam. Chromium156.0.8078.4 sandbox verified, three one-attempt cases. No native/rootless platform or production/NAS claim.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        }
+      ],
       "id": "CARD-01",
       "owner": "WEB-009",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_01"
+          "node_id": "tests/unit/test_catalog_cards.py::test_exact_card_provenance_safe_links_and_immutable_evidence"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_repository_cards.py::test_card_cannot_claim_unrelated_manifest_or_expected_source"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_01"
+          "node_id": "tests/unit/test_catalog_lifecycle.py::test_joined_sync_and_repair_capture_exact_readme_without_changing_old_evidence"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_technical_refresh_observes_exact_published_headers_without_other_archive_writes"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-01"
+          "node_id": ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-009-capture-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5247,24 +5302,79 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_cards.py::test_only_exact_manifest_root_readme_is_selected_and_missing_is_normal",
+            "tests/unit/test_repository_cards.py::test_card_round_trip_preserves_all_old_evidence_and_never_opens_payload"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Repository-code canary remains absent; no arbitrary payload/loader execution. API actually has only lo in a distinct private network namespace and AF_UNIX-only restrictions; browser captures14 trusted-origin requests without interception/overflow. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_catalog_refresh.py::test_technical_refresh_observes_exact_published_headers_without_other_archive_writes",
+            "tests/unit/test_catalog_refresh.py::test_technical_only_never_recaptures_changed_tags_or_hashes_payloads"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Repository-code canary remains absent; no arbitrary payload/loader execution. API actually has only lo in a distinct private network namespace and AF_UNIX-only restrictions; browser captures14 trusted-origin requests without interception/overflow. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "4eebd0d29731731ed6a7b86c1fa73d0022d629dcf58fc8632cb03f1d895ca373",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web009-inputs/web-009-run-owned-functional.py --log /var/tmp/web-009-validation-xv0sm3nn/functional-capture3.log",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/functional-capture3-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay",
+            ".scratch/web-009-capture-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS21.287s, case71c865837e274513a3fea29db1205edb. Repository-code canary remains absent; no arbitrary payload/loader execution. API actually has only lo in a distinct private network namespace and AF_UNIX-only restrictions; browser captures14 trusted-origin requests without interception/overflow. One POST and original operationfded74737798e5474483fdae0e90acb5 is reobserved without replay. Normal browser/container/API/Caddy drain and original five infrastructure pairs unchanged. Earlier capture1 home-ExecStart refusal and capture2 Caddy syntax failure remain false; independent drain proof retained. Exact card GET/rendering are later tasks.",
+          "profile": "Owned application profile; built UI/shared real Caddy/trusted TLS/installed wheel0.2.12/actual API+operation runner; LOCAL_NFS_METADATA_SIMULATION is only the external storage mount-table/local-lock seam. Chromium156.0.8078.4 sandbox verified, three one-attempt cases. No native/rootless platform or production/NAS claim.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        }
+      ],
       "id": "CARD-02",
       "owner": "WEB-009",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_02"
+          "node_id": "tests/unit/test_catalog_cards.py::test_only_exact_manifest_root_readme_is_selected_and_missing_is_normal"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_repository_cards.py::test_card_round_trip_preserves_all_old_evidence_and_never_opens_payload"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_02"
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_technical_refresh_observes_exact_published_headers_without_other_archive_writes"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_refresh.py::test_technical_only_never_recaptures_changed_tags_or_hashes_payloads"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-02"
+          "node_id": ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-009-capture-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5272,24 +5382,99 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_cards.py::test_source_limit_refuses_before_read_and_charges_attempt",
+            "tests/unit/test_catalog_cards.py::test_utf8_and_json_string_independent_exact_bounds",
+            "tests/unit/test_catalog_cards.py::test_image_placeholder_expansion_is_bounded_before_join",
+            "tests/unit/test_catalog_cards.py::test_failed_read_charges_actual_consumption_before_classification",
+            "tests/unit/test_repository_cards.py::test_utf8_and_whole_record_limits_are_independent",
+            "tests/unit/test_repository_cards.py::test_card_work_budget_is_shared_across_writer_new_and_prior_record_reads"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. A source of1048577bytes produces oversize/no body through the installed service; all seven publications complete within real aggregate budgets. Exact UTF8/JSON/work and parser boundaries are covered by caller unit/integration tests, not inferred from this representative installed case. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_lifecycle.py::test_invocation_budget_is_shared_across_publications",
+            "tests/unit/test_api_catalog_refresh.py::test_technical_refresh_observes_exact_published_headers_without_other_archive_writes"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. A source of1048577bytes produces oversize/no body through the installed service; all seven publications complete within real aggregate budgets. Exact UTF8/JSON/work and parser boundaries are covered by caller unit/integration tests, not inferred from this representative installed case. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "4eebd0d29731731ed6a7b86c1fa73d0022d629dcf58fc8632cb03f1d895ca373",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web009-inputs/web-009-run-owned-functional.py --log /var/tmp/web-009-validation-xv0sm3nn/functional-capture3.log",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/functional-capture3-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay",
+            ".scratch/web-009-capture-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS21.287s, case71c865837e274513a3fea29db1205edb. A source of1048577bytes produces oversize/no body through the installed service; all seven publications complete within real aggregate budgets. Exact UTF8/JSON/work and parser boundaries are covered by caller unit/integration tests, not inferred from this representative installed case. One POST and original operationfded74737798e5474483fdae0e90acb5 is reobserved without replay. Normal browser/container/API/Caddy drain and original five infrastructure pairs unchanged. Earlier capture1 home-ExecStart refusal and capture2 Caddy syntax failure remain false; independent drain proof retained. Exact card GET/rendering are later tasks.",
+          "profile": "Owned application profile; built UI/shared real Caddy/trusted TLS/installed wheel0.2.12/actual API+operation runner; LOCAL_NFS_METADATA_SIMULATION is only the external storage mount-table/local-lock seam. Chromium156.0.8078.4 sandbox verified, three one-attempt cases. No native/rootless platform or production/NAS claim.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        }
+      ],
       "id": "CARD-03",
       "owner": "WEB-009",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_03"
+          "node_id": "tests/unit/test_catalog_cards.py::test_source_limit_refuses_before_read_and_charges_attempt"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_cards.py::test_utf8_and_json_string_independent_exact_bounds"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_cards.py::test_image_placeholder_expansion_is_bounded_before_join"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_cards.py::test_failed_read_charges_actual_consumption_before_classification"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_repository_cards.py::test_utf8_and_whole_record_limits_are_independent"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_repository_cards.py::test_card_work_budget_is_shared_across_writer_new_and_prior_record_reads"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_03"
+          "node_id": "tests/unit/test_catalog_lifecycle.py::test_invocation_budget_is_shared_across_publications"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_technical_refresh_observes_exact_published_headers_without_other_archive_writes"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-03"
+          "node_id": ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-009-capture-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5297,24 +5482,89 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_cards.py::test_no_follow_regular_sources_only_without_target_reads",
+            "tests/unit/test_catalog_cards.py::test_descriptor_and_nofollow_path_rejoin_after_actual_read",
+            "tests/unit/test_catalog_cards.py::test_fresh_source_digest_is_distinct_from_old_ordinary_declaration_read",
+            "tests/unit/test_repository_cards.py::test_card_round_trip_preserves_all_old_evidence_and_never_opens_payload"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Known same-size changed README produces failed/source_digest_mismatch with no presentation; full immutable publication bytes/metadata remain equal. Unsafe filesystem replacement variants are actual source filesystem tests, not installed fault-injection claims. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_lifecycle.py::test_joined_sync_and_repair_capture_exact_readme_without_changing_old_evidence",
+            "tests/unit/test_api_catalog_refresh.py::test_technical_refresh_observes_exact_published_headers_without_other_archive_writes"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Known same-size changed README produces failed/source_digest_mismatch with no presentation; full immutable publication bytes/metadata remain equal. Unsafe filesystem replacement variants are actual source filesystem tests, not installed fault-injection claims. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "4eebd0d29731731ed6a7b86c1fa73d0022d629dcf58fc8632cb03f1d895ca373",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web009-inputs/web-009-run-owned-functional.py --log /var/tmp/web-009-validation-xv0sm3nn/functional-capture3.log",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/functional-capture3-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay",
+            ".scratch/web-009-capture-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS21.287s, case71c865837e274513a3fea29db1205edb. Known same-size changed README produces failed/source_digest_mismatch with no presentation; full immutable publication bytes/metadata remain equal. Unsafe filesystem replacement variants are actual source filesystem tests, not installed fault-injection claims. One POST and original operationfded74737798e5474483fdae0e90acb5 is reobserved without replay. Normal browser/container/API/Caddy drain and original five infrastructure pairs unchanged. Earlier capture1 home-ExecStart refusal and capture2 Caddy syntax failure remain false; independent drain proof retained. Exact card GET/rendering are later tasks.",
+          "profile": "Owned application profile; built UI/shared real Caddy/trusted TLS/installed wheel0.2.12/actual API+operation runner; LOCAL_NFS_METADATA_SIMULATION is only the external storage mount-table/local-lock seam. Chromium156.0.8078.4 sandbox verified, three one-attempt cases. No native/rootless platform or production/NAS claim.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        }
+      ],
       "id": "CARD-04",
       "owner": "WEB-009",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_04"
+          "node_id": "tests/unit/test_catalog_cards.py::test_no_follow_regular_sources_only_without_target_reads"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_cards.py::test_descriptor_and_nofollow_path_rejoin_after_actual_read"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_cards.py::test_fresh_source_digest_is_distinct_from_old_ordinary_declaration_read"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_repository_cards.py::test_card_round_trip_preserves_all_old_evidence_and_never_opens_payload"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_04"
+          "node_id": "tests/unit/test_catalog_lifecycle.py::test_joined_sync_and_repair_capture_exact_readme_without_changing_old_evidence"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_technical_refresh_observes_exact_published_headers_without_other_archive_writes"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-04"
+          "node_id": ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-009-capture-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5322,24 +5572,84 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_catalog_cards.py::test_nonpresent_classifications_never_retain_source",
+            "tests/unit/test_catalog_cards.py::test_credentials_anywhere_withhold_whole_body_before_omissions",
+            "tests/unit/test_repository_cards.py::test_nonpresent_card_keeps_expected_source_but_withholds_presentation"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Model/dataset present, normal absent, unsafe secret, oversize and failed digest states remain distinct. Result stays partial with7 observation writes/0 failed records/1 technical incomplete; card warnings never inflate verification confidence. Unsupported grammar variants run in source tests. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_catalog_lifecycle.py::test_card_extractor_failure_does_not_discard_successful_observation",
+            "tests/unit/test_api_catalog_refresh.py::test_card_only_failure_warns_without_reclassifying_structured_refresh"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Model/dataset present, normal absent, unsafe secret, oversize and failed digest states remain distinct. Result stays partial with7 observation writes/0 failed records/1 technical incomplete; card warnings never inflate verification confidence. Unsupported grammar variants run in source tests. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "4eebd0d29731731ed6a7b86c1fa73d0022d629dcf58fc8632cb03f1d895ca373",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web009-inputs/web-009-run-owned-functional.py --log /var/tmp/web-009-validation-xv0sm3nn/functional-capture3.log",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/functional-capture3-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay",
+            ".scratch/web-009-capture-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS21.287s, case71c865837e274513a3fea29db1205edb. Model/dataset present, normal absent, unsafe secret, oversize and failed digest states remain distinct. Result stays partial with7 observation writes/0 failed records/1 technical incomplete; card warnings never inflate verification confidence. Unsupported grammar variants run in source tests. One POST and original operationfded74737798e5474483fdae0e90acb5 is reobserved without replay. Normal browser/container/API/Caddy drain and original five infrastructure pairs unchanged. Earlier capture1 home-ExecStart refusal and capture2 Caddy syntax failure remain false; independent drain proof retained. Exact card GET/rendering are later tasks.",
+          "profile": "Owned application profile; built UI/shared real Caddy/trusted TLS/installed wheel0.2.12/actual API+operation runner; LOCAL_NFS_METADATA_SIMULATION is only the external storage mount-table/local-lock seam. Chromium156.0.8078.4 sandbox verified, three one-attempt cases. No native/rootless platform or production/NAS claim.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        }
+      ],
       "id": "CARD-05",
       "owner": "WEB-009",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_05"
+          "node_id": "tests/unit/test_catalog_cards.py::test_nonpresent_classifications_never_retain_source"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_cards.py::test_credentials_anywhere_withhold_whole_body_before_omissions"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_repository_cards.py::test_nonpresent_card_keeps_expected_source_but_withholds_presentation"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_05"
+          "node_id": "tests/unit/test_catalog_lifecycle.py::test_card_extractor_failure_does_not_discard_successful_observation"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_card_only_failure_warns_without_reclassifying_structured_refresh"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-05"
+          "node_id": ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-009-capture-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5347,24 +5657,89 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_repository_cards.py::test_card_crashes_leave_a_whole_old_or_new_record",
+            "tests/unit/test_repository_cards.py::test_prior_unsupported_unsafe_or_oversize_card_is_preserved",
+            "tests/unit/test_repository_cards.py::test_matching_digest_does_not_authorize_unsafe_new_or_existing_presentation",
+            "tests/unit/test_catalog_storage.py::test_metadata_unknown_temp_names_refuse_and_supported_ones_remain"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Preexisting schema999 card remains byte/inode-identical during installed refresh; other cards remain complete and independent publication authority is unchanged. Temporary/fsync/replace cuts are exercised on actual local filesystems in source tests, not represented as installed crash cases. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "918f7b5a6670b05d6fd84619501c3d72f982281e551522517056bd905dadd18b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/gate1/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_catalog_refresh.py::test_card_only_failure_warns_without_reclassifying_structured_refresh",
+            "tests/unit/test_catalog_lifecycle.py::test_optional_store_failures_preserve_success_and_valid_publication"
+          ],
+          "observed_assertion": "All named nodes and variants pass in strict gate:8500 backend tests plus full strict web/Cockpit, wheel and real-API browser checks;52 unrelated opt-in deselections and zero required skips. Preexisting schema999 card remains byte/inode-identical during installed refresh; other cards remain complete and independent publication authority is unchanged. Temporary/fsync/replace cuts are exercised on actual local filesystems in source tests, not represented as installed crash cases. Functional assertions are separately recorded below.",
+          "profile": "WEB-009, this commit; parentad3275a; frozen1383 source inputs. Actual local filesystems/ASGI/operation services with owned external storage/Hub seams where named; not installed MAC or NAS proof.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        },
+        {
+          "artifact_sha256": "4eebd0d29731731ed6a7b86c1fa73d0022d629dcf58fc8632cb03f1d895ca373",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web009-inputs/web-009-run-owned-functional.py --log /var/tmp/web-009-validation-xv0sm3nn/functional-capture3.log",
+          "evidence_locator": "/var/tmp/web-009-validation-xv0sm3nn/functional-capture3-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay",
+            ".scratch/web-009-capture-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS21.287s, case71c865837e274513a3fea29db1205edb. Preexisting schema999 card remains byte/inode-identical during installed refresh; other cards remain complete and independent publication authority is unchanged. Temporary/fsync/replace cuts are exercised on actual local filesystems in source tests, not represented as installed crash cases. One POST and original operationfded74737798e5474483fdae0e90acb5 is reobserved without replay. Normal browser/container/API/Caddy drain and original five infrastructure pairs unchanged. Earlier capture1 home-ExecStart refusal and capture2 Caddy syntax failure remain false; independent drain proof retained. Exact card GET/rendering are later tasks.",
+          "profile": "Owned application profile; built UI/shared real Caddy/trusted TLS/installed wheel0.2.12/actual API+operation runner; LOCAL_NFS_METADATA_SIMULATION is only the external storage mount-table/local-lock seam. Chromium156.0.8078.4 sandbox verified, three one-attempt cases. No native/rootless platform or production/NAS claim.",
+          "source_sha256": "741fe59cc7ac4edc0248d594f35bc53a064c3707d9e43b9403e841f369441e59"
+        }
+      ],
       "id": "CARD-06",
       "owner": "WEB-009",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_06"
+          "node_id": "tests/unit/test_repository_cards.py::test_card_crashes_leave_a_whole_old_or_new_record"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_repository_cards.py::test_prior_unsupported_unsafe_or_oversize_card_is_preserved"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_repository_cards.py::test_matching_digest_does_not_authorize_unsafe_new_or_existing_presentation"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_catalog_storage.py::test_metadata_unknown_temp_names_refuse_and_supported_ones_remain"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_06"
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_card_only_failure_warns_without_reclassifying_structured_refresh"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_catalog_lifecycle.py::test_optional_store_failures_preserve_success_and_valid_publication"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-06"
+          "node_id": ".scratch/web-009-capture-browser.mjs::original-refresh-result-bounded-publications-no-replay"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-009-capture-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5372,7 +5747,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

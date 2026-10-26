@@ -29,6 +29,31 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-009 Capture bounded publication-pinned README cards (2026-10-25,
+  this commit — [task](plans/tasks/web-009-repository-card-capture.md)).
+  Independent schema1/model/path and guarded atomic adjunct storage capture only
+  manifest-listed root README through joined sync/repair and existing technical
+  refresh. Full-source secret suppression, inert bounded grammar, fresh SHA and
+  no-follow descriptor/path stability preserve exact publication authority.
+  Old observation/result shapes and counts remain unchanged; optional failures
+  warn without inflating integrity. Unknown/unsafe prior cards are preserved.
+  Strict gate passes1413.458s:8500 backend,581 Cockpit unit,2834 web unit/2894
+  component, strict types/lint, wheel/read-API/browser checks;211 human docs/27
+  helpers. All1383 frozen source inputs remain exact at741fe59c….
+  Real installed built-UI/Caddy/API application acceptance passes21.287s: three
+  one-attempt Chrome cases, one original refresh, seven publication outcomes,
+  unchanged authority, no code/network and normal process/container drain.
+  Storage seam is explicitly LOCAL_NFS_METADATA_SIMULATION, not platform/NAS.
+  Both failed setup cohorts remain false with independent original-role drain.
+  Actual previous-release reconstructed binary preserves all files and returns
+  HFVER007/40 for catalog with new cards; status/inventory remain compatible.
+  New human README guide and discovery/schema/security/API/CLI/operations and
+  rollback docs align; INV002/005/018 and ADR142/AD12/14/15/17/133 reviewed/amended.
+  Shared image01ef3ffc retains pinned UBI10 micro/no runtime Node; installed112
+  modules match disclosed fixture wheel0.2.12. No runtime dependency added.
+  CARD01–06 complete; selector advances WEB010, rendering remains WEB014.
+  No production/NAS/live Cockpit, deployment, merge, push or tag action.
+
 - [x] WEB-008 Implement guarded atomic configuration application (2026-10-25,
   this commit — [task](plans/tasks/web-008-atomic-configuration-application.md)).
   Exact managed edits require their original successful complete preview, fresh
@@ -2678,6 +2703,26 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-009 checkpoint (2026-10-25, this commit): WEB001–009 complete on
+`feat/web-ui`; continue WEB-010 through the current selector. Strict gate and
+installed application refresh acceptance pass; CARD01–06 complete. Exact card
+GET and React rendering remain WEB-010/014. Task009 records all identities,
+commands, failure outcomes, source/functional evidence and compatibility drill.
+The shared API/UI image remains pinned UBI10 micro without runtime Node.
+
+The owned guest's original five infrastructure processes remain unchanged;
+new API/Caddy/browser roles drain normally. Test package0.2.12 is installed only
+under an owned test prefix, with no production or release selection. The seven
+publications live only in a fresh home-directory storage simulation. Prior failed
+cohorts and their independent drain evidence remain preserved. Existing guest
+key/lock, loopback NFS and historical helper/runtime state are unchanged. Old
+released-source status/inventory read the new adjunct environment, but catalog
+refuses HFVER007/exit40; preserve cards and choose a compatible reader rather
+than deleting metadata. Human rollback guidance records that limitation.
+Production0.2.2, NAS/guards/calendars/credentials and live Cockpit remain untouched.
+Production rollout, merge, push and tag remain unauthorized. Earlier checkpoints
+below are historical evidence.
 
 Latest WEB-008 checkpoint (2026-10-25, this commit): WEB001–008 are complete on
 `feat/web-ui`; continue WEB-009 through the current selector. Strict gate5 and125

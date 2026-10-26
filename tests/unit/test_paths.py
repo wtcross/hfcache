@@ -83,6 +83,30 @@ def test_top_level_layout(layout: ArchiveLayout):
     assert layout.catalog == ROOT / "published/catalog"
     assert layout.repositories_catalog == ROOT / "published/catalog/repositories.json"
     assert layout.verification_catalog == ROOT / "published/catalog/verification.json"
+
+
+@pytest.mark.parametrize("kind", ["model", "dataset"])
+def test_repository_card_paths_and_only_approved_namespace_grammar(layout, kind):
+    repository = layout.repository(RepositoryIdentity.of(kind, "organization/repository"))
+    path = repository.card(SHA, PUBLICATION)
+    plural = "models" if kind == "model" else "datasets"
+    assert layout.repository_cards == ROOT / "published/metadata/cards"
+    assert (
+        path
+        == layout.repository_cards
+        / plural
+        / "organization/repository"
+        / SHA
+        / f"{PUBLICATION}.json"
+    )
+    assert layout.supplemental_entry_kind(path) == "file"
+    assert (
+        layout.supplemental_entry_kind(path.with_name(path.name + ".tmp-0123456789abcdef"))
+        == "file"
+    )
+    assert layout.supplemental_entry_kind(path.parent) == "directory"
+    assert layout.supplemental_entry_kind(path.with_name("unexplained.tmp")) is None
+    assert layout.supplemental_entry_kind(layout.metadata / "unknown") is None
     assert layout.audit == ROOT / "audit"
     assert layout.pruned_audit == ROOT / "audit/pruned"
     assert layout.repair_audit == ROOT / "audit/repairs"

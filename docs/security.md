@@ -74,6 +74,14 @@ a conservative YAML subset without aliases/tags/constructors, never follows URLs
 and retains only selected attributed declarations. Its bounds do not retroactively
 claim a parser resource bound for the older dependency detector.
 
+Independent README presentation capture uses that same exact-manifest access
+and shared budgets. It detects registered/recognized secrets across the original
+source before omitting front matter or replacing assets; a match withholds the
+whole presentation. Unsupported syntax and unsafe or exhausted input produce
+fixed diagnostics without raw source fragments or exception messages. No URL,
+code block or document construct grants execution or network authority. See the
+[capture subset](web-ui/readme-cards.md#sanitized-presentation).
+
 **Residual risk.** A parser vulnerability in the standard library or in
 `huggingface_hub`. Mitigated by keeping the dependency set small and locked, and
 by systemd hardening (§5) limiting what a compromised process can reach.
@@ -1301,13 +1309,21 @@ implemented. Source tests do not establish SELinux/namespace/container acceptanc
 Cards are untrusted derived presentation, separately bound to exact retained
 publication and immutable manifest/source identity. Writer-only bounded source
 SHA comparison checks the copied README alone and never raises integrity
-confidence. HTTP reads only the adjunct, never the payload/Hub. Sanitize known
-secrets before retention and render bounded inert Markdown using React allowlists.
-Disable HTML/MDX/SVG/scripts/iframes/forms/handlers/unsafe protocols, code execution
-and automatic images/fonts. Safe relative links use pinned upstream identity;
-external links use `noopener noreferrer`; heading IDs prevent DOM clobbering.
-The source toggle exposes sanitized presentation only. Missing/unsafe/oversize/
-failed capture remains explicit and cannot invalidate valid publication success.
+confidence. Capture is implemented in unreleased source; its inert Markdown is
+not an HTML response or an available card view. Registered/recognized secrets
+anywhere in the source withhold the whole presentation; non-present records retain no body or
+presentation digest. Safe link text stays inert, Markdown images become fixed
+placeholders, and raw HTML/MDX outside supported code is unsupported. Absent README is
+normal; unsafe/oversize/failed capture emits bounded `HFWRN011` without undoing
+valid publication success or changing old observation counts.
+
+The later card read API must read only adjunct/authoritative metadata, never
+payloads or Hub. The later renderer must use React allowlists and bounded inert
+Markdown, disabling HTML/MDX/SVG/scripts/iframes/forms/handlers/unsafe protocols,
+code execution and automatic images/fonts. Safe relative links use pinned
+upstream identity; external links use `noopener noreferrer`; heading IDs prevent
+DOM clobbering. Any source toggle exposes sanitized presentation only. These
+read/render controls do not become available through writer capture.
 
 Conformance requires adversarial unit/integration cases and built-UI tests through
 actual Caddy/TLS plus installed isolated native/rootless profiles in Chromium,

@@ -323,6 +323,17 @@ strict [refresh payload](schemas.md#173-offline-refresh-result). Refresh perform
 no recovery/repair/prune/cleanup or integrity hashing. Observer departure cannot
 cancel it; startup never replays it. Preserve uncertain handles and original state.
 
+In unreleased source, `technical=true` also captures the exact publication's
+manifest-listed root `README.md` into an independent
+[RepositoryCard](schemas.md#181-repositorycard-schema-1). A bounded fresh source
+SHA-256 comparison establishes only README provenance; it does not verify the
+publication or update integrity confidence. No Hub request or payload download
+is added. Card failure uses existing `HFWRN011` warnings and the existing partial
+result rules. Publication observation fields and counts retain their original
+meaning; there is no card count, refresh flag or additional refresh route.
+The card read API and browser renderer are separate subsequent work. See the
+[capture guide](web-ui/readme-cards.md).
+
 The canonical route identifies this operation kind; its Envelope command is
 `catalog refresh`. Existing receipt/result-reference/Envelope versions and fields
 remain unchanged. Strict older operation-route clients may refuse the new kind.

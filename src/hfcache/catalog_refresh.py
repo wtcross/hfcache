@@ -92,30 +92,48 @@ def _scope(
 
 def _publication(
     capture: CatalogCapture, identity: RepositoryIdentity, ref: Reference
-) -> PublicationRefresh:
+) -> tuple[PublicationRefresh, bool]:
     common = {
         "commit_sha": ref.commit_sha,
         "publication_id": ref.publication_id,
         "publication_generation": ref.publication_generation,
     }
     try:
-        record = capture.publication_record(
+        record, card = capture.publication_records(
             identity, CommitSha(ref.commit_sha), PublicationId(ref.publication_id)
         )
+    except HfcacheError as exc:
+        return (
+            PublicationRefresh(**common, write_status="failed", error_code=exc.problems[0].code),
+            True,
+        )
+    except Exception:  # noqa: BLE001 - exact binding failure supplies no card authority
+        return PublicationRefresh(**common, write_status="failed", error_code="HFVER007"), True
+    try:
         failures = capture.write_record(record)
         if failures:
-            return PublicationRefresh(**common, write_status="failed", error_code=failures[0])
-        return PublicationRefresh(
-            **common,
-            write_status="written",
-            observation_status=record.status,
-            observed_at=record.observed_at,
-            manifest_digest=record.manifest_digest,
-        )
+            refreshed = PublicationRefresh(**common, write_status="failed", error_code=failures[0])
+        else:
+            refreshed = PublicationRefresh(
+                **common,
+                write_status="written",
+                observation_status=record.status,
+                observed_at=record.observed_at,
+                manifest_digest=record.manifest_digest,
+            )
     except HfcacheError as exc:
-        return PublicationRefresh(**common, write_status="failed", error_code=exc.problems[0].code)
+        refreshed = PublicationRefresh(
+            **common, write_status="failed", error_code=exc.problems[0].code
+        )
     except Exception:  # noqa: BLE001 - isolate only the optional exact record attempt
-        return PublicationRefresh(**common, write_status="failed", error_code="HFVER007")
+        refreshed = PublicationRefresh(**common, write_status="failed", error_code="HFVER007")
+    card_incomplete = card is None
+    if card is not None:
+        card_incomplete = bool(capture.write_record(card)) or card.state not in {
+            "present",
+            "absent",
+        }
+    return refreshed, card_incomplete
 
 
 def refresh_catalog(
@@ -143,7 +161,10 @@ def refresh_catalog(
                 tag_status = "failed" if failures else "captured"
             if suppressed:
                 warning_codes.add("HFWRN011")
-        publications = tuple(_publication(capture, identity, ref) for ref in references)
+        attempts = tuple(_publication(capture, identity, ref) for ref in references)
+        publications = tuple(publication for publication, _card_incomplete in attempts)
+        if any(card_incomplete for _publication, card_incomplete in attempts):
+            warning_codes.add("HFWRN011")
         error_codes.update(pub.error_code for pub in publications if pub.error_code is not None)
         incomplete = any(pub.observation_status != "complete" for pub in publications)
         if incomplete or error_codes:

@@ -421,10 +421,25 @@ readers before switching. Preserve all independent compatibility domains:
 | Quarantine cleanup (0.1.8–0.1.10) | Formats remain compatible; older tools lack cleanup and do not restore removed redundant entries |
 | API receipts and scheduled handles | Retain separate stores/handles and a compatible observer/reconciler; absent old commands/modules never prove nonexecution |
 | Tags and supplemental discovery | Old strict configs refuse even empty tags; old initialization inspection flags the optional namespace, while ordinary inventory can remain readable. Old client receipt allowlists refuse refresh kinds although generic stores preserve them. Require actual target validation, preserved backups/handles and a compatible observer; never delete evidence to force acceptance. See [observed compatibility](discovery.md#observed-pre-feature-compatibility). |
+| RepositoryCard schema1 (unreleased) | The isolated 0.2.2 released-source drill preserves cards and keeps status/inventory readable, but its catalog read refuses the new namespace with `HFVER007`/exit40. Preserve adjuncts and a compatible catalog reader before rollback; never delete cards to make the old reader accept the archive. |
 | Optional MCP | Disable deliberately before server-only/pre-MCP startup; no automatic fallback or schema migration |
 | Protected host reader | For a predecessor with host-reader support, preserve current bootstrap inodes before restoring matching copies/labels and the reviewed release/index/policy binding; retain the original key and six explicit permission values. For a pre-helper target, restore a preserved target-compatible server configuration and keep the helper stopped while retaining its files, policy, receipt, key and evidence. Review SELinux policy compatibility separately; a selector rollback alone is insufficient. |
 | Explicit verifier socket owner | An older strict server rejects the new configuration key. Validate the intended target with a preserved compatible server configuration before selection; do not change socket ownership or discard operation state to force rollback. |
 | Rootless 0.2.0 | Recorded API-to-worker SELinux connection limitation returns; do not weaken policy to bypass it |
+
+The README throwaway-archive drill rebuilt the exact recorded released source
+`1c685018803a365bbb8b0c1aad4b94709f60e7d7` offline. The rebuilt0.2.2 wheel is
+`b88ffd0f8605d2410a16aa17379eb8a31362310f7143ca07dfab8ebf17bb6503`,
+with90 installed package files matching that commit. It is not a claim about the
+deployed artifact. Actual old CLI status, inventory and catalog reads pass before
+the card is added; afterward status/inventory still pass while catalog refuses.
+All archive file bytes and full metadata remain unchanged. The fixture's separate
+initialization inspection already refuses its populated layout before cards, so
+that result is not attributed to the card extension. Exact commands/results:
+`/var/tmp/hfcache-web009-format-_h1hjuvg/RESULT.json` (SHA256
+`b4c2e6d525f6060aea6e6fb8e92ccd2d1cd8706705388d0b749557f5cf7453d2`).
+This is an isolated read/format drill, not production, NFS workload or old-writer
+effect acceptance. The [card guide](web-ui/readme-cards.md) describes preservation.
 
 Native switch refuses retained scheduled handles if target Python lacks
 `hfcache.scheduled_client`; unknown/future/temp/symlink evidence stays preserved.

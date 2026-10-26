@@ -16,7 +16,12 @@ from hypothesis import strategies as st
 
 from hfcache.api.basic import ProtectedAdministratorRecord
 from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
-from hfcache.catalog_models import CatalogRecord, PublicationObservation, RepositoryTagSnapshot
+from hfcache.catalog_models import (
+    CatalogRecord,
+    PublicationObservation,
+    RepositoryCard,
+    RepositoryTagSnapshot,
+)
 from hfcache.catalog_storage import parse_record
 from hfcache.errors import ExitCode, HfcacheError, IntegrityError, SafetyError
 from hfcache.host_models import HostStatus
@@ -58,6 +63,7 @@ MODEL_FOR = {
     "protected-administrator": ProtectedAdministratorRecord,
     "repository-tag-snapshot": RepositoryTagSnapshot,
     "publication-observation": PublicationObservation,
+    "repository-card": RepositoryCard,
     "operation-event": OperationEvent,
     "operation-result-reference": ResultReference,
     "operation-receipt": OperationReceipt,

@@ -19,6 +19,7 @@ from hfcache.api.operations import OperationEvent, OperationReceipt, ResultRefer
 from hfcache.catalog_models import (
     ModelVariant,
     PublicationObservation,
+    RepositoryCard,
     RepositoryTagSnapshot,
     SourceObservation,
     VariantMember,
@@ -638,6 +639,27 @@ def publication_observation() -> PublicationObservation:
     )
 
 
+def repository_card() -> RepositoryCard:
+    """Schema18.1 absent README still binds the exact authoritative fixture manifest."""
+    return RepositoryCard(
+        archive_id=ARCHIVE_ID,
+        repository_type="model",
+        repository_id=REPOSITORY_ID,
+        commit_sha=SHA,
+        publication_id=PUBLICATION,
+        publication_generation=1,
+        manifest_path=f"published/manifests/models/{REPOSITORY_ID}/{SHA}/{PUBLICATION}.json",
+        manifest_digest=sha256(dump(manifest())).hexdigest(),
+        source_path=None,
+        expected_source_sha256=None,
+        captured_at=at("2026-10-25T12:00:00.000000Z"),
+        state="absent",
+        markdown=None,
+        presentation_sha256=None,
+        diagnostics=("readme_absent",),
+    )
+
+
 def configuration_read() -> ConfigRead:
     """Independent nonsecret schema1 example, never an installed configuration."""
     return ConfigRead.model_validate(
@@ -716,6 +738,7 @@ EXAMPLES = {
     "protected-administrator": protected_administrator,
     "repository-tag-snapshot": tag_snapshot,
     "publication-observation": publication_observation,
+    "repository-card": repository_card,
     "operation-event": operation_event,
     "operation-result-reference": operation_result_reference,
     "operation-receipt": operation_receipt,

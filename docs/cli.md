@@ -1053,3 +1053,12 @@ never resubmits. JSON retains exact server Envelopes and evidence; complete page
 assembly changes only entries, retaining the first Envelope's identity/times.
 Quiet retains warnings, errors and uncertainty handles. API unavailability never
 falls back to an archive mount, local Hub source or model runtime.
+
+With the matching unreleased server, technical refresh also captures bounded,
+publication-pinned README presentation records. This includes `--technical-only`
+and the default refresh; `--tags-only` does not read README sources. The narrow
+README source-digest comparison establishes provenance only, without changing
+verification confidence. Existing observation counts and JSON fields stay the
+same; `HFWRN011` exposes incomplete card capture through the normal partial-result
+rules. Card display and a card read API are separate subsequent work. See
+[README capture and limits](web-ui/readme-cards.md).

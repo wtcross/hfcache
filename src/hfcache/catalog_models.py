@@ -5,7 +5,7 @@ import json
 import re
 from typing import TYPE_CHECKING, Annotated, Literal, Self
 
-from pydantic import BeforeValidator, Field, model_validator
+from pydantic import BeforeValidator, Field, field_validator, model_validator
 
 from hfcache.models import (
     ArchiveIdField,
@@ -20,6 +20,7 @@ from hfcache.models import (
     Sha256,
     Timestamp,
     as_tuple,
+    dump,
 )
 from hfcache.tags import normalize_tags
 
@@ -29,6 +30,25 @@ if TYPE_CHECKING:
 MAXIMUM_MEMBERS = 4096
 MAXIMUM_RECORD_BYTES = 16 * 1024 * 1024
 EXTRACTOR_VERSION = "static-1"
+MAXIMUM_CARD_SOURCE_BYTES = 1024 * 1024
+MAXIMUM_CARD_PRESENTATION_BYTES = 1024 * 1024
+MAXIMUM_CARD_RECORD_BYTES = 2 * 1024 * 1024
+CARD_PRESENTATION_VERSION = "markdown-1"
+
+CardState = Literal["present", "absent", "unsupported", "oversize", "unsafe", "failed"]
+CardDiagnostic = Literal[
+    "readme_absent",
+    "source_oversize",
+    "presentation_oversize",
+    "source_digest_mismatch",
+    "source_changed",
+    "invalid_utf8",
+    "unsupported_markdown",
+    "unsafe_content",
+    "secret_suppressed",
+    "work_limit",
+    "read_failed",
+]
 
 
 def _identifier(value: object) -> str:
@@ -211,5 +231,66 @@ class PublicationObservation(CatalogRecord):
             for v in self.variants
         ):
             msg = "variant identity does not match membership and extractor"
+            raise ValueError(msg)
+        return self
+
+
+class RepositoryCard(CatalogRecord):
+    """Independent publication-bound presentation, never archive authority (ADR142, §18.1)."""
+
+    kind: Literal["repository_card"] = "repository_card"
+    archive_id: ArchiveIdField
+    repository_type: RepositoryTypeField
+    repository_id: RepositoryIdField
+    commit_sha: CommitShaField
+    publication_id: PublicationIdField
+    publication_generation: Generation
+    manifest_path: ArchivePath
+    manifest_digest: Sha256
+    source_path: Literal["README.md"] | None
+    expected_source_sha256: Sha256 | None
+    captured_at: Timestamp
+    presentation_version: Literal["markdown-1"] = CARD_PRESENTATION_VERSION
+    state: CardState
+    markdown: Annotated[str, Field(max_length=MAXIMUM_CARD_PRESENTATION_BYTES)] | None
+    presentation_sha256: Sha256 | None
+    diagnostics: Annotated[
+        tuple[CardDiagnostic, ...], BeforeValidator(as_tuple), Field(max_length=11)
+    ] = ()
+
+    @field_validator("schema_version", mode="before")
+    @classmethod
+    def strict_version(cls, value: object) -> object:
+        if type(value) is not int or value != 1:
+            msg = "Unsupported repository card schema"
+            raise ValueError(msg)
+        return value
+
+    @model_validator(mode="after")
+    def coherent(self) -> Self:
+        _ordered(self.diagnostics)
+        if (self.source_path is None) != (self.expected_source_sha256 is None) or (
+            (self.state == "absent") != (self.source_path is None)
+        ):
+            msg = "Card source identity must be absent only when README is absent"
+            raise ValueError(msg)
+        if self.state == "present":
+            if self.markdown is None or self.presentation_sha256 is None:
+                msg = "Present cards require sanitized Markdown and its presentation digest"
+                raise ValueError(msg)
+            body = self.markdown.encode("utf-8")
+            encoded = json.dumps(self.markdown, ensure_ascii=False).encode("utf-8")
+            if (
+                len(body) > MAXIMUM_CARD_PRESENTATION_BYTES
+                or len(encoded) > MAXIMUM_CARD_PRESENTATION_BYTES
+                or hashlib.sha256(body).hexdigest() != self.presentation_sha256
+            ):
+                msg = "Card presentation exceeds its byte bounds or disagrees with its digest"
+                raise ValueError(msg)
+        elif self.markdown is not None or self.presentation_sha256 is not None:
+            msg = "Non-present cards must withhold all presentation content"
+            raise ValueError(msg)
+        if len(dump(self)) > MAXIMUM_CARD_RECORD_BYTES:
+            msg = "Repository card exceeds its whole-record byte bound"
             raise ValueError(msg)
         return self

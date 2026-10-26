@@ -9,8 +9,13 @@ import pytest
 
 from hfcache import catalog_capture
 from hfcache.catalog_extractors import ExtractionBudget
-from hfcache.catalog_models import PublicationObservation
-from hfcache.catalog_storage import CatalogWriter, read_publication_observation, read_tag_snapshot
+from hfcache.catalog_models import PublicationObservation, RepositoryCard
+from hfcache.catalog_storage import (
+    CatalogWriter,
+    read_publication_observation,
+    read_repository_card,
+    read_tag_snapshot,
+)
 from hfcache.errors import IntegrityError, Problem, SafetyError
 from hfcache.hub import HubClient
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity
@@ -57,6 +62,13 @@ def observation(layout):
     )
 
 
+def card(layout):
+    ref = reference(layout)
+    return read_repository_card(
+        layout, MODEL, CommitSha(SHA_A), PublicationId(ref.publication_id), ARCHIVE_ID
+    )
+
+
 def test_sync_binds_exact_new_publication_without_changing_manifest(service, layout):
     result = service.synchronize()
     assert result.exit_code == 0
@@ -76,6 +88,64 @@ def test_sync_binds_exact_new_publication_without_changing_manifest(service, lay
     assert tags is not None
     assert tags.tags == ("original",)
     assert tags.curation_fingerprint == service.config.curation_fingerprint()
+    absent = card(layout)
+    assert isinstance(absent, RepositoryCard)
+    assert absent.state == "absent"
+    assert absent.source_path is absent.markdown is None
+
+
+def test_joined_sync_and_repair_capture_exact_readme_without_changing_old_evidence(
+    service, layout, hub
+):
+    readme = b"# Archived card\n\nComplete model snapshot.\n"
+    hub.revisions[SHA_A]["README.md"] = readme
+    result = service.synchronize()
+    assert result.exit_code == 0
+    assert not result.warnings
+    original = card(layout)
+    assert isinstance(original, RepositoryCard)
+    assert original.state == "present"
+    assert original.markdown == readme.decode()
+    assert original.expected_source_sha256 == hashlib.sha256(readme).hexdigest()
+    repository = layout.repository(MODEL)
+    before = reference(layout)
+    old_manifest = repository.manifest(CommitSha(SHA_A), PublicationId(before.publication_id))
+    old_card = repository.card(CommitSha(SHA_A), PublicationId(before.publication_id))
+    old_bytes = (old_manifest.read_bytes(), old_card.read_bytes())
+    member = (
+        repository.instance(CommitSha(SHA_A), PublicationId(before.publication_id)) / "model.gguf"
+    )
+    data = member.read_bytes()
+    member.unlink()
+    member.write_bytes(b"broken" + data[6:])
+    repaired = service.repair(RepairRequest(f"{MODEL.selector}@{SHA_A}", reason="fixture damage"))
+    assert repaired.exit_code == 0
+    assert not repaired.warnings
+    replacement = card(layout)
+    assert isinstance(replacement, RepositoryCard)
+    assert replacement.publication_id != original.publication_id
+    assert replacement.markdown == original.markdown
+    assert replacement.expected_source_sha256 == original.expected_source_sha256
+    assert (old_manifest.read_bytes(), old_card.read_bytes()) == old_bytes
+
+
+def test_card_extractor_failure_does_not_discard_successful_observation(
+    service, layout, monkeypatch
+):
+    def failed(*_args, **_kwargs):
+        msg = "private card source must not leak"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(catalog_capture, "capture_repository_card", failed)
+    result = service.synchronize()
+    assert result.exit_code == 0
+    assert result.payload["repositories"][0]["status"] == "completed_with_warnings"
+    assert [warning.code for warning in result.warnings] == ["HFWRN011"]
+    observed = observation(layout)
+    assert observed is not None
+    assert observed.status == "complete"
+    assert card(layout) is None
+    assert "private card source" not in str(result)
 
 
 @pytest.mark.parametrize("tags", [(), ("changed",)])

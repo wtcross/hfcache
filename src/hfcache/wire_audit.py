@@ -498,7 +498,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.catalog_models",
-            "a5849ea0e2a5ac5e5c08eaf3a841ce74b414c25e1584b1406defd3bacb39c767",
+            "55b3754a7c31e1fc16f6405853bf5ac14aff6ad52a34c0e79e7aaa459443fb15",
         ),
         (
             "hfcache.catalog_query_models",
@@ -542,7 +542,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.paths",
-            "e376d5e766b453758554d229c3e6f3ef438701f2716faada49c789290dd0f65d",
+            "7676a4dd51374bd6f1b141921b3c839aedbf86863e1cb653503e8e9922597839",
         ),
         (
             "hfcache.preflight",

@@ -145,3 +145,16 @@ new state and validate a reviewed rollback target under actual executor drain.
 
 [Decision 142](decision-142.md) amends this record for the accepted
 replacement design. Accepted card adjunct design extends only the approved optional metadata namespace and bounded writer-owned README source-copy check; existing records, integrity confidence and read-only transport authority remain unchanged. Card conformance is pending.
+
+## Independent card capture clarification (2026-10-25)
+
+[Decision 142](decision-142.md#writer-capture-amendment-2026-10-25) now implements
+writer capture in unreleased source. It adds independent cards under the approved
+optional namespace without placing presentation in structured observations or
+widening old request/result schemas. `technical=true` requests both outputs under
+shared invocation limits; observation rows, statuses and counts remain truthful
+to observations. Card failures add existing bounded `HFWRN011` warnings, while
+absent README remains normal. The bounded fresh README digest is source-copy
+provenance only and grants no verification confidence. Card API reads and display
+remain separate later work; old-format compatibility requires an actual target
+drill rather than inference from unchanged version numbers.

@@ -1271,6 +1271,13 @@ bounded identifiers, fixed statuses/codes and actual generation widths. Aggregat
 scope/result exhaustion refuses; it never returns a truncated success. Ordinary
 classified failure envelopes remain valid when scope cannot be established.
 
+`technical=true` additionally captures independent §18.1 cards. These fields and
+counts retain their original observation/snapshot meanings: card writes and
+failures add no publication rows, observation writes or failed-record counts.
+Card failures add bounded `HFWRN011`; the aggregate state uses the same rule
+above, based on the existing observation/snapshot write counts. A complete
+structured observation can coexist with a card warning and partial refresh.
+
 ### Observed compatibility of supplemental records
 
 The two supplemental record families have independent schema-1 versions; no old
@@ -1285,11 +1292,13 @@ number alone does not establish compatibility.
 
 ## 18. Web UI and administration design records
 
-**RepositoryCard §18.1 remains accepted design.
-Protected status/configuration reconstruction and outcomes §18.2, static manifest/bootstrap §18.3,
+**RepositoryCard writer capture §18.1, protected status/configuration
+reconstruction and outcomes §18.2, static manifest/bootstrap §18.3,
 administrator record §18.4 and managed projections §18.5 are implemented in
 unreleased source.** Current archive durable formats above remain unchanged;
 source implementation is not installed compatibility or release acceptance.
+The card read projection and browser renderer remain later work; capture adds
+no card endpoint or browser view.
 The independent card/helper/static/bootstrap
 families below must each validate their own strict integer version, reject
 unknown fields/duplicate JSON keys/coercions, enforce bounds before allocation
@@ -1330,17 +1339,26 @@ when capture fails. All identities/generation/manifest/source digests must agree
 with authoritative retained metadata before a card is served or replaced.
 
 Raw source is at most 1 MiB. Presentation UTF-8 bytes and its serialized JSON
-string are each at most 1 MiB; the canonical whole record is at most 2 MiB.
-Shared writer extraction/read/work/attempt/128 MiB aggregate-write budgets still
-apply. Bounded source SHA comparison is README provenance only, never a
+string, including its quotes and JSON escaping, are each at most 1 MiB; the
+canonical whole record is at most 2 MiB. Encoding uses UTF-8 and the JSON-string
+bound uses `ensure_ascii=False`. Shared writer limits remain 64 MiB actual reads,
+eight million work steps, 4096 record attempts and 128 MiB aggregate serialized
+writes. Failed source reads and capture/write attempts consume these budgets.
+Bounded source SHA comparison is README provenance only, never a
 verification result. Writer no-follow identity checks and atomic replace/fsync
 follow the existing supplemental boundary; unknown/unsafe evidence remains.
+Present bodies also revalidate the same `markdown-1` grammar and current
+registered/recognized secret absence before read or replacement, under the shared
+work budget. A matching presentation digest alone does not make active or unsafe
+source acceptable. Revalidation must leave the sanitized source unchanged.
 
-Card read projection is independently schema 1 and adds state `not_captured` for
-an absent adjunct of an otherwise authorized exact retained publication. It does
-not write a synthetic record. Missing exact publication is HTTP 404, not a card
+The planned card read projection is independently schema 1 and adds state
+`not_captured` for an absent adjunct of an otherwise authorized exact retained
+publication. It does not write a synthetic record. Missing exact publication is HTTP 404, not a card
 state or fallback. Invalid records remain classified errors. No unsanitized raw
-payload or HTML representation is exposed. See [discovery](discovery.md#repository-card-design).
+payload or HTML representation is authorized. This projection is separate from
+the implemented writer capture. See [discovery](discovery.md#repository-card-design)
+and the [capture guide](web-ui/readme-cards.md).
 
 ### 18.2 Private helper protocol and outcomes
 

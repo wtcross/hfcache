@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+from hfcache.catalog_cards import capture_repository_card
 from hfcache.catalog_extractors import (
     EXTRACTION_WARNING_CODE,
     ExtractionBudget,
@@ -12,7 +13,7 @@ from hfcache.catalog_extractors import (
     extract_static,
 )
 from hfcache.catalog_gguf import extract_gguf
-from hfcache.catalog_models import PublicationObservation, RepositoryTagSnapshot
+from hfcache.catalog_models import PublicationObservation, RepositoryCard, RepositoryTagSnapshot
 from hfcache.catalog_parsing import ExtractionError
 from hfcache.catalog_storage import CatalogWriter, publication_binding
 from hfcache.catalog_weights import extract_weights
@@ -128,7 +129,11 @@ class CatalogCapture:
         self.curation = None
         self.curation_failed = False
         self.writer = CatalogWriter(
-            self.layout, storage=self.config.storage, checks=self.checks, active_sync=active_sync
+            self.layout,
+            storage=self.config.storage,
+            checks=self.checks,
+            active_sync=active_sync,
+            card_budget=self.budget,
         )
         try:
             current = self.curation_source() if self.curation_source is not None else self.config
@@ -156,7 +161,7 @@ class CatalogCapture:
                 raise ConfigurationError.single(msg, code="HFCFG001") from None
 
     def write_record(
-        self, record: RepositoryTagSnapshot | PublicationObservation
+        self, record: RepositoryTagSnapshot | PublicationObservation | RepositoryCard
     ) -> tuple[str, ...]:
         """Independent write outcome; fixed codes distinguish explicit partial refresh progress."""
         require_archive_lock(expected=self.ownership)
@@ -184,7 +189,9 @@ class CatalogCapture:
             return ("HFVER007",)
         return ()
 
-    def _write(self, record: RepositoryTagSnapshot | PublicationObservation) -> bool:
+    def _write(
+        self, record: RepositoryTagSnapshot | PublicationObservation | RepositoryCard
+    ) -> bool:
         return not self.write_record(record)
 
     def tag_record(self, identity: RepositoryIdentity) -> tuple[RepositoryTagSnapshot | None, bool]:
@@ -214,22 +221,52 @@ class CatalogCapture:
         if sha is None or publication is None or self.writer is None:
             return incomplete
         try:
-            record = self.publication_record(identity, CommitSha(sha), PublicationId(publication))
+            record, card = self.publication_records(
+                identity, CommitSha(sha), PublicationId(publication)
+            )
         except Exception:  # noqa: BLE001 - failure to bind optional evidence never reclassifies publication
             return True
-        return (not self._write(record)) or record.status != "complete" or incomplete
+        observation_incomplete = (not self._write(record)) or record.status != "complete"
+        card_incomplete = card is None
+        if card is not None:
+            card_incomplete = (not self._write(card)) or card.state not in {"present", "absent"}
+        return observation_incomplete or card_incomplete or incomplete
+
+    def _binding(
+        self, identity: RepositoryIdentity, sha: CommitSha, publication: PublicationId
+    ) -> tuple[RevisionManifest, str]:
+        require_archive_lock(expected=self.ownership)
+        if self.writer is None:
+            msg = "Catalog capture has not begun"
+            raise RuntimeError(msg)
+        return publication_binding(
+            self.layout, identity, sha, publication, reader=self.writer.reader
+        )
 
     def publication_record(
         self, identity: RepositoryIdentity, sha: CommitSha, publication: PublicationId
     ) -> PublicationObservation:
         """Bind exact retained evidence before extraction; failed interpretation stays recorded."""
-        require_archive_lock(expected=self.ownership)
-        if self.writer is None:
-            msg = "Catalog capture has not begun"
-            raise RuntimeError(msg)
-        manifest, digest = publication_binding(
-            self.layout, identity, sha, publication, reader=self.writer.reader
-        )
+        manifest, digest = self._binding(identity, sha, publication)
+        return self._observation(manifest, digest)
+
+    def publication_records(
+        self, identity: RepositoryIdentity, sha: CommitSha, publication: PublicationId
+    ) -> tuple[PublicationObservation, RepositoryCard | None]:
+        """Bind once; optional card failure cannot erase a structured observation (ADR142)."""
+        manifest, digest = self._binding(identity, sha, publication)
+        observation = self._observation(manifest, digest)
+        try:
+            card = capture_repository_card(
+                SourceAccess(self.layout, manifest, budget=self.budget),
+                digest,
+                archive_id=self.config.storage.archive_id,
+            )
+        except Exception:  # noqa: BLE001 - isolate this independently optional adjunct
+            card = None
+        return observation, card
+
+    def _observation(self, manifest: RevisionManifest, digest: str) -> PublicationObservation:
         try:
             result = extract_publication(SourceAccess(self.layout, manifest, budget=self.budget))
             record = self._record(manifest, digest, result)
