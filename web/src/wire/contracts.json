@@ -8105,6 +8105,395 @@
       "kind": "object",
       "semantic_ids": []
     },
+    "RepositoryCardRead": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.card_models.RepositoryCardRead.strict_version"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "kind",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "repository_card"
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "repository_type",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "model"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "dataset"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": [
+              "hfcache.identity.parse_repository_type"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "repository_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_repository_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "commit_sha",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_commit_sha"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "publication_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_publication_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "publication_generation",
+          "node": {
+            "kind": "integer",
+            "maximum": null,
+            "minimum": "1",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "manifest_path",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._archive_path"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "manifest_digest",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "source_path",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "README.md"
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "expected_source_sha256",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.models._parse_sha256"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "captured_at",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "timestamp.serialized"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "presentation_version",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "markdown-1"
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "state",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "present"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "absent"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "unsupported"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "oversize"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "unsafe"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "failed"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "not_captured"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "markdown",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 1048576,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "presentation_sha256",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.models._parse_sha256"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "diagnostics",
+          "node": {
+            "items": {
+              "choices": [
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "readme_absent"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "source_oversize"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "presentation_oversize"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "source_digest_mismatch"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "source_changed"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "invalid_utf8"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "unsupported_markdown"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "unsafe_content"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "secret_suppressed"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "work_limit"
+                },
+                {
+                  "kind": "literal",
+                  "semantic_ids": [],
+                  "value": "read_failed"
+                }
+              ],
+              "kind": "union",
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 11,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.card_models.RepositoryCardRead.coherent"
+      ]
+    },
     "RepositoryConfig": {
       "extra": "forbid",
       "fields": [
@@ -14506,6 +14895,84 @@
       "success": "ManifestPayload"
     },
     {
+      "binding_ids": [
+        "publication.card"
+      ],
+      "commands": [
+        "card read"
+      ],
+      "cursor": "none",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "repository_card",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/repositories/{repository_type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card",
+      "path_parameters": [
+        {
+          "name": "repository_type",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 256,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_repository_type"
+            ]
+          }
+        },
+        {
+          "name": "namespace",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 96,
+            "min_codepoints": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+            "semantic_ids": []
+          }
+        },
+        {
+          "name": "name",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 96,
+            "min_codepoints": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+            "semantic_ids": []
+          }
+        },
+        {
+          "name": "commit_sha",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 256,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_commit_sha"
+            ]
+          }
+        },
+        {
+          "name": "publication_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 256,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_publication_id"
+            ]
+          }
+        }
+      ],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "read",
+      "success": "RepositoryCardRead"
+    },
+    {
       "binding_ids": [],
       "commands": [
         "operations list"
@@ -15879,6 +16346,14 @@
       "phase": "field",
       "source_hash": "55d53d4e2899aed76be2324b76f4065e023228b53c9ce730a7f5816d868aef75"
     },
+    "hfcache.card_models.RepositoryCardRead.coherent": {
+      "phase": "model",
+      "source_hash": "6093f632f02cc41fb9ed3cc6cd03f223e2151fe926ee5d77bc1ef992408f2fc0"
+    },
+    "hfcache.card_models.RepositoryCardRead.strict_version": {
+      "phase": "field",
+      "source_hash": "b2083bfe255ff6b73c72bb70e0478b6241b4c7c828ef3b77b520b0b063132d84"
+    },
     "hfcache.catalog_models.ModelVariant.coherent": {
       "phase": "model",
       "source_hash": "2e5f2cccd83e1963359d7eacc9eb5502a8e64fcccba67f7b45883e93565ce436"
@@ -16239,6 +16714,10 @@
       "phase": "context",
       "source_hash": "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d"
     },
+    "publication.card": {
+      "phase": "context",
+      "source_hash": "452f67070232e422eccd6943a74df2ae4b25616fc7c8715a83f7d16c6cd0009b"
+    },
     "publication.manifest": {
       "phase": "context",
       "source_hash": "18bb75cc7e5fceca74ebab614f6ea53b000ce1db8b15a2cf2f2efbd4cb3d853c"
@@ -16268,5 +16747,5 @@
       "source_hash": "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61"
     }
   },
-  "source_digest": "06a12a8720cef19052e74f889e240dcfa9c63249c50360ae97931b8de20ddb11"
+  "source_digest": "4f3b1b07176239b5a5e40975a04544379b50fc37b69a80ac20fcecf4b256ef63"
 }

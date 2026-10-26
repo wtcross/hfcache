@@ -188,11 +188,17 @@ def read_authority[ModelT: VersionedModel](
     path: Path,
     model: type[ModelT],
     reader: MetadataReader,
+    *,
+    missing_ok: bool = False,
 ) -> tuple[ModelT, str]:
     try:
         raw = reader.read(path, maximum_bytes=MAXIMUM_RECORD_BYTES)
         _json_structure(raw)
         value = load(model, raw, error=IntegrityError, code="HFVER007")
+    except FileNotFoundError as exc:
+        if missing_ok:
+            raise
+        raise _invalid() from exc
     except (OSError, ValueError, RecursionError) as exc:
         raise _invalid() from exc
     return value, hashlib.sha256(raw).hexdigest()

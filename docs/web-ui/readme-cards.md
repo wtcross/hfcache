@@ -1,9 +1,10 @@
-# Archived README capture
+# Archived README capture and reads
 
-Writer capture is implemented in unreleased source. It stores a bounded,
+Writer capture and the exact card read API are implemented in unreleased source.
+Capture stores a bounded,
 sanitized presentation of an archived root `README.md`, separately from technical
-declarations. Card retrieval and browser display remain under development; the
-current interface has no card view, raw-source download or card refresh button.
+declarations. Browser display remains under development; the current interface
+has no card view, raw-source download or card refresh button.
 Installing a release and granting archive write authority remain separate
 operator actions. See [interface availability](README.md).
 
@@ -25,6 +26,56 @@ the archived source. Neither digest makes upstream statements trustworthy.
 Structured declarations, operator tags, publication membership and integrity
 evidence retain their separate meanings. Capture never fetches a live README,
 follows a URL or executes repository code.
+
+## Read one exact publication
+
+Use a release containing the card API and the deployment's existing verified
+HTTPS/authentication setup. REST reader, writer and Basic administrator credentials
+can read cards; an MCP token has no REST authority. A read does not require an
+archive-write grant or a host-helper permission and needs no idempotency key.
+
+First obtain the exact commit SHA and publication ID from the ordinary reference
+metadata. The current reference is
+`GET /api/v1/repositories/{type}/{namespace}/{name}/references/current`; a known
+retained SHA can use that full SHA in place of `current`. Preserve both returned
+identity components. Then request:
+
+```text
+GET /api/v1/repositories/{type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card
+```
+
+Replace every placeholder with that actual selected identity; `type` is `model`
+or `dataset`, the commit is40 lowercase hex characters and publication ID is32.
+Include the deployment's public prefix before `/api/v1` when configured. There is
+no filename, URL, body selector or query parameter. No new card CLI command or
+MCP tool is introduced.
+
+The usual read wrapper contains a flat `envelope.data` object, command `card read`
+and `next_cursor: null`. Check the returned archive/repository/commit/publication/
+generation and manifest identity against the selection before using the text.
+The typed browser client performs this binding and verifies the present text's
+UTF-8 SHA-256 before exposing it. The result is sanitized Markdown in JSON, never
+an HTML response or an unsanitized README download.
+
+`state=not_captured` is a normal200 response for a retained publication with no
+card adjunct. Its capture time, presentation version, text and presentation
+digest are null, diagnostics empty, and source identity comes only from the
+manifest. It creates no record. A stored `absent` card instead records an actual
+capture where no root README was listed. The durable states below retain their
+own meanings; only `present` has text and a presentation digest.
+
+A missing/pruned/purged/repaired-away exact publication returns404, even if an old
+card or manifest remains. An older still-retained SHA remains selectable after
+current moves. Do not replace a failed selection with current or a repair's new
+publication ID without an explicit new selection. Malformed, unsafe, mismatched
+or future-version records are classified errors, not absent or empty success.
+Preserve that evidence rather than delete it to make a read succeed.
+
+GET uses only adjunct and authoritative metadata, not README or other payloads.
+It performs no Hub request, refresh, verification, archive lock or write. It can
+be repeated for the same selected identity after a connection error; a missing
+capture never authorizes automatic refresh. Use the separate writer workflow
+below when a deliberately new capture is wanted.
 
 ## Refresh existing publications
 
@@ -89,10 +140,10 @@ file that is missing or unreadable is a failure, not an absent README. Diagnosti
 are fixed codes, never rejected text, credentials or raw exception messages.
 See the exact [record fields and diagnostics](../schemas.md#181-repositorycard-schema-1).
 
-A missing adjunct is not a durable `absent` record. The future read projection
-will distinguish `not_captured` from absent README and will reject stale exact
-publication identity. Until that API exists, the refresh response does not expose
-the stored presentation or provide a card-read route.
+A missing adjunct is not a durable `absent` record. The read API distinguishes
+`not_captured` from absent README and rejects vanished exact publication identity.
+The refresh response itself still exposes no presentation or card count; use the
+separate exact read described above.
 
 ## Sanitized presentation
 
@@ -143,6 +194,7 @@ presentation. Capture does not implement those views.
 | Sanitized UTF-8 bytes | 1 MiB |
 | JSON-encoded presentation string, including quotes and escaping | 1 MiB |
 | Whole canonical card record | 2 MiB |
+| Complete encoded card HTTP response | Smaller of configured response limit and2 MiB |
 | Shared actual metadata reads per writer invocation | 64 MiB |
 | Shared extraction/suppression work | 8 million steps |
 | Shared record attempts | 4096 |
@@ -152,6 +204,13 @@ The JSON-string bound uses UTF-8 with `ensure_ascii=False`; it is independent
 of the raw text limit. Failed reads and failed capture/write attempts consume
 the shared budgets. Cards and observations share those invocation limits; a
 large refresh cannot reset them for each publication.
+
+Card reads also use bounded metadata reads and presentation work. A response that
+cannot fit the configured/card ceiling refuses before headers with413; it is
+never truncated into success. Metadata or parser work exhaustion is a classified
+failure. The normal metadata lease stays held until both the worker and request
+finish, including interrupted observers. `no-store` and `nosniff` apply to the
+JSON response; API availability does not enable automatic media or rendering.
 
 Each record is independently atomic under the original writer lock and existing
 preflight/journal guards: temporary sibling, file fsync, atomic replacement and

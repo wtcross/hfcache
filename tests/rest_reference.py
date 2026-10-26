@@ -439,6 +439,20 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
         "none",
         "none",
     ),
+    (
+        (
+            "GET /repositories/{repository_type}/{namespace}/{name}/publications/"
+            "{commit_sha}/{publication_id}/card"
+        ),
+        "default",
+        "browser / HTTP",
+        "R",
+        "synchronous",
+        "none",
+        "no",
+        "none",
+        "none",
+    ),
     ("GET /operations", "default", "SDK / HTTP", "R", "synchronous", "none", "no", "none", "none"),
     (
         "GET /operations/lookup",

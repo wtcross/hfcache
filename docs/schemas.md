@@ -1292,13 +1292,13 @@ number alone does not establish compatibility.
 
 ## 18. Web UI and administration design records
 
-**RepositoryCard writer capture §18.1, protected status/configuration
+**RepositoryCard writer capture and read projection §18.1, protected status/configuration
 reconstruction and outcomes §18.2, static manifest/bootstrap §18.3,
 administrator record §18.4 and managed projections §18.5 are implemented in
 unreleased source.** Current archive durable formats above remain unchanged;
 source implementation is not installed compatibility or release acceptance.
-The card read projection and browser renderer remain later work; capture adds
-no card endpoint or browser view.
+The card GET uses an independent read projection below; browser rendering remains
+later work. Neither capture nor read adds a browser card view.
 The independent card/helper/static/bootstrap
 families below must each validate their own strict integer version, reject
 unknown fields/duplicate JSON keys/coercions, enforce bounds before allocation
@@ -1352,13 +1352,41 @@ registered/recognized secret absence before read or replacement, under the share
 work budget. A matching presentation digest alone does not make active or unsafe
 source acceptable. Revalidation must leave the sanitized source unchanged.
 
-The planned card read projection is independently schema 1 and adds state
-`not_captured` for an absent adjunct of an otherwise authorized exact retained
-publication. It does not write a synthetic record. Missing exact publication is HTTP 404, not a card
-state or fallback. Invalid records remain classified errors. No unsanitized raw
-payload or HTML representation is authorized. This projection is separate from
-the implemented writer capture. See [discovery](discovery.md#repository-card-design)
-and the [capture guide](web-ui/readme-cards.md).
+#### Card read projection schema 1
+
+`RepositoryCardRead` is a strict independent public projection in the existing
+read wrapper's flat `envelope.data`, with command `card read`. Its fields have
+the same names and identity grammar as the durable card table above. It adds
+state `not_captured` for an absent adjunct of an otherwise authorized exact
+retained publication, without creating a synthetic durable record.
+
+| Field group | Read projection rule |
+| --- | --- |
+| `schema_version`, `kind` | Explicit integer1 and `repository_card` |
+| Archive/repository/commit/publication/generation/manifest identity | Required and bound to the exact requested retained publication, including when not captured |
+| `source_path`, `expected_source_sha256` | Exact manifest README identity, or both null if no root README is listed; this also applies to `not_captured` |
+| `state` | Six durable states above, plus `not_captured` |
+| `captured_at`, `presentation_version` | Null only for `not_captured`; otherwise actual captured timestamp and `markdown-1` |
+| `markdown`, `presentation_sha256` | Present only for `present`, with the matching UTF-8 digest; otherwise both null |
+| `diagnostics` | Same sorted unique fixed vocabulary; empty for `not_captured` |
+
+An empty present string is valid. A missing adjunct and a captured absent README
+are different observations even if both have null source identity. No timestamp,
+presentation version or warning is invented for not-captured coverage. Invalid
+schema, identity, presentation or bounds is a classified error, not another card
+state. Missing/pruned/purged/repaired-away exact publication returns HTTP404,
+never a fallback to current, another publication or an orphan adjunct.
+
+The projection retains the1MiB UTF-8 and JSON-string presentation limits. Its
+complete encoded HTTP response is at most2MiB and must also fit configured
+`max_response_bytes` before headers. The server revalidates present source grammar
+and current secret absence without changing retained bytes. Browser decoding
+checks structural/state/byte and exact request identity rules; the typed client
+additionally verifies present-body SHA-256 with WebCrypto before exposing it.
+No unsanitized payload or HTML representation is authorized. See
+[API effects](api.md#new-presentation-and-host-bounds),
+[discovery](discovery.md#repository-card-design) and the
+[read guide](web-ui/readme-cards.md#read-one-exact-publication).
 
 ### 18.2 Private helper protocol and outcomes
 

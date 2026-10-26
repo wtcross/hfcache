@@ -29,6 +29,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-010 Expose bounded exact-publication card reads (2026-10-26,
+  this commit — [task](plans/tasks/web-010-repository-card-read-api.md)).
+  Authenticated narrow GET joins archive sentinel, retained ref, manifest and
+  O_PATH tree identity before/after bounded adjunct read. Missing capture is
+  explicit; vanished/repaired/pruned pairs404 without current fallback. Existing
+  metadata pool/lease survives encoding/send/cancellation; read has no source,
+  Hub, credential, archive-lock, refresh or write capability. Strict independent
+  DTO and162-definition/50-mode browser registry validate states/provenance;
+  typed client awaits native digest and abort checks before exposing content.
+  Strict gate3 passes1406.731s:8581 backend,581 Cockpit unit,2879 frontend unit/
+  2939 component, all strict/build/wheel and14 actual API browser checks;
+  human docs211/helpers27. All1388 regular inputs remain exact at71e7056b….
+  New query coverage100%, model96%; source and independent route/auth evidence
+  pass. Installed real-Caddy/actual typed-client application acceptance passes
+  six cases/46.607s, ten publications/all seven states+future refusal,49 GETs,
+  no metadata/source change except explicit toy ref transitions, and normal
+  process/container drain. External storage seam is labelled simulation, not
+  platform/NAS proof. Earlier inventory/count/fixture failures remain retained;
+  four test-only corrections leave every runtime/browser/packaging byte equal
+  to accepted fixture artifacts. Image84b929bc retains pinned UBI10 micro/no Node;
+  installed114 modules match fixture0.2.14 wheel, with no release selection.
+  Human guide/API/schema/security/discovery/navigation and ADR142/INV018 align;
+  relevant invariant/ADR/FW review complete, no new dependency/durable format/
+  CLI/MCP/mutation interface. CARD07–09 complete; selector advances WEB011.
+  Rendering remains WEB014. No production/NAS/live Cockpit, rollout, merge,
+  push or tag action.
+
 - [x] WEB-009 Capture bounded publication-pinned README cards (2026-10-25,
   this commit — [task](plans/tasks/web-009-repository-card-capture.md)).
   Independent schema1/model/path and guarded atomic adjunct storage capture only
@@ -2703,6 +2730,25 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-010 checkpoint (2026-10-26, this commit): WEB001–010 are complete on
+`feat/web-ui`; continue WEB-011 through the current selector. Source gate3 and
+six installed real-Caddy/typed-client cases pass. CARD01–09 complete; renderer
+remains WEB-014. Task010 records exact artifacts, all commands/layers, source3
+runtime reuse proof and every earlier failed outcome. Shared API/UI image remains
+pinned UBI10 micro without runtime Node. No new runtime dependency is introduced.
+
+Owned guest retains its original five infrastructure processes; test API/Caddy/
+browser roles are stopped normally.114 installed modules match the disclosed
+0.2.14 fixture wheel under `/opt/hfcache-web010-runtime`; no real release selector
+or service is changed. Source1 artifacts remain valid for runtime because final
+source3 changes exactly four independent test inventory/count files. Its source
+tar retains old inventories and must never be presented as a release candidate.
+Toy ref transitions are external storage simulation; no production/NAS/platform
+acceptance is inferred. Guard/key/locks, loopback NFS, earlier test state and failed
+runs remain preserved. Production0.2.2, real credentials/calendars/guards and live
+Cockpit are untouched. Rollout, merge, push and tag remain unauthorized.
+Earlier checkpoints below retain their original historical scope.
 
 Latest WEB-009 checkpoint (2026-10-25, this commit): WEB001–009 complete on
 `feat/web-ui`; continue WEB-010 through the current selector. Strict gate and

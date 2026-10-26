@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from hfcache.api.command_models import CommandModel
 from hfcache.archive import InitializationResult
+from hfcache.card_models import RepositoryCardRead
 from hfcache.catalog_query_models import (
     CatalogCoverage,
     CatalogDetailPayload,
@@ -520,6 +521,17 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
     model(RecoveryReport.model_validate(recovery_fields))
     for value in _catalog_samples():
         model(value)
+    model(examples.repository_card_read())
+    missing_card = examples.repository_card().to_payload()
+    missing_card.update(
+        state="not_captured",
+        captured_at=None,
+        presentation_version=None,
+        markdown=None,
+        presentation_sha256=None,
+        diagnostics=[],
+    )
+    model(RepositoryCardRead.model_validate(missing_card))
     model(
         Capabilities(
             api_version=1,
@@ -683,6 +695,7 @@ def covered_route_modes() -> set[tuple[str, str, str]]:
         "report",
         "reference",
         "manifest",
+        "repository_card",
         "operations",
         "operation_lookup",
         "operation",
@@ -735,6 +748,7 @@ def covered_route_modes() -> set[tuple[str, str, str]]:
 def _original_models() -> dict[str, type[BaseModel]]:
     result = {}
     for module in (
+        "hfcache.card_models",
         "hfcache.catalog_models",
         "hfcache.catalog_query_models",
         "hfcache.catalog_refresh_models",

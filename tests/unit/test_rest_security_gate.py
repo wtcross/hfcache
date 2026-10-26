@@ -38,6 +38,10 @@ READ_PATHS = (
     "/runs/{run_id}",
     "/repositories/{repository_type}/{namespace}/{name}/references/{revision}",
     "/repositories/{repository_type}/{namespace}/{name}/manifests/{commit_sha}/{publication_id}",
+    (
+        "/repositories/{repository_type}/{namespace}/{name}/publications/"
+        "{commit_sha}/{publication_id}/card"
+    ),
     "/operations",
     "/operations/lookup",
     "/operations/{operation_id}",
@@ -177,7 +181,7 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
     if not docs_enabled:
         expected.remove(("GET", PREFIX + "/docs"))
     assert actual == expected
-    assert len(actual) == (43 if docs_enabled else 42)
+    assert len(actual) == (44 if docs_enabled else 43)
     documented = {
         (row[0].split(" ", 1)[0], PREFIX + row[0].split(" ", 1)[1])
         for row in matrix_rows()

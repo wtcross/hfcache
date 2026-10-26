@@ -44,6 +44,7 @@ from hfcache.services.bootstrap import (  # noqa: F401 - legacy query exports
     query_version,
     validate_config,
 )
+from hfcache.services.card_queries import read_card
 from hfcache.services.context import ServiceResult
 from hfcache.verification import Resolved, VerificationTarget, estimate_resolved
 
@@ -51,6 +52,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from pathlib import Path
 
+    from hfcache.card_models import RepositoryCardRead
     from hfcache.config import ApplicationConfig, RepositoryConfig
 
 
@@ -115,6 +117,8 @@ class MetadataQueries(Protocol):
     ) -> Reference: ...
 
     def read_manifest(self, request: PublicationQuery) -> RevisionManifest: ...
+
+    def read_card(self, request: PublicationQuery) -> RepositoryCardRead: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -401,6 +405,10 @@ class LocalQueries:
     def read_manifest(self, request: PublicationQuery) -> RevisionManifest:
         """Read the exact instance requested, including a retained repair predecessor."""
         return self._manifest(request, MetadataReader(self.layout.root, self.bounds))
+
+    def read_card(self, request: PublicationQuery) -> RepositoryCardRead:
+        """Read the exact retained card through the shared bounded metadata capability."""
+        return read_card(self.config, request, bounds=self.bounds)
 
     def _manifest(self, request: PublicationQuery, reader: MetadataReader) -> RevisionManifest:
         repository = self.layout.repository(request.identity)

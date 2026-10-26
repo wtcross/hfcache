@@ -2,6 +2,7 @@
 import * as wire from "../wire/generated";
 import {
     ARTIFACT_JSON_LIMITS,
+    CARD_JSON_LIMITS,
     NORMAL_JSON_LIMITS,
     parseWireJson,
     readBoundedJson,
@@ -25,6 +26,7 @@ import type {
 } from "./types";
 import { buildRequestInput, serializeRequestJson } from "./request";
 import { uriPath } from "./url-paths";
+import { validateCardDigest } from "../wire/card-semantics";
 
 type Decoder<T> = (value: unknown) => T;
 interface Contract<S, F> {
@@ -294,7 +296,11 @@ export class ApiClient {
             });
             const raw = await readBoundedJson(response, {
                 signal: controller.signal,
-                limits: artifact ? ARTIFACT_JSON_LIMITS : NORMAL_JSON_LIMITS,
+                limits: contract.bindingIds.includes("publication.card")
+                    ? CARD_JSON_LIMITS
+                    : artifact
+                      ? ARTIFACT_JSON_LIMITS
+                      : NORMAL_JSON_LIMITS,
             });
             if (response.status !== 200) {
                 const problem = wire.decodeClientProblem(raw);
@@ -339,6 +345,13 @@ export class ApiClient {
                     ),
                     complete = typedResponse(result, payload);
                 applyBindings(contract.bindingIds, complete, context);
+                if (contract.bindingIds.includes("publication.card")) {
+                    await validateCardDigest(payload);
+                    // WebCrypto cannot be interrupted; do not expose a result
+                    // after the original caller's cancellation or deadline.
+                    if (wasAborted(controller.signal))
+                        throw new WireError("semantic");
+                }
                 if (
                     contract.path === "/api/v1/status" &&
                     isRecord(payload.archive) &&
@@ -551,6 +564,30 @@ export class ApiClient {
             options,
             publication,
             true,
+        );
+    }
+    readRepositoryCard(
+        publication: ExactPublication,
+        options: ReadOptions = {},
+    ) {
+        const { repositoryType, repositoryId, commitSha, publicationId } =
+            publication;
+        const [namespace, name] = repositorySegments(
+            repositoryType,
+            repositoryId,
+        );
+        return this.read(
+            wire.routeContracts.repository_card_default,
+            {
+                repository_type: repositoryType,
+                namespace,
+                name,
+                commit_sha: commitSha,
+                publication_id: publicationId,
+            },
+            {},
+            options,
+            { repositoryType, repositoryId, commitSha, publicationId },
         );
     }
     readOperations(

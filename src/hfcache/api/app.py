@@ -53,6 +53,8 @@ from hfcache.api.ui_serving import (
     UiStreams,
     bootstrap_bytes,
 )
+from hfcache.card_models import RepositoryCardRead
+from hfcache.catalog_models import MAXIMUM_CARD_RECORD_BYTES
 from hfcache.errors import (
     AuthenticationError,
     AuthorizationError,
@@ -60,6 +62,7 @@ from hfcache.errors import (
     ConfigurationError,
     HfcacheError,
     HostAdministrationUnavailableError,
+    IntegrityError,
     OperationError,
     RequestError,
     SafetyError,
@@ -1129,10 +1132,16 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
             else result.envelope(context).to_payload(),
             next_cursor=cursor,
         ).model_dump()
-        payload = cast("dict[str, Any]", sanitize(payload))
+        sanitized = cast("dict[str, Any]", sanitize(payload))
+        if result.command == "card read" and sanitized != payload:
+            message = "Card presentation became unsafe while encoding its response"
+            raise IntegrityError.single(message, code="HFVER007")
+        payload = sanitized
         maximum = (
             server.limits.max_artifact_bytes * 8 if large else server.limits.max_response_bytes
         )
+        if result.command == "card read":
+            maximum = min(maximum, MAXIMUM_CARD_RECORD_BYTES)
         if sum(len(chunk) for chunk in _encoded(payload)) > maximum:
             raise RequestError(status_code=413)
         if large:
@@ -1380,6 +1389,34 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
             ), None
 
         return await execute(request, read, large=True)
+
+    @app.get(
+        PREFIX
+        + "/repositories/{repository_type}/{namespace}/{name}"
+        + "/publications/{commit_sha}/{publication_id}/card",
+        response_model=ReadResponse,
+        openapi_extra={"x-card-payload": RepositoryCardRead.model_json_schema()},
+    )
+    async def repository_card(  # noqa: PLR0913 - closed exact-publication path grammar
+        request: Request,
+        *,
+        repository_type: str,
+        namespace: str,
+        name: str,
+        commit_sha: str,
+        publication_id: str,
+    ) -> Response:
+        _no_query(request)
+        selected = PublicationQuery(
+            RepositoryIdentity.of(repository_type, f"{namespace}/{name}"),
+            CommitSha(commit_sha),
+            PublicationId(publication_id),
+        )
+
+        def read(queries: MetadataQueries, _: PolicySnapshot) -> tuple[ServiceResult, None]:
+            return ServiceResult("card read", queries.read_card(selected).to_payload()), None
+
+        return await execute(request, read)
 
     def public_operation(receipt: OperationReceipt) -> dict[str, Any]:
         payload = receipt.model_dump(mode="json")

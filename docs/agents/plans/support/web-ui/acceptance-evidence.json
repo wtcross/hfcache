@@ -5750,21 +5750,106 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "c92ef059be06c06abdb102f3d9173f5ff6d11d99689d78a9af6c9838aebc65b3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_card_reads.py::test_exact_read_ignores_current_but_refuses_repaired_away_even_if_replacement_missing",
+            "tests/unit/test_card_reads.py::test_retained_authorization_precedes_orphan_adjunct",
+            "tests/unit/test_card_reads.py::test_authority_rejoin_rejects_races_after_adjunct_read",
+            "tests/unit/test_card_reads.py::test_archive_sentinel_must_authorize_even_a_missing_capture",
+            "tests/unit/test_card_reads.py::test_archive_identity_is_rejoined_after_adjunct_read"
+          ],
+          "observed_assertion": "PASS1406.731s:8581 backend tests/52 unrelated opt-in deselections,581 Cockpit unit,2879 frontend unit/2939 combined component, all strict/build/wheel and14 API-browser checks; zero required skips. Sentinel UUID/hash, per-SHA retained reference, canonical manifest and O_PATH tree identity authorize/rejoin the exact pair. Current changes keep the original retained card; repaired/pruned/missing pairs404 without fallback, even with orphan cards/trees. Corrupt authoritative identity remains a classified error.",
+          "profile": "WEB-010, this commit; parentc51cc5b; frozen1388 regular source inputs. Actual source ASGI/filesystem/pool plus owned external storage seam; not installed MAC or NAS acceptance.",
+          "source_sha256": "71e7056b49adf28d59c81ac602233d009ac6425566dd93c0d84402dcbefec30d"
+        },
+        {
+          "artifact_sha256": "c92ef059be06c06abdb102f3d9173f5ff6d11d99689d78a9af6c9838aebc65b3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_card_reads.py::test_authenticated_get_returns_flat_projection_and_security_headers",
+            "tests/unit/test_card_reads.py::test_authority_rejoin_rejects_races_after_adjunct_read"
+          ],
+          "observed_assertion": "PASS1406.731s:8581 backend tests/52 unrelated opt-in deselections,581 Cockpit unit,2879 frontend unit/2939 combined component, all strict/build/wheel and14 API-browser checks; zero required skips. Sentinel UUID/hash, per-SHA retained reference, canonical manifest and O_PATH tree identity authorize/rejoin the exact pair. Current changes keep the original retained card; repaired/pruned/missing pairs404 without fallback, even with orphan cards/trees. Corrupt authoritative identity remains a classified error.",
+          "profile": "WEB-010, this commit; parentc51cc5b; frozen1388 regular source inputs. Actual source ASGI/filesystem/pool plus owned external storage seam; not installed MAC or NAS acceptance.",
+          "source_sha256": "71e7056b49adf28d59c81ac602233d009ac6425566dd93c0d84402dcbefec30d"
+        },
+        {
+          "artifact_sha256": "a6c2c342df9a2306196cf89bfe2612f106cb88f7d2266a178f4f1414c90bae23",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web010-inputs/web-010-run-owned-functional-v2.py --log /var/tmp/web-010-validation-p3visvrb/functional-card-read2.log",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/functional-card-read2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-010-card-browser-v2.mjs::no-query-selector-and-no-vanished-current-fallback",
+            ".scratch/web-010-card-browser-v2.mjs::concurrent-current-switch-keeps-original-retained-card",
+            ".scratch/web-010-card-browser-v2.mjs::same-sha-repair-never-adopts-replacement-card",
+            ".scratch/web-010-card-browser-v2.mjs::pruned-retained-reference-cannot-be-resurrected-by-card",
+            ".scratch/web-010-card-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS46.607s, case009a47cb0a62416b85f7cc94f0dc7512; six one-attempt Chromium156.0.8078.4 cases, ten publications covering seven states plus future-schema refusal. Sentinel UUID/hash, per-SHA retained reference, canonical manifest and O_PATH tree identity authorize/rejoin the exact pair. Current changes keep the original retained card; repaired/pruned/missing pairs404 without fallback, even with orphan cards/trees. Corrupt authoritative identity remains a classified error. All49 browser requests are GET at exact trusted origin with no interception/overflow; actual API namespace has onlylo/AF_UNIX restrictions. Browser/container/API/Caddy drain normally and original five infrastructure pairs remain unchanged. Failed original functional1 remains excluded; rendering remains WEB014.",
+          "profile": "Owned application profile: built UI/trusted real Caddy/installed wheel0.2.14/actual canonical typed ApiClient through unshipped IIFE. LOCAL_NFS_METADATA_SIMULATION only for external storage/mount-table/local-lock seam; platform_acceptance=false. Final gate differs from installed source only in four test inventory/count files; explicit source3 reuse proof preserves every runtime/browser/packaging byte.",
+          "source_sha256": "1dbdb947b8cb2579c64aebd7bd9baf2a71742b63400112a30973b18f5400e700"
+        }
+      ],
       "id": "CARD-07",
       "owner": "WEB-010",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_07"
+          "node_id": "tests/unit/test_card_reads.py::test_exact_read_ignores_current_but_refuses_repaired_away_even_if_replacement_missing"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_card_reads.py::test_retained_authorization_precedes_orphan_adjunct"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_card_reads.py::test_authority_rejoin_rejects_races_after_adjunct_read"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_card_reads.py::test_archive_sentinel_must_authorize_even_a_missing_capture"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_card_reads.py::test_archive_identity_is_rejoined_after_adjunct_read"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_07"
+          "node_id": "tests/unit/test_card_reads.py::test_authenticated_get_returns_flat_projection_and_security_headers"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_authority_rejoin_rejects_races_after_adjunct_read"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-07"
+          "node_id": ".scratch/web-010-card-browser-v2.mjs::no-query-selector-and-no-vanished-current-fallback"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-010-card-browser-v2.mjs::concurrent-current-switch-keeps-original-retained-card"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-010-card-browser-v2.mjs::same-sha-repair-never-adopts-replacement-card"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-010-card-browser-v2.mjs::pruned-retained-reference-cannot-be-resurrected-by-card"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-010-card-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5772,24 +5857,84 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "c92ef059be06c06abdb102f3d9173f5ff6d11d99689d78a9af6c9838aebc65b3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_card_reads.py::test_tree_metadata_descriptor_has_no_directory_content_capability",
+            "tests/unit/test_card_reads.py::test_configured_metadata_budget_is_not_bypassed_by_card_read"
+          ],
+          "observed_assertion": "PASS1406.731s:8581 backend tests/52 unrelated opt-in deselections,581 Cockpit unit,2879 frontend unit/2939 combined component, all strict/build/wheel and14 API-browser checks; zero required skips. Only sentinel/ref/manifest/card metadata and O_PATH tree existence are available; no SourceAccess/capture, Hub/DNS, credentials or archive flock. Actual ASGI slow-send/cancellation holds two leases and refuses a third until completion/cancellation; it is not a physical TCP-RST claim. Installed full-file inspection proves GETs do not change source/card bytes and only explicit external toy ref transitions occur.",
+          "profile": "WEB-010, this commit; parentc51cc5b; frozen1388 regular source inputs. Actual source ASGI/filesystem/pool plus owned external storage seam; not installed MAC or NAS acceptance.",
+          "source_sha256": "71e7056b49adf28d59c81ac602233d009ac6425566dd93c0d84402dcbefec30d"
+        },
+        {
+          "artifact_sha256": "c92ef059be06c06abdb102f3d9173f5ff6d11d99689d78a9af6c9838aebc65b3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_card_reads.py::test_real_card_get_has_only_metadata_capability_and_no_capture_network_or_lock",
+            "tests/unit/test_card_reads.py::test_card_metadata_lease_lives_through_slow_send_and_disconnect",
+            "tests/unit/test_card_reads.py::test_card_query_and_body_refuse_before_metadata_work"
+          ],
+          "observed_assertion": "PASS1406.731s:8581 backend tests/52 unrelated opt-in deselections,581 Cockpit unit,2879 frontend unit/2939 combined component, all strict/build/wheel and14 API-browser checks; zero required skips. Only sentinel/ref/manifest/card metadata and O_PATH tree existence are available; no SourceAccess/capture, Hub/DNS, credentials or archive flock. Actual ASGI slow-send/cancellation holds two leases and refuses a third until completion/cancellation; it is not a physical TCP-RST claim. Installed full-file inspection proves GETs do not change source/card bytes and only explicit external toy ref transitions occur.",
+          "profile": "WEB-010, this commit; parentc51cc5b; frozen1388 regular source inputs. Actual source ASGI/filesystem/pool plus owned external storage seam; not installed MAC or NAS acceptance.",
+          "source_sha256": "71e7056b49adf28d59c81ac602233d009ac6425566dd93c0d84402dcbefec30d"
+        },
+        {
+          "artifact_sha256": "a6c2c342df9a2306196cf89bfe2612f106cb88f7d2266a178f4f1414c90bae23",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web010-inputs/web-010-run-owned-functional-v2.py --log /var/tmp/web-010-validation-p3visvrb/functional-card-read2.log",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/functional-card-read2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-010-card-browser-v2.mjs::pruned-retained-reference-cannot-be-resurrected-by-card",
+            ".scratch/web-010-card-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS46.607s, case009a47cb0a62416b85f7cc94f0dc7512; six one-attempt Chromium156.0.8078.4 cases, ten publications covering seven states plus future-schema refusal. Only sentinel/ref/manifest/card metadata and O_PATH tree existence are available; no SourceAccess/capture, Hub/DNS, credentials or archive flock. Actual ASGI slow-send/cancellation holds two leases and refuses a third until completion/cancellation; it is not a physical TCP-RST claim. Installed full-file inspection proves GETs do not change source/card bytes and only explicit external toy ref transitions occur. All49 browser requests are GET at exact trusted origin with no interception/overflow; actual API namespace has onlylo/AF_UNIX restrictions. Browser/container/API/Caddy drain normally and original five infrastructure pairs remain unchanged. Failed original functional1 remains excluded; rendering remains WEB014.",
+          "profile": "Owned application profile: built UI/trusted real Caddy/installed wheel0.2.14/actual canonical typed ApiClient through unshipped IIFE. LOCAL_NFS_METADATA_SIMULATION only for external storage/mount-table/local-lock seam; platform_acceptance=false. Final gate differs from installed source only in four test inventory/count files; explicit source3 reuse proof preserves every runtime/browser/packaging byte.",
+          "source_sha256": "1dbdb947b8cb2579c64aebd7bd9baf2a71742b63400112a30973b18f5400e700"
+        }
+      ],
       "id": "CARD-08",
       "owner": "WEB-010",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_08"
+          "node_id": "tests/unit/test_card_reads.py::test_tree_metadata_descriptor_has_no_directory_content_capability"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_card_reads.py::test_configured_metadata_budget_is_not_bypassed_by_card_read"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_08"
+          "node_id": "tests/unit/test_card_reads.py::test_real_card_get_has_only_metadata_capability_and_no_capture_network_or_lock"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_card_metadata_lease_lives_through_slow_send_and_disconnect"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_card_query_and_body_refuse_before_metadata_work"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-08"
+          "node_id": ".scratch/web-010-card-browser-v2.mjs::pruned-retained-reference-cannot-be-resurrected-by-card"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-010-card-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5797,24 +5942,104 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "c92ef059be06c06abdb102f3d9173f5ff6d11d99689d78a9af6c9838aebc65b3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_card_reads.py::test_read_projection_has_independent_coherent_states",
+            "tests/unit/test_card_reads.py::test_read_projection_refuses_unknown_coercive_or_mixed_fields",
+            "tests/unit/test_card_reads.py::test_read_projection_bounds_utf8_and_json_expansion_separately"
+          ],
+          "observed_assertion": "PASS1406.731s:8581 backend tests/52 unrelated opt-in deselections,581 Cockpit unit,2879 frontend unit/2939 combined component, all strict/build/wheel and14 API-browser checks; zero required skips. Seven strict card states plus unknown-schema refusal stay distinct. Reader/writer/Basic read; MCP REST credential is denied401 before metadata work. UTF8/JSON/body/work limits, unsafe/corrupt records and redaction races refuse without partial-success headers or stale digest. Reconstructing browser decoder plus awaited native SHA256 and exact request binding expose no tampered/aborted body.",
+          "profile": "WEB-010, this commit; parentc51cc5b; frozen1388 regular source inputs. Actual source ASGI/filesystem/pool plus owned external storage seam; not installed MAC or NAS acceptance.",
+          "source_sha256": "71e7056b49adf28d59c81ac602233d009ac6425566dd93c0d84402dcbefec30d"
+        },
+        {
+          "artifact_sha256": "c92ef059be06c06abdb102f3d9173f5ff6d11d99689d78a9af6c9838aebc65b3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_card_reads.py::test_authenticated_get_returns_flat_projection_and_security_headers",
+            "tests/unit/test_card_reads.py::test_basic_allowed_and_mcp_credential_denied_before_metadata_work",
+            "tests/unit/test_card_reads.py::test_invalid_adjunct_is_classified_without_fallback_or_private_values",
+            "tests/unit/test_card_reads.py::test_sanitization_race_refuses_changed_markdown_and_stale_digest",
+            "tests/unit/test_card_reads.py::test_card_encoding_expansion_refuses_before_success_headers"
+          ],
+          "observed_assertion": "PASS1406.731s:8581 backend tests/52 unrelated opt-in deselections,581 Cockpit unit,2879 frontend unit/2939 combined component, all strict/build/wheel and14 API-browser checks; zero required skips. Seven strict card states plus unknown-schema refusal stay distinct. Reader/writer/Basic read; MCP REST credential is denied401 before metadata work. UTF8/JSON/body/work limits, unsafe/corrupt records and redaction races refuse without partial-success headers or stale digest. Reconstructing browser decoder plus awaited native SHA256 and exact request binding expose no tampered/aborted body.",
+          "profile": "WEB-010, this commit; parentc51cc5b; frozen1388 regular source inputs. Actual source ASGI/filesystem/pool plus owned external storage seam; not installed MAC or NAS acceptance.",
+          "source_sha256": "71e7056b49adf28d59c81ac602233d009ac6425566dd93c0d84402dcbefec30d"
+        },
+        {
+          "artifact_sha256": "a6c2c342df9a2306196cf89bfe2612f106cb88f7d2266a178f4f1414c90bae23",
+          "command": "rtk python3 .scratch/web-008-call-guest.py --script /home/webfixture/web010-inputs/web-010-run-owned-functional-v2.py --log /var/tmp/web-010-validation-p3visvrb/functional-card-read2.log",
+          "evidence_locator": "/var/tmp/web-010-validation-p3visvrb/functional-card-read2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-010-card-browser-v2.mjs::built-ui-basic-login-exact-bootstrap",
+            ".scratch/web-010-card-browser-v2.mjs::exact-model-dataset-all-card-states-and-safe-metadata-errors",
+            ".scratch/web-010-card-fixture.py::inspect"
+          ],
+          "observed_assertion": "PASS46.607s, case009a47cb0a62416b85f7cc94f0dc7512; six one-attempt Chromium156.0.8078.4 cases, ten publications covering seven states plus future-schema refusal. Seven strict card states plus unknown-schema refusal stay distinct. Reader/writer/Basic read; MCP REST credential is denied401 before metadata work. UTF8/JSON/body/work limits, unsafe/corrupt records and redaction races refuse without partial-success headers or stale digest. Reconstructing browser decoder plus awaited native SHA256 and exact request binding expose no tampered/aborted body. All49 browser requests are GET at exact trusted origin with no interception/overflow; actual API namespace has onlylo/AF_UNIX restrictions. Browser/container/API/Caddy drain normally and original five infrastructure pairs remain unchanged. Failed original functional1 remains excluded; rendering remains WEB014.",
+          "profile": "Owned application profile: built UI/trusted real Caddy/installed wheel0.2.14/actual canonical typed ApiClient through unshipped IIFE. LOCAL_NFS_METADATA_SIMULATION only for external storage/mount-table/local-lock seam; platform_acceptance=false. Final gate differs from installed source only in four test inventory/count files; explicit source3 reuse proof preserves every runtime/browser/packaging byte.",
+          "source_sha256": "1dbdb947b8cb2579c64aebd7bd9baf2a71742b63400112a30973b18f5400e700"
+        }
+      ],
       "id": "CARD-09",
       "owner": "WEB-010",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_card.py::test_card_09"
+          "node_id": "tests/unit/test_card_reads.py::test_read_projection_has_independent_coherent_states"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_card_reads.py::test_read_projection_refuses_unknown_coercive_or_mixed_fields"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_card_reads.py::test_read_projection_bounds_utf8_and_json_expansion_separately"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_card.py::test_card_09"
+          "node_id": "tests/unit/test_card_reads.py::test_authenticated_get_returns_flat_projection_and_security_headers"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_basic_allowed_and_mcp_credential_denied_before_metadata_work"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_invalid_adjunct_is_classified_without_fallback_or_private_values"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_sanitization_race_refuses_changed_markdown_and_stale_digest"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_card_reads.py::test_card_encoding_expansion_refuses_before_success_headers"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/card.spec.ts::CARD-09"
+          "node_id": ".scratch/web-010-card-browser-v2.mjs::built-ui-basic-login-exact-bootstrap"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-010-card-browser-v2.mjs::exact-model-dataset-all-card-states-and-safe-metadata-errors"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-010-card-fixture.py::inspect"
         }
       ],
       "required_layers": [
@@ -5822,7 +6047,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

@@ -12,6 +12,7 @@ from pydantic import BaseModel, BeforeValidator, Field, create_model
 
 from hfcache import ui_models
 from hfcache import wire_models as payloads
+from hfcache.card_models import RepositoryCardRead
 from hfcache.catalog_query_models import (
     CatalogDetailPayload,
     CatalogFacetPayload,
@@ -44,6 +45,7 @@ AUTHORITIES: dict[str, Any] = {
     "ApiProblem": ClientProblem,
     "Capabilities": Capabilities,
     "HostStatus": HostStatus,
+    "RepositoryCardRead": RepositoryCardRead,
     "ConfigRead": ConfigRead,
     "ConfigApplicationOutcome": ConfigApplicationOutcome,
     "ManagedValidation": ManagedValidation,
@@ -194,6 +196,13 @@ READ_ROUTES = (
         "manifest read",
         "ManifestPayload",
         bindings=("publication.manifest",),
+    ),
+    _read(
+        "repository_card",
+        "/repositories/{repository_type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card",
+        "card read",
+        "RepositoryCardRead",
+        bindings=("publication.card",),
     ),
     _read(
         "operations",

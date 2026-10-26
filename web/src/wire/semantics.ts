@@ -14,6 +14,7 @@ import {
 import { contextSemanticIds } from "../api/bindings";
 import { applyHostSemantic, hostSemanticIds } from "./host-semantics";
 import { applyConfigSemantic, configSemanticIds } from "./config-semantics";
+import { applyCardSemantic, cardSemanticIds } from "./card-semantics";
 import { pythonIsPrintable } from "./unicode";
 import {
     applyUiSemantic,
@@ -264,9 +265,14 @@ export const implementedSemanticIds: readonly string[] = [
     ...uiContextSemanticIds,
     ...hostSemanticIds,
     ...configSemanticIds,
+    ...cardSemanticIds,
 ];
 
 export function applySemantic(id: string, value: unknown): void {
+    if (cardSemanticIds.includes(id)) {
+        applyCardSemantic(id, value);
+        return;
+    }
     if (configSemanticIds.includes(id)) {
         applyConfigSemantic(id, value);
         return;

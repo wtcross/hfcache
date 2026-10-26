@@ -1144,8 +1144,11 @@ image/worker/TLS fixture records and clean immutable artifact identities.
   exact manifest-listed root README and perform its bounded source-copy digest
   check; it never changes publication verification confidence. Card reads open
   adjunct/authoritative metadata only, preserve exact retained identity and do
-  not fall back. Writer capture is implemented in unreleased source; its future
-  read API and renderer are separate. Existing observations, public refresh
+  not fall back. Writer capture and exact metadata-only reads are implemented in
+  unreleased source; the renderer remains separate. Missing capture is explicit,
+  vanished retained identity is404, and corrupt/unsafe records refuse. GET shares
+  the bounded metadata lease through encoding/send/disconnect, creates no files
+  and takes no archive writer lock. Existing observations, public refresh
   fields/counts and their schemas remain unchanged. Non-present cards retain no
   body; incomplete capture warns without undoing publication success. See
   [card contract](discovery.md#repository-card-design).

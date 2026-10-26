@@ -16,6 +16,7 @@ from hashlib import sha256
 from hfcache.api.auth import CredentialClass
 from hfcache.api.basic import ProtectedAdministratorRecord
 from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
+from hfcache.card_models import RepositoryCardRead
 from hfcache.catalog_models import (
     ModelVariant,
     PublicationObservation,
@@ -658,6 +659,11 @@ def repository_card() -> RepositoryCard:
         presentation_sha256=None,
         diagnostics=("readme_absent",),
     )
+
+
+def repository_card_read() -> RepositoryCardRead:
+    """Public projection of actual absent-README fixture authority; not a durable format."""
+    return RepositoryCardRead.model_validate(repository_card().to_payload())
 
 
 def configuration_read() -> ConfigRead:

@@ -74,6 +74,16 @@ const reads: readonly (readonly [string, ReadInvocation])[] = [
             }),
     ],
     ["/operations", (api) => api.readOperations()],
+    [
+        "/repositories/model/org/name/publications/" + sha + "/" + id + "/card",
+        (api) =>
+            api.readRepositoryCard({
+                repositoryType: "model",
+                repositoryId: "org/name",
+                commitSha: sha,
+                publicationId: id,
+            }),
+    ],
     ["/operations/lookup", (api) => api.lookupOperation("original-key")],
     ["/operations/" + id, (api) => api.readOperation(id)],
     [

@@ -118,6 +118,7 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `GET /runs/{run_id}` | default | runs show RUN_ID | R | synchronous | none | no | none | none |
 | `GET /repositories/{repository_type}/{namespace}/{name}/references/{revision}` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /repositories/{repository_type}/{namespace}/{name}/manifests/{commit_sha}/{publication_id}` | default | SDK / HTTP | R | synchronous | none | no | none | none |
+| `GET /repositories/{repository_type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card` | default | browser / HTTP | R | synchronous | none | no | none | none |
 | `GET /operations` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /operations/lookup` | default | operations lookup | R | synchronous | none | no | none | none |
 | `GET /operations/{operation_id}` | default | operations show | R | synchronous | none | no | none | none |
@@ -331,7 +332,8 @@ publication or update integrity confidence. No Hub request or payload download
 is added. Card failure uses existing `HFWRN011` warnings and the existing partial
 result rules. Publication observation fields and counts retain their original
 meaning; there is no card count, refresh flag or additional refresh route.
-The card read API and browser renderer are separate subsequent work. See the
+The exact card read API is implemented in unreleased source; browser rendering
+remains subsequent work. See the
 [capture guide](web-ui/readme-cards.md).
 
 The canonical route identifies this operation kind; its Envelope command is
@@ -554,8 +556,8 @@ POST. [Server lifecycle](server.md#restart-and-drain) governs actual executor dr
 Optional Basic authentication and the indexed `/ui/` navigation/assets/bootstrap
 surface are implemented in unreleased source, preserving existing REST/MCP
 credential classes and strict public schemas. Protected host status and managed
-configuration read/validation/preview and guarded application are implemented in
-unreleased source. Other host controls and cards below retain their
+configuration read/validation/preview, guarded application and exact-publication
+card reads are implemented in unreleased source. Other host controls below retain their
 separate design and acceptance obligations. These source additions do not change an installed release or grant
 host authority.
 See [UI availability](web-ui/README.md), [authentication decision](adr/decision-140.md),
@@ -748,11 +750,49 @@ nothing. See [managed reconstruction](adr/decision-153.md) and the
 
 ### New presentation and host bounds
 
-Cards have independent [schema 1](schemas.md#181-repositorycard-schema-1).
-`not_captured` distinguishes a missing adjunct from missing README; vanished
-publication is 404 without fallback. Invalid schema/identity/bounds is a classified
-error. Card reads never open source payloads or contact the Hub, and use the same
-bounded metadata pool/lease lifetime as other reads.
+`GET /api/v1/repositories/{repository_type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card`
+accepts no query parameters or body selectors. It requires normal REST read
+authority: reader, writer or Basic administrator; MCP credentials do not grant
+REST access. No archive-write or protected host-helper permission is needed for
+this read. Use the configured public prefix as for other REST routes.
+
+The ordinary read wrapper has command `card read`, `next_cursor: null` and a flat
+strict [RepositoryCardRead schema 1](schemas.md#card-read-projection-schema-1)
+in `envelope.data`, not a nested card object. Archive/repository/SHA/publication/
+generation, manifest identity and source identity bind the exact selected retained
+publication. A current-pointer change cannot select another card. Missing retained
+ref, a valid ref naming another publication, or a missing requested manifest/tree
+returns404 without falling forward to current or a repair replacement. Orphan
+card/manifest files do not authorize a read.
+
+A missing adjunct returns200 with `state=not_captured`; it creates no record.
+`captured_at`, `presentation_version`, `markdown` and `presentation_sha256` are
+null and diagnostics empty. Its source path/expected digest come only from the
+manifest, or are both null when no root README is listed. A stored `absent` card
+instead records an actual capture finding no manifest-listed README. The other
+stored states remain explicit; only `present` carries sanitized Markdown and its
+matching UTF-8 digest. A present empty string is valid.
+
+Malformed authoritative metadata is classified `HFVER007`/`HFVER008`; corrupt,
+unsafe, unknown-version or mismatched adjuncts are `HFVER007`, not successful
+empty content. Metadata/parser work exhaustion is `HFAPI005`. The API rechecks
+retained ref/manifest identity after reading the adjunct and refuses unsafe
+presentation or any output sanitization that would change its body/identity while
+retaining an old digest. The typed browser client binds the exact request identity
+and verifies present-body SHA-256 with native WebCrypto before exposing data.
+
+Presentation UTF-8 and JSON-string bytes each fit1MiB. The complete encoded read
+response fits the smaller of configured `max_response_bytes` and2MiB, checked
+before headers; response overflow returns413. Reads share the normal bounded
+metadata pool and lease through encoding, response completion and disconnect;
+cancelling an observer cannot release a still-running worker's slot. Responses
+retain `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`.
+
+Card GET reads adjunct and authoritative metadata only. It never opens README or
+other file payloads, acquires the archive writer lock, resolves Hub credentials,
+contacts Hub, writes, refreshes or verifies publication content. There is no raw
+README, HTML or general file endpoint. Browser rendering remains later work;
+this API does not enable a card view. See the [read procedure](web-ui/readme-cards.md#read-one-exact-publication).
 
 Calendar expressions are one nonempty printable ASCII line, at most 4096 bytes,
 without backslash; delay is a printable ASCII line at most 256 bytes without

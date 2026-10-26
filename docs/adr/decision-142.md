@@ -1,7 +1,7 @@
 # Capture publication-bound inert README presentation records
 
 - Decision identity: 142.
-- Status: Accepted; writer capture implemented in unreleased source; card API and rendering pending.
+- Status: Accepted; writer capture and exact card reads implemented in unreleased source; rendering pending.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -111,3 +111,29 @@ old-binary rollback or installed acceptance; the actual compatibility drill and
 functional evidence must be recorded before acceptance. Exact card API reads
 and React rendering remain separate later work, with all originally accepted
 identity, no-payload and inert-rendering controls still required.
+
+## Exact read clarification (2026-10-25)
+
+The exact card GET is now implemented in unreleased source through the existing
+authenticated metadata pool and request/worker lease. Its strict independent
+schema-1 projection is flat inside the unchanged read wrapper, with command
+`card read`. It preserves exact retained archive/repository/SHA/publication/
+generation/manifest identity. `not_captured` uses manifest-only source identity,
+null capture time/version/body/digest and empty diagnostics, without writing a
+synthetic durable card. Missing/pruned/purged/repaired-away identity returns404;
+orphan card/manifest files and current/repair replacements supply no fallback.
+
+The read rechecks retention/manifest identity after adjunct access and uses the
+same present-body grammar/current-secret validator without silently transforming
+bytes under an old digest. The typed browser client verifies request identity
+and the present UTF-8 digest before exposing the projection. Encoded responses
+fit the smaller of configured response capacity and2MiB before headers, retaining
+the1MiB UTF-8 and JSON-string presentation bounds. This changes no durable
+schema, refresh wrapper, MCP tool or CLI command and introduces no dependency.
+
+GET has no payload, Hub, credential-resolution, archive-lock, write, refresh or
+verification capability. It retains ordinary authentication, no-store/nosniff
+and bounded lease/drain behavior. Browser rendering and source-toggle UX remain
+later work with the original inert rendering requirements; the JSON API does
+not make those views available. Source implementation alone is not installed
+acceptance or production deployment.

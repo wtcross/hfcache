@@ -1,6 +1,6 @@
-/** Generated from source digest 06a12a8720cef19052e74f889e240dcfa9c63249c50360ae97931b8de20ddb11. Run generate:wire; do not edit. */
+/** Generated from source digest 4f3b1b07176239b5a5e40975a04544379b50fc37b69a80ac20fcecf4b256ef63. Run generate:wire; do not edit. */
 export const WIRE_SOURCE_DIGEST =
-    "06a12a8720cef19052e74f889e240dcfa9c63249c50360ae97931b8de20ddb11";
+    "4f3b1b07176239b5a5e40975a04544379b50fc37b69a80ac20fcecf4b256ef63";
 import {
     wireObject,
     wireRequestObject,
@@ -802,6 +802,47 @@ export type ReportPayload = {
 };
 export type RepositoriesPayload = {
     readonly ["repositories"]: readonly RepositoryPayload[];
+};
+export type RepositoryCardRead = {
+    readonly ["schema_version"]: 1;
+    readonly ["kind"]: "repository_card";
+    readonly ["archive_id"]: string;
+    readonly ["repository_type"]: "model" | "dataset";
+    readonly ["repository_id"]: string;
+    readonly ["commit_sha"]: string;
+    readonly ["publication_id"]: string;
+    readonly ["publication_generation"]: number;
+    readonly ["manifest_path"]: string;
+    readonly ["manifest_digest"]: string;
+    readonly ["source_path"]: "README.md" | null;
+    readonly ["expected_source_sha256"]: string | null;
+    readonly ["captured_at"]: string | null;
+    readonly ["presentation_version"]: "markdown-1" | null;
+    readonly ["state"]:
+        | (
+              | "present"
+              | "absent"
+              | "unsupported"
+              | "oversize"
+              | "unsafe"
+              | "failed"
+          )
+        | "not_captured";
+    readonly ["markdown"]: string | null;
+    readonly ["presentation_sha256"]: string | null;
+    readonly ["diagnostics"]: readonly (
+        | "readme_absent"
+        | "source_oversize"
+        | "presentation_oversize"
+        | "source_digest_mismatch"
+        | "source_changed"
+        | "invalid_utf8"
+        | "unsupported_markdown"
+        | "unsafe_content"
+        | "secret_suppressed"
+        | "work_limit"
+        | "read_failed"
+    )[];
 };
 export type RepositoryConfig = {
     readonly ["id"]: string;
@@ -5058,6 +5099,198 @@ export function decodeRepositoriesPayload(value: unknown): RepositoriesPayload {
         });
     })(value);
 }
+export function decodeRepositoryCardRead(value: unknown): RepositoryCardRead {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "kind",
+                "archive_id",
+                "repository_type",
+                "repository_id",
+                "commit_sha",
+                "publication_id",
+                "publication_generation",
+                "manifest_path",
+                "manifest_digest",
+                "source_path",
+                "expected_source_sha256",
+                "captured_at",
+                "presentation_version",
+                "state",
+                "markdown",
+                "presentation_sha256",
+                "diagnostics",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.card_models.RepositoryCardRead.strict_version"],
+                ),
+                ["kind"]: wireLiteral(object["kind"], "repository_card"),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["repository_type"]: checked(
+                    wireUnion<"model" | "dataset">(object["repository_type"], [
+                        (member: unknown) => wireLiteral(member, "model"),
+                        (member: unknown) => wireLiteral(member, "dataset"),
+                    ]),
+                    ["hfcache.identity.parse_repository_type"],
+                ),
+                ["repository_id"]: checked(
+                    wireString(object["repository_id"], null, null, null),
+                    ["hfcache.identity.parse_repository_id"],
+                ),
+                ["commit_sha"]: checked(
+                    wireString(object["commit_sha"], null, null, null),
+                    ["hfcache.identity.parse_commit_sha"],
+                ),
+                ["publication_id"]: checked(
+                    wireString(object["publication_id"], null, null, null),
+                    ["hfcache.identity.parse_publication_id"],
+                ),
+                ["publication_generation"]: wireInteger(
+                    object["publication_generation"],
+                    "1",
+                    null,
+                ),
+                ["manifest_path"]: checked(
+                    wireString(object["manifest_path"], null, null, null),
+                    ["hfcache.models._archive_path"],
+                ),
+                ["manifest_digest"]: checked(
+                    wireString(object["manifest_digest"], null, null, null),
+                    ["hfcache.models._parse_sha256"],
+                ),
+                ["source_path"]: wireUnion<"README.md" | null>(
+                    object["source_path"],
+                    [
+                        (member: unknown) => wireLiteral(member, "README.md"),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["expected_source_sha256"]: wireUnion<string | null>(
+                    object["expected_source_sha256"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, null, null, null), [
+                                "hfcache.models._parse_sha256",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["captured_at"]: wireUnion<string | null>(
+                    object["captured_at"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, null, null, null), [
+                                "timestamp.serialized",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["presentation_version"]: wireUnion<"markdown-1" | null>(
+                    object["presentation_version"],
+                    [
+                        (member: unknown) => wireLiteral(member, "markdown-1"),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["state"]: wireUnion<
+                    | (
+                          | "present"
+                          | "absent"
+                          | "unsupported"
+                          | "oversize"
+                          | "unsafe"
+                          | "failed"
+                      )
+                    | "not_captured"
+                >(object["state"], [
+                    (member: unknown) =>
+                        wireUnion<
+                            | "present"
+                            | "absent"
+                            | "unsupported"
+                            | "oversize"
+                            | "unsafe"
+                            | "failed"
+                        >(member, [
+                            (member: unknown) => wireLiteral(member, "present"),
+                            (member: unknown) => wireLiteral(member, "absent"),
+                            (member: unknown) =>
+                                wireLiteral(member, "unsupported"),
+                            (member: unknown) =>
+                                wireLiteral(member, "oversize"),
+                            (member: unknown) => wireLiteral(member, "unsafe"),
+                            (member: unknown) => wireLiteral(member, "failed"),
+                        ]),
+                    (member: unknown) => wireLiteral(member, "not_captured"),
+                ]),
+                ["markdown"]: wireUnion<string | null>(object["markdown"], [
+                    (member: unknown) =>
+                        wireString(member, null, 1048576, null),
+                    (member: unknown) => wireNull(member),
+                ]),
+                ["presentation_sha256"]: wireUnion<string | null>(
+                    object["presentation_sha256"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, null, null, null), [
+                                "hfcache.models._parse_sha256",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["diagnostics"]: wireArray(
+                    object["diagnostics"],
+                    (member: unknown) =>
+                        wireUnion<
+                            | "readme_absent"
+                            | "source_oversize"
+                            | "presentation_oversize"
+                            | "source_digest_mismatch"
+                            | "source_changed"
+                            | "invalid_utf8"
+                            | "unsupported_markdown"
+                            | "unsafe_content"
+                            | "secret_suppressed"
+                            | "work_limit"
+                            | "read_failed"
+                        >(member, [
+                            (member: unknown) =>
+                                wireLiteral(member, "readme_absent"),
+                            (member: unknown) =>
+                                wireLiteral(member, "source_oversize"),
+                            (member: unknown) =>
+                                wireLiteral(member, "presentation_oversize"),
+                            (member: unknown) =>
+                                wireLiteral(member, "source_digest_mismatch"),
+                            (member: unknown) =>
+                                wireLiteral(member, "source_changed"),
+                            (member: unknown) =>
+                                wireLiteral(member, "invalid_utf8"),
+                            (member: unknown) =>
+                                wireLiteral(member, "unsupported_markdown"),
+                            (member: unknown) =>
+                                wireLiteral(member, "unsafe_content"),
+                            (member: unknown) =>
+                                wireLiteral(member, "secret_suppressed"),
+                            (member: unknown) =>
+                                wireLiteral(member, "work_limit"),
+                            (member: unknown) =>
+                                wireLiteral(member, "read_failed"),
+                        ]),
+                    null,
+                    11,
+                ),
+            });
+        })(value),
+        ["hfcache.card_models.RepositoryCardRead.coherent"],
+    );
+}
 export function decodeRepositoryConfig(value: unknown): RepositoryConfig {
     return checked(
         ((input: unknown) => {
@@ -8153,6 +8386,8 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeReportPayload(value);
         case "RepositoriesPayload":
             return decodeRepositoriesPayload(value);
+        case "RepositoryCardRead":
+            return decodeRepositoryCardRead(value);
         case "RepositoryConfig":
             return decodeRepositoryConfig(value);
         case "RepositoryPayload":
@@ -8947,6 +9182,68 @@ export const routeContracts = {
             })(value),
         repeated: [],
         decodeSuccess: decodeManifestPayload,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: wireNull,
+    },
+    repository_card_default: {
+        method: "GET",
+        path: "/api/v1/repositories/{repository_type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card",
+        commands: ["card read"],
+        bindingIds: ["publication.card"],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (
+            value: unknown,
+        ): {
+            readonly ["repository_type"]: string;
+            readonly ["namespace"]: string;
+            readonly ["name"]: string;
+            readonly ["commit_sha"]: string;
+            readonly ["publication_id"]: string;
+        } =>
+            ((input: unknown) => {
+                const object = wireObject(input, [
+                    "repository_type",
+                    "namespace",
+                    "name",
+                    "commit_sha",
+                    "publication_id",
+                ]);
+                return Object.freeze({
+                    ["repository_type"]: checked(
+                        wireString(object["repository_type"], 1, 256, null),
+                        ["hfcache.identity.parse_repository_type"],
+                    ),
+                    ["namespace"]: wireString(
+                        object["namespace"],
+                        1,
+                        96,
+                        "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+                    ),
+                    ["name"]: wireString(
+                        object["name"],
+                        1,
+                        96,
+                        "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+                    ),
+                    ["commit_sha"]: checked(
+                        wireString(object["commit_sha"], 1, 256, null),
+                        ["hfcache.identity.parse_commit_sha"],
+                    ),
+                    ["publication_id"]: checked(
+                        wireString(object["publication_id"], 1, 256, null),
+                        ["hfcache.identity.parse_publication_id"],
+                    ),
+                });
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeRepositoryCardRead,
         decodeFailure: (value: unknown): EmptyPayload =>
             wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
         decodeBody: wireNull,
@@ -11150,6 +11447,72 @@ export const routeDefinitions = [
         request_body: null,
         response_kind: "read",
         success: "ManifestPayload",
+    },
+    {
+        binding_ids: ["publication.card"],
+        commands: ["card read"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "repository_card",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/repositories/{repository_type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card",
+        path_parameters: [
+            {
+                name: "repository_type",
+                node: {
+                    kind: "string",
+                    max_codepoints: 256,
+                    min_codepoints: 1,
+                    pattern: null,
+                    semantic_ids: ["hfcache.identity.parse_repository_type"],
+                },
+            },
+            {
+                name: "namespace",
+                node: {
+                    kind: "string",
+                    max_codepoints: 96,
+                    min_codepoints: 1,
+                    pattern: "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+                    semantic_ids: [],
+                },
+            },
+            {
+                name: "name",
+                node: {
+                    kind: "string",
+                    max_codepoints: 96,
+                    min_codepoints: 1,
+                    pattern: "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+                    semantic_ids: [],
+                },
+            },
+            {
+                name: "commit_sha",
+                node: {
+                    kind: "string",
+                    max_codepoints: 256,
+                    min_codepoints: 1,
+                    pattern: null,
+                    semantic_ids: ["hfcache.identity.parse_commit_sha"],
+                },
+            },
+            {
+                name: "publication_id",
+                node: {
+                    kind: "string",
+                    max_codepoints: 256,
+                    min_codepoints: 1,
+                    pattern: null,
+                    semantic_ids: ["hfcache.identity.parse_publication_id"],
+                },
+            },
+        ],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "read",
+        success: "RepositoryCardRead",
     },
     {
         binding_ids: [],

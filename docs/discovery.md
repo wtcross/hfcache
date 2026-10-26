@@ -11,7 +11,7 @@ installs configuration.
 
 ## Repository card design
 
-**Writer capture is implemented in unreleased source.** Existing technical
+**Writer capture and exact card API reads are implemented in unreleased source.** Existing technical
 observations retain declarations; an independent
 [RepositoryCard schema 1](schemas.md#181-repositorycard-schema-1) extends the
 optional namespace with
@@ -19,9 +19,8 @@ optional namespace with
 plural `models`/`datasets` grammar. It does not widen old observations/manifests,
 change publication or verification confidence, or make leftover records authority.
 See [decision 142](adr/decision-142.md) and [UI availability](web-ui/README.md).
-The [README capture guide](web-ui/readme-cards.md) describes the existing refresh
-workflow. Exact card API reads and browser rendering remain later work; this
-capture implementation adds neither a read endpoint nor a card view.
+The [README guide](web-ui/readme-cards.md) describes refresh and exact reads.
+Browser rendering remains later work; API availability does not add a card view.
 
 Joined writer-owned sync/repair and existing `technical=true` offline refresh
 capture only root manifest-listed `README.md` through no-follow ordinary-file
@@ -59,14 +58,20 @@ warning makes refresh partial when an observation or tag snapshot was written;
 the existing no-write rule otherwise yields failed. A card write cannot inflate
 `observations_written`, `records_failed` or `technical_incomplete`.
 
-The planned authenticated exact card GET reads only adjunct plus authoritative
+The authenticated exact card GET reads only adjunct plus authoritative
 metadata, using existing bounded reader/lease rules. It never opens payloads,
 resolves credentials, refreshes or contacts Hub. Retained noncurrent exact publications
 may be read only when current reference rules authorize them. Pruned, purged or
 repaired-away identity is 404 with no current-instance fallback. Invalid adjunct
 identity/schema/bounds is an error, never successful empty content. Its explicit
 `not_captured` state describes a missing adjunct, not a durable card record.
-This read projection is not implemented by writer capture.
+The strict read projection preserves authoritative identity for `not_captured`,
+with null capture time/version/body/digest and no diagnostics. Source identity
+comes from the manifest without opening README. The complete response fits2MiB
+and the configured response bound; malformed/unsafe adjuncts and exhausted work
+are errors. The original metadata lease covers encoding/send/disconnect; GET
+acquires no writer lock and creates no files. See the
+[read projection](schemas.md#card-read-projection-schema-1).
 
 The planned renderer uses bounded inert React Markdown/GFM with a reviewed
 allowlist; no raw HTML/MDX, SVG, scripts, iframes, forms, handlers, unsafe protocols,

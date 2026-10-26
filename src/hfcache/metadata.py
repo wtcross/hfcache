@@ -77,7 +77,8 @@ class MetadataReader:
                 is_directory = directory or index < len(path.parts) - 2
                 flags = os.O_NOFOLLOW
                 flags |= (
-                    os.O_RDONLY | os.O_DIRECTORY
+                    (os.O_PATH if metadata_only and index == len(path.parts) - 2 else os.O_RDONLY)
+                    | os.O_DIRECTORY
                     if is_directory
                     else (os.O_PATH if metadata_only else os.O_RDONLY | os.O_NONBLOCK)
                 )

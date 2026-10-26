@@ -70,11 +70,11 @@ def parameter_values(
 def test_manifest_has_exactly_all_36_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
     assert len(PARITY) == len(PARITY_REFERENCE) == 36
-    assert len(REFERENCE) == len(rows) == 50
+    assert len(REFERENCE) == len(rows) == 51
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
     assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
     assert rows == REFERENCE
-    assert len({row[:2] for row in rows}) == 50
+    assert len({row[:2] for row in rows}) == 51
     assert all(len(row) == 9 for row in rows)
 
 
@@ -98,6 +98,32 @@ def test_host_status_has_separate_basic_authority_without_expanding_cli_parity()
             "test_host_status_never_promotes_rest_bearers_or_calls_the_helper",
         )
     )
+
+
+def test_card_read_has_separate_http_evidence_without_claiming_a_cli_mode():
+    row = next(row for row in matrix_rows() if row[0].endswith("/card"))
+    assert row == (
+        (
+            "GET /repositories/{repository_type}/{namespace}/{name}/publications/"
+            "{commit_sha}/{publication_id}/card"
+        ),
+        "default",
+        "browser / HTTP",
+        "R",
+        "synchronous",
+        "none",
+        "no",
+        "none",
+        "none",
+    )
+    assert all(row[:2] not in routes for routes in PARITY_REFERENCE.values())
+    for function in (
+        "test_authenticated_get_returns_flat_projection_and_security_headers",
+        "test_basic_allowed_and_mcp_credential_denied_before_metadata_work",
+        "test_real_card_get_has_only_metadata_capability_and_no_capture_network_or_lock",
+        "test_exact_read_ignores_current_but_refuses_repaired_away_even_if_replacement_missing",
+    ):
+        evidence_function(Evidence("test_card_reads", function))
 
 
 @pytest.mark.parametrize("mode", PARITY, ids=lambda mode: mode.cli_mode)

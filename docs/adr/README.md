@@ -209,7 +209,7 @@ status and current-contract links before applying a historical choice.
 | 139 | [Confirm installed configuration through a pipe and bounded local collector](decision-139.md) |
 | 140 | [Serve an authenticated SPA through the existing application and Caddy](decision-140.md) — accepted design; conformance pending |
 | 141 | [Separate privileged host administration from the unprivileged API](decision-141.md) — accepted design; conformance pending |
-| 142 | [Capture publication-bound inert README presentation records](decision-142.md) — writer capture in unreleased source; card API/rendering pending |
+| 142 | [Capture publication-bound inert README presentation records](decision-142.md) — writer capture and exact card reads in unreleased source; rendering pending |
 | 143 | [Keep strict web assets separate from Python runtime and require real acceptance](decision-143.md) — accepted design; conformance pending |
 | 144 | [Retire shipped Cockpit only after complete replacement proof](decision-144.md) — proposed, conditional |
 | 145 | [Derive precise browser contracts and preserve numeric source before decoding](decision-145.md) |

@@ -43,6 +43,7 @@ export const contextSemanticIds: readonly string[] = [
     "operation.identity",
     "operation.result",
     "publication.manifest",
+    "publication.card",
     "publication.reference",
     "run.report",
 ];
@@ -121,6 +122,27 @@ export function applyBindings(
     for (const id of ids) {
         const payload = response.envelope.data;
         switch (id) {
+            case "publication.card": {
+                check(
+                    response.envelope.command === "card read" &&
+                        response.next_cursor === null,
+                );
+                if (response.envelope.exit_code !== 0) break;
+                check(
+                    payload.archive_id === response.archive_id &&
+                        payload.repository_type === context.repositoryType &&
+                        payload.repository_id === context.repositoryId &&
+                        payload.commit_sha === context.commitSha &&
+                        payload.publication_id === context.publicationId,
+                );
+                const plural =
+                    context.repositoryType === "model" ? "models" : "datasets";
+                check(
+                    payload.manifest_path ===
+                        `published/manifests/${plural}/${text(payload.repository_id)}/${text(payload.commit_sha)}/${text(payload.publication_id)}.json`,
+                );
+                break;
+            }
             case "host.status": {
                 if (response.envelope.exit_code !== 0) break;
                 const binding = payload.binding;

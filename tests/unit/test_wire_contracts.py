@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from hfcache import wire_schema
 from hfcache.api.command_models import CommandModel
+from hfcache.card_models import RepositoryCardRead
 from hfcache.config import ApplicationConfig
 from hfcache.services.candidates import validate_candidate
 from hfcache.services.queries import LocalQueries
@@ -74,6 +75,26 @@ def test_serialized_defaults_are_required_without_erasing_request_omission(contr
     assert (
         next(field for field in sync["fields"] if field["name"] == "selectors")["required"] is False
     )
+
+
+def test_card_read_is_an_exact_closed_projection_not_a_durable_record_or_path_selector(contracts):
+    route = next(item for item in contracts["routes"] if item["id"] == "repository_card")
+    assert route["path"] == (
+        "/api/v1/repositories/{repository_type}/{namespace}/{name}"
+        "/publications/{commit_sha}/{publication_id}/card"
+    )
+    assert route["method"] == "GET"
+    assert route["commands"] == ("card read",)
+    assert route["binding_ids"] == ("publication.card",)
+    assert route["request_body"] is None
+    assert AUTHORITIES["RepositoryCardRead"] is RepositoryCardRead
+    assert "RepositoryCard" not in contracts["definitions"]
+    definition = contracts["definitions"]["RepositoryCardRead"]
+    assert definition["kind"] == "object"
+    assert definition["extra"] == "forbid"
+    assert all(field["required"] for field in definition["fields"])
+    assert not any(node["kind"] == "json" for node in _nodes(definition))
+    assert contracts["semantics"]["publication.card"]["phase"] == "context"
 
 
 def test_python_array_and_integer_bounds_survive_the_export(contracts):

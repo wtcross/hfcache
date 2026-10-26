@@ -1,6 +1,10 @@
 /** Reviewed Python semantic source pins. Deliberately NOT rewritten by code generation. */
 export const semanticSourceHashes: Readonly<Record<string, string>> =
     Object.freeze({
+        "hfcache.card_models.RepositoryCardRead.strict_version":
+            "b2083bfe255ff6b73c72bb70e0478b6241b4c7c828ef3b77b520b0b063132d84",
+        "hfcache.card_models.RepositoryCardRead.coherent":
+            "6093f632f02cc41fb9ed3cc6cd03f223e2151fe926ee5d77bc1ef992408f2fc0",
         "hfcache.config_models.ConfigApplicationOutcome.coherent_identity":
             "d3d2ce4dc6292cb04e5ecc537c0ad2a072242f23dbb75e6715c413c2e135cec5",
         "hfcache.config_models._preview_key":
@@ -97,6 +101,8 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
         // path construction and public validation behavior are unchanged.
         "publication.manifest":
             "18bb75cc7e5fceca74ebab614f6ea53b000ce1db8b15a2cf2f2efbd4cb3d853c",
+        "publication.card":
+            "452f67070232e422eccd6943a74df2ae4b25616fc7c8715a83f7d16c6cd0009b",
         "publication.reference":
             "5bd218564e4be5f61303f9703fd9cad9778c07cd41b9be9a0e25abcbbbfdfbfc",
         "run.report":

@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-009 (this commit); WEB-010 is next |
+| Latest completed package | WEB-010 (this commit); WEB-011 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3713,3 +3713,10 @@ previous-release binary drill pass, with storage simulation and catalog rollback
 refusal explicitly disclosed. CARD01–06 complete. Exact card read is next;
 rendering remains WEB-014. Shared image retains pinned UBI10 micro/no runtime Node.
 No production/NAS/live Cockpit/rollout/publication authority changes.
+
+2026-10-26: WEB-010 completes authenticated exact-publication card reads. Strict
+gate3 and installed real-Caddy/typed-client acceptance pass; CARD07–09 complete.
+Retained inventory/count failures are corrected without runtime changes and
+original failures remain recorded. Shared image stays pinned UBI10 micro with
+no runtime Node. Continue WEB-011 query and operation state; README rendering
+remains WEB-014 and production rollout/publication remain separate.

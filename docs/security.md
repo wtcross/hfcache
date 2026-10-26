@@ -1309,7 +1309,7 @@ implemented. Source tests do not establish SELinux/namespace/container acceptanc
 Cards are untrusted derived presentation, separately bound to exact retained
 publication and immutable manifest/source identity. Writer-only bounded source
 SHA comparison checks the copied README alone and never raises integrity
-confidence. Capture is implemented in unreleased source; its inert Markdown is
+confidence. Capture and exact metadata-only reads are implemented in unreleased source; their inert Markdown is
 not an HTML response or an available card view. Registered/recognized secrets
 anywhere in the source withhold the whole presentation; non-present records retain no body or
 presentation digest. Safe link text stays inert, Markdown images become fixed
@@ -1317,13 +1317,22 @@ placeholders, and raw HTML/MDX outside supported code is unsupported. Absent REA
 normal; unsafe/oversize/failed capture emits bounded `HFWRN011` without undoing
 valid publication success or changing old observation counts.
 
-The later card read API must read only adjunct/authoritative metadata, never
-payloads or Hub. The later renderer must use React allowlists and bounded inert
+The card read API accepts only exact validated repository/SHA/publication identity
+and rechecks retained authority after reading the adjunct. Missing capture is
+explicit without a write; vanished identity is404, and unknown/unsafe/corrupt
+records refuse. It never opens README/payloads, resolves Hub credentials, contacts
+Hub, acquires the writer lock or refreshes. Ordinary read authentication, bounded
+pool/lease lifetime and no-store/nosniff apply. Response encoding completes within
+the smaller configured bound or2MiB before headers. Present-body validation and
+redaction must not emit changed Markdown with an old digest; the typed browser
+client verifies the actual UTF-8 digest and exact request binding before exposure.
+
+The later renderer must use React allowlists and bounded inert
 Markdown, disabling HTML/MDX/SVG/scripts/iframes/forms/handlers/unsafe protocols,
 code execution and automatic images/fonts. Safe relative links use pinned
 upstream identity; external links use `noopener noreferrer`; heading IDs prevent
 DOM clobbering. Any source toggle exposes sanitized presentation only. These
-read/render controls do not become available through writer capture.
+render controls do not become available through card GET.
 
 Conformance requires adversarial unit/integration cases and built-UI tests through
 actual Caddy/TLS plus installed isolated native/rootless profiles in Chromium,

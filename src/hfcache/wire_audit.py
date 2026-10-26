@@ -3,6 +3,14 @@
 AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
         (
+            "hfcache.card_models.RepositoryCardRead.strict_version",
+            "b2083bfe255ff6b73c72bb70e0478b6241b4c7c828ef3b77b520b0b063132d84",
+        ),
+        (
+            "hfcache.card_models.RepositoryCardRead.coherent",
+            "6093f632f02cc41fb9ed3cc6cd03f223e2151fe926ee5d77bc1ef992408f2fc0",
+        ),
+        (
             "hfcache.config_models.ConfigApplicationOutcome.coherent_identity",
             "d3d2ce4dc6292cb04e5ecc537c0ad2a072242f23dbb75e6715c413c2e135cec5",
         ),
@@ -437,6 +445,22 @@ AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins rema
 AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
         (
+            "hfcache.card_models",
+            "cadac80326fc38d91b7c9d3ce949d56cd055d73120901e53cf1303fb445d3fe7",
+        ),
+        (
+            "hfcache.services.card_queries",
+            "9a8f61ed071d5129d0182ebf0eb54f51b6d9574380b1af15c289035194cbfd9c",
+        ),
+        (
+            "hfcache.metadata",
+            "a7482d4fb66b49132e32544679928046f3bafb81c90549f75cb426d1bfa0e36a",
+        ),
+        (
+            "hfcache.catalog_storage",
+            "f20466de4e65054417e870f0c7e0c2d8a31cc5381627d735ff9ebb7b0149a1f0",
+        ),
+        (
             "hfcache.api.configuration",
             "1112bba9937bfb3286517384ad91b1e54c1871481bfd5bd94baf9c11e7d73854",
         ),
@@ -466,7 +490,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ("hfcache.ui_models", "3b3b4b2181294ce5c2426d9fdb9227c5a0da8bdfac67d99a0dabe61783701956"),
         (
             "hfcache.api.app",
-            "6d355a173c12f7c0443a76d58a57e8c1c96e5bbd322fc63643c767e6ff7548f5",
+            "a9be6c720a353adf5442bd2154603c9a1b9d9d2589458b06ba578efed48bddeb",
         ),
         (
             "hfcache.api.catalog",
@@ -578,7 +602,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.services.queries",
-            "ad4588a99fc905b97c96572f550b8774463c307ad8d64caeaf4f9f60ed59de6a",
+            "b17438e9223a25bc851bd1b7e46408269e34302af91598d54580733208b48e28",
         ),
         (
             "hfcache.services.requests",

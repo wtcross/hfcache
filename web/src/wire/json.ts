@@ -40,6 +40,10 @@ export const ARTIFACT_JSON_LIMITS: JsonLimits = Object.freeze({
     ...NORMAL_JSON_LIMITS,
     maxBytes: 64 * 1024 * 1024,
 });
+export const CARD_JSON_LIMITS: JsonLimits = Object.freeze({
+    ...NORMAL_JSON_LIMITS,
+    maxBytes: 2 * 1024 * 1024,
+});
 
 class RawNumber {
     readonly source: string;
