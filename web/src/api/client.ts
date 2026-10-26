@@ -52,7 +52,7 @@ export interface ApiClientOptions {
     readonly fetcher?: typeof globalThis.fetch;
     readonly timeoutMs?: number;
 }
-export interface SubmissionOptions extends ReadOptions {
+export interface SubmissionOptions extends Pick<ReadOptions, "signal"> {
     readonly idempotencyKey: string;
 }
 export type SubmissionResult =
@@ -162,7 +162,8 @@ export class ApiClient {
             location.origin !== this.scope.origin
         )
             throw new WireError("semantic");
-        this.fetcher = options.fetcher ?? globalThis.fetch.bind(globalThis);
+        // A supplied native Window.fetch still requires its browser receiver.
+        this.fetcher = (options.fetcher ?? globalThis.fetch).bind(globalThis);
         this.timeoutMs = options.timeoutMs ?? 30000;
         if (
             !Number.isSafeInteger(this.timeoutMs) ||
@@ -275,6 +276,27 @@ export class ApiClient {
                     throw new WireError("schema");
             }
             const url = this.url(contract, path, query);
+            const routeLimits = contract.bindingIds.includes("publication.card")
+                ? CARD_JSON_LIMITS
+                : artifact
+                  ? ARTIFACT_JSON_LIMITS
+                  : NORMAL_JSON_LIMITS;
+            const requestedLimit = options.responseByteLimit;
+            if (
+                requestedLimit !== undefined &&
+                (!Number.isSafeInteger(requestedLimit) || requestedLimit < 1)
+            )
+                throw new WireError("bounds");
+            const limits =
+                requestedLimit === undefined
+                    ? routeLimits
+                    : {
+                          ...routeLimits,
+                          maxBytes: Math.min(
+                              routeLimits.maxBytes,
+                              requestedLimit,
+                          ),
+                      };
             const headers = new Headers({ Accept: "application/json" });
             if (body !== undefined) {
                 headers.set("Content-Type", "application/json");
@@ -296,11 +318,7 @@ export class ApiClient {
             });
             const raw = await readBoundedJson(response, {
                 signal: controller.signal,
-                limits: contract.bindingIds.includes("publication.card")
-                    ? CARD_JSON_LIMITS
-                    : artifact
-                      ? ARTIFACT_JSON_LIMITS
-                      : NORMAL_JSON_LIMITS,
+                limits,
             });
             if (response.status !== 200) {
                 const problem = wire.decodeClientProblem(raw);

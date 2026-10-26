@@ -6350,21 +6350,76 @@
       "status": "pending"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/session-controller.unit.test.ts::actual typed-client POST sees the persisted original key before transmission and 202 stays unresolved",
+            "web/test/session-controller.unit.test.ts::storage quota prevents any fetch and preserves a blocked original handle"
+          ],
+          "observed_assertion": "PASS1501.198s;8581 backend/52 unrelated opt-in deselections,581Cockpit unit/110mountedFirefox,3131web unit/3214combined component; all strict/build/wheel/read-API/browser checks, zero required skips. The canonical controller saves the original validated key before the real POST; pre-send quota refuses all POST transmission. Actual durable Basic receipt key digests join the captured original keys.",
+          "profile": "WEB-011, this commit; parentbeebb7a;1413 frozen regular inputs. Actual typed controller/decoders with explicit boundary fixtures and local storage faults; installed functional evidence is recorded separately.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "d20139ef2ee1f30d40bb785fae1a350bba6848d955c52ae1b88ce24fd9da6029",
+          "command": "rtk python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web011-source2-inputs/web-011-run-native-source2.py --log /var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-1.log -- --descriptor /home/webfixture/web011-source2-inputs/functional-descriptor-source2-v1.json",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-evidence.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            ".scratch/web-011-operation-browser.mjs::quota-before-zero-transmission",
+            ".scratch/web-011-operation-browser.mjs::lost-admission-original-key-recovery"
+          ],
+          "observed_assertion": "The canonical controller saves the original validated key before the real POST; pre-send quota refuses all POST transmission. Actual durable Basic receipt key digests join the captured original keys. Actual native authentication/store/runner/result key/run/SHA joins corroborate the original handles. Empty installed Plans do not prove archive-write effects. The separate ASGI/CatalogWriter/Unix configuration-writer nodes execute real local filesystem effects; their Hub/authority/SID external adapters are not MAC/NAS proof.",
+          "profile": "Owned installed native end-to-end stack",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "d20139ef2ee1f30d40bb785fae1a350bba6848d955c52ae1b88ce24fd9da6029",
+          "command": "rtk python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web011-source2-inputs/web-011-run-native-source2.py --log /var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-1.log -- --descriptor /home/webfixture/web011-source2-inputs/functional-descriptor-source2-v1.json",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-011-operation-browser.mjs::quota-before-zero-transmission",
+            ".scratch/web-011-operation-browser.mjs::lost-admission-original-key-recovery"
+          ],
+          "observed_assertion": "PASS89.587s, nine one-attempt Chromium156.0.8078.4 cases;47 trusted requests/45GET+2POST, passive observation/no interception or overflow. The canonical controller saves the original validated key before the real POST; pre-send quota refuses all POST transmission. Actual durable Basic receipt key digests join the captured original keys. Actual original API stops and is gone before new instance; helper/Caddy remain original. Browser/container/application processes, cgroups and endpoints drain normally; original five infrastructure pairs and protected config/key/lock/archive metadata remain unchanged. Source1 failed browser and its succeeded original operation/store remain retained; no original submission is replayed.",
+          "profile": "Built UI/shared trusted-TLS Caddy/indexed installed native0.2.18 API and genuine host helper; actual OWNED_READONLY_LOOPBACK_NFS. An unshipped canonical-controller submission/fault entry exercises the already implemented controller before full job forms in WEB016. No fake API/business response; browser storage and post202 transport failures are explicit injection seams. Full later cross-browser/platform/rootless/NAS acceptance is not claimed.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        }
+      ],
       "id": "OPS-01",
       "owner": "WEB-011",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_01"
+          "node_id": "web/test/session-controller.unit.test.ts::actual typed-client POST sees the persisted original key before transmission and 202 stays unresolved"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/session-controller.unit.test.ts::storage quota prevents any fetch and preserves a blocked original handle"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_01"
+          "node_id": ".scratch/web-011-operation-browser.mjs::quota-before-zero-transmission"
+        },
+        {
+          "layer": "integration",
+          "node_id": ".scratch/web-011-operation-browser.mjs::lost-admission-original-key-recovery"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-01"
+          "node_id": ".scratch/web-011-operation-browser.mjs::quota-before-zero-transmission"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::lost-admission-original-key-recovery"
         }
       ],
       "required_layers": [
@@ -6372,24 +6427,84 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/session-controller.unit.test.ts::lost acknowledgment is one POST, and explicit observation only looks up its original key",
+            "web/test/native-fetch.component.test.tsx::production default mount restores uncertain key then observes actual typed receipt/result without POST"
+          ],
+          "observed_assertion": "PASS1501.198s;8581 backend/52 unrelated opt-in deselections,581Cockpit unit/110mountedFirefox,3131web unit/3214combined component; all strict/build/wheel/read-API/browser checks, zero required skips. One actual main Plan admission survives lost202, route/reload and API restart with only original-key GET observation. A separate independent postquota case creates the second actual original Plan; no replacement POST is sent. Existing real writer integrations independently prove one publication/download or tag-snapshot effect.",
+          "profile": "WEB-011, this commit; parentbeebb7a;1413 frozen regular inputs. Actual typed controller/decoders with explicit boundary fixtures and local storage faults; installed functional evidence is recorded separately.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_command_adversarial.py::test_lost_http_acknowledgement_does_not_cancel_real_sync",
+            "tests/unit/test_api_catalog_refresh.py::test_lost_http_acknowledgement_keeps_one_owned_refresh_and_key_lookup"
+          ],
+          "observed_assertion": "One actual main Plan admission survives lost202, route/reload and API restart with only original-key GET observation. A separate independent postquota case creates the second actual original Plan; no replacement POST is sent. Existing real writer integrations independently prove one publication/download or tag-snapshot effect. Actual native authentication/store/runner/result key/run/SHA joins corroborate the original handles. Empty installed Plans do not prove archive-write effects. The separate ASGI/CatalogWriter/Unix configuration-writer nodes execute real local filesystem effects; their Hub/authority/SID external adapters are not MAC/NAS proof.",
+          "profile": "Owned local ASGI/OperationStore/OperationRunner and filesystem/Unix writer integration; not installed MAC/NAS acceptance.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "d20139ef2ee1f30d40bb785fae1a350bba6848d955c52ae1b88ce24fd9da6029",
+          "command": "rtk python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web011-source2-inputs/web-011-run-native-source2.py --log /var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-1.log -- --descriptor /home/webfixture/web011-source2-inputs/functional-descriptor-source2-v1.json",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-011-operation-browser.mjs::lost-admission-original-key-recovery",
+            ".scratch/web-011-operation-browser.mjs::api-restart-reconnect-original-authority",
+            ".scratch/web-011-operation-browser.mjs::quota-after-original-memory-id-blocks"
+          ],
+          "observed_assertion": "PASS89.587s, nine one-attempt Chromium156.0.8078.4 cases;47 trusted requests/45GET+2POST, passive observation/no interception or overflow. One actual main Plan admission survives lost202, route/reload and API restart with only original-key GET observation. A separate independent postquota case creates the second actual original Plan; no replacement POST is sent. Existing real writer integrations independently prove one publication/download or tag-snapshot effect. Actual original API stops and is gone before new instance; helper/Caddy remain original. Browser/container/application processes, cgroups and endpoints drain normally; original five infrastructure pairs and protected config/key/lock/archive metadata remain unchanged. Source1 failed browser and its succeeded original operation/store remain retained; no original submission is replayed.",
+          "profile": "Built UI/shared trusted-TLS Caddy/indexed installed native0.2.18 API and genuine host helper; actual OWNED_READONLY_LOOPBACK_NFS. An unshipped canonical-controller submission/fault entry exercises the already implemented controller before full job forms in WEB016. No fake API/business response; browser storage and post202 transport failures are explicit injection seams. Full later cross-browser/platform/rootless/NAS acceptance is not claimed.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        }
+      ],
       "id": "OPS-02",
       "owner": "WEB-011",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_02"
+          "node_id": "web/test/session-controller.unit.test.ts::lost acknowledgment is one POST, and explicit observation only looks up its original key"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/native-fetch.component.test.tsx::production default mount restores uncertain key then observes actual typed receipt/result without POST"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_02"
+          "node_id": "tests/unit/test_api_command_adversarial.py::test_lost_http_acknowledgement_does_not_cancel_real_sync"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_lost_http_acknowledgement_keeps_one_owned_refresh_and_key_lookup"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-02"
+          "node_id": ".scratch/web-011-operation-browser.mjs::lost-admission-original-key-recovery"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::api-restart-reconnect-original-authority"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::quota-after-original-memory-id-blocks"
         }
       ],
       "required_layers": [
@@ -6397,24 +6512,94 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/operation-registry.unit.test.ts::reload always authenticates original key before trusting even a saved operation ID",
+            "web/test/operation-registry.unit.test.ts::restored terminal summaries stay blocked until key, receipt and exact result revalidate",
+            "web/test/operation-registry.unit.test.ts::same-subject API restart explicitly reconnects through original key and preserves historical fingerprint"
+          ],
+          "observed_assertion": "PASS1501.198s;8581 backend/52 unrelated opt-in deselections,581Cockpit unit/110mountedFirefox,3131web unit/3214combined component; all strict/build/wheel/read-API/browser checks, zero required skips. Route remount retains observation; reload turns saved terminal metadata unverified and requires authenticated key-first lookup despite a saved ID. Explicit reconnect uses fresh instance authority without rewriting the original authority/target. Cross-tab advice cannot merge or authorize submission.",
+          "profile": "WEB-011, this commit; parentbeebb7a;1413 frozen regular inputs. Actual typed controller/decoders with explicit boundary fixtures and local storage faults; installed functional evidence is recorded separately.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery[disconnect]",
+            "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery[result-persistence]",
+            "tests/unit/test_basic_operation_identity.py::test_restart_rotation_with_the_same_subject_keeps_the_original_handle"
+          ],
+          "observed_assertion": "Route remount retains observation; reload turns saved terminal metadata unverified and requires authenticated key-first lookup despite a saved ID. Explicit reconnect uses fresh instance authority without rewriting the original authority/target. Cross-tab advice cannot merge or authorize submission. Actual native authentication/store/runner/result key/run/SHA joins corroborate the original handles. Empty installed Plans do not prove archive-write effects. The separate ASGI/CatalogWriter/Unix configuration-writer nodes execute real local filesystem effects; their Hub/authority/SID external adapters are not MAC/NAS proof.",
+          "profile": "Owned local ASGI/OperationStore/OperationRunner and filesystem/Unix writer integration; not installed MAC/NAS acceptance.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "d20139ef2ee1f30d40bb785fae1a350bba6848d955c52ae1b88ce24fd9da6029",
+          "command": "rtk python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web011-source2-inputs/web-011-run-native-source2.py --log /var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-1.log -- --descriptor /home/webfixture/web011-source2-inputs/functional-descriptor-source2-v1.json",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-011-operation-browser.mjs::route-remount-and-unverified-reload",
+            ".scratch/web-011-operation-browser.mjs::api-restart-reconnect-original-authority",
+            ".scratch/web-011-operation-browser.mjs::two-tabs-advice-no-automerge-or-submit"
+          ],
+          "observed_assertion": "PASS89.587s, nine one-attempt Chromium156.0.8078.4 cases;47 trusted requests/45GET+2POST, passive observation/no interception or overflow. Route remount retains observation; reload turns saved terminal metadata unverified and requires authenticated key-first lookup despite a saved ID. Explicit reconnect uses fresh instance authority without rewriting the original authority/target. Cross-tab advice cannot merge or authorize submission. Actual original API stops and is gone before new instance; helper/Caddy remain original. Browser/container/application processes, cgroups and endpoints drain normally; original five infrastructure pairs and protected config/key/lock/archive metadata remain unchanged. Source1 failed browser and its succeeded original operation/store remain retained; no original submission is replayed.",
+          "profile": "Built UI/shared trusted-TLS Caddy/indexed installed native0.2.18 API and genuine host helper; actual OWNED_READONLY_LOOPBACK_NFS. An unshipped canonical-controller submission/fault entry exercises the already implemented controller before full job forms in WEB016. No fake API/business response; browser storage and post202 transport failures are explicit injection seams. Full later cross-browser/platform/rootless/NAS acceptance is not claimed.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        }
+      ],
       "id": "OPS-03",
       "owner": "WEB-011",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_03"
+          "node_id": "web/test/operation-registry.unit.test.ts::reload always authenticates original key before trusting even a saved operation ID"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-registry.unit.test.ts::restored terminal summaries stay blocked until key, receipt and exact result revalidate"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-registry.unit.test.ts::same-subject API restart explicitly reconnects through original key and preserves historical fingerprint"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_03"
+          "node_id": "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery[disconnect]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery[result-persistence]"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_basic_operation_identity.py::test_restart_rotation_with_the_same_subject_keeps_the_original_handle"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-03"
+          "node_id": ".scratch/web-011-operation-browser.mjs::route-remount-and-unverified-reload"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::api-restart-reconnect-original-authority"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::two-tabs-advice-no-automerge-or-submit"
         }
       ],
       "required_layers": [
@@ -6422,24 +6607,92 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/operation-registry.unit.test.ts::post-admission storage loss retains learned ID and blocks fresh work",
+            "web/test/operation-registry.unit.test.ts::forged saved key-to-ID association conflicts without overwriting original evidence",
+            "web/test/cross-tab.unit.test.ts"
+          ],
+          "observed_assertion": "PASS1501.198s;8581 backend/52 unrelated opt-in deselections,581Cockpit unit/110mountedFirefox,3131web unit/3214combined component; all strict/build/wheel/read-API/browser checks, zero required skips. Malformed storage stays retained and blocked; prequota sends no POST; post-admission write loss keeps the original learned ID in memory and rejects a second submission before POST. Bounded metadata never evicts unresolved records, and forged key-to-ID associations conflict.",
+          "profile": "WEB-011, this commit; parentbeebb7a;1413 frozen regular inputs. Actual typed controller/decoders with explicit boundary fixtures and local storage faults; installed functional evidence is recorded separately.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "d20139ef2ee1f30d40bb785fae1a350bba6848d955c52ae1b88ce24fd9da6029",
+          "command": "rtk python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web011-source2-inputs/web-011-run-native-source2.py --log /var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-1.log -- --descriptor /home/webfixture/web011-source2-inputs/functional-descriptor-source2-v1.json",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-evidence.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            ".scratch/web-011-operation-browser.mjs::quota-before-zero-transmission",
+            ".scratch/web-011-operation-browser.mjs::quota-after-original-memory-id-blocks",
+            ".scratch/web-011-operation-browser.mjs::two-tabs-advice-no-automerge-or-submit",
+            ".scratch/web-011-operation-browser.mjs::corrupt-storage-visible-no-submission"
+          ],
+          "observed_assertion": "Malformed storage stays retained and blocked; prequota sends no POST; post-admission write loss keeps the original learned ID in memory and rejects a second submission before POST. Bounded metadata never evicts unresolved records, and forged key-to-ID associations conflict. Actual native authentication/store/runner/result key/run/SHA joins corroborate the original handles. Empty installed Plans do not prove archive-write effects. The separate ASGI/CatalogWriter/Unix configuration-writer nodes execute real local filesystem effects; their Hub/authority/SID external adapters are not MAC/NAS proof.",
+          "profile": "Owned installed native end-to-end stack",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "d20139ef2ee1f30d40bb785fae1a350bba6848d955c52ae1b88ce24fd9da6029",
+          "command": "rtk python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web011-source2-inputs/web-011-run-native-source2.py --log /var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-1.log -- --descriptor /home/webfixture/web011-source2-inputs/functional-descriptor-source2-v1.json",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-011-operation-browser.mjs::quota-before-zero-transmission",
+            ".scratch/web-011-operation-browser.mjs::quota-after-original-memory-id-blocks",
+            ".scratch/web-011-operation-browser.mjs::two-tabs-advice-no-automerge-or-submit",
+            ".scratch/web-011-operation-browser.mjs::corrupt-storage-visible-no-submission"
+          ],
+          "observed_assertion": "PASS89.587s, nine one-attempt Chromium156.0.8078.4 cases;47 trusted requests/45GET+2POST, passive observation/no interception or overflow. Malformed storage stays retained and blocked; prequota sends no POST; post-admission write loss keeps the original learned ID in memory and rejects a second submission before POST. Bounded metadata never evicts unresolved records, and forged key-to-ID associations conflict. Actual original API stops and is gone before new instance; helper/Caddy remain original. Browser/container/application processes, cgroups and endpoints drain normally; original five infrastructure pairs and protected config/key/lock/archive metadata remain unchanged. Source1 failed browser and its succeeded original operation/store remain retained; no original submission is replayed.",
+          "profile": "Built UI/shared trusted-TLS Caddy/indexed installed native0.2.18 API and genuine host helper; actual OWNED_READONLY_LOOPBACK_NFS. An unshipped canonical-controller submission/fault entry exercises the already implemented controller before full job forms in WEB016. No fake API/business response; browser storage and post202 transport failures are explicit injection seams. Full later cross-browser/platform/rootless/NAS acceptance is not claimed.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        }
+      ],
       "id": "OPS-04",
       "owner": "WEB-011",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_04"
+          "node_id": "web/test/operation-registry.unit.test.ts::post-admission storage loss retains learned ID and blocks fresh work"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-registry.unit.test.ts::forged saved key-to-ID association conflicts without overwriting original evidence"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/cross-tab.unit.test.ts"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_04"
+          "node_id": "tests/unit/test_operation_store_adversarial.py::test_capacity_never_evicts_unexpired_or_ambiguous_history"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-04"
+          "node_id": ".scratch/web-011-operation-browser.mjs::quota-before-zero-transmission"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::quota-after-original-memory-id-blocks"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::two-tabs-advice-no-automerge-or-submit"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::corrupt-storage-visible-no-submission"
         }
       ],
       "required_layers": [
@@ -6447,24 +6700,89 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/operation-registry.unit.test.ts::interruption and missing history never fabricate a terminal result",
+            "web/test/operation-observation.unit.test.ts::unknown effects retain full result and cannot be labelled settled",
+            "web/test/OperationRecovery.component.test.tsx"
+          ],
+          "observed_assertion": "PASS1501.198s;8581 backend/52 unrelated opt-in deselections,581Cockpit unit/110mountedFirefox,3131web unit/3214combined component; all strict/build/wheel/read-API/browser checks, zero required skips. Genuine missing-key/ID404 responses remain unknown with original handles retained. No missing, expired, interrupted or effect-unknown state becomes proof of nonexecution, success, cleanup or replay authority.",
+          "profile": "WEB-011, this commit; parentbeebb7a;1413 frozen regular inputs. Actual typed controller/decoders with explicit boundary fixtures and local storage faults; installed functional evidence is recorded separately.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/gate2/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_operations.py::test_missing_lookup_is_uncertainty_not_proven_nonexecution",
+            "tests/unit/test_api_catalog_refresh.py::test_restart_preserves_abandoned_refresh_without_execution_or_replay",
+            "tests/unit/test_operation_store_adversarial.py::test_expired_terminal_with_unavailable_result_is_preserved"
+          ],
+          "observed_assertion": "Genuine missing-key/ID404 responses remain unknown with original handles retained. No missing, expired, interrupted or effect-unknown state becomes proof of nonexecution, success, cleanup or replay authority. Actual native authentication/store/runner/result key/run/SHA joins corroborate the original handles. Empty installed Plans do not prove archive-write effects. The separate ASGI/CatalogWriter/Unix configuration-writer nodes execute real local filesystem effects; their Hub/authority/SID external adapters are not MAC/NAS proof.",
+          "profile": "Owned local ASGI/OperationStore/OperationRunner and filesystem/Unix writer integration; not installed MAC/NAS acceptance.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        },
+        {
+          "artifact_sha256": "d20139ef2ee1f30d40bb785fae1a350bba6848d955c52ae1b88ce24fd9da6029",
+          "command": "rtk python3 -I -B .scratch/web-008-call-guest.py --script /home/webfixture/web011-source2-inputs/web-011-run-native-source2.py --log /var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-1.log -- --descriptor /home/webfixture/web011-source2-inputs/functional-descriptor-source2-v1.json",
+          "evidence_locator": "/var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-evidence.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-011-operation-browser.mjs::offline-before-missing-lookup-unknown",
+            ".scratch/web-011-operation-browser.mjs::manual-id-missing-remains-unknown"
+          ],
+          "observed_assertion": "PASS89.587s, nine one-attempt Chromium156.0.8078.4 cases;47 trusted requests/45GET+2POST, passive observation/no interception or overflow. Genuine missing-key/ID404 responses remain unknown with original handles retained. No missing, expired, interrupted or effect-unknown state becomes proof of nonexecution, success, cleanup or replay authority. Actual original API stops and is gone before new instance; helper/Caddy remain original. Browser/container/application processes, cgroups and endpoints drain normally; original five infrastructure pairs and protected config/key/lock/archive metadata remain unchanged. Source1 failed browser and its succeeded original operation/store remain retained; no original submission is replayed.",
+          "profile": "Built UI/shared trusted-TLS Caddy/indexed installed native0.2.18 API and genuine host helper; actual OWNED_READONLY_LOOPBACK_NFS. An unshipped canonical-controller submission/fault entry exercises the already implemented controller before full job forms in WEB016. No fake API/business response; browser storage and post202 transport failures are explicit injection seams. Full later cross-browser/platform/rootless/NAS acceptance is not claimed.",
+          "source_sha256": "d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25"
+        }
+      ],
       "id": "OPS-05",
       "owner": "WEB-011",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_05"
+          "node_id": "web/test/operation-registry.unit.test.ts::interruption and missing history never fabricate a terminal result"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-observation.unit.test.ts::unknown effects retain full result and cannot be labelled settled"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/OperationRecovery.component.test.tsx"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_05"
+          "node_id": "tests/unit/test_api_operations.py::test_missing_lookup_is_uncertainty_not_proven_nonexecution"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_restart_preserves_abandoned_refresh_without_execution_or_replay"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_operation_store_adversarial.py::test_expired_terminal_with_unavailable_result_is_preserved"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-05"
+          "node_id": ".scratch/web-011-operation-browser.mjs::offline-before-missing-lookup-unknown"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-011-operation-browser.mjs::manual-id-missing-remains-unknown"
         }
       ],
       "required_layers": [
@@ -6472,7 +6790,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

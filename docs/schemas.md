@@ -1706,3 +1706,47 @@ assessment requires exactly all derived enabled repositories, available upstream
 state, resolved immutable SHAs and all numeric sizing facts. Partial/refused sizing
 cannot be a complete preview. Public projections contain no candidate text or
 secret-dependent full-document hash. See [managed API](api.md#managed-configuration-read-and-assessment-responses).
+
+### 18.6 Browser recovery metadata schema 1
+
+This independent session-storage format is not an archive record, API receipt or
+execution ledger. Its fixed storage key is `hfcache.web.operations.v1`; the exact
+top-level object is `{schemaVersion:1,records:[...]}`. Closed decoding rejects
+unknown/coercive fields, malformed identities and unsupported versions before
+use. At most32 records and64KiB of encoded metadata are retained, including a
+1024-byte growth reserve per unresolved record. Unresolved entries are never
+evicted to make room.
+
+Each record has exactly these fields:
+
+| Fields | Meaning |
+| --- | --- |
+| `schemaVersion`, `recordId` | Integer1 and the browser-local record identity; this is not a server operation ID. |
+| `handles` | Either `kind:"basic-key"` with `key` and nullable `operationId`, or `kind:"imported"` with nullable `operationId` and nullable `legacyKey:{value,credentialClass}`. |
+| `originalAuthority` | A tagged `web` scope, historical `cockpit` authority, or `unknown`; original authority is separate from the current observer. |
+| `observationTarget` | The validated current target scope. It cannot silently rewrite original authority. |
+| `source`, `action`, `route` | Source is `web`, `cockpit` or `manual`; nullable action/route use the closed supported-action mapping. Imported unknown actions are not submission authority. |
+| `receiptIdentity` | Null or the exact safe original receipt fields: `operation_id`, `principal`, `route`, `archive_id`, `config_fingerprint`, `created_at`. |
+| `createdAt`, `updatedAt` | Bounded browser metadata timestamps, not server execution evidence. |
+| `state`, `terminal` | A local recovery classification and nullable safe terminal summary. Saved summaries remain unverified after restore. |
+
+Scope fields are `origin`, `publicPrefix`, `authorityEpoch`, `subject`,
+`credentialClass`, nullable `instanceId`, nullable `archiveId` and nullable
+`configFingerprint`. Historical Cockpit authority retains its `host`, `profile`,
+`endpoint`, `credentialClass`, nullable `archiveId` and `authorityFingerprint`.
+Local authentication generation is an in-memory invalidation boundary, never a
+persisted proof that saved evidence is current.
+
+Recovery states are `prepared`, `uncertain`, `accepted`, `observing`, `missing`,
+`unavailable`, `conflict`, `unverified`, `terminal` and `reference`. The terminal
+summary contains only `command`, `exitCode`, `outcome`, `runId` and nullable
+`code`; it contains no Envelope/body. Public credential class never establishes
+the imported operation's creator or key ownership. Legacy bearer keys and
+Basic-subject keys remain distinct namespaces.
+
+There is no persisted `not_submitted` state or flag. A proven current-session
+pre-fetch refusal can remove only its own fresh prepared record, with durable
+removal before unblocking; a local not-submitted summary remains memory-only.
+Failed removal persistence retains the key and block. Missing/expired receipts
+never trigger automatic record cleanup. Passwords, tokens, request/result bodies,
+configuration drafts and raw logs are forbidden. See [browser recovery](web-ui/operations.md).

@@ -20,6 +20,7 @@ const compiled = {
     wire: bootstrap.wire_source_digest,
 };
 test("only a reconstructed real bootstrap read can replace inert startup recovery", async () => {
+    vi.stubGlobal("location", new URL(bootstrap.configured_origin + "/ui/"));
     inertUiDocument(document);
     const platform: unknown = await vi.importActual("node:crypto");
     if (

@@ -1380,6 +1380,19 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   Configured identity never substitutes for archive health. JSON operation links
   retain raw identity; URI headers/navigation encode trusted complete paths.
   Malformed acknowledgments still retain the original key without replay.
+  A route-independent browser controller persists the original key before POST
+  under a closed32-record/64KiB recovery bound; storage failure or unresolved
+  work blocks conflicting submission without evicting handles. Restored records
+  are unverified. Only a proven fresh pre-fetch refusal may durably remove its
+  own prepared record before unblocking; no restored not-submitted flag or
+  missing-receipt cleanup exists. Basic-subject and legacy bearer namespaces
+  remain separate; ID import proves no creator/key association. Compatible
+  explicit reconnect retains original admitted scope while fresh authority/auth
+  generation invalidates private evidence. Stop observing aborts local reads,
+  never execution. Shared32MiB encoded retention, route-clamped8MiB responses,
+  finite concurrency/retry/time/cycle/event bounds and advisory cross-tab notices
+  never manufacture outcomes or execution authority. API interruption cannot
+  clear separate unknown protected configuration effects.
 
 Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-and-current-availability),
 [API](api.md#web-ui-and-administration-design),

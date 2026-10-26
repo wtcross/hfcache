@@ -103,3 +103,23 @@ See [API wire rules](../api.md#browser-wire-boundary),
 [schema compatibility](../schemas.md#11-validation-summary),
 [development](../development.md#generated-browser-contracts), and the
 [ECMAScript JSON.parse specification](https://tc39.es/ecma262/multipage/structured-data.html#sec-json.parse).
+
+## Bounded session observation amendment (2026-10-26)
+
+The typed client supports a per-read response limit that can only lower its
+registered route ceiling. The application observation controller uses8MiB;
+ordinary16MiB, artifact64MiB and card2MiB ceilings still apply. Submission options
+remain separate and do not inherit a read cap. Shared32MiB encoded logical
+retention is not an exact heap measurement. Concurrency, finite GET retry/time/
+cycle budgets and bounded event buffers preserve unknown/gap classifications;
+they never retry POST or infer nonexecution from observation failure.
+
+The route-independent controller retains original receipt route/identity and
+uses the original authenticated key or ID. Restored metadata requires fresh
+observation; ID import proves no creator/key association. Reconnect refreshes
+current authenticated read context while retaining original admitted authority.
+Local auth-generation invalidation applies even when server scope values match.
+The [session contract](../schemas.md#186-browser-recovery-metadata-schema-1) and
+[user guide](../web-ui/operations.md) refine the recovery design of
+[decision134](decision-134.md) and query semantics of [decision137](decision-137.md).
+No server DTO, receipt format, REST/MCP permission or execution authority changes.

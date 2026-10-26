@@ -34,6 +34,27 @@ const original = {
 const operation = decodeClientOperation(
     parseWireJson(JSON.stringify(original)),
 );
+test("an explicitly supplied branded fetch keeps its global receiver for GET and POST", async () => {
+    const fetcher = vi.fn<typeof fetch>(function (this: unknown) {
+        if (this !== globalThis) throw new TypeError("Illegal invocation");
+        return Promise.resolve(jsonResponse(problemWire(), 401));
+    });
+    const api = client(fetcher);
+    expect(await api.readVersion()).toMatchObject({
+        kind: "api_problem",
+        status: 401,
+    });
+    expect(
+        await api.submitInstalledPlan(
+            {},
+            { idempotencyKey: "original-native-key" },
+        ),
+    ).toMatchObject({ kind: "api_problem", status: 401 });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(
+        fetcher.mock.contexts.every((receiver) => receiver === globalThis),
+    ).toBe(true);
+});
 function client(fetcher: typeof fetch, writer = true, timeoutMs = 1000) {
     return createApiClient({
         scope: createApiScope({

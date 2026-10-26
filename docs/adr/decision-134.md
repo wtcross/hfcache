@@ -184,3 +184,34 @@ unavailable/empty states and fresh host/session evidence. Version remains an
 authenticated server read. Browser build, selected release and API authority
 diagnostics stay advisory and independent of action permission or installed
 symptom acceptance. Original negative Envelopes and classified causes remain.
+
+## Application-owned browser session amendment (2026-10-26)
+
+The replacement interface adapts the existing recovery registry locally, retaining
+its LGPL-2.1-or-later provenance and full shipped license notice. It uses the typed
+same-origin REST client, with no Cockpit transport or runtime dependency. The
+historical Cockpit behavior above remains a separate supported client boundary.
+
+The new registry stores at most32 records/64KiB of closed safe-handle metadata,
+reserving growth for unresolved entries. Persist the original key before POST;
+failure before transmission blocks submission, while possible transmission plus
+storage failure preserves in-memory handles and the block. Never evict unresolved
+records or replay a POST. Restored prepared/terminal summaries are unverified
+until authenticated original observation. Only a provable current-session
+pre-fetch refusal can durably remove its own fresh prepared record before
+unblocking. Its not-submitted summary remains memory-only; there is no persisted
+flag or cleanup inferred from missing receipts.
+
+Basic-subject keys and historical bearer keys have different namespaces. Manual
+ID imports retain unknown creator/key ownership; they cannot resolve an unrelated
+uncertain key-only record. A legacy key is an unbound retained reference, not a
+current Basic key or a permanent block in that unrelated namespace. Explicit
+compatible reconnect changes current observation context without rewriting
+original admitted authority. Changed scope/auth generation clears private cached
+evidence while preserving safe unresolved handles. Cross-tab notices are advisory
+only. Stop observing aborts reads, not execution; unknown or unconfirmed protected
+configuration effects remain distinct from generic API failure/interruption.
+
+Exact metadata and user procedures are in [schemas](../schemas.md#186-browser-recovery-metadata-schema-1)
+and [browser recovery](../web-ui/operations.md). No new endpoint, server receipt,
+credential grant, cancellation or automatic recovery effect is introduced.

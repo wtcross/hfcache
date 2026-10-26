@@ -137,7 +137,10 @@ HFAPI008/500 may follow durable admission and is not proof of nonexecution.
 Pre-send validation remains a config/protocol refusal. Missing/expired history or an
 observation timeout preserves uncertainty and the original key/ID;
 never generate a new key to replay uncertain mutation. Authenticated key lookup
-observes without submitting and remains within the credential-class namespace.
+observes without submitting and remains within the credential-class namespace
+and, for Basic, the same stable administrator subject. A legacy Cockpit bearer
+key is not a current Basic key. Ordinary ID observation does not establish
+ownership of the operation's key or original creator.
 
 The central client errors are HFAPI017 configuration and HFAPI018 protocol/
 compatibility at exit 10; HFAPI019 connectivity and HFAPI020 uncertain submission
@@ -434,11 +437,33 @@ hfcache --client-config /etc/hfcache/client.toml --json operations show <operati
 hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 operations wait --after 12 -- '<operation-id>'
 ```
 
-Use the same configured authority and credential class for key lookup. A stopped
+Use the same configured authority and credential class for key lookup, including
+the same stable subject for Basic. A stopped
 client or sync/verify client service stops observation, not the server executor;
 use [server drain](server.md#restart-and-drain) and
 [recovery](recovery.md#preserve-four-kinds-of-authority) for execution
 ownership. [Decision 120](adr/decision-120.md) records this boundary. Scheduled clients and Cockpit use the profile-specific boundaries below.
+
+### Browser observation sessions
+
+The [browser recovery guide](web-ui/operations.md) describes the independent
+route-independent controller and bounded32-record/64KiB session registry. It
+stores safe handles, not credentials or request/result bodies; restored terminal
+summaries remain unverified. A legacy bearer-key reference stays separate from
+the current Basic namespace. There is no automatic POST retry, cleanup or
+operation cancellation.
+
+Browser session observation has its own lower limits:8MiB per read response
+clamped to the route ceiling, shared32MiB encoded retained evidence, two global
+reads/one per handle, three eligible GET retries after the initial attempt at
+1/2/4seconds,120cycles/five minutes, and32events/64KiB per handle. These do not
+alter the Python client's configured wait budget or server operation retention.
+Explicit compatible reconnect refreshes authenticated read context while
+retaining original operation scope; an API instance change is not a new
+submission. Typed query handles survive route changes only within one authenticated
+session. Reconnect permanently clears and retires those handles; feature controllers
+create replacements against the current client, and an old handle cannot fetch again.
+Stop observing only aborts local observation.
 
 ## Native Unix and public prefixes
 

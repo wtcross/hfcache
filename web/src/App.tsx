@@ -11,7 +11,15 @@ import {
 } from "./navigation";
 import type { Workspace } from "./navigation";
 import type { UiAdminPermission, UiBootstrap } from "./wire/generated";
-import { HostAdministration } from "./components/HostStatusPanel";
+import {
+    HostAdministration,
+    SessionHostAdministration,
+} from "./components/HostStatusPanel";
+import { OperationRecovery } from "./components/OperationRecovery";
+import type {
+    SessionController,
+    SessionSnapshot,
+} from "./state/session-controller";
 
 const permissionLabels: Readonly<
     Record<UiAdminPermission["capability"], string>
@@ -27,10 +35,14 @@ function WorkspaceContent({
     workspace,
     authenticated,
     host,
+    controller,
+    session,
 }: {
     workspace: Workspace;
     authenticated: boolean;
     host: UiBootstrap | null;
+    controller?: SessionController;
+    session?: SessionSnapshot;
 }) {
     switch (workspace) {
         case "library":
@@ -76,6 +88,13 @@ function WorkspaceContent({
                 </div>
             );
         case "operations":
+            if (controller !== undefined && session !== undefined)
+                return (
+                    <OperationRecovery
+                        controller={controller}
+                        session={session}
+                    />
+                );
             return (
                 <Panel title="Operation observation">
                     <div className="empty-state">
@@ -108,6 +127,8 @@ function WorkspaceContent({
                 </Panel>
             );
         case "administration":
+            if (host !== null && controller !== undefined)
+                return <SessionHostAdministration controller={controller} />;
             if (host !== null) return <HostAdministration bootstrap={host} />;
             return (
                 <Panel title="Configuration and host permissions">
@@ -131,10 +152,14 @@ export function App({
     basePath,
     bootstrap,
     onCheckRelease,
+    controller,
+    session,
 }: {
     basePath: string;
     bootstrap?: UiBootstrap;
     onCheckRelease?: () => Promise<boolean>;
+    controller?: SessionController;
+    session?: SessionSnapshot;
 }) {
     const base = validateBasePath(basePath);
     const [pathname, setPathname] = useState(window.location.pathname);
@@ -299,10 +324,39 @@ export function App({
                         <span aria-hidden="true" />
                         {bootstrap === undefined
                             ? "Not connected"
-                            : "Authenticated"}
+                            : session === undefined
+                              ? "Authenticated"
+                              : session.connection === "connected"
+                                ? "Authenticated"
+                                : session.connection.replaceAll("_", " ")}
                     </span>
                 </header>
                 <main id="main-content" ref={main} tabIndex={-1}>
+                    {controller !== undefined && session !== undefined && (
+                        <div className="session-recovery">
+                            <button
+                                type="button"
+                                disabled={
+                                    session.connection === "reconnecting" ||
+                                    session.connection === "update_required"
+                                }
+                                onClick={() => {
+                                    void controller.reconnect();
+                                }}
+                            >
+                                Reconnect
+                            </button>
+                            {session.notice !== null && (
+                                <Notice>{session.notice}</Notice>
+                            )}
+                            {session.connection === "update_required" && (
+                                <p role="status">
+                                    Copy original recovery handles, then reload
+                                    the interface.
+                                </p>
+                            )}
+                        </div>
+                    )}
                     {bootstrap !== undefined &&
                         onCheckRelease !== undefined && (
                             <div>
@@ -341,9 +395,12 @@ export function App({
                         </strong>{" "}
                         {bootstrap === undefined
                             ? "This source preview makes no API requests and submits no operations."
-                            : "Archive health and repository data have not been requested. No operation has been submitted."}
+                            : controller === undefined
+                              ? "Archive health and repository data have not been requested. No operation has been submitted."
+                              : "Original operation handles are preserved separately from private observations. Open Operations for recovery."}
                     </Notice>
-                    {updateRequired && (
+                    {(updateRequired ||
+                        session?.connection === "update_required") && (
                         <Notice>
                             <strong>Interface update required.</strong> Reload
                             when ready. Original operation handles and unsaved
@@ -406,6 +463,10 @@ export function App({
                             workspace={workspace}
                             authenticated={bootstrap !== undefined}
                             host={host}
+                            {...(controller === undefined
+                                ? {}
+                                : { controller })}
+                            {...(session === undefined ? {} : { session })}
                         />
                     )}
                     <footer className="page-footer">

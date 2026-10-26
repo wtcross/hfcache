@@ -49,4 +49,6 @@ export type ReadResult<Success, Failure> =
 
 export interface ReadOptions {
     readonly signal?: AbortSignal;
+    /** A caller may lower the route's existing response ceiling, never raise it. */
+    readonly responseByteLimit?: number;
 }

@@ -80,6 +80,7 @@ test("mobile navigation is explicitly labelled and closes on navigation or histo
 
 test("the mount boundary validates deployment metadata and supports owned cleanup", async () => {
     const bootstrap = uiBootstrapFixture();
+    vi.stubGlobal("location", new URL(bootstrap.configured_origin + "/ui/"));
     expect(() => mountApplication(document, bootstrap)).toThrow("container");
     const container = document.createElement("div");
     container.id = "root";

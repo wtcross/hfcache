@@ -38,6 +38,10 @@ An administrator record's stable subject owns its original operation keys.
 Keeping the subject during password rotation preserves that namespace. Changing
 it separates the new identity; it never proves an old operation did not execute.
 Do not delete receipts or resend a lost action to regain visibility.
+Old Cockpit bearer keys use a separate namespace from Basic-subject keys. A
+manual legacy key remains an unbound reference; a missing Basic lookup cannot
+prove its nonexecution. ID-only observation does not prove the current reader
+created the operation or owns its key.
 
 Native systemd delivery can show a root-owned `0440` file while a named-user ACL
 grants only the service UID read access. Group mode bits alone do not identify
@@ -162,6 +166,7 @@ through an authorized drained restart and actual API-to-worker validation.
 | Startup refuses with HFCFG005 and an enabled-asset diagnostic | The manifest, application/wire version, indexed bytes, protected ownership, local mount identity or disjointness proof failed. Compare the selected artifact and reviewed manifest hash. Preserve the failed release; restore a coherent artifact/configuration pair in a separately authorized rollout. Do not grant write permissions, follow symlinks or move assets into the archive. |
 | **Starting hfcache** remains visible | The entry module, bootstrap read or build/context validation did not complete. The explanation and **Reload interface** link are inert HTML and remain usable if JavaScript never loads. Check the HTTPS authority, deployment prefix and matching release; share safe status/codes rather than raw bootstrap or credential data. |
 | **Interface update required** | A loaded chunk failed or an explicit version check observed a changed artifact. Preserve original operation handles and unsaved work, then reload when ready. The interface never reloads or replays an action automatically. |
+| API instance changed with the same compatible release | Explicitly reconnect to fresh authenticated context, retaining original handles. A new instance invalidates cached reads; it does not create a new operation or prove completion. Changed subject/archive/authority requires its own compatible scope, without silent rebinding. |
 | **The interface version could not be checked** | The bounded bootstrap read did not produce a matching supported result. Keep the current operation handles. Investigate the selected release and connection; failure does not prove an operation stopped. |
 | Missing `.js`/`.css` or an unknown workspace returns JSON 404 | Only indexed assets and exact supported workspace routes are served. The API deliberately does not substitute HTML for a missing module or unrelated route. Compare the selected artifact/prefix; do not add a global history fallback in Caddy. |
 | HTTP 503 / HFAPI009 while loading an asset | Static admission is full or draining. At most 16 UI bodies are active with no queue; each send has a 30-second deadline. Wait for the current requests or investigate an authorized service drain. Metadata and authentication use separate capacity. |
@@ -190,11 +195,10 @@ Use the authorized [upgrade and drain procedure](../deployment-centos-stream-10.
 
 ## Read results
 
-Check [interface availability](README.md) before using this guide. The current
-authenticated shell establishes configured identity and navigation; domain read
-views remain under development. The following read-state guidance also applies
-to the real API read fixture and the forthcoming views. Installed production
-services are unchanged. A read result describes observed information, never
+Check [interface availability](README.md) before using this guide. The shared
+query and original-operation observation state is available in unreleased source;
+repository views and full job forms remain under development. Installed production
+services retain their recorded releases. A read result describes observed information, never
 permission to modify an archive or proof that an accepted job has finished.
 
 | Message | Meaning | Safe next step |
@@ -228,3 +232,25 @@ text do not belong in screenshots or diagnostic reports. Operators should compar
 the intended API authority, archive identity and supported source/artifact versions
 before investigating [wire limits](../api.md#browser-wire-boundary). Changing a
 browser limit is a reviewed software change, not an operator workaround.
+
+## Original-operation recovery
+
+Use [Observe and recover original operations](operations.md) for the complete
+procedure and finite browser-session limits. **Import original handle** and
+**Observe original operation** perform reads; **Copy recovery handles** preserves
+safe metadata. **Stop observing in this browser** does not cancel backend work.
+
+| Problem | Safe next step |
+| --- | --- |
+| Lost acknowledgement or operation ID | Keep the original key and use authenticated original-key lookup. Do not create another key or replay the POST. |
+| Prepared/terminal record reappears after reload | Treat it as unverified until authenticated original observation. A stored summary cannot establish success or nonexecution. |
+| Missing/expired receipt or interrupted operation | Preserve handles and follow operator recovery. Missing API history cannot clear protected configuration outcomes or authorize cleanup. |
+| Session storage unavailable, corrupt or full | Before transmission, submission is refused. After possible transmission, copy retained in-memory handles and keep the mutation block. Never clear unresolved records as a workaround. |
+| Observation cycle, byte or time limit reached | Retain the original handle. Explicitly resume bounded reads when appropriate; reaching a limit says nothing about execution completion. |
+| Event sequence gap | Preserve the reported gap and observed sequence. Missing retained progress is not an empty event history or a complete execution trace. |
+| Old Cockpit key cannot be looked up as Basic | Keep it as an unbound legacy reference, or observe a known original operation ID. Current Basic lookup is a different namespace and proves no association. |
+| Another tab reports activity | Treat the notice as advisory. It neither owns execution nor authorizes another submission, cancellation or automatic handle import. |
+
+Only a provable fresh refusal before fetch can remove its own prepared record,
+and only after the removal persists. **Not submitted** is a local memory-only
+summary. It is never restored from storage or inferred from a missing receipt.

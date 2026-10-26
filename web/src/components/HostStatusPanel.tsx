@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { ApiClient } from "../api/client";
 import { createApiClient } from "../api/client";
 import type { ApiScope } from "../api/identity";
 import type { ReadResult } from "../api/types";
 import { Panel } from "../primitives";
 import { bootstrapScope } from "../bootstrap";
+import type { SessionController } from "../state/session-controller";
 import type {
     EmptyPayload,
     HostPermissionReasons,
@@ -304,4 +305,65 @@ export function HostAdministration({ bootstrap }: { bootstrap: UiBootstrap }) {
         return { client: createApiClient({ scope }), scope };
     }, [bootstrap]);
     return <HostStatusPanel client={host.client} scope={host.scope} />;
+}
+
+/** The production session owns this read across route mounts and clears it on auth drift. */
+export function SessionHostAdministration({
+    controller,
+}: {
+    controller: SessionController;
+}) {
+    const query = controller.hostStatus;
+    const state = useSyncExternalStore(query.subscribe, query.snapshot);
+    const session = useSyncExternalStore(
+        controller.subscribe,
+        controller.snapshot,
+    );
+    useEffect(() => {
+        if (
+            session.connection === "connected" &&
+            query.snapshot().phase === "idle"
+        )
+            void query.refresh();
+    }, [query, session.connection, session.generation]);
+    const observation = state.result === null ? null : { result: state.result };
+    return (
+        <Panel title="Host administration">
+            <p>
+                Host status reports administrative evidence. Archive health and
+                operation outcomes have separate observations.
+            </p>
+            <p>
+                Policy permissions describe host authority. This interface
+                currently provides status reads.
+            </p>
+            {state.phase === "loading" || state.phase === "idle" ? (
+                <p role="status">Loading host status.</p>
+            ) : state.result?.kind === "success" ? (
+                <HostObservation status={state.result.payload} />
+            ) : (
+                <p role="alert">
+                    {state.reason === "authentication"
+                        ? "Reconnect to load current host authority."
+                        : state.reason === "capacity"
+                          ? "Browser read capacity is unavailable. No host authority was inferred."
+                          : observation === null
+                            ? "Host status is unavailable."
+                            : failure(observation)}
+                </p>
+            )}
+            <button
+                type="button"
+                disabled={
+                    state.phase === "loading" ||
+                    session.connection !== "connected"
+                }
+                onClick={() => {
+                    void query.refresh();
+                }}
+            >
+                Refresh host status
+            </button>
+        </Panel>
+    );
 }

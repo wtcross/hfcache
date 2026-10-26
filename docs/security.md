@@ -1070,6 +1070,37 @@ admission precedes expensive hashing; failed-login capacity is independent of
 operation observation. No secrets enter diagnostics, traces or original-handle
 recovery state.
 
+Browser recovery keeps only validated nonsecret handles and bounded identity/
+terminal metadata in session storage:32records/64KiB, with no credentials,
+request/result bodies, configuration text, cards or raw logs. Storage is untrusted;
+restored prepared and terminal records require authenticated original observation.
+Never evict unresolved handles to admit a mutation. Storage failure before POST
+blocks transmission; failure after possible transmission keeps in-memory handles
+and the block. Only a proven current-session refusal before fetch may durably
+remove its own fresh prepared record before releasing that block. Its local
+not-submitted summary is not persisted, and missing receipts never authorize
+automatic deletion or replay.
+
+Stable Basic subjects and bearer credential classes retain their separate key
+namespaces. Imported IDs do not prove the current reader's creator/key ownership;
+manually retained legacy keys remain unbound references. Explicit compatible
+reconnect obtains fresh authenticated context without rewriting original admitted
+authority. Changed scope/authentication or local authentication generation clears
+private cached data while preserving unresolved safe handles. Cross-tab notices
+are bounded advisory signals, never execution locks, grants or trusted results.
+Stopping browser observation aborts reads only.
+Query handles survive route remounts only within one authenticated session.
+Session replacement/reconnect permanently clears and retires old handles;
+controllers recreate them against the current client. A retired handle cannot
+invoke an old loader, including when returned scope values are identical.
+
+The shared32MiB retention budget measures encoded logical evidence, not exact
+heap/RSS. An8MiB observation-response limit only lowers existing route limits;
+finite concurrency, retries, cycles, time and event retention are specified in
+the [recovery guide](web-ui/operations.md#finite-observation). Exhaustion is
+visible uncertainty, not an empty/successful result. API interruption never
+clears separate unknown or installed-unconfirmed protected configuration effects.
+
 Apply restrictive CSP with same-origin scripts/styles/connect, no inline
 executable scripts/eval, framing/plugins or card forms; `base-uri` permits only
 the controlled same-origin deployment base. Use `nosniff` and `no-referrer`.

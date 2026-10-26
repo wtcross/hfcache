@@ -20,13 +20,14 @@ separate on the same Caddy endpoint.
 After sign-in, **Administrator session** identifies the authenticated human.
 **Configured archive** shows the UUID from installed policy; it does not mean
 archive health, inventory or writability has been checked. The current interface
-provides navigation and permission explanations; repository views and operational
-controls are still under development:
+provides navigation, permission explanations and
+[original-operation observation and recovery](operations.md). Repository views
+and full job forms are still under development:
 
 | Workspace | Intended workflow |
 | --- | --- |
 | Library | Find configured and archived models or datasets, inspect exact publications and distinguish metadata coverage from integrity evidence. |
-| Operations | Submit supported jobs and observe their original operation handles, including after a connection interruption. |
+| Operations | [Observe and recover original operation handles](operations.md), including after a connection interruption. Full job submission forms remain under development. |
 | Maintenance | Review the scope of existing retention, repair and recovery actions before any separate Apply action. |
 | Administration | Read [protected host status and permission reasons](administration.md); use the [configuration and tags API guide](configuration-and-tags.md) for installed intent, managed validation, exact previews and guarded application. |
 
@@ -39,11 +40,15 @@ read/validate/preview API availability does not imply a browser editor. A grant
 alone does not make a feature available or remove a read-only guard.
 
 **Check interface version** performs a read, without reloading automatically or
-replaying an operation. If **Interface update required** appears, preserve
+replaying an operation. A compatible API restart requires explicit reconnect
+before resuming observation with fresh authenticated context; the original
+handles keep their admitted scope. If **Interface update required** appears, preserve
 original operation handles and unsaved work, then choose **Reload interface**
 when ready. If startup stops at **Starting hfcache**, the inert explanation and
 reload link remain available even when the application module could not load;
 see [startup troubleshooting](troubleshooting.md#interface-startup-and-release-changes).
+**Stop observing in this browser** stops local reads, never accepted backend
+work. Keep and copy original handles before closing a recovery session.
 
 Browser access uses HTTP Basic over verified HTTPS. The browser manages the
 password and may cache it after a tab closes; Basic has no reliable application

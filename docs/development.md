@@ -124,6 +124,11 @@ Keep the [license inventory](../web/dependencies/licenses.json) and
 [third-party notices](../web/THIRD_PARTY_NOTICES.txt) synchronized with changes;
 browser libraries become shipped static assets, while lint/test/browser tools
 remain development dependencies. Preserve any reused Cockpit LGPL notices.
+The application-owned recovery registry is a local adaptation of the existing
+Cockpit registry under LGPL-2.1-or-later. Its reviewed local-source provenance
+and full LGPL text are included in the shipped notices; the workspace license
+is `(MIT AND LGPL-2.1-or-later)`. This adds no npm package, Cockpit bridge or
+Cockpit runtime dependency. The unchanged npm closure retains its own licenses.
 After changing the lock, refresh the inventory explicitly with
 `pnpm --dir web exec node scripts/licenses.ts --refresh`. This contacts the
 registry for exact locked versions, including optional packages for other

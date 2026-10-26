@@ -533,6 +533,27 @@ Validated operation links cannot redirect to another origin, prefix or operation
 Query identities contain authenticated authority, archive and exact publication
 scope; passwords and bearer values never belong in query keys or browser state.
 
+The route-independent browser observation controller retains original keys/IDs
+across navigation without introducing a submission endpoint or receipt format.
+Its recovery metadata is bounded to32 records/64KiB; restored records are
+unverified until authenticated original observation. Basic keys retain their
+stable-subject namespace, while manually retained Cockpit bearer keys remain
+unbound legacy references. ID observation does not prove creator/key ownership.
+An explicit compatible reconnect can refresh the API instance/authority epoch
+without rebinding the original operation's admitted authority. Authentication or
+scope changes clear private cached evidence, including a local authentication
+generation change whose returned values are identical.
+
+One shared32MiB encoded logical-evidence budget bounds retained browser reads;
+it is not an exact heap limit. Observation reads use an8MiB per-response ceiling
+clamped to the existing route ceiling (including2MiB cards), two concurrent
+reads globally/one per handle, at most three eligible GET retries after the
+initial attempt at1/2/4seconds, and at most120 cycles or five minutes. Event
+retention is32 events/64KiB per handle with explicit sequence gaps. These bounds
+only lower existing client ceilings and add no server setting. Stop observing
+aborts local reads, never execution. Unknown, missing, interrupted, partial and
+failed results remain distinct; see the [browser recovery guide](web-ui/operations.md).
+
 ## Reconnect after lost acknowledgement
 
 1. Retain the original key, route, configured authority and credential class

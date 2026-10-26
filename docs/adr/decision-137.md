@@ -82,3 +82,29 @@ CP-02/08/10/13. [Cockpit](../cockpit.md), [client guidance](../api-client.md),
 No runtime dependency, durable format, REST/MCP authority, deployment or workload
 permission changes. Source, disposable Cockpit/PAM, installed symptom and NAS
 acceptance remain separate.
+
+## Shared query and original-operation state amendment (2026-10-26)
+
+The application browser separates query loading/stale/unavailable/domain failure
+from queued/waiting/running/terminal/interrupted/unknown operation observation.
+Original structured classifications remain typed; rejected content is never
+used as an empty inventory, readiness or successful outcome. Event sequence gaps
+and retention loss remain visible. Request IDs, admitted operation IDs and domain
+run/report IDs retain separate meanings.
+
+The shared query/controller layer bounds retained encoded logical evidence to
+32MiB, independent of exact JavaScript heap usage. Each session read is at most
+8MiB and never exceeds its existing route ceiling. Observation uses two active
+reads globally/one per handle, at most three eligible GET retries after the
+initial attempt with1/2/4second delays,120cycles or five minutes, and32events/
+64KiB per handle. Limits end or refuse observation without changing execution.
+They introduce no server configuration or more permissive route bound.
+
+Explicit compatible reconnect obtains fresh authenticated bootstrap context
+after an API instance change. It retains original admitted scope rather than
+silently rebinding an operation. Changed scope/authentication, including a new
+local authentication generation with identical returned values, invalidates
+private caches and late callbacks. A different interface/wire release requires
+explicit reload without automatic replay or loss of safe uncertain handles.
+The [recovery guide](../web-ui/operations.md) defines the user procedure; full job
+forms and repository views are separate work.

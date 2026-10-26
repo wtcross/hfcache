@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "schemaVersion": 1,
+      "recordId": "00000000000000000000000000000001",
+      "handles": {
+        "kind": "basic-key",
+        "key": "key-1",
+        "operationId": null
+      },
+      "originalAuthority": {
+        "kind": "web",
+        "scope": {
+          "origin": "https://archive.invalid",
+          "publicPrefix": "",
+          "authorityEpoch": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "subject": "administrator-v1",
+          "credentialClass": "rest-writer",
+          "instanceId": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "archiveId": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+          "configFingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      },
+      "observationTarget": {
+        "origin": "https://archive.invalid",
+        "publicPrefix": "",
+        "authorityEpoch": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "subject": "administrator-v1",
+        "credentialClass": "rest-writer",
+        "instanceId": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "archiveId": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+        "configFingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "source": "web",
+      "action": "sync",
+      "route": "/api/v1/syncs",
+      "receiptIdentity": null,
+      "createdAt": 100,
+      "updatedAt": 100,
+      "state": "prepared",
+      "terminal": null
+    }
+  ]
+}

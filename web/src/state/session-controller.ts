@@ -1,0 +1,449 @@
+/** One authenticated application session, above routes; submissions are never replayed. */
+import { ApiClient } from "../api/client";
+import type { SubmissionOptions, SubmissionResult } from "../api/client";
+import {
+    bootstrapScope,
+    releaseChanged,
+    InterfaceUpdateRequiredError,
+} from "../bootstrap";
+import { decodeConfigApplicationOutcome } from "../wire/generated";
+import type { ClientOperation, UiBootstrap } from "../wire/generated";
+import { parseWireJson, WireError } from "../wire/json";
+import { createAuthSession, sameAuthSession } from "./authority";
+import type { AuthorizedObservation, RecordId } from "./authority";
+import {
+    createOperationRegistry,
+    OperationRegistryError,
+} from "./operation-registry";
+import type {
+    Action,
+    ManualImport,
+    OperationStorage,
+    RecoveryRecord,
+    RegistrySnapshot,
+    SafeTerminalSummary,
+} from "./operation-registry";
+import { createOperationObserver } from "./operation-observation";
+import type { OriginalResultRead, PauseReason } from "./operation-observation";
+import { createQueryStore } from "./query-state";
+import {
+    createReadCoordinator,
+    createRetentionBudget,
+} from "./retention-budget";
+import { createCrossTabAdvice } from "./cross-tab";
+
+type SubmissionMethods = {
+    [K in Action]: `submit${Capitalize<K>}`;
+};
+export type SubmissionIntent = {
+    [K in Action]: {
+        readonly action: K;
+        readonly request: Parameters<ApiClient[SubmissionMethods[K]]>[0];
+    };
+}[Action];
+
+function dispatch(
+    client: ApiClient,
+    intent: SubmissionIntent,
+    options: SubmissionOptions,
+): Promise<SubmissionResult> {
+    switch (intent.action) {
+        case "sync":
+            return client.submitSync(intent.request, options);
+        case "installedPlan":
+            return client.submitInstalledPlan(intent.request, options);
+        case "candidatePlan":
+            return client.submitCandidatePlan(intent.request, options);
+        case "managedPlan":
+            return client.submitManagedPlan(intent.request, options);
+        case "configurationApplication":
+            return client.submitConfigurationApplication(
+                intent.request,
+                options,
+            );
+        case "readOnlyDiagnostics":
+            return client.submitReadOnlyDiagnostics(intent.request, options);
+        case "probeDiagnostics":
+            return client.submitProbeDiagnostics(intent.request, options);
+        case "newVerification":
+            return client.submitNewVerification(intent.request, options);
+        case "fullVerification":
+            return client.submitFullVerification(intent.request, options);
+        case "revisionVerification":
+            return client.submitRevisionVerification(intent.request, options);
+        case "prunePreview":
+            return client.submitPrunePreview(intent.request, options);
+        case "pruneApply":
+            return client.submitPruneApply(intent.request, options);
+        case "purgePreview":
+            return client.submitPurgePreview(intent.request, options);
+        case "purgeApply":
+            return client.submitPurgeApply(intent.request, options);
+        case "recoveryPreview":
+            return client.submitRecoveryPreview(intent.request, options);
+        case "recoveryApply":
+            return client.submitRecoveryApply(intent.request, options);
+        case "quarantinePreview":
+            return client.submitQuarantinePreview(intent.request, options);
+        case "quarantineApply":
+            return client.submitQuarantineApply(intent.request, options);
+        case "repair":
+            return client.submitRepair(intent.request, options);
+        case "catalogRefresh":
+            return client.submitCatalogRefresh(intent.request, options);
+    }
+}
+
+export interface SessionSnapshot {
+    readonly bootstrap: UiBootstrap;
+    readonly generation: number;
+    readonly connection:
+        "connected" | "disconnected" | "reconnecting" | "update_required";
+    readonly registry: RegistrySnapshot;
+    readonly pendingSubmission: boolean;
+    readonly canSubmit: boolean;
+    readonly notice: string | null;
+}
+export interface SessionControllerOptions {
+    readonly bootstrap: UiBootstrap;
+    readonly fetcher?: typeof fetch;
+    readonly storage: OperationStorage | null;
+    /** Production supplies the same bounded, build-verified bootstrap loader used at mount. */
+    readonly reconnect: () => Promise<UiBootstrap>;
+}
+
+export function resultCertainty(
+    receipt: ClientOperation,
+    result: OriginalResultRead,
+): "known" | "unknown-effects" {
+    if (result.kind !== "success" && result.kind !== "domain_failure")
+        return "unknown-effects";
+    if (receipt.route !== "/api/v1/config/applications") return "known";
+    const outcome = decodeConfigApplicationOutcome(
+        parseWireJson(JSON.stringify(result.payload)),
+    );
+    return !outcome.pending &&
+        (outcome.state === "confirmed" || outcome.state === "unchanged")
+        ? "known"
+        : "unknown-effects";
+}
+
+export function createSessionController(options: SessionControllerOptions) {
+    let bootstrap = options.bootstrap;
+    let session = createAuthSession({
+        scope: bootstrapScope(bootstrap),
+        authGeneration: 1,
+    });
+    let client = new ApiClient({
+        scope: session.scope,
+        ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
+    });
+    let connection: SessionSnapshot["connection"] = "connected";
+    let pendingSubmission = false;
+    let notice: string | null = null;
+    let disposed = false;
+    let batching = false;
+    let otherTabChanged = false;
+    const listeners = new Set<() => void>();
+    const registry = createOperationRegistry({ storage: options.storage });
+    const retention = createRetentionBudget();
+    const reads = createReadCoordinator();
+    let snapshot: SessionSnapshot;
+    function publish() {
+        if (batching || disposed) return;
+        snapshot = Object.freeze({
+            bootstrap,
+            generation: session.authGeneration,
+            connection,
+            registry: registry.snapshot(),
+            pendingSubmission,
+            canSubmit:
+                !otherTabChanged &&
+                connection === "connected" &&
+                !pendingSubmission &&
+                registry.canSubmit(session),
+            notice,
+        });
+        for (const listener of listeners) {
+            try {
+                listener();
+            } catch {
+                /* A detached view cannot interrupt recovery persistence. */
+            }
+        }
+    }
+    const queries = createQueryStore({
+        session,
+        retention,
+        reads,
+        onUnauthorized: unauthorized,
+    });
+    const newHostStatus = () =>
+        queries.query({ routeId: "host_status_default" }, (readOptions) =>
+            client.hostStatus(readOptions),
+        );
+    let hostStatus = newHostStatus();
+    const observer = createOperationObserver({
+        retention,
+        reads,
+        onUnauthorized: unauthorized,
+        onReceipt: (auth, receipt) => {
+            if (!current(auth)) return null;
+            registry.observed(auth, receipt);
+            return registry.authorizeObservation(auth.recordId, session);
+        },
+        onResult: (auth, receipt, result) => {
+            if (!current(auth)) return "unknown-effects";
+            const certainty = resultCertainty(receipt, result);
+            if (result.kind === "success" || result.kind === "domain_failure") {
+                const envelope = result.response.envelope;
+                const exitCode = envelope.exit_code;
+                if (
+                    exitCode !== 0 &&
+                    exitCode !== 10 &&
+                    exitCode !== 20 &&
+                    exitCode !== 30 &&
+                    exitCode !== 40 &&
+                    exitCode !== 50
+                )
+                    throw new WireError("semantic");
+                const summary: SafeTerminalSummary = {
+                    command: envelope.command,
+                    exitCode,
+                    outcome: envelope.outcome,
+                    runId: envelope.run_id,
+                    code:
+                        envelope.errors[0]?.code ??
+                        envelope.warnings[0]?.code ??
+                        null,
+                };
+                registry.resolved(auth, summary, certainty);
+                // Tags can change without changing the configuration fingerprint.
+                if (
+                    certainty === "known" &&
+                    receipt.route === "/api/v1/config/applications"
+                )
+                    queries.invalidate(() => true);
+            }
+            return certainty;
+        },
+    });
+    function current(auth: AuthorizedObservation) {
+        return (
+            !disposed &&
+            connection === "connected" &&
+            sameAuthSession(
+                session,
+                createAuthSession({
+                    scope: auth.target,
+                    authGeneration: auth.authGeneration,
+                }),
+            )
+        );
+    }
+    function stillReconnecting(generation: number) {
+        return (
+            !disposed &&
+            session.authGeneration === generation &&
+            connection === "reconnecting"
+        );
+    }
+    function startObservation(auth: AuthorizedObservation) {
+        void observer.observe(auth, client).catch(() => {
+            if (current(auth)) registry.unknown(auth.recordId, "unavailable");
+        });
+    }
+    function clearPrivate() {
+        batching = true;
+        session = createAuthSession({
+            scope: session.scope,
+            authGeneration: session.authGeneration + 1,
+        });
+        observer.clearPrivate();
+        queries.clearPrivate("authentication");
+        registry.invalidateObservations();
+        batching = false;
+    }
+    function unauthorized() {
+        if (disposed) return;
+        connection = "disconnected";
+        notice =
+            "Authentication or connection changed. Private observations were cleared; original handles are preserved.";
+        clearPrivate();
+        publish();
+    }
+    let advice = createCrossTabAdvice({ scope: session.scope });
+    function receiveAdvice() {
+        otherTabChanged = true;
+        notice =
+            "Another tab changed recovery history. Copy any memory-only handles, then reload to read the saved history before submitting.";
+        publish();
+    }
+    let unsubscribeAdvice = advice.subscribe(receiveAdvice);
+    let previousRecords = registry.snapshot().records;
+    const unsubscribeRegistry = registry.subscribe(() => {
+        const records = registry.snapshot().records;
+        for (const record of records)
+            if (
+                previousRecords.find(
+                    (previous) => previous.recordId === record.recordId,
+                ) !== record
+            )
+                advice.publish(record.recordId);
+        for (const record of previousRecords)
+            if (!records.some((next) => next.recordId === record.recordId))
+                advice.publish(record.recordId);
+        previousRecords = records;
+        publish();
+    });
+    publish();
+    return Object.freeze({
+        snapshot: () => snapshot,
+        subscribe(listener: () => void) {
+            listeners.add(listener);
+            return () => {
+                listeners.delete(listener);
+            };
+        },
+        queries,
+        get hostStatus() {
+            return hostStatus;
+        },
+        observer,
+        importHandle(input: ManualImport): RecoveryRecord {
+            if (disposed || connection !== "connected")
+                throw new OperationRegistryError("scope");
+            return registry.importHandle(input, session);
+        },
+        originalScope: () => session.scope,
+        observe(id: RecordId) {
+            if (disposed || connection !== "connected")
+                throw new OperationRegistryError("scope");
+            const auth = registry.authorizeObservation(id, session, {
+                reconnect: true,
+            });
+            startObservation(auth);
+        },
+        stopObserving(id: RecordId, reason: PauseReason = "user") {
+            observer.pause(id, reason);
+        },
+        async submit(intent: SubmissionIntent): Promise<{
+            readonly recordId: RecordId;
+            readonly result: SubmissionResult;
+        }> {
+            if (
+                disposed ||
+                connection !== "connected" ||
+                pendingSubmission ||
+                otherTabChanged
+            )
+                throw new OperationRegistryError("blocked");
+            const originalSession = session;
+            const originalClient = client;
+            const record = registry.prepare(intent.action, originalSession);
+            if (record.handles.kind !== "basic-key")
+                throw new OperationRegistryError("invalid");
+            pendingSubmission = true;
+            notice = null;
+            publish();
+            try {
+                const result = await dispatch(originalClient, intent, {
+                    idempotencyKey: record.handles.key,
+                });
+                const saved = registry.submitted(
+                    record.recordId,
+                    result,
+                    originalSession,
+                );
+                if (saved === null)
+                    notice =
+                        "Not submitted. Validation refused the request before transmission.";
+                if (result.kind === "api_problem" && result.status === 401)
+                    unauthorized();
+                if (
+                    result.kind === "accepted" &&
+                    current({
+                        recordId: record.recordId,
+                        target: originalSession.scope,
+                        authGeneration: originalSession.authGeneration,
+                        locator: {
+                            kind: "id",
+                            operationId:
+                                result.acceptance.operation.operation_id,
+                        },
+                        expectedSafeReceiptIdentity: null,
+                    })
+                ) {
+                    startObservation(
+                        registry.authorizeObservation(record.recordId, session),
+                    );
+                }
+                return { recordId: record.recordId, result };
+            } finally {
+                pendingSubmission = false;
+                publish();
+            }
+        },
+        disconnect: unauthorized,
+        async reconnect(): Promise<void> {
+            if (disposed || connection === "reconnecting") return;
+            clearPrivate();
+            const reconnectGeneration = session.authGeneration;
+            connection = "reconnecting";
+            notice = null;
+            publish();
+            try {
+                const next = await options.reconnect();
+                if (!stillReconnecting(reconnectGeneration)) return;
+                if (releaseChanged(bootstrap, next)) {
+                    connection = "update_required";
+                    notice =
+                        "Interface update required. Copy original recovery handles before reloading.";
+                } else {
+                    bootstrap = next;
+                    session = createAuthSession({
+                        scope: bootstrapScope(next),
+                        authGeneration: session.authGeneration,
+                    });
+                    client = new ApiClient({
+                        scope: session.scope,
+                        ...(options.fetcher === undefined
+                            ? {}
+                            : { fetcher: options.fetcher }),
+                    });
+                    queries.setSession(session);
+                    hostStatus = newHostStatus();
+                    unsubscribeAdvice();
+                    advice.dispose();
+                    advice = createCrossTabAdvice({ scope: session.scope });
+                    unsubscribeAdvice = advice.subscribe(receiveAdvice);
+                    connection = "connected";
+                    notice =
+                        "Reconnected. Observe original operations explicitly; no submission was replayed.";
+                }
+            } catch (error) {
+                if (!stillReconnecting(reconnectGeneration)) return;
+                connection =
+                    error instanceof InterfaceUpdateRequiredError
+                        ? "update_required"
+                        : "disconnected";
+                notice =
+                    error instanceof InterfaceUpdateRequiredError
+                        ? "Interface update required. Copy original recovery handles before reloading."
+                        : "Reconnect is unavailable. Preserve original handles; no submission was replayed.";
+            }
+            publish();
+        },
+        dispose() {
+            disposed = true;
+            observer.dispose();
+            queries.dispose();
+            unsubscribeRegistry();
+            unsubscribeAdvice();
+            advice.dispose();
+            listeners.clear();
+        },
+    });
+}
+
+export type SessionController = ReturnType<typeof createSessionController>;

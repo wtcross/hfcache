@@ -4,17 +4,17 @@
 | --- | --- |
 | State | active |
 | Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
-| Next task | [WEB-011 — Query and operation state](tasks/web-011-query-and-operation-state.md) |
-| Branch / completed package | `feat/web-ui` / WEB-010 (this commit) |
-| Blockers | WEB011–026 and final plan-wide acceptance remain. No current prerequisite blocker. |
+| Next task | [WEB-012 — Library and discovery](tasks/web-012-library-and-discovery.md) |
+| Branch / completed package | feat/web-ui / WEB-011, this commit |
+| Blockers | None for WEB-012. WEB012–026 and final plan-wide acceptance remain. |
 | Last completed plan | [Cockpit repair local rollout](2026-10-20-plan-cockpit-rest-rollout.md) |
 | Updated | 2026-10-26 |
 
-WEB001–010 are complete. Exact card reads pass strict source gate3 and installed
-application acceptance, with no payload/network/write effects or current fallback.
-CARD01–09 are complete; README rendering remains WEB-014. The shared API/UI image
-remains pinned UBI10 micro without runtime Node.
+WEB001–011 are complete. Authority-scoped query state and original-operation
+browser recovery pass strict gate2 and nine genuine native installed cases.
+OPS01–05 are complete. The shared API/UI image remains pinned UBI10 micro without
+runtime Node. Full job forms remain WEB-016; Library is next.
 
 No production/NAS/live Cockpit changes, rollout, merge, push or tag.
-Detailed evidence: [task010](tasks/web-010-repository-card-read-api.md) and
+Detailed evidence: [task011](tasks/web-011-query-and-operation-state.md) and
 [Operator handoff](../progress.md#operator-handoff).

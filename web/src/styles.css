@@ -527,3 +527,61 @@ main:focus {
         transition: none !important;
     }
 }
+.recovery-workspace {
+    display: grid;
+    gap: 1.5rem;
+}
+.recovery-entry {
+    border-top: 1px solid var(--line, #dfe5ed);
+    padding: 1.25rem 0;
+    overflow-wrap: anywhere;
+}
+.recovery-facts {
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+    gap: 0.5rem 1rem;
+}
+.recovery-facts dt {
+    font-weight: 600;
+}
+.recovery-facts dd {
+    margin: 0;
+}
+.recovery-unknown {
+    padding: 0.75rem;
+    color: #714e0c;
+    background: #fff6de;
+    border-left: 3px solid #c79021;
+}
+.recovery-actions,
+.session-recovery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+.recovery-import {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 42rem;
+}
+.recovery-import label {
+    display: grid;
+    gap: 0.4rem;
+    font-weight: 600;
+}
+.recovery-import input,
+.recovery-import select {
+    padding: 0.65rem;
+    border: 1px solid #aeb9ca;
+    border-radius: 0.35rem;
+    background: #fff;
+    color: #17253d;
+    font: inherit;
+}
+.recovery-entry pre {
+    max-height: 24rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

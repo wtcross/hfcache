@@ -137,6 +137,44 @@ export async function loadBootstrap(
     bootstrapScope(bootstrap);
     return bootstrap;
 }
+
+export class InterfaceUpdateRequiredError extends Error {
+    constructor() {
+        super(
+            "Interface update required. Preserve original handles before reloading.",
+        );
+        this.name = "InterfaceUpdateRequiredError";
+    }
+}
+
+/** Reconnect never accepts private context belonging to a different UI build. */
+export async function loadReconnectBootstrap(
+    document: Document,
+    origin: string,
+    compiled: CompiledIdentity,
+    previous: UiBootstrap,
+    fetcher: typeof fetch = globalThis.fetch,
+): Promise<UiBootstrap> {
+    const metadata = readInertMetadata(document);
+    if (
+        previous.configured_origin !== origin ||
+        previous.paths.bootstrap !== metadata.bootstrap ||
+        previous.paths.ui_base !== metadata.base
+    )
+        throw new WireError("semantic");
+    const next = await readBootstrap(origin, metadata.bootstrap, fetcher);
+    if (
+        next.configured_origin !== origin ||
+        JSON.stringify(next.paths) !== JSON.stringify(previous.paths)
+    )
+        throw new WireError("semantic");
+    if (releaseChanged(previous, next))
+        throw new InterfaceUpdateRequiredError();
+    await verifyBootstrapContext(next, metadata, origin, compiled);
+    bootstrapScope(next);
+    return next;
+}
+
 async function readBootstrap(
     origin: string,
     path: string,

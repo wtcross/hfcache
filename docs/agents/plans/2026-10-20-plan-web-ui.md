@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-010 (this commit); WEB-011 is next |
+| Latest completed package | WEB-011 (this commit); WEB-012 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3720,3 +3720,13 @@ Retained inventory/count failures are corrected without runtime changes and
 original failures remain recorded. Shared image stays pinned UBI10 micro with
 no runtime Node. Continue WEB-011 query and operation state; README rendering
 remains WEB-014 and production rollout/publication remain separate.
+
+2026-10-26: WEB-011 completes authority-scoped query state and original-operation
+recovery. Strict gate2 passes1501.198s and nine genuine native Basic/Caddy/API/helper
+browser cases pass89.587s, including real API restart, lost202, quotas and tabs.
+The first installed run exposed an unbound native fetch receiver; its failed
+browser and succeeded original operation remain retained. The central binding
+fix and production-mount regressions pass. OPS01–05 complete; continue WEB-012.
+Shared API/UI image remains pinned UBI10 micro without runtime Node. Full Library,
+job forms, later host/cross-browser/platform acceptance and production rollout
+remain separate tasks; no production/NAS/live Cockpit/publication action occurs.

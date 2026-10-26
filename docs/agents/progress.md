@@ -29,6 +29,32 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-011 Preserve original operation recovery across browser sessions
+  (2026-10-26, this commit — [task](plans/tasks/web-011-query-and-operation-state.md)).
+  One authenticated controller owns bounded queries, original-key persistence,
+  finite GET observation, auth-generation clearing, explicit reconnect and the
+  Operations recovery panel. Restored summaries require original authenticated
+  evidence; legacy namespaces and ID-only imports remain distinct. No POST retry,
+  cancellation, false terminal proof or request/credential persistence is added.
+  Strict gate2 passes1501.198s:8581 backend/52 unrelated opt-in deselections,
+  581Cockpit unit/110mountedFirefox,3131web unit/3214combined component, strict
+  types/lint/contracts/build/wheels/startup/browser/read-API checks; zero required
+  skips,95.46%web line coverage. All1413 source inputs remain exact atd1edf7be….
+  Nine one-attempt Chromium156 native installed cases pass89.587s,47actual
+  trusted requests/2original empty Plans, real API restart, quota/tabs/missing
+  history and normal browser/API/helper/Caddy drain. Separate real backend writer
+  tests prove one effect; empty Plans do not claim archive mutation acceptance.
+  The first installed run found the native fetch receiver bug; its failed browser
+  and succeeded original operation/store remain preserved. Central binding and
+  mounted production regressions fix it. Source1 disk-full build and relocated
+  closed artifacts retain exact evidence. Human operations/reconnect guide,
+  navigation/troubleshooting/API/schema/security/license docs align212/27.
+  INV002/005/018/021, AD16/17, FW03/04 and ADR134/137/145 reviewed; relevant dated
+  amendments and LGPL provenance/full notice accompany the port, no new runtime
+  dependency. Final imagea603f14b retains pinned UBI10 micro/no Node;114 installed
+  modules match disclosed fixture0.2.18. OPS01–05 complete; Library WEB-012 next.
+  No production/NAS/live Cockpit/rollout/merge/push/tag action.
+
 - [x] WEB-010 Expose bounded exact-publication card reads (2026-10-26,
   this commit — [task](plans/tasks/web-010-repository-card-read-api.md)).
   Authenticated narrow GET joins archive sentinel, retained ref, manifest and
@@ -2730,6 +2756,27 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-011 checkpoint (2026-10-26, this commit): WEB001–011 complete on
+feat/web-ui; continue WEB-012 through the current selector. Strict source gate2,
+nine genuine native Basic/Caddy/installed API/helper browser cases and separate
+real backend one-write/no-replay integration pass. OPS01–05 complete; full job
+forms remain WEB-016. [Task011](plans/tasks/web-011-query-and-operation-state.md)
+records all commands, source/artifact hashes, actual case IDs and retained failures.
+
+The owned guest now retains native fixture0.2.18 under /opt/hfcache/releases;
+its API/helper/Caddy/browser roles are normally stopped and original five
+infrastructure pairs are unchanged. The first failed native browser's succeeded
+original Plan/store is retained under helper-web011-source2/retained-source1-api-store,
+with leaf identities/SIDs/hashes intact; no original submission was replayed.
+Guard/key/configuration lock, RO loopback archive metadata and old artifacts remain.
+Source2 evidence is /var/tmp/web-011-validation-1oxmmhrk/functional-native-source2-evidence.json.
+These actual empty Plan executions prove recovery behavior, not archive effects,
+NAS or the later full platform matrix. Source2 stock API/UI imagea603f14b uses
+pinned UBI10 micro without Node; projected rootless0.2.19 has no new functional claim.
+Production0.2.2, real credentials/calendars/guards and live Cockpit are untouched.
+Rollout, merge, push and tag remain unauthorized. Earlier checkpoints retain their
+original historical scope.
 
 Latest WEB-010 checkpoint (2026-10-26, this commit): WEB001–010 are complete on
 `feat/web-ui`; continue WEB-011 through the current selector. Source gate3 and
@@ -12432,3 +12479,10 @@ Checkpoint252: failed rootless38 original metadata ACTUALLY PASSES0.895367s (396
      preserves private predecessor/outcome evidence under the common lock, and
      observes interruption without replay or rollback. Implementation acceptance
      is pending; no completion is inferred from this decision.
+
+2026-10-26 WEB-011 implementation refinement of decisions134/137/145: the new
+web controller retains opaque same-session observation authority, never rebinds
+original handles and retires old query loaders on authentication-generation
+changes. Shared encoded-data limits and native fetch receiver binding preserve
+the existing no-replay/wire contracts; they add no endpoint or runtime package.
+The dated amendments in ADR134/137/145 and INV021 record these scoped details.
