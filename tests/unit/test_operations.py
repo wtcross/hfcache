@@ -143,6 +143,26 @@ def test_expiry_requires_explicit_terminal_proof_and_never_ages_interrupted(tmp_
         assert caught.value.exit_code == 20
 
 
+@pytest.mark.parametrize("failed", [False, True])
+def test_configuration_application_originals_survive_generic_expiration(tmp_path, snapshot, failed):
+    moment = [datetime(2026, 10, 17, tzinfo=UTC)]
+    with OperationStore(tmp_path / "state", clock=lambda: moment[0]) as store:
+        receipt = store.admit(
+            WRITER, "original-config-effect", "/api/v1/config/applications", {}, snapshot
+        ).receipt
+        store.transition(receipt.operation_id, "running")
+        original = store.transition(
+            receipt.operation_id,
+            "failed" if failed else "succeeded",
+            envelope=envelope(failed=failed),
+        )
+        before = {path.name: path.read_bytes() for path in store.root.glob("*.json")}
+        moment[0] += timedelta(days=365)
+        assert store.expire() == ()
+        assert store.lookup(WRITER, "original-config-effect") == original
+        assert {path.name: path.read_bytes() for path in store.root.glob("*.json")} == before
+
+
 @pytest.mark.parametrize(
     "change",
     [

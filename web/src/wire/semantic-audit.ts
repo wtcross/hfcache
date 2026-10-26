@@ -1,6 +1,10 @@
 /** Reviewed Python semantic source pins. Deliberately NOT rewritten by code generation. */
 export const semanticSourceHashes: Readonly<Record<string, string>> =
     Object.freeze({
+        "hfcache.config_models.ConfigApplicationOutcome.coherent_identity":
+            "d3d2ce4dc6292cb04e5ecc537c0ad2a072242f23dbb75e6715c413c2e135cec5",
+        "hfcache.config_models._preview_key":
+            "a03df8fdf60e52ce03177e6524fc76096aa159544116aef706edd19719df03a6",
         "hfcache.config_models.ManagedEditRequest.unique_edits":
             "ffb185ae022ae59815536b1deff2285f9880d8a21db14c9816e084dafb835ae9",
         "hfcache.config_models.SettingsTable.nonempty":
@@ -84,11 +88,11 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
         "catalog.response":
             "f4a756a1d6b5b777c4d4397ac7d3fe01a565968f307ed1305b69059d74774417",
         "operation.events":
-            "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7",
+            "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d",
         "operation.identity":
-            "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7",
+            "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d",
         "operation.result":
-            "c8c594c0b7f3165ca05f2ca1a80cec03812bea8e87f592c9a8fbd342b001d9f7",
+            "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d",
         "publication.manifest":
             "8a8ccf6a8ea195bf782a510009abfc4f40591ae1698da00b0668f33ad61d0d6f",
         "publication.reference":

@@ -29,6 +29,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-008 Implement guarded atomic configuration application (2026-10-25,
+  this commit — [task](plans/tasks/web-008-atomic-configuration-application.md)).
+  Exact managed edits require their original successful complete preview, fresh
+  Basic/independent permission and full-byte base. Durable admission precedes one
+  helper handoff. The original flock, first durable pending intent, sealed private
+  outcomes, predecessor preservation and exact confirmation enforce no replay,
+  rollback or uncertain cleanup. Original-key reads preserve interrupted receipts
+  independently of confirmed host history. Maintained legacy writers share guards.
+  ADR154, amended ADR122/141/150/153 and INV001/002/018/020/021 align; human API,
+  configuration/tag, host, security/schema/server and deployment guides accompany
+  the feature. Editor UX remains WEB-015. No runtime dependency is added.
+  Strict gate5 passes1647.627s:8363 backend tests,581 Cockpit unit and all strict
+  frontend/component/wheel/read-API checks;210 human documents/27 helpers validate.
+  All1378 source inputs remain unchanged at93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9.
+  Actual-FS tests cover114 first/120 previous-backup durability cuts. Normal
+  native/rootless acceptance passes78 browser cases; representative helper/API
+  crashes, both legacy orderings, stale-tag refusal and the final23-case
+  permission/queue/genuine-quota suite bring clean installed coverage to125 cases.
+  All required cases pass once; all original roles drain. The final suite proves
+  15517860 used bytes plus2558664 reserve exceeds16777216, without seeded outcomes
+  or patched limits. Its457 requests all satisfy bounded closed-origin capture.
+  Earlier failed recorder/cohorts remain false and retained; explicit disposable
+  retirement preserves original state/receipts and config/key/lock. Shared stock
+  API/UI image241b49a6 remains pinned UBI10 micro without Node. CONFIG06–11
+  complete; selector advances WEB-009. No production/NAS/live Cockpit/rollout,
+  merge, push or tag action.
+
 - [x] WEB-007 Expose safe configuration and exact managed previews (2026-10-25,
   this commit — [task](plans/tasks/web-007-configuration-read-and-preview.md)).
   Protected configuration read provides complete editable values and opaque
@@ -2651,6 +2678,28 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-008 checkpoint (2026-10-25, this commit): WEB001–008 are complete on
+`feat/web-ui`; continue WEB-009 through the current selector. Strict gate5 and125
+clean installed browser cases pass, including actual host-helper/API interruption,
+legacy contention/candidate preservation, stale tags, fresh/queued permission and
+real16MiB quota refusal. CONFIG01–11 are complete. Task008 records exact artifacts,
+commands, outcomes and all retained failures. Configuration editor UX is WEB-015;
+README capture is next. The shared API/UI image remains pinned UBI10 micro.
+
+Owned test guest remains drained after final1.276s explicit state/credential
+retirement. Native0.2.10/rootless0.2.11 and stock software/image0.2.10 are disclosed
+fixture versions, not releases. Original process pairs, readonly loopback NFS,
+configuration key and persistent lock remain; installed configuration contains
+only disabled owned fixture repositories. Original private histories, backups,
+API stores and all failed outcomes remain at task008's evidence locators, including
+the recorder-overflow run, whose25 passing application assertions did not establish
+acceptance. Its corrected fresh23-case cohort passes553.269s with complete457
+request capture and normal drain. Disposable retirement is not a product recovery
+procedure; no outcome phase is edited or operation replayed. Production0.2.2,
+NAS/guards/calendars/credentials and live Cockpit remain untouched. Production
+rollout, merge, push and tag remain unauthorized. Earlier checkpoints below are
+historical evidence.
 
 Latest WEB-007 checkpoint (2026-10-25, this commit): WEB001–007 complete on
 `feat/web-ui`; resume WEB-008 through the current selector. Strict source gate
@@ -12285,3 +12334,10 @@ Checkpoint252: failed rootless38 original metadata ACTUALLY PASSES0.895367s (396
      persistent staging/install still require the original configuration guard.
      Full-byte base and exact server-derived scope are checked before Hub work.
      Existing literal/installed clients and original operation observation remain.
+
+154. **Install exact managed configuration once and observe durable host outcomes**
+     (2026-10-25, WEB-008, this commit). [Decision154](../adr/decision-154.md)
+     binds apply to its successful exact preview and original durable receipt,
+     preserves private predecessor/outcome evidence under the common lock, and
+     observes interruption without replay or rollback. Implementation acceptance
+     is pending; no completion is inferred from this decision.

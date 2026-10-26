@@ -70,11 +70,11 @@ def parameter_values(
 def test_manifest_has_exactly_all_36_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
     assert len(PARITY) == len(PARITY_REFERENCE) == 36
-    assert len(REFERENCE) == len(rows) == 48
+    assert len(REFERENCE) == len(rows) == 50
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
     assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
     assert rows == REFERENCE
-    assert len({row[:2] for row in rows}) == 48
+    assert len({row[:2] for row in rows}) == 50
     assert all(len(row) == 9 for row in rows)
 
 

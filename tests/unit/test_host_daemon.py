@@ -7,6 +7,7 @@ Installed root/native/container separation requires the disposable guest proof.
 import ast
 import hashlib
 import importlib.util
+import json
 import os
 import socket
 import stat
@@ -163,7 +164,13 @@ def inspector():
     calls = []
     hashes = {
         key: hashlib.sha256(key.encode()).hexdigest()
-        for key in ("helper_daemon", "host_policy", "host_protocol", "host_peer")
+        for key in (
+            "helper_daemon",
+            "host_policy",
+            "host_protocol",
+            "host_peer",
+            "host_configuration",
+        )
     }
     bindings = {
         role: hashes[key]
@@ -172,6 +179,7 @@ def inspector():
             ("host_policy", "helper_policy_module"),
             ("host_protocol", "helper_protocol_module"),
             ("host_peer", "helper_peer_module"),
+            ("host_configuration", "helper_configuration_module"),
         )
     }
     budget = SimpleNamespace(
@@ -219,7 +227,13 @@ def inspector():
     )
     peers = SimpleNamespace(authenticate=authenticate, revalidate=peer_again)
     instance = daemon.HostDaemon(
-        {"host_protocol": protocol, "host_policy": policy, "host_peer": peers}, hashes
+        {
+            "host_protocol": protocol,
+            "host_policy": policy,
+            "host_peer": peers,
+            "host_configuration": SimpleNamespace(),
+        },
+        hashes,
     )
     instance.deployment_sha256 = authority.deployment_sha256
     try:
@@ -265,14 +279,45 @@ def test_daemon_real_exchange_revalidates_before_read_and_releases_capacity(insp
     instance.capacity.release()
 
 
+@pytest.mark.parametrize("operation", ["config-apply", "config-outcome"])
+def test_daemon_application_dispatch_uses_indexed_writer_after_original_peer_proof(
+    inspector, operation
+):
+    instance, calls, authority = inspector
+    body: dict[str, object] = {"operation_id": "b" * 32, "request_digest": "c" * 64}
+    if operation == "config-apply":
+        body |= {
+            "managed": {"base_revision": "d" * 64, "edits": []},
+            "candidate_revision": "e" * 64,
+            "config_fingerprint": "f" * 64,
+            "preview_operation_id": "a" * 32,
+            "required_selectors": [],
+        }
+
+    def dispatch(policy, snapshot, incoming):
+        assert policy is instance.policy
+        assert snapshot is authority
+        assert incoming == body
+        calls.append(operation)
+        return {"state": "confirmed"}
+
+    instance.configuration.apply_configuration = dispatch
+    instance.configuration.read_configuration_outcome = dispatch
+    request = protocol.HostRequest("c" * 32, operation, body)
+    raw = run_exchange(instance, request.wire())
+    assert protocol.reply_body(protocol.decode_object(raw[4:]), request) == {"state": "confirmed"}
+    assert calls == ["inspect", "peer-first", "revalidate", "peer-again", "revalidate", operation]
+
+
 @pytest.mark.parametrize(
     "change", [{"operation": "config-apply"}, {"body": {"path": "/etc/passwd"}}]
 )
-def test_daemon_invalid_requests_never_dispatch(inspector, change):
+def test_daemon_invalid_requests_never_dispatch(inspector, change, capsys):
     instance, calls, _ = inspector
     assert run_exchange(instance, protocol.HostRequest("d" * 32, "status").wire() | change) == b""
     assert "status" not in calls
     assert "peer-again" not in calls
+    assert capsys.readouterr().err == ""
 
 
 def test_daemon_deployment_drift_refuses_before_peer_and_dispatch(inspector):
@@ -282,7 +327,7 @@ def test_daemon_deployment_drift_refuses_before_peer_and_dispatch(inspector):
     assert calls == ["inspect"]
 
 
-def test_config_base_policy_denial_is_typed_after_fresh_peer_proof(inspector):
+def test_config_base_policy_denial_is_typed_after_fresh_peer_proof(inspector, capsys):
     instance, calls, _ = inspector
 
     def denied(_authority):
@@ -310,6 +355,7 @@ def test_config_base_policy_denial_is_typed_after_fresh_peer_proof(inspector):
     ]
     with pytest.raises(protocol.HostProtocolError, match="operation-denied"):
         protocol.reply_body(response, request)
+    assert capsys.readouterr().err == ""
 
 
 def test_host_python_312_syntax_and_fixed_unit_boundary():
@@ -324,3 +370,73 @@ def test_host_python_312_syntax_and_fixed_unit_boundary():
     assert "--config" not in unit
     assert "CAP_SYS_PTRACE" not in unit
     assert "CAP_DAC_OVERRIDE" not in unit
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected_class"),
+    [
+        (RuntimeError, "RuntimeError"),
+        (InspectionError, "ValueError"),
+        (protocol.HostProtocolError, "Exception"),
+    ],
+)
+def test_unexpected_writer_exchange_failure_logs_only_protected_metadata(
+    inspector, capsys, failure, expected_class
+):
+    instance, calls, _authority = inspector
+    hostile = "Authorization: Bearer private-token; request body and private TOML must stay hidden"
+    namespace = {"hostile": hostile, "failure": failure}
+    exec(
+        compile(
+            "def apply_configuration(policy, authority, body):\n"
+            "    try:\n"
+            "        raise OSError(5, hostile, '/run/secrets/private-input')\n"
+            "    except OSError:\n"
+            "        raise failure('facts-unavailable') from None\n",
+            str(daemon.LIBRARY / "host_configuration.py"),
+            "exec",
+        ),
+        namespace,
+    )
+    instance.configuration.apply_configuration = namespace["apply_configuration"]
+    request = protocol.HostRequest(
+        "c" * 32,
+        "config-apply",
+        {
+            "operation_id": "b" * 32,
+            "request_digest": "c" * 64,
+            "managed": {"base_revision": "d" * 64, "edits": []},
+            "candidate_revision": "e" * 64,
+            "config_fingerprint": "f" * 64,
+            "preview_operation_id": "a" * 32,
+            "required_selectors": [],
+        },
+    )
+    before = fd_count()
+    assert run_exchange(instance, request.wire()) == b""
+    assert fd_count() == before
+    assert calls == ["inspect", "peer-first", "revalidate", "peer-again", "revalidate"]
+    diagnostic = capsys.readouterr().err
+    assert hostile not in diagnostic
+    assert "/run/secrets/private-input" not in diagnostic
+    assert "base_revision" not in diagnostic
+    assert request.body["request_digest"] not in diagnostic
+    assert len(diagnostic) <= daemon.MAX_FAILURE_BYTES + 200
+    prefix, body = diagnostic.split("protected host helper failure ", 1)
+    assert (
+        prefix
+        == "protected host helper unavailable; preserve state and inspect fixed prerequisites\n"
+    )
+    metadata = json.loads(body)
+    assert metadata["operation"] == "serve"
+    assert [row["error_class"] for row in metadata["errors"]] == [expected_class, "OSError"]
+    assert [row["errno"] for row in metadata["errors"]] == [None, 5]
+    frames = [frame for row in metadata["errors"] for frame in row["frames"]]
+    assert any(
+        frame["module"] == "host_configuration" and frame["function"] == "apply_configuration"
+        for frame in frames
+    )
+    assert any(
+        frame["module"] == "host-helper" and frame["function"] == "exchange" for frame in frames
+    )
+    assert all(set(frame) == {"module", "function", "line"} for frame in frames)

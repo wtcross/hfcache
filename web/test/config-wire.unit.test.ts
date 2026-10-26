@@ -6,6 +6,8 @@ import {
     decodeManagedAssessment,
     decodePlanResultPayload,
     decodeRequestManagedPlanRequest,
+    decodeConfigApplicationOutcome,
+    decodeRequestConfigApplicationSubmission,
     routeContracts,
 } from "../src/wire/generated";
 import { parseWireJson } from "../src/wire/json";
@@ -58,6 +60,135 @@ test("original Python serialized public config fixtures decode without private c
             ).toThrow();
         }
     }
+});
+
+test("application intent binds a strict preview reference without literal candidate text", () => {
+    const body = {
+        ...object(fixtures.request),
+        preview: { operation_id: "c".repeat(32), key: "owned-preview.1" },
+    };
+    expect(
+        decodeRequestConfigApplicationSubmission(wire(body)).preview.key,
+    ).toBe("owned-preview.1");
+    for (const extra of [
+        { candidate: "private" },
+        { selectors: [] },
+        { preview: null },
+    ])
+        expect(() =>
+            decodeRequestConfigApplicationSubmission(
+                wire({ ...body, ...extra }),
+            ),
+        ).toThrow();
+    for (const key of ["", "x".repeat(129), "x\n", "secret/key", null])
+        expect(() =>
+            decodeRequestConfigApplicationSubmission(
+                wire({
+                    ...body,
+                    preview: { operation_id: "c".repeat(32), key },
+                }),
+            ),
+        ).toThrow();
+    expect(routeContracts.config_apply_default.commands).toEqual([
+        "config apply",
+    ]);
+});
+
+test("host outcomes preserve uncertainty and pending confirmation without private data", () => {
+    const outcome = object(fixtures.application_outcome);
+    expect(decodeConfigApplicationOutcome(wire(outcome)).state).toBe(
+        "confirmed",
+    );
+    expect(
+        decodeConfigApplicationOutcome(wire({ ...outcome, pending: true }))
+            .pending,
+    ).toBe(true);
+    const unknown = {
+        ...outcome,
+        state: "unknown",
+        base_revision: null,
+        candidate_revision: null,
+        config_fingerprint: null,
+    };
+    expect(decodeConfigApplicationOutcome(wire(unknown)).state).toBe("unknown");
+    for (const change of [
+        { pending: 1 },
+        { state: "succeeded" },
+        { candidate: "private" },
+        { request_digest: "A".repeat(64) },
+    ])
+        expect(() =>
+            decodeConfigApplicationOutcome(wire({ ...outcome, ...change })),
+        ).toThrow();
+});
+
+test("outcome client sends only an original-key GET and rejects another operation identity", async () => {
+    const outcome = object(fixtures.application_outcome);
+    const seen: {
+        method: string | undefined;
+        key: string | null;
+        path: string;
+    }[] = [];
+    const client = (operation_id: unknown) =>
+        createApiClient({
+            scope: {
+                origin: "https://fixture.invalid",
+                publicPrefix: "",
+                authorityEpoch: "test",
+                subject: "test",
+                instanceId: null,
+                archiveId: String(outcome.archive_id),
+                configFingerprint: "d".repeat(64),
+                credentialClass: "rest-reader",
+            },
+            fetcher: (url, init) => {
+                seen.push({
+                    method: init?.method,
+                    key: new Headers(init?.headers).get("Idempotency-Key"),
+                    path:
+                        typeof url === "string"
+                            ? url
+                            : url instanceof URL
+                              ? url.href
+                              : url.url,
+                });
+                return Promise.resolve(
+                    jsonResponse({
+                        ...readWire("config outcome", {
+                            ...outcome,
+                            operation_id,
+                        }),
+                        archive_id: outcome.archive_id,
+                    }),
+                );
+            },
+        });
+    const identifier = String(outcome.operation_id);
+    expect(
+        (
+            await client(identifier).readConfigurationOutcome(
+                identifier,
+                "original-key",
+            )
+        ).kind,
+    ).toBe("success");
+    expect(
+        (
+            await client("e".repeat(32)).readConfigurationOutcome(
+                identifier,
+                "original-key",
+            )
+        ).kind,
+    ).toBe("protocol_failure");
+    expect(seen).toHaveLength(2);
+    expect(
+        seen.every(
+            (row) =>
+                row.method === "GET" &&
+                row.key === "original-key" &&
+                row.path.endsWith("/config/applications/" + identifier),
+        ),
+    ).toBe(true);
 });
 
 test("schema, revisions and nonsecret field metadata cannot coerce or expand", () => {

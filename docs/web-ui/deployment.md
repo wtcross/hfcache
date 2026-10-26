@@ -225,12 +225,12 @@ changes the six permission booleans or the existing key.
 
 1. Install the selected release's `scripts/host-helper.py` as the ordinary
    root-owned0755 `/usr/local/libexec/hfcache-host-helper`. Install its
-   `host_protocol.py`, `host_policy.py`, `host_peer.py` and selected
+   `host_protocol.py`, `host_policy.py`, `host_peer.py`, `host_configuration.py` and selected
    `packaging/selinux/hfcache-host-helper.cil` as root-owned0644 ordinary files
    under root-owned0755 `/usr/local/lib/hfcache-host-helper`. The modules are
    protected host Python3.12 standard-library copies, distinct from API code;
    the CIL is independently bound policy authority. Rootless staging captures
-   all six helper files in its manifest before indexing, including the CIL.
+   all seven helper files in its manifest before indexing, including the CIL.
    Install the exact selected `hfcache-host-helper.service` as an ordinary
    root-owned0644 system unit. Rootless staged copies live under `host-helper/`;
    native copies come from `src/hfcache/`, `scripts/` and `packaging/systemd/`.
@@ -261,8 +261,43 @@ changes the six permission booleans or the existing key.
    Require Enforcing and the exact first-exec domain; no permissive or
    unconfined fallback is valid. Install the selected tmpfiles fragment as
    `/etc/tmpfiles.d/hfcache-host-helper.conf`, with the measured API group.
+   Keep `SupplementaryGroups=hfcache` in the selected helper unit. This is the
+   existing application group, not a new capability or per-request credential
+   change. Its only new writable bind is fixed `/etc/hfcache`; all archive,
+   credential and network restrictions remain in force.
    Provision the fixed labels in the
    [mandatory SELinux contract](../host-administration.md#mandatory-selinux-isolation).
+   The exact `/etc/hfcache` directory needs
+   `hfcache_host_helper_configuration_dir_t`. Installed configuration and owned
+   `.candidate.toml`/`config.toml.bak` use `hfcache_host_helper_application_conf_t`;
+   `.configuration.lock` and `.configuration.pending` use
+   `hfcache_host_helper_configuration_guard_t`. The private
+   `/etc/hfcache/.configuration-applications(/.*)?` context is
+   `hfcache_host_helper_application_state_t`, except these fixed retained-original
+   paths, which require `hfcache_host_helper_application_conf_t`:
+   `/etc/hfcache/.configuration-applications/[0-9a-f]{32}/predecessor\.toml` and
+   `/etc/hfcache/.configuration-applications/[0-9a-f]{32}/previous-backup\.toml`.
+   Add those specific exceptions after the private-tree rule and verify effective
+   `matchpathcon` results before provisioning; do not rely on regex specificity
+   to override local rule ordering. Apply narrow persistent rules and
+   inspect effective contexts before preparing the new deployment/SELinux
+   receipt. A reviewed first upgrade may assign the new guard SID to the same
+   original lock inode: record its before/after full contexts while retaining
+   device/inode, mode and ownership. Never replace/unlink it. If no original guard
+   exists, root must explicitly provision the fixed root:root0600 single-link lock
+   once before enabling application; reads and the writer never create it.
+   Preserve pending and
+   private history evidence; unknown state refuses upgrade rather than being
+   relabelled or removed.
+   New helper-created files/directories use the compiled creation transitions.
+   Legacy root `unconfined_t` candidate/backup publications use corresponding file
+   and named guard transitions under this exact directory, without a new allow
+   grant. Verify the actual Cockpit/root launch domain and resulting installed
+   leaf SID during coexistence acceptance.
+   The tmpfiles fragment creates only the root0700 history directory, never a
+   pending marker or replacement lock. Historical original predecessor/backup
+   inodes retain their exact0640 root:hfcache metadata and original application
+   SID inside private0700; do not recursively restorecon/chmod that history.
    Runtime fcontext `/run/hfcache-host-helper(/.*)?` must be
    `hfcache_host_helper_runtime_t`, including the API subtree. After exact owned
    processes/socket work has drained, inspect any earlier owned

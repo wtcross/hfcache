@@ -21,6 +21,7 @@ import sys
 import time
 import tomllib
 import uuid
+from copy import copy
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
@@ -46,6 +47,9 @@ SELINUX_LABELS = {
     "helper_code": "hfcache_host_helper_code_t",
     "configuration": "hfcache_host_helper_conf_t",
     "application_config": "hfcache_host_helper_application_conf_t",
+    "configuration_directory": "hfcache_host_helper_configuration_dir_t",
+    "application_state": "hfcache_host_helper_application_state_t",
+    "configuration_guard": "hfcache_host_helper_configuration_guard_t",
     "runtime": "hfcache_host_helper_runtime_t",
     "api_credentials": "hfcache_host_helper_secret_t",
     "hub_home": "hfcache_host_helper_hub_state_t",
@@ -258,6 +262,10 @@ def binding_paths(profile: str) -> dict[str, tuple[Path, str]]:
                 Path("/usr/local/lib/hfcache-host-helper/host_protocol.py"),
                 ordinary + "host_protocol.py",
             ),
+            "helper_configuration_module": (
+                Path("/usr/local/lib/hfcache-host-helper/host_configuration.py"),
+                ordinary + "host_configuration.py",
+            ),
             "helper_peer_module": (
                 Path("/usr/local/lib/hfcache-host-helper/host_peer.py"),
                 ordinary + "host_peer.py",
@@ -317,7 +325,7 @@ class _Capture:
         self.files: dict[Path, tuple[int, ...]] = {}
         self.links: dict[Path, tuple[tuple[int, ...], str]] = {}
         self.absent: set[Path] = set()
-        self.labels: dict[Path, tuple[tuple[int, ...], str]] = {}
+        self.labels: dict[Path, tuple[tuple[int, ...], str, str]] = {}
         self.mounts: list[tuple[Path, str, set[str], set[str]]] = []
 
     def accounting(self, path: Path) -> str:
@@ -513,9 +521,22 @@ class _Capture:
                 and fields[2] == expected_type
                 and fields[3] == "s0"
             )
-            identity = _identity(before)
-            _need(_identity(os.stat(path.name, dir_fd=parent, follow_symlinks=False)) == identity)
-            record = (identity, expected_type)
+            # ADR154: fixed-name publication intentionally changes this directory's
+            # entry timestamps/link count; its identity, ownership/mode and full SID
+            # stay pinned. All file labels retain the complete metadata comparison.
+            mutable_directory = (
+                path == CONFIGURATION.parent
+                and expected_type == SELINUX_LABELS["configuration_directory"]
+            )
+            if mutable_directory:
+                _need(stat.S_ISDIR(before.st_mode))
+            metadata = PARENT_METADATA if mutable_directory else METADATA
+            identity = _identity(before, metadata)
+            _need(
+                _identity(os.stat(path.name, dir_fd=parent, follow_symlinks=False), metadata)
+                == identity
+            )
+            record = (identity, expected_type, context)
             _need(path not in self.labels or self.labels[path] == record)
             self.labels[path] = record
         finally:
@@ -539,7 +560,7 @@ class _Capture:
         for path, expected in self.files.items():
             self.budget.remaining()
             _need(_identity(path.lstat()) == expected)
-        for path, (_identity_before, label) in tuple(self.labels.items()):
+        for path, (_identity_before, label, _context_before) in tuple(self.labels.items()):
             self.label(path, label)
         for path, expected in self.links.items():
             self.budget.remaining()
@@ -1069,11 +1090,13 @@ class _Inspection:
             "helper_policy_module",
             "helper_protocol_module",
             "helper_peer_module",
+            "helper_configuration_module",
             "helper_selinux_policy",
         ):
             self.capture.label(paths[role][0], SELINUX_LABELS["helper_code"])
         for path in (POLICY, DEPLOYMENT, REVISION_KEY, SELINUX_INSTALLATION):
             self.capture.label(path, SELINUX_LABELS["configuration"])
+        self.capture.label(CONFIGURATION.parent, SELINUX_LABELS["configuration_directory"])
         self.capture.label(CONFIGURATION, SELINUX_LABELS["application_config"])
         self.capture.label(Path("/run/hfcache-host-helper"), SELINUX_LABELS["runtime"])
         self.capture.label(Path("/run/hfcache-host-helper/api"), SELINUX_LABELS["runtime"])
@@ -1648,6 +1671,51 @@ def revalidate(snapshot: AuthoritySnapshot) -> None:
     except INSPECTION_ERRORS:
         raise
     except Exception:  # noqa: BLE001 - fixed unavailable reason, never a partial grant
+        msg = "facts-unavailable"
+        raise InspectionError(msg) from None
+
+
+def confirm_configuration(
+    snapshot: AuthoritySnapshot,
+    candidate: bytes,
+    identity: tuple[int, ...],
+    context: str,
+) -> None:
+    """Revalidate the original authority with only its installed config leaf replaced."""
+    _need(type(snapshot) is AuthoritySnapshot)
+    _need(type(candidate) is bytes and len(candidate) <= MAX_CONFIGURATION_BYTES)
+    _need(len(identity) == len(METADATA) and all(type(item) is int for item in identity))
+    _need(type(context) is str)
+    original = snapshot._inspection  # noqa: SLF001 - module-private immutable capture
+    inspection = copy(original)
+    capture = copy(original.capture)
+    inspection.capture = capture
+    # Rechecks may extend these maps. Keep the supplied pre-effect capture exact,
+    # including its original config inode; only the work budget remains shared.
+    capture.parents = original.capture.parents.copy()
+    capture.files = original.capture.files.copy()
+    capture.links = original.capture.links.copy()
+    capture.absent = original.capture.absent.copy()
+    capture.labels = original.capture.labels.copy()
+    capture.mounts = original.capture.mounts.copy()
+    capture.files[CONFIGURATION] = identity
+    capture.labels.pop(CONFIGURATION, None)
+    inspection.config_body = candidate
+    try:
+        capture.label(CONFIGURATION, SELINUX_LABELS["application_config"])
+        _need(
+            capture.labels[CONFIGURATION]
+            == (identity, SELINUX_LABELS["application_config"], context),
+            "config-unavailable",
+        )
+        # The captured verifier's adapters close over its capture. Recreate that
+        # small indexed namespace for this copy, without reloading the package or
+        # hashing the native interpreter a second time.
+        inspection.legacy = inspection.legacy_namespace()
+        inspection.validate()
+    except INSPECTION_ERRORS:
+        raise
+    except Exception:  # noqa: BLE001 - fixed refusal without a partial confirmation
         msg = "facts-unavailable"
         raise InspectionError(msg) from None
 

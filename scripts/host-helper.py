@@ -1,9 +1,9 @@
 #!/usr/bin/python3 -I
-"""Decision150 fixed protected host reads; --help has no host effects.
+"""Decision150/154 fixed protected host operations; --help has no host effects.
 
 This foreground service loads only root-protected standard-library bootstrap
 copies. It never accepts a path, unit, manager, UID or executable from a request.
-Every write opcode remains denied. Host Python3.12 is supported.
+Only exact managed configuration application can write. Host Python3.12 is supported.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import builtins
 import ctypes
+import grp
 import hashlib
 import json
 import os
@@ -147,7 +148,8 @@ def startup_task():
 def startup_principal():
     uid, gid = os.getresuid(), os.getresgid()
     if uid == (0, 0, 0):
-        refuse(gid == (0, 0, 0) and all(group == 0 for group in os.getgroups()))
+        allowed = {0, grp.getgrnam("hfcache").gr_gid}
+        refuse(gid == (0, 0, 0) and set(os.getgroups()) <= allowed)
         return True
     refuse(
         uid[0] > 0
@@ -274,7 +276,7 @@ def load_modules():
     """Root protection precedes import; selected-index hashes precede admission."""
     modules, hashes = {}, {}
     work = {"files": 0, "bytes": 0}
-    for name in ("host_protocol", "host_policy", "host_peer"):
+    for name in ("host_protocol", "host_policy", "host_peer", "host_configuration"):
         path = LIBRARY / (name + ".py")
         body = trusted_read(path)
         work["files"] += 1
@@ -299,6 +301,7 @@ def verify_bootstrap(snapshot, hashes):
         "host_policy": "helper_policy_module",
         "host_protocol": "helper_protocol_module",
         "host_peer": "helper_peer_module",
+        "host_configuration": "helper_configuration_module",
     }
     refuse(all(hashes[name] == bindings[role] for name, role in expected.items()))
 
@@ -425,12 +428,13 @@ def notify_ready():
 
 
 class HostDaemon:
-    """Eight reserved exchanges, no queued inspection jobs or effect opcodes."""
+    """Eight reserved exchanges, no queued inspection jobs or arbitrary effects."""
 
     def __init__(self, modules, hashes):
         self.protocol = modules["host_protocol"]
         self.policy = modules["host_policy"]
         self.peers = modules["host_peer"]
+        self.configuration = modules["host_configuration"]
         self.hashes = hashes
         self.stop = threading.Event()
         self.capacity = threading.BoundedSemaphore(MAX_EXCHANGES)
@@ -487,6 +491,14 @@ class HostDaemon:
                     return self.policy.read_config_base(authority)
                 if request.operation == "config-prepare":
                     return self.policy.prepare_configuration(authority, request.body)
+                if request.operation == "config-apply":
+                    return self.configuration.apply_configuration(
+                        self.policy, authority, request.body
+                    )
+                if request.operation == "config-outcome":
+                    return self.configuration.read_configuration_outcome(
+                        self.policy, authority, request.body
+                    )
                 raise self.protocol.HostProtocolError(_OPERATION_DENIED)  # noqa: TRY301 - closed dispatch boundary
 
             with connection:
@@ -503,7 +515,13 @@ class HostDaemon:
                         exchange.respond(outcome="denied", body={}, reason=error.reason)
                     else:
                         exchange.respond(outcome="ok", body=body)
-        except Exception:  # noqa: BLE001 - refused/unknown input closes; never echo external errors
+        except Exception as error:  # noqa: BLE001 - unknown failures close; safe operator metadata only
+            expected = isinstance(error, self.protocol.HostProtocolError) and error.reason in {
+                "invalid-request",
+                "peer-refused",
+            }
+            if not expected:
+                log_failure(error, "serve")
             return
         finally:
             connection.close()
@@ -587,7 +605,7 @@ def failure_metadata(error, operation):
     protected.update(
         {
             str(LIBRARY / (name + ".py")): name
-            for name in ("host_peer", "host_policy", "host_protocol")
+            for name in ("host_peer", "host_policy", "host_protocol", "host_configuration")
         }
     )
     classes = {

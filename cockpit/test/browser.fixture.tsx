@@ -1846,7 +1846,7 @@ async function run(): Promise<void> {
     await test('V09/V18 Configuration retains validation and original preview notices after bridge loss', async () => {
         const { session, start, validation } = await beginValidation(CONFIG_DRAFT.replace('enabled=false', 'enabled=true'));
         validation.succeedEnvelope(assessment());
-        const preview = await guardedProcess(start + 2, 'guard');
+        const preview = await guardedProcess(start + 2, 'preview');
         invariant(preview.clientArgv?.includes('plan'), 'Enabled repository did not use the keyed preview route');
         invariant(preview.key !== null, 'Candidate sizing key must be recorded before spawn');
         preview.emit('Idempotency key: ' + preview.key + '\nOperation: ' + preview.operationId + '\n');
@@ -1865,7 +1865,7 @@ async function run(): Promise<void> {
         const draft = CONFIG_DRAFT.replace('enabled=false', 'enabled=true');
         const { session, start, validation } = await beginValidation(draft);
         validation.succeedEnvelope(assessment());
-        const preview = await guardedProcess(start + 2, 'guard');
+        const preview = await guardedProcess(start + 2, 'preview');
         preview.succeedEnvelope({
             ...configEnvelope({
                 repositories: [{
@@ -1903,7 +1903,7 @@ async function run(): Promise<void> {
     await test('V09 Configuration rejects a required sizing success without the strict repository evidence', async () => {
         const { session, start, validation } = await beginValidation(CONFIG_DRAFT.replace('enabled=false', 'enabled=true'));
         validation.succeedEnvelope(assessment());
-        const preview = await guardedProcess(start + 2, 'guard');
+        const preview = await guardedProcess(start + 2, 'preview');
         preview.succeedEnvelope({ ...configEnvelope({}), command: 'plan' });
         await until(() => text().includes('candidate-preview') && text().includes('Client output could not be validated'),
                     'classified malformed required-sizing evidence');
@@ -2360,7 +2360,7 @@ async function run(): Promise<void> {
         const draft = CONFIG_DRAFT.replace('enabled=false', 'enabled=true');
         const { session, start, validation } = await beginValidation(draft, true);
         validation.succeedEnvelope(assessment());
-        const preview = await guardedProcess(start + 2, 'guard');
+        const preview = await guardedProcess(start + 2, 'preview');
         invariant(preview.key !== null, 'Sizing key was not created before its process');
         const key = preview.key;
         preview.fail();

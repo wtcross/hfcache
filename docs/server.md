@@ -51,9 +51,10 @@ format; The independent local receipt schema is described separately below.
 The server configuration default is `/etc/hfcache/server.toml`.
 [`packaging/server.toml`](../packaging/server.toml) is an example for this separate
 domain, not an addition to `examples/config.toml` and not an installed listener.
-Install/update ownership remains operator-controlled `root:hfcache`; the current
-server has no configuration-install API. The [accepted administration design](#web-ui-design-and-current-availability)
-adds a separately guarded helper boundary only after implementation and acceptance.
+Server-configuration ownership remains operator-controlled `root:hfcache`; no API
+installs listener/authentication settings. The separate guarded configuration API
+can install only managed archive-policy edits through the protected host helper.
+See [administration availability](#web-ui-design-and-current-availability).
 Listener/auth settings are immutable until
 restart. Configured TLS paths are declarations; the listener loads and validates
 the certificate/key before accepting connections.
@@ -326,8 +327,8 @@ Its separate immutable internal grants are `config-read`, `config-write`,
 `host-read`, `schedule-write`, `observer-stop`; ordinary bearer writer has none.
 These grants alone authorize no host effects or protected configuration install;
 the separate helper/policy boundary remains required. Protected status and fresh
-Basic job checks use the [host reader](host-administration.md); write operations
-remain separately unavailable.
+Basic job checks use the [host helper](host-administration.md); configuration
+application additionally requires its fixed guarded writer and matching preview.
 Basic never authenticates MCP. No new class, permission, subject or attribution
 field joins the stable capabilities response or old strict receipts.
 
@@ -865,3 +866,32 @@ The API does not hold admission/store locks across helper calls or Hub work.
 Queue execution rechecks full-byte base, opaque candidate identity and all six
 protected authority fields. Comments and tags invalidate base identity even when
 operational fingerprints remain unchanged. See [API contracts](api.md#managed-configuration-read-and-assessment-responses).
+
+
+### Guarded configuration application
+
+The API durably admits a keyed configuration application before sending the
+fixed helper request. It stores a canonical request digest, safe original receipt
+and transmission-intent event, never private TOML, keys or helper diagnostics.
+Duplicate keys resolve the original receipt before preparing another candidate.
+Queued execution rechecks current capability, independent policy, exact base and
+candidate, protected authority and successful complete original preview. No Hub
+preview is repeated by apply. Helper calls occur outside admission/store locks.
+
+The helper owns only labelled fixed configuration paths under `/etc/hfcache`.
+It uses the original flock inode and same-filesystem private operation directory,
+stages0640 root:hfcache, preserves original predecessor/backup inodes and confirms
+installed bytes/fingerprint before acknowledging. A durable pending marker
+precedes effects; legacy writers check it under the same flock. Cockpit previews
+release that flock over network work, capture bounded output and reacquire/recheck
+original base/candidate before returning the result.
+
+On startup unfinished application receipts become interrupted without helper
+transmission. Once ready, the original configuration outcome route permits a
+configuration-read administrator with the original subject-scoped key to inspect
+authenticated host evidence independently of that monotonic generic receipt.
+Lost replies never cause replay, rollback or automatic cleanup. Missing/ambiguous
+history or pending state blocks another apply. Private retention has fixed
+64-operation/16MiB refusal limits; original receipts are conservatively retained.
+See [application wire contract](api.md#guarded-configuration-application-and-original-outcomes)
+and [interruption handling](web-ui/configuration-and-tags.md#observe-an-interrupted-application).

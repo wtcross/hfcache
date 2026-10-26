@@ -35,10 +35,11 @@ Version is integer1, never a boolean; request_id is32 lowercase hexadecimal
 characters. Implemented `status` and `config-read` have exact empty-object body.
 Read-only `config-prepare` accepts exactly `{base_revision,edits}`, using the
 closed managed edit grammar and bounds in the [API contract](api.md#managed-configuration-form).
-Unknown keys, versions and operations refuse. The reserved future operations
-`config-apply`, `outcome-read`,
-`schedule-validate`, `schedule-change`, `observer-stop`, `journal-read` confer
-no authority and remain denied. No descriptor passing is supported.
+Fixed `config-apply` accepts only the bound application identity/managed edits
+specified below; `config-outcome` accepts only operation ID and request digest.
+Unknown keys, versions and operations refuse. Reserved `schedule-validate`,
+`schedule-change`, `observer-stop`, `journal-read` confer no authority and remain
+denied. No descriptor passing is supported.
 
 Response keys are exactly `schema_version`, `request_id`, `operation`, `outcome`,
 `body`, `reason`; identity equals the original request. Outcomes are `ok`,
@@ -640,8 +641,11 @@ Labels has exactly these role/type entries; it contains no path selector:
 | Role | Required type | Fixed objects |
 | --- | --- | --- |
 | `helper_exec` | `hfcache_host_helper_exec_t` | `/usr/local/libexec/hfcache-host-helper` |
-| `helper_code` | `hfcache_host_helper_code_t` | `/usr/local/lib/hfcache-host-helper` and its three modules/CIL |
-| `application_config` | `hfcache_host_helper_application_conf_t` | Only `/etc/hfcache/config.toml`, read-only to helper and application roles |
+| `helper_code` | `hfcache_host_helper_code_t` | `/usr/local/lib/hfcache-host-helper` and its four modules/CIL |
+| `application_config` | `hfcache_host_helper_application_conf_t` | Installed configuration, owned fixed candidate/backup and preserved original predecessor/backup leaves; helper guarded write, application read-only |
+| `configuration_directory` | `hfcache_host_helper_configuration_dir_t` | Exactly `/etc/hfcache`, helper fixed-name publication; application directory reads only |
+| `application_state` | `hfcache_host_helper_application_state_t` | Root0700 `.configuration-applications` directories and newly created root0600 private files |
+| `configuration_guard` | `hfcache_host_helper_configuration_guard_t` | Original `.configuration.lock` and fixed `.configuration.pending` |
 | `configuration` | `hfcache_host_helper_conf_t` | Fixed policy, deployment, SELinux receipt and key leaves under `/etc/hfcache`; no container access |
 | `runtime` | `hfcache_host_helper_runtime_t` | `/run/hfcache-host-helper` and its API subtree |
 | `api_credentials` | `hfcache_host_helper_secret_t` | `/etc/hfcache/credentials` |
@@ -659,7 +663,8 @@ fixed fcontext rules and actual creation proof must cover new runtime/secret
 objects. A directory label alone does not attest its children's labels. Where
 fixed inspection needs nonsecret secret-store metadata, it must have a separate
 supported label from secret bodies; otherwise that configuration refuses.
-The shared application-config type permits only read-only file access; it does
+The shared application-config type permits guarded helper writes and read-only
+application file access; it does
 not make private policy/index/key/receipt types container-readable. Mutable Hub
 state has its own helper-denied type with the application role's required
 read/write/create/rename/lock permissions. Credential/container-secret types
@@ -843,7 +848,11 @@ causes and implicit contexts, including a context suppressed by `raise ... from
 None`; inspect at most64 traceback frames per exception. Module names are fixed
 labels, never filenames. No exception text, paths, argv, PID, payload or local
 variables enter this record. Fixed observer stderr inherits the daemon journal;
-engine CLI stderr remains discarded. This operator diagnostic changes no public
+engine CLI stderr remains discarded. Unexpected per-request failures also emit
+this bounded metadata before closing the exchange; expected invalid-input/peer
+refusals and already-answered policy denials remain quiet. An interrupted apply
+must still be observed by its original handle, regardless of journal output.
+This operator diagnostic changes no public
 response or permission and does not establish a failed operation's cause by
 itself.
 
@@ -886,3 +895,47 @@ and calls neither execute nor reconciliation. After a request may have reached
 the verifier, retain exact original worker reconciliation/unknown semantics.
 Never resubmit recovered work, replace an original handle, cancel accepted work,
 or infer nonexecution from a disconnected client or failed policy observation.
+
+
+## Guarded configuration application
+
+[Decision154](adr/decision-154.md) adds fixed `config-apply` and read-only
+`config-outcome` to the same peer-authenticated helper. The fifth protected
+bootstrap input is `host_configuration.py`, indexed as
+`helper_configuration_module` from native `src/hfcache/` or rootless
+`host-helper/`. No application package import or request-selected module is
+permitted. Apply reconstructs the closed managed candidate, checks original
+preview/request identity and expected operational fingerprint independently, then
+uses the original `.configuration.lock` inode. The API supplies validated complete
+preview evidence; the helper does not read API receipt storage or acquire API
+admission/store/archive locks. No helper Hub request is introduced.
+
+The unit adds only `SupplementaryGroups=hfcache` and the fixed writable
+`/etc/hfcache` bind. The group permits root:hfcache0640 creation without CAP_CHOWN
+or per-thread credential switching. Preserve SETUID/SETGID ceiling, existing
+namespace/capability proofs, network denial and every archive/credential mask.
+Directory, state and guard types above carry only fixed configuration publication
+rights; no generic `etc_t` writes or relabel permission is granted. Root
+provisioning may narrowly assign the new guard SID to the original lock inode
+on first upgrade, recording the transition without replacing it or changing
+mode/ownership. The helper cannot perform this provisioning action. Creation
+transitions assign application-config files, private directories/files and the
+two named guards their separate types. The legacy root `unconfined_t` publisher
+has the same file/guard creation transitions under that exact labelled directory;
+this assigns types without adding an allow rule. Verify the actual Cockpit launch
+domain and inherited labels before accepting legacy coexistence. Container roles cannot traverse/read private
+state or read guards. The system manager separately has directory `mounton` on
+the configuration-directory type to establish that fixed writable bind.
+
+Private same-device root0700 `.configuration-applications/<operation-id>` holds
+HMAC-authenticated state and bounded root0600 new material. Retained original
+predecessor/backup inodes keep exact0640 root:hfcache metadata and original SID
+inside that private directory. The pending root0600 guard is authenticated
+minimal original-ID/request-digest intent, durable before even creating an
+operation workspace or its private material. Full private intent/material then
+become durable before candidate/backup changes. This closes the early crash
+window for every participating legacy writer; marker-only history is unknown
+and remains blocking. No unknown backup or candidate is adopted. History
+records, original inodes and ambiguous outcomes are never evicted or repaired by
+reads. See [private schema](schemas.md#182-private-helper-protocol-and-outcomes)
+and [operator workflow](web-ui/configuration-and-tags.md#observe-an-interrupted-application).

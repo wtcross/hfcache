@@ -113,9 +113,58 @@ def test_json_limits_preserve_finite_values_and_unicode():
         {"extra": None},
     ],
 )
-def test_request_is_closed_and_only_two_read_operations(change):
+def test_request_is_closed_and_unknown_or_unbound_operations_refuse(change):
     with pytest.raises(protocol.HostProtocolError):
         protocol.HostRequest.parse(request().wire() | change)
+
+
+def apply_body() -> dict[str, object]:
+    return {
+        "operation_id": "b" * 32,
+        "request_digest": "c" * 64,
+        "managed": {"base_revision": "d" * 64, "edits": []},
+        "candidate_revision": "e" * 64,
+        "config_fingerprint": "f" * 64,
+        "preview_operation_id": "a" * 32,
+        "required_selectors": ["model:owned/repository"],
+    }
+
+
+def test_application_and_outcome_have_distinct_closed_private_bodies():
+    body = apply_body()
+    parsed = protocol.HostRequest.parse(protocol.HostRequest("a" * 32, "config-apply", body).wire())
+    assert parsed.body == body
+    observed: dict[str, object] = {key: body[key] for key in ("operation_id", "request_digest")}
+    assert (
+        protocol.HostRequest.parse(
+            protocol.HostRequest("a" * 32, "config-outcome", observed).wire()
+        ).body
+        == observed
+    )
+    for operation, invalid in (("config-outcome", body), ("config-apply", observed)):
+        with pytest.raises(protocol.HostProtocolError, match="invalid-request"):
+            protocol.HostRequest.parse(protocol.HostRequest("a" * 32, operation, invalid).wire())
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("operation_id", "A" * 32),
+        ("request_digest", None),
+        ("managed", None),
+        ("candidate_revision", "e" * 63),
+        ("config_fingerprint", True),
+        ("preview_operation_id", "a" * 33),
+        ("required_selectors", [1]),
+        ("required_selectors", ["model:owned/repo"] * 2),
+        ("required_selectors", ["model:owned/" + str(index) for index in range(257)]),
+        ("path", "/etc/hfcache/hfcache.toml"),
+    ],
+)
+def test_application_refuses_malformed_bindings_before_dispatch(field, value):
+    body = apply_body() | {field: value}
+    with pytest.raises(protocol.HostProtocolError, match="invalid-request"):
+        protocol.HostRequest.parse(protocol.HostRequest("a" * 32, "config-apply", body).wire())
 
 
 @pytest.mark.parametrize("wire", [b"", b"\x00\x00", b"\x00\x00\x00\x00", b"\x00\x20\x00\x01"])

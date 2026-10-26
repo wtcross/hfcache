@@ -20,7 +20,12 @@ from hfcache.catalog_query_models import (
 )
 from hfcache.catalog_refresh_models import CatalogRefreshResult
 from hfcache.client_models import Acceptance, Capabilities, ClientEvents, ClientProblem, ClientRead
-from hfcache.config_models import ConfigRead, ManagedAssessment, ManagedValidation
+from hfcache.config_models import (
+    ConfigApplicationOutcome,
+    ConfigRead,
+    ManagedAssessment,
+    ManagedValidation,
+)
 from hfcache.host_models import HostStatus
 from hfcache.reporting import RunReport, VerificationReport
 
@@ -40,6 +45,7 @@ AUTHORITIES: dict[str, Any] = {
     "Capabilities": Capabilities,
     "HostStatus": HostStatus,
     "ConfigRead": ConfigRead,
+    "ConfigApplicationOutcome": ConfigApplicationOutcome,
     "ManagedValidation": ManagedValidation,
     "ManagedAssessment": ManagedAssessment,
     "PlanResultPayload": payloads.PlanPayload | ManagedAssessment,
@@ -142,6 +148,12 @@ READ_ROUTES = (
     _read("health", "/health", "health", "HealthPayload"),
     _read("host_status", "/host/status", "host status", "HostStatus", bindings=("host.status",)),
     _read("config_read", "/config", "config read", "ConfigRead"),
+    _read(
+        "config_outcome",
+        "/config/applications/{operation_id}",
+        "config outcome",
+        "ConfigApplicationOutcome",
+    ),
     _read(
         "inspection",
         "/archive/inspection",
@@ -261,27 +273,31 @@ READ_ROUTES = (
     ),
 )
 
-REQUEST_MODELS = {
-    name: "hfcache.api.command_models:" + name
-    for name in (
-        "SyncSubmission",
-        "PlanSubmission",
-        "DiagnosticsSubmission",
-        "VerificationSubmission",
-        "ValidationSubmission",
-        "CatalogRefreshSubmission",
-    )
-} | {
-    name: "hfcache.api.maintenance_models:" + name
-    for name in (
-        "PruneSubmission",
-        "PurgeSubmission",
-        "RecoverySubmission",
-        "QuarantineSubmission",
-        "RepairSubmission",
-        "InitializationSubmission",
-    )
-}
+REQUEST_MODELS = (
+    {
+        name: "hfcache.api.command_models:" + name
+        for name in (
+            "SyncSubmission",
+            "PlanSubmission",
+            "DiagnosticsSubmission",
+            "VerificationSubmission",
+            "ValidationSubmission",
+            "CatalogRefreshSubmission",
+        )
+    }
+    | {
+        name: "hfcache.api.maintenance_models:" + name
+        for name in (
+            "PruneSubmission",
+            "PurgeSubmission",
+            "RecoverySubmission",
+            "QuarantineSubmission",
+            "RepairSubmission",
+            "InitializationSubmission",
+        )
+    }
+    | {"ConfigApplicationSubmission": "hfcache.config_models:ConfigApplicationSubmission"}
+)
 
 
 def request_authorities() -> dict[str, type[BaseModel]]:
@@ -343,6 +359,14 @@ def request_authorities() -> dict[str, type[BaseModel]]:
 
 
 _JOBS = (
+    (
+        "config_apply",
+        "/config/applications",
+        "config apply",
+        "ConfigApplicationSubmission",
+        "ConfigApplicationOutcome",
+        ("ConfigApplicationOutcome",),
+    ),
     ("sync", "/syncs", "sync", "SyncSubmission", "RunResultPayload", ("RunResultPayload",)),
     ("plan", "/plans", "plan", "PlanSubmission", "PlanResultPayload", ("PlanResultPayload",)),
     (

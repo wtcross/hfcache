@@ -59,6 +59,7 @@ def common_sources(selected, profile):
         "helper_policy_module",
         "helper_protocol_module",
         "helper_peer_module",
+        "helper_configuration_module",
         "helper_selinux_policy",
     ):
         relative = policy.binding_paths(profile)[name][1]
@@ -199,6 +200,7 @@ def configure(selected, profile, monkeypatch, tmp_path, *, deployment=None):
     # Platform behavior is modeled only in these profile/unit fixtures. Dedicated
     # metadata tests and actual installed guests own SELinux acceptance.
     monkeypatch.setattr(policy, "_selinux_state", lambda budget, **_kwargs: budget.remaining())
+    capture_label = policy._Capture.label
     monkeypatch.setattr(policy._Capture, "label", lambda _self, _path, _label: None)
     permissions = dict.fromkeys(policy.ACTIONS, True)
     units = {
@@ -236,6 +238,7 @@ def configure(selected, profile, monkeypatch, tmp_path, *, deployment=None):
         units=units,
         calls=calls,
         paths=paths,
+        capture_label=capture_label,
     )
     publish(state)
     return state
@@ -344,6 +347,7 @@ def test_shared_configuration_does_not_share_private_helper_authority_label(
         lambda _self, path, label: captured.append((path, label)),
     )
     policy.inspect_authority()
+    assert (host.config.parent, "hfcache_host_helper_configuration_dir_t") in captured
     assert (host.config, "hfcache_host_helper_application_conf_t") in captured
     assert (host.config, "hfcache_host_helper_conf_t") not in captured
     for private in (host.policy, host.deployment, host.key, policy.SELINUX_INSTALLATION):
@@ -506,6 +510,7 @@ def test_all_nine_original_rootless_bindings_are_still_required(rootless, name):
         "helper_policy_module",
         "helper_protocol_module",
         "helper_peer_module",
+        "helper_configuration_module",
     ],
 )
 def test_each_trusted_bootstrap_copy_is_bound(fixture, name, request):
@@ -1163,6 +1168,103 @@ def test_actual_pinned_interpreter_may_exceed_source_leaf_limit_within_shared_bu
     assert snapshot.budget.bytes - before < policy.MAX_AUTHORITY_BYTES
 
 
+def configuration_label_capture(native, monkeypatch):
+    """Use the real config label/metadata reader with an explicit unit SID adapter."""
+    context = "system_u:object_r:" + policy.SELINUX_LABELS["application_config"] + ":s0"
+    monkeypatch.setattr(policy.os, "getxattr", lambda *_args, **_kwargs: context.encode())
+    monkeypatch.setattr(
+        policy._Capture,
+        "label",
+        lambda capture, path, kind: (
+            native.capture_label(capture, path, kind) if path == policy.CONFIGURATION else None
+        ),
+    )
+    return context
+
+
+def replace_configuration(host):
+    candidate = host.config.read_bytes() + b"\n# intentional replacement\n"
+    incoming = host.config.with_name("replacement.toml")
+    write(incoming, candidate, 0o640)
+    if os.getegid() == 0:
+        os.chown(incoming, os.geteuid(), host.index["api_principal"]["host_gid"])
+    incoming.replace(host.config)
+    return candidate, policy._identity(host.config.lstat())
+
+
+def test_installed_configuration_rechecks_real_capture_without_second_runtime_load(
+    native, monkeypatch
+):
+    context = configuration_label_capture(native, monkeypatch)
+    target = policy.PREFIX / "python" / native.index["profile_evidence"]["python_target_relative"]
+    # One real executable fits the original aggregate; two reads alone exceed it.
+    body = b"x" * (policy.MAX_BYTES // 2 + 1)
+    target.write_bytes(body)
+    native.index["profile_evidence"]["python_target_sha256"] = digest(body)
+    publish(native)
+    snapshot = policy.inspect_authority()
+    capture = snapshot._inspection.capture
+    original = {
+        name: getattr(capture, name).copy()
+        for name in ("parents", "files", "links", "absent", "labels", "mounts")
+    }
+    original_body = snapshot._inspection.config_body
+    candidate, identity = replace_configuration(native)
+    before_files, before_bytes = snapshot.budget.files, snapshot.budget.bytes
+    reads = []
+    actual_read = policy._Capture.read
+
+    def read(capture, path, **kwargs):
+        reads.append(path)
+        return actual_read(capture, path, **kwargs)
+
+    monkeypatch.setattr(policy._Capture, "read", read)
+    policy.confirm_configuration(snapshot, candidate, identity, context)
+    assert target not in reads
+    assert native.key in reads
+    assert native.policy in reads
+    assert snapshot.budget.files > before_files
+    assert before_bytes < snapshot.budget.bytes <= policy.MAX_BYTES
+    assert snapshot._inspection.config_body == original_body
+    assert all(getattr(capture, name) == value for name, value in original.items())
+    # The pre-effect snapshot still refuses its replaced original config leaf.
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)
+
+
+@pytest.mark.parametrize(
+    "mutation", ["key", "policy", "deployment", "package", "unit", "mount", "config", "context"]
+)
+def test_configuration_confirmation_preserves_original_other_authority_checks(
+    native, monkeypatch, mutation
+):
+    context = configuration_label_capture(native, monkeypatch)
+    snapshot = policy.inspect_authority()
+    candidate, identity = replace_configuration(native)
+    if mutation in {"key", "policy", "deployment"}:
+        path = getattr(native, mutation)
+        path.write_bytes(path.read_bytes() + b"drift")
+    elif mutation == "package":
+        path = native.selected / native.index["profile_evidence"]["package_root_relative"]
+        write(path / "unexpected.py", b"# drift\n")
+    elif mutation == "unit":
+        native.units[policy.UNITS[0]]["ActiveState"] = "active"
+    elif mutation == "mount":
+        native.mountinfo.write_bytes(b"1 0 0:1 / / ro - ext4 /dev/local ro\n")
+    elif mutation == "config":
+        # Even identical bytes/SID at a different inode must not replace the
+        # writer's exact observed installed descriptor identity.
+        incoming = native.config.with_name("unexpected-replacement.toml")
+        write(incoming, candidate, 0o640)
+        if os.getegid() == 0:
+            os.chown(incoming, os.geteuid(), native.index["api_principal"]["host_gid"])
+        incoming.replace(native.config)
+    else:
+        context = context.replace("system_u", "other_u")
+    with pytest.raises(policy.InspectionError):
+        policy.confirm_configuration(snapshot, candidate, identity, context)
+
+
 def native_uv_aliases(native, *, minor_selector=True):
     """Original uv0.11.32 raw aliases, backed by actual ordinary fixture bytes."""
     directory = policy.PREFIX / "python" / f"cpython-3.14.6-linux-{os.uname().machine}-gnu"
@@ -1259,3 +1361,44 @@ def test_config_read_cannot_use_a_grant_after_policy_revocation(native):
     publish(native)
     with pytest.raises(policy.InspectionError):
         policy.read_config_base(snapshot)
+
+
+@pytest.mark.parametrize("drift", [None, "base", "mode", "sid"])
+def test_real_snapshot_revalidation_allows_owned_directory_entries_but_rejects_drift(
+    native, monkeypatch, drift
+):
+    # Model only this directory's kernel SID; use the actual capture method,
+    # _Inspection.validate and all original file/parent checks against real files.
+    context = [b"system_u:object_r:hfcache_host_helper_configuration_dir_t:s0"]
+    directory = native.config.parent
+
+    def label(capture, path, expected):
+        if path == directory:
+            native.capture_label(capture, path, expected)
+
+    def getxattr(path, name, *, follow_symlinks):
+        assert path == directory
+        assert name == "security.selinux"
+        assert not follow_symlinks
+        return context[0]
+
+    monkeypatch.setattr(policy._Capture, "label", label)
+    monkeypatch.setattr(os, "getxattr", getxattr)
+    snapshot = policy.inspect_authority()
+    before = native.config.stat()
+    (directory / ".configuration-applications").mkdir(mode=0o700)
+    for name in (".configuration.pending", ".candidate.toml", ".configuration-backup.tmp"):
+        write(directory / name, b"owned transaction fixture", 0o600)
+    assert native.config.stat() == before
+    policy.revalidate(snapshot)
+    if drift == "base":
+        native.config.write_bytes(native.config.read_bytes() + b"# changed tags\n")
+    elif drift == "mode":
+        directory.chmod(0o710)
+    elif drift == "sid":
+        # A same-type SELinux User change also violates the full SID binding.
+        context[0] = context[0].replace(b"system_u:", b"unconfined_u:")
+    else:
+        return
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)

@@ -1004,7 +1004,9 @@ worker evidence permits parent interruption; a transport failure is never proof
 that the executor ended. This keeps uncertainty visible without adding a new
 durable state enum or weakening the retained-history rule.
 
-Only validated application-owned terminal success/failure history may expire
+Configuration application receipts and private outcomes are conservatively
+retained; they do not expire or get evicted to make room. For other operations,
+only validated application-owned terminal success/failure history may expire
 after the configured retention period (default 30 days). Unexpired bindings
 cannot be evicted to satisfy a count cap. Nonterminal, interrupted, malformed,
 unknown-version and ambiguous records never expire automatically. Full count or
@@ -1283,8 +1285,8 @@ number alone does not establish compatibility.
 
 ## 18. Web UI and administration design records
 
-**RepositoryCard §18.1 and private helper write outcomes remain accepted design.
-Protected status/read-only reconstruction §18.2, static manifest/bootstrap §18.3,
+**RepositoryCard §18.1 remains accepted design.
+Protected status/configuration reconstruction and outcomes §18.2, static manifest/bootstrap §18.3,
 administrator record §18.4 and managed projections §18.5 are implemented in
 unreleased source.** Current archive durable formats above remain unchanged;
 source implementation is not installed compatibility or release acceptance.
@@ -1343,7 +1345,8 @@ payload or HTML representation is exposed. See [discovery](discovery.md#reposito
 ### 18.2 Private helper protocol and outcomes
 
 Protected `status`, editable `config-read` and read-only `config-prepare` are
-implemented in unreleased source. Other opcodes remain reserved and denied. Protocol1 exact framing,
+implemented in unreleased source, together with fixed `config-apply` and
+read-only `config-outcome`. Other opcodes remain reserved and denied. Protocol1 exact framing,
 kernel credentials/original peer pidfd, protected address binding, independent
 deployment/policy schemas and inspection budgets are specified in the
 [host contract](host-administration.md). The revision key is a separately
@@ -1359,28 +1362,56 @@ over the exact base identity and reconstructed bytes. Stale bases yield the clos
 `config-conflict` denial; unknown/mixed/coercive edits refuse. Other opcodes remain
 reserved. Non-persisting preparation uses pinned capture and bracketed exact
 revalidation; persistent staging/application retains the original configuration
-lock. See [decision153](adr/decision-153.md).
+lock. See [decision153](adr/decision-153.md) and [decision154](adr/decision-154.md).
 
 Protocol schema 1 is length-prefixed UTF-8 JSON, at most 2 MiB per encoded frame,
 one request per connection, finite deadline and no descriptor passing. Request
 fields are `schema_version`, `request_id`, `operation`, strict operation-specific
 `body`; response binds the same identity and closed outcome. Operations are
-`status`, `config-read`, `config-prepare`, `config-apply`, `outcome-read`,
+`status`, `config-read`, `config-prepare`, `config-apply`, `config-outcome`,
 `schedule-validate`, `schedule-change`, `observer-stop`, `journal-read`.
 No operation accepts caller-selected path/command/unit/manager/UID/credential.
 Preparation sends managed edits and opaque base token, never a maximal raw
 base/candidate pair; helper reconstructs privately. Every encoded response is
 independently bounded even when its candidate text satisfies the 1 MiB raw limit.
 
-Private helper workspace is protected local mode `0700`; versioned outcome
-records/material are `0600`, outside the archive. Keep fixed protected candidate,
-predecessor and original configuration lock. Persist intent before effect and
-never replay after interruption. Outcomes distinguish `unchanged`, `confirmed`,
-`installed-unconfirmed`, `conflict`, `unknown`; missing history never means
-unchanged. Generic API receipts retain old strict schema/class grammar and contain
-neither executable requests nor raw configuration. Helper verifies exact preview
-against fixed receipt/result storage through bounded read-only access without
-acquiring API writer locks. No unknown outcome is evicted or cleaned to make room.
+Private configuration application schema1 state is independent of archive JSON
+and generic API receipts. Fixed same-filesystem
+`/etc/hfcache/.configuration-applications/<operation-id>/` directories are
+root0700; bounded new metadata/material files are root0600, NOFOLLOW and
+single-link. Only the retained original predecessor/previous-backup inodes keep
+exact0640 root:hfcache metadata and full SID inside the private directory.
+A separate HMAC domain with the existing protected key authenticates canonical
+state independently of current policy/deployment. Each record retains original
+binding hashes, archive/target, request/preview and exact material identities.
+No key or TOML document enters a public or generic operation record.
+
+Under the original `.configuration.lock` inode/flock, enforce64 retained
+operations/16MiB before mutation. First durably publish root0600
+`.configuration.pending` as authenticated minimal original-ID/request-digest
+intent. Only then create the operation workspace and persist full private intent
+and base/candidate, before fixed candidate/backup effects. Even a crash during
+the first private write therefore blocks legacy writers. Matching marker-only
+history reads `unknown`/`pending=true`; neither a partial marker nor a missing
+workspace permits replay, repair or cleanup.
+Phases are `intent`, `staged`, `backup_ready`, `install_intent`, `installed`,
+`confirmed`, with explicit file/parent fsync boundaries. Preserve previous known
+confirmed backups and the exchanged original predecessor with NOREPLACE moves;
+unknown candidate/backup evidence refuses. Remove only the authenticated current
+pending marker after durable confirmed state and parent fsync. No reader clears
+it or repairs, replays, rolls back or evicts uncertainty. A surviving marker
+blocks new writers even if its record is confirmed.
+
+The public schema1 `ConfigApplicationOutcome` has exactly nine required fields:
+`schema_version`, `archive_id`, `operation_id`, `request_digest`, `base_revision`,
+`candidate_revision`, `config_fingerprint`, `state`, `pending`. The three revision/
+fingerprint identities are nullable together, and mandatory for every state
+except `unknown`. Its states are `staged`, `unchanged`, `installed_unconfirmed`,
+`confirmed`, `conflict`, `unknown`; `pending` is a strict boolean. Missing history
+is `unknown`, never proof of nonexecution. Exact disk evidence can classify an
+interruption but cannot promote it to confirmed. Authenticated historical
+confirmation survives later legitimate edits. See the
+[API application contract](api.md#guarded-configuration-application-and-original-outcomes).
 
 ### 18.3 Web release manifest and UI bootstrap
 
@@ -1589,8 +1620,12 @@ command comparison excludes coordination timestamp changes while binding stable
 inode/label/principal/mode/link/size/ancestor identity. This attests no shared
 contents integrity. Recreation/reboot requires independent root provisioning;
 native-only use has no corresponding engine prerequisite.
-`application_config` covers only the shared read-only `config.toml` input;
-`configuration` retains the separate private helper authority type. The fixed
+`application_config` covers shared application-readable configuration leaves,
+including helper-owned candidate/backup and retained original predecessor/backup
+inodes; only the fixed guarded helper may write them. `configuration_directory`,
+`application_state` and `configuration_guard` bind the distinct directory, private
+state and lock/pending types. `configuration` retains the separate private helper
+authority type. The fixed
 `hub_home` and `hub_cache` roles cover writable Hub state, including the mounted
 `/var/cache/hfcache` parent and its descendants, with a distinct type that the
 helper cannot read. Immutable credential roles retain their separate type.

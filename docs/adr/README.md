@@ -221,3 +221,4 @@ status and current-contract links before applying a historical choice.
 | 151 | [Retain mapped-inode read and search only inside the verified engine USER namespace](decision-151.md) — implemented; owned native/rootless conformance |
 | 152 | [Validate the exact read-only service ACL on a protected credential](decision-152.md) — implemented; owned native/rootless conformance |
 | 153 | [Reconstruct bounded managed configuration privately from exact installed bytes](decision-153.md) — accepted design |
+| 154 | [Install exact managed configuration once and observe durable host outcomes](decision-154.md) — accepted design; implementation acceptance pending |

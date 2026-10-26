@@ -63,7 +63,8 @@ export function validateCandidate(guard: CandidateGuard, expectedClientScope?: s
     });
 }
 
-/* §6 step 3: the API sizing job holds the config flock and binds exact bytes.
+/* §6 step 3: release the common flock during Hub sizing, then reacquire it and
+ * recheck the exact original base/candidate before releasing captured output.
  * It creates an operation receipt while remaining archive-lock-free. */
 export function planCandidate(selectors: string[], guard: CandidateGuard,
     onNotice?: (notice: OperationNotice) => void, requiredScope?: Readonly<OperationScope>): Promise<Envelope> {

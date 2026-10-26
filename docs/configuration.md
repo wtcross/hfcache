@@ -571,11 +571,16 @@ Only an absent candidate means installed intent; explicit null is refused. The
 absent optional field is omitted from plan canonical bodies, preserving existing
 installed-plan key digests.
 Candidate exact text binds a new request; no raw candidate body is durable control
-state. REST cannot install policy or backups. Cockpit's CP-11 pipeline now guards
+state. Literal-candidate REST calls cannot install policy or backups; only the
+separate managed application endpoint has a fixed guarded helper write. Cockpit's
+CP-11 pipeline guards
 exact candidate/base bytes under the retained root config flock, requires valid
 compatible assessment and any required successful preview, then preserves atomic
 backup/install and confirms the exact expected installed fingerprint and document
-before and after API validation. A valid failed request Envelope does not need an
+before and after API validation. Preview releases the same flock over network
+work, captures bounded stdout and reacquires/rechecks exact base/candidate before
+returning it. Legacy write/install/remove refuse a pending helper application
+marker under that original flock. A valid failed request Envelope does not need an
 assessment payload: its original code/message remains failure evidence. Exact
 draft/base bytes and acknowledged stages stay in application memory across tab
 changes, never in browser storage. Interrupted writes/installations disable repeat
@@ -591,7 +596,7 @@ manual operator guidance. API-only clients never receive Hub authority. See
 and [decision 119](adr/decision-119.md)
 and [candidate wire contract](api.md#candidate-content-and-installed-authority).
 
-### Managed configuration reads and previews
+### Managed configuration reads, previews and application
 
 The protected configuration API exposes only the supported settings and complete
 repository entries, including tags and declared dependencies. It preserves the
@@ -615,7 +620,15 @@ Repository upsert replaces a complete entry: omitted `revision`, `enabled`,
 replacement changes only supplied supported fields. Managed previews derive the
 required newly added/enabled/retargeted enabled scope on the server; empty scope
 still gets an explicit assessment without Hub contact. Validation and preview
-never install configuration. Configuration Apply remains unimplemented. Follow
+never install configuration. A separate keyed application requires that exact
+successful complete assessment and rechecks fresh authority/base under the
+original persistent flock. It stages and atomically installs0640 root:hfcache,
+retains predecessor inodes privately and confirms exact bytes/fingerprint.
+Unknown candidate/backup/pending evidence refuses rather than being adopted.
+Private root0700 `/etc/hfcache/.configuration-applications` outcomes and the fixed
+root0600 `.configuration.pending` marker preserve interruption evidence; original
+predecessor/backup inodes keep their0640 metadata within that private directory.
+Outcome reads never replay, repair, roll back or remove uncertainty. Follow
 the [configuration and tags guide](web-ui/configuration-and-tags.md) for the eleven
 settings, exact edit forms, normalization, stale conflicts and original-handle
 recovery, and the [API contract](api.md#managed-configuration-form) for wire details.

@@ -281,7 +281,10 @@ def test_receipt_role_is_closed_without_any_host_io():
         "kernel_policy_sha256": "c" * 64,
         "labels": {**policy.SELINUX_LABELS, "archive": "nfs_t"},
     }
-    assert len(value["labels"]) == 12
+    assert len(value["labels"]) == 15
+    assert {"configuration_directory", "configuration_guard", "application_state"} <= set(
+        value["labels"]
+    )
     assert policy._selinux_installation(json.dumps(value).encode(), "a" * 64) == value
     del value["labels"]["engine_shared_memory"]
     with pytest.raises(policy.InspectionError):

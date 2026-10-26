@@ -68,7 +68,7 @@ def test_policy_has_no_optional_global_or_permissive_escape():
 
 
 def test_only_explicit_system_manager_enters_domain_and_no_child_leaves():
-    transitions = [form for form in forms() if form[0] == "typetransition"]
+    transitions = [form for form in forms() if form[0] == "typetransition" and form[3] == "process"]
     assert transitions == [
         ["typetransition", "init_t", "hfcache_host_helper_exec_t", "process", SUBJECT]
     ]
@@ -135,6 +135,7 @@ def test_payload_object_types_never_allow_helper_reads_or_mapping(target):
 def test_container_compatibility_is_closed_to_inputs_endpoint_and_hub_state():
     expected = {
         ("hfcache_host_helper_application_conf_t", "file"): {"getattr", "open", "read"},
+        ("hfcache_host_helper_configuration_dir_t", "dir"): {"getattr", "search", "open", "read"},
         ("hfcache_host_helper_hub_state_t", "dir"): {
             "getattr",
             "search",
@@ -210,6 +211,8 @@ def test_installed_unit_requires_domain_without_optional_fallback():
     assert "SELinuxContext=-" not in unit
     assert "CapabilityBoundingSet=CAP_SETUID CAP_SETGID\n" in unit
     assert "AmbientCapabilities=CAP_SETUID\n" in unit
+    assert "SupplementaryGroups=hfcache\n" in unit
+    assert "ReadWritePaths=/etc/hfcache /run/hfcache-host-helper " in unit
     assert "RestrictNamespaces=user\n" in unit
     assert "NoNewPrivileges=true\n" in unit
     assert "RestrictAddressFamilies=AF_UNIX\n" in unit
@@ -492,13 +495,13 @@ def test_namespace_owner_mediation_never_grants_process_attach():
     )
 
 
-def test_shared_application_config_is_readonly_and_private_authority_stays_private():
+def test_shared_application_config_has_narrow_writer_and_private_authority_stays_private():
     rules = access_rules("allow")
     assert (
         SUBJECT,
         "hfcache_host_helper_application_conf_t",
         "file",
-        frozenset({"getattr", "open", "read"}),
+        frozenset({"getattr", "open", "read", "write", "create", "setattr", "rename", "unlink"}),
     ) in rules
     assert not any(
         source == "container_t" and target == "hfcache_host_helper_conf_t"
@@ -604,6 +607,7 @@ def test_trusted_manager_explicit_rights_are_closed_and_do_not_expand_helper_acc
         ("hfcache_host_helper_hub_state_t", "dir", frozenset({"setattr"})),
         ("hfcache_host_helper_secret_t", "file", frozenset({"read", "open"})),
         ("hfcache_host_helper_runtime_t", "dir", frozenset({"mounton"})),
+        ("hfcache_host_helper_configuration_dir_t", "dir", frozenset({"mounton"})),
     ]
     for target in ("hfcache_host_helper_secret_t", "hfcache_host_helper_hub_state_t"):
         assert not any(source == SUBJECT and found == target for source, found, _, _ in rules)
@@ -627,6 +631,7 @@ def test_manager_mask_mounton_never_becomes_helper_mount_or_payload_authority():
             "hfcache_host_helper_hub_state_t",
             "hfcache_archive_t",
             "hfcache_host_helper_runtime_t",
+            "hfcache_host_helper_configuration_dir_t",
         )
     }
     assert not any(
@@ -696,3 +701,65 @@ def test_fixed_manager_authorization_is_status_only():
     }
     control = {"start", "stop", "reload", "enable", "disable", "kill", "load"}
     assert all(not (permissions & control) for _source, _target, _cls, permissions in metadata)
+
+
+def test_configuration_creation_transitions_and_writes_are_closed():
+    directory = "hfcache_host_helper_configuration_dir_t"
+    state = "hfcache_host_helper_application_state_t"
+    guard = "hfcache_host_helper_configuration_guard_t"
+    application = "hfcache_host_helper_application_conf_t"
+    transitions = [
+        form[1:] for form in forms() if form[0] == "typetransition" and form[3] != "process"
+    ]
+    assert transitions == [
+        [SUBJECT, directory, "file", application],
+        [SUBJECT, directory, "file", '".configuration.lock"', guard],
+        [SUBJECT, directory, "file", '".configuration.pending"', guard],
+        ["unconfined_t", directory, "file", application],
+        ["unconfined_t", directory, "file", '".configuration.lock"', guard],
+        ["unconfined_t", directory, "file", '".configuration.pending"', guard],
+        [SUBJECT, directory, "dir", state],
+        [SUBJECT, state, "dir", state],
+        [SUBJECT, state, "file", state],
+    ]
+    rules = access_rules("allow")
+    assert (
+        SUBJECT,
+        directory,
+        "dir",
+        frozenset({"getattr", "search", "open", "read", "write", "add_name", "remove_name"}),
+    ) in rules
+    assert (
+        SUBJECT,
+        guard,
+        "file",
+        frozenset({"getattr", "open", "read", "write", "create", "setattr", "unlink", "lock"}),
+    ) in rules
+    assert not any(
+        source == SUBJECT
+        and target == "etc_t"
+        and rights & {"write", "create", "add_name", "remove_name", "setattr"}
+        for source, target, _, rights in rules
+    )
+    assert not any(
+        source == SUBJECT and rights & {"relabelfrom", "relabelto"}
+        for source, _, _, rights in rules
+    )
+    for target in (state, guard):
+        assert not any(source == "container_t" and found == target for source, found, _, _ in rules)
+        assert (
+            "container_t",
+            target,
+            "file",
+            frozenset({"open", "read", "write", "map", "execute"}),
+        ) in access_rules("neverallow")
+
+
+def test_private_outcome_tmpfiles_never_create_pending_or_replace_lock():
+    source = (ROOT / "packaging/tmpfiles.d/hfcache-host-helper.conf").read_text()
+    assert "d /etc/hfcache/.configuration-applications 0700 root root -" in source
+    assert not any(
+        ".configuration.pending" in line or ".configuration.lock" in line
+        for line in source.splitlines()
+        if line and not line.startswith("#")
+    )

@@ -45,7 +45,11 @@ from hfcache.client_models import (
     ClientRead,
 )
 from hfcache.config import ApplicationConfig, RepositoryConfig
-from hfcache.config_models import ManagedEditRequest
+from hfcache.config_models import (
+    ConfigApplicationSubmission,
+    ConfigPreviewReference,
+    ManagedEditRequest,
+)
 from hfcache.errors import Problem
 from hfcache.hashing import ObjectIdentity
 from hfcache.identity import CommitSha, PublicationId, RunId, TransactionId
@@ -103,6 +107,10 @@ def request_samples() -> dict[str, dict[str, Any]]:
         "ManagedPlanRequest": {
             "managed": managed_request().model_dump(mode="json", exclude_none=True)
         },
+        "ConfigApplicationSubmission": {
+            "managed": managed_request().model_dump(mode="json", exclude_none=True),
+            "preview": {"operation_id": examples.RUN, "key": "owned-preview"},
+        },
         "ReadOnlyDiagnostics": {"read_only": True},
         "ProbeDiagnostics": {"read_only": False},
         "NewVerification": {"mode": "new", "run_id": examples.RUN},
@@ -112,7 +120,7 @@ def request_samples() -> dict[str, dict[str, Any]]:
     result = {}
     for name, model in request_authorities().items():
         parsed = model.model_validate(bodies[name])
-        if not isinstance(parsed, CommandModel):
+        if not isinstance(parsed, (CommandModel, ConfigApplicationSubmission)):
             message = "request authority is not an original command model"
             raise TypeError(message)
         body = parsed.canonical_body()
@@ -492,6 +500,7 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
         examples.configuration_read,
         examples.managed_validation,
         examples.managed_assessment,
+        examples.configuration_application_outcome,
     ):
         model(factory())
     model(PrunedRevision(commit_sha=examples.OTHER_SHA, logical_bytes=0, publication_generation=1))
@@ -602,6 +611,7 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
                 request_model(item)
 
     request_model(managed_request())
+    request_model(ConfigPreviewReference(operation_id=examples.RUN, key="owned-preview"))
     add("PlanResultPayload", examples.managed_assessment().model_dump(mode="json"))
     for name, report in (
         ("RunResultPayload", examples.run_report()),
@@ -662,6 +672,8 @@ def covered_route_modes() -> set[tuple[str, str, str]]:
         "health",
         "host_status",
         "config_read",
+        "config_outcome",
+        "config_apply",
         "inspection",
         "status",
         "repositories",

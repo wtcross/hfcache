@@ -1,6 +1,6 @@
-/** Generated from source digest bf6497a458d0ba1db7de4ba542477c17e2b306a95c19b67203e44443f55e0ecc. Run generate:wire; do not edit. */
+/** Generated from source digest ee8f77356b97ec5745a01762aa9295e1110fa4d98b4708d8ef399595bfe18ecb. Run generate:wire; do not edit. */
 export const WIRE_SOURCE_DIGEST =
-    "bf6497a458d0ba1db7de4ba542477c17e2b306a95c19b67203e44443f55e0ecc";
+    "ee8f77356b97ec5745a01762aa9295e1110fa4d98b4708d8ef399595bfe18ecb";
 import {
     wireObject,
     wireRequestObject,
@@ -195,6 +195,23 @@ export type ClientRead = {
     readonly ["config_fingerprint"]: string | null;
     readonly ["envelope"]: Envelope;
     readonly ["next_cursor"]: string | null;
+};
+export type ConfigApplicationOutcome = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["operation_id"]: string;
+    readonly ["request_digest"]: string;
+    readonly ["base_revision"]: string | null;
+    readonly ["candidate_revision"]: string | null;
+    readonly ["config_fingerprint"]: string | null;
+    readonly ["state"]:
+        | "staged"
+        | "unchanged"
+        | "installed_unconfirmed"
+        | "confirmed"
+        | "conflict"
+        | "unknown";
+    readonly ["pending"]: boolean;
 };
 export type ConfigRead = {
     readonly ["schema_version"]: 1;
@@ -861,6 +878,14 @@ export type RequestCatalogRefreshSubmission = {
     readonly ["revision_scope"]?: "current" | "retained";
     readonly ["tags"]?: boolean;
     readonly ["technical"]?: boolean;
+};
+export type RequestConfigApplicationSubmission = {
+    readonly ["managed"]: RequestManagedEditRequest;
+    readonly ["preview"]: RequestConfigPreviewReference;
+};
+export type RequestConfigPreviewReference = {
+    readonly ["operation_id"]: string;
+    readonly ["key"]: string;
 };
 export type RequestDiagnosticsSubmission = { readonly ["read_only"]: boolean };
 export type RequestFullVerification = {
@@ -2156,6 +2181,91 @@ export function decodeClientRead(value: unknown): ClientRead {
             "hfcache.client_models.ClientRead.required_envelope_version",
             "hfcache.client_models.ClientRead.coherent_envelope",
         ],
+    );
+}
+export function decodeConfigApplicationOutcome(
+    value: unknown,
+): ConfigApplicationOutcome {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "operation_id",
+                "request_digest",
+                "base_revision",
+                "candidate_revision",
+                "config_fingerprint",
+                "state",
+                "pending",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.config_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["operation_id"]: checked(
+                    wireString(object["operation_id"], null, null, null),
+                    ["hfcache.identity.parse_run_id"],
+                ),
+                ["request_digest"]: checked(
+                    wireString(object["request_digest"], null, null, null),
+                    ["hfcache.config_models._revision"],
+                ),
+                ["base_revision"]: wireUnion<string | null>(
+                    object["base_revision"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, null, null, null), [
+                                "hfcache.config_models._revision",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["candidate_revision"]: wireUnion<string | null>(
+                    object["candidate_revision"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, null, null, null), [
+                                "hfcache.config_models._revision",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["config_fingerprint"]: wireUnion<string | null>(
+                    object["config_fingerprint"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, null, null, null), [
+                                "hfcache.config_models._revision",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["state"]: wireUnion<
+                    | "staged"
+                    | "unchanged"
+                    | "installed_unconfirmed"
+                    | "confirmed"
+                    | "conflict"
+                    | "unknown"
+                >(object["state"], [
+                    (member: unknown) => wireLiteral(member, "staged"),
+                    (member: unknown) => wireLiteral(member, "unchanged"),
+                    (member: unknown) =>
+                        wireLiteral(member, "installed_unconfirmed"),
+                    (member: unknown) => wireLiteral(member, "confirmed"),
+                    (member: unknown) => wireLiteral(member, "conflict"),
+                    (member: unknown) => wireLiteral(member, "unknown"),
+                ]),
+                ["pending"]: wireBoolean(object["pending"]),
+            });
+        })(value),
+        ["hfcache.config_models.ConfigApplicationOutcome.coherent_identity"],
     );
 }
 export function decodeConfigRead(value: unknown): ConfigRead {
@@ -5401,6 +5511,33 @@ export function decodeRequestCatalogRefreshSubmission(
         ["hfcache.api.command_models.CatalogRefreshSubmission.canonical"],
     );
 }
+export function decodeRequestConfigApplicationSubmission(
+    value: unknown,
+): RequestConfigApplicationSubmission {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["managed", "preview"]);
+        return Object.freeze({
+            ["managed"]: decodeRequestManagedEditRequest(object["managed"]),
+            ["preview"]: decodeRequestConfigPreviewReference(object["preview"]),
+        });
+    })(value);
+}
+export function decodeRequestConfigPreviewReference(
+    value: unknown,
+): RequestConfigPreviewReference {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["operation_id", "key"]);
+        return Object.freeze({
+            ["operation_id"]: checked(
+                wireString(object["operation_id"], null, null, null),
+                ["hfcache.identity.parse_run_id"],
+            ),
+            ["key"]: checked(wireString(object["key"], null, null, null), [
+                "hfcache.config_models._preview_key",
+            ]),
+        });
+    })(value);
+}
 export function decodeRequestDiagnosticsSubmission(
     value: unknown,
 ): RequestDiagnosticsSubmission {
@@ -7878,6 +8015,8 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeClientProblem(value);
         case "ClientRead":
             return decodeClientRead(value);
+        case "ConfigApplicationOutcome":
+            return decodeConfigApplicationOutcome(value);
         case "ConfigRead":
             return decodeConfigRead(value);
         case "DependencyObservation":
@@ -8028,6 +8167,10 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeRequestCandidatePayload(value);
         case "RequestCatalogRefreshSubmission":
             return decodeRequestCatalogRefreshSubmission(value);
+        case "RequestConfigApplicationSubmission":
+            return decodeRequestConfigApplicationSubmission(value);
+        case "RequestConfigPreviewReference":
+            return decodeRequestConfigPreviewReference(value);
         case "RequestDiagnosticsSubmission":
             return decodeRequestDiagnosticsSubmission(value);
         case "RequestFullVerification":
@@ -8295,6 +8438,34 @@ export const routeContracts = {
             })(value),
         repeated: [],
         decodeSuccess: decodeConfigRead,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: wireNull,
+    },
+    config_outcome_default: {
+        method: "GET",
+        path: "/api/v1/config/applications/{operation_id}",
+        commands: ["config outcome"],
+        bindingIds: [],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (value: unknown): { readonly ["operation_id"]: string } =>
+            ((input: unknown) => {
+                const object = wireObject(input, ["operation_id"]);
+                return Object.freeze({
+                    ["operation_id"]: checked(
+                        wireString(object["operation_id"], 1, 256, null),
+                        ["hfcache.identity.parse_run_id"],
+                    ),
+                });
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeConfigApplicationOutcome,
         decodeFailure: (value: unknown): EmptyPayload =>
             wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
         decodeBody: wireNull,
@@ -9604,6 +9775,31 @@ export const routeContracts = {
             wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
         decodeBody: wireNull,
     },
+    config_apply_default: {
+        method: "POST",
+        path: "/api/v1/config/applications",
+        commands: ["config apply"],
+        bindingIds: [],
+        responseKind: "acceptance",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeAcceptance,
+        decodeFailure: (_value: unknown): never => {
+            void _value;
+            throw new WireError("schema");
+        },
+        decodeBody: decodeRequestConfigApplicationSubmission,
+    },
     sync_default: {
         method: "POST",
         path: "/api/v1/syncs",
@@ -10177,6 +10373,7 @@ export const routeContracts = {
     },
 } as const;
 export type OperationSuccess =
+    | ConfigApplicationOutcome
     | RunResultPayload
     | PlanResultPayload
     | DiagnosticsPayload
@@ -10190,8 +10387,9 @@ export type OperationSuccess =
     | InitializationPayload
     | CatalogRefreshResult;
 export type OperationFailure =
-    | RunResultPayload
+    | ConfigApplicationOutcome
     | EmptyPayload
+    | RunResultPayload
     | PlanResultPayload
     | DiagnosticsPayload
     | VerificationResultPayload
@@ -10218,6 +10416,17 @@ export function decodeOriginalOperationPayload(
     failed: boolean,
     value: unknown,
 ): OperationSuccess | OperationFailure {
+    if (
+        origin === "/api/v1/config/applications" &&
+        ["config apply"].includes(command)
+    )
+        return failed
+            ? ((value: unknown): ConfigApplicationOutcome | EmptyPayload =>
+                  wireUnion<ConfigApplicationOutcome | EmptyPayload>(value, [
+                      decodeConfigApplicationOutcome,
+                      decodeEmptyPayload,
+                  ]))(value)
+            : decodeConfigApplicationOutcome(value);
     if (origin === "/api/v1/syncs" && ["sync"].includes(command))
         return failed
             ? ((value: unknown): RunResultPayload | EmptyPayload =>
@@ -10495,6 +10704,32 @@ export const routeDefinitions = [
         request_body: null,
         response_kind: "read",
         success: "ConfigRead",
+    },
+    {
+        binding_ids: [],
+        commands: ["config outcome"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "config_outcome",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/config/applications/{operation_id}",
+        path_parameters: [
+            {
+                name: "operation_id",
+                node: {
+                    kind: "string",
+                    max_codepoints: 256,
+                    min_codepoints: 1,
+                    pattern: null,
+                    semantic_ids: ["hfcache.identity.parse_run_id"],
+                },
+            },
+        ],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "read",
+        success: "ConfigApplicationOutcome",
     },
     {
         binding_ids: [],
@@ -11690,6 +11925,21 @@ export const routeDefinitions = [
     },
     {
         binding_ids: [],
+        commands: ["config apply"],
+        cursor: "none",
+        failure: [],
+        id: "config_apply",
+        method: "POST",
+        mode: "default",
+        path: "/api/v1/config/applications",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: "RequestConfigApplicationSubmission",
+        response_kind: "acceptance",
+        success: "Acceptance",
+    },
+    {
+        binding_ids: [],
         commands: ["sync"],
         cursor: "none",
         failure: [],
@@ -12035,6 +12285,13 @@ export const routeDefinitions = [
     },
 ] as const;
 export const operationResultDefinitions = [
+    {
+        binding_ids: ["operation.result"],
+        commands: ["config apply"],
+        failure: ["ConfigApplicationOutcome", "EmptyPayload"],
+        origin_path: "/api/v1/config/applications",
+        success: "ConfigApplicationOutcome",
+    },
     {
         binding_ids: ["operation.result"],
         commands: ["sync"],

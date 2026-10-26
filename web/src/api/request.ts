@@ -129,7 +129,11 @@ export function buildRequestInput(route: string, value: unknown): unknown {
     const raw = parseWireJson(text);
     if (!isRecord(raw)) throw new WireError("schema");
     if (
-        ["/api/v1/plans", "/api/v1/config/validate"].includes(route) &&
+        [
+            "/api/v1/plans",
+            "/api/v1/config/validate",
+            "/api/v1/config/applications",
+        ].includes(route) &&
         isRecord(raw.managed) &&
         Array.isArray(raw.managed.edits)
     ) {

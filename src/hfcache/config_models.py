@@ -1,7 +1,7 @@
 """Strict managed configuration projections and edits (CONFIG-01 through05, decision153)."""
 
 import re
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
@@ -11,7 +11,7 @@ from hfcache.config import (  # noqa: TC001 - Pydantic resolves fields at runtim
 )
 from hfcache.errors import ConfigurationError
 from hfcache.identity import parse_selector
-from hfcache.models import ArchiveIdField, as_tuple
+from hfcache.models import ArchiveIdField, RunIdField, as_tuple
 from hfcache.wire_models import PlanPayload  # noqa: TC001 - Pydantic resolves nested DTOs
 
 MAXIMUM_EDITS = 256
@@ -363,5 +363,59 @@ class ManagedAssessment(ConfigModel):
             for row in self.sizing.repositories
         ):
             message = "complete managed sizing requires enabled and fully sized repositories"
+            raise ValueError(message)
+        return self
+
+
+def _preview_key(value: object) -> str:
+    if not isinstance(value, str) or re.fullmatch(r"[A-Za-z0-9._~+-]{1,128}", value) is None:
+        message = "preview key must use the bounded idempotency-key grammar"
+        raise ValueError(message)
+    return value
+
+
+class ConfigPreviewReference(ConfigModel):
+    operation_id: RunIdField
+    key: Annotated[str, BeforeValidator(_preview_key)]
+
+
+class ConfigApplicationSubmission(ConfigModel):
+    managed: ManagedEditRequest
+    preview: ConfigPreviewReference
+
+    def canonical_body(self) -> dict[str, Any]:
+        return {
+            "managed": self.managed.model_dump(mode="json", exclude_none=True),
+            "preview": self.preview.model_dump(mode="json"),
+        }
+
+
+class ConfigApplicationOutcome(ConfigModel):
+    """Authenticated host observation, independent of an API receipt's state."""
+
+    schema_version: SchemaOne
+    archive_id: ArchiveIdField
+    operation_id: RunIdField
+    request_digest: OpaqueRevision
+    base_revision: OpaqueRevision | None
+    candidate_revision: OpaqueRevision | None
+    config_fingerprint: OpaqueRevision | None
+    state: Literal[
+        "staged", "unchanged", "installed_unconfirmed", "confirmed", "conflict", "unknown"
+    ]
+    pending: bool
+
+    @model_validator(mode="after")
+    def coherent_identity(self) -> Self:
+        known = tuple(
+            value is not None
+            for value in (
+                self.base_revision,
+                self.candidate_revision,
+                self.config_fingerprint,
+            )
+        )
+        if (any(known) and not all(known)) or (self.state != "unknown" and not all(known)):
+            message = "host outcome requires a complete original configuration identity"
             raise ValueError(message)
         return self

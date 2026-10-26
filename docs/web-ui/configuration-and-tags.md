@@ -1,10 +1,11 @@
 # Configuration and tags
 
 The configuration API in unreleased source can read the installed editable
-settings, validate managed edits and prepare a sizing preview. These procedures
+settings, validate managed edits, prepare a sizing preview and apply the exact
+assessed candidate through the protected helper. These procedures
 use the API; they do not imply that a configuration editor is available in the
-web interface. Configuration Apply is not implemented. Validation and preview
-never install a file, change tags on disk or start synchronization.
+web interface. Validation and preview never install a file, change tags on disk
+or start synchronization; application is a separate guarded operation.
 
 Use the matching installed API/helper release and the separately provisioned
 Basic administrator over verified HTTPS. Configuration administration requires
@@ -208,7 +209,8 @@ Managed reconstruction preserves protected **values**, but canonicalizes the
 whole TOML document into a fixed table and repository-array layout with a final
 newline. Comments, spacing and original formatting are discarded in the private
 candidate, including for an otherwise unchanged assessment. The candidate stays
-server-side, is limited to 1 MiB of UTF-8, and is never installed by these calls.
+server-side, is limited to 1 MiB of UTF-8, and is installed only by a separate
+application of the exact successful assessment.
 The editable projection is therefore unsuitable as a byte-for-byte backup.
 
 If the preview acknowledgement or connection is lost, preserve its original key
@@ -219,12 +221,76 @@ identity. Never submit a replacement preview to discover whether the first ran;
 a missing result or expired receipt does not prove nonexecution. See
 [reconnect after lost acknowledgement](../api.md#reconnect-after-lost-acknowledgement).
 
-## Apply and protected changes
+## Apply the assessed candidate
 
-There is no configuration Apply endpoint in the current implementation. A valid
-candidate, complete preview or enabled permission does not install it. Retain
-the original assessment for observation; it is evidence, not transferable
-authorization for a later write.
+1. Retain the exact managed body and original successful complete preview's
+   operation ID and key. This is required even when sizing scope is empty.
+2. Save a **new application** `Idempotency-Key`. Send
+   `POST /api/v1/config/applications` with the usual verified HTTPS, JSON and
+   Basic request guards. Its exact body is:
+
+   ```json
+   {
+     "managed": {"base_revision": "<original base revision>", "edits": []},
+     "preview": {"operation_id": "<original preview operation ID>", "key": "<original preview key>"}
+   }
+   ```
+
+   Substitute your actual original managed edits and preview identity; the empty
+   list illustrates the unchanged-intent form only. Never mix identities from
+   different drafts. The preview grants no authority: current configuration-write,
+   independent host policy, protected fields and exact base/candidate/scope are
+   checked again. Nonempty scope also requires Hub permission. Apply does not
+   perform another preview or contact the Hub.
+3. Retain the returned original application receipt/links. HTTP202 proves durable
+   admission only. Observe that operation and its protected configuration outcome;
+   successful application requires exact installed bytes/fingerprint confirmation,
+   not only valid TOML, a complete preview or a successful POST acknowledgement.
+
+A matching duplicate application key returns the original receipt without another
+effect. Do not use duplicate POSTs to repair an outcome or submit a new key after
+a lost response. The API and helper never replay an existing operation ID.
+
+The helper holds the original configuration flock, stages0640 root:hfcache,
+durably retains the predecessor, atomically exchanges the installed file and
+confirms exact bytes/fingerprint. It preserves authenticated old backups in
+root0700 per-operation directories. Unknown candidates/backups refuse; a merely
+regular legacy backup is not proof that it is safe to overwrite. New private
+files are root0600; retained original predecessor/backup inodes keep their exact
+0640 metadata inside that private directory. No archive content or credential is
+written by application.
+
+## Observe an interrupted application
+
+Use `GET /api/v1/config/applications/<original application operation ID>` with
+configuration-read capability and the **original application key** in
+`Idempotency-Key`, under the original administrator identity. This reads protected
+host evidence without starting another application. If you lost the ID, recover
+the original receipt through the existing operation-key lookup first.
+
+The `config outcome` result reports `state`, `pending`, original identities and
+opaque revisions/fingerprint. Only `confirmed` with `pending=false` establishes
+a completed application. `staged`, `unchanged`, `installed_unconfirmed`,
+`conflict` or `unknown` are explicit observations, not instructions to retry.
+Missing history is uncertainty. An interrupted generic operation stays
+interrupted even when authenticated host history confirms installation; a later
+legitimate edit does not erase that historical confirmation.
+
+A pending marker is persisted before the first private staging write, so a crash
+there also blocks Cockpit and other participating guarded writers. A marker with
+no complete private outcome remains `unknown` with `pending=true`; it is not
+permission to retry or remove it. Pending state, unresolved
+history or corrupt/missing evidence blocks new applications, including when a
+confirmed record's marker survived a crash. Preserve original receipts/keys and
+all candidate, backup, marker and private outcome evidence for a privileged
+operator. Do not delete the marker, overwrite a backup, replay, roll back or
+clean history to make room. Reads perform no repair. The fixed64-operation/16MiB
+private limit refuses new work instead of deleting originals. Operator-reviewed
+reconciliation uses the same persistent guard; there is no browser cleanup or
+rollback endpoint. See [recovery](../recovery.md) and the
+[application contract](../api.md#guarded-configuration-application-and-original-outcomes).
+
+## Protected changes
 
 Changing archive root/UUID or Hub/credential authority requires a privileged
 operator's configuration and deployment procedure. Full literal candidates can

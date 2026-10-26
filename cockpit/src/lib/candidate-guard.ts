@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later
- * Exact candidate/base bytes stay under one privileged config lock (ADR122).
+ * Exact candidate/base bytes share one privileged config lock (ADR122/154).
  * Browser content is bounded stdin data; only the CLI adapter supplies argv.
  */
 
@@ -73,6 +73,7 @@ export LC_ALL=C
 action=$1 installed=$2 candidate=$3 backup=$4 lock=$5 owner=$6 group=$7
 shift 7
 directory=\${installed%/*}
+pending="$directory/.configuration.pending"
 fail() {
     if [[ "$action" == inspect ]]; then
         printf '{"candidate":"unknown","installedBase":"unknown","installedCandidate":"unknown","backupBase":"unknown"}\\n'
@@ -151,6 +152,8 @@ else
 fi
 [[ $(stat -Lc '%d:%i' -- /proc/self/fd/9) == "$before" ]] || fail
 [[ $(stat -c '%d:%i' -- "$lock") == "$before" ]] || fail
+no_pending() { [[ ! -e "$pending" && ! -L "$pending" ]] || fail; }
+case "$action" in write|install|remove) no_pending ;; esac
 if [[ "$action" == read ]]; then
     regular "$installed"
     size=$(stat -c '%s' -- "$installed")
@@ -216,13 +219,18 @@ printf '%s' "$original" > "$expected_base"
 regular "$installed"
 cmp -s -- "$installed" "$expected_base" || fail
 case "$action" in
-confirm)
+confirm|preview)
+    if [[ "$action" == preview ]]; then
+        regular "$candidate"
+        cmp -s -- "$candidate" "$expected_candidate" || fail
+        flock --unlock 9
+    fi
     confirmation=$(mktemp "$directory/.confirmation.XXXXXX")
     # PID1 may write a pipe, never this root-owned configuration-directory file.
     # Bound only the local collector. Capture both statuses before any other
     # command so a collector refusal cannot release plausible partial output or
     # replace the launcher's original status when collection succeeded.
-    if "$@" | (ulimit -f 4096 || exit "$?"; exec cat > "$confirmation"); then
+    if "$@" 9<&- | (ulimit -f 4096 || exit "$?"; exec cat 9<&- > "$confirmation"); then
         status=0
     else
         statuses=("\${PIPESTATUS[@]}")
@@ -231,6 +239,16 @@ confirm)
     fi
     case "$status" in 0|10|20|30|40|50) ;; *) exit "$status" ;; esac
     (( $(stat -c '%s' -- "$confirmation") <= 4194304 )) || fail
+    if [[ "$action" == preview ]]; then
+        flock --exclusive 9
+        [[ -f "$lock" && ! -L "$lock" ]] || fail
+        [[ $(stat -c '%u:%a:%h' -- "$lock") == "$owner:600:1" ]] || fail
+        [[ $(stat -Lc '%d:%i' -- /proc/self/fd/9) == "$before" ]] || fail
+        [[ $(stat -c '%d:%i' -- "$lock") == "$before" ]] || fail
+        no_pending
+        regular "$candidate"
+        cmp -s -- "$candidate" "$expected_candidate" || fail
+    fi
     regular "$installed"
     cmp -s -- "$installed" "$expected_base" || fail
     cat -- "$confirmation"
@@ -283,7 +301,7 @@ function encodeFrame(value: string): string {
 }
 
 function invocation(
-    action: 'read' | 'inspect' | 'write' | 'guard' | 'install' | 'remove' | 'confirm',
+    action: 'read' | 'inspect' | 'write' | 'guard' | 'install' | 'remove' | 'confirm' | 'preview',
     guard: CandidateGuard | null,
     argv: string[],
     fixture?: ConfigurationFixture,
@@ -326,11 +344,11 @@ export function inspectCandidateInvocation(
 }
 
 export function guardCandidateInvocation(
-    argv: string[], guard: CandidateGuard, fixture?: ConfigurationFixture,
+    argv: string[], guard: CandidateGuard, fixture?: ConfigurationFixture, preview = false,
 ): GuardedInvocation {
     if (argv[0] !== 'systemd-run')
         throw new Error('Candidate validation requires the installed CLI adapter');
-    return invocation('guard', guard, argv, fixture);
+    return invocation(preview ? 'preview' : 'guard', guard, argv, fixture);
 }
 
 export function candidateMutationInvocation(

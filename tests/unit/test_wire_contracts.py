@@ -148,7 +148,11 @@ def test_every_actual_json_route_and_original_job_result_is_registered():
             if isinstance(node, ast.BinOp):
                 return spelling(node.left) + spelling(node.right)
             assert isinstance(node, ast.Name)
-            return {"PREFIX": prefix, "ROUTE": prefix + "/catalog/refreshes"}[node.id]
+            return {
+                "PREFIX": prefix,
+                "ROUTE": prefix + "/catalog/refreshes",
+                "_APPLICATIONS": "/api/v1/config/applications",
+            }[node.id]
 
         for node in ast.walk(tree):
             if (

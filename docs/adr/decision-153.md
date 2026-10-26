@@ -87,3 +87,10 @@ guarded application obligation. No permission, dependency, host effect opcode,
 archive format or automatic replay is added here. Required unit, actual Unix/API,
 same-Caddy installed functional and human-documentation evidence accompanies
 implementation; this design alone establishes no acceptance.
+
+## Guarded application amendment (2026-10-25)
+
+[Decision154](decision-154.md) defines the narrow configuration writer, shared
+legacy guard, durable private outcomes and original-handle read-only observation.
+It supersedes earlier assumptions of a wholly read-only helper for this fixed
+operation; all unrelated authority and original reasoning remain.

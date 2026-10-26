@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-007 (this commit); WEB-008 is next |
+| Latest completed package | WEB-008 (this commit); WEB-009 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3703,3 +3703,5 @@ joins; original inputs, operation handles, mounts and lifecycle closure pass.
 Task006 records exact current artifacts and retained failed attempts.
 AUTH-08/HOST-01–03 are complete. The selector advances to WEB-007. No runtime
 dependency or production/NAS/live Cockpit/rollout/publication action follows.
+
+2026-10-25: WEB-008 completes guarded atomic configuration application and original-operation read-only recovery. Strict gate5, native/rootless normal workflows and representative process-crash, legacy, stale-tag, queued-policy and genuine-quota acceptance pass; original failed cohorts remain retained. CONFIG06–11 complete. Continue WEB-009; production rollout and final plan-wide acceptance remain separate.

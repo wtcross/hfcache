@@ -68,11 +68,12 @@ WRITER_POSTS = (
 )
 # A REST reader/writer has no internal Basic administrative capability. Keep
 # this inventory separate so route-complete role tests cannot silently promote it.
-ADMIN_READ_PATHS = ("/host/status", "/config")
+ADMIN_READ_PATHS = ("/host/status", "/config", "/config/applications/{operation_id}")
+ADMIN_POST_PATHS = ("/config/applications",)
 ROUTES = (
     tuple(("GET", PREFIX + path) for path in READ_PATHS)
     + tuple(("GET", PREFIX + path) for path in ADMIN_READ_PATHS)
-    + tuple(("POST", PREFIX + path) for path in (*READER_POSTS, *WRITER_POSTS))
+    + tuple(("POST", PREFIX + path) for path in (*READER_POSTS, *WRITER_POSTS, *ADMIN_POST_PATHS))
 )
 
 
@@ -176,7 +177,7 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
     if not docs_enabled:
         expected.remove(("GET", PREFIX + "/docs"))
     assert actual == expected
-    assert len(actual) == (41 if docs_enabled else 40)
+    assert len(actual) == (43 if docs_enabled else 42)
     documented = {
         (row[0].split(" ", 1)[0], PREFIX + row[0].split(" ", 1)[1])
         for row in matrix_rows()
@@ -193,6 +194,7 @@ def test_documented_post_routes_use_the_strict_named_request_models(configured):
     assert CHECKER["audience_errors"](json.dumps(schema)) == []
     models = {
         "/config/validate": "ValidationSubmission",
+        "/config/applications": "ConfigApplicationSubmission",
         "/plans": "PlanSubmission",
         "/diagnostics": "DiagnosticsSubmission",
         "/syncs": "SyncSubmission",
@@ -209,7 +211,7 @@ def test_documented_post_routes_use_the_strict_named_request_models(configured):
         "/repairs": "RepairSubmission",
         "/archive/initializations": "InitializationSubmission",
     }
-    assert set(models) == set(READER_POSTS) | set(WRITER_POSTS)
+    assert set(models) == set(READER_POSTS) | set(WRITER_POSTS) | set(ADMIN_POST_PATHS)
     for path, model in models.items():
         body = schema["paths"][PREFIX + path]["post"]["requestBody"]
         assert (
@@ -273,7 +275,9 @@ def test_reader_writer_roles_cover_all_routes_without_admission_or_hub_access(co
                         extra=((b"idempotency-key", b"role-audit"),),
                     )
                     if method == "POST":
-                        refused = token == READER and path.removeprefix(PREFIX) in WRITER_POSTS
+                        refused = path.removeprefix(PREFIX) in ADMIN_POST_PATHS or (
+                            token == READER and path.removeprefix(PREFIX) in WRITER_POSTS
+                        )
                         assert status == (403 if refused else 422), (token, path, payload)
                         assert received == (0 if refused else 1), (token, path)
                     elif path.removeprefix(PREFIX) in ADMIN_READ_PATHS:

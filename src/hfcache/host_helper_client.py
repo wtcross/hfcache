@@ -56,9 +56,9 @@ _SOCKET_MODE = 0o660
 _DIRECTORY_MODE = 0o750
 
 
-def _managed_body(body: dict[str, object]) -> dict[str, object]:
+def _request_body(operation: str, body: dict[str, object]) -> dict[str, object]:
     """Freeze bounded caller data before reserving or queueing a worker."""
-    request = HostRequest("0" * 32, "config-prepare", body)
+    request = HostRequest("0" * 32, operation, body)
     return HostRequest.parse(decode_object(encode_object(request.wire()))).body
 
 
@@ -449,8 +449,17 @@ class HostHelperClient:
         return self._execute(self._reserve(), "config-read")
 
     def config_prepare(self, body: dict[str, object]) -> dict[str, object]:
-        incoming = _managed_body(body)
+        incoming = _request_body("config-prepare", body)
         return self._execute(self._reserve(), "config-prepare", incoming)
+
+    def config_apply(self, body: dict[str, object]) -> dict[str, object]:
+        """Transmit once; uncertainty is observed through config_outcome, never replayed."""
+        incoming = _request_body("config-apply", body)
+        return self._execute(self._reserve(), "config-apply", incoming)
+
+    def config_outcome(self, body: dict[str, object]) -> dict[str, object]:
+        incoming = _request_body("config-outcome", body)
+        return self._execute(self._reserve(), "config-outcome", incoming)
 
     async def _async(
         self, operation: str, body: dict[str, object] | None = None
@@ -480,7 +489,13 @@ class HostHelperClient:
         return await self._async("config-read")
 
     async def async_config_prepare(self, body: dict[str, object]) -> dict[str, object]:
-        return await self._async("config-prepare", _managed_body(body))
+        return await self._async("config-prepare", _request_body("config-prepare", body))
+
+    async def async_config_apply(self, body: dict[str, object]) -> dict[str, object]:
+        return await self._async("config-apply", _request_body("config-apply", body))
+
+    async def async_config_outcome(self, body: dict[str, object]) -> dict[str, object]:
+        return await self._async("config-outcome", _request_body("config-outcome", body))
 
     def close(self, *, timeout: float = 24.0) -> bool:
         """Stop admission, close owned sockets, and report actual joined workers."""

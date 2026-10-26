@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { setTimeout as pause } from 'node:timers/promises';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import {
     candidateMutationInvocation, CONFIGURATION_PATHS, guardCandidateInvocation, guardInstalledInvocation,
@@ -935,4 +936,124 @@ test('inspection waits on the original configuration flock and observes a concur
             inspecting.kill('SIGKILL');
         files.close();
     }
+});
+
+for (const kind of ['file', 'symlink', 'directory'] as const) {
+    test(`pending ${kind} blocks every legacy mutation without changing evidence`, () => {
+        const files = fixture();
+        try {
+            assert.equal(files.write().status, 0);
+            const inode = statSync(files.paths.lock).ino;
+            const pending = join(files.root, '.configuration.pending');
+            if (kind === 'file') writeFileSync(pending, 'protected pending evidence', { mode: 0o600 });
+            else if (kind === 'symlink') symlinkSync('absent-target', pending);
+            else mkdirSync(pending, { mode: 0o700 });
+            const marker = lstatSync(pending);
+            for (const action of ['write', 'install', 'remove'] as const)
+                assert.notEqual(files.run(candidateMutationInvocation(action, GUARD, files.identity)).status, 0);
+            assert.equal(lstatSync(pending).ino, marker.ino);
+            assert.equal(statSync(files.paths.lock).ino, inode);
+            assert.equal(readFileSync(files.paths.installed, 'utf8'), BASE);
+            assert.equal(readFileSync(files.paths.candidate, 'utf8'), CONTENT);
+            assert.equal(existsSync(files.paths.backup), false);
+            assert.equal(files.run(readInstalledInvocation(files.identity)).status, 0);
+            assert.equal(files.run(inspectCandidateInvocation(GUARD, files.identity)).status, 0);
+        } finally { files.close() }
+    });
+}
+
+for (const change of ['none', 'installed', 'candidate', 'pending', 'lock'] as const) {
+    test(`preview releases the original flock and withholds output after concurrent ${change}`, async () => {
+        const files = fixture();
+        let child: ReturnType<typeof spawn> | null = null;
+        const entered = join(files.root, 'preview-entered');
+        const release = join(files.root, 'preview-release');
+        try {
+            assert.equal(files.write().status, 0);
+            const inode = statSync(files.paths.lock).ino;
+            const invocation = guardCandidateInvocation(
+                hfcacheArgv(['plan', 'model:org/repo'], { config: files.paths.candidate }), GUARD, files.identity, true,
+            );
+            child = spawn(invocation.argv[0], invocation.argv.slice(1), {
+                env: { ...files.env, HFCACHE_TEST_ENTERED: entered, HFCACHE_TEST_RELEASE: release, HFCACHE_TEST_STATUS: '20', HFCACHE_TEST_REQUIRE_STDOUT_PIPE: '1' },
+                stdio: ['pipe', 'pipe', 'ignore'],
+            });
+            const finished = new Promise<number | null>(resolve => child?.once('exit', resolve));
+            let output = '';
+            child.stdout?.on('data', bytes => { output += String(bytes) });
+            child.stdin?.end(invocation.input);
+            for (let attempt = 0; attempt < 250 && !existsSync(entered); attempt += 1) await pause(20);
+            assert.ok(existsSync(entered));
+            assert.equal(spawnSync('flock', ['--exclusive', '--nonblock', files.paths.lock, 'true']).status, 0);
+            assert.equal(statSync(files.paths.lock).ino, inode);
+            assert.equal(output, '');
+            if (change === 'installed' || change === 'candidate')
+                writeFileSync(files.paths[change], 'changed tags while Hub request ran\n');
+            else if (change === 'pending')
+                writeFileSync(join(files.root, '.configuration.pending'), 'original application intent', { mode: 0o600 });
+            else if (change === 'lock') {
+                const old = files.paths.lock + '.retained';
+                execFileSync('mv', ['--', files.paths.lock, old]);
+                writeFileSync(files.paths.lock, '', { mode: 0o600 });
+            }
+            writeFileSync(release, 'release');
+            const status = await finished;
+            if (change === 'none') {
+                assert.equal(status, 20);
+                assert.equal(output, '{"fixture":"API response"}\n');
+                assert.equal(statSync(files.paths.lock).ino, inode);
+            } else {
+                assert.notEqual(status, 0);
+                assert.equal(output, '');
+            }
+            assert.equal(readFileSync(files.called, 'utf8'), 'called');
+            assert.equal(readdirSync(files.root).some(name => name.startsWith('.confirmation.')), false);
+        } finally {
+            if (child?.exitCode === null) child.kill('SIGKILL');
+            files.close();
+        }
+    });
+}
+
+test('durable minimal writer intent blocks legacy writers before any private workspace exists', () => {
+    const files = fixture();
+    try {
+        assert.equal(files.run(readInstalledInvocation(files.identity)).status, 0);
+        const lock = lstatSync(files.paths.lock);
+        // Use the protected writer's actual stdlib encoder/HMAC domain. This is
+        // the first durable marker, before operation directories or TOML exist.
+        const module = fileURLToPath(new URL('../../src/hfcache/host_configuration.py', import.meta.url));
+        const pending = execFileSync('python3', ['-I', '-c', [
+            'import importlib.util,sys',
+            'spec=importlib.util.spec_from_file_location("owned_writer",sys.argv[1])',
+            'writer=importlib.util.module_from_spec(spec);spec.loader.exec_module(writer)',
+            'intent={"operation_id":"a"*32,"request_digest":"b"*64}',
+            'sealed={"record":intent,"authentication":writer._seal(b"k"*32,intent,b"host-config-pending-v1")}',
+            'sys.stdout.buffer.write(writer._encoded(sealed))',
+        ].join('\n'), module]);
+        const marker = join(files.root, '.configuration.pending');
+        writeFileSync(marker, pending, { mode: 0o600 });
+        const identity = (filename: string) => {
+            const row = lstatSync(filename);
+            return [row.dev, row.ino, row.mode, row.uid, row.gid, row.nlink, row.size, row.mtimeMs, row.ctimeMs];
+        };
+        const originalMarker = identity(marker);
+        assert.equal(existsSync(join(files.root, '.configuration-applications')), false);
+        assert.equal(existsSync(files.paths.candidate), false);
+        for (const exactCandidate of [false, true]) {
+            if (exactCandidate) writeFileSync(files.paths.candidate, CONTENT, { mode: 0o640 });
+            for (const action of ['write', 'install', 'remove'] as const)
+                assert.notEqual(files.run(candidateMutationInvocation(action, GUARD, files.identity)).status, 0);
+            assert.deepEqual(readFileSync(marker), pending);
+            assert.deepEqual(identity(marker), originalMarker);
+            assert.deepEqual(lstatSync(files.paths.lock), lock);
+            assert.equal(readFileSync(files.paths.installed, 'utf8'), BASE);
+            assert.equal(existsSync(files.paths.backup), false);
+            assert.equal(existsSync(join(files.root, '.configuration-applications')), false);
+            assert.equal(existsSync(files.called), false);
+            assert.equal(readdirSync(files.root).some(name => /^\.(candidate-input|installed-input|predecessor|confirmation)\./.test(name)), false);
+            if (exactCandidate) assert.equal(readFileSync(files.paths.candidate, 'utf8'), CONTENT);
+            else assert.equal(existsSync(files.paths.candidate), false);
+        }
+    } finally { files.close() }
 });

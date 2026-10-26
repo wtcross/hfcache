@@ -4534,21 +4534,145 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_api_configuration_applications.py::test_invalid_preview_never_reaches_effect",
+            "tests/unit/test_api_configuration_applications.py::test_apply_requires_exact_preview_and_duplicate_never_reprepares_changed_base"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: installed stopped-Hub failed preview; installed external tag-only stale base",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: installed stopped-Hub failed preview; installed external tag-only stale base",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "2ec875f419615542b134f7bba678c86c6da4a0b78c468b963f141a96319ccb9d",
+          "command": "/usr/bin/python3 -I /home/webfixture/hfcache-web008/.scratch/provisioning/config-runner.py --profile native",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/native-source3d-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver.mjs::refuse-wrong-preview-operation-id",
+            ".scratch/web-008-config-browser-driver.mjs::refuse-wrong-original-preview-key",
+            ".scratch/web-008-config-browser-driver.mjs::refuse-draft-modified-after-preview"
+          ],
+          "observed_assertion": "39 cases/profile pass with nine authenticated confirmed applications, exact candidate/backup/predecessor/original-lock/fullSID checks and normal original process/cgroup/endpoint drain. Original keys survive lost202 body without replay. Earlier failed cohorts remain false. Remaining case assertions: installed stopped-Hub failed preview; installed external tag-only stale base",
+          "profile": "Owned CentOS10/Enforcing/readonly loopback NFS; real shared Caddy/Basic/TLS; native0.2.10 or rootless0.2.11 stock241b image; all3 pinned browsers, thirteen cases each.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "99b45f64d25e0562e7f28ddd930d3644c4a357f79721ee84b0a9a0977e3056d6",
+          "command": "/usr/bin/python3 -I /home/webfixture/hfcache-web008/.scratch/provisioning/config-runner.py --profile rootless",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/rootless-source3e-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver.mjs::refuse-wrong-preview-operation-id",
+            ".scratch/web-008-config-browser-driver.mjs::refuse-wrong-original-preview-key",
+            ".scratch/web-008-config-browser-driver.mjs::refuse-draft-modified-after-preview"
+          ],
+          "observed_assertion": "39 cases/profile pass with nine authenticated confirmed applications, exact candidate/backup/predecessor/original-lock/fullSID checks and normal original process/cgroup/endpoint drain. Original keys survive lost202 body without replay. Earlier failed cohorts remain false. Remaining case assertions: installed stopped-Hub failed preview; installed external tag-only stale base",
+          "profile": "Owned CentOS10/Enforcing/readonly loopback NFS; real shared Caddy/Basic/TLS; native0.2.10 or rootless0.2.11 stock241b image; all3 pinned browsers, thirteen cases each.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "f9f456ba16c177f400e78a9b8b870b87360dd181929291238c036607276de9c5",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/tag-race-runner.py",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-native-tag-race-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-tag-race",
+            ".scratch/web-008-tag-race-runner.py::run"
+          ],
+          "observed_assertion": "Generation02c91da72e3d49209ed5dc8b1038e28a passes71.381s: only disabled base-model tags change, operational fingerprint remains equal, original stale preview Apply receives409 with zero new receipts/transmission or helper effects. Three one-attempt browser cases, original normal drain; known legacy backup retained NOREPLACE after stop, installed tags remain. Stopped-Hub failed-preview case remains pending.",
+          "profile": "Owned installed native/Chromium representative deeper matrix; real Caddy/Basic/trusted TLS/API and maintained legacy write/install; actual coordinator f27117c9.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "581becdb19e554160a35cb4cf98e0747d982fbb8c43a31adb773f4a6992e62e5",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/native-negatives.py --manifest /home/webfixture/hfcache-web008/.scratch/provisioning/host-fixture-negatives.json --slow-entry-sha256 35a008bbcb7e0c4ca8e9e275cdb1f5eff1dc12a4957f58afcac1bba0d1c379bb --slow-unit-sha256 00d339ea1d6175776a93ed6919c41aec772cf3a17a0341413f41c4035783c910",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/native-negatives-original-summary.json",
+          "exit_status": 1,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-native-negatives.py::run"
+          ],
+          "observed_assertion": "All25 one-attempt application assertions pass, including real preview failure, helper denial, queued permission refusal with zero transmission and genuine16MiB quota guard. Final passive network recorder overflows its256-row cap, so infrastructure_failed remains true and this execution is not functional acceptance. All original roles drain; explicit disposable retirement preserves original state/receipts without replay or changing outcome phases.",
+          "profile": "Owned native/Chromium; generation1453e4d129d84f649144eebc7b894aba; actual Caddy/API/helper and isolated Hub; original result stays false.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "1c68a5232ac86aea6e5b01f604e550f212821991164fb039e9c200c4a963bb58",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/native-negatives.py --manifest /home/webfixture/hfcache-web008/.scratch/provisioning/host-fixture-negatives.json --slow-entry-sha256 35a008bbcb7e0c4ca8e9e275cdb1f5eff1dc12a4957f58afcac1bba0d1c379bb --slow-unit-sha256 00d339ea1d6175776a93ed6919c41aec772cf3a17a0341413f41c4035783c910",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/native-negatives-phased-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver-negatives.mjs::real-stopped-hub-preview-fails",
+            ".scratch/web-008-config-browser-driver-negatives.mjs::failed-preview-cannot-apply",
+            ".scratch/web-008-native-negatives.py::run"
+          ],
+          "observed_assertion": "PASS553.269s,23 one-attempt cases: stopped-Hub preview fails and Apply409/no admission; independent host policy denies Apply403/no admission; genuine occupied Hub lane admits queued Apply then fresh permission false causes HFAPI002/zero transmission. Seven real confirmed applications fill15517860bytes; next original application e6a421052c2cddf60d4976ff5c71384b refuses at actual confined quota guard line678 because required2558664bytes exceeds16777216 limit. No seeded outcomes/patched limits; original unknown/no-pending outcome is read only. All457 requests retained in9 bounded256-row buckets, no overflow/invalid origin, TLS verified and temporary manager environment restored; all original roles drain. Earlier failed observer-overflow cohort stays false. Required assertions now complete.",
+          "profile": "Owned native/Chromium, real built UI/shared Caddy/installed API/helper and deterministic owned external Hub; generationb080429b817b49f18142ca784e7df78a; private coordinatorc9400782/driver0eabc988/launcher04a38ea1.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        }
+      ],
       "id": "CONFIG-06",
       "owner": "WEB-008",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_06"
+          "node_id": "tests/unit/test_api_configuration_applications.py::test_invalid_preview_never_reaches_effect"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_api_configuration_applications.py::test_apply_requires_exact_preview_and_duplicate_never_reprepares_changed_base"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_06"
+          "node_id": "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-06"
+          "node_id": ".scratch/web-008-config-browser-driver.mjs::refuse-wrong-preview-operation-id"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver.mjs::refuse-wrong-original-preview-key"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver.mjs::refuse-draft-modified-after-preview"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-tag-race"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver-negatives.mjs::real-stopped-hub-preview-fails"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver-negatives.mjs::failed-preview-cannot-apply"
         }
       ],
       "required_layers": [
@@ -4556,24 +4680,94 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_host_configuration.py::test_apply_preserves_original_inode_and_lock_and_observes_without_replay",
+            "tests/unit/test_host_configuration.py::test_confirmed_history_and_backup_handover_survive_policy_change"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: final matrix and bookkeeping review",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: final matrix and bookkeeping review",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "2ec875f419615542b134f7bba678c86c6da4a0b78c468b963f141a96319ccb9d",
+          "command": "/usr/bin/python3 -I /home/webfixture/hfcache-web008/.scratch/provisioning/config-runner.py --profile native",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/native-source3d-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver.mjs::apply-settings-and-tags-confirmed-original-outcome",
+            ".scratch/web-008-config-browser-driver.mjs::apply-configured-only-removal-original-confirmation",
+            ".scratch/web-008-config-runner.py::verify_filesystem"
+          ],
+          "observed_assertion": "39 cases/profile pass with nine authenticated confirmed applications, exact candidate/backup/predecessor/original-lock/fullSID checks and normal original process/cgroup/endpoint drain. Original keys survive lost202 body without replay. Earlier failed cohorts remain false. Remaining case assertions: final matrix and bookkeeping review",
+          "profile": "Owned CentOS10/Enforcing/readonly loopback NFS; real shared Caddy/Basic/TLS; native0.2.10 or rootless0.2.11 stock241b image; all3 pinned browsers, thirteen cases each.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "99b45f64d25e0562e7f28ddd930d3644c4a357f79721ee84b0a9a0977e3056d6",
+          "command": "/usr/bin/python3 -I /home/webfixture/hfcache-web008/.scratch/provisioning/config-runner.py --profile rootless",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/rootless-source3e-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver.mjs::apply-settings-and-tags-confirmed-original-outcome",
+            ".scratch/web-008-config-browser-driver.mjs::apply-configured-only-removal-original-confirmation",
+            ".scratch/web-008-config-runner.py::verify_filesystem"
+          ],
+          "observed_assertion": "39 cases/profile pass with nine authenticated confirmed applications, exact candidate/backup/predecessor/original-lock/fullSID checks and normal original process/cgroup/endpoint drain. Original keys survive lost202 body without replay. Earlier failed cohorts remain false. Remaining case assertions: final matrix and bookkeeping review",
+          "profile": "Owned CentOS10/Enforcing/readonly loopback NFS; real shared Caddy/Basic/TLS; native0.2.10 or rootless0.2.11 stock241b image; all3 pinned browsers, thirteen cases each.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        }
+      ],
       "id": "CONFIG-07",
       "owner": "WEB-008",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_07"
+          "node_id": "tests/unit/test_host_configuration.py::test_apply_preserves_original_inode_and_lock_and_observes_without_replay"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_host_configuration.py::test_confirmed_history_and_backup_handover_survive_policy_change"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_07"
+          "node_id": "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-07"
+          "node_id": ".scratch/web-008-config-browser-driver.mjs::apply-settings-and-tags-confirmed-original-outcome"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver.mjs::apply-configured-only-removal-original-confirmation"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-runner.py::verify_filesystem"
         }
       ],
       "required_layers": [
@@ -4581,24 +4775,121 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_host_configuration.py::test_exhaustive_walk_includes_all_current_first_and_previous_backup_boundaries",
+            "tests/unit/test_host_configuration.py::test_fault_boundaries_preserve_and_never_replay"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: final representative/source distinction and evidence review",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_host_configuration.py::test_every_emitted_durability_cut_preserves_inodes_and_observes_without_replay",
+            "tests/unit/test_host_configuration.py::test_first_durable_marker_blocks_without_workspace_and_binds_original_digest"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: final representative/source distinction and evidence review",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "ca924247ae75af29de2a4fb889de7808f82155489b9b3c936ccf4b136ce37cf7",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/deep-runner.py --profile native --checkpoint pending:after_directory_fsync",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-native-marker2-summary.log",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-deep-runner.py::run",
+            ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-helper-response-loss"
+          ],
+          "observed_assertion": "Original operation 47d764d14300a44355cb3ec35492b8a5 returns unknown/pending=true. Original key is observed only; no replay/rollback/state-phase repair. All original roles drain. Process interruption only; no power-loss claim.",
+          "profile": "Owned installed real confined helper checkpoint exit91; Chromium representative deeper matrix under testing strategy136; original managers/role identities retained.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "96a65180b2dc5e848f203f01de922c1fbe8f940bd7657e0b11a8339ba9b30dd7",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/deep-runner.py --profile native --checkpoint staged:after_rename",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-native-staged-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-deep-runner.py::run",
+            ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-helper-response-loss"
+          ],
+          "observed_assertion": "Original operation cb343d11bdbb388ad95e3b3b4ec79dc1 returns staged/pending=true. Original key is observed only; no replay/rollback/state-phase repair. All original roles drain. Process interruption only; no power-loss claim.",
+          "profile": "Owned installed real confined helper checkpoint exit91; Chromium representative deeper matrix under testing strategy136; original managers/role identities retained.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "92d7dcc6df7291c7a6c8eb0d492ceee4e3106911e694a926e3ae8d845f6512a5",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/deep-runner.py --profile native --checkpoint exchange:after_rename",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-native-exchanged-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-deep-runner.py::run",
+            ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-helper-response-loss"
+          ],
+          "observed_assertion": "Original operation 243a429b4049b7ce6abf937bb558a727 returns installed_unconfirmed/pending=true. Original key is observed only; no replay/rollback/state-phase repair. All original roles drain. Process interruption only; no power-loss claim.",
+          "profile": "Owned installed real confined helper checkpoint exit91; Chromium representative deeper matrix under testing strategy136; original managers/role identities retained.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "fdce7fcfab37ed7fbfdbe4ecc39b7daee6d410369c5d494b0107bea0bc0d3fcb",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/deep-runner.py --profile rootless --checkpoint pending-clear:after_directory_fsync",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-rootless-confirmed-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-deep-runner.py::run",
+            ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-helper-response-loss"
+          ],
+          "observed_assertion": "Original operation 5790183884a37f0cb165503eba0eee65 returns confirmed/pending=false. Original key is observed only; no replay/rollback/state-phase repair. All original roles drain. Process interruption only; no power-loss claim.",
+          "profile": "Owned installed real confined helper checkpoint exit91; Chromium representative deeper matrix under testing strategy136; original managers/role identities retained.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        }
+      ],
       "id": "CONFIG-08",
       "owner": "WEB-008",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_08"
+          "node_id": "tests/unit/test_host_configuration.py::test_exhaustive_walk_includes_all_current_first_and_previous_backup_boundaries"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_host_configuration.py::test_fault_boundaries_preserve_and_never_replay"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_08"
+          "node_id": "tests/unit/test_host_configuration.py::test_every_emitted_durability_cut_preserves_inodes_and_observes_without_replay"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_host_configuration.py::test_first_durable_marker_blocks_without_workspace_and_binds_original_digest"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-08"
+          "node_id": ".scratch/web-008-deep-runner.py::run"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-helper-response-loss"
         }
       ],
       "required_layers": [
@@ -4606,24 +4897,122 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_api_configuration_applications.py::test_lost_helper_ack_and_api_restart_only_observe_original",
+            "tests/unit/test_api_configuration_applications.py::test_malformed_helper_success_after_effect_stays_interrupted"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: final original-key/restart evidence review",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery",
+            "tests/unit/test_configuration_application_integration.py::test_original_key_never_retransmits_after_real_unix_loss_before_writer_intent"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: final original-key/restart evidence review",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "2ec875f419615542b134f7bba678c86c6da4a0b78c468b963f141a96319ccb9d",
+          "command": "/usr/bin/python3 -I /home/webfixture/hfcache-web008/.scratch/provisioning/config-runner.py --profile native",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/native-source3d-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver.mjs::lost-application-202-body-original-key-observation-only"
+          ],
+          "observed_assertion": "39 cases/profile pass with nine authenticated confirmed applications, exact candidate/backup/predecessor/original-lock/fullSID checks and normal original process/cgroup/endpoint drain. Original keys survive lost202 body without replay. Earlier failed cohorts remain false. Remaining case assertions: final original-key/restart evidence review",
+          "profile": "Owned CentOS10/Enforcing/readonly loopback NFS; real shared Caddy/Basic/TLS; native0.2.10 or rootless0.2.11 stock241b image; all3 pinned browsers, thirteen cases each.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "99b45f64d25e0562e7f28ddd930d3644c4a357f79721ee84b0a9a0977e3056d6",
+          "command": "/usr/bin/python3 -I /home/webfixture/hfcache-web008/.scratch/provisioning/config-runner.py --profile rootless",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/rootless-source3e-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver.mjs::lost-application-202-body-original-key-observation-only"
+          ],
+          "observed_assertion": "39 cases/profile pass with nine authenticated confirmed applications, exact candidate/backup/predecessor/original-lock/fullSID checks and normal original process/cgroup/endpoint drain. Original keys survive lost202 body without replay. Earlier failed cohorts remain false. Remaining case assertions: final original-key/restart evidence review",
+          "profile": "Owned CentOS10/Enforcing/readonly loopback NFS; real shared Caddy/Basic/TLS; native0.2.10 or rootless0.2.11 stock241b image; all3 pinned browsers, thirteen cases each.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "fdce7fcfab37ed7fbfdbe4ecc39b7daee6d410369c5d494b0107bea0bc0d3fcb",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/deep-runner.py --profile rootless --checkpoint pending-clear:after_directory_fsync",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-rootless-confirmed-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-deep-runner.py::run",
+            ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-helper-response-loss"
+          ],
+          "observed_assertion": "Original operation 5790183884a37f0cb165503eba0eee65 returns confirmed/pending=false. Original key is observed only; no replay/rollback/state-phase repair. All original roles drain. Process interruption only; no power-loss claim.",
+          "profile": "Owned installed real confined helper checkpoint exit91; Chromium representative deeper matrix under testing strategy136; original managers/role identities retained.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "897f4b380d9d8d09f9b12ca4c01ea5061db1d99dc811b915b3b0c442116171a2",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/api-crash-runner.py --profile native --checkpoint pending-clear:after_directory_fsync",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-native-api-crash2-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-api-crash-runner.py::run"
+          ],
+          "observed_assertion": "Generation48763d06fd4345369183cadeb705187c passes93.747s: host confirmed/no pending, API restart has new instance, three one-attempt browser cases, no Apply retransmission and normal original drain. First before-intent failed API attempt stays false and retained.",
+          "profile": "Owned installed API SIGKILL while real helper parked after confirmation; helper exactPID also killed; same Caddy/worker and Chromium original-key observation.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        }
+      ],
       "id": "CONFIG-09",
       "owner": "WEB-008",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_09"
+          "node_id": "tests/unit/test_api_configuration_applications.py::test_lost_helper_ack_and_api_restart_only_observe_original"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_api_configuration_applications.py::test_malformed_helper_success_after_effect_stays_interrupted"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_09"
+          "node_id": "tests/unit/test_configuration_application_integration.py::test_api_unix_writer_exact_install_and_original_recovery"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_configuration_application_integration.py::test_original_key_never_retransmits_after_real_unix_loss_before_writer_intent"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-09"
+          "node_id": ".scratch/web-008-config-browser-driver.mjs::lost-application-202-body-original-key-observation-only"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-api-crash-runner.py::run"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver-deep.mjs::coordinator-helper-response-loss"
         }
       ],
       "required_layers": [
@@ -4631,24 +5020,82 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "cockpit/test/candidate-guard.test.ts::durable minimal writer intent blocks legacy writers before any private workspace exists"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: final both-order evidence review and bookkeeping",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "cockpit/test/candidate-guard.test.ts::config flock remains held through the CLI and serializes a competing install",
+            "cockpit/test/candidate-guard.test.ts::real guarded shell preserves exact Unicode/trailing-newline bytes, predecessor and persistent lock"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: final both-order evidence review and bookkeeping",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "a289b9dcca7f77c3f3411fad231e19c251e09a55cfea0e5c3a3f21b8319dba47",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/legacy-concurrency-runner.py --profile native --mode helper-first",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-native-legacy-helper-first-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-legacy-concurrency-runner.py::run"
+          ],
+          "observed_assertion": "Actual helper-first passes86.607s. Helper-first proves /proc/locks holder plus blocked waiter on original inode92486144 and pending refusal; legacy-first proves the exact root:hfcache0640 candidate precedes one interrupted Apply, remains unchanged and is preserved by NOREPLACE after browser completion. Original IDs/keys retained, no replay, all original roles drain.",
+          "profile": "Owned installed native/Chromium; real confined helper and maintained original fixed-candidate Bash writer; no product adapters.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "9b37b8f28b053218064d4caf0fce3e640d6f6c644cb4a38f7d2ef3852fef0e5b",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/legacy-concurrency-runner.py --profile native --mode legacy-first",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/deep-native-legacy-first-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-legacy-concurrency-runner.py::run"
+          ],
+          "observed_assertion": "Actual legacy-first passes76.981s. Helper-first proves /proc/locks holder plus blocked waiter on original inode92486144 and pending refusal; legacy-first proves the exact root:hfcache0640 candidate precedes one interrupted Apply, remains unchanged and is preserved by NOREPLACE after browser completion. Original IDs/keys retained, no replay, all original roles drain.",
+          "profile": "Owned installed native/Chromium; real confined helper and maintained original fixed-candidate Bash writer; no product adapters.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        }
+      ],
       "id": "CONFIG-10",
       "owner": "WEB-008",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_10"
+          "node_id": "cockpit/test/candidate-guard.test.ts::durable minimal writer intent blocks legacy writers before any private workspace exists"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_10"
+          "node_id": "cockpit/test/candidate-guard.test.ts::config flock remains held through the CLI and serializes a competing install"
+        },
+        {
+          "layer": "integration",
+          "node_id": "cockpit/test/candidate-guard.test.ts::real guarded shell preserves exact Unicode/trailing-newline bytes, predecessor and persistent lock"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-10"
+          "node_id": ".scratch/web-008-legacy-concurrency-runner.py::run"
         }
       ],
       "required_layers": [
@@ -4656,24 +5103,93 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_host_configuration.py::test_permission_and_digest_conflicts_do_not_repeat_effect",
+            "tests/unit/test_host_policy.py::test_configuration_confirmation_preserves_original_other_authority_checks"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: genuine occupied Hub lane and queued permission drift with zero handoff",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "870aa58fac2c5b57f4041de2dd85c69b9cbdbe273af2921641ffadeb8d02138b",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/gate5/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_configuration_applications.py::test_queued_apply_rechecks_before_transmission",
+            "tests/unit/test_api_candidates_adversarial.py::test_queued_candidate_rechecks_fresh_installed_authority"
+          ],
+          "observed_assertion": "All named nodes pass in strict gate5:8363 backend tests plus581 Cockpit unit and strict frontend checks. Source checkpoint walk covers114 first/120 second boundaries; original22 independent expectations remain.52 unrelated opt-in deselections; no required skips. Remaining installed assertions: genuine occupied Hub lane and queued permission drift with zero handoff",
+          "profile": "WEB-008, this commit; parent7a86fc2; frozen1378 inputs. Actual local filesystems/Bash and real Unix where named; owned metadata/SID or service adapters remain labelled source fixtures, not installed MAC proof.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "581becdb19e554160a35cb4cf98e0747d982fbb8c43a31adb773f4a6992e62e5",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/native-negatives.py --manifest /home/webfixture/hfcache-web008/.scratch/provisioning/host-fixture-negatives.json --slow-entry-sha256 35a008bbcb7e0c4ca8e9e275cdb1f5eff1dc12a4957f58afcac1bba0d1c379bb --slow-unit-sha256 00d339ea1d6175776a93ed6919c41aec772cf3a17a0341413f41c4035783c910",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/native-negatives-original-summary.json",
+          "exit_status": 1,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-native-negatives.py::run"
+          ],
+          "observed_assertion": "All25 one-attempt application assertions pass, including real preview failure, helper denial, queued permission refusal with zero transmission and genuine16MiB quota guard. Final passive network recorder overflows its256-row cap, so infrastructure_failed remains true and this execution is not functional acceptance. All original roles drain; explicit disposable retirement preserves original state/receipts without replay or changing outcome phases.",
+          "profile": "Owned native/Chromium; generation1453e4d129d84f649144eebc7b894aba; actual Caddy/API/helper and isolated Hub; original result stays false.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        },
+        {
+          "artifact_sha256": "1c68a5232ac86aea6e5b01f604e550f212821991164fb039e9c200c4a963bb58",
+          "command": "/usr/bin/python3 -I /opt/hfcache-web006/helper-web008/native-negatives.py --manifest /home/webfixture/hfcache-web008/.scratch/provisioning/host-fixture-negatives.json --slow-entry-sha256 35a008bbcb7e0c4ca8e9e275cdb1f5eff1dc12a4957f58afcac1bba0d1c379bb --slow-unit-sha256 00d339ea1d6175776a93ed6919c41aec772cf3a17a0341413f41c4035783c910",
+          "evidence_locator": "/var/tmp/web-008-validation-4d8__00f/native-negatives-phased-summary.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-008-config-browser-driver-negatives.mjs::root-policy-denies-original-preview-apply",
+            ".scratch/web-008-config-browser-driver-negatives.mjs::real-hub-lane-queue-policy-drift",
+            ".scratch/web-008-native-negatives.py::run"
+          ],
+          "observed_assertion": "PASS553.269s,23 one-attempt cases: stopped-Hub preview fails and Apply409/no admission; independent host policy denies Apply403/no admission; genuine occupied Hub lane admits queued Apply then fresh permission false causes HFAPI002/zero transmission. Seven real confirmed applications fill15517860bytes; next original application e6a421052c2cddf60d4976ff5c71384b refuses at actual confined quota guard line678 because required2558664bytes exceeds16777216 limit. No seeded outcomes/patched limits; original unknown/no-pending outcome is read only. All457 requests retained in9 bounded256-row buckets, no overflow/invalid origin, TLS verified and temporary manager environment restored; all original roles drain. Earlier failed observer-overflow cohort stays false. Required assertions now complete.",
+          "profile": "Owned native/Chromium, real built UI/shared Caddy/installed API/helper and deterministic owned external Hub; generationb080429b817b49f18142ca784e7df78a; private coordinatorc9400782/driver0eabc988/launcher04a38ea1.",
+          "source_sha256": "93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9"
+        }
+      ],
       "id": "CONFIG-11",
       "owner": "WEB-008",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_config.py::test_config_11"
+          "node_id": "tests/unit/test_host_configuration.py::test_permission_and_digest_conflicts_do_not_repeat_effect"
+        },
+        {
+          "layer": "unit",
+          "node_id": "tests/unit/test_host_policy.py::test_configuration_confirmation_preserves_original_other_authority_checks"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_config.py::test_config_11"
+          "node_id": "tests/unit/test_api_configuration_applications.py::test_queued_apply_rechecks_before_transmission"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_candidates_adversarial.py::test_queued_candidate_rechecks_fresh_installed_authority"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/config.spec.ts::CONFIG-11"
+          "node_id": ".scratch/web-008-config-browser-driver-negatives.mjs::real-hub-lane-queue-policy-drift"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-008-config-browser-driver-negatives.mjs::root-policy-denies-original-preview-apply"
         }
       ],
       "required_layers": [
@@ -4681,7 +5197,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

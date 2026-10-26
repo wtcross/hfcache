@@ -445,7 +445,11 @@ When the validated API helper projection is present, only its existing
 `/var/lib/hfcache/hf-home` and `/var/cache/hfcache` binds omit shared `:z`
 relabeling. Preserve their fixed writable mount scope, the separately provisioned
 Hub-state type, and original/default and other-role argv. The application
-`config.toml` leaf has its own shared read-only type; private helper authority
+`config.toml` leaf has its own application-readable type; the privileged helper
+may write that type only through its fixed guarded configuration workflow. The
+API bind remains read-only. `/etc/hfcache` has a separate directory type for
+fixed-name publication; private root0700 outcome directories and configuration
+guards have distinct container-denied types. Private helper authority
 types remain unreadable to containers. Prove actual config reads, Hub-state
 operations and new leaf labels under Enforcing before support is accepted.
 Native opt-in uses its separately protected server configuration. The host helper's
@@ -674,3 +678,25 @@ API networking only when the helper-derived repository scope is nonempty and
 explicit Hub permission is freshly proved. An empty scope contacts no Hub.
 Preparation and sizing cannot install configuration. See the [API contract](api.md#managed-configuration-read-and-assessment-responses)
 and [configuration guide](web-ui/configuration-and-tags.md).
+
+
+### Managed configuration writer provisioning
+
+Helper-enabled releases additionally capture `host-helper/host_configuration.py`
+as the fourth standard-library module beside the entry, unit, policy/protocol/
+peer modules and CIL. Its exact installed copy is an independent deployment
+binding for both native and rootless profiles. The helper service's fixed
+`SupplementaryGroups=hfcache` permits owned0640 creation without CAP_CHOWN; only
+its `/etc/hfcache` bind becomes writable. No application container receives a
+writable configuration mount or private history mount. Keep all existing helper
+masks, rootless namespace/capability proofs and no-network restrictions.
+
+Provision the dedicated configuration-directory, private-state and guard types
+and persistent exact fcontexts before preparing new indexes. A reviewed first
+upgrade may assign the new guard SID to the **same original lock inode**, recording
+before/after contexts without changing its mode, ownership or identity. Never
+replace that lock. Preserve private history inodes and their recorded full SIDs;
+unknown evidence is not permission to relabel it. Application
+containers retain read-only config access; private outcome/guard types remain
+denied. See [label roles](host-administration.md#mandatory-selinux-isolation) and
+[helper deployment](web-ui/deployment.md#install-the-protected-host-reader).

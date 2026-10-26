@@ -1,4 +1,4 @@
-"""Non-installing managed configuration reads/assessments (decision153, INV-001)."""
+"""Exact managed configuration and non-replaying application (decisions153/154)."""
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, NoReturn, Protocol, cast
@@ -8,10 +8,14 @@ from pydantic import ValidationError
 from starlette.responses import Response  # noqa: TC002 - FastAPI resolves route annotations
 
 from hfcache.api.auth import AdminCapability, require_admin_capability
+from hfcache.api.command_models import AcceptanceResponse
 from hfcache.api.commands import _accepted, _key, _no_query, offload_command
 from hfcache.api.host_authorization import authorize_request
 from hfcache.api.models import ReadResponse
+from hfcache.api.operations import Admission, request_digest
 from hfcache.config_models import (
+    ConfigApplicationOutcome,
+    ConfigApplicationSubmission,
     ConfigPrepared,
     ConfigRead,
     ManagedAssessment,
@@ -22,6 +26,7 @@ from hfcache.errors import (
     AuthorizationError,
     HfcacheError,
     HostAdministrationUnavailableError,
+    OperationError,
     RequestError,
 )
 from hfcache.host_protocol import HostProtocolError
@@ -46,6 +51,8 @@ class ConfigHelper(Protocol):
     async def async_config_read(self) -> dict[str, Any]: ...
     async def async_config_prepare(self, body: dict[str, Any]) -> dict[str, Any]: ...
     def config_prepare(self, body: dict[str, Any]) -> dict[str, Any]: ...
+    def config_apply(self, body: dict[str, Any]) -> dict[str, Any]: ...
+    def config_outcome(self, body: dict[str, Any]) -> dict[str, Any]: ...
 
 
 def _helper(request: Request) -> ConfigHelper:
@@ -263,7 +270,226 @@ async def managed_plan(request: Request, body: PlanSubmission, server: ServerCon
     return await offload_command(request, work)
 
 
-def install_configuration_route(app: FastAPI, render: Render) -> None:
+_APPLICATIONS = "/api/v1/config/applications"
+
+
+class _ApplicationUncertainError(RuntimeError):
+    """Halt the lane after an unclassified handoff; original observation is read-only."""
+
+
+def _conflict(message: str) -> NoReturn:
+    raise RequestError(code="HFAPI007", status_code=409, message=message)
+
+
+def _preview(
+    request: Request, body: ConfigApplicationSubmission, prepared: ConfigPrepared
+) -> ManagedAssessment:
+    store = request.app.state.operations
+    receipt = store.lookup(request.state.principal, body.preview.key)
+    if (
+        receipt.operation_id != body.preview.operation_id
+        or receipt.route != "/api/v1/plans"
+        or receipt.state != "succeeded"
+        or receipt.archive_id != prepared.archive_id
+    ):
+        _conflict("Apply requires the original successful matching managed preview")
+    result = store.result(receipt.operation_id)
+    try:
+        assessment = ManagedAssessment.model_validate(result.data)
+    except ValidationError:
+        _conflict("Apply requires a complete managed preview")
+    if (
+        result.exit_code != 0
+        or not assessment.complete
+        or assessment.archive_id != prepared.archive_id
+        or assessment.base_revision != prepared.base_revision
+        or assessment.candidate_revision != prepared.candidate_revision
+        or assessment.required_selectors != prepared.required_selectors
+    ):
+        _conflict("Configuration or required scope differs from the original preview")
+    return assessment
+
+
+def _outcome(request: Request, identifier: str, digest: str) -> ConfigApplicationOutcome:
+    try:
+        raw = _helper(request).config_outcome(
+            {"operation_id": identifier, "request_digest": digest}
+        )
+        outcome = ConfigApplicationOutcome.model_validate(raw)
+    except Exception as error:  # noqa: BLE001 - fixed failure, never private diagnostic text
+        _failure(error)
+    _archive(request, outcome.archive_id)
+    if outcome.operation_id != identifier or outcome.request_digest != digest:
+        raise HostAdministrationUnavailableError
+    return outcome
+
+
+def _unresolved(request: Request) -> None:
+    """No store/runner lock is held while authenticating previous host outcomes."""
+    for receipt in request.app.state.operations.list():
+        if receipt.route != _APPLICATIONS or receipt.state == "succeeded":
+            continue
+        if receipt.state in {"queued", "waiting_lock", "running"}:
+            _conflict("Another configuration application is still active")
+        kinds = {event.kind for event in receipt.events}
+        if "configuration.transmission" not in kinds:
+            continue
+        outcome = _outcome(request, receipt.operation_id, receipt.request_digest)
+        if outcome.state != "confirmed" or outcome.pending:
+            _conflict(
+                "An earlier configuration application requires original-handle reconciliation"
+            )
+
+
+def _execute_application(
+    request: Request,
+    body: ConfigApplicationSubmission,
+    admitted: PreparedCandidate,
+    snapshot: PolicySnapshot,
+    context: ExecutionContext,
+) -> ServiceResult:
+    require_admin_capability(request.state.principal, AdminCapability.CONFIG_WRITE)
+    try:
+        raw = _helper(request).config_prepare(
+            body.managed.model_dump(mode="json", exclude_none=True)
+        )
+    except Exception as error:  # noqa: BLE001 - refusal before effect transmission
+        _failure(error)
+    current = _decode_prepared(request, raw, body.managed)
+    if (
+        current.candidate_revision != admitted.reply.candidate_revision
+        or current.required_selectors != admitted.reply.required_selectors
+        or current.candidate != admitted.reply.candidate
+    ):
+        _conflict("Configuration changed before application execution")
+    checked = _checked(request, current)
+    require_compatible_authority(checked.config, snapshot.config)
+    _preview(request, body, current)
+    identifier = context.operation_id
+    if identifier is None:
+        raise OperationError
+    store = request.app.state.operations
+    receipt = store.get(identifier)
+    # This durable event is the last API write before the single helper handoff.
+    store.append_event(identifier, "configuration.transmission", "Configuration handoff intended")
+    try:
+        raw = _helper(request).config_apply(
+            {
+                "operation_id": identifier,
+                "request_digest": receipt.request_digest,
+                "managed": body.managed.model_dump(mode="json", exclude_none=True),
+                "candidate_revision": current.candidate_revision,
+                "config_fingerprint": checked.config.fingerprint(),
+                "preview_operation_id": body.preview.operation_id,
+                "required_selectors": list(current.required_selectors),
+            }
+        )
+    except Exception:  # noqa: BLE001 - transmission outcome unknown, never retry or invent failure
+        raise _ApplicationUncertainError from None
+    try:
+        outcome = ConfigApplicationOutcome.model_validate(raw)
+        _archive(request, outcome.archive_id)
+    except Exception:  # noqa: BLE001 - any invalid post-effect reply leaves outcome uncertain
+        raise _ApplicationUncertainError from None
+    if (
+        outcome.operation_id != identifier
+        or outcome.request_digest != receipt.request_digest
+        or outcome.base_revision != current.base_revision
+        or outcome.candidate_revision != current.candidate_revision
+        or outcome.config_fingerprint != checked.config.fingerprint()
+        or outcome.state != "confirmed"
+        or outcome.pending
+    ):
+        raise _ApplicationUncertainError
+    return ServiceResult("config apply", outcome.model_dump(mode="json"))
+
+
+async def _apply(
+    request: Request, body: ConfigApplicationSubmission, server: ServerConfig
+) -> Response:
+    _no_query(request)
+    require_admin_capability(request.state.principal, AdminCapability.CONFIG_WRITE)
+    await authorize_request(request, frozenset({"configuration"}))
+    key = _key(request)
+    digest = request_digest(_APPLICATIONS, body.canonical_body())
+
+    def duplicate() -> Admission | None:
+        try:
+            previous = request.app.state.operations.lookup(request.state.principal, key)
+        except OperationError as error:
+            if error.status_code == 404:  # noqa: PLR2004 - classified missing original handle
+                return None
+            raise
+        if previous.route != _APPLICATIONS or previous.request_digest != digest:
+            raise RequestError(
+                code="HFAPI012",
+                status_code=409,
+                message="Idempotency key conflicts with its admitted request",
+            )
+        return Admission(previous, created=False)
+
+    previous = await offload_command(request, duplicate)
+    if previous is not None:
+        return _accepted(request, previous, server)
+    reply = await _prepare(request, body.managed)
+    actions: frozenset[HostAction] = frozenset({"configuration"})
+    if reply.required_selectors:
+        actions = frozenset({"configuration", "hub"})
+    authorization = await authorize_request(request, actions)
+    if authorization is None:
+        raise HostAdministrationUnavailableError
+
+    def work() -> Response:
+        prepared = _checked(request, reply)
+        _preview(request, body, reply)
+        _unresolved(request)
+
+        def budget(snapshot: PolicySnapshot) -> float:
+            authorization.check_snapshot(snapshot)
+            require_compatible_authority(prepared.config, snapshot.config)
+            return snapshot.config.sync.lock_wait_seconds
+
+        admission = request.app.state.runner.submit(
+            request.state.principal,
+            key,
+            _APPLICATIONS,
+            body.canonical_body(),
+            command="config apply",
+            execute=lambda snapshot, context: _execute_application(
+                request, body, prepared, snapshot, context
+            ),
+            wait_seconds=budget,
+            requires_lock=False,
+            context=request.state.execution_context,
+            authorize=authorization.recheck,
+        )
+        return _accepted(request, admission, server)
+
+    return await offload_command(request, work)
+
+
+def install_configuration_route(app: FastAPI, render: Render, server: ServerConfig) -> None:
+    app.state.command_routes = frozenset(getattr(app.state, "command_routes", ())) | {_APPLICATIONS}
+
+    @app.post(_APPLICATIONS, response_model=AcceptanceResponse, status_code=202)
+    async def apply_configuration(request: Request, body: ConfigApplicationSubmission) -> Response:
+        return await _apply(request, body, server)
+
+    @app.get(_APPLICATIONS + "/{operation_id}", response_model=ReadResponse)
+    async def observe_application(request: Request, operation_id: str) -> Response:
+        _no_query(request)
+        require_admin_capability(request.state.principal, AdminCapability.CONFIG_READ)
+        key = _key(request)
+
+        def work() -> Response:
+            receipt = request.app.state.operations.lookup(request.state.principal, key)
+            if receipt.route != _APPLICATIONS or receipt.operation_id != operation_id:
+                _conflict("Original configuration application key and identity must match")
+            outcome = _outcome(request, operation_id, receipt.request_digest)
+            return render(request, ServiceResult("config outcome", outcome.model_dump(mode="json")))
+
+        return await offload_command(request, work)
+
     @app.get("/api/v1/config", response_model=ReadResponse)
     async def read_configuration(request: Request) -> Response:
         _no_query(request)

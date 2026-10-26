@@ -425,18 +425,72 @@ def test_native_real_peer_pidfd_does_not_read_hidden_other_process_stat(tmp_path
         binding.close()
 
 
-def test_client_timeout_performs_one_attempt_without_retry(tmp_path, monkeypatch):
+@pytest.mark.parametrize("operation", ["status", "config_apply"])
+def test_client_timeout_performs_one_attempt_without_retry(tmp_path, monkeypatch, operation):
     monkeypatch.setattr(client_module, "CLIENT_SECONDS", 0.03)
     release = threading.Event()
     with unix_service(tmp_path, release=release) as (path, accepted, _):
         client = client_module.HostHelperClient(UnixTestBinding(path), deployment_sha256=DEPLOYMENT)
         try:
+            call = (
+                client.status
+                if operation == "status"
+                else lambda: client.config_apply(application_body())
+            )
             with pytest.raises(protocol.HostProtocolError, match="timeout"):
-                client.status()
+                call()
             assert len(accepted) == 1
             assert not client._jobs
         finally:
             release.set()
+            assert client.close(timeout=2)
+
+
+def application_body() -> dict[str, object]:
+    return {
+        "operation_id": "b" * 32,
+        "request_digest": "c" * 64,
+        "managed": {"base_revision": "d" * 64, "edits": []},
+        "candidate_revision": "e" * 64,
+        "config_fingerprint": "f" * 64,
+        "preview_operation_id": "a" * 32,
+        "required_selectors": [],
+    }
+
+
+def test_application_and_observation_client_freeze_separate_real_unix_requests(tmp_path):
+    body = application_body()
+    expected = copy.deepcopy(body)
+    observed: dict[str, object] = {key: body[key] for key in ("operation_id", "request_digest")}
+    received = []
+    with unix_service(tmp_path, received=received) as (path, accepted, _):
+        binding = UnixTestBinding(path)
+        client = client_module.HostHelperClient(binding, deployment_sha256=DEPLOYMENT)
+        try:
+            client.config_apply(body)
+            client.config_outcome(observed)
+            binding.entered.clear()
+            release = threading.Event()
+            binding.stall = release
+
+            async def mutate_after_admission():
+                task = asyncio.create_task(client.async_config_apply(body))
+                while not binding.entered.is_set():
+                    await asyncio.sleep(0.001)
+                cast("dict[str, Any]", body["managed"])["edits"].append({"path": "never-transmit"})
+                release.set()
+                await task
+                await client.async_config_outcome(observed)
+
+            asyncio.run(mutate_after_admission())
+            assert len(accepted) == 4
+            assert [(item.operation, item.body) for item in received] == [
+                ("config-apply", expected),
+                ("config-outcome", observed),
+                ("config-apply", expected),
+                ("config-outcome", observed),
+            ]
+        finally:
             assert client.close(timeout=2)
 
 

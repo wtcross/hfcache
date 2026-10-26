@@ -2,8 +2,9 @@
 """Propose a fixed host-helper deployment index from actual protected files.
 
 Read-only administrator preparation, not activation or conformance. Install the
-reviewed protected bootstrap copies first. Explicit source provenance must come
-from the genuine build receipt; this tool never invents a clean source commit.
+reviewed protected entry and all four standard-library module copies first.
+Explicit source provenance must come from the genuine build receipt; this tool
+never invents a clean source commit.
 No policy, key, configuration, archive or service is read or changed.
 """
 

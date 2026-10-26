@@ -122,3 +122,10 @@ guards and historical evidence remain. See [server](../server.md),
 [API](../api.md#web-ui-and-administration-design),
 [schemas](../schemas.md#18-web-ui-and-administration-design-records),
 [web UI status](../web-ui/README.md) and [authentication](decision-140.md).
+
+## Guarded application amendment (2026-10-25)
+
+[Decision154](decision-154.md) defines the narrow configuration writer, shared
+legacy guard, durable private outcomes and original-handle read-only observation.
+It supersedes earlier assumptions of a wholly read-only helper for this fixed
+operation; all unrelated authority and original reasoning remain.

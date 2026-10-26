@@ -1164,8 +1164,8 @@ an unrelated ioctl or certificate lookup denial does not justify a grant.
 
 For helper mask/bind attachment, the trusted system manager separately has only
 directory `mounton` on the
-custom secret, Hub-state, archive and runtime types so it can install the fixed
-`InaccessiblePaths` masks and existing `ReadWritePaths` runtime bind before
+custom secret, Hub-state, archive, runtime and configuration-directory types so it can install the fixed
+`InaccessiblePaths` masks and fixed `ReadWritePaths` runtime/configuration binds before
 helper exec. This type-wide manager permission grants the helper no additional
 mount or object access. Preserve every mask/bind, denied payload type and
 existing helper runtime right; successful policy compilation alone is not proof
@@ -1191,7 +1191,7 @@ This type-wide metadata permission adds no traversal/enumeration, directory
 mutation, file access or network authority; preserve stock path/configuration
 proof and all capability, namespace and payload restrictions.
 
-Only the application configuration leaf shares a read-only type with containers;
+Application configuration files share an application-read-only type with containers;
 private helper policy/index/key/receipt labels do not become container-readable.
 Mutable Hub home and the entire cache root use a separate helper-denied state
 type, with legitimate application state operations. Credential/container-secret
@@ -1337,3 +1337,35 @@ CAS includes tags/comments even when the operational fingerprint is unchanged.
 Read-only reconstruction creates no lock/staging/outcome; guarded installation
 retains the original configuration lock and durable no-replay obligations. See
 [managed reconstruction](adr/decision-153.md) and the [operator guide](web-ui/configuration-and-tags.md).
+
+
+### Guarded configuration filesystem effects
+
+The online API has no writable configuration directory or private outcome mount.
+The peer-authenticated helper exposes only closed managed edits and opaque
+identities, never paths, commands, arbitrary TOML or credentials. It independently
+reconstructs protected values/fingerprint and serializes fixed publication under
+the original persistent configuration flock. No archive lock or Hub/network work
+occurs there. Basic configuration-write plus fresh independent permission and an
+exact successful complete original preview are required; possession of a preview
+or key grants no authority.
+
+`/etc/hfcache` has its own configuration-directory type, private root0700
+`.configuration-applications` directories/new root0600 files use a state type,
+and `.configuration.lock`/`.configuration.pending` use a guard type. The helper
+may create/write/rename/unlink only owned configuration/state/guard types; generic
+`etc_t` writes, relabeling, new capabilities, archive and credential writes remain
+denied. `SupplementaryGroups=hfcache` permits root:hfcache0640 creation without
+CAP_CHOWN or threaded credential changes. The API still reads configuration through
+its read-only mount; private state/guards are container-denied. Preserved original
+predecessor/backup inodes retain their exact0640 metadata/SID within private0700.
+
+Private HMAC outcomes bind original request/preview/archive/target and material,
+independent of later deployment/policy bytes. Intent/pending durability precedes
+effects; exact post-install bytes/fingerprint precede confirmation. Duplicate
+operation IDs observe only. Unknown backups, unresolved state, missing/corrupt
+history and pending markers refuse new writes. Read-only original-key outcome
+observation cannot clear, replay, roll back or clean up evidence. Fixed retention
+quotas refuse rather than evict. Generic receipts/events/results contain no raw
+configuration, keys or helper diagnostics. See
+[decision154](adr/decision-154.md) and [application recovery](web-ui/configuration-and-tags.md#observe-an-interrupted-application).

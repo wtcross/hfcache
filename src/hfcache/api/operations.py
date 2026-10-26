@@ -764,6 +764,7 @@ class OperationStore:
             for record in records:
                 if (
                     record.state in _TERMINAL
+                    and record.route != "/api/v1/config/applications"
                     and record.completed_at is not None
                     and record.completed_at <= cutoff
                 ):

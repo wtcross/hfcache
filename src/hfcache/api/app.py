@@ -439,6 +439,8 @@ class Boundary:
         command = scope["method"] == "POST" and path in getattr(
             self.owner.state, "command_routes", ()
         )
+        if command and path == PREFIX + "/config/applications":
+            require_admin_capability(principal, AdminCapability.CONFIG_WRITE)
         if command and path in getattr(
             self.owner.state, "writer_routes", {PREFIX + "/syncs", PREFIX + "/verifications"}
         ):
@@ -1167,7 +1169,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
 
     install_catalog_routes(app, execute_catalog)
     install_host_status_route(app, render)
-    install_configuration_route(app, render)
+    install_configuration_route(app, render, server)
 
     @app.get(PREFIX + "/version", response_model=ReadResponse)
     async def version(request: Request) -> Response:

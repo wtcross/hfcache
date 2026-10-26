@@ -6,7 +6,12 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from hfcache.config_models import ConfigRead, ManagedAssessment, ManagedValidation
+from hfcache.config_models import (
+    ConfigApplicationOutcome,
+    ConfigRead,
+    ManagedAssessment,
+    ManagedValidation,
+)
 from hfcache.wire_registry import AUTHORITIES, RESULT_ROUTES, ROUTES, request_authorities
 from hfcache.wire_schema import Exporter, build_contracts, check_json_schema
 from tests.fixtures import examples
@@ -20,6 +25,11 @@ FIXTURES = json.loads(Path("tests/fixtures/web_wire/config.json").read_text())
         ("read", examples.configuration_read, ConfigRead),
         ("validation", examples.managed_validation, ManagedValidation),
         ("assessment", examples.managed_assessment, ManagedAssessment),
+        (
+            "application_outcome",
+            examples.configuration_application_outcome,
+            ConfigApplicationOutcome,
+        ),
     ],
 )
 def test_independent_config_serialized_fixtures_match_original_models(key, factory, model):
@@ -33,6 +43,7 @@ def test_independent_config_serialized_fixtures_match_original_models(key, facto
 def test_only_public_configuration_models_are_registered_and_no_private_candidate_is_exported():
     contracts = build_contracts()
     assert {"ConfigRead", "ManagedValidation", "ManagedAssessment"} <= AUTHORITIES.keys()
+    assert AUTHORITIES["ConfigApplicationOutcome"] is ConfigApplicationOutcome
     assert not any("Prepared" in name for name in contracts["definitions"])
     read = next(row for row in ROUTES if row.id == "config_read")
     assert (read.path, read.commands, read.success) == (
@@ -47,6 +58,13 @@ def test_only_public_configuration_models_are_registered_and_no_private_candidat
     plan = next(row for row in RESULT_ROUTES if row.origin_path == "/api/v1/plans")
     assert plan.success == "PlanResultPayload"
     assert contracts["definitions"]["PlanResultPayload"]["kind"] == "union"
+    observation = next(row for row in ROUTES if row.id == "config_outcome")
+    assert observation.path == "/api/v1/config/applications/{operation_id}"
+    assert observation.commands == ("config outcome",)
+    application = next(
+        row for row in RESULT_ROUTES if row.origin_path == "/api/v1/config/applications"
+    )
+    assert application.success == "ConfigApplicationOutcome"
 
 
 def test_managed_export_request_modes_are_closed_without_changing_literal_forms():

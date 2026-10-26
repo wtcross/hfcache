@@ -75,6 +75,8 @@ export function normalizeManagedTags(value: unknown): readonly string[] {
 export const configSemanticIds: readonly string[] = [
     "hfcache.config_models._one",
     "hfcache.config_models._revision",
+    "hfcache.config_models._preview_key",
+    "hfcache.config_models.ConfigApplicationOutcome.coherent_identity",
     "hfcache.config_models._whole_selector",
     "hfcache.config_models._retention",
     "hfcache.config_models.EditableConfig.unique_repositories",
@@ -98,6 +100,24 @@ export function applyConfigSemantic(id: string, value: unknown): void {
         case "hfcache.config_models._revision":
             check(canonicalHex(text(value), 64));
             return;
+        case "hfcache.config_models._preview_key": {
+            const source = text(value);
+            check(/^[A-Za-z0-9._~+-]{1,128}$/u.exec(source)?.[0] === source);
+            return;
+        }
+        case "hfcache.config_models.ConfigApplicationOutcome.coherent_identity": {
+            const row = record(value),
+                known = [
+                    row.base_revision,
+                    row.candidate_revision,
+                    row.config_fingerprint,
+                ].map((item) => item !== null);
+            check(
+                (known.every(Boolean) || known.every((item) => !item)) &&
+                    (row.state === "unknown" || known.every(Boolean)),
+            );
+            return;
+        }
         case "hfcache.config_models._whole_selector": {
             const source = text(value),
                 colon = source.indexOf(":");

@@ -83,6 +83,8 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `POST /config/validate` | installed | config validate (installed) | R | synchronous | none | no | none | none |
 | `POST /config/validate` | candidate | --config PATH config validate | W | synchronous | none | no | none | none |
 | `POST /config/validate` | managed | browser / HTTP | internal config-write | synchronous | none | no | none | none |
+| `POST /config/applications` | managed | browser / HTTP | internal config-write | keyed guarded helper application | none | no | none | receipt/events/result + private configuration outcome state |
+| `GET /config/applications/{operation_id}` | default | browser / HTTP | internal config-read + original key | synchronous protected outcome read | none | no | none | none |
 | `GET /archive/inspection` | default | archive init --inspect | R | synchronous | none | no | none | none |
 | `POST /archive/initializations` | default | archive init --confirm | W + initialization gate | keyed job | archive | no | initial layout/sentinel | receipt, events and result |
 | `POST /diagnostics` | read_only=true | doctor --read-only | R | keyed job | none | yes | none | receipt, events and result |
@@ -541,8 +543,8 @@ POST. [Server lifecycle](server.md#restart-and-drain) governs actual executor dr
 Optional Basic authentication and the indexed `/ui/` navigation/assets/bootstrap
 surface are implemented in unreleased source, preserving existing REST/MCP
 credential classes and strict public schemas. Protected host status and managed
-configuration read/validation/preview are also implemented in unreleased source.
-Configuration application, other host controls and cards below retain their
+configuration read/validation/preview and guarded application are implemented in
+unreleased source. Other host controls and cards below retain their
 separate design and acceptance obligations. These source additions do not change an installed release or grant
 host authority.
 See [UI availability](web-ui/README.md), [authentication decision](adr/decision-140.md),
@@ -557,6 +559,7 @@ configured public prefix before `/api/v1` or `/ui/`:
 | --- | --- |
 | `GET /api/v1/config` | Explicit configuration-read administration capability and protected helper proof; strict nonsecret installed projection and opaque exact-byte base revision |
 | `POST /api/v1/config/applications` | Explicit configuration-write administration capability plus protected host policy; keyed admission and guarded helper application, never arbitrary policy paths |
+| `GET /api/v1/config/applications/{operation_id}` | Configuration-read capability plus original subject-scoped application key; protected outcome observation without replay |
 | `GET /api/v1/repositories/{repository_type}/{namespace}/{name}/publications/{commit_sha}/{publication_id}/card` | REST metadata read; exact retained publication and bounded adjunct only |
 | `GET /api/v1/host/status` | Explicit administration-read capability; bounded selected-profile, permissions/reasons, fixed unit/timer and sync-schedule revision facts |
 | `POST /api/v1/host/sync-schedule/validations` | Explicit schedule administration capability and host policy; bounded read-only fixed systemd calendar/timespan validation |
@@ -631,8 +634,8 @@ protected fields; do not accept JSON pointers, paths or redaction placeholders.
 Read binds the complete installed document, including tag-only changes, to a
 strong opaque `base_revision` using a protected stable HMAC key. Do not return
 secret-dependent full-document hashes. Application is
-`{managed: ManagedEditRequest, preview_operation_id}`, naming the exact required
-successful managed assessment operation. Revalidate original identity, exact
+`{managed: ManagedEditRequest, preview: {operation_id, key}}`, naming the exact
+required successful managed assessment and its original idempotency key. Revalidate original identity, exact
 candidate/base, complete required sizing or explicit empty-scope assessment,
 server-derived scope and current capability/policy before installation.
 A preview reference is evidence, never
@@ -641,14 +644,55 @@ a transferable authorization token. Configuration documents remain at most 1 MiB
 Apply follows existing exact candidate/base comparisons under the original config
 lock, durable predecessor backup, atomic `0640 root:hfcache` install and exact
 post-install bytes/fingerprint confirmation. The lock is released during Hub
-sizing. Receipt/helper interruption yields explicit unchanged,
-installed-unconfirmed, conflict or unknown reconciliation through original handles;
+sizing. Receipt/helper interruption yields explicit staged, unchanged,
+installed_unconfirmed, confirmed, conflict or unknown observations through original handles;
 it never causes automatic replay, rollback or evidence cleanup. Generic receipts,
 events and results contain no raw configuration or credentials.
 Unknown existing candidate/backup evidence refuses application and is preserved.
 A known predecessor backup tied to a confirmed helper outcome may be superseded
 only after a durable per-operation private copy preserves it; replacing the fixed
 backup never deletes uncertain or unexplained history.
+
+### Guarded configuration application and original outcomes
+
+POST `/config/applications` accepts exactly `ConfigApplicationSubmission`:
+`{managed: {base_revision, edits}, preview: {operation_id, key}}`. Supply a new
+application `Idempotency-Key`, distinct from the preview key. Every change,
+including an empty sizing scope, requires the original successful complete
+managed assessment for the same exact base, candidate and derived scope.
+The preview/key confer no permission. Admission and queued execution recheck the
+current configuration-write grant, independent host policy, protected authority
+and exact candidate identity; nonempty scope also requires Hub permission.
+Apply performs no Hub request and never repeats the preview.
+
+HTTP202 returns the ordinary original operation receipt. Durable admission and
+a fixed transmission-intent event precede helper effects. Canonical request data
+is represented by its digest; raw configuration, credentials, preview keys and
+private helper diagnostics never enter generic receipts/events/results. A
+matching duplicate key returns the original receipt before new helper preparation;
+conflicting data refuses. The fixed helper performs one guarded application under
+the original configuration flock. An existing operation ID is observe-only,
+including another identical apply request. No restart or observation replays it.
+
+GET `/config/applications/{operation_id}` requires configuration-read capability
+and the **application's** original `Idempotency-Key` under the same authenticated
+subject. It returns an Envelope with command `config outcome` and strict
+`ConfigApplicationOutcome` data: `schema_version`, `archive_id`, `operation_id`,
+`request_digest`, nullable `base_revision`, nullable `candidate_revision`, nullable
+`config_fingerprint`, `state` and `pending`. The three nullable identities are
+all present or all null; states other than `unknown` require them. States are
+`staged`, `unchanged`, `installed_unconfirmed`, `confirmed`, `conflict`, `unknown`.
+These are independent host observations, not new generic receipt states.
+Only `confirmed` with `pending=false` establishes a completed application.
+An interrupted generic receipt remains interrupted even when its original
+protected outcome proves confirmation. A later legitimate configuration change
+does not invalidate authenticated historical confirmation.
+
+Missing/corrupt/unknown private history, unresolved outcomes or a surviving
+pending marker block new applications. Reads create no state or lock and perform
+no repair. Do not resubmit with another key, roll back automatically, remove the
+marker, discard a backup or clean private history to unblock work. Preserve the
+original receipt/key and follow the [configuration recovery procedure](web-ui/configuration-and-tags.md#observe-an-interrupted-application).
 
 ### Managed configuration read and assessment responses
 

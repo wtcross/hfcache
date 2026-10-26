@@ -233,7 +233,11 @@ switching; a tag-only edit needs no sizing preview. See [tag rules](../configura
 command takes the retained root configuration flock and compares exact candidate
 and loaded installed-base bytes. An external edit requires reload/revalidation;
 form/text changes invalidate earlier readiness. Server validity, installed
-compatibility and required preview success are displayed separately.
+compatibility and required preview success are displayed separately. During Hub
+sizing the guard releases the original configuration flock, retains bounded CLI
+output privately, then reacquires the same lock and rechecks exact base/candidate
+before returning the result. An intervening edit or pending application marker
+withholds that result without repeating the preview.
 
 Added/retargeted enabled repositories require a successful compatible candidate
 sizing preview before installation. Failed/malformed/uncertain preview does not
@@ -243,7 +247,8 @@ install/backup, required daemon restart and compatible-preview procedure. The
 page never redirects daemon credentials to proposed authority.
 
 **Install validated candidate** rechecks exact candidate/base content and
-readiness under the config flock, preserves `config.toml.bak`, fsyncs and atomically
+readiness under the config flock, refuses any fixed pending application marker,
+preserves `config.toml.bak`, fsyncs and atomically
 renames. It then validates installed policy through the API and requires the exact
 expected operational fingerprint plus exact installed bytes under the retained
 config lock before showing success. A tag-only change has the same policy hash

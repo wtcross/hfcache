@@ -309,7 +309,11 @@ export class ApiClient {
             }
             const decoded = wrapper(raw),
                 result = decoded.response;
-            const historical = contract.path.startsWith("/api/v1/operations/");
+            const configOutcome =
+                contract.path === "/api/v1/config/applications/{operation_id}";
+            const historical =
+                contract.path.startsWith("/api/v1/operations/") ||
+                configOutcome;
             const nullable = [
                 "/api/v1/version",
                 "/api/v1/capabilities",
@@ -321,6 +325,7 @@ export class ApiClient {
                 historical,
                 nullable,
                 nullable ||
+                    configOutcome ||
                     contract.path === "/api/v1/operations" ||
                     contract.path === "/api/v1/host/status",
             );
@@ -349,6 +354,11 @@ export class ApiClient {
                 if (
                     context.managedBaseRevision !== undefined &&
                     payload.base_revision !== context.managedBaseRevision
+                )
+                    throw new WireError("semantic");
+                if (
+                    configOutcome &&
+                    payload.operation_id !== context.operationId
                 )
                     throw new WireError("semantic");
                 if ("operation" in payload)
@@ -435,6 +445,23 @@ export class ApiClient {
             {},
             {},
             options,
+        );
+    }
+    /** Original application key observes host evidence without submitting an effect. */
+    readConfigurationOutcome(
+        operationId: string,
+        idempotencyKey: string,
+        options: ReadOptions = {},
+    ) {
+        return this.read(
+            wire.routeContracts.config_outcome_default,
+            { operation_id: operationId },
+            {},
+            options,
+            { operationId },
+            false,
+            undefined,
+            idempotencyKey,
         );
     }
     readArchiveInspection(options: ReadOptions = {}) {
@@ -861,6 +888,17 @@ export class ApiClient {
         options: SubmissionOptions,
     ) {
         return this.submit(wire.routeContracts.plan_managed, request, options);
+    }
+    /** Requires independent server-side configuration-write permission and preview proof. */
+    submitConfigurationApplication(
+        request: wire.RequestConfigApplicationSubmission,
+        options: SubmissionOptions,
+    ) {
+        return this.submit(
+            wire.routeContracts.config_apply_default,
+            request,
+            options,
+        );
     }
     submitReadOnlyDiagnostics(
         request: wire.RequestReadOnlyDiagnostics,

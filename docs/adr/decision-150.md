@@ -68,6 +68,12 @@ discarded. Full exception logging would disclose untrusted diagnostics and is
 not permitted. These observations change no helper operation, protocol,
 endpoint, capability or SELinux permission and do not establish rootless support.
 
+WEB008 extends the same bounded logger to unexpected per-request failures,
+including escaped inspection failures after an effect. Invalid-input/peer
+protocol refusals and already-answered policy denials remain quiet. Closing an
+exchange still preserves the original uncertain operation; logging neither
+confirms nor replays it.
+
 ### Fixed rootless payload-cgroup refinement (2026-10-24)
 
 The isolated installed Podman6.1 API's original container init and independently
@@ -685,3 +691,10 @@ Amends [141](decision-141.md), [135](decision-135.md),
 transport. Archive/verification, original operation and no-replay invariants
 remain unchanged. See [security](../security.md), [server](../server.md),
 [API](../api.md) and [container roles](../containers.md).
+
+## Guarded application amendment (2026-10-25)
+
+[Decision154](decision-154.md) defines the narrow configuration writer, shared
+legacy guard, durable private outcomes and original-handle read-only observation.
+It supersedes earlier assumptions of a wholly read-only helper for this fixed
+operation; all unrelated authority and original reasoning remain.

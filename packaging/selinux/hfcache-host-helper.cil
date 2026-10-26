@@ -1,4 +1,4 @@
-; hfcache protected host reader policy, source policy version 1.
+; hfcache protected host administration policy, source policy version 1.
 ; Install only by an explicit root provisioning action at priority 400.
 ; The module name is hfcache_host_helper. No runtime read installs policy.
 ; Supported target policy and enforcing role acceptance must be proved.
@@ -11,13 +11,16 @@
 (type hfcache_host_helper_code_t)
 (type hfcache_host_helper_conf_t)
 (type hfcache_host_helper_application_conf_t)
+(type hfcache_host_helper_configuration_dir_t)
+(type hfcache_host_helper_application_state_t)
+(type hfcache_host_helper_configuration_guard_t)
 (type hfcache_host_helper_hub_state_t)
 (type hfcache_host_helper_runtime_t)
 (type hfcache_host_helper_secret_t)
 (type hfcache_host_helper_engine_lock_t)
 (type hfcache_host_helper_engine_shm_t)
 (type hfcache_archive_t)
-(typeattributeset file_type (hfcache_host_helper_exec_t hfcache_host_helper_code_t hfcache_host_helper_conf_t hfcache_host_helper_application_conf_t hfcache_host_helper_hub_state_t hfcache_host_helper_runtime_t hfcache_host_helper_secret_t hfcache_host_helper_engine_lock_t hfcache_host_helper_engine_shm_t hfcache_archive_t))
+(typeattributeset file_type (hfcache_host_helper_exec_t hfcache_host_helper_code_t hfcache_host_helper_conf_t hfcache_host_helper_application_conf_t hfcache_host_helper_configuration_dir_t hfcache_host_helper_application_state_t hfcache_host_helper_configuration_guard_t hfcache_host_helper_hub_state_t hfcache_host_helper_runtime_t hfcache_host_helper_secret_t hfcache_host_helper_engine_lock_t hfcache_host_helper_engine_shm_t hfcache_archive_t))
 (typeattributeset exec_type (hfcache_host_helper_exec_t))
 
 ; Enter once from the system manager and stay confined across all children.
@@ -39,6 +42,8 @@
 (allow init_t hfcache_host_helper_secret_t (file (read open)))
 ; The existing writable runtime bind is also installed before helper exec.
 (allow init_t hfcache_host_helper_runtime_t (dir (mounton)))
+; Fixed /etc/hfcache writable bind; no generic etc write permission.
+(allow init_t hfcache_host_helper_configuration_dir_t (dir (mounton)))
 (typetransition init_t hfcache_host_helper_exec_t process hfcache_host_helper_t)
 (allow hfcache_host_helper_t hfcache_host_helper_exec_t (file (entrypoint getattr open read execute execute_no_trans map)))
 
@@ -63,7 +68,27 @@
 (allow hfcache_host_helper_t hfcache_host_helper_code_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t hfcache_host_helper_code_t (file (getattr open read map)))
 (allow hfcache_host_helper_t hfcache_host_helper_conf_t (file (getattr open read)))
-(allow hfcache_host_helper_t hfcache_host_helper_application_conf_t (file (getattr open read)))
+; ADR154: only the labelled fixed configuration directory and owned files mutate.
+; Original predecessor/backup inodes retain application_conf_t inside private0700.
+(allow hfcache_host_helper_t hfcache_host_helper_configuration_dir_t (dir (getattr search open read write add_name remove_name)))
+(allow hfcache_host_helper_t hfcache_host_helper_application_conf_t (file (getattr open read write create setattr rename unlink)))
+(allow hfcache_host_helper_t hfcache_host_helper_application_state_t (dir (getattr search open read write add_name remove_name create setattr)))
+(allow hfcache_host_helper_t hfcache_host_helper_application_state_t (file (getattr open read write create setattr rename unlink)))
+(allow hfcache_host_helper_t hfcache_host_helper_configuration_guard_t (file (getattr open read write create setattr unlink lock)))
+(typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t file hfcache_host_helper_application_conf_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t file ".configuration.lock" hfcache_host_helper_configuration_guard_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t file ".configuration.pending" hfcache_host_helper_configuration_guard_t)
+; Legacy root Cockpit/CLI publications use the same parent and persistent guard.
+; Transitions assign types only; they add no unconfined-domain access grant.
+(typetransition unconfined_t hfcache_host_helper_configuration_dir_t file hfcache_host_helper_application_conf_t)
+(typetransition unconfined_t hfcache_host_helper_configuration_dir_t file ".configuration.lock" hfcache_host_helper_configuration_guard_t)
+(typetransition unconfined_t hfcache_host_helper_configuration_dir_t file ".configuration.pending" hfcache_host_helper_configuration_guard_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t dir hfcache_host_helper_application_state_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_application_state_t dir hfcache_host_helper_application_state_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_application_state_t file hfcache_host_helper_application_state_t)
+(neverallow container_t hfcache_host_helper_application_state_t (dir (search read write add_name remove_name)))
+(neverallow container_t hfcache_host_helper_application_state_t (file (open read write map execute)))
+(neverallow container_t hfcache_host_helper_configuration_guard_t (file (open read write map execute)))
 (allow hfcache_host_helper_t hfcache_host_helper_runtime_t (dir (getattr search open read write add_name remove_name create setattr)))
 (allow hfcache_host_helper_t hfcache_host_helper_runtime_t (file (getattr open read write append create setattr unlink lock)))
 (allow hfcache_host_helper_t hfcache_host_helper_runtime_t (sock_file (getattr open read write create setattr unlink)))
@@ -211,6 +236,7 @@
 (allow hfcache_host_helper_t container_var_run_t (sock_file (getattr read write)))
 
 ; Fixed shared config is read-only; mutable Hub state stays helper-denied.
+(allow container_t hfcache_host_helper_configuration_dir_t (dir (getattr search open read)))
 (allow container_t hfcache_host_helper_application_conf_t (file (getattr open read)))
 (allow container_t hfcache_host_helper_hub_state_t (dir (getattr search open read write add_name remove_name create setattr rmdir)))
 (allow container_t hfcache_host_helper_hub_state_t (file (getattr open read write append create setattr unlink rename link lock map)))

@@ -33,8 +33,10 @@ cap at 200 whole lines within 64 KiB. UTF-8 counting handles split surrogate pai
 display truncation never turns a partial line into a plausible handle/event.
 
 Under persistent root-owned `0600` `/etc/hfcache/.configuration.lock`, compare
-exact candidate content and the installed base bytes through validation/required
-preview and before installation. Candidate bytes are bounded inert stdin, never
+exact candidate content and the installed base bytes before/after validation and
+required preview, and before installation. Release the flock during Hub preview,
+capture its bounded stdout, then reacquire the same lock and recheck both exact
+documents before releasing that result. Candidate bytes are bounded inert stdin, never
 shell code. Edits invalidate readiness. Syntax validity, compatible authority,
 preview success and exact installed content and operational fingerprint confirmation are separate gates;
 incompatible/unknown authority blocks plugin installation and explains the manual
@@ -418,8 +420,15 @@ or preview readiness ([decision 119](adr/decision-119.md)).
 Every pipeline command takes the persistent root-owned `0600`
 `/etc/hfcache/.configuration.lock` flock. Compare the expected candidate and
 loaded installed-base bytes while holding it; refuse changed content rather than
-borrow earlier validation/preview. Hold the lock through that command and its
-atomic changes. Each candidate/base document is at most 1 MiB of complete UTF-8
+borrow earlier validation/preview. Hold the lock through local validation and
+atomic changes. For a network preview, release it before invoking the original
+CLI, capture bounded stdout privately, then reacquire the same original inode and
+recheck its pathname/metadata plus exact installed/candidate bytes before
+returning any captured result. A concurrent edit/pending marker withholds that
+result without replaying the original request. Legacy write/install/remove check
+the fixed `.configuration.pending` marker under the same flock and refuse while
+it exists, including unsafe/symlink forms. Reads remain available and never clear
+that marker. Each candidate/base document is at most 1 MiB of complete UTF-8
 without NUL. Payloads travel as bounded inert stdin, never shell interpolation or
 generic executable/path input. Cockpit's text channel carries exactly two
 canonical base64 lines, each followed by LF: candidate, then installed base.
@@ -449,7 +458,8 @@ The pipeline, in order (`CP-11`):
    mismatch field names without credential values. Valid incompatible/unknown
    authority remains valid syntax but blocks plugin installation.
 3. **Preview when required.** Added/retargeted enabled repositories require a
-   successful API-backed candidate `plan` under the same exact-content/base guard.
+   successful API-backed candidate `plan` with exact-content/base checks before
+   and after the unlocked network observation.
    Planning uses installed authority/credentials, cannot install policy and grants
    no later apply authority. Failed/malformed/uncertain preview leaves install
    disabled; edits invalidate a prior preview.

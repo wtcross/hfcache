@@ -73,6 +73,7 @@ src = ["src", "tests"]
 "scripts/prepare-host-helper.py" = "py312"
 "src/hfcache/host_protocol.py" = "py312"
 "src/hfcache/host_policy.py" = "py312"
+"src/hfcache/host_configuration.py" = "py312"
 "src/hfcache/host_peer.py" = "py312"
 "src/hfcache/host_helper_client.py" = "py312"
 

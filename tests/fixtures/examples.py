@@ -27,6 +27,7 @@ from hfcache.catalog_models import (
 from hfcache.config_models import (
     EDITABLE_FIELDS,
     PROTECTED_FIELDS,
+    ConfigApplicationOutcome,
     ConfigRead,
     ManagedAssessment,
     ManagedValidation,
@@ -691,6 +692,20 @@ def managed_assessment() -> ManagedAssessment:
         required_selectors=(),
         complete=True,
         sizing=None,
+    )
+
+
+def configuration_application_outcome() -> ConfigApplicationOutcome:
+    return ConfigApplicationOutcome(
+        schema_version=1,
+        archive_id=ARCHIVE_ID,
+        operation_id=RUN,
+        request_digest="c" * 64,
+        base_revision="a" * 64,
+        candidate_revision="b" * 64,
+        config_fingerprint=FINGERPRINT,
+        state="confirmed",
+        pending=False,
     )
 
 

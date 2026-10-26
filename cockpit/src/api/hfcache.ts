@@ -56,7 +56,7 @@ async function observeHfcache(command: string[], options: RunOptions & ClientCom
         ? guardInstalledInvocation(argv, options.confirmInstalledContent)
         : options.candidateGuard === undefined
             ? undefined
-            : guardCandidateInvocation(argv, options.candidateGuard);
+            : guardCandidateInvocation(argv, options.candidateGuard, undefined, command[0] === 'plan');
     const envelope = await runSpawned(guarded?.argv ?? argv, arguments_ => {
         // Merge bounded CLI progress/handle notices with terminal stdout; the
         // independent collector never mistakes them for result authority.

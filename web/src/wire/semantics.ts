@@ -188,6 +188,7 @@ const jobs = new Set(
         "repairs",
         "archive/initializations",
         "catalog/refreshes",
+        "config/applications",
     ].map((item) => "/api/v1/" + item),
 );
 const exitCodes = new Set([0, 10, 20, 30, 40, 50]);

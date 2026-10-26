@@ -28,6 +28,7 @@ JOB_ROUTES = frozenset(
         "repairs",
         "archive/initializations",
         "catalog/refreshes",
+        "config/applications",
     )
 )
 

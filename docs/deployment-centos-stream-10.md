@@ -357,6 +357,16 @@ pass. Prototype/source tests do not establish installed helper/API support.
 The existing UBI10 micro API image serves the UI, REST and MCP through the same
 Caddy; there is no frontend image/server or runtime Node installation.
 
+For guarded managed configuration application, install the matching protected
+`host_configuration.py` module and refreshed helper unit/CIL/index/SELinux receipt
+as part of the same reviewed helper upgrade. Provision the narrow configuration
+directory, private-state and guard contexts, retaining the original flock inode
+and any pending/history evidence. The helper adds the existing `hfcache`
+supplementary group and fixed `/etc/hfcache` writable bind, without new capabilities
+or API writable mounts. Never recursively relabel or clean private outcomes to
+unblock an upgrade. Follow the [helper provisioning procedure](web-ui/deployment.md#install-the-protected-host-reader)
+and [application interruption procedure](web-ui/configuration-and-tags.md#observe-an-interrupted-application).
+
 ## Upgrade and drain
 
 Stage beside the retained predecessor and verify compatible policy/artifacts before

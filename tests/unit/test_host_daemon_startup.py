@@ -179,10 +179,13 @@ def test_steady_state_must_actually_match_after_successful_syscalls(monkeypatch,
         ((0, 0, 0), (983, 983, 983), [], False),
         ((983, 983, 983), (0, 0, 0), [], False),
         ((983, 983, 983), (983, 983, 983), [983], False),
-        ((0, 0, 0), (0, 0, 0), [983], False),
+        ((0, 0, 0), (0, 0, 0), [983], True),
+        ((0, 0, 0), (0, 0, 0), [0, 983], True),
+        ((0, 0, 0), (0, 0, 0), [984], False),
     ],
 )
 def test_startup_ids_reject_mixed_or_extra_principals(monkeypatch, uids, gids, groups, valid):
+    monkeypatch.setattr(daemon.grp, "getgrnam", lambda _name: SimpleNamespace(gr_gid=983))
     monkeypatch.setattr(
         daemon,
         "os",

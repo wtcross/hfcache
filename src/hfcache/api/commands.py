@@ -120,7 +120,7 @@ def _accepted(request: Request, admission: Admission, server: ServerConfig) -> R
     )
 
 
-async def offload_command(request: Request, work: Callable[[], Response]) -> Response:
+async def offload_command[ResultT](request: Request, work: Callable[[], ResultT]) -> ResultT:
     lease = request.app.state.pool.submit(work)
     request.state.metadata_leases.append(lease)
     return await lease.future

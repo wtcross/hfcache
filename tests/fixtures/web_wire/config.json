@@ -21,7 +21,9 @@
           "enabled": true,
           "id": "organization/model-name",
           "revision": "main",
-          "tags": ["coding"],
+          "tags": [
+            "coding"
+          ],
           "type": "model"
         }
       ],
@@ -95,7 +97,9 @@
             "enabled": true,
             "id": "organization/model-name",
             "revision": "main",
-            "tags": ["coding"],
+            "tags": [
+              "coding"
+            ],
             "type": "model"
           }
         },
@@ -131,5 +135,16 @@
     "required_selectors": [],
     "schema_version": 1,
     "valid": true
+  },
+  "application_outcome": {
+    "schema_version": 1,
+    "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+    "operation_id": "4c1e8a55b0d24f1e9a3c7d2b6f80e114",
+    "request_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "base_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "candidate_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "config_fingerprint": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "state": "confirmed",
+    "pending": false
   }
 }

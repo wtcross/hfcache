@@ -341,8 +341,11 @@ History: `synchronization` (`54e4671`), decision 94.
   [Decision153](adr/decision-153.md) adds nonsecret managed configuration reads,
   full-byte HMAC concurrency and privately reconstructed exact validation/preview.
   Hidden authority is preserved; empty scope is an explicit no-Hub assessment.
-  Installation retains [decision141](adr/decision-141.md)'s separate original-lock,
-  durable outcome and no-replay requirements.
+  [Decision154](adr/decision-154.md) requires the original persistent configuration
+  flock, exact-byte base/candidate checks, successful bound preview, durable
+  private predecessor/outcome evidence and exact installed confirmation. Unknown
+  effects are observed through their original handles without replay, rollback
+  or uncertain cleanup. The narrow host writer adds no archive/credential authority.
 - **`INV-002` — Credentials have only explicit sources and never become
   evidence.** Accept only an explicit token file or systemd credential, with
   the documented precedence and file validation. Disable ambient discovery;

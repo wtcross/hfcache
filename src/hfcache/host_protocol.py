@@ -35,6 +35,7 @@ WRITE_SECONDS = 2.0
 CLIENT_SECONDS = 22.0
 MAX_EXCHANGES = 8
 MAX_MANAGED_EDITS = 256
+MAX_SELECTOR_CHARS = 256
 SO_PEERPIDFD = 77
 SCM_PIDFD = 4
 _HEADER = struct.Struct("!I")
@@ -65,7 +66,9 @@ _REASONS = frozenset(
         "internal-unavailable",
     }
 )
-_OPERATIONS = frozenset({"status", "config-read", "config-prepare"})
+_OPERATIONS = frozenset(
+    {"status", "config-read", "config-prepare", "config-apply", "config-outcome"}
+)
 # Linux limits one SCM_RIGHTS message to253 FDs. Leave room for credentials,
 # all such FDs and an unexpected pidfd; MSG_CTRUNC still always refuses.
 _ANCILLARY_BYTES = socket.CMSG_SPACE(_CREDENTIALS.size) + socket.CMSG_SPACE(254 * 4)
@@ -209,6 +212,17 @@ def encode_object(value: dict[str, object]) -> bytes:
     return result
 
 
+def _hex_field(value: object, width: int) -> None:
+    _need(type(value) is str and re.fullmatch(r"[0-9a-f]{" + str(width) + "}", value))
+
+
+def _managed_request(value: object) -> None:
+    _need(type(value) is dict and set(value) == {"base_revision", "edits"})
+    body = cast("dict[str, object]", value)
+    _hex_field(body["base_revision"], 64)
+    _need(type(body["edits"]) is list and len(body["edits"]) <= MAX_MANAGED_EDITS)
+
+
 @dataclass(frozen=True)
 class HostRequest:
     request_id: str
@@ -226,12 +240,35 @@ class HostRequest:
         _need(type(body) is dict)
         body = cast("dict[str, object]", body)
         if operation == "config-prepare":
-            _need(set(body) == {"base_revision", "edits"})
-            _need(
-                type(body["base_revision"]) is str
-                and re.fullmatch(r"[0-9a-f]{64}", body["base_revision"])
-            )
-            _need(type(body["edits"]) is list and len(body["edits"]) <= MAX_MANAGED_EDITS)
+            _managed_request(body)
+        elif operation in {"config-apply", "config-outcome"}:
+            expected = {"operation_id", "request_digest"}
+            if operation == "config-apply":
+                expected |= {
+                    "managed",
+                    "candidate_revision",
+                    "config_fingerprint",
+                    "preview_operation_id",
+                    "required_selectors",
+                }
+            _need(set(body) == expected)
+            _hex_field(body["operation_id"], 32)
+            _hex_field(body["request_digest"], 64)
+            if operation == "config-apply":
+                _managed_request(body["managed"])
+                _hex_field(body["candidate_revision"], 64)
+                _hex_field(body["config_fingerprint"], 64)
+                _hex_field(body["preview_operation_id"], 32)
+                selectors = body["required_selectors"]
+                _need(type(selectors) is list and len(selectors) <= MAX_MANAGED_EDITS)
+                selectors = cast("list[str]", selectors)
+                _need(
+                    all(
+                        type(value) is str and 1 <= len(value) <= MAX_SELECTOR_CHARS
+                        for value in selectors
+                    )
+                )
+                _need(len(selectors) == len(set(selectors)))
         else:
             _need(not body)
         return cls(cast("str", request_id), cast("str", operation), cast("dict[str, object]", body))

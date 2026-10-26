@@ -167,3 +167,10 @@ or a running payload. No new transport, capability or credential authority follo
 
 [Decision 141](decision-141.md) amends this record for the accepted
 replacement design. Accepted replacement helper design preserves exact config guards, original handles and protected host authority. The current Cockpit transport remains until implemented replacement and conditional retirement are accepted.
+
+## Guarded application amendment (2026-10-25)
+
+[Decision154](decision-154.md) defines the narrow configuration writer, shared
+legacy guard, durable private outcomes and original-handle read-only observation.
+It supersedes earlier assumptions of a wholly read-only helper for this fixed
+operation; all unrelated authority and original reasoning remain.

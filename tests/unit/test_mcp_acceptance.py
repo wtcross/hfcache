@@ -19,6 +19,7 @@ from tests.unit.test_mcp_tools import MCP, snapshot
 from tests.unit.test_mcp_tools import archive as archive  # noqa: PLC0414 - shared fixture
 from tests.unit.test_mcp_transport import INITIALIZE
 from tests.unit.test_rest_security_gate import (
+    ADMIN_POST_PATHS,
     ADMIN_READ_PATHS,
     ROUTES,
     WRITER_POSTS,
@@ -52,7 +53,9 @@ def assert_rest_role_outcome(method, path, token, outcome):
     status, payload, received, _ = outcome
     if method == "POST":
         writer_only = path.removeprefix("/api/v1") in WRITER_POSTS
-        denied = token == READER and writer_only
+        denied = path.removeprefix("/api/v1") in ADMIN_POST_PATHS or (
+            token == READER and writer_only
+        )
         assert status == (403 if denied else 422), (path, payload)
         assert received == (0 if denied else 1)
     elif path.removeprefix("/api/v1") in ADMIN_READ_PATHS:

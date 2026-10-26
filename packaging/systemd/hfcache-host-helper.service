@@ -1,7 +1,7 @@
-# Protected administrative reads; decision150. No archive/Hub authority.
+# Protected host administration; decisions150/154. No archive/Hub authority.
 # Provision the independent policy/index/key and protected bootstrap copies first.
 [Unit]
-Description=hfcache protected host administration reader
+Description=hfcache protected host administration helper
 Documentation=file:///opt/hfcache/current/docs/host-administration.md
 After=local-fs.target
 PartOf=hfcache.target
@@ -11,6 +11,7 @@ Type=notify
 NotifyAccess=main
 User=root
 Group=root
+SupplementaryGroups=hfcache
 SELinuxContext=system_u:system_r:hfcache_host_helper_t:s0
 UMask=0027
 ExecStart=/usr/local/libexec/hfcache-host-helper serve
@@ -44,7 +45,7 @@ SystemCallArchitectures=native
 RestrictAddressFamilies=AF_UNIX
 IPAddressDeny=any
 InaccessiblePaths=-/srv/hfcache -/run/credentials -/run/secrets -/etc/credstore -/etc/credstore.encrypted -/etc/hfcache/credentials -/var/lib/hfcache/hf-home -/var/cache/hfcache -/var/lib/hfcache/.local/share/containers/storage/secrets
-ReadWritePaths=/run/hfcache-host-helper -/run/user -/var/lib/hfcache/.local/share/containers
+ReadWritePaths=/etc/hfcache /run/hfcache-host-helper -/run/user -/var/lib/hfcache/.local/share/containers
 
 [Install]
 WantedBy=hfcache.target

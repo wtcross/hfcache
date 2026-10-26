@@ -94,7 +94,7 @@ export function decodeGuardedInput(value: string): readonly [string, string] {
 export class ProcessBoundary {
     private static sequence = 0;
     readonly argv: string[];
-    readonly action: 'schedule-validate' | 'schedule-remove' | 'profile' | 'cli' | 'read' | 'inspect' | 'write' | 'install' | 'remove' | 'guard' | 'confirm';
+    readonly action: 'schedule-validate' | 'schedule-remove' | 'profile' | 'cli' | 'read' | 'inspect' | 'write' | 'install' | 'remove' | 'guard' | 'preview' | 'confirm';
     readonly clientArgv: string[] | null;
     readonly command: readonly string[];
     readonly key: string | null;
@@ -139,13 +139,13 @@ export class ProcessBoundary {
             const expected = readInstalledInvocation().argv;
             const action = argv[4];
             invariant(action === 'read' || action === 'inspect' || action === 'write' ||
-                      action === 'install' || action === 'remove' || action === 'guard' || action === 'confirm',
+                      action === 'install' || action === 'remove' || action === 'guard' || action === 'preview' || action === 'confirm',
                       'Only fixed configuration guard actions are permitted');
             expected[4] = action;
             invariant(expected.every((argument, index) => argument === argv[index]),
                       'Actual guarded adapter must retain the exact trusted script, paths and identity');
             this.action = action;
-            const client = action === 'guard' || action === 'confirm';
+            const client = action === 'guard' || action === 'preview' || action === 'confirm';
             invariant(client || argv.length === expected.length, 'Host-only guard must contain no command tail');
             this.clientArgv = client ? argv.slice(expected.length) : null;
             if (this.clientArgv !== null) {
@@ -157,9 +157,10 @@ export class ProcessBoundary {
                 } else {
                     invariant(parsed.config === CONFIGURATION_PATHS.candidate,
                               'Candidate CLI must select only the fixed candidate path');
-                    invariant(parsed.command[0] === 'plan' ||
-                              (parsed.command.join(' ') === 'config validate' && parsed.key === null),
-                              'Only candidate validation and sizing may use the guard');
+                    invariant(action === 'preview'
+                        ? parsed.command[0] === 'plan' && parsed.key !== null
+                        : parsed.command.join(' ') === 'config validate' && parsed.key === null,
+                              'Candidate validation and keyed sizing must use their exact guard actions');
                 }
             }
             invariant(options.superuser === 'require' && options.err === (client ? 'out' : 'message'),
