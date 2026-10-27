@@ -1,10 +1,123 @@
-# Observe and recover original operations
+# Run, observe and recover operations
 
-The unreleased interface supports read-only observation and recovery of original
-operation handles. Full job forms and the complete Operations workspace remain
-under development. Existing [API and CLI submission](../api-client.md#submission-and-observation)
-procedures retain their own authorization requirements. Opening this guide or
-importing a handle submits no work.
+The unreleased Operations workspace submits supported jobs through the existing
+API and observes their original receipts, results, events and run reports.
+Opening Operations performs no job submission; history and estimates are explicit
+reads. [API and CLI submissions](../api-client.md#submission-and-observation)
+retain their own credential and authorization requirements. Check the installed
+release and [access guidance](README.md) before following these procedures.
+
+## Choose a job and its effects
+
+In **Jobs**, choose **Job**, review **Selected job effects**, then choose
+**Submit job** only for the intended scope. **Job permissions** offers an optional
+**Read job permission evidence** read when host-read is available. It shows the
+observed effective archive/Hub permissions, refusal reasons and guard state;
+opening the workspace does not read it automatically. That cached observation
+is informational, never authorization or an extra prerequisite for a job. The displayed REST capability is an
+explanation, not a grant: Basic jobs also require a fresh protected host binding
+and the relevant permission at admission and again before execution. An
+unavailable helper, held guard or changed scope can refuse a request even when
+read-only metadata is available. Do not switch credentials or repeat a request
+to work around a refusal.
+
+| Job | Scope and actual effects |
+| --- | --- |
+| Installed sizing | Installed configured repositories or explicit selectors. Contacts the configured Hub for metadata and sizing; creates an operation receipt, without downloading model content, changing configuration or writing archive data. Requires Hub permission. |
+| Candidate file sizing | Repositories in the selected candidate file or explicit selectors, using compatible installed archive/Hub authority. Sizing does not install that file or grant Apply readiness. Requires write capability and Hub permission. |
+| Sync | Installed full or selected configured scope. May download, publish immutable revisions, refresh metadata and enforce installed retention policy. Requires archive permission and real storage/lock checks. |
+| Verification | The private offline worker hashes the selected archive scope and persists verification reports/catalog evidence. No Hub, repair, pruning or automatic healing. Requires archive permission. |
+| Diagnostics: Read-only checks | Contacts the Hub and reports checks that can be established without archive-write probes or the common archive lock. It remains a keyed job and requires Hub permission. Skipped probes are not proved successful. |
+| Diagnostics: Temporary archive probes | Contacts the Hub and performs bounded temporary health probes under the existing archive lock; it does not synchronize repositories. Requires Hub and archive permissions. |
+| Refresh offline metadata | Writes supplemental tags/technical observations/cards for the selected current or retained publications, without Hub downloads, payload verification, repair or purge. Full scope includes configured and archived identities. Requires archive permission. |
+
+For Installed sizing or Sync, choose **All configured repositories** or
+**Selected repositories**. Candidate file sizing instead offers **All candidate
+repositories**; full refresh offers **All configured and archived repositories**.
+Enter exact selectors in **Repository selectors (one per line)**, for example
+`model:example/model-name` and `dataset:example/dataset-name`. These are synthetic
+syntax examples, not recommendations or existing archive facts. The browser
+accepts at most100 selectors of at most256 characters and a1MiB encoded JSON
+request. Changing action or scope never submits work. Empty selected scope is
+invalid; it does not silently become a whole-archive job.
+
+**Candidate TOML file for sizing** reads a file into RAM, at most1MiB of strict
+UTF-8, with the entire encoded JSON request also at most1MiB. Escaping/selectors
+can make a source-sized file exceed the request ceiling. The page shows only its
+filename and byte count, never its contents. It neither edits, exports, installs
+nor saves the file in browser storage. Use **Clear selected file** to release it.
+A syntactically valid file may still be incompatible with installed protected
+authority. **Plan configuration draft** instead opens the existing
+[managed configuration editor](configuration-and-tags.md); no uploaded candidate
+is copied into that draft.
+
+### Verification and metadata scope
+
+For **Verification**, choose exactly one mode:
+
+- **New publications** uses **Original sync run ID (optional)**, a32-character
+  domain run ID from a real sync result. It is not the operation or request ID.
+  Leaving it empty uses the server's existing new-publication selection.
+- **All retained publications** checks every retained revision in the archive,
+  including unmanaged repositories.
+- **Exact revision** uses **Exact revision (TYPE:namespace/name@SHA)** with the
+  full40-character immutable commit SHA. It selects a retained revision, not an
+  arbitrary filesystem path.
+
+**Read verification estimate** is a GET: no job admission, hash read, archive
+lock or verification finding. Unknown throughput/duration stays **Unknown**;
+logical unique-byte counts are not physical allocation or progress percentages.
+The estimate does not establish writability or the absence of storage maintenance.
+
+For **Refresh offline metadata**, choose **Current publications** or
+**Retained publications**, and at least one of **Refresh configured tags** and
+**Refresh technical metadata**. Technical capture can read bounded manifest-bound
+metadata and README source; it does not load a model/dataset or raise integrity
+confidence. Unpublished, partial, unsupported and failed records remain explicit.
+See [refresh semantics](../discovery.md#transport-and-refresh-boundary).
+
+## Inspect operation results and run reports
+
+A202 means durable admission. Use the original handle below to observe execution;
+**Latest original job** does not turn admission into completion. Clearing local
+job input, changing workspace, reloading or stopping observation never cancels
+backend work or creates another POST. There is no executor Cancel control.
+
+In **Operation and run history**, choose **Read history**. **Operation receipts**
+and **Archive run reports** are separate bounded collections. Use **Inspect
+operation** for the exact receipt/result and **Read run report** for the selected
+domain run. **Read domain run report** also follows a validated result's run ID.
+Some commands create a run identity without a durable archive report; a missing
+report does not rewrite the original operation result.
+
+Each operation/run page has at most25 rows, with **Previous operations**/**Next
+operations** and **Previous runs**/**Next runs**. The browser keeps at most32
+cursor positions; it does not scan the whole store. A stale cursor requires an
+explicit **Read history** restart, not a hidden all-page retry. Loaded extent is
+not a complete archive or repository audit, and selecting a receipt does not
+establish ownership of its submission key.
+Visible ready rows and the loaded extent describe the same page. A loading view
+does not establish an empty archive or a complete history count.
+
+**Validated event page** and **Next events** expose bounded diagnostic events.
+Sequence gaps/dropped prefixes remain visible; events and host journals never
+substitute for the exact command result. A report's repository/findings lists
+page locally25 rows at a time; this does not extend the server history walk.
+Report identity and historical policy remain attached to their domain run, even
+when current configuration has changed.
+
+| Result | Interpretation and safe action |
+| --- | --- |
+| Queued / waiting_lock / running | Authenticated execution states, without a terminal outcome. Observe the original operation within its finite read budget. |
+| Success / success with warnings | Keep the actual result, warnings and per-repository outcomes. A successful read or admission alone is insufficient. |
+| Busy / HFMNT010 | The common archive lock was not acquired in time. This is a benign busy refusal, not an integrity finding. Identify the real executor; never unlink a lock or automatically retry the job. |
+| Partial / repository failure | Preserve successful and failed repository entries and their codes. Partial information is useful evidence, not successful completion of omitted work. |
+| Integrity finding | Review the exact revision, file, expected/observed evidence and report. Do not infer healing or blindly sync, prune or repair; use the authorized [integrity/recovery procedures](../recovery.md). |
+| Interrupted / missing / unavailable | Keep original handles and use the recovery procedure below. No replacement submission, inferred rollback or empty success follows. |
+
+No byte percentage is invented from elapsed time, file count or an incomplete
+event stream. A valid failed domain Envelope can arrive over HTTP200; its original
+exit code, errors, warnings and validated partial data remain visible.
 
 ## Keep the original handle
 

@@ -316,10 +316,12 @@ class ObservationFile:
         os.fsync(self.directory)
         self.checkpoint("after_directory_fsync")
 
-    def complete(self) -> None:
+    def complete(self, *, check_stop: Callable[[], None] | None = None) -> None:
         self.check()
         self.checkpoint("before_unlink")
         self.check()
+        if check_stop is not None:
+            check_stop()
         os.unlink("pending.json", dir_fd=self.directory)
         self.checkpoint("after_unlink")
         os.fsync(self.directory)
@@ -382,14 +384,17 @@ def _authenticate(client: ApiClient, *, recovering: bool, sleep: Callable[[float
         return
 
 
-def _await_terminal(
+def _await_terminal(  # noqa: PLR0913 - exact read, persistent handle and cooperative stop
     client: ApiClient,
     operation_id: str,
     command: Command,
     state: ObservationFile,
     sleep: Callable[[float], None],
+    *,
+    check_stop: Callable[[], None],
 ) -> Envelope:
     while True:
+        check_stop()
         try:
             result = client.observe(operation_id).envelope
         except ClientConnectionError:
@@ -397,7 +402,11 @@ def _await_terminal(
             continue
         if result.command != ("sync" if command == "sync" else "verify --full"):
             raise _unsafe()
-        state.complete()
+        # HTTP response/connection contexts have closed before this owned
+        # checkpoint. A stop retains the original handle, even if the read
+        # concurrently obtained a terminal result.
+        check_stop()
+        state.complete(check_stop=check_stop)
         return result
 
 
@@ -411,8 +420,10 @@ def run_scheduled(  # noqa: PLR0913 - explicit injection seams for durable bound
     checkpoint: Callable[[str], None] | None = None,
     on_key: Callable[[str], None] | None = None,
     on_accepted: Callable[[str], None] | None = None,
+    check_stop: Callable[[], None] | None = None,
 ) -> Envelope:
     """Observe one fixed scheduled intention; an old record never authorizes POST."""
+    check_stop = check_stop or (lambda: None)
     binding = _binding(config, command)
     try:
         with ObservationFile(state_directory, checkpoint) as state:
@@ -421,8 +432,10 @@ def run_scheduled(  # noqa: PLR0913 - explicit injection seams for durable bound
                 getattr(existing, name) != value for name, value in binding.items()
             ):
                 raise _unsafe()
+            check_stop()
             with client_factory(config) as client:
                 _authenticate(client, recovering=existing is not None, sleep=sleep)
+                check_stop()
                 handle = existing
                 if handle is None:
                     handle = ScheduledObservation.model_validate(
@@ -430,6 +443,7 @@ def run_scheduled(  # noqa: PLR0913 - explicit injection seams for durable bound
                     )
                     state.write(handle)
                     state.check()
+                    check_stop()
                     try:
                         submitted = client.submit(
                             _ROUTES[command],
@@ -459,7 +473,9 @@ def run_scheduled(  # noqa: PLR0913 - explicit injection seams for durable bound
                     on_accepted(handle.operation_id)
                 if handle != existing:
                     state.write(handle)
-                return _await_terminal(client, handle.operation_id, command, state, sleep)
+                return _await_terminal(
+                    client, handle.operation_id, command, state, sleep, check_stop=check_stop
+                )
     except OSError, ValueError:
         raise _unsafe() from None
 
@@ -478,8 +494,10 @@ def main() -> int:
 
     def observer_sleep(seconds: float) -> None:
         check_stop()
-        time.sleep(seconds)
-        check_stop()
+        deadline = time.monotonic() + seconds
+        while (remaining := deadline - time.monotonic()) > 0:
+            time.sleep(min(remaining, 0.1))
+            check_stop()
 
     def create_client(config: ClientConfig) -> ApiClient:
         check_stop()
@@ -496,7 +514,6 @@ def main() -> int:
     def terminate(_number: int, _frame: FrameType | None) -> None:
         nonlocal stop_requested
         stop_requested = True
-        raise KeyboardInterrupt
 
     previous_handlers = {
         number: signal.getsignal(number) for number in (signal.SIGINT, signal.SIGTERM)
@@ -513,6 +530,7 @@ def main() -> int:
                 sleep=observer_sleep,
                 on_key=key_notice,
                 on_accepted=accepted_notice,
+                check_stop=check_stop,
             )
         except HfcacheError as error:
             sys.stderr.write(str(error) + "\n")

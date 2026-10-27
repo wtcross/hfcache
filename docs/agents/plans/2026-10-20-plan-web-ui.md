@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-015 (this commit); WEB-016 is next |
+| Latest completed package | WEB-016 (this commit); WEB-017 is pending next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3766,3 +3766,21 @@ are complete; all original roles/Hub drain normally. Task015 retains exact pins,
 all failed attempts, source3 Firefox-origin fix and scoped native owned-RO-NFS
 limits. Continue WEB-016; later platform/parity/rollback/final acceptance and
 production rollout remain separate. No production/NAS/live Cockpit/publication.
+
+
+2026-10-26: WEB-016 completes existing jobs and exact operation and run reports.
+Strict gate 4 passes in 1781.806 seconds on unchanged source 7fa3bb9f… / 1473
+inputs, with 8608 backend tests, 3557 web unit tests, 3799 combined frontend tests,
+required Cockpit, build, wheel, browser and documentation checks, and zero required
+skips. Fresh installed native .36 acceptance passes all 47 current cases: 36 normal
+browser cases, nine busy, partial and integrity cases across three engines, and
+two actual SDK signal stops. Exact results and reports, bounded history paging,
+true lost-response original-key recovery and backend continuation are proved.
+Final integrity damage remains unhealed. The source, wheel, UI and shared UBI 10
+micro image match, with no runtime Node. All original roles drain, and 667 old
+fixture objects and five baseline pairs remain unchanged. Task016 retains exact
+current hashes, earlier failed gates and cohorts, and SDK1's unchanged false
+collector result with separate retrospective closure. OPS06–09 and human guidance
+are complete. WEB-017 remains pending for activation after this commit.
+Production, NAS, new rootless UI, WEB022 platform, parity, final acceptance and
+rollout remain separate. No merge, push or tag action occurred.

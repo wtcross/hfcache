@@ -59,7 +59,11 @@ function queryParts(descriptor: QueryDescriptor): {
     publication: ExactPublication | undefined;
 } {
     const contract = routeContracts[descriptor.routeId];
-    if (contract.method !== "GET" || contract.responseKind !== "read")
+    if (
+        contract.method !== "GET" ||
+        (contract.responseKind !== "read" &&
+            contract.responseKind !== "operation_result")
+    )
         throw new WireError("schema");
     const path = contract.decodePath(
         parseWireJson(serializeRequestJson(descriptor.path ?? {})),

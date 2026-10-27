@@ -253,6 +253,87 @@ def test_key_is_durable_before_the_only_post(configured, tmp_path):
     )
 
 
+def test_cooperative_stop_after_key_persistence_prevents_fresh_post(configured, tmp_path):
+    writer, stopped = Writer(configured), Event()
+    state = tmp_path / "state"
+
+    def checkpoint(name):
+        if name == "after_directory_fsync":
+            stopped.set()
+
+    def check_stop():
+        if stopped.is_set():
+            raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        run_scheduled(
+            configured,
+            "sync",
+            state,
+            client_factory=writer.factory,
+            checkpoint=checkpoint,
+            check_stop=check_stop,
+        )
+    original = (state / "pending.json").read_bytes()
+    assert json.loads(original)["operation_id"] is None
+    assert {request.method for request in writer.requests} == {"GET"}
+    with pytest.raises(RemoteApiError):
+        run_scheduled(configured, "sync", state, client_factory=writer.factory)
+    assert (state / "pending.json").read_bytes() == original
+    assert {request.method for request in writer.requests} == {"GET"}
+
+
+@pytest.mark.parametrize("exit_code", [0, 30])
+@pytest.mark.parametrize("stop_stage", ["terminal_read", "before_unlink"])
+def test_cooperative_stop_after_terminal_read_preserves_original_handle(
+    configured, tmp_path, exit_code, stop_stage
+):
+    state = tmp_path / "state"
+    handle = install_handle(state, configured)
+    original = (state / "pending.json").read_bytes()
+
+    class TerminalWriter(Writer):
+        def receipt(self, state=None):
+            return super().receipt(state or ("failed" if self.fail else "succeeded"))
+
+    writer, stopped = TerminalWriter(configured, fail=exit_code), Event()
+    writer.admitted, writer.key = True, handle.idempotency_key
+
+    class StopAfterRead(ApiClient):
+        def observe(self, *args, **kwargs):
+            result = super().observe(*args, **kwargs)
+            # The real typed client has exited its response contexts.
+            if stop_stage == "terminal_read":
+                stopped.set()
+            return result
+
+    def checkpoint(name):
+        if stop_stage == "before_unlink" and name == "before_unlink":
+            stopped.set()
+
+    def check_stop():
+        if stopped.is_set():
+            raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        run_scheduled(
+            configured,
+            "sync",
+            state,
+            client_factory=lambda config: StopAfterRead(
+                config, transport=httpx.MockTransport(writer.response)
+            ),
+            checkpoint=checkpoint,
+            check_stop=check_stop,
+        )
+    assert writer.result is not None
+    assert writer.result["exit_code"] == exit_code
+    assert (state / "pending.json").read_bytes() == original
+    assert {request.method for request in writer.requests} == {"GET"}
+    with ObservationFile(state) as released:
+        assert released.read() == handle
+
+
 def test_finite_windows_keep_observing_without_posting_again(configured, tmp_path):
     writer = Writer(configured, pending=12)
     result = run_scheduled(
@@ -810,8 +891,42 @@ def test_pending_file_vanishing_after_inventory_is_uncertainty_not_a_fresh_submi
     assert not (state / "pending.json").exists()
 
 
-@pytest.mark.parametrize("stop_signal", [signal.SIGTERM, signal.SIGINT])
-def test_real_signal_classifies_stop_without_losing_or_replaying_existing_work(stop_signal):
+def _lock_entry_signal_code(read_fd: int, stop_signal: signal.Signals) -> str:
+    # The parent releases this gate only after the original HTTP/ownership
+    # handshake. Inject one real signal after acquire and before __enter__
+    # returns: the old asynchronous exception leaked this exact pool lock.
+    return f"""import faulthandler, linecache, os, signal, sys
+faulthandler.dump_traceback_later(7)
+from httpcore._synchronization import ThreadLock
+lock_code = ThreadLock.__enter__.__code__
+lock_return = lock_code.co_firstlineno + 2
+assert 'self._lock.acquire()' in linecache.getline(lock_code.co_filename, lock_return - 1)
+assert 'return self' in linecache.getline(lock_code.co_filename, lock_return)
+armed = False
+sent = False
+def inject_signal(frame, event, value):
+    global armed, sent
+    if (event == 'return' and frame.f_code.co_name == 'accepted_notice'
+            and frame.f_code.co_filename.endswith('/hfcache/scheduled_client.py')):
+        armed = True
+    if (armed and not sent and event == 'line'
+            and frame.f_code is lock_code and frame.f_lineno == lock_return):
+        try: ready = os.read({read_fd}, 1)
+        except BlockingIOError: return inject_signal
+        if ready == b'1':
+            assert frame.f_locals['self']._lock.locked()
+            sent = True
+            sys.stderr.write('SIGNAL_AT_HTTP_POOL_LOCK:{int(stop_signal)}\\n')
+            sys.stderr.flush()
+            os.kill(os.getpid(), {int(stop_signal)})
+    return inject_signal
+sys.settrace(inject_signal)
+"""
+
+
+def _real_signal_stop_preserves_existing_work(  # noqa: PLR0915 - one owned HTTP server/child/cleanup
+    stop_signal, *, lock_entry=False
+):
     with TemporaryDirectory(prefix="hfcache-observer-") as temporary:
         root = Path(temporary)
         channel, token, settings, state = (
@@ -846,6 +961,9 @@ def test_real_signal_classifies_stop_without_losing_or_replaying_existing_work(s
                 )
             )
         original, entered, methods = (state / "pending.json").read_bytes(), Event(), []
+        gate_read, gate_write = os.pipe() if lock_entry else (-1, -1)
+        if lock_entry:
+            os.set_blocking(gate_read, False)
         writer = Writer(config)
 
         class Handler(BaseHTTPRequestHandler):
@@ -885,6 +1003,8 @@ def test_real_signal_classifies_stop_without_losing_or_replaying_existing_work(s
                 "outcome=main(); assert all(signal.getsignal(n)==v for n,v in before.items()); "
                 "sys.exit(outcome)"
             )
+            if lock_entry:
+                code = _lock_entry_signal_code(gate_read, stop_signal) + code
             try:
                 with subprocess.Popen(
                     [
@@ -900,12 +1020,16 @@ def test_real_signal_classifies_stop_without_losing_or_replaying_existing_work(s
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
+                    pass_fds=(gate_read,) if lock_entry else (),
                 ) as process:
                     try:
                         assert entered.wait(10)
                         with pytest.raises(SafetyError), ObservationFile(state):
                             pytest.fail("subprocess did not retain exclusive observer ownership")
-                        process.send_signal(stop_signal)
+                        if lock_entry:
+                            assert os.write(gate_write, b"1") == 1
+                        else:
+                            process.send_signal(stop_signal)
                         output, errors = process.communicate(timeout=10)
                     finally:
                         if process.poll() is None:
@@ -919,7 +1043,13 @@ def test_real_signal_classifies_stop_without_losing_or_replaying_existing_work(s
                 assert "Idempotency key: " + "a" * 32 in errors
                 assert "Accepted operation: " + OPERATION in errors
                 assert TOKEN not in errors
+                if lock_entry:
+                    assert f"SIGNAL_AT_HTTP_POOL_LOCK:{int(stop_signal)}" in errors
+                    assert "Timeout (" not in errors
             finally:
+                if lock_entry:
+                    os.close(gate_read)
+                    os.close(gate_write)
                 server.shutdown()
                 thread.join(5)
         assert not thread.is_alive()
@@ -929,3 +1059,54 @@ def test_real_signal_classifies_stop_without_losing_or_replaying_existing_work(s
             retained = released.read()
             assert retained is not None
             assert retained.operation_id == OPERATION
+
+
+@pytest.mark.parametrize("stop_signal", [signal.SIGTERM, signal.SIGINT])
+def test_real_signal_classifies_stop_without_losing_or_replaying_existing_work(stop_signal):
+    _real_signal_stop_preserves_existing_work(stop_signal)
+
+
+@pytest.mark.parametrize("stop_signal", [signal.SIGTERM, signal.SIGINT])
+def test_real_signal_after_http_pool_lock_acquire_stops_without_leaking_lock(stop_signal):
+    _real_signal_stop_preserves_existing_work(stop_signal, lock_entry=True)
+
+
+@pytest.mark.parametrize("stop_signal", [signal.SIGTERM, signal.SIGINT])
+def test_signal_during_long_observer_sleep_checks_stop_between_bounded_slices(
+    configured, tmp_path, monkeypatch, capsys, stop_signal
+):
+    previous = {number: signal.getsignal(number) for number in (signal.SIGINT, signal.SIGTERM)}
+    intervals = []
+
+    def interrupt(seconds):
+        intervals.append(seconds)
+        signal.raise_signal(stop_signal)
+
+    def wait(*args, sleep, **kwargs):
+        sleep(60)
+        pytest.fail("stopped observer resumed its wait")
+
+    monkeypatch.setattr(scheduled_client.time, "sleep", interrupt)
+    monkeypatch.setattr(scheduled_client, "run_scheduled", wait)
+    monkeypatch.setattr(scheduled_client, "resolve_client_config", lambda _: configured)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "scheduled-observer",
+            "--client-config",
+            "owned.toml",
+            "--state-directory",
+            str(tmp_path),
+            "sync",
+        ],
+    )
+    assert scheduled_client.main() == 20
+    assert len(intervals) == 1
+    assert 0 < intervals[0] <= 0.1
+    assert all(signal.getsignal(number) == handler for number, handler in previous.items())
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "HFAPI019" in captured.err
+    assert "Accepted work may continue" in captured.err
+    assert TOKEN not in captured.err

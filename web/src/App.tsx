@@ -28,6 +28,9 @@ import type {
 import type { RepositoryStore } from "./repository/repository-state";
 import { repositoryFragment, repositoryPath } from "./repository/routes";
 import type { RepositoryTarget } from "./repository/routes";
+import { OperationsWorkspace } from "./components/OperationsWorkspace";
+import type { JobsStore } from "./operations/jobs-state";
+import type { HistoryStore } from "./operations/history-state";
 import type {
     SessionController,
     SessionSnapshot,
@@ -56,6 +59,10 @@ function WorkspaceContent({
     onOpenRepository,
     configuration,
     onEditConfiguration,
+    jobs,
+    history,
+    onReadReport,
+    onOpenConfiguration,
 }: {
     workspace: Workspace;
     authenticated: boolean;
@@ -69,6 +76,10 @@ function WorkspaceContent({
     onOpenRepository: RepositoryNavigation;
     configuration?: ConfigurationStore;
     onEditConfiguration?: (intent: ConfigurationIntent) => void;
+    jobs?: JobsStore;
+    history?: HistoryStore;
+    onReadReport?: (runId: string) => void;
+    onOpenConfiguration?: () => void;
 }) {
     switch (workspace) {
         case "library":
@@ -85,6 +96,9 @@ function WorkspaceContent({
                         store={repository}
                         target={repositoryTarget}
                         basePath={basePath}
+                        {...(onReadReport === undefined
+                            ? {}
+                            : { onReadReport })}
                         {...(onEditConfiguration === undefined
                             ? {}
                             : { onEditConfiguration })}
@@ -144,6 +158,26 @@ function WorkspaceContent({
                 </div>
             );
         case "operations":
+            if (
+                controller !== undefined &&
+                session !== undefined &&
+                jobs !== undefined &&
+                history !== undefined
+            )
+                return (
+                    <OperationsWorkspace
+                        controller={controller}
+                        session={session}
+                        jobs={jobs}
+                        history={history}
+                        {...(configuration === undefined
+                            ? {}
+                            : { configuration })}
+                        {...(onOpenConfiguration === undefined
+                            ? {}
+                            : { onOpenConfiguration })}
+                    />
+                );
             if (controller !== undefined && session !== undefined)
                 return (
                     <OperationRecovery
@@ -228,6 +262,8 @@ export function App({
     libraryBookmark,
     repository,
     configuration,
+    jobs,
+    history,
 }: {
     basePath: string;
     bootstrap?: UiBootstrap;
@@ -238,6 +274,8 @@ export function App({
     libraryBookmark?: string;
     repository?: RepositoryStore;
     configuration?: ConfigurationStore;
+    jobs?: JobsStore;
+    history?: HistoryStore;
 }) {
     const base = validateBasePath(basePath);
     const [pathname, setPathname] = useState(window.location.pathname);
@@ -387,6 +425,11 @@ export function App({
         );
     function editConfiguration(intent: ConfigurationIntent) {
         requestNavigation(workspacePath("administration", base), intent);
+    }
+    function readReport(runId: string) {
+        if (history === undefined) return;
+        void history.selectRun(runId);
+        requestNavigation(workspacePath("operations", base));
     }
     async function checkInterfaceVersion(): Promise<void> {
         if (onCheckRelease === undefined) return;
@@ -721,9 +764,23 @@ export function App({
                             {...(configuration === undefined
                                 ? {}
                                 : { configuration })}
+                            {...(jobs === undefined ? {} : { jobs })}
+                            {...(history === undefined
+                                ? {}
+                                : { history, onReadReport: readReport })}
                             {...(!canEditConfiguration
                                 ? {}
-                                : { onEditConfiguration: editConfiguration })}
+                                : {
+                                      onEditConfiguration: editConfiguration,
+                                      onOpenConfiguration: () => {
+                                          requestNavigation(
+                                              workspacePath(
+                                                  "administration",
+                                                  base,
+                                              ),
+                                          );
+                                      },
+                                  })}
                         />
                     )}
                     <footer className="page-footer">

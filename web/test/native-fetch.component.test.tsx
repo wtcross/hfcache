@@ -1,5 +1,5 @@
 /** Branded browser transport boundary; real mount/controller/client, owned HTTP wires only. */
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { mountApplication } from "../src/mount";
@@ -144,7 +144,20 @@ test("production default mount restores uncertain key then observes actual typed
     );
     await screen.findByText(/Verified in this session\./u);
     expect(screen.getByText("settled", { exact: true })).toBeInTheDocument();
-    expect(screen.getByText(operationId, { exact: true })).toBeInTheDocument();
+    const recovery = screen.getByRole("article", {
+        name: "Recovery record " + record.recordId,
+    });
+    expect(
+        within(recovery).getByText("Original operation ID", { exact: true })
+            .nextElementSibling,
+    ).toHaveTextContent(operationId);
+    expect(
+        within(
+            within(recovery).getByRole("region", {
+                name: "Original operation result",
+            }),
+        ).getByText(operationId, { exact: true }),
+    ).toBeInTheDocument();
     expect(transport.requests).toEqual([
         { path: "/api/v1/operations/lookup", method: "GET", originalKey },
         {

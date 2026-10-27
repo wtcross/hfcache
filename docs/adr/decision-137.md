@@ -108,3 +108,15 @@ private caches and late callbacks. A different interface/wire release requires
 explicit reload without automatic replay or loss of safe uncertain handles.
 The [recovery guide](../web-ui/operations.md) defines the user procedure; full job
 forms and repository views are separate work.
+
+
+## Existing-job presentation composition (2026-10-26)
+
+The application Operations workspace adds bounded forms for existing sizing,
+sync, verification, diagnostics and offline refresh, with explicit scope/effect
+and effective-capability explanations. Queued/waiting/running states, benign
+HFMNT010 busy, partial repository results, integrity findings and interrupted or
+unavailable evidence remain distinct. No manufactured progress, success or empty
+result follows from HTTP200/202, missing events or observation failure. Existing
+original-handle state, server grants/locks and [typed report rules](decision-136.md)
+remain authoritative; job forms introduce no endpoint, dependency or replay.

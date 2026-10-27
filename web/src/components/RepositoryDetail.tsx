@@ -640,6 +640,7 @@ export function RepositoryDetail({
     target,
     basePath,
     onEditConfiguration,
+    onReadReport,
 }: {
     store: RepositoryStore;
     target: RepositoryTarget;
@@ -647,6 +648,7 @@ export function RepositoryDetail({
     onEditConfiguration?: (
         intent: import("../configuration/configuration-state").ConfigurationIntent,
     ) => void;
+    onReadReport?: (runId: string) => void;
 }) {
     const state = useSyncExternalStore(store.subscribe, store.snapshot);
     const stableTarget = useMemo(
@@ -1462,6 +1464,17 @@ export function RepositoryDetail({
                                             >
                                                 Inspect report {runId}
                                             </button>
+                                            {onReadReport !== undefined && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        onReadReport(runId);
+                                                    }}
+                                                >
+                                                    Open run report in
+                                                    Operations {runId}
+                                                </button>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>

@@ -8455,21 +8455,264 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "ee6fe410eb50bff3cafec4cc12ede6084cdc6c1e86ad8b761445805492882612",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-normal4.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-normal4-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-cases.mjs::jobs-and-installed-sizing",
+            ".scratch/web-016-operation-cases.mjs::selected-sync-and-original-run",
+            ".scratch/web-016-operation-cases.mjs::original-response-loss-read-only-recovery"
+          ],
+          "observed_assertion": "PASS432.496s/cohortc5206a2897514cbdac62b7c62377e2b8;36one-attempt cases/12each Chromium156.0.8078.4,Firefox157.0,WebKit27.2;30singleoriginal keyed jobs all exit0, real sync publication/Unix verification/durable reports, three genuine pre-header connection aborts/original-key GET recovery/zero replay. WebKit actual history25/5/25rows and knownextent30;315trusted passive requests/72zero-CSP checkpoints/no dialogs,popups,pageerrors. All13originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "e537305a06c7bcfc74a6bb385cd319accde43252698796dbe1804bdca99f9a09",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py busy",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-busy1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS174.941s;3one-attempt cases/oneperengine. Real heldarchive flock yields three original syncfailed20/HFMNT010, authenticated failed HTTP200results, benignbusy guidance/no replay/no invented run report. Originalholder released/reaped afterroles stop;13originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "8284b3a3ad5a46a909a6c0fc6ecd97b35278a0054ac877da0e853da9d8912c22",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py partial",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-partial1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS106.298s;3one-attempt cases/oneperengine. Three original fullsyncfailed30 retain both repositories: datasetfailedHFHUB001/no publication and modelskippedHFWRN011/originalc76106ccf7894c488c92a6b23f27a83b. Exact original result/persisted report equality, onePOSTperengine/no replay. ExternalHub refusal restored afterstop;14originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "993f82429023302a7e428522a764d0bc1e8599685f720bd470f344f491a35b65",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py integrity",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-integrity1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS100.423s;3one-attempt cases/oneperengine, lastfixturemode. Three original fullverifications/API-realUnixworker exact resultjoins fail40/HFVER001, preserving config.json digest_mismatch for exact modelpublicationc76106ccf7894c488c92a6b23f27a83b. Original findings/report equality, onePOSTperengine/no replay/no healing. DamagedSHA7c064c316c677e2d1330869e1639194066cf8ca00f8bd3631fd3891213152481 remains;14originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/operation-results.component.test.tsx::HTTP200 failed Envelope exit%s preserves its independent domain class",
+            "web/test/operation-results.component.test.tsx::a queued receipt without a stored result is uncertainty, with no completion or byte percentage",
+            "web/test/jobs-state.unit.test.ts::lost acknowledgement retains the original handle and repeated click cannot create another POST"
+          ],
+          "observed_assertion": "Strictgate3PASS1494.761s/1473inputs/drift[];3556webunit and3798combinedReact/state/client tests,95.55line90.36branch;8608backend,581Cockpitunit/110mounted, allformat/lint/types/contracts/docs/build/wheel/readfixture/browserchecks.52unrelatedopt-indeselections,zero requiredskips. ClosedDTOs/permissions/effects, exactclassifiedresults, boundedloadedhistory/report/event/capacity andoriginalhandle/no-replay paths pass.",
+          "profile": "Frozen currentS3d5b17/1473; unit usesNode/jsdomReact andcontrolledexternalboundaries. Integration usesrealASGI/service/store/Unixworker andactualOSsignals withownedlocalHTTP; externalHub/mount/DNS/TLS adapters remainexplicit. InstalledCaddy/current.34acceptance recordedseparately, notMAC/NAS prooffromthisgate.",
+          "source_sha256": "d5b17c5b32a8665bb2e61114e79e260023be821babd4b83bf0d75d74bcdf5b0e"
+        },
+        {
+          "artifact_sha256": "7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_operations.py::test_exact_stored_result_preserves_domain_envelope_and_failed_exit",
+            "tests/unit/test_runner.py::test_queue_time_is_deducted_from_same_absolute_lock_deadline",
+            "tests/unit/test_api_command_adversarial.py::test_verification_retry_precedes_unavailable_probe_changed_policy_and_conflict",
+            "tests/unit/test_web_operations_worker.py::test_lost_real_unix_submit_ack_reconciles_original_worker_without_second_effect",
+            "tests/unit/test_scheduled_client.py::test_real_signal_after_http_pool_lock_acquire_stops_without_leaking_lock",
+            "tests/unit/test_scheduled_client.py::test_cooperative_stop_after_key_persistence_prevents_fresh_post",
+            "tests/unit/test_scheduled_client.py::test_cooperative_stop_after_terminal_read_preserves_original_handle"
+          ],
+          "observed_assertion": "RealASGI/store/runner tests preserve202 versus exactdomainEnvelope/runidentity, queueabsolute deadlines, originalkey conflicts and realUnixworker lostACK reconciliation. AddedactualSIGINT/SIGTERM injection afterHTTPpool-lockacquire provescooperativestop without lockleak, exactpendingretention/restoredhandlers/GETonly; ownedfreshPOST/terminalread/preunlink checks pass. Originalgate1testassertion/gate2timeout remainfailedatretainedlocators; diagnosticclass notassertedoriginalcause.",
+          "profile": "Frozen currentS3d5b17/1473; unit usesNode/jsdomReact andcontrolledexternalboundaries. Integration usesrealASGI/service/store/Unixworker andactualOSsignals withownedlocalHTTP; externalHub/mount/DNS/TLS adapters remainexplicit. InstalledCaddy/current.34acceptance recordedseparately, notMAC/NAS prooffromthisgate.",
+          "source_sha256": "d5b17c5b32a8665bb2e61114e79e260023be821babd4b83bf0d75d74bcdf5b0e"
+        },
+        {
+          "artifact_sha256": "b1ba833b1f0bc3c215c4bb86a3704eb72ff41ab6ee52eee79021fbdda5407df3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/operation-results.component.test.tsx::HTTP200 failed Envelope exit%s preserves its independent domain class",
+            "web/test/operation-results.component.test.tsx::a queued receipt without a stored result is uncertainty, with no completion or byte percentage",
+            "web/test/jobs-state.unit.test.ts::lost acknowledgement retains the original handle and repeated click cannot create another POST"
+          ],
+          "observed_assertion": "Current strict gate 4 passed in 1781.806s: 1473 inputs, drift [], 8608 backend tests, 52 unrelated opt-in deselections, 3557 web unit / 3799 combined frontend tests, 95.55% line / 90.37% branch coverage, 581 Cockpit unit / 110 mounted checks. Required format, lint, types, contracts, docs (215 human / 27 helpers), builds, wheel profiles, browser startup and read fixture all pass with zero required skips. Subscriber-time regression checks coherent ready Operations/Runs rows and counts across first, next, previous and refreshed pages. Real OS signal / HTTP pool-lock-entry tests and safe POST, terminal and pending-unlink boundaries preserve original handles. Earlier failed gates and SDK1 collector failure remain separately retained.",
+          "profile": "ActualNode/jsdomReact/typedclient tests plusrealASGI/service/runner/store/Unixworker/localHTTP+OSsignals; deterministicexternalHub/storage/DNS/TLS boundaries. InstalledUI/CLI proofrecordedseparately; noMAC/NAS inferencefromthisgate.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "b1ba833b1f0bc3c215c4bb86a3704eb72ff41ab6ee52eee79021fbdda5407df3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_operations.py::test_exact_stored_result_preserves_domain_envelope_and_failed_exit",
+            "tests/unit/test_runner.py::test_queue_time_is_deducted_from_same_absolute_lock_deadline",
+            "tests/unit/test_api_command_adversarial.py::test_verification_retry_precedes_unavailable_probe_changed_policy_and_conflict",
+            "tests/unit/test_web_operations_worker.py::test_lost_real_unix_submit_ack_reconciles_original_worker_without_second_effect",
+            "tests/unit/test_scheduled_client.py::test_real_signal_after_http_pool_lock_acquire_stops_without_leaking_lock",
+            "tests/unit/test_scheduled_client.py::test_cooperative_stop_after_key_persistence_prevents_fresh_post",
+            "tests/unit/test_scheduled_client.py::test_cooperative_stop_after_terminal_read_preserves_original_handle"
+          ],
+          "observed_assertion": "Current strict gate 4 passed in 1781.806s: 1473 inputs, drift [], 8608 backend tests, 52 unrelated opt-in deselections, 3557 web unit / 3799 combined frontend tests, 95.55% line / 90.37% branch coverage, 581 Cockpit unit / 110 mounted checks. Required format, lint, types, contracts, docs (215 human / 27 helpers), builds, wheel profiles, browser startup and read fixture all pass with zero required skips. Subscriber-time regression checks coherent ready Operations/Runs rows and counts across first, next, previous and refreshed pages. Real OS signal / HTTP pool-lock-entry tests and safe POST, terminal and pending-unlink boundaries preserve original handles. Earlier failed gates and SDK1 collector failure remain separately retained.",
+          "profile": "ActualNode/jsdomReact/typedclient tests plusrealASGI/service/runner/store/Unixworker/localHTTP+OSsignals; deterministicexternalHub/storage/DNS/TLS boundaries. InstalledUI/CLI proofrecordedseparately; noMAC/NAS inferencefromthisgate.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "4ef61065b5527bd2cd1222c17fd16696ad243d42d73a11f80c780b8a555cd03a",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-normal1.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-normal1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-cases-v2.mjs::jobs-and-installed-sizing",
+            ".scratch/web-016c-operation-cases-v2.mjs::selected-sync-and-original-run",
+            ".scratch/web-016c-operation-cases-v2.mjs::original-response-loss-read-only-recovery"
+          ],
+          "observed_assertion": "Passed 36 one-attempt cases in 481.193s, 12 each in Chromium 156.0.8078.4, Firefox 157.0 and WebKit 27.2. All 30 original jobs exit 0 (9 plans, 3 syncs, 9 Unix verifications, 6 diagnostics, 3 refreshes); 12 durable reports. Positive first-new verification reads 2 repositories, 2 revisions, 4 objects and 86 bytes. Every sampled ready-history tuple is coherent; actual WebKit next/previous paging shows rows/loaded extent 25/25, 4/29, 25/29 before the final lost-response plan. Three genuine pre-header aborts recover through original-key GET with zero POST replay. 320 trusted requests, 72 zero-CSP checkpoints; 13 original process pairs gone, 4 empty cgroups, 5 refused endpoints and 667 old objects plus baseline/input identities unchanged.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "1a2a9e3181d3d118313ea12a064bc71ea526ce4388b2acb1cb81eabd9c0a0563",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py busy",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-busy1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 173.482s with 3 original full-sync POSTs. A real held flock yields exit 20/HFMNT010 and an authenticated HTTP 200 domain failure; busy guidance appears without an invented report or replay. The holder is normally released/reaped after role shutdown. 13 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged; 94 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "4dff655c8c0decf93bff7823f34d513df3e10d4e5101b75553a3c47e78f5e532",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py partial",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-partial1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 109.008s with 3 original full-sync POSTs returning exit 30/HFHUB001. Both repository outcomes remain visible: failed dataset with null new publication, skipped model with HFWRN011 retaining publication 305babbfa6b348c1b38bcd136df7e5ae. Exact original result/report joins pass without replay. The external refusal is restored after shutdown; 14 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged. 52 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "0d4aaa0890b41ba6d605f78516a92e8ce6d6954e3cf8725bd965c71371107433",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py integrity",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-integrity1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 89.241s with 3 original full-verification POSTs returning exit 40/HFVER001. Real API/Unix-worker result and report joins match. Publication 305babbfa6b348c1b38bcd136df7e5ae/config.json remains damaged at SHA256 7c064c316c677e2d1330869e1639194066cf8ca00f8bd3631fd3891213152481; no healing, replay or later job occurs. 18 final durable reports, 14 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged. 50 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "e5ed892a7a76caa68014fadbd410797dfd200804d35d272752da20c8dfaaef8c",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-observer2.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-observer2-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-run-observer-v2.py::scheduled-observer-sigint-original-get-only",
+            ".scratch/web-016c-run-observer-v2.py::scheduled-observer-sigterm-original-get-only"
+          ],
+          "observed_assertion": "Passed 2 one-attempt installed SDK signal cases in 73.710s, using one new original REST-writer full verification under a real flock. The standard installed entrypoint exits 20/HFAPI019 on SIGINT and SIGTERM, restores prior handlers, preserves exact pending/lock evidence and issues zero observer POSTs. Server and worker continue waiting and then fail 20/HFMNT010 with identical result SHA256 b79e19a464534d587a0dfff19f4de7bf79c214dc340ee1ecdda35d5726262e2f; archive unchanged. Combined passive call/return header events total 16 with 8 send returns; these are not HTTP delivery counts. All original roles, observers and holder normally drain; cgroups empty, endpoints refuse and 667 old objects remain unchanged. SDK1 functional success/coordinator failure and separate read-only retrospective closure 0d16faf2b6333ddffb68b23f91cca71e58a9f700589d3faca8cd481c3c33a095 remain retained. The private v2 collector classifies seven root-protected inputs while all ten immutability joins remain; no canonical guard change or replay of an old key.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance. Unprivileged installed observer UID1000 uses owned configuration and CA; its passive profiler records only method/path/PID, without headers, bodies or mocks. This does not establish fixed host observer-unit control parity.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        }
+      ],
       "id": "OPS-06",
       "owner": "WEB-016",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_06"
+          "node_id": "web/test/operation-results.component.test.tsx::HTTP200 failed Envelope exit%s preserves its independent domain class"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-results.component.test.tsx::a queued receipt without a stored result is uncertainty, with no completion or byte percentage"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/jobs-state.unit.test.ts::lost acknowledgement retains the original handle and repeated click cannot create another POST"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_06"
+          "node_id": "tests/unit/test_api_operations.py::test_exact_stored_result_preserves_domain_envelope_and_failed_exit"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_runner.py::test_queue_time_is_deducted_from_same_absolute_lock_deadline"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_command_adversarial.py::test_verification_retry_precedes_unavailable_probe_changed_policy_and_conflict"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_operations_worker.py::test_lost_real_unix_submit_ack_reconciles_original_worker_without_second_effect"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_scheduled_client.py::test_real_signal_after_http_pool_lock_acquire_stops_without_leaking_lock"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_scheduled_client.py::test_cooperative_stop_after_key_persistence_prevents_fresh_post"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_scheduled_client.py::test_cooperative_stop_after_terminal_read_preserves_original_handle"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-06"
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::jobs-and-installed-sizing"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::selected-sync-and-original-run"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::original-response-loss-read-only-recovery"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-run-observer-v2.py::scheduled-observer-sigint-original-get-only"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-run-observer-v2.py::scheduled-observer-sigterm-original-get-only"
         }
       ],
       "required_layers": [
@@ -8477,24 +8720,209 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "ee6fe410eb50bff3cafec4cc12ede6084cdc6c1e86ad8b761445805492882612",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-normal4.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-normal4-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-cases.mjs::selected-sync-and-original-run"
+          ],
+          "observed_assertion": "PASS432.496s/cohortc5206a2897514cbdac62b7c62377e2b8;36one-attempt cases/12each Chromium156.0.8078.4,Firefox157.0,WebKit27.2;30singleoriginal keyed jobs all exit0, real sync publication/Unix verification/durable reports, three genuine pre-header connection aborts/original-key GET recovery/zero replay. WebKit actual history25/5/25rows and knownextent30;315trusted passive requests/72zero-CSP checkpoints/no dialogs,popups,pageerrors. All13originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "e537305a06c7bcfc74a6bb385cd319accde43252698796dbe1804bdca99f9a09",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py busy",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-busy1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS174.941s;3one-attempt cases/oneperengine. Real heldarchive flock yields three original syncfailed20/HFMNT010, authenticated failed HTTP200results, benignbusy guidance/no replay/no invented run report. Originalholder released/reaped afterroles stop;13originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "8284b3a3ad5a46a909a6c0fc6ecd97b35278a0054ac877da0e853da9d8912c22",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py partial",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-partial1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS106.298s;3one-attempt cases/oneperengine. Three original fullsyncfailed30 retain both repositories: datasetfailedHFHUB001/no publication and modelskippedHFWRN011/originalc76106ccf7894c488c92a6b23f27a83b. Exact original result/persisted report equality, onePOSTperengine/no replay. ExternalHub refusal restored afterstop;14originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "993f82429023302a7e428522a764d0bc1e8599685f720bd470f344f491a35b65",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py integrity",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-integrity1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS100.423s;3one-attempt cases/oneperengine, lastfixturemode. Three original fullverifications/API-realUnixworker exact resultjoins fail40/HFVER001, preserving config.json digest_mismatch for exact modelpublicationc76106ccf7894c488c92a6b23f27a83b. Original findings/report equality, onePOSTperengine/no replay/no healing. DamagedSHA7c064c316c677e2d1330869e1639194066cf8ca00f8bd3631fd3891213152481 remains;14originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/operation-results.component.test.tsx::HTTP200 failed Envelope exit%s preserves its independent domain class",
+            "web/test/operation-results.component.test.tsx::HFMNT010 is explicitly benign busy even when delivered as a failed domain envelope",
+            "web/test/operation-results.component.test.tsx::sync partial report keeps successful and failed repositories, with25 rows and separately paged warnings",
+            "web/test/operation-results.component.test.tsx::verification findings retain exact publication and raw metadata as text, with bounded paging and no healing claim"
+          ],
+          "observed_assertion": "Strictgate3PASS1494.761s/1473inputs/drift[];3556webunit and3798combinedReact/state/client tests,95.55line90.36branch;8608backend,581Cockpitunit/110mounted, allformat/lint/types/contracts/docs/build/wheel/readfixture/browserchecks.52unrelatedopt-indeselections,zero requiredskips. ClosedDTOs/permissions/effects, exactclassifiedresults, boundedloadedhistory/report/event/capacity andoriginalhandle/no-replay paths pass.",
+          "profile": "Frozen currentS3d5b17/1473; unit usesNode/jsdomReact andcontrolledexternalboundaries. Integration usesrealASGI/service/store/Unixworker andactualOSsignals withownedlocalHTTP; externalHub/mount/DNS/TLS adapters remainexplicit. InstalledCaddy/current.34acceptance recordedseparately, notMAC/NAS prooffromthisgate.",
+          "source_sha256": "d5b17c5b32a8665bb2e61114e79e260023be821babd4b83bf0d75d74bcdf5b0e"
+        },
+        {
+          "artifact_sha256": "7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_commands.py::test_sync_http_preserves_partial_failure_priority",
+            "tests/unit/test_web_operations_worker.py::test_real_api_sync_then_all_unix_verification_modes_and_integrity_report"
+          ],
+          "observed_assertion": "RealASGI/service syncpartialpriority and actualUnixverification/result/report joins preserve perrepositorysuccess/failure and40integrity withouthealing. Componentdomainmatrix10/20/30/40/50 andbenignHFMNT010 remainexact; realinstalledfailurecase evidence separatelyversioned.",
+          "profile": "Frozen currentS3d5b17/1473; unit usesNode/jsdomReact andcontrolledexternalboundaries. Integration usesrealASGI/service/store/Unixworker andactualOSsignals withownedlocalHTTP; externalHub/mount/DNS/TLS adapters remainexplicit. InstalledCaddy/current.34acceptance recordedseparately, notMAC/NAS prooffromthisgate.",
+          "source_sha256": "d5b17c5b32a8665bb2e61114e79e260023be821babd4b83bf0d75d74bcdf5b0e"
+        },
+        {
+          "artifact_sha256": "b1ba833b1f0bc3c215c4bb86a3704eb72ff41ab6ee52eee79021fbdda5407df3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/operation-results.component.test.tsx::HTTP200 failed Envelope exit%s preserves its independent domain class",
+            "web/test/operation-results.component.test.tsx::HFMNT010 is explicitly benign busy even when delivered as a failed domain envelope",
+            "web/test/operation-results.component.test.tsx::sync partial report keeps successful and failed repositories, with25 rows and separately paged warnings",
+            "web/test/operation-results.component.test.tsx::verification findings retain exact publication and raw metadata as text, with bounded paging and no healing claim"
+          ],
+          "observed_assertion": "Current strict gate 4 passed in 1781.806s: 1473 inputs, drift [], 8608 backend tests, 52 unrelated opt-in deselections, 3557 web unit / 3799 combined frontend tests, 95.55% line / 90.37% branch coverage, 581 Cockpit unit / 110 mounted checks. Required format, lint, types, contracts, docs (215 human / 27 helpers), builds, wheel profiles, browser startup and read fixture all pass with zero required skips. Subscriber-time regression checks coherent ready Operations/Runs rows and counts across first, next, previous and refreshed pages. Real OS signal / HTTP pool-lock-entry tests and safe POST, terminal and pending-unlink boundaries preserve original handles. Earlier failed gates and SDK1 collector failure remain separately retained.",
+          "profile": "ActualNode/jsdomReact/typedclient tests plusrealASGI/service/runner/store/Unixworker/localHTTP+OSsignals; deterministicexternalHub/storage/DNS/TLS boundaries. InstalledUI/CLI proofrecordedseparately; noMAC/NAS inferencefromthisgate.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "b1ba833b1f0bc3c215c4bb86a3704eb72ff41ab6ee52eee79021fbdda5407df3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_commands.py::test_sync_http_preserves_partial_failure_priority",
+            "tests/unit/test_web_operations_worker.py::test_real_api_sync_then_all_unix_verification_modes_and_integrity_report"
+          ],
+          "observed_assertion": "Current strict gate 4 passed in 1781.806s: 1473 inputs, drift [], 8608 backend tests, 52 unrelated opt-in deselections, 3557 web unit / 3799 combined frontend tests, 95.55% line / 90.37% branch coverage, 581 Cockpit unit / 110 mounted checks. Required format, lint, types, contracts, docs (215 human / 27 helpers), builds, wheel profiles, browser startup and read fixture all pass with zero required skips. Subscriber-time regression checks coherent ready Operations/Runs rows and counts across first, next, previous and refreshed pages. Real OS signal / HTTP pool-lock-entry tests and safe POST, terminal and pending-unlink boundaries preserve original handles. Earlier failed gates and SDK1 collector failure remain separately retained.",
+          "profile": "ActualNode/jsdomReact/typedclient tests plusrealASGI/service/runner/store/Unixworker/localHTTP+OSsignals; deterministicexternalHub/storage/DNS/TLS boundaries. InstalledUI/CLI proofrecordedseparately; noMAC/NAS inferencefromthisgate.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "4ef61065b5527bd2cd1222c17fd16696ad243d42d73a11f80c780b8a555cd03a",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-normal1.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-normal1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-cases-v2.mjs::selected-sync-and-original-run"
+          ],
+          "observed_assertion": "Passed 36 one-attempt cases in 481.193s, 12 each in Chromium 156.0.8078.4, Firefox 157.0 and WebKit 27.2. All 30 original jobs exit 0 (9 plans, 3 syncs, 9 Unix verifications, 6 diagnostics, 3 refreshes); 12 durable reports. Positive first-new verification reads 2 repositories, 2 revisions, 4 objects and 86 bytes. Every sampled ready-history tuple is coherent; actual WebKit next/previous paging shows rows/loaded extent 25/25, 4/29, 25/29 before the final lost-response plan. Three genuine pre-header aborts recover through original-key GET with zero POST replay. 320 trusted requests, 72 zero-CSP checkpoints; 13 original process pairs gone, 4 empty cgroups, 5 refused endpoints and 667 old objects plus baseline/input identities unchanged.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "1a2a9e3181d3d118313ea12a064bc71ea526ce4388b2acb1cb81eabd9c0a0563",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py busy",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-busy1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 173.482s with 3 original full-sync POSTs. A real held flock yields exit 20/HFMNT010 and an authenticated HTTP 200 domain failure; busy guidance appears without an invented report or replay. The holder is normally released/reaped after role shutdown. 13 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged; 94 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "4dff655c8c0decf93bff7823f34d513df3e10d4e5101b75553a3c47e78f5e532",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py partial",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-partial1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 109.008s with 3 original full-sync POSTs returning exit 30/HFHUB001. Both repository outcomes remain visible: failed dataset with null new publication, skipped model with HFWRN011 retaining publication 305babbfa6b348c1b38bcd136df7e5ae. Exact original result/report joins pass without replay. The external refusal is restored after shutdown; 14 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged. 52 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "0d4aaa0890b41ba6d605f78516a92e8ce6d6954e3cf8725bd965c71371107433",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py integrity",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-integrity1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 89.241s with 3 original full-verification POSTs returning exit 40/HFVER001. Real API/Unix-worker result and report joins match. Publication 305babbfa6b348c1b38bcd136df7e5ae/config.json remains damaged at SHA256 7c064c316c677e2d1330869e1639194066cf8ca00f8bd3631fd3891213152481; no healing, replay or later job occurs. 18 final durable reports, 14 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged. 50 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        }
+      ],
       "id": "OPS-07",
       "owner": "WEB-016",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_07"
+          "node_id": "web/test/operation-results.component.test.tsx::HTTP200 failed Envelope exit%s preserves its independent domain class"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-results.component.test.tsx::HFMNT010 is explicitly benign busy even when delivered as a failed domain envelope"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-results.component.test.tsx::sync partial report keeps successful and failed repositories, with25 rows and separately paged warnings"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-results.component.test.tsx::verification findings retain exact publication and raw metadata as text, with bounded paging and no healing claim"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_07"
+          "node_id": "tests/unit/test_api_commands.py::test_sync_http_preserves_partial_failure_priority"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_operations_worker.py::test_real_api_sync_then_all_unix_verification_modes_and_integrity_report"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-07"
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::selected-sync-and-original-run"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
         }
       ],
       "required_layers": [
@@ -8502,24 +8930,260 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "ee6fe410eb50bff3cafec4cc12ede6084cdc6c1e86ad8b761445805492882612",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-normal4.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-normal4-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-cases.mjs::loaded-history-and-exact-report"
+          ],
+          "observed_assertion": "PASS432.496s/cohortc5206a2897514cbdac62b7c62377e2b8;36one-attempt cases/12each Chromium156.0.8078.4,Firefox157.0,WebKit27.2;30singleoriginal keyed jobs all exit0, real sync publication/Unix verification/durable reports, three genuine pre-header connection aborts/original-key GET recovery/zero replay. WebKit actual history25/5/25rows and knownextent30;315trusted passive requests/72zero-CSP checkpoints/no dialogs,popups,pageerrors. All13originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "e537305a06c7bcfc74a6bb385cd319accde43252698796dbe1804bdca99f9a09",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py busy",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-busy1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS174.941s;3one-attempt cases/oneperengine. Real heldarchive flock yields three original syncfailed20/HFMNT010, authenticated failed HTTP200results, benignbusy guidance/no replay/no invented run report. Originalholder released/reaped afterroles stop;13originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "8284b3a3ad5a46a909a6c0fc6ecd97b35278a0054ac877da0e853da9d8912c22",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py partial",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-partial1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS106.298s;3one-attempt cases/oneperengine. Three original fullsyncfailed30 retain both repositories: datasetfailedHFHUB001/no publication and modelskippedHFWRN011/originalc76106ccf7894c488c92a6b23f27a83b. Exact original result/persisted report equality, onePOSTperengine/no replay. ExternalHub refusal restored afterstop;14originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "993f82429023302a7e428522a764d0bc1e8599685f720bd470f344f491a35b65",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py integrity",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-integrity1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS100.423s;3one-attempt cases/oneperengine, lastfixturemode. Three original fullverifications/API-realUnixworker exact resultjoins fail40/HFVER001, preserving config.json digest_mismatch for exact modelpublicationc76106ccf7894c488c92a6b23f27a83b. Original findings/report equality, onePOSTperengine/no replay/no healing. DamagedSHA7c064c316c677e2d1330869e1639194066cf8ca00f8bd3631fd3891213152481 remains;14originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/history-state.unit.test.ts::next and previous replace the visible page and retain only known loaded extent",
+            "web/test/history-state.unit.test.ts::cursor history stops at32 positions, independent of a server claiming more",
+            "web/test/history-state.unit.test.ts::409 continuation remains a visible failed read until explicit refresh, with no automatic retry",
+            "web/test/operation-observation.unit.test.ts::initial read plus three1/2/4-second retries then visible pause",
+            "web/test/operation-observation.unit.test.ts::events preserve server gaps, bounded local omissions, duplicates and conflicts",
+            "web/test/operation-observation.unit.test.ts::global capacity refuses before GET and full result cannot silently fall out of retention"
+          ],
+          "observed_assertion": "Strictgate3PASS1494.761s/1473inputs/drift[];3556webunit and3798combinedReact/state/client tests,95.55line90.36branch;8608backend,581Cockpitunit/110mounted, allformat/lint/types/contracts/docs/build/wheel/readfixture/browserchecks.52unrelatedopt-indeselections,zero requiredskips. ClosedDTOs/permissions/effects, exactclassifiedresults, boundedloadedhistory/report/event/capacity andoriginalhandle/no-replay paths pass.",
+          "profile": "Frozen currentS3d5b17/1473; unit usesNode/jsdomReact andcontrolledexternalboundaries. Integration usesrealASGI/service/store/Unixworker andactualOSsignals withownedlocalHTTP; externalHub/mount/DNS/TLS adapters remainexplicit. InstalledCaddy/current.34acceptance recordedseparately, notMAC/NAS prooffromthisgate.",
+          "source_sha256": "d5b17c5b32a8665bb2e61114e79e260023be821babd4b83bf0d75d74bcdf5b0e"
+        },
+        {
+          "artifact_sha256": "7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_reads.py::test_large_reports_stream_in_bounded_chunks_and_sanitize_registered_secrets",
+            "tests/unit/test_api_operations.py::test_event_pages_have_explicit_dropped_prefix_and_sequence_cursor",
+            "tests/unit/test_api_operations.py::test_operation_collection_pages_keep_identity_during_status_updates_and_refuse_new_members",
+            "tests/unit/test_operations.py::test_expiry_requires_explicit_terminal_proof_and_never_ages_interrupted"
+          ],
+          "observed_assertion": "RealAPI boundedlarge-reportstreams/sanitization, explicitdropped-prefix events, operationcollection stablepages/newmemberrefusal, andexpiry requiringterminalproof pass. Browserunit/controller gap/overflow/capacity/slowreads/cursor409 preserveunknown/boundedloadedextent instead of fullaudit or fabricatedsuccess.",
+          "profile": "Frozen currentS3d5b17/1473; unit usesNode/jsdomReact andcontrolledexternalboundaries. Integration usesrealASGI/service/store/Unixworker andactualOSsignals withownedlocalHTTP; externalHub/mount/DNS/TLS adapters remainexplicit. InstalledCaddy/current.34acceptance recordedseparately, notMAC/NAS prooffromthisgate.",
+          "source_sha256": "d5b17c5b32a8665bb2e61114e79e260023be821babd4b83bf0d75d74bcdf5b0e"
+        },
+        {
+          "artifact_sha256": "b1ba833b1f0bc3c215c4bb86a3704eb72ff41ab6ee52eee79021fbdda5407df3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/history-state.unit.test.ts::next and previous replace the visible page and retain only known loaded extent",
+            "web/test/history-state.unit.test.ts::cursor history stops at32 positions, independent of a server claiming more",
+            "web/test/history-state.unit.test.ts::409 continuation remains a visible failed read until explicit refresh, with no automatic retry",
+            "web/test/operation-observation.unit.test.ts::initial read plus three1/2/4-second retries then visible pause",
+            "web/test/operation-observation.unit.test.ts::events preserve server gaps, bounded local omissions, duplicates and conflicts",
+            "web/test/operation-observation.unit.test.ts::global capacity refuses before GET and full result cannot silently fall out of retention",
+            "web/test/history-state.unit.test.ts::every published ready history page includes its rows in the known loaded extent"
+          ],
+          "observed_assertion": "Current strict gate 4 passed in 1781.806s: 1473 inputs, drift [], 8608 backend tests, 52 unrelated opt-in deselections, 3557 web unit / 3799 combined frontend tests, 95.55% line / 90.37% branch coverage, 581 Cockpit unit / 110 mounted checks. Required format, lint, types, contracts, docs (215 human / 27 helpers), builds, wheel profiles, browser startup and read fixture all pass with zero required skips. Subscriber-time regression checks coherent ready Operations/Runs rows and counts across first, next, previous and refreshed pages. Real OS signal / HTTP pool-lock-entry tests and safe POST, terminal and pending-unlink boundaries preserve original handles. Earlier failed gates and SDK1 collector failure remain separately retained.",
+          "profile": "ActualNode/jsdomReact/typedclient tests plusrealASGI/service/runner/store/Unixworker/localHTTP+OSsignals; deterministicexternalHub/storage/DNS/TLS boundaries. InstalledUI/CLI proofrecordedseparately; noMAC/NAS inferencefromthisgate.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "b1ba833b1f0bc3c215c4bb86a3704eb72ff41ab6ee52eee79021fbdda5407df3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_reads.py::test_large_reports_stream_in_bounded_chunks_and_sanitize_registered_secrets",
+            "tests/unit/test_api_operations.py::test_event_pages_have_explicit_dropped_prefix_and_sequence_cursor",
+            "tests/unit/test_api_operations.py::test_operation_collection_pages_keep_identity_during_status_updates_and_refuse_new_members",
+            "tests/unit/test_operations.py::test_expiry_requires_explicit_terminal_proof_and_never_ages_interrupted"
+          ],
+          "observed_assertion": "Current strict gate 4 passed in 1781.806s: 1473 inputs, drift [], 8608 backend tests, 52 unrelated opt-in deselections, 3557 web unit / 3799 combined frontend tests, 95.55% line / 90.37% branch coverage, 581 Cockpit unit / 110 mounted checks. Required format, lint, types, contracts, docs (215 human / 27 helpers), builds, wheel profiles, browser startup and read fixture all pass with zero required skips. Subscriber-time regression checks coherent ready Operations/Runs rows and counts across first, next, previous and refreshed pages. Real OS signal / HTTP pool-lock-entry tests and safe POST, terminal and pending-unlink boundaries preserve original handles. Earlier failed gates and SDK1 collector failure remain separately retained.",
+          "profile": "ActualNode/jsdomReact/typedclient tests plusrealASGI/service/runner/store/Unixworker/localHTTP+OSsignals; deterministicexternalHub/storage/DNS/TLS boundaries. InstalledUI/CLI proofrecordedseparately; noMAC/NAS inferencefromthisgate.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "4ef61065b5527bd2cd1222c17fd16696ad243d42d73a11f80c780b8a555cd03a",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-normal1.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-normal1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-cases-v2.mjs::loaded-history-and-exact-report"
+          ],
+          "observed_assertion": "Passed 36 one-attempt cases in 481.193s, 12 each in Chromium 156.0.8078.4, Firefox 157.0 and WebKit 27.2. All 30 original jobs exit 0 (9 plans, 3 syncs, 9 Unix verifications, 6 diagnostics, 3 refreshes); 12 durable reports. Positive first-new verification reads 2 repositories, 2 revisions, 4 objects and 86 bytes. Every sampled ready-history tuple is coherent; actual WebKit next/previous paging shows rows/loaded extent 25/25, 4/29, 25/29 before the final lost-response plan. Three genuine pre-header aborts recover through original-key GET with zero POST replay. 320 trusted requests, 72 zero-CSP checkpoints; 13 original process pairs gone, 4 empty cgroups, 5 refused endpoints and 667 old objects plus baseline/input identities unchanged.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "1a2a9e3181d3d118313ea12a064bc71ea526ce4388b2acb1cb81eabd9c0a0563",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py busy",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-busy1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 173.482s with 3 original full-sync POSTs. A real held flock yields exit 20/HFMNT010 and an authenticated HTTP 200 domain failure; busy guidance appears without an invented report or replay. The holder is normally released/reaped after role shutdown. 13 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged; 94 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "4dff655c8c0decf93bff7823f34d513df3e10d4e5101b75553a3c47e78f5e532",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py partial",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-partial1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 109.008s with 3 original full-sync POSTs returning exit 30/HFHUB001. Both repository outcomes remain visible: failed dataset with null new publication, skipped model with HFWRN011 retaining publication 305babbfa6b348c1b38bcd136df7e5ae. Exact original result/report joins pass without replay. The external refusal is restored after shutdown; 14 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged. 52 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "0d4aaa0890b41ba6d605f78516a92e8ce6d6954e3cf8725bd965c71371107433",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py integrity",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-integrity1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 89.241s with 3 original full-verification POSTs returning exit 40/HFVER001. Real API/Unix-worker result and report joins match. Publication 305babbfa6b348c1b38bcd136df7e5ae/config.json remains damaged at SHA256 7c064c316c677e2d1330869e1639194066cf8ca00f8bd3631fd3891213152481; no healing, replay or later job occurs. 18 final durable reports, 14 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged. 50 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "e5ed892a7a76caa68014fadbd410797dfd200804d35d272752da20c8dfaaef8c",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-observer2.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-observer2-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-run-observer-v2.py::scheduled-observer-sigint-original-get-only",
+            ".scratch/web-016c-run-observer-v2.py::scheduled-observer-sigterm-original-get-only"
+          ],
+          "observed_assertion": "Passed 2 one-attempt installed SDK signal cases in 73.710s, using one new original REST-writer full verification under a real flock. The standard installed entrypoint exits 20/HFAPI019 on SIGINT and SIGTERM, restores prior handlers, preserves exact pending/lock evidence and issues zero observer POSTs. Server and worker continue waiting and then fail 20/HFMNT010 with identical result SHA256 b79e19a464534d587a0dfff19f4de7bf79c214dc340ee1ecdda35d5726262e2f; archive unchanged. Combined passive call/return header events total 16 with 8 send returns; these are not HTTP delivery counts. All original roles, observers and holder normally drain; cgroups empty, endpoints refuse and 667 old objects remain unchanged. SDK1 functional success/coordinator failure and separate read-only retrospective closure 0d16faf2b6333ddffb68b23f91cca71e58a9f700589d3faca8cd481c3c33a095 remain retained. The private v2 collector classifies seven root-protected inputs while all ten immutability joins remain; no canonical guard change or replay of an old key.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance. Unprivileged installed observer UID1000 uses owned configuration and CA; its passive profiler records only method/path/PID, without headers, bodies or mocks. This does not establish fixed host observer-unit control parity.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        }
+      ],
       "id": "OPS-08",
       "owner": "WEB-016",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_08"
+          "node_id": "web/test/history-state.unit.test.ts::next and previous replace the visible page and retain only known loaded extent"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/history-state.unit.test.ts::cursor history stops at32 positions, independent of a server claiming more"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/history-state.unit.test.ts::409 continuation remains a visible failed read until explicit refresh, with no automatic retry"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-observation.unit.test.ts::initial read plus three1/2/4-second retries then visible pause"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-observation.unit.test.ts::events preserve server gaps, bounded local omissions, duplicates and conflicts"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/operation-observation.unit.test.ts::global capacity refuses before GET and full result cannot silently fall out of retention"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/history-state.unit.test.ts::every published ready history page includes its rows in the known loaded extent"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_08"
+          "node_id": "tests/unit/test_api_reads.py::test_large_reports_stream_in_bounded_chunks_and_sanitize_registered_secrets"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_operations.py::test_event_pages_have_explicit_dropped_prefix_and_sequence_cursor"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_operations.py::test_operation_collection_pages_keep_identity_during_status_updates_and_refuse_new_members"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_operations.py::test_expiry_requires_explicit_terminal_proof_and_never_ages_interrupted"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-08"
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::loaded-history-and-exact-report"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-run-observer-v2.py::scheduled-observer-sigint-original-get-only"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-run-observer-v2.py::scheduled-observer-sigterm-original-get-only"
         }
       ],
       "required_layers": [
@@ -8527,24 +9191,287 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "ee6fe410eb50bff3cafec4cc12ede6084cdc6c1e86ad8b761445805492882612",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-normal4.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-normal4-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-cases.mjs::jobs-and-installed-sizing",
+            ".scratch/web-016-operation-cases.mjs::selected-sync-and-original-run",
+            ".scratch/web-016-operation-cases.mjs::verification-estimate-read",
+            ".scratch/web-016-operation-cases.mjs::new-publications-verification",
+            ".scratch/web-016-operation-cases.mjs::full-retained-verification",
+            ".scratch/web-016-operation-cases.mjs::exact-revision-verification",
+            ".scratch/web-016-operation-cases.mjs::read-only-diagnostics",
+            ".scratch/web-016-operation-cases.mjs::probing-diagnostics",
+            ".scratch/web-016-operation-cases.mjs::offline-metadata-refresh",
+            ".scratch/web-016-operation-cases.mjs::candidate-file-sizing"
+          ],
+          "observed_assertion": "PASS432.496s/cohortc5206a2897514cbdac62b7c62377e2b8;36one-attempt cases/12each Chromium156.0.8078.4,Firefox157.0,WebKit27.2;30singleoriginal keyed jobs all exit0, real sync publication/Unix verification/durable reports, three genuine pre-header connection aborts/original-key GET recovery/zero replay. WebKit actual history25/5/25rows and knownextent30;315trusted passive requests/72zero-CSP checkpoints/no dialogs,popups,pageerrors. All13originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "e537305a06c7bcfc74a6bb385cd319accde43252698796dbe1804bdca99f9a09",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py busy",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-busy1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS174.941s;3one-attempt cases/oneperengine. Real heldarchive flock yields three original syncfailed20/HFMNT010, authenticated failed HTTP200results, benignbusy guidance/no replay/no invented run report. Originalholder released/reaped afterroles stop;13originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "8284b3a3ad5a46a909a6c0fc6ecd97b35278a0054ac877da0e853da9d8912c22",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py partial",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-partial1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS106.298s;3one-attempt cases/oneperengine. Three original fullsyncfailed30 retain both repositories: datasetfailedHFHUB001/no publication and modelskippedHFWRN011/originalc76106ccf7894c488c92a6b23f27a83b. Exact original result/persisted report equality, onePOSTperengine/no replay. ExternalHub refusal restored afterstop;14originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "993f82429023302a7e428522a764d0bc1e8599685f720bd470f344f491a35b65",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-supplement1.py integrity",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-integrity1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "PASS100.423s;3one-attempt cases/oneperengine, lastfixturemode. Three original fullverifications/API-realUnixworker exact resultjoins fail40/HFVER001, preserving config.json digest_mismatch for exact modelpublicationc76106ccf7894c488c92a6b23f27a83b. Original findings/report equality, onePOSTperengine/no replay/no healing. DamagedSHA7c064c316c677e2d1330869e1639194066cf8ca00f8bd3631fd3891213152481 remains;14originalpairs gone/4emptycgroups/5refused endpoints/knowncleanup; originalWEB015,baseline5 andfixedinputs unchanged.",
+          "profile": "Built UI through the same genuine trusted-TLS Caddy and indexed installed native0.2.32 API/helper/runner/FD3 Unix worker in owned Enforcing guest; LOCAL_STORAGE_SIMULATION with deterministic external Hub/storage adapters. Package bytes match selected wheel. Real business routes/effects, no fake API responses; not new rootless UI, production/NAS or later platform acceptance.",
+          "source_sha256": "2b6e329d2ccd3c716cb416c956379895cbb66a7e50067b1e0ebc668955302d97"
+        },
+        {
+          "artifact_sha256": "7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/jobs-state.unit.test.ts::builds one existing action DTO without broadening its scope: %j",
+            "web/test/JobForms.component.test.tsx::%s selected scope submits one exact canonical request and admission stays distinct from completion",
+            "web/test/JobForms.component.test.tsx::verification %s uses only the existing offline scope DTO",
+            "web/test/JobForms.component.test.tsx::diagnostics %s sends explicit read_only=%s and preserves its effects",
+            "web/test/JobForms.component.test.tsx::refresh retains the explicit metadata flags and rejects an empty category selection",
+            "web/test/JobForms.component.test.tsx::candidate file selection is read-free, never exposes contents or persists them, and submits only on explicit action"
+          ],
+          "observed_assertion": "Strictgate3PASS1494.761s/1473inputs/drift[];3556webunit and3798combinedReact/state/client tests,95.55line90.36branch;8608backend,581Cockpitunit/110mounted, allformat/lint/types/contracts/docs/build/wheel/readfixture/browserchecks.52unrelatedopt-indeselections,zero requiredskips. ClosedDTOs/permissions/effects, exactclassifiedresults, boundedloadedhistory/report/event/capacity andoriginalhandle/no-replay paths pass.",
+          "profile": "Frozen currentS3d5b17/1473; unit usesNode/jsdomReact andcontrolledexternalboundaries. Integration usesrealASGI/service/store/Unixworker andactualOSsignals withownedlocalHTTP; externalHub/mount/DNS/TLS adapters remainexplicit. InstalledCaddy/current.34acceptance recordedseparately, notMAC/NAS prooffromthisgate.",
+          "source_sha256": "d5b17c5b32a8665bb2e61114e79e260023be821babd4b83bf0d75d74bcdf5b0e"
+        },
+        {
+          "artifact_sha256": "7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate3/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_commands.py::test_reader_plan_and_explicit_diagnostics_keep_effects_and_lock_boundaries",
+            "tests/unit/test_api_candidates_adversarial.py::test_candidate_plan_uses_installed_credential_and_candidate_repository_policy",
+            "tests/unit/test_api_catalog_refresh.py::test_refresh_http_captures_once_replays_original_and_new_key_recaptures",
+            "tests/unit/test_web_operations_worker.py::test_real_api_sync_then_all_unix_verification_modes_and_integrity_report"
+          ],
+          "observed_assertion": "Realcommandservices execute installed/candidate plans andreadonly/probingdiagnostics withproperlock/Hub boundaries; catalogrefresh capturesonce/originalkeyreplayisobservation, freshkeyrecaptures. NewactualASGI-runner-Unixworker test publishesrealownedcontent, executesnew/full/exactverify withidenticalAPI/worker/report bytes, preservesintegrity40/nohealing andoriginalprivateACK reconciliation.",
+          "profile": "Frozen currentS3d5b17/1473; unit usesNode/jsdomReact andcontrolledexternalboundaries. Integration usesrealASGI/service/store/Unixworker andactualOSsignals withownedlocalHTTP; externalHub/mount/DNS/TLS adapters remainexplicit. InstalledCaddy/current.34acceptance recordedseparately, notMAC/NAS prooffromthisgate.",
+          "source_sha256": "d5b17c5b32a8665bb2e61114e79e260023be821babd4b83bf0d75d74bcdf5b0e"
+        },
+        {
+          "artifact_sha256": "b1ba833b1f0bc3c215c4bb86a3704eb72ff41ab6ee52eee79021fbdda5407df3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/jobs-state.unit.test.ts::builds one existing action DTO without broadening its scope: %j",
+            "web/test/JobForms.component.test.tsx::%s selected scope submits one exact canonical request and admission stays distinct from completion",
+            "web/test/JobForms.component.test.tsx::verification %s uses only the existing offline scope DTO",
+            "web/test/JobForms.component.test.tsx::diagnostics %s sends explicit read_only=%s and preserves its effects",
+            "web/test/JobForms.component.test.tsx::refresh retains the explicit metadata flags and rejects an empty category selection",
+            "web/test/JobForms.component.test.tsx::candidate file selection is read-free, never exposes contents or persists them, and submits only on explicit action"
+          ],
+          "observed_assertion": "Current strict gate 4 passed in 1781.806s: 1473 inputs, drift [], 8608 backend tests, 52 unrelated opt-in deselections, 3557 web unit / 3799 combined frontend tests, 95.55% line / 90.37% branch coverage, 581 Cockpit unit / 110 mounted checks. Required format, lint, types, contracts, docs (215 human / 27 helpers), builds, wheel profiles, browser startup and read fixture all pass with zero required skips. Subscriber-time regression checks coherent ready Operations/Runs rows and counts across first, next, previous and refreshed pages. Real OS signal / HTTP pool-lock-entry tests and safe POST, terminal and pending-unlink boundaries preserve original handles. Earlier failed gates and SDK1 collector failure remain separately retained.",
+          "profile": "ActualNode/jsdomReact/typedclient tests plusrealASGI/service/runner/store/Unixworker/localHTTP+OSsignals; deterministicexternalHub/storage/DNS/TLS boundaries. InstalledUI/CLI proofrecordedseparately; noMAC/NAS inferencefromthisgate.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "b1ba833b1f0bc3c215c4bb86a3704eb72ff41ab6ee52eee79021fbdda5407df3",
+          "command": "scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/gate4/strict-gate-result.json",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_api_commands.py::test_reader_plan_and_explicit_diagnostics_keep_effects_and_lock_boundaries",
+            "tests/unit/test_api_candidates_adversarial.py::test_candidate_plan_uses_installed_credential_and_candidate_repository_policy",
+            "tests/unit/test_api_catalog_refresh.py::test_refresh_http_captures_once_replays_original_and_new_key_recaptures",
+            "tests/unit/test_web_operations_worker.py::test_real_api_sync_then_all_unix_verification_modes_and_integrity_report"
+          ],
+          "observed_assertion": "Current strict gate 4 passed in 1781.806s: 1473 inputs, drift [], 8608 backend tests, 52 unrelated opt-in deselections, 3557 web unit / 3799 combined frontend tests, 95.55% line / 90.37% branch coverage, 581 Cockpit unit / 110 mounted checks. Required format, lint, types, contracts, docs (215 human / 27 helpers), builds, wheel profiles, browser startup and read fixture all pass with zero required skips. Subscriber-time regression checks coherent ready Operations/Runs rows and counts across first, next, previous and refreshed pages. Real OS signal / HTTP pool-lock-entry tests and safe POST, terminal and pending-unlink boundaries preserve original handles. Earlier failed gates and SDK1 collector failure remain separately retained.",
+          "profile": "ActualNode/jsdomReact/typedclient tests plusrealASGI/service/runner/store/Unixworker/localHTTP+OSsignals; deterministicexternalHub/storage/DNS/TLS boundaries. InstalledUI/CLI proofrecordedseparately; noMAC/NAS inferencefromthisgate.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "4ef61065b5527bd2cd1222c17fd16696ad243d42d73a11f80c780b8a555cd03a",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-normal1.py",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-normal1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-cases-v2.mjs::jobs-and-installed-sizing",
+            ".scratch/web-016c-operation-cases-v2.mjs::selected-sync-and-original-run",
+            ".scratch/web-016c-operation-cases-v2.mjs::verification-estimate-read",
+            ".scratch/web-016c-operation-cases-v2.mjs::new-publications-verification",
+            ".scratch/web-016c-operation-cases-v2.mjs::full-retained-verification",
+            ".scratch/web-016c-operation-cases-v2.mjs::exact-revision-verification",
+            ".scratch/web-016c-operation-cases-v2.mjs::read-only-diagnostics",
+            ".scratch/web-016c-operation-cases-v2.mjs::probing-diagnostics",
+            ".scratch/web-016c-operation-cases-v2.mjs::offline-metadata-refresh",
+            ".scratch/web-016c-operation-cases-v2.mjs::candidate-file-sizing"
+          ],
+          "observed_assertion": "Passed 36 one-attempt cases in 481.193s, 12 each in Chromium 156.0.8078.4, Firefox 157.0 and WebKit 27.2. All 30 original jobs exit 0 (9 plans, 3 syncs, 9 Unix verifications, 6 diagnostics, 3 refreshes); 12 durable reports. Positive first-new verification reads 2 repositories, 2 revisions, 4 objects and 86 bytes. Every sampled ready-history tuple is coherent; actual WebKit next/previous paging shows rows/loaded extent 25/25, 4/29, 25/29 before the final lost-response plan. Three genuine pre-header aborts recover through original-key GET with zero POST replay. 320 trusted requests, 72 zero-CSP checkpoints; 13 original process pairs gone, 4 empty cgroups, 5 refused endpoints and 667 old objects plus baseline/input identities unchanged.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "1a2a9e3181d3d118313ea12a064bc71ea526ce4388b2acb1cb81eabd9c0a0563",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py busy",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-busy1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 173.482s with 3 original full-sync POSTs. A real held flock yields exit 20/HFMNT010 and an authenticated HTTP 200 domain failure; busy guidance appears without an invented report or replay. The holder is normally released/reaped after role shutdown. 13 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged; 94 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "4dff655c8c0decf93bff7823f34d513df3e10d4e5101b75553a3c47e78f5e532",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py partial",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-partial1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 109.008s with 3 original full-sync POSTs returning exit 30/HFHUB001. Both repository outcomes remain visible: failed dataset with null new publication, skipped model with HFWRN011 retaining publication 305babbfa6b348c1b38bcd136df7e5ae. Exact original result/report joins pass without replay. The external refusal is restored after shutdown; 14 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged. 52 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        },
+        {
+          "artifact_sha256": "0d4aaa0890b41ba6d605f78516a92e8ce6d6954e3cf8725bd965c71371107433",
+          "command": "rtk proxy python /var/tmp/web-016-validation-2_9zjimp/run-source4-supplement1.py integrity",
+          "evidence_locator": "/var/tmp/web-016-validation-2_9zjimp/functional-source4-integrity1-result-observed.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
+          ],
+          "observed_assertion": "Passed 3 one-attempt browser cases in 89.241s with 3 original full-verification POSTs returning exit 40/HFVER001. Real API/Unix-worker result and report joins match. Publication 305babbfa6b348c1b38bcd136df7e5ae/config.json remains damaged at SHA256 7c064c316c677e2d1330869e1639194066cf8ca00f8bd3631fd3891213152481; no healing, replay or later job occurs. 18 final durable reports, 14 original pairs gone, 4 empty cgroups, 5 refused endpoints, 667 old objects and inputs unchanged. 50 trusted requests and 6 zero-CSP checkpoints.",
+          "profile": "Current frozen source S4, fixture 0.2.36: built UI through the shared trusted-TLS Caddy, indexed installed native API/helper/runner and real FD3 Unix worker in the owned Enforcing guest. LOCAL_STORAGE_SIMULATION with deterministic external Hub/mount adapters; all 114 installed module bytes match the wheel/source. This does not establish new rootless UI, NAS, production or later platform acceptance.",
+          "source_sha256": "7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b"
+        }
+      ],
       "id": "OPS-09",
       "owner": "WEB-016",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_09"
+          "node_id": "web/test/jobs-state.unit.test.ts::builds one existing action DTO without broadening its scope: %j"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/JobForms.component.test.tsx::%s selected scope submits one exact canonical request and admission stays distinct from completion"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/JobForms.component.test.tsx::verification %s uses only the existing offline scope DTO"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/JobForms.component.test.tsx::diagnostics %s sends explicit read_only=%s and preserves its effects"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/JobForms.component.test.tsx::refresh retains the explicit metadata flags and rejects an empty category selection"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/JobForms.component.test.tsx::candidate file selection is read-free, never exposes contents or persists them, and submits only on explicit action"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_09"
+          "node_id": "tests/unit/test_api_commands.py::test_reader_plan_and_explicit_diagnostics_keep_effects_and_lock_boundaries"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_candidates_adversarial.py::test_candidate_plan_uses_installed_credential_and_candidate_repository_policy"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_api_catalog_refresh.py::test_refresh_http_captures_once_replays_original_and_new_key_recaptures"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_web_operations_worker.py::test_real_api_sync_then_all_unix_verification_modes_and_integrity_report"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-09"
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::jobs-and-installed-sizing"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::selected-sync-and-original-run"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::verification-estimate-read"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::new-publications-verification"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::full-retained-verification"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::exact-revision-verification"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::read-only-diagnostics"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::probing-diagnostics"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::offline-metadata-refresh"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-cases-v2.mjs::candidate-file-sizing"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-016c-operation-failure-cases.mjs::original-job-failure-classification-and-evidence"
         }
       ],
       "required_layers": [
@@ -8552,7 +9479,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

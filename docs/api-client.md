@@ -546,6 +546,13 @@ handlers. Library import and `run_scheduled` have no signal side effects. Stoppi
 the client unit therefore preserves recovery handles; it does not cancel the
 server's accepted operation.
 
+The signal handler latches the stop request; it must not raise an asynchronous
+exception while the HTTP transport owns a lock. Owned request/observation and
+persistence checkpoints classify the stop before another submission or terminal
+pending-file removal. Poll and retry waits remain stop-aware. An in-flight HTTP
+exchange retains its configured finite connect/read budget; stopping observation
+does not cancel a transmitted request or change the server's operation outcome.
+
 ## Troubleshooting and rollback
 
 | Code/result | Meaning and next step |
@@ -657,3 +664,23 @@ use same-origin mode, reject redirects and disable caching; GETs retain
 `no-referrer`. The response-wide `no-referrer` policy and external-link isolation
 remain in force. A client must not compensate by accepting a null Origin or
 retrying a refused submission. See [decision145](adr/decision-145.md).
+
+
+### Browser jobs and bounded history
+
+The [Operations guide](web-ui/operations.md) composes the existing named typed
+submission methods, original-operation controller and authenticated reads.
+Installed/candidate sizing, sync, verification, diagnostics and offline refresh
+retain their original route/command and scope; Basic admission still obtains
+fresh protected host permission. A local form or valid candidate never grants
+execution authority. Candidate-file sizing keeps strict bounded UTF-8 only in
+RAM and never becomes a configuration editor/install path or saved request body.
+
+Operation/run inventories explicitly load25-row pages with at most32 cursor
+positions; events remain paged and gaps visible. A stale cursor requires explicit
+restart. These are limited loaded histories, not reconstructed complete audits.
+Report/result collections page locally without adding network authority; exact
+run/operation/request IDs, historical policy and classified partial/busy/integrity
+results stay distinct. HTTP200 or202 does not replace a domain result. Original
+lookup, GET retries and stop-observing retain the existing finite session limits
+and never resubmit a POST, cancel an executor or clear protected pending state.

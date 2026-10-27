@@ -21,17 +21,17 @@ After sign-in, **Administrator session** identifies the authenticated human.
 **Configured archive** shows the UUID from installed policy; it does not mean
 archive health, inventory or writability has been checked. The current interface
 provides the [Library](library.md), permission explanations and
-[original-operation observation and recovery](operations.md), with
+[jobs, operation/report history and original recovery](operations.md), with
 [exact-publication repository details](repository-details.md). The bounded
 [README view](readme-cards.md) provides formatted and sanitized-source display.
 [Configuration and tags](configuration-and-tags.md) adds structured managed
-editing; full job submission forms remain separate work:
+editing. Operations composes supported job forms with original-handle recovery:
 
 | Workspace | Intended workflow |
 | --- | --- |
 | Library | [Find configured and archived models or datasets](library.md) using local ID/tag and technical filters. Keep scope, loaded rows, coverage and current/historical provenance distinct. |
 | Repository details | [Inspect a selected exact publication](repository-details.md), attributed model/dataset metadata, files, revisions, integrity and loaded history; open current configuration tag editing separately. |
-| Operations | [Observe and recover original operation handles](operations.md), including after a connection interruption. Full job submission forms remain under development. |
+| Operations | [Submit supported jobs, inspect bounded operation/run history and recover original handles](operations.md). Preserve effects, result classification and original identity through interruption. |
 | Maintenance | Review the scope of existing retention, repair and recovery actions before any separate Apply action. |
 | Administration | Read [protected host status and permission reasons](administration.md); use [Configuration and tags](configuration-and-tags.md) to review installed intent, edit one draft, validate, preview and apply exact assessed changes. |
 
@@ -43,8 +43,10 @@ Library filter bookmarks use bounded URL fragments after `#`, not shell query
 strings; filtering and detail navigation perform reads only. Administration lists
 each permission with its current reason; unimplemented host controls remain
 disabled. Configuration editing uses its independent grants and original preview,
-not host-read as an extra prerequisite. It does not start a job, change protected
-authority or remove a read-only guard. A grant alone never proves readiness.
+not host-read as an extra prerequisite. Opening or reading the editor starts no
+job; explicit preview/Apply retains its original handles. Neither editing nor
+job permission evidence changes protected authority or removes a read-only guard.
+A grant alone never proves readiness.
 
 **Check interface version** performs a read, without reloading automatically or
 replaying an operation. A compatible API restart requires explicit reconnect

@@ -10,6 +10,7 @@ import {
     problemWire,
     readWire,
 } from "./read-fixtures";
+import runReport from "../../tests/fixtures/schemas/run-report.json";
 
 const id = "a".repeat(32),
     sha = "b".repeat(40),
@@ -33,6 +34,60 @@ const original = {
 };
 const operation = decodeClientOperation(
     parseWireJson(JSON.stringify(original)),
+);
+
+test.each([
+    "historical",
+    "wrong_archive",
+    "null_fingerprint",
+    "wrong_read_policy",
+    "current_inventory",
+] as const)(
+    "report retains historical policy independently of its current read wrapper: %s",
+    async (mode) => {
+        const archiveId =
+            mode === "wrong_archive"
+                ? "01234567-89ab-cdef-0123-456789abcdef"
+                : ARCHIVE_ID;
+        const report = { ...runReport, archive_id: archiveId };
+        const base = readWire(
+            mode === "current_inventory" ? "runs" : "runs read",
+            mode === "current_inventory"
+                ? { runs: [report.run_id] }
+                : { report },
+        );
+        const wire = {
+            ...base,
+            archive_id: archiveId,
+            config_fingerprint:
+                mode === "null_fingerprint"
+                    ? null
+                    : mode === "wrong_read_policy" ||
+                        mode === "current_inventory"
+                      ? "e".repeat(64)
+                      : "f".repeat(64),
+            envelope: { ...base.envelope, run_id: report.run_id },
+        };
+        const api = createApiClient({
+            scope: createApiScope({
+                origin: "https://archive.invalid",
+                publicPrefix: "",
+                authorityEpoch: "current-policy",
+                subject: "reader",
+                credentialClass: "rest-reader",
+                instanceId: null,
+                archiveId: ARCHIVE_ID,
+                configFingerprint: "f".repeat(64),
+            }),
+            fetcher: () => Promise.resolve(jsonResponse(wire)),
+        });
+        const result = await (mode === "current_inventory"
+            ? api.readRuns()
+            : api.readReport(report.run_id));
+        expect(result.kind).toBe(
+            mode === "historical" ? "success" : "protocol_failure",
+        );
+    },
 );
 test("an explicitly supplied branded fetch keeps its global receiver for GET and POST", async () => {
     const fetcher = vi.fn<typeof fetch>(function (this: unknown) {

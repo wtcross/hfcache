@@ -6,6 +6,8 @@ import type { LibraryStore } from "../library/library-state";
 import { libraryFragment } from "../library/filters";
 import type { RepositoryStore } from "../repository/repository-state";
 import type { ConfigurationStore } from "../configuration/configuration-state";
+import type { JobsStore } from "../operations/jobs-state";
+import type { HistoryStore } from "../operations/history-state";
 
 export function ConnectedApplication({
     controller,
@@ -14,6 +16,8 @@ export function ConnectedApplication({
     library,
     repository,
     configuration,
+    jobs,
+    history,
 }: {
     controller: SessionController;
     basePath: string;
@@ -21,6 +25,8 @@ export function ConnectedApplication({
     library: LibraryStore;
     repository: RepositoryStore;
     configuration: ConfigurationStore;
+    jobs: JobsStore;
+    history: HistoryStore;
 }) {
     const session = useSyncExternalStore(
         controller.subscribe,
@@ -40,6 +46,8 @@ export function ConnectedApplication({
             library={library}
             repository={repository}
             configuration={configuration}
+            jobs={jobs}
+            history={history}
             libraryBookmark={libraryFragment(libraryState.filters)}
             onCheckRelease={() => checkRelease(session.bootstrap, fetcher)}
         />

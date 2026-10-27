@@ -234,7 +234,12 @@ type Router = (
     url: URL,
     fallback: () => Response,
 ) => Response | Promise<Response>;
-function setup(fragment = "", item = target, router?: Router) {
+function setup(
+    fragment = "",
+    item = target,
+    router?: Router,
+    onReadReport?: (runId: string) => void,
+) {
     window.history.replaceState(
         null,
         "",
@@ -447,7 +452,12 @@ function setup(fragment = "", item = target, router?: Router) {
     const store = createRepositoryStore(controller);
     owned.push({ store, controller });
     const rendered = render(
-        <RepositoryDetail store={store} target={item} basePath="/ui/" />,
+        <RepositoryDetail
+            store={store}
+            target={item}
+            basePath="/ui/"
+            {...(onReadReport === undefined ? {} : { onReadReport })}
+        />,
     );
     const loaded = async () => {
         await waitFor(() => {
@@ -475,10 +485,12 @@ test("current resolves once, pins exact URL and never changes selection when cur
     const fixture = setup();
     await fixture.loaded();
     expect(fixture.store.snapshot().selected).toMatchObject(first);
-    expect(window.location.hash).toContain("commit_sha=" + first.commitSha);
-    expect(window.location.hash).toContain(
-        "publication_id=" + first.publicationId,
-    );
+    await waitFor(() => {
+        expect(window.location.hash).toContain("commit_sha=" + first.commitSha);
+        expect(window.location.hash).toContain(
+            "publication_id=" + first.publicationId,
+        );
+    });
     fixture.setCurrent(second);
     await userEvent.click(
         screen.getByRole("tab", { name: "Files & manifest" }),
@@ -806,6 +818,26 @@ test("activity observes explicitly loaded history and reports without inventing 
     expect(
         fixture.fetcher.mock.calls.every(([, init]) => init?.method === "GET"),
     ).toBe(true);
+});
+
+test("repository Activity forwards the exact loaded run ID to Operations without submitting or walking history", async () => {
+    const openReport = vi.fn();
+    const fixture = setup(
+        repositoryFragment({ pair: first, tab: "activity" }),
+        target,
+        undefined,
+        openReport,
+    );
+    await fixture.loaded();
+    const requests = fixture.fetcher.mock.calls.length;
+    await userEvent.click(
+        screen.getByRole("button", {
+            name: "Open run report in Operations " + runReport.run_id,
+        }),
+    );
+    expect(openReport).toHaveBeenCalledExactlyOnceWith(runReport.run_id);
+    expect(fixture.fetcher).toHaveBeenCalledTimes(requests);
+    expect(fixture.controller.snapshot().registry.records).toEqual([]);
 });
 
 test("model details retain primary, adapter and incomplete declarations without inventing unknown bits", async () => {

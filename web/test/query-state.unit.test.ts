@@ -23,6 +23,37 @@ function setup() {
     return { store, retention, reads, onUnauthorized };
 }
 
+test("original result GET uses shared retention while malformed IDs and submissions refuse", async () => {
+    const { store, retention } = setup();
+    const loader = vi.fn().mockResolvedValue(await versionResult());
+    const query = store.query(
+        {
+            routeId: "operation_result_by_original_operation",
+            path: { operation_id: "a".repeat(32) },
+        },
+        loader,
+    );
+    expect(loader).not.toHaveBeenCalled();
+    await query.refresh();
+    expect(loader).toHaveBeenCalledOnce();
+    expect(query.snapshot().phase).toBe("ready");
+    expect(retention.usedBytes).toBeGreaterThan(0);
+    expect(() =>
+        store.query(
+            {
+                routeId: "operation_result_by_original_operation",
+                path: { operation_id: "../other" },
+            },
+            loader,
+        ),
+    ).toThrow();
+    expect(() =>
+        store.query({ routeId: "config_validate_installed" }, loader),
+    ).toThrow();
+    store.dispose();
+    expect(retention.usedBytes).toBe(0);
+});
+
 test("typed handle keeps classified evidence and releases encoded retention on disposal", async () => {
     const { store, retention } = setup();
     const value = await versionResult("first");

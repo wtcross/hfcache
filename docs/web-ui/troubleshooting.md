@@ -197,8 +197,8 @@ Use the authorized [upgrade and drain procedure](../deployment-centos-stream-10.
 
 Check [interface availability](README.md) before using this guide. The shared
 query, Library, repository details and original-operation observation state are
-available in unreleased source, including bounded README rendering; full job
-forms remain separate work. Installed production
+available in unreleased source, including bounded README rendering and
+[supported jobs/history](operations.md). Installed production
 services retain their recorded releases. A read result describes observed information, never
 permission to modify an archive or proof that an accepted job has finished.
 
@@ -233,6 +233,27 @@ text do not belong in screenshots or diagnostic reports. Operators should compar
 the intended API authority, archive identity and supported source/artifact versions
 before investigating [wire limits](../api.md#browser-wire-boundary). Changing a
 browser limit is a reviewed software change, not an operator workaround.
+
+## Jobs and reports
+
+Follow [Operations](operations.md#choose-a-job-and-its-effects) for actual scopes
+and permissions. An enabled control is not proof of writable storage or a fresh
+protected grant. Never diagnose an uncertain submission by submitting again.
+
+| Problem | Meaning and safe next step |
+| --- | --- |
+| HFAPI022 / helper unavailable | Basic job admission lacks fresh protected authority. Preserve any original handle; ask the operator to restore the genuine indexed helper/profile. Read-only metadata does not bypass that boundary. |
+| HFAPI002 / permission refused | The action needs its own effective archive/Hub permission. Do not substitute a token, broaden policy or retry under another key. |
+| Candidate file refused | Correct strict UTF-8, nonempty source and1MiB source/encoded-request bounds. Syntax validity does not establish compatible archive/Hub authority; the file is for sizing, not installation. |
+| HFMNT010 / Busy | Another real executor holds the archive lock. This is not an integrity finding. Keep the original result/handles and inspect that executor; never unlink the lock or silently resubmit. |
+| Verification findings / integrity exit | Preserve exact findings and the domain run report. A verification report never repairs or changes expected digests; follow authorized recovery rather than blind sync/prune. |
+| Some repository entries failed | Keep all actual successful/failed entries and their codes. A partial result cannot become all-repository success or an empty list. |
+| History page limit, expired cursor or event gap | Loaded pages/events are incomplete evidence. Explicitly restart a stale history read or narrow investigation; do not infer a complete audit or missing execution. |
+| Report missing or unavailable | Keep the original operation result and distinct run ID. Not every command persists a report, and expired/missing evidence never proves nonexecution. |
+
+**Clear local job input** releases only local intent. **Stop observing in this
+browser** aborts only reads. Neither stops a worker, reverses a publication,
+clears pending configuration or authorizes a new submission.
 
 ## Original-operation recovery
 

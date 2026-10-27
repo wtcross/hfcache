@@ -7,6 +7,7 @@ import type {
     SessionSnapshot,
 } from "../state/session-controller";
 import type { ConfigurationStore } from "../configuration/configuration-state";
+import { OperationResult } from "./OperationResult";
 
 function ConfigurationRecovery({
     store,
@@ -87,10 +88,12 @@ function RecoveryEntry({
     record,
     controller,
     configuration,
+    onReadReport,
 }: {
     readonly record: RecoveryRecord;
     readonly controller: SessionController;
     readonly configuration: ConfigurationStore | undefined;
+    readonly onReadReport: ((runId: string) => void) | undefined;
 }) {
     const observation = useSyncExternalStore(
         (listener) => controller.observer.subscribe(record.recordId, listener),
@@ -259,39 +262,15 @@ function RecoveryEntry({
             {observation.result !== null && (
                 <details>
                     <summary>Validated original result</summary>
-                    <p>Read classification: {observation.result.kind}.</p>
-                    {(observation.result.kind === "success" ||
-                        observation.result.kind === "domain_failure") && (
-                        <dl className="recovery-facts">
-                            <dt>Request ID</dt>
-                            <dd>
-                                <code>
-                                    {observation.result.response.request_id}
-                                </code>
-                            </dd>
-                            <dt>Command</dt>
-                            <dd>
-                                {observation.result.response.envelope.command}
-                            </dd>
-                            <dt>Outcome</dt>
-                            <dd>
-                                {observation.result.response.envelope.outcome}
-                            </dd>
-                            <dt>Exit code</dt>
-                            <dd>
-                                {observation.result.response.envelope.exit_code}
-                            </dd>
-                            <dt>Domain run ID</dt>
-                            <dd>
-                                <code>
-                                    {
-                                        observation.result.response.envelope
-                                            .run_id
-                                    }
-                                </code>
-                            </dd>
-                        </dl>
-                    )}
+                    <OperationResult
+                        result={observation.result}
+                        {...(observation.receipt === null
+                            ? {}
+                            : { operation: observation.receipt })}
+                        {...(onReadReport === undefined
+                            ? {}
+                            : { onReadReport })}
+                    />
                 </details>
             )}
             {message !== null && <p role="status">{message}</p>}
@@ -303,10 +282,12 @@ export function OperationRecovery({
     controller,
     session,
     configuration,
+    onReadReport,
 }: {
     readonly controller: SessionController;
     readonly session: SessionSnapshot;
     readonly configuration?: ConfigurationStore;
+    readonly onReadReport?: (runId: string) => void;
 }) {
     const choiceId = useId();
     const [kind, setKind] = useState<"id" | "basic-key" | "legacy-key">("id");
@@ -375,6 +356,7 @@ export function OperationRecovery({
                             record={record}
                             controller={controller}
                             configuration={configuration}
+                            onReadReport={onReadReport}
                         />
                     ))
                 )}

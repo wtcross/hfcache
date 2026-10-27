@@ -531,6 +531,110 @@ main:focus {
     display: grid;
     gap: 1.5rem;
 }
+.operations-workspace {
+    display: grid;
+    gap: 1.5rem;
+    min-width: 0;
+}
+.operations-workspace section,
+.operations-workspace article {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.history-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.history-list li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--line, #dfe5ed);
+}
+.history-list li code {
+    max-width: 100%;
+}
+.history-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+.history-pagination p {
+    flex-basis: 100%;
+}
+.operation-events {
+    padding-left: 1.5rem;
+    max-height: 24rem;
+    overflow: auto;
+}
+.operation-events li {
+    padding: 0.4rem 0;
+}
+.job-form {
+    display: grid;
+    gap: 0.8rem;
+    max-width: 52rem;
+}
+.job-form fieldset {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem 1.25rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0.8rem;
+    border: 1px solid var(--line, #dfe5ed);
+    border-radius: 0.4rem;
+}
+.job-form legend {
+    padding: 0 0.3rem;
+    font-weight: 600;
+}
+.job-form fieldset label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.job-form textarea,
+.job-form > input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.65rem;
+    border: 1px solid #aeb9ca;
+    border-radius: 0.35rem;
+    color: #17253d;
+    background: #fff;
+    font: inherit;
+}
+.job-form > button {
+    justify-self: start;
+}
+.job-file {
+    display: grid;
+    gap: 0.7rem;
+}
+.job-file input {
+    max-width: 100%;
+}
+.job-effects,
+.job-result,
+.job-estimate {
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line, #dfe5ed);
+    border-radius: 0.4rem;
+    background: #f6f8fc;
+}
+.job-identity {
+    display: grid;
+    gap: 0.4rem 1rem;
+    grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+}
+.job-identity dd {
+    margin: 0;
+}
 .recovery-entry {
     border-top: 1px solid var(--line, #dfe5ed);
     padding: 1.25rem 0;

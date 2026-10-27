@@ -74,3 +74,20 @@ remains available, then worker; a stopped observer is never executor termination
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
+
+## 2026-10-26: Cooperative scheduled-observer interruption
+
+Raising KeyboardInterrupt from a signal handler immediately after the HTTP
+transport acquires a lock can leave shutdown blocked re-acquiring it. Latching
+the stop request avoids asynchronous exceptions inside transport critical sections.
+
+The entrypoint instead latches SIGINT/SIGTERM and classifies interruption at owned
+safe request/observation and persistence checkpoints, before a fresh submission
+or terminal pending-file removal. Poll/retry waits remain stop-aware; current
+HTTP exchanges retain their existing finite budgets. Restore prior handlers,
+retain exact original handles and never replay or cancel accepted work. The
+ordinary imported client has no signal side effects or new default behavior.
+This adds no executor, thread framework, lock, runtime dependency, wire format or
+host permission. The [client contract](../api-client.md) states the observable
+behavior; [real signal and ownership regressions](../../tests/unit/test_scheduled_client.py)
+cover the interruption and original-handle boundaries.

@@ -78,3 +78,14 @@ read tools. [CLI](../cli.md), [API client](../api-client.md),
 Source/temporary fixtures never establish real Cockpit/PAM, installed symptom,
 deployment or NAS/workload acceptance. No runtime dependency or durable format
 change is introduced.
+
+
+## Application Operations/report composition (2026-10-26)
+
+The application-owned browser reuses existing typed operation/run reads and exact
+report/result identities. Its separate25-row operation/run pages retain at most32
+cursor positions and explicit stale-cursor restart; local25-row report collections
+are presentation of already validated bounded data. Loaded history is never a
+complete archive/repository audit. Events/journals stay diagnostic and do not
+replace classified domain results. See [Operations](../web-ui/operations.md).
+No endpoint, report format, archive-path access or execution authority changes.

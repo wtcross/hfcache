@@ -510,13 +510,18 @@ finite response budgets and existing wrappers. Readers/writers may read.
 
 Writer-only `POST /catalog/refreshes` uses existing keyed serialized operations,
 receipts and exact result observation. Strict body fields are whole-repository
-`selectors=[]`, `revision_scope=retained`, `tags=true`, `technical=true`, with at
-least one boolean true. Empty selection means configured/retained union; unknown
+`selectors` (default`[]`), `revision_scope` (`current` or `retained`, default
+`retained`), `tags=true` and `technical=true`, with at least one boolean true. Empty selection means configured/retained union; unknown
 selectors refuse. Fresh scope and installed curation are checked after lock wait
 without replacing admitted operational authority. Unpublished technical work is
 explicitly skipped; tag-only capture is valid. Refresh never downloads, verifies,
 repairs, installs config or increases integrity confidence. A new capture needs a
 new key; replaying a key observes the original operation.
+
+The browser's [Refresh offline metadata job](web-ui/operations.md#verification-and-metadata-scope)
+uses this same keyed route and original recovery. Full refresh scope includes
+configured and retained archived identities, not only the visible Library page.
+Reading or paging Library/detail/history never starts refresh implicitly.
 
 The independent client and CLI expose search, tag facets, catalog detail/variants
 and writer refresh through REST, preserving JSON evidence, qualified human output,

@@ -193,3 +193,22 @@ server still requires its exact configured Origin, including for validation.
 Response headers and external links remain `no-referrer`. Accepting null Origin
 would weaken the existing CSRF boundary; changing the request policy preserves
 that boundary without a new endpoint, permission, dependency or automatic retry.
+
+
+## Existing jobs and paged history composition (2026-10-26)
+
+Named typed job DTOs retain explicit full/selected and verification/diagnostic/
+refresh discriminators. A bounded read-only candidate-file upload is sizing-only,
+never a TOML editor, durable browser body or protected configuration installation.
+The same original-key controller owns every POST and exact result identity; event,
+receipt and domain-report reads remain separate. Finite displayed history/local
+report pages preserve current-session query ownership and existing byte limits.
+[Operations procedures](../web-ui/operations.md) add no server DTO, permission,
+route, mutation retry or new architecture rule.
+
+Ready history rows and their known loaded extent are derived from the same query
+snapshot. A query-ready notification can precede its awaiting caller's positional
+bookkeeping; the displayed active-page count therefore comes from that ready
+payload rather than a stale stored count. Previous positions and their finite
+retention remain unchanged. This prevents a transient zero loaded extent beside
+visible rows without scanning, inventing totals or altering read authority.

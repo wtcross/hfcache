@@ -29,6 +29,38 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-016 Expose jobs and exact operation reports
+  (2026-10-26, this commit — [task](plans/tasks/web-016-operations-and-reports-ui.md)).
+  Existing full and selected sizing/sync, all verification modes and estimates,
+  diagnostics and offline refresh reuse the original-key controller and real
+  private worker. Bounded histories, events, results and reports preserve failed
+  HTTP 200 Envelopes, benign busy, partial repository results, integrity findings
+  and unknown outcomes without replay. Cooperative scheduled-observer stop avoids
+  asynchronous HTTP-lock interruption; every ready history publication includes
+  its own count. Strict gate 4 passes in 1781.806 seconds on exact source
+  7fa3bb9f… / 1473 inputs: 8608 backend tests with 52 unrelated deselections, 3557
+  web unit tests, 3799 combined frontend tests, 95.55% line and 90.37% branch
+  coverage, 581 Cockpit unit tests and 110 mounted checks. All required builds,
+  wheel profiles, browser and documentation checks (215 documents / 27 helpers)
+  pass with zero required skips. The current native .36 wheel, UI and image
+  3da0c794 match the source, with actual UBI 10 micro ancestry and no runtime Node.
+  All 47 current installed cases pass: 36 normal cases in 481.193 seconds, three
+  busy cases in 173.482 seconds, three partial cases in 109.008 seconds, two SDK2
+  signal cases in 73.710 seconds and three final integrity cases in 89.241 seconds.
+  The browser checks cover 39 POSTs, 516 trusted requests, 90 zero-CSP checkpoints,
+  18 exact reports, real original-key loss recovery and 25-row history paging.
+  SDK observers send zero POSTs, retain original pending state and handlers, and
+  leave the backend to return busy exit 20. All roles stop normally; 667 old
+  WEB015/.32/.34 objects and five baseline pairs remain exact. Final damaged
+  publication 305babbf… is deliberately unhealed. Old pending states and SDK1's
+  false collector result remain preserved, without replay or promotion. Five
+  actual private PNGs remain unpublished. OPS06–09 and human guides are complete.
+  INV006/007/013/014/018/020/021 and ADR109/115/116/118/120/121/135/136/137/145/148
+  are reviewed; ADR121/136/137/145 are amended. WEB-017 is pending next.
+  LOCAL_STORAGE_SIMULATION is not NAS, new rootless or WEB022 platform proof.
+  No production, live Cockpit, rollout, merge, push or tag action occurred.
+  Evidence: /var/tmp/web-016-validation-2_9zjimp/.
+
 - [x] WEB-015 Implement repository configuration and tag management
   (2026-10-26, this commit — [task](plans/tasks/web-015-configuration-and-tag-ui.md)).
   One exact-base RAM draft composes existing validation/preview/guarded Apply,
@@ -2858,6 +2890,33 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-016 checkpoint (2026-10-26, this commit): WEB001–016 are complete on
+feat/web-ui; WEB-017 remains pending through the current selector.
+[Task016](plans/tasks/web-016-operations-and-reports-ui.md) records strict gate 4
+on source 7fa3bb9f… / 1473 inputs, the matching native .36 wheel, UI, UBI 10 micro
+image and no-Node proof, and all 47 current installed cases. OPS06–09 and human
+operations, report and recovery guidance are complete. All original browser, API,
+worker, helper and Caddy roles stop normally. Cgroups are empty and endpoints
+refuse connections; five baseline pairs and 667 original WEB015/.32/.34 objects
+remain exact. Owned selector .36 and its fixture state are retained; no production
+release switch is implied.
+
+Preserve the final damage to model publication
+305babbfa6b348c1b38bcd136df7e5ae/config.json and its exit 40 findings and reports.
+Do not sync or repair it to clean up acceptance. Keep WEB015's original
+installed_unconfirmed/pending application, old .32 damage, .34 receipts and SDK
+observation pending files. None is a new-work queue or replay permission. SDK1's
+original collector record retains passed=false and cleanup_unknown=true. Separate
+retrospective closure 0d16faf2… proves its actual original lifecycle and input
+closure without effects, and fresh SDK2 passes after the private public-input ABI
+correction. Earlier gates, prechecks and cohorts remain chronological, not promoted.
+Current aggregate: E=/var/tmp/web-016-validation-2_9zjimp/source4-functional-all-summary.json.
+This is LOCAL_STORAGE_SIMULATION application acceptance, not live NAS or new
+rootless UI proof. WEB022 platform, compatibility, parity, final acceptance and
+production rollout remain separate. Production 0.2.2, guards, calendars,
+credentials and live Cockpit remain untouched. No rollout, merge, push, tag or live
+plugin removal is authorized.
 
 Latest WEB-015 checkpoint (2026-10-26, this commit): WEB001–015 complete on
 feat/web-ui; WEB-016 is next through the current selector. [Task015](plans/tasks/web-015-configuration-and-tag-ui.md)
@@ -12697,3 +12756,18 @@ GET no-referrer and no-retry rules remain strict. Bounded CSP-compatible choices
 replace native selects without changing Library semantics or introducing a package.
 Dated ADR133/145/153/154 and INV001/018/019/020/021/living contracts record these
 implementation details; no new endpoint, dependency, grant or architecture decision.
+
+
+2026-10-26 WEB-016 implementation refinement of decisions
+109/115/116/118/120/121/135/136/137/145/148: existing typed jobs and original-key
+admission compose bounded history, events, exact results and separate domain
+reports without new authority. Current read-wrapper policy remains distinct from
+nested historical report policy. Scheduled entrypoint handlers latch stop requests
+and classify them only at owned HTTP and persistence boundaries, preserving exact
+handles and finite existing budgets; the imported library remains unchanged by
+default. Ready history counts and rows publish coherently from the same snapshot.
+Amendments to ADR121/136/137/145 and review of INV006/007/013/014/018/020/021 record
+these scoped implementation details, with real signal, worker and browser
+regressions and preserved causal and failed evidence. No endpoint, runtime
+dependency, durable format, privilege or new architectural decision is introduced.
+Actual production, NAS and platform holds remain independent.
