@@ -29,6 +29,32 @@ never initialize. Exact terminal failure/partial diagnostics remain observable;
 HTTP success/admission is not a domain-success claim. These routes add no new
 archive recovery algorithm, durable schema or workflow framework.
 
+## Browser composition refinement (2026-10-26)
+
+The browser exposes these existing routes through one bounded maintenance intent,
+without adding an endpoint or execution authority. Genuine helper `control`
+permission is required for previews; `archive` is required for Apply and repair.
+Repair uses installed Hub authority without introducing an additional Hub grant.
+A successful complete preview and explicit one-use confirmation gate the local
+Apply action. Every raw edit, navigation pause or authentication change retires
+readiness; unknown original effects remain observable without POST replay.
+Empty prune/purge scope and recovery with no actionable work or any blocked entry
+cannot enable Apply. Prune selectors are whole repositories in this interface;
+purge still refuses configured entries, including disabled ones. Quarantine keeps
+the complete explicit transaction-ID batch and original proof requirements.
+
+Repair starts from a decoded report finding with archive/run attribution and an
+exact SHA/publication identity. Fresh selected-SHA reference and manifest reads
+must agree with it before local confirmation; missing or changed evidence has no
+current/latest fallback. Generation comes from that metadata, not from a finding
+field. These reads provide no atomic publication compare-and-swap: the existing
+request contains SHA and reason only. The server rederives execution evidence
+under lock. The interface keeps the finding, fresh observed identity and actual
+retired/replacement IDs distinct and qualifies any changed instance rather than
+claiming the old finding repaired. This refinement changes no repair algorithm,
+publication identity, grace period, audit format or lock semantics. See the
+[operator workflow](../web-ui/maintenance.md).
+
 ## Relationships and technical evidence
 
 - [decision 120](decision-120.md)

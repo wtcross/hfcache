@@ -1028,13 +1028,11 @@ export function createRepositoryStore(controller: Controller) {
             });
         },
         pause() {
-            const unfinished = pending !== null;
             generation++;
             pending = null;
-            abortLoading();
-            currentRef?.handle.invalidate();
-            selectedRef?.handle.invalidate();
-            if (unfinished) manifest?.handle.invalidate();
+            // A full route unmount releases active query owners and aggregate
+            // aliases. The exact target/view bookmark survives for a fresh open.
+            retire();
             emit();
         },
         dispose() {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { ReportPayload } from "../wire/generated";
+import type { RepairFindingIntent } from "../operations/maintenance-state";
 
 /** Local paging replaces rows; it never fetches or implies complete server history. */
 export function ReportCollection<T>({
@@ -80,8 +81,10 @@ function Messages({
 }
 export function RunReport({
     report,
+    onRepairFinding,
 }: {
     readonly report: ReportPayload["report"];
+    readonly onRepairFinding?: (intent: RepairFindingIntent) => void;
 }) {
     const identity = report.run_id + ":" + report.completed_at;
     return (
@@ -218,26 +221,66 @@ export function RunReport({
                         name="integrity findings"
                         identity={identity}
                         render={(row) => (
-                            <dl className="recovery-facts">
-                                <dt>Repository</dt>
-                                <dd>
-                                    {row.repository_type} {row.repository_id}
-                                </dd>
-                                <dt>Finding</dt>
-                                <dd>{row.kind}</dd>
-                                <dt>Commit SHA</dt>
-                                <dd>{row.commit_sha ?? "Not attributed"}</dd>
-                                <dt>Publication ID</dt>
-                                <dd>
-                                    {row.publication_id ?? "Not attributed"}
-                                </dd>
-                                <dt>Path</dt>
-                                <dd>{row.path ?? "Not attributed"}</dd>
-                                <dt>Expected</dt>
-                                <dd>{row.expected ?? "Not available"}</dd>
-                                <dt>Observed</dt>
-                                <dd>{row.observed ?? "Not available"}</dd>
-                            </dl>
+                            <div>
+                                <dl className="recovery-facts">
+                                    <dt>Repository</dt>
+                                    <dd>
+                                        {row.repository_type}{" "}
+                                        {row.repository_id}
+                                    </dd>
+                                    <dt>Finding</dt>
+                                    <dd>{row.kind}</dd>
+                                    <dt>Commit SHA</dt>
+                                    <dd>
+                                        {row.commit_sha ?? "Not attributed"}
+                                    </dd>
+                                    <dt>Publication ID</dt>
+                                    <dd>
+                                        {row.publication_id ?? "Not attributed"}
+                                    </dd>
+                                    <dt>Path</dt>
+                                    <dd>{row.path ?? "Not attributed"}</dd>
+                                    <dt>Expected</dt>
+                                    <dd>{row.expected ?? "Not available"}</dd>
+                                    <dt>Observed</dt>
+                                    <dd>{row.observed ?? "Not available"}</dd>
+                                </dl>
+                                {onRepairFinding !== undefined && (
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            row.commit_sha === null ||
+                                            row.publication_id === null ||
+                                            row.kind === "ref_invalid" ||
+                                            row.kind === "manifest_invalid"
+                                        }
+                                        onClick={() => {
+                                            onRepairFinding({
+                                                source: {
+                                                    archiveId:
+                                                        report.archive_id,
+                                                    runId: report.run_id,
+                                                    completedAt:
+                                                        report.completed_at,
+                                                },
+                                                finding: row,
+                                            });
+                                        }}
+                                    >
+                                        Review repair from this finding
+                                    </button>
+                                )}
+                                {(row.commit_sha === null ||
+                                    row.publication_id === null ||
+                                    row.kind === "ref_invalid" ||
+                                    row.kind === "manifest_invalid") && (
+                                    <p>
+                                        This finding lacks safe exact repair
+                                        attribution. Preserve the evidence and
+                                        follow the recovery runbook.
+                                    </p>
+                                )}
+                            </div>
                         )}
                     />
                 </>

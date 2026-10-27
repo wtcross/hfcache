@@ -648,6 +648,15 @@ reserialization. Revision confidence joins by exact publication; current status,
 API health and metadata completeness cannot substitute. Activity shows only
 bounded loaded archive history, without claiming a complete repository audit.
 
+Leaving repository details releases its query subscriptions and aggregate
+payload references, including ready results. The repository, exact publication
+pair and tab can remain as navigation identity, but returning creates fresh
+authenticated handles and rechecks selected-SHA membership before showing
+publication data. Body-cache reuse across a full route exit is not guaranteed.
+This lets another feature acquire the same exact query without bypassing the
+active duplicate guard or changing query identities and shared limits. Pausing
+starts no read and does not cancel or replay accepted operations.
+
 ### Browser managed configuration reads
 
 The configuration editor reads the existing `GET /api/v1/config` projection

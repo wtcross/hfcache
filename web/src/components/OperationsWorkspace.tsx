@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Notice, Panel } from "../primitives";
 import type { HistoryKind, HistoryStore } from "../operations/history-state";
 import type { JobsStore } from "../operations/jobs-state";
+import type { RepairFindingIntent } from "../operations/maintenance-state";
 import type {
     SessionController,
     SessionSnapshot,
@@ -51,6 +52,7 @@ export function OperationsWorkspace({
     history,
     configuration,
     onOpenConfiguration,
+    onRepairFinding,
 }: {
     controller: SessionController;
     session: SessionSnapshot;
@@ -58,6 +60,7 @@ export function OperationsWorkspace({
     history: HistoryStore;
     configuration?: ConfigurationStore;
     onOpenConfiguration?: () => void;
+    onRepairFinding?: (intent: RepairFindingIntent) => void;
 }) {
     const state = useSyncExternalStore(history.subscribe, history.snapshot);
     const [permissionEvidence, setPermissionEvidence] = useState(false);
@@ -150,6 +153,7 @@ export function OperationsWorkspace({
                 session={session}
                 {...(configuration === undefined ? {} : { configuration })}
                 onReadReport={readReport}
+                {...(onRepairFinding === undefined ? {} : { onRepairFinding })}
             />
             <Panel title="Operation and run history">
                 <p>
@@ -273,6 +277,9 @@ export function OperationsWorkspace({
                                 result={state.result.result}
                                 operation={receipt}
                                 onReadReport={readReport}
+                                {...(onRepairFinding === undefined
+                                    ? {}
+                                    : { onRepairFinding })}
                             />
                             {receipt.state === "interrupted" && (
                                 <Notice>
@@ -346,7 +353,12 @@ export function OperationsWorkspace({
                     {report === undefined ? (
                         <ReadStatus page={state.report} name="Run report" />
                     ) : (
-                        <RunReport report={report} />
+                        <RunReport
+                            report={report}
+                            {...(onRepairFinding === undefined
+                                ? {}
+                                : { onRepairFinding })}
+                        />
                     )}
                 </Panel>
             )}

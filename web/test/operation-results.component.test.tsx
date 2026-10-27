@@ -461,3 +461,81 @@ test("sizing preserves unknown quantities and disabled entries rather than manuf
     expect(screen.getByText("unknown")).toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
 });
+
+test("an exact decoded verification finding hands off its original report attribution without submitting repair", async () => {
+    const value = decodeReportPayload(
+        parseWireJson(JSON.stringify({ report: verificationReportFixture })),
+    ).report;
+    const review = vi.fn();
+    render(<RunReport report={value} onRepairFinding={review} />);
+    expect(review).not.toHaveBeenCalled();
+    await userEvent.click(
+        screen.getByRole("button", { name: "Review repair from this finding" }),
+    );
+    expect(review).toHaveBeenCalledExactlyOnceWith({
+        source: {
+            archiveId: value.archive_id,
+            runId: value.run_id,
+            completedAt: value.completed_at,
+        },
+        finding: verificationReportFixture.findings[0],
+    });
+    expect(
+        screen.queryByRole("button", { name: "Repair reviewed revision" }),
+    ).not.toBeInTheDocument();
+});
+
+test.each(["ref_invalid", "manifest_invalid"] as const)(
+    "%s findings remain evidence without a direct repair handoff",
+    async (kind) => {
+        const value = decodeReportPayload(
+            parseWireJson(
+                JSON.stringify({
+                    report: {
+                        ...verificationReportFixture,
+                        findings: [
+                            { ...verificationReportFixture.findings[0], kind },
+                        ],
+                    },
+                }),
+            ),
+        ).report;
+        const review = vi.fn();
+        render(<RunReport report={value} onRepairFinding={review} />);
+        const button = screen.getByRole("button", {
+            name: "Review repair from this finding",
+        });
+        expect(button).toBeDisabled();
+        await userEvent.click(button);
+        expect(review).not.toHaveBeenCalled();
+        expect(
+            screen.getByText(/lacks safe exact repair attribution/),
+        ).toBeInTheDocument();
+    },
+);
+
+test("unattributed findings cannot become a blind revision repair form", () => {
+    const value = decodeReportPayload(
+        parseWireJson(
+            JSON.stringify({
+                report: {
+                    ...verificationReportFixture,
+                    findings: [
+                        {
+                            ...verificationReportFixture.findings[0],
+                            commit_sha: null,
+                            publication_id: null,
+                            path: null,
+                            kind: "ref_invalid",
+                        },
+                    ],
+                },
+            }),
+        ),
+    ).report;
+    render(<RunReport report={value} onRepairFinding={vi.fn()} />);
+    expect(
+        screen.getByRole("button", { name: "Review repair from this finding" }),
+    ).toBeDisabled();
+    expect(screen.getAllByText("Not attributed")).toHaveLength(3);
+});

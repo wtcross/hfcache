@@ -39,6 +39,12 @@ your intent with **Select current publication**. **Copy commit SHA** and
 **Copy publication ID** retain the full identifiers. Reloading or revisiting an exact bookmark keeps that publication
 instead of substituting whatever is current now.
 
+Leaving details stops its local reads and releases the displayed evidence.
+The bookmark still identifies the selected pair and tab. Returning reads that
+selection afresh and rechecks retained membership before showing publication
+data; a preserved manifest alone does not prove that publication is still retained.
+Original operation handles and accepted jobs remain independent of this view.
+
 An unpublished configured repository has no current publication. Its Library
 configuration and tag facts do not manufacture one. An explicitly selected pruned, purged or
 repaired-away publication is unavailable. Keep its original identifiers when

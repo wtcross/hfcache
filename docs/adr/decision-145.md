@@ -162,6 +162,26 @@ Activity retains limited loaded-history provenance. Existing wire schemas,
 response/retention ceilings and read-only authority remain unchanged. See
 [detail procedures](../web-ui/repository-details.md).
 
+## Repository read ownership refinement (2026-10-26)
+
+Repository detail queries belong to the active view. Keeping a ready query
+subscription after leaving that view can prevent another feature, such as repair
+evidence checking, from acquiring the identical query under the existing active
+duplicate guard. A completed read does not justify permanent view ownership.
+
+Pausing or leaving repository details therefore releases all of its query
+subscriptions and aggregate payload references, including ready evidence. Only
+the repository identity, selected full SHA/publication pair and tab remain for
+navigation. Returning explicitly creates fresh authenticated read handles and
+revalidates the selected full-SHA reference before publication data is qualified.
+Missing or replaced membership remains unavailable without a current/latest
+fallback. Immutable response reuse across a complete route exit is not required.
+
+This changes no query identity, active duplicate guard, response/retention bound,
+API, schema or capability. It adds no background read or automatic retry. Original
+operation ownership remains with the session controller; leaving a read view
+never cancels or replays accepted work.
+
 ## Structured managed-edit composition clarification (2026-10-26)
 
 The editor uses the existing generated editable projection, strict managed DTOs

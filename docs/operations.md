@@ -167,6 +167,10 @@ cannot discover the NAS maintenance calendar itself.
 
 ## Preview and apply maintenance
 
+For the browser workflow, use [reviewed archive maintenance](web-ui/maintenance.md).
+It keeps explicit preview, confirmation and original-operation observation
+separate from the server's fresh execution proof.
+
 Every preview below is a reader-capable keyed job: it creates receipt/event/result
 history and reads live metadata, although it changes no archive data. A preview
 never grants later apply authority. Apply requires a writer, a separate request

@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-016 (this commit); WEB-017 is pending next |
+| Latest completed package | WEB-017, this commit; WEB-018 is pending next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3784,3 +3784,24 @@ collector result with separate retrospective closure. OPS06–09 and human guida
 are complete. WEB-017 remains pending for activation after this commit.
 Production, NAS, new rootless UI, WEB022 platform, parity, final acceptance and
 rollout remain separate. No merge, push or tag action occurred.
+
+
+2026-10-26: WEB-017 activated after dependency WEB-016 committed as `b48bc53`.
+The existing typed maintenance routes, shared operation state and disposable
+application environment are reused. Scope, required gates and production
+restrictions are unchanged; task017 owns execution status and evidence.
+
+
+2026-10-27: WEB-017 completes guarded maintenance and finding-based exact repair.
+Strict gate2 passes in 1768.399s on unchanged S2 8e320cf1… / 1481 inputs;
+8610 backend / 3858 combined frontend and all required Cockpit/build/docs checks
+pass without required skips. All 39 current installed browser cases pass across
+three engines, with 33 original browser POSTs, 331 trusted requests and 78 zero-CSP
+checkpoints. Original repair collector failure is retained and separately
+qualified by exact read-only closure of legitimate provider-cache link changes;
+no job is replayed to obtain acceptance. Final ambiguous journal, damaged retired
+predecessors, grace records, 4128 older objects and baseline five remain preserved.
+Matching shared .42 fixture artifacts retain pinned UBI 10 micro without runtime
+Node. MAINT01–06 and human guides are complete. Task017 owns exact evidence and
+limits. WEB-018 is pending next; production/NAS/new rootless/platform/parity/final
+acceptance and rollout remain separate. No merge, push, Git tag or live Cockpit removal.

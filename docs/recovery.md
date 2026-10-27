@@ -122,6 +122,12 @@ damaged bytes. If upstream still serves the immutable revision, use explicit rep
 otherwise consider an authorized snapshot restore. If neither source exists,
 preserve the manifest/audit and stop rather than inventing content.
 
+The [browser repair workflow](web-ui/maintenance.md#repair-from-an-integrity-finding)
+starts from an exact report finding and rechecks its SHA reference and manifest.
+That fresh observation is not publication compare-and-swap authority: the existing
+repair request names a SHA, and the result's actual retired and replacement
+publication IDs remain authoritative for what executed.
+
 ```bash
 "${HF[@]}" repair model:organization/model@0123456789abcdef0123456789abcdef01234567 --reason 'digest mismatch investigation'
 ```

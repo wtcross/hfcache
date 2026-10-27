@@ -277,6 +277,28 @@ Only a provable fresh refusal before fetch can remove its own prepared record,
 and only after the removal persists. **Not submitted** is a local memory-only
 summary. It is never restored from storage or inferred from a missing receipt.
 
+## Maintenance preview and effects
+
+Follow [reviewed archive maintenance](maintenance.md). Preserve the original
+preview and effect handles separately; confirmation never replaces fresh server
+proof under the archive lock.
+
+| Problem | Meaning and safe next step |
+| --- | --- |
+| Preview permission denied | Browser previews need REST read and genuine protected control permission. Apply and repair need REST write and archive permission. Read permission evidence deliberately; do not infer a grant from sign-in or require an unrelated host-read grant. |
+| Preview accepted but Apply unavailable | A 202 is not a complete successful preview. Observe its original result. Failed, partial, malformed, stale or capacity-refused evidence cannot arm Apply; empty eligible scope needs no mutation. |
+| Confirmation disappears after editing, navigation or reconnect | Expected: review belongs to that exact input and browser session. It is consumed by one submission attempt. Preserve uncertain original work and observe it before considering another deliberate operation. |
+| Purge refuses a disabled repository | A configured entry remains managed even when disabled. Configuration removal and archive purge are separate explicit workflows; the browser never silently changes configuration to allow deletion. |
+| Recovery reports blocked work | Preserve journals, trees, timestamps and audit. Any blocked entry prevents browser Apply. Do not rewrite checkpoints, move evidence or replay maintenance to force a resolution. |
+| Quarantine cleanup refuses one ID | The complete named batch must pass fresh proof. Unknown, unique, changed, repair or unfinished content remains; do not drop refused IDs as an automatic retry or substitute paths. |
+| Repair finding no longer matches the SHA reference | Stop. The publication changed or is unavailable. No latest/current fallback or blind SHA request is offered. Check the exact report and current retained evidence separately. |
+| Repair's retired ID differs from the reviewed finding | Fresh reads were not atomic publication comparison. Keep the actual result and both identities; do not label the old finding repaired. The replacement needs its own integrity evidence. |
+| Busy, partial or failed effect | Keep its actual exit code, diagnostics and any completed entries. A failure can leave committed or isolated evidence. Never infer no writes or resubmit with a fresh key to discover the old outcome. |
+
+Maintenance exposes no archive initialization, evidence deletion, cancellation or
+automatic retry. A vanished receipt does not prove nonexecution. Use the
+[recovery runbook](../recovery.md) for unknown effects.
+
 ## Library search and pages
 
 Follow the [Library guide](library.md) for scopes, tag provenance and same-variant

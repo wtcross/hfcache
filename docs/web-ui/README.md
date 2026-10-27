@@ -25,14 +25,16 @@ provides the [Library](library.md), permission explanations and
 [exact-publication repository details](repository-details.md). The bounded
 [README view](readme-cards.md) provides formatted and sanitized-source display.
 [Configuration and tags](configuration-and-tags.md) adds structured managed
-editing. Operations composes supported job forms with original-handle recovery:
+editing. [Maintenance](maintenance.md) provides reviewed retention, recovery,
+quarantine cleanup and finding-based repair. Operations composes supported job
+forms with original-handle recovery:
 
 | Workspace | Intended workflow |
 | --- | --- |
 | Library | [Find configured and archived models or datasets](library.md) using local ID/tag and technical filters. Keep scope, loaded rows, coverage and current/historical provenance distinct. |
 | Repository details | [Inspect a selected exact publication](repository-details.md), attributed model/dataset metadata, files, revisions, integrity and loaded history; open current configuration tag editing separately. |
 | Operations | [Submit supported jobs, inspect bounded operation/run history and recover original handles](operations.md). Preserve effects, result classification and original identity through interruption. |
-| Maintenance | Review the scope of existing retention, repair and recovery actions before any separate Apply action. |
+| Maintenance | [Preview and review retention, recovery and quarantine cleanup, or check repair evidence from an exact finding](maintenance.md), before a separately confirmed archive effect. |
 | Administration | Read [protected host status and permission reasons](administration.md); use [Configuration and tags](configuration-and-tags.md) to review installed intent, edit one draft, validate, preview and apply exact assessed changes. |
 
 Use the sidebar or **Open navigation** on a narrow screen to change workspace.

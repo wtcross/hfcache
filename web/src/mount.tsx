@@ -15,6 +15,7 @@ import { createRepositoryStore } from "./repository/repository-state";
 import { createConfigurationStore } from "./configuration/configuration-state";
 import { createJobsStore } from "./operations/jobs-state";
 import { createHistoryStore } from "./operations/history-state";
+import { createMaintenanceStore } from "./operations/maintenance-state";
 
 export async function startApplication(
     document: Document,
@@ -76,6 +77,7 @@ export function mountApplication(
     const configuration = createConfigurationStore(controller);
     const jobs = createJobsStore(controller);
     const history = createHistoryStore(controller);
+    const maintenance = createMaintenanceStore(controller);
     root.render(
         <ConnectedApplication
             basePath={basePath}
@@ -86,6 +88,7 @@ export function mountApplication(
             configuration={configuration}
             jobs={jobs}
             history={history}
+            maintenance={maintenance}
         />,
     );
     return () => {
@@ -95,6 +98,7 @@ export function mountApplication(
         configuration.dispose();
         jobs.dispose();
         history.dispose();
+        maintenance.dispose();
         controller.dispose();
     };
 }

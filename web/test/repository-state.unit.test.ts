@@ -11,6 +11,7 @@ import type {
     RepositoryView,
 } from "../src/repository/routes";
 import { createSessionController } from "../src/state/session-controller";
+import { createMaintenanceStore } from "../src/operations/maintenance-state";
 import type { SessionController } from "../src/state/session-controller";
 import {
     ARCHIVE_ID,
@@ -961,7 +962,9 @@ test("pausing an active refresh aborts its stale cached query and fences its lat
     );
     await refresh;
     expect(seen).toHaveLength(before);
-    expect(store.snapshot().selected).toMatchObject(first);
+    expect(store.snapshot().selected).toBeNull();
+    expect(store.snapshot().view.pair).toEqual(first);
+    expect(store.snapshot().manifest.result).toBeNull();
     expect(store.snapshot().phase).toBe("idle");
 });
 
@@ -1177,4 +1180,104 @@ test("continuation and report actions stop before their next GET when the select
     retired = true;
     await store.openReport("1".repeat(32));
     expect(paths(seen).some((path) => path.includes("/runs/"))).toBe(false);
+});
+
+test("full route pause releases active publication queries and payload aliases before another view checks the same repair evidence", async () => {
+    const { store, controller, seen } = setup();
+    const maintenance = createMaintenanceStore(controller);
+    try {
+        await store.open(target, { pair: first, tab: "activity" });
+        expect(store.snapshot().manifest.phase).toBe("ready");
+        const bookmark = store.snapshot().view;
+        const before = seen.length;
+        const paused: { phase: string; results: unknown[] }[] = [];
+        const unsubscribe = store.subscribe(() => {
+            const state = store.snapshot();
+            paused.push({
+                phase: state.phase,
+                results: [
+                    state.current.result,
+                    state.selectedReference.result,
+                    state.manifest.result,
+                    state.runs.result,
+                    state.currentFacts.inventory.result,
+                    state.currentFacts.status.result,
+                ],
+            });
+        });
+        store.pause();
+        unsubscribe();
+        expect(paused).toEqual([
+            { phase: "idle", results: [null, null, null, null, null, null] },
+        ]);
+        expect(store.snapshot().target).toEqual(target);
+        expect(store.snapshot().view).toEqual(bookmark);
+        expect(store.snapshot().selected).toBeNull();
+        await Promise.resolve();
+        expect(seen).toHaveLength(before);
+        expect(
+            maintenance.setRepairFinding({
+                source: {
+                    archiveId: ARCHIVE_ID,
+                    runId: "3".repeat(32),
+                    completedAt: at,
+                },
+                finding: {
+                    repository_type: target.repositoryType,
+                    repository_id: target.repositoryId,
+                    commit_sha: first.commitSha,
+                    publication_id: first.publicationId,
+                    kind: "digest_mismatch",
+                    path: "config.json",
+                    expected: "1".repeat(64),
+                    observed: "2".repeat(64),
+                },
+            }),
+        ).toBe(true);
+        await maintenance.checkRepair();
+        expect(maintenance.snapshot().repairProof).toBe("ready");
+        expect(paths(seen).slice(before)).toEqual([
+            "/api/v1/repositories/model/owner/model/references/" +
+                first.commitSha,
+            "/api/v1/repositories/model/owner/model/manifests/" +
+                first.commitSha +
+                "/" +
+                first.publicationId,
+            "/api/v1/repositories/model/owner/model/references/" +
+                first.commitSha,
+        ]);
+        maintenance.pause();
+        await store.open(target, bookmark);
+        expect(store.snapshot().phase).toBe("ready");
+        expect(store.snapshot().retained).toBe(true);
+        expect(store.snapshot().selected).toMatchObject(first);
+    } finally {
+        maintenance.dispose();
+    }
+});
+
+test("returning to a paused exact bookmark rereads membership and manifest without adopting a new current publication", async () => {
+    const { store, seen, moveCurrent } = setup();
+    await store.open(target, overview);
+    const bookmark = store.snapshot().view;
+    store.pause();
+    const before = seen.length;
+    moveCurrent(second);
+    await store.open(target, bookmark);
+    expect(store.snapshot().phase).toBe("ready");
+    expect(store.snapshot().retained).toBe(true);
+    expect(store.snapshot().selected).toMatchObject(first);
+    expect(store.snapshot().view).toEqual(bookmark);
+    const reads = paths(seen).slice(before);
+    expect(reads.slice(0, 3)).toEqual([
+        "/api/v1/repositories/model/owner/model/references/current",
+        "/api/v1/repositories/model/owner/model/references/" + first.commitSha,
+        "/api/v1/repositories/model/owner/model/manifests/" +
+            first.commitSha +
+            "/" +
+            first.publicationId,
+    ]);
+    expect(
+        reads.some((path) => path.includes("/manifests/" + second.commitSha)),
+    ).toBe(false);
 });

@@ -7,6 +7,7 @@ import type {
     SessionSnapshot,
 } from "../state/session-controller";
 import type { ConfigurationStore } from "../configuration/configuration-state";
+import type { RepairFindingIntent } from "../operations/maintenance-state";
 import { OperationResult } from "./OperationResult";
 
 function ConfigurationRecovery({
@@ -89,11 +90,14 @@ function RecoveryEntry({
     controller,
     configuration,
     onReadReport,
+    onRepairFinding,
 }: {
     readonly record: RecoveryRecord;
     readonly controller: SessionController;
     readonly configuration: ConfigurationStore | undefined;
     readonly onReadReport: ((runId: string) => void) | undefined;
+    readonly onRepairFinding:
+        ((intent: RepairFindingIntent) => void) | undefined;
 }) {
     const observation = useSyncExternalStore(
         (listener) => controller.observer.subscribe(record.recordId, listener),
@@ -270,6 +274,9 @@ function RecoveryEntry({
                         {...(onReadReport === undefined
                             ? {}
                             : { onReadReport })}
+                        {...(onRepairFinding === undefined
+                            ? {}
+                            : { onRepairFinding })}
                     />
                 </details>
             )}
@@ -283,11 +290,13 @@ export function OperationRecovery({
     session,
     configuration,
     onReadReport,
+    onRepairFinding,
 }: {
     readonly controller: SessionController;
     readonly session: SessionSnapshot;
     readonly configuration?: ConfigurationStore;
     readonly onReadReport?: (runId: string) => void;
+    readonly onRepairFinding?: (intent: RepairFindingIntent) => void;
 }) {
     const choiceId = useId();
     const [kind, setKind] = useState<"id" | "basic-key" | "legacy-key">("id");
@@ -357,6 +366,7 @@ export function OperationRecovery({
                             controller={controller}
                             configuration={configuration}
                             onReadReport={onReadReport}
+                            onRepairFinding={onRepairFinding}
                         />
                     ))
                 )}

@@ -29,6 +29,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-017 Implement guarded maintenance and integrity remediation
+  (2026-10-27, this commit — [task](plans/tasks/web-017-maintenance-ui.md)).
+  Dedicated prune, unmanaged purge, recovery, explicit quarantine and exact-finding
+  repair reuse the typed original-operation controller and server authority.
+  One-use preview confirmation, fresh reference–manifest–reference repair proof,
+  exact result attribution and repository read-owner release prevent stale intent
+  and query handoff failures. Strict gate2 passes in 1768.399s on unchanged S2
+  8e320cf1… / 1481 inputs: 8610 backend tests with 52 unrelated deselections,
+  3599 web unit / 3858 combined frontend, 95.06% line / 90.29% branch coverage,
+  581 Cockpit unit / 110 mounted checks and all required builds, wheel profiles,
+  browser and documentation checks (216 documents / 27 helpers), no required skips.
+  All 39 current installed browser cases pass: 27 main maintenance, nine repair
+  and three final ambiguous-recovery refusals across Chromium, Firefox and WebKit.
+  There are 33 original browser POSTs, one genuine verification prelude, 331
+  trusted requests and 78 zero-CSP checkpoints. The repair collector's original
+  false/unknown result is retained: a separate 13.841s read-only proof qualifies
+  its actual nine UI/effect cases and exactly three legitimate cache-hardlink
+  link-count/ctime changes, with bytes and inodes preserved. It is never promoted
+  or replayed. Final archive/grace/ambiguous evidence, 4128 older objects and five
+  baseline pairs remain exact; all roles drain normally. Matching .42 artifacts
+  use shared pinned UBI 10 micro without runtime Node. MAINT01–06, human guides
+  and ADR117/145/INV021 amendments are complete. Existing failed histories,
+  damaged predecessors and pending handles remain preserved. WEB-018 is next.
+  Evidence: /var/tmp/web-017-validation-n5qoqk8f/source2c-functional-all-summary.json.
+  LOCAL_STORAGE_SIMULATION does not establish NAS or new rootless/platform proof.
+  Production, live Cockpit, rollout, merge, push and Git tags remain untouched.
+
 - [x] WEB-016 Expose jobs and exact operation reports
   (2026-10-26, this commit — [task](plans/tasks/web-016-operations-and-reports-ui.md)).
   Existing full and selected sizing/sync, all verification modes and estimates,
@@ -2890,6 +2917,33 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-017 checkpoint (2026-10-27, this commit): WEB001–017 are complete on
+feat/web-ui; WEB-018 is pending through the current selector. [Task017](plans/tasks/web-017-maintenance-ui.md)
+records strict gate2 on S2 8e320cf1… / 1481 unchanged inputs, matching .42
+wheel/UI/shared UBI 10 micro image without runtime Node, and all 39 current
+three-engine browser cases. MAINT01–06 and the maintenance guide are complete.
+Prune remains one-round with current protected; purge stays unmanaged-only;
+quarantine requires explicit proved IDs; blocked recovery preserves evidence;
+repair retains SHA/generation/expected bytes with new publication identity and
+grace. Original-operation recovery never resubmits an uncertain effect.
+
+The final C namespace, selected owned .42 release and archive 66cebdbf… remain
+retained and quiet. Original roles are gone, cgroups empty and endpoints refused.
+All 4128 older objects and five baseline process pairs remain exact. Preserve
+ambiguous journal 97c38426…/HFTXN004, three open repair grace journals, original
+manifests and damaged retired predecessors. No job or healing follows the final
+refusal cases. Repair's original collector remains false/cleanup-unknown; the
+separate a431a84e… read-only proof and 758975ab… root qualification establish its
+actual nine UI/effect cases and exact cache-link metadata changes. Do not change
+that failed record or infer historical fixed-input full metadata where only
+hashes were saved. Earlier C1's open prune journal, failed B repair/damage and
+all WEB015/016 pending handles and failures remain separate preserved evidence.
+Current aggregate: /var/tmp/web-017-validation-n5qoqk8f/source2c-functional-all-summary.json.
+This is owned native LOCAL_STORAGE_SIMULATION, not live NAS, new rootless UI or
+WEB022 platform acceptance. Production 0.2.2, guards, calendars, credentials and
+live Cockpit remain untouched. No rollout, merge, push, tag or live plugin
+removal is authorized; later platform/parity/rollback/final gates remain required.
 
 Latest WEB-016 checkpoint (2026-10-26, this commit): WEB001–016 are complete on
 feat/web-ui; WEB-017 remains pending through the current selector.
@@ -12771,3 +12825,16 @@ these scoped implementation details, with real signal, worker and browser
 regressions and preserved causal and failed evidence. No endpoint, runtime
 dependency, durable format, privilege or new architectural decision is introduced.
 Actual production, NAS and platform holds remain independent.
+
+
+2026-10-27 WEB-017 implementation refinement of decisions117/134/137/145:
+maintenance previews and one-use browser confirmations retain reviewed intent;
+the backend rederives authority and exact scope under its existing locks.
+Finding-based repair uses fresh retained metadata without inventing publication-ID
+CAS and distinguishes original finding, reviewed and actual retired/replacement
+identities. Repository route exit releases read subscriptions and aggregate
+bodies; return preserves the bookmark with fresh membership. Dated ADR117/145
+and INV021 amendments record this composition. The final test collector's
+full-metadata assumption is separately qualified for exactly three provider-cache
+hardlink releases, preserving all original failed flags and required byte/inode
+evidence. No endpoint, dependency, privilege or new architectural decision is added.

@@ -29,6 +29,11 @@ import type { RepositoryStore } from "./repository/repository-state";
 import { repositoryFragment, repositoryPath } from "./repository/routes";
 import type { RepositoryTarget } from "./repository/routes";
 import { OperationsWorkspace } from "./components/OperationsWorkspace";
+import { MaintenanceWorkspace } from "./components/MaintenanceWorkspace";
+import type {
+    MaintenanceStore,
+    RepairFindingIntent,
+} from "./operations/maintenance-state";
 import type { JobsStore } from "./operations/jobs-state";
 import type { HistoryStore } from "./operations/history-state";
 import type {
@@ -63,6 +68,8 @@ function WorkspaceContent({
     history,
     onReadReport,
     onOpenConfiguration,
+    maintenance,
+    onRepairFinding,
 }: {
     workspace: Workspace;
     authenticated: boolean;
@@ -80,6 +87,8 @@ function WorkspaceContent({
     history?: HistoryStore;
     onReadReport?: (runId: string) => void;
     onOpenConfiguration?: () => void;
+    maintenance?: MaintenanceStore;
+    onRepairFinding?: (intent: RepairFindingIntent) => void;
 }) {
     switch (workspace) {
         case "library":
@@ -170,6 +179,9 @@ function WorkspaceContent({
                         session={session}
                         jobs={jobs}
                         history={history}
+                        {...(onRepairFinding === undefined
+                            ? {}
+                            : { onRepairFinding })}
                         {...(configuration === undefined
                             ? {}
                             : { configuration })}
@@ -204,6 +216,21 @@ function WorkspaceContent({
                 </Panel>
             );
         case "maintenance":
+            if (
+                maintenance !== undefined &&
+                controller !== undefined &&
+                session !== undefined
+            )
+                return (
+                    <MaintenanceWorkspace
+                        store={maintenance}
+                        controller={controller}
+                        session={session}
+                        {...(onReadReport === undefined
+                            ? {}
+                            : { onReadReport })}
+                    />
+                );
             return (
                 <Panel title="Archive care">
                     <div className="empty-state">
@@ -264,6 +291,7 @@ export function App({
     configuration,
     jobs,
     history,
+    maintenance,
 }: {
     basePath: string;
     bootstrap?: UiBootstrap;
@@ -276,6 +304,7 @@ export function App({
     configuration?: ConfigurationStore;
     jobs?: JobsStore;
     history?: HistoryStore;
+    maintenance?: MaintenanceStore;
 }) {
     const base = validateBasePath(basePath);
     const [pathname, setPathname] = useState(window.location.pathname);
@@ -323,6 +352,7 @@ export function App({
     useEffect(() => {
         const observeLocation = () => {
             const target = window.location.pathname + window.location.hash;
+            if (target !== acceptedLocation.current) maintenance?.pause();
             if (
                 configuration?.snapshot().dirty === true &&
                 target !== acceptedLocation.current
@@ -332,7 +362,10 @@ export function App({
                     document.activeElement instanceof HTMLElement
                         ? document.activeElement
                         : null;
-                setPendingNavigation({ path: target, intent: null });
+                setPendingNavigation({
+                    path: target,
+                    intent: null,
+                });
                 return;
             }
             acceptedLocation.current = target;
@@ -351,7 +384,7 @@ export function App({
             window.removeEventListener("hashchange", observeLocation);
             window.removeEventListener("beforeunload", beforeUnload);
         };
-    }, [configuration]);
+    }, [configuration, maintenance]);
     useEffect(() => {
         if (pendingNavigation !== null) stayButton.current?.focus();
     }, [pendingNavigation]);
@@ -376,6 +409,7 @@ export function App({
         path: string | null,
         intent: ConfigurationIntent | null = null,
     ) {
+        maintenance?.pause();
         if (path === null) {
             window.location.reload();
             return;
@@ -391,6 +425,7 @@ export function App({
         path: string | null,
         intent: ConfigurationIntent | null = null,
     ) {
+        maintenance?.pause();
         if (configuration?.snapshot().dirty === true) {
             previousFocus.current =
                 document.activeElement instanceof HTMLElement
@@ -430,6 +465,12 @@ export function App({
         if (history === undefined) return;
         void history.selectRun(runId);
         requestNavigation(workspacePath("operations", base));
+    }
+    function reviewRepairFinding(intent: RepairFindingIntent) {
+        // Only the charged maintenance owner retains finding data, including
+        // while an unsaved-configuration navigation dialog is open.
+        maintenance?.setRepairFinding(intent);
+        requestNavigation(workspacePath("maintenance", base));
     }
     async function checkInterfaceVersion(): Promise<void> {
         if (onCheckRelease === undefined) return;
@@ -768,6 +809,12 @@ export function App({
                             {...(history === undefined
                                 ? {}
                                 : { history, onReadReport: readReport })}
+                            {...(maintenance === undefined
+                                ? {}
+                                : {
+                                      maintenance,
+                                      onRepairFinding: reviewRepairFinding,
+                                  })}
                             {...(!canEditConfiguration
                                 ? {}
                                 : {

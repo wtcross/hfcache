@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { OriginalResultRead } from "../state/operation-observation";
 import type { ClientOperation, ReportPayload } from "../wire/generated";
+import type { RepairFindingIntent } from "../operations/maintenance-state";
 import { ReportCollection, RunReport } from "./RunReport";
 
 import { classifyOperationResult } from "../operations/history-state";
@@ -122,10 +123,12 @@ export function OperationResult({
     result,
     operation,
     onReadReport,
+    onRepairFinding,
 }: {
     readonly result: OriginalResultRead | null;
     readonly operation?: ClientOperation;
     readonly onReadReport?: (runId: string) => void;
+    readonly onRepairFinding?: (intent: RepairFindingIntent) => void;
 }) {
     const classification = classifyOperationResult(result);
     const available =
@@ -217,7 +220,12 @@ export function OperationResult({
                         </button>
                     )}
                     {report !== null ? (
-                        <RunReport report={report} />
+                        <RunReport
+                            report={report}
+                            {...(onRepairFinding === undefined
+                                ? {}
+                                : { onRepairFinding })}
+                        />
                     ) : (
                         <Data
                             key={response.request_id}

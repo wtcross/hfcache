@@ -8,6 +8,7 @@ import type { RepositoryStore } from "../repository/repository-state";
 import type { ConfigurationStore } from "../configuration/configuration-state";
 import type { JobsStore } from "../operations/jobs-state";
 import type { HistoryStore } from "../operations/history-state";
+import type { MaintenanceStore } from "../operations/maintenance-state";
 
 export function ConnectedApplication({
     controller,
@@ -18,6 +19,7 @@ export function ConnectedApplication({
     configuration,
     jobs,
     history,
+    maintenance,
 }: {
     controller: SessionController;
     basePath: string;
@@ -27,6 +29,7 @@ export function ConnectedApplication({
     configuration: ConfigurationStore;
     jobs: JobsStore;
     history: HistoryStore;
+    maintenance: MaintenanceStore;
 }) {
     const session = useSyncExternalStore(
         controller.subscribe,
@@ -48,6 +51,7 @@ export function ConnectedApplication({
             configuration={configuration}
             jobs={jobs}
             history={history}
+            maintenance={maintenance}
             libraryBookmark={libraryFragment(libraryState.filters)}
             onCheckRelease={() => checkRelease(session.bootstrap, fetcher)}
         />

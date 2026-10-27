@@ -1589,3 +1589,65 @@ main:focus {
     width: auto;
     flex: none;
 }
+
+.maintenance-workspace {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+}
+.maintenance-workspace section,
+.maintenance-workspace article {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.maintenance-workspace button {
+    max-width: 100%;
+    margin: 0.35rem 0.5rem 0.35rem 0;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid #b9c6db;
+    border-radius: 0.4rem;
+    background: #fff;
+    color: #253c62;
+    cursor: pointer;
+}
+.maintenance-workspace button:hover:not(:disabled) {
+    border-color: #315fe9;
+    background: #f2f5ff;
+}
+.maintenance-workspace button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+.maintenance-form {
+    display: grid;
+    gap: 0.75rem;
+    min-width: 0;
+}
+.maintenance-form fieldset {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+    border: 1px solid #cbd5e5;
+    border-radius: 0.4rem;
+}
+.maintenance-form fieldset label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.maintenance-form textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0.65rem;
+    border: 1px solid #b9c6db;
+    border-radius: 0.4rem;
+    color: #192335;
+    background: #fff;
+    resize: vertical;
+    font: inherit;
+}
+.maintenance-workspace button:focus-visible,
+.maintenance-form textarea:focus-visible {
+    outline: 3px solid #86a5ff;
+    outline-offset: 3px;
+}

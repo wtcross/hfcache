@@ -1427,6 +1427,13 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   verified terminal API receipt and `pending=false` confirmed/unchanged result
   establish known configuration effects. This RAM-only proof changes no saved
   record/receipt and is cleared on reconnect; unchanged is not installation.
+  Browser maintenance requires complete successful preview evidence and one-use
+  local confirmation, while server scope and archive proof remain fresh under
+  the original lock. Blocked recovery and empty eligible scope cannot arm Apply.
+  Finding-based repair rechecks exact retained evidence without inventing a
+  publication compare-and-swap request; reviewed and actually retired/replacement
+  identities remain distinct. Unknown effects preserve original handles without
+  automatic replay. See [decision 117](adr/decision-117.md).
   Library filter fragments remain bounded under fixed shell routes and encode
   only supported API predicates, never request-selected authority. Main/facet
   pages and enrichment remain finite; stale or contradictory pages cannot become
@@ -1436,6 +1443,12 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   fragments. Selection changes invalidate late old responses. Whole manifest
   reads retain existing byte/integer bounds despite locally paged file tables;
   manifest-file digests are never invented from reserialized HTTP JSON.
+  Leaving repository details releases its query subscriptions and aggregate
+  payload references, including ready evidence. Retained navigation identity
+  grants no read ownership: returning creates fresh scoped handles and rechecks
+  selected membership without latest fallback. Other features acquire their own
+  reads under the unchanged duplicate guard and shared bounds; accepted operation
+  ownership remains independent. See [decision 145](adr/decision-145.md).
   Verified README presentation retains exact source/digest identity in the
   Sanitized source view. Closed lazy React Markdown/GFM formatting adds finite
   pre-parse and AST bounds, disables active content and automatic assets, and
