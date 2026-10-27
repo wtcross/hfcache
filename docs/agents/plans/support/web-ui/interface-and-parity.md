@@ -52,3 +52,16 @@ The implementation creates executable coverage references for every row below. N
 | No credential editor or browser API/Hub bearer | Native Basic authentication and separate server-provisioned sources | WEB-004, WEB-005 |
 
 Explicitly out of UI scope: archive initialization/reinitialization, arbitrary host administration, terminal execution, live model inference, enabling verification scheduling, and general payload serving. Keep CLI/MCP and native/base installation support. Do not remove generic client/runtime helpers because Cockpit uses them; classify all call sites before retirement.
+
+WEB-019 composes these existing authorities in the actual Administration route.
+The [operator guide](../../../../web-ui/administration.md) identifies the rendered
+Archive health, API readiness, Software identities, Diagnostics, Sync schedule,
+Original sync observer, Verification timer (read-only), bounded journal and
+Original operation recovery controls. Configuration uses the existing guarded
+editor in that workspace. Permission reasons remain independent for archive,
+Hub, control, configuration, schedule and observer actions. Unsupported rootless
+host effects remain explicit denials. Readiness, a successful diagnostic check,
+metadata coverage and a journal event never establish a successful archive
+verification or accepted executor cancellation. Task019 records its source and
+rendered-control evidence; the later compatibility and retirement tasks still
+own the complete migration gate.

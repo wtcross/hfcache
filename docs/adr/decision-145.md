@@ -241,3 +241,29 @@ original-process observer stop, independent durable outcomes and finite diagnost
 reads. It preserves archive serialization, original operation identity and this
 record's unrelated requirements. Implementation and actual installed conformance
 are separately required.
+
+## Administration presentation amendment (2026-10-27)
+
+The Administration workspace composes the existing scoped status, readiness and
+version reads with protected host status, configuration, diagnostics, fixed host
+actions and original-operation recovery. It creates no new authority or wire
+schema. API readiness, reachable archive capacity, verification evidence,
+metadata coverage and software identity remain separate observations. Failed,
+stale or missing reads cannot supply healthy labels, zero counts or permission.
+No observed full verification is explicitly unknown, including when the current
+degraded flag is false. Bounded warning guidance navigates to a workflow without
+submitting it; journal events remain diagnostics rather than operation results.
+
+Schedule validation retains the exact submitted input and authenticated revision.
+Every edit attempt retires local review; only explicit one-use confirmation may
+submit the reviewed intent. Display actual normalized systemd text and label its
+server/systemd interpretation without inventing a timezone field or converting
+it to browser-local time. Observer review binds the original invocation; stopping
+that observer never claims backend cancellation. Existing original-key lookup
+and protected-outcome reads preserve uncertainty after reply loss. The
+[Administration guide](../web-ui/administration.md) describes these workflows.
+
+[Decision156](decision-156.md#implementation-and-presentation-status-2026-10-27)
+records committed scoped native/rootless API-contract proof. Rendered
+Administration controls have their own required acceptance; neither implies
+production rollout or broader platform conformance.

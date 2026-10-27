@@ -9,6 +9,7 @@ import type {
 import type { ConfigurationStore } from "../configuration/configuration-state";
 import type { RepairFindingIntent } from "../operations/maintenance-state";
 import { OperationResult } from "./OperationResult";
+import { HostActionRecovery } from "./HostActionRecovery";
 
 function ConfigurationRecovery({
     store,
@@ -233,6 +234,14 @@ function RecoveryEntry({
                 record.route === "/api/v1/config/applications" && (
                     <ConfigurationRecovery
                         store={configuration}
+                        record={record}
+                    />
+                )}
+            {record.handles.kind === "basic-key" &&
+                (record.route === "/api/v1/host/sync-schedule/changes" ||
+                    record.route === "/api/v1/host/sync-observer/stops") && (
+                    <HostActionRecovery
+                        controller={controller}
                         record={record}
                     />
                 )}

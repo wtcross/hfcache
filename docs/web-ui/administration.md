@@ -1,8 +1,12 @@
-# Administration and host permissions
+# Administration
 
-The web interface provides protected host status in unreleased source. Keep the
-installed Cockpit interface until replacement acceptance and migration are
-complete. Source availability does not change the running host's permissions.
+Open **Administration** to inspect the archive, API readiness, software identities
+and protected host permissions; edit configuration; run explicit diagnostics; and
+use the fixed schedule, observer and journal controls supported by the installed
+profile. Opening or refreshing a read panel never submits a job or changes a
+timer. The interface remains unreleased source until installed through the
+[deployment procedure](deployment.md). Keep the installed Cockpit interface until
+replacement acceptance and migration are complete.
 
 The human administrator signs in with the configured browser Basic account.
 That account is separate from service bearer credentials and host policy. Login
@@ -10,11 +14,12 @@ lets you view the interface; it cannot grant archive, Hub or host authority.
 
 ## Read the permission evidence
 
-Administration displays the selected deployment, independent host-policy proof
-and six effective categories: archive jobs, Hub sizing/diagnostics, control-state
-previews, configuration, schedules and scheduled-observer control. An explicit
-denial reason is part of each category. Rootless schedule and observer controls
-stay denied while their fixed system-manager bindings are unproved.
+**Host administration** displays the selected deployment, independent host-policy
+proof and six effective categories: archive jobs, Hub sizing/diagnostics,
+control-state previews, configuration, schedules and scheduled-observer control.
+An explicit denial reason is part of each category. Rootless schedule and
+observer controls stay denied while their fixed system-manager bindings are
+unproved; no same-name user-manager unit substitutes for them.
 
 Supported means the helper could verify the selected installed profile. Guarded
 means the original read-only guard is held and archive actions are denied.
@@ -23,63 +28,193 @@ the helper cannot currently provide an authenticated bounded observation. Neithe
 unknown nor unavailable grants actions, implies an inactive service, or proves
 an API/worker crash. A known absent guard grants nothing by itself.
 
-Status does not show archive health or prove that a write would succeed. Domain
-locks, storage guards, configured scope and policy remain final. An enabled
-policy category also does not implement a host action whose endpoint is absent.
-The verification timer is display-only.
+**Refresh host status** performs another bounded read; it never submits or retries
+an operation. **Denied** carries the reason for a known refusal; **Unavailable**
+means required authority could not be observed. **Allowed** describes an
+independently verified policy category, not proof that a write would succeed.
+Domain locks, storage guards, configured scope and fresh execution checks remain
+final. The verification timer is display-only.
 
-Open **Administration** to view **Host administration**. **Refresh host status**
-performs another bounded read; it never submits or retries an operation. Known
-permission refusals display **Denied** with their reason; missing authority
-displays **Unavailable**. **Allowed** describes the independently verified policy
-category. Displaying it never submits a configuration or schedule mutation.
+## Read archive and readiness observations
 
-The separate **Configuration and tags** panel composes the existing protected
-configuration read, managed validation, sizing preview and guarded application
-APIs. Its configuration-read/write grants and independent policy checks stand
-on their own; host-read is not an additional gate. A visible **Allowed** status
-does not bypass fresh request/execution checks. Follow the
+**Refresh administration status** reads the current **Archive health**,
+**API readiness**, **Verification health** and **Software identities** panels.
+These observations answer different questions:
+
+| Observation | How to use it |
+| --- | --- |
+| API readiness | The daemon can answer its readiness check. This does not establish valid archive policy, archive reachability, free capacity, verification or write permission. |
+| Archive health | Read observed available capacity, configured reserve and headroom together with unfinished transactions, deferred cleanup, unknown entries and quarantined bytes. An unreachable archive has unavailable values, not zero usage or a clean state. |
+| Verification health | Outstanding failures and the last observed full verification are independent of readiness and metadata coverage. **No full verification has been observed** means no such evidence is available, even when the degraded flag is false. Use exact publication integrity or an original verification report for a particular revision. |
+| Software identities | UI/bootstrap build, API version and available protected host-release binding are separate identities. A matching version does not prove a production deployment, healthy archive or successful job. |
+
+A read is a snapshot, not a reservation of disk space or execution authority.
+Failed, stale or unavailable evidence must be read again before it is treated as
+current. Do not turn a missing value into zero or interpret a complete metadata
+catalog as proof that archive bytes have been verified. Findings and warning
+lists show finite local pages of 25 rows; loaded extent is not an archive total.
+
+Warnings provide guidance, never an automatic cleanup or repair action. The
+[operator warning runbook](../operations.md#warnings) and
+[supplemental metadata contract](../discovery.md) remain authoritative.
+
+| Code | Safe next step |
+| --- | --- |
+| `HFDEP001` | Review declared dependencies in Configuration. Dependencies are never downloaded implicitly. |
+| `HFWRN001` | Review recovery and a separate prune preview for temporary over-retention. |
+| `HFWRN002` | Logical removal already committed; inspect recovery for outstanding physical trash cleanup. |
+| `HFWRN003` | Preserve unknown entries and identify them before any removal. |
+| `HFWRN004` | Diagnose stale staging and inspect a recovery preview. |
+| `HFWRN005` | Review capacity and reserve. ZFS snapshots can retain blocks after application pruning. |
+| `HFWRN006` | Preserve local revisions while upstream is unreachable; this does not trigger pruning. |
+| `HFWRN007` | Confirm that the repository is intentionally unmanaged before reviewing a purge preview. |
+| `HFWRN008` | Inspect recovery for an expired repair predecessor; grace and quarantine rules still apply. |
+| `HFWRN009` | Check the writer-local Xet cache; its advisory ceiling is separate from archive capacity. |
+| `HFWRN010` | Review overlap with storage maintenance. Verification scheduling is not editable here. |
+| `HFWRN011` | Supplemental metadata or README capture is incomplete or failed. Keep affected fields unknown and the valid publication retained; this does not imply an integrity failure. Review the explicit metadata-refresh workflow in Operations. A GET never refreshes metadata. |
+
+An unfamiliar warning keeps its code and generic guidance. A workflow link only
+navigates; any preview, job or effect still requires its own explicit action and
+fresh authority.
+
+## Configuration and diagnostics
+
+**Configuration and tags** uses its independent configuration-read/write grants;
+host-read is not an additional gate. Follow the
 [configuration workflow](configuration-and-tags.md) for one in-memory draft,
-exact-base review and original-outcome recovery. Full schedule, observer and
-journal forms remain a separate Administration UI package. Their fixed host APIs
-have independent native provisioning and permission requirements below.
+exact-base review, validation, sizing preview and original-outcome recovery. A
+visible **Allowed** status does not bypass fresh request/execution checks.
+
+The **Diagnostics** panel submits explicit [Operations jobs](operations.md), using
+the same original receipts and classified results:
+
+- **Run read-only diagnostics** can contact the Hub and creates an operation
+  receipt, but does not perform archive-write probes.
+- **Run temporary archive probes** also performs temporary archive writes under
+  the archive lock and needs archive authority. First review and select **I
+  understand these probes can write temporary archive data.**
+
+Neither runs merely because Administration is opened or refreshed. Inspect
+**Original diagnostic job** and its **Diagnostic checks**, retaining failed,
+partial and skipped results. A skipped check is not a pass. Use that exact result
+and its codes, rather than API readiness or journal activity, to judge the run.
+
+For example, `HFHUB003` can report that the Hub identity is `anonymous` while
+`hub.expected_account` names an account. Browser sign-in and granted Hub
+permission do not authenticate a Hub account. Preserve that failed diagnostic
+and ask the operator to review the installed [Hub configuration](../configuration.md)
+and protected credential delivery. Do not paste a Hub token or REST bearer into
+this page. A failed identity check can appear alongside successful DNS/TLS checks
+and useful storage checks; retain each check's actual outcome.
 
 ## Schedule, observer and diagnostic APIs
 
-The [fixed host API](../api.md#fixed-host-actions-and-original-outcomes) validates
-calendar and delay values with the installed systemd tools. A change uses the
-fresh exact schedule revision and one original idempotency key. Replace/reset
-reload the manager and restart only a previously active sync timer. Pause stops
-that timer; resume starts it without enabling it. Persistent catch-up can start
-the scheduled observer. Verification scheduling remains read-only, and these
-actions never operate on the application target, API or worker.
+These rendered controls use the existing fixed host API and its protected policy.
+The browser never talks directly to a host manager, file or shell.
 
-Stopping the scheduled sync observer requires fresh evidence identifying that
-original boot, service invocation and process. It sends SIGTERM only to the
-retained original process. An accepted backend job and the observer's pending
-handle survive independently. A stopped observer does not prove cancellation,
-failure or completion of that job.
+### Change the sync schedule
+
+The controls operate only on the fixed system sync timer. First choose **Read
+schedule and observer** to obtain current protected permissions, the installed
+schedule revision and actual observer evidence. The dedicated observer response
+can preserve a real running fact even when the older host-status panel cannot
+represent an intermediate oneshot state. A failed read supplies no control
+readiness.
+
+For a replacement:
+
+1. Open **Edit sync schedule**, enter an **OnCalendar expression** and optionally
+   a **Randomized delay (optional)** value, then choose **Validate schedule**.
+2. Read **Normalized calendar**, **Normalized randomized delay** and **Next event
+   (server/systemd)**. These values use the server/systemd timezone interpretation,
+   including any timezone in the returned text. They are not converted to your
+   browser's local time; no separate API timezone field is implied.
+3. Choose **Review replacement**, check the intended action and exact revision,
+   then select **Confirm reviewed schedule change**. Choose **Apply reviewed schedule**
+   once to submit that reviewed intent.
+
+Validation performs no schedule write. Editing any raw input, including an
+invalid edit or one that normalizes to the same value, retires the old review.
+Refresh, reconnect or leaving the view also requires fresh review. Confirmation
+is consumed on the first apply attempt, including refusal or a lost reply; it is
+never a retry permission. A revision conflict requires an explicit fresh read
+and a new review rather than overwriting another change.
+
+**Review reset** followed by confirmation and **Reset to shipped schedule**
+removes the managed override. **Review pause** or **Review resume**, confirmation,
+then **Pause sync timer** or **Resume sync timer** stops or starts that timer.
+Pause/resume never changes enablement. Replacement/reset reload the manager and
+restart only a previously active timer; an inactive timer remains inactive.
+Resume or a restart can trigger Persistent catch-up and start the scheduled
+observer. These controls do not change the verification timer, stop the
+application target, API or worker, or create another scheduler.
+
+The [fixed host API](../api.md#fixed-host-actions-and-original-outcomes) records
+stored-file state separately from manager acknowledgement. A terminal API receipt
+alone is not proof that both are confirmed. Use the original host outcome below
+when any part remains pending or unconfirmed.
+
+### Stop only the original scheduled observer
+
+After a fresh read, **Review original observer** identifies the exact original
+boot, service invocation and process. Review that evidence, select **Confirm
+original observer**, then **Stop original sync observer**. The action sends
+SIGTERM only to the retained original process; a changed binding requires a new
+read and review, never a numeric-PID or replacement-invocation stop.
+
+Accepted backend work and the observer's pending handle survive independently.
+Stopping the observer does not cancel, fail or complete its backend job. Follow
+that job's original operation/report in [Operations](operations.md). **Stop
+observing in this browser** only stops local reads and is separate from this
+explicit host action.
 
 Native observer stop needs the separately provisioned confined observer profile.
 An ordinary native installation can expose the real observer identity and allow
-schedule changes while correctly denying stop with `profile-unproved`. The host
+schedule changes while correctly denying stop with `profile-unproved`. A host
 administrator must install and verify the fixed context fragment and dedicated
 scheduled-state label; granting a policy bit alone is insufficient. An inactive
 timer may be reported as `linked` when installed by an immutable unit symlink.
 That state is not calendar enablement; retain the actual unit state and check its
 enablement links independently.
 
-After a lost reply, observe the original schedule/stop outcome with its original
-key. Keep API receipt state separate from host certainty: a stored schedule does
-not prove manager reload succeeded, and an acknowledged signal without observed
-exit is unconfirmed. Never submit a replacement key to discover what happened.
-Private pending records and uncertain outcomes require operator review, not
-browser cleanup or automatic rollback.
+### Recover an original host action
 
-Journal pages cover only the sync and verification observers. They are finite,
-newest-first diagnostics with explicit gaps/truncation and a short-lived cursor.
-Only closed event, level and run-ID fields are exposed. Empty or missing journal
-data establishes no operation outcome. See [native provisioning](deployment.md#optional-native-schedule-and-observer-provisioning)
+Original-operation recovery remains available in Administration. After a lost
+reply, preserve the original key and any accepted operation ID. **Observe
+original operation** reads the API receipt. **Observe original host outcome**
+reads the independent fixed-host facts; the controller verifies the original
+authenticated key before that exact outcome read. These reads do not require a
+new write grant and never resend the action.
+
+Keep API receipt state separate from host certainty: a stored schedule does not
+prove manager reload succeeded, and an acknowledged signal without observed exit
+is unconfirmed. Known unchanged means no effect, not successful application.
+Missing history, pending, conflict or unconfirmed evidence remains unresolved.
+Never submit a replacement key to discover what happened, remove a private
+marker or use reset as rollback. Preserve private outcomes, backups and pending
+handles for the host operator. Reconnect requires fresh authenticated observation;
+saved browser metadata alone is not proof of an outcome.
+
+### Read bounded diagnostic journals
+
+Choose **Sync observer** or **Verification observer**, then **Read diagnostic
+journal**. **Previous journal page** and **Next journal page** navigate explicit
+bounded pages, retaining at most 32 positions and displaying 25 entries at a time.
+They do not follow an unbounded stream or scan all history. Pages are newest-first
+and expose only closed event, level and run-ID fields, with explicit gap and
+truncation information. Source changes or an expired cursor require a deliberate
+new read.
+
+Available history can differ between sources and between reads. An empty
+verification journal is an empty observation, including when its timer is
+disabled. **Next journal page** stays disabled when the response has no next
+cursor. Reading the journal never enables a timer or submits a job to populate
+history.
+
+Logs are diagnostic evidence. An empty page, a gap, a run-ID mention or a stopped
+observer establishes no operation outcome. Use the original operation result and
+exact run report for completion. No journal text is a command or raw exception/
+credential source. See [native provisioning](deployment.md#optional-native-schedule-and-observer-provisioning)
 and [troubleshooting](troubleshooting.md#schedule-observer-and-journal-diagnostics).
 
 ## Provision policy independently
@@ -140,3 +275,27 @@ available when host proof is down. A failed observation does not cancel accepted
 work. Retain its original handle and reconcile read-only; do not submit another
 operation to test whether the first one ran. See
 [troubleshooting](troubleshooting.md) and [API recovery](../api.md#reconnect-after-lost-acknowledgement).
+
+## Screenshots
+
+This full-page capture shows disposable native test build0.2.50 through the
+shared Caddy endpoint, using synthetic local storage. Its capacities, identifiers
+and policy grants are example observations, not production or NAS evidence.
+
+<details>
+<summary>View the full native Administration screen</summary>
+
+![Native Administration with independent archive, readiness, software and host permissions, explicit diagnostics, fixed schedule controls and original-operation recovery](images/administration-native-desktop.png)
+
+</details>
+
+On a narrow screen, leaving an edited schedule requires **Stay** or explicit
+discard. Discard retires its local review and preserves original operations.
+This capture uses the same disposable build and synthetic archive.
+
+<details>
+<summary>View the mobile dirty-schedule dialog</summary>
+
+![Mobile Administration navigation dialog preserves a dirty schedule until Stay or explicit discard](images/administration-mobile-dirty-navigation.png)
+
+</details>

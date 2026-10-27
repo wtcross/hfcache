@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-018, this commit; WEB-019 is next |
+| Latest completed package | WEB-019, this commit; WEB-020 is pending |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3826,3 +3826,23 @@ and all original pending/failed/damaged evidence remain preserved. Task018 owns
 exact proofs and limits. Continue WEB-019 forms; later platform, compatibility,
 retirement, final acceptance and production rollout remain separate. No merge,
 push, Git tag, NAS or live Cockpit action occurred.
+
+2026-10-27: WEB-019 activated after committed WEB-018 and its clean strict/48-case acceptance. Complete rendered Administration using existing typed authorities, query/operation owners and test environments. No new engine or privilege surface is authorized.
+
+2026-10-27: WEB-019 completes the rendered Administration workspace, independent
+health/readiness/permission/software facts, warning guidance, one-use fixed
+schedule/original-observer controls, bounded journals, explicit diagnostics and
+global original-outcome recovery. Strict gate2 passes1994.337s on unchanged
+S3 `107e45b4…`/1519 inputs with8927 backend/3690 web unit/4007 combined tests,
+94.94% line/90% branch coverage and no required skips. All42 accepted scoped
+browser cases pass:27 native pairs join original Chromium9/Firefox9 with targeted
+WebKit9 plus separate read-only qualifications, preserving both failed original
+collectors;15 rootless pass normally254.036s. The fixture's60s sync wait is
+retained and restored to shipped3600; the corrected journal join admits exactly
+one legitimate failed SDK sync journal, never a publication. Existing Caddy/
+engines and pinned UBI10micro shared images without runtime Node are retained.
+OPS-10, human guides/screenshots and living ADR/invariant/contracts are aligned.
+Task019 owns exact sources, original evidence and limits; aggregate3ebb9e27…
+records506 trusted requests/84 clear CSP checkpoints and normal rootless drain.
+WEB-020 is pending next. NAS/production/full-platform, compatibility, retirement,
+final gate and rollout remain separate; no merge, push, tag or live Cockpit action.

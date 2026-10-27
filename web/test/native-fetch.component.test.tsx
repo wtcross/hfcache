@@ -7,7 +7,12 @@ import { bootstrapScope } from "../src/bootstrap";
 import { createAuthSession } from "../src/state/authority";
 import { createOperationRegistry } from "../src/state/operation-registry";
 import { hostStatusWire } from "./host-fixtures";
-import { jsonResponse, readWire } from "./read-fixtures";
+import {
+    jsonResponse,
+    readWire,
+    statusPayload,
+    versionPayload,
+} from "./read-fixtures";
 import { inertUiDocument, uiBootstrapFixture } from "./ui-fixtures";
 
 const operationId = "a".repeat(32),
@@ -64,6 +69,37 @@ function brandedTransport() {
         });
         if (url.pathname === "/api/v1/host/status")
             return Promise.resolve(jsonResponse(hostStatusWire()));
+        if (url.pathname === "/api/v1/status") {
+            const payload = statusPayload(true);
+            return Promise.resolve(
+                jsonResponse({
+                    ...readWire("status", {
+                        ...payload,
+                        archive: {
+                            ...payload.archive,
+                            archive_id: bootstrap.configured_archive_id,
+                        },
+                    }),
+                    archive_id: bootstrap.configured_archive_id,
+                }),
+            );
+        }
+        if (url.pathname === "/api/v1/health")
+            return Promise.resolve(
+                jsonResponse(
+                    readWire("health", {
+                        ready: true,
+                        // The actual unavailable-policy health variant remains
+                        // daemon-ready and carries no archive inspection.
+                        policy_valid: null,
+                        archive: null,
+                    }),
+                ),
+            );
+        if (url.pathname === "/api/v1/version")
+            return Promise.resolve(
+                jsonResponse(readWire("version", versionPayload)),
+            );
         const operation = {
             schema_version: 1,
             operation_id: operationId,
@@ -99,15 +135,21 @@ function brandedTransport() {
     return { requests, rejectedReceivers: () => rejectedReceivers };
 }
 
-test("production default mount reaches host query through a branded native-like fetch", async () => {
+test("production default mount reaches host and Administration reads through a branded native-like fetch", async () => {
     localStorage.clear();
     const transport = brandedTransport();
     mount("administration");
     await waitFor(() => {
         expect(screen.getByTestId("host-state")).toHaveTextContent("supported");
     });
+    await screen.findByText("API daemon: Ready.");
+    expect(screen.getByText("Installed policy: Unknown.")).toBeInTheDocument();
+    await screen.findByText(versionPayload.application, { exact: true });
     expect(transport.requests).toEqual([
         { path: "/api/v1/host/status", method: "GET", originalKey: null },
+        { path: "/api/v1/status", method: "GET", originalKey: null },
+        { path: "/api/v1/health", method: "GET", originalKey: null },
+        { path: "/api/v1/version", method: "GET", originalKey: null },
     ]);
     expect(transport.rejectedReceivers()).toBe(0);
 });

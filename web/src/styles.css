@@ -8,6 +8,85 @@
     --line: #dfe5ee;
     --accent: #315fe9;
 }
+.administration-workspace,
+.administration-read-view,
+.host-controls {
+    display: grid;
+    gap: 20px;
+    min-width: 0;
+}
+.administration-workspace :is(.panel, section, dl, dd, code) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.administration-workspace dl > div,
+.administration-identities > div {
+    padding-block: 7px;
+}
+.administration-workspace dt {
+    color: var(--muted);
+    font-size: 12px;
+}
+.administration-workspace dd {
+    margin-inline-start: 0;
+}
+.administration-diagnostic-actions {
+    display: grid;
+    gap: 16px;
+    margin-block: 16px;
+}
+.administration-diagnostic-actions > div {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f7f9fc;
+}
+.administration-diagnostic-actions label {
+    display: block;
+    margin-block: 12px;
+}
+.administration-workspace input[type="checkbox"] {
+    margin-inline-end: 8px;
+}
+.host-controls form,
+.host-controls section {
+    margin-block: 16px;
+}
+.host-controls form > label {
+    display: block;
+    margin-block: 12px 6px;
+    font-weight: 600;
+}
+.host-controls input[type="text"] {
+    display: block;
+    width: 100%;
+    max-width: 42rem;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid #b8c4d5;
+    border-radius: 6px;
+    font: inherit;
+    background: white;
+}
+.host-controls .button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-block: 14px;
+}
+.administration-workspace :is(input, summary, [tabindex]):focus-visible {
+    outline: 3px solid #86a5ff;
+    outline-offset: 4px;
+}
+@media (min-width: 1050px) {
+    .administration-read-view {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+    .administration-diagnostic-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
 * {
     box-sizing: border-box;
 }

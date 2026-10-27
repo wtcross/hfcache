@@ -1235,8 +1235,9 @@ and guarded validation, not deletion or a universal compatibility assumption.
 The following are accepted requirements with explicit conformance boundaries.
 Optional Basic and authenticated SPA/static serving are implemented in unreleased
 source, preserving existing REST bearer and fourteen read-only MCP behavior.
-Protected host status and fresh Basic job proof are being implemented under
-[decision150](adr/decision-150.md); configuration/host writes remain separate.
+Protected host status and fresh Basic job proof are implemented under
+[decision150](adr/decision-150.md); configuration and fixed host writes retain
+their separate guarded contracts.
 The API pins helper-address directories with no-follow `O_PATH` handles, requiring
 search access without directory reads or listings; binding-leaf and peer guards
 remain mandatory.
@@ -1427,6 +1428,11 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   verified terminal API receipt and `pending=false` confirmed/unchanged result
   establish known configuration effects. This RAM-only proof changes no saved
   record/receipt and is cleared on reconnect; unchanged is not installation.
+  Administration keeps API readiness, archive reachability/capacity, verification,
+  metadata coverage and software identities separate. A false degraded flag with
+  no observed full verification is not a healthy-history claim. Warning guidance
+  and journal navigation never submit work; failed or stale observations cannot
+  supply zero counts, current health or local action readiness.
   Browser maintenance requires complete successful preview evidence and one-use
   local confirmation, while server scope and archive proof remain fresh under
   the original lock. Blocked recovery and empty eligible scope cannot arm Apply.
@@ -1488,5 +1494,11 @@ No enforcement or acceptance is claimed from these new register entries alone.
   Journal sources, cursor,
   time, bytes and concurrency
   are finite; logs never establish job completion. Preserve HostStatus schema1
-  and existing bearer/MCP/receipt schemas. See [decision156](adr/decision-156.md)
+  in rendered controls as well: use the dedicated fresh observer authority for
+  host actions, retain explicit independent denials, consume local review once
+  and retire it on every raw edit. Systemd normalization/next-elapse text describes
+  server interpretation, never an invented API timezone or browser-local time.
+  Verification timer display cannot offer timer changes. Preserve original-key
+  recovery on Administration without implicit resubmission. Existing
+  bearer/MCP/receipt schemas remain unchanged. See [decision156](adr/decision-156.md)
   and [host administration](host-administration.md).

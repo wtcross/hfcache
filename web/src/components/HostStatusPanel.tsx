@@ -276,8 +276,8 @@ export function HostStatusPanel({
                 operation outcomes have separate observations.
             </p>
             <p>
-                Policy permissions describe host authority. This interface
-                currently provides status reads.
+                These permissions describe protected host authority. Every
+                action still requires fresh server checks.
             </p>
             {observation === null ? (
                 <p role="status">Loading host status.</p>
@@ -334,8 +334,8 @@ export function SessionHostAdministration({
                 operation outcomes have separate observations.
             </p>
             <p>
-                Policy permissions describe host authority. This interface
-                currently provides status reads.
+                These permissions describe protected host authority. Every
+                action still requires fresh server checks.
             </p>
             {state.phase === "loading" || state.phase === "idle" ? (
                 <p role="status">Loading host status.</p>

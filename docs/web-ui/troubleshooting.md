@@ -51,6 +51,26 @@ and inspect metadata in the intended service namespace; do not copy plaintext,
 widen permissions, change groups or disable confinement to make startup pass.
 An ordinary file with another readable group remains invalid.
 
+## Administration observations
+
+Use **Refresh administration status** for archive, readiness and version reads;
+use **Refresh host status** or **Read schedule and observer** for the separate
+protected host observations. None submits a job or repairs missing authority.
+
+| Observation | Meaning and safe next step |
+| --- | --- |
+| API ready, archive unavailable or policy invalid | Readiness describes the daemon, not a healthy or writable archive. Preserve the failed read/code and inspect the separate policy/archive evidence. Do not use missing capacity as zero or submit a probe merely to make the panel green. |
+| No full verification has been observed | There is no observed full-verification result. A false degraded flag, complete catalog or reachable filesystem cannot fill that gap. Review exact publication integrity or explicitly submit a permitted verification from Operations. |
+| Free space near reserve | Available bytes and headroom are one snapshot, not a reservation. Follow the capacity runbook; ZFS snapshots can retain blocks after application pruning. Never remove unknown entries or bypass reserve checks from this warning. |
+| Warnings, unfinished transactions or deferred cleanup | Read the exact code and attribution in the [Administration guide](administration.md#read-archive-and-readiness-observations). A workflow link does not execute recovery, pruning, purge or repair. Each needs its own review. |
+| Read fails after an earlier success | Earlier observations are stale, not current health. Keep safe codes and identities; perform an explicit read after addressing the cause. Do not infer zero counts or lost data. |
+| UI, API and protected host versions differ | Keep the displayed identities separate and ask the operator to compare the selected release and asset manifest. Preserve unsaved work and original handles before explicit reconnect/reload. Matching version text alone proves neither deployment nor health. |
+| Diagnostic check skipped | The probe did not establish that property. Read the original diagnostic result, including failed and skipped checks; journal activity and API readiness are not substitutes. |
+| Diagnostic `HFHUB003` reports an anonymous or unexpected Hub identity | Keep the original failed job and its useful partial checks. Basic sign-in and a protected Hub grant are separate from the Hub account. Ask the operator to review `hub.expected_account`, token mode and protected credential delivery in the [installed configuration](../configuration.md); never supply Hub tokens or REST bearers through the page. |
+
+See [Administration](administration.md) for independent permission categories,
+bounded findings/warning lists and explicit diagnostic effects.
+
 ## Protected host status
 
 Keep the public `state`, `reason`, and `profile` from the original
@@ -170,7 +190,7 @@ through an authorized drained restart and actual API-to-worker validation.
 | **The interface version could not be checked** | The bounded bootstrap read did not produce a matching supported result. Keep the current operation handles. Investigate the selected release and connection; failure does not prove an operation stopped. |
 | Missing `.js`/`.css` or an unknown navigation path returns JSON 404 | Only indexed assets, exact workspaces and validated type-aware repository routes are served. The API deliberately does not substitute HTML for a missing module or unrelated route. Compare the selected artifact/prefix; do not add a global history fallback in Caddy. |
 | HTTP 503 / HFAPI009 while loading an asset | Static admission is full or draining. At most 16 UI bodies are active with no queue; each send has a 30-second deadline. Wait for the current requests or investigate an authorized service drain. Metadata and authentication use separate capacity. |
-| Administration shows disabled actions | A known grant does not make an unimplemented or host-denied feature effective. The displayed reason is authoritative for that scope; signing in does not clear a guard, enable schedules or permit archive writes. |
+| Administration shows disabled actions | A known grant does not make an unavailable or host-denied feature effective. The displayed reason is authoritative for that scope; signing in does not clear a guard, enable schedules or permit archive writes. |
 
 Reload uses the same trusted URL and browser-managed credentials. Never paste a
 bearer into page storage or use a certificate-bypass flag to get past startup.
@@ -399,14 +419,22 @@ add a Caddy authentication gate or resubmit an uncertain Apply. See
 
 | Problem | Meaning and safe next step |
 | --- | --- |
+| Signed in, but schedule or observer control disabled | Basic authentication and feature grants do not supply protected host authority. Read the dedicated schedule/observer observation and its independent reasons. A permitted schedule change can coexist with a denied stop. Do not change credential class or policy from the browser. |
 | Schedule or observer denied on guarded rootless | Expected for the current unproved system-manager binding. Retain the denial; do not choose a user manager or operate on same-name user units. |
 | Native host-effect labels or receipt unavailable | Keep existing read/configuration use. A host administrator must provision the exact optional version2 labels, original host-action lock and fresh receipt/index; a true policy bit alone cannot supply them. |
 | Native schedule allowed but observer stop reports profile-unproved | Check the optional fixed `50-hfcache-observer.conf` binding, effective manager context and dedicated scheduled-state label. Default units and journal stream context cannot attest the live SDK domain; init_t is not a supported signal target. Preserve the real running/inactive fact and original handle; do not grant init_t signals, choose an unconfined context or relabel automatically. |
 | Verification timer reports linked and inactive | Immutable unit symlinks can produce linked without calendar enablement. Preserve the exact installed state and verify no enablement links; do not remove unit links or enable the timer to alter the display. |
 | Legacy schedule/observer exclusion refuses | Preserve the old policy and admitted handles. Activation needs a safely absent policy or both strict legacy host-control bits false, plus independently proven quiescence of older privileged calls. Do not rewrite old source/index provenance or bypass the gate. |
-| Schedule revision changed | Read the installed schedule again and deliberately review a new change. Do not overwrite concurrent edits or treat an old preview as authority. |
+| Validation succeeds but the timer did not change | Validation only checks the expression/delay. Review the normalized server/systemd text and exact revision, confirm once, then choose the corresponding explicit effect. A success message for validation is not schedule installation. |
+| Review or confirmation cleared after an edit, refresh or navigation | Expected. Every raw edit attempt, including invalid or equivalent text, retires previous validation/review. Refresh, authority drift and leaving the view also retire it. Read/validate/review again deliberately; do not reuse an earlier confirmation. |
+| Next event differs from browser-local time | Interpret the returned normalized/next-elapse text as server/systemd time. No separate API timezone field or browser-local conversion is implied. Make any intended timezone explicit in the calendar expression and validate it. |
+| Schedule revision changed / HFAPI007 | Read the installed schedule again and deliberately review a new change. Do not overwrite concurrent edits or treat an old preview as authority. A known unchanged outcome is a refusal with no effect, not successful installation. |
+| Resume or replacement starts a scheduled run | Persistent catch-up can run after a timer start/restart. Pause/resume never changes enablement; replacement/reset restarts only a timer that was previously active. Observe any admitted backend job by its original handle. |
 | File changed but manager state unconfirmed | Observe the original keyed host outcome. Preserve backups and pending evidence; do not replay reload/restart, reset or a replacement POST automatically. |
 | Original observer binding changed | The requested original process is no longer proved. Refuse stop rather than signal a replacement invocation or numeric PID. Observe accepted backend work by its own original handle. |
 | Observer stopped but job still running | Expected: client observation and server execution have separate lifetimes. Stop observation never cancels accepted API/worker work. |
+| Receipt terminal but host effect still pending or unconfirmed | Use original-operation recovery in Administration to observe that exact original host outcome. A terminal receipt, stored file or acknowledged signal alone does not establish all required host facts. Keep the original key/ID and private pending evidence; do not retry under another key or use reset as rollback. |
+| Journal source changed and no entries are shown | Choose **Read diagnostic journal** for that source. Source selection clears the previous page/history without silently reading a new stream. |
+| An explicit journal read is empty and Next is disabled | That source currently returned no entries or continuation. History may be unavailable even if an earlier read had entries. Keep this separate from operation completion; do not enable verification scheduling or start a job merely to populate the journal. |
 | Journal gap, truncation or expired cursor | Read a deliberately new bounded page if needed. Logs are incomplete diagnostics, never completion evidence or authority for a command. |
 | Private host history quota or pending marker blocks effects | Preserve the complete records and original lock inode. No GET, UI reset or receipt expiry deletes uncertain evidence. |

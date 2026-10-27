@@ -16,6 +16,8 @@ import { createConfigurationStore } from "./configuration/configuration-state";
 import { createJobsStore } from "./operations/jobs-state";
 import { createHistoryStore } from "./operations/history-state";
 import { createMaintenanceStore } from "./operations/maintenance-state";
+import { createAdministrationReadStore } from "./administration/administration-read-state";
+import { createHostControlsStore } from "./administration/host-controls-state";
 
 export async function startApplication(
     document: Document,
@@ -78,6 +80,8 @@ export function mountApplication(
     const jobs = createJobsStore(controller);
     const history = createHistoryStore(controller);
     const maintenance = createMaintenanceStore(controller);
+    const administrationRead = createAdministrationReadStore(controller);
+    const hostControls = createHostControlsStore(controller);
     root.render(
         <ConnectedApplication
             basePath={basePath}
@@ -89,6 +93,8 @@ export function mountApplication(
             jobs={jobs}
             history={history}
             maintenance={maintenance}
+            administrationRead={administrationRead}
+            hostControls={hostControls}
         />,
     );
     return () => {
@@ -99,6 +105,8 @@ export function mountApplication(
         jobs.dispose();
         history.dispose();
         maintenance.dispose();
+        administrationRead.dispose();
+        hostControls.dispose();
         controller.dispose();
     };
 }

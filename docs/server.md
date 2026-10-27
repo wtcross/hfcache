@@ -732,10 +732,13 @@ does not certify installed NAS, egress, SELinux or other-host operation.
 
 Unreleased source implements the optional Basic provider and authenticated
 application asset/bootstrap serving below. It remains disabled unless explicitly
-configured with a matching protected artifact. Guarded host administration and
-clean release packaging retain their separate implementation/acceptance
-requirements; a Basic grant alone authorizes no host effect. These source
-capabilities do not change an installed release or permit adding unsupported
+configured with a matching protected artifact. Administration composes existing
+status/readiness/version reads, protected host observations, configuration,
+explicit diagnostics and fixed schedule/observer/journal controls. Opening or
+refreshing a read panel submits no operation. Basic grants, protected host
+permissions and each action's fresh execution proof remain independent; a Basic
+grant alone authorizes no host effect. These source capabilities do not change
+an installed release or permit adding unsupported
 settings to its server. The shipped Cockpit plugin remains supported.
 [UI status](web-ui/README.md) and
 decisions [140](adr/decision-140.md), [141](adr/decision-141.md),

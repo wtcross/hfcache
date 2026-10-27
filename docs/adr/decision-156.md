@@ -1,7 +1,9 @@
 # Bind fixed host effects to original intent and independently observable outcomes
 
 - Decision identity: 156.
-- Status: Accepted design; implementation and installed conformance pending.
+- Status: Accepted; implemented in `84221bf` with scoped installed
+  native and guarded-rootless API-contract acceptance. Full platform and
+  production acceptance remain separate.
 - Date: 2026-10-27.
 
 ## Context and decision
@@ -163,3 +165,22 @@ filesystem/process integration, actual native positive and guarded-rootless deni
 acceptance are required. Source design is not installed conformance or production
 rollout permission. Original handles, unknown records, NAS and live Cockpit remain
 protected.
+
+## Implementation and presentation status (2026-10-27)
+
+The implementation in `84221bf` supplies these fixed routes, private outcomes and
+optional native observer confinement. It passed the strict source gate and
+33 native/15 guarded-rootless cases across three browser engines, through the
+actual shared Caddy and installed API/helper.
+The native cases prove permitted fixed effects and exact observer stop while
+accepted backend work continues. The rootless cases prove protected denial with
+no admitted effect or user-manager substitution. The canonical client/controller
+probe ran inside the authenticated built application; it did not establish
+rendered Administration-form acceptance. Original failed collectors and startup
+records remain retained, with separate explicitly qualified read-only closure.
+
+This is owned `LOCAL_STORAGE_SIMULATION` evidence, not NAS, production rollout,
+Cockpit retirement or the later full platform matrix. It does not change the
+installed production release. The subsequent Administration composition uses the
+existing ports under the same authority, outcome and no-replay rules; rendered
+controls require their own source and actual user-workflow acceptance.

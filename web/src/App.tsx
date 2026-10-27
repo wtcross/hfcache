@@ -36,6 +36,9 @@ import type {
 } from "./operations/maintenance-state";
 import type { JobsStore } from "./operations/jobs-state";
 import type { HistoryStore } from "./operations/history-state";
+import type { AdministrationReadStore } from "./administration/administration-read-state";
+import type { HostControlsStore } from "./administration/host-controls-state";
+import { AdministrationWorkspace } from "./components/AdministrationWorkspace";
 import type {
     SessionController,
     SessionSnapshot,
@@ -70,6 +73,9 @@ function WorkspaceContent({
     onOpenConfiguration,
     maintenance,
     onRepairFinding,
+    administrationRead,
+    hostControls,
+    onAdministrationNavigate,
 }: {
     workspace: Workspace;
     authenticated: boolean;
@@ -89,6 +95,11 @@ function WorkspaceContent({
     onOpenConfiguration?: () => void;
     maintenance?: MaintenanceStore;
     onRepairFinding?: (intent: RepairFindingIntent) => void;
+    administrationRead?: AdministrationReadStore;
+    hostControls?: HostControlsStore;
+    onAdministrationNavigate: (
+        destination: "configuration" | "maintenance" | "operations",
+    ) => void;
 }) {
     switch (workspace) {
         case "library":
@@ -247,6 +258,28 @@ function WorkspaceContent({
                 </Panel>
             );
         case "administration":
+            if (
+                controller !== undefined &&
+                session !== undefined &&
+                administrationRead !== undefined &&
+                hostControls !== undefined
+            )
+                return (
+                    <AdministrationWorkspace
+                        controller={controller}
+                        session={session}
+                        read={administrationRead}
+                        hostControls={hostControls}
+                        onNavigate={onAdministrationNavigate}
+                        {...(configuration === undefined
+                            ? {}
+                            : { configuration })}
+                        {...(jobs === undefined ? {} : { jobs })}
+                        {...(onReadReport === undefined
+                            ? {}
+                            : { onReadReport })}
+                    />
+                );
             if (configuration !== undefined)
                 return (
                     <>
@@ -292,6 +325,8 @@ export function App({
     jobs,
     history,
     maintenance,
+    administrationRead,
+    hostControls,
 }: {
     basePath: string;
     bootstrap?: UiBootstrap;
@@ -305,6 +340,8 @@ export function App({
     jobs?: JobsStore;
     history?: HistoryStore;
     maintenance?: MaintenanceStore;
+    administrationRead?: AdministrationReadStore;
+    hostControls?: HostControlsStore;
 }) {
     const base = validateBasePath(basePath);
     const [pathname, setPathname] = useState(window.location.pathname);
@@ -354,7 +391,8 @@ export function App({
             const target = window.location.pathname + window.location.hash;
             if (target !== acceptedLocation.current) maintenance?.pause();
             if (
-                configuration?.snapshot().dirty === true &&
+                (configuration?.snapshot().dirty === true ||
+                    hostControls?.snapshot().dirty === true) &&
                 target !== acceptedLocation.current
             ) {
                 window.history.replaceState(null, "", acceptedLocation.current);
@@ -375,7 +413,10 @@ export function App({
         window.addEventListener("popstate", observeLocation);
         window.addEventListener("hashchange", observeLocation);
         const beforeUnload = (event: BeforeUnloadEvent) => {
-            if (configuration?.snapshot().dirty === true)
+            if (
+                configuration?.snapshot().dirty === true ||
+                hostControls?.snapshot().dirty === true
+            )
                 event.preventDefault();
         };
         window.addEventListener("beforeunload", beforeUnload);
@@ -384,7 +425,7 @@ export function App({
             window.removeEventListener("hashchange", observeLocation);
             window.removeEventListener("beforeunload", beforeUnload);
         };
-    }, [configuration, maintenance]);
+    }, [configuration, hostControls, maintenance]);
     useEffect(() => {
         if (pendingNavigation !== null) stayButton.current?.focus();
     }, [pendingNavigation]);
@@ -426,7 +467,10 @@ export function App({
         intent: ConfigurationIntent | null = null,
     ) {
         maintenance?.pause();
-        if (configuration?.snapshot().dirty === true) {
+        if (
+            configuration?.snapshot().dirty === true ||
+            hostControls?.snapshot().dirty === true
+        ) {
             previousFocus.current =
                 document.activeElement instanceof HTMLElement
                     ? document.activeElement
@@ -460,6 +504,17 @@ export function App({
         );
     function editConfiguration(intent: ConfigurationIntent) {
         requestNavigation(workspacePath("administration", base), intent);
+    }
+    function administrationNavigate(
+        destination: "configuration" | "maintenance" | "operations",
+    ) {
+        if (destination === "configuration") {
+            const section = document.getElementById(
+                "administration-configuration",
+            );
+            section?.scrollIntoView({ block: "start" });
+            section?.focus();
+        } else requestNavigation(workspacePath(destination, base));
     }
     function readReport(runId: string) {
         if (history === undefined) return;
@@ -509,12 +564,18 @@ export function App({
                         }}
                     >
                         <h2 id="unsaved-draft-title">
-                            Unsaved configuration changes
+                            {hostControls?.snapshot().dirty === true
+                                ? configuration?.snapshot().dirty === true
+                                    ? "Unsaved administration changes"
+                                    : "Unsaved schedule changes"
+                                : "Unsaved configuration changes"}
                         </h2>
                         <p>
-                            Leaving discards the private configuration draft.
+                            {hostControls?.snapshot().dirty === true
+                                ? "Leaving discards private administration drafts and schedule review."
+                                : "Leaving discards the private configuration draft."}{" "}
                             Original operation handles remain available in
-                            Operations.
+                            Operations and Administration.
                         </p>
                         <button
                             ref={stayButton}
@@ -532,6 +593,7 @@ export function App({
                             onClick={() => {
                                 const next = pendingNavigation;
                                 configuration?.discard();
+                                hostControls?.discard();
                                 setPendingNavigation(null);
                                 performNavigation(next.path, next.intent);
                             }}
@@ -723,7 +785,7 @@ export function App({
                             ? "This source preview makes no API requests and submits no operations."
                             : controller === undefined
                               ? "Archive health and repository data have not been requested. No operation has been submitted."
-                              : "Original operation handles are preserved separately from private observations. Open Operations for recovery."}
+                              : "Original operation handles are preserved separately from private observations. Open Operations or Administration for recovery."}
                     </Notice>
                     {(updateRequired ||
                         session?.connection === "update_required") && (
@@ -802,6 +864,13 @@ export function App({
                                 : {})}
                             basePath={base}
                             onOpenRepository={navigateRepository}
+                            onAdministrationNavigate={administrationNavigate}
+                            {...(administrationRead === undefined
+                                ? {}
+                                : { administrationRead })}
+                            {...(hostControls === undefined
+                                ? {}
+                                : { hostControls })}
                             {...(configuration === undefined
                                 ? {}
                                 : { configuration })}

@@ -29,6 +29,38 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-019 Complete operator Administration and diagnostics
+  (2026-10-27, this commit — [task](plans/tasks/web-019-administration-and-diagnostics-ui.md)).
+  The real Administration route composes independent archive/readiness/software
+  and host-permission facts, complete warning guidance, guarded configuration,
+  explicit keyed diagnostics, fixed sync schedule/original-observer controls,
+  read-only verification status, bounded journals and original-outcome recovery.
+  Dirty navigation and one-use reviews retain original intent and no-replay
+  uncertainty. ADR145/156, INV018/020/021/022, server/parity contracts and human
+  Administration/troubleshooting/navigation plus actual screenshots align.
+  Strict gate2 passes1994.337s on unchanged S3 `107e45b4…`/1519 files:8927 backend,
+  3690 required web unit/4007 combined frontend,94.94% line/90% branch coverage,
+  252464 gzip JavaScript bytes, all required wheel/build/browser/docs checks and
+  zero required skips. OPS-10 maps real test nodes and actual executions.
+  All42 required scoped browser pairs pass:27 native through real Caddy22443/
+  installed .50 API/helper/system manager and15 guarded rootless through existing
+  Caddy8443/.49 API/helper/worker. Native27 is an explicit union of original
+  Chromium9/Firefox9 and targeted WebKit9, with separate read-only closure/joins;
+  both original failed collectors stay false/unknown. Retain the fixture's old
+  config inode while restoring sync wait60→shipped3600; the journal correction
+  joins exactly one legitimate failed SDK sync journal, no publication. No POST
+  or successful browser work is replayed to qualify collection.
+  Rootless normal pass254.036s admits0 operations from3 denied keyed POSTs;
+  53 final tracked identities are gone,4 cgroups empty/4 endpoints refused and
+  exact created secrets retired. Archive/stores/key/configuration/SDK and older
+  failed/unknown evidence remain; verification stays inactive/unenabled.
+  Total506 trusted requests/84 clear CSP checkpoints; actual runtime source
+  equality and pinned UBI10micro/no-runtime-Node shared images are verified.
+  Aggregate: /var/tmp/web-019-validation-fnvch46d/source3-functional-all-summary.json
+  (SHA2563ebb9e27…). This is LOCAL_STORAGE_SIMULATION plus isolated host behavior;
+  WEB020–026/full-platform/NAS/production/retirement/final acceptance remain.
+  No new engine/frontend server, merge, push, tag, rollout or live Cockpit removal.
+
 - [x] WEB-018 Implement guarded schedule, observer and journal actions
   (2026-10-27, this commit — [task](plans/tasks/web-018-schedule-observer-and-journal.md)).
   Fixed calendar/timespan validation, schedule CAS/apply/reset/pause/resume,
@@ -2947,6 +2979,32 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-019 checkpoint (2026-10-27, this commit): WEB001–019 are complete on
+feat/web-ui; [task019](plans/tasks/web-019-administration-and-diagnostics-ui.md)
+records final strict source3 gate,27 qualified native/15 normal rootless actual
+rendered cases, UBI10micro/no-runtime-Node shared API/UI images and OPS-10.
+[WEB-020](plans/tasks/web-020-cross-browser-accessibility-and-load.md) is pending.
+The human Administration and troubleshooting guides now describe independent
+facts, exact reviews, diagnostic partial failures, rootless denials, journals and
+original recovery, with actual synthetic desktop/mobile captures.
+
+The owned guest selects .49 rootless and is quiet after normal closure:53 final
+tracked PID/start pairs gone,4 empty cgroups/4 refused endpoints, exact created
+secret IDs retired, verify timer inactive/unenabled. Native .50/B archive57d03fca…,
+all32 original API receipts,20 host outcomes, retained configuration inode and
+SDK handles/journals remain preserved. Original B1/targeted collectors remain
+false/unknown; separate proofs8ce4e5a3…/3b000047… establish actual closure/joins
+without rewriting them. Keep the old .48/A interrupted diagnostic263e4ec0…,
+all prior archives/cohorts, WEB017C ambiguous journal97c38426…, damaged retired
+predecessors and private pending handles; never replay or clear them. The source
+gate's first stale-test failure, ENOSPC builds and historical unsaved metadata
+limits remain explicit. Aggregate source3-functional-all-summary.json in
+/var/tmp/web-019-validation-fnvch46d (SHA2563ebb9e27…) pins evidence and sources.
+Reuse the same guest/Caddy/engines. This proves no NAS/production/full-platform
+acceptance and authorizes no rollout. Production0.2.2, live guards/calendars/
+credentials/Caddy and Cockpit remain untouched; merge/push/Git tags/live plugin
+removal stay outside scope.
 
 Latest WEB-018 checkpoint (2026-10-27, this commit): WEB001–018 are complete on
 feat/web-ui. [Task018](plans/tasks/web-018-schedule-observer-and-journal.md)
@@ -12920,3 +12978,15 @@ evidence. No endpoint, dependency, privilege or new architectural decision is ad
      The fixture's mistaken hyphenated policy module is separately retained and
      corrected to the documented underscore module name. No init_t/unconfined
      signal grant, capability, IP authority or security fallback is introduced.
+
+2026-10-27 WEB-019 implementation refinement of decisions145/156: the production
+Administration route composes the existing independent query, original-operation,
+configuration and job owners. Fresh schedule/observer review and private outcome
+proof are retired on edit, navigation or authentication changes; no host/domain
+completion is inferred from another lane. Readiness, archive/verification facts,
+metadata coverage and journal diagnostics remain separate. Human warning and
+partial diagnostic guidance accompanies actual controls. Dated ADR145/156 and
+INV018/020/021/022 amendments record this composition; no endpoint, dependency,
+durable format, privilege or new architectural choice is introduced. Fixture
+timeout/journal collector corrections and separate failed-result qualifications
+are test evidence, never a production relaxation or permission to replay work.

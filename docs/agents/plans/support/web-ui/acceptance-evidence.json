@@ -9482,21 +9482,183 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "artifact_sha256": "a99e1f6243149ca1902dd213bce783bc1bf8b51b78806f7075914b2e9b776014",
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-019-validation-fnvch46d/gate2/strict-gate.log",
+          "exit_status": 0,
+          "layer": "unit",
+          "node_ids": [
+            "web/test/host-controls-state.unit.test.ts::original observer tuple is reviewed and transmitted unchanged, never a unit selector",
+            "web/test/host-controls-state.unit.test.ts::a replacement observer invocation invalidates the old confirmation",
+            "web/test/host-controls-state.unit.test.ts::journal source selection is read-free; explicit pages replace rather than accumulate",
+            "web/test/host-controls-state.unit.test.ts::journal continuation stops after32 explicit positions without an extra GET",
+            "web/test/host-controls-state.unit.test.ts::original outcome recovery uses only GET and pending host proof never releases uncertainty",
+            "web/test/HostControls.component.test.tsx::explicit observer review exposes original tuple and stops only that tuple",
+            "web/test/HostControls.component.test.tsx::journal radio selection is read-free and bounded pages expose gaps and truncation",
+            "web/test/HostControls.component.test.tsx::malformed journal HTML is refused and never becomes active DOM",
+            "web/test/HostControls.component.test.tsx::denied observer authority leaves schedule controls available and explains independent permission",
+            "web/test/HostActionRecovery.component.test.tsx::a confirmed protected outcome does not complete a running API receipt or its backend job",
+            "web/test/HostActionRecovery.component.test.tsx::OperationRecovery includes %s original host outcomes without an automatic observer or effect",
+            "web/test/HostActionRecovery.component.test.tsx::missing %s history stays unconfirmed and preserves the original handles",
+            "web/test/HostActionRecovery.component.test.tsx::disconnect hides a late old-generation outcome and requires an explicit fresh observation after reconnect",
+            "web/test/administration-navigation.component.test.tsx::Administration composes real controls and original recovery without submitting work on mount",
+            "web/test/administration-navigation.component.test.tsx::navigation offers Stay or explicit schedule discard and preserves original operations"
+          ],
+          "observed_assertion": "Strict gate2 passed in1994.337s on1519 unchanged source files:8927 backend tests (52 unrelated opt-in deselections),3690 required web unit tests and4007 combined frontend tests, no required skips; line94.94%/branch90%. Listed React/store tests exercise original-tuple review, proof invalidation, bounded diagnostic journals and GET-only original recovery with labelled HTTP fixtures. Listed backend tests exercise real owned pidfd, runner/archive flock, ASGI/helper-outcome separation and journal projection. These source checks do not establish installed browser acceptance; native/rootless functional evidence is still pending.",
+          "profile": "WEB-019, this commit; local offline locked server+mcp extras and required web/Cockpit checks. Native/runtime source2 differs from this final source3 only in the human guide and two actual PNGs; rootless source1 additionally differs in three documentation files and one unshipped mount test. No application/runtime/packaging change.",
+          "source_sha256": "107e45b48e0ea2d4da43b5ce850ded90b394ed2fd233818e4b6b826638352dbd"
+        },
+        {
+          "artifact_sha256": "a99e1f6243149ca1902dd213bce783bc1bf8b51b78806f7075914b2e9b776014",
+          "command": "rtk proxy scripts/check.sh --require-web --require-cockpit",
+          "evidence_locator": "/var/tmp/web-019-validation-fnvch46d/gate2/strict-gate.log",
+          "exit_status": 0,
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_host_actions.py::test_actual_pidfd_stops_only_original_even_when_manager_replaces_invocation",
+            "tests/unit/test_host_action_runner.py::test_host_action_finishes_while_original_domain_work_still_holds_archive_flock",
+            "tests/unit/test_host_fixed_routes.py::test_lost_helper_reply_keeps_original_interrupted_and_gets_confirmed_without_replay",
+            "tests/unit/test_host_actions.py::test_journal_closed_projection_and_cursor_does_not_skip_boundary",
+            "tests/unit/test_host_actions.py::test_journal_capacity_and_unrecognized_prose_never_expose_payload"
+          ],
+          "observed_assertion": "Strict gate2 passed in1994.337s on1519 unchanged source files:8927 backend tests (52 unrelated opt-in deselections),3690 required web unit tests and4007 combined frontend tests, no required skips; line94.94%/branch90%. Listed React/store tests exercise original-tuple review, proof invalidation, bounded diagnostic journals and GET-only original recovery with labelled HTTP fixtures. Listed backend tests exercise real owned pidfd, runner/archive flock, ASGI/helper-outcome separation and journal projection. These source checks do not establish installed browser acceptance; native/rootless functional evidence is still pending.",
+          "profile": "WEB-019, this commit; local offline locked server+mcp extras and required web/Cockpit checks. Native/runtime source2 differs from this final source3 only in the human guide and two actual PNGs; rootless source1 additionally differs in three documentation files and one unshipped mount test. No application/runtime/packaging change.",
+          "source_sha256": "107e45b48e0ea2d4da43b5ce850ded90b394ed2fd233818e4b6b826638352dbd"
+        },
+        {
+          "artifact_sha256": "dd66516957cf272a1a0a5c8fb474adf6d9f5dd5855fb729e6b76f4aba666b8bb",
+          "command": "rtk proxy python3 .scratch/web-019-native-case-union.py --execute --targeted-result /var/tmp/web-019-validation-fnvch46d/native-b-webkit-functional1-original-result.json",
+          "evidence_locator": "/var/tmp/web-019-validation-fnvch46d/native-b-case-union.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-019-administration-cases.mjs::bounded-two-source-diagnostic-journals",
+            ".scratch/web-019-administration-cases.mjs::reviewed-original-observer-stop-backend-continues"
+          ],
+          "observed_assertion": "Accepted27 distinct native (engine,case) pairs through actual rendered UI/Caddy22443/installed .50 API/helper/system manager: original B1 Chromium9 and Firefox9 plus targeted WebKit9. Both raw wrappers remain rc1/false/cleanup_unknown. B1 WebKit backend exhausted the fixture60s lock wait; retain its original failed20/HFMNT010 and confirmed host stop. Retained old config inode/bytes and changed only sync wait to shipped3600; browser/collector deadlines and security remain unchanged. New WebKit functional9 all pass; sole final collector assertion wrongly expected no new SDK transaction journal. Separate read-only qualification3b000047 rejoins all8 new receipts/private HMAC/host/doctor/SDK/backup outcomes and exactly1 failed sync journal by original run/archive/fingerprint/HFHUB003, no publication. Saved91 old objects/49 API files/13970 older rows remain exact;26 original identities gone,5 cgroups empty/5 endpoints refused, timer inactive/unenabled. B1 independent closure8ce4 remains separate. The pinned sidecar validates exact original RESULT/REPORT/proof hashes and attempts1 for every accepted case; neither original result is rewritten or promoted. Guarded rootless remains required.",
+          "profile": "WEB-019, this commit; native .50 LOCAL_STORAGE_SIMULATION, sandboxed Chromium156.0.8078.4/Firefox157/WebKit27.2 and trusted TLS22443 through existing Caddy. Rendered schedule/observer/journal/recovery/diagnostic controls; no client POST probe or API mock. Hub/storage adapters are explicitly synthetic at supported seams. Pinned UBI10micro shared API/UI artifact has no runtime Node. No NAS/production/full-platform acceptance. Runtime source2 equals final source3 production bytes; only guide and two PNGs differ.",
+          "source_sha256": "be79ca2dfe4e983732d3b6dfee6ff0e7626a2a72a72cd7570abf122072e5ef72"
+        },
+        {
+          "artifact_sha256": "8a81937f29e9d422a665337dd8cb6ee3c6657dec58e3e27569571f83061a481a",
+          "command": "rtk proxy python3 .scratch/web-019-execute-rootless-v3-functional.py",
+          "evidence_locator": "/var/tmp/web-019-validation-fnvch46d/rootless-v3-functional1-original-result.json",
+          "exit_status": 0,
+          "layer": "functional",
+          "node_ids": [
+            ".scratch/web-019-administration-cases.mjs::unsupported-host-controls-stay-disabled",
+            ".scratch/web-019-administration-cases.mjs::bounded-two-source-diagnostic-journals",
+            ".scratch/web-019-administration-cases.mjs::missing-original-key-never-proves-nonexecution"
+          ],
+          "observed_assertion": "Original guarded-rootless run passed254.036s with all15 once-per-engine rendered cases and no required skips. Actual Administration inspection/independent identity and permission facts, disabled unsupported host controls, bounded two-source journals, one genuine diagnostic403 per browser preserving its uncertain original key/blocking a second job, and missing-key404 recovery never implying nonexecution. Three keyed POSTs yield0 admissions/new receipts; no profile or registry bypass. All82 requests use trusted same-origin Caddy8443 and30 CSP checkpoints are clear. Normal closure succeeds:53 final tracked PID/start identities gone (including reaped exact secret-retirement commands),4 cgroups empty/4 endpoints refuse, all created secret IDs retired. Archive full identity/bytes, API/worker receipts, original credentials/key/configuration/SDK handles and prior state remain unchanged; verification timer stays inactive/unenabled. Native case union remains separately qualified with both original failed wrappers preserved.",
+          "profile": "WEB-019, this commit; installed .49 shared UBI10micro API/UI image with no runtime Node, existing hfcache user engine/Caddy/owned guest, SELinux Enforcing; sandboxed Chromium156.0.8078.4/Firefox157/WebKit27.2 and trusted TLS8443. LOCAL_STORAGE_SIMULATION with supported Hub/storage adapters, actual host/container behavior, no mock API or client POST probe. RuntimeS1 source11bc is byte-equal to nativeS2 production modules and web source; finalS3 adds only documentation/test assertions and actual PNGs. No NAS/production/full-platform acceptance.",
+          "source_sha256": "11bc4c9e3509361d14ca7c328577a578b4bc0da450c22b63d6f00436a7354add"
+        }
+      ],
       "id": "OPS-10",
       "owner": "WEB-019",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_ops.py::test_ops_10"
+          "node_id": "web/test/host-controls-state.unit.test.ts::original observer tuple is reviewed and transmitted unchanged, never a unit selector"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/host-controls-state.unit.test.ts::a replacement observer invocation invalidates the old confirmation"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/host-controls-state.unit.test.ts::journal source selection is read-free; explicit pages replace rather than accumulate"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/host-controls-state.unit.test.ts::journal continuation stops after32 explicit positions without an extra GET"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/host-controls-state.unit.test.ts::original outcome recovery uses only GET and pending host proof never releases uncertainty"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/HostControls.component.test.tsx::explicit observer review exposes original tuple and stops only that tuple"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/HostControls.component.test.tsx::journal radio selection is read-free and bounded pages expose gaps and truncation"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/HostControls.component.test.tsx::malformed journal HTML is refused and never becomes active DOM"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/HostControls.component.test.tsx::denied observer authority leaves schedule controls available and explains independent permission"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/HostActionRecovery.component.test.tsx::a confirmed protected outcome does not complete a running API receipt or its backend job"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/HostActionRecovery.component.test.tsx::OperationRecovery includes %s original host outcomes without an automatic observer or effect"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/HostActionRecovery.component.test.tsx::missing %s history stays unconfirmed and preserves the original handles"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/HostActionRecovery.component.test.tsx::disconnect hides a late old-generation outcome and requires an explicit fresh observation after reconnect"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/administration-navigation.component.test.tsx::Administration composes real controls and original recovery without submitting work on mount"
+        },
+        {
+          "layer": "unit",
+          "node_id": "web/test/administration-navigation.component.test.tsx::navigation offers Stay or explicit schedule discard and preserves original operations"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_ops.py::test_ops_10"
+          "node_id": "tests/unit/test_host_actions.py::test_actual_pidfd_stops_only_original_even_when_manager_replaces_invocation"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_host_action_runner.py::test_host_action_finishes_while_original_domain_work_still_holds_archive_flock"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_host_fixed_routes.py::test_lost_helper_reply_keeps_original_interrupted_and_gets_confirmed_without_replay"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_host_actions.py::test_journal_closed_projection_and_cursor_does_not_skip_boundary"
+        },
+        {
+          "layer": "integration",
+          "node_id": "tests/unit/test_host_actions.py::test_journal_capacity_and_unrecognized_prose_never_expose_payload"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/ops.spec.ts::OPS-10"
+          "node_id": ".scratch/web-019-administration-cases.mjs::bounded-two-source-diagnostic-journals"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-019-administration-cases.mjs::reviewed-original-observer-stop-backend-continues"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-019-administration-cases.mjs::unsupported-host-controls-stay-disabled"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-019-administration-cases.mjs::bounded-two-source-diagnostic-journals"
+        },
+        {
+          "layer": "functional",
+          "node_id": ".scratch/web-019-administration-cases.mjs::missing-original-key-never-proves-nonexecution"
         }
       ],
       "required_layers": [
@@ -9504,7 +9666,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [
